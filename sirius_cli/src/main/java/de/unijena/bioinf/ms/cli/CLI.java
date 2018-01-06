@@ -180,7 +180,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                         printf("%" + n + "d.) %s\t%s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\texplained intensity: %.2f %%\tisotope peaks: %d\n", rank++, result.getMolecularFormula().toString(), String.valueOf(result.getResolvedTree().getAnnotationOrNull(PrecursorIonType.class)), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getResolvedTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getResolvedTree()) * 100, isoPeaks);
                     }
 
-                    if (projectWriter != null) {
+                    if (projectWriter != null) {//todo da sollte es einen job typ geben der automatisch an ExperimentResult.java annotiert
                         projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results));
                     }
                 } else {

@@ -16,18 +16,14 @@ import java.util.List;
 public class ExperimentContainer extends AbstractBean {
     //the ms experiment we use for computation
     private final MutableMs2Experiment experiment;
-    //results and gui wrapper for the experiment
+    //results and ut gui wrapper bean
     private volatile List<SiriusResultElement> results;
     private volatile List<IdentificationResult> originalResults;
     private volatile SiriusResultElement bestHit;
     private volatile int bestHitIndex = 0;
 
-    //todo map this drectly to ms2exp
-    private double selectedFocusedMass;
-    private double dataFocusedMass;
 
     private String guiName;
-    //    private URL source;
     private int suffix;
     private volatile ComputingStatus computeState;
     private String errorMessage;
@@ -39,8 +35,6 @@ public class ExperimentContainer extends AbstractBean {
 
     public ExperimentContainer(MutableMs2Experiment source) {
         this.experiment = source;
-        selectedFocusedMass = -1;
-        dataFocusedMass = -1;
         guiName = "";
         suffix = 1;
         results = Collections.emptyList();
@@ -76,20 +70,12 @@ public class ExperimentContainer extends AbstractBean {
         return experiment.getMs2Spectra();
     }
 
-    public SimpleSpectrum getCorrelatedSpectrum() {
+    public SimpleSpectrum getMergedMs1Spectrum() {
         return experiment.getMergedMs1Spectrum();
     }
 
     public PrecursorIonType getIonization() {
         return experiment.getPrecursorIonType();
-    }
-
-    public double getSelectedFocusedMass() {
-        return selectedFocusedMass;
-    }
-
-    public double getDataFocusedMass() {
-        return dataFocusedMass;
     }
 
     public List<SiriusResultElement> getResults() {
@@ -100,9 +86,8 @@ public class ExperimentContainer extends AbstractBean {
         return originalResults;
     }
 
-    public double getFocusedMass() {
-        if (selectedFocusedMass > 0) return selectedFocusedMass;
-        else return dataFocusedMass;
+    public double getIonMass() {
+        return experiment.getIonMass();
     }
 
     public String getErrorMessage() {
@@ -184,17 +169,12 @@ public class ExperimentContainer extends AbstractBean {
         firePropertyChange("ionization", old, experiment.getPrecursorIonType());
     }
 
-    public void setSelectedFocusedMass(double focusedMass) {
-        double old = selectedFocusedMass;
-        selectedFocusedMass = focusedMass;
-        firePropertyChange("selectedFocusedMass", old, selectedFocusedMass);
+    public void setIonMass(double ionMass) {
+        double old = experiment.getIonMass();
+        experiment.setIonMass(ionMass);
+        firePropertyChange("ionMass", old, experiment.getIonMass());
     }
 
-    public void setDataFocusedMass(double focusedMass) {
-        double old = dataFocusedMass;
-        dataFocusedMass = focusedMass;
-        firePropertyChange("dataFocusedMass", old, dataFocusedMass);
-    }
 
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
@@ -206,6 +186,7 @@ public class ExperimentContainer extends AbstractBean {
         firePropertyChange("computeState", oldST, this.computeState);
     }
 
+    //this can be use to initiate an arbitrary update event, e.g. to initialize a view
     public void fireUpdateEvent() {
         firePropertyChange("updated", false, true);
     }
@@ -220,8 +201,6 @@ public class ExperimentContainer extends AbstractBean {
 
     public ExperimentContainer copy() {
         ExperimentContainer newExp = new ExperimentContainer(new MutableMs2Experiment(experiment));
-        newExp.setDataFocusedMass(getDataFocusedMass());
-        newExp.setSelectedFocusedMass(getSelectedFocusedMass());
         newExp.setSuffix(getSuffix());
         List<SiriusResultElement> sre = new ArrayList<>(getResults());
         newExp.setRawResults(getRawResults(), sre);

@@ -127,7 +127,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 		int xPos = Math.max(ionLength,focLength)+15;
 		
 		String ionValue = ec.getIonization().toString();
-		double focD = ec.getFocusedMass();
+		double focD = ec.getIonMass();
 		String focMass = focD>0 ? numberFormat.format(focD)+" Da" : "unknown";
 		
 		g2.setFont(valueFont);

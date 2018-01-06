@@ -104,7 +104,7 @@ public class SiriusDataConverter {
     }*/
 
     /*public static MutableMs2Experiment experimentContainerToSiriusExperiment(ExperimentContainer myxo) {
-        return experimentContainerToSiriusExperiment(myxo, myxo.getIonization(), myxo.getFocusedMass());
+        return experimentContainerToSiriusExperiment(myxo, myxo.getIonization(), myxo.getIonMass());
     }*/
 
     public static SiriusResultElement siriusResultToMyxoResult(IdentificationResult ir) {
@@ -125,7 +125,7 @@ public class SiriusDataConverter {
                     parentmass = tree.getAnnotationOrNull(PrecursorIonType.class).addIonAndAdduct(tree.getRoot().getFormula().getMass());
                 } else parentmass = -1d;
 
-                c.setSelectedFocusedMass(parentmass);
+                c.setIonMass(parentmass);
             }
         }
         return c;

@@ -2,7 +2,6 @@ package de.unijena.bioinf.sirius.gui.structure;
 
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.sirius.gui.msviewer.data.MSViewerDataModel;
 import de.unijena.bioinf.sirius.gui.msviewer.data.PeakInformation;
 
@@ -10,7 +9,7 @@ import java.util.TreeMap;
 
 public class SpectrumContainer implements MSViewerDataModel {
 
-    private final Spectrum<?> sp;
+    private final Spectrum<?> sourceSpectrum;
     private MutableMs2Spectrum modified = null;
 
     private TreeMap<Double, Integer> massToIndex;
@@ -20,7 +19,7 @@ public class SpectrumContainer implements MSViewerDataModel {
     protected double maxMass;
 
     public SpectrumContainer(Spectrum<?> sp) {
-        this.sp = sp;
+        this.sourceSpectrum = sp;
 
         //Zwischenschritt da Spektren denkbar bei denen es mehrere Peaks mit gleicher Masse geben kann...
 
@@ -60,19 +59,20 @@ public class SpectrumContainer implements MSViewerDataModel {
 
     }
 
-    public MutableMs2Spectrum getSpectrumToChange() {
-        if (modified == null) modified = new MutableMs2Spectrum();
+    public Spectrum<?> getSpectrum() {
+        if (modified != null)
+            return modified;
+        return sourceSpectrum;
+    }
+
+    public MutableMs2Spectrum getModifiableSpectrum() {
+        if (modified == null)
+            modified = new MutableMs2Spectrum(sourceSpectrum);
         return modified;
     }
 
-    public Spectrum<?> getSpectrum() {
-        if (modified != null) {
-            if (modified.getMsLevel() == 1)
-                return new SimpleSpectrum(modified);
-            else
-                return modified;
-        } else
-            return sp;
+    public boolean isModified() {
+        return modified != null;
     }
 
 
@@ -177,5 +177,6 @@ public class SpectrumContainer implements MSViewerDataModel {
         // TODO Auto-generated method stub
         return false;
     }
+
 
 }
