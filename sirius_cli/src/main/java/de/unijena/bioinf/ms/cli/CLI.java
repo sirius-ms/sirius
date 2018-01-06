@@ -328,8 +328,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         }
         if (ionModeStrings.size()>0) ionModeStrings.add("--placeholder");
         ionModeStrings.addAll(argsCopy);
-
-        System.out.println(ionModeStrings);
         return ionModeStrings.toArray(new String[ionModeStrings.size()]);
     }
 
