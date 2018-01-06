@@ -11,6 +11,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.BioFilter;
+import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
@@ -194,7 +195,8 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
             FormulaJob formulaJob = new FormulaJob(fingeridInput.getMolecularFormula(), fingerblast.getSearchEngine());
 
             //fingerblast jobs
-            FingerblastJJob blastJob = new FingerblastJJob(fingerblast, bioFilter, dbFlag);
+            final PrecursorIonType ionType = fingeridInput.getResolvedTree().getAnnotationOrThrow(PrecursorIonType.class);
+            FingerblastJJob blastJob = new FingerblastJJob(fingerblast, bioFilter, dbFlag, CompoundCandidateChargeState.getFromPrecursorIonType(ionType));
             blastJob.addRequiredJob(formulaJob);
             blastJob.addRequiredJob(predictionJob);
             submitSubJob(formulaJob);
