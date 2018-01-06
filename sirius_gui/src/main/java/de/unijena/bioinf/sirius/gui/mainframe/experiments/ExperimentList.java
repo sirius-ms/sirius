@@ -47,7 +47,7 @@ public class ExperimentList {
                     public void getFilterStrings(List<String> baseList, ExperimentContainer element) {
                         baseList.add(element.getGUIName());
                         baseList.add(element.getIonization().toString());
-                        baseList.add(String.valueOf(element.getFocusedMass()));
+                        baseList.add(String.valueOf(element.getIonMass()));
                     }
                 }, true));
 
@@ -83,9 +83,9 @@ public class ExperimentList {
         Collections.sort(compoundList, new Comparator<ExperimentContainer>() {
             @Override
             public int compare(ExperimentContainer o1, ExperimentContainer o2) {
-                double mz1 = o1.getFocusedMass();
+                double mz1 = o1.getIonMass();
                 if (mz1 <= 0 || Double.isNaN(mz1)) mz1 = Double.POSITIVE_INFINITY;
-                double mz2 = o2.getFocusedMass();
+                double mz2 = o2.getIonMass();
                 if (mz2 <= 0 || Double.isNaN(mz2)) mz2 = Double.POSITIVE_INFINITY;
                 return Double.compare(mz1, mz2);
             }
