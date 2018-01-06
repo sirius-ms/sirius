@@ -491,6 +491,14 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         return new PrecursorIonType(ion, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), false);
     }
 
+    public PrecursorIonType unknownPositivePrecursorIonType() {
+        return UNKNOWN_POSITIVE_IONTYPE;
+    }
+
+    public PrecursorIonType unknownNegativePrecursorIonType() {
+        return UNKNOWN_NEGATIVE_IONTYPE;
+    }
+
     public PrecursorIonType getUnknownPrecursorIonType(int charge) {
         if (charge != -1 && charge != 1) throw new IllegalArgumentException("Multiple charges are not allowed!");
         if (charge > 0) return UNKNOWN_POSITIVE_IONTYPE;
@@ -698,6 +706,14 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     public Collection<String> getIonizations() {
         return ionizationToAdduct.keySet();
     }
+
+    public Collection<String> getIonizationsAndUnknowns() {
+        Set<String> result = new HashSet<>(getIonizations());
+        result.add(unknownPositivePrecursorIonType().getIonization().getName());
+        result.add(unknownNegativePrecursorIonType().getIonization().getName());
+        return result;
+    }
+
 
     /**
      * @return the set of different positive Ionization types
