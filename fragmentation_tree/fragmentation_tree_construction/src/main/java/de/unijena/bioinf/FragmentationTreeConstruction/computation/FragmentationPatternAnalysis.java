@@ -1149,7 +1149,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (Loss l : tree.losses()) {
             overallScore += l.getWeight();
         }
-        treeScoring.setOverallScore(treeScoring.getRootScore() + overallScore);
 
         tree.setAnnotation(TreeScoring.class, treeScoring);
 
@@ -1238,7 +1237,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
 
         treeScoring.setRootScore(originalGraph.getLoss(originalGraph.getRoot(), tree.getRoot().getFormula()).getWeight() - rootIso);
-
+        treeScoring.setOverallScore(treeScoring.getRootScore() + overallScore + rootIso);
+        treeScoring.setIsotopeMs1Score(rootIso);
         // add statistics
         treeScoring.setExplainedIntensity(getIntensityRatioOfExplainedPeaks(tree));
         treeScoring.setExplainedIntensityOfExplainablePeaks(getIntensityRatioOfExplainablePeaks(tree));
@@ -1388,7 +1388,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * As the single scores are forgotten during tree computation, they have to be computed again.
      * @param tree
      */
-    public boolean recalculateScores(FTree tree) {
+    public double recalculateScores(FTree tree) {
         final Iterator<Loss> edges = tree.lossIterator();
         final ProcessedInput input = tree.getAnnotationOrThrow(ProcessedInput.class);
         final FragmentAnnotation<ProcessedPeak> peakAno = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
@@ -1504,7 +1504,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             scoreSum += s.sum();
         }
         scoreSum += fAno.get(root).sum();
-        return Math.abs(scoreSum-tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) < 1e-8;
+        return scoreSum;
 
     }
 
