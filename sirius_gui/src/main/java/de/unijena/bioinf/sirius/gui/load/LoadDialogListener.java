@@ -1,6 +1,5 @@
 package de.unijena.bioinf.sirius.gui.load;
 
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
 
 import java.io.File;
@@ -12,11 +11,9 @@ public interface LoadDialogListener {
 
     void addSpectra(List<File> files);
 
-    void removeSpectrum(SpectrumContainer sp);
-
+    void removeSpectra(List<SpectrumContainer> sps);
 
     void changeCollisionEnergy(SpectrumContainer sp);
-
 
     void changeMSLevel(SpectrumContainer sp, int msLevel);
 

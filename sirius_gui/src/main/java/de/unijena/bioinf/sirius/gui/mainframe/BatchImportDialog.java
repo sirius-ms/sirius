@@ -5,7 +5,6 @@ import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.sirius.gui.io.DataFormat;
 import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
-import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 
 import javax.swing.*;
@@ -15,6 +14,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class BatchImportDialog extends JDialog implements ActionListener {
@@ -27,8 +27,17 @@ public class BatchImportDialog extends JDialog implements ActionListener {
     private AnalyseFileTypesThread analyseThread;
     private List<String> errors;
 
+    public BatchImportDialog(Dialog owner) {
+        super(owner, true);
+        init();
+    }
+
     public BatchImportDialog(JFrame owner) {
         super(owner, true);
+        init();
+    }
+
+    private void init() {
         this.setTitle("Batch Import");
         this.rv = ReturnValue.Abort;
         this.setLayout(new BorderLayout());
@@ -67,18 +76,8 @@ public class BatchImportDialog extends JDialog implements ActionListener {
         this.setVisible(true);
     }
 
-    public void start(File[] files) {
-        errors = new ArrayList<>();
-        analyseThread = new AnalyseFileTypesThread(files, this, errors);
-        Thread thread = new Thread(analyseThread);
-        thread.start();
-        this.setSize(new Dimension(300, 125));
-        setLocationRelativeTo(getParent());
-        this.setVisible(true);
-    }
-
-    public List<ExperimentContainer> getResults() {
-        if (this.rv == ReturnValue.Abort) return new ArrayList<>();
+    public List<Ms2Experiment> getResults() {
+        if (this.rv == ReturnValue.Abort) return Collections.emptyList();
         else return this.importThread.getResults();
     }
 
@@ -234,7 +233,7 @@ class AnalyseFileTypesThread implements Runnable {
 class ImportExperimentsThread implements Runnable {
 
     private List<File> msFiles, mgfFiles;
-    private List<ExperimentContainer> results;
+    private List<Ms2Experiment> results;
     private volatile boolean stop;
     private List<String> errors;
     private BatchImportDialog bid;
@@ -254,7 +253,6 @@ class ImportExperimentsThread implements Runnable {
 
     @Override
     public void run() {
-
         final MsExperimentParser parser = new MsExperimentParser();
 
         final int size = msFiles.size() + mgfFiles.size();
@@ -266,6 +264,8 @@ class ImportExperimentsThread implements Runnable {
             }
         });
         int counter = 0;
+
+
         for (final File f : msFiles) {
             final int currentCounter = counter;
             SwingUtilities.invokeLater(new Runnable() {
@@ -306,14 +306,13 @@ class ImportExperimentsThread implements Runnable {
                 bid.fileImportFinished();
             }
         });
-
     }
 
     private void addToResults(final CloseableIterator<Ms2Experiment> experiments) {
         while (experiments.hasNext()) {
             final Ms2Experiment exp = experiments.next();
-            final ExperimentContainer ec = new ExperimentContainer(exp);
-            results.add(ec);
+//            final ExperimentContainer ec = new ExperimentContainer(exp);
+            results.add(exp);
             if (stop) {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
@@ -325,37 +324,8 @@ class ImportExperimentsThread implements Runnable {
             }
         }
     }
-	/*
-	public ExperimentContainer readMSCompound(File file){
-		
-		JenaMSConverter conv = new JenaMSConverter();
-		ExperimentContainer ec = null;
-		try{
-			ec = conv.convert(file);
-		}catch(RuntimeException e2){
-			errors.add(file.getName()+": Invalid file format.");
-			return null;
-		}
-		return ec;
-		
-	}
-	
-	public ExperimentContainer readMGFCompound(File file){
-		
-		MGFConverter conv = new MGFConverter();
-		ExperimentContainer ec = null;
-		try{
-			ec = conv.convert(file);
-		}catch(RuntimeException e2){
-			errors.add(file.getName()+": Invalid file format.");
-			return null;
-		}
-		return ec;
-		
-	}
-	*/
 
-    List<ExperimentContainer> getResults() {
+    List<Ms2Experiment> getResults() {
         return this.results;
     }
 

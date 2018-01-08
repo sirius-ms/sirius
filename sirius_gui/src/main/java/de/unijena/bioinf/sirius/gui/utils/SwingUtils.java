@@ -23,10 +23,8 @@ public class SwingUtils {
     public final static int LARGE_GAP = 20;
 
 
-
-
     public static void initUI() {
-    //load nimbus look and feel, befor mainframe is built
+        //load nimbus look and feel, befor mainframe is built
         try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -46,7 +44,7 @@ public class SwingUtils {
 
     }
 
-    public static void drawListStatusElement(ComputingStatus state, Graphics2D g2, Component c){
+    public static void drawListStatusElement(ComputingStatus state, Graphics2D g2, Component c) {
         final Color prevCol = g2.getColor();
         String icon = "";
 
@@ -69,8 +67,8 @@ public class SwingUtils {
                 icon = "";
         }
 
-        int offset =  g2.getFontMetrics().stringWidth(icon);
-        g2.drawString(icon, c.getWidth()-offset-10, c.getHeight()-8);
+        int offset = g2.getFontMetrics().stringWidth(icon);
+        g2.drawString(icon, c.getWidth() - offset - 10, c.getHeight() - 8);
         g2.setColor(prevCol);
     }
 
@@ -126,6 +124,4 @@ public class SwingUtils {
             g.drawRect(1, 1, (w - 3), (h - 3));
         }
     }
-
-
 }

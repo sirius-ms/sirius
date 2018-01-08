@@ -3,15 +3,9 @@ package de.unijena.bioinf.sirius.gui.load;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
 
-import javax.swing.*;
-
 public interface LoadDialog {
 
     void newCollisionEnergy(SpectrumContainer sp);
-
-//    void spectraAdded(Spectrum<?> sp);
-
-//    void spectraRemoved(Spectrum<?> sp);
 
     void msLevelChanged(SpectrumContainer sp);
 
@@ -30,6 +24,4 @@ public interface LoadDialog {
     void ionizationChanged(PrecursorIonType ionization);
 
     PrecursorIonType getIonization();
-
-    DefaultListModel<SpectrumContainer> getSpectra();
 }
