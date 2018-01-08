@@ -16,4 +16,5 @@ public class Decomposition extends Scored<MolecularFormula> {
     public Ionization getIon() {
         return ion;
     }
+
 }
