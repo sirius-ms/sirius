@@ -58,6 +58,13 @@ public class PossibleIonModes {
     protected List<ProbabilisticIonization> ionTypes;
     protected double totalProb;
 
+    public PossibleIonModes(PossibleIonModes pi) {
+        this.ionTypes = new ArrayList<>();
+        for (ProbabilisticIonization i : pi.ionTypes)
+            this.ionTypes.add(new ProbabilisticIonization(i.ionType,i.probability));
+        this.totalProb = pi.totalProb;
+    }
+
     public PossibleIonModes() {
         this.ionTypes = new ArrayList<>();
     }
@@ -69,6 +76,14 @@ public class PossibleIonModes {
 
     public void add(Ionization ionType, double probability) {
         add(PrecursorIonType.getPrecursorIonType(ionType), probability);
+    }
+    public void add(Ionization ionType) {
+        double minProb = Double.POSITIVE_INFINITY;
+        for (ProbabilisticIonization pi : ionTypes)
+            if (pi.probability>0)
+                minProb = Math.min(pi.probability, minProb);
+        if (Double.isInfinite(minProb)) minProb = 1d;
+        add(PrecursorIonType.getPrecursorIonType(ionType), minProb);
     }
 
     public List<ProbabilisticIonization> ProbabilisticIonizations() {
