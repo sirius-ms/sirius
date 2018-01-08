@@ -17,6 +17,7 @@
  */
 package de.unijena.bioinf.ms.cli;
 
+import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
@@ -140,8 +141,9 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         if (options.isAutoCharge()) {
             if (i.experiment.getPrecursorIonType().isIonizationUnknown() || i.experiment.getPrecursorIonType().isPlainProtonationOrDeprotonation()) {
                 i.experiment.setAnnotation(PossibleAdducts.class, null);
-                if (i.experiment.getPrecursorIonType().isIonizationUnknown())
-                    i.experiment.setAnnotation(PossibleIonModes.class, PossibleIonModes.defaultFor(i.experiment.getPrecursorIonType().getCharge()));
+                if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
+                    setPrecursorIonTypes(i.experiment, new PossibleAdducts(Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(i.experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class)));
+                }
             } else {
                 setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()));
             }
