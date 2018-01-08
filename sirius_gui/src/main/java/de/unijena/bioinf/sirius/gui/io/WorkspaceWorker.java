@@ -16,11 +16,11 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.bioinf.sirius.gui.mainframe;
+package de.unijena.bioinf.sirius.gui.io;
 
 import com.google.common.collect.Iterators;
 import de.unijena.bioinf.sirius.gui.dialogs.ImportWorkspaceDialog;
-import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
+import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +51,7 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
     }
 
     public boolean hasErrorMessage() {
-        return errorMessage!=null;
+        return errorMessage != null;
     }
 
     public String getErrorMessage() {
@@ -68,8 +68,8 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
     protected void process(List<ExperimentContainer> chunks) {
         super.process(chunks);
         buffer.addAll(chunks);
-        if (dialog.getDecision()!= ImportWorkspaceDialog.Decision.NONE) {
-            if (dialog.getDecision()== ImportWorkspaceDialog.Decision.ABORT) {
+        if (dialog.getDecision() != ImportWorkspaceDialog.Decision.NONE) {
+            if (dialog.getDecision() == ImportWorkspaceDialog.Decision.ABORT) {
                 abort = true;
             } else {
                 flushBuffer();
@@ -78,8 +78,9 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
     }
 
     public void flushBuffer() {
-        if (dialog.getDecision() == ImportWorkspaceDialog.Decision.ABORT || dialog.getDecision() == ImportWorkspaceDialog.Decision.NONE) return;
-        if (errorMessage!=null) return;
+        if (dialog.getDecision() == ImportWorkspaceDialog.Decision.ABORT || dialog.getDecision() == ImportWorkspaceDialog.Decision.NONE)
+            return;
+        if (errorMessage != null) return;
         while (!buffer.isEmpty()) {
             Workspace.importCompound(buffer.pollFirst());
         }
@@ -120,7 +121,7 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
             try {
                 new WorkspaceIO().newLoad(file, publishingQueue);
             } catch (Exception e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 this.errorMessage = e.toString();
                 return null;
             }

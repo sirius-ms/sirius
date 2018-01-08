@@ -1,61 +1,57 @@
 package de.unijena.bioinf.sirius.gui.load;
 
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
-import de.unijena.bioinf.sirius.gui.io.DataFormat;
-import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
-import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
-import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
+import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.msviewer.MSViewerPanel;
-import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.File;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Vector;
 import java.util.regex.Pattern;
 
 public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionListener, ListSelectionListener, WindowListener,
         DropTargetListener, MouseListener {
 
     private JButton add, remove, ok, abort;
+
     private JList<SpectrumContainer> msList;
+
+
     private MSViewerPanel msviewer;
     private JButton editCE;
     private JTextField cEField;
     private JTextField parentMzField;
     private JComboBox<String> msLevelBox;
-    private Vector<String> ionizations;
+
     private JComboBox<String> ionizationCB;
 
-    private DefaultListModel<SpectrumContainer> listModel;
 
     private List<LoadDialogListener> listeners;
 
     private DecimalFormat cEFormat;
 
     private JTextField nameTF;
-    private JButton nameB;
 
     JPopupMenu spPopMenu;
     JMenuItem addMI, removeMI;
 
     private static Pattern NUMPATTERN = Pattern.compile("^[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?$");
 
-    public DefaultLoadDialog(JFrame owner) {
+    public DefaultLoadDialog(JFrame owner, ListModel<SpectrumContainer> listModel) {
         super(owner, "load", true);
 
         this.cEFormat = new DecimalFormat("#0.0");
@@ -70,12 +66,9 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
         this.add(mainPanel, BorderLayout.CENTER);
 
         JPanel leftPanel = new JPanel(new BorderLayout());
-//		leftPanel.setBorder(BorderFactory.createEtchedBorder());
         mainPanel.add(leftPanel, BorderLayout.WEST);
 
-        listModel = new DefaultListModel<>();
-
-        msList = new JList<SpectrumContainer>(listModel);
+        msList = new JList<>(listModel);
         msList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         JScrollPane msPanel = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         msPanel.setViewportView(msList);
@@ -98,37 +91,33 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
         JPanel rightPanel = new JPanel(new BorderLayout());
 
-
         msviewer = new MSViewerPanel();
         msviewer.setData(new DummySpectrumContainer());
-//		msviewer.setData(listmodel.get(0));
         rightPanel.add(msviewer, BorderLayout.CENTER);
-
-//		JSpinner minspinner = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 100.0, 0.1));
-//		JSpinner maxspinner = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 100.0, 0.1));
 
         JPanel propsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
 
         JPanel msLevelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        msLevelPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "ms level"));
+        msLevelPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "MS level"));
         propsPanel.add(msLevelPanel);
 
         JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        namePanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "compound name"));
+        namePanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Compound name"));
         nameTF = new JTextField(12);
-        nameTF.setEditable(false);
-//		nameTF.setText("unknown");
+        nameTF.setEditable(true);
         namePanel.add(nameTF);
-        nameB = new JButton("Change");
-        nameB.addActionListener(this);
-        namePanel.add(nameB);
         propsPanel.add(namePanel);
 
         JPanel cEPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "ion/adduct type"));
-        ionizations = new Vector<>();
-        updateIonizationCandidates();
+        cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Ion"));
+
+
+        Vector<String> ionizations = new Vector<>(PeriodicTable.getInstance().getIonizationsAndUnknowns());
+        Collections.sort(ionizations);
         ionizationCB = new JComboBox<>(ionizations);
+        ionizationCB.setSelectedItem(PeriodicTable.getInstance().unknownPositivePrecursorIonType().getIonization().getName());
+
+
         cEPanel.add(ionizationCB);
         propsPanel.add(cEPanel);
 
@@ -165,11 +154,6 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
         propsPanel.add(cEPanel);
 
-//		changeMSLevel = new JButton("change");
-//		changeMSLevel.addActionListener(this);
-//		changeMSLevel.setEnabled(false);
-//		msLevelPanel.add(changeMSLevel);
-
         String[] msLevelVals = {"MS 1", "MS 2"};
 
         msLevelBox = new JComboBox<>(msLevelVals);
@@ -179,13 +163,9 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
 
         rightPanel.add(propsPanel, BorderLayout.SOUTH);
-
-//		TODO: Namenfeld einfuegen + eV bei MS1 abschalten + Elemente richtig initialisieren wenn leer und dann Spektren hinzugefuegt
-
         mainPanel.add(rightPanel, BorderLayout.CENTER);
 
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-//		controlPanel.setBorder(BorderFactory.createEtchedBorder());
         this.add(controlPanel, BorderLayout.SOUTH);
 
         ok = new JButton("OK");
@@ -218,18 +198,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
         }
 
 
-        DropTarget dropTarget = new DropTarget(this, this);
-
+        DropTarget dropTarget = new DropTarget(msList, this);
         constructSpectraListPopupMenu();
-
-//		this.setSize(new Dimension(800,600));
-//		this.setVisible(true);
-    }
-
-    protected void updateIonizationCandidates() {
-        ionizations.clear();
-        for (Ionization ion : Ionization.values())
-            ionizations.add(ion.toString());
     }
 
 
@@ -248,14 +218,15 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     }
 
     private void updateCETextField() {
-        int index = msList.getSelectedIndex();
-        if (index == -1 || listModel.size() <= index) {
+        final SpectrumContainer spcont = msList.getSelectedValue();
+        if (spcont == null) {
             this.cEField.setText("");
             this.cEField.setEnabled(false);
             this.editCE.setEnabled(false);
             return;
         }
-        SpectrumContainer spcont = listModel.get(index);
+
+
         if (spcont.getSpectrum().getMsLevel() == 1) {
             cEField.setText("");
             cEField.setEnabled(false);
@@ -278,42 +249,28 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     }
 
     @Override
-    public void newCollisionEnergy(Spectrum<?> sp) {
+    public void newCollisionEnergy(SpectrumContainer container) {
         msList.repaint();
         updateCETextField();
-
     }
 
     @Override
     public void ionizationChanged(PrecursorIonType ionization) {
         if (ionization != null) {
-            final Ionization enumbla = SiriusDataConverter.siriusIonizationToEnum(ionization);
-            if (enumbla.isUnknown() && !ionization.isIonizationUnknown()) {
-                updateIonizationCandidates();
-                ionizations.add(ionization.toString());
-                ionizationCB.setSelectedItem(ionization.toString());
-            } else {
-                ionizationCB.setSelectedItem(enumbla.toString());
-            }
+            String name = ionization.getIonization().getName();
+            if (name != null)
+                ionizationCB.setSelectedItem(name);
         }
     }
 
     @Override
-    public void spectraAdded(Spectrum<?> sp) {
-        listModel.addElement(new SpectrumContainer(sp));
-        msList.setSelectedIndex(0);
+    public PrecursorIonType getIonization() {
+        String item = (String) ionizationCB.getSelectedItem();
+        if (item != null)
+            return PeriodicTable.getInstance().ionByName(item);
+        return PeriodicTable.getInstance().getUnknownPrecursorIonType(1);
     }
 
-    @Override
-    public void spectraRemoved(Spectrum<?> sp) {
-        for (int i = 0; i < listModel.size(); i++) {
-            SpectrumContainer spCont = listModel.getElementAt(i);
-            if (spCont.getSpectrum().equals(sp)) {
-                listModel.remove(i);
-                break;
-            }
-        }
-    }
 
     @Override
     public void addLoadDialogListener(LoadDialogListener ldl) {
@@ -321,11 +278,12 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     }
 
     @Override
-    public void msLevelChanged(Spectrum<?> sp) {
+    public void msLevelChanged(SpectrumContainer container) {
         msList.repaint();
         updateCETextField();
-        SpectrumContainer spcont = listModel.get(msList.getSelectedIndex());
-        if (spcont.getSpectrum().equals(sp)) {
+        SpectrumContainer spcont = msList.getSelectedValue();
+        //check if the active spectrum has to be actualized
+        if (spcont.getSpectrum().equals(container)) {
             msLevelBox.setSelectedIndex(spcont.getSpectrum().getMsLevel() - 1);
         }
     }
@@ -340,10 +298,6 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     private void load() {
         this.setVisible(false);
         for (LoadDialogListener ldl : listeners) {
-            ldl.setIonization((SiriusDataConverter.enumOrNameToIontype((String) ionizationCB.getSelectedItem())));
-            if (NUMPATTERN.matcher(parentMzField.getText()).matches()) {
-                ldl.setParentMass(Double.parseDouble(parentMzField.getText()));
-            }
             ldl.completeProcess();
         }
     }
@@ -360,27 +314,20 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == this.msLevelBox) {
-            SpectrumContainer spCont = listModel.get(msList.getSelectedIndex());
+            SpectrumContainer spCont = msList.getSelectedValue();
             int msLevel = msLevelBox.getSelectedIndex() + 1;
             if (spCont.getSpectrum().getMsLevel() != msLevel) {
                 for (LoadDialogListener ldl : listeners) {
-                    ldl.changeMSLevel(spCont.getSpectrum(), msLevelBox.getSelectedIndex() + 1);
+                    ldl.changeMSLevel(spCont, msLevelBox.getSelectedIndex() + 1);
                 }
             }
         } else if (e.getSource() == this.remove || e.getSource() == this.removeMI) {
-            int[] indices = msList.getSelectedIndices();
-            List<SpectrumContainer> conts = new ArrayList<SpectrumContainer>();
-            for (int index : indices) {
-                conts.add(listModel.get(index));
-            }
-            for (SpectrumContainer spcont : conts) {
-                for (LoadDialogListener ldl : listeners) {
-                    ldl.removeSpectrum(spcont.getSpectrum());
-                }
+            for (LoadDialogListener ldl : listeners) {
+                ldl.removeSpectra(msList.getSelectedValuesList());
             }
         } else if (e.getSource() == this.editCE) {
             for (LoadDialogListener ldl : listeners) {
-                ldl.changeCollisionEnergy(listModel.get(msList.getSelectedIndex()).getSpectrum());
+                ldl.changeCollisionEnergy(msList.getSelectedValue());
             }
         } else if (e.getSource() == this.add || e.getSource() == this.addMI) {
             for (LoadDialogListener ldl : listeners) {
@@ -390,18 +337,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
             load();
         } else if (e.getSource() == this.abort) {
             abort();
-        } else if (e.getSource() == this.nameB) {
-            ExperimentNameDialog diag = new ExperimentNameDialog(this, nameTF.getText());
-            if (diag.getReturnValue() == ReturnValue.Success) {
-                String newName = diag.getNewName();
-                if (newName != null && !newName.isEmpty()) {
-                    for (LoadDialogListener ldl : listeners) {
-                        ldl.experimentNameChanged(newName);
-                    }
-                }
-            }
         }
-
     }
 
     ////// ListSelectionListener ////////
@@ -425,7 +361,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
                 this.remove.setEnabled(true);
                 this.removeMI.setEnabled(true);
             }
-            SpectrumContainer spcont = listModel.get(msList.getSelectedIndex());
+            SpectrumContainer spcont = msList.getSelectedValue();
             msviewer.setData(spcont);
             msviewer.repaint();
             msLevelBox.setEnabled(true);
@@ -487,8 +423,22 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     }
 
     @Override
+    public String getExperimentName() {
+        return nameTF.getText();
+    }
+
+    @Override
     public void parentMassChanged(double newMz) {
         parentMzField.setText(String.valueOf(newMz));
+    }
+
+    //todo error handling
+    @Override
+    public double getParentMass() throws NumberFormatException {
+        if (NUMPATTERN.matcher(parentMzField.getText()).matches()) {
+            return Double.parseDouble(parentMzField.getText());
+        }
+        return -1d;
     }
 
     /// drag and drop support...
@@ -519,38 +469,9 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
     @Override
     public void drop(DropTargetDropEvent dtde) {
-        dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-        Transferable tr = dtde.getTransferable();
-        DataFlavor[] flavors = tr.getTransferDataFlavors();
-        List<File> newFiles = new ArrayList<File>();
-        try {
-            for (int i = 0; i < flavors.length; i++) {
-                if (flavors[i].isFlavorJavaFileListType()) {
-                    List files = (List) tr.getTransferData(flavors[i]);
-                    for (Object o : files) {
-                        File file = (File) o;
-                        newFiles.add(file);
-                    }
-                }
-                dtde.dropComplete(true);
-            }
-        } catch (Exception e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-            dtde.rejectDrop();
-        }
-
-        DataFormatIdentifier identifier = new DataFormatIdentifier();
-        List<File> acceptedFiles = new ArrayList<>(newFiles.size());
-        for (File file : newFiles) {
-            if (identifier.identifyFormat(file) != DataFormat.NotSupported) {
-                acceptedFiles.add(file);
-            }
-        }
-
-        if (acceptedFiles.size() > 0) {
-            for (LoadDialogListener li : listeners) {
-                li.addSpectra(acceptedFiles);
-            }
+        final List<File> newFiles = DragAndDrop.getFileListFromDrop(dtde);
+        for (LoadDialogListener li : listeners) {
+            li.addSpectra(newFiles);
         }
     }
 
@@ -585,25 +506,4 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
         // TODO Auto-generated method stub
 
     }
-
-    @Override
-    public Iterator<Spectrum<?>> getSpectra() {
-        return new SpectrumIterator();
-
-    }
-
-    private class SpectrumIterator implements Iterator<Spectrum<?>> {
-        Enumeration<SpectrumContainer> containers = listModel.elements();
-
-        @Override
-        public boolean hasNext() {
-            return containers.hasMoreElements();
-        }
-
-        @Override
-        public Spectrum<?> next() {
-            return containers.nextElement().getSpectrum();
-        }
-    }
-
 }

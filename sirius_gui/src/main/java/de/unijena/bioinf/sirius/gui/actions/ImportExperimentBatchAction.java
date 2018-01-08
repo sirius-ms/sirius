@@ -7,7 +7,7 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedBatchDataFormatFilter;
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
+import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -36,10 +36,11 @@ public class ImportExperimentBatchAction extends AbstractAction {
         chooser.addChoosableFileFilter(new SupportedBatchDataFormatFilter());
         chooser.setAcceptAllFileFilterUsed(false);
         int returnVal = chooser.showOpenDialog(MF);
+
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] files = chooser.getSelectedFiles();
             CONFIG_STORAGE.setDefaultLoadDialogPath(files[0].getParentFile());
-            Workspace.importOneExperimentPerFile(files);
+            WorkspaceIO.importOneExperimentPerFile(files);
         }
     }
 }
