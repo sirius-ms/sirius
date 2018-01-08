@@ -152,6 +152,8 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         } else {
             if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
                 setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType().getCharge()>0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-")));
+            } else {
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()));
             }
         }
 

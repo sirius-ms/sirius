@@ -22,10 +22,9 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.FilebasedDatabase;
@@ -222,7 +221,7 @@ public class BackgroundComputation extends AbstractBean {
             final SearchableDatabase searchableDatabase = container.searchableDatabase;
             sirius.getMs2Analyzer().setIsotopeHandling(container.enableIsotopesInMs2 ? FragmentationPatternAnalysis.IsotopeInMs2Handling.ALWAYS : FragmentationPatternAnalysis.IsotopeInMs2Handling.IGNORE);
             if (container.enableIsotopesInMs2) {
-                FragmentationPatternAnalysis.getByClassName(LimitNumberOfPeaksFilter.class, sirius.getMs2Analyzer().getPostProcessors()).setLimit(100);
+                //FragmentationPatternAnalysis.getByClassName(LimitNumberOfPeaksFilter.class, sirius.getMs2Analyzer().getPostProcessors()).setLimit(100);
             }
             sirius.setProgress(new Progress() {
                 @Override
@@ -255,15 +254,16 @@ public class BackgroundComputation extends AbstractBean {
 
                 }
             });
-            sirius.setFormulaConstraints(container.constraints);
-
-            if ((int) (10 * sirius.getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation().getPpm()) != (int) (10 * container.ppm)) {
-                sirius.getMs2Analyzer().getDefaultProfile().setAllowedMassDeviation(new Deviation(container.ppm));
-                sirius.getMs1Analyzer().getDefaultProfile().setAllowedMassDeviation(new Deviation(container.ppm));
-            }
             try {
                 final List<IdentificationResult> results;
-                final Ms2Experiment experiment = container.exp.getMs2Experiment();
+                final MutableMs2Experiment experiment = new MutableMs2Experiment(container.exp.getMs2Experiment());
+
+
+                sirius.setFormulaConstraints(experiment, container.constraints);
+                sirius.setAllowedMassDeviation(experiment, new Deviation(container.ppm));
+
+
+
                 boolean hasMS2 = experiment.getMs2Spectra().size() != 0;
                 if (searchableDatabase == null) {
                     if (hasMS2) {

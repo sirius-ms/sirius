@@ -58,7 +58,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
         initInput();
         final ArrayList<FingerprintCandidate> searchList = new ArrayList<>(this.searchList.size());
         for (FingerprintCandidate c : this.searchList) {
-            if ((!filter || !(flag != 0 && (c.getBitset() & flag) == 0)) && c.hasChargeState(chargeState))
+            if ((!filter || flag == 0 || (c.getBitset() & flag) != 0))
                 searchList.add(c);
         }
         // filter by charge state

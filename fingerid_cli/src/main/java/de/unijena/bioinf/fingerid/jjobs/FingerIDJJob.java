@@ -192,7 +192,7 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
             predictionJobs.add(predictionJob);
 
             // formula jobs
-            FormulaJob formulaJob = new FormulaJob(fingeridInput.getMolecularFormula(), fingerblast.getSearchEngine());
+            FormulaJob formulaJob = new FormulaJob(fingeridInput.getMolecularFormula(), fingerblast.getSearchEngine(), fingeridInput.getPrecursorIonType());
 
             //fingerblast jobs
             final PrecursorIonType ionType = fingeridInput.getResolvedTree().getAnnotationOrThrow(PrecursorIonType.class);
