@@ -62,7 +62,7 @@ public interface SiriusOptions {
     @Option(longName = "noise", description = "median intensity of noise peaks", defaultToNull = true)
     Double getMedianNoise();
 
-    @Option(shortName = "Z", longName = "auto-charge", description = "Use this option if the charge of your compounds is unknown and you do not want to assume [M+H]+ as default. With the auto charge option SIRIUS will not care about charges and allow arbitrary adducts for the precursor peak.")
+    @Option(shortName = "Z", longName = "auto-charge", description = "Use this option if the adduct type and/or ion mode of your compounds is unknown and you do not want to assume [M+H]+/[M-H]- as default. With the option enabled, SIRIUS will also search for other adduct types (e.g. [M+NH3+H]+ or even other ion modes (e.g. [M+Na]+) if no ion mode is specified.")
     boolean isAutoCharge();
 
     @Option(shortName = "h", longName = "help", helpRequest = true)
@@ -99,8 +99,8 @@ public interface SiriusOptions {
     @Option(shortName = "z", longName = {"parentmass", "precursor", "mz"}, description = "the mass of the parent ion", defaultToNull = true)
     Double getParentMz();
 
-    @Option(shortName = "i", longName = "ion", description = "the ionization/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+.", defaultToNull = true)
-    String getIon();
+    @Option(shortName = "i", longName = "ion", description = "the ionization/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.", defaultToNull = true)
+    List<String> getIon();
 
     @Option(longName = "tree-timeout", description = "Time out in seconds per fragmentation tree computations. 0 for an infinite amount of time. Default: 0", defaultValue = "-1")
     int getTreeTimeout();
@@ -118,7 +118,7 @@ public interface SiriusOptions {
     @Option(longName = "beautifytrees", description = "will produce bigger trees and explain more peaks, if possible")
     boolean isBeautifyTrees();
 
-    @Option(shortName = "f", longName = {"guession"}, description = "specifies a list of possible ionizations/adducts, e.g. '[M]+,[M+H]+,[M+Na]+,[M+K]+'. Sirius tries to guess possible ionizations by mass differences in the MS1. Using only '[M]+,[M+H]+' will have no effect because of isotope peaks.", defaultToNull = true)
+    @Option(shortName = "f", longName = {"guession"}, description = "specifies a list of possible ionizations/adducts, e.g. '[M]+,[M+H]+,[M+Na]+,[M+K]+'.", defaultToNull = true)
     List<String> getPossibleIonizations();
 
     @Option(longName = "maxmz", description = "Just consider compounds with a precursor mz lower or equal this maximum mz. All other compounds in the input file are ignored.", defaultToNull = true)
@@ -138,5 +138,11 @@ public interface SiriusOptions {
 
     @Option(longName = "initial-compound-buffer", description = "Number of compounds that will be loaded initially into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores", defaultToNull = true)
     Integer getMinInstanceBuffer();
+
+    /**
+     * Just to artificially separate list parameters from rest parameters -_-
+     */
+    @Option(hidden = true)
+    public boolean isPlaceholder();
 
 }
