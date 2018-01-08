@@ -194,7 +194,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             exp = validator.validate(exp, validatorWarning, repairInput);
         }
 
-        final ProcessedInput pinput =  new ProcessedInput(new MutableMs2Experiment(exp), originalExperiment, new MutableMeasurementProfile(defaultProfile));
+        MeasurementProfile profile = input.getAnnotation(MeasurementProfile.class, null);
+        if (profile == null) profile = defaultProfile;
+        else profile = MutableMeasurementProfile.merge(defaultProfile, profile);
+
+        final ProcessedInput pinput =  new ProcessedInput(new MutableMs2Experiment(exp), originalExperiment, new MutableMeasurementProfile(profile));
 
         if (originalExperiment.getMolecularFormula()!=null) {
             pinput.getMeasurementProfile().setFormulaConstraints(pinput.getMeasurementProfile().getFormulaConstraints().getExtendedConstraints(FormulaConstraints.allSubsetsOf(originalExperiment.getMolecularFormula())));
@@ -455,27 +459,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final List<MolecularFormula> pmds;
         final List<Decomposition> decomps = new ArrayList<>();
         if (whiteset!=null && !whiteset.getFormulas().isEmpty()) {
-            pmds = new ArrayList<>(whiteset.getFormulas());
-            final Iterator<MolecularFormula> fiter = pmds.iterator();
-            while (fiter.hasNext()) {
-                if (!parentDeviation.inErrorWindow(parentPeak.getOriginalMz(), experiment.getPrecursorIonType().neutralMassToPrecursorMass(fiter.next().getMass()))) {
-                    fiter.remove();
-                }
-            }
-            final PrecursorIonType ionType = input.getExperimentInformation().getPrecursorIonType();
-            for (MolecularFormula w : whiteset.getFormulas()) {
-                // check ion mass
-                final PrecursorIonType ion;
-                if ((ionType.neutralMassToPrecursorMass(w.getMass())-input.getExperimentInformation().getIonMass() ) < 0.02) {
-                    ion = ionType;
-                } else {
-                    ion = PT.ionByMass(input.getExperimentInformation().getIonMass()-w.getMass(), 0.02, input.getExperimentInformation().getPrecursorIonType().getCharge());
-                }
 
-
-                final MolecularFormula neutral = ion.neutralMoleculeToMeasuredNeutralMolecule(w);
-                decomps.add(new Decomposition(neutral, ion.getIonization(), 0d));
-            }
+            final List<PrecursorIonType> ionTypes;
+            if (experiment.getPrecursorIonType().isIonizationUnknown()) ionTypes = experiment.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
+            else ionTypes = Arrays.asList(experiment.getPrecursorIonType());
+            decomps.addAll(whiteset.resolve(parentPeak.getOriginalMz(), parentDeviation, ionTypes));
+            pmds = new ArrayList<>();
+            for (Decomposition d : decomps) pmds.add(d.getCandidate());
         } else {
 
             pmds = new ArrayList<>();
@@ -493,7 +483,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         getDecomposersFor(pmds, constraints, decomposers, constraintList);
 
         // add adduct to molecular formula of the ion - because the adduct might get lost during fragmentation
-        {
+        if (false){ // HÄH? Sollte doch schon so sein...
             final MolecularFormula adduct = experiment.getPrecursorIonType().getAdduct();
             final ListIterator<MolecularFormula> iter = pmds.listIterator();
             while (iter.hasNext()) {

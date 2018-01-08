@@ -29,6 +29,10 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType> {
         this.ionTypes = new ArrayList<>();
     }
 
+    public List<PrecursorIonType> getAdducts() {
+        return ionTypes;
+    }
+
     public boolean hasPositiveCharge() {
         for (PrecursorIonType a : ionTypes)
             if (a.getCharge() > 0)
