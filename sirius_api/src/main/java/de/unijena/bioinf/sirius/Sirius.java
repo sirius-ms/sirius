@@ -17,6 +17,7 @@
  */
 package de.unijena.bioinf.sirius;
 
+import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformation;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformer;
@@ -335,6 +336,23 @@ public class Sirius {
     }
 
     /**
+     * Search for peaks in MS1 that indicate certain
+     * @param experiment
+     */
+    public void detectPossibleAdductsFromMs1(MutableMs2Experiment experiment) {
+        final PrecursorIonType[] adductTypes;
+        if (experiment.getPrecursorIonType().isIonizationUnknown()) {
+            adductTypes = guessIonization(experiment, Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class));
+        } else {
+            adductTypes = guessIonization(experiment, PeriodicTable.getInstance().adductsByIonisation(experiment.getPrecursorIonType().getIonization()).toArray(new PrecursorIonType[0]));
+        }
+        setAllowedAdducts(experiment,adductTypes);
+        final Set<Ionization> ionModes = new HashSet<>();
+        for (PrecursorIonType ionType : adductTypes) ionModes.add(ionType.getIonization());
+        setAllowedIonModes(experiment, ionModes.toArray(new Ionization[ionModes.size()]));
+    }
+
+    /**
      * Identify the molecular formula of the measured compound using the provided MS and MSMS data
      *
      * @param uexperiment input data
@@ -504,8 +522,11 @@ public class Sirius {
     }
 
     public FTree beautifyTree(FTree tree, Ms2Experiment experiment, boolean recalibrating) {
+        final PrecursorIonType ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
+        final MutableMs2Experiment mexp = new MutableMs2Experiment(experiment);
+        mexp.setPrecursorIonType(ionType);
         final MolecularFormula formula = tree.getAnnotationOrThrow(PrecursorIonType.class).measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
-        final IdentificationResult ir = compute(experiment, formula, recalibrating);
+        final IdentificationResult ir = compute(mexp, formula, recalibrating);
         return ir.getRawTree();
     }
 
@@ -516,6 +537,7 @@ public class Sirius {
         if (experiment instanceof MutableMs2Experiment) return (MutableMs2Experiment) experiment;
         else return new MutableMs2Experiment(experiment);
     }
+
 
     public void setAllowedIonModes(Ms2Experiment experiment, Ionization... ionModes) {
         final PossibleIonModes pa = new PossibleIonModes();
@@ -912,7 +934,11 @@ public class Sirius {
         // step 1: automatic element detection
         performAutomaticElementDetection(input, pattern.getPattern());
 
-        // step 2: Isotope pattern analysis
+        // step 2: adduct type search
+        if (input.getExperimentInformation().getAnnotation(PossibleAdducts.class,null)==null)
+            detectPossibleAdductsFromMs1(input.getExperimentInformation());
+
+        // step 3: Isotope pattern analysis
         if (input.getAnnotation(IsotopeScoring.class, IsotopeScoring.DEFAULT).getIsotopeScoreWeighting() <= 0)
             return false;
         final DecompositionList decompositions = instance.precompute().getAnnotationOrThrow(DecompositionList.class);

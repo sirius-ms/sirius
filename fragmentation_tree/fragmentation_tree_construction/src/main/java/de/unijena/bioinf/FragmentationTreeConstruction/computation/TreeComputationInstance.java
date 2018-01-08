@@ -15,6 +15,7 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.MasterJJob;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -396,7 +397,9 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
             for (int i = 0, nn = Math.min(exactResults.size(), numberOfResultsToKeep); i < nn; ++i) {
                 ExactResult recalibratedResult = recalibrationJobs.get(i).takeResult();
                 final FTree recalibrated = recalibratedResult.tree;
+
                 final TreeScoring sc = recalibrated.getAnnotationOrThrow(TreeScoring.class);
+
                 final double recalibrationBonus = sc.getRecalibrationBonus();
                 double recalibrationPenalty = 0d;
                 if (i <= 10) {
@@ -415,7 +418,11 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
         final int nl = Math.min(numberOfResultsToKeep, exactResults.size());
         final ArrayList<FTree> finalResults = new ArrayList<>(nl);
         for (int m = 0; m < nl; ++m) {
-            final boolean correct = analyzer.recalculateScores(exactResults.get(m).tree);
+            final double score = analyzer.recalculateScores(exactResults.get(m).tree);
+            if (Math.abs(score - exactResults.get(m).tree.getTreeWeight()) > 0.1)
+                LoggerFactory.getLogger(TreeComputationInstance.class).warn("Score of " + exactResults.get(m).decomposition.toString() + " differs significantly from recalculated score: " + score + " vs " + exactResults.get(m).tree.getTreeWeight() );
+            else if (Math.abs(score - exactResults.get(m).tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) > 0.1)
+                LoggerFactory.getLogger(TreeComputationInstance.class).warn("Score of tree " + exactResults.get(m).decomposition.toString() + " differs significantly from recalculated score: " + score + " vs " + exactResults.get(m).tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore() );
             finalResults.add(exactResults.get(m).tree);
         }
 
@@ -452,11 +459,10 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
             if (recalibrationBonus <= 0) {
                 recalibrated = tree;
             } else {
-                graph = recalibratedResult.graph;
                 recalibrated = recalibratedResult.tree;
+                final TreeScoring sc = recalibrated.getAnnotationOrThrow(TreeScoring.class);
+                sc.setRecalibrationBonus(recalibrationBonus);
             }
-            final TreeScoring sc = recalibrated.getAnnotationOrThrow(TreeScoring.class);
-            sc.setRecalibrationBonus(recalibrationBonus);
             return new ExactResult(r.decomposition, null, recalibrated, recalibrated.getTreeWeight());
         }
     }
