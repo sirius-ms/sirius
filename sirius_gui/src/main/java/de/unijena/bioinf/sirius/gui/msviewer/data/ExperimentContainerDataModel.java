@@ -34,10 +34,8 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
 
     protected double minMz, maxMz;
 
-    //todo add to list as listener
     public ExperimentContainerDataModel() {
         this.ec = null;
-//        this.currentResult = ec.getBestHit() != null ? ec.getBestHit().getResult(); //todo is that correct
         this.marked = new TreeSet<Integer>();
 
         refreshRanges();
@@ -90,7 +88,7 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
                 if (ms2 != null) {
                     if (ms2.size() > 1) {
                         cbModel.addElement(MSMS_MERGED_DISPLAY);
-                        identifierToSpectrum.put(MSMS_MERGED_DISPLAY, merge(ms2));
+                        identifierToSpectrum.put(MSMS_MERGED_DISPLAY, null);//calculated on demand
                     }
 
                     for (MutableMs2Spectrum sp : ms2) {

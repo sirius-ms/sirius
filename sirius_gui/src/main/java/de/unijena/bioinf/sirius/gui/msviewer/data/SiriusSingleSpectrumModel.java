@@ -13,10 +13,11 @@ public class SiriusSingleSpectrumModel implements MSViewerDataModel {
     protected double minMz, maxMz;
 
     public SiriusSingleSpectrumModel(Spectrum<? extends Peak> spectrum) {
-        this(spectrum, 0, 400d);
-        Range<Double> range = SiriusSingleSpectrumAnnotated.getVisibleRange(spectrum);
-        this.minMz = range.lowerEndpoint();
-        this.maxMz = range.upperEndpoint();
+        this(spectrum, SiriusSingleSpectrumAnnotated.getVisibleRange(spectrum));
+    }
+
+    public SiriusSingleSpectrumModel(Spectrum<? extends Peak> spectrum, Range<Double> range) {
+        this(spectrum, range.lowerEndpoint(), range.upperEndpoint());
     }
 
     public SiriusSingleSpectrumModel(Spectrum<? extends Peak> spectrum, double minMz, double maxMz) {
@@ -48,13 +49,8 @@ public class SiriusSingleSpectrumModel implements MSViewerDataModel {
 
     @Override
     public double getRelativeIntensity(int index) {
-        return spectrum.getIntensityAt(index)/scale;
+        return spectrum.getIntensityAt(index) / scale;
     }
-
-//    @Override
-//    public double getSignalNoise(int index) {
-//        return 0;
-//    }
 
     @Override
     public double getAbsoluteIntensity(int index) {
@@ -108,11 +104,11 @@ public class SiriusSingleSpectrumModel implements MSViewerDataModel {
 
     @Override
     public int getIndexWithMass(double mass) {
-        return Spectrums.mostIntensivePeakWithin(spectrum, mass, new Deviation(1,0.1));
+        return Spectrums.mostIntensivePeakWithin(spectrum, mass, new Deviation(1, 0.1));
     }
 
     @Override
     public int findIndexOfPeak(double mass, double tolerance) {
-        return Spectrums.mostIntensivePeakWithin(spectrum, mass, new Deviation(1,tolerance));
+        return Spectrums.mostIntensivePeakWithin(spectrum, mass, new Deviation(1, tolerance));
     }
 }

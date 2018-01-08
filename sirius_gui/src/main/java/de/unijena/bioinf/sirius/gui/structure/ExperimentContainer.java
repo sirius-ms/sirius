@@ -33,9 +33,14 @@ public class ExperimentContainer extends AbstractBean {
         this(new MutableMs2Experiment(source));
     }
 
+    public ExperimentContainer(Ms2Experiment source, List<IdentificationResult> results) {
+        this(source);
+        setRawResults(results);
+    }
+
     public ExperimentContainer(MutableMs2Experiment source) {
         this.experiment = source;
-        guiName = "";
+        guiName = null;
         suffix = 1;
         results = Collections.emptyList();
         originalResults = Collections.emptyList();
@@ -55,6 +60,8 @@ public class ExperimentContainer extends AbstractBean {
     }
 
     public String getGUIName() {
+        if (guiName == null)
+            guiName = createGuiName();
         return guiName;
     }
 

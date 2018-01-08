@@ -32,6 +32,8 @@ dependencies {
     compile "org.openscience.cdk:cdk-smarts:$cdk_version"
 
     compile group: 'net.java.dev.glazedlists', name: 'glazedlists_java16', version: '1.10.0'
+
+    //compile group: 'com.kitfox.svg', name: 'svg-salamander', version: '1.0'
 }
 
 /*################### Environment variables ################### */

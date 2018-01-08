@@ -35,7 +35,6 @@ import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -317,7 +316,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
                 if (this.compoundsToProcess.size() == 1) {
                     //if one experiment is selected, force ionization
-                    ec.setIonization(SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()));
+                    ec.setIonization(PrecursorIonType.getPrecursorIonType(searchProfilePanel.getIonization()));
                 }
 
                 if (treatAsHydrogen && ec.getIonization().isIonizationUnknown()) {
@@ -441,13 +440,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         box.setEditable(true);
         MyListCellRenderer renderer = new MyListCellRenderer(masses);
         box.setRenderer(renderer);
-        box.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final Double value = getSelectedIonMass();
-                if (value != null) ec.setIonMass(value);
-            }
-        });
 
         AutoCompleteDecorator.decorate(box, new ObjectToStringConverter() {
             @Override

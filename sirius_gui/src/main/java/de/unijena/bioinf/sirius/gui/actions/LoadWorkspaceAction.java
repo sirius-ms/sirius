@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.gui.actions;
  * 29.01.17.
  */
 
+import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 
@@ -33,13 +34,13 @@ public class LoadWorkspaceAction extends AbstractAction {
         jfc.setCurrentDirectory(CONFIG_STORAGE.getDefaultSaveFilePath());
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
-        jfc.addChoosableFileFilter(new Workspace.SiriusSaveFileFilter());
+        jfc.addChoosableFileFilter(WorkspaceIO.SAVE_FILE_FILTER);
 
         int returnVal = jfc.showOpenDialog(MF);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File selFile = jfc.getSelectedFile();
             CONFIG_STORAGE.setDefaultSaveFilePath(selFile.getParentFile());
-            Workspace.importWorkspace(Arrays.asList(selFile));
+            WorkspaceIO.importWorkspace(Arrays.asList(selFile));
         }
     }
 }
