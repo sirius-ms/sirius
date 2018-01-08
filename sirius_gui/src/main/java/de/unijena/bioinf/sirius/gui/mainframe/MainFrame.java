@@ -11,6 +11,7 @@ import de.unijena.bioinf.sirius.gui.compute.JobDialog;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
+import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentList;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListView;
@@ -235,11 +236,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     }
 
+    @Override
     public void drop(DropTargetDropEvent dtde) {
         final List<File> newFiles = DragAndDrop.getFileListFromDrop(dtde);
 
         if (newFiles.size() > 0) {
-            importDragAndDropFiles(Arrays.asList(Workspace.resolveFileList(newFiles.toArray(new File[newFiles.size()]))));
+            importDragAndDropFiles(Arrays.asList(WorkspaceIO.resolveFileList(newFiles.toArray(new File[newFiles.size()]))));
         }
     }
 
@@ -249,6 +251,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         rawFiles = new ArrayList<>(rawFiles);
         // entferne nicht unterstuetzte Files und suche nach CSVs
         // suche nach Sirius files
+        //todo into fileimport dialog
         final List<File> siriusFiles = new ArrayList<>();
         final Iterator<File> rawFileIterator = rawFiles.iterator();
         while (rawFileIterator.hasNext()) {
@@ -261,11 +264,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 rawFileIterator.remove();
             }
         }
+
         if (siriusFiles.size() > 0) {
-            Workspace.importWorkspace(siriusFiles);
+            WorkspaceIO.importWorkspace(siriusFiles);
         }
 
-        DropImportDialog dropDiag = new DropImportDialog(this, rawFiles);
+        FileImportDialog dropDiag = new FileImportDialog(this, rawFiles);
         if (dropDiag.getReturnValue() == ReturnValue.Abort) {
             return;
         }
@@ -288,7 +292,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 Workspace.importCompound(ec);
             }
         } else if (csvFiles.size() == 0 && mgfFiles.size() == 0 && msFiles.size() > 0) {
-            Workspace.importOneExperimentPerFile(msFiles, mgfFiles);
+            WorkspaceIO.importOneExperimentPerFile(msFiles, mgfFiles);
         } else {
             DragAndDropOpenDialog diag = new DragAndDropOpenDialog(this);
             DragAndDropOpenDialogReturnValue rv = diag.getReturnValue();
@@ -304,7 +308,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                     Workspace.importCompound(ec);
                 }
             } else if (rv == DragAndDropOpenDialogReturnValue.oneExperimentPerFile) {
-                Workspace.importOneExperimentPerFile(msFiles, mgfFiles);
+                WorkspaceIO.importOneExperimentPerFile(msFiles, mgfFiles);
             }
         }
     }

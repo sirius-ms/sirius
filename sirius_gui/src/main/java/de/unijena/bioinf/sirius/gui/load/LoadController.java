@@ -1,85 +1,75 @@
 package de.unijena.bioinf.sirius.gui.load;
 
+import ca.odell.glazedlists.BasicEventList;
+import ca.odell.glazedlists.swing.GlazedListsSwing;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.babelms.CloseableIterator;
-import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.fingerid.storage.ConfigStorage;
 import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormatsFilter;
-import de.unijena.bioinf.sirius.gui.io.DataFormat;
-import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
+import de.unijena.bioinf.sirius.gui.mainframe.BatchImportDialog;
+import de.unijena.bioinf.sirius.gui.mainframe.FileImportDialog;
 import de.unijena.bioinf.sirius.gui.structure.CSVToSpectrumConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
+import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
 import gnu.trove.list.array.TDoubleArrayList;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 public class LoadController implements LoadDialogListener {
-    LoadDialog loadDialog;
+    private final ConfigStorage config;
+    private final JFrame owner;
+    private DefaultLoadDialog loadDialog;
 
-    private ExperimentContainer inputExp;
-
-    Map<Spectrum<?>, MutableMs2Spectrum> spectra = new HashMap<>();
-    private Spectrum<?> ms1 = null;
-
-    private String name;
-    private double parentMass;
-    private PrecursorIonType ionization;
+    private ExperimentContainer expToModify;
     private URL source;
 
-    private ConfigStorage config;
+    private final BasicEventList<SpectrumContainer> spectra;
 
-    private JFrame owner;
 
     public LoadController(JFrame owner, ExperimentContainer exp, ConfigStorage config) {
         this.owner = owner;
-
         this.config = config;
-        inputExp = exp;
-        loadDialog = new DefaultLoadDialog(owner);
 
-        if (inputExp != null) {
-            if (exp.getIonization() != null) {
-                setIonization(exp.getIonization());
-                loadDialog.ionizationChanged(this.ionization);
+        expToModify = exp;
+
+        if (expToModify != null) {
+            spectra = new BasicEventList<>(expToModify.getMs1Spectra().size() + expToModify.getMs2Spectra().size());
+            loadDialog = new DefaultLoadDialog(owner, GlazedListsSwing.eventListModel(spectra));
+
+
+            loadDialog.ionizationChanged(exp.getIonization() != null ? exp.getIonization() : PrecursorIonType.unknown(1));
+
+            if (!Double.isNaN(exp.getIonMass()) && exp.getIonMass() > 0) {
+                loadDialog.parentMassChanged(exp.getIonMass());
             }
-            if (!Double.isNaN(exp.getDataFocusedMass()) && exp.getDataFocusedMass() > 0) {
-                setParentMass(exp.getDataFocusedMass());
-                loadDialog.parentMassChanged(this.parentMass);
-            }
 
-            experimentNameChanged(exp.getName());
+            loadDialog.experimentNameChanged(exp.getName());
 
-            //todo i think this is always only on ms1
-            boolean first = true;
-            for (Spectrum<? extends Peak> spectrum : inputExp.getMs1Spectra()) {
+            for (Spectrum<? extends Peak> spectrum : expToModify.getMs1Spectra()) {
                 addToSpectra(spectrum);
-                if (first) {
-                    ms1 = spectrum;
-                    first = false;
-                }
             }
 
-            for (Spectrum<? extends Peak> spectrum : inputExp.getMs2Spectra()) {
+            for (Spectrum<? extends Peak> spectrum : expToModify.getMs2Spectra()) {
                 addToSpectra(spectrum);
             }
         } else {
-            spectra.clear();
-            setParentMass(-1);
-            setIonization(PrecursorIonType.unknown(1));
-            experimentNameChanged("");
+            spectra = new BasicEventList<>();
+            loadDialog = new DefaultLoadDialog(owner, GlazedListsSwing.eventListModel(spectra));
+            loadDialog.parentMassChanged(-1);
+            loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
+            loadDialog.experimentNameChanged("");
             source = null;
         }
 
@@ -94,34 +84,8 @@ public class LoadController implements LoadDialogListener {
         loadDialog.showDialog();
     }
 
-    //this is basically som prpety change like thing for the marvin stuff
-    private Spectrum<?> addToSpectra(Spectrum<?> sp) {
-        if (sp.getMsLevel() == 1) {
-            if (ms1 != null) {
-                sp = new MutableMs2Spectrum(sp);
-                ((MutableMs2Spectrum) sp).setMsLevel(2);
-            } else {
-                ms1 = sp;
-            }
-        }
-
-        spectra.putIfAbsent(sp, null);
-        loadDialog.spectraAdded(sp);
-        return sp;
-    }
-
-    private void removeFromSpectra(final Spectrum<?> sp) {
-        spectra.remove(sp);
-        loadDialog.spectraRemoved(sp);
-    }
-
-    private MutableMs2Spectrum getModifiableSpectrum(final Spectrum<?> sp) {
-        MutableMs2Spectrum mod = spectra.get(sp);
-        if (mod == null) {
-            mod = new MutableMs2Spectrum(sp);
-            spectra.put(sp, mod);
-        }
-        return mod;
+    private void addToSpectra(Spectrum<?>... sps) {
+        spectra.addAll(Arrays.stream(sps).map(SpectrumContainer::new).collect(Collectors.toList()));
     }
 
     @Override
@@ -133,49 +97,29 @@ public class LoadController implements LoadDialogListener {
         chooser.setAcceptAllFileFilterUsed(false);
         int returnVal = chooser.showOpenDialog((JDialog) loadDialog);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-
             File[] files = chooser.getSelectedFiles();
-
             //setzt Pfad
             config.setDefaultLoadDialogPath(files[0].getParentFile());
 
             //untersuche die Dateitypen und schaue ob CSV vorhanden, wenn vorhanden behandelte alle CSVs auf
             //gleiche Weise
-
-            importSpectra(files);
+            importSpectra(Arrays.asList(files));
         }
     }
 
-    private void importSpectra(File[] files) {
-
-        DataFormatIdentifier dfi = new DataFormatIdentifier();
-        List<File> csvFiles = new ArrayList<>();
-        List<File> msFiles = new ArrayList<>();
-        List<File> mgfFiles = new ArrayList<>();
-//		File firstCSV = null;
-        for (File file : files) {
-            DataFormat df = dfi.identifyFormat(file);
-            if (df == DataFormat.CSV) {
-                csvFiles.add(file);
-            } else if (df == DataFormat.JenaMS) {
-                msFiles.add(file);
-            } else if (df == DataFormat.MGF) {
-                mgfFiles.add(file);
-            }
-        }
-
-        importSpectra(csvFiles, msFiles, mgfFiles);
+    private void importSpectra(List<File> files) {
+        FileImportDialog idi = new FileImportDialog(owner, files);
+        importSpectra(idi.getCSVFiles(), idi.getMSFiles(), idi.getMGFFiles());
     }
 
 
     private void importSpectra(List<File> csvFiles, List<File> msFiles, List<File> mgfFiles) {
-
         List<String> errorStorage = new ArrayList<>();
 
-        CSVDialogReturnContainer cont = null;
-        CSVFormatReader csvReader = new CSVFormatReader();
-
+        //csv import
         if (csvFiles.size() > 0) {
+            CSVDialogReturnContainer cont = null;
+            CSVFormatReader csvReader = new CSVFormatReader();
 
             HashMap<Integer, List<List<TDoubleArrayList>>> columnNumberToData = new HashMap<>();
 
@@ -220,7 +164,6 @@ public class LoadController implements LoadDialogListener {
                                 CSVToSpectrumConverter conv = new CSVToSpectrumConverter();
                                 Spectrum<?> sp = conv.convertCSVToSpectrum(data, cont);
                                 addToSpectra(sp);
-                                loadDialog.spectraAdded(sp);
                             }
                         }
                     }
@@ -228,36 +171,15 @@ public class LoadController implements LoadDialogListener {
             }
         }
 
+        BatchImportDialog batchImportDialog = new BatchImportDialog(loadDialog);
+        batchImportDialog.start(msFiles, mgfFiles);
+        errorStorage.addAll(batchImportDialog.getErrors());
 
-        final MsExperimentParser parser = new MsExperimentParser();
-
-        if (msFiles.size() > 0) {
-            for (File file : msFiles) {
-                try (CloseableIterator<Ms2Experiment> iter = parser.getParser(file).parseFromFileIterator(file)) {
-                    while (iter.hasNext()) {
-                        importExperimentContainer(new ExperimentContainer(iter.next()), errorStorage);
-                    }
-                } catch (Exception e) {
-                    errorStorage.add(file.getName() + ": Invalid file format.");
-                    continue;
-                }
-            }
+        //todo backround?
+        for (Ms2Experiment exp : batchImportDialog.getResults()) {
+            importExperiment(exp);
         }
 
-        if (mgfFiles.size() > 0) {
-            for (File file : mgfFiles) {
-                try (CloseableIterator<Ms2Experiment> iter = parser.getParser(file).parseFromFileIterator(file)) {
-                    while (iter.hasNext()) {
-                        importExperimentContainer(new ExperimentContainer(iter.next()), errorStorage);
-                    }
-                } catch (Exception e) {
-                    String m = file.getName() + ": Invalid file format.";
-                    LoggerFactory.getLogger(this.getClass()).error(m, e);
-                    errorStorage.add(m);
-                    continue;
-                }
-            }
-        }
 
         if (errorStorage.size() > 1) {
             ErrorListDialog elDiag = new ErrorListDialog(this.owner, errorStorage);
@@ -267,96 +189,79 @@ public class LoadController implements LoadDialogListener {
 
     }
 
-    public void importExperimentContainer(ExperimentContainer ec, List<String> errorStorage) {
-        source = ec.getSource();
+    //this imports an merges the experiments
+    private void importExperiment(Ms2Experiment experiment) {
+        source = experiment.getSource();
 
-        if (ionization.isIonizationUnknown() && ec.getIonization() != null && !ec.getIonization().isIonizationUnknown()) {
-            setIonization(ec.getIonization());
-            loadDialog.ionizationChanged(ec.getIonization());
-        }
+        if (loadDialog.getIonization().isIonizationUnknown() && experiment.getPrecursorIonType() != null && !experiment.getPrecursorIonType().isIonizationUnknown())
+            loadDialog.ionizationChanged(experiment.getPrecursorIonType());
 
-        if (!Double.isNaN(ec.getDataFocusedMass()) && ec.getDataFocusedMass() > 0 && parentMass < 0) {
-            setParentMass(ec.getDataFocusedMass());
-            loadDialog.parentMassChanged(ec.getDataFocusedMass());
-        }
-
+        final String name = loadDialog.getExperimentName();
         if (name == null || name.isEmpty())
-            experimentNameChanged(ec.getName());
+            loadDialog.experimentNameChanged(experiment.getName());
 
+        if (loadDialog.getParentMass() < 0 && experiment.getIonMass() > 0)
+            loadDialog.parentMassChanged(experiment.getIonMass());
 
-        double ecFM = ec.getDataFocusedMass();
-        if (parentMass <= 0 && ecFM > 0) {
-            setParentMass(ecFM);
+        for (Spectrum<Peak> sp : experiment.getMs1Spectra()) {
+            addToSpectra(sp);
         }
 
-        if (ec.getMs1Spectra().size() > 0) {
-            SimpleSpectrum ms1 = ec.getMs1Spectra().get(0);
-            if (ms1 != null) {
-                addToSpectra(ms1);
-            }
-        }
-
-        for (MutableMs2Spectrum sp : ec.getMs2Spectra()) {
+        for (Ms2Spectrum<Peak> sp : experiment.getMs2Spectra()) {
             addToSpectra(sp);
         }
     }
 
     public ExperimentContainer getExperiment() {
-        return inputExp;
+        return expToModify;
     }
 
 
+    //todo maybe in backround, will freeze the gui for many spectra
     @Override
-    public void removeSpectrum(Spectrum<?> sp) {
-        removeFromSpectra(sp);
+    public void removeSpectra(List<SpectrumContainer> sps) {
+        spectra.removeAll(sps);
 
         if (spectra.isEmpty()) {
-            setParentMass(-1);
-            setIonization(PrecursorIonType.unknown(1));
-            experimentNameChanged("");
-            this.loadDialog.experimentNameChanged("");
+            loadDialog.parentMassChanged(-1);
+            loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
+            loadDialog.experimentNameChanged("");
         }
-    }
-
-    @Override
-    public void abortProcess() {
-        //nothing to do here
     }
 
     @Override
     public void completeProcess() {
         if (!spectra.isEmpty()) {
-            if (inputExp == null) {
-                inputExp = new ExperimentContainer(new MutableMs2Experiment());
+            if (expToModify == null) {
+                expToModify = new ExperimentContainer(new MutableMs2Experiment());
             } else {
-                inputExp.getMs2Experiment().getMs1Spectra().clear();
-                inputExp.getMs2Experiment().getMs2Spectra().clear();
+                expToModify.getMs2Experiment().getMs1Spectra().clear();
+                expToModify.getMs2Experiment().getMs2Spectra().clear();
             }
 
             //add spectra
-            for (Map.Entry<Spectrum<?>, MutableMs2Spectrum> e : spectra.entrySet()) {
-                if (e.getValue() != null) {
-                    if (e.getKey().getMsLevel() == 1)
-                        inputExp.getMs2Experiment().getMs1Spectra().add(new SimpleSpectrum(e.getValue()));
+            for (SpectrumContainer container : spectra) {
+                Spectrum<?> spectrum = container.getSpectrum(); // this return already the modified version if one exists
+                if (spectrum.getMsLevel() == 1) {
+                    if (container.isModified())
+                        expToModify.getMs2Experiment().getMs1Spectra().add(new SimpleSpectrum(spectrum));
                     else
-                        inputExp.getMs2Experiment().getMs2Spectra().add(e.getValue());
+                        expToModify.getMs2Experiment().getMs1Spectra().add((SimpleSpectrum) spectrum);
                 } else {
-                    if (e.getKey().getMsLevel() == 1)
-                        inputExp.getMs2Experiment().getMs1Spectra().add((SimpleSpectrum) e.getKey());
-                    else
-                        inputExp.getMs2Experiment().getMs2Spectra().add((MutableMs2Spectrum) e.getKey());
+                    expToModify.getMs2Experiment().getMs2Spectra().add((MutableMs2Spectrum) spectrum);
                 }
             }
 
-            inputExp.setIonization(ionization);
-            inputExp.setSelectedFocusedMass(parentMass);
-            inputExp.setName(name);
-            inputExp.getMs2Experiment().setSource(source);
+            expToModify.setIonization(loadDialog.getIonization());
+            expToModify.setIonMass(loadDialog.getParentMass());
+            expToModify.setName(loadDialog.getExperimentName());
+            expToModify.getMs2Experiment().setSource(source);
         }
     }
 
     @Override
-    public void changeCollisionEnergy(Spectrum<?> sp) {
+    public void changeCollisionEnergy(SpectrumContainer container) {
+        Spectrum sp = container.getSpectrum();
         double oldMin, oldMax;
         if (sp.getCollisionEnergy() == null) {
             oldMin = 0;
@@ -371,57 +276,23 @@ public class LoadController implements LoadDialogListener {
             double newMin = ced.getMinCollisionEnergy();
             double newMax = ced.getMaxCollisionEnergy();
             if (oldMin != newMin || oldMax != newMax) {
-                getModifiableSpectrum(sp).setCollisionEnergy(new CollisionEnergy(newMin, newMax));
-                loadDialog.newCollisionEnergy(sp);
+                container.getModifiableSpectrum().setCollisionEnergy(new CollisionEnergy(newMin, newMax));
+                loadDialog.newCollisionEnergy(container);
             }
         }
     }
 
     @Override
-    public void changeMSLevel(final Spectrum<?> sp, int msLevel) {
-        if (sp.getMsLevel() == msLevel) {
-            return;
-        }
-
-        MutableMs2Spectrum mod = getModifiableSpectrum(sp);
+    public void changeMSLevel(final SpectrumContainer container, int msLevel) {
+        //indentity chekc already done before listener call
+        MutableMs2Spectrum mod = container.getModifiableSpectrum();
         mod.setMsLevel(msLevel);
-
-        if (msLevel == 1) {
-            if (ms1 == null) {
-                ms1 = sp;
-            } else {
-                MutableMs2Spectrum oldMS1 = getModifiableSpectrum(ms1);
-                oldMS1.setMsLevel(2);
-                loadDialog.msLevelChanged(oldMS1);
-            }
-        }
-        loadDialog.msLevelChanged(sp);
+        loadDialog.msLevelChanged(container);
     }
-
-    @Override
-    public void experimentNameChanged(String name) {
-        if (name != null) {
-            this.name = name;
-            loadDialog.experimentNameChanged(this.name);
-        }
-    }
-
-    @Override
-    public void setParentMass(double mz) {
-        this.parentMass = mz;
-    }
-
-    @Override
-    public void setIonization(PrecursorIonType ionType) {
-        this.ionization = ionType;
-    }
-
 
     @Override
     public void addSpectra(List<File> files) {
-        File[] fileArr = new File[files.size()];
-        importSpectra(files.toArray(fileArr));
-
+        importSpectra(files);
     }
 
     public void addSpectra(List<File> csvFiles, List<File> msFiles, List<File> mgfFiles) {

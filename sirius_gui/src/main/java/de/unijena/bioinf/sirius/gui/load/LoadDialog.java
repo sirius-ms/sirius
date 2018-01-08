@@ -1,21 +1,13 @@
 package de.unijena.bioinf.sirius.gui.load;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-
-import java.util.Iterator;
+import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
 
 public interface LoadDialog {
 
-    void newCollisionEnergy(Spectrum<?> sp);
+    void newCollisionEnergy(SpectrumContainer sp);
 
-    void ionizationChanged(PrecursorIonType ionization);
-
-    void spectraAdded(Spectrum<?> sp);
-
-    void spectraRemoved(Spectrum<?> sp);
-
-    void msLevelChanged(Spectrum<?> sp);
+    void msLevelChanged(SpectrumContainer sp);
 
     void addLoadDialogListener(LoadDialogListener ldl);
 
@@ -23,7 +15,13 @@ public interface LoadDialog {
 
     void experimentNameChanged(String name);
 
+    String getExperimentName();
+
     void parentMassChanged(double newMz);
 
-    Iterator<Spectrum<?>> getSpectra();
+    double getParentMass();
+
+    void ionizationChanged(PrecursorIonType ionization);
+
+    PrecursorIonType getIonization();
 }

@@ -8,12 +8,13 @@ package de.unijena.bioinf.sirius.gui.actions;
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
+import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.configs.Icons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -43,7 +44,7 @@ public class ExportResultsAction extends AbstractAction {
         });
     }
 
-    private boolean checkEnabled(){
+    private boolean checkEnabled() {
         BasicEventList<ExperimentContainer> sl = Workspace.COMPOUNT_LIST;
         if (!sl.isEmpty()) {
             for (ExperimentContainer e : sl) {
@@ -57,6 +58,6 @@ public class ExportResultsAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Workspace.exportResults();
+        WorkspaceIO.exportResults();
     }
 }

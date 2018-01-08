@@ -21,26 +21,44 @@ package de.unijena.bioinf.sirius.gui.io;
 import com.google.common.base.Function;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
+import de.unijena.bioinf.fingerid.FingerIdData;
+import de.unijena.bioinf.fingerid.FingerIdDataCSVExporter;
 import de.unijena.bioinf.fingerid.FingerIdResultReader;
 import de.unijena.bioinf.fingerid.FingerIdResultWriter;
+import de.unijena.bioinf.fingerid.storage.ConfigStorage;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.gui.dialogs.*;
+import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
+import de.unijena.bioinf.sirius.gui.mainframe.BatchImportDialog;
+import de.unijena.bioinf.sirius.gui.mainframe.FileImportDialog;
+import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.projectspace.*;
+import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
+
 public class WorkspaceIO {
+    public static final SiriusSaveFileFilter SAVE_FILE_FILTER = new SiriusSaveFileFilter();
 
     public void newStore(List<ExperimentContainer> containers, File file) throws IOException {
         final DirectoryWriter.WritingEnvironment env;
@@ -69,7 +87,7 @@ public class WorkspaceIO {
 
         while (reader.hasNext()) {
             final ExperimentResult result = reader.next();
-            queue.add(SiriusDataConverter.siriusToMyxoContainer(result.getExperiment(), result.getResults()));
+            queue.add(new ExperimentContainer(result.getExperiment(), result.getResults()));
         }
         return queue;
     }
@@ -91,7 +109,7 @@ public class WorkspaceIO {
                 final String name = entry.getName();
                 if (name.endsWith("/")) {
                     if (currentExpId >= 0 && currentExperiment != null)
-                        if (!queue.offer(SiriusDataConverter.siriusToMyxoContainer(currentExperiment, new ArrayList<>(results.values()))))
+                        if (!queue.offer(new ExperimentContainer(currentExperiment, new ArrayList<>(results.values()))))
                             return;
                     currentExpId = Integer.parseInt(name.substring(0, name.length() - 1));
                     currentExperiment = null;
@@ -106,7 +124,7 @@ public class WorkspaceIO {
                 }
             }
             if (currentExpId >= 0 && currentExperiment != null)
-                if (!queue.offer(SiriusDataConverter.siriusToMyxoContainer(currentExperiment, new ArrayList<IdentificationResult>(results.values()))))
+                if (!queue.offer(new ExperimentContainer(currentExperiment, new ArrayList<>(results.values()))))
                     return;
         }
     }
@@ -182,6 +200,214 @@ public class WorkspaceIO {
             assert false; // StringIO should not raise IO exceptions
             throw new RuntimeException(e);
         }
+    }
+
+
+    public static void importWorkspace(List<File> selFile) {
+        ImportWorkspaceDialog workspaceDialog = new ImportWorkspaceDialog(MF);
+        final WorkspaceWorker worker = new WorkspaceWorker(workspaceDialog, selFile);
+        worker.execute();
+        workspaceDialog.start();
+        worker.flushBuffer();
+        try {
+            worker.get();
+        } catch (InterruptedException | ExecutionException e1) {
+            LoggerFactory.getLogger(Workspace.class).error(e1.getMessage(), e1);
+        }
+        worker.flushBuffer();
+        if (worker.hasErrorMessage()) {
+            new ErrorReportDialog(MF, worker.getErrorMessage());
+        }
+    }
+
+    public static void exportResults() {
+        JFileChooser jfc = new JFileChooser();
+        jfc.setCurrentDirectory(ConfigStorage.CONFIG_STORAGE.getCsvExportPath());
+        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        jfc.setAcceptAllFileFilterUsed(false);
+        jfc.addChoosableFileFilter(new SupportedExportCSVFormatsFilter());
+
+        final ExporterAccessory accessory = new ExporterAccessory(jfc);
+        jfc.setAccessory(accessory);
+
+        File selectedFile = null;
+
+        while (selectedFile == null) {
+            int returnval = jfc.showSaveDialog(MF);
+            if (returnval == JFileChooser.APPROVE_OPTION) {
+                File selFile = jfc.getSelectedFile();
+                if (selFile == null) continue;
+                ConfigStorage.CONFIG_STORAGE.setCsvExportPath((selFile.exists() && selFile.isDirectory()) ? selFile : selFile.getParentFile());
+
+                if (accessory.isSingleFile()) {
+                    String name = selFile.getName();
+                    if (!name.endsWith(".csv") && !name.endsWith(".tsv")) {
+                        selFile = new File(selFile.getAbsolutePath() + ".csv");
+                    }
+
+                    if (selFile.exists()) {
+                        FilePresentDialog fpd = new FilePresentDialog(MF, selFile.getName());
+                        ReturnValue rv = fpd.getReturnValue();
+                        if (rv == ReturnValue.Success) {
+                            selectedFile = selFile;
+                        }
+                    } else {
+                        selectedFile = selFile;
+                    }
+
+                } else {
+                    if (!selFile.exists()) {
+                        selFile.mkdirs();
+                    }
+                }
+                selectedFile = selFile;
+                break;
+            } else {
+                break;
+            }
+        }
+
+        if (selectedFile == null) return;
+        if (accessory.isSingleFile()) {
+            try (final BufferedWriter fw = new BufferedWriter(new FileWriter(selectedFile))) {
+                for (ExperimentContainer ec : Workspace.COMPOUNT_LIST) {
+                    if (ec.isComputed() && ec.getResults().size() > 0) {
+                        IdentificationResult.writeIdentifications(fw, ec.getMs2Experiment(), ec.getRawResults());
+                    }
+                }
+            } catch (IOException e) {
+                new ErrorReportDialog(MF, e.toString());
+            }
+        } else {
+            try {
+                writeMultiFiles(selectedFile, accessory.isExportingSirius(), accessory.isExportingFingerId());
+            } catch (IOException e) {
+                new ErrorReportDialog(MF, e.toString());
+            }
+        }
+    }
+
+    private static void writeMultiFiles(File selectedFile, boolean withSirius, boolean withFingerid) throws IOException {
+        final HashSet<String> names = new HashSet<>();
+        for (ExperimentContainer container : Workspace.COMPOUNT_LIST) {
+            if (container.getResults() == null || container.getResults().size() == 0) continue;
+            final String name;
+            {
+                String origName = escapeFileName(container.getName());
+                String aname = origName;
+                int i = 1;
+                while (names.contains(aname)) {
+                    aname = origName + "(" + (++i) + ")";
+                }
+                name = aname;
+                names.add(name);
+            }
+
+            if (withSirius) {
+
+                final File resultFile = new File(selectedFile, name + "_formula_candidates.csv");
+                try (final BufferedWriter bw = Files.newBufferedWriter(resultFile.toPath(), Charset.defaultCharset())) {
+                    bw.write("formula\trank\tscore\ttreeScore\tisoScore\texplainedPeaks\texplainedIntensity\n");
+                    for (IdentificationResult result : container.getRawResults()) {
+                        bw.write(result.getMolecularFormula().toString());
+                        bw.write('\t');
+                        bw.write(String.valueOf(result.getRank()));
+                        bw.write('\t');
+                        bw.write(String.valueOf(result.getScore()));
+                        bw.write('\t');
+                        bw.write(String.valueOf(result.getTreeScore()));
+                        bw.write('\t');
+                        bw.write(String.valueOf(result.getIsotopeScore()));
+                        bw.write('\t');
+                        final TreeScoring scoring = result.getResolvedTree().getAnnotationOrNull(TreeScoring.class);
+                        bw.write(String.valueOf(result.getResolvedTree().numberOfVertices()));
+                        bw.write('\t');
+                        bw.write(scoring == null ? "\"\"" : String.valueOf(scoring.getExplainedIntensity()));
+                        bw.write('\n');
+                    }
+                }
+            }
+            if (withFingerid) {
+                final ArrayList<FingerIdData> datas = new ArrayList<>();
+                for (SiriusResultElement elem : container.getResults()) {
+                    if (elem.getFingerIdData() == null) continue;
+                    datas.add(elem.getFingerIdData());
+                }
+                final File resultFile = new File(selectedFile, name + ".csv");
+                new FingerIdDataCSVExporter().exportToFile(resultFile, datas);
+            }
+        }
+    }
+
+    private static String escapeFileName(String name) {
+        final String n = name.replaceAll("[:\\\\/*\"?|<>']", "");
+        if (n.length() > 128) {
+            return n.substring(0, 128);
+        } else return n;
+    }
+
+    public static void importOneExperimentPerFile(File... files) {
+        importOneExperimentPerFile(Arrays.asList(files));
+    }
+
+    public static void importOneExperimentPerFile(List<File> files) {
+        FileImportDialog imp = new FileImportDialog(MF, files);
+        importOneExperimentPerFile(imp.getMSFiles(), imp.getMGFFiles());
+    }
+
+    public static void importOneExperimentPerFile(List<File> msFiles, List<File> mgfFiles) {
+        BatchImportDialog batchDiag = new BatchImportDialog(MF);
+        batchDiag.start(msFiles, mgfFiles);
+
+        List<Ms2Experiment> ecs = batchDiag.getResults();
+        List<String> errors = batchDiag.getErrors();
+
+        Workspace.importCompounds(Workspace.toExperimentContainer(ecs));
+
+        if (errors != null) {
+            if (errors.size() > 1) {
+                ErrorListDialog elDiag = new ErrorListDialog(MF, errors);
+            } else if (errors.size() == 1) {
+                ErrorReportDialog eDiag = new ErrorReportDialog(MF, errors.get(0));
+            }
+
+        }
+    }
+
+    public static File[] resolveFileList(File[] files) {
+        List<File> l = resolveFileList(Arrays.asList(files));
+        return l.toArray(new File[l.size()]);
+    }
+
+    public static List<File> resolveFileList(List<File> files) {
+        final ArrayList<File> filelist = new ArrayList<>();
+        for (File f : files) {
+            if (f.isDirectory()) {
+                final File[] fl = f.listFiles();
+                if (fl != null) {
+                    for (File g : fl)
+                        if (!g.isDirectory()) filelist.add(g);
+                }
+            } else {
+                filelist.add(f);
+            }
+        }
+        return filelist;
+    }
+
+    public static class SiriusSaveFileFilter extends FileFilter {
+        @Override
+        public boolean accept(File f) {
+            if (f.isDirectory()) return true;
+            String name = f.getName();
+            return name.endsWith(".sirius");
+        }
+
+        @Override
+        public String getDescription() {
+            return ".sirius";
+        }
+
     }
 
 }
