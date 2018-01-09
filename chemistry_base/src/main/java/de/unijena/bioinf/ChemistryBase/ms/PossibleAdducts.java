@@ -11,10 +11,10 @@ import java.util.*;
  */
 public final class PossibleAdducts implements Iterable<PrecursorIonType> {
 
-    protected final LinkedHashSet<PrecursorIonType> adducts;
+    protected final List<PrecursorIonType> adducts;
 
     public PossibleAdducts(Collection<? extends PrecursorIonType> c) {
-        this.adducts = new LinkedHashSet<>(c);
+        this.adducts = new ArrayList<>(c);
     }
 
     public PossibleAdducts(PrecursorIonType... possibleAdducts) {
@@ -26,11 +26,11 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType> {
     }
 
     public PossibleAdducts() {
-        this.adducts = new LinkedHashSet<>();
+        this.adducts = new ArrayList<>();
     }
 
     public List<PrecursorIonType> getAdducts() {
-        return ionTypes;
+        return adducts;
     }
 
     public boolean hasPositiveCharge() {
