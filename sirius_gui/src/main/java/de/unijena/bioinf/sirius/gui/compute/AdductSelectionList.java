@@ -2,12 +2,12 @@ package de.unijena.bioinf.sirius.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.JCheckBoxList;
 
-import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AdductSelectionList extends JCheckBoxList<String> implements ListSelectionListener {
 
@@ -26,13 +26,14 @@ public class AdductSelectionList extends JCheckBoxList<String> implements ListSe
     }
 
     private void change() {
-        DefaultListModel<CheckBoxListItem<String>> m = (DefaultListModel<CheckBoxListItem<String>>) getModel();
-        m.removeAllElements();
+        List<String> m = new ArrayList<>();
         for (String ionisation : source.getCheckedItems()) {
             for (PrecursorIonType adduct : PeriodicTable.getInstance().adductsByIonisation(ionisation)) {
-                m.addElement(CheckBoxListItem.getNew(adduct.toString()));
+                m.add(adduct.toString());
             }
         }
+        replaceElements(m);
+        checkAll();
     }
 
 }

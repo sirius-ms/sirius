@@ -25,9 +25,9 @@ import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 public class EditExperimentAction extends AbstractAction {
 
     public EditExperimentAction() {
-        super("Edit Experiment");
+        super("Edit");
         putValue(Action.SMALL_ICON, Icons.EDIT_16);
-        putValue(Action.SHORT_DESCRIPTION, "Edit Selected Experiment");
+        putValue(Action.SHORT_DESCRIPTION, "Edit the selected data");
 
         setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty());
 

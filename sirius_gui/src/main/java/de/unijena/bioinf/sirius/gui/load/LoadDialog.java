@@ -1,7 +1,11 @@
 package de.unijena.bioinf.sirius.gui.load;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
+
+import java.util.List;
 
 public interface LoadDialog {
 
@@ -17,11 +21,10 @@ public interface LoadDialog {
 
     String getExperimentName();
 
-    void parentMassChanged(double newMz);
-
     double getParentMass();
 
     void ionizationChanged(PrecursorIonType ionization);
+
 
     PrecursorIonType getIonization();
 }

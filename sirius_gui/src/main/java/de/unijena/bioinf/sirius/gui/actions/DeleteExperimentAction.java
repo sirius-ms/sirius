@@ -27,9 +27,9 @@ import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
  */
 public class DeleteExperimentAction extends AbstractAction {
     public DeleteExperimentAction() {
-        super("Remove Experiment(s)");
+        super("Delete");
         putValue(Action.SMALL_ICON, Icons.REMOVE_DOC_16);
-        putValue(Action.SHORT_DESCRIPTION, "Remove selected Experiment(s)");
+        putValue(Action.SHORT_DESCRIPTION, "Delete the selected data");
 
         setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty());
 

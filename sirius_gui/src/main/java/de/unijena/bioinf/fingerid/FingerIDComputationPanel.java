@@ -5,6 +5,7 @@ package de.unijena.bioinf.fingerid;
  * 23.01.17.
  */
 
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
@@ -104,6 +105,14 @@ public class FingerIDComputationPanel extends JPanel {
 
     public boolean isCSISelected() {
         return csiButton == null || csiButton.isSelected();
+    }
+
+    public PossibleAdducts getPossibleAdducts() {
+        PossibleAdducts adds = new PossibleAdducts();
+        for (String adductName : adductOptions.adductList.getCheckedItems()) {
+            adds.addAdduct(adductName);
+        }
+        return adds;
     }
 
     public static class DBSelectionPanel extends TextHeaderBoxPanel {

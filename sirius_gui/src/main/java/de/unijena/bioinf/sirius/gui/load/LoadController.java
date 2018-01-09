@@ -1,7 +1,6 @@
 package de.unijena.bioinf.sirius.gui.load;
 
 import ca.odell.glazedlists.BasicEventList;
-import ca.odell.glazedlists.swing.GlazedListsSwing;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -46,14 +45,10 @@ public class LoadController implements LoadDialogListener {
 
         if (expToModify != null) {
             spectra = new BasicEventList<>(expToModify.getMs1Spectra().size() + expToModify.getMs2Spectra().size());
-            loadDialog = new DefaultLoadDialog(owner, GlazedListsSwing.eventListModel(spectra));
+            loadDialog = new DefaultLoadDialog(owner, spectra);
 
 
             loadDialog.ionizationChanged(exp.getIonization() != null ? exp.getIonization() : PrecursorIonType.unknown(1));
-
-            if (!Double.isNaN(exp.getIonMass()) && exp.getIonMass() > 0) {
-                loadDialog.parentMassChanged(exp.getIonMass());
-            }
 
             loadDialog.experimentNameChanged(exp.getName());
 
@@ -66,8 +61,7 @@ public class LoadController implements LoadDialogListener {
             }
         } else {
             spectra = new BasicEventList<>();
-            loadDialog = new DefaultLoadDialog(owner, GlazedListsSwing.eventListModel(spectra));
-            loadDialog.parentMassChanged(-1);
+            loadDialog = new DefaultLoadDialog(owner, spectra);
             loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
             loadDialog.experimentNameChanged("");
             source = null;
@@ -200,9 +194,6 @@ public class LoadController implements LoadDialogListener {
         if (name == null || name.isEmpty())
             loadDialog.experimentNameChanged(experiment.getName());
 
-        if (loadDialog.getParentMass() < 0 && experiment.getIonMass() > 0)
-            loadDialog.parentMassChanged(experiment.getIonMass());
-
         for (Spectrum<Peak> sp : experiment.getMs1Spectra()) {
             addToSpectra(sp);
         }
@@ -223,7 +214,6 @@ public class LoadController implements LoadDialogListener {
         spectra.removeAll(sps);
 
         if (spectra.isEmpty()) {
-            loadDialog.parentMassChanged(-1);
             loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
             loadDialog.experimentNameChanged("");
         }
