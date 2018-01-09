@@ -89,7 +89,7 @@ public class Sirius {
         private final int numberOfResultsToKeep;
         private final boolean beautifyTrees;
 
-        public SiriusIdentificationJob(Ms2Experiment experiment, int numberOfResultsToKeep, boolean beautifyTrees)  {
+        public SiriusIdentificationJob(Ms2Experiment experiment, int numberOfResultsToKeep, boolean beautifyTrees) {
             super(JobType.CPU, 0, 100);
             this.experiment = experiment;
             this.numberOfResultsToKeep = numberOfResultsToKeep;
@@ -338,6 +338,7 @@ public class Sirius {
 
     /**
      * Search for peaks in MS1 that indicate certain
+     *
      * @param experiment
      */
     public void detectPossibleAdductsFromMs1(MutableMs2Experiment experiment) {
@@ -345,9 +346,9 @@ public class Sirius {
         if (experiment.getPrecursorIonType().isIonizationUnknown()) {
             adductTypes = guessIonization(experiment, Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class));
         } else {
-            adductTypes = guessIonization(experiment, PeriodicTable.getInstance().adductsByIonisation(experiment.getPrecursorIonType().getIonization()).toArray(new PrecursorIonType[0]));
+            adductTypes = guessIonization(experiment, PeriodicTable.getInstance().adductsByIonisation(experiment.getPrecursorIonType()).toArray(new PrecursorIonType[0]));
         }
-        setAllowedAdducts(experiment,adductTypes);
+        setAllowedAdducts(experiment, adductTypes);
         final Set<Ionization> ionModes = new HashSet<>();
         for (PrecursorIonType ionType : adductTypes) ionModes.add(ionType.getIonization());
         setAllowedIonModes(experiment, ionModes.toArray(new Ionization[ionModes.size()]));
@@ -532,10 +533,15 @@ public class Sirius {
                 if (ionType.isIntrinsicalCharged())
                     formula = ionType.measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
                 else
-                    formula = tree.getRoot().getFormula(); break;
-            case IONIZED: formula = ionType.precursorIonToNeutralMolecule(tree.getRoot().getFormula()); break;
-            case RAW: default:
-                formula = ionType.measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula()); break;
+                    formula = tree.getRoot().getFormula();
+                break;
+            case IONIZED:
+                formula = ionType.precursorIonToNeutralMolecule(tree.getRoot().getFormula());
+                break;
+            case RAW:
+            default:
+                formula = ionType.measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
+                break;
         }
         final IdentificationResult ir = compute(mexp, formula, recalibrating);
         return ir.getRawTree();
@@ -966,7 +972,7 @@ public class Sirius {
         performAutomaticElementDetection(input, pattern.getPattern());
 
         // step 2: adduct type search
-        if (input.getExperimentInformation().getAnnotation(PossibleAdducts.class,null)==null)
+        if (input.getExperimentInformation().getAnnotation(PossibleAdducts.class, null) == null)
             detectPossibleAdductsFromMs1(input.getExperimentInformation());
 
         // step 3: Isotope pattern analysis

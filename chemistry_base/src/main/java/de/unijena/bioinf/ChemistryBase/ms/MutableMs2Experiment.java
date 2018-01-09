@@ -11,7 +11,7 @@ import java.util.*;
 
 public class MutableMs2Experiment implements Ms2Experiment {
 
-    private PrecursorIonType precursorIonType;
+    private PrecursorIonType precursorIonType = PrecursorIonType.unknown();
     private List<SimpleSpectrum> ms1Spectra;
     private SimpleSpectrum mergedMs1Spectrum;
     private List<MutableMs2Spectrum> ms2Spectra;
@@ -60,6 +60,7 @@ public class MutableMs2Experiment implements Ms2Experiment {
     public void setSource(URL source) {
         this.source = source;
     }
+
     public void setSource(File source) {
         try {
             this.source = source.toURI().toURL();
@@ -159,7 +160,7 @@ public class MutableMs2Experiment implements Ms2Experiment {
 
     @Override
     public <T> T getAnnotation(Class<T> klass) {
-        return (T)annotations.get(klass);
+        return (T) annotations.get(klass);
     }
 
     @Override
@@ -176,7 +177,7 @@ public class MutableMs2Experiment implements Ms2Experiment {
 
     @Override
     public <T> boolean setAnnotation(Class<T> klass, T value) {
-        final T val = (T) annotations.put((Class<Object>)klass, value);
+        final T val = (T) annotations.put((Class<Object>) klass, value);
         return val != null;
     }
 
