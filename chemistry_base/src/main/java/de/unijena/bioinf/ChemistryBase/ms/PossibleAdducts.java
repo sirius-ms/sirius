@@ -11,10 +11,10 @@ import java.util.*;
  */
 public final class PossibleAdducts implements Iterable<PrecursorIonType> {
 
-    protected final ArrayList<PrecursorIonType> ionTypes;
+    protected final LinkedHashSet<PrecursorIonType> adducts;
 
     public PossibleAdducts(Collection<? extends PrecursorIonType> c) {
-        this.ionTypes = new ArrayList<>(c);
+        this.adducts = new LinkedHashSet<>(c);
     }
 
     public PossibleAdducts(PrecursorIonType... possibleAdducts) {
@@ -22,22 +22,22 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType> {
     }
 
     public PossibleAdducts(PossibleAdducts pa) {
-        this(pa.ionTypes);
+        this(pa.adducts);
     }
 
     public PossibleAdducts() {
-        this.ionTypes = new ArrayList<>();
+        this.adducts = new LinkedHashSet<>();
     }
 
     public boolean hasPositiveCharge() {
-        for (PrecursorIonType a : ionTypes)
+        for (PrecursorIonType a : adducts)
             if (a.getCharge() > 0)
                 return true;
         return false;
     }
 
     public boolean hasNegativeCharge() {
-        for (PrecursorIonType a : ionTypes)
+        for (PrecursorIonType a : adducts)
             if (a.getCharge() < 0)
                 return true;
         return false;
@@ -45,20 +45,28 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType> {
 
     public List<Ionization> getIonModes() {
         final Set<Ionization> ions = new HashSet<>();
-        for (PrecursorIonType a : ionTypes)
+        for (PrecursorIonType a : adducts)
             ions.add(a.getIonization());
         return new ArrayList<>(ions);
     }
 
     public PossibleIonModes merge(PossibleIonModes ionModes) {
         final PossibleIonModes copy = new PossibleIonModes(ionModes);
-        for (PrecursorIonType ionType : ionTypes)
+        for (PrecursorIonType ionType : adducts)
             copy.add(ionType.getIonization());
         return copy;
     }
 
+    public void addAdduct(String adductName) {
+        addAdduct(PrecursorIonType.getPrecursorIonType(adductName));
+    }
+
+    public void addAdduct(PrecursorIonType adduct) {
+        adducts.add(adduct);
+    }
+
     @Override
     public Iterator<PrecursorIonType> iterator() {
-        return ionTypes.iterator();
+        return adducts.iterator();
     }
 }
