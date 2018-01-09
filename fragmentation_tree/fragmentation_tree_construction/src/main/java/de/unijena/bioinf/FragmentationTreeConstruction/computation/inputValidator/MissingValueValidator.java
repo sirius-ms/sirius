@@ -27,6 +27,8 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created with IntelliJ IDEA.
@@ -60,11 +62,32 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
         return input;
     }
 
+    private static Pattern P_LAYER = Pattern.compile("/p([+-])(\\d+)");
     private void checkInchi(Warning warn, boolean repair, MutableMs2Experiment input) {
         final InChI inchi = input.getAnnotation(InChI.class);
         if (inchi==null || inchi.in3D == null) return;
         final MolecularFormula formula = inchi.extractFormula();
         if (input.getMolecularFormula() != null && !input.getMolecularFormula().equals(formula)) {
+
+            // check for p layer
+            final Matcher m = P_LAYER.matcher(inchi.in3D);
+            if (m.find()) {
+                MolecularFormula difference = MolecularFormula.parse("H");
+                difference = difference.multiply(Integer.parseInt(m.group(2)));
+                if (m.group(1).equals("-")) difference = difference.negate();
+                if (formula.add(difference).equals(input.getMolecularFormula())) {
+                    // everything is alright!
+                    if (m.group(1).equals("+")) {
+                        ensureIonType(input, PrecursorIonType.getPrecursorIonType("[M]+"), warn, repair);
+                    } else {
+                        ensureIonType(input, PrecursorIonType.getPrecursorIonType("[M]-"), warn, repair);
+                    }
+                    return;
+                }
+
+            }
+
+
             warn.warn("InChI has different molecular formula than input formula (" + inchi.extractFormula() + " vs. " + input.getMolecularFormula() + ")");
         }
         if (input.getMoleculeNeutralMass() > 0 && Math.abs(formula.getMass()-input.getMoleculeNeutralMass()) > 0.01) {
@@ -74,6 +97,15 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
             if (input.getMolecularFormula()==null) input.setMolecularFormula(formula);
             if (input.getMoleculeNeutralMass()==0) input.setMoleculeNeutralMass(formula.getMass());
         }
+    }
+
+    private void ensureIonType(MutableMs2Experiment input, PrecursorIonType precursorIonType, Warning warn, boolean repair) {
+        if (input.getPrecursorIonType().equals(precursorIonType)) return;
+        else if (repair || input.getPrecursorIonType().isIonizationUnknown()) {
+            if (!input.getPrecursorIonType().isIonizationUnknown())
+                warn.warn("Set ion type to " + precursorIonType.toString());
+            input.setPrecursorIonType(precursorIonType);
+        } else throw new InvalidException("PrecursorIonType is expected to be " + precursorIonType.toString() + " but " + input.getPrecursorIonType() + " is given.");
     }
 
     protected void checkNeutralMass(Warning warn, boolean repair, MutableMs2Experiment input) {

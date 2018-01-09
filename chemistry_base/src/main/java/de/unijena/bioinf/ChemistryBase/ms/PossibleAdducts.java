@@ -29,6 +29,10 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType> {
         this.adducts = new LinkedHashSet<>();
     }
 
+    public List<PrecursorIonType> getAdducts() {
+        return ionTypes;
+    }
+
     public boolean hasPositiveCharge() {
         for (PrecursorIonType a : adducts)
             if (a.getCharge() > 0)

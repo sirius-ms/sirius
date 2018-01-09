@@ -174,14 +174,13 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     }
 
     public PrecursorIonType getPrecursorIonTypeForEI() {
-        return EI_TYPE;
+        throw new UnsupportedOperationException();
     }
 
     private IonMode[] POSITIVE_ION_MODES, NEGATIVE_ION_MODES;
     private Charge POSITIVE_IONIZATION, NEGATIVE_IONIZATION;
-    private IonMode PROTONATION, DEPROTONATION, INTRINSICALLY_CHARGED_POSITIVE, INTRINSICALLY_CHARGED_NEGATIVE;
-    private Ionization ELECTRON_IONIZATION;
-    private PrecursorIonType EI_TYPE, UNKNOWN_POSITIVE_IONTYPE, UNKNOWN_NEGATIVE_IONTYPE;
+    private IonMode PROTONATION, DEPROTONATION;
+    private PrecursorIonType UNKNOWN_POSITIVE_IONTYPE, UNKNOWN_NEGATIVE_IONTYPE,  INTRINSICALLY_CHARGED_POSITIVE, INTRINSICALLY_CHARGED_NEGATIVE;
 
     public Iterable<Ionization> getKnownIonModes(int charge) {
         if (Math.abs(charge) != 1) throw new IllegalArgumentException("Do not support multiple charges yet");
@@ -230,10 +229,12 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
     private void addDefaultIons() {
         // ION MODES
+        this.POSITIVE_IONIZATION = new Charge(1);
+        this.NEGATIVE_IONIZATION = new Charge(-1);
         PROTONATION = new IonMode(1, "[M+H]+", MolecularFormula.parse("H"));
         DEPROTONATION = new IonMode(-1, "[M-H]-", MolecularFormula.parse("H").negate());
-        this.UNKNOWN_NEGATIVE_IONTYPE = new PrecursorIonType(new Charge(-1), MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), true);
-        this.UNKNOWN_POSITIVE_IONTYPE = new PrecursorIonType(new Charge(1), MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), true);
+        this.UNKNOWN_NEGATIVE_IONTYPE = new PrecursorIonType(NEGATIVE_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
+        this.UNKNOWN_POSITIVE_IONTYPE = new PrecursorIonType(POSITIVE_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
         this.POSITIVE_ION_MODES = new IonMode[]{
                 new IonMode(1, "[M+K]+", MolecularFormula.parse("K")),
                 new IonMode(1, "[M+Na]+", MolecularFormula.parse("Na")),
@@ -241,14 +242,11 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         };
         this.NEGATIVE_ION_MODES = new IonMode[]{
                 new IonMode(-1, "[M+Cl]-", MolecularFormula.parse("Cl")),
+                new IonMode(-1, "[M+Br]-", MolecularFormula.parse("Br")),
                 DEPROTONATION
         };
-        this.POSITIVE_IONIZATION = new Charge(1);
-        this.NEGATIVE_IONIZATION = new Charge(-1);
-        this.INTRINSICALLY_CHARGED_NEGATIVE = new IonMode(-1, "[M]-", MolecularFormula.emptyFormula());
-        this.INTRINSICALLY_CHARGED_POSITIVE = new IonMode(1, "[M]+", MolecularFormula.emptyFormula());
-        this.ELECTRON_IONIZATION = new ElectronIonization();
-        this.EI_TYPE = new PrecursorIonType(ELECTRON_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), false);
+        this.INTRINSICALLY_CHARGED_NEGATIVE = new PrecursorIonType(DEPROTONATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.INTRINSICAL_CHARGED);
+        this.INTRINSICALLY_CHARGED_POSITIVE = new PrecursorIonType(PROTONATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.INTRINSICAL_CHARGED);
         loadKnownIonTypes();
     }
 
@@ -459,14 +457,17 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             }
             if (usedIonMode != null) break;
         }
-        if (usedIonMode == null) {
-            usedIonMode = charge > 0 ? INTRINSICALLY_CHARGED_POSITIVE : INTRINSICALLY_CHARGED_NEGATIVE;
-        }
+
         MolecularFormula adduct = MolecularFormula.emptyFormula();
         for (MolecularFormula f : adducts) adduct = adduct.add(f);
         MolecularFormula insource = MolecularFormula.emptyFormula();
         for (MolecularFormula f : insourceFrags) insource = insource.add(f);
-        return new PrecursorIonType(usedIonMode, insource, adduct, false);
+
+        if (usedIonMode == null && adduct.isEmpty() && insource.isEmpty()) {
+            return charge > 0 ? INTRINSICALLY_CHARGED_POSITIVE : INTRINSICALLY_CHARGED_NEGATIVE;
+        } else if (usedIonMode==null) {
+            throw new RuntimeException("Cannot parse " + name);
+        } else return new PrecursorIonType(usedIonMode, insource, adduct, PrecursorIonType.SPECIAL_TYPES.REGULAR);
     }
 
 
@@ -488,7 +489,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             if (i.getIonization().equals(ion) && i.getAdduct().atomCount() == 0 && i.getInSourceFragmentation().atomCount() == 0)
                 return i;
         }
-        return new PrecursorIonType(ion, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), false);
+        return new PrecursorIonType(ion, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.REGULAR);
     }
 
     public PrecursorIonType unknownPositivePrecursorIonType() {
