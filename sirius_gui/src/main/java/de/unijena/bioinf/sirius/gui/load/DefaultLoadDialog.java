@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.load;
 
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import ca.odell.glazedlists.BasicEventList;
+import ca.odell.glazedlists.swing.GlazedListsSwing;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
@@ -8,6 +9,8 @@ import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.msviewer.MSViewerPanel;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
+import de.unijena.bioinf.sirius.gui.utils.ExperiemtEditPanel;
+import de.unijena.bioinf.sirius.gui.utils.TextHeaderBoxPanel;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -18,9 +21,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 import java.util.regex.Pattern;
 
 public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionListener, ListSelectionListener, WindowListener,
@@ -29,29 +30,24 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     private JButton add, remove, ok, abort;
 
     private JList<SpectrumContainer> msList;
-
+    private ExperiemtEditPanel editPanel;
 
     private MSViewerPanel msviewer;
     private JButton editCE;
     private JTextField cEField;
-    private JTextField parentMzField;
     private JComboBox<String> msLevelBox;
-
-    private JComboBox<String> ionizationCB;
 
 
     private List<LoadDialogListener> listeners;
 
     private DecimalFormat cEFormat;
 
-    private JTextField nameTF;
-
     JPopupMenu spPopMenu;
     JMenuItem addMI, removeMI;
 
     private static Pattern NUMPATTERN = Pattern.compile("^[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?$");
 
-    public DefaultLoadDialog(JFrame owner, ListModel<SpectrumContainer> listModel) {
+    public DefaultLoadDialog(JFrame owner, BasicEventList<SpectrumContainer> list) {
         super(owner, "load", true);
 
         this.cEFormat = new DecimalFormat("#0.0");
@@ -68,7 +64,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
         JPanel leftPanel = new JPanel(new BorderLayout());
         mainPanel.add(leftPanel, BorderLayout.WEST);
 
-        msList = new JList<>(listModel);
+        msList = new JList<>(GlazedListsSwing.eventListModel(list));
         msList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         JScrollPane msPanel = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         msPanel.setViewportView(msList);
@@ -95,74 +91,31 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
         msviewer.setData(new DummySpectrumContainer());
         rightPanel.add(msviewer, BorderLayout.CENTER);
 
-        JPanel propsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
 
-        JPanel msLevelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        msLevelPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "MS level"));
-        propsPanel.add(msLevelPanel);
+        //edit panel
+        editPanel = new ExperiemtEditPanel();
+        list.addListEventListener(listChanges -> editPanel.precursorSelection.setData(list, 0d));
 
-        JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        namePanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Compound name"));
-        nameTF = new JTextField(12);
-        nameTF.setEditable(true);
-        namePanel.add(nameTF);
-        propsPanel.add(namePanel);
+        String[] msLevelVals = {"MS 1", "MS 2"};
+        msLevelBox = new JComboBox<>(msLevelVals);
+        msLevelBox.setEnabled(false);
+        msLevelBox.addActionListener(this);
+        editPanel.add(new TextHeaderBoxPanel("MS level", msLevelBox));
 
-        JPanel cEPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Ion"));
-
-
-        Vector<String> ionizations = new Vector<>(PeriodicTable.getInstance().getIonizationsAndUnknowns());
-        Collections.sort(ionizations);
-        ionizationCB = new JComboBox<>(ionizations);
-        ionizationCB.setSelectedItem(PeriodicTable.getInstance().unknownPositivePrecursorIonType().getIonization().getName());
-
-
-        cEPanel.add(ionizationCB);
-        propsPanel.add(cEPanel);
-
-        cEPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        JPanel cEPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         cEField = new JTextField(10);
         cEField.setEditable(false);
         cEField.setEnabled(false);
         cEPanel.add(cEField);
-        cEPanel.add(new JLabel("eV"));
 
-        editCE = new JButton("Edit");
+        editCE = new JButton("Change");
         editCE.setEnabled(false);
         editCE.addActionListener(this);
         cEPanel.add(editCE);
-
-        cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "collision energy (optional)"));
-
-        cEPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "parent mass"));
-
-        parentMzField = new JTextField(12);
-        parentMzField.setEditable(true);
-        parentMzField.setEnabled(true);
-        parentMzField.setInputVerifier(new InputVerifier() {
-            @Override
-            public boolean verify(JComponent input) {
-                JTextField tf = (JTextField) input;
-                final String text = tf.getText().trim();
-                return NUMPATTERN.matcher(text).matches();
-            }
-        });
-        cEPanel.add(parentMzField);
-        cEPanel.add(new JLabel("m/z"));
-
-        propsPanel.add(cEPanel);
-
-        String[] msLevelVals = {"MS 1", "MS 2"};
-
-        msLevelBox = new JComboBox<>(msLevelVals);
-        msLevelBox.setEnabled(false);
-        msLevelBox.addActionListener(this);
-        msLevelPanel.add(msLevelBox);
+        editPanel.add(new TextHeaderBoxPanel("Collision energy (eV)", cEPanel));
 
 
-        rightPanel.add(propsPanel, BorderLayout.SOUTH);
+        rightPanel.add(editPanel, BorderLayout.SOUTH);
         mainPanel.add(rightPanel, BorderLayout.CENTER);
 
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
@@ -259,16 +212,13 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
         if (ionization != null) {
             String name = ionization.getIonization().getName();
             if (name != null)
-                ionizationCB.setSelectedItem(name);
+                editPanel.ionizationCB.setSelectedItem(name);
         }
     }
 
     @Override
     public PrecursorIonType getIonization() {
-        String item = (String) ionizationCB.getSelectedItem();
-        if (item != null)
-            return PeriodicTable.getInstance().ionByName(item);
-        return PeriodicTable.getInstance().getUnknownPrecursorIonType(1);
+        return editPanel.getSelectedIonization();
     }
 
 
@@ -290,7 +240,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
     @Override
     public void showDialog() {
-        this.setSize(new Dimension(950, 640));
+        pack();
         setLocationRelativeTo(getParent());
         this.setVisible(true);
     }
@@ -419,26 +369,18 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
     @Override
     public void experimentNameChanged(String name) {
-        nameTF.setText(name);
+        editPanel.nameTF.setText(name);
     }
 
     @Override
     public String getExperimentName() {
-        return nameTF.getText();
-    }
-
-    @Override
-    public void parentMassChanged(double newMz) {
-        parentMzField.setText(String.valueOf(newMz));
+        return editPanel.nameTF.getText();
     }
 
     //todo error handling
     @Override
     public double getParentMass() throws NumberFormatException {
-        if (NUMPATTERN.matcher(parentMzField.getText()).matches()) {
-            return Double.parseDouble(parentMzField.getText());
-        }
-        return -1d;
+        return editPanel.getSelectedIonMass();
     }
 
     /// drag and drop support...

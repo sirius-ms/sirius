@@ -157,4 +157,12 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
         refresh();
     }
 
+    public void replaceElements(Iterable<E> nuElements) {
+        DefaultListModel<CheckBoxListItem<E>> m = (DefaultListModel<CheckBoxListItem<E>>) getModel();
+        m.removeAllElements();
+        for (E element : nuElements) {
+            m.addElement(CheckBoxListItem.getNew(element));
+        }
+    }
+
 }

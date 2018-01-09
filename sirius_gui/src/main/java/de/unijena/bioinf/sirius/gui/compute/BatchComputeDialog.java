@@ -20,11 +20,9 @@ package de.unijena.bioinf.sirius.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
@@ -39,8 +37,7 @@ import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
-import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
+import de.unijena.bioinf.sirius.gui.utils.ExperiemtEditPanel;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -59,12 +56,13 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     private JCheckBox recompute;
 
-    private ElementsPanel elementPanel;
     private JButton elementAutoDetect = null;
-    private JComboBox<Peak> box = null;
 
+    private ElementsPanel elementPanel;
+    private ExperiemtEditPanel editPanel;
     private SearchProfilePanel searchProfilePanel;
     private FingerIDComputationPanel csiOptions;
+
     private MainFrame owner;
     List<ExperimentContainer> compoundsToProcess;
 
@@ -102,7 +100,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             searchProfilePanel = new SearchProfilePanel(this, enableFallback);
             /////////////////////////////////////////////
         } else {
-            initSingleExperiment(mainPanel, detectableElements);
+            initSingleExperimentDialog(mainPanel, detectableElements);
             searchProfilePanel = new SearchProfilePanel(this, compoundsToProcess.get(0).getIonization());
         }
 
@@ -117,18 +115,13 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
         });
 
-
         JPanel stack = new JPanel();
         stack.setLayout(new BorderLayout());
-        stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "CSI:FingerId search"));
+        stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "CSI:FingerId - Structure Elucidation"));
 
-
-//        JPanel otherPanel = new JPanel();
-//        otherPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
         csiOptions = new FingerIDComputationPanel(owner.getCsiFingerId().getAvailableDatabases(), searchProfilePanel.ionizationCB, true, true);
         if (!csiOptions.isEnabled()) csiOptions.dbSelectionOptions.setDb(searchProfilePanel.getFormulaSource());
         csiOptions.setMaximumSize(csiOptions.getPreferredSize());
-
 
         stack.add(csiOptions, BorderLayout.CENTER);
         mainPanel.add(stack);
@@ -217,7 +210,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
             ExperimentContainer ec = compoundsToProcess.get(0);
             if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
-                MutableMs2Experiment exp = applySettingsAndGet(ec, getSelectedIonMass());
+                MutableMs2Experiment exp = ec.getMs2Experiment();
 
                 ElementPredictor predictor = sirius.getElementPrediction();
                 final FormulaConstraints c = sirius.predictElementsFromMs1(exp);
@@ -236,18 +229,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 new ExceptionDialog(this, notWorkingMessage);
             }
         }
-    }
-
-    private Double getSelectedIonMass() {
-        Object selected = box.getSelectedItem();
-        double pm = 0;
-        if (selected instanceof Peak) {
-            Peak cp = (Peak) selected;
-            pm = cp.getMass();
-        } else if (selected != null && !selected.toString().isEmpty()) {
-            pm = Double.parseDouble(selected.toString());
-        } else return null;
-        return pm;
     }
 
     private void abortComputing() {
@@ -287,9 +268,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         if (elementPanel.individualAutoDetect)
             elementsToAutoDetect = elementPanel.getElementsToAutoDetect();
 
-
         final double ppm = searchProfilePanel.getPpm();
-
         final int candidates = searchProfilePanel.getNumberOfCandidates();
 
         // CHECK ILP SOLVER
@@ -303,9 +282,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
         LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder);
 
-        // treatment of unknown ionization
-        final boolean treatAsHydrogen = (searchProfilePanel.getIonization().equals("treat as protonation"));
-
         //entspricht setup() Methode
         final BackgroundComputation bgc = owner.getBackgroundComputation();
         final Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
@@ -313,23 +289,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         while (compounds.hasNext()) {
             final ExperimentContainer ec = compounds.next();
             if (ec.isUncomputed()) {
-
-                if (this.compoundsToProcess.size() == 1) {
-                    //if one experiment is selected, force ionization
-                    ec.setIonization(PrecursorIonType.getPrecursorIonType(searchProfilePanel.getIonization()));
-                }
-
-                if (treatAsHydrogen && ec.getIonization().isIonizationUnknown()) {
-                    if (ec.getIonization() == null || ec.getIonization().getCharge() > 0) {
-                        ec.setIonization(PrecursorIonType.getPrecursorIonType("[M+H]+"));
-                    } else {
-                        ec.setIonization(PrecursorIonType.getPrecursorIonType("[M-H]-"));
-                    }
-                }
-
+                MutableMs2Experiment exp = applySettingsAndGet(ec);
                 FormulaConstraints individualConstraints = new FormulaConstraints(constraints);
+
                 if (!elementsToAutoDetect.isEmpty() && !ec.getMs1Spectra().isEmpty()) {
-                    MutableMs2Experiment exp = applySettingsAndGet(ec, ec.getIonMass());
                     FormulaConstraints autoConstraints = sirius.predictElementsFromMs1(exp);
                     if (autoConstraints != null) {
                         ElementPredictor predictor = sirius.getElementPrediction();
@@ -352,145 +315,16 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         return this.success;
     }
 
-    public void initSingleExperiment(Box mainPanel, List<Element> detectableElements) {
-        final ExperimentContainer ec = compoundsToProcess.get(0);
-        JPanel focMassPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        Vector<Peak> masses = new Vector<>();
-        double maxInt = -1;
-        Object maxObj = null;
-        ArrayList<SimpleSpectrum> ms1Spectra = new ArrayList<>(ec.getMs1Spectra());
-        if (ec.getMergedMs1Spectrum() != null)
-            ms1Spectra.add(ec.getMergedMs1Spectrum());
-        final SimpleMutableSpectrum massBuffer = new SimpleMutableSpectrum();
+    public void initSingleExperimentDialog(Box mainPanel, List<Element> detectableElements) {
+        ExperimentContainer ec = compoundsToProcess.get(0);
+        editPanel = new ExperiemtEditPanel();
+        editPanel.setBorder(BorderFactory.createEtchedBorder());
+        editPanel.nameTF.setText(ec.getName());
+        editPanel.ionizationCB.setSelectedItem(ec.getIonization().getIonization().getName());
+        editPanel.precursorSelection.setData(ec.getMs1Spectra(), ec.getMs2Spectra(), ec.getIonMass());
+        mainPanel.add(editPanel, BorderLayout.NORTH);
 
-        // falls MS1 verfügbar biete MS1 Peaks an, ansonsten nehme MS2 und normalisiere global
-        Peak bestDataIon = null;
-        final Deviation dev = new Deviation(20);
-        final double focusedMass = ec.getIonMass(); //todo proof data focused stuff
-        if (!ms1Spectra.isEmpty()) {
-            for (SimpleSpectrum cms1 : ms1Spectra) {
-                final double cms1MaxInt = cms1.getMaxIntensity();
-                if (focusedMass > 0) {
-                    final int i = Spectrums.mostIntensivePeakWithin(cms1, focusedMass, dev);
-                    if (i >= 0) {
-                        massBuffer.addPeak(cms1.getMzAt(i), cms1.getIntensityAt(i) / cms1MaxInt);
-                        bestDataIon = cms1.getPeakAt(i);
-                    }
-                }
-                // for each isotope pattern add starting peak with at least 2% intensity
-                for (int i = 0; i < cms1.size(); ++i) {
-                    int j = Spectrums.mostIntensivePeakWithin(cms1, cms1.getMzAt(i) - 1.0033, dev);
-                    if (j < 0 || cms1.getIntensityAt(j) < 0.02) {
-                        massBuffer.addPeak(cms1.getMzAt(i), cms1.getIntensityAt(i) / cms1MaxInt);
-                    }
-                }
-            }
-
-        } else {
-            // take the highest peak with at least 5% intensity that is not preceeded by
-            // possible isotope peaks
-
-            // I hate marvins data structures -_-
-            final SimpleMutableSpectrum mergedSpec = new SimpleMutableSpectrum(Spectrums.mergeSpectra(new Deviation(20), true, true, ec.getMs2Spectra())); //todo her was parantmass 0d
-            Spectrums.normalize(mergedSpec, Normalization.Max(1d));
-            Spectrums.applyBaseline(mergedSpec, 0.05);
-            final SimpleSpectrum spec = new SimpleSpectrum(mergedSpec);
-            // search parent peak
-            int largestPeak = spec.size() - 1;
-            for (; largestPeak > 0; --largestPeak) {
-                final int isotopePeak = Spectrums.mostIntensivePeakWithin(spec, spec.getMzAt(largestPeak) - 1d, new Deviation(10, 0.2));
-                if (isotopePeak < 0 || spec.getIntensityAt(isotopePeak) < spec.getIntensityAt(largestPeak)) break;
-            }
-            double expectedParentMass = 0d;
-            if (largestPeak > 0) {
-                expectedParentMass = spec.getMzAt(largestPeak);
-            }
-
-
-            for (MutableMs2Spectrum sp : ec.getMs2Spectra()) {
-                final double spMaxInt = sp.getMaxIntensity();
-                for (int i = 0; i < sp.size(); i++) {
-                    if (sp.getPeakAt(i).getIntensity() > maxInt) {
-                        maxInt = sp.getPeakAt(i).getIntensity();
-                    }
-                    massBuffer.addPeak(sp.getMzAt(i), sp.getIntensityAt(i) / spMaxInt);
-                    if ((focusedMass > 0 && dev.inErrorWindow(sp.getPeakAt(i).getMass(), focusedMass)) || (expectedParentMass > 0 && dev.inErrorWindow(sp.getPeakAt(i).getMass(), expectedParentMass))) {
-                        if (bestDataIon == null || sp.getPeakAt(i).getIntensity() > bestDataIon.getIntensity())
-                            bestDataIon = sp.getPeakAt(i);
-                    }
-                }
-            }
-        }
-        Spectrums.mergePeaksWithinSpectrum(massBuffer, dev, false, true);
-        Peak defaultIon = null;
-        for (Peak p : massBuffer) {
-            masses.add(p);
-            if (bestDataIon != null && dev.inErrorWindow(p.getMass(), bestDataIon.getMass())) {
-                defaultIon = p;
-            }
-            if (bestDataIon == null && (defaultIon == null || p.getMass() > defaultIon.getMass())) {
-                defaultIon = p;
-            }
-        }
-
-        box = new JComboBox<>(masses);
-        if (defaultIon != null)
-            box.setSelectedItem(defaultIon);
-
-        box.setEditable(true);
-        MyListCellRenderer renderer = new MyListCellRenderer(masses);
-        box.setRenderer(renderer);
-
-        AutoCompleteDecorator.decorate(box, new ObjectToStringConverter() {
-            @Override
-            public String getPreferredStringForItem(Object item) {
-                if (item instanceof Peak) {
-                    Peak peak = (Peak) item;
-                    return String.valueOf(peak.getMass());
-                } else {
-                    return (String) item;
-                }
-
-            }
-        });
-        focMassPanel.add(box);
-        focMassPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Parent mass"));
-
-
-
-        /*
-         * Was abgefragt werden muss:
-         *
-         * foc. mass
-         * Ionisierung
-         * seltene Elemente abseits von CHNOPS Br, B, Cl, Se, F, I
-         *
-         */
-
-        JButton autoDetectFM = new JButton("Most intensive peak");
-        autoDetectFM.addActionListener(this);
-        if (masses.isEmpty()) autoDetectFM.setEnabled(false);
-        JButton expFM = new JButton("File value");
-        expFM.addActionListener(this);
-        if (defaultIon != null) {
-            box.setSelectedItem(defaultIon);
-        } else if (bestDataIon == null) {
-            expFM.setEnabled(false);
-            if (masses.isEmpty()) {
-                box.setSelectedItem("");
-            } else {
-                box.setSelectedItem(maxObj);
-            }
-        } else if (bestDataIon != null) {
-            box.setSelectedItem(bestDataIon);
-        } else {
-            box.setSelectedItem(String.valueOf(focusedMass));
-        }
-
-        focMassPanel.add(autoDetectFM);
-        focMassPanel.add(expFM);
-        mainPanel.add(focMassPanel, BorderLayout.NORTH);
-
+        editPanel.ionizationCB.addActionListener(e -> searchProfilePanel.refreshPossibleIonizations(editPanel.getSelectedIonization()));
 
         /////////////Solo Element//////////////////////
         elementPanel = new ElementsPanel(this, 4);
@@ -510,12 +344,19 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         /////////////////////////////////////////////
     }
 
-    private MutableMs2Experiment applySettingsAndGet(ExperimentContainer ec, double ionMass) {
-        //todo ATTENTION here the experiment is changed
-        //todo appy complex ionization stuff
-        ec.setIonization(PrecursorIonType.getPrecursorIonType(searchProfilePanel.getIonization()));
-        MutableMs2Experiment exp = ec.getMs2Experiment();
-        exp.setIonMass(ionMass);
+
+    private MutableMs2Experiment applySettingsAndGet(ExperimentContainer ec) {
+        if (editPanel != null) {
+            final Double ionMass = editPanel.getSelectedIonMass();
+            if (ionMass != null)
+                ec.setIonMass(ionMass);
+            ec.setName(editPanel.getExperiementName());
+            ec.setIonization(editPanel.getSelectedIonization());
+        }
+
+        final MutableMs2Experiment exp = ec.getMs2Experiment();
+        exp.setAnnotation(PossibleIonModes.class, searchProfilePanel.getPossibleIonModes());
+        exp.setAnnotation(PossibleAdducts.class, csiOptions.getPossibleAdducts());
         return exp;
     }
 }

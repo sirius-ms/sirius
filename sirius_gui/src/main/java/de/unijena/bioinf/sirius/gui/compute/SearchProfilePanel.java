@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
 import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
@@ -56,7 +57,7 @@ public class SearchProfilePanel extends JPanel {
 
     private Window owner;
 
-    private Vector<String> ionizations;
+    //    private Vector<String> ionizations;
     private Vector<Instruments> instruments;
     JCheckBoxList<String> ionizationCB;
     public final JComboBox<String> formulaCombobox;
@@ -80,7 +81,7 @@ public class SearchProfilePanel extends JPanel {
         JPanel mainwindow;
         if (!selectIonization) {
             this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-            this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Other"));
+            this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Sirius - Molecular Formula Identification"));
 
             JPanel otherPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
             mainwindow = otherPanel;
@@ -88,33 +89,21 @@ public class SearchProfilePanel extends JPanel {
 
         } else {
             this.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-            this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Other"));
+            this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Sirius - Molecular Formula Identification"));
             mainwindow = this;
         }
 
         //configure ionization panels
-        ionizations = new Vector<>();
-
-        if (ionType != null) {
-            if (ionType.isIonizationUnknown()) {
-                if (ionType.getCharge() > 0) {
-                    ionizations.addAll(PeriodicTable.getInstance().getPositiveIonizations());
-                } else {
-                    ionizations.addAll(PeriodicTable.getInstance().getNegativeIonizations());
-                }
-            } else {
-                String io = ionType.getIonization().toString();
-                ionizations.add(io);
-            }
-        } else {
-            ionizations.addAll(PeriodicTable.getInstance().getIonizations());
-        }
+        ionizationCB = new JCheckBoxList<>();
+        refreshPossibleIonizations(ionType);
 
 
-        ionizationCB = new JCheckBoxList<>(ionizations);
-        ionizationCB.checkAll();
         JPanel ionPanel;
-        if (selectIonization) {
+        if (selectIonization || enableFallback) {
+            ionPanel = createFallbackIonissationOptionPanel(ionizationCB);
+            mainwindow.add(ionPanel);
+        }
+        /*if (selectIonization) {
             ionPanel = createIonissationOptionPanel(ionizationCB);
             mainwindow.add(ionPanel);
         } else {
@@ -122,7 +111,7 @@ public class SearchProfilePanel extends JPanel {
                 ionPanel = createFallbackIonissationOptionPanel(ionizationCB);
                 mainwindow.add(ionPanel);
             }
-        }
+        }*/
 
 
         instruments = new Vector<>();
@@ -173,6 +162,27 @@ public class SearchProfilePanel extends JPanel {
         }
     }
 
+    public void refreshPossibleIonizations(PrecursorIonType ionType) {
+        java.util.List<String> ionizations = new ArrayList<>();
+
+        if (ionType != null) {
+            if (ionType.isIonizationUnknown()) {
+                if (ionType.getCharge() > 0) {
+                    ionizations.addAll(PeriodicTable.getInstance().getPositiveIonizations());
+                } else {
+                    ionizations.addAll(PeriodicTable.getInstance().getNegativeIonizations());
+                }
+            } else {
+                String io = ionType.getIonization().toString();
+                ionizations.add(io);
+            }
+        } else {
+            ionizations.addAll(PeriodicTable.getInstance().getIonizations());
+        }
+
+        ionizationCB.replaceElements(ionizations);
+        ionizationCB.checkAll();
+    }
 
     public Instruments getInstrument() {
         return (Instruments) instrumentCB.getSelectedItem();
@@ -182,9 +192,12 @@ public class SearchProfilePanel extends JPanel {
         return getInstrument() == Instruments.BRUKER;
     }
 
-    public String getIonization() {
-        ArrayList<String> it = ionizationCB.getCheckedItems();
-        return it == null ? null : it.get(0);
+    public PossibleIonModes getPossibleIonModes() {
+        PossibleIonModes mode = new PossibleIonModes();
+        for (String ioniz : ionizationCB.getCheckedItems()) {
+            mode.add(ioniz, 1d);
+        }
+        return mode;
     }
 
     public double getPpm() {
@@ -215,11 +228,11 @@ public class SearchProfilePanel extends JPanel {
     }
 
 
-    private JPanel createIonissationOptionPanel(final JCheckBoxList<String> ionizationCB) {
-        JPanel main = new TextHeaderBoxPanel("Ionization");
+    /*private JPanel createIonissationOptionPanel(final JCheckBoxList<String> ionizationCB) {
+        JPanel main = new TextHeaderBoxPanel("Possible Ionizations");
         main.add(ionizationCB);
 
-        if (ionizations.size() > 1) {
+        if (ionizationCB.getModel().getSize() > 1) {
             JButton all = new JButton("all");
             all.addActionListener(e -> ionizationCB.checkAll());
             JButton none = new JButton("none");
@@ -231,10 +244,10 @@ public class SearchProfilePanel extends JPanel {
         }
 
         return main;
-    }
+    }*/
 
     private JPanel createFallbackIonissationOptionPanel(final JCheckBoxList<String> ionizationCB) {
-        ionizationCB.setToolTipText("Set fallback ionisation for unknown adduct types");
+        ionizationCB.setToolTipText("Set possible fallback ionisation for data with unknown ionization");
 
         JButton all = new JButton("all");
         all.addActionListener(e -> ionizationCB.checkAll());
@@ -257,7 +270,7 @@ public class SearchProfilePanel extends JPanel {
         buttons.add(neg);
         buttons.add(none);
 
-        JPanel main = new TextHeaderBoxPanel("Fallback ionisation(s)");
+        JPanel main = new TextHeaderBoxPanel("Possible Ionizations");
         main.add(ionizationCB);
         main.add(buttons);
         return main;

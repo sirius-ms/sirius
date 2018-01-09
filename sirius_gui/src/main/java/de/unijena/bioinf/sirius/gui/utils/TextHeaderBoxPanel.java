@@ -8,6 +8,11 @@ import java.awt.*;
 public class TextHeaderBoxPanel extends JPanel {
     private JPanel body;
 
+    public TextHeaderBoxPanel(final String headerText, Component toAdd) {
+        this(headerText);
+        add(toAdd);
+    }
+
     public TextHeaderBoxPanel(final String headerText) {
         this(headerText, false);
     }
