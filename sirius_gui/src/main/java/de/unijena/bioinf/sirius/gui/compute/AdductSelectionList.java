@@ -28,7 +28,7 @@ public class AdductSelectionList extends JCheckBoxList<String> implements ListSe
     private void change() {
         List<String> m = new ArrayList<>();
         for (String ionisation : source.getCheckedItems()) {
-            for (PrecursorIonType adduct : PeriodicTable.getInstance().adductsByIonisation(ionisation)) {
+            for (PrecursorIonType adduct : PeriodicTable.getInstance().adductsByIonisation(PrecursorIonType.getPrecursorIonType(ionisation))) {
                 m.add(adduct.toString());
             }
         }

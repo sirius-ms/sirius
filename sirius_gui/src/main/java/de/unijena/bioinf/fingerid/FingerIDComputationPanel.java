@@ -171,7 +171,7 @@ public class FingerIDComputationPanel extends JPanel {
         private final JScrollPane sp;
 
         public AdductSelectionPanel(final JCheckBoxList<String> sourceIonization) {
-            super("Select adducts");
+            super("Possible Adducts");
             adductList = new AdductSelectionList(sourceIonization);
             sp = new JScrollPane(adductList);
             sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

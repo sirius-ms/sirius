@@ -85,6 +85,14 @@ public class ExperimentContainer extends AbstractBean {
         return experiment.getPrecursorIonType();
     }
 
+    /*public String getIonizationAsString() {
+
+        PrecursorIonType i = experiment.getPrecursorIonType();
+        if (i != null)
+            return i.toString();
+        else return "Unknown";
+    }*/
+
     public List<SiriusResultElement> getResults() {
         return this.results;
     }

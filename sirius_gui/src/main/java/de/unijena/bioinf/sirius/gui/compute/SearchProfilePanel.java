@@ -7,6 +7,7 @@ import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.JCheckBoxList;
@@ -18,7 +19,10 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
 import java.util.Vector;
+import java.util.stream.Collectors;
 
 /**
  * Created by Marcus Ludwig on 12.01.17.
@@ -66,72 +70,34 @@ public class SearchProfilePanel extends JPanel {
     private SpinnerNumberModel snm;
     private final JSpinner candidatesSpinner;
 
-
-    public SearchProfilePanel(final Window owner, boolean enableFallback) {
-        this(owner, null, false, enableFallback);
-    }
-
-    public SearchProfilePanel(final Window owner, PrecursorIonType ionType) {
-        this(owner, ionType, true, false);
-    }
-
-    private SearchProfilePanel(final Window owner, PrecursorIonType ionType, boolean selectIonization, boolean enableFallback) {
+    public SearchProfilePanel(final Window owner, Collection<ExperimentContainer> ecs) {
         this.owner = owner;
 
-        JPanel mainwindow;
-        if (!selectIonization) {
-            this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-            this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Sirius - Molecular Formula Identification"));
-
-            JPanel otherPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-            mainwindow = otherPanel;
-            this.add(mainwindow);
-
-        } else {
-            this.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-            this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Sirius - Molecular Formula Identification"));
-            mainwindow = this;
-        }
+        this.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Sirius - Molecular Formula Identification"));
 
         //configure ionization panels
         ionizationCB = new JCheckBoxList<>();
-        refreshPossibleIonizations(ionType);
-
-
-        JPanel ionPanel;
-        if (selectIonization || enableFallback) {
-            ionPanel = createFallbackIonissationOptionPanel(ionizationCB);
-            mainwindow.add(ionPanel);
-        }
-        /*if (selectIonization) {
-            ionPanel = createIonissationOptionPanel(ionizationCB);
-            mainwindow.add(ionPanel);
-        } else {
-            if (enableFallback) {
-                ionPanel = createFallbackIonissationOptionPanel(ionizationCB);
-                mainwindow.add(ionPanel);
-            }
-        }*/
-
+        add(createIonissationOptionPanel(ionizationCB));
 
         instruments = new Vector<>();
         for (Instruments i : Instruments.values()) {
             instruments.add(i);
         }
         instrumentCB = new JComboBox<>(instruments);
-        mainwindow.add(new TwoCloumnPanel(new JLabel("instrument"), instrumentCB));
+        add(new TwoCloumnPanel(new JLabel("instrument"), instrumentCB));
 
         snm = new SpinnerNumberModel(10, 0.25, 20, 0.25);
         ppmSpinner = new JSpinner(this.snm);
         ppmSpinner.setMinimumSize(new Dimension(70, 26));
         ppmSpinner.setPreferredSize(new Dimension(70, 26));
-        mainwindow.add(new TwoCloumnPanel(new JLabel("ppm"), ppmSpinner));
+        add(new TwoCloumnPanel(new JLabel("ppm"), ppmSpinner));
 
         final SpinnerNumberModel candidatesNumberModel = new SpinnerNumberModel(10, 1, 1000, 1);
         candidatesSpinner = new JSpinner(candidatesNumberModel);
         candidatesSpinner.setMinimumSize(new Dimension(70, 26));
         candidatesSpinner.setPreferredSize(new Dimension(70, 26));
-        mainwindow.add(new TwoCloumnPanel(new JLabel("candidates"), candidatesSpinner));
+        add(new TwoCloumnPanel(new JLabel("candidates"), candidatesSpinner));
 
         instrumentCB.addItemListener(new ItemListener() {
             @Override
@@ -158,30 +124,39 @@ public class SearchProfilePanel extends JPanel {
             }
 
             formulaCombobox = new JComboBox<>(values);
-            mainwindow.add(new TwoCloumnPanel(label, formulaCombobox));
+            add(new TwoCloumnPanel(label, formulaCombobox));
         }
+
+        refreshPossibleIonizations(ecs.stream().map(ExperimentContainer::getIonization).collect(Collectors.toSet()));
+
     }
 
-    public void refreshPossibleIonizations(PrecursorIonType ionType) {
+    public boolean refreshPossibleIonizations(Set<PrecursorIonType> ionTypes) {
         java.util.List<String> ionizations = new ArrayList<>();
 
-        if (ionType != null) {
-            if (ionType.isIonizationUnknown()) {
-                if (ionType.getCharge() > 0) {
+        if (!ionTypes.isEmpty()) {
+            if (ionTypes.contains(PrecursorIonType.unknown())) {
+                ionizations.addAll(PeriodicTable.getInstance().getIonizations());
+            } else {
+                if (ionTypes.contains(PrecursorIonType.unknownPositive())) {
                     ionizations.addAll(PeriodicTable.getInstance().getPositiveIonizations());
-                } else {
+                }
+                if (ionTypes.contains(PrecursorIonType.unknownNegative())) {
                     ionizations.addAll(PeriodicTable.getInstance().getNegativeIonizations());
                 }
-            } else {
-                String io = ionType.getIonization().toString();
-                ionizations.add(io);
             }
-        } else {
-            ionizations.addAll(PeriodicTable.getInstance().getIonizations());
         }
 
-        ionizationCB.replaceElements(ionizations);
-        ionizationCB.checkAll();
+        if (ionizations.isEmpty()) {
+            ionizationCB.replaceElements(ionTypes.stream().map(PrecursorIonType::toString).collect(Collectors.toList()));
+            ionizationCB.checkAll();
+            return false;
+        } else {
+            ionizationCB.replaceElements(ionizations);
+            ionizationCB.checkAll();
+            return true;
+        }
+//        pack();
     }
 
     public Instruments getInstrument() {
@@ -228,26 +203,30 @@ public class SearchProfilePanel extends JPanel {
     }
 
 
-    /*private JPanel createIonissationOptionPanel(final JCheckBoxList<String> ionizationCB) {
-        JPanel main = new TextHeaderBoxPanel("Possible Ionizations");
-        main.add(ionizationCB);
+    private JPanel createIonissationOptionPanel(final JCheckBoxList<String> ionizationCB) {
+        JPanel main = createIonisationBasePanel();
 
-        if (ionizationCB.getModel().getSize() > 1) {
-            JButton all = new JButton("all");
-            all.addActionListener(e -> ionizationCB.checkAll());
-            JButton none = new JButton("none");
-            none.addActionListener(e -> ionizationCB.uncheckAll());
-            JPanel buttons = new JPanel(new BorderLayout());
-            buttons.add(all, BorderLayout.WEST);
-            buttons.add(none, BorderLayout.EAST);
-            main.add(buttons);
-        }
+        JButton all = new JButton("all");
+        all.addActionListener(e -> ionizationCB.checkAll());
+        JButton none = new JButton("none");
+        none.addActionListener(e -> ionizationCB.uncheckAll());
+        JPanel buttons = new JPanel(new BorderLayout());
+        buttons.add(all, BorderLayout.WEST);
+        buttons.add(none, BorderLayout.EAST);
+        main.add(buttons);
 
         return main;
-    }*/
+    }
+
+    private JPanel createIonisationBasePanel() {
+        JPanel main = new TextHeaderBoxPanel("Possible Ionizations");
+        main.add(ionizationCB);
+        main.setToolTipText("Set possible ionisation for data with unknown ionization");
+        return main;
+    }
 
     private JPanel createFallbackIonissationOptionPanel(final JCheckBoxList<String> ionizationCB) {
-        ionizationCB.setToolTipText("Set possible fallback ionisation for data with unknown ionization");
+        JPanel main = createIonisationBasePanel();
 
         JButton all = new JButton("all");
         all.addActionListener(e -> ionizationCB.checkAll());
@@ -270,8 +249,6 @@ public class SearchProfilePanel extends JPanel {
         buttons.add(neg);
         buttons.add(none);
 
-        JPanel main = new TextHeaderBoxPanel("Possible Ionizations");
-        main.add(ionizationCB);
         main.add(buttons);
         return main;
     }

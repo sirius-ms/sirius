@@ -76,11 +76,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         this.success = false;
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-
-        this.setLayout(new BorderLayout());
+        setLayout(new BorderLayout());
 
         Box mainPanel = Box.createVerticalBox();
-        this.add(mainPanel, BorderLayout.CENTER);
+        add(mainPanel, BorderLayout.CENTER);
         //mainpanel done
 
 
@@ -91,20 +90,16 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             if (elementPredictor.isPredictable(element)) detectableElements.add(element);
         }
 
-
         if (compoundsToProcess.size() > 1) {
             ///////////////////Multi Element//////////////////////
             elementPanel = new ElementsPanel(this, 4, detectableElements);
             mainPanel.add(elementPanel);
-            boolean enableFallback = hasCompoundWithUnknownIonization();
-            searchProfilePanel = new SearchProfilePanel(this, enableFallback);
             /////////////////////////////////////////////
         } else {
             initSingleExperimentDialog(mainPanel, detectableElements);
-            searchProfilePanel = new SearchProfilePanel(this, compoundsToProcess.get(0).getIonization());
         }
 
-
+        searchProfilePanel = new SearchProfilePanel(this, compoundsToProcess);
         mainPanel.add(searchProfilePanel);
         searchProfilePanel.formulaCombobox.addItemListener(new ItemListener() {
             @Override
@@ -174,10 +169,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
 
 
-        this.pack();
-        this.setResizable(false);
+        pack();
         setLocationRelativeTo(getParent());
-        this.setVisible(true);
+        setVisible(true);
 
     }
 
@@ -188,7 +182,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     }
 
 
-    private boolean hasCompoundWithUnknownIonization() {
+    /*private boolean hasCompoundWithUnknownIonization() {
         Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
         while (compounds.hasNext()) {
             final ExperimentContainer ec = compounds.next();
@@ -197,7 +191,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
         }
         return false;
-    }
+    }*/
 
 
     @Override
@@ -322,9 +316,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         editPanel.nameTF.setText(ec.getName());
         editPanel.ionizationCB.setSelectedItem(ec.getIonization().getIonization().getName());
         editPanel.precursorSelection.setData(ec.getMs1Spectra(), ec.getMs2Spectra(), ec.getIonMass());
-        mainPanel.add(editPanel, BorderLayout.NORTH);
+        add(editPanel, BorderLayout.NORTH);
 
-        editPanel.ionizationCB.addActionListener(e -> searchProfilePanel.refreshPossibleIonizations(editPanel.getSelectedIonization()));
+        editPanel.ionizationCB.addActionListener(e -> searchProfilePanel.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization())));
 
         /////////////Solo Element//////////////////////
         elementPanel = new ElementsPanel(this, 4);
