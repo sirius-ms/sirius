@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecular
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.ChemistryBase.ms.ft.UnregardedCandidatesUpperBound;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -525,7 +526,17 @@ public class Sirius {
         final PrecursorIonType ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
         final MutableMs2Experiment mexp = new MutableMs2Experiment(experiment);
         mexp.setPrecursorIonType(ionType);
-        final MolecularFormula formula = tree.getAnnotationOrThrow(PrecursorIonType.class).measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
+        final MolecularFormula formula;
+        switch (tree.getAnnotation(IonTreeUtils.Type.class, IonTreeUtils.Type.RAW)) {
+            case RESOLVED:
+                if (ionType.isIntrinsicalCharged())
+                    formula = ionType.measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
+                else
+                    formula = tree.getRoot().getFormula(); break;
+            case IONIZED: formula = ionType.precursorIonToNeutralMolecule(tree.getRoot().getFormula()); break;
+            case RAW: default:
+                formula = ionType.measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula()); break;
+        }
         final IdentificationResult ir = compute(mexp, formula, recalibrating);
         return ir.getRawTree();
     }
@@ -545,6 +556,26 @@ public class Sirius {
             pa.add(ion, 1d);
         }
         experiment.setAnnotation(PossibleIonModes.class, pa);
+    }
+
+    public void setAllowedMassDeviation(MutableMs2Experiment experiment, Deviation fragmentMassDeviation) {
+        MutableMeasurementProfile prof = makeProfile(experiment);
+        prof.setAllowedMassDeviation(fragmentMassDeviation);
+    }
+
+    private MutableMeasurementProfile makeProfile(MutableMs2Experiment experiment) {
+        MeasurementProfile prof = experiment.getAnnotation(MeasurementProfile.class, null);
+        if (prof == null) {
+            MutableMeasurementProfile prof2 = new MutableMeasurementProfile();
+            experiment.setAnnotation(MeasurementProfile.class, prof2);
+            return prof2;
+        } else if (prof instanceof MutableMeasurementProfile) {
+            return (MutableMeasurementProfile) prof;
+        } else {
+            MutableMeasurementProfile prof2 = new MutableMeasurementProfile(prof);
+            experiment.setAnnotation(MeasurementProfile.class, prof2);
+            return prof2;
+        }
     }
 
     public void setIonModeWithProbability(Ms2Experiment experiment, Ionization ion, double probability) {

@@ -35,6 +35,14 @@ import java.util.*;
  */
 public abstract class MolecularFormula implements Cloneable, Iterable<Element>, Comparable<MolecularFormula> {
 
+    private static MolecularFormula Hydrogen;
+
+    public static MolecularFormula getHydrogen() {
+        if (Hydrogen==null) Hydrogen = parse("H");
+        return Hydrogen;
+
+    }
+
     /**
      * returns a new immutable molecular formula of the given formula
      */
