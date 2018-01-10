@@ -51,16 +51,6 @@ public class CheckBoxListItem<E> extends JCheckBox {
         });
     }
 
-    @Override
-    public boolean isSelected() {
-        return super.isSelected();
-    }
-
-    @Override
-    public void setSelected(boolean selected) {
-        super.setSelected(selected);
-    }
-
     public E getValue() {
         return value;
     }

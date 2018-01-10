@@ -78,6 +78,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
+
         Box mainPanel = Box.createVerticalBox();
         add(mainPanel, BorderLayout.CENTER);
         //mainpanel done
@@ -93,10 +94,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         if (compoundsToProcess.size() > 1) {
             ///////////////////Multi Element//////////////////////
             elementPanel = new ElementsPanel(this, 4, detectableElements);
-            mainPanel.add(elementPanel);
+            add(elementPanel, BorderLayout.NORTH);
             /////////////////////////////////////////////
         } else {
-            initSingleExperimentDialog(mainPanel, detectableElements);
+            initSingleExperimentDialog(detectableElements);
         }
 
         searchProfilePanel = new SearchProfilePanel(this, compoundsToProcess);
@@ -114,7 +115,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         stack.setLayout(new BorderLayout());
         stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "CSI:FingerId - Structure Elucidation"));
 
-        csiOptions = new FingerIDComputationPanel(owner.getCsiFingerId().getAvailableDatabases(), searchProfilePanel.ionizationCB, true, true);
+        csiOptions = new FingerIDComputationPanel(owner.getCsiFingerId().getAvailableDatabases(), searchProfilePanel.ionizationPanel.checkBoxList, true, true);
         if (!csiOptions.isEnabled()) csiOptions.dbSelectionOptions.setDb(searchProfilePanel.getFormulaSource());
         csiOptions.setMaximumSize(csiOptions.getPreferredSize());
 
@@ -169,7 +170,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
 
 
+
         pack();
+        setResizable(false);
         setLocationRelativeTo(getParent());
         setVisible(true);
 
@@ -309,20 +312,26 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         return this.success;
     }
 
-    public void initSingleExperimentDialog(Box mainPanel, List<Element> detectableElements) {
+    public void initSingleExperimentDialog(List<Element> detectableElements) {
+        JPanel north = new JPanel(new BorderLayout());
+
+
         ExperimentContainer ec = compoundsToProcess.get(0);
         editPanel = new ExperiemtEditPanel();
         editPanel.setBorder(BorderFactory.createEtchedBorder());
         editPanel.nameTF.setText(ec.getName());
         editPanel.ionizationCB.setSelectedItem(ec.getIonization().getIonization().getName());
         editPanel.precursorSelection.setData(ec.getMs1Spectra(), ec.getMs2Spectra(), ec.getIonMass());
-        add(editPanel, BorderLayout.NORTH);
+        north.add(editPanel, BorderLayout.NORTH);
 
-        editPanel.ionizationCB.addActionListener(e -> searchProfilePanel.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization())));
+        editPanel.ionizationCB.addActionListener(e -> {
+            searchProfilePanel.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization()));
+            pack();
+        });
 
         /////////////Solo Element//////////////////////
         elementPanel = new ElementsPanel(this, 4);
-        mainPanel.add(elementPanel);
+        north.add(elementPanel, BorderLayout.SOUTH);
 
         StringBuilder builder = new StringBuilder();
         builder.append("Auto detectable element are: ");
@@ -336,6 +345,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         elementAutoDetect.setEnabled(true);
         elementPanel.lowerPanel.add(elementAutoDetect);
         /////////////////////////////////////////////
+
+        add(north, BorderLayout.NORTH);
     }
 
 

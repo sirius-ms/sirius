@@ -40,8 +40,6 @@ class CheckboxCellRenderer extends DefaultListCellRenderer {
             CheckBoxListItem checkbox = (CheckBoxListItem) value;
             checkbox.setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
             checkbox.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
-            checkbox.setEnabled(isEnabled());
-            checkbox.setFont(getFont());
             checkbox.setFocusPainted(false);
             checkbox.setBorderPainted(true);
             checkbox.setBorder(isSelected ? UIManager.getBorder("List.focusCellHighlightBorder")

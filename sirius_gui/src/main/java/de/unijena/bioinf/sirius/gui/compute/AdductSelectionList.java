@@ -26,6 +26,7 @@ public class AdductSelectionList extends JCheckBoxList<String> implements ListSe
     }
 
     private void change() {
+        boolean enabled = isEnabled();
         List<String> m = new ArrayList<>();
         for (String ionisation : source.getCheckedItems()) {
             for (PrecursorIonType adduct : PeriodicTable.getInstance().adductsByIonisation(PrecursorIonType.getPrecursorIonType(ionisation))) {
@@ -34,6 +35,7 @@ public class AdductSelectionList extends JCheckBoxList<String> implements ListSe
         }
         replaceElements(m);
         checkAll();
+        setEnabled(enabled);
     }
 
 }
