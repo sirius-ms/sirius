@@ -16,6 +16,7 @@ import de.unijena.bioinf.sirius.gui.utils.RelativeLayout;
 import de.unijena.bioinf.sirius.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.JCheckBoxList;
+import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.JCheckboxListPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +31,7 @@ import java.util.Vector;
 public class FingerIDComputationPanel extends JPanel {
 
     public final DBSelectionPanel dbSelectionOptions;
-    public final AdductSelectionPanel adductOptions;
+    public final JCheckboxListPanel<String> adductOptions;
     private ToolbarToggleButton csiButton = null;
 
     public FingerIDComputationPanel(final List<SearchableDatabase> databases) {
@@ -70,24 +71,17 @@ public class FingerIDComputationPanel extends JPanel {
         } else dbSelectionOptions = null;
 
         if (sourceIonization != null) {
-            adductOptions = new AdductSelectionPanel(sourceIonization);
+            adductOptions = new JCheckboxListPanel<>(new AdductSelectionList(sourceIonization), "Possible Adducts");
             target.add(adductOptions);
         } else adductOptions = null;
-
-
+        
         setComponentsEnabled(csiButton == null);
-
-
     }
 
     private void setComponentsEnabled(final boolean enabled) {
         if (dbSelectionOptions != null) dbSelectionOptions.setEnabled(enabled);
-        if (adductOptions != null) {
-            adductOptions.setEnabled(enabled);
-            adductOptions.adductList.setEnabled(enabled);
-            adductOptions.sp.setEnabled(enabled);
+        if (adductOptions != null) adductOptions.setEnabled(enabled);
 
-        }
     }
 
 
@@ -109,7 +103,7 @@ public class FingerIDComputationPanel extends JPanel {
 
     public PossibleAdducts getPossibleAdducts() {
         PossibleAdducts adds = new PossibleAdducts();
-        for (String adductName : adductOptions.adductList.getCheckedItems()) {
+        for (String adductName : adductOptions.checkBoxList.getCheckedItems()) {
             adds.addAdduct(adductName);
         }
         return adds;
@@ -163,22 +157,6 @@ public class FingerIDComputationPanel extends JPanel {
 
         public SearchableDatabase getDb() {
             return (SearchableDatabase) db.getSelectedItem();
-        }
-    }
-
-    public static class AdductSelectionPanel extends TextHeaderBoxPanel {
-        private final AdductSelectionList adductList;
-        private final JScrollPane sp;
-
-        public AdductSelectionPanel(final JCheckBoxList<String> sourceIonization) {
-            super("Possible Adducts");
-            adductList = new AdductSelectionList(sourceIonization);
-            sp = new JScrollPane(adductList);
-            sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-            sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-            sp.setPreferredSize(new Dimension(sp.getPreferredSize().width, 125));
-            add(sp);
-
         }
     }
 }

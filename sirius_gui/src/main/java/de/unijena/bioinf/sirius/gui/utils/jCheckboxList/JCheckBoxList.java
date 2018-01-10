@@ -25,6 +25,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
 
@@ -35,6 +36,8 @@ import java.util.Enumeration;
  */
 public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
 
+
+    private final MouseAdapter mouseAdapter;
 
     public JCheckBoxList(java.util.List<E> listElements) {
         this();
@@ -49,7 +52,7 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
         setModel(new DefaultListModel<>());
         setCellRenderer(new CheckboxCellRenderer());
 
-        addMouseListener(new MouseAdapter() {
+        mouseAdapter = new MouseAdapter() {
 
             @Override
             public void mousePressed(MouseEvent e) {
@@ -70,7 +73,8 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
                     }
                 }
             }
-        });
+        };
+        addMouseListener(mouseAdapter);
 
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     }
@@ -165,4 +169,25 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
         }
     }
 
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        final Enumeration<CheckBoxListItem<E>> dlm = ((DefaultListModel<CheckBoxListItem<E>>) getModel()).elements();
+
+        while (dlm.hasMoreElements()) {
+            dlm.nextElement().setEnabled(enabled);
+        }
+
+        setMouseListenerEnabled(enabled);
+    }
+
+
+    private void setMouseListenerEnabled(boolean enabled) {
+        if (enabled) {
+            if (!Arrays.asList(getMouseListeners()).contains(mouseAdapter))
+                addMouseListener(mouseAdapter);
+        } else {
+            removeMouseListener(mouseAdapter);
+        }
+    }
 }

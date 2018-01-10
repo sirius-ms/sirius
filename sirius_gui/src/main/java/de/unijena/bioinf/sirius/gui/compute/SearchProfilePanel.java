@@ -8,9 +8,10 @@ import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.JCheckBoxList;
+import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.JCheckboxListPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +64,7 @@ public class SearchProfilePanel extends JPanel {
 
     //    private Vector<String> ionizations;
     private Vector<Instruments> instruments;
-    JCheckBoxList<String> ionizationCB;
+    final JCheckboxListPanel<String> ionizationPanel;
     public final JComboBox<String> formulaCombobox;
     private JComboBox<Instruments> instrumentCB;
     private JSpinner ppmSpinner;
@@ -77,8 +78,10 @@ public class SearchProfilePanel extends JPanel {
         this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Sirius - Molecular Formula Identification"));
 
         //configure ionization panels
-        ionizationCB = new JCheckBoxList<>();
-        add(createIonissationOptionPanel(ionizationCB));
+        ionizationPanel = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Possible Ionizations", "Set possible ionisation for data with unknown ionization");
+        ionizationPanel.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>("[M + H]+ ", false));
+
+        add(ionizationPanel);
 
         instruments = new Vector<>();
         for (Instruments i : Instruments.values()) {
@@ -131,7 +134,7 @@ public class SearchProfilePanel extends JPanel {
 
     }
 
-    public boolean refreshPossibleIonizations(Set<PrecursorIonType> ionTypes) {
+    public void refreshPossibleIonizations(Set<PrecursorIonType> ionTypes) {
         java.util.List<String> ionizations = new ArrayList<>();
 
         if (!ionTypes.isEmpty()) {
@@ -148,13 +151,15 @@ public class SearchProfilePanel extends JPanel {
         }
 
         if (ionizations.isEmpty()) {
-            ionizationCB.replaceElements(ionTypes.stream().map(PrecursorIonType::toString).collect(Collectors.toList()));
-            ionizationCB.checkAll();
-            return false;
+            ionizationPanel.checkBoxList.replaceElements(ionTypes.stream().map(PrecursorIonType::toString).collect(Collectors.toList()));
+            ionizationPanel.checkBoxList.checkAll();
+//            ionizationPanel.setVisible(false);
+            ionizationPanel.setEnabled(false);
         } else {
-            ionizationCB.replaceElements(ionizations);
-            ionizationCB.checkAll();
-            return true;
+            ionizationPanel.checkBoxList.replaceElements(ionizations);
+            ionizationPanel.checkBoxList.checkAll();
+//            ionizationPanel.setVisible(true);
+            ionizationPanel.setEnabled(true);
         }
 //        pack();
     }
@@ -169,7 +174,7 @@ public class SearchProfilePanel extends JPanel {
 
     public PossibleIonModes getPossibleIonModes() {
         PossibleIonModes mode = new PossibleIonModes();
-        for (String ioniz : ionizationCB.getCheckedItems()) {
+        for (String ioniz : ionizationPanel.checkBoxList.getCheckedItems()) {
             mode.add(ioniz, 1d);
         }
         return mode;
@@ -203,29 +208,8 @@ public class SearchProfilePanel extends JPanel {
     }
 
 
-    private JPanel createIonissationOptionPanel(final JCheckBoxList<String> ionizationCB) {
-        JPanel main = createIonisationBasePanel();
 
-        JButton all = new JButton("all");
-        all.addActionListener(e -> ionizationCB.checkAll());
-        JButton none = new JButton("none");
-        none.addActionListener(e -> ionizationCB.uncheckAll());
-        JPanel buttons = new JPanel(new BorderLayout());
-        buttons.add(all, BorderLayout.WEST);
-        buttons.add(none, BorderLayout.EAST);
-        main.add(buttons);
-
-        return main;
-    }
-
-    private JPanel createIonisationBasePanel() {
-        JPanel main = new TextHeaderBoxPanel("Possible Ionizations");
-        main.add(ionizationCB);
-        main.setToolTipText("Set possible ionisation for data with unknown ionization");
-        return main;
-    }
-
-    private JPanel createFallbackIonissationOptionPanel(final JCheckBoxList<String> ionizationCB) {
+    /*private JPanel createFallbackIonissationOptionPanel(final JCheckBoxList<String> ionizationCB) {
         JPanel main = createIonisationBasePanel();
 
         JButton all = new JButton("all");
@@ -251,5 +235,5 @@ public class SearchProfilePanel extends JPanel {
 
         main.add(buttons);
         return main;
-    }
+    }*/
 }

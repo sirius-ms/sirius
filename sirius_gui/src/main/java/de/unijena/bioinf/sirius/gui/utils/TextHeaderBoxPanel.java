@@ -22,7 +22,7 @@ public class TextHeaderBoxPanel extends JPanel {
         body = new JPanel();
         body.setLayout(new BoxLayout(body, horizontal ? BoxLayout.X_AXIS : BoxLayout.Y_AXIS));
         super.add(new JXTitledSeparator(headerText), BorderLayout.NORTH);
-        super.add(body);
+        super.add(body, BorderLayout.CENTER);
     }
 
     @Override
