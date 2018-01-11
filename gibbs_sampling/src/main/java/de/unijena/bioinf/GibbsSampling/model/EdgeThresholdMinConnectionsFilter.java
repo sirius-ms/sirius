@@ -31,16 +31,63 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
         for(int i = 0; i < logEdgeScores.length; ++i) {
             if(peakIdx != graph.getPeakIdx(i)) {
                 double score = logEdgeScores[i];
+                //CHANGED just add edge if <0 (at least some matching fragments)
+                if (score>=0) continue;
+
+                //edges assigned in this 'reverse direction' (candidateIdx->i) to retrieve all of them later on
+                //after that the graph is made symmetric anyways.
                 weightedEdges.add(new WeightedEdge(candidateIdx, i, score));
             }
         }
 
+        //negative weights are good (p-values)
+        //take at least the top x edges. maybe more if several are better than basic thres.
         Collections.sort(weightedEdges);
         double currentThreshold;
-        if(this.minimumConnectionCount >= weightedEdges.size()) {
-            currentThreshold = weightedEdges.get(weightedEdges.size() - 1).weight;//todo add pseudo???
+//        if (weightedEdges.size()==0){
+//            currentThreshold = basicThreshold;
+//        } else if(this.minimumConnectionCount >= weightedEdges.size()) {
+//            currentThreshold = weightedEdges.get(weightedEdges.size() - 1).weight;//todo add pseudo???
+//        } else {
+//            //get next best weight, so that minimumConnectionCount-1 edge gets positive weight
+//            //if no bigger weight exists it is set to weight of minimumConnectionCount-1 edge
+//            //using 0 probably makes the score likely to 'strong'
+//            //todo test 0?
+//            double thresholdScore = weightedEdges.get(minimumConnectionCount-1).weight;
+//            currentThreshold = thresholdScore;
+//            for (int i = minimumConnectionCount; i < weightedEdges.size(); i++) {
+//                double weight = weightedEdges.get(i).weight;
+//                if (weight>currentThreshold){
+//                    currentThreshold = weight;
+//                    break;
+//                }
+//
+//            }
+////            currentThreshold = weightedEdges.get(this.minimumConnectionCount).weight;
+//        }
+
+        //changed use 0 as possible threshold
+        if (weightedEdges.size()==0){
+            currentThreshold = 0;
+        } else if(this.minimumConnectionCount >= weightedEdges.size()) {
+            currentThreshold = 0;//todo add pseudo???
         } else {
-            currentThreshold = weightedEdges.get(this.minimumConnectionCount).weight;
+            //get next best weight, so that minimumConnectionCount-1 edge gets positive weight
+            //if no bigger weight exists it is set to weight of minimumConnectionCount-1 edge
+            //using 0 probably makes the score likely to 'strong'
+            //todo test 0?
+            double thresholdScore = weightedEdges.get(minimumConnectionCount-1).weight;
+            currentThreshold = thresholdScore;
+            for (int i = minimumConnectionCount; i < weightedEdges.size(); i++) {
+                double weight = weightedEdges.get(i).weight;
+                if (weight>currentThreshold){
+                    currentThreshold = weight;
+                    break;
+                }
+
+            }
+            if (currentThreshold==thresholdScore) currentThreshold = 0;
+//            currentThreshold = weightedEdges.get(this.minimumConnectionCount).weight;
         }
 
         if(currentThreshold < this.basicThreshold) {
@@ -78,15 +125,20 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
             }
 
             Arrays.sort(thresholds);
-            int pos = Math.min(this.numberOfCandidatesWithMinConnCount, thresholds.length); //changed
-            double t = pos == 0?thresholds[0]:thresholds[thresholds.length-pos];
+            int pos = Math.min(this.numberOfCandidatesWithMinConnCount, thresholds.length-1); //changed
+//            double t = pos == 0?thresholds[0]:thresholds[thresholds.length-pos];
+            //changed reverse order??
+            double t = pos == 0?thresholds[thresholds.length-1]:thresholds[pos-1];
             if(t < this.basicThreshold) {
-                t = this.basicThreshold;
+                throw new RuntimeException("individual edge threshold must not be smaller than overall threshold");
             }
-
+//todo rather really look at the number of edges (may be less)
             for(int j = left; j <= right; ++j) {
                 double current_t = graph.getEdgeThreshold(j);
-                if(current_t != t) {
+                //todo check!! change to current_t>t ?
+                //todo bug?!?! this may lead to 0 similar candidates getting a positive score. in principle it also should not be possible that current_t<t
+                if(current_t > t) {
+//                if(current_t != t) {
                     double diff = t - current_t;
                     int[] connections1 = graph.getLogWeightConnections(j);
 
@@ -121,7 +173,7 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
                     connectionsList[i].add(j);
                     connectionsList[j].add(i);
                 } else if (max < 0d) {
-                    System.err.println("Edge has a negative weight");
+                    throw new RuntimeException("Edge has a negative weight");
                 }
             }
         }
