@@ -6,6 +6,8 @@ import de.unijena.bioinf.GibbsSampling.model.scorer.ReactionScorer;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -14,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
+    private static final Logger LOG = LoggerFactory.getLogger(GibbsMFCorrectionNetwork.class);
     public static final boolean DEBUG = false;
     public static final int DEFAULT_CORRELATION_STEPSIZE = 10;
     private static final boolean OUTPUT_SAMPLE_PROBABILITY = false;
@@ -248,7 +251,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
             if (DEBUG && !changed) System.out.println("nothing changed in step "+i);
 
             if((i % step == 0 && i>0) || i == (burnIn+maxSteps-1)) {
-                System.out.println("step "+((double)(((i+1)*100/(maxSteps+burnIn))))+"%");
+                LOG.info("step "+((double)(((i+1)*100/(maxSteps+burnIn))))+"%");
             }
         }
 
@@ -626,24 +629,13 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         int left = graph.getPeakLeftBoundary(compoundIdx);
         int right = graph.getPeakRightBoundary(compoundIdx);
         Scored<C>[] scoredCandidates = new Scored[right-left+1];
-//        for (int i = left; i <= right; i++) {
-//             int[] conns = graph.getConnections(i);
-//             double score = graph.getCandidateScore(i);
-//            for (int c : conns) {
-//                //todo add or multiply????????
-//                score += graph.getLogWeight(c, i)+graph.getCandidateScore(c);
-//            }
-//            scoredCandidates[i-left] = new Scored(graph.getPossibleFormulas1D(i).getCandidate(), score);
-//        }
-
 
         double[] scores = new double[right-left+1];
         for (int i = left; i <= right; i++) {
             int[] conns = graph.getConnections(i);
             double score = graph.getCandidateScore(i);
             for (int c : conns) {
-                //todo add or multiply????????
-                score += graph.getLogWeight(c, i)+graph.getCandidateScore(c);
+                score += graph.getLogWeight(c, i)*Math.exp(graph.getCandidateScore(c));
             }
             scores[i-left] = score;
         }
@@ -665,7 +657,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
 
 
         for (int i = left; i <= right; i++) {
-            scoredCandidates[i-left] = new Scored(graph.getPossibleFormulas1D(i).getCandidate(), scores[i-left]);
+            scoredCandidates[i-left] = new Scored(graph.getPossibleFormulas1D(i).getCandidate(), scores[i-left]/sum);
         }
 
         Arrays.sort(scoredCandidates, Scored.<C>desc());

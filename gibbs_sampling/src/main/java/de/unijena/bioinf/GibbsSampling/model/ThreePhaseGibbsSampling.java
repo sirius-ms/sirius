@@ -2,24 +2,25 @@ package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 /**
  * compute Gibbs Sampling first with good quality spectra. Then, insert other ones and compute again.
  */
 public class ThreePhaseGibbsSampling {
+    private static final Logger LOG = LoggerFactory.getLogger(ThreePhaseGibbsSampling.class);
     private String[] ids;
     private FragmentsCandidate[][] possibleFormulas;
     private NodeScorer<FragmentsCandidate>[] nodeScorers;
@@ -107,7 +108,7 @@ public class ThreePhaseGibbsSampling {
 
 
 
-        System.out.println("running first round with "+firstRoundIds.length+" compounds.");
+        LOG.info("run Zodiac on good quality compounds only. Use "+firstRoundIds.length+" of "+ids.length+" compounds.");
         gibbsParallel = new GibbsParallel<>(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, workersCount, repetitions);
         graph = gibbsParallel.getGraph();
     }
@@ -143,25 +144,31 @@ public class ThreePhaseGibbsSampling {
 
 
         //2. now score 'all' candidates for each compound (rest of network is fixed on best only)
-        //todo how to hack this?
-
+        LOG.info("rerank candidates.");
         //extract top hits;
-        Scored<FragmentsCandidate>[][] intermediateResults = gibbsParallel.getChosenFormulasBySampling();
+        Scored<FragmentsCandidate>[][] intermediateResults = results1.clone();
         Scored<FragmentsCandidate>[][] scoredFixedCandidates = new Scored[firstRoundIds.length][];
-        for (int i = 0; i < intermediateResults.length; i++) {
-            //todo change to use all candidates with their fixed computed probabilities. and not only best hit
-            Scored<FragmentsCandidate> bestHit = intermediateResults[i][0];
-            scoredFixedCandidates[i] = new Scored[]{new Scored(bestHit.getCandidate(), 0d)};
-        }
+
+
+        Graph<FragmentsCandidate> graphWithFixedProbabilities = gibbsParallel.getGraph().replaceScoredCandidates(firstRoundIds, transformToLogScores(results1));
+        graphWithFixedProbabilities = graphWithFixedProbabilities.removeUnlikelyCandidates(0d);
+
+
+
+
+
         //now replace each step one compound with all candidates and score them (not super efficient, but should play no big role compared to rest)
         for (int i = 0; i < firstRoundCompoundsIdx.size(); i++) {
             int firstRoundIdx = firstRoundCompoundsIdx.get(i);
             FragmentsCandidate[] allCandidates = possibleFormulas[firstRoundIdx];
             Scored<FragmentsCandidate>[] currentScoredCandidates = graph.getPossibleFormulas(i);
 
-            if (allCandidates.length==currentScoredCandidates.length) continue;
+            //changed comment out to test.
+//            if (allCandidates.length==currentScoredCandidates.length) continue;
 
             Scored<FragmentsCandidate>[] allScoredCandidates = new Scored[allCandidates.length];
+
+
 
             //compute new node scores for all compound candidates
             for (FragmentsCandidate candidate : allCandidates) {
@@ -176,31 +183,46 @@ public class ThreePhaseGibbsSampling {
             }
 
 
+            Graph<FragmentsCandidate> oneCompoundOfInterestGraph = graphWithFixedProbabilities.extractOneCompound(i, allScoredCandidates);
 
-            Scored<FragmentsCandidate>[] best = scoredFixedCandidates[i];
-            scoredFixedCandidates[i] = allScoredCandidates;
 
-//          todo   ...don't  init all edges
-            Graph<FragmentsCandidate> graph = new Graph<FragmentsCandidate>(firstRoundIds, scoredFixedCandidates);
-            graph.init(edgeScorers, edgeFilter, workersCount);
+            compareCompoundInteractions(graphWithFixedProbabilities, oneCompoundOfInterestGraph, i);
+//            compareCompoundInteractions(gibbsParallel.getGraph(), oneCompoundOfInterestGraph, i);
+//            compareCompoundCandidateScores(gibbsParallel.getGraph(), oneCompoundOfInterestGraph, i);
 
 
             //todo is this working? (log odds vs log probs -> recalculate)
-            Scored<FragmentsCandidate>[] scoredCandidates = GibbsMFCorrectionNetwork.computeFromSnapshot(graph, i);
+            Scored<FragmentsCandidate>[] scoredCandidates = GibbsMFCorrectionNetwork.computeFromSnapshot(oneCompoundOfInterestGraph, i);
+
+
+            //test: compare sampling and not sampling
+            boolean error = false;
+            for (int j = 0; j < results1[i].length; j++) {
+                Scored<FragmentsCandidate> r1 = results1[i][j];
+                Scored<FragmentsCandidate> r2 = scoredCandidates[j];
+                double errorRate = Math.abs(r1.getScore()-r2.getScore()) / Math.max(r1.getScore(), 1e-3);
+                if (errorRate>1e-1 && Math.abs(r1.getScore()-r2.getScore())>0.03){
+                    error = true;
+                }
+            }
+            //todo for whatever reason errors improve if burn-in and iterations are increased!?!?!
+            if (error){
+                //maybe it is still correct
+                //this does not need to produce exactly same results.
+                System.out.println("big deviation");
+                scoredCandidates = GibbsMFCorrectionNetwork.computeFromSnapshot(oneCompoundOfInterestGraph, i);
+            } else {
+                System.out.println("great");
+            }
 
             //update results with all candidates for compound i;
             results1[i] = scoredCandidates;
 
-            scoredFixedCandidates[i] = best;
-
-//            Scored<FragmentsCandidate>[] scoredCandidiates = GibbsMFCorrectionNetwork.computeFromSnapshot(graph, i);
-//            GibbsMFCorrectionNetwork<FragmentsCandidate> gibbs = new GibbsMFCorrectionNetwork<FragmentsCandidate>(firstRoundIds, fixedCandidates, nodeScorers, edgeScorers, edgeFilter, workersCount);
-//            gibbs.iteration(Math.min(1000, maxSteps));
-
-
-
 
         }
+
+
+
 
 
 
@@ -211,7 +233,7 @@ public class ThreePhaseGibbsSampling {
         }
 
 
-
+        LOG.info("score low quality compounds.");
         FragmentsCandidate[][] candidatesNewRound = combineNewAndOldAndSetFixedProbabilities(results1, firstRoundCompoundsIdx);
         //todo this stupid thing creates a complete new graph.
         gibbsParallel = new GibbsParallel<>(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, new TIntHashSet(firstRoundCompoundsIdx), workersCount, repetitions);
@@ -230,6 +252,108 @@ public class ThreePhaseGibbsSampling {
 
 
     }
+
+    private void compareCompoundCandidateScores(Graph<FragmentsCandidate> graph1, Graph<FragmentsCandidate> graph2, int compoundIndex) {
+        Scored<FragmentsCandidate>[] scoredCandidates = graph1.getPossibleFormulas(compoundIndex);
+        Scored<FragmentsCandidate>[] scoredCandidates2 = graph2.getPossibleFormulas(compoundIndex);
+
+
+
+        for (int i = 0; i < scoredCandidates.length; i++) {
+            Scored<FragmentsCandidate> scoredCandidate = scoredCandidates[i];
+            boolean found = false;
+            for (int j = 0; j < scoredCandidates2.length; j++) {
+                Scored<FragmentsCandidate> scoredCandidate2 = scoredCandidates2[j];
+                if (scoredCandidate.getCandidate().equals(scoredCandidate2.getCandidate())){
+                    if (found){
+                        throw new RuntimeException("candidate is contained at least twice.");
+                    }
+                    found = true;
+
+                    //compare
+                    if (Math.abs(scoredCandidate.getScore()-scoredCandidate2.getScore())>1e-12){
+                        throw new RuntimeException("candidate scores differ.\n"+scoredCandidate.getCandidate()+
+                                "\n"+scoredCandidate.getCandidate().getFormula()+"\n"+scoredCandidate2.getCandidate()
+                        +"\nscore: "+scoredCandidate.getScore()+" vs "+scoredCandidate2.getScore());
+                    }
+
+                }
+
+            }
+            if (!found){
+                throw new RuntimeException("candidate not found");
+            }
+        }
+    }
+
+    private void compareCompoundInteractions(Graph<FragmentsCandidate> graph1, Graph<FragmentsCandidate> graph2, int compoundIndex) {
+        Scored<FragmentsCandidate>[] scoredCandidates = graph1.getPossibleFormulas(compoundIndex);
+        Scored<FragmentsCandidate>[] scoredCandidates2 = graph2.getPossibleFormulas(compoundIndex);
+
+
+
+        for (int i = 0; i < scoredCandidates.length; i++) {
+            Scored<FragmentsCandidate> scoredCandidate = scoredCandidates[i];
+            boolean found = false;
+            for (int j = 0; j < scoredCandidates2.length; j++) {
+                Scored<FragmentsCandidate> scoredCandidate2 = scoredCandidates2[j];
+                if (scoredCandidate.getCandidate().equals(scoredCandidate2.getCandidate())){
+                    if (found){
+                        throw new RuntimeException("candidate is contained at least twice.");
+                    }
+                    found = true;
+
+                    //compare
+                    int candIdx = graph1.getAbsoluteFormulaIdx(compoundIndex, i);
+                    int candIdx2 = graph2.getAbsoluteFormulaIdx(compoundIndex, j);
+
+                    int[] connections = graph1.getConnections(candIdx).clone();
+                    int[] connections2 = graph2.getConnections(candIdx2).clone();
+
+                    Arrays.sort(connections);
+                    Arrays.sort(connections2);
+
+                    if (connections.length!=connections2.length){
+                        throw new RuntimeException("different number of connections.");
+                    }
+
+                    for (int k = 0; k < connections.length; k++) {
+                        int c = connections[k];
+                        int c2 = connections2[k];
+
+                        if (!graph1.getPossibleFormulas1D(c).getCandidate().equals(graph2.getPossibleFormulas1D(c2).getCandidate())){
+                            throw new RuntimeException("connected candidates differ");
+                        }
+                        if (graph1.getLogWeight(c, candIdx)!=graph2.getLogWeight(c2, candIdx2)){
+                            throw new RuntimeException("edge scores differ");
+                        }
+
+                    }
+
+                }
+
+            }
+            if (!found){
+                throw new RuntimeException("candidate not found");
+            }
+        }
+
+
+    }
+
+    private Scored<FragmentsCandidate>[][] transformToLogScores(Scored<FragmentsCandidate>[][] scoredCandidates){
+        Scored<FragmentsCandidate>[][] logC = new Scored[scoredCandidates.length][];
+        for (int i = 0; i < scoredCandidates.length; i++) {
+            Scored<FragmentsCandidate>[] scoreds = scoredCandidates[i];
+            Scored<FragmentsCandidate>[] s2 = new Scored[scoreds.length];
+            for (int j = 0; j < scoreds.length; j++) {
+                s2[j] = new Scored<>(scoreds[j].getCandidate(), Math.log(scoreds[j].getScore()));
+            }
+            logC[i] = s2;
+        }
+        return logC;
+    }
+
 
     private Scored<FragmentsCandidate>[][] combineResults(Scored<FragmentsCandidate>[][] results1, String[] resultIds1, Scored<FragmentsCandidate>[][] results2, String[] resultIds2) {
         TObjectIntMap<String> idMap = new TObjectIntHashMap<>();
