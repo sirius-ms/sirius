@@ -2,6 +2,7 @@ package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ExponentialDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
@@ -10,10 +11,13 @@ import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TDoubleProcedure;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TDoubleHashSet;
 import gnu.trove.set.hash.TIntHashSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -24,6 +28,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Graph<C extends Candidate<?>> {
+    private static final Logger LOG = LoggerFactory.getLogger(Graph.class);
     private static final boolean THIN_OUT_GRAPH = false;
     final TIntIntHashMap[] indexMap;
     final TDoubleArrayList[] weights;
@@ -53,6 +58,19 @@ public class Graph<C extends Candidate<?>> {
         }
 
         this.assertInput();
+    }
+
+    private Graph(String[] ids, Scored<C>[][] possibleFormulas, TIntIntHashMap[] indexMap, TDoubleArrayList[] weights, int[][] connections, double[] edgeThresholds, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter) {
+        this.ids = ids;
+        this.possibleFormulas = possibleFormulas;
+        this.possibleFormulas1D = this.setUp(possibleFormulas);
+        this.size = this.possibleFormulas1D.length;
+        this.indexMap = indexMap;
+        this.weights = weights;
+        this.edgeThresholds = edgeThresholds;
+        this.connections = connections;
+        this.edgeScorers = edgeScorers;
+        this.edgeFilter = edgeFilter;
     }
 
     private void assertInput() {
@@ -213,7 +231,7 @@ public class Graph<C extends Candidate<?>> {
     }
 
     private Scored<C>[] setUp(Scored<C>[][] possibleFormulas) {
-        System.out.println("initialize");
+        LOG.info("initialize");
         int length = 0;
 
         for(int i = 0; i < possibleFormulas.length; ++i) {
@@ -252,7 +270,7 @@ public class Graph<C extends Candidate<?>> {
         HighQualityRandom random = new HighQualityRandom();
 
         if (GibbsMFCorrectionNetwork.DEBUG){
-            System.out.println("setting connections in: "+(System.currentTimeMillis()-time)+" ms");
+            LOG.info("setting connections in: "+(System.currentTimeMillis()-time)+" ms");
             TDoubleArrayList someScores = new TDoubleArrayList();
 
             for(int i = 0; i < 1000; ++i) {
@@ -281,7 +299,7 @@ public class Graph<C extends Candidate<?>> {
             sum += connection.length;
         }
 
-        System.out.println("number of connections " + sum / 2);
+        LOG.info("number of connections " + sum / 2);
 
         if (GibbsMFCorrectionNetwork.DEBUG) {
             final TDoubleArrayList samples = new TDoubleArrayList();
@@ -413,7 +431,7 @@ public class Graph<C extends Candidate<?>> {
         final Graph final_graph = this;
         long time = System.currentTimeMillis();
 
-        System.out.println("start computing edges");
+        LOG.info("start computing edges");
         int step = Math.max(this.getSize()/20, 1);
 
         AtomicInteger counter = new AtomicInteger(0);
@@ -446,7 +464,7 @@ public class Graph<C extends Candidate<?>> {
                     //progess
                     int progress = counter.incrementAndGet();
                     if((progress-1) % step == 0 || (progress)==(size)) {
-                        System.out.println((100*(progress)/size)+"%");
+                        LOG.info((100*(progress)/size)+"%");
                     }
                 }
             }));
@@ -457,9 +475,9 @@ public class Graph<C extends Candidate<?>> {
 
         if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("computing edges in ms: "+(System.currentTimeMillis()-time));
 
-        for (EdgeScorer edgeScorer : edgeScorers) {
-            edgeScorer.clean();
-        }
+//        for (EdgeScorer edgeScorer : edgeScorers) {
+//            edgeScorer.clean(); //changed don't clean. we need this information later on
+//        }
 
     }
 
@@ -820,4 +838,284 @@ public class Graph<C extends Candidate<?>> {
         }
         return false;
     }
+
+
+    /**
+     * ... this method only extracts connections comming from the compound of interest
+     * @param compoundIndex compoundIndex of compound
+     * @param replacementCandidates is only allowed to append new candidates. already known canidates must be kept as prefix in same ordering. The node scores may change.
+     * @return
+     */
+    public Graph<C> extractOneCompound(int compoundIndex, Scored<C>[] replacementCandidates){
+        //assert
+        final Scored<C>[] oldCandidates = getPossibleFormulas(compoundIndex);
+        if (oldCandidates.length==0) throw new RuntimeException("graph does not contain any compound candidates to replace"); //todo necessary that edge thresholds are already computed!?!?
+        boolean error = false;
+        Scored<C>[] replacementCandidatesResorted = new Scored[replacementCandidates.length];
+        if (oldCandidates.length>replacementCandidates.length) error = true;
+        else {
+            int newCandidateIndex = oldCandidates.length;
+            TObjectIntHashMap<C> indexMap = toIndexMap(oldCandidates);
+            for (int j = 0; j < replacementCandidates.length; j++) {
+                int idx = indexMap.get(replacementCandidates[j].getCandidate());
+                if (idx<0){
+                    if (newCandidateIndex==replacementCandidates.length){
+                        error = true;
+                        break;
+                    }
+                    replacementCandidatesResorted[newCandidateIndex++] = replacementCandidates[j];
+                } else {
+                    replacementCandidatesResorted[idx] = replacementCandidates[j];
+                }
+            }
+        }
+        if (error) throw new RuntimeException("replaced candidates must contain all previous candidates");
+
+
+
+        int oldLength = oldCandidates.length;
+        int absStartPos = getPeakLeftBoundary(compoundIndex);
+        int rightPos = getPeakRightBoundary(compoundIndex);
+        int newLength = replacementCandidatesResorted.length;
+        int newSize = getSize()-oldLength+newLength;
+        TIntIntHashMap[] indexMap2 = new TIntIntHashMap[newSize];
+        TDoubleArrayList[] weights2 = new TDoubleArrayList[newSize];
+        double[] edgeThresholds2 = new double[newSize];
+        int[][] connections2 = new int[newSize][];
+
+
+        for(int i = 0; i < indexMap2.length; ++i) {
+            indexMap2[i] = new TIntIntHashMap(newSize / 100, 0.75F, -1, -1);
+            weights2[i] = new TDoubleArrayList(newSize / 100);
+        }
+
+
+
+        //compute edges of new candidates
+        double specificLogThreshold = getEdgeThreshold(absStartPos);
+        if (GibbsMFCorrectionNetwork.DEBUG){
+            int right = getPeakRightBoundary(compoundIndex);
+            for (int i = absStartPos; i <= right; i++) {
+                if (specificLogThreshold!=getEdgeThreshold(i)) throw new RuntimeException("edge threshold for candidates of one compound must be the same.");
+            }
+        }
+        for (int i = oldLength; i < newLength; i++) {
+//            int pos = absStartPos+i;
+            final C candidate = replacementCandidatesResorted[i].getCandidate();
+            final int candidateNewIdx = absStartPos + i;
+            TIntArrayList newConns = new TIntArrayList();
+            for(int j = 0; j < Graph.this.getSize(); ++j) {
+                int newIdx = oldToNewIndex(j, absStartPos, oldLength, newLength);
+                //same compound index = no edge possible
+                if(compoundIndex != Graph.this.getPeakIdx(j)) {
+                    C candidate2 = Graph.this.getPossibleFormulas1D(j).getCandidate();
+                    double score = 0.0D;
+
+                    for(int k = 0; k < edgeScorers.length; ++k) {
+                        EdgeScorer edgeScorer = edgeScorers[k];
+                        score += edgeScorer.score(candidate, candidate2);
+                    }
+
+                    final double currentThreshold = Math.max(specificLogThreshold, getEdgeThreshold(j));
+                    edgeThresholds2[candidateNewIdx] = currentThreshold;
+                    final double weight = currentThreshold - score;
+                    if (weight>0){
+                        //todo correct direction?
+                        indexMap2[candidateNewIdx].put(newIdx, weights2[candidateNewIdx].size());
+                        weights2[candidateNewIdx].add(weight);
+
+                        newConns.add(newIdx);
+                    }
+
+
+                }
+            }
+
+            connections2[candidateNewIdx] = newConns.toArray();
+
+
+        }
+
+        //add known edges
+        for (int i = 0; i <= rightPos; i++) {
+            //new idx equals old idx i
+            int[] conns = getConnections(i);
+            int[] newConns = new int[conns.length];
+            edgeThresholds2[i] = edgeThresholds[i];
+            for (int j = 0; j < conns.length; j++) {
+                final int c = conns[j];
+                int newIdx = oldToNewIndex(c, absStartPos, oldLength, newLength);
+                double w = getLogWeight(i, c);
+                indexMap2[i].put(newIdx, weights2[i].size());
+                weights2[i].add(w);
+                newConns[j] = newIdx;
+            }
+
+            connections2[i] = newConns;
+
+        }
+        for (int i = rightPos+1; i < getSize(); i++) {
+            int newI = oldToNewIndex(i, absStartPos, oldLength, newLength);
+            int[] conns = getConnections(i);
+            int[] newConns = new int[conns.length];
+            edgeThresholds2[newI] = edgeThresholds[i];
+            for (int j = 0; j < conns.length; j++) {
+                final int c = conns[j];
+                int newIdx = oldToNewIndex(c, absStartPos, oldLength, newLength);
+                double w = getLogWeight(i, c);
+                indexMap2[newI].put(newIdx, weights2[newI].size());
+                weights2[newI].add(w);
+                newConns[j] = newIdx;
+            }
+
+            connections2[newI] = newConns;
+        }
+
+        for (int i = 0; i < connections2.length; i++) {
+            if (connections2[i]==null){
+                System.out.println("is null");
+            }
+
+        }
+
+        Scored<C>[][] possibleFormulas2 = new Scored[possibleFormulas.length][];
+        for (int i = 0; i < possibleFormulas.length; i++) {
+            if (i==compoundIndex){
+                possibleFormulas2[i] = replacementCandidatesResorted;
+            } else {
+                possibleFormulas2[i] = possibleFormulas[i].clone();
+            }
+
+        }
+
+        return new Graph<C>(this.ids, possibleFormulas2, indexMap2, weights2, connections2, edgeThresholds2, edgeScorers, edgeFilter);
+
+    }
+
+    private int oldToNewIndex(int oldIdx, int replacedCompoundStartIdx, int oldNumberOfCandidates, int newNumberOfCandidates){
+        if (oldIdx<=replacedCompoundStartIdx+oldNumberOfCandidates-1) return oldIdx;
+        return oldIdx-oldNumberOfCandidates+newNumberOfCandidates;
+    }
+
+    /**
+     * this function replaces the node scores of all candidates and returns a new graph.
+     * @param ids
+     * @param possibleFormulas
+     * @return
+     */
+    public Graph<C> replaceScoredCandidates(String[] ids, Scored<C>[][] possibleFormulas){
+        //assert same compounds and candidates:
+        if (ids.length!=this.ids.length || possibleFormulas.length!=this.possibleFormulas.length){
+            throw new RuntimeException("number of compounds differs.");
+        }
+        for (int i = 0; i < ids.length; i++) {
+            if (!ids[i].equals(this.ids[i])) throw new RuntimeException("new ids differ from old ones.");
+        }
+
+        Scored<C>[][] possibleFormulasSorted = new Scored[possibleFormulas.length][];
+        for (int i = 0; i < possibleFormulas.length; i++) {
+            Scored<C>[] candidates1 = this.possibleFormulas[i];
+            Scored<C>[] candidates2 = possibleFormulas[i];
+            Scored<C>[] candidates2Resorted = new Scored[candidates2.length];
+            if (candidates1.length!=candidates2.length) throw new RuntimeException("number of compound candidates differ from old ones.");
+            TObjectIntHashMap<C> indexMap = toIndexMap(candidates2);
+            for (int j = 0; j < candidates1.length; j++) {
+                int idx = indexMap.get(candidates1[j].getCandidate());
+                if (idx<0) throw new RuntimeException("compound candidates differ from old ones.");
+                candidates2Resorted[j] = candidates2[idx];
+            }
+            possibleFormulasSorted[i] = candidates2Resorted;
+        }
+
+
+        return new Graph<C>(this.ids, possibleFormulasSorted, indexMap.clone(), weights, connections.clone(), edgeThresholds, edgeScorers, edgeFilter);
+
+    }
+
+    private Set<C> toHashSet(Scored<C>[] array) {
+        Set<C> set = new HashSet<>(array.length);
+        for (Scored<C> cScored : array) {
+            set.add(cScored.getCandidate());
+        }
+        return set;
+    }
+
+    private TObjectIntHashMap<C> toIndexMap(Scored<C>[] array) {
+        TObjectIntHashMap<C> map = new TObjectIntHashMap<>(array.length, 0.7f, -1);
+        for (int i = 0; i < array.length; i++) {
+            map.put(array[i].getCandidate(),i);
+
+        }
+        return map;
+    }
+
+
+    /**
+     * removes all candidates below the probability threshold. matching values are removed.
+     * @param probabilityThreshold this is a probability not a log probability!!!
+     * @return
+     */
+    public Graph<C> removeUnlikelyCandidates(double probabilityThreshold){
+        final double logProb = Math.log(probabilityThreshold) ;
+        TIntArrayList removableCandidates = new TIntArrayList();
+        TIntIntHashMap oldToNewIndex  = new TIntIntHashMap(possibleFormulas1D.length, 0.7f, -1, -1);
+        int newIdx = 0;
+        for (int i = 0; i < possibleFormulas1D.length; i++) {
+            if (possibleFormulas1D[i].getScore()<=logProb) removableCandidates.add(i);
+            else oldToNewIndex.put(i, newIdx++);
+        }
+
+
+        int newSize = getSize()-removableCandidates.size();
+        TIntIntHashMap[] indexMap2 = new TIntIntHashMap[newSize];
+        TDoubleArrayList[] weights2 = new TDoubleArrayList[newSize];
+        double[] edgeThresholds2 = new double[newSize];
+        int[][] connections2 = new int[newSize][];
+
+        for(int i = 0; i < indexMap2.length; ++i) {
+            indexMap2[i] = new TIntIntHashMap(newSize / 100, 0.75F, -1, -1);
+            weights2[i] = new TDoubleArrayList(newSize / 100);
+        }
+
+
+        for (int i = 0; i < getSize(); i++) {
+            if (!oldToNewIndex.containsKey(i)) continue;
+            newIdx = oldToNewIndex.get(i);
+            edgeThresholds2[newIdx] = edgeThresholds[i];
+            int[] conns = getConnections(i);
+            TIntArrayList newConns = new TIntArrayList();
+            for (int j = 0; j < conns.length; j++) {
+                int c = conns[j];
+                int newC = oldToNewIndex.get(c);
+                if (newC<0) continue;
+
+                newConns.add(newC);
+
+                double weight = getLogWeight(i, c);
+
+                indexMap2[newIdx].put(j, weights2[newIdx].size());
+                weights2[newIdx].add(weight);
+            }
+            connections2[newIdx] = newConns.toArray();
+        }
+
+        Scored<C>[][] possibleFormulas2 = new Scored[possibleFormulas.length][];
+        for (int i = 0; i < possibleFormulas.length; i++) {
+            Scored<C>[] candidates = possibleFormulas[i];
+            List<Scored<C>> newCandidates = new ArrayList<>();
+            for (int j = 0; j < candidates.length; j++) {
+                int absIdx = getAbsoluteFormulaIdx(i, j);
+                newIdx = oldToNewIndex.get(absIdx);
+                if (newIdx<0) continue;
+                final Scored<C> candidate = candidates[j];
+                newCandidates.add(candidate);
+            }
+            possibleFormulas2[i] = newCandidates.toArray(new Scored[0]);
+        }
+
+        return new Graph<C>(this.ids, possibleFormulas2, indexMap2, weights2, connections2, edgeThresholds2, edgeScorers, edgeFilter);
+
+
+    }
+
 }
