@@ -217,7 +217,7 @@ public class ThreePhaseGibbsSampling {
 
             //update results with all candidates for compound i;
             results1[i] = scoredCandidates;
-
+            //todo don't use new scores as the 'true' probabilities but only to spot missed candidates
 
         }
 
@@ -234,6 +234,7 @@ public class ThreePhaseGibbsSampling {
 
 
         LOG.info("score low quality compounds.");
+        //todo rather sample everything and just use results of low quality compounds? may there arise problems? in principle should not as we still sample all compounds (even 'fixed')
         FragmentsCandidate[][] candidatesNewRound = combineNewAndOldAndSetFixedProbabilities(results1, firstRoundCompoundsIdx);
         //todo this stupid thing creates a complete new graph.
         gibbsParallel = new GibbsParallel<>(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, new TIntHashSet(firstRoundCompoundsIdx), workersCount, repetitions);
