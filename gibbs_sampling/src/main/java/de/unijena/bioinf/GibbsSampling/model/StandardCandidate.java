@@ -77,7 +77,31 @@ public class StandardCandidate<T> extends Candidate<T> implements HasFormula,Has
         return ionType;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        StandardCandidate<?> that = (StandardCandidate<?>) o;
+
+        if (isCorrect != that.isCorrect) return false;
+        if (inTrainingSet != that.inTrainingSet) return false;
+        if (inEvaluationSet != that.inEvaluationSet) return false;
+        if (!formula.equals(that.formula)) return false;
+        if (!ionType.equals(that.ionType)) return false;
+        return hit != null ? hit.equals(that.hit) : that.hit == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = formula.hashCode();
+        result = 31 * result + ionType.hashCode();
+        result = 31 * result + (isCorrect ? 1 : 0);
+        result = 31 * result + (inTrainingSet ? 1 : 0);
+        result = 31 * result + (inEvaluationSet ? 1 : 0);
+        result = 31 * result + (hit != null ? hit.hashCode() : 0);
+        return result;
+    }
 }
 
 
