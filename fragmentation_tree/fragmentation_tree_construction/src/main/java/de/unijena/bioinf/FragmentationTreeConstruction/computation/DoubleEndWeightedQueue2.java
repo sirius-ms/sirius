@@ -1,6 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import com.google.common.collect.TreeMultimap;
+import gnu.trove.procedure.TObjectProcedure;
 
 import java.util.*;
 
@@ -13,6 +14,7 @@ public class DoubleEndWeightedQueue2<T> implements Iterable<T> {
     protected int capacity;
     protected int size;
     protected double lowerbound;
+    protected TObjectProcedure<T> callback;
 
     public DoubleEndWeightedQueue2(int capacity, Comparator<T> comp) {
         this.backingQueue = TreeMultimap.create(new Comparator<Double>() {
@@ -26,7 +28,16 @@ public class DoubleEndWeightedQueue2<T> implements Iterable<T> {
         this.capacity = capacity;
     }
 
+    public TObjectProcedure<T> getCallback() {
+        return callback;
+    }
+
+    public void setCallback(TObjectProcedure<T> callback) {
+        this.callback = callback;
+    }
+
     public void replace(T value, double score) {
+        if (callback!=null) callback.execute(value);
         backingQueue.remove(score, value);
         backingQueue.put(score, value);
     }
@@ -44,7 +55,9 @@ public class DoubleEndWeightedQueue2<T> implements Iterable<T> {
                     Map.Entry<Double, Collection<T>> entry = backingQueue.asMap().firstEntry();
                     final int entrySize = entry.getValue().size();
                     if ((size - entrySize) >= capacity ) {
-                        backingQueue.asMap().pollFirstEntry();
+                        Map.Entry<Double, Collection<T>> e =  backingQueue.asMap().pollFirstEntry();
+                        if (callback!=null)
+                            for (T t : e.getValue()) callback.execute(t);
                         size -= entrySize;
                     } else {
                         break;
@@ -69,6 +82,9 @@ public class DoubleEndWeightedQueue2<T> implements Iterable<T> {
     public void clear() {
         size=0;
         lowerbound = Double.NEGATIVE_INFINITY;
+        if (callback!=null)
+            for (T t : backingQueue.values())
+                callback.execute(t);
         backingQueue.clear();
     }
 
