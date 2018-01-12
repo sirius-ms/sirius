@@ -36,8 +36,8 @@
       },
       {
         "$name": "scoring.NormalDistributedIntensityScorer",
-        "absolute_error": 0.005,
-        "relative_error": 0.1
+        "absolute_error": 0.02,
+        "relative_error": 0.08
       },
       {
         "$name": "scoring.MissingPeakScorer",
@@ -163,6 +163,9 @@
         "prior": {
           "$name": "SupportVectorMolecularFormulaScorer"
         }
+      },
+      {
+        "$name": "IsotopeMs1Scorer"
       }
     ],
     "recalibrationMethod": {

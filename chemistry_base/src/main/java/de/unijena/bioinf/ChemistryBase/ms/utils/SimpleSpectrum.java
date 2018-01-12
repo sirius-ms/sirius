@@ -23,6 +23,10 @@ import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 
 import java.util.Arrays;
 
+/**
+ * Simple implementation of an immutable Mass Spectrum.
+ * Peaks are stored ordered by mass in arrays.
+ */
 public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectrum{
 
 	protected final int hash;

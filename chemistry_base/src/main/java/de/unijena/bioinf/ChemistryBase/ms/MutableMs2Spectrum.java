@@ -30,6 +30,7 @@ public class MutableMs2Spectrum extends SimpleMutableSpectrum implements Ms2Spec
     private double totalIoncount=0d;
     private Ionization ionization=null;
     private int msLevel=0;
+    private int scanNumber; // an arbitrary ID that is unique within the experiment object
 
     public MutableMs2Spectrum() {
     }
@@ -50,7 +51,17 @@ public class MutableMs2Spectrum extends SimpleMutableSpectrum implements Ms2Spec
             totalIoncount = ms2spec.getTotalIonCount();
             ionization = ms2spec.getIonization();
             msLevel = ms2spec.getMsLevel();
+            if (spec instanceof MutableMs2Spectrum)
+                this.scanNumber = ((MutableMs2Spectrum) spec).scanNumber;
         }
+    }
+
+    public int getScanNumber() {
+        return scanNumber;
+    }
+
+    public void setScanNumber(int scanNumber) {
+        this.scanNumber = scanNumber;
     }
 
     @Override

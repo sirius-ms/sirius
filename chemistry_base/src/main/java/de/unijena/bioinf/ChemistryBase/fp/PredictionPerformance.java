@@ -44,6 +44,21 @@ public final class PredictionPerformance {
             return this;
         }
 
+        public Modify update(Modify m) {
+            tp += m.tp;
+            fp += m.fp;
+            tn += m.tn;
+            fn += m.fn;
+            return this;
+        }
+        public Modify update(PredictionPerformance m) {
+            tp += m.tp;
+            fp += m.fp;
+            tn += m.tn;
+            fn += m.fn;
+            return this;
+        }
+
         public Modify update(boolean[] truths, boolean[] predictions) {
             for (int k=0; k < truths.length; ++k) update(truths[k], predictions[k]);
             return this;
@@ -56,6 +71,12 @@ public final class PredictionPerformance {
 
         public Modify update(boolean truth, boolean predicted) {
             return update(truth,predicted,1d);
+        }
+
+        public Modify updateProbabilistic(boolean truth, double predicted) {
+            update(truth,true,predicted);
+            update(truth,false,1d-predicted);
+            return this;
         }
 
         public Modify update(boolean truth, boolean predicted, double weight) {
@@ -122,12 +143,12 @@ public final class PredictionPerformance {
 
     private double tp, fp, tn, fn;
     private double pseudoCount;
-    private double f, precision, recall, accuracy, specitivity;
+    private double f, precision, recall, accuracy, specitivity, mcc;
     private final boolean allowRelabeling;
 
     @Override
     public String toString() {
-        return String.format(Locale.US, "tp=%.1f\tfp=%.1f\ttn=%.1f\tfn=%.1f\tf1=%.4f\tprecision=%.4f\trecall=%.4f\taccuracy=%.4f", tp,fp,tn,fn,f,precision,recall,accuracy);
+        return String.format(Locale.US, "tp=%.1f\tfp=%.1f\ttn=%.1f\tfn=%.1f\tf1=%.4f\tprecision=%.4f\trecall=%.4f\tmcc=%.4f\taccuracy=%.4f", tp,fp,tn,fn,f,precision,recall, mcc, accuracy);
     }
 
     /**
@@ -139,7 +160,7 @@ public final class PredictionPerformance {
     }
 
     public Modify modify() {
-        return new Modify(tp,fp,tn,fn);
+        return new Modify(tp,fp,tn,fn, pseudoCount, allowRelabeling);
     }
 
     @Deprecated
@@ -168,6 +189,12 @@ public final class PredictionPerformance {
         for (PredictionPerformance p : ps) f1 += p.getF();
         f1 /= ps.length;
         return f1;
+    }
+    public static double averageMCC(PredictionPerformance[] ps) {
+        double mccVal=0d;
+        for (PredictionPerformance p : ps) mccVal += p.mcc;
+        mccVal /= ps.length;
+        return mccVal;
     }
 
     public static PredictionPerformance fromString(String string) {
@@ -230,6 +257,14 @@ public final class PredictionPerformance {
         return Math.min(tp+fn, tn+fp);
     }
 
+    public double getCount() {
+        if (allowRelabeling) {
+            return getSmallerClassSize();
+        } else {
+            return tp+fn+2*pseudoCount;
+        }
+    }
+
     public double getTp() {
         return tp;
     }
@@ -268,6 +303,10 @@ public final class PredictionPerformance {
         return pseudoCount;
     }
 
+    public double getMcc() {
+        return mcc;
+    }
+
     public double numberOfSamples() {
         return tp+fp+tn+fn;
     }
@@ -304,8 +343,10 @@ public final class PredictionPerformance {
         }
 
         // now calculate F score related to the smaller class
-
-        accuracy = (TP + TN) / (TP + FP + TN + FN);
+        if ((TP + FP + TN + FN)==0)
+            accuracy = 0d;
+        else
+            accuracy = (TP + TN) / (TP + FP + TN + FN);
         if (TP + FN == 0) recall = 0d;
         else recall = (TP) / (TP + FN);
         if (TN+FP == 0) specitivity = 0d;
@@ -317,6 +358,20 @@ public final class PredictionPerformance {
         } else {
             f = 0;
         }
+
+        // now calculate MCC
+        final double mccDiv = Math.sqrt((TP+FP) * (TP+FN) * (TN+FP) * (TN+FN));
+        mcc = ((TP*TN) - (FP * FN)) / (mccDiv == 0 ? 1 : mccDiv);
+
+    }
+
+    // because I need this so often...
+    public String toCsvRow() {
+        return getF() + "\t" + getRecall() + "\t" + getPrecision() + "\t" + getMcc() + "\t" + getCount() + "\t" + getTp() + "\t" + getFp() + "\t" + getTn() + "\t" + getFn() + "\n";
+    }
+
+    public static String csvHeader() {
+        return "f1\trecall\tprecision\tmcc\tcount\ttp\tp\ttn\tfn\n";
     }
 
 }

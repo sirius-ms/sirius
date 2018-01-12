@@ -37,7 +37,7 @@ public class NoiseEstimateFilter implements Preprocessor, Initializable {
     protected boolean checkOnlyNonRadicals;
 
     public DecomposerCache getCache() {
-        if (cache == null) cache = new DecomposerCache(3);
+        if (cache == null) cache = new DecomposerCache(10);
         return cache;
     }
 
