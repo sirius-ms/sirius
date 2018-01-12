@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import com.google.common.collect.Sets;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
@@ -11,10 +12,10 @@ import java.util.*;
  */
 public final class PossibleAdducts implements Iterable<PrecursorIonType> {
 
-    protected final List<PrecursorIonType> adducts;
+    protected final LinkedHashSet<PrecursorIonType> adducts;
 
     public PossibleAdducts(Collection<? extends PrecursorIonType> c) {
-        this.adducts = new ArrayList<>(c);
+        this.adducts = new LinkedHashSet<>(c);
     }
 
     public PossibleAdducts(PrecursorIonType... possibleAdducts) {
@@ -26,11 +27,15 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType> {
     }
 
     public PossibleAdducts() {
-        this.adducts = new ArrayList<>();
+        this(new LinkedHashSet<>());
     }
 
-    public List<PrecursorIonType> getAdducts() {
-        return adducts;
+    private PossibleAdducts(LinkedHashSet<PrecursorIonType> adducts) {
+        this.adducts = adducts;
+    }
+
+    public Set<PrecursorIonType> getAdducts() {
+        return Collections.unmodifiableSet(adducts);
     }
 
     public boolean hasPositiveCharge() {
@@ -73,4 +78,27 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType> {
     public Iterator<PrecursorIonType> iterator() {
         return adducts.iterator();
     }
+
+    @Override
+    public String toString() {
+        return adducts.toString();
+    }
+
+    public static PossibleAdducts union(PossibleAdducts p1, Set<PrecursorIonType> p2) {
+        return new PossibleAdducts(Sets.union(p1.adducts, p2));
+    }
+
+    public static PossibleAdducts union(PossibleAdducts p1, PossibleAdducts p2) {
+        return new PossibleAdducts(Sets.union(p1.adducts, p2.adducts));
+    }
+
+    public static PossibleAdducts intersection(PossibleAdducts p1, Set<PrecursorIonType> p2) {
+        return new PossibleAdducts(Sets.intersection(p1.adducts, p2));
+    }
+
+    public static PossibleAdducts intersection(PossibleAdducts p1, PossibleAdducts p2) {
+        return new PossibleAdducts(Sets.intersection(p1.adducts, p2.adducts));
+    }
+
+
 }

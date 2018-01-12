@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Give access to all chemical elements and ions. This class should be seen as singleton, although it's
@@ -716,15 +717,31 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     /**
      * @return the set of different Ionization types
      */
-    public Collection<String> getIonizations() {
+    public Set<String> getIonizationsAsString() {
         return ionizationToAdduct.keySet();
+    }
+
+    /**
+     * @return the set of different Ionization types
+     */
+    public Set<PrecursorIonType> getIonizations() {
+        return ionizationToAdduct.keySet().stream().map(this::ionByName).collect(Collectors.toSet());
+    }
+
+    public Set<PrecursorIonType> getIonizations(final int charge) {
+        if (charge > 0)
+            return getPositiveIonizations();
+        else if (charge < 0)
+            return getNegativeIonizations();
+        else
+            return getIonizations();
     }
 
     /**
      * @return the set of different Ionization types inlcuding the 3 different unknown types ([M+?]+,[M+?]-,[M+?])
      */
     public Collection<String> getIonizationsAndUnknowns() {
-        Set<String> result = new HashSet<>(getIonizations());
+        Set<String> result = new HashSet<>(getIonizationsAsString());
         result.add(unknownPositivePrecursorIonType().getIonization().getName());
         result.add(unknownNegativePrecursorIonType().getIonization().getName());
         result.add(unknownPrecursorIonType().getIonization().getName());
@@ -735,11 +752,10 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     /**
      * @return the set of different positive Ionization types
      */
-    public Collection<String> getPositiveIonizations() {
+    public Set<String> getPositiveIonizationsAsString() {
         Set<String> positives = new HashSet<>();
         for (String ionType : ionizationToAdduct.keySet()) {
-            Ionization ionization = knownIonTypes.get(ionType).getIonization();
-            if (ionization.getCharge() > 0)
+            if (knownIonTypes.get(ionType).getIonization().getCharge() > 0)
                 positives.add(ionType);
         }
         return positives;
@@ -748,12 +764,35 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     /**
      * @return the set of different positive Ionization types
      */
-    public Collection<String> getNegativeIonizations() {
+    public Set<PrecursorIonType> getPositiveIonizations() {
+        Set<PrecursorIonType> positives = new HashSet<>();
+        for (String ionType : ionizationToAdduct.keySet()) {
+            if (knownIonTypes.get(ionType).getIonization().getCharge() > 0)
+                positives.add(ionByName(ionType));
+        }
+        return positives;
+    }
+
+    /**
+     * @return the set of different positive Ionization types
+     */
+    public Set<String> getNegativeIonizationsAsString() {
         Set<String> negatives = new HashSet<>();
         for (String ionType : ionizationToAdduct.keySet()) {
-            Ionization ionization = knownIonTypes.get(ionType).getIonization();
-            if (ionization.getCharge() < 0)
+            if (knownIonTypes.get(ionType).getIonization().getCharge() < 0)
                 negatives.add(ionType);
+        }
+        return negatives;
+    }
+
+    /**
+     * @return the set of different positive Ionization types
+     */
+    public Set<PrecursorIonType> getNegativeIonizations() {
+        Set<PrecursorIonType> negatives = new HashSet<>();
+        for (String ionType : ionizationToAdduct.keySet()) {
+            if (knownIonTypes.get(ionType).getIonization().getCharge() < 0)
+                negatives.add(ionByName(ionType));
         }
         return negatives;
     }
@@ -875,11 +914,11 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     public Set<PrecursorIonType> adductsByIonisation(PrecursorIonType ionMode) {
         if (ionMode.isIonizationUnknown()) {
             if (ionMode.isUnknownPositive()) {
-                adductsFromIonizationNames(getPositiveIonizations());
+                adductsFromIonizationNames(getPositiveIonizationsAsString());
             } else if (ionMode.isUnknownNegative()) {
-                adductsFromIonizationNames(getNegativeIonizations());
+                adductsFromIonizationNames(getNegativeIonizationsAsString());
             } else {
-                adductsFromIonizationNames(getIonizations());
+                adductsFromIonizationNames(getIonizationsAsString());
             }
         }
         return adductsFromIonizationName(ionMode.getIonization().toString());
