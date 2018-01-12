@@ -2,10 +2,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration2;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
@@ -395,7 +392,7 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
                 recalibrationJobs.add(rj);
                 submitSubJob(rj);
             }
-            for (int i = 0, nn = Math.min(exactResults.size(), numberOfResultsToKeep); i < nn; ++i) {
+            for (int i = 0, nn = recalibrationJobs.size(); i < nn; ++i) {
                 ExactResult recalibratedResult = recalibrationJobs.get(i).takeResult();
                 final FTree recalibrated = recalibratedResult.tree;
 
@@ -414,16 +411,25 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
                 exactResults.set(i, new ExactResult(recalibratedResult.decomposition, null, recalibrated, recalibrated.getTreeWeight()));
                 tick();
             }
+            Collections.sort(exactResults, Collections.reverseOrder());
+        } else {
+            Collections.sort(exactResults, Collections.reverseOrder());
+            for (int i=0; i < Math.min(numberOfResultsToKeep, exactResults.size()); ++i) {
+                analyzer.addTreeAnnotations(exactResults.get(i).graph,exactResults.get(i).tree);
+            }
         }
         Collections.sort(exactResults, Collections.reverseOrder());
         final int nl = Math.min(numberOfResultsToKeep, exactResults.size());
         final ArrayList<FTree> finalResults = new ArrayList<>(nl);
         for (int m = 0; m < nl; ++m) {
             final double score = analyzer.recalculateScores(exactResults.get(m).tree);
-            if (Math.abs(score - exactResults.get(m).tree.getTreeWeight()) > 0.1)
-                LoggerFactory.getLogger(TreeComputationInstance.class).warn("Score of " + exactResults.get(m).decomposition.toString() + " differs significantly from recalculated score: " + score + " vs " + exactResults.get(m).tree.getTreeWeight() );
-            else if (Math.abs(score - exactResults.get(m).tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) > 0.1)
-                LoggerFactory.getLogger(TreeComputationInstance.class).warn("Score of tree " + exactResults.get(m).decomposition.toString() + " differs significantly from recalculated score: " + score + " vs " + exactResults.get(m).tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore() );
+            if (Math.abs(score - exactResults.get(m).tree.getTreeWeight()) > 0.1) {
+                LoggerFactory.getLogger(TreeComputationInstance.class).warn("Score of " + exactResults.get(m).decomposition.toString() + " differs significantly from recalculated score: " + score + " vs " + exactResults.get(m).tree.getTreeWeight() + " with tree size is " + exactResults.get(m).tree.getFragmentAnnotationOrThrow(Score.class).get(exactResults.get(m).tree.getFragmentAt(1)).get("TreeSizeScorer") + " and " + exactResults.get(m).tree.getAnnotationOrThrow(ProcessedInput.class).getAnnotationOrThrow(TreeSizeScorer.TreeSizeBonus.class).score + " sort key is score " + exactResults.get(m).score);
+                analyzer.recalculateScores(exactResults.get(m).tree);
+            } else if (Math.abs(score - exactResults.get(m).tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) > 0.1) {
+                LoggerFactory.getLogger(TreeComputationInstance.class).warn("Score of tree " + exactResults.get(m).decomposition.toString() + " differs significantly from recalculated score: " + score + " vs " + exactResults.get(m).tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()  + " with tree size is " + exactResults.get(m).tree.getFragmentAnnotationOrThrow(Score.class).get(exactResults.get(m).tree.getFragmentAt(1) ).get("TreeSizeScorer") + " and " + exactResults.get(m).tree.getAnnotationOrThrow(ProcessedInput.class).getAnnotationOrThrow(TreeSizeScorer.TreeSizeBonus.class).score + " sort key is score " + exactResults.get(m).score);
+                analyzer.recalculateScores(exactResults.get(m).tree);
+            }
             finalResults.add(exactResults.get(m).tree);
         }
 
@@ -484,10 +490,10 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
         }
     }
 
-    private static final double MAX_TREESIZE_INCREASE = 3d;
+    private static final double MAX_TREESIZE_INCREASE = 0;//3d;
     private static final double TREE_SIZE_INCREASE = 1d;
-    private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;
-    private static final double MIN_EXPLAINED_INTENSITY = 0.7d;
+    private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 0;//15;
+    private static final double MIN_EXPLAINED_INTENSITY = 0d;//0.7d;
     private static final int MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY = 5;
 
     private boolean checkForTreeQuality(List<ExactResult> results) {
@@ -574,9 +580,11 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
         analyzer.performPeakScoring(pin);
         FGraph graph = analyzer.buildGraph(pin, l.getDecompositions().get(0));
         graph.addAnnotation(SpectralRecalibration.class, rec);
+        graph.setAnnotation(ProcessedInput.class, pin);
         final FTree recalibratedTree = analyzer.computeTree(graph);
         //System.out.println("Recalibrate " + tree.getRoot().getFormula() + " => " + rec.getRecalibrationFunction() + "  ( " + (recalibratedTree.getTreeWeight() - tree.getTreeWeight()) + ")");
         recalibratedTree.setAnnotation(SpectralRecalibration.class, rec);
+        recalibratedTree.setAnnotation(ProcessedInput.class, pin);
         return new ExactResult(l.getDecompositions().get(0), graph, recalibratedTree, recalibratedTree.getTreeWeight());
     }
 
