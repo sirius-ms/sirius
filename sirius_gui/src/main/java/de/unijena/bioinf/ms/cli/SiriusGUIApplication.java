@@ -7,7 +7,6 @@ package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
@@ -25,10 +24,9 @@ public class SiriusGUIApplication {
 
 
         if (cli.options.isGUI()) {
-            SiriusJobs.setGlobalJobManager(
-                    new SwingJobManager(Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1")))
-            );
-            FingeridCLI.DEFAULT_LOGGER.info("Swing Job manager initialized!");
+            final int cpuThreads = Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1"));
+            SiriusJobs.setGlobalJobManager(new SwingJobManager(8, Math.min(cpuThreads, 3)));
+            FingeridCLI.DEFAULT_LOGGER.info("Swing Job manager initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
 
 
             if (ProxyManager.getProxyStrategy() == null) {

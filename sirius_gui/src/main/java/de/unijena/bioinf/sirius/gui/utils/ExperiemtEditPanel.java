@@ -26,8 +26,12 @@ public class ExperiemtEditPanel extends JPanel {
         add(new TextHeaderBoxPanel(IonizationSelector.name, ionizationCB));
     }
 
-    public Double getSelectedIonMass() {
+    public double getSelectedIonMass() {
         return precursorSelection.getSelectedIonMass();
+    }
+
+    public boolean setSelectedIonMass(double ionMass) {
+        return precursorSelection.setSelectedItem(ionMass);
     }
 
     public String getExperiementName() {

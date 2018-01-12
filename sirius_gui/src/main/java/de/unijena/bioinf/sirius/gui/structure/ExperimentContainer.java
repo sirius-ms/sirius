@@ -6,14 +6,20 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import org.jdesktop.beans.AbstractBean;
 
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ExperimentContainer extends AbstractBean {
+/**
+ * This is the wrapper for the Ms2Experiment.class to interact with the gui
+ * elements. It uses a special property change support that executes the events
+ * in the EDT. So you can change all fields from any thread, the gui will still
+ * be updated in the EDT. Some operations may NOT be Thread save, so you may have
+ * to care about Synchronization.
+ */
+public class ExperimentContainer extends AbstractEDTBean {
     //the ms experiment we use for computation
     private final MutableMs2Experiment experiment;
     //results and ut gui wrapper bean
@@ -85,14 +91,6 @@ public class ExperimentContainer extends AbstractBean {
         return experiment.getPrecursorIonType();
     }
 
-    /*public String getIonizationAsString() {
-
-        PrecursorIonType i = experiment.getPrecursorIonType();
-        if (i != null)
-            return i.toString();
-        else return "Unknown";
-    }*/
-
     public List<SiriusResultElement> getResults() {
         return this.results;
     }
@@ -134,25 +132,25 @@ public class ExperimentContainer extends AbstractBean {
     }
 
 
-    public void setRawResults(List<IdentificationResult> results) {
+    public  void setRawResults(List<IdentificationResult> results) {
         setRawResults(results, SiriusResultElementConverter.convertResults(results));
     }
 
-    public void setRawResults(List<IdentificationResult> results, List<SiriusResultElement> myxoresults) {
+    public  void setRawResults(List<IdentificationResult> results, List<SiriusResultElement> myxoresults) {
         List<SiriusResultElement> old = this.results;
         this.results = myxoresults;
         this.originalResults = results == null ? Collections.<IdentificationResult>emptyList() : results;
         firePropertyChange("results_upadated", old, this.results);
-        if (this.computeState == ComputingStatus.COMPUTING)
-            setComputeState((results == null || results.size() == 0) ? ComputingStatus.FAILED : ComputingStatus.COMPUTED);
+        /*if (this.computeState == ComputingStatus.COMPUTING)
+            setComputeState((results == null || results.size() == 0) ? ComputingStatus.FAILED : ComputingStatus.COMPUTED);*/
     }
 
-    public void setName(String name) {
+    public  void setName(String name) {
         experiment.setName(name);
         setGuiName(createGuiName());
     }
 
-    public void setSuffix(int value) {
+    public  void setSuffix(int value) {
         this.suffix = value;
         setGuiName(createGuiName());
     }
@@ -162,13 +160,13 @@ public class ExperimentContainer extends AbstractBean {
     }
 
     // with change event
-    protected void setGuiName(String guiName) {
+    private void setGuiName(String guiName) {
         String old = this.guiName;
         this.guiName = guiName;
         firePropertyChange("guiName", old, this.guiName);
     }
 
-    public void setBestHit(final SiriusResultElement bestHit) {
+    public  void setBestHit(final SiriusResultElement bestHit) {
         if (this.bestHit != bestHit) {
             if (this.bestHit != null)
                 this.bestHit.setBestHit(false);
@@ -178,24 +176,24 @@ public class ExperimentContainer extends AbstractBean {
         }
     }
 
-    public void setIonization(PrecursorIonType ionization) {
+    public  void setIonization(PrecursorIonType ionization) {
         PrecursorIonType old = experiment.getPrecursorIonType();
         experiment.setPrecursorIonType(ionization);
         firePropertyChange("ionization", old, experiment.getPrecursorIonType());
     }
 
-    public void setIonMass(double ionMass) {
+    public  void setIonMass(double ionMass) {
         double old = experiment.getIonMass();
         experiment.setIonMass(ionMass);
         firePropertyChange("ionMass", old, experiment.getIonMass());
     }
 
 
-    public void setErrorMessage(String errorMessage) {
+    public  void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
     }
 
-    public void setComputeState(ComputingStatus st) {
+    public  void setComputeState(ComputingStatus st) {
         ComputingStatus oldST = this.computeState;
         this.computeState = st;
         firePropertyChange("computeState", oldST, this.computeState);
@@ -221,5 +219,6 @@ public class ExperimentContainer extends AbstractBean {
         newExp.setRawResults(getRawResults(), sre);
         return newExp;
     }
+
 
 }

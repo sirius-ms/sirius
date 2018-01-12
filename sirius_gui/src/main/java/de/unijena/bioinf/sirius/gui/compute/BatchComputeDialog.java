@@ -20,6 +20,8 @@ package de.unijena.bioinf.sirius.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
@@ -30,6 +32,9 @@ import de.unijena.bioinf.fingerid.FingerIDComputationPanel;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.FingerIDSearchGuiJob;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.SiriusIdentificationGuiJob;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
@@ -170,7 +175,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
 
 
-
         pack();
         setResizable(false);
         setLocationRelativeTo(getParent());
@@ -183,19 +187,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         if (elementAutoDetect != null)
             elementAutoDetect.setEnabled(enabled);
     }
-
-
-    /*private boolean hasCompoundWithUnknownIonization() {
-        Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
-        while (compounds.hasNext()) {
-            final ExperimentContainer ec = compounds.next();
-            if (ec.getIonization() == null || ec.getIonization().isIonizationUnknown()) {
-                return true;
-            }
-        }
-        return false;
-    }*/
-
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -280,12 +271,12 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder);
 
         //entspricht setup() Methode
-        final BackgroundComputation bgc = owner.getBackgroundComputation();
         final Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
-        final ArrayList<BackgroundComputation.Task> tasks = new ArrayList<>();
         while (compounds.hasNext()) {
             final ExperimentContainer ec = compounds.next();
+            //check what we have to compute
             if (ec.isUncomputed()) {
+
                 MutableMs2Experiment exp = applySettingsAndGet(ec);
                 FormulaConstraints individualConstraints = new FormulaConstraints(constraints);
 
@@ -300,11 +291,13 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                         }
                     }
                 }
-                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, individualConstraints, ppm, candidates, searchableDatabase, searchProfilePanel.hasIsotopesEnabled(), csiOptions.isCSISelected(), csiOptions.dbSelectionOptions.getDb(), searchProfilePanel.restrictToOrganics());
-                tasks.add(task);
+
+                SiriusIdentificationGuiJob identificationJob = Jobs.runSiriusIdentification(instrument, ppm, candidates, individualConstraints, searchProfilePanel.restrictToOrganics(), searchableDatabase, ec);
+                if (csiOptions.isCSISelected()) {
+                    FingerIDSearchGuiJob fingerid = Jobs.runFingerIDSearch(csiOptions.dbSelectionOptions.getDb(), identificationJob);
+                }
             }
         }
-        bgc.addAll(tasks);
         dispose();
     }
 
@@ -351,17 +344,43 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
 
     private MutableMs2Experiment applySettingsAndGet(ExperimentContainer ec) {
-        if (editPanel != null) {
-            final Double ionMass = editPanel.getSelectedIonMass();
-            if (ionMass != null)
+        final MutableMs2Experiment exp = ec.getMs2Experiment();
+
+        if (compoundsToProcess.size() == 1) { //check wether we have multiple compounds
+            final double ionMass = editPanel.getSelectedIonMass();
+            if (ionMass <= 0)
                 ec.setIonMass(ionMass);
             ec.setName(editPanel.getExperiementName());
             ec.setIonization(editPanel.getSelectedIonization());
+
+            if (ec.getIonization().isIonizationUnknown())
+                exp.setAnnotation(PossibleIonModes.class, searchProfilePanel.getPossibleIonModes());
+            else
+                exp.setAnnotation(PossibleIonModes.class, PossibleIonModes.deterministic(ec.getIonization()));
+
+            exp.setAnnotation(PossibleAdducts.class, csiOptions.getPossibleAdducts());
+        } else {
+            PrecursorIonType i = ec.getIonization();
+            List<PrecursorIonType> ions;
+
+            if (i.isUnknownPositive()) {
+                exp.setAnnotation(PossibleIonModes.class, PossibleIonModes.reduceTo(searchProfilePanel.getPossibleIonModes(), PeriodicTable.getInstance().getPositiveIonizationsAsString()));
+                ions = exp.getAnnotation(PossibleIonModes.class).getIonModesAsPrecursorIonType();
+            } else if (i.isUnknownNegative()) {
+                exp.setAnnotation(PossibleIonModes.class, PossibleIonModes.reduceTo(searchProfilePanel.getPossibleIonModes(), PeriodicTable.getInstance().getNegativeIonizationsAsString()));
+                ions = exp.getAnnotation(PossibleIonModes.class).getIonModesAsPrecursorIonType();
+            } else if (i.isIonizationUnknown()) {
+                exp.setAnnotation(PossibleIonModes.class, searchProfilePanel.getPossibleIonModes());
+                ions = exp.getAnnotation(PossibleIonModes.class).getIonModesAsPrecursorIonType();
+            } else {
+                ions = Collections.singletonList(i);
+            }
+
+            Set<PrecursorIonType> allPossible = PeriodicTable.getInstance().adductsByIonisation(ions);
+            exp.setAnnotation(PossibleAdducts.class, PossibleAdducts.intersection(csiOptions.getPossibleAdducts(), allPossible));
         }
 
-        final MutableMs2Experiment exp = ec.getMs2Experiment();
-        exp.setAnnotation(PossibleIonModes.class, searchProfilePanel.getPossibleIonModes());
-        exp.setAnnotation(PossibleAdducts.class, csiOptions.getPossibleAdducts());
+
         return exp;
     }
 }

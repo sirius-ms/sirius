@@ -7,6 +7,7 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.dialogs.CloseDialogNoSaveReturnValue;
 import de.unijena.bioinf.sirius.gui.dialogs.CloseDialogReturnValue;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
@@ -53,7 +54,7 @@ public class DeleteExperimentAction extends AbstractAction {
 
         List<ExperimentContainer> toRemove = new ArrayList<>(MF.getExperimentList().getCompoundListSelectionModel().getSelected());
         for (ExperimentContainer cont : toRemove) {
-            MF.getBackgroundComputation().cancel(cont);
+            Jobs.cancel(cont);
         }
         Workspace.removeAll(toRemove);
     }
