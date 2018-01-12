@@ -74,6 +74,9 @@ public class PossibleIonModes {
         totalProb += probability;
     }
 
+    public void add(String ionType, double probability) {
+        add(PrecursorIonType.getPrecursorIonType(ionType), probability);
+    }
     public void add(Ionization ionType, double probability) {
         add(PrecursorIonType.getPrecursorIonType(ionType), probability);
     }
