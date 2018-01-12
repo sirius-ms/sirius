@@ -81,7 +81,7 @@ public class PatternExtractionTest {
         merged.addPeak(1320.082, 11);
         merged.addPeak(618.001, 120);
 
-        final List<IsotopePattern> candidates = new ArrayList<IsotopePattern>(new ExtractAll().extractPattern(profile, merged));
+        final List<IsotopePattern> candidates = new ArrayList<IsotopePattern>(new ExtractAll().extractPatternMs1(profile, merged));
         Collections.sort(candidates, new Comparator<IsotopePattern>() {
             @Override
             public int compare(IsotopePattern o1, IsotopePattern o2) {

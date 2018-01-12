@@ -27,20 +27,21 @@ class DefaultDescriptors {
         registry.put(Fragment.class, Peak.class, new PeakDescriptor());
         registry.put(Fragment.class, AnnotatedPeak.class, new AnnotatedPeakDescriptor());
         registry.put(Fragment.class, Score.class, new ScoreDescriptor());
-        registry.put(Fragment.class, PrecursorIonType.class, new PrecursorIonTypeDescriptor("ion"));
+        registry.put(Fragment.class, Ionization.class, new IonizationDescriptor());
 
         registry.put(Loss.class, Score.class, new ScoreDescriptor());
         registry.put(Loss.class, InsourceFragmentation.class, new InsourceDescriptor());
 
         registry.put(FTree.class, IonTreeUtils.Type.class, new IonTypeDescriptor());
 
+        registry.put(FTree.class, UnregardedCandidatesUpperBound.class, new UnregardedCandidatesUpperBoundDescriptor());
     }
 
     private static class IonizationDescriptor implements Descriptor<Ionization> {
 
         @Override
         public String[] getKeywords() {
-            return new String[]{"ion"};
+            return new String[]{"ion","precursorIonType"};
         }
 
         @Override
@@ -50,7 +51,11 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> Ionization read(DataDocument<G, D, L> document, D dictionary) {
-            return PeriodicTable.getInstance().ionByName(document.getStringFromDictionary(dictionary, "ion")).getIonization();
+            if (document.hasKeyInDictionary(dictionary,"ion")) {
+                return PeriodicTable.getInstance().ionByName(document.getStringFromDictionary(dictionary, "ion")).getIonization();
+            } else {
+                return PeriodicTable.getInstance().ionByName(document.getStringFromDictionary(dictionary, "precursorIonType")).getIonization();
+            }
         }
 
         @Override
@@ -261,6 +266,8 @@ class DefaultDescriptors {
             if (document.hasKeyInDictionary(dictionary, "explainedIntensityOfExplainablePeaks")) {
                 scoring.setExplainedIntensityOfExplainablePeaks(document.getDoubleFromDictionary(dictionary, "explainedIntensityOfExplainablePeaks"));
             }
+            if (document.hasKeyInDictionary(score,"isotope"))
+                scoring.setIsotopeMs1Score(document.getDoubleFromDictionary(score, "isotope"));
 
 
             return scoring;
@@ -285,6 +292,7 @@ class DefaultDescriptors {
             document.addToDictionary(dictionary, "ratioOfExplainedPeaks", annotation.getRatioOfExplainedPeaks());
             document.addToDictionary(dictionary, "explainedIntensity", annotation.getExplainedIntensity());
             document.addToDictionary(dictionary, "explainedIntensityOfExplainablePeaks", annotation.getExplainedIntensityOfExplainablePeaks());
+            document.addToDictionary(score, "isotope", annotation.getIsotopeMs1Score());
         }
     }
 
@@ -361,7 +369,7 @@ class DefaultDescriptors {
 
         @Override
         public String[] getKeywords() {
-            return new String[]{"mz", "intensity"};
+            return new String[]{"mz", "intensity","relativeIntensity"};
         }
 
         @Override
@@ -371,13 +379,13 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> Peak read(DataDocument<G, D, L> document, D dictionary) {
-            return new Peak(document.getDoubleFromDictionary(dictionary, "mz"), document.getDoubleFromDictionary(dictionary, "intensity"));
+            return new Peak(document.getDoubleFromDictionary(dictionary, "mz"), document.hasKeyInDictionary(dictionary,"relativeIntensity") ? document.getDoubleFromDictionary(dictionary, "relativeIntensity") : document.getDoubleFromDictionary(dictionary, "intensity"));
         }
 
         @Override
         public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, Peak annotation) {
-            document.addToDictionary(dictionary, "mz", annotation.getMass());
-            document.addToDictionary(dictionary, "intensity", annotation.getIntensity());
+            //document.addToDictionary(dictionary, "mz", annotation.getMass());
+            //document.addToDictionary(dictionary, "intensity", annotation.getIntensity());
         }
     }
 
@@ -498,6 +506,32 @@ class DefaultDescriptors {
             }
             document.addToDictionary(dictionary, TOK, value);
 
+        }
+    }
+
+    private static class UnregardedCandidatesUpperBoundDescriptor implements Descriptor<UnregardedCandidatesUpperBound> {
+
+        @Override
+        public String[] getKeywords() {
+            return new String[]{"numberOfUnregardedCandidates", "lowestConsideredCandidateScore"};
+        }
+
+        @Override
+        public Class<UnregardedCandidatesUpperBound> getAnnotationClass() {
+            return UnregardedCandidatesUpperBound.class;
+        }
+
+        @Override
+        public <G, D, L> UnregardedCandidatesUpperBound read(DataDocument<G, D, L> document, D dictionary) {
+            final int numberOfUnregardedCandidates = (int)document.getIntFromDictionary(dictionary, "numberOfUnregardedCandidates");
+            final double lowestConsideredCandidateScore = document.getDoubleFromDictionary(dictionary, "lowestConsideredCandidateScore");
+            return new UnregardedCandidatesUpperBound(numberOfUnregardedCandidates, lowestConsideredCandidateScore);
+        }
+
+        @Override
+        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, UnregardedCandidatesUpperBound annotation) {
+            document.addToDictionary(dictionary, "numberOfUnregardedCandidates", annotation.getNumberOfUnregardedCandidates());
+            document.addToDictionary(dictionary, "lowestConsideredCandidateScore", annotation.getLowestConsideredCandidateScore());
         }
     }
 }

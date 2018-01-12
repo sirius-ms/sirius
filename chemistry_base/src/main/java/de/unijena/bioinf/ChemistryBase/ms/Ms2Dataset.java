@@ -5,11 +5,11 @@ import java.util.List;
 /**
  * Created by ge28quv on 01/07/17.
  */
-public interface Ms2Dataset {
+public interface Ms2Dataset extends Iterable<Ms2Experiment>{
 
     public IsolationWindow getIsolationWindow();
 
-    public List<Ms2Experiment> getExperiments();
+    public <E extends Ms2Experiment> List<E> getExperiments();
 
     /**
      * todo currently uses absolute median noise intensity!!!
@@ -21,4 +21,5 @@ public interface Ms2Dataset {
 
     public double getIsolationWindowWidth();
 
+    public DatasetStatistics getDatasetStatistics();
 }

@@ -98,7 +98,9 @@ public class JSONDocumentType extends DataDocument<JsonElement, JsonObject, Json
 
     @Override
     public double getDoubleFromDictionary(JsonObject dict, String key) {
-        return dict.get(key).getAsDouble();
+        final JsonElement elem = dict.get(key);
+        if (elem==null) throw new NullPointerException("Key is not contained in dictionary: '" + key + "'\n");
+        return elem.getAsDouble();
     }
 
     @Override

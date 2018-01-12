@@ -22,6 +22,11 @@ public class PrecursorIonType {
     private final MolecularFormula modification;
     private final String name;
 
+
+    public boolean hasNeitherAdductNorInsource() {
+        return inSourceFragmentation.isEmpty() && adduct.isEmpty();
+    }
+
     private final boolean unknown; // flag used to annotate unknown ion types
 
     public static PrecursorIonType getPrecursorIonType(String name) {

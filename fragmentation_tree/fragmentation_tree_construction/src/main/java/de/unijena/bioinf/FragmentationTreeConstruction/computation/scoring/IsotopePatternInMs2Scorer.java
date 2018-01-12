@@ -4,24 +4,31 @@ import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.IsotopicMarker;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2IsotopePatternMatch;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.PeakAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.FastIsotopePatternGenerator;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.FragmentIsotopeGenerator;
+import de.unijena.bioinf.IsotopePatternAnalysis.generation.IsotopePatternGenerator;
+import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MassDeviationScorer;
+import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MassDifferenceDeviationScorer;
+import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MissingPeakScorer;
+import de.unijena.bioinf.IsotopePatternAnalysis.scoring.NormalDistributedIntensityScorer;
+import de.unijena.bioinf.IsotopePatternAnalysis.util.PiecewiseLinearFunctionIntensityDependency;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
+import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.analysis.function.Identity;
 import org.apache.commons.math3.special.Erf;
 
 import java.util.ArrayList;
@@ -39,7 +46,7 @@ public class IsotopePatternInMs2Scorer {
 
 
     @Parameter
-    protected double baselineAbsoluteIntensity = 300;
+    protected double baselineAbsoluteIntensity = 500;
 
     public double getBaselineAbsoluteIntensity() {
         return baselineAbsoluteIntensity;
@@ -49,8 +56,18 @@ public class IsotopePatternInMs2Scorer {
         this.baselineAbsoluteIntensity = baselineAbsoluteIntensity;
     }
 
+    /**
+     *
+     * @param input
+     * @param graph
+     */
     public void score(ProcessedInput input, FGraph graph) {
-
+        final SpectralRecalibration recalibration = graph.getAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
+        final List<MutableMs2Spectrum> ms2Spectra = new ArrayList<>(input.getExperimentInformation().getMs2Spectra());
+        for (int k=0; k < ms2Spectra.size(); ++k) {
+            ms2Spectra.set(k, new MutableMs2Spectrum(ms2Spectra.get(k)));
+            Spectrums.sortSpectrumByMass(ms2Spectra.get(k));
+        }
         final Deviation peakDev = input.getMeasurementProfile().getAllowedMassDeviation();
         final Deviation shiftDev = peakDev.divide(2);
         // 1. for each fragment compute Isotope Pattern and match them against raw spectra
@@ -65,25 +82,27 @@ public class IsotopePatternInMs2Scorer {
         // find patterns and score
 
         //////////
-        // TODO: ONLY FOR QTOF!!!!
-        final double sigmaAbs;
+        final double sigmaAbs; // absolute error depending relatively on the base peak
         {
-            double sig = 0.05;
+            double abs = 0d;
+            double sig = 0.01;
             for (int k=0; k < input.getMergedPeaks().size(); ++k) {
-                final ProcessedPeak p = input.getMergedPeaks().get(0);
+                final ProcessedPeak p = input.getMergedPeaks().get(k);
                 if (p.isSynthetic()) continue;
-                double abs = 0d;
                 for (Peak ap : p.getOriginalPeaks()) abs = Math.max(ap.getIntensity(),abs);
-                final double scale = p.getRelativeIntensity()/abs;
-                sig = baselineAbsoluteIntensity*scale;
-                break;
             }
-            sigmaAbs = sig;
+            sigmaAbs = abs*sig;
         }
 
         final MolecularFormula ms1Formula = graph.getRoot().getChildren(0).getFormula();
         final FragmentIsotopeGenerator fisogen = new FragmentIsotopeGenerator();
-        final SimpleSpectrum ms1Pattern = findMs1PatternInMs2(input, graph, generator, ion);
+        IsolationWindow isolationWindow = input.getExperimentInformation().getAnnotation(IsolationWindow.class);
+        final SimpleSpectrum ms1Pattern;
+        if (isolationWindow!=null){
+            ms1Pattern = isolationWindow.transform(generator.simulatePattern(ms1Formula, ion), input.getExperimentInformation().getIonMass());
+        } else {
+            ms1Pattern = findMs1PatternInMs2(input, graph, generator, ms2Spectra, ion);
+        }
 
 
         ////////////
@@ -119,16 +138,19 @@ public class IsotopePatternInMs2Scorer {
                 // TODO: maybe use original MS/MS spectra to avoid prefiltering?
                 int msmsId=-1;
                 eachSpec:
-                for (Ms2Spectrum msms : input.getExperimentInformation().getMs2Spectra()) {
+                for (MutableMs2Spectrum msms : input.getExperimentInformation().getMs2Spectra()) {
+                    final UnivariateFunction F = recalibration.getRecalibrationFunctionFor(msms);
                     ++msmsId;
                     final double maxIntensity = Spectrums.getMaximalIntensity(msms);
                     final int index = Spectrums.mostIntensivePeakWithin(msms, simulated.getMzAt(0), peakDev);
                     if (index < 0) {
                         continue;
                     }
-                    final SimpleSpectrum foundPattern = extractPattern(peakDev, shiftDev, simulated, msms, maxIntensity, index);
+                    final SimpleSpectrum foundPattern = extractPattern(peakDev, shiftDev, simulated, msms, maxIntensity, index, F);
+                    if (foundPattern.size() <= 1) continue ;
                     final double[] pkscores = new double[foundPattern.size()];
-                    double score = scorePatternPeakByPeak(simulated, foundPattern, pkscores, peakAno.get(f).getRelativeIntensity(), sigmaAbs);
+                    final double baselineAbs = Math.max(baselineAbsoluteIntensity/msms.getIntensityAt(index), sigmaAbs/msms.getIntensityAt(index));
+                    double score = scorePatternPeakByPeak(simulated, foundPattern, pkscores, peakAno.get(f).getRelativeIntensity(), baselineAbs);
                     if (score <= 0) continue ;
                     ids.add(msmsId);
                     scores.add(score);
@@ -185,24 +207,24 @@ public class IsotopePatternInMs2Scorer {
         }
     }
 
-    private SimpleSpectrum extractPattern(Deviation peakDev, Deviation shiftDev, SimpleSpectrum simulated, Ms2Spectrum msms, double maxIntensity, int index) {
+    private SimpleSpectrum extractPattern(Deviation peakDev, Deviation shiftDev, SimpleSpectrum simulated, Ms2Spectrum msms, double maxIntensity, int index, UnivariateFunction recalibrationFunction) {
         SimpleMutableSpectrum buf = new SimpleMutableSpectrum(simulated.size());
         buf.addPeak(msms.getMzAt(index), 1d);
 
         int isoIndex = 1;
         int lastFound=0;
-
+        final double monoMz = recalibrationFunction.value(msms.getMzAt(0));
         // find isotope peaks
         findPeaks:
         for (int k=index+1; isoIndex < simulated.size() && k < msms.size(); ++k) {
 
-            final double mz = msms.getMzAt(k);
+            final double mz = recalibrationFunction.value(msms.getMzAt(k));
             final double intens = msms.getIntensityAt(k)/msms.getIntensityAt(index);
 
             final double isoMz = simulated.getMzAt(isoIndex);
             final double isoInt = simulated.getIntensityAt(isoIndex);
 
-            if (peakDev.inErrorWindow(mz, isoMz) || shiftDev.inErrorWindow(mz-msms.getMzAt(0), isoMz-simulated.getMzAt(0)))  {
+            if (peakDev.inErrorWindow(mz, isoMz) || shiftDev.inErrorWindow(mz-monoMz, isoMz-simulated.getMzAt(0)))  {
                 buf.addPeak(mz, intens);
                 lastFound = isoIndex+1;
             } else if (mz > (isoMz+0.25)) {
@@ -237,7 +259,7 @@ public class IsotopePatternInMs2Scorer {
     }
 
 
-    private SimpleSpectrum findMs1PatternInMs2(ProcessedInput input, FGraph graph, FastIsotopePatternGenerator generator, Ionization ion) {
+    private SimpleSpectrum findMs1PatternInMs2(ProcessedInput input, FGraph graph, FastIsotopePatternGenerator generator, List<MutableMs2Spectrum> ms2Spectra, Ionization ion) {
         SimpleSpectrum ms1Pattern;// find MS1 spectrum
         final Deviation dev = input.getMeasurementProfile().getAllowedMassDeviation();
         if (USE_FRAGMENT_ISOGEN) {
@@ -246,7 +268,7 @@ public class IsotopePatternInMs2Scorer {
             double intens = 0d;
 
             int k=-1;
-            for (Ms2Spectrum spec : input.getExperimentInformation().getMs2Spectra()) {
+            for (Ms2Spectrum spec : ms2Spectra) {
                 ++k;
                 final int parent = Spectrums.mostIntensivePeakWithin(spec, input.getExperimentInformation().getIonMass(), dev);
                 if (parent<0) continue;
@@ -259,7 +281,7 @@ public class IsotopePatternInMs2Scorer {
             if (mostIntens<0) return null;
             final Ms2Spectrum msms = input.getExperimentInformation().getMs2Spectra().get(mostIntens);
             final double maxInt = Spectrums.getMaximalIntensity(msms);
-            final SimpleSpectrum extr = extractPattern(dev, dev, simulated, msms, maxInt, Spectrums.mostIntensivePeakWithin(msms, input.getExperimentInformation().getIonMass(), dev));
+            final SimpleSpectrum extr = extractPattern(dev, dev, simulated, msms, maxInt, Spectrums.mostIntensivePeakWithin(msms, input.getExperimentInformation().getIonMass(), dev), new Identity());
             if (msms.getIntensityAt(Spectrums.mostIntensivePeakWithin(msms, input.getExperimentInformation().getIonMass(), dev))/maxInt < 0.1) return findMs1Pattern(input,graph,generator,ion);
             final double[] pkscores = new double[extr.size()];
             double score = scorePatternPeakByPeak(normalizeByFirstPeak(simulated), normalizeByFirstPeak(extr), pkscores, 1, 0.05);
@@ -286,23 +308,36 @@ public class IsotopePatternInMs2Scorer {
         double score = 0d;
         double bestScore = 0d;
         // adjust sigmaAbs to relative intensity
-        sigmaAbs = Math.min(0.5, sigmaAbs * (1d/relativeIntensityOfMono));
+        sigmaAbs = Math.min(0.05, sigmaAbs);// * (1d/relativeIntensityOfMono));
         final double absDiff = new Deviation(20).absoluteFor(simulated.getMzAt(0));
         double lastPenalty = 0d;
 
         final double normMz = Math.log(Erf.erfc((1.5*absDiff)/(Math.sqrt(2)*absDiff)));
-
-        for (int k=1, n = Math.min(foundPattern.size(), simulated.size()); k < n; ++k) {
+        int foundIndex = 1;
+        for (int k=1, n = simulated.size(); k < n; ++k) {
+            if (foundIndex >= foundPattern.size()) break;
+            if (k < simulated.size() && foundPattern.getMzAt(foundIndex) > (0.25+simulated.getMzAt(k))) {
+                final double p = simulated.getIntensityAt(k);
+                final double intensScore = Math.exp((-p*p)/(2*sigmaAbs*sigmaAbs))/Math.sqrt(2d*Math.PI * sigmaAbs*sigmaAbs)*MULTIPLIER;
+                final double penalty = MULTIPLIER*Math.log(Erf.erfc((intensityLeft)/(Math.sqrt(2)*sigmaAbs)));
+                score += intensScore ;//+ 3*Math.min(1,relativeIntensityOfMono)*(foundPattern.getIntensityAt(k)/foundPattern.getIntensityAt(0));
+                if (score+penalty > bestScore) bestScore = (score+penalty);
+                scores[foundIndex] += score + (penalty-lastPenalty);
+                lastPenalty = penalty;
+                continue;
+            }
+            if (foundIndex>=foundPattern.size()) break;
             intensityLeft -= simulated.getIntensityAt(k);
             // mass dev score
-            final double mz1Score = Math.log(Erf.erfc(Math.abs(simulated.getMzAt(k) - foundPattern.getMzAt(k))/(Math.sqrt(2)*absDiff)))*MULTIPLIER;
-            final double mz2Score = Math.log(Erf.erfc(Math.abs((simulated.getMzAt(k)-simulated.getMzAt(0)) - (foundPattern.getMzAt(k)-foundPattern.getMzAt(0)))/(Math.sqrt(2)*absDiff)))*MULTIPLIER;
-            final double intensScore = scoreLogOddIntensity(foundPattern.getIntensityAt(k), simulated.getIntensityAt(k), 0.1, sigmaAbs)*MULTIPLIER;
-            final double penalty = MULTIPLIER*Math.log(Erf.erfc((intensityLeft)/(Math.sqrt(2)*Math.max(sigmaAbs, 0.05))));
+            final double mz1Score = Math.log(Erf.erfc(Math.abs(simulated.getMzAt(k) - foundPattern.getMzAt(foundIndex))/(Math.sqrt(2)*absDiff)))*MULTIPLIER;
+            final double mz2Score = Math.log(Erf.erfc(Math.abs((simulated.getMzAt(k)-simulated.getMzAt(0)) - (foundPattern.getMzAt(foundIndex)-foundPattern.getMzAt(0)))/(Math.sqrt(2)*absDiff)))*MULTIPLIER;
+            final double intensScore = scoreLogOddIntensity(foundPattern.getIntensityAt(foundIndex), simulated.getIntensityAt(k), 0.15, sigmaAbs)*MULTIPLIER;
+            final double penalty = MULTIPLIER*Math.log(Erf.erfc((intensityLeft)/(Math.sqrt(2)*sigmaAbs)));
             score += (Math.max(mz1Score,mz2Score)-normMz) + intensScore ;//+ 3*Math.min(1,relativeIntensityOfMono)*(foundPattern.getIntensityAt(k)/foundPattern.getIntensityAt(0));
             if (score+penalty > bestScore) bestScore = (score+penalty);
-            scores[k] = score + (penalty-lastPenalty);
+            scores[foundIndex] += score + (penalty-lastPenalty);
             lastPenalty = penalty;
+            ++foundIndex;
         }
         return bestScore;
     }
@@ -349,19 +384,93 @@ public class IsotopePatternInMs2Scorer {
 
     private static final double SQRT2PI = Math.sqrt(2 * Math.PI);
     private double scoreIntensity(double measuredIntensity, double theoreticalIntensity, double sigmaR, double sigmaA) {
-        final double delta = measuredIntensity - theoreticalIntensity;
-        final double deltaZero = (sigmaR * sigmaR * delta * theoreticalIntensity) / (sigmaA * sigmaA +
-                sigmaR * sigmaR * theoreticalIntensity * theoreticalIntensity);
-        final double epsilon = delta - deltaZero * theoreticalIntensity;
-        final double probDelta = (1 / (SQRT2PI * sigmaR)) * (Math.pow(Math.E, ((deltaZero) * (deltaZero) / (-2 * sigmaR *
-                sigmaR))));
-        final double probEpsilon = (1 / (SQRT2PI * sigmaA)) * (Math.pow(Math.E, (epsilon * epsilon / (-2 * sigmaA * sigmaA))));
-        final double probability = probDelta * probEpsilon;
+        final double delta = measuredIntensity-theoreticalIntensity;
+        final double probability = Math.exp(-(delta*delta)/(2*(sigmaA*sigmaA + measuredIntensity*measuredIntensity*sigmaR*sigmaR)))/(2*Math.PI*measuredIntensity*sigmaR*sigmaA);
         return Math.log(probability);
     }
 
     private double scoreLogOddIntensity(double measuredIntensity, double theoreticalIntensity, double sigmaR, double sigmaA) {
-        return scoreIntensity(measuredIntensity, theoreticalIntensity, sigmaR, sigmaA) - scoreIntensity(theoreticalIntensity+1.5*sigmaA + 1.5*theoreticalIntensity*sigmaR, theoreticalIntensity, sigmaR, sigmaA);
+        return scoreIntensity(measuredIntensity, theoreticalIntensity, sigmaR, sigmaA)/* - scoreIntensity(theoreticalIntensity+1.5*sigmaA + 1.5*theoreticalIntensity*sigmaR, theoreticalIntensity, sigmaR, sigmaA)*/;
     }
 
+    public void scoreFromMs1(ProcessedInput input, FGraph graph) {
+        final PrecursorIonType ion = graph.getAnnotationOrThrow(PrecursorIonType.class);
+        final Deviation dev = input.getMeasurementProfile().getAllowedMassDeviation();
+        final SimpleSpectrum mergedMs1 = input.getExperimentInformation().getMergedMs1Spectrum();
+        if (mergedMs1 == null) return;
+        final IsotopePatternAnalysis analyzer = new IsotopePatternAnalysis();
+        final MassDeviationScorer scorer1 = new MassDeviationScorer(new PiecewiseLinearFunctionIntensityDependency(
+                new double[]{0.2,0.1,0.01},
+                new double[]{1,2,3}
+        ));
+        final MassDifferenceDeviationScorer scorer2 = new MassDifferenceDeviationScorer(new PiecewiseLinearFunctionIntensityDependency(
+                new double[]{0.2,0.1,0.01},
+                new double[]{1,2,3}
+        ));
+        final NormalDistributedIntensityScorer scorer3 = new NormalDistributedIntensityScorer(0.1, 0.005);
+        final MissingPeakScorer scorer4 = new MissingPeakScorer();
+        if (!input.getPeakAnnotations().containsKey(IsotopePatternAssignment.class)) {
+            final PeakAnnotation<IsotopePatternAssignment> ano = input.getOrCreatePeakAnnotation(IsotopePatternAssignment.class);
+            for (ProcessedPeak peak : input.getMergedPeaks()) {
+
+                if (peak == input.getParentPeak())
+                    continue;
+
+                final double ionMass = peak.getMz();
+                final int index = Spectrums.mostIntensivePeakWithin(mergedMs1, ionMass, dev);
+                if (index >= 0) {
+                    final SimpleSpectrum spec = Spectrums.getNormalizedSpectrum(analyzer.extractPattern(mergedMs1, input.getMeasurementProfile(), ionMass), Normalization.Max(1d));
+                    if (spec.size() > 1) {
+                        // use pattern!
+                        peak.setMz(spec.getMzAt(0));
+                        ano.set(peak, new IsotopePatternAssignment(spec));
+                    }
+                }
+            }
+        }
+        final IsotopePatternGenerator gen = new FastIsotopePatternGenerator(Normalization.Max(1d));
+
+        final PeakAnnotation<IsotopePatternAssignment> ano = input.getOrCreatePeakAnnotation(IsotopePatternAssignment.class);
+        final FragmentAnnotation<IsotopePattern> isoPat = graph.getOrCreateFragmentAnnotation(IsotopePattern.class);
+        for (Fragment f : graph.getFragmentsWithoutRoot()) {
+            final ProcessedPeak peak = input.getMergedPeaks().get(f.getColor());
+            final IsotopePatternAssignment assignment = ano.get(peak);
+            if (assignment != null) {
+                SimpleSpectrum spec = assignment.pattern;
+                gen.setMaximalNumberOfPeaks(spec.size());
+                final SimpleSpectrum simulated = Spectrums.subspectrum(gen.simulatePattern(f.getFormula(), ion.getIonization()), 0, assignment.pattern.size());
+                spec = Spectrums.subspectrum(spec, 0, simulated.size());
+                // shorten pattern
+
+                final double[] scores = new double[spec.size()];
+                scorer1.score(scores, spec, simulated, Normalization.Max(1d), input.getExperimentInformation(), input.getMeasurementProfile());
+                scorer2.score(scores, spec, simulated, Normalization.Max(1d), input.getExperimentInformation(), input.getMeasurementProfile());
+                scorer3.score(scores, spec, simulated, Normalization.Max(1d), input.getExperimentInformation(), input.getMeasurementProfile());
+                scorer4.score(scores, spec, simulated, Normalization.Max(1d), input.getExperimentInformation(), input.getMeasurementProfile());
+                double maxScore = 0d;
+                for (int i=0; i < scores.length; ++i) {
+                    maxScore = Math.max(scores[i], maxScore);
+                }
+                if (maxScore>0) {
+                    isoPat.set(f, new IsotopePattern(f.getFormula(), maxScore, spec));
+                    for (int i=0, n=f.getInDegree(); i < n; ++i) {
+                        final Loss l = f.getIncomingEdge(i);
+                        l.setWeight(l.getWeight() + maxScore);
+                    }
+                }
+            }
+
+        }
+
+
+
+    }
+
+    protected static class IsotopePatternAssignment {
+        private final SimpleSpectrum pattern;
+
+        public IsotopePatternAssignment(SimpleSpectrum pattern) {
+            this.pattern = pattern;
+        }
+    }
 }

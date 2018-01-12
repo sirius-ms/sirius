@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.Random;
 
@@ -147,7 +148,26 @@ public class FragmentIsotopeGenerator extends FastIsotopePatternGenerator {
             masses[k] = monof + k+ionization.addToMass(masses[k]);
         }
 
-        return new SimpleSpectrum(masses, intensities);
+
+        //may have negative intensities after folding
+        boolean someNegative = false;
+        for (double intensity : intensities) {
+            if (intensity<0) {
+                someNegative = true;
+                break;
+            }
+        }
+        if (!someNegative) return new SimpleSpectrum(masses, intensities);
+
+        final TDoubleArrayList mzs = new TDoubleArrayList(intensities.length);
+        final TDoubleArrayList ints = new TDoubleArrayList(intensities.length);
+        for (int i = 0; i < intensities.length; i++) {
+            if (intensities[i]>=getMinimalProbabilityThreshold()){
+                ints.add(intensities[i]);
+                mzs.add(masses[i]);
+            }
+        }
+        return new SimpleSpectrum(mzs.toArray(), ints.toArray());
     }
 
 }
