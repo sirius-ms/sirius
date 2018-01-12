@@ -103,8 +103,11 @@ public class ProcessedInput implements Cloneable {
         p.mergedPeaks = new ArrayList<>(mergedPeaks.size());
         p.peakAnnotations = (HashMap<Class, PeakAnnotation>) peakAnnotations.clone();
         p.annotations = (HashMap<Class, Object>) annotations.clone();
+        final PeakAnnotation<DecompositionList> dl = p.getPeakAnnotationOrThrow(DecompositionList.class);
         for (ProcessedPeak peak : mergedPeaks) {
-            p.mergedPeaks.add(peak.recalibrate(rec));
+            ProcessedPeak recalibrated = peak.recalibrate(rec);
+            dl.set(recalibrated, new DecompositionList(new ArrayList<>()));
+            p.mergedPeaks.add(recalibrated);
         }
         p.addAnnotation(SpectralRecalibration.class, rec);
         return p;
