@@ -86,8 +86,8 @@ public class WebAPI implements Closeable {
     public static final String FINGERID_WEB_API = FingerIDProperties.fingeridWebHost();
 //    public static final String FINGERID_WEBSITE = "http://www.csi-fingerid.org";
 
-    public static PrecursorIonType[] positiveIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(1), PrecursorIonType.class);
-    public static PrecursorIonType[] negativeIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(-1), PrecursorIonType.class);
+//    public static PrecursorIonType[] positiveIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(1), PrecursorIonType.class);
+//    public static PrecursorIonType[] negativeIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(-1), PrecursorIonType.class);
 
 
     public static WebAPI newInstance() {

@@ -139,13 +139,13 @@ public class SearchProfilePanel extends JPanel {
 
         if (!ionTypes.isEmpty()) {
             if (ionTypes.contains(PrecursorIonType.unknown())) {
-                ionizations.addAll(PeriodicTable.getInstance().getIonizations());
+                ionizations.addAll(PeriodicTable.getInstance().getIonizationsAsString());
             } else {
                 if (ionTypes.contains(PrecursorIonType.unknownPositive())) {
-                    ionizations.addAll(PeriodicTable.getInstance().getPositiveIonizations());
+                    ionizations.addAll(PeriodicTable.getInstance().getPositiveIonizationsAsString());
                 }
                 if (ionTypes.contains(PrecursorIonType.unknownNegative())) {
-                    ionizations.addAll(PeriodicTable.getInstance().getNegativeIonizations());
+                    ionizations.addAll(PeriodicTable.getInstance().getNegativeIonizationsAsString());
                 }
             }
         }
@@ -206,6 +206,8 @@ public class SearchProfilePanel extends JPanel {
     public boolean restrictToOrganics() {
         return formulaCombobox.getSelectedIndex() == 2; // TODO: add checkbox instead
     }
+
+
 
 
 

@@ -6,7 +6,6 @@ import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
 import de.unijena.bioinf.sirius.gui.compute.JobDialog;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
@@ -85,12 +84,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return toolbar;
     }
 
-    private BackgroundComputation backgroundComputation;
-
-    public BackgroundComputation getBackgroundComputation() {
-        return backgroundComputation;
-    }
-
     private DropTarget dropTarget;
 
 
@@ -104,7 +97,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
     private static void decoradeMainFrameInstance(final MainFrame mf) {
         //create computation
         mf.csiFingerId = new CSIFingerIdComputation();
-        mf.backgroundComputation = new BackgroundComputation(mf.csiFingerId);
 
         // create models for views
         mf.experimentList = new ExperimentList();

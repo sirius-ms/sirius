@@ -19,7 +19,6 @@ import gnu.trove.list.array.TDoubleArrayList;
 
 import javax.swing.*;
 import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,8 +30,7 @@ public class LoadController implements LoadDialogListener {
     private final JFrame owner;
     private DefaultLoadDialog loadDialog;
 
-    private ExperimentContainer expToModify;
-    private URL source;
+    private final ExperimentContainer expToModify;
 
     private final BasicEventList<SpectrumContainer> spectra;
 
@@ -41,9 +39,9 @@ public class LoadController implements LoadDialogListener {
         this.owner = owner;
         this.config = config;
 
-        expToModify = exp;
 
-        if (expToModify != null) {
+        if (exp != null) {
+            expToModify = exp;
             spectra = new BasicEventList<>(expToModify.getMs1Spectra().size() + expToModify.getMs2Spectra().size());
             loadDialog = new DefaultLoadDialog(owner, spectra);
 
@@ -59,12 +57,14 @@ public class LoadController implements LoadDialogListener {
             for (Spectrum<? extends Peak> spectrum : expToModify.getMs2Spectra()) {
                 addToSpectra(spectrum);
             }
+
+            loadDialog.setParentMass(expToModify.getIonMass());
         } else {
+            expToModify = new ExperimentContainer(new MutableMs2Experiment());
             spectra = new BasicEventList<>();
             loadDialog = new DefaultLoadDialog(owner, spectra);
             loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
             loadDialog.experimentNameChanged("");
-            source = null;
         }
 
         loadDialog.addLoadDialogListener(this);
@@ -185,7 +185,10 @@ public class LoadController implements LoadDialogListener {
 
     //this imports an merges the experiments
     private void importExperiment(Ms2Experiment experiment) {
-        source = experiment.getSource();
+        expToModify.getMs2Experiment().addAnnotationsFrom(experiment);
+
+        if (expToModify.getMs2Experiment().getSource() == null)
+            expToModify.getMs2Experiment().setSource(experiment.getSource());
 
         if (loadDialog.getIonization().isIonizationUnknown() && experiment.getPrecursorIonType() != null && !experiment.getPrecursorIonType().isIonizationUnknown())
             loadDialog.ionizationChanged(experiment.getPrecursorIonType());
@@ -201,9 +204,14 @@ public class LoadController implements LoadDialogListener {
         for (Ms2Spectrum<Peak> sp : experiment.getMs2Spectra()) {
             addToSpectra(sp);
         }
+
+        if (expToModify.getIonMass() <= 0)
+            loadDialog.setParentMass(experiment.getIonMass());
     }
 
     public ExperimentContainer getExperiment() {
+        if (expToModify.getMs1Spectra().isEmpty() && expToModify.getMs2Spectra().isEmpty())
+            return null;
         return expToModify;
     }
 
@@ -219,15 +227,12 @@ public class LoadController implements LoadDialogListener {
         }
     }
 
+
     @Override
     public void completeProcess() {
         if (!spectra.isEmpty()) {
-            if (expToModify == null) {
-                expToModify = new ExperimentContainer(new MutableMs2Experiment());
-            } else {
-                expToModify.getMs2Experiment().getMs1Spectra().clear();
-                expToModify.getMs2Experiment().getMs2Spectra().clear();
-            }
+            expToModify.getMs2Experiment().getMs1Spectra().clear();
+            expToModify.getMs2Experiment().getMs2Spectra().clear();
 
             //add spectra
             for (SpectrumContainer container : spectra) {
@@ -245,7 +250,6 @@ public class LoadController implements LoadDialogListener {
             expToModify.setIonization(loadDialog.getIonization());
             expToModify.setIonMass(loadDialog.getParentMass());
             expToModify.setName(loadDialog.getExperimentName());
-            expToModify.getMs2Experiment().setSource(source);
         }
     }
 

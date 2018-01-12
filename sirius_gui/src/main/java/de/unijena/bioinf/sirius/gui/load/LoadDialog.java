@@ -23,6 +23,8 @@ public interface LoadDialog {
 
     double getParentMass();
 
+    void setParentMass(double ionMass);
+
     void ionizationChanged(PrecursorIonType ionization);
 
 

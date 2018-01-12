@@ -7,8 +7,10 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.sirius.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
@@ -79,7 +81,7 @@ public class ComputeAllAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (isActive.get()) {
-            MF.getBackgroundComputation().cancelAll();
+            Jobs.cancelALL();
         } else {
             new BatchComputeDialog(MF, MF.getCompounds());
         }

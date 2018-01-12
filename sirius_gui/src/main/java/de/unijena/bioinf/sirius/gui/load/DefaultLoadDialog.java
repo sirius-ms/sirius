@@ -30,7 +30,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     private JButton add, remove, ok, abort;
 
     private JList<SpectrumContainer> msList;
-    private ExperiemtEditPanel editPanel;
+    ExperiemtEditPanel editPanel;
 
     private MSViewerPanel msviewer;
     private JButton editCE;
@@ -46,6 +46,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     JMenuItem addMI, removeMI;
 
     private static Pattern NUMPATTERN = Pattern.compile("^[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?$");
+    private double ionMass;
 
     public DefaultLoadDialog(JFrame owner, BasicEventList<SpectrumContainer> list) {
         super(owner, "load", true);
@@ -94,7 +95,9 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
         //edit panel
         editPanel = new ExperiemtEditPanel();
-        list.addListEventListener(listChanges -> editPanel.precursorSelection.setData(list, 0d));
+        list.addListEventListener(listChanges -> {
+            editPanel.precursorSelection.setData(list, editPanel.getSelectedIonMass());
+        });
 
         String[] msLevelVals = {"MS 1", "MS 2"};
         msLevelBox = new JComboBox<>(msLevelVals);
@@ -155,6 +158,10 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
         constructSpectraListPopupMenu();
     }
 
+    @Override
+    public void setParentMass(double ionMass) {
+        editPanel.setSelectedIonMass(ionMass);
+    }
 
     public void constructSpectraListPopupMenu() {
         spPopMenu = new JPopupMenu();

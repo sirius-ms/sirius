@@ -138,8 +138,13 @@ public class PrecursorSelector extends JPanel {
         return box;
     }
 
+    public boolean setSelectedItem(double mass) {
+        MsExperiments.PrecursorCandidates masses = MsExperiments.findPossiblePrecursorPeaks(peaks, mass);
+        box.setSelectedItem(masses.getDefaultPrecursor() != null ? masses.getDefaultPrecursor() : String.valueOf(mass));
+        return true;
+    }
 
-    public Double getSelectedIonMass() {
+    public double getSelectedIonMass() {
         Object selected = box.getSelectedItem();
         double pm;
         if (selected instanceof Peak) {
@@ -147,7 +152,7 @@ public class PrecursorSelector extends JPanel {
             pm = cp.getMass();
         } else if (selected != null && !selected.toString().isEmpty()) {
             pm = Double.parseDouble(selected.toString());
-        } else return null;
+        } else return 0d;
         return pm;
     }
 

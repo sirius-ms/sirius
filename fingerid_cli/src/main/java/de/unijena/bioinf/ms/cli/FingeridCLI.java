@@ -118,7 +118,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
     private void generateCustomDatabase(FingerIdOptions options) throws IOException {
         DatabaseImporter.importDatabase(options.getGeneratingCompoundDatabase(), options.getInput());
     }
-    
+
     protected FingerIDJJob makeFingerIdJob(final Instance i, BasicJJob<List<IdentificationResult>> siriusJob) {
         if (siriusJob == null) return null;
 
@@ -139,6 +139,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
 
     protected static final class CandidateElement extends Scored<FingerprintCandidate> {
         protected final FingerIdResult origin;
+
         public CandidateElement(FingerIdResult ir, Scored<FingerprintCandidate> c) {
             super(c.getCandidate(), c.getScore());
             this.origin = ir;
@@ -164,7 +165,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
                     FingerIdResult fingerIdResult = identificationResult.getAnnotationOrNull(FingerIdResult.class);
                     if (fingerIdResult != null) {
                         for (Scored<FingerprintCandidate> fpc : fingerIdResult.getCandidates())
-                            allCandidates.add(new CandidateElement(fingerIdResult,fpc));
+                            allCandidates.add(new CandidateElement(fingerIdResult, fpc));
                     }
                 }
 
@@ -224,8 +225,9 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
                     if (name == null || name.isEmpty()) name = "";
                     if (true || bioConfidence == null)
                         progress.info(String.format(Locale.US, "Top biocompound is %s %s (%s)\n", name, topBio.origin.getPrecursorIonType().toString(), fc.getInchi().in2D));
-                    else {}
-                        //progress.info(String.format(Locale.US, "Top biocompound is %s %s (%s) with confidence %.2f\n", name, topBio.origin.getPrecursorIonType().toString(), fc.getInchi().in2D, confidenceScore));
+                    else {
+                    }
+                    //progress.info(String.format(Locale.US, "Top biocompound is %s %s (%s) with confidence %.2f\n", name, topBio.origin.getPrecursorIonType().toString(), fc.getInchi().in2D, confidenceScore));
                 }
 
                 for (int k = 0; k < Math.min(20, allCandidates.size()); ++k) {
@@ -234,7 +236,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
                     String n = f.getName();
                     if (n == null || n.isEmpty()) n = f.getSmiles();
                     if (n == null) n = "";
-                    println(String.format(Locale.US, "%2d.) %s\t%s\t%s\t%s\tscore: %.2f", (k + 1), n, e.origin.getResolvedTree().getRoot().getFormula().toString(), e.origin.getPrecursorIonType().toString(),  f.getInchi().in2D, allCandidates.get(k).getScore()));
+                    println(String.format(Locale.US, "%2d.) %s\t%s\t%s\t%s\tscore: %.2f", (k + 1), n, e.origin.getResolvedTree().getRoot().getFormula().toString(), e.origin.getPrecursorIonType().toString(), f.getInchi().in2D, allCandidates.get(k).getScore()));
                 }
                 if (allCandidates.size() > 20) {
                     println("... " + (allCandidates.size() - 20) + " further candidates.");
@@ -526,11 +528,14 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
             if (options.getPPMMax() != null) dev = new Deviation(options.getPPMMax());
             else dev = sirius.getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation();
             final List<PrecursorIonType> allowedIonTypes = new ArrayList<>();
-            if (i.experiment.getPrecursorIonType() == null || i.experiment.getPrecursorIonType().isIonizationUnknown()) {
-                if (i.experiment.getPrecursorIonType() == null || i.experiment.getPrecursorIonType().getCharge() > 0) {
-                    allowedIonTypes.addAll(Arrays.asList(WebAPI.positiveIons));
+            if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
+                int charge = i.experiment.getPrecursorIonType().getCharge();
+                if (charge > 0) {
+                    allowedIonTypes.addAll(PeriodicTable.getInstance().getPositiveIonizations());
+                } else if (charge < 0) {
+                    allowedIonTypes.addAll(PeriodicTable.getInstance().getPositiveIonizations());
                 } else {
-                    allowedIonTypes.addAll(Arrays.asList(WebAPI.negativeIons));
+                    allowedIonTypes.addAll(PeriodicTable.getInstance().getIonizations());
                 }
             } else {
                 allowedIonTypes.add(i.experiment.getPrecursorIonType());
