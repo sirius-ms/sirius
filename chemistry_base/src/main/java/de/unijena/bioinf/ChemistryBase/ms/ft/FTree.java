@@ -170,6 +170,10 @@ public class FTree extends AbstractFragmentationGraph {
 
     public int deleteSubtree(Fragment root) {
         assert !root.isDeleted();
+        if (root.isLeaf()) {
+            deleteFragment(root);
+            return 1;
+        }
         final Iterator<Fragment> iter = postOrderIterator(root);
         final ArrayList<Fragment> vertices = new ArrayList<Fragment>();
         while (iter.hasNext()) {

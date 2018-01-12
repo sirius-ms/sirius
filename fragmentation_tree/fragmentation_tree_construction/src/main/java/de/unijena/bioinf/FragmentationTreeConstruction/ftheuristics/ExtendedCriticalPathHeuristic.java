@@ -5,12 +5,14 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
+import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.util.*;
 
 public class ExtendedCriticalPathHeuristic {
 
-    protected static final boolean STOP_EARLY = true;
+    protected final boolean STOP_EARLY;
+    protected final int INSERTION;
 
     protected FGraph graph;
 
@@ -21,6 +23,12 @@ public class ExtendedCriticalPathHeuristic {
     protected double[] criticalPaths;
 
     public ExtendedCriticalPathHeuristic(FGraph graph) {
+        this(graph,true,1);
+    }
+
+    public ExtendedCriticalPathHeuristic(FGraph graph, boolean stopEarly, int insertion) {
+        this.STOP_EARLY = stopEarly;
+        this.INSERTION = insertion;
         this.graph = graph;
         this.usedColors = new BitSet(graph.maxColor()+1);
         this.usedEdges = new Loss[graph.maxColor()+1];
@@ -48,7 +56,7 @@ public class ExtendedCriticalPathHeuristic {
             }
         });
         if (searchKey < 0) {
-            searchKey = -(searchKey-1);
+            searchKey = -(searchKey+1);
         } else {
             while (searchKey< graph.numberOfVertices() && graph.getFragmentAt(searchKey).getColor() == color)
                 ++searchKey;
@@ -60,7 +68,8 @@ public class ExtendedCriticalPathHeuristic {
         while (findCriticalPaths()) {
 
         }
-        relocateAll();
+        if (INSERTION==1) relocateAll();
+        else if (INSERTION==2) relocateBySpanningTree();
         return buildSolution();
     }
 
@@ -198,6 +207,48 @@ public class ExtendedCriticalPathHeuristic {
         */
         //System.err.println(c + " => " + (-score));
 
+    }
+
+    protected void relocateBySpanningTree() {
+        final TIntObjectHashMap<ArrayList<Loss>> availableLosses = new TIntObjectHashMap<>();
+        final BitSet usedFragments = new BitSet(graph.numberOfVertices());
+        for (int l=0; l < numberOfSelectedEdges; ++l) {
+            final Loss loss = usedEdges[l];
+            final Fragment f = loss.getTarget();
+            usedFragments.set(f.getVertexId());
+        }
+        usedFragments.set(graph.getRoot().getVertexId());
+        for (int l=0; l < numberOfSelectedEdges; ++l) {
+            final Loss loss = usedEdges[l];
+            final Fragment f = loss.getTarget();
+            final ArrayList<Loss> ls = new ArrayList<>();
+            for (int i=0; i < f.getInDegree(); ++i) {
+                if (usedFragments.get(f.getParent(i).getVertexId())) {
+                    ls.add(f.getIncomingEdge(i));
+                }
+            }
+            availableLosses.put(f.getVertexId(), ls);
+        }
+        numberOfSelectedEdges = 0;
+        while (!availableLosses.isEmpty()) {
+            Loss maximum = findMax(availableLosses);
+            usedEdges[numberOfSelectedEdges++] = maximum;
+            availableLosses.remove(maximum.getTarget().getVertexId());
+        }
+        Arrays.sort(usedEdges, 0, numberOfSelectedEdges, (a,b)->a.getTarget().getColor()-b.getTarget().getColor());
+
+    }
+
+    private Loss findMax(TIntObjectHashMap<ArrayList<Loss>> map) {
+        Loss[] maxLoss = new Loss[1];
+        map.forEachValue((x)->{
+            for (Loss l : x) {
+                if (maxLoss[0]==null || l.getWeight()>maxLoss[0].getWeight())
+                    maxLoss[0] = l;
+            }
+            return true;
+        });
+        return maxLoss[0];
     }
 
     protected boolean relocate(int lossId) {
