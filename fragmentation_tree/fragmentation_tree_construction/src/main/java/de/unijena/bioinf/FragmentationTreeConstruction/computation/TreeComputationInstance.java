@@ -214,7 +214,7 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
                 final List<IntermediateResult> intermediateResults = new ArrayList<>();
                 final DecompositionList dlist = pinput.getAnnotationOrThrow(DecompositionList.class);
                 configureProgress(0, 20, n);
-                if (dlist.getDecompositions().size() > 100) {
+                if (dlist.getDecompositions().size() > 100 && numberOfResultsToKeep < dlist.getDecompositions().size()/4) {
                     final List<HeuristicJob> heuristics = new ArrayList<>();
                     for (final Decomposition formula : dlist.getDecompositions()) {
                         final HeuristicJob heuristicJob = new HeuristicJob(formula);
@@ -247,6 +247,7 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
                 }
                 if (tss != null && retryWithHigherScore && fr.canceledDueToLowScore) {
                     inc += TREE_SIZE_INCREASE;
+                    System.err.println("increase tree size to " + inc);
                     treeSizeBonus = new TreeSizeScorer.TreeSizeBonus(treeSizeBonus.score + TREE_SIZE_INCREASE);
                     tss.fastReplace(pinput, treeSizeBonus);
                 } else return fr;
@@ -301,7 +302,7 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
         final int BATCH_SIZE = Math.min(4 * NCPUS, Math.max(30, NCPUS));
         final int MAX_GRAPH_CACHE_SIZE = Math.max(30, BATCH_SIZE);
 
-        final int n = numberOfResultsToKeep;
+        final int n = Math.min(intermediateResults.size(), numberOfResultsToKeep);
         final DoubleEndWeightedQueue2<ExactResult> queue = new DoubleEndWeightedQueue2<>(Math.max(20, n + 10), new ExactResultComparator());
         final DoubleEndWeightedQueue2<ExactResult> graphCache;
         // store at maximum 30 graphs
