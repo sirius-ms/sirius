@@ -33,6 +33,10 @@ import java.util.regex.Pattern;
 
 public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
+    private static enum SpecType {
+        UNKNOWN,MS1, MSMS, CORRELATED;
+    }
+
     private static class MgfSpec {
 
         private String featureId;
@@ -42,6 +46,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         private String inchi, smiles, name;
         private RetentionTime retentionTime;
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
+        private SpecType type;
 
         public MgfSpec(MgfSpec s) {
             this.spectrum=new MutableMs2Spectrum(s.spectrum);
@@ -52,11 +57,13 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             this.name = s.name;
             this.featureId = s.featureId;
             this.retentionTime = s.retentionTime;
+            this.type = s.type;
         }
 
         public MgfSpec() {
             this.spectrum = new MutableMs2Spectrum();
             this.fields = new HashMap<String, String>();
+            this.type = SpecType.UNKNOWN;
         }
     }
 
@@ -96,7 +103,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 buffer.addLast(s);
         }
 
-        private static Pattern CHARGE_PATTERN = Pattern.compile("(\\d+)([+-])?");
+        private static Pattern CHARGE_PATTERN = Pattern.compile("([+-]?\\d+)([+-])?");
         private static Pattern NOT_AVAILABLE = Pattern.compile("\\s*N/A\\s*");
 
         private void handleKeyword(MgfSpec spec, String keyword, String value) throws IOException {
@@ -131,7 +138,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 if (spec.spectrum.getIonization()==null || spec.spectrum.getIonization().getCharge() != charge)
                     spec.spectrum.setIonization(new Charge(charge));
                 if (spec.ionType==null) spec.ionType = PrecursorIonType.unknown(charge);
-            } else if (keyword.startsWith("ION")) {
+            } else if (keyword.startsWith("ION") || keyword.contains("ADDUCT")) {
                 final PrecursorIonType ion;
                 final Matcher cm = CHARGE_PATTERN.matcher(value);
                 if (value.toLowerCase().startsWith("pos")) {
@@ -145,24 +152,30 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 } else {
                     try {
                         ion = PeriodicTable.getInstance().ionByName(value);
-                        if (ion==null) {
+                        if (ion == null) {
                             LoggerFactory.getLogger(this.getClass()).error("Unknown ion '" + value + "'");
-                            if (!ignoreUnsupportedIonTypes) throw new IOException("Unknown ion '" + value +"'");
+                            if (!ignoreUnsupportedIonTypes) throw new IOException("Unknown ion '" + value + "'");
                             else return;
-                        }
-                        else {
+                        } else {
 
                         }
                     } catch (RuntimeException e) {
-                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                         if (!ignoreUnsupportedIonTypes) throw (e);
                         else return;
                     }
                 }
                 spec.spectrum.setIonization(ion.getIonization());
                 spec.ionType = ion;
+            } else if (keyword.contains("SPECTYPE")) {
+                if (value.toUpperCase().contains("CORRELATED")) {
+                    spec.type = SpecType.CORRELATED;
+                }
             } else if (keyword.contains("LEVEL")) {
-                spec.spectrum.setMsLevel(Integer.parseInt(value));
+                final int level = Integer.parseInt(value);
+                spec.spectrum.setMsLevel(level);
+                if (level == 1 && spec.type != SpecType.CORRELATED) spec.type = SpecType.MS1;
+                else if (level > 1) spec.type = SpecType.MSMS;
             } else {
                 if (NOT_AVAILABLE.matcher(value).matches()) return;
                 if (keyword.equalsIgnoreCase("INCHI")) {
@@ -273,8 +286,15 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
         while (true) {
             final MgfSpec spec = inst.pollNext();
-            if (spec.spectrum.getMsLevel()==1) exp.getMs1Spectra().add(new SimpleSpectrum(spec.spectrum));
-            else exp.getMs2Spectra().add(new MutableMs2Spectrum(spec.spectrum));
+            if (spec.spectrum.getMsLevel()==1) {
+                if (spec.type==SpecType.CORRELATED) {
+                    exp.setMergedMs1Spectrum(new SimpleSpectrum(spec.spectrum));
+                } else {
+                    exp.getMs1Spectra().add(new SimpleSpectrum(spec.spectrum));
+                }
+            } else {
+                exp.getMs2Spectra().add(new MutableMs2Spectrum(spec.spectrum));
+            }
             if (exp.getPrecursorIonType()==null) {
                 exp.setPrecursorIonType(spec.ionType);
             }
@@ -305,10 +325,10 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 final MgfSpec nextOne = inst.peekNext();
                 if (spec.featureId!=null && !spec.featureId.equals(nextOne.featureId)) break;
                 if (spec.name != null && spec.featureId==null && !spec.name.equals(nextOne.name)) break;
-                if (exp.getPrecursorIonType()!=null && !exp.getPrecursorIonType().equals(spec.ionType)) break;
+                if (exp.getPrecursorIonType()!=null && !exp.getPrecursorIonType().isIonizationUnknown() && nextOne.ionType!=null && !nextOne.ionType.isIonizationUnknown() && !exp.getPrecursorIonType().equals(nextOne.ionType)) break;
                 if (nextOne.spectrum.getPrecursorMz() != 0) {
                     if ((spec.featureId!=null || spec.name!=null)) {
-                        if (Math.abs(nextOne.spectrum.getPrecursorMz() - exp.getIonMass()) > 0.002) break;
+                        if (Math.abs(nextOne.spectrum.getPrecursorMz() - exp.getIonMass()) > 0.005) break;
                     } else if (nextOne.spectrum.getPrecursorMz()!=exp.getIonMass()) break;
                 }
             } else break;

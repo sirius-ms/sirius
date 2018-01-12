@@ -47,6 +47,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         final MsInstrumentation instrumentation = data.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown);
         writer.write(">instrumentation " + instrumentation.description());
         writer.newLine();
+        writeIfAvailable(writer, ">quality", data.getAnnotation(CompoundQuality.class));
         final Map<String,String> arbitraryKeys = data.getAnnotation(Map.class, new HashMap<String,String>());
         for (Map.Entry<String,String> e : arbitraryKeys.entrySet()) {
             writer.write("#" + e.getKey() + " " + e.getValue());
