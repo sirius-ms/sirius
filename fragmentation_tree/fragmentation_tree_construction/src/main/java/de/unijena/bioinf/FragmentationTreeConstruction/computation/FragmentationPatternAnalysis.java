@@ -1116,7 +1116,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @param originalGraph
      * @param tree
      */
-    protected void addTreeAnnotations(FGraph originalGraph, FTree tree) {
+    public void addTreeAnnotations(FGraph originalGraph, FTree tree) {
         final ProcessedInput pinput = originalGraph.getAnnotationOrNull(ProcessedInput.class);
         tree.setAnnotation(ProcessedInput.class, pinput);
         PrecursorIonType ionType = originalGraph.getAnnotationOrThrow(PrecursorIonType.class);
@@ -1266,7 +1266,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         ////// bug in reduction code for isotopes
         //if (fragments.getAnnotationOrNull(IsotopicMarker.class)!=null) return fragments;
         /////
-        if (reduction == null) return fragments;
+        if (reduction == null) {
+            // do topological sort
+            fragments.sortTopological();
+            return fragments;
+        }
         return reduction.reduce(fragments, lowerbound);
     }
 
@@ -1274,7 +1278,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         ////// bug in reduction code for isotopes
         //if (fragments.getAnnotationOrNull(IsotopicMarker.class)!=null) return fragments;
         /////
-        if (reduction == null) return fragments;
+        if (reduction == null) {
+            // do topological sort
+            fragments.sortTopological();
+            return fragments;
+        }
         return reduction.reduce(fragments, 0d);
     }
 
@@ -1340,7 +1348,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         if (maxIntensity==0) return 0;
         return treeIntensity / maxIntensity;
     }
-    protected double getIntensityRatioOfExplainedPeaksFromUnanotatedTree(ProcessedInput input, FTree tree, Ionization ionMode) {
+    public double getIntensityRatioOfExplainedPeaksFromUnanotatedTree(ProcessedInput input, FTree tree, Ionization ionMode) {
         final double[] fragmentMasses = new double[tree.numberOfVertices()];
         int k=0;
         for (Fragment f : tree) {
