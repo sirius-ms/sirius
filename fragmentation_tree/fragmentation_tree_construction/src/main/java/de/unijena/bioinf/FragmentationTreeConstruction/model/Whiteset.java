@@ -29,7 +29,7 @@ public class Whiteset {
      * returns a new whiteset of all formulas that can be explained with the given mass and one
      * of the precursor ions
      */
-    public List<Decomposition> resolve(double parentMass, Deviation deviation, List<PrecursorIonType> allowedPrecursorIonTypes) {
+    public List<Decomposition> resolve(double parentMass, Deviation deviation, Collection<PrecursorIonType> allowedPrecursorIonTypes) {
         final List<Decomposition> decompositions = new ArrayList<>();
         eachFormula:
         for (MolecularFormula formula : formulas) {

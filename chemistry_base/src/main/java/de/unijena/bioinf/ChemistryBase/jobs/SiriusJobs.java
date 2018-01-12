@@ -10,13 +10,13 @@ public class SiriusJobs {
 
 
     public static void setGlobalJobManager(int cpuThreads) {
-        replace(new JobManager(cpuThreads));
+        replace(new JobManager(cpuThreads, Math.min(cpuThreads, 3)));
     }
 
     private static void replace(JobManager jobManager) {
         final JobManager oldManager = globalJobManager;
         globalJobManager = jobManager;
-        if (oldManager!=null) {
+        if (oldManager != null) {
             try {
                 globalJobManager.shutdown();
             } catch (InterruptedException e) {

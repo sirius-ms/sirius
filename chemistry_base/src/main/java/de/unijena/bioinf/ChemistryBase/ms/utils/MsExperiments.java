@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class MsExperiments {
@@ -115,5 +116,13 @@ public class MsExperiments {
         possiblePrecursors.defaultPrecursor = defaultIon;
 
         return possiblePrecursors;
+    }
+
+    public static PrecursorCandidates findPossiblePrecursorPeaks(List<Peak> peaks, double ionMass) {
+        final SimpleMutableSpectrum massBuffer = new SimpleMutableSpectrum();
+        for (Peak peak : peaks) {
+            massBuffer.addPeak(peak);
+        }
+        return findPossiblePrecursorPeaks(Collections.singletonList(new SimpleSpectrum(massBuffer)), Collections.EMPTY_LIST, ionMass);
     }
 }

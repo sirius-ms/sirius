@@ -460,7 +460,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final List<Decomposition> decomps = new ArrayList<>();
         if (whiteset!=null && !whiteset.getFormulas().isEmpty()) {
 
-            final List<PrecursorIonType> ionTypes;
+            final Collection<PrecursorIonType> ionTypes;
             if (experiment.getPrecursorIonType().isIonizationUnknown()) ionTypes = experiment.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
             else ionTypes = Arrays.asList(experiment.getPrecursorIonType());
             decomps.addAll(whiteset.resolve(parentPeak.getOriginalMz(), parentDeviation, ionTypes));

@@ -58,7 +58,7 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
         checkIonization(warn, repair, input);
         checkMergedMs1(warn, repair, input);
         checkIonMass(warn, repair, input);
-        checkNeutralMass(warn, repair, input);
+//        checkNeutralMass(warn, repair, input);
         return input;
     }
 
@@ -95,7 +95,6 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
         }
         if (repair) {
             if (input.getMolecularFormula()==null) input.setMolecularFormula(formula);
-            if (input.getMoleculeNeutralMass()==0) input.setMoleculeNeutralMass(formula.getMass());
         }
     }
 
@@ -108,7 +107,7 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
         } else throw new InvalidException("PrecursorIonType is expected to be " + precursorIonType.toString() + " but " + input.getPrecursorIonType() + " is given.");
     }
 
-    protected void checkNeutralMass(Warning warn, boolean repair, MutableMs2Experiment input) {
+    /*protected void checkNeutralMass(Warning warn, boolean repair, MutableMs2Experiment input) {
         if (input.getMoleculeNeutralMass() == 0 || !validDouble(input.getMoleculeNeutralMass(), false)) {
             if (input.getMolecularFormula() != null) {
                 input.setMoleculeNeutralMass(input.getMolecularFormula().getMass());
@@ -116,7 +115,7 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
                 input.setMoleculeNeutralMass(input.getPrecursorIonType().precursorMassToNeutralMass(input.getIonMass()));
             }
         }
-    }
+    }*/
 
     protected void removeEmptySpectra(Warning warn, MutableMs2Experiment input) {
         final Iterator<MutableMs2Spectrum> iter = input.getMs2Spectra().iterator();
@@ -138,10 +137,8 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
             input.setAnnotation(PossibleIonModes.class, ionModes);
         }
 
-        if ((input.getMolecularFormula()!=null || input.getMoleculeNeutralMass()>0) && input.getIonMass()>0 && input.getPrecursorIonType()!=null) {
-            final double neutralmass;
-            if (input.getMolecularFormula()!=null) neutralmass=input.getMolecularFormula().getMass();
-            else neutralmass = input.getMoleculeNeutralMass();
+        final double neutralmass = input.getMoleculeNeutralMass();
+        if ((input.getMolecularFormula()!=null || neutralmass>0) && input.getIonMass()>0 && input.getPrecursorIonType()!=null) {
             final double modification = input.getIonMass()-neutralmass;
             if (Math.abs(input.getPrecursorIonType().neutralMassToPrecursorMass(neutralmass)-input.getIonMass()) > 1e-2) {
                 final PrecursorIonType iontype = PeriodicTable.getInstance().ionByMass(modification, 1e-2, input.getPrecursorIonType().getCharge());

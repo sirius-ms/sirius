@@ -82,7 +82,13 @@ public interface Ms2Experiment extends Cloneable {
      *
      * @return the *exact* (idealized) mass of the molecule or 0 if the mass is unknown
      */
-    double getMoleculeNeutralMass();
+    default double getMoleculeNeutralMass() {
+        if (getMolecularFormula() != null)
+            return getMolecularFormula().getMass();
+        if (!getPrecursorIonType().isIonizationUnknown() && getIonMass() > 0)
+            getPrecursorIonType().precursorMassToNeutralMass(getIonMass());
+        return 0;
+    }
 
     /**
      * @return molecular formula of the neutral molecule
