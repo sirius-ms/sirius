@@ -1,9 +1,8 @@
 package de.unijena.bioinf.sirius.gui.table;
 
+import de.unijena.bioinf.sirius.gui.structure.AbstractEDTBean;
 import de.unijena.bioinf.sirius.gui.table.list_stats.DoubleListStats;
 import eu.hansolo.rangeslider.RangeSlider;
-import org.jdesktop.beans.AbstractBean;
-import oshi.jna.platform.unix.solaris.LibKstat;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -12,7 +11,7 @@ import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.List;
 
-public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends AbstractBean, D> extends JPanel implements ActiveElementChangedListener<E, D> {
+public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends AbstractEDTBean, D> extends JPanel implements ActiveElementChangedListener<E, D> {
     public static final String DEFAUTL_INT_FORMAT = "##0";
     public static final String DEFAUTL_DOUBLE_FORMAT = "##0.00";
 

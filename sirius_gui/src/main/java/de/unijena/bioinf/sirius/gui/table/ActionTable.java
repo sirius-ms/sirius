@@ -5,24 +5,23 @@ package de.unijena.bioinf.sirius.gui.table;
  * 24.01.17.
  */
 
-import ca.odell.glazedlists.*;
+import ca.odell.glazedlists.EventList;
+import ca.odell.glazedlists.FilterList;
+import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.gui.AbstractTableComparatorChooser;
 import ca.odell.glazedlists.gui.TableFormat;
-import ca.odell.glazedlists.matchers.AbstractMatcherEditor;
 import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventTableModel;
 import ca.odell.glazedlists.swing.TableComparatorChooser;
-import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
-import org.jdesktop.beans.AbstractBean;
+import de.unijena.bioinf.sirius.gui.structure.AbstractEDTBean;
 
 import javax.swing.*;
-import java.util.ArrayList;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ActionTable<T extends AbstractBean> extends JTable {
+public class ActionTable<T extends AbstractEDTBean> extends JTable {
     public final TableComparatorChooser comparatorChooser;
 
 

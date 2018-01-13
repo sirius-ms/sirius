@@ -4,7 +4,7 @@ import java.awt.*;
 import java.util.*;
 
 /**
- *  The <code>RelativeLayout</code> class is a layout manager that
+ *  The <code>RelativeLayout</code> class is a layout MANAGER that
  *  lays out a container's components on the specified X or Y axis.
  *
  *	Components can be layed out at their preferred size or at a
@@ -371,7 +371,7 @@ public class RelativeLayout implements LayoutManager2, java.io.Serializable
 	 * container in order to satisfy the constraints of the
 	 * <code>RelativeLayout</code> object.
 	 * <p>
-	 * The grid layout manager determines the size of individual
+	 * The grid layout MANAGER determines the size of individual
 	 * components by dividing the free space in the container into
 	 * equal-sized portions according to the number of rows and columns
 	 * in the layout. The container's free space equals the container's
@@ -839,7 +839,7 @@ public class RelativeLayout implements LayoutManager2, java.io.Serializable
 	}
 
 	/**
-	 * Invalidates the layout, indicating that if the layout manager
+	 * Invalidates the layout, indicating that if the layout MANAGER
 	 * has cached information it should be discarded.
 	 */
 	public void invalidateLayout(Container target)

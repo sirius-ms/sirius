@@ -59,7 +59,7 @@ public abstract class Workspace {
             public void run() {
                 resolveCompundNameConflict(ec);
                 COMPOUNT_LIST.add(ec);
-                if (ec.getResults().size() > 0) ec.setComputeState(ComputingStatus.COMPUTED);
+                if (ec.getResults().size() > 0) ec.setSiriusComputeState(ComputingStatus.COMPUTED);
             }
         });
     }

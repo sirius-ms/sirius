@@ -36,16 +36,19 @@ public class FingerIDSearchGuiJob extends DependentMasterJJob<FingerIdData> impl
 
     @Override
     protected FingerIdData compute() throws Exception {
-        if (ec.getComputeState() != ComputingStatus.COMPUTED)
+        if (ec.getSiriusComputeState() != ComputingStatus.COMPUTED)
             throw new IllegalArgumentException("Input Data does not contain Sirius Identification results. Run Sirius job first!");
 
+        updateProgress(0, 1, -10);
         CSIFingerIdComputation csiFingerID = MainFrame.MF.getCsiFingerId();
         csiFingerID.compute(ec, db);
+        updateProgress(0, 1, 1);
+
         return null;
     }
 
     @Override
     public SwingJJobContainer<FingerIdData> asSwingJob() {
-        return new SwingJJobContainer<>(this, ec.getGUIName(), "FingerIDSearch");
+        return new SwingJJobContainer<>(this, ec.getGUIName(), "Submit FingerID Jobs");
     }
 }

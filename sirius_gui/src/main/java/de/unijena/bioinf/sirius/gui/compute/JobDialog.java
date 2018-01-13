@@ -1,5 +1,11 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
+import de.unijena.bioinf.jjobs.JJobManagerPanel;
+import de.unijena.bioinf.jjobs.JJobTable;
+import de.unijena.bioinf.jjobs.JJobTableFormat;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.sirius.gui.table.SiriusTableCellRenderer;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -18,13 +24,15 @@ public class JobDialog extends JDialog implements JobLog.JobListener {
         this.owner = owner;
         final JPanel innerPanel = new JPanel();
         innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.Y_AXIS));
+
         final JPanel running = new JPanel(new BorderLayout());
         final JPanel done = new JPanel(new BorderLayout());
         innerPanel.add(running);
         innerPanel.add(done);
-        running.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Running Jobs"));
-        done.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Terminated Jobs"));
-        add(innerPanel);
+        running.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Running CSI:FingerID Jobs"));
+        done.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Terminated CSI:FingerID Jobs"));
+        final JJobManagerPanel main = new JJobManagerPanel(new JJobTable(Jobs.MANAGER, new JJobTableFormat(), new SiriusTableCellRenderer()), null, innerPanel);
+        add(main);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         this.r = new DefaultListModel<>();
         this.t = new DefaultListModel<>();

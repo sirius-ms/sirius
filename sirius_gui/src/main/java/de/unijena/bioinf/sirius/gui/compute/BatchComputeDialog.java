@@ -25,14 +25,14 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.fingerid.FingerIDComputationPanel;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.compute.jjobs.FingerIDSearchGuiJob;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.SiriusIdentificationGuiJob;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
@@ -226,38 +226,33 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private void startComputing() {
         if (recompute.isSelected()) {
             final String dontAskProperty = "de.unijena.bioinf.sirius.dontAsk.recompute";
-            Properties properties = ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties();
 
             ReturnValue value;
-            if (Boolean.parseBoolean(properties.getProperty(dontAskProperty, "false")) || this.compoundsToProcess.size() == 1) {
+            if (Boolean.parseBoolean(PropertyManager.PROPERTIES.getProperty(dontAskProperty, "false")) || this.compoundsToProcess.size() == 1) {
                 value = ReturnValue.Success;
             } else {
                 QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", dontAskProperty);
                 value = questionDialog.getReturnValue();
             }
 
-            //reset status of uncomputed values
+            //reset status of already computed values to uncomputed if needed
             if (value == ReturnValue.Success) {
                 final Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
                 while (compounds.hasNext()) {
                     final ExperimentContainer ec = compounds.next();
-                    ec.setComputeState(ComputingStatus.UNCOMPUTED);
+                    ec.setSiriusComputeState(ComputingStatus.UNCOMPUTED);
                 }
             }
         }
 
-
-        String instrument = searchProfilePanel.getInstrument().profile;
-
-        SearchableDatabase searchableDatabase = searchProfilePanel.getFormulaSource();
-
-        FormulaConstraints constraints = elementPanel.getElementConstraints();
-        List<Element> elementsToAutoDetect = Collections.EMPTY_LIST;
-        if (elementPanel.individualAutoDetect)
-            elementsToAutoDetect = elementPanel.getElementsToAutoDetect();
-
+        //collect job parameter from view
+        final String instrument = searchProfilePanel.getInstrument().profile;
+        final SearchableDatabase searchableDatabase = searchProfilePanel.getFormulaSource();
+        final FormulaConstraints constraints = elementPanel.getElementConstraints();
+        final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.EMPTY_LIST;
         final double ppm = searchProfilePanel.getPpm();
         final int candidates = searchProfilePanel.getNumberOfCandidates();
+        ////////////////////////////////////////////////////////////////
 
         // CHECK ILP SOLVER
         TreeBuilder builder = new Sirius().getMs2Analyzer().getTreeBuilder();
@@ -270,34 +265,52 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
         LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder);
 
-        //entspricht setup() Methode
-        final Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
-        while (compounds.hasNext()) {
-            final ExperimentContainer ec = compounds.next();
-            //check what we have to compute
-            if (ec.isUncomputed()) {
+        Jobs.runInBackroundAndLoad(owner, "Submitting Identification Jobs", new TinyBackgroundJJob() {
+            @Override
+            protected Object compute() throws InterruptedException {
+                //entspricht setup() Methode
+                final Iterator<ExperimentContainer> compounds = compoundsToProcess.iterator();
+                final int max = compoundsToProcess.size();
+                int progress = 0;
+                while (compounds.hasNext()) {
+                    final ExperimentContainer ec = compounds.next();
+                    checkForInterruption();
+                    //check what we have to compute
+                    if (ec.isUncomputed() || ec.getBestHit() == null) {
+                        progressInfo(ec.getGUIName());
+                        checkForInterruption();
+                        MutableMs2Experiment exp = applySettingsAndGet(ec);
+                        FormulaConstraints individualConstraints = new FormulaConstraints(constraints);
 
-                MutableMs2Experiment exp = applySettingsAndGet(ec);
-                FormulaConstraints individualConstraints = new FormulaConstraints(constraints);
-
-                if (!elementsToAutoDetect.isEmpty() && !ec.getMs1Spectra().isEmpty()) {
-                    FormulaConstraints autoConstraints = sirius.predictElementsFromMs1(exp);
-                    if (autoConstraints != null) {
-                        ElementPredictor predictor = sirius.getElementPrediction();
-                        for (Element element : elementsToAutoDetect) {
-                            if (predictor.isPredictable(element)) {
-                                individualConstraints.setUpperbound(element, autoConstraints.getUpperbound(element));
+                        if (!elementsToAutoDetect.isEmpty() && !ec.getMs1Spectra().isEmpty()) {
+                            FormulaConstraints autoConstraints = sirius.predictElementsFromMs1(exp);
+                            if (autoConstraints != null) {
+                                ElementPredictor predictor = sirius.getElementPrediction();
+                                for (Element element : elementsToAutoDetect) {
+                                    if (predictor.isPredictable(element)) {
+                                        individualConstraints.setUpperbound(element, autoConstraints.getUpperbound(element));
+                                    }
+                                }
                             }
                         }
-                    }
-                }
 
-                SiriusIdentificationGuiJob identificationJob = Jobs.runSiriusIdentification(instrument, ppm, candidates, individualConstraints, searchProfilePanel.restrictToOrganics(), searchableDatabase, ec);
-                if (csiOptions.isCSISelected()) {
-                    FingerIDSearchGuiJob fingerid = Jobs.runFingerIDSearch(csiOptions.dbSelectionOptions.getDb(), identificationJob);
+                        checkForInterruption();
+
+                        if (!ec.isComputed()) {
+                            SiriusIdentificationGuiJob identificationJob = Jobs.runSiriusIdentification(instrument, ppm, candidates, individualConstraints, searchProfilePanel.restrictToOrganics(), searchableDatabase, ec);
+                            if (csiOptions.isCSISelected())
+                                Jobs.runFingerIDSearch(csiOptions.dbSelectionOptions.getDb(), identificationJob);
+                        } else if (csiOptions.isCSISelected() && ec.getBestHit() == null) {
+                            Jobs.runFingerIDSearch(csiOptions.dbSelectionOptions.getDb(), ec);
+                        }
+                    }
+                    updateProgress(0, max, ++progress);
                 }
+                return true;
             }
-        }
+        });
+
+
         dispose();
     }
 
