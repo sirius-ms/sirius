@@ -20,9 +20,9 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import org.jdesktop.beans.AbstractBean;
+import de.unijena.bioinf.sirius.gui.structure.AbstractEDTBean;
 
-public class FingerIdData extends AbstractBean {
+public class FingerIdData extends AbstractEDTBean {
 
     protected final ProbabilityFingerprint platts;
 
@@ -31,9 +31,11 @@ public class FingerIdData extends AbstractBean {
     protected final Compound[] compounds;
     protected final double[] scores;
     protected final double[] tanimotoScores;
+    public final SearchableDatabase db;
+
+    //todo is the confidence stuff still needed or dead?
     private double confidence;
     private double topScore;
-    public final SearchableDatabase db;
 
     public FingerIdData(SearchableDatabase db, Compound[] compounds, double[] scores, double[] tanimotoScores, ProbabilityFingerprint platts) {
         this.db = db;
@@ -64,7 +66,7 @@ public class FingerIdData extends AbstractBean {
     public void setConfidence(double confidence) {
         double old = this.confidence;
         this.confidence = confidence;
-        firePropertyChange("confidence",old,this.confidence);
+        firePropertyChange("confidence", old, this.confidence);
     }
 
     public double getTopScore() {
@@ -74,7 +76,7 @@ public class FingerIdData extends AbstractBean {
     public void setTopScore(double topScore) {
         double old = this.topScore;
         this.topScore = topScore;
-        firePropertyChange("topScore",old,this.topScore);
+        firePropertyChange("topScore", old, this.topScore);
     }
 
     public Compound[] getCompounds() {
@@ -84,24 +86,4 @@ public class FingerIdData extends AbstractBean {
     public double[] getScores() {
         return scores;
     }
-
-    /*public double getMinLogPFilter() {
-        return minLogPFilter;
-    }
-
-    public void setMinLogPFilter(double minLogPFilter) {
-        double old = this.minLogPFilter;
-        this.minLogPFilter = minLogPFilter;
-        firePropertyChange("minLogPFilter",old,this.minLogPFilter);
-    }
-
-    public double getMaxLogPFilter() {
-        return maxLogPFilter;
-    }
-
-    public void setMaxLogPFilter(double maxLogPFilter) {
-        double old = this.maxLogPFilter;
-        this.maxLogPFilter = maxLogPFilter;
-        firePropertyChange("maxLogPFilter",old,this.maxLogPFilter);
-    }*/
 }

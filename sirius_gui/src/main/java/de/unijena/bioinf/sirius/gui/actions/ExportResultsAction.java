@@ -48,7 +48,7 @@ public class ExportResultsAction extends AbstractAction {
         BasicEventList<ExperimentContainer> sl = Workspace.COMPOUNT_LIST;
         if (!sl.isEmpty()) {
             for (ExperimentContainer e : sl) {
-                if (e.getComputeState() == ComputingStatus.COMPUTED) {
+                if (e.getSiriusComputeState() == ComputingStatus.COMPUTED) {
                     return true;
                 }
             }

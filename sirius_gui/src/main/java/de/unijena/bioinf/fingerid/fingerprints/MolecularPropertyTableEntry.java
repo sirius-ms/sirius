@@ -1,12 +1,12 @@
 package de.unijena.bioinf.fingerid.fingerprints;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import org.jdesktop.beans.AbstractBean;
+import de.unijena.bioinf.sirius.gui.structure.AbstractEDTBean;
 
 /**
  * TODO: this class is immutable. Does it make sense to have it extend AbstractBean?
  */
-public class MolecularPropertyTableEntry extends AbstractBean implements Comparable<MolecularPropertyTableEntry> {
+public class MolecularPropertyTableEntry extends AbstractEDTBean implements Comparable<MolecularPropertyTableEntry> {
 
     protected final ProbabilityFingerprint underlyingFingerprint;
     protected final int absoluteIndex;
@@ -33,7 +33,7 @@ public class MolecularPropertyTableEntry extends AbstractBean implements Compara
     }
 
     public int getMatchSize() {
-        if (visualization==null) return 0;
+        if (visualization == null) return 0;
         return visualization.numberOfMatchesAtoms;
     }
 
@@ -45,31 +45,38 @@ public class MolecularPropertyTableEntry extends AbstractBean implements Compara
         final CdkFingerprintVersion v;
         FingerprintVersion vv = underlyingFingerprint.getFingerprintVersion();
         if (vv instanceof MaskedFingerprintVersion) vv = ((MaskedFingerprintVersion) vv).getMaskedFingerprintVersion();
-        if (vv instanceof CdkFingerprintVersion) v = (CdkFingerprintVersion)vv;
+        if (vv instanceof CdkFingerprintVersion) v = (CdkFingerprintVersion) vv;
         else throw new RuntimeException("Can only deal with CDK fingerprints");
         return v.getFingerprintTypeFor(absoluteIndex);
     }
 
     public String getFingerprintTypeName() {
         switch (getFingerprintType()) {
-            case ECFP: return "ECFP";
-            case KLEKOTA_ROTH: return "Klekota Roth";
-            case MACCS: return "MACCS";
-            case OPENBABEL: return "Open Babel FP4";
-            case PUBCHEM: return "PubChem";
-            case SUBSTRUCTURE: return "CDK Substructure";
-            default:return null;
+            case ECFP:
+                return "ECFP";
+            case KLEKOTA_ROTH:
+                return "Klekota Roth";
+            case MACCS:
+                return "MACCS";
+            case OPENBABEL:
+                return "Open Babel FP4";
+            case PUBCHEM:
+                return "PubChem";
+            case SUBSTRUCTURE:
+                return "CDK Substructure";
+            default:
+                return null;
         }
     }
 
 
     @Override
     public int compareTo(MolecularPropertyTableEntry o) {
-        return absoluteIndex-o.absoluteIndex;
+        return absoluteIndex - o.absoluteIndex;
     }
 
     @Override
     public String toString() {
-        return  absoluteIndex + ": " + getMolecularProperty().toString();
+        return absoluteIndex + ": " + getMolecularProperty().toString();
     }
 }

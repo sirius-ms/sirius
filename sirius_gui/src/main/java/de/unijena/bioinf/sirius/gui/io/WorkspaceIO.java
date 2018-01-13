@@ -19,6 +19,7 @@
 package de.unijena.bioinf.sirius.gui.io;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
@@ -71,7 +72,7 @@ public class WorkspaceIO {
         final FingerIdResultWriter w = new FingerIdResultWriter(env);
         for (ExperimentContainer c : containers) {
             final Ms2Experiment exp = c.getMs2Experiment();
-            w.writeExperiment(new ExperimentResult(exp, c.getRawResults()));
+            w.writeExperiment(new ExperimentResult(exp, Lists.newArrayList(c.getRawResults())));
         }
         w.close();
     }
@@ -159,7 +160,7 @@ public class WorkspaceIO {
             }
         }).getBytes(Charset.forName("UTF-8")));
         // if results available, write trees
-        if (c.getRawResults() != null && !c.getRawResults().isEmpty()) {
+        if (c.getRawResults() != null && !c.getRawResults().iterator().hasNext()) {
             //final List<IdentificationResult> irs = c.getRawResults();
             for (final SiriusResultElement ir : c.getResults()) {
                 final ZipEntry tree = new ZipEntry(prefix + ir.getRank() + ".json");

@@ -20,7 +20,7 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
-import org.jdesktop.beans.AbstractBean;
+import de.unijena.bioinf.sirius.gui.structure.AbstractEDTBean;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.CircularFingerprinter;
@@ -37,7 +37,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class CompoundCandidate extends AbstractBean implements Comparable<CompoundCandidate> {
+public class CompoundCandidate extends AbstractEDTBean implements Comparable<CompoundCandidate> {
     public static final CompoundCandidate PROTOTYPE = new PrototypeCompoundCandidate();
 
     public static final boolean ECFP_ENABLED = true;
@@ -126,7 +126,7 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
             List<DatabaseLabel> labels = new ArrayList<>();
             for (String key : this.compound.databases.keySet()) {
                 final Collection<String> values = this.compound.databases.get(key);
-                final ArrayList<String> cleaned =  new ArrayList<>(values.size());
+                final ArrayList<String> cleaned = new ArrayList<>(values.size());
                 for (String value : values) {
                     if (value != null)
                         cleaned.add(value);
@@ -266,7 +266,7 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
 
     private static class PrototypeCompoundCandidate extends CompoundCandidate {
         private PrototypeCompoundCandidate() {
-            super(0, 0, null, Compound.getPrototypeCompound(),"PROTO");
+            super(0, 0, null, Compound.getPrototypeCompound(), "PROTO");
         }
 
         @Override

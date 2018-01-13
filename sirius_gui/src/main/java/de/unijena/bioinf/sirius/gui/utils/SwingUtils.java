@@ -36,9 +36,8 @@ public class SwingUtils {
             // If Nimbus is not available, you can set the GUI to another look and feel.
         }
 
-        Painter painter = new ProgressPainter(Color.WHITE, Colors.ICON_GREEN);
-        UIManager.put("ProgressBar[Enabled].foregroundPainter", painter);
-        UIManager.put("ProgressBar[Enabled+Finished].foregroundPainter", painter);
+        UIManager.put("nimbusOrange", Colors.ICON_GREEN);
+
 //        ToolTipManager.sharedInstance().setInitialDelay(250);
 
 

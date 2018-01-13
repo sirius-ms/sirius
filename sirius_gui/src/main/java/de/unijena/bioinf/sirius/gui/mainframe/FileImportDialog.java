@@ -112,7 +112,7 @@ public class FileImportDialog extends JDialog implements ActionListener{
 
 }
 
-//this is am perfect application for a io backround jjob or Swing worker
+//this is am perfect application for a io backround jjob
 class DataAnalyseThread implements Runnable {
 	
 	private List<File> csvFiles, msFiles, mgfFiles, rawFiles;
