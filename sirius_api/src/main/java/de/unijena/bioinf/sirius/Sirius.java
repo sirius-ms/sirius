@@ -90,7 +90,7 @@ public class Sirius {
         private final boolean beautifyTrees;
 
         public SiriusIdentificationJob(Ms2Experiment experiment, int numberOfResultsToKeep, boolean beautifyTrees) {
-            super(JobType.CPU, 0, 100);
+            super(JobType.CPU);
             this.experiment = experiment;
             this.numberOfResultsToKeep = numberOfResultsToKeep;
             this.beautifyTrees = beautifyTrees;
@@ -102,7 +102,7 @@ public class Sirius {
             instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
-                    SiriusIdentificationJob.this.updateProgress((int) evt.getNewValue());
+                    SiriusIdentificationJob.this.updateProgress(0, (int) evt.getNewValue(), 100);
                 }
             });
             final ProcessedInput pinput = instance.validateInput();
