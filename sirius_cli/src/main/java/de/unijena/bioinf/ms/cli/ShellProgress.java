@@ -19,7 +19,6 @@ package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
-import de.unijena.bioinf.jjobs.JobProgressInfoEvent;
 import de.unijena.bioinf.sirius.Feedback;
 import de.unijena.bioinf.sirius.Progress;
 
@@ -122,14 +121,12 @@ public class ShellProgress implements Progress, JobProgressEventListener {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //todo this is all workaround: when everything runs on jobs we schould replace the feedback with the JJob object
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    @Override
-    public void info(JobProgressInfoEvent infoEvent) {
-        info(infoEvent.getMessage());
-    }
 
     @Override
-    public void update(JobProgressEvent progressEvent) {
+    public void progressChanged(JobProgressEvent progressEvent) {
         update(progressEvent.getNewValue(), progressEvent.getMaxValue(), "", DUMMY_FEEDBACK);
+        if (progressEvent.hasMessage())
+            info(progressEvent.getMessage());
     }
 
     private static class DummyFeedback implements Feedback {
