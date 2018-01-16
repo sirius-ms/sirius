@@ -1,7 +1,7 @@
 package de.unijena.bioinf.sirius.gui.mainframe.experiments;
 
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
+import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -154,7 +154,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 
 
 		g2.setFont(statusFont);
-		SwingUtils.drawListStatusElement(ec.getSiriusComputeState(),g2,this);
+		GuiUtils.drawListStatusElement(ec.getSiriusComputeState(),g2,this);
 	}
 
 }

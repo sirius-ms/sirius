@@ -323,11 +323,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
 
         ExperimentContainer ec = compoundsToProcess.get(0);
-        editPanel = new ExperiemtEditPanel();
-        editPanel.setBorder(BorderFactory.createEtchedBorder());
-        editPanel.nameTF.setText(ec.getName());
-        editPanel.ionizationCB.setSelectedItem(ec.getIonization().getIonization().getName());
-        editPanel.precursorSelection.setData(ec.getMs1Spectra(), ec.getMs2Spectra(), ec.getIonMass());
+        editPanel = new ExperiemtEditPanel(ec);
+        editPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Edit Input Data"));
         north.add(editPanel, BorderLayout.NORTH);
 
         editPanel.ionizationCB.addActionListener(e -> {

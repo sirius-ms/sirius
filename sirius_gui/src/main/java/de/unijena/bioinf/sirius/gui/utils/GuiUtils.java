@@ -5,8 +5,19 @@ package de.unijena.bioinf.sirius.gui.utils;
  * 06.10.16.
  */
 
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
@@ -16,7 +27,7 @@ import java.awt.*;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SwingUtils {
+public class GuiUtils {
 
     public final static int SMALL_GAP = 5;
     public final static int MEDIUM_GAP = 10;
@@ -69,6 +80,45 @@ public class SwingUtils {
         int offset = g2.getFontMetrics().stringWidth(icon);
         g2.drawString(icon, c.getWidth() - offset - 10, c.getHeight() - 8);
         g2.setColor(prevCol);
+    }
+
+    public static String extractMolecularFormulaString(ExperimentContainer ec) {
+        MutableMs2Experiment exp = ec.getMs2Experiment();
+        return extractMolecularFormulaString(exp);
+    }
+
+    public static String extractMolecularFormulaString(Ms2Experiment exp) {
+        MolecularFormula formula = exp.getMolecularFormula();
+        if (formula != null) {
+            return formula.toString();
+        }
+
+        if (exp.hasAnnotation(InChI.class)) {
+            InChI inChI = exp.getAnnotation(InChI.class);
+            formula = inChI.extractFormula();
+            return formula.toString();
+
+        }
+
+        if (exp.hasAnnotation(Smiles.class)) {
+            Smiles smiles = exp.getAnnotation(Smiles.class);
+            try {
+                final IAtomContainer mol = new SmilesParser(DefaultChemObjectBuilder.getInstance()).parseSmiles(smiles.smiles);
+                String formulaString = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(mol));
+                return formulaString;
+            } catch (CDKException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+    //to clean fresh imported annotations
+    public static void clearExperimentAnotations(Ms2Experiment exp) {
+        //todo are there more annotaion that we do not want in the gui after import
+        exp.clearAnnotation(Smiles.class);
+        exp.clearAnnotation(InChI.class);
     }
 
 

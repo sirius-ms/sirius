@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.util.Properties;
 
-import static de.unijena.bioinf.sirius.gui.utils.SwingUtils.SMALL_GAP;
+import static de.unijena.bioinf.sirius.gui.utils.GuiUtils.SMALL_GAP;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)

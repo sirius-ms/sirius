@@ -10,7 +10,7 @@ import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
-import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
+import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
 import de.unijena.bioinf.sirius.net.ProxyManager;
 
 /**
@@ -33,7 +33,7 @@ public class SiriusGUIApplication {
                 ApplicationCore.SIRIUS_PROPERTIES_FILE.setAndStoreProperty("de.unijena.bioinf.sirius.proxy", ProxyManager.DEFAULT_STRATEGY.name());
             }
 
-            SwingUtils.initUI();
+            GuiUtils.initUI();
             FingeridCLI.DEFAULT_LOGGER.info("Swing parameters for GUI initialized");
             MainFrame.MF.setLocationRelativeTo(null);//init mainframe
             FingeridCLI.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");

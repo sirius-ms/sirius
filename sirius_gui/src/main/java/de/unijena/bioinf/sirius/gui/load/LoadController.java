@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.load;
 
 import ca.odell.glazedlists.BasicEventList;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -15,6 +16,7 @@ import de.unijena.bioinf.sirius.gui.structure.CSVToSpectrumConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
+import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import javax.swing.*;
@@ -48,6 +50,8 @@ public class LoadController implements LoadDialogListener {
 
             loadDialog.ionizationChanged(exp.getIonization() != null ? exp.getIonization() : PrecursorIonType.unknown(1));
 
+            loadDialog.editPanel.setMolecularFomula(exp.getMs2Experiment());
+
             loadDialog.experimentNameChanged(exp.getName());
 
             for (Spectrum<? extends Peak> spectrum : expToModify.getMs1Spectra()) {
@@ -65,6 +69,7 @@ public class LoadController implements LoadDialogListener {
             loadDialog = new DefaultLoadDialog(owner, spectra);
             loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
             loadDialog.experimentNameChanged("");
+            loadDialog.editPanel.formulaTF.setText("");
         }
 
         loadDialog.addLoadDialogListener(this);
@@ -193,6 +198,10 @@ public class LoadController implements LoadDialogListener {
         if (loadDialog.getIonization().isIonizationUnknown() && experiment.getPrecursorIonType() != null && !experiment.getPrecursorIonType().isIonizationUnknown())
             loadDialog.ionizationChanged(experiment.getPrecursorIonType());
 
+        final String formula = loadDialog.editPanel.formulaTF.getText();
+        if (formula == null || formula.isEmpty())
+            loadDialog.editPanel.setMolecularFomula(experiment);
+
         final String name = loadDialog.getExperimentName();
         if (name == null || name.isEmpty())
             loadDialog.experimentNameChanged(experiment.getName());
@@ -224,6 +233,7 @@ public class LoadController implements LoadDialogListener {
         if (spectra.isEmpty()) {
             loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
             loadDialog.experimentNameChanged("");
+            loadDialog.editPanel.formulaTF.setText("");
         }
     }
 
@@ -250,6 +260,13 @@ public class LoadController implements LoadDialogListener {
             expToModify.setIonization(loadDialog.getIonization());
             expToModify.setIonMass(loadDialog.getParentMass());
             expToModify.setName(loadDialog.getExperimentName());
+
+            String formulaString = loadDialog.editPanel.formulaTF.getText();
+            if (formulaString != null && !formulaString.isEmpty()){
+                //todo validate formula and show error panel instead of ignoring it
+                expToModify.getMs2Experiment().setMolecularFormula(MolecularFormula.parse(formulaString));
+            }
+            GuiUtils.clearExperimentAnotations(expToModify.getMs2Experiment());
         }
     }
 
