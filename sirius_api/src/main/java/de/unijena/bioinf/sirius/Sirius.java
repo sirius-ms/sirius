@@ -50,7 +50,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 public class Sirius {
 
@@ -102,21 +101,21 @@ public class Sirius {
             instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
-                    SiriusIdentificationJob.this.updateProgress(0, (int) evt.getNewValue(), 100);
+                    updateProgress(0, (int) evt.getNewValue(), 105);
                 }
             });
             final ProcessedInput pinput = instance.validateInput();
             performMs1Analysis(instance, IsotopePatternHandling.both);
             submitSubJob(instance);
-            TreeComputationInstance.FinalResult fr;
-            try {
+            TreeComputationInstance.FinalResult fr = instance.awaitResult();
+            /*try {
                 fr = instance.awaitResult();
             } catch (ExecutionException e) {
                 if (e.getCause() instanceof RuntimeException)
                     throw (RuntimeException) e.getCause();
                 LOG().error(e.getMessage(), e);
                 return null;
-            }
+            }*/
 
             List<IdentificationResult> r = createIdentificationResults(fr);//postprocess results
             return r;
