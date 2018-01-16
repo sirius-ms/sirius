@@ -171,6 +171,13 @@ public class MutableMs2Experiment implements Ms2Experiment {
         return val != null;
     }
 
+    @Override
+    public <T> Object clearAnnotation(Class<T> klass) {
+        return annotations.remove(klass);
+    }
+
+
+
     //overrides existing
     public void setAnnotationsFrom(Ms2Experiment experiment) {
         final Iterator<Map.Entry<Class<Object>, Object>> iter = experiment.forEachAnnotation();
