@@ -12,6 +12,7 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.MasterJJob;
+import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
