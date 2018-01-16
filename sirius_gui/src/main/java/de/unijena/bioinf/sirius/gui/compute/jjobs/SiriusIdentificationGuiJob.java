@@ -11,6 +11,7 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.FormulaWhiteListJob;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.logging.TextAreaJJobContainer;
 
 import java.util.List;
 
@@ -82,7 +83,6 @@ public class SiriusIdentificationGuiJob extends MasterJJob<List<IdentificationRe
 
         checkForInterruption();
         ec.setRawResults(results);
-        updateProgress(0, 100, 100);
         return results;
     }
 
@@ -93,6 +93,6 @@ public class SiriusIdentificationGuiJob extends MasterJJob<List<IdentificationRe
 
     @Override
     public SwingJJobContainer<List<IdentificationResult>> asSwingJob() {
-        return new SwingJJobContainer<>(this, ec.getGUIName(), "Molecular Formula Identification");
+        return new TextAreaJJobContainer<>(this, ec.getGUIName(), "Molecular Formula Identification");
     }
 }

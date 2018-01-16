@@ -10,6 +10,7 @@ import de.unijena.bioinf.jjobs.SwingJJobContainer;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.logging.TextAreaJJobContainer;
 
 public class FingerIDSearchGuiJob extends DependentMasterJJob<FingerIdData> implements GuiObservableJJob<FingerIdData> {
     final ExperimentContainer ec;
@@ -42,13 +43,11 @@ public class FingerIDSearchGuiJob extends DependentMasterJJob<FingerIdData> impl
         updateProgress(0, 1, -10);
         CSIFingerIdComputation csiFingerID = MainFrame.MF.getCsiFingerId();
         csiFingerID.compute(ec, db);
-        updateProgress(0, 1, 1);
-
         return null;
     }
 
     @Override
     public SwingJJobContainer<FingerIdData> asSwingJob() {
-        return new SwingJJobContainer<>(this, ec.getGUIName(), "Submit FingerID Jobs");
+        return new TextAreaJJobContainer<>(this, ec.getGUIName(), "Submitting FingerID Jobs");
     }
 }

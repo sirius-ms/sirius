@@ -8,11 +8,15 @@ import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.logging.TextAreaHandler;
+import de.unijena.bioinf.sirius.logging.TextAreaOutputStream;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Jobs {
     public static final SwingJobManager MANAGER = (SwingJobManager) SiriusJobs.getGlobalJobManager();
