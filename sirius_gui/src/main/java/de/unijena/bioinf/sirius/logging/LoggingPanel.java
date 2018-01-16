@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.logging;
+package de.unijena.bioinf.sirius.logging;
 
 
 import javax.swing.*;
@@ -9,13 +9,8 @@ import java.util.logging.Logger;
 
 public class LoggingPanel extends JPanel {
 
-    public LoggingPanel(Logger logger) {
+    public LoggingPanel(JTextArea textArea) {
         setLayout(new BorderLayout());
-
-        JTextArea textArea = new JTextArea();
-        OutputStream os = new TextAreaOutputStream(textArea);
-        logger.addHandler(new TextAreaHandler(os));
-
 
         textArea.setEditable(false);
 
@@ -36,7 +31,11 @@ public class LoggingPanel extends JPanel {
         logger.setUseParentHandlers(false);
         logger.setLevel(Level.ALL);
 
-        LoggingPanel logPane = new LoggingPanel(logger);
+        JTextArea textArea = new JTextArea();
+        OutputStream os = new TextAreaOutputStream(textArea);
+        logger.addHandler(new TextAreaHandler(os, Level.ALL));
+
+        LoggingPanel logPane = new LoggingPanel(textArea);
 
         logger.info("test, TEST");
 

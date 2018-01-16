@@ -3,11 +3,14 @@ package de.unijena.bioinf.sirius.gui.compute;
 import de.unijena.bioinf.jjobs.JJobManagerPanel;
 import de.unijena.bioinf.jjobs.JJobTable;
 import de.unijena.bioinf.jjobs.JJobTableFormat;
+import de.unijena.bioinf.jjobs.SwingJJobContainer;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.table.SiriusTableCellRenderer;
+import de.unijena.bioinf.sirius.logging.LoggingDialog;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +34,18 @@ public class JobDialog extends JDialog implements JobLog.JobListener {
         innerPanel.add(done);
         running.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Running CSI:FingerID Jobs"));
         done.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Terminated CSI:FingerID Jobs"));
-        final JJobManagerPanel main = new JJobManagerPanel(new JJobTable(Jobs.MANAGER, new JJobTableFormat(), new SiriusTableCellRenderer()), null, innerPanel);
+        final JJobTable jobTable = new JJobTable(Jobs.MANAGER, new JJobTableFormat(), new SiriusTableCellRenderer());
+        jobTable.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) { // check if a double click
+                    int row = jobTable.rowAtPoint(e.getPoint());
+                    SwingJJobContainer c = jobTable.getAdvancedTableModel().getElementAt(row);
+                    LoggingDialog dig = new LoggingDialog(JobDialog.this, c);
+                }
+            }
+        });
+
+        final JJobManagerPanel main = new JJobManagerPanel(jobTable, null, innerPanel);
         add(main);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         this.r = new DefaultListModel<>();

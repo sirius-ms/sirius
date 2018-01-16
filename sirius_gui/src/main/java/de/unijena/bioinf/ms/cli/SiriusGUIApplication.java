@@ -34,7 +34,9 @@ public class SiriusGUIApplication {
             }
 
             SwingUtils.initUI();
+            FingeridCLI.DEFAULT_LOGGER.info("Swing parameters for GUI initialized");
             MainFrame.MF.setLocationRelativeTo(null);//init mainframe
+            FingeridCLI.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
         } else {
             cli.setup();
             cli.validate();

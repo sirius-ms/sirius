@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.logging;
+package de.unijena.bioinf.sirius.logging;
 
 import javax.swing.*;
 import java.io.ByteArrayOutputStream;
@@ -9,14 +9,15 @@ public class TextAreaOutputStream extends OutputStream {
     private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     private final JTextArea textArea;
 
-    protected TextAreaOutputStream(JTextArea textArea) {
+    public TextAreaOutputStream(JTextArea textArea) {
         super();
         this.textArea = textArea;
     }
 
     @Override
     public void flush() throws IOException {
-        textArea.append(buffer.toString("UTF-8"));
+        if (textArea != null)
+            textArea.append(buffer.toString("UTF-8"));
         buffer.reset();
     }
 

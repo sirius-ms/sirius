@@ -1,8 +1,9 @@
-package de.unijena.bioinf.sirius.gui.logging;
+package de.unijena.bioinf.sirius.logging;
 
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.SimpleFormatter;
 import java.util.logging.StreamHandler;
@@ -23,10 +24,11 @@ public class TextAreaHandler extends StreamHandler {
         }
     }
 
-    protected TextAreaHandler(OutputStream os) {
+    public TextAreaHandler(OutputStream os, Level level) {
         super();
         configure();
         setOutputStream(os);
+        setLevel(level);
     }
 
     // [UnsynchronizedOverridesSynchronized] Unsynchronized method publish overrides synchronized method in StreamHandler
