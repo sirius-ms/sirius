@@ -49,34 +49,34 @@ public class SiriusIdentificationGuiJob extends MasterJJob<List<IdentificationRe
     @Override
     protected List<IdentificationResult> compute() throws Exception {
         MutableMs2Experiment experiment = new MutableMs2Experiment(ec.getMs2Experiment()); //todo we want to copy?
-        //todo finde a nice way to combine progress between subjobs
+        //todo find a nice way to combine progress between subjobs
 
-        updateProgress(0, 1, 110);
+        updateProgress(0, 110, 1);
         final Sirius.SiriusIdentificationJob identificationJob = sirius.makeIdentificationJob(experiment, numberOfCandidates);
         identificationJob.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> {
             JobProgressEvent e = (JobProgressEvent) evt;
             updateProgress(e.getMinValue(), e.getNewValue(), e.getMaxValue());
         });
 
-        updateProgress(0, 3, 110);
+        updateProgress(0, 110, 3);
 
-        //todo progress stuf
-        //todo find good solution for subjobs and depedencies
-        //  sirius.getMs2Analyzer().setIsotopeHandling(container.enableIsotopesInMs2 ? FragmentationPatternAnalysis.IsotopeInMs2Handling.ALWAYS : FragmentationPatternAnalysis.IsotopeInMs2Handling.IGNORE);
         sirius.setTimeout(experiment, -1, Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.treebuilder.timeout", "0")));
         sirius.setFormulaConstraints(experiment, constraints);
         sirius.setAllowedMassDeviation(experiment, new Deviation(ppm));
+        //todo iosope stuff
+        //todo recalibration
+        //sirius.setIsotopeHandling(container.enableIsotopesInMs2 ? FragmentationPatternAnalysis.IsotopeInMs2Handling.ALWAYS : FragmentationPatternAnalysis.IsotopeInMs2Handling.IGNORE);
 //        sirius.enableRecalibration(experiment, true);
 //        sirius.setIsotopeMode(experiment, IsotopePatternHandling.both);
 
-        updateProgress(0, 4, 110);
+        updateProgress(0, 110, 4);
         checkForInterruption();
         if (searchableDatabase != null) {
             FormulaWhiteListJob wlj = new FormulaWhiteListJob(ppm, onlyOrganic, searchableDatabase, experiment);
             wlj.call();
         }
 
-        updateProgress(0, 8, 110);
+        updateProgress(0, 110, 8);
         checkForInterruption();
 
         final List<IdentificationResult> results = identificationJob.call();

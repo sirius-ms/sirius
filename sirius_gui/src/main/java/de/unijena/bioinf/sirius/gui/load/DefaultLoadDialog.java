@@ -2,10 +2,12 @@ package de.unijena.bioinf.sirius.gui.load;
 
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
+import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.msviewer.MSViewerPanel;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
@@ -253,10 +255,30 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     }
 
     private void load() {
+        if (!validateFormula()) {
+            new ExceptionDialog(this, "The molecular formula is invalid. Please specify a valid molecular formula or leave the field empty if the molecular formula is unknown.");
+            return;
+        }
         this.setVisible(false);
         for (LoadDialogListener ldl : listeners) {
             ldl.completeProcess();
         }
+    }
+
+    private boolean validateFormula() {
+        String formulaString = editPanel.formulaTF.getText();
+        if (formulaString == null || formulaString.isEmpty())
+            return true;
+        MolecularFormula mf = MolecularFormula.parse(formulaString);
+
+        return mf != null && !mf.equals(MolecularFormula.emptyFormula());
+    }
+
+    public MolecularFormula getMolecularFormula() {
+        String formulaString = editPanel.formulaTF.getText();
+        if (formulaString == null || formulaString.isEmpty())
+            return null;
+        return MolecularFormula.parse(formulaString);
     }
 
     private void abort() {
