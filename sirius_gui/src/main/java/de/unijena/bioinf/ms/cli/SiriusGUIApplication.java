@@ -9,9 +9,13 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
 import de.unijena.bioinf.sirius.net.ProxyManager;
+
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -21,7 +25,6 @@ public class SiriusGUIApplication {
     public static void main(String[] args) {
         final FingeridCLI<SiriusGUIOptions> cli = new FingeridCLI<>();
         cli.parseArgs(args, SiriusGUIOptions.class);
-
 
         if (cli.options.isGUI()) {
             final int cpuThreads = Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1"));
@@ -35,6 +38,13 @@ public class SiriusGUIApplication {
 
             GuiUtils.initUI();
             FingeridCLI.DEFAULT_LOGGER.info("Swing parameters for GUI initialized");
+            MainFrame.MF.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent event) {
+                    FingeridCLI.DEFAULT_LOGGER.info("Saving properties file before termination.");
+                    Jobs.runInBackround(ApplicationCore.SIRIUS_PROPERTIES_FILE::store);
+                }
+            });
             MainFrame.MF.setLocationRelativeTo(null);//init mainframe
             FingeridCLI.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
         } else {

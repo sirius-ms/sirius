@@ -24,4 +24,8 @@ public class PrecursorIonTypeSelector extends JComboBox<String> {
     public PrecursorIonTypeSelector() {
         this(new Vector<>(PeriodicTable.getInstance().getAdductsAndUnKnowns().stream().map(PrecursorIonType::toString).sorted().collect(Collectors.toList())), PeriodicTable.getInstance().unknownPositivePrecursorIonType().getIonization().getName());
     }
+
+    public void refresh() {
+        setModel(new DefaultComboBoxModel<>(new Vector<>(PeriodicTable.getInstance().getAdductsAndUnKnowns().stream().map(PrecursorIonType::toString).sorted().collect(Collectors.toList()))));
+    }
 }
