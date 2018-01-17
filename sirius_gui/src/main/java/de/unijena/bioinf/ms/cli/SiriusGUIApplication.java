@@ -7,9 +7,9 @@ package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
 import de.unijena.bioinf.sirius.net.ProxyManager;
@@ -41,23 +41,37 @@ public class SiriusGUIApplication {
             MainFrame.MF.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent event) {
-                    FingeridCLI.DEFAULT_LOGGER.info("Saving properties file before termination.");
-                    Jobs.runInBackround(ApplicationCore.SIRIUS_PROPERTIES_FILE::store);
+                    try {
+                        FingeridCLI.DEFAULT_LOGGER.info("Saving properties file before termination.");
+                        ApplicationCore.SIRIUS_PROPERTIES_FILE.store();
+                    } finally {
+                        try {
+
+                            JobManager.shutDownAllInstances();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                            System.exit(0);
+                        }
+                    }
+
                 }
             });
             MainFrame.MF.setLocationRelativeTo(null);//init mainframe
             FingeridCLI.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
         } else {
-            cli.setup();
-            cli.validate();
-            cli.compute();
+            try {
+                cli.setup();
+                cli.validate();
+                cli.compute();
+            } finally {
+                try {
+                    JobManager.shutDownAllInstances();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    System.exit(0);
+                }
+            }
         }
 
-        /*try {
-            JobManager.shutDownAllInstances();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            System.exit(0);
-        }*/
     }
 }
