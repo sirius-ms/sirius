@@ -16,7 +16,6 @@ import de.unijena.bioinf.sirius.gui.structure.CSVToSpectrumConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
-import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import javax.swing.*;
@@ -262,11 +261,10 @@ public class LoadController implements LoadDialogListener {
             expToModify.setName(loadDialog.getExperimentName());
 
             String formulaString = loadDialog.editPanel.formulaTF.getText();
-            if (formulaString != null && !formulaString.isEmpty()){
+            if (formulaString != null && !formulaString.isEmpty()) {
                 //todo validate formula and show error panel instead of ignoring it
                 expToModify.getMs2Experiment().setMolecularFormula(MolecularFormula.parse(formulaString));
             }
-            GuiUtils.clearExperimentAnotations(expToModify.getMs2Experiment());
         }
     }
 

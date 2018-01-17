@@ -19,10 +19,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Set;
-import java.util.Vector;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -130,35 +127,34 @@ public class SearchProfilePanel extends JPanel {
             add(new TwoCloumnPanel(label, formulaCombobox));
         }
 
-        refreshPossibleIonizations(ecs.stream().map(ExperimentContainer::getIonization).collect(Collectors.toSet()));
+        refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().getName()).collect(Collectors.toSet()));
 
     }
 
-    public void refreshPossibleIonizations(Set<PrecursorIonType> ionTypes) {
+    public void refreshPossibleIonizations(Set<String> ionTypes) {
         java.util.List<String> ionizations = new ArrayList<>();
 
         if (!ionTypes.isEmpty()) {
-            if (ionTypes.contains(PrecursorIonType.unknown())) {
+            if (ionTypes.contains(PrecursorIonType.unknown().getIonization().getName())) {
                 ionizations.addAll(PeriodicTable.getInstance().getIonizationsAsString());
             } else {
-                if (ionTypes.contains(PrecursorIonType.unknownPositive())) {
+                if (ionTypes.contains(PrecursorIonType.unknownPositive().getIonization().getName())) {
                     ionizations.addAll(PeriodicTable.getInstance().getPositiveIonizationsAsString());
                 }
-                if (ionTypes.contains(PrecursorIonType.unknownNegative())) {
+                if (ionTypes.contains(PrecursorIonType.unknownNegative().getIonization().getName())) {
                     ionizations.addAll(PeriodicTable.getInstance().getNegativeIonizationsAsString());
                 }
             }
         }
 
         if (ionizations.isEmpty()) {
-            ionizationPanel.checkBoxList.replaceElements(ionTypes.stream().map(PrecursorIonType::toString).collect(Collectors.toList()));
+            ionizationPanel.checkBoxList.replaceElements(ionTypes.stream().sorted().collect(Collectors.toList()));
             ionizationPanel.checkBoxList.checkAll();
-//            ionizationPanel.setVisible(false);
             ionizationPanel.setEnabled(false);
         } else {
+            Collections.sort(ionizations);
             ionizationPanel.checkBoxList.replaceElements(ionizations);
             ionizationPanel.checkBoxList.checkAll();
-//            ionizationPanel.setVisible(true);
             ionizationPanel.setEnabled(true);
         }
 //        pack();

@@ -3,13 +3,14 @@ package de.unijena.bioinf.sirius.gui.utils;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import javax.swing.*;
 
 public class ExperiemtEditPanel extends JPanel {
     public final PrecursorSelector precursorSelection;
-    public final IonizationSelector ionizationCB;
+    public final PrecursorIonTypeSelector ionizationCB;
     public final JTextField nameTF;
     public final JTextField formulaTF;
 
@@ -24,8 +25,8 @@ public class ExperiemtEditPanel extends JPanel {
         precursorSelection = new PrecursorSelector();
         add(new TextHeaderBoxPanel(PrecursorSelector.name, precursorSelection));
 
-        ionizationCB = new IonizationSelector();
-        add(new TextHeaderBoxPanel(IonizationSelector.name, ionizationCB));
+        ionizationCB = new PrecursorIonTypeSelector();
+        add(new TextHeaderBoxPanel(PrecursorIonTypeSelector.name, ionizationCB));
 
         formulaTF = new JTextField(12);
         add(new TextHeaderBoxPanel("Molecular Formula", formulaTF));
@@ -59,13 +60,13 @@ public class ExperiemtEditPanel extends JPanel {
 
     public void setData(ExperimentContainer ec) {
         nameTF.setText(ec.getName());
-        ionizationCB.setSelectedItem(ec.getIonization().getIonization().getName());
+        ionizationCB.setSelectedItem(ec.getIonization().toString());
         precursorSelection.setData(ec.getMs1Spectra(), ec.getMs2Spectra(), ec.getIonMass());
         setMolecularFomula(ec.getMs2Experiment());
     }
 
     public void setMolecularFomula(Ms2Experiment ec) {
-        String formulaString = GuiUtils.extractMolecularFormulaString(ec);
+        String formulaString = Workspace.extractMolecularFormulaString(ec);
         formulaTF.setText(formulaString);
     }
 }

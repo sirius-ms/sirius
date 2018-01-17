@@ -36,6 +36,13 @@ public class AdductSelectionList extends JCheckBoxList<String> implements ListSe
         replaceElements(m);
         checkAll();
         setEnabled(enabled);
+        firePropertyChange("refresh", null, null);
     }
 
+    @Override
+    public void setEnabled(boolean enabled) {
+        boolean old = isEnabled();
+        super.setEnabled(enabled);
+        firePropertyChange("refresh", old, isEnabled());
+    }
 }
