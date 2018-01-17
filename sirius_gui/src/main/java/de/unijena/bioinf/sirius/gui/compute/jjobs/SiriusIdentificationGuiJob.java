@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Whiteset;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -13,6 +14,7 @@ import de.unijena.bioinf.sirius.gui.compute.FormulaWhiteListJob;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.logging.TextAreaJJobContainer;
 
+import java.util.Collections;
 import java.util.List;
 
 public class SiriusIdentificationGuiJob extends MasterJJob<List<IdentificationResult>> implements GuiObservableJJob<List<IdentificationResult>> {
@@ -71,9 +73,13 @@ public class SiriusIdentificationGuiJob extends MasterJJob<List<IdentificationRe
 
         updateProgress(0, 110, 4);
         checkForInterruption();
-        if (searchableDatabase != null) {
-            FormulaWhiteListJob wlj = new FormulaWhiteListJob(ppm, onlyOrganic, searchableDatabase, experiment);
-            wlj.call();
+        if (experiment.getMolecularFormula() == null) {
+            if (searchableDatabase != null) {
+                FormulaWhiteListJob wlj = new FormulaWhiteListJob(ppm, onlyOrganic, searchableDatabase, experiment);
+                wlj.call();
+            }
+        } else {
+            experiment.setAnnotation(Whiteset.class, new Whiteset(Collections.singleton(experiment.getMolecularFormula())));
         }
 
         updateProgress(0, 110, 8);

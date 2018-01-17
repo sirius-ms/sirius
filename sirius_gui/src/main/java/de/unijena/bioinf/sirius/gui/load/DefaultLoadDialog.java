@@ -255,7 +255,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     }
 
     private void load() {
-        if (!validateFormula()) {
+        if (!editPanel.validateFormula()) {
             new ExceptionDialog(this, "The molecular formula is invalid. Please specify a valid molecular formula or leave the field empty if the molecular formula is unknown.");
             return;
         }
@@ -265,21 +265,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
         }
     }
 
-    private boolean validateFormula() {
-        String formulaString = editPanel.formulaTF.getText();
-        if (formulaString == null || formulaString.isEmpty())
-            return true;
-        MolecularFormula mf = MolecularFormula.parse(formulaString);
 
-        return mf != null && !mf.equals(MolecularFormula.emptyFormula());
-    }
-
-    public MolecularFormula getMolecularFormula() {
-        String formulaString = editPanel.formulaTF.getText();
-        if (formulaString == null || formulaString.isEmpty())
-            return null;
-        return MolecularFormula.parse(formulaString);
-    }
 
     private void abort() {
         this.setVisible(false);

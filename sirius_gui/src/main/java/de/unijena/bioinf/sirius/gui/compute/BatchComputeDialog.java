@@ -18,10 +18,7 @@
 
 package de.unijena.bioinf.sirius.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
@@ -46,6 +43,8 @@ import de.unijena.bioinf.sirius.gui.utils.ExperiemtEditPanel;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -324,10 +323,29 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
 
         ExperimentContainer ec = compoundsToProcess.get(0);
-        editPanel = new ExperiemtEditPanel(ec);
+        editPanel = new ExperiemtEditPanel();
         editPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Edit Input Data"));
         north.add(editPanel, BorderLayout.NORTH);
 
+        //todo beging ugly hack --> we want to manage this by the edit panel instead and fire eit panel events
+        editPanel.formulaTF.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                changedUpdate(e);
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                changedUpdate(e);
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                boolean enable = e.getDocument().getLength() == 0;
+                searchProfilePanel.formulaCombobox.setEnabled(enable);
+                searchProfilePanel.candidatesSpinner.setEnabled(enable);
+            }
+        });
 
         editPanel.ionizationCB.addActionListener(e -> {
             PrecursorIonType ionType = editPanel.getSelectedIonization();
@@ -335,7 +353,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             pack();
         });
 
-        //todo beging ugly hack
+
         csiOptions.adductOptions.checkBoxList.addPropertyChangeListener("refresh", evt -> {
             PrecursorIonType ionType = editPanel.getSelectedIonization();
             if (!ionType.getAdduct().isEmpty()) {
@@ -347,7 +365,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
         });
 
-        searchProfilePanel.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization().getIonization().getName()));
+//        searchProfilePanel.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization().getIonization().getName()));
+        editPanel.setData(ec);
         ///////ugly hack end
 
         /////////////Solo Element//////////////////////
@@ -375,6 +394,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         final MutableMs2Experiment exp = ec.getMs2Experiment();
 
         if (compoundsToProcess.size() == 1) { //check wether we have multiple compounds
+            if (editPanel.validateFormula()) {
+                final MolecularFormula nuFormula = editPanel.getMolecularFormula();
+                exp.setMolecularFormula(nuFormula);
+            }
+
             final double ionMass = editPanel.getSelectedIonMass();
             if (ionMass <= 0)
                 ec.setIonMass(ionMass);
