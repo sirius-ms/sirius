@@ -66,7 +66,7 @@ public class SearchProfilePanel extends JPanel {
     private JComboBox<Instruments> instrumentCB;
     private JSpinner ppmSpinner;
     private SpinnerNumberModel snm;
-    private final JSpinner candidatesSpinner;
+    final JSpinner candidatesSpinner;
 
     public SearchProfilePanel(final Window owner, Collection<ExperimentContainer> ecs) {
         this.owner = owner;

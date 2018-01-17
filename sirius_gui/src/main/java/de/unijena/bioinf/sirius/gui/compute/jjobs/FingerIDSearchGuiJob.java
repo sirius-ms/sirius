@@ -40,7 +40,6 @@ public class FingerIDSearchGuiJob extends DependentMasterJJob<FingerIdData> impl
         if (ec.getSiriusComputeState() != ComputingStatus.COMPUTED)
             throw new IllegalArgumentException("Input Data does not contain Sirius Identification results. Run Sirius job first!");
 
-//        updateProgress(0, 1, -10);
         CSIFingerIdComputation csiFingerID = MainFrame.MF.getCsiFingerId();
         csiFingerID.compute(ec, db);
         return null;

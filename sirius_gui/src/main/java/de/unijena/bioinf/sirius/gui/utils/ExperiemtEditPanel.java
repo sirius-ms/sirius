@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.utils;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -8,6 +9,7 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import javax.swing.*;
 
+//todo property change support so that other views can listen to changes input data before applying them
 public class ExperiemtEditPanel extends JPanel {
     public final PrecursorSelector precursorSelection;
     public final PrecursorIonTypeSelector ionizationCB;
@@ -68,5 +70,21 @@ public class ExperiemtEditPanel extends JPanel {
     public void setMolecularFomula(Ms2Experiment ec) {
         String formulaString = Workspace.extractMolecularFormulaString(ec);
         formulaTF.setText(formulaString);
+    }
+
+    public boolean validateFormula() {
+        String formulaString = formulaTF.getText();
+        if (formulaString == null || formulaString.isEmpty())
+            return true;
+        MolecularFormula mf = MolecularFormula.parse(formulaString);
+
+        return mf != null && !mf.equals(MolecularFormula.emptyFormula());
+    }
+
+    public MolecularFormula getMolecularFormula() {
+        String formulaString = formulaTF.getText();
+        if (formulaString == null || formulaString.isEmpty())
+            return null;
+        return MolecularFormula.parse(formulaString);
     }
 }
