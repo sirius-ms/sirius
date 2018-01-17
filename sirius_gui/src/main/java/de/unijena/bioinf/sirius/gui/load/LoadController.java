@@ -1,17 +1,22 @@
 package de.unijena.bioinf.sirius.gui.load;
 
 import ca.odell.glazedlists.BasicEventList;
+import ca.odell.glazedlists.EventList;
+import ca.odell.glazedlists.swing.GlazedListsSwing;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.fingerid.storage.ConfigStorage;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormatsFilter;
 import de.unijena.bioinf.sirius.gui.mainframe.BatchImportDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.FileImportDialog;
+import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.CSVToSpectrumConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
@@ -33,7 +38,7 @@ public class LoadController implements LoadDialogListener {
 
     private final ExperimentContainer expToModify;
 
-    private final BasicEventList<SpectrumContainer> spectra;
+    private final EventList<SpectrumContainer> spectra;
 
 
     public LoadController(JFrame owner, ExperimentContainer exp, ConfigStorage config) {
@@ -43,7 +48,7 @@ public class LoadController implements LoadDialogListener {
 
         if (exp != null) {
             expToModify = exp;
-            spectra = new BasicEventList<>(expToModify.getMs1Spectra().size() + expToModify.getMs2Spectra().size());
+            spectra = GlazedListsSwing.swingThreadProxyList(new BasicEventList<>(expToModify.getMs1Spectra().size() + expToModify.getMs2Spectra().size()));
             loadDialog = new DefaultLoadDialog(owner, spectra);
 
 
@@ -64,7 +69,7 @@ public class LoadController implements LoadDialogListener {
             loadDialog.setParentMass(expToModify.getIonMass());
         } else {
             expToModify = new ExperimentContainer(new MutableMs2Experiment());
-            spectra = new BasicEventList<>();
+            spectra = GlazedListsSwing.swingThreadProxyList(new BasicEventList<>());
             loadDialog = new DefaultLoadDialog(owner, spectra);
             loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
             loadDialog.experimentNameChanged("");
@@ -173,16 +178,25 @@ public class LoadController implements LoadDialogListener {
         batchImportDialog.start(msFiles, mgfFiles);
         errorStorage.addAll(batchImportDialog.getErrors());
 
-        //todo backround?
-        for (Ms2Experiment exp : batchImportDialog.getResults()) {
-            importExperiment(exp);
-        }
+        Jobs.runInBackroundAndLoad(loadDialog, "Importing Compounds", new TinyBackgroundJJob() {
+            @Override
+            protected Object compute() {
+                List<Ms2Experiment> r = batchImportDialog.getResults();
+                int i = 0;
+                updateProgress(0, r.size(), i);
+                for (Ms2Experiment exp : r) {
+                    importExperiment(exp);
+                    updateProgress(0, r.size(), ++i);
+                }
+                return true;
+            }
+        });
 
 
         if (errorStorage.size() > 1) {
-            ErrorListDialog elDiag = new ErrorListDialog(this.owner, errorStorage);
+            new ErrorListDialog(this.owner, errorStorage);
         } else if (errorStorage.size() == 1) {
-            ExceptionDialog eDiag = new ExceptionDialog(this.owner, errorStorage.get(0));
+            new ExceptionDialog(this.owner, errorStorage.get(0));
         }
 
     }
@@ -195,7 +209,7 @@ public class LoadController implements LoadDialogListener {
             expToModify.getMs2Experiment().setSource(experiment.getSource());
 
         if (loadDialog.getIonization().isIonizationUnknown() && experiment.getPrecursorIonType() != null && !experiment.getPrecursorIonType().isIonizationUnknown())
-            loadDialog.ionizationChanged(experiment.getPrecursorIonType());
+            addIonToPeriodicTableAndFireChange(experiment.getPrecursorIonType());
 
         final String formula = loadDialog.editPanel.formulaTF.getText();
         if (formula == null || formula.isEmpty())
@@ -223,12 +237,15 @@ public class LoadController implements LoadDialogListener {
         return expToModify;
     }
 
+    private void addIonToPeriodicTableAndFireChange(PrecursorIonType ionization) {
+        if (Workspace.addIonToPeriodicTable(ionization))
+            loadDialog.editPanel.ionizationCB.refresh();
+        loadDialog.ionizationChanged(ionization);
+    }
 
-    //todo maybe in backround, will freeze the gui for many spectra
     @Override
     public void removeSpectra(List<SpectrumContainer> sps) {
         spectra.removeAll(sps);
-
         if (spectra.isEmpty()) {
             loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
             loadDialog.experimentNameChanged("");

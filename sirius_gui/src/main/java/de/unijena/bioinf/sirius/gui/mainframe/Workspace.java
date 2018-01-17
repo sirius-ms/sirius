@@ -6,13 +6,13 @@ package de.unijena.bioinf.sirius.gui.mainframe;
  */
 
 import ca.odell.glazedlists.BasicEventList;
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import joptsimple.internal.Strings;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -72,6 +73,7 @@ public abstract class Workspace {
             }
 
             clearExperimentAnotations(ec);
+            addIonToPeriodicTable(ec.getIonization());
             resolveCompundNameConflict(ec);
             COMPOUNT_LIST.add(ec);
             if (ec.getResults().size() > 0) ec.setSiriusComputeState(ComputingStatus.COMPUTED);
@@ -144,4 +146,26 @@ public abstract class Workspace {
         exp.clearAnnotation(Smiles.class);
         exp.clearAnnotation(InChI.class);
     }
+
+
+    public static boolean addIonToPeriodicTable(PrecursorIonType ionization) {
+        if (ionization != null) {
+            String name = ionization.toString();
+            if (name != null) {
+                if (!PeriodicTable.getInstance().hasIon(name)) {
+                    final PeriodicTable i = PeriodicTable.getInstance();
+                    i.addCommonIonType(name);
+                    if (ionization.getCharge() > 0)
+                        ApplicationCore.SIRIUS_PROPERTIES_FILE.setProperty("de.unijena.bioinf.sirius.chem.adducts.positive",
+                                Strings.join(i.getPositiveAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.toList()), ","));
+                    else if (ionization.getCharge() < 0)
+                        ApplicationCore.SIRIUS_PROPERTIES_FILE.setProperty("de.unijena.bioinf.sirius.chem.adducts.negative",
+                                Strings.join(i.getNegativeAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.toList()), ","));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 }

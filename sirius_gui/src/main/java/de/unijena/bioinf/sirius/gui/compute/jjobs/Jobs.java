@@ -8,15 +8,12 @@ import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.logging.TextAreaHandler;
-import de.unijena.bioinf.sirius.logging.TextAreaOutputStream;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Jobs {
     public static final SwingJobManager MANAGER = (SwingJobManager) SiriusJobs.getGlobalJobManager();
@@ -70,6 +67,22 @@ public class Jobs {
     public static TinyBackgroundJJob runInBackround(TinyBackgroundJJob task) {
         MANAGER.submitJob(task);
         return task;
+    }
+
+    public static LoadingBackroundTask runInBackroundAndLoad(final Dialog owner, final Runnable task) {
+        return runInBackroundAndLoad(owner, "Please wait", task);
+    }
+
+    public static LoadingBackroundTask runInBackroundAndLoad(final Dialog owner, final String title, final Runnable task) {
+        return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
+    }
+
+    public static LoadingBackroundTask runInBackroundAndLoad(final Dialog owner, TinyBackgroundJJob task) {
+        return runInBackroundAndLoad(owner, "Please wait", task);
+    }
+
+    public static LoadingBackroundTask runInBackroundAndLoad(final Dialog owner, String title, TinyBackgroundJJob task) {
+        return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
     }
 
     public static LoadingBackroundTask runInBackroundAndLoad(final JFrame owner, final Runnable task) {

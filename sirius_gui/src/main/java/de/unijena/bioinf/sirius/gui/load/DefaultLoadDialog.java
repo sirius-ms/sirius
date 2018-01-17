@@ -1,8 +1,7 @@
 package de.unijena.bioinf.sirius.gui.load;
 
-import ca.odell.glazedlists.BasicEventList;
+import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
@@ -50,7 +49,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     private static Pattern NUMPATTERN = Pattern.compile("^[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?$");
     private double ionMass;
 
-    public DefaultLoadDialog(JFrame owner, BasicEventList<SpectrumContainer> list) {
+    public DefaultLoadDialog(JFrame owner, EventList<SpectrumContainer> list) {
         super(owner, "load", true);
 
         this.cEFormat = new DecimalFormat("#0.0");
@@ -220,8 +219,9 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     public void ionizationChanged(PrecursorIonType ionization) {
         if (ionization != null) {
             String name = ionization.toString();
-            if (name != null)
+            if (name != null) {
                 editPanel.ionizationCB.setSelectedItem(name);
+            }
         }
     }
 
@@ -264,7 +264,6 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
             ldl.completeProcess();
         }
     }
-
 
 
     private void abort() {
