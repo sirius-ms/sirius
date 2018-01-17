@@ -902,10 +902,33 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         return parseIonType(name);
     }
 
+    public boolean hasIon(String name) {
+        name = canonicalizeIonName(name);
+        return knownIonTypes.containsKey(name);
+    }
+
 
     public Set<PrecursorIonType> getAdducts() {
         Set<PrecursorIonType> adducts = new HashSet<>(knownIonTypes.values().size() + 3);
         adducts.addAll(knownIonTypes.values());
+        return adducts;
+    }
+
+    public Set<PrecursorIonType> getPositiveAdducts() {
+        Set<PrecursorIonType> adducts = new HashSet<>(knownIonTypes.values().size());
+        for (PrecursorIonType ionType : knownIonTypes.values()) {
+            if (ionType.getCharge() > 0)
+                adducts.add(ionType);
+        }
+        return adducts;
+    }
+
+    public Set<PrecursorIonType> getNegativeAdducts() {
+        Set<PrecursorIonType> adducts = new HashSet<>(knownIonTypes.values().size());
+        for (PrecursorIonType ionType : knownIonTypes.values()) {
+            if (ionType.getCharge() < 0)
+                adducts.add(ionType);
+        }
         return adducts;
     }
 
