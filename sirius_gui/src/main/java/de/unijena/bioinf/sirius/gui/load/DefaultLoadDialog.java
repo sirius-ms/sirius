@@ -219,7 +219,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     @Override
     public void ionizationChanged(PrecursorIonType ionization) {
         if (ionization != null) {
-            String name = ionization.getIonization().getName();
+            String name = ionization.toString();
             if (name != null)
                 editPanel.ionizationCB.setSelectedItem(name);
         }

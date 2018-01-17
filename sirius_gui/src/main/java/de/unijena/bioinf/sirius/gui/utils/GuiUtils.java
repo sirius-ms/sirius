@@ -82,46 +82,6 @@ public class GuiUtils {
         g2.setColor(prevCol);
     }
 
-    public static String extractMolecularFormulaString(ExperimentContainer ec) {
-        MutableMs2Experiment exp = ec.getMs2Experiment();
-        return extractMolecularFormulaString(exp);
-    }
-
-    public static String extractMolecularFormulaString(Ms2Experiment exp) {
-        MolecularFormula formula = exp.getMolecularFormula();
-        if (formula != null) {
-            return formula.toString();
-        }
-
-        if (exp.hasAnnotation(InChI.class)) {
-            InChI inChI = exp.getAnnotation(InChI.class);
-            formula = inChI.extractFormula();
-            return formula.toString();
-
-        }
-
-        if (exp.hasAnnotation(Smiles.class)) {
-            Smiles smiles = exp.getAnnotation(Smiles.class);
-            try {
-                final IAtomContainer mol = new SmilesParser(DefaultChemObjectBuilder.getInstance()).parseSmiles(smiles.smiles);
-                String formulaString = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(mol));
-                return formulaString;
-            } catch (CDKException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return null;
-    }
-
-    //to clean fresh imported annotations
-    public static void clearExperimentAnotations(Ms2Experiment exp) {
-        //todo are there more annotaion that we do not want in the gui after import
-        exp.clearAnnotation(Smiles.class);
-        exp.clearAnnotation(InChI.class);
-    }
-
-
     public static class SimplePainter extends AbstractRegionPainter {
 
         private Color fillColor;

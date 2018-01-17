@@ -6,9 +6,18 @@ package de.unijena.bioinf.sirius.gui.mainframe;
  */
 
 import ca.odell.glazedlists.BasicEventList;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -54,13 +63,18 @@ public abstract class Workspace {
     }
 
     public static void importCompound(final ExperimentContainer ec) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                resolveCompundNameConflict(ec);
-                COMPOUNT_LIST.add(ec);
-                if (ec.getResults().size() > 0) ec.setSiriusComputeState(ComputingStatus.COMPUTED);
+        SwingUtilities.invokeLater(() -> {
+            //search for a missing molecular formula before cleaning the annotations
+            if (ec.getMs2Experiment().getMolecularFormula() == null) {
+                String f = extractMolecularFormulaString(ec);
+                if (f != null && !f.isEmpty())
+                    ec.getMs2Experiment().setMolecularFormula(MolecularFormula.parse(f));
             }
+
+            clearExperimentAnotations(ec);
+            resolveCompundNameConflict(ec);
+            COMPOUNT_LIST.add(ec);
+            if (ec.getResults().size() > 0) ec.setSiriusComputeState(ComputingStatus.COMPUTED);
         });
     }
 
@@ -85,5 +99,49 @@ public abstract class Workspace {
             NAMES.remove(container.getGUIName());
         }
         COMPOUNT_LIST.removeAll(containers);
+    }
+
+    ////////////// helper methods to import data into workspace//////////////////////
+    public static String extractMolecularFormulaString(ExperimentContainer ec) {
+        MutableMs2Experiment exp = ec.getMs2Experiment();
+        return extractMolecularFormulaString(exp);
+    }
+
+    public static String extractMolecularFormulaString(Ms2Experiment exp) {
+        MolecularFormula formula = exp.getMolecularFormula();
+        if (formula != null) {
+            return formula.toString();
+        }
+
+        if (exp.hasAnnotation(InChI.class)) {
+            InChI inChI = exp.getAnnotation(InChI.class);
+            formula = inChI.extractFormula();
+            return formula.toString();
+
+        }
+
+        if (exp.hasAnnotation(Smiles.class)) {
+            Smiles smiles = exp.getAnnotation(Smiles.class);
+            try {
+                final IAtomContainer mol = new SmilesParser(DefaultChemObjectBuilder.getInstance()).parseSmiles(smiles.smiles);
+                String formulaString = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(mol));
+                return formulaString;
+            } catch (CDKException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+    //to clean fresh imported annotations
+    public static void clearExperimentAnotations(ExperimentContainer ec) {
+        clearExperimentAnotations(ec.getMs2Experiment());
+    }
+
+    public static void clearExperimentAnotations(Ms2Experiment exp) {
+        //todo are there more annotaion that we do not want in the gui after import
+        exp.clearAnnotation(Smiles.class);
+        exp.clearAnnotation(InChI.class);
     }
 }

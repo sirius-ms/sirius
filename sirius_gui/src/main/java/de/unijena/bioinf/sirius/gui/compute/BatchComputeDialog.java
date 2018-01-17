@@ -96,15 +96,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             if (elementPredictor.isPredictable(element)) detectableElements.add(element);
         }
 
-        if (compoundsToProcess.size() > 1) {
-            ///////////////////Multi Element//////////////////////
-            elementPanel = new ElementsPanel(this, 4, detectableElements);
-            add(elementPanel, BorderLayout.NORTH);
-            /////////////////////////////////////////////
-        } else {
-            initSingleExperimentDialog(detectableElements);
-        }
-
         searchProfilePanel = new SearchProfilePanel(this, compoundsToProcess);
         mainPanel.add(searchProfilePanel);
         searchProfilePanel.formulaCombobox.addItemListener(new ItemListener() {
@@ -116,13 +107,23 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
         });
 
-        JPanel stack = new JPanel();
-        stack.setLayout(new BorderLayout());
-        stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "CSI:FingerId - Structure Elucidation"));
-
         csiOptions = new FingerIDComputationPanel(owner.getCsiFingerId().getAvailableDatabases(), searchProfilePanel.ionizationPanel.checkBoxList, true, true);
         if (!csiOptions.isEnabled()) csiOptions.dbSelectionOptions.setDb(searchProfilePanel.getFormulaSource());
         csiOptions.setMaximumSize(csiOptions.getPreferredSize());
+
+        if (compoundsToProcess.size() > 1) {
+            ///////////////////Multi Element//////////////////////
+            elementPanel = new ElementsPanel(this, 4, detectableElements);
+            add(elementPanel, BorderLayout.NORTH);
+            /////////////////////////////////////////////
+        } else {
+            initSingleExperimentDialog(detectableElements);
+        }
+
+
+        JPanel stack = new JPanel();
+        stack.setLayout(new BorderLayout());
+        stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "CSI:FingerId - Structure Elucidation"));
 
         stack.add(csiOptions, BorderLayout.CENTER);
         mainPanel.add(stack);
@@ -327,10 +328,27 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         editPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Edit Input Data"));
         north.add(editPanel, BorderLayout.NORTH);
 
+
         editPanel.ionizationCB.addActionListener(e -> {
-            searchProfilePanel.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization()));
+            PrecursorIonType ionType = editPanel.getSelectedIonization();
+            searchProfilePanel.refreshPossibleIonizations(Collections.singleton(ionType.getIonization().getName()));
             pack();
         });
+
+        //todo beging ugly hack
+        csiOptions.adductOptions.checkBoxList.addPropertyChangeListener("refresh", evt -> {
+            PrecursorIonType ionType = editPanel.getSelectedIonization();
+            if (!ionType.getAdduct().isEmpty()) {
+                csiOptions.adductOptions.checkBoxList.uncheckAll();
+                csiOptions.adductOptions.checkBoxList.check(ionType.toString());
+                csiOptions.adductOptions.setEnabled(false);
+            } else {
+                csiOptions.adductOptions.setEnabled(csiOptions.isCSISelected());
+            }
+        });
+
+        searchProfilePanel.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization().getIonization().getName()));
+        ///////ugly hack end
 
         /////////////Solo Element//////////////////////
         elementPanel = new ElementsPanel(this, 4);
@@ -363,12 +381,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             ec.setName(editPanel.getExperiementName());
             ec.setIonization(editPanel.getSelectedIonization());
 
-            if (ec.getIonization().isIonizationUnknown())
+            if (exp.getPrecursorIonType().isIonizationUnknown())
                 exp.setAnnotation(PossibleIonModes.class, searchProfilePanel.getPossibleIonModes());
-            else
-                exp.setAnnotation(PossibleIonModes.class, PossibleIonModes.deterministic(ec.getIonization()));
-
-            exp.setAnnotation(PossibleAdducts.class, csiOptions.getPossibleAdducts());
+            if (exp.getPrecursorIonType().getAdduct() == null)
+                exp.setAnnotation(PossibleAdducts.class, csiOptions.getPossibleAdducts());
         } else {
             PrecursorIonType i = ec.getIonization();
             List<PrecursorIonType> ions;
@@ -386,8 +402,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 ions = Collections.singletonList(i);
             }
 
-            Set<PrecursorIonType> allPossible = PeriodicTable.getInstance().adductsByIonisation(ions);
-            exp.setAnnotation(PossibleAdducts.class, PossibleAdducts.intersection(csiOptions.getPossibleAdducts(), allPossible));
+            if (ions.size() != 1 || ions.get(0).getAdduct() == null) {
+                Set<PrecursorIonType> allPossible = PeriodicTable.getInstance().adductsByIonisation(ions);
+                exp.setAnnotation(PossibleAdducts.class, PossibleAdducts.intersection(csiOptions.getPossibleAdducts(), allPossible));
+            }
         }
 
 
