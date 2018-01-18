@@ -216,7 +216,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             likely.add(ionByName("[M+Na]+"));
             for (PrecursorIonType i : likely) ions.remove(i);
             likely.addAll(ions);
-        } else {
+        } else if (charge < 0) {
             likely.add(ionByName("[M-H]-"));
             likely.add(ionByName("[M]-"));
             for (PrecursorIonType i : likely) ions.remove(i);
@@ -902,6 +902,44 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         return parseIonType(name);
     }
 
+    public boolean hasIon(String name) {
+        name = canonicalizeIonName(name);
+        return knownIonTypes.containsKey(name);
+    }
+
+
+    public Set<PrecursorIonType> getAdducts() {
+        Set<PrecursorIonType> adducts = new HashSet<>(knownIonTypes.values().size() + 3);
+        adducts.addAll(knownIonTypes.values());
+        return adducts;
+    }
+
+    public Set<PrecursorIonType> getPositiveAdducts() {
+        Set<PrecursorIonType> adducts = new HashSet<>(knownIonTypes.values().size());
+        for (PrecursorIonType ionType : knownIonTypes.values()) {
+            if (ionType.getCharge() > 0)
+                adducts.add(ionType);
+        }
+        return adducts;
+    }
+
+    public Set<PrecursorIonType> getNegativeAdducts() {
+        Set<PrecursorIonType> adducts = new HashSet<>(knownIonTypes.values().size());
+        for (PrecursorIonType ionType : knownIonTypes.values()) {
+            if (ionType.getCharge() < 0)
+                adducts.add(ionType);
+        }
+        return adducts;
+    }
+
+    public Set<PrecursorIonType> getAdductsAndUnKnowns() {
+        Set<PrecursorIonType> adducts = getAdducts();
+        adducts.add(PrecursorIonType.unknown());
+        adducts.add(PrecursorIonType.unknownPositive());
+        adducts.add(PrecursorIonType.unknownNegative());
+        return adducts;
+    }
+
 
     public Set<PrecursorIonType> adductsByIonisation(Collection<PrecursorIonType> ionMode) {
         Set<PrecursorIonType> adducts = new HashSet<>();
@@ -939,6 +977,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         Set<PrecursorIonType> r = ionizationToAdduct.get(p.getIonization().getName());
         return r == null ? Collections.<PrecursorIonType>emptySet() : Collections.unmodifiableSet(r);
     }
+
 
     /**
      * Calculate for a given alphabet the maximal and minimal mass defects of isotopes.

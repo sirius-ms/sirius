@@ -100,6 +100,11 @@ class Ms2ExperimentShallowCopy implements Ms2Experiment {
     }
 
     @Override
+    public <T> Object clearAnnotation(Class<T> klass) {
+        return experiment.clearAnnotation(klass);
+    }
+
+    @Override
     public Ms2Experiment clone() {
         return new Ms2ExperimentShallowCopy(experiment, ionType);
     }
