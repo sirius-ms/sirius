@@ -39,15 +39,22 @@ public class LowIntensityAnnotator implements QualityAnnotator{
         }
     }
 
+    /**
+     * annotates {@link Ms2Experiment} with SpectrumProperty.LowIntensity if NOT ANY MS1 contains the  precursor peak with relative intensity > minRelMs1Intensity
+     * ignores merged MS1 spectrum (this might be a artificial spectrum. E.g. isotopes.)
+     * @param experiment
+     */
     public void annotate(Ms2Experiment experiment) {
         //too low MS1 peak intensity
         double maxMs1Intensity = statistics.getMaxMs1Intensity();
-        if (CompoundQuality.hasProperty(experiment, SpectrumProperty.NoMS1Peak)) return;
+//        if (CompoundQuality.hasProperty(experiment, SpectrumProperty.NoMS1Peak)) return;
 
         boolean isLowIntensity = true;
         for (Spectrum<Peak> spectrum : experiment.getMs1Spectra()) {
             double highestInCurrentMs1 = Spectrums.getMaximalIntensity(spectrum);
-            double ionIntensity = spectrum.getIntensityAt(Spectrums.mostIntensivePeakWithin(spectrum, experiment.getIonMass(), findMs1PeakDeviation));
+            int idx = Spectrums.mostIntensivePeakWithin(spectrum, experiment.getIonMass(), findMs1PeakDeviation);
+            if (idx<0) continue;
+            double ionIntensity = spectrum.getIntensityAt(idx);
             if (ionIntensity/highestInCurrentMs1>=minRelMs1Intensity) isLowIntensity = false;
 //            else if (ionIntensity>=minAbsMs1Intensity) isLowIntensity = false;
             if (!isLowIntensity) break;
