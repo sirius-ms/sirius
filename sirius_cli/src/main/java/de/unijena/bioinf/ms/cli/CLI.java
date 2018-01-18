@@ -126,9 +126,11 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             logger.error("Could not load results for " + jc.sourceInstance.file.getName());
     }
 
-    private void setPrecursorIonTypes(MutableMs2Experiment exp, PossibleAdducts pa) {
+    private void setPrecursorIonTypes(MutableMs2Experiment exp, PossibleAdducts pa, boolean guessFromMS1) {
         exp.setAnnotation(PossibleAdducts.class, pa);
         exp.setAnnotation(PossibleIonModes.class, pa.merge(exp.getAnnotation(PossibleIonModes.class, new PossibleIonModes())));
+        PossibleIonModes im = exp.getAnnotation(PossibleIonModes.class);
+        im.enableGuessFromMs1(guessFromMS1);
     }
 
     protected Sirius.SiriusIdentificationJob makeSiriusJob(final Instance i) {
@@ -142,20 +144,20 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             if (i.experiment.getPrecursorIonType().isIonizationUnknown() || i.experiment.getPrecursorIonType().isPlainProtonationOrDeprotonation()) {
                 i.experiment.setAnnotation(PossibleAdducts.class, null);
                 if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
-                    setPrecursorIonTypes(i.experiment, new PossibleAdducts(Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(i.experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class)));
+                    setPrecursorIonTypes(i.experiment, new PossibleAdducts(Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(i.experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class)),true);
                 }
             } else {
-                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()));
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()),false);
             }
         } else if (options.getIon() != null && options.getIon().size()>1) {
             final List<PrecursorIonType> ionTypes = new ArrayList<>();
             for (String ion : options.getIon()) ionTypes.add(PrecursorIonType.getPrecursorIonType(ion));
-            setPrecursorIonTypes(i.experiment, new PossibleAdducts(ionTypes));
+            setPrecursorIonTypes(i.experiment, new PossibleAdducts(ionTypes),true);
         } else {
             if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
-                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType().getCharge()>0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-")));
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType().getCharge()>0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-")),true); // TODO: ins MS1 gucken
             } else {
-                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()));
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()),false);
             }
         }
 
@@ -524,10 +526,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                 ms1Prof.setFormulaConstraints(options.getElements());
             }
 
-            if (options.isAutoCharge()) {
-                sirius.setAutoIonMode(true);
-            }
-
             if (options.getMedianNoise() != null) {
                 ms2Prof.setMedianNoiseIntensity(options.getMedianNoise());
             }
@@ -546,7 +544,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
             sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
             sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
-
+            /*
             if (options.getPossibleIonizations() != null) {
                 List<String> ionList = options.getPossibleIonizations();
                 if (ionList.size() == 1) {
@@ -565,6 +563,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                 ionTypesWithoutAdducts = set.toArray(new PrecursorIonType[0]);
 
             }
+            */
         } catch (IOException e) {
             logger.error("Cannot load profile '" + options.getProfile() + "':\n", e);
             System.exit(1);
@@ -787,14 +786,14 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     protected static PrecursorIonType getIonFromOptions(SiriusOptions opt, int charge) {
         List<String> ionStr = opt.getIon();
         if (ionStr == null) {
-            if (opt.isAutoCharge() || opt.getPossibleIonizations() != null) return PrecursorIonType.unknown(charge);
+            if (opt.isAutoCharge()) return PrecursorIonType.unknown(charge);
             else if (charge == 0) throw new IllegalArgumentException("Please specify the charge");
             else if (charge == 1) return PrecursorIonType.getPrecursorIonType("[M+H]+");
             else if (charge == -1) return PrecursorIonType.getPrecursorIonType("[M-H]-");
             else throw new IllegalArgumentException("SIRIUS does not support multiple charges");
         } else if (ionStr.size()==1){
             final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(opt.getIon().get(0));
-            if (ionType.isIonizationUnknown() && !opt.isAutoCharge() && opt.getPossibleIonizations() == null) {
+            if (ionType.isIonizationUnknown() && !opt.isAutoCharge()) {
                 if (ionType.getCharge() > 0) return PrecursorIonType.getPrecursorIonType("[M+H]+");
                 else return PrecursorIonType.getPrecursorIonType("[M-H]-");
             } else return ionType;
