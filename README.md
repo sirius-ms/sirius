@@ -24,20 +24,20 @@ CSI:FingerID.</span>
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 3.5.2-SNAPSHOT (Build 0 from 2017-12-15)
-- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-win64.zip)
-- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-linux64.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-osx64.zip)
-
-### SIRIUS+CSI:FingerID Commandline only - Version 3.5.2-SNAPSHOT (Build 0 from 2017-12-15)
-- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-win64-headless.zip)
-- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-linux64-headless.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-osx64-headless.zip)
-
 ### Documentation
 - [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
 - [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-manual.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
+
+### SIRIUS+CSI:FingerID GUI and CLI - Version 3.5.2-SNAPSHOT (Build 0 from 2018-01-18)
+- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-win64.zip)
+- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-linux64.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-osx64.zip)
+
+### SIRIUS+CSI:FingerID Commandline only - Version 3.5.2-SNAPSHOT (Build 0 from 2018-01-18)
+- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-win64-headless.zip)
+- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-linux64-headless.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-osx64-headless.zip)
 
 ### Sources on GitHub
 - [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)
