@@ -1253,13 +1253,17 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.reduction = reduction;
     }
 
-    public FGraph buildGraph(ProcessedInput input, Decomposition candidate) {
+    public FGraph buildGraphWithoutReduction(ProcessedInput input, Decomposition candidate) {
         // build Graph
         final FGraph graph = graphBuilder.fillGraph(
                 graphBuilder.addRoot(graphBuilder.initializeEmptyGraph(input),
                         input.getParentPeak(), Collections.singletonList(candidate)));
         graph.addAliasForFragmentAnnotation(ProcessedPeak.class, Peak.class);
-        return performGraphReduction(performGraphScoring(graph));
+        return performGraphScoring(graph);
+    }
+
+    public FGraph buildGraph(ProcessedInput input, Decomposition candidate) {
+        return performGraphReduction(buildGraphWithoutReduction(input,candidate));
     }
 
     public FGraph performGraphReduction(FGraph fragments, double lowerbound) {
