@@ -16,6 +16,7 @@ public class PossibleIonModes {
     public static PossibleIonModes deterministic(PrecursorIonType precursorIonType) {
         final PossibleIonModes a = new PossibleIonModes();
         a.add(precursorIonType, 1);
+        a.disableGuessFromMs1();
         return a;
     }
 
@@ -31,6 +32,7 @@ public class PossibleIonModes {
             a.add(t.ionByName("[M+Cl]-").getIonization(), 0.03);
             a.add(t.ionByName("[M+Br]-").getIonization(), 0.02);
         }
+        a.enableGuessFromMs1();
         return a;
     }
 
@@ -51,16 +53,33 @@ public class PossibleIonModes {
 
     protected List<ProbabilisticIonization> ionTypes;
     protected double totalProb;
+    protected boolean enableGuessFromMs1;
 
     public PossibleIonModes(PossibleIonModes pi) {
         this.ionTypes = new ArrayList<>();
         for (ProbabilisticIonization i : pi.ionTypes)
             this.ionTypes.add(new ProbabilisticIonization(i.ionMode, i.probability));
         this.totalProb = pi.totalProb;
+        this.enableGuessFromMs1 = pi.enableGuessFromMs1;
     }
 
     public PossibleIonModes() {
         this.ionTypes = new ArrayList<>();
+        this.enableGuessFromMs1 = true;
+    }
+
+    public boolean isGuessFromMs1Enabled() {
+        return enableGuessFromMs1;
+    }
+
+    public void enableGuessFromMs1(boolean enabled) {
+        this.enableGuessFromMs1 = enabled;
+    }
+    public void enableGuessFromMs1(){
+        enableGuessFromMs1(true);
+    }
+    public void disableGuessFromMs1() {
+        enableGuessFromMs1(false);
     }
 
     public void add(ProbabilisticIonization ionMode) {
