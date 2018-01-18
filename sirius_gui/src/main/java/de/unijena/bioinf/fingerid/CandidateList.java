@@ -28,8 +28,8 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
         this(source, DataSelectionStrategy.ALL_SELECTED);
     }
 
-    public CandidateList(final FormulaList source,  DataSelectionStrategy strategy) {
-        super(CompoundCandidate.class,strategy);
+    public CandidateList(final FormulaList source, DataSelectionStrategy strategy) {
+        super(CompoundCandidate.class, strategy);
 
         scoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
@@ -54,7 +54,7 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
         List<SiriusResultElement> formulasToShow = new LinkedList<>();
 
 
-        switch(selectionType){
+        switch (selectionType) {
             case ALL:
                 formulasToShow.addAll(resultElements);
                 break;
@@ -73,7 +73,7 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
         for (SiriusResultElement e : formulasToShow) {
             if (e != null && e.getFingerIdComputeState().equals(ComputingStatus.COMPUTED)) {
                 for (int j = 0; j < e.getFingerIdData().compounds.length; j++) {
-                    CompoundCandidate c = new CompoundCandidate(j + 1, j, e.getFingerIdData());
+                    CompoundCandidate c = new CompoundCandidate(j + 1, j, e.getFingerIdData(), e.getResult().getPrecursorIonType());
                     elementList.add(c);
                     scoreStats.addValue(c.getScore());
                     logPStats.addValue(c.compound.getXlogP());
@@ -86,6 +86,6 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
 //        elementList.getReadWriteLock().readLock().unlock(); //todo maybe reanable
         elementList.getReadWriteLock().writeLock().unlock();
 //        System.out.println("unlocked");
-        notifyListeners(data,null,getElementList(),getResultListSelectionModel());
+        notifyListeners(data, null, getElementList(), getResultListSelectionModel());
     }
 }
