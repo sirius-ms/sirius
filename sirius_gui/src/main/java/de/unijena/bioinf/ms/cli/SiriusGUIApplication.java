@@ -28,7 +28,7 @@ public class SiriusGUIApplication {
 
         if (cli.options.isGUI()) {
             final int cpuThreads = Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1"));
-            SiriusJobs.setGlobalJobManager(new SwingJobManager(8, Math.min(cpuThreads, 3)));
+            SiriusJobs.setGlobalJobManager(new SwingJobManager(PropertyManager.getNumberOfThreads(), Math.min(cpuThreads, 3)));
             FingeridCLI.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
 
 
