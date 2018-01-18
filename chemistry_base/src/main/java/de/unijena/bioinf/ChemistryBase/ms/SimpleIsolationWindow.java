@@ -9,13 +9,32 @@ public class SimpleIsolationWindow extends IsolationWindow {
 
     protected double[] relMz;
     protected double[] filterRatio;
+    protected double outerRimSize = 0.5;
+    protected double minWindowSize = 1.0;
 
     public SimpleIsolationWindow(double maxWindowSize) {
         super(maxWindowSize);
     }
 
-    public SimpleIsolationWindow(double maxWindowSize, double massShift, boolean estimateSize) {
-        super(maxWindowSize, massShift, estimateSize);
+    /**
+     * minimum estimated size is 1Da; if intensity outside filter window shall be estimated the edge is interpolated with 0 intensity in distance 0.5
+     * @param maxWindowSize
+     * @param massShift
+     * @param estimateSize
+     * @param findMs1PeakDeviation
+     */
+    public SimpleIsolationWindow(double maxWindowSize, double massShift, boolean estimateSize, Deviation findMs1PeakDeviation) {
+        super(maxWindowSize, massShift, estimateSize, findMs1PeakDeviation);
+    }
+
+    @Override
+    public double getLeftBorder() {
+        return getMassShift()-getEstimatedWindowSize()/2-minWindowSize;
+    }
+
+    @Override
+    public double getRightBorder() {
+        return getMassShift()+getEstimatedWindowSize()/2+minWindowSize;
     }
 
 
@@ -33,14 +52,14 @@ public class SimpleIsolationWindow extends IsolationWindow {
             leftIntensity = filterRatio[idx-1];
             rightIntensity = filterRatio[idx];
         } else if (diff<=relMz[0]) {
-            leftMz = relMz[0]-0.5;
+            leftMz = relMz[0]-outerRimSize;
             rightMz = relMz[0];
             leftIntensity = 0d;
             rightIntensity = filterRatio[0];
         } else {
             leftMz = relMz[relMz.length-1];
             leftIntensity = filterRatio[filterRatio.length-1];
-            rightMz = leftMz+0.5; //todo how to end filter?
+            rightMz = leftMz+outerRimSize; //todo how to end filter?
             rightIntensity = 0d;
 
         }
@@ -72,7 +91,7 @@ public class SimpleIsolationWindow extends IsolationWindow {
 
     @Override
     public double getEstimatedWindowSize() {
-        return relMz[relMz.length-1]-relMz[0]+0.2;//or bigger?
+        return Math.max(minWindowSize, relMz[relMz.length-1]-relMz[0]);//+0.2);//todo or bigger?
     }
 
     @Override

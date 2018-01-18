@@ -18,19 +18,20 @@ public class MissingMergedSpectrumValidator implements Ms2ExperimentValidator {
     @Override
     public Ms2Experiment validate(Ms2Experiment input, Warning warning, boolean repair) throws InvalidException {
         MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(input);
-        if (mutableMs2Experiment.getMs1Spectra().isEmpty()){
-            if (repair){
-                mutableMs2Experiment.getMs1Spectra().add(new SimpleSpectrum(new double[0], new double[0]));
-            } else {
-                throw new InvalidException("no MS1 given for "+mutableMs2Experiment.getName());
-            }
-        }
+//        if (mutableMs2Experiment.getMs1Spectra().isEmpty()){
+//            if (repair){
+//                mutableMs2Experiment.getMs1Spectra().add(new SimpleSpectrum(new double[0], new double[0]));
+//            } else {
+//                throw new InvalidException("no MS1 given for "+mutableMs2Experiment.getName());
+//            }
+//        }
         if (mutableMs2Experiment.getMergedMs1Spectrum() == null) {
             if (mutableMs2Experiment.getMs1Spectra().size() == 1) {
                 mutableMs2Experiment.setMergedMs1Spectrum(mutableMs2Experiment.getMs1Spectra().get(0));
             } else {
                 if (repair) {
-                    warning.warn("no merged MS1 given for "+mutableMs2Experiment.getName());
+                    //todo this currently also merges peaks within the same spectrum.
+                    warning.warn("no merged MS1 given for "+mutableMs2Experiment.getName()+". Merging MS1 spectra is still experimental");
                     //todo test merging multiple spectra!!! merge more radical?
                     //todo or rather do the same as in FPA
                     Deviation deviation = new Deviation(20);
