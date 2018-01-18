@@ -34,11 +34,26 @@ public class NoMs1PeakAnnotator implements QualityAnnotator {
         }
     }
 
+    /**
+     * currently annotates {@link Ms2Experiment} with SpectrumProperty.NoMS1Peak if NOT ANY MS1 contains the  precursor peak at ANY intensity.
+     * ignores merged MS1 spectrum (this might be a artificial spectrum. E.g. isotopes.)
+     * CHANGING DEFINITION OF SpectrumProperty.NoMS1Peak INFLUENCES OTHER QualityAnnotators!
+     * TODO do it in a different way? e.g. if not all spectra...
+     * @param experiment
+     */
     public void annotate(Ms2Experiment experiment) {
-        Spectrum<Peak> ms1 = experiment.getMergedMs1Spectrum();
-        if (Spectrums.binarySearch(ms1, experiment.getIonMass(), findMs1PeakDeviation)<0){
-            CompoundQuality.setProperty(experiment, SpectrumProperty.NoMS1Peak);
+        boolean noMS1 = true;
+        for (Spectrum<Peak> spectrum : experiment.getMs1Spectra()) {
+            if (Spectrums.binarySearch(spectrum, experiment.getIonMass(), findMs1PeakDeviation)>=0){
+                noMS1 = false;
+                break;
+            }
         }
+        if (noMS1) CompoundQuality.setProperty(experiment, SpectrumProperty.NoMS1Peak);
+//        Spectrum<Peak> ms1 = experiment.getMergedMs1Spectrum();
+//        if (Spectrums.binarySearch(ms1, experiment.getIonMass(), findMs1PeakDeviation)<0){
+//            CompoundQuality.setProperty(experiment, SpectrumProperty.NoMS1Peak);
+//        }
         //todo is any intensity good enough or should be assume some miniumum intensity (e.g. 0.1%)
         //problem: (at least mzMine2) has relative intensities to precursor (-> has to have a precursor peak anyways?)
     }
