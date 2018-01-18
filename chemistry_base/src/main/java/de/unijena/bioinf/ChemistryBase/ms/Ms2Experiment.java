@@ -143,9 +143,18 @@ public interface Ms2Experiment extends Cloneable {
     <T> boolean setAnnotation(Class<T> klass, T value);
 
     /**
+     * Remove the annotation with the given key
+     *
+     * @return the value associated with this key or null if there is no value for this key
+     */
+    <T> Object clearAnnotation(Class<T> klass);
+
+
+    /**
      * Allow cloning/copying of Ms2Experiments
      * The implementation might choose if the cloning is deep or shallow
      */
     Ms2Experiment clone();
+
 
 }
