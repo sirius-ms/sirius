@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import java.io.File;
 import java.nio.file.Paths;
 
+//todo this should move to Properties File and SiriusProperties.java
 public class ConfigStorage {
     public static final ConfigStorage CONFIG_STORAGE = new ConfigStorage();//todo generic file path remembering
 

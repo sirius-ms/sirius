@@ -6,23 +6,27 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
-import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.Compound;
 import de.unijena.bioinf.fingerid.FingerIdData;
-import org.jdesktop.beans.AbstractBean;
+import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
+import de.unijena.bioinf.sirius.IdentificationResult;
 
-import javax.swing.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class SiriusResultElement extends AbstractBean implements Comparable<SiriusResultElement> {
+/**
+ * this is the view for SiriusResultElement.class
+ */
+public class SiriusResultElement extends AbstractEDTBean implements Comparable<SiriusResultElement>, PropertyChangeListener {
+    //the results data structure
+    private IdentificationResult resultElement;
 
     private boolean bestHit = false;
-    private TreeNode tree; //zur Anzeige
-    private IdentificationResult resultElement;
+    private TreeNode tree; //just a gui tree.
 
     protected volatile FingerIdData fingerIdData;
     private volatile ComputingStatus fingerIdComputeState = ComputingStatus.UNCOMPUTED;
@@ -48,10 +52,10 @@ public class SiriusResultElement extends AbstractBean implements Comparable<Siri
     public void setFingerIdData(FingerIdData fingerIdData) {
         this.fingerIdData = fingerIdData;
         List<Scored<FingerprintCandidate>> candidates = getCandidates(fingerIdData);
-        resultElement.setAnnotation(FingerIdResult.class, new FingerIdResult(candidates, 0d, fingerIdData.getPlatts()));
+        resultElement.setAnnotation(FingerIdResult.class, new FingerIdResult(candidates, 0d, fingerIdData.getPlatts(), null)); //TODO: implement
     }
 
-    private List<Scored<FingerprintCandidate>> getCandidates(FingerIdData fingerIdData){
+    private List<Scored<FingerprintCandidate>> getCandidates(FingerIdData fingerIdData) {
         //todo again duplicate data!
         final Compound[] compounds = fingerIdData.getCompounds();
         final double[] scores = fingerIdData.getScores();
@@ -104,7 +108,7 @@ public class SiriusResultElement extends AbstractBean implements Comparable<Siri
     public void setBestHit(final boolean bestHit) {
         final boolean old = this.bestHit;
         this.bestHit = bestHit;
-        fireEDTPropertyChange("best_hit", old, bestHit);
+        firePropertyChange("best_hit", old, bestHit);
     }
 
     @Override
@@ -119,16 +123,11 @@ public class SiriusResultElement extends AbstractBean implements Comparable<Siri
     public void setFingerIdComputeState(final ComputingStatus fingerIdComputeState) {
         final ComputingStatus old = this.fingerIdComputeState;
         this.fingerIdComputeState = fingerIdComputeState;
-        fireEDTPropertyChange("finger_compute_state", old, this.fingerIdComputeState);
+        firePropertyChange("finger_compute_state", old, this.fingerIdComputeState);
     }
 
-
-    public void fireEDTPropertyChange(final String name, final Object old, final Object nu){
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                firePropertyChange(name, old, nu);
-            }
-        });
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        //todo handle fingeridjobs in the future
     }
 }

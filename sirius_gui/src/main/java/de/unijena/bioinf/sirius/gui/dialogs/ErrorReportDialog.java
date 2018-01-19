@@ -10,7 +10,7 @@ import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.errorReport.FinngerIDWebErrorReporter;
 import de.unijena.bioinf.sirius.core.errorReport.SiriusDefaultErrorReport;
 import de.unijena.bioinf.sirius.gui.settings.ErrorReportSettingsPanel;
-import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
+import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 
@@ -66,7 +66,7 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
     protected JPanel buildNorthPanel() {
         Icon icon = UIManager.getIcon("OptionPane.errorIcon");
 
-        final JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, SwingUtils.LARGE_GAP, SwingUtils.LARGE_GAP));
+        final JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, GuiUtils.LARGE_GAP, GuiUtils.LARGE_GAP));
 
         northPanel.add(new JLabel(icon));
         northPanel.add(new JLabel(message));
@@ -78,10 +78,10 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
     protected JPanel buildSouthPanel() {
 
         final TwoCloumnPanel south = new TwoCloumnPanel();
-        south.setBorder(new TitledBorder(new EmptyBorder(SwingUtils.MEDIUM_GAP, SwingUtils.MEDIUM_GAP, SwingUtils.SMALL_GAP, SwingUtils.MEDIUM_GAP), "Send error report?"));
+        south.setBorder(new TitledBorder(new EmptyBorder(GuiUtils.MEDIUM_GAP, GuiUtils.MEDIUM_GAP, GuiUtils.SMALL_GAP, GuiUtils.MEDIUM_GAP), "Send error report?"));
 
 
-        south.add(new JLabel(reportText), SwingUtils.MEDIUM_GAP, false);
+        south.add(new JLabel(reportText), GuiUtils.MEDIUM_GAP, false);
         south.add(new JLabel(reportDetails));
         return south;
     }
@@ -95,15 +95,15 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
         textarea.setEditable(true);
         final JScrollPane sc = new JScrollPane(textarea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         sc.setPreferredSize((new Dimension(sc.getPreferredSize().width, 250)));
-        sc.setBorder(new TitledBorder(new EmptyBorder(SwingUtils.MEDIUM_GAP, SwingUtils.SMALL_GAP, SwingUtils.SMALL_GAP, SwingUtils.SMALL_GAP), "Add comments or additional information here"));
-        expandPanel.add(sc,SwingUtils.MEDIUM_GAP , true);
+        sc.setBorder(new TitledBorder(new EmptyBorder(GuiUtils.MEDIUM_GAP, GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP), "Add comments or additional information here"));
+        expandPanel.add(sc, GuiUtils.MEDIUM_GAP , true);
 
         return expandPanel;
     }
 
     @Override
     protected JPanel buildButtonPanel() {
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, SwingUtils.SMALL_GAP, SwingUtils.SMALL_GAP));
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP));
         close = new JButton("Close");
         close.addActionListener(this);
         send = new JButton("Send");
@@ -121,7 +121,7 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
                 @Override
                 protected String doInBackground() throws Exception {
                     expandPanel.saveProperties();
-                    ApplicationCore.SIRIUS_PROPERTIES_FILE.changePropertiesPersistent(props);
+                    ApplicationCore.SIRIUS_PROPERTIES_FILE.setAndStoreProperties(props);
 
                     boolean senMail = Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail"));
                     String mail = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");

@@ -1,11 +1,17 @@
 package de.unijena.bioinf.fingerid.jjobs;
 
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
+import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.BioFilter;
+import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
@@ -35,6 +41,7 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
     //canopus options
     private Canopus canopus = null;
 
+    protected List<IdentificationResult> addedIdentificationResults = new ArrayList<>();
 
     public FingerIDJJob(Fingerblast fingerblast, MaskedFingerprintVersion fingerprintVersion) {
         this(fingerblast, fingerprintVersion, PredictorType.CSI_FINGERID);
@@ -72,6 +79,10 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
         this.filterIdentifications = filterIdentifications;
     }
 
+    public List<IdentificationResult> getAddedIdentificationResults() {
+        return addedIdentificationResults;
+    }
+
     @Override
     protected Map<IdentificationResult, ProbabilityFingerprint> compute() throws Exception {
         WebAPI webAPI = WebAPI.newInstance();
@@ -101,12 +112,7 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
         if (input.isEmpty()) return null;
 
         //sort input with ascending score
-        Collections.sort(input, new Comparator<IdentificationResult>() {
-            @Override
-            public int compare(IdentificationResult o1, IdentificationResult o2) {
-                return Double.compare(o1.getScore(), o2.getScore()); //todo do we need ascending or descending
-            }
-        });
+        Collections.sort(input);
 
         //shrinking list to max number of values
         if (input.size() > maxResults)
@@ -114,14 +120,14 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
 
         final ArrayList<IdentificationResult> filteredResults = new ArrayList<>();
         //filterIdentifications list if wanted
-        if (filterIdentifications && input.size()>0) {
+        if (filterIdentifications && input.size() > 0) {
             // first filterIdentifications identificationResult list by top scoring formulas
-            final IdentificationResult top =  input.get(0);
+            final IdentificationResult top = input.get(0);
             if (top == null || top.getResolvedTree() == null) return null;
             progressInfo("Filter Identification Results for CSI:FingerId usage");
             filteredResults.add(top);
             final double threshold = Math.max(top.getScore(), 0) - Math.max(5, top.getScore() * 0.25);
-            for (int k=1, n =  input.size(); k < n;  ++k) {
+            for (int k = 1, n = input.size(); k < n; ++k) {
                 IdentificationResult e = input.get(k);
                 if (e.getScore() < threshold) break;
                 if (e.getResolvedTree() == null || e.getResolvedTree().numberOfVertices() <= 1) {
@@ -152,19 +158,48 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
 
         progressInfo("Search with CSI:FingerId");
 
+        // EXPAND LIST
+
+        final List<IdentificationResult> ionTypes = new ArrayList<>();
+        for (IdentificationResult ir : filteredResults) {
+            final Ms2Experiment validatedExperiment;
+            {
+                ProcessedInput pi = ir.getRawTree().getAnnotationOrNull(ProcessedInput.class);
+                if (pi != null) validatedExperiment = pi.getExperimentInformation();
+                else {
+                    LOG().info("FingerID job has no access to processed input data");
+                    validatedExperiment = experiment;
+                }
+            }
+            final PossibleAdducts adductTypes = validatedExperiment.getAnnotation(PossibleAdducts.class, new PossibleAdducts(PeriodicTable.getInstance().adductsByIonisation(experiment.getPrecursorIonType())));
+            for (PrecursorIonType ionType : adductTypes) {
+                if (!ionType.equals(ir.getBeautifulTree().getAnnotationOrThrow(PrecursorIonType.class)) && new IonTreeUtils().isResolvable(ir.getBeautifulTree(), ionType)) {
+                    ionTypes.add(IdentificationResult.withPrecursorIonType(ir, ionType));
+                }
+            }
+        }
+        filteredResults.addAll(ionTypes);
+        Collections.sort(filteredResults);
+        addedIdentificationResults.addAll(ionTypes);
 
         //submit jobs
         List<WebAPI.PredictionJJob> predictionJobs = new ArrayList<>();
         List<FingerprintDependentJJob> annotationJobs = new ArrayList<>();
+
         for (IdentificationResult fingeridInput : filteredResults) {
-            //prediction jobs
             WebAPI.PredictionJJob predictionJob = webAPI.makePredictionJob(experiment, fingeridInput, fingeridInput.getResolvedTree(), fingerprintVersion, predicors);
             submitSubJob(predictionJob);
             predictionJobs.add(predictionJob);
 
+            // formula jobs
+            FormulaJob formulaJob = new FormulaJob(fingeridInput.getMolecularFormula(), fingerblast.getSearchEngine(), fingeridInput.getPrecursorIonType());
+
             //fingerblast jobs
-            FingerblastJJob blastJob = new FingerblastJJob(fingerblast, bioFilter, dbFlag);
+            final PrecursorIonType ionType = fingeridInput.getResolvedTree().getAnnotationOrThrow(PrecursorIonType.class);
+            FingerblastJJob blastJob = new FingerblastJJob(fingerblast, bioFilter, dbFlag, CompoundCandidateChargeState.getFromPrecursorIonType(ionType));
+            blastJob.addRequiredJob(formulaJob);
             blastJob.addRequiredJob(predictionJob);
+            submitSubJob(formulaJob);
             submitSubJob(blastJob);
             annotationJobs.add(blastJob);
 
@@ -189,8 +224,6 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
         for (FingerprintDependentJJob job : annotationJobs) {
             job.takeAndAnnotateResult();
         }
-
-
 
 
         return fps;

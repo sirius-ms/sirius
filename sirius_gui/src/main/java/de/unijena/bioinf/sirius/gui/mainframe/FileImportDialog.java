@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class DropImportDialog extends JDialog implements ActionListener{
+public class FileImportDialog extends JDialog implements ActionListener{
 	
 	private JProgressBar bar;
 	private DataAnalyseThread dat;
@@ -21,10 +21,12 @@ public class DropImportDialog extends JDialog implements ActionListener{
 	
 	private ReturnValue rv;
 
-	public DropImportDialog(JFrame owner,List<File> rawFiles) {
+	public FileImportDialog(JFrame owner, List<File> rawFiles) {
 		super(owner,true);
 		this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-		
+
+		this.setTitle("Checking Files");
+
 		JPanel centerPanel = new JPanel(new BorderLayout());
 		centerPanel.setBorder(BorderFactory.createEtchedBorder());
 		this.add(centerPanel, BorderLayout.CENTER);
@@ -98,6 +100,9 @@ public class DropImportDialog extends JDialog implements ActionListener{
 		return this.dat.getMGFFiles();
 	}
 
+	//todo get Sirius files!
+	//todo get canopus files?
+
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() == this.abort){
@@ -107,14 +112,15 @@ public class DropImportDialog extends JDialog implements ActionListener{
 
 }
 
+//this is am perfect application for a io backround jjob
 class DataAnalyseThread implements Runnable {
 	
 	private List<File> csvFiles, msFiles, mgfFiles, rawFiles;
 	private DataFormatIdentifier ident;
-	private DropImportDialog diag;
+	private FileImportDialog diag;
 	private volatile boolean stop;
 	
-	public DataAnalyseThread(List<File> rawFiles, DropImportDialog diag) {
+	public DataAnalyseThread(List<File> rawFiles, FileImportDialog diag) {
 		this.rawFiles = rawFiles;
 		this.diag = diag;
 		stop = false;

@@ -7,8 +7,8 @@ package de.unijena.bioinf.sirius.gui.dialogs;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
-import de.unijena.bioinf.sirius.gui.settings.*;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
+import de.unijena.bioinf.sirius.gui.settings.*;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -23,10 +23,11 @@ import java.util.Properties;
 public class SettingsDialog extends JDialog implements ActionListener {
     private JButton discard, save;
     private final Properties nuProps;
+    private AdductSettingsPanel addSettings;
     private ProxySettingsPanel proxSettings;
     private GerneralSettingsPanel genSettings;
     private ErrorReportSettingsPanel errorSettings;
-//    private ILPSettings ilpSettings;
+    //    private ILPSettings ilpSettings;
     private JTabbedPane settingsPane;
 
     public SettingsDialog(Frame owner) {
@@ -48,6 +49,9 @@ public class SettingsDialog extends JDialog implements ActionListener {
         genSettings = new GerneralSettingsPanel(nuProps);
         genSettings.addVerticalGlue();
         settingsPane.add(genSettings.name(), genSettings);
+
+        addSettings = new AdductSettingsPanel(nuProps);
+        settingsPane.add(addSettings.name(), addSettings);
 
         /*ilpSettings = new ILPSettings(nuProps);
         settingsPane.add(ilpSettings.name(),ilpSettings);*/
@@ -84,12 +88,24 @@ public class SettingsDialog extends JDialog implements ActionListener {
         setVisible(true);
     }
 
-    private void collectChangedProps() {
+    private boolean collectChangedProps() {
+        boolean restartMessage = false;
         for (Component c : settingsPane.getComponents()) {
             if (c instanceof SettingsPanel) {
                 ((SettingsPanel) c).saveProperties();
+                restartMessage = restartMessage || ((SettingsPanel) c).restartRequired();
             }
         }
+
+        ApplicationCore.SIRIUS_PROPERTIES_FILE.setProperties(nuProps);
+
+        for (Component c : settingsPane.getComponents()) {
+            if (c instanceof SettingsPanel) {
+                ((SettingsPanel) c).reloadChanges();
+            }
+        }
+
+        return restartMessage;
     }
 
 
@@ -98,17 +114,19 @@ public class SettingsDialog extends JDialog implements ActionListener {
         if (e.getSource() == discard) {
             this.dispose();
         } else {
-            collectChangedProps();
+            boolean restartMessage = collectChangedProps();
             new SwingWorker<Integer, String>() {
                 @Override
                 protected Integer doInBackground() throws Exception {
                     LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
-                    ApplicationCore.SIRIUS_PROPERTIES_FILE.changePropertiesPersistent(nuProps);
+                    ApplicationCore.SIRIUS_PROPERTIES_FILE.store();
                     new CheckConnectionAction().actionPerformed(null); //todo maybe some run check function for the settings panels
                     return 1;
 
                 }
             }.execute();
+            if (restartMessage)
+                new ExceptionDialog(this, "For at least one change you made requires a restart of Sirius.");
             this.dispose();
         }
     }

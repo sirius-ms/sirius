@@ -1,57 +1,59 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.jjobs.JobStateEvent;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import org.jdesktop.beans.AbstractBean;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ExperimentContainer extends AbstractBean {
+/**
+ * This is the wrapper for the Ms2Experiment.class to interact with the gui
+ * elements. It uses a special property change support that executes the events
+ * in the EDT. So you can change all fields from any thread, the gui will still
+ * be updated in the EDT. Some operations may NOT be Thread save, so you may have
+ * to care about Synchronization.
+ */
+public class ExperimentContainer extends AbstractEDTBean implements PropertyChangeListener {
+    //the ms experiment we use for computation
+    private final MutableMs2Experiment experiment;
 
-    private List<CompactSpectrum> ms1Spectra, ms2Spectra;
-    // TODO: dirty hack
-    private CompactSpectrum correlatedSpectrum;
-
-    //private Ionization ionization;
-    private PrecursorIonType ionization;
-    private double selectedFocusedMass;
-    private double dataFocusedMass;
-    private String name, guiName;
-    private URL source;
-    private int suffix;
-    private volatile ComputingStatus computeState;
-    private String errorMessage;
-
+    //Here are fields to view the SiriusResultElement
     private volatile List<SiriusResultElement> results;
-    private volatile List<IdentificationResult> originalResults;
     private volatile SiriusResultElement bestHit;
-    private volatile int bestHitIndex =0;
+    private volatile int bestHitIndex = 0;
+
+    private volatile ComputingStatus siriusComputeState = ComputingStatus.UNCOMPUTED;
 
 
-    public ExperimentContainer() {
-        ms1Spectra = new ArrayList<CompactSpectrum>();
-        ms2Spectra = new ArrayList<CompactSpectrum>();
-        ionization = PrecursorIonType.unknown(1);
-        selectedFocusedMass = -1;
-        dataFocusedMass = -1;
-        name = "";
-        guiName = "";
+    //here are fields to view the ExperimentContainer
+    private String guiName;
+    private int suffix;
+
+
+    public ExperimentContainer(Ms2Experiment source) {
+        this(new MutableMs2Experiment(source));
+    }
+
+    public ExperimentContainer(Ms2Experiment source, List<IdentificationResult> results) {
+        this(source);
+        setRawResults(results);
+    }
+
+    public ExperimentContainer(MutableMs2Experiment source) {
+        this.experiment = source;
+        guiName = null;
         suffix = 1;
+        bestHit = null;
         results = Collections.emptyList();
-        originalResults = Collections.emptyList();
-        this.computeState = ComputingStatus.UNCOMPUTED;
-    }
-
-    public void setCorrelatedSpectrum(CompactSpectrum spectrum) {
-        this.correlatedSpectrum = spectrum;
-    }
-
-    public CompactSpectrum getCorrelatedSpectrum() {
-        return correlatedSpectrum;
     }
 
     public SiriusResultElement getBestHit() {
@@ -63,10 +65,12 @@ public class ExperimentContainer extends AbstractBean {
     }
 
     public String getName() {
-        return name;
+        return experiment.getName();
     }
 
     public String getGUIName() {
+        if (guiName == null)
+            guiName = createGuiName();
         return guiName;
     }
 
@@ -74,103 +78,85 @@ public class ExperimentContainer extends AbstractBean {
         return this.suffix;
     }
 
-    public List<CompactSpectrum> getMs1Spectra() {
-        return ms1Spectra;
+    public List<SimpleSpectrum> getMs1Spectra() {
+        return experiment.getMs1Spectra();
     }
 
-    public void setMs1Spectra(List<CompactSpectrum> ms1Spectra) {
-        if (ms1Spectra == null) return;
-        this.ms1Spectra = ms1Spectra;
+    public List<MutableMs2Spectrum> getMs2Spectra() {
+        return experiment.getMs2Spectra();
     }
 
-    public List<CompactSpectrum> getMs2Spectra() {
-        return ms2Spectra;
-    }
-
-    public void setMs2Spectra(List<CompactSpectrum> ms2Spectra) {
-        if (ms2Spectra == null) return;
-        this.ms2Spectra = ms2Spectra;
+    public SimpleSpectrum getMergedMs1Spectrum() {
+        return experiment.getMergedMs1Spectrum();
     }
 
     public PrecursorIonType getIonization() {
-        return ionization;
-    }
-
-    public double getSelectedFocusedMass() {
-        return selectedFocusedMass;
-    }
-
-    public double getDataFocusedMass() {
-        return dataFocusedMass;
+        return experiment.getPrecursorIonType();
     }
 
     public List<SiriusResultElement> getResults() {
         return this.results;
     }
 
-    public List<IdentificationResult> getRawResults() {
-        return originalResults;
+    public Iterable<IdentificationResult> getRawResults() {
+        return () -> new IdentificationResultIterator(getResults().iterator());
     }
 
-    public double getFocusedMass() {
-        if (selectedFocusedMass > 0) return selectedFocusedMass;
-        else return dataFocusedMass;
-    }
-
-    public String getErrorMessage() {
-        return errorMessage;
+    public double getIonMass() {
+        return experiment.getIonMass();
     }
 
     public boolean isComputed() {
-        return computeState == ComputingStatus.COMPUTED;
+        return siriusComputeState == ComputingStatus.COMPUTED;
     }
 
     public boolean isComputing() {
-        return computeState == ComputingStatus.COMPUTING;
+        return siriusComputeState == ComputingStatus.COMPUTING;
     }
 
     public boolean isUncomputed() {
-        return computeState == ComputingStatus.UNCOMPUTED;
+        return siriusComputeState == ComputingStatus.UNCOMPUTED;
     }
 
-    public ComputingStatus getComputeState() {
-        return computeState;
+    public ComputingStatus getSiriusComputeState() {
+        return siriusComputeState;
     }
 
     public boolean isFailed() {
-        return this.computeState == ComputingStatus.FAILED;
+        return this.siriusComputeState == ComputingStatus.FAILED;
     }
 
     public boolean isQueued() {
-        return computeState == ComputingStatus.QUEUED;
+        return siriusComputeState == ComputingStatus.QUEUED;
     }
 
 
-    public void setRawResults(List<IdentificationResult> results) {
-        setRawResults(results,SiriusResultElementConverter.convertResults(results));
+    public void setRawResults(Iterable<IdentificationResult> results) {
+        setResults(SiriusResultElementConverter.convertResults(results));
     }
 
-    public void setRawResults(List<IdentificationResult> results, List<SiriusResultElement> myxoresults) {
+    private void setResults(List<SiriusResultElement> myxoresults) {
         List<SiriusResultElement> old = this.results;
         this.results = myxoresults;
-        this.originalResults = results == null?Collections.<IdentificationResult>emptyList():results;
-        firePropertyChange("results_upadated",old,this.results);
-        if (this.computeState == ComputingStatus.COMPUTING)
-            setComputeState((results == null || results.size() == 0) ? ComputingStatus.FAILED : ComputingStatus.COMPUTED);
+        firePropertyChange("results_upadated", old, this.results);
     }
 
     public void setName(String name) {
-        this.name = name;
-        setGuiName(this.suffix >= 2 ? this.name + " (" + suffix + ")" : this.name);
+        experiment.setName(name);
+        setGuiName(createGuiName());
     }
 
     public void setSuffix(int value) {
         this.suffix = value;
-        setGuiName(this.suffix >= 2 ? this.name + " (" + suffix + ")" : this.name);
+        setGuiName(createGuiName());
+    }
+
+    private String createGuiName() {
+        return this.suffix >= 2 ? experiment.getName() + " (" + suffix + ")" : experiment.getName();
     }
 
     // with change event
-    protected void setGuiName(String guiName) {
+    private void setGuiName(String guiName) {
         String old = this.guiName;
         this.guiName = guiName;
         firePropertyChange("guiName", old, this.guiName);
@@ -187,42 +173,42 @@ public class ExperimentContainer extends AbstractBean {
     }
 
     public void setIonization(PrecursorIonType ionization) {
-        PrecursorIonType old = this.ionization;
-        this.ionization = ionization;
-        firePropertyChange("ionization", old, this.ionization);
+        PrecursorIonType old = experiment.getPrecursorIonType();
+        experiment.setPrecursorIonType(ionization);
+        firePropertyChange("ionization", old, experiment.getPrecursorIonType());
     }
 
-    public void setSelectedFocusedMass(double focusedMass) {
-        double old = selectedFocusedMass;
-        selectedFocusedMass = focusedMass;
-        firePropertyChange("selectedFocusedMass", old, selectedFocusedMass);
+    public void setIonMass(double ionMass) {
+        double old = experiment.getIonMass();
+        experiment.setIonMass(ionMass);
+        firePropertyChange("ionMass", old, experiment.getIonMass());
     }
 
-    public void setDataFocusedMass(double focusedMass) {
-        double old = dataFocusedMass;
-        dataFocusedMass = focusedMass;
-        firePropertyChange("dataFocusedMass", old, dataFocusedMass);
+
+    public void setSiriusComputeState(ComputingStatus st) {
+        ComputingStatus oldST = this.siriusComputeState;
+        this.siriusComputeState = st;
+        firePropertyChange("siriusComputeState", oldST, this.siriusComputeState);
     }
 
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
-
-    public void setComputeState(ComputingStatus st) {
-        ComputingStatus oldST = this.computeState;
-        this.computeState = st;
-        firePropertyChange("computeState", oldST, this.computeState);
-    }
-
-    public void fireUpdateEvent(){
+    //this can be use to initiate an arbitrary update event, e.g. to initialize a view
+    public void fireUpdateEvent() {
         firePropertyChange("updated", false, true);
     }
 
     public URL getSource() {
-        return source;
+        return experiment.getSource();
     }
 
-    public void setSource(URL source) {
-        this.source = source;
+    public MutableMs2Experiment getMs2Experiment() {
+        return experiment;
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (evt instanceof JobStateEvent) {
+            JobStateEvent e = (JobStateEvent) evt;
+            setSiriusComputeState(Jobs.getComputingState(e.getNewValue()));
+        }
     }
 }

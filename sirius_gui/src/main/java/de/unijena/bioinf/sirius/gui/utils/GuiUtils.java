@@ -5,8 +5,19 @@ package de.unijena.bioinf.sirius.gui.utils;
  * 06.10.16.
  */
 
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
@@ -16,17 +27,15 @@ import java.awt.*;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SwingUtils {
+public class GuiUtils {
 
     public final static int SMALL_GAP = 5;
     public final static int MEDIUM_GAP = 10;
     public final static int LARGE_GAP = 20;
 
 
-
-
     public static void initUI() {
-    //load nimbus look and feel, befor mainframe is built
+        //load nimbus look and feel, befor mainframe is built
         try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -38,15 +47,14 @@ public class SwingUtils {
             // If Nimbus is not available, you can set the GUI to another look and feel.
         }
 
-        Painter painter = new ProgressPainter(Color.WHITE, Colors.ICON_GREEN);
-        UIManager.put("ProgressBar[Enabled].foregroundPainter", painter);
-        UIManager.put("ProgressBar[Enabled+Finished].foregroundPainter", painter);
+        UIManager.put("nimbusOrange", Colors.ICON_GREEN);
+
 //        ToolTipManager.sharedInstance().setInitialDelay(250);
 
 
     }
 
-    public static void drawListStatusElement(ComputingStatus state, Graphics2D g2, Component c){
+    public static void drawListStatusElement(ComputingStatus state, Graphics2D g2, Component c) {
         final Color prevCol = g2.getColor();
         String icon = "";
 
@@ -69,11 +77,10 @@ public class SwingUtils {
                 icon = "";
         }
 
-        int offset =  g2.getFontMetrics().stringWidth(icon);
-        g2.drawString(icon, c.getWidth()-offset-10, c.getHeight()-8);
+        int offset = g2.getFontMetrics().stringWidth(icon);
+        g2.drawString(icon, c.getWidth() - offset - 10, c.getHeight() - 8);
         g2.setColor(prevCol);
     }
-
 
     public static class SimplePainter extends AbstractRegionPainter {
 
@@ -126,6 +133,4 @@ public class SwingUtils {
             g.drawRect(1, 1, (w - 3), (h - 3));
         }
     }
-
-
 }

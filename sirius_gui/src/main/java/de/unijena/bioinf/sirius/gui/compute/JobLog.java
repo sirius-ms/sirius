@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-
+@Deprecated
 public class JobLog {
 
     public static JobLog instance = new JobLog();

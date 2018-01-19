@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.cli;
 
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.jjobs.JobManager;
 import org.slf4j.LoggerFactory;
 
 public class FingeridApplication {
@@ -14,7 +14,12 @@ public class FingeridApplication {
             LoggerFactory.getLogger(SiriusApplication.class).error("Unkown Error!", e);
         } finally {
             System.out.println("Time: " + ((double) (System.currentTimeMillis() - t)) / 1000d);
-            SiriusJobs.getGlobalJobManager().shutdown();
+            try {
+                JobManager.shutDownAllInstances();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                System.exit(0);
+            }
         }
     }
 
