@@ -995,13 +995,15 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         double maxmz = Double.NEGATIVE_INFINITY;
         for (Element e : alphabet) {
             final Isotopes iso = dist.getIsotopesFor(e);
-            for (int k = 1; k < iso.getNumberOfIsotopes(); ++k) {
-                final int i = iso.getIntegerMass(k) - e.getIntegerMass();
-                if (i > peakOffset) break;
-                double diff = iso.getMassDifference(k) - i;
-                diff *= (peakOffset / i);
-                minmz = Math.min(minmz, diff);
-                maxmz = Math.max(maxmz, diff);
+            if (iso != null) { //todo @Kai null check correct??
+                for (int k = 1; k < iso.getNumberOfIsotopes(); ++k) {
+                    final int i = iso.getIntegerMass(k) - e.getIntegerMass();
+                    if (i > peakOffset) break;
+                    double diff = iso.getMassDifference(k) - i;
+                    diff *= (peakOffset / i);
+                    minmz = Math.min(minmz, diff);
+                    maxmz = Math.max(maxmz, diff);
+                }
             }
         }
         final double a = monomz + peakOffset + minmz;
