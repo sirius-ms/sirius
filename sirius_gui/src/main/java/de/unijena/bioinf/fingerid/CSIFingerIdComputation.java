@@ -37,7 +37,6 @@ import de.unijena.bioinf.fingerid.net.FingerIdJob;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
-import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
@@ -230,7 +229,7 @@ public class CSIFingerIdComputation {
     private FingerIdData blast(SiriusResultElement elem, List<Compound> compoundList, ProbabilityFingerprint plattScores, SearchableDatabase db) {
         final List<FingerprintCandidate> fcs = new ArrayList<>(compoundList.size());
         for (Compound c : compoundList) fcs.add(c.asFingerprintCandidate());
-        final Fingerblast blaster = new Fingerblast(scoringMethod,null);
+        final Fingerblast blaster = new Fingerblast(scoringMethod, null);
         try {
             List<Scored<FingerprintCandidate>> candidates = blaster.score(fcs, plattScores);
             final double[] scores = new double[candidates.size()];
@@ -845,7 +844,7 @@ public class CSIFingerIdComputation {
                         nothingToDo = false;
                         container.job = JobLog.getInstance().submitRunning(container.experiment.getGUIName(), "Predict fingerprint");
                         try {
-                            final FingerIdJob job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(container.experiment), container.result.getResult().getResolvedTree(), fingerprintVersion);
+                            final FingerIdJob job = webAPI.submitJob(container.experiment.getMs2Experiment(), container.result.getResult().getResolvedTree(), fingerprintVersion);
                             jobs.put(container, job);
                         } catch (IOException e) {
                             jobQueue.add(container);

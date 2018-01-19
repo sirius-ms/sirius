@@ -174,7 +174,7 @@ public class IdentificationCellRenderer extends JPanel implements ListCellRender
 
         int xPos = Math.max(propertyFm.stringWidth("confidence"),Math.max(ionLength,focLength))+10;
 
-        double focD = ec.getFocusedMass();
+        double focD = ec.getIonMass();
         String focMass = focD>0 ? numberFormat.format(focD)+" Da" : "unknown";
 
         String nameOrInchi = c.name;

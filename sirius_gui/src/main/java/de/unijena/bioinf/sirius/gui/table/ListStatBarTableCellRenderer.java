@@ -25,22 +25,22 @@ public class ListStatBarTableCellRenderer extends AbstractBarTableCellRenderer {
     }
 
     @Override
-    protected float getMax(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
-        return (float) stats.getMax();
+    protected double getMax(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
+        return stats.getMax();
     }
 
     @Override
-    protected float getMin(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
-        return (float) stats.getMin();
+    protected double getMin(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
+        return stats.getMin();
     }
 
 
-    protected float getSum(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
-        return percentage ? (float) stats.getSum() : Float.NaN;
+    protected double getSum(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
+        return percentage ?  stats.getSum() : Double.NaN;
     }
 
     @Override
-    protected float getPercentage(JTable table, float value, boolean isSelected, boolean hasFocus, int row, int column) {
+    protected double getPercentage(JTable table, double value, boolean isSelected, boolean hasFocus, int row, int column) {
         return (value / getSum(table, isSelected, hasFocus, row, column) * 100f);
     }
 }

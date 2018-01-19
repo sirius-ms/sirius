@@ -11,7 +11,7 @@ dependencies {
     compile group: "de.unijena.bioinf.ms", name: "chemical_db", version: "$fingeridVersion"
 
     compile group: "de.unijena.bioinf.ms", name: "canopus_predict", version: "$fingeridVersion"
-    compile group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
+    compile group: 'de.unijena.bioinf', name: 'jjobs-swing', version: "$jjobs_version"
 //external
     compile group: 'javax.json', name: 'javax.json-api', version: "$json_version"
     compile group: 'org.glassfish', name: 'javax.json', version: "$json_impl_version"
@@ -33,8 +33,7 @@ dependencies {
 
     compile group: 'net.java.dev.glazedlists', name: 'glazedlists_java16', version: '1.10.0'
 
-
-
+    //compile group: 'com.kitfox.svg', name: 'svg-salamander', version: '1.0'
 }
 
 /*################### Environment variables ################### */
@@ -73,7 +72,7 @@ distributions {
                     from("build/install/${project.name}/lib") {
                         exclude libExclude
                     }
-                    from("${project.glpkPath}/l${ar}/"){
+                    from("${project.glpkPath}/l${ar}/") {
                         include('libglpk.so.40')
                         include('libglpk_java.so')
                     }

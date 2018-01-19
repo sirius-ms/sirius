@@ -168,7 +168,8 @@ public abstract class ApplicationCore {
 
 
         SIRIUS_PROPERTIES_FILE = new PersistentProperties(WORKSPACE.resolve("sirius.properties"), defaultProps, USER_PROPERTIES_FILE_HAEDER);
-        SIRIUS_PROPERTIES_FILE.addPropertyPersistent("de.unijena.bioinf.sirius.workspace", WORKSPACE.toAbsolutePath().toString());
+        SIRIUS_PROPERTIES_FILE.store();
+        PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.workspace", WORKSPACE.toAbsolutePath().toString());
         DEFAULT_LOGGER.debug("application properties initialized!");
 
 
@@ -178,8 +179,8 @@ public abstract class ApplicationCore {
 
         HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
         int cores = hardware.getProcessor().getPhysicalProcessorCount();
-        SIRIUS_PROPERTIES_FILE.addProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(cores));
-        SIRIUS_PROPERTIES_FILE.addProperty("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(hardware.getProcessor().getLogicalProcessorCount()));
+        PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(cores));
+        PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(hardware.getProcessor().getLogicalProcessorCount()));
         DEFAULT_LOGGER.info("CPU check done. " + PropertyManager.getNumberOfCores() + " cores that handle " + PropertyManager.getNumberOfThreads() + " threads were found.");
 
         //bug reporting

@@ -2,7 +2,7 @@ package de.unijena.bioinf.sirius.gui.mainframe.molecular_formular;
 
 import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
-import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
+import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -132,7 +132,7 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
 //
         if (sre != null && sre.getFingerIdComputeState() != null) {
             g.setFont(statusFont);
-            SwingUtils.drawListStatusElement(sre.getFingerIdComputeState(), g2, this);
+            GuiUtils.drawListStatusElement(sre.getFingerIdComputeState(), g2, this);
         }
     }
 

@@ -6,7 +6,7 @@ import ca.odell.glazedlists.ObservableElementList;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import org.jdesktop.beans.AbstractBean;
+import de.unijena.bioinf.sirius.gui.structure.AbstractEDTBean;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Created by fleisch on 15.05.17.
  */
-public abstract class ActionList<E extends AbstractBean, D> implements ActiveElements<E, D> {
+public abstract class ActionList<E extends AbstractEDTBean, D> implements ActiveElements<E, D> {
     public enum DataSelectionStrategy {ALL, FIRST_SELECTED, ALL_SELECTED}
 
     private final List<ActiveElementChangedListener> listeners = new LinkedList<>();
@@ -29,7 +29,7 @@ public abstract class ActionList<E extends AbstractBean, D> implements ActiveEle
     public final DataSelectionStrategy selectionType;
 
     public ActionList(Class<E> cls) {
-        this(cls,DataSelectionStrategy.FIRST_SELECTED);
+        this(cls, DataSelectionStrategy.FIRST_SELECTED);
     }
 
     public ActionList(Class<E> cls, DataSelectionStrategy strategy) {

@@ -51,7 +51,7 @@ public class FingerIdBackgroundComputation {
                 break;
             }
         }
-        container.setComputeState(ComputingStatus.UNCOMPUTED);
+        container.setSiriusComputeState(ComputingStatus.UNCOMPUTED);
         cancel.add(container);
     }
 
@@ -62,7 +62,7 @@ public class FingerIdBackgroundComputation {
             final Task t = iter.next();
             canceled.add(t.exp);
             iter.remove();
-            t.exp.setComputeState(ComputingStatus.UNCOMPUTED);
+            t.exp.setSiriusComputeState(ComputingStatus.UNCOMPUTED);
         }
         if (currentComputation!=null) cancel(currentComputation);
         return canceled;
@@ -70,13 +70,13 @@ public class FingerIdBackgroundComputation {
 
     public void add(Task containers) {
         this.queue.add(containers);
-        containers.exp.setComputeState(ComputingStatus.QUEUED);
+        containers.exp.setSiriusComputeState(ComputingStatus.QUEUED);
         wakeup();
     }
 
     public void addAll(Collection<Task> containers) {
         for (Task t : containers) {
-            t.exp.setComputeState(ComputingStatus.QUEUED);
+            t.exp.setSiriusComputeState(ComputingStatus.QUEUED);
         }
         this.queue.addAll(containers);
         wakeup();
@@ -100,7 +100,7 @@ public class FingerIdBackgroundComputation {
 
         public Task(ExperimentContainer exp) {
             this.exp = exp;
-            this.state = exp.getComputeState();
+            this.state = exp.getSiriusComputeState();
         }
     }
 
@@ -109,7 +109,7 @@ public class FingerIdBackgroundComputation {
         protected void process(List<Task> chunks) {
             super.process(chunks);
             for (Task c : chunks) {
-                c.exp.setComputeState(c.state);
+                c.exp.setSiriusComputeState(c.state);
                 if (c.state == ComputingStatus.COMPUTING) {
                     currentComputation = c.exp;
                 }

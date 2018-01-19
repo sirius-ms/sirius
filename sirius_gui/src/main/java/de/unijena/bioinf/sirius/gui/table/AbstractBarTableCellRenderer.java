@@ -17,16 +17,18 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
     protected Color[] colors = {Colors.ICON_RED, Colors.ICON_YELLOW, Colors.ICON_GREEN};
     protected float[] fractions = {.1f, .5f, 1f};
 
-    private float toFill;
-    private float percentageValue;
+
+    private double percentageValue;
     protected final boolean percentage;
 
     private boolean selected;
+
     private String max;
     private float thresh;
+    private float toFill;
 
     public AbstractBarTableCellRenderer() {
-        this(-1,false);
+        this(-1, false);
     }
 
     public AbstractBarTableCellRenderer(int highlightColumn, boolean percentage) {
@@ -34,22 +36,22 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
         this.percentage = percentage;
     }
 
-    protected abstract float getMax(JTable table, boolean isSelected, boolean hasFocus, int row, int column);
+    protected abstract double getMax(JTable table, boolean isSelected, boolean hasFocus, int row, int column);
 
-    protected abstract float getMin(JTable table, boolean isSelected, boolean hasFocus, int row, int column);
+    protected abstract double getMin(JTable table, boolean isSelected, boolean hasFocus, int row, int column);
 
     //override this method if want a threshold line
-    protected float getThresh(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
-        return Float.NaN;
+    protected double getThresh(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
+        return Double.NaN;
     }
 
     //override this method if you have to modify the value of the cell for view
-    protected float getValue(Object value) {
+    protected double getValue(Object value) {
         return ((Double) value).floatValue();
     }
 
-    protected float getPercentage(JTable table, float value, boolean isSelected, boolean hasFocus, int row, int column) {
-        return percentage ? (value / getMax(table, isSelected, hasFocus, row, column) * 100f) : Float.NaN;
+    protected double getPercentage(JTable table, double value, boolean isSelected, boolean hasFocus, int row, int column) {
+        return percentage ? (value / getMax(table, isSelected, hasFocus, row, column) * 100d) : Double.NaN;
     }
 
 
@@ -58,18 +60,18 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
         double max = getMax(table, isSelected, hasFocus, row, column);
         double min = getMin(table, isSelected, hasFocus, row, column);
 
-        final float current = getValue(value);
+        final double current = getValue(value);
         percentageValue = getPercentage(table, current, isSelected, hasFocus, row, column);
 
         this.max = NF.format(max);
         toFill = (float) normalize(min, max, current);
         selected = isSelected;
-        thresh = (float) normalize(min, max, getThresh(table, isSelected, hasFocus, row, column));
+        thresh = (float) Math.max(0f, normalize(min, max, getThresh(table, isSelected, hasFocus, row, column)));
         return super.getTableCellRendererComponent(table, current, isSelected, hasFocus, row, column);
     }
 
     private double normalize(double min, double max, double value) {
-        return ((value - min) / (max - min));
+        return (value - min) / (max - min);
     }
 
     @Override
@@ -102,8 +104,8 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
         }
 
         String v = value;
-        if (!Float.isNaN(percentageValue))
-            v =  String.format("%.2f",percentageValue) + "%";
+        if (!Double.isNaN(percentageValue))
+            v = String.format("%.2f", percentageValue) + "%";
 
         g2d.drawString(v, (getWidth() / 2) + (maxWord / 2) - (g2d.getFontMetrics().stringWidth(v)), (getHeight() - 4));
     }

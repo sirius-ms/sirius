@@ -5,11 +5,10 @@ package de.unijena.bioinf.sirius.gui.actions;
  * 29.01.17.
  */
 
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import de.unijena.bioinf.sirius.gui.configs.Icons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -25,15 +24,15 @@ public class ImportExperimentAction extends AbstractAction {
         super("Import");
         putValue(Action.LARGE_ICON_KEY, Icons.DOC_32);
         putValue(Action.SMALL_ICON, Icons.ADD_DOC_16);
-        putValue(Action.SHORT_DESCRIPTION,"Import measurements of a single compound");
+        putValue(Action.SHORT_DESCRIPTION, "Import measurements of a single compound");
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         LoadController lc = new LoadController(MF, CONFIG_STORAGE);
         lc.showDialog();
-        if (lc.getReturnValue() == ReturnValue.Success) {
-            ExperimentContainer ec = lc.getExperiment();
+        ExperimentContainer ec = lc.getExperiment();
+        if (ec != null) {
             Workspace.importCompound(ec);
         }
     }
