@@ -17,13 +17,6 @@ public class FingerIDSearchGuiJob extends DependentMasterJJob<FingerIdData> impl
     final SearchableDatabase db;
 
 
-    public FingerIDSearchGuiJob(SearchableDatabase fingeridDB, SiriusIdentificationGuiJob required) {
-        super(JobType.WEBSERVICE);
-        this.db = fingeridDB;
-        addRequiredJob(required);
-        ec = required.ec;
-    }
-
     public FingerIDSearchGuiJob(SearchableDatabase fingeridDB, ExperimentContainer ec) {
         super(JobType.WEBSERVICE);
         this.db = fingeridDB;

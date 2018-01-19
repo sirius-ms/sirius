@@ -18,10 +18,11 @@
 
 package de.unijena.bioinf.sirius.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
@@ -30,7 +31,9 @@ import de.unijena.bioinf.fingerid.FingerIDComputationPanel;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.FingerIDSearchGuiJob;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.PrepareSiriusIdentificationInputJob;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.SiriusIdentificationGuiJob;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
@@ -193,6 +196,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         if (e.getSource() == abort) {
             this.dispose();
         } else if (e.getSource() == this.compute) {
+            if (editPanel != null && compoundsToProcess.size() == 1)
+                saveEdits(compoundsToProcess.get(0));
             startComputing();
         } else if (e.getSource() == elementAutoDetect) {
             String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
@@ -223,6 +228,19 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         this.dispose();
     }
 
+    private void saveEdits(ExperimentContainer ec) {
+        if (editPanel.validateFormula()) {
+            final MolecularFormula nuFormula = editPanel.getMolecularFormula();
+            ec.getMs2Experiment().setMolecularFormula(nuFormula);
+        }
+
+        final double ionMass = editPanel.getSelectedIonMass();
+        if (ionMass <= 0)
+            ec.setIonMass(ionMass);
+        ec.setName(editPanel.getExperiementName());
+        ec.setIonization(editPanel.getSelectedIonization());
+    }
+
     private void startComputing() {
         if (recompute.isSelected()) {
             final String dontAskProperty = "de.unijena.bioinf.sirius.dontAsk.recompute";
@@ -241,6 +259,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 while (compounds.hasNext()) {
                     final ExperimentContainer ec = compounds.next();
                     ec.setSiriusComputeState(ComputingStatus.UNCOMPUTED);
+                    ec.setBestHit(null);
                 }
             }
         }
@@ -275,34 +294,38 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 while (compounds.hasNext()) {
                     final ExperimentContainer ec = compounds.next();
                     checkForInterruption();
-                    //check what we have to compute
                     if (ec.isUncomputed() || ec.getBestHit() == null) {
                         progressInfo(ec.getGUIName());
                         checkForInterruption();
-                        MutableMs2Experiment exp = applySettingsAndGet(ec);
-                        FormulaConstraints individualConstraints = new FormulaConstraints(constraints);
 
-                        if (!elementsToAutoDetect.isEmpty() && !ec.getMs1Spectra().isEmpty()) {
-                            FormulaConstraints autoConstraints = sirius.predictElementsFromMs1(exp);
-                            if (autoConstraints != null) {
-                                ElementPredictor predictor = sirius.getElementPrediction();
-                                for (Element element : elementsToAutoDetect) {
-                                    if (predictor.isPredictable(element)) {
-                                        individualConstraints.setUpperbound(element, autoConstraints.getUpperbound(element));
-                                    }
-                                }
-                            }
-                        }
+                        //prepare input data for identication
+                        PrepareSiriusIdentificationInputJob prepareJob = new PrepareSiriusIdentificationInputJob(
+                                ec,
+                                instrument,
+                                ppm,
+                                searchProfilePanel.restrictToOrganics(),
+                                searchableDatabase,
+                                new FormulaConstraints(constraints),
+                                Collections.unmodifiableList(elementsToAutoDetect),
+                                searchProfilePanel.getPossibleIonModes(),
+                                csiOptions.getPossibleAdducts()
+                        );
+                        Jobs.submit(prepareJob);
 
-                        checkForInterruption();
-
+                        SiriusIdentificationGuiJob identificationJob = null;
                         if (!ec.isComputed()) {
-                            SiriusIdentificationGuiJob identificationJob = Jobs.runSiriusIdentification(instrument, ppm, candidates, individualConstraints, searchProfilePanel.restrictToOrganics(), searchableDatabase, ec);
-                            if (csiOptions.isCSISelected())
-                                Jobs.runFingerIDSearch(csiOptions.dbSelectionOptions.getDb(), identificationJob);
-                        } else if (csiOptions.isCSISelected() && ec.getBestHit() == null) {
-                            Jobs.runFingerIDSearch(csiOptions.dbSelectionOptions.getDb(), ec);
+                            identificationJob = new SiriusIdentificationGuiJob(instrument, candidates, ec);
+                            identificationJob.addRequiredJob(prepareJob);
+                            Jobs.submit(identificationJob);
                         }
+
+                        if (csiOptions.isCSISelected() && ec.getBestHit() == null) {
+                            FingerIDSearchGuiJob fingeridJob = new FingerIDSearchGuiJob(csiOptions.dbSelectionOptions.getDb(), ec);
+                            fingeridJob.addRequiredJob(identificationJob);
+                            fingeridJob.addRequiredJob(prepareJob);
+                            Jobs.submit(fingeridJob);
+                        }
+                        System.out.println("submitted");
                     }
                     updateProgress(0, max, ++progress);
                 }
@@ -310,8 +333,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
         });
 
-
         dispose();
+
     }
 
     public boolean isSuccessful() {
@@ -390,49 +413,4 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     }
 
 
-    private MutableMs2Experiment applySettingsAndGet(ExperimentContainer ec) {
-        final MutableMs2Experiment exp = ec.getMs2Experiment();
-
-        if (compoundsToProcess.size() == 1) { //check wether we have multiple compounds
-            if (editPanel.validateFormula()) {
-                final MolecularFormula nuFormula = editPanel.getMolecularFormula();
-                exp.setMolecularFormula(nuFormula);
-            }
-
-            final double ionMass = editPanel.getSelectedIonMass();
-            if (ionMass <= 0)
-                ec.setIonMass(ionMass);
-            ec.setName(editPanel.getExperiementName());
-            ec.setIonization(editPanel.getSelectedIonization());
-
-            if (exp.getPrecursorIonType().isIonizationUnknown())
-                exp.setAnnotation(PossibleIonModes.class, searchProfilePanel.getPossibleIonModes());
-            if (exp.getPrecursorIonType().getAdduct() == null)
-                exp.setAnnotation(PossibleAdducts.class, csiOptions.getPossibleAdducts());
-        } else {
-            PrecursorIonType i = ec.getIonization();
-            List<PrecursorIonType> ions;
-
-            if (i.isUnknownPositive()) {
-                exp.setAnnotation(PossibleIonModes.class, PossibleIonModes.reduceTo(searchProfilePanel.getPossibleIonModes(), PeriodicTable.getInstance().getPositiveIonizationsAsString()));
-                ions = exp.getAnnotation(PossibleIonModes.class).getIonModesAsPrecursorIonType();
-            } else if (i.isUnknownNegative()) {
-                exp.setAnnotation(PossibleIonModes.class, PossibleIonModes.reduceTo(searchProfilePanel.getPossibleIonModes(), PeriodicTable.getInstance().getNegativeIonizationsAsString()));
-                ions = exp.getAnnotation(PossibleIonModes.class).getIonModesAsPrecursorIonType();
-            } else if (i.isIonizationUnknown()) {
-                exp.setAnnotation(PossibleIonModes.class, searchProfilePanel.getPossibleIonModes());
-                ions = exp.getAnnotation(PossibleIonModes.class).getIonModesAsPrecursorIonType();
-            } else {
-                ions = Collections.singletonList(i);
-            }
-
-            if (ions.size() != 1 || ions.get(0).getAdduct() == null) {
-                Set<PrecursorIonType> allPossible = PeriodicTable.getInstance().adductsByIonisation(ions);
-                exp.setAnnotation(PossibleAdducts.class, PossibleAdducts.intersection(csiOptions.getPossibleAdducts(), allPossible));
-            }
-        }
-
-
-        return exp;
-    }
 }

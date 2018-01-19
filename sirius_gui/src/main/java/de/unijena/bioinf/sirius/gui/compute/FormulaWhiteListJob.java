@@ -29,17 +29,21 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
 
     private final boolean annotate;
 
-    public FormulaWhiteListJob(double ppm, boolean onlyOrganic, SearchableDatabase searchableDatabase, Ms2Experiment experiment, boolean annotateResult) {
+    public FormulaWhiteListJob(Deviation massDev, boolean onlyOrganic, SearchableDatabase searchableDatabase, Ms2Experiment experiment, boolean annotateResult) {
         super(JobType.WEBSERVICE); //todo io or webservice
-        this.massDev = new Deviation(ppm);
+        this.massDev = massDev;
         this.onlyOrganic = onlyOrganic;
         this.searchableDatabase = searchableDatabase;
         this.experiment = experiment;
         this.annotate = annotateResult;
     }
 
+    public FormulaWhiteListJob(Deviation massDev, boolean onlyOrganic, SearchableDatabase searchableDatabase, Ms2Experiment experiment) {
+        this(massDev, onlyOrganic, searchableDatabase, experiment, true);
+    }
+
     public FormulaWhiteListJob(double ppm, boolean onlyOrganic, SearchableDatabase searchableDatabase, Ms2Experiment experiment) {
-        this(ppm, onlyOrganic, searchableDatabase, experiment, true);
+        this(new Deviation(ppm), onlyOrganic, searchableDatabase, experiment, true);
     }
 
     @Override
@@ -102,7 +106,7 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
     }
 
     public static Whiteset searchFormulasInBackround(double ppm, boolean onlyOrganic, SearchableDatabase searchableDatabase, Ms2Experiment ex) {
-        FormulaWhiteListJob j = new FormulaWhiteListJob(ppm, onlyOrganic, searchableDatabase, ex, false);
+        FormulaWhiteListJob j = new FormulaWhiteListJob(new Deviation(ppm), onlyOrganic, searchableDatabase, ex, false);
         SiriusJobs.getGlobalJobManager().submitJob(j);
         return j.getResult();
     }
