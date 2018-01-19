@@ -163,6 +163,14 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
     }
 
     public void setBestHit(final SiriusResultElement bestHit) {
+        if (bestHit == null) {
+            if (this.bestHit != null)
+                this.bestHit.setBestHit(false);
+            this.bestHit = bestHit;
+            bestHitIndex = 0;
+            return;
+        }
+
         if (this.bestHit != bestHit) {
             if (this.bestHit != null)
                 this.bestHit.setBestHit(false);
