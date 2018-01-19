@@ -325,7 +325,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                             fingeridJob.addRequiredJob(prepareJob);
                             Jobs.submit(fingeridJob);
                         }
-                        System.out.println("submitted");
                     }
                     updateProgress(0, max, ++progress);
                 }
