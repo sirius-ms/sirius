@@ -60,7 +60,7 @@ public interface ZodiacOptions extends SiriusOptions {
             shortName = {"b"},
             longName = {"burn-in"},
             description = "number of steps to use to burn in gibbs sampler.",
-            defaultValue = {"10000"}
+                defaultValue = {"10000"}
     )
     int getBurnInSteps();
 
