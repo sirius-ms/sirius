@@ -42,6 +42,7 @@ public class NoMs1PeakAnnotator implements QualityAnnotator {
      * @param experiment
      */
     public void annotate(Ms2Experiment experiment) {
+//        if (experiment.getMs1Spectra().size()==0) return;
         boolean noMS1 = true;
         for (Spectrum<Peak> spectrum : experiment.getMs1Spectra()) {
             if (Spectrums.binarySearch(spectrum, experiment.getIonMass(), findMs1PeakDeviation)>=0){
