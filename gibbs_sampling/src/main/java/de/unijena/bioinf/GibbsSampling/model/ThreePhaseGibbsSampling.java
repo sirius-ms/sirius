@@ -42,6 +42,8 @@ public class ThreePhaseGibbsSampling {
 
     private int numberOfCandidatesFirstRound;
 
+
+    //todo extend from TwoPhaseGibbsSampling
     public ThreePhaseGibbsSampling(String[] ids, FragmentsCandidate[][] possibleFormulas, int numberOfCandidatesFirstRound, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int workersCount, int repetitions) {
         this.ids = ids;
         this.possibleFormulas = possibleFormulas;
@@ -229,6 +231,7 @@ public class ThreePhaseGibbsSampling {
         //3. include bad quality spectra (could also do this in step 2) //todo use gibbs sampling??
         if (firstRoundIds.length==possibleFormulas.length){
             combinedResult = results1;
+            usedIds = gibbsParallel.getGraph().ids;
             return;
         }
 

@@ -1,15 +1,11 @@
 package de.unijena.bioinf.GibbsSampling;
 
-import com.google.common.collect.Iterators;
 import com.lexicalscope.jewel.cli.CliFactory;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
-import de.unijena.bioinf.ChemistryBase.ms.ft.UnregardedCandidatesUpperBound;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.GibbsSampling.model.distributions.*;
 import de.unijena.bioinf.GibbsSampling.model.scorer.*;
@@ -17,12 +13,15 @@ import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
+import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.projectspace.DirectoryReader;
+import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
+import de.unijena.bioinf.sirius.projectspace.SiriusFileReader;
+import de.unijena.bioinf.sirius.projectspace.SiriusWorkspaceReader;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TIntIntHashMap;
-import gnu.trove.procedure.TIntIntProcedure;
 import gnu.trove.set.TCharSet;
 import gnu.trove.set.hash.TCharHashSet;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -31,10 +30,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
@@ -73,12 +69,13 @@ public class GibbsSamplerMain {
     private static int maxCandidates = 50;
     private static boolean useLibraryHits = true;
     private static double libraryScore = 1.0D;
-    final String SEP = "\t";
+    final static String SEP = "\t";
     private static final String[] reactionStringsMyCompoundID = new String[]{"H2", "CH2", "NH", "O", "NH3", "H2O", "CO", "C2H4", "C2H2O", "CO2", "C2H3NO", "SO3", "HPO3", "C4H3N3", "C4H2N2O", "C3H5NOS", "C2H5NO2S", "C5H4N2O", "C3H5NO2S", "C5H8O4", "C5H3N5", "C7H13NO2", "C5H7NO3S", "C6H10O5", "C6H8O6", "C10H12N2O4", "C9H11N3O4", "C9H10N2O5", "C16H30O", "C6H11O8P", "C10H11N5O3", "C10H11N5O4", "C10H15N3O5S", "C10H15N3O6S", "C12H20O10", "C18H30O15"};
     private static final String[] reactionStringsRogers = new String[]{"C10H11N5O3", "C10H11N5O4", "C10H12N2O4", "C10H12N5O6P", "C10H12N5O7P", "C10H13N2O7P", "C10H13N5O10P2", "C10H13N5O9P2", "C10H14N2O10P2", "C10H14N2O2S", "C10H15N2O3S", "C10H15N3O5S", "C11H10N2O", "C12H20O11", "C16H30O", "C18H30O15", "C21H33N7O15P3S", "C21H34N7O16P3S", "C2H2", "C2H2O", "C2H3NO", "C2H3O2", "C2H4", "C2O2", "C3H2O3", "C3H5NO", "C3H5NO2", "C3H5NOS", "C3H5O", "C4H3N2O2", "C4H4N3O", "C4H4O2", "C4H5NO3", "C4H6N2O2", "C4H7NO2", "C5H4N5", "C5H4N5O", "C5H5N2O2", "C5H7", "C5H7NO", "C5H7NO3", "C5H8N2O2", "C5H8O4", "C5H9NO", "C5H9NOS", "C6H10N2O3S2", "C6H10O5", "C6H10O6", "C6H11NO", "C6H11O8P", "C6H12N2O", "C6H12N4O", "C6H7N3O", "C6H8O6", "C8H8NO5P", "C9H10N2O5", "C9H11N2O8P", "C9H12N2O11P2", "C9H12N3O7P", "C9H13N3O10P2", "C9H9NO", "C9H9NO2", "CH2", "CH2ON", "CH3N2O", "CHO2", "CO", "CO2", "H2", "H2O", "H3O6P2", "HPO3", "N", "NH", "NH2", "O", "P", "PP", "SO3"};
 
     private static boolean is2Phase;
-    private static boolean is3Phase = false;
+    private static boolean is3Phase;
+    private final static int reactionStepSize = 1;
 
     private static ScoreProbabilityDistribution probabilityDistribution;
 
@@ -89,12 +86,12 @@ public class GibbsSamplerMain {
         GibbsSamplerMain main = new GibbsSamplerMain();
         if(args.length != 0 && !args[0].equals("--help") && !args[0].equals("-h")) {
             GibbsSamplerOptions opts = CliFactory.createCli(GibbsSamplerOptions.class).parseArguments(args);
-            mgfFile = Paths.get(opts.getSpectrumsFile(), new String[0]);
-            libraryHits = Paths.get(opts.getCorrectHitsFile(), new String[0]);
-            outputFile = Paths.get(opts.getOutputPath(), new String[0]);
-            treeDir = Paths.get(opts.getTreeDir(), new String[0]);
+            mgfFile = Paths.get(opts.getSpectrumsFile());
+            libraryHits = Paths.get(opts.getCorrectHitsFile());
+            outputFile = Paths.get(opts.getOutputPath());
+            treeDir = Paths.get(opts.getTreeDir());
             if(opts.getOutputDirPath() != null) {
-                graphOutputDir = Paths.get(opts.getOutputDirPath(), new String[0]);
+                graphOutputDir = Paths.get(opts.getOutputDirPath());
             } else {
                 graphOutputDir = null;
             }
@@ -124,6 +121,8 @@ public class GibbsSamplerMain {
             System.out.println("arguments " + Arrays.toString(args));
 
             is2Phase = opts.isTwoPhase();
+            is3Phase = opts.isThreePhase();
+
 
             EdgeScorer[] edgeScorers;
             if(opts.getProbabilityDistribution().toLowerCase().equals("exponential")) {
@@ -174,6 +173,8 @@ public class GibbsSamplerMain {
 //            } else if (opts.isTestGraphGeneration()){
 //                System.out.println("test graph");
 //                main.testGraphGeneration(treeDir, mgfFile, libraryHits, edgeScorers, opts);
+            } else if(opts.getEvalCliOutput()!=null) {
+                main.evalZodiacOutput(treeDir, Paths.get(opts.getEvalCliOutput()), mgfFile, libraryHits);
             } else {
                 System.out.println("do evaluation");
                 main.doEvaluation(treeDir, mgfFile, libraryHits, outputFile, edgeScorers);
@@ -183,6 +184,97 @@ public class GibbsSamplerMain {
             System.out.println(CliFactory.createCli(GibbsSamplerOptions.class).getHelpMessage());
         }
     }
+
+    private void evalZodiacOutput(Path workspace, Path zodiacSummary, Path mgfFile, Path libraryHitsPath) throws IOException {
+        Map<String, List<FragmentsCandidate>> candidatesMap;
+        System.out.println("Reading from Sirius workspace");
+        candidatesMap = parseMFCandidatesFromWorkspace(workspace);
+
+        Map<String, List<Scored<MolecularFormula>>> zodiacResults = parseZodiacCliResults(zodiacSummary);
+
+        Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(reactionStepSize)).map(r -> r.netChange()).collect(Collectors.toSet());
+
+        parseLibraryHits(libraryHitsPath, mgfFile, candidatesMap);
+
+
+        Map<String, LibraryHit> correctHits = identifyCorrectLibraryHits(candidatesMap, netSingleReactionDiffs);
+
+
+        Set<String> evaluationIds = extractEvaluationIds(candidatesMap, correctHits, 0.0, netSingleReactionDiffs);
+
+        String[] ids = candidatesMap.keySet().stream().filter(key -> candidatesMap.get(key).size()>0).toArray(s -> new String[s]);
+
+
+        Scored<FragmentsCandidate>[][] result = mergeCandidatesWithZodiacResults(ids, candidatesMap, zodiacResults);
+
+
+        int[] numberOfIds = statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits, null);
+        System.out.println(numberOfIds[0]+" correct out of "+(numberOfIds[0]+numberOfIds[1]));
+//
+//
+
+    }
+
+    private Scored<FragmentsCandidate>[][] mergeCandidatesWithZodiacResults(String[] ids, Map<String, List<FragmentsCandidate>> candidatesMap, Map<String, List<Scored<MolecularFormula>>> zodiacResults) {
+        Scored<FragmentsCandidate>[][] scored = new Scored[ids.length][];
+        for (int i = 0; i < ids.length; i++) {
+            String id = ids[i];
+            List<FragmentsCandidate> candidates = candidatesMap.get(id);
+            List<Scored<FragmentsCandidate>> scoredCandidates = new ArrayList<>();
+            List<Scored<MolecularFormula>> results = zodiacResults.get(id);
+            if (candidates.size()<results.size()) throw new RuntimeException("results are missing from candidates set for id "+id);
+            //map candidates and results
+            for (Scored<MolecularFormula> result : results) {
+                MolecularFormula mf = result.getCandidate();
+                FragmentsCandidate fragmentsCandidate;
+                if (DummyFragmentCandidate.dummy.equals(mf)){
+                    fragmentsCandidate = DummyFragmentCandidate.newDummy(-1, -1, null);
+                } else {
+                    fragmentsCandidate = findCandidate(candidates, mf);
+                }
+                scoredCandidates.add(new Scored<>(fragmentsCandidate, result.getScore()));
+            }
+            scored[i] = scoredCandidates.toArray(new Scored[0]);
+        }
+        return scored;
+    }
+
+    private FragmentsCandidate findCandidate(List<FragmentsCandidate> candidates, MolecularFormula mf){
+        for (FragmentsCandidate candidate : candidates) {
+            if (candidate.getFormula().equals(mf)) return candidate;
+        }
+        throw new RuntimeException("cannot find candidate for "+mf);
+    }
+
+    private Map<String, List<Scored<MolecularFormula>>> parseZodiacCliResults(Path zodiacSummary) throws IOException {
+        BufferedReader reader = Files.newBufferedReader(zodiacSummary, Charset.defaultCharset());
+        //header
+        reader.readLine();
+        //todo this currently ignores number of connections !!!!
+        String dummy = DummyFragmentCandidate.dummy.toString();
+        Map<String, List<Scored<MolecularFormula>>> map = new HashMap<>();
+        String line;
+        while ((line=reader.readLine())!=null) {
+            String[] cols = line.split(SEP);
+            String id = cols[0];
+            List<Scored<MolecularFormula>> scoredList = new ArrayList<>();
+            for (int i = 4; i < cols.length; i+=2) {
+                String formula = cols[i];
+                MolecularFormula mf;
+                if (formula.equals(dummy)){
+                    mf = DummyFragmentCandidate.dummy;
+                } else {
+                    mf = MolecularFormula.parse(formula);
+                }
+                double score = Double.parseDouble(cols[i+1]);
+
+                scoredList.add(new Scored<>(mf, score));
+            }
+            map.put(id, scoredList);
+        }
+        return map;
+    }
+
 
     private static ScoreProbabilityDistribution readPCP(String pathString) throws IOException {
         Path path = Paths.get(pathString, new String[0]);
@@ -211,7 +303,7 @@ public class GibbsSamplerMain {
             workerCount /= 2;
         }
 
-        Set netSingleReactionDiffs = (Set)Arrays.stream(parseReactions(1)).map((r) -> {
+        Set netSingleReactionDiffs = (Set)Arrays.stream(parseReactions(reactionStepSize)).map((r) -> {
             return r.netChange();
         }).collect(Collectors.toSet());
 
@@ -323,7 +415,7 @@ public class GibbsSamplerMain {
             workerCount /= 2;
         }
 
-        Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(1)).map(r -> r.netChange()).collect(Collectors.toSet());
+        Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(reactionStepSize)).map(r -> r.netChange()).collect(Collectors.toSet());
 
         Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, maxCandidates, workerCount);
 
@@ -444,7 +536,7 @@ public class GibbsSamplerMain {
 
 
         //all possible netto changes of MolecularFormulas using on of the reactions.
-        Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(1)).map(r -> r.netChange()).collect(Collectors.toSet());
+        Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(reactionStepSize)).map(r -> r.netChange()).collect(Collectors.toSet());
 
         Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidatesEval(treeDir, mgfFile, Integer.MAX_VALUE, workerCount, true); //remove candidates later when adding dummy
 
@@ -508,7 +600,7 @@ public class GibbsSamplerMain {
                 resultIds = twoPhaseGibbsSampling.getIds();
 
                 System.out.println("result");
-                statisticsOfKnownCompounds(result, resultIds, evaluationIds, correctHits);
+                statisticsOfKnownCompounds(result, resultIds, evaluationIds, correctHits, twoPhaseGibbsSampling.getGraph());
                 listOfResults.add(result);
             }
         } else {
@@ -564,7 +656,7 @@ public class GibbsSamplerMain {
 
                 Scored<FragmentsCandidate>[][] result = gibbsParallel.getChosenFormulasBySampling();
                 System.out.println("result");
-                statisticsOfKnownCompounds(result, resultIds, evaluationIds, correctHits);
+                statisticsOfKnownCompounds(result, resultIds, evaluationIds, correctHits, gibbsParallel.getGraph());
                 listOfResults.add(result);
             }
         }
@@ -586,7 +678,7 @@ public class GibbsSamplerMain {
 
 
         //all possible netto changes of MolecularFormulas using on of the reactions.
-        Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(1)).map(r -> r.netChange()).collect(Collectors.toSet());
+        Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(reactionStepSize)).map(r -> r.netChange()).collect(Collectors.toSet());
 
         Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidatesEval(treeDir, mgfFile, Integer.MAX_VALUE, workerCount, true); //remove candidates later when adding dummy
 
@@ -884,6 +976,15 @@ public class GibbsSamplerMain {
         return list.toArray();
     }
 
+    private boolean isSiriusWorkspace(Path dir){
+        //only tests if this is not a simple collection of json trees
+        if (dir.toFile().getName().endsWith("zip")) return true;
+        for (File file : dir.toFile().listFiles()) {
+            if (file.getName().equals("version.txt")) return true;
+        }
+        return false;
+    }
+
     protected void doEvaluation(Path treeDir, Path mgfFile, Path libraryHitsPath, Path outputFile, EdgeScorer[] edgeScorers) throws IOException {
         if (!GibbsMFCorrectionNetwork.iniAssignMostLikely) throw new RuntimeException("initialize MF candidates by most likely");
         int workerCount = Runtime.getRuntime().availableProcessors();
@@ -897,11 +998,23 @@ public class GibbsSamplerMain {
 //        //reactions
 
         //all possible netto changes of MolecularFormulas using on of the reactions.
-        Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(1)).map(r -> r.netChange()).collect(Collectors.toSet());
+        Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(reactionStepSize)).map(r -> r.netChange()).collect(Collectors.toSet());
+
+
+
 
 //        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidatesEval(treeDir, mgfFile, Integer.MAX_VALUE, workerCount, true); //remove candidates later when adding dummy
         //changed assigning CompoundQuality
-        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, Integer.MAX_VALUE, workerCount, true); //remove candidates later when adding dummy
+        Map<String, List<FragmentsCandidate>> candidatesMap;
+        if (isSiriusWorkspace(treeDir)){
+            System.out.println("Reading from Sirius workspace");
+            candidatesMap = parseMFCandidatesFromWorkspace(treeDir);
+        } else {
+            candidatesMap = parseMFCandidates(treeDir, mgfFile, Integer.MAX_VALUE, workerCount, true); //remove candidates later when adding dummy
+        }
+
+
+        System.out.println(candidatesMap.size()+" compounds");
 
 
         parseLibraryHits(libraryHitsPath, mgfFile, candidatesMap);
@@ -964,7 +1077,7 @@ public class GibbsSamplerMain {
 
             Scored<FragmentsCandidate>[][] result = threePhaseGibbsSampling.getChosenFormulas();
             System.out.println("standard");
-            statisticsOfKnownCompounds(result, threePhaseGibbsSampling.getIds(), evaluationIds, correctHits);
+            statisticsOfKnownCompounds(result, threePhaseGibbsSampling.getIds(), evaluationIds, correctHits, threePhaseGibbsSampling.getGraph());
 
             if (outputFile!=null) writeBestFormulas(threePhaseGibbsSampling.getChosenFormulas(), threePhaseGibbsSampling.getGraph(), outputFile);
         }
@@ -975,7 +1088,7 @@ public class GibbsSamplerMain {
 
             Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.getChosenFormulas();
             System.out.println("standard");
-            statisticsOfKnownCompounds(result, twoPhaseGibbsSampling.getIds(), evaluationIds, correctHits);
+            statisticsOfKnownCompounds(result, twoPhaseGibbsSampling.getIds(), evaluationIds, correctHits, twoPhaseGibbsSampling.getGraph());
 
             if (outputFile!=null) writeBestFormulas(twoPhaseGibbsSampling.getChosenFormulas(), twoPhaseGibbsSampling.getGraph(), outputFile);
         } else {
@@ -994,17 +1107,22 @@ public class GibbsSamplerMain {
 
             Scored<FragmentsCandidate>[][] result = gibbsParallel.getChosenFormulasBySampling();
             System.out.println("standard");
-            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
+            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits, gibbsParallel.getGraph());
 
             result = gibbsParallel.getChosenFormulasByAddedUpPosterior();
             System.out.println("addedPosterior");
-            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
+            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits, gibbsParallel.getGraph());
 
             result = gibbsParallel.getChosenFormulasByMaxPosterior();
             System.out.println("maxPosterior");
-            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
+            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits, gibbsParallel.getGraph());
 
-            if (outputFile!=null) writeBestFormulas(gibbsParallel.getChosenFormulasBySampling(), gibbsParallel.getGraph(), outputFile);
+            if (outputFile!=null){
+                writeBestFormulas(gibbsParallel.getChosenFormulasBySampling(), gibbsParallel.getGraph(), outputFile);
+                Path zodiacOutput = outputFile.resolveSibling("zodiac_results_output_"+outputFile.getFileName().toString());
+                Scored<FragmentsCandidate>[][] bestInitial = getBestInitialAssignments(ids, candidatesMap);
+                writeZodiacOutput(ids, bestInitial, gibbsParallel.getChosenFormulasBySampling(), gibbsParallel.getGraph(), zodiacOutput);
+            }
         }
     }
 
@@ -1023,7 +1141,7 @@ public class GibbsSamplerMain {
 //        int stepsize = 2; //low for testing purposes
 //        Reaction[] reactions = parseReactions(stepsize);
         //all possible netto changes of MolecularFormulas using on of the reactions.
-        Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(1)).map(r -> r.netChange()).collect(Collectors.toSet());
+        Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(reactionStepSize)).map(r -> r.netChange()).collect(Collectors.toSet());
 
 //        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, maxCandidates, workerCount);
 //
@@ -1112,15 +1230,15 @@ public class GibbsSamplerMain {
 
             Scored<FragmentsCandidate>[][] standardresult = gibbsParallel.getChosenFormulasBySampling();
             System.out.println("standard");
-            statisticsOfKnownCompounds(standardresult, ids, evaluationIds, correctHits);
+            statisticsOfKnownCompounds(standardresult, ids, evaluationIds, correctHits, gibbsParallel.getGraph());
 
             Scored<FragmentsCandidate>[][] result = gibbsParallel.getChosenFormulasByAddedUpPosterior();
             System.out.println("addedPosterior");
-            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
+            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits, gibbsParallel.getGraph());
 
             result = gibbsParallel.getChosenFormulasByMaxPosterior();
             System.out.println("maxPosterior");
-            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
+            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits, gibbsParallel.getGraph());
 
 
             writeBestFormulas(standardresult, gibbsParallel.getGraph(), outputFile);
@@ -1147,13 +1265,63 @@ public class GibbsSamplerMain {
     }
 
 
+    private final static int NUMBER_OF_HITS = Integer.MAX_VALUE;
+    public static void writeZodiacOutput(String[] ids, Scored<FragmentsCandidate>[][] initial, Scored<FragmentsCandidate>[][] result, Graph<FragmentsCandidate> graph, Path outputPath) throws IOException {
+        int[] connectingPeaks = graph.getMaxConnectedCompoundsCounts();
+        String[] ids2 = graph.getIds();
+
+        BufferedWriter writer = Files.newBufferedWriter(outputPath, Charset.defaultCharset());
+        //changed connectingPeaks -> connectedCompounds
+        writer.write("id" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "connectedCompounds" + SEP + "ZodiacMF" + SEP + "ZodiacScore");
+        for (int i = 0; i < ids.length; i++) {
+            final StringBuffer buffer = new StringBuffer();
+
+            final String id = ids[i];
+            final String siriusMF = initial[i][0].getCandidate().getFormula().formatByHill();
+            final double siriusScore = initial[i][0].getScore();
+
+            final int connections = connectingPeaks[i];
+            if (!id.equals(ids2[i])) throw new RuntimeException("different ids");
+
+
+            buffer.append(id);
+            buffer.append(SEP);
+            buffer.append(siriusMF);
+            buffer.append(SEP);
+            buffer.append(Double.toString(siriusScore));
+            buffer.append(SEP);
+            buffer.append(connections);
+
+            final Scored<FragmentsCandidate>[] currentResults = result[i];
+            for (int j = 0; j < Math.min(currentResults.length, NUMBER_OF_HITS); j++) {
+                Scored<FragmentsCandidate> currentResult = currentResults[j];
+                final String mf = currentResult.getCandidate().getFormula().formatByHill();
+                final double score = currentResult.getScore();
+
+                if (score <= 0) break; //don't write MF with 0 probability
+
+                buffer.append(SEP);
+                buffer.append(mf);
+                buffer.append(SEP);
+                buffer.append(Double.toString(score));
+            }
+
+            writer.write("\n");
+            writer.write(buffer.toString());
+
+        }
+
+        writer.close();
+
+    }
+
     private void writeBestFormulas(Scored<FragmentsCandidate>[][] results, Graph<FragmentsCandidate> graph, Path outputFile) throws IOException {
         BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset(), new OpenOption[0]);
         String SEP = "\t";
 
         //adding biotransformations very likely makes it slow
         System.out.println("parsing reactions");
-        Reaction[] reactions = parseReactions(3);
+        Reaction[] reactions = parseReactions(reactionStepSize);
         Map<MolecularFormula, List<Reaction>> netSingleReactionDiffs = new HashMap<>();
         for (Reaction reaction : reactions) {
             MolecularFormula net = reaction.netChange();
@@ -1471,6 +1639,19 @@ public class GibbsSamplerMain {
         }
     }
 
+    private static boolean isAllIdsOrdered(List<String> ids){
+        for (int i = 0; i < ids.size(); i++) {
+            String id = ids.get(i);
+            try {
+                int integer = Integer.parseInt(id);
+                if (integer!=(i+1)) return false;
+            } catch (NumberFormatException e){
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static  <C extends Candidate & HasLibraryHit> void parseLibraryHits(Path libraryHitsPath, Path mgfFile, Map<String, List<C>> candidatesMap) throws IOException {
         try {
             List<String> featureIDs = new ArrayList<>();
@@ -1487,6 +1668,8 @@ public class GibbsSamplerMain {
                     }
                 }
             }
+
+            if (isAllIdsOrdered(featureIDs)) System.out.println("all experiment ids in ascending order without any missing");
 
             //todo change nasty hack
 
@@ -1725,7 +1908,7 @@ public class GibbsSamplerMain {
         }
     }
 
-    
+
     /**
      * print ranks of compounds
      * @param result sorted!
@@ -1733,7 +1916,7 @@ public class GibbsSamplerMain {
      * @param correctHitsMap
      * @return
      */
-    private int[] statisticsOfKnownCompounds(Scored<FragmentsCandidate>[][] result, String ids[], Set<String> evaluationIDs, Map<String, LibraryHit> correctHitsMap){
+    private int[] statisticsOfKnownCompounds(Scored<FragmentsCandidate>[][] result, String ids[], Set<String> evaluationIDs, Map<String, LibraryHit> correctHitsMap, Graph<FragmentsCandidate> graph){
         int bestIsDummyCount = 0;
         int total = 0;
         for (int i = 0; i < result.length; i++) {
@@ -1755,28 +1938,47 @@ public class GibbsSamplerMain {
             String id = ids[i];
 
             if (correctHitsMap.containsKey(id) && evaluationIDs.contains(id)){
-//                MolecularFormula correct = correctHitsMap.get(id).getMolecularFormula();
+                MolecularFormula correct = null;
+                MolecularFormula library = correctHitsMap.get(id).getMolecularFormula();
                 int pos = 1;
                 int correctPos = Integer.MAX_VALUE;
                 int dummyPos = Integer.MAX_VALUE;
                 for (Scored<FragmentsCandidate> candidateScored : candidatesScored) {
                     if (candidateScored.getCandidate().isCorrect()) {
                         correctPos = pos;
+                        correct = candidateScored.getCandidate().getFormula();
                     } else if (DummyFragmentCandidate.isDummy(candidateScored.getCandidate())){
                         dummyPos = pos;
                     }
                     pos++;
                 }
+
+                int numberOfConnectedCompoundsBest=-1;
+                int maxNumberOfConnectedCompounds=-1;
+                if (graph!=null) {
+                    numberOfConnectedCompoundsBest = graph.getNumberOfConnectedCompounds(i, candidatesScored[0].getCandidate());
+                    maxNumberOfConnectedCompounds = graph.getMaxNumberOfConnectedCompounds(i);
+                }
+
+                if (correctPos==1) ++correctId;
+                else ++wrongId;
                 if (dummyPos==1){
                     System.out.println(id + " best is dummy.");
                 }
                 if (correctPos>candidatesScored.length){
                     System.out.println(id + " not found | best has "+candidatesScored[0].getScore());
                 } else {
-                    System.out.println(id + " found at " + correctPos + " (" + candidatesScored[correctPos-1].getScore()+ ") of " + candidatesScored.length+"  | best has "+candidatesScored[0].getScore());
+                    System.out.println(id + " found at " + correctPos + " (" + candidatesScored[correctPos-1].getScore()+ ") of " + candidatesScored.length
+                            +"  | best has "+candidatesScored[0].getScore()
+                            +" | best: "+candidatesScored[0].getCandidate().getFormula()
+                            +" | correct: "+correct
+                            +" | library: "+library
+                            +(graph==null?"":(" || "+numberOfConnectedCompoundsBest+" | "+maxNumberOfConnectedCompounds))
+                    );
                 }
             }
         }
+        System.out.println(correctId+" correct out of "+(correctId+wrongId));
         return new int[]{correctId, wrongId};
     }
 
@@ -1850,6 +2052,91 @@ public class GibbsSamplerMain {
         } else {
             throw new RuntimeException("Error parsing reaction");
         }
+    }
+
+
+//    public static  protected static List<ExperimentResult> newLoad(File file) throws IOException {
+//        final List<ExperimentResult> results = new ArrayList<>();
+//        final DirectoryReader.ReadingEnvironment env;
+//        if (file.isDirectory()) {
+//            env = new SiriusFileReader(file);
+//        } else {
+//            env = new SiriusWorkspaceReader(file);
+//        }
+//        final DirectoryReader reader = new DirectoryReader(env);
+//
+//        while (reader.hasNext()) {
+//            final ExperimentResult result = reader.next();
+//            results.add(result);
+//        }
+//        return results;
+//    }
+
+
+    public static Map<String, List<FragmentsCandidate>> parseMFCandidatesFromWorkspace(Path workspaceDir) throws IOException {
+        File file = workspaceDir.toFile();
+        final List<ExperimentResult> results = new ArrayList<>();
+
+
+        final DirectoryReader.ReadingEnvironment env;
+        if (file.isDirectory()) {
+            env = new SiriusFileReader(file);
+        } else {
+            env = new SiriusWorkspaceReader(file);
+        }
+        final DirectoryReader reader = new DirectoryReader(env);
+
+        while (reader.hasNext()) {
+            final ExperimentResult result = reader.next();
+            results.add(result);
+        }
+
+        List<Ms2Experiment> allExperiments = new ArrayList<>();
+        for (ExperimentResult result : results) {
+            allExperiments.add(result.getExperiment());
+        }
+        Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
+        Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
+        dataset = preprocessor.preprocess(dataset);
+        allExperiments = dataset.getExperiments();
+
+//        //changed: test just by chance assign compound bad quality
+//        for (Ms2Experiment experiment : allExperiments) {
+//            if (Math.random()<0.1){
+//                if (CompoundQuality.isNotBadQuality(experiment)){
+//                    CompoundQuality.setProperty(experiment, SpectrumProperty.PoorlyExplained);
+//                    System.out.println("make bad quality: "+experiment.getName());
+//                }
+//            }
+//        }
+
+
+        int pos = 0;
+        Map<String, List<FragmentsCandidate>> candidatesMap = new HashMap<>();
+        for (ExperimentResult result : results) {
+            List<FTree> trees = new ArrayList<>();
+            Ms2Experiment experiment = allExperiments.get(pos++); //use experiments with assigned quality
+            for (IdentificationResult identificationResult : result.getResults()) {
+//                trees.add(identificationResult.getRawTree());
+                trees.add(identificationResult.getResolvedTree()); //todo use rawTree or resolvedTree?!
+            }
+
+
+            if (!atLeastOneTreeExplainsSomeIntensity(trees, 0.5)){
+                CompoundQuality.setProperty(experiment, SpectrumProperty.PoorlyExplained);
+            }
+            if (!atLeastOneTreeExplainsSomePeaks(trees, 3)){
+                CompoundQuality.setProperty(experiment, SpectrumProperty.PoorlyExplained);
+            }
+
+            List<FragmentsCandidate> candidates = FragmentsCandidate.createAllCandidateInstances(trees, experiment);
+
+            Collections.sort(candidates);
+            candidatesMap.put(experiment.getName(), candidates);
+
+        }
+
+        return candidatesMap;
     }
 
     public static Map<String, List<FragmentsCandidate>> parseMFCandidates(Path treeDir, Path mgfFile, int maxCandidates, int workercount) throws IOException {
@@ -2495,6 +2782,54 @@ public class GibbsSamplerMain {
         }
 
 
+    }
+
+    /**
+     * @param ids
+     * @param explanationsMap
+     * @return best initial formulas with RELATIVE SCORE!!
+     */
+    public static Scored<FragmentsCandidate>[][] getBestInitialAssignments(String[] ids, Map<String, List<FragmentsCandidate>> explanationsMap) {
+        Scored<FragmentsCandidate>[][] array = new Scored[ids.length][];
+        for (int i = 0; i < ids.length; i++) {
+            List<FragmentsCandidate> smfList = explanationsMap.get(ids[i]);
+            Scored<FragmentsCandidate>[] smfarray = new Scored[smfList.size()];
+
+            if (true) {
+                //normalize
+                double max = Double.NEGATIVE_INFINITY;
+                for (int j = 0; j < smfList.size(); ++j) {
+                    final Candidate candidate = smfList.get(j);
+                    double score = candidate.getScore();
+                    if (score > max) {
+                        max = score;
+                    }
+                }
+
+                double sum = 0.0D;
+                double[] scores = new double[smfList.size()];
+
+                for (int j = 0; j < smfList.size(); ++j) {
+                    final Candidate candidate = smfList.get(j);
+                    double expS = Math.exp(1d * (candidate.getScore() - max));
+                    sum += expS;
+                    scores[j] = expS;
+                }
+
+                for (int j = 0; j < smfList.size(); ++j) {
+                    smfarray[j] = new Scored<FragmentsCandidate>(smfList.get(j), scores[j] / sum);
+                }
+
+            } else {
+                for (int j = 0; j < smfarray.length; j++) {
+                    smfarray[j] = new Scored<FragmentsCandidate>(smfList.get(j), smfList.get(j).getScore());
+                }
+            }
+
+            Arrays.sort(smfarray, Collections.<Scored<FragmentsCandidate>>reverseOrder());
+            array[i] = smfarray;
+        }
+        return array;
     }
 
 

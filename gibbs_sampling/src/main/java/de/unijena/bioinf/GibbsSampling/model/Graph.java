@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.LogManager;
 
 public class Graph<C extends Candidate<?>> {
     private static final Logger LOG = LoggerFactory.getLogger(Graph.class);
@@ -764,33 +765,6 @@ public class Graph<C extends Candidate<?>> {
 
     }
 
-    /**
-     * for each compound: returns the maximum number of peaks one of it's MF candidates is connected to
-     * @return
-     */
-    public int[] getMaxConnectionCounts() {
-        final int numberOfPeaks = numberOfCompounds();
-        final int[] connectionCounts = new int[numberOfPeaks];
-        for (int i = 0; i < numberOfPeaks; i++) {
-            int left = getPeakLeftBoundary(i);
-            int right = getPeakRightBoundary(i);
-
-            int maxConnections = -1;
-            for (int j = left; j <= right; j++) {
-                TIntHashSet connectedCompounds = new TIntHashSet();
-                int[] conns = getConnections(j);
-                for (int c : conns) {
-                    connectedCompounds.add(getPeakIdx(c));
-                }
-                maxConnections = Math.max(maxConnections, connectedCompounds.size());
-            }
-
-            connectionCounts[i] = maxConnections;
-        }
-
-        return connectionCounts;
-
-    }
 
     private boolean arePeaksConnected(int[][] connections){
         int numberOfPeaks = numberOfCompounds();
@@ -1017,7 +991,19 @@ public class Graph<C extends Candidate<?>> {
             Scored<C>[] candidates1 = this.possibleFormulas[i];
             Scored<C>[] candidates2 = possibleFormulas[i];
             Scored<C>[] candidates2Resorted = new Scored[candidates2.length];
-            if (candidates1.length!=candidates2.length) throw new RuntimeException("number of compound candidates differ from old ones.");
+            if (candidates1.length!=candidates2.length){
+                System.out.println("i "+i+" | id "+ids[i]);
+                System.out.println("sizes: "+candidates1.length+" | "+candidates2.length);
+                for (int j = 0; j < candidates1.length; j++) {
+                    System.out.print(candidates1[j].getCandidate()+", ");
+                }
+                System.out.println();
+                for (int j = 0; j < candidates2.length; j++) {
+                    System.out.print(candidates2[j].getCandidate()+", ");
+                }
+                System.out.println();
+                throw new RuntimeException("number of compound candidates differ from old ones.");
+            }
             TObjectIntHashMap<C> indexMap = toIndexMap(candidates2);
             for (int j = 0; j < candidates1.length; j++) {
                 int idx = indexMap.get(candidates1[j].getCandidate());
@@ -1117,5 +1103,53 @@ public class Graph<C extends Candidate<?>> {
 
 
     }
+
+    public int getNumberOfConnectedCompounds(int peakdIdx, C candidate) {
+        Scored<C>[] candidates = getPossibleFormulas(peakdIdx);
+        for (int i = 0; i < candidates.length; i++) {
+            if (candidates[i].getCandidate().equals(candidate)){
+                return getNumberOfConnections(getAbsoluteFormulaIdx(peakdIdx, i));
+            }
+        }
+        throw new RuntimeException("candidate not found");
+    }
+
+    public int getMaxNumberOfConnectedCompounds(int peakIndex) {
+        int left = getPeakLeftBoundary(peakIndex);
+        int right = getPeakRightBoundary(peakIndex);
+
+        int maxConnections = -1;
+        for (int j = left; j <= right; j++) {
+            maxConnections = Math.max(maxConnections, getNumberOfConnectedCompounds(j));
+        }
+
+        return maxConnections;
+
+    }
+
+    /**
+     * for each compound: returns the maximum number of peaks one of it's MF candidates is connected to
+     * @return
+     */
+    public int[] getMaxConnectedCompoundsCounts() {
+        final int numberOfPeaks = numberOfCompounds();
+        final int[] connectionCounts = new int[numberOfPeaks];
+        for (int i = 0; i < numberOfPeaks; i++) {
+            connectionCounts[i] = getMaxNumberOfConnectedCompounds(i);
+        }
+        return connectionCounts;
+
+    }
+
+    public int getNumberOfConnectedCompounds(int candidateIndex) {
+        TIntHashSet connectedCompounds = new TIntHashSet();
+        int[] conns = getConnections(candidateIndex);
+        for (int c : conns) {
+            connectedCompounds.add(getPeakIdx(c));
+        }
+        return connectedCompounds.size();
+    }
+
+
 
 }
