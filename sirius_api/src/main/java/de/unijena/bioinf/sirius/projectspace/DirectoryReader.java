@@ -90,7 +90,7 @@ public class DirectoryReader implements ProjectReader {
         }
     }
 
-    private final static Pattern RESULT_PATTERN = Pattern.compile("(\\d+)_(.+)_(.+)\\.json");
+    private final static Pattern RESULT_PATTERN = Pattern.compile("(\\d+)_(.+)(_(.+))?\\.json");
 
     private ExperimentResult parseExperiment(final Instance instance) throws IOException {
         env.enterDirectory(instance.getDirectory());
