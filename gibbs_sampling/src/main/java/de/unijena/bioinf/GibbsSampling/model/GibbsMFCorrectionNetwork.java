@@ -6,6 +6,8 @@ import de.unijena.bioinf.GibbsSampling.model.scorer.ReactionScorer;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -14,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
+    private static final Logger LOG = LoggerFactory.getLogger(GibbsMFCorrectionNetwork.class);
     public static final boolean DEBUG = false;
     public static final int DEFAULT_CORRELATION_STEPSIZE = 10;
     private static final boolean OUTPUT_SAMPLE_PROBABILITY = false;
@@ -31,6 +34,17 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     double[] posteriorProbs;
     double[] posteriorProbSums;
     private Random random;
+
+    /*
+    instead of using sum of log odds, use the maximum.
+    this might resolve 'clique' issues (compounds are in fact not independent)
+     */
+    private static final boolean USE_MAX_PRIOR_PROBABILITY = false;
+
+    /*
+
+     */
+    private static final boolean USE_SQRT_PRIOR_PROBABILITY = false;
 
 
     /*
@@ -68,7 +82,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     public static <C extends Candidate<?>> Graph<C> buildGraph(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds, int numOfThreads) {
         for (NodeScorer<C> nodeScorer : nodeScorers) {
             for (int i = 0; i < possibleFormulas.length; i++) {
-                if (fixedCompounds.contains(i)) continue;
+                if (isFixed(fixedCompounds, i)) continue;
                 C[] candidates = possibleFormulas[i];
                 nodeScorer.score(candidates);
             }
@@ -97,6 +111,12 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         Graph<C> graph = new Graph<C>(filteredIds, scoredPossibleFormulas);
         graph.init(edgeScorers, edgeFilter, numOfThreads);
         return graph;
+    }
+
+    private static boolean isFixed(TIntHashSet fixedCompounds, int i) {
+        if (fixedCompounds==null) return false;
+        if (fixedCompounds.contains(i)) return true;
+        return false;
     }
 
     private void setActive() {
@@ -146,10 +166,11 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
 
         ///set priorProb and maxPriorProb
         for(int i = 0; i < this.priorProb.length; ++i) {
-            int[] conn = this.graph.getConnections(i);
-
             //not for fixed compounds
-            if (fixedCompounds.contains(i)) continue;
+            int peak = graph.getPeakIdx(i);
+            if (isFixed(fixedCompounds, peak)) continue;
+
+            int[] conn = this.graph.getConnections(i);
             for(int j = 0; j < conn.length; ++j) {
                 if(this.active[conn[j]]) {
                     this.addActiveEdge(conn[j], i);
@@ -230,7 +251,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
             if (DEBUG && !changed) System.out.println("nothing changed in step "+i);
 
             if((i % step == 0 && i>0) || i == (burnIn+maxSteps-1)) {
-                System.out.println("step "+((double)(((i+1)*100/(maxSteps+burnIn))))+"%");
+                LOG.info("step "+((double)(((i+1)*100/(maxSteps+burnIn))))+"%");
             }
         }
 
@@ -300,7 +321,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         Scored<C>[][] candidatesByCompound = new Scored[this.graph.numberOfCompounds()][];
 
         for(int i = 0; i < this.graph.numberOfCompounds(); ++i) {
-            if (fixedCompounds.contains(i)){
+            if (isFixed(fixedCompounds, i)){
                 Scored<C>[] candidatesLogScore = graph.getPossibleFormulas(i);
                 Scored<C>[] candidatesScored = new Scored[candidatesLogScore.length];
                 for (int j = 0; j < candidatesScored.length; j++) {
@@ -393,21 +414,23 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
             BitSet toUpdate = new BitSet();
             int[] c = this.graph.getConnections(absCurrentActive);
             for (int conjugate : c) {
-                this.removeActiveEdge(absCurrentActive, conjugate);
                 final int corrspondingPeakIdx = this.graph.getPeakIdx(conjugate);
+                if (isFixed(fixedCompounds, corrspondingPeakIdx)) continue;
+                this.removeActiveEdge(absCurrentActive, conjugate);
                 toUpdate.set(corrspondingPeakIdx);
             }
 
             c = this.graph.getConnections(absIdx);
             for (int conjugate : c) {
-                this.addActiveEdge(absIdx, conjugate);
                 final int corrspondingPeakIdx = this.graph.getPeakIdx(conjugate);
+                if (isFixed(fixedCompounds, corrspondingPeakIdx)) continue;
+                this.addActiveEdge(absIdx, conjugate);
                 toUpdate.set(corrspondingPeakIdx);
             }
 
 
             for (int i = toUpdate.nextSetBit(0); i >= 0; i = toUpdate.nextSetBit(i+1)) {
-                if (!fixedCompounds.contains(i)) updatePeak(i);
+                if (!isFixed(fixedCompounds, i)) updatePeak(i);
                 if (i == Integer.MAX_VALUE) {
                     break; // or (i+1) would overflow
                 }
@@ -422,11 +445,49 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
 
 
     private void removeActiveEdge(int outgoing, int incoming) {
-        this.priorProb[incoming] -= (this.graph.getLogWeight(outgoing, incoming));
+        if (USE_MAX_PRIOR_PROBABILITY) {
+            final double removedWeight = this.graph.getLogWeight(outgoing, incoming);
+            final double currentWeight = this.priorProb[incoming];
+            if (removedWeight==currentWeight){
+                //find 2nd best score
+                double max = 0; //no active edge = 0;
+                int[] conn = this.graph.getConnections(incoming);
+                for(int j = 0; j < conn.length; ++j) {
+                    final int c = conn[j];
+                    if(this.active[c] && c!=outgoing) {
+                        final double weight = graph.getLogWeight(c, incoming);
+                        if (weight>max) max = weight;
+                    }
+                }
+
+                this.priorProb[incoming] = max;
+
+            }
+            //else weight is not interesting. do nothing.
+
+        } else {
+            if (USE_SQRT_PRIOR_PROBABILITY){
+                this.priorProb[incoming] -= Math.sqrt(this.graph.getLogWeight(outgoing, incoming));
+            } else {
+                this.priorProb[incoming] -= (this.graph.getLogWeight(outgoing, incoming));
+            }
+        }
     }
 
     private void addActiveEdge(int outgoing, int incoming) {
-        this.priorProb[incoming] += (this.graph.getLogWeight(outgoing, incoming));
+        if (USE_MAX_PRIOR_PROBABILITY) {
+            final double newWeight = this.graph.getLogWeight(outgoing, incoming);
+            final double currentWeight = this.priorProb[incoming];
+            if (newWeight>currentWeight){
+                this.priorProb[incoming] = newWeight;
+            }
+        } else {
+            if (USE_SQRT_PRIOR_PROBABILITY){
+                this.priorProb[incoming] += Math.sqrt(this.graph.getLogWeight(outgoing, incoming));
+            } else {
+                this.priorProb[incoming] += (this.graph.getLogWeight(outgoing, incoming));
+            }
+        }
     }
 
 
@@ -568,14 +629,39 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         int left = graph.getPeakLeftBoundary(compoundIdx);
         int right = graph.getPeakRightBoundary(compoundIdx);
         Scored<C>[] scoredCandidates = new Scored[right-left+1];
+
+        double[] scores = new double[right-left+1];
         for (int i = left; i <= right; i++) {
-             int[] conns = graph.getConnections(i);
-             double score = 0;
+            int[] conns = graph.getConnections(i);
+            double score = graph.getCandidateScore(i);
             for (int c : conns) {
-                score += graph.getLogWeight(c, i)+graph.getCandidateScore(c);
+                score += graph.getLogWeight(c, i)*Math.exp(graph.getCandidateScore(c));
             }
-            scoredCandidates[i-left] = new Scored(graph.getPossibleFormulas1D(i), score);
+            scores[i-left] = score;
         }
+
+
+        double maxLog = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < scores.length; i++) {
+            double score = scores[i];
+            if (maxLog<score) maxLog = score;
+        }
+
+        double sum = 0;
+        for (int i = 0; i < scores.length; i++) {
+            final double score = Math.exp(scores[i]-maxLog);
+            scores[i] = score;
+            sum += score;
+        }
+        assert sum > 0.0D;
+
+
+        for (int i = left; i <= right; i++) {
+            scoredCandidates[i-left] = new Scored(graph.getPossibleFormulas1D(i).getCandidate(), scores[i-left]/sum);
+        }
+
+        Arrays.sort(scoredCandidates, Scored.<C>desc());
+
         return scoredCandidates;
     }
 
