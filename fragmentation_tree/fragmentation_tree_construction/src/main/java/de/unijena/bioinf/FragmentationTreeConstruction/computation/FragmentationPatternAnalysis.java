@@ -194,7 +194,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             exp = validator.validate(exp, validatorWarning, repairInput);
         }
 
-        final ProcessedInput pinput =  new ProcessedInput(new MutableMs2Experiment(exp), originalExperiment, new MutableMeasurementProfile(defaultProfile));
+        MeasurementProfile profile = input.getAnnotation(MeasurementProfile.class, null);
+        if (profile == null) profile = defaultProfile;
+        else profile = MutableMeasurementProfile.merge(defaultProfile, profile);
+
+        final ProcessedInput pinput =  new ProcessedInput(new MutableMs2Experiment(exp), originalExperiment, new MutableMeasurementProfile(profile));
 
         if (originalExperiment.getMolecularFormula()!=null) {
             pinput.getMeasurementProfile().setFormulaConstraints(pinput.getMeasurementProfile().getFormulaConstraints().getExtendedConstraints(FormulaConstraints.allSubsetsOf(originalExperiment.getMolecularFormula())));
@@ -202,9 +206,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
         // set precursor ion types
         if (pinput.getExperimentInformation().getPrecursorIonType().isIonizationUnknown()) {
-            PossibleAdductTypes adductTypes = pinput.getExperimentInformation().getAnnotation(PossibleAdductTypes.class, null);
+            PossibleIonModes adductTypes = pinput.getExperimentInformation().getAnnotation(PossibleIonModes.class, null);
             if (adductTypes==null) {
-                adductTypes = new PossibleAdductTypes();
+                adductTypes = new PossibleIonModes();
                 if (pinput.getExperimentInformation().getPrecursorIonType().getCharge()>0) {
                     adductTypes.add(PrecursorIonType.getPrecursorIonType("[M+H]+"), 0.9);
                     adductTypes.add(PrecursorIonType.getPrecursorIonType("[M+Na]+"), 0.05);
@@ -214,9 +218,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                     adductTypes.add(PrecursorIonType.getPrecursorIonType("[M+Cl]-"), 0.05);
                 }
             }
-            pinput.setAnnotation(PossibleAdductTypes.class, adductTypes);
+            pinput.setAnnotation(PossibleIonModes.class, adductTypes);
         } else {
-            pinput.setAnnotation(PossibleAdductTypes.class, PossibleAdductTypes.deterministic(pinput.getExperimentInformation().getPrecursorIonType()));
+            pinput.setAnnotation(PossibleIonModes.class, PossibleIonModes.deterministic(pinput.getExperimentInformation().getPrecursorIonType()));
         }
 
         // set whiteset
@@ -447,7 +451,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         Collections.sort(processedPeaks, new ProcessedPeak.MassComparator());
         final ProcessedPeak parentPeak = processedPeaks.get(processedPeaks.size() - 1);
         // decompose peaks
-        final List<Ionization> ionModes = input.getAnnotationOrThrow(PossibleAdductTypes.class).getIonModes();
+        final List<Ionization> ionModes = input.getAnnotationOrThrow(PossibleIonModes.class).getIonModes();
         final PeakAnnotation<DecompositionList> decompositionList = input.getOrCreatePeakAnnotation(DecompositionList.class);
         final MassToFormulaDecomposer decomposer = decomposers.getDecomposer(constraints.getChemicalAlphabet());
         final Deviation fragmentDeviation = input.getMeasurementProfile().getAllowedMassDeviation();
@@ -455,27 +459,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final List<MolecularFormula> pmds;
         final List<Decomposition> decomps = new ArrayList<>();
         if (whiteset!=null && !whiteset.getFormulas().isEmpty()) {
-            pmds = new ArrayList<>(whiteset.getFormulas());
-            final Iterator<MolecularFormula> fiter = pmds.iterator();
-            while (fiter.hasNext()) {
-                if (!parentDeviation.inErrorWindow(parentPeak.getOriginalMz(), experiment.getPrecursorIonType().neutralMassToPrecursorMass(fiter.next().getMass()))) {
-                    fiter.remove();
-                }
-            }
-            final PrecursorIonType ionType = input.getExperimentInformation().getPrecursorIonType();
-            for (MolecularFormula w : whiteset.getFormulas()) {
-                // check ion mass
-                final PrecursorIonType ion;
-                if ((ionType.neutralMassToPrecursorMass(w.getMass())-input.getExperimentInformation().getIonMass() ) < 0.02) {
-                    ion = ionType;
-                } else {
-                    ion = PT.ionByMass(input.getExperimentInformation().getIonMass()-w.getMass(), 0.02, input.getExperimentInformation().getPrecursorIonType().getCharge());
-                }
 
-
-                final MolecularFormula neutral = ion.neutralMoleculeToMeasuredNeutralMolecule(w);
-                decomps.add(new Decomposition(neutral, ion.getIonization(), 0d));
-            }
+            final Collection<PrecursorIonType> ionTypes;
+            if (experiment.getPrecursorIonType().isIonizationUnknown()) ionTypes = experiment.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
+            else ionTypes = Arrays.asList(experiment.getPrecursorIonType());
+            decomps.addAll(whiteset.resolve(parentPeak.getOriginalMz(), parentDeviation, ionTypes));
+            pmds = new ArrayList<>();
+            for (Decomposition d : decomps) pmds.add(d.getCandidate());
         } else {
 
             pmds = new ArrayList<>();
@@ -493,7 +483,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         getDecomposersFor(pmds, constraints, decomposers, constraintList);
 
         // add adduct to molecular formula of the ion - because the adduct might get lost during fragmentation
-        {
+        if (false){ // HÄH? Sollte doch schon so sein...
             final MolecularFormula adduct = experiment.getPrecursorIonType().getAdduct();
             final ListIterator<MolecularFormula> iter = pmds.listIterator();
             while (iter.hasNext()) {
@@ -1126,7 +1116,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @param originalGraph
      * @param tree
      */
-    protected void addTreeAnnotations(FGraph originalGraph, FTree tree) {
+    public void addTreeAnnotations(FGraph originalGraph, FTree tree) {
         final ProcessedInput pinput = originalGraph.getAnnotationOrNull(ProcessedInput.class);
         tree.setAnnotation(ProcessedInput.class, pinput);
         PrecursorIonType ionType = originalGraph.getAnnotationOrThrow(PrecursorIonType.class);
@@ -1149,7 +1139,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (Loss l : tree.losses()) {
             overallScore += l.getWeight();
         }
-        treeScoring.setOverallScore(treeScoring.getRootScore() + overallScore);
 
         tree.setAnnotation(TreeScoring.class, treeScoring);
 
@@ -1238,7 +1227,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
 
         treeScoring.setRootScore(originalGraph.getLoss(originalGraph.getRoot(), tree.getRoot().getFormula()).getWeight() - rootIso);
-
+        treeScoring.setOverallScore(treeScoring.getRootScore() + overallScore + rootIso);
+        treeScoring.setIsotopeMs1Score(rootIso);
         // add statistics
         treeScoring.setExplainedIntensity(getIntensityRatioOfExplainedPeaks(tree));
         treeScoring.setExplainedIntensityOfExplainablePeaks(getIntensityRatioOfExplainablePeaks(tree));
@@ -1276,7 +1266,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         ////// bug in reduction code for isotopes
         //if (fragments.getAnnotationOrNull(IsotopicMarker.class)!=null) return fragments;
         /////
-        if (reduction == null) return fragments;
+        if (reduction == null) {
+            // do topological sort
+            fragments.sortTopological();
+            return fragments;
+        }
         return reduction.reduce(fragments, lowerbound);
     }
 
@@ -1284,7 +1278,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         ////// bug in reduction code for isotopes
         //if (fragments.getAnnotationOrNull(IsotopicMarker.class)!=null) return fragments;
         /////
-        if (reduction == null) return fragments;
+        if (reduction == null) {
+            // do topological sort
+            fragments.sortTopological();
+            return fragments;
+        }
         return reduction.reduce(fragments, 0d);
     }
 
@@ -1350,7 +1348,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         if (maxIntensity==0) return 0;
         return treeIntensity / maxIntensity;
     }
-    protected double getIntensityRatioOfExplainedPeaksFromUnanotatedTree(ProcessedInput input, FTree tree, Ionization ionMode) {
+    public double getIntensityRatioOfExplainedPeaksFromUnanotatedTree(ProcessedInput input, FTree tree, Ionization ionMode) {
         final double[] fragmentMasses = new double[tree.numberOfVertices()];
         int k=0;
         for (Fragment f : tree) {
@@ -1388,7 +1386,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * As the single scores are forgotten during tree computation, they have to be computed again.
      * @param tree
      */
-    public boolean recalculateScores(FTree tree) {
+    public double recalculateScores(FTree tree) {
         final Iterator<Loss> edges = tree.lossIterator();
         final ProcessedInput input = tree.getAnnotationOrThrow(ProcessedInput.class);
         final FragmentAnnotation<ProcessedPeak> peakAno = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
@@ -1504,7 +1502,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             scoreSum += s.sum();
         }
         scoreSum += fAno.get(root).sum();
-        return Math.abs(scoreSum-tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) < 1e-8;
+        return scoreSum;
 
     }
 

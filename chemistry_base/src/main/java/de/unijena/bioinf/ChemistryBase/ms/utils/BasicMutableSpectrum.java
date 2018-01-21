@@ -103,4 +103,20 @@ public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpect
         intensities.set(index2, in);
     }
 
+    public double getMaxIntensity() {
+        return intensities.max();
+    }
+
+    public double getMinIntensity() {
+        return intensities.min();
+    }
+
+    public double getMaxMass() {
+        return masses.max();
+    }
+
+    public double getMinMass() {
+        return masses.min();
+    }
+
 }

@@ -18,17 +18,47 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 
-
-
-
 public interface Spectrum<T extends Peak> extends Iterable<T>, Cloneable {
 
-	double getMzAt(int index);
-	
-	double getIntensityAt(int index);
-	
-	T getPeakAt(int index);
-	
-	int size();
-	
+    double getMzAt(int index);
+
+    double getIntensityAt(int index);
+
+    T getPeakAt(int index);
+
+    int size();
+
+
+    /*
+     * This are the only extensions we need to be Compatible with myxo viewers and stuff, i know this is not the perfect model
+     * but it is painless and costs no memory for non MSn data.
+     */
+
+    /**
+     * @return the collision energy (type) of the fragmentation cell. If no MSn data it returns CollisionEnergy.none()
+     */
+    default CollisionEnergy getCollisionEnergy() {
+        return CollisionEnergy.none();
+    }
+
+    /**
+     * The MS level. use 1 for MS1 and 2 for MS2 spectra.
+     *
+     * @return MS of the spectrum
+     */
+    default int getMsLevel() {
+        return 1;
+    }
+
+    /**
+     * @return The highest intensity of all peaks in the spectrum
+     */
+    default double getMaxIntensity() {
+        final int s = size();
+        double max = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < s; i++) {
+            max = Math.max(getIntensityAt(i), max);
+        }
+        return max;
+    }
 }

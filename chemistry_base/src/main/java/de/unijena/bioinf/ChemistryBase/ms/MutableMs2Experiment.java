@@ -11,13 +11,12 @@ import java.util.*;
 
 public class MutableMs2Experiment implements Ms2Experiment {
 
-    private PrecursorIonType precursorIonType;
+    private PrecursorIonType precursorIonType = PrecursorIonType.unknown();
     private List<SimpleSpectrum> ms1Spectra;
     private SimpleSpectrum mergedMs1Spectrum;
     private List<MutableMs2Spectrum> ms2Spectra;
     private HashMap<Class<Object>, Object> annotations;
     private double ionMass;
-    private double moleculeNeutralMass;
     private MolecularFormula molecularFormula;
     private URL source;
     private String name;
@@ -51,7 +50,7 @@ public class MutableMs2Experiment implements Ms2Experiment {
             this.annotations.put(v.getKey(), v.getValue());
         }
         this.ionMass = experiment.getIonMass();
-        this.moleculeNeutralMass = experiment.getMoleculeNeutralMass();
+//        this.moleculeNeutralMass = experiment.getMoleculeNeutralMass();
         this.molecularFormula = experiment.getMolecularFormula();
         this.source = experiment.getSource();
         this.name = experiment.getName();
@@ -60,6 +59,7 @@ public class MutableMs2Experiment implements Ms2Experiment {
     public void setSource(URL source) {
         this.source = source;
     }
+
     public void setSource(File source) {
         try {
             this.source = source.toURI().toURL();
@@ -108,11 +108,6 @@ public class MutableMs2Experiment implements Ms2Experiment {
     }
 
     @Override
-    public double getMoleculeNeutralMass() {
-        return moleculeNeutralMass;
-    }
-
-    @Override
     public MolecularFormula getMolecularFormula() {
         return molecularFormula;
     }
@@ -142,10 +137,6 @@ public class MutableMs2Experiment implements Ms2Experiment {
         this.ionMass = ionMass;
     }
 
-    public void setMoleculeNeutralMass(double moleculeNeutralMass) {
-        this.moleculeNeutralMass = moleculeNeutralMass;
-    }
-
     public void setMolecularFormula(MolecularFormula molecularFormula) {
         this.molecularFormula = molecularFormula;
     }
@@ -159,7 +150,7 @@ public class MutableMs2Experiment implements Ms2Experiment {
 
     @Override
     public <T> T getAnnotation(Class<T> klass) {
-        return (T)annotations.get(klass);
+        return (T) annotations.get(klass);
     }
 
     @Override
@@ -176,8 +167,33 @@ public class MutableMs2Experiment implements Ms2Experiment {
 
     @Override
     public <T> boolean setAnnotation(Class<T> klass, T value) {
-        final T val = (T) annotations.put((Class<Object>)klass, value);
+        final T val = (T) annotations.put((Class<Object>) klass, value);
         return val != null;
+    }
+
+    @Override
+    public <T> Object clearAnnotation(Class<T> klass) {
+        return annotations.remove(klass);
+    }
+
+
+
+    //overrides existing
+    public void setAnnotationsFrom(Ms2Experiment experiment) {
+        final Iterator<Map.Entry<Class<Object>, Object>> iter = experiment.forEachAnnotation();
+        while (iter.hasNext()) {
+            final Map.Entry<Class<Object>, Object> v = iter.next();
+            this.annotations.put(v.getKey(), v.getValue());
+        }
+    }
+
+    //doe not override existing
+    public void addAnnotationsFrom(Ms2Experiment experiment) {
+        final Iterator<Map.Entry<Class<Object>, Object>> iter = experiment.forEachAnnotation();
+        while (iter.hasNext()) {
+            final Map.Entry<Class<Object>, Object> v = iter.next();
+            this.annotations.putIfAbsent(v.getKey(), v.getValue());
+        }
     }
 
     @Override

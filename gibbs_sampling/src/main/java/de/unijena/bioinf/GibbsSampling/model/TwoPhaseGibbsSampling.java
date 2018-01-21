@@ -3,8 +3,13 @@ package de.unijena.bioinf.GibbsSampling.model;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TObjectIntMap;
+import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.set.hash.TIntHashSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -14,6 +19,7 @@ import java.util.*;
  * @param <C>
  */
 public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
+    private static final Logger LOG = LoggerFactory.getLogger(TwoPhaseGibbsSampling.class);
     private String[] ids;
     private C[][] possibleFormulas;
     private NodeScorer<C>[] nodeScorers;
@@ -31,6 +37,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
     private Graph<C> graph;
     private GibbsParallel<C> gibbsParallel;
     private String[] firstRoundIds;
+    private TIntArrayList firstRoundCompoundsIdx;
 
     public TwoPhaseGibbsSampling(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int workersCount, int repetitions) {
         this.ids = ids;
@@ -44,7 +51,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
     }
 
     private void init(){
-        TIntArrayList firstRoundCompoundsIdx = new TIntArrayList();
+        firstRoundCompoundsIdx = new TIntArrayList();
         for (int i = 0; i < possibleFormulas.length; i++) {
             C[] poss = possibleFormulas[i];
             if (poss.length>0 && CompoundQuality.isNotBadQuality(poss[0].getExperiment())){
@@ -85,12 +92,22 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
 
         if (firstRoundIds.length==possibleFormulas.length){
             combinedResult = gibbsParallel.getChosenFormulasBySampling();
+            usedIds = firstRoundIds;
         } else {
-            //todo that's no good idea. Candidates should rather keep their probabilities
-            C[][] combined = combineNewAndOld(results1, firstRoundIds);
+//            //todo that's no good idea. Candidates should rather keep their probabilities
+//            C[][] combined = combineNewAndOld(results1, firstRoundIds);
+//
+//            System.out.println("running second round with "+combined.length+" compounds.");
+//            gibbsParallel = new GibbsParallel<>(ids, combined, nodeScorers, edgeScorers, edgeFilter, workersCount, repetitions);
 
-            System.out.println("running second round with "+combined.length+" compounds.");
-            gibbsParallel = new GibbsParallel<>(ids, combined, nodeScorers, edgeScorers, edgeFilter, workersCount, repetitions);
+            //changed same as in 3phase
+            LOG.info("score low quality compounds.");
+            //todo rather sample everything and just use results of low quality compounds? may there arise problems? in principle should not as we still sample all compounds (even 'fixed')
+            C[][] candidatesNewRound = combineNewAndOldAndSetFixedProbabilities(results1, firstRoundCompoundsIdx);
+            //todo this stupid thing creates a complete new graph.
+            gibbsParallel = new GibbsParallel<>(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, new TIntHashSet(firstRoundCompoundsIdx), workersCount, repetitions);
+
+
 
             gibbsParallel.iteration(maxSteps, burnIn);
 
@@ -155,6 +172,59 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
             } else {
                 newPossibleFormulas[i] = possibleFormulas[i];
             }
+        }
+
+        return newPossibleFormulas;
+    }
+
+    /**
+     * results must be sorted!
+     */
+    private C[][] combineNewAndOldAndSetFixedProbabilities(Scored<C>[][] results, TIntArrayList resultIdxs) {
+        if (results.length == 0){
+            return possibleFormulas;
+        }
+
+        TIntIntMap idxMap = new TIntIntHashMap(results.length, 0.75f, -1, -1);
+        for (int i = 0; i < resultIdxs.size(); i++) {
+            idxMap.put(resultIdxs.get(i), i);
+        }
+
+        C[][] newPossibleFormulas = (C[][])Array.newInstance(cClass, possibleFormulas.length, 1);
+
+
+
+        for (int i = 0; i < possibleFormulas.length; i++) {
+            try {
+                if (idxMap.containsKey(i)) {
+                    Scored<C>[] scoreds = results[idxMap.get(i)];
+                    List<C> candidates = new ArrayList<>();
+                    for (Scored<C> scored : scoreds) {
+                        C candidate = scored.getCandidate();
+                        candidate.clearNodeScores();
+                        candidate.addNodeProbabilityScore(scored.getScore());
+                        candidates.add(candidate);
+                    }
+                    newPossibleFormulas[i] = candidates.toArray((C[]) Array.newInstance(cClass, 0));
+                } else {
+                    newPossibleFormulas[i] = possibleFormulas[i];
+                }
+
+            } catch (Exception e) {
+                System.out.println("Error: "+e.getMessage());
+                System.out.println(idxMap.containsKey(i));
+                Scored<C>[] scoreds = results[idxMap.get(i)];
+                System.out.println(Arrays.toString(scoreds));
+                for (int j = 0; j < scoreds.length; j++) {
+                    Scored<C> scored = scoreds[j];
+                    System.out.println(j);
+                    System.out.println(scored);
+                    System.out.println(scored.getCandidate());
+                    System.out.println("isScored "+(scored instanceof  Scored));
+                    System.out.println("isFragmentCandidate "+(scored.getCandidate() instanceof  FragmentsCandidate));
+                }
+            }
+
         }
 
         return newPossibleFormulas;

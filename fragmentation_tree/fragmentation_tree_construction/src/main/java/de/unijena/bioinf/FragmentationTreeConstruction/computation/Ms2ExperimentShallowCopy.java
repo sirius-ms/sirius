@@ -18,7 +18,10 @@ class Ms2ExperimentShallowCopy implements Ms2Experiment {
 
     public Ms2ExperimentShallowCopy(Ms2Experiment experiment, PrecursorIonType ionType) {
         this.experiment = experiment;
-        this.ionType = ionType;
+        if (ionType != null)
+            this.ionType = ionType;
+        else this.ionType = PrecursorIonType.unknown();
+
     }
 
     @Override
@@ -94,6 +97,11 @@ class Ms2ExperimentShallowCopy implements Ms2Experiment {
     @Override
     public <T> boolean setAnnotation(Class<T> klass, T value) {
         return experiment.setAnnotation(klass, value);
+    }
+
+    @Override
+    public <T> Object clearAnnotation(Class<T> klass) {
+        return experiment.clearAnnotation(klass);
     }
 
     @Override

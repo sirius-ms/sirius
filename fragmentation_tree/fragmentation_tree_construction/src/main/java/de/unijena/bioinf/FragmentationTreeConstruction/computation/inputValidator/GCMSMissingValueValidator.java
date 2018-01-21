@@ -33,7 +33,7 @@ public class GCMSMissingValueValidator extends MissingValueValidator {
         if (input.getMs1Spectra() == null || input.getMs1Spectra().isEmpty()) throw new InvalidException("Missing MS1 spectra");
         checkIonization(warn, repair, input);
         checkMergedMs1(warn, repair, input);
-        checkNeutralMass(warn, repair, input);
+//        checkNeutralMass(warn, repair, input);
         return input;
     }
 
@@ -46,7 +46,7 @@ public class GCMSMissingValueValidator extends MissingValueValidator {
         }
     }
 
-    @Override
+    /*@Override
     protected void checkNeutralMass(Warning warn, boolean repair, MutableMs2Experiment input) {
         if (input.getMoleculeNeutralMass() == 0 || !validDouble(input.getMoleculeNeutralMass(), false)) {
             if (input.getMolecularFormula() != null) {
@@ -57,7 +57,7 @@ public class GCMSMissingValueValidator extends MissingValueValidator {
                 input.setMoleculeNeutralMass(input.getPrecursorIonType().precursorMassToNeutralMass(input.getIonMass()));
             }
         }
-    }
+    }*/
 
     private boolean validDouble(double val, boolean mayNegative) {
         return !Double.isInfinite(val) && !Double.isNaN(val) && (mayNegative || val >= 0d);
