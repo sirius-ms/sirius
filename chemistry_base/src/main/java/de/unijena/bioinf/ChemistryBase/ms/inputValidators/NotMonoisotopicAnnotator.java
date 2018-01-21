@@ -42,21 +42,39 @@ public class NotMonoisotopicAnnotator implements QualityAnnotator {
     }
 
     private boolean isNotMonoisotopicPeak(Ms2Experiment experiment, MeasurementProfile profile) {
-        final double precursorMass = experiment.getIonMass();
+        double precursorMass = experiment.getIonMass();
+        int mostIntensiveIdx = -1;
+        double maxIntensity = -1d;
+        int pos = -1;
+        for (Spectrum<Peak> spectrum : experiment.getMs1Spectra()) {
+            ++pos;
+            int idx = Spectrums.mostIntensivePeakWithin(spectrum, precursorMass, findMs1PeakDeviation);
+            if (idx<0) continue;
+            double intensity = spectrum.getIntensityAt(idx);
+            if (intensity>maxIntensity){
+                maxIntensity = intensity;
+                mostIntensiveIdx = pos;
+            }
+        }
+        if (mostIntensiveIdx<0) throw new RuntimeException("no MS1 precursor peak found.");
 
-        MutableSpectrum<Peak> merged = new SimpleMutableSpectrum(experiment.getMergedMs1Spectrum());
-        //todo which devation to finde peak?
-        int idx = Spectrums.mostIntensivePeakWithin(merged, precursorMass, findMs1PeakDeviation);
-        double realMass = merged.getMzAt(idx);
+        return isNotMonoisotopicPeak(precursorMass, experiment.getMs1Spectra().get(mostIntensiveIdx), profile, experiment.getPrecursorIonType().getCharge());
+
+    }
+    
+    private boolean isNotMonoisotopicPeak(double precursorMass, Spectrum<Peak> ms1, MeasurementProfile profile, int charge) {
+        //todo which devation to find peak?
+        SimpleMutableSpectrum spectrum = new SimpleMutableSpectrum(ms1);
+        int idx = Spectrums.mostIntensivePeakWithin(spectrum, precursorMass, findMs1PeakDeviation);
+        double realMass = spectrum.getMzAt(idx);
         if (idx<0){
-//            merged.addPeak(precursorMass, experiment.getIonMass());
+//            ms1.addPeak(precursorMass, experiment.getIonMass());
             throw new RuntimeException("could not find precursor peak");
         }
-        Spectrums.filterIsotpePeaks(merged, profile.getAllowedMassDeviation());
-        System.out.println("new");
-        int idx2 = Spectrums.mostIntensivePeakWithin(merged, precursorMass, findMs1PeakDeviation);
-        return (idx2 <0 || realMass!=merged.getMzAt(idx2));
-//        return (Spectrums.search(merged, precursorMass, profile.getAllowedMassDeviation())<0); //not contained after filtering
+        Spectrums.filterIsotpePeaks(spectrum, profile.getAllowedMassDeviation());
+        int idx2 = Spectrums.mostIntensivePeakWithin(spectrum, precursorMass, findMs1PeakDeviation);
+        return (idx2 <0 || realMass!=spectrum.getMzAt(idx2));
+//        return (Spectrums.search(ms1, precursorMass, profile.getAllowedMassDeviation())<0); //not contained after filtering
     }
 
 }
