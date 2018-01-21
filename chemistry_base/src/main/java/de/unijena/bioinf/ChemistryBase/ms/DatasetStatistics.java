@@ -76,6 +76,7 @@ public class DatasetStatistics {
     public double getMedianMs2NoiseIntensity(){
         //todo implement fast median
         if (Double.isNaN(medianNoiseIntensity)){
+            if (noiseIntensities.size()==0) throw new RuntimeException("cannot estimate median noise intensity.");
             TDoubleArrayList copy = new TDoubleArrayList(noiseIntensities);
             copy.sort();
             medianNoiseIntensity = copy.get(copy.size()/2);
@@ -85,9 +86,10 @@ public class DatasetStatistics {
 
     public double getQuantileMs2NoiseIntensity(int quantile){
         //todo implement fast median
-            TDoubleArrayList copy = new TDoubleArrayList(noiseIntensities);
-            copy.sort();
-            return copy.get((int)(copy.size()*(quantile/100d)));
+        if (noiseIntensities.size()==0) throw new RuntimeException("cannot estimate median noise intensity.");
+        TDoubleArrayList copy = new TDoubleArrayList(noiseIntensities);
+        copy.sort();
+        return copy.get((int)(copy.size()*(quantile/100d)));
     }
 
     public TDoubleArrayList getNoiseIntensities() {
