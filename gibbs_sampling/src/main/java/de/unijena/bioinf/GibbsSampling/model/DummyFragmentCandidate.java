@@ -9,7 +9,7 @@ import java.util.Collections;
 public class DummyFragmentCandidate extends FragmentsCandidate{
 
     private int numberOfIgnoredInstances;
-    private static final DummyMolecularFormula dummy = new DummyMolecularFormula();
+    public static final DummyMolecularFormula dummy = new DummyMolecularFormula();
 
     protected DummyFragmentCandidate(FragmentsAndLosses fragmentsAndLosses, double score, MolecularFormula formula, PrecursorIonType ionType, Ms2Experiment experiment) {
         super(fragmentsAndLosses, score, formula, ionType, experiment);
@@ -18,7 +18,7 @@ public class DummyFragmentCandidate extends FragmentsCandidate{
     public static DummyFragmentCandidate newDummy(double scoreThres, int numberOfIgnoredInstances, Ms2Experiment experiment){
 
         FragmentsAndLosses fragmentsAndLosses = new FragmentsAndLosses(new FragmentWithIndex[0], new FragmentWithIndex[0]);
-        PrecursorIonType ionType = experiment.getPrecursorIonType(); //todo use unknown????
+        PrecursorIonType ionType = experiment==null?null:experiment.getPrecursorIonType(); //todo use unknown????
         DummyFragmentCandidate candidate = new DummyFragmentCandidate(fragmentsAndLosses, scoreThres, dummy, ionType, experiment);
 
 //        candidate.ionType = ionType;
@@ -37,7 +37,7 @@ public class DummyFragmentCandidate extends FragmentsCandidate{
         return (fragmentsCandidate instanceof DummyFragmentCandidate);
     }
 
-    private static class DummyMolecularFormula extends MolecularFormula {
+    public static class DummyMolecularFormula extends MolecularFormula {
 
         public DummyMolecularFormula(){
             super();
