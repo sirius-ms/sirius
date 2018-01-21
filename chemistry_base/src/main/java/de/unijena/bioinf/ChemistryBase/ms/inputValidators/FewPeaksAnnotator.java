@@ -62,7 +62,7 @@ public class FewPeaksAnnotator implements QualityAnnotator {
             //todo problem: this produces summed intensities which is not comparable to medianNoise
             //probably merge not summing -> at least one over noise
             //todo only merge between different spectra.
-            return Spectrums.mergeSpectra(deviation, true, true, experiment.getMs2Spectra());
+            return Spectrums.mergeSpectra(deviation, false, true, experiment.getMs2Spectra());
         }
     }
 }
