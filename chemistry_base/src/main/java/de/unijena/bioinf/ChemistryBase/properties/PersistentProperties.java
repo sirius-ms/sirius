@@ -10,103 +10,86 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Map;
 import java.util.Properties;
 
 //todo this should be combineable with Property FileWatcherService
-public class PersistentProperties {
+public class PersistentProperties extends Properties {
     private static final Logger LOGGER = LoggerFactory.getLogger(PersistentProperties.class);
     private final String fileheader;
     private final Path propsSourceFile;
-    private final Properties props;
-
-
-    /*public PersistentProperties(Path propsSourceFile) throws IOException {
-        this(propsSourceFile, "Auto generated Properties File");
-    }*/
 
     public PersistentProperties(Path propertiesFile, Properties defaultProps, String fileheader) {
+        super();
         this.fileheader = fileheader;
         this.propsSourceFile = propertiesFile;
-        this.props = new Properties();
-        this.props.putAll(defaultProps);
+        putAll(defaultProps);
 
         if (Files.exists(propsSourceFile)) {
             try (InputStream stream = Files.newInputStream(propsSourceFile)) {
                 Properties tmp = new Properties();
                 tmp.load(stream);
-                props.putAll(tmp);
+                putAll(tmp);
             } catch (IOException e) {
                 LOGGER.error("Could NOT load Properties from given properties file, falling back to default properties", e);
             }
         }
 
-        PropertyManager.PROPERTIES.putAll(props);
+        PropertyManager.PROPERTIES.putAll(this);
     }
 
 
-    /*public PersistentProperties(Path propsSourceFile, String fileheader) throws IOException {
-        this.fileheader = fileheader;
-        this.propsSourceFile = propsSourceFile;
-        props = new Properties();
-        props.load(Files.newInputStream(propsSourceFile, StandardOpenOption.READ));
-    }*/
-
-    public void addProperties(File properties) throws IOException {
-        addProperties(properties.toPath());
+    @Override
+    public synchronized void putAll(Map<?, ?> properties) {
+        PropertyManager.PROPERTIES.putAll(properties);
+        super.putAll(properties);
     }
 
-    public void addProperties(Path properties) throws IOException {
+    @Override
+    public synchronized Object put(Object key, Object value) {
+        PropertyManager.PROPERTIES.put(key, value);
+        return super.put(key, value);
+    }
+
+    @Override
+    public synchronized Object setProperty(String key, String value) {
+        return put(key, value);
+    }
+
+
+    public synchronized void setAndStoreProperty(String propertyName, String propertyValue) {
+        setProperty(propertyName, propertyValue);
+        store();
+    }
+
+    public synchronized void setProperties(Properties properties) {
+        putAll(properties);
+    }
+
+    public synchronized void setProperties(File properties) throws IOException {
+        setProperties(properties.toPath());
+    }
+
+    public synchronized void setProperties(Path properties) throws IOException {
         Properties p = new Properties();
         p.load(Files.newInputStream(properties));
-        addProperties(p);
+        putAll(p);
     }
 
-    public void addProperties(Properties properties) {
-        PropertyManager.PROPERTIES.putAll(properties);
-        PropertyManager.PROPERTIES.putAll(props);
-    }
-
-    public void addProperty(String propertyName, String propertyValue) {
-        PropertyManager.PROPERTIES.setProperty(propertyName, propertyValue);
-        PropertyManager.PROPERTIES.putAll(props);
-    }
-
-    public void addPropertyPersistent(String propertyName, String propertyValue) {
-        addProperty(propertyName, propertyValue);
-        storeProperties();
-    }
-
-
-    public void changeProperties(Properties properties) {
-        PropertyManager.PROPERTIES.putAll(properties);
-        props.putAll(properties);
-    }
-
-    public void changeProperty(String propertyName, String propertyValue) {
-        PropertyManager.PROPERTIES.setProperty(propertyName, propertyValue);
-        props.setProperty(propertyName, propertyValue);
-    }
-
-    public void changePropertiesPersistent(Properties properties) {
-        changeProperties(properties);
-        storeProperties();
-    }
-
-
-    public void changePropertyPersistent(String propertyName, String propertyValue) {
-        changeProperty(propertyName, propertyValue);
-        storeProperties();
+    public void setAndStoreProperties(Properties properties) {
+        setProperties(properties);
+        store();
     }
 
     public Properties getCopyOfPersistentProperties() {
-        return new Properties(props);
+        return new Properties(this);
     }
 
-    public void storeProperties() {
+    public synchronized void store() {
         try {
             Files.deleteIfExists(propsSourceFile);
             try (OutputStream stream = Files.newOutputStream(propsSourceFile, StandardOpenOption.CREATE_NEW)) {
-                props.store(stream, fileheader);
+                store(stream, fileheader);
             } catch (IOException e) {
                 LOGGER.error("Could not save new Properties file! Changes not saved!", e);
             }

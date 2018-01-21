@@ -133,6 +133,17 @@ public abstract class HeuristicSolver {
 		this.treeVertexID[treeRootID] = 0;
 	}
 
+	public FTree solveWithScore() {
+		FTree tree = solve();
+		double score = graph.getRoot().getOutgoingEdge(0).getWeight();
+		for (Fragment f : tree) {
+			if (!f.isRoot())
+				score += f.getIncomingEdge().getWeight();
+		}
+		tree.setTreeWeight(score);
+		return tree;
+	}
+
 	/**
 	 * builds the new {@link FTree}
 	 * 
