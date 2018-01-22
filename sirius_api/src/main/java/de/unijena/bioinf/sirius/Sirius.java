@@ -308,10 +308,12 @@ public class Sirius {
         this.elementPrediction = elementPrediction;
     }
 
+    @Deprecated
     public boolean isAutoIonMode() {
         return autoIonMode;
     }
 
+    @Deprecated
     public void setAutoIonMode(boolean autoIonMode) {
         this.autoIonMode = autoIonMode;
     }
@@ -340,6 +342,7 @@ public class Sirius {
      *
      * @param experiment
      */
+     @Deprecated
     public void detectPossibleAdductsFromMs1(MutableMs2Experiment experiment) {
         final PrecursorIonType[] adductTypes;
         if (experiment.getPrecursorIonType().isIonizationUnknown()) {
@@ -351,6 +354,23 @@ public class Sirius {
         final Set<Ionization> ionModes = new HashSet<>();
         for (PrecursorIonType ionType : adductTypes) ionModes.add(ionType.getIonization());
         setAllowedIonModes(experiment, ionModes.toArray(new Ionization[ionModes.size()]));
+    }
+
+    public void detectPossibleIonModesFromMs1(MutableMs2Experiment experiment) {
+        final List<PrecursorIonType> ionTypes = new ArrayList<>();
+        for (Ionization ionMode : PeriodicTable.getInstance().getKnownIonModes(experiment.getPrecursorIonType().getCharge())) {
+            ionTypes.add(PrecursorIonType.getPrecursorIonType(ionMode));
+        }
+        detectPossibleIonModesFromMs1(experiment,ionTypes.toArray(new PrecursorIonType[ionTypes.size()]));
+    }
+    public void detectPossibleIonModesFromMs1(MutableMs2Experiment experiment,PrecursorIonType... allowedIonModes) {
+        final PrecursorIonType[] ionModes = guessIonization(experiment, allowedIonModes);
+        final Set<Ionization> ionizations = new HashSet<>();
+        for (PrecursorIonType ionType : ionModes) ionizations.add(ionType.getIonization());
+        if (ionizations.isEmpty()) {
+            for (PrecursorIonType ionType : allowedIonModes) ionizations.add(ionType.getIonization());
+        }
+        setAllowedIonModes(experiment, ionizations.toArray(new Ionization[ionizations.size()]));
     }
 
     /**
@@ -971,8 +991,11 @@ public class Sirius {
         performAutomaticElementDetection(input, pattern.getPattern());
 
         // step 2: adduct type search
-        if (input.getExperimentInformation().getAnnotation(PossibleAdducts.class, null) == null)
-            detectPossibleAdductsFromMs1(input.getExperimentInformation());
+        PossibleIonModes pim = input.getExperimentInformation().getAnnotation(PossibleIonModes.class,null);
+        if (pim==null)
+            detectPossibleIonModesFromMs1(input.getExperimentInformation());
+        else if (pim.isGuessFromMs1Enabled())
+            detectPossibleIonModesFromMs1(input.getExperimentInformation(), pim.getIonModesAsPrecursorIonType().toArray(new PrecursorIonType[0]));
 
         // step 3: Isotope pattern analysis
         if (input.getAnnotation(IsotopeScoring.class, IsotopeScoring.DEFAULT).getIsotopeScoreWeighting() <= 0)
