@@ -12,6 +12,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
+import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
@@ -224,6 +225,17 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
         for (FingerprintDependentJJob job : annotationJobs) {
             job.takeAndAnnotateResult();
         }
+
+        // delete added IR without database hit
+        final List<IdentificationResult> toDelete = new ArrayList<>();
+        for (IdentificationResult ar : addedIdentificationResults) {
+            FingerIdResult fr = ar.getAnnotationOrNull(FingerIdResult.class);
+            if (fr==null || fr.getCandidates().isEmpty()) {
+                toDelete.add(ar);
+            }
+        }
+        addedIdentificationResults.removeAll(toDelete);
+        filteredResults.removeAll(toDelete);
 
 
         return fps;

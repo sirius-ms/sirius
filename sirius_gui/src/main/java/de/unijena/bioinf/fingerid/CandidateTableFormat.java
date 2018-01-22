@@ -10,10 +10,12 @@ public class CandidateTableFormat extends SiriusTableFormat<CompoundCandidate> {
     protected CandidateTableFormat(ListStats stats) {
         super(stats);
     }
+
     protected static String[] columns = new String[]{
             "Rank",
             "Molecular Formula",
 //            "Formula Score",
+            "Adduct",
             "Similarity",
             "Name",
             "CSI:FingerID Score",
@@ -25,7 +27,7 @@ public class CandidateTableFormat extends SiriusTableFormat<CompoundCandidate> {
 
     @Override
     public int highlightColumnIndex() {
-        return columns.length-1;
+        return columns.length - 1;
     }
 
     @Override
@@ -45,6 +47,7 @@ public class CandidateTableFormat extends SiriusTableFormat<CompoundCandidate> {
         int col = 0;
         if (column == col++) return result.rank;
         if (column == col++) return result.getMolecularFormula();
+        if (column == col++) return result.adduct;
         if (column == col++) return result.getTanimotoScore();
         if (column == col++) return result.compound.name != null ? result.compound.name : "";
         if (column == col++) return result.getScore();

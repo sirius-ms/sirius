@@ -9,8 +9,8 @@ import de.unijena.bioinf.ChemistryBase.fp.BooleanFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.chemdb.*;
-import de.unijena.bioinf.fingerid.Fingerprinter;
 import de.unijena.bioinf.fingerid.Compound;
+import de.unijena.bioinf.fingerid.Fingerprinter;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingerid.storage.ConfigStorage;
@@ -278,6 +278,8 @@ public class CustomDatabase implements SearchableDatabase {
     }
 
     public static class Importer {
+        private String[] commonNameProps = new String[]{};//notnull;
+        private String[] dbIDProps = new String[]{};//notnull;
 
         final CustomDatabase database;
         File currentPath;
@@ -311,6 +313,14 @@ public class CustomDatabase implements SearchableDatabase {
             } catch (CDKException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        public void setCommonNameProps(String[] commonNameProps) {
+            this.commonNameProps = commonNameProps;
+        }
+
+        public void setDbIDProps(String[] dbIDProps) {
+            this.dbIDProps = dbIDProps;
         }
 
         public void addListener(ImporterListener listener) {
@@ -463,6 +473,17 @@ public class CustomDatabase implements SearchableDatabase {
             }
         }
 
+
+        private String getFirstMatchingProperty(final IAtomContainer c, final String[] propertyKeys) {
+            for (String commonNameProp : propertyKeys) {
+                String propValue = (String) c.getProperties().get(commonNameProp);
+                if (propValue != null) {
+                    return propValue;
+                }
+            }
+            return null;
+        }
+
         protected void addMolecule(IAtomContainer mol) throws IOException {
             synchronized (moleculeBuffer) {
                 moleculeBuffer.add(mol);
@@ -510,7 +531,7 @@ public class CustomDatabase implements SearchableDatabase {
             }
             for (Comp c : dict.values()) {
                 try {
-                    addToBuffer(computeCompound(c.molecule, c.molecule.getID(), c.candidate));
+                    addToBuffer(computeCompound(c.molecule, c.candidate));
                 } catch (CDKException | IllegalArgumentException e) {
                     logger.error(e.getMessage(), e);
                 }
@@ -530,14 +551,25 @@ public class CustomDatabase implements SearchableDatabase {
             }
         }
 
-        protected FingerprintCandidate computeCompound(IAtomContainer molecule, String optionalName, FingerprintCandidate fc) throws CDKException, IOException {
-            if (fc == null) return computeCompound(molecule, optionalName);
+        protected FingerprintCandidate computeCompound(IAtomContainer molecule, FingerprintCandidate fc) throws CDKException, IOException {
+            final String commonName = getFirstMatchingProperty(molecule, commonNameProps);
+            final String id = getFirstMatchingProperty(molecule, dbIDProps);
+
+            if (fc == null) return computeCompound(molecule, id, commonName);
+
             logger.info("download fingerprint " + fc.getInchiKey2D());
             if (fc.getLinks() == null) fc.setLinks(new DBLink[0]);
-            if (optionalName != null) {
-                fc.setName(optionalName);
+
+            if (fc.getName() == null || fc.getName().isEmpty()) {
+                if (commonName != null)
+                    fc.setName(commonName);
+            }
+
+            if (id != null) {
+                if (fc.getName() == null || fc.getName().isEmpty())
+                    fc.setName(id);
                 DBLink[] ls = Arrays.copyOf(fc.getLinks(), fc.getLinks().length + 1);
-                ls[ls.length - 1] = new DBLink(database.name, optionalName);
+                ls[ls.length - 1] = new DBLink(database.name, id);
                 fc.setLinks(ls);
             } else {
                 DBLink[] ls = Arrays.copyOf(fc.getLinks(), fc.getLinks().length + 1);
@@ -553,7 +585,7 @@ public class CustomDatabase implements SearchableDatabase {
             return fc;
         }
 
-        protected FingerprintCandidate computeCompound(IAtomContainer molecule, String optionalName) throws CDKException, IllegalArgumentException, IOException {
+        protected FingerprintCandidate computeCompound(IAtomContainer molecule, final String id, final String commonName) throws CDKException, IllegalArgumentException, IOException {
             InChIGenerator gen = inChIGeneratorFactory.getInChIGenerator(molecule);
             final InChI inchi = new InChI(gen.getInchiKey(), gen.getInchi());
             molecule = inChIGeneratorFactory.getInChIToStructure(inchi.in2D, SilentChemObjectBuilder.getInstance()).getAtomContainer();
@@ -564,9 +596,13 @@ public class CustomDatabase implements SearchableDatabase {
 
             final FingerprintCandidate fc = new FingerprintCandidate(inchi, fp);
             fc.setSmiles(smiles);
-            if (optionalName != null) {
-                fc.setName(optionalName);
-                fc.setLinks(new DBLink[]{new DBLink(database.name, optionalName)});
+
+            if (commonName != null)
+                fc.setName(commonName);
+            if (id != null) {
+                fc.setLinks(new DBLink[]{new DBLink(database.name, id)});
+                if (fc.getName() == null || fc.getName().isEmpty())
+                    fc.setName(id);//set id as name if no name was set
             } else {
                 fc.setLinks(new DBLink[0]);
             }

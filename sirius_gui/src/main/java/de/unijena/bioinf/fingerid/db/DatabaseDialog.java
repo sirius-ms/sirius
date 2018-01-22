@@ -3,18 +3,18 @@ package de.unijena.bioinf.fingerid.db;
 import com.google.common.base.Predicate;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.DialogHaeder;
 import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.ext.ListAction;
-import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.sirius.gui.load.CsvFields;
 import de.unijena.bioinf.sirius.gui.load.csv.GeneralCSVDialog;
 import de.unijena.bioinf.sirius.gui.load.csv.SimpleCsvParser;
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.utils.PlaceholderTextField;
+import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import org.jdesktop.swingx.JXRadioGroup;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.ReaderFactory;
@@ -45,8 +45,9 @@ public class DatabaseDialog extends JDialog {
     protected JButton addCustomDb;
     protected DatabaseView dbView;
     protected PlaceholderTextField nameField;
-//    protected final Frame owner;
+    //    protected final Frame owner;
     private JDialog owner = this;
+
     public DatabaseDialog(final Frame owner) {
         super(owner, true);
         setTitle("Databases");
@@ -86,7 +87,7 @@ public class DatabaseDialog extends JDialog {
             }
 
             public void onTextChanged() {
-                if (nameField.getText().length()>0 && !databases.contains(nameField.getText())) {
+                if (nameField.getText().length() > 0 && !databases.contains(nameField.getText())) {
                     addCustomDb.setEnabled(true);
                 } else {
                     addCustomDb.setEnabled(false);
@@ -136,7 +137,7 @@ public class DatabaseDialog extends JDialog {
         new ListAction(dbList, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                final int k=dbList.getSelectedIndex();
+                final int k = dbList.getSelectedIndex();
                 if (k > 0 && k < dbList.getModel().getSize()) {
                     whenCustomDbIsAdded(new ImportDatabaseDialog(dbList.getModel().getElementAt(k)).database);
                 }
@@ -146,7 +147,7 @@ public class DatabaseDialog extends JDialog {
         dbView.edit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                final int k=dbList.getSelectedIndex();
+                final int k = dbList.getSelectedIndex();
                 if (k > 0 && k < dbList.getModel().getSize()) {
                     whenCustomDbIsAdded(new ImportDatabaseDialog(dbList.getModel().getElementAt(k)).database);
                 }
@@ -157,14 +158,14 @@ public class DatabaseDialog extends JDialog {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final int index = dbList.getSelectedIndex();
-                if (index< 0 || index >= dbList.getModel().getSize())
+                if (index < 0 || index >= dbList.getModel().getSize())
                     return;
                 final String name = dbList.getModel().getElementAt(index);
-                final String msg = (index>0) ?
+                final String msg = (index > 0) ?
                         "Do you really want to delete the custom database '" + name + "'?" : "Do you really want to clear the cache of the PubChem database?";
 
-                if (new QuestionDialog(getOwner(),msg).isSuccess()) {
-                    if (index>0) {
+                if (new QuestionDialog(getOwner(), msg).isSuccess()) {
+                    if (index > 0) {
                         new CustomDatabase(name, new File(CONFIG_STORAGE.getCustomDatabaseDirectory(), name)).deleteDatabase();
                         customDatabases.remove(name);
                         dbList.setListData(collectDatabases().toArray(new String[0]));
@@ -191,7 +192,7 @@ public class DatabaseDialog extends JDialog {
 
     protected void whenCustomDbIsAdded(final CustomDatabase db) {
         this.customDatabases.put(db.name, db);
-        new SwingWorker<String, String>(){
+        new SwingWorker<String, String>() {
 
             @Override
             protected String doInBackground() throws Exception {
@@ -205,7 +206,7 @@ public class DatabaseDialog extends JDialog {
             protected void process(List<String> chunks) {
                 for (String c : chunks) {
                     final CustomDatabase cd = customDatabases.get(c);
-                    if (c != null && cd!=null && c.equals(dbList.getSelectedValue())) {
+                    if (c != null && cd != null && c.equals(dbList.getSelectedValue())) {
                         dbView.updateContent(cd);
                     }
                 }
@@ -213,27 +214,27 @@ public class DatabaseDialog extends JDialog {
         }.execute();
     }
 
-    protected static class DatabaseView extends JPanel  {
+    protected static class DatabaseView extends JPanel {
         JLabel content;
         JButton deleteCache, edit;
+
         protected DatabaseView() {
             this.content = new JLabel("placeholder");
-            content.setBorder(BorderFactory.createEmptyBorder(4,8,4,4));
+            content.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 4));
             this.deleteCache = new JButton("delete cache");
             setLayout(new BorderLayout());
             add(content, BorderLayout.CENTER);
             //add(Box.createVerticalGlue());
             final Box hor = Box.createHorizontalBox();
-            hor.setBorder(BorderFactory.createEmptyBorder(0,0,16,0));
+            hor.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
             edit = new JButton("edit");
             hor.add(Box.createHorizontalGlue());
             hor.add(edit);
             hor.add(deleteCache);
             hor.add(Box.createHorizontalGlue());
             add(hor, BorderLayout.SOUTH);
-            setPreferredSize(new Dimension(200,240));
+            setPreferredSize(new Dimension(200, 240));
         }
-
 
 
         protected void update(String database) {
@@ -248,8 +249,8 @@ public class DatabaseDialog extends JDialog {
 
 
         public void updateContent(CustomDatabase c) {
-            if (c.numberOfCompounds>0) {
-                content.setText("<html>Custom database. Containing " + c.numberOfCompounds + " compounds with " + c.numberOfFormulas + " different molecular formulas. Consumes " + c.megabytes + " mb on the hard drive." + ((c.searchInBio()||c.searchInPubchem()) ? "<br>This database will also include all compounds from " + (c.searchInPubchem() ? "PubChem" : "our bio database") : "") + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "") +  "</html>");
+            if (c.numberOfCompounds > 0) {
+                content.setText("<html>Custom database. Containing " + c.numberOfCompounds + " compounds with " + c.numberOfFormulas + " different molecular formulas. Consumes " + c.megabytes + " mb on the hard drive." + ((c.searchInBio() || c.searchInPubchem()) ? "<br>This database will also include all compounds from " + (c.searchInPubchem() ? "PubChem" : "our bio database") : "") + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "") + "</html>");
             } else {
                 content.setText("Empty custom database.");
             }
@@ -311,7 +312,7 @@ public class DatabaseDialog extends JDialog {
                 right.setFont(tempFont);
                 left.setFont(tempFont.deriveFont(Font.BOLD));
             } catch (FontFormatException | IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             }
         }
 
@@ -342,7 +343,7 @@ public class DatabaseDialog extends JDialog {
         protected JTextArea details;
         protected CustomDatabase.Importer importer;
         protected JButton close;
-        protected volatile boolean doNotCancel=false;
+        protected volatile boolean doNotCancel = false;
 
         protected volatile int molBufferSize, fpBufferSize;
 
@@ -353,8 +354,8 @@ public class DatabaseDialog extends JDialog {
             this.importer = importer;
             JPanel panel = new JPanel();
             panel.setLayout(new BorderLayout());
-            panel.setBorder(BorderFactory.createEmptyBorder(6,6,6,6));
-            panel.setPreferredSize(new Dimension(480,320));
+            panel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+            panel.setPreferredSize(new Dimension(480, 320));
             add(panel);
             JPanel inner = new JPanel();
             inner.setLayout(new BorderLayout());
@@ -385,7 +386,7 @@ public class DatabaseDialog extends JDialog {
 
         @Override
         public void dispose() {
-            if (worker!=null) worker.cancel(!doNotCancel);
+            if (worker != null) worker.cancel(!doNotCancel);
             super.dispose();
         }
 
@@ -395,14 +396,14 @@ public class DatabaseDialog extends JDialog {
         }
 
 
-
         public void setCompounds(CustomDatabase db, final List<? extends Object> stringsOrFiles) {
             close.setEnabled(false);
             details.setText("");
             progressBar.setMinimum(0);
             progressBar.setMaximum(stringsOrFiles.size());
             progressBar.setValue(0);
-            if (stringsOrFiles.size()>0 && stringsOrFiles.get(0) instanceof File) {
+            if (stringsOrFiles.size() > 0 && stringsOrFiles.get(0) instanceof File) {
+                new AskForFieldsToImportDialog(DatabaseDialog.this, importer);
                 statusText.setText("Parse " + stringsOrFiles.size() + " files");
             } else {
                 statusText.setText("Predict fingerprints for " + stringsOrFiles.size() + " compounds");
@@ -422,18 +423,18 @@ public class DatabaseDialog extends JDialog {
                             parser = GeneralCSVDialog.makeCsvImporterDialog(getOwner(), preview, new Predicate<GeneralCSVDialog>() {
                                 @Override
                                 public boolean apply(GeneralCSVDialog input) {
-                                    return input.getFirstColumnFor(inchi)>= 0 || input.getFirstColumnFor(smiles)>=0;
+                                    return input.getFirstColumnFor(inchi) >= 0 || input.getFirstColumnFor(smiles) >= 0;
                                 }
-                            }, inchi,smiles,id);
+                            }, inchi, smiles, id);
                             break outer;
                         }
                     }
                 }
             }
             final GeneralCSVDialog csvDialog = parser;
-            final SimpleCsvParser csvParser = csvDialog!=null ? csvDialog.getParser() : null;
-            final int inchiColumn = csvDialog!=null ? csvDialog.getFirstColumnFor(inchi) : 0, smilesColumn = csvDialog!=null ? csvDialog.getFirstColumnFor(smiles) : 0, idColumn = csvDialog!=null ? csvDialog.getFirstColumnFor(id) : 0;
-            worker = new SwingWorker<List<InChI>, ImportStatus>(){
+            final SimpleCsvParser csvParser = csvDialog != null ? csvDialog.getParser() : null;
+            final int inchiColumn = csvDialog != null ? csvDialog.getFirstColumnFor(inchi) : 0, smilesColumn = csvDialog != null ? csvDialog.getFirstColumnFor(smiles) : 0, idColumn = csvDialog != null ? csvDialog.getFirstColumnFor(id) : 0;
+            worker = new SwingWorker<List<InChI>, ImportStatus>() {
 
                 @Override
                 protected void done() {
@@ -445,16 +446,16 @@ public class DatabaseDialog extends JDialog {
                 protected void process(List<ImportStatus> chunks) {
                     super.process(chunks);
                     for (ImportStatus status : chunks) {
-                        if (status.topMessage!=null) statusText.setText(status.topMessage);
-                        if (status.inchi!=null) {
+                        if (status.topMessage != null) statusText.setText(status.topMessage);
+                        if (status.inchi != null) {
                         }
                         progressBar.setValue(status.current);
                         progressBar.setMaximum(status.max);
-                        if (status.errorMessage!=null) {
+                        if (status.errorMessage != null) {
                             try {
                                 details.getDocument().insertString(details.getDocument().getLength(), status.errorMessage + "\n", null);
                             } catch (BadLocationException e) {
-                                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                             }
                         }
                     }
@@ -465,7 +466,7 @@ public class DatabaseDialog extends JDialog {
                     final List<InChI> inchis = new ArrayList<>(stringsOrFiles.size());
                     final List<IAtomContainer> buffer = new ArrayList<>();
                     final ReaderFactory rf = new ReaderFactory();
-                    int k=0;
+                    int k = 0;
                     for (Object s : stringsOrFiles) {
                         if (isCancelled()) return Collections.emptyList();
                         final ImportStatus status = new ImportStatus();
@@ -474,34 +475,34 @@ public class DatabaseDialog extends JDialog {
 
                         if (s instanceof String) {
                             try {
-                                importer.importFromString((String)s);
+                                importer.importFromString((String) s);
                             } catch (Throwable e) {
                                 status.errorMessage = e.getMessage();
                             }
                         } else if (s instanceof File) {
                             try {
-                                boolean isCsv=csvParser!=null;
+                                boolean isCsv = csvParser != null;
                                 if (isCsv) {
-                                    try (final InputStream sr = new FileInputStream((File)s)) {
+                                    try (final InputStream sr = new FileInputStream((File) s)) {
                                         if (rf.createReader(sr) != null) {
                                             isCsv = false;
                                         }
                                     }
                                 }
                                 if (isCsv) {
-                                    try (final BufferedReader br = new BufferedReader(new FileReader((File)s))) {
+                                    try (final BufferedReader br = new BufferedReader(new FileReader((File) s))) {
                                         final List<String> inchiOrSmiles = new ArrayList<>();
                                         final List<String> ids = new ArrayList<>();
                                         String line;
-                                        while ((line=br.readLine())!=null) {
+                                        while ((line = br.readLine()) != null) {
                                             String[] tabs = csvParser.parseLine(line);
 
                                             String id = null;
-                                            if (idColumn>=0) id = tabs[idColumn];
-                                            if (inchiColumn>=0 && tabs[inchiColumn].startsWith("InChI=")) {
+                                            if (idColumn >= 0) id = tabs[idColumn];
+                                            if (inchiColumn >= 0 && tabs[inchiColumn].startsWith("InChI=")) {
                                                 inchiOrSmiles.add(tabs[inchiColumn]);
                                                 ids.add(id);
-                                            } else if (smilesColumn>=0) {
+                                            } else if (smilesColumn >= 0) {
                                                 inchiOrSmiles.add(tabs[smilesColumn]);
                                                 ids.add(id);
                                             }
@@ -511,9 +512,9 @@ public class DatabaseDialog extends JDialog {
                                         status.max = inchiOrSmiles.size();
                                         String oldMessage = status.topMessage;
                                         status.topMessage = "Download/Compute " + inchiOrSmiles.size() + " structures";
-                                        int batchSize = Math.min(5, inchiOrSmiles.size()/100);
+                                        int batchSize = Math.min(5, inchiOrSmiles.size() / 100);
                                         publish(status);
-                                        for (int i=0; i < inchiOrSmiles.size(); ++i) {
+                                        for (int i = 0; i < inchiOrSmiles.size(); ++i) {
                                             try {
                                                 importer.importFromString(inchiOrSmiles.get(i), ids.get(i));
                                             } catch (Exception e) {
@@ -523,7 +524,7 @@ public class DatabaseDialog extends JDialog {
                                                 publish(sc);
                                                 e.printStackTrace();
                                             }
-                                            if (i % batchSize==0) {
+                                            if (i % batchSize == 0) {
                                                 final ImportStatus sc = status.clone();
                                                 sc.current = i;
                                                 publish(sc);
@@ -533,7 +534,7 @@ public class DatabaseDialog extends JDialog {
                                         status.topMessage = oldMessage;
                                     }
                                 } else {
-                                    importer.importFrom((File)s);
+                                    importer.importFrom((File) s);
                                 }
                             } catch (Throwable e) {
                                 status.errorMessage = e.getMessage();
@@ -543,12 +544,12 @@ public class DatabaseDialog extends JDialog {
                         publish(status);
                     }
                     try {
-                        doNotCancel=true;
+                        doNotCancel = true;
                         importer.flushBuffer();
-                        doNotCancel=false;
+                        doNotCancel = false;
                     } catch (Exception e) {
-                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
-                        throw(e);
+                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+                        throw (e);
                     }
                     return inchis;
                 }
@@ -563,20 +564,20 @@ public class DatabaseDialog extends JDialog {
 
                 try (FileInputStream br = new FileInputStream(f)) {
                     ReaderFactory rf = new ReaderFactory();
-                    if (rf.createReader(br)!=null) return null;
+                    if (rf.createReader(br) != null) return null;
                 }
 
                 try (BufferedReader br = new BufferedReader(new FileReader(f))) {
                     final ArrayList<String> lines = new ArrayList<>();
                     // parse 10 lines
                     String line;
-                    while ((line=br.readLine())!=null) {
+                    while ((line = br.readLine()) != null) {
                         lines.add(line);
-                        if (lines.size()>10) break;
+                        if (lines.size() > 10) break;
                     }
                     if (lines.isEmpty()) return null;
 
-                    if (SimpleCsvParser.guessSeparator(lines).parseLine(lines.get(0)).length>1) {
+                    if (SimpleCsvParser.guessSeparator(lines).parseLine(lines.get(0)).length > 1) {
                         return lines;
                     } else return null;
                 }
@@ -588,7 +589,7 @@ public class DatabaseDialog extends JDialog {
 
     }
 
-    protected static class ImportStatus implements Cloneable{
+    protected static class ImportStatus implements Cloneable {
         private InChI inchi;
         private String errorMessage, topMessage;
         private int max, current;
@@ -596,14 +597,14 @@ public class DatabaseDialog extends JDialog {
         @Override
         protected ImportStatus clone() {
             try {
-                return (ImportStatus)super.clone();
+                return (ImportStatus) super.clone();
             } catch (CloneNotSupportedException e) {
                 throw new RuntimeException(e);
             }
         }
     }
 
-    protected class ImportDatabaseDialog extends JDialog implements CustomDatabase.ImporterListener{
+    protected class ImportDatabaseDialog extends JDialog implements CustomDatabase.ImporterListener {
 
         protected ImportList ilist;
         protected JButton importButton;
@@ -612,7 +613,7 @@ public class DatabaseDialog extends JDialog {
         protected Collector collector;
         protected CustomDatabase database;
 
-        private static final String NONE="None", BIO = "Biological database", PUBCHEM="PubChem";
+        private static final String NONE = "None", BIO = "Biological database", PUBCHEM = "PubChem";
 
         public ImportDatabaseDialog(String name) {
             super(owner, "Import " + name + " database", true);
@@ -648,13 +649,13 @@ public class DatabaseDialog extends JDialog {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     final String value = inh.getSelectedValue();
-                    database.deriveFromBioDb=database.deriveFromPubchem=false;
-                    if (value.equals(BIO)) database.deriveFromBioDb=true;
-                    else if (value.equals(PUBCHEM)) database.deriveFromPubchem=true;
+                    database.deriveFromBioDb = database.deriveFromPubchem = false;
+                    if (value.equals(BIO)) database.deriveFromBioDb = true;
+                    else if (value.equals(PUBCHEM)) database.deriveFromPubchem = true;
                     try {
                         importer.writeSettings();
                     } catch (IOException e1) {
-                        LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(),e1);
+                        LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
                     }
                 }
             });
@@ -682,29 +683,26 @@ public class DatabaseDialog extends JDialog {
             box2.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Recently imported"));
 
             ilist = new ImportList();
-            box2.add(new JScrollPane(ilist, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,  ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
+            box2.add(new JScrollPane(ilist, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
 
             add(box2, BorderLayout.SOUTH);
 
             importDialog = new ImportCompoundsDialog(importer);
 
-            importButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (!importDialog.isVisible()) {
-                        final String[] lines = textArea.getText().split("\n");
-                        importDialog.setCompounds(database, Arrays.asList(lines));
-                        textArea.setText("");
-                    }
+            importButton.addActionListener(e -> {
+                if (!importDialog.isVisible()) {
+                    final String[] lines = textArea.getText().split("\n");
+                    importDialog.setCompounds(database, Arrays.asList(lines));
+                    textArea.setText("");
                 }
             });
 
-            final DropTarget dropTarget = new DropTarget(){
+            final DropTarget dropTarget = new DropTarget() {
                 @Override
                 public synchronized void drop(DropTargetDropEvent evt) {
                     final List<File> files = DragAndDrop.getFileListFromDrop(evt);
                     if (!importDialog.isVisible()) {
-                        importDialog.setCompounds(database,files);
+                        importDialog.setCompounds(database, files);
                         textArea.setText("");
                     }
                 }
@@ -742,6 +740,7 @@ public class DatabaseDialog extends JDialog {
 
     private static class Collector extends SwingWorker<InChI, InChI> implements CustomDatabase.ImporterListener {
         private CustomDatabase.Importer importer;
+
         public Collector(CustomDatabase.Importer importer) {
             this.importer = importer;
         }
@@ -774,6 +773,39 @@ public class DatabaseDialog extends JDialog {
         }
     }
 
+    private class AskForFieldsToImportDialog extends JDialog {
+        private final JTextField nameField = new JTextField("COMMON_NAME,SYSTEMATIC_NAME");
+        private final JTextField idField = new JTextField("");
+
+        AskForFieldsToImportDialog(Dialog owner, final CustomDatabase.Importer importer) {
+            super(owner, "Specify fields to parse", true);
+
+            JPanel main = new JPanel(new BorderLayout());
+            add(main);
+
+            TwoCloumnPanel panel = new TwoCloumnPanel();
+            panel.add(new JLabel("<html>Please specify the names of the fields that have to be parsed in a comma separated list. <br> The list should be ordered from highest to lowest priority</html>"));
+            panel.add(new JLabel("Database ID"), idField);
+            panel.add(new JLabel("Name"), nameField);
+
+            JButton okB = new JButton("OK");
+            okB.addActionListener(e -> {
+                importer.setCommonNameProps(nameField.getText().replaceAll("\\s+", "").split(","));
+                importer.setDbIDProps(idField.getText().replaceAll("\\s+", "").split(","));
+                setVisible(false);
+                dispose();
+            });
+            JPanel bPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            bPanel.add(okB);
+
+            main.add(panel, BorderLayout.CENTER);
+            main.add(bPanel, BorderLayout.SOUTH);
+
+            pack();
+            setLocationRelativeTo(owner);
+            setVisible(true);
+        }
+    }
 
 
 }
