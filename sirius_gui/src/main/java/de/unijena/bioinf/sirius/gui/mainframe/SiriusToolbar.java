@@ -43,9 +43,9 @@ class SiriusToolbar extends JToolBar {
         addSeparator(new Dimension(20, 20));
 //        add(Box.createGlue());
 
-        configFingerID = new ToolbarButton(SiriusActions.COMPUTE_CSI.getInstance());
-        add(configFingerID);
-        addSeparator(new Dimension(20, 20));
+//        configFingerID = new ToolbarButton(SiriusActions.COMPUTE_CSI.getInstance());
+//        add(configFingerID);
+//        addSeparator(new Dimension(20, 20));
 //        add(Box.createGlue());
 
         //todo implement database menu

@@ -18,6 +18,7 @@
 
 package de.unijena.bioinf.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.sirius.gui.structure.AbstractEDTBean;
@@ -44,6 +45,7 @@ public class CompoundCandidate extends AbstractEDTBean implements Comparable<Com
 
     private static final double THRESHOLD_FP = 0.4;
 
+    protected final PrecursorIonType adduct;
     protected final FingerIdData data;
     protected final Compound compound;
     protected final int rank, index;
@@ -103,20 +105,21 @@ public class CompoundCandidate extends AbstractEDTBean implements Comparable<Com
     protected boolean atomCoordinatesAreComputed = false;
     protected ReentrantLock compoundLock = new ReentrantLock();
 
-    public CompoundCandidate(int rank, int index, FingerIdData data) {
-        this(rank, index, data, data.compounds[index], data.compounds[index].getInchi().extractFormula().toString());
+    public CompoundCandidate(int rank, int index, FingerIdData data, PrecursorIonType adduct) {
+        this(rank, index, data, data.compounds[index], data.compounds[index].getInchi().extractFormula().toString(), adduct);
     }
 
-    public CompoundCandidate(int rank, int index, FingerIdData data, String formula) {
-        this(rank, index, data, data.compounds[index], formula);
+    public CompoundCandidate(int rank, int index, FingerIdData data, String formula, PrecursorIonType adduct) {
+        this(rank, index, data, data.compounds[index], formula, adduct);
     }
 
-    private CompoundCandidate(int rank, int index, FingerIdData data, Compound compound, String formula) {
+    private CompoundCandidate(int rank, int index, FingerIdData data, Compound compound, String formula, PrecursorIonType adduct) {
         this.rank = rank;
         this.index = index;
         this.data = data;
         this.compound = compound;
         this.molecularFormulaString = formula;
+        this.adduct = adduct;
         this.relevantFps = null;
 
 
@@ -266,7 +269,7 @@ public class CompoundCandidate extends AbstractEDTBean implements Comparable<Com
 
     private static class PrototypeCompoundCandidate extends CompoundCandidate {
         private PrototypeCompoundCandidate() {
-            super(0, 0, null, Compound.getPrototypeCompound(), "PROTO");
+            super(0, 0, null, Compound.getPrototypeCompound(), "PROTO", PrecursorIonType.getPrecursorIonType("[M + C2H3N + Na]+"));
         }
 
         @Override

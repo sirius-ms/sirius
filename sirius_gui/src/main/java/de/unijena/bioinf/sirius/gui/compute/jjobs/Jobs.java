@@ -1,7 +1,10 @@
 package de.unijena.bioinf.sirius.gui.compute.jjobs;
 
+import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.sirius.Sirius;
@@ -14,6 +17,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 
 public class Jobs {
     public static final SwingJobManager MANAGER = (SwingJobManager) SiriusJobs.getGlobalJobManager();
@@ -24,11 +28,22 @@ public class Jobs {
 
     }
 
-    private static <JJ extends GuiObservableJJob> JJ submit(final JJ j) {
-        MANAGER.submitSwingJob(j.asSwingJob());
+    public static <JJ extends GuiObservableJJob> JJ submit(final JJ j) {
+        submit(j.asSwingJob());
         return j;
     }
 
+    public static <JJ extends SwingJJobContainer> JJ submit(final JJ j) {
+        MANAGER.submitSwingJob(j);
+        return j;
+    }
+
+
+   /* public static PrepareSiriusIdentificationInputJob runPrepareSiriusIdentification(ExperimentContainer ec, String profile, double ppm, boolean onlyOrganic, SearchableDatabase db, final FormulaConstraints constraints, final List<Element> elementsToAutoDetect, PossibleIonModes possibleIonModes, PossibleAdducts possibleAdducts) {
+        PrepareSiriusIdentificationInputJob j = new PrepareSiriusIdentificationInputJob(ec, profile, ppm, onlyOrganic, db, constraints, elementsToAutoDetect, possibleIonModes, possibleAdducts);
+        submit(j);
+        return j;
+    }
 
     public static SiriusIdentificationGuiJob runSiriusIdentification(String profile, double ppm, int numberOfCandidates, FormulaConstraints constraints, boolean onlyOrganic, SearchableDatabase db, ExperimentContainer ec) {
         SiriusIdentificationGuiJob j = new SiriusIdentificationGuiJob(profile, ppm, numberOfCandidates, constraints, onlyOrganic, db, ec);
@@ -44,7 +59,7 @@ public class Jobs {
     public static FingerIDSearchGuiJob runFingerIDSearch(SearchableDatabase fingerIDDB, SiriusIdentificationGuiJob required) {
         FingerIDSearchGuiJob j = new FingerIDSearchGuiJob(fingerIDDB, required);
         return submit(j);
-    }
+    }*/
 
 
     public static Sirius getSiriusByProfile(String profile) {
