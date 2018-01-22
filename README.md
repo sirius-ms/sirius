@@ -6,7 +6,7 @@ material and the original publications. We ask that users who use SIRIUS
 and CSI:FingerID cite the corresponding papers in any resulting
 publications.</span>*
 
-Contact: [](https://raw.githubusercontent.com/boecker-lab/sirius_frontend/release/manual/source/siriusMailtrans.png)
+Contact: ![](https://raw.githubusercontent.com/boecker-lab/sirius_frontend/release/manual/source/siriusMailtrans.png)
 
 SIRIUS is new java-based software framework for discovering a
 landscape of de-novo identification of metabolites using single and
