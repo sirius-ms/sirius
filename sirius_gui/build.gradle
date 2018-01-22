@@ -1,7 +1,6 @@
 dependencies {
 //project
     compile project(':sirius_cli')
-    compile project(':fingerid_cli')
 
 //internal
     compile group: "de.unijena.bioinf.ms", name: "fingerblast", version: "$fingeridVersion"
