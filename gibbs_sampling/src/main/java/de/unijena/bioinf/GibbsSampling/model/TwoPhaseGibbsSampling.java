@@ -77,7 +77,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
 
 
 
-        System.out.println("running first round with "+firstRoundIds.length+" compounds.");
+        LOG.info("running first round with "+firstRoundIds.length+" compounds.");
         gibbsParallel = new GibbsParallel<>(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, workersCount, repetitions);
         graph = gibbsParallel.getGraph();
     }
@@ -101,7 +101,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
 //            gibbsParallel = new GibbsParallel<>(ids, combined, nodeScorers, edgeScorers, edgeFilter, workersCount, repetitions);
 
             //changed same as in 3phase
-            LOG.info("score low quality compounds.");
+            LOG.info("score low quality compounds. overall "+ids.length+" compounds");
             //todo rather sample everything and just use results of low quality compounds? may there arise problems? in principle should not as we still sample all compounds (even 'fixed')
             C[][] candidatesNewRound = combineNewAndOldAndSetFixedProbabilities(results1, firstRoundCompoundsIdx);
             //todo this stupid thing creates a complete new graph.
