@@ -29,6 +29,8 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -56,6 +58,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class GibbsSamplerMain {
+    private static final Logger LOG = LoggerFactory.getLogger(GibbsSamplerMain.class);
     private static Path formulaFile;
     private static Path outputFile;
     private static Path treeDir;
@@ -188,7 +191,7 @@ public class GibbsSamplerMain {
     private void evalZodiacOutput(Path workspace, Path zodiacSummary, Path mgfFile, Path libraryHitsPath) throws IOException {
         Map<String, List<FragmentsCandidate>> candidatesMap;
         System.out.println("Reading from Sirius workspace");
-        candidatesMap = parseMFCandidatesFromWorkspace(workspace);
+        candidatesMap = parseMFCandidatesFromWorkspace(workspace, mgfFile);
 
         Map<String, List<Scored<MolecularFormula>>> zodiacResults = parseZodiacCliResults(zodiacSummary);
 
@@ -1008,7 +1011,7 @@ public class GibbsSamplerMain {
         Map<String, List<FragmentsCandidate>> candidatesMap;
         if (isSiriusWorkspace(treeDir)){
             System.out.println("Reading from Sirius workspace");
-            candidatesMap = parseMFCandidatesFromWorkspace(treeDir);
+            candidatesMap = parseMFCandidatesFromWorkspace(treeDir, mgfFile);
         } else {
             candidatesMap = parseMFCandidates(treeDir, mgfFile, Integer.MAX_VALUE, workerCount, true); //remove candidates later when adding dummy
         }
@@ -1269,6 +1272,8 @@ public class GibbsSamplerMain {
     public static void writeZodiacOutput(String[] ids, Scored<FragmentsCandidate>[][] initial, Scored<FragmentsCandidate>[][] result, Graph<FragmentsCandidate> graph, Path outputPath) throws IOException {
         int[] connectingPeaks = graph.getMaxConnectedCompoundsCounts();
         String[] ids2 = graph.getIds();
+        if (ids.length!=ids2.length) throw new RuntimeException("unexpected number of solved instances");
+
 
         BufferedWriter writer = Files.newBufferedWriter(outputPath, Charset.defaultCharset());
         //changed connectingPeaks -> connectedCompounds
@@ -1281,7 +1286,7 @@ public class GibbsSamplerMain {
             final double siriusScore = initial[i][0].getScore();
 
             final int connections = connectingPeaks[i];
-            if (!id.equals(ids2[i])) throw new RuntimeException("different ids");
+            if (!id.equals(ids2[i])) throw new RuntimeException("different ids: "+id+" vs "+ids2[i]);
 
 
             buffer.append(id);
@@ -2054,26 +2059,18 @@ public class GibbsSamplerMain {
         }
     }
 
+    public static Map<String, List<FragmentsCandidate>> parseMFCandidatesFromWorkspace(Path workspaceDir, Path originalMsInformation) throws IOException {
+        return parseMFCandidatesFromWorkspace(workspaceDir, originalMsInformation, Integer.MAX_VALUE);
+    }
 
-//    public static  protected static List<ExperimentResult> newLoad(File file) throws IOException {
-//        final List<ExperimentResult> results = new ArrayList<>();
-//        final DirectoryReader.ReadingEnvironment env;
-//        if (file.isDirectory()) {
-//            env = new SiriusFileReader(file);
-//        } else {
-//            env = new SiriusWorkspaceReader(file);
-//        }
-//        final DirectoryReader reader = new DirectoryReader(env);
-//
-//        while (reader.hasNext()) {
-//            final ExperimentResult result = reader.next();
-//            results.add(result);
-//        }
-//        return results;
-//    }
-
-
-    public static Map<String, List<FragmentsCandidate>> parseMFCandidatesFromWorkspace(Path workspaceDir) throws IOException {
+    /**
+     *
+     * @param workspaceDir
+     * @param originalMsInformation e.g. the mgf file used as input for Sirius
+     * @return
+     * @throws IOException
+     */
+    public static Map<String, List<FragmentsCandidate>> parseMFCandidatesFromWorkspace(Path workspaceDir, Path originalMsInformation, int maxCandidates) throws IOException {
         File file = workspaceDir.toFile();
         final List<ExperimentResult> results = new ArrayList<>();
 
@@ -2091,9 +2088,45 @@ public class GibbsSamplerMain {
             results.add(result);
         }
 
+        final MsExperimentParser parser = new MsExperimentParser();
+        List<Ms2Experiment> rawExperiments = parser.getParser(originalMsInformation.toFile()).parseFromFile(originalMsInformation.toFile());
+        Map<String, List<Ms2Experiment>> nameToExperiment = new HashMap<>();
+        for (Ms2Experiment rawExperiment : rawExperiments) {
+            String name = rawExperiment.getName();
+            List<Ms2Experiment> experimentList = nameToExperiment.get(name);
+            if (experimentList==null){
+                //should always be the case?
+                experimentList = new ArrayList<>();
+                nameToExperiment.put(name, experimentList);
+            }
+            experimentList.add(rawExperiment);
+        }
+
         List<Ms2Experiment> allExperiments = new ArrayList<>();
         for (ExperimentResult result : results) {
-            allExperiments.add(result.getExperiment());
+            MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(result.getExperiment());
+            String name = mutableMs2Experiment.getName();
+            List<Ms2Experiment> experimentList = nameToExperiment.get(name);
+            Ms2Experiment experiment2 = null;
+            if (experimentList.size()==1){
+                experiment2 = experimentList.get(0);
+            } else if (experimentList.size()>1){
+                for (Ms2Experiment experiment : experimentList) {
+                    if (Math.abs(mutableMs2Experiment.getIonMass()-experiment.getIonMass())<1e-15){
+                        experiment2 = experiment;
+                        break;
+                    }
+                }
+            }
+            if (experiment2==null){
+                LOG.error("cannot find original MS data for compound in sirius workspace: "+mutableMs2Experiment.getName());
+            } else {
+                mutableMs2Experiment.setMergedMs1Spectrum(experiment2.getMergedMs1Spectrum());
+                mutableMs2Experiment.setMs1Spectra(experiment2.getMs1Spectra());
+                mutableMs2Experiment.setMs2Spectra(experiment2.getMs2Spectra());
+            }
+            allExperiments.add(mutableMs2Experiment);
+
         }
         Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
         Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
@@ -2132,7 +2165,8 @@ public class GibbsSamplerMain {
             List<FragmentsCandidate> candidates = FragmentsCandidate.createAllCandidateInstances(trees, experiment);
 
             Collections.sort(candidates);
-            candidatesMap.put(experiment.getName(), candidates);
+            if (candidates.size() > maxCandidates) candidates = candidates.subList(0, maxCandidates);
+            if (candidates.size() > 0) candidatesMap.put(experiment.getName(), candidates);
 
         }
 
