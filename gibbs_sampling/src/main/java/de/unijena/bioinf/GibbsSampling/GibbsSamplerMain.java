@@ -1824,7 +1824,7 @@ public class GibbsSamplerMain {
             UnregardedCandidatesUpperBound unregardedCandidatesUpperBound = candidates.get(0).getAnnotationOrNull(UnregardedCandidatesUpperBound.class);
 
             if (unregardedCandidatesUpperBound==null){
-                System.err.println("Cannot create dummy node. Information missing.");
+                LOG.warn("Cannot create dummy node. Information missing.");
                 break;
             }
 
