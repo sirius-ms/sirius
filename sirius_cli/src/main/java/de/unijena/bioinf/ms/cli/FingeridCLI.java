@@ -38,7 +38,7 @@ import java.util.concurrent.ExecutionException;
 
 import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 
-public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Options> {
+public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
     static {
         CustomDatabase.customDatabases(true);
         DEFAULT_LOGGER.info("Custom DBs initialized!");

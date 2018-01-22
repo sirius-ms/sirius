@@ -6,7 +6,7 @@ import de.unijena.bioinf.fingeriddb.job.PredictorType;
 import java.io.File;
 import java.util.List;
 
-public interface FingerIdOptions extends ZodiacOptions {
+public interface FingerIdOptions extends SiriusOptions {
 
     @Option(shortName = "d", defaultValue = "all", description = "search formulas in given database: all, pubchem, bio, kegg, hmdb")
     String getDatabase();
