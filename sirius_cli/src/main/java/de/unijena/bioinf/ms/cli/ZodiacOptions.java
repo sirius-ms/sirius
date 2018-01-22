@@ -6,22 +6,16 @@ import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
 /**
  * Created by ge28quv on 22/05/17.
  */
-public interface ZodiacOptions extends SiriusOptions {
+public interface ZodiacOptions {
 
-    /////////////////////////////////////////////////
-    // run Zodiac
 
-    @Option(longName = {"zodiac"}, description = "run zodiac on a given sirius workspace.", hidden = true)
-    boolean isZodiac();
 
-    /////////////////////////////////////////////////
-
-    /*@Option(
+    @Option(
             shortName = {"s"},
             longName = {"sirius"},
             description = "Sirius output directory or workspace. This is the input for Zodiac"
     )
-    String getInput();*/
+    String getSirius();
 
     //todo @Marcus for the future this should ne replaced with the sirius input property if possible
     @Option(
@@ -32,16 +26,15 @@ public interface ZodiacOptions extends SiriusOptions {
     String getSpectraFile();
 
 
-  /*  @Option(
+    @Option(
             shortName = {"o"},
             longName = {"output"},
             description = "output directory"
     )
-    String getOutputPath();*/
+    String getOutput();
 
 
     @Option(
-//            shortName = {"h"},
             longName = {"spectral-hits"},
             description = "csv with spectral library hits",
             defaultToNull = true
@@ -100,14 +93,23 @@ public interface ZodiacOptions extends SiriusOptions {
     )
     EdgeScorings getProbabilityDistribution();
 
-    /*@Option(
+    @Option(
             longName = {"candidates"},
             description = "maximum number of candidate molecular formulas per compound to use in Zodiac. default: all",
+            defaultToNull = true
+    )
+    Integer getNumberOfCandidates();
+
+
+    @Option(
+            longName = {"processors", "cores"},
+            description = "Number of cpu cores to use. If not specified Sirius uses all available cores.",
             defaultValue = "-1"
     )
-    int getMaxNumOfCandidates();*/
+    int getNumOfCores();
 
-
+    @Option(shortName = "h", longName = "help", helpRequest = true)
+    boolean isHelp();
 
 
 }

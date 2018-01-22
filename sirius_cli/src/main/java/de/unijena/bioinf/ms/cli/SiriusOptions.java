@@ -41,6 +41,14 @@ public interface SiriusOptions {
     @Option(longName = {"sirius", "workspace"}, shortName = "w", description = "store workspace into given file, such that it can be loaded by SIRIUS GUI afterwards", defaultToNull = true)
     String getSirius();
 
+    /////////////////////////////////////////////////
+    // run Zodiac
+
+    @Option(longName = {"zodiac"}, description = "run zodiac on a given sirius workspace.", hidden = true)
+    boolean isZodiac();
+
+    /////////////////////////////////////////////////
+
     @Option
     boolean isVersion();
 
