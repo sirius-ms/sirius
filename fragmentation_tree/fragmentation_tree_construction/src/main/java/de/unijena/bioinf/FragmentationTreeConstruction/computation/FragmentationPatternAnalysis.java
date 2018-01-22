@@ -458,14 +458,27 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
         final List<MolecularFormula> pmds;
         final List<Decomposition> decomps = new ArrayList<>();
-        if (whiteset!=null && !whiteset.getFormulas().isEmpty()) {
+        if (whiteset != null && !whiteset.getFormulas().isEmpty()) {
 
             final Collection<PrecursorIonType> ionTypes;
-            if (experiment.getPrecursorIonType().isIonizationUnknown()) ionTypes = experiment.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
+            if (experiment.getPrecursorIonType().isIonizationUnknown())
+                ionTypes = experiment.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
             else ionTypes = Arrays.asList(experiment.getPrecursorIonType());
             decomps.addAll(whiteset.resolve(parentPeak.getOriginalMz(), parentDeviation, ionTypes));
             pmds = new ArrayList<>();
             for (Decomposition d : decomps) pmds.add(d.getCandidate());
+        } else if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
+            // use given ionization
+            final PrecursorIonType ionType = experiment.getPrecursorIonType();
+            final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ionType.precursorMassToNeutralMass(parentPeak.getOriginalMz()), parentDeviation, constraints);
+            pmds = new ArrayList<>();
+            for (MolecularFormula f : forms)  {
+                final MolecularFormula neutralMeasuredFormula = ionType.neutralMoleculeToMeasuredNeutralMolecule(f);
+                if (neutralMeasuredFormula.isAllPositiveOrZero()) {
+                    decomps.add(new Decomposition(neutralMeasuredFormula, ionType.getIonization() , 0d));
+                    pmds.add(neutralMeasuredFormula);
+                }
+            }
         } else {
 
             pmds = new ArrayList<>();
@@ -481,16 +494,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final List<MassToFormulaDecomposer> decomposers = new ArrayList<>();
         final List<FormulaConstraints> constraintList = new ArrayList<>();
         getDecomposersFor(pmds, constraints, decomposers, constraintList);
-
-        // add adduct to molecular formula of the ion - because the adduct might get lost during fragmentation
-        if (false){ // HÄH? Sollte doch schon so sein...
-            final MolecularFormula adduct = experiment.getPrecursorIonType().getAdduct();
-            final ListIterator<MolecularFormula> iter = pmds.listIterator();
-            while (iter.hasNext()) {
-                final MolecularFormula f = iter.next();
-                iter.set(f.add(adduct));
-            }
-        }
 
         decompositionList.set(parentPeak, new DecompositionList(decomps));
         int j = 0;
@@ -1253,13 +1256,17 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.reduction = reduction;
     }
 
-    public FGraph buildGraph(ProcessedInput input, Decomposition candidate) {
+    public FGraph buildGraphWithoutReduction(ProcessedInput input, Decomposition candidate) {
         // build Graph
         final FGraph graph = graphBuilder.fillGraph(
                 graphBuilder.addRoot(graphBuilder.initializeEmptyGraph(input),
                         input.getParentPeak(), Collections.singletonList(candidate)));
         graph.addAliasForFragmentAnnotation(ProcessedPeak.class, Peak.class);
-        return performGraphReduction(performGraphScoring(graph));
+        return performGraphScoring(graph);
+    }
+
+    public FGraph buildGraph(ProcessedInput input, Decomposition candidate) {
+        return performGraphReduction(buildGraphWithoutReduction(input,candidate));
     }
 
     public FGraph performGraphReduction(FGraph fragments, double lowerbound) {
