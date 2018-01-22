@@ -6,9 +6,24 @@ dependencies {
     compile group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
     compile group: 'de.unijena.bioinf.utils', name: 'error-reporter', version: "$error_reporter_version"
     compile group: 'com.google.classpath-explorer', name: 'classpath-explorer', version: '1.0'
+
+    //internal
+    compile group: "de.unijena.bioinf.ms", name: "fingerblast", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "confidence_score", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemdb_rest", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemdb_file", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemical_db", version: "$fingeridVersion"
+
+    compile group: "de.unijena.bioinf.ms", name: "canopus_predict", version: "$fingeridVersion"
+    compile group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
+    compile group: "net.iharder", name: "base64", version: "2.3.8"
+
+    //cdk
+    compile "org.openscience.cdk:cdk-silent:$cdk_version"
+
 }
 
-/*mainClassName = 'de.unijena.bioinf.ms.cli.SiriusApplication'
+mainClassName = 'de.unijena.bioinf.ms.cli.SiriusCLIApplication'
 project.ext.set("type", "console")
 
 
@@ -18,7 +33,7 @@ jar {
     }
 }
 
-*//*################### Windows release Stuff ################### *//*
+/*################### Windows release Stuff ################### */
 launch4j {
     mainClassName = project.mainClassName
     headerType = "$project.type"
@@ -27,7 +42,7 @@ launch4j {
     outfile = "${project.appName}.exe"
 }
 
-*//*################### Build distributions ################### *//*
+/*################### Build distributions ################### */
 task distribute { group = 'distribution' }
 distribute.dependsOn ':buildDoku'
 
@@ -41,7 +56,10 @@ distributions {
                     from("build/install/${project.name}/lib") {
                         exclude libExclude
                     }
-                    from("${project.glpkPath}/l${ar}/")
+                    from("${project.glpkPath}/l${ar}/") {
+                        include('libglpk.so.40')
+                        include('libglpk_java.so')
+                    }
                 }
 
                 into('bin') {
@@ -116,7 +134,9 @@ distributions {
                 from("build/install/${project.name}/bin") {
                     exclude("*.bat")
                 }
-                from("${project.distPath}")
+                from("${project.distPath}") {
+                    exclude('sirius-gui')
+                }
                 from("${getRootDir()}/LICENSE.txt")
             }
             into('doc') {
@@ -173,4 +193,4 @@ distributions {
         File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}").toFile()
         commandLine([command.absolutePath])
     }
-}*/
+}

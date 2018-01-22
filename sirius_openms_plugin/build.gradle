@@ -2,7 +2,7 @@ import java.nio.file.Files
 
 dependencies {
 //project
-    compile project(':fingerid_cli')
+    compile project(':sirius_cli')
 }
 
 /*################### Environment variables ################### */

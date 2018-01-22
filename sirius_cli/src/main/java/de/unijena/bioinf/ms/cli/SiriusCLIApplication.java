@@ -3,17 +3,17 @@ package de.unijena.bioinf.ms.cli;
 import de.unijena.bioinf.jjobs.JobManager;
 import org.slf4j.LoggerFactory;
 
-public class SiriusApplication {
-    public static void main(String[] args) {
+public class SiriusCLIApplication {
+    public static void main(String[] args) throws InterruptedException {
         long t = System.currentTimeMillis();
         try {
-            final ZodiacCLI<ZodiacOptions> cli = new ZodiacCLI<>();
-            cli.parseArgsAndInit(args, ZodiacOptions.class);
+            final FingeridCLI<FingerIdOptions> cli = new FingeridCLI<>();
+            cli.parseArgsAndInit(args, FingerIdOptions.class);
             cli.compute();
         } catch (Exception e) {
-            LoggerFactory.getLogger(SiriusApplication.class).error("Unkown Error!", e);
+            LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unkown Error!", e);
         } finally {
-            System.err.println("Time: " + ((double) (System.currentTimeMillis() - t)) / 1000d);
+            System.out.println("Time: " + ((double) (System.currentTimeMillis() - t)) / 1000d);
             try {
                 JobManager.shutDownAllInstances();
             } catch (InterruptedException e) {
