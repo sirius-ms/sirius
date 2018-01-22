@@ -6,7 +6,7 @@ dependencies {
 }
 
 /*################### Environment variables ################### */
-mainClassName = "de.unijena.bioinf.ms.cli.FingeridApplication"
+mainClassName = 'de.unijena.bioinf.ms.cli.SiriusCLIApplication'
 project.ext.set("type", "console")
 
 /*################### Jar build Stuff ################### */
