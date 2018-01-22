@@ -295,7 +295,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             } else {
                 exp.getMs2Spectra().add(new MutableMs2Spectrum(spec.spectrum));
             }
-            if (exp.getPrecursorIonType()==null || exp.getPrecursorIonType().isIonizationUnknown()) {
+            if (exp.getPrecursorIonType()==null || exp.getPrecursorIonType().isUnknownNoCharge()) {
                 exp.setPrecursorIonType(spec.ionType);
             }
             if (spec.inchi!=null && spec.inchi.startsWith("InChI=")) {
