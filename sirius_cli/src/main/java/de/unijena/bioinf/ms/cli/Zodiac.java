@@ -54,7 +54,7 @@ public class Zodiac {
 
     public void run() {
         maxCandidates = (options.getNumberOfCandidates() == null ? Integer.MAX_VALUE : options.getNumberOfCandidates());
-
+        Path originalSpectraPath = Paths.get(options.getSpectraFile());
         try {
             //todo For the official release zodiac should become a job an create subjobs in the jobmanager for multithreading
             int workerCount = PropertyManager.getNumberOfCores();
@@ -71,13 +71,14 @@ public class Zodiac {
             List<ExperimentResult> input = newLoad(workSpacePath.toFile());
 
             //changed
-            Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(input, maxCandidates);
+            Map<String, List<FragmentsCandidate>> candidatesMap = GibbsSamplerMain.parseMFCandidatesFromWorkspace(workSpacePath, originalSpectraPath);
+            //..parser with GibbsSamplerMain parser and use quality stuff...
 
             System.out.println("number of compounds: " + candidatesMap.size());
 
 
             if (libraryHitsFile != null)
-                GibbsSamplerMain.parseLibraryHits(libraryHitsFile, Paths.get(options.getSpectraFile()), candidatesMap);
+                GibbsSamplerMain.parseLibraryHits(libraryHitsFile, originalSpectraPath, candidatesMap);
             setKnownCompounds(candidatesMap, netSingleReactionDiffs);
 
             GibbsSamplerMain.addNotExplainableDummy(candidatesMap, maxCandidates);
@@ -134,7 +135,7 @@ public class Zodiac {
             ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
             EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
 
-
+//            GibbsParallel<FragmentsCandidate> twoPhaseGibbsSampling = new GibbsParallel<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, options.getSeparateRuns());
             TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, options.getSeparateRuns());
 
             //validate Graph
@@ -151,11 +152,12 @@ public class Zodiac {
 
             System.out.println("start gibbs sampling");
             twoPhaseGibbsSampling.run(options.getIterationSteps(), options.getBurnInSteps());
-
-
+//            twoPhaseGibbsSampling.iteration(options.getIterationSteps(), options.getBurnInSteps());
+            graph = twoPhaseGibbsSampling.getGraph(); //update, get complete graph
             Scored<FragmentsCandidate>[][] bestInitial = GibbsSamplerMain.getBestInitialAssignments(ids, candidatesMap);
 
             Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.getChosenFormulas();
+//            Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.getChosenFormulasBySampling();
 
             GibbsSamplerMain.writeZodiacOutput(ids, bestInitial, result, graph, outputPath.resolve("zodiac_summary.csv"));
             writeSpectra(ids, result, outputPath);
