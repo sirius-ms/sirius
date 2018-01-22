@@ -21,6 +21,7 @@ import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import de.unijena.bioinf.sirius.projectspace.SiriusFileReader;
 import de.unijena.bioinf.sirius.projectspace.SiriusWorkspaceReader;
 import org.slf4j.LoggerFactory;
+import oshi.SystemInfo;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -57,7 +58,8 @@ public class Zodiac {
         Path originalSpectraPath = Paths.get(options.getSpectraFile());
         try {
             //todo For the official release zodiac should become a job an create subjobs in the jobmanager for multithreading
-            int workerCount = PropertyManager.getNumberOfCores();
+//            int workerCount = PropertyManager.getNumberOfCores();
+            int workerCount = options.getNumOfCores()>0 ? options.getNumOfCores() : (new SystemInfo()).getHardware().getProcessor().getPhysicalProcessorCount()-1;
 
 //        //reactions
             Reaction[] reactions = GibbsSamplerMain.parseReactions(1);
