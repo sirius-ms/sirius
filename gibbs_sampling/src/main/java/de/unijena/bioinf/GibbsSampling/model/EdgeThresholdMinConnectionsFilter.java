@@ -12,7 +12,6 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
 
     public EdgeThresholdMinConnectionsFilter(double basicThreshold, int numberOfCandidatesWithMinConnCount, int minimumConnectionCount) {
         super(Double.NaN);
-        System.out.println("EdgeThresholdMinConnectionsFilter " + basicThreshold + " " + numberOfCandidatesWithMinConnCount + " " + minimumConnectionCount);
         if(minimumConnectionCount < 0) {
             throw new IllegalArgumentException("min connection count must be positive");
         } else if(numberOfCandidatesWithMinConnCount<0){
