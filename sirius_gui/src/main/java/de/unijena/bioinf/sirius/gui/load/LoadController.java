@@ -3,7 +3,6 @@ package de.unijena.bioinf.sirius.gui.load;
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -277,10 +276,8 @@ public class LoadController implements LoadDialogListener {
             expToModify.setIonMass(loadDialog.getParentMass());
             expToModify.setName(loadDialog.getExperimentName());
 
-            String formulaString = loadDialog.editPanel.formulaTF.getText();
-            if (formulaString != null && !formulaString.isEmpty()) {
-                //todo validate formula and show error panel instead of ignoring it
-                expToModify.getMs2Experiment().setMolecularFormula(MolecularFormula.parse(formulaString));
+            if (loadDialog.editPanel.validateFormula()) {
+                expToModify.getMs2Experiment().setMolecularFormula(loadDialog.editPanel.getMolecularFormula());
             }
         }
     }
