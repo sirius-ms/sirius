@@ -23,7 +23,8 @@ launch4j {
     jreRuntimeBits = "$project.arch"
     outfile = "${project.appName}.exe"
     jar = "../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}"
-    classPath = ["${runtimeClasspath.replace('${', '%').replace('}', '%')}", "../../../All/Sirius/lib/*"]
+
+    classPath += ["../../../All/Sirius/lib/*"] //add
 }
 
 startScripts {

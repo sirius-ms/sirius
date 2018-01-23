@@ -260,6 +260,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     final ExperimentContainer ec = compounds.next();
                     ec.setSiriusComputeState(ComputingStatus.UNCOMPUTED);
                     ec.setBestHit(null);
+                    ec.getMs2Experiment().clearAllAnnotations();
                 }
             }
         }
