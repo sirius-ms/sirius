@@ -173,11 +173,11 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
     protected void configureProgress(int from, int to, int numberOfTicks) {
         int span = to - from;
         if (numberOfTicks > span) {
-            ticksPerProgress = numberOfTicks / span;
+            ticksPerProgress = numberOfTicks / Math.max(1, span); //todo WORKAROUND: anti null devision work around
             progressPerTick = 1;
         } else {
             ticksPerProgress = 1;
-            progressPerTick = span / numberOfTicks;
+            progressPerTick = span / Math.max(1, numberOfTicks); //todo WORKAROUND: anti null devision work around
         }
         ticks.set(from * ticksPerProgress);
         nextProgress = (from + 1) * ticksPerProgress;
@@ -211,7 +211,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
                 final List<IntermediateResult> intermediateResults = new ArrayList<>();
                 final DecompositionList dlist = pinput.getAnnotationOrThrow(DecompositionList.class);
                 configureProgress(0, 20, n);
-                if (dlist.getDecompositions().size() > 100 && numberOfResultsToKeep < dlist.getDecompositions().size()/4) {
+                if (dlist.getDecompositions().size() > 100 && numberOfResultsToKeep < dlist.getDecompositions().size() / 4) {
                     final List<HeuristicJob> heuristics = new ArrayList<>();
                     for (final Decomposition formula : dlist.getDecompositions()) {
                         final HeuristicJob heuristicJob = new HeuristicJob(formula);
@@ -414,8 +414,8 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
             Collections.sort(exactResults, Collections.reverseOrder());
         } else {
             Collections.sort(exactResults, Collections.reverseOrder());
-            for (int i=0; i < Math.min(numberOfResultsToKeep, exactResults.size()); ++i) {
-                analyzer.addTreeAnnotations(exactResults.get(i).graph,exactResults.get(i).tree);
+            for (int i = 0; i < Math.min(numberOfResultsToKeep, exactResults.size()); ++i) {
+                analyzer.addTreeAnnotations(exactResults.get(i).graph, exactResults.get(i).tree);
             }
         }
         Collections.sort(exactResults, Collections.reverseOrder());
@@ -427,7 +427,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
                 LoggerFactory.getLogger(TreeComputationInstance.class).warn("Score of " + exactResults.get(m).decomposition.toString() + " differs significantly from recalculated score: " + score + " vs " + exactResults.get(m).tree.getTreeWeight() + " with tree size is " + exactResults.get(m).tree.getFragmentAnnotationOrThrow(Score.class).get(exactResults.get(m).tree.getFragmentAt(1)).get("TreeSizeScorer") + " and " + exactResults.get(m).tree.getAnnotationOrThrow(ProcessedInput.class).getAnnotationOrThrow(TreeSizeScorer.TreeSizeBonus.class).score + " sort key is score " + exactResults.get(m).score);
                 analyzer.recalculateScores(exactResults.get(m).tree);
             } else if (Math.abs(score - exactResults.get(m).tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) > 0.1) {
-                LoggerFactory.getLogger(TreeComputationInstance.class).warn("Score of tree " + exactResults.get(m).decomposition.toString() + " differs significantly from recalculated score: " + score + " vs " + exactResults.get(m).tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()  + " with tree size is " + exactResults.get(m).tree.getFragmentAnnotationOrThrow(Score.class).get(exactResults.get(m).tree.getFragmentAt(1) ).get("TreeSizeScorer") + " and " + exactResults.get(m).tree.getAnnotationOrThrow(ProcessedInput.class).getAnnotationOrThrow(TreeSizeScorer.TreeSizeBonus.class).score + " sort key is score " + exactResults.get(m).score);
+                LoggerFactory.getLogger(TreeComputationInstance.class).warn("Score of tree " + exactResults.get(m).decomposition.toString() + " differs significantly from recalculated score: " + score + " vs " + exactResults.get(m).tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore() + " with tree size is " + exactResults.get(m).tree.getFragmentAnnotationOrThrow(Score.class).get(exactResults.get(m).tree.getFragmentAt(1)).get("TreeSizeScorer") + " and " + exactResults.get(m).tree.getAnnotationOrThrow(ProcessedInput.class).getAnnotationOrThrow(TreeSizeScorer.TreeSizeBonus.class).score + " sort key is score " + exactResults.get(m).score);
                 analyzer.recalculateScores(exactResults.get(m).tree);
             }
             finalResults.add(exactResults.get(m).tree);
@@ -439,8 +439,8 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
 
     private void checkTimeout() {
         final long time = System.currentTimeMillis();
-        final int elapsedTime = (int)((time-startTime)/1000);
-        restTime = Math.min(restTime,secondsPerInstance-elapsedTime);
+        final int elapsedTime = (int) ((time - startTime) / 1000);
+        restTime = Math.min(restTime, secondsPerInstance - elapsedTime);
         if (restTime <= 0) throw new TimeoutException();
     }
 
