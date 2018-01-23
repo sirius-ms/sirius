@@ -134,6 +134,9 @@ public interface SiriusOptions {
     @Option(longName = "maxmz", description = "Just consider compounds with a precursor mz lower or equal this maximum mz. All other compounds in the input file are ignored.", defaultToNull = true)
     Double getMaxMz();
 
+    @Option(longName = "mostintense-ms2", description = "Only use the fragmentation spectrum with the most intense precursor peak (for each compound).")
+    boolean isMostIntenseMs2();
+
 
     //technical stuff
     @Option(
