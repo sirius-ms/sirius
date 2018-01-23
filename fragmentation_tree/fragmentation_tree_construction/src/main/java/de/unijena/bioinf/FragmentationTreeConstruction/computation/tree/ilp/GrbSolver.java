@@ -66,6 +66,7 @@ public class GrbSolver extends AbstractSolver{
 
     @Override
     protected void defineVariablesWithStartValues(int[] usedEdgeIds) throws Exception {
+        defineVariables();
         final double[] values = new double[losses.size()];
         for (int index : usedEdgeIds) values[index] = 1d;
         model.set(GRB.DoubleAttr.Start, variables, values);
