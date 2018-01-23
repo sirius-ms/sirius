@@ -73,7 +73,7 @@ public class ExtendedCriticalPathHeuristic {
         return buildSolution();
     }
 
-    public FTree buildSolution() {
+    protected FTree buildSolution() {
         if (numberOfSelectedEdges==0) {
             Fragment bestFrag = null;
             for (Fragment f : graph.getRoot().getChildren()) {
@@ -104,7 +104,7 @@ public class ExtendedCriticalPathHeuristic {
     /*
      SIMPLE CASE: Graph is layered (i.e. no isotope peaks!)
      */
-    public boolean findCriticalPaths() {
+    protected boolean findCriticalPaths() {
         //System.out.println(".....");
         //Arrays.fill(criticalPaths, Double.NaN);
         double bestPathScore = 0d;
@@ -128,7 +128,7 @@ public class ExtendedCriticalPathHeuristic {
         return bestLoss!=null;
     }
 
-    private int backtrackBestPath(Loss loss,int maxColor) {
+    protected int backtrackBestPath(Loss loss,int maxColor) {
         usedEdges[numberOfSelectedEdges++] = loss;
         //System.out.println("ADD " + loss + " WITH WEIGHT " + loss.getWeight() );
         assert usedColors.get(loss.getTarget().getColor())==false;
@@ -156,7 +156,7 @@ public class ExtendedCriticalPathHeuristic {
         return maxColor;
     }
 
-    private double recomputeCriticalScore(int vertexId) {
+    protected double recomputeCriticalScore(int vertexId) {
         if (!Double.isNaN(criticalPaths[vertexId]))
             return criticalPaths[vertexId];
         final Fragment u = graph.getFragmentAt(vertexId);
@@ -172,7 +172,7 @@ public class ExtendedCriticalPathHeuristic {
     }
 
 
-    private void addSeletableEdgesFor(Fragment root) {
+    protected void addSeletableEdgesFor(Fragment root) {
         for (int i=0, n = root.getOutDegree(); i < n; ++i) {
             final Loss l = root.getOutgoingEdge(i);
             if (!usedColors.get(l.getTarget().getColor())) {
@@ -197,7 +197,7 @@ public class ExtendedCriticalPathHeuristic {
         Arrays.sort(usedEdges, 0, numberOfSelectedEdges, new Comparator<Loss>() {
             @Override
             public int compare(Loss o1, Loss o2) {
-                return o1.getTarget().getColor() - o2.getTarget().getColor();
+                return o2.getTarget().getColor() - o1.getTarget().getColor();
             }
         });
         /*
@@ -239,7 +239,7 @@ public class ExtendedCriticalPathHeuristic {
 
     }
 
-    private Loss findMax(TIntObjectHashMap<ArrayList<Loss>> map) {
+    protected Loss findMax(TIntObjectHashMap<ArrayList<Loss>> map) {
         Loss[] maxLoss = new Loss[1];
         map.forEachValue((x)->{
             for (Loss l : x) {
@@ -265,7 +265,4 @@ public class ExtendedCriticalPathHeuristic {
             return true;
         } else return false;
     }
-
-
-
 }

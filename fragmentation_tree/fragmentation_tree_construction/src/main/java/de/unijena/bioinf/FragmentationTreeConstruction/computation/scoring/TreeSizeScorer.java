@@ -40,10 +40,12 @@ public class TreeSizeScorer implements PeakScorer {
         // fast replace of peak scores. Dirty hack. be careful what you are doing!
         final Scoring scoring = processedInput.getAnnotationOrThrow(Scoring.class);
         final TreeSizeBonus oldBonus = processedInput.getAnnotation(TreeSizeBonus.class, defaultBonus);
-        final double[] xs = scoring.getPeakScores();
-        final double diff = newBonus.score - oldBonus.score;
-        for (int i=0, n = xs.length-1; i<n; ++i) {
-            xs[i] += diff;
+        if (Math.abs(oldBonus.score-newBonus.score) > 1e-12) {
+            final double[] xs = scoring.getPeakScores();
+            final double diff = newBonus.score - oldBonus.score;
+            for (int i=0, n = xs.length-1; i<n; ++i) {
+                xs[i] += diff;
+            }
         }
         processedInput.setAnnotation(TreeSizeBonus.class, newBonus);
 

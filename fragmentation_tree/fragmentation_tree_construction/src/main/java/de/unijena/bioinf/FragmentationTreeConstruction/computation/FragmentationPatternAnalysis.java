@@ -1090,6 +1090,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // we have to completely rescore the input...
         final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));
         pin.setAnnotation(DecompositionList.class, l);
+        performDecomposition(pin);
         performPeakScoring(pin);
         FGraph graph = buildGraph(pin, l.getDecompositions().get(0));
         graph.addAnnotation(SpectralRecalibration.class, rec);

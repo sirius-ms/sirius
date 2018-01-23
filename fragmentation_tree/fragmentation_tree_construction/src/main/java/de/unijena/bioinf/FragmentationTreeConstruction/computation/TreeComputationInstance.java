@@ -11,7 +11,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.jjobs.MasterJJob;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +18,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.FinalResult> {
+public class TreeComputationInstance extends AbstractTreeComputationInstance {
     //todo should we remove subjobs if they are finished?
     //todo we proof for cancellation??
     protected final JobManager jobManager;
@@ -38,7 +37,7 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
     protected int restTime, secondsPerInstance, secondsPerTree;
 
     public TreeComputationInstance(JobManager manager, FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep) {
-        super(JJob.JobType.CPU);
+        super();
         this.jobManager = manager;
         this.analyzer = analyzer;
         this.experiment = input;
@@ -491,10 +490,10 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
         }
     }
 
-    private static final double MAX_TREESIZE_INCREASE = 0;//3d;
+    private static final double MAX_TREESIZE_INCREASE = 3d;
     private static final double TREE_SIZE_INCREASE = 1d;
-    private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 0;//15;
-    private static final double MIN_EXPLAINED_INTENSITY = 0d;//0.7d;
+    private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;
+    private static final double MIN_EXPLAINED_INTENSITY = 0.7d;
     private static final int MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY = 5;
 
     private boolean checkForTreeQuality(List<ExactResult> results) {
@@ -578,6 +577,7 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
         // we have to completely rescore the input...
         final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));
         pin.setAnnotation(DecompositionList.class, l);
+        analyzer.performDecomposition(pin);
         analyzer.performPeakScoring(pin);
         FGraph graph = analyzer.buildGraph(pin, l.getDecompositions().get(0));
         graph.addAnnotation(SpectralRecalibration.class, rec);
@@ -607,25 +607,6 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
         @Override
         public int compareTo(IntermediateResult o) {
             return Double.compare(heuristicScore, o.heuristicScore);
-        }
-    }
-
-    public final static class FinalResult {
-        protected final boolean canceledDueToLowScore;
-        protected final List<FTree> results;
-
-        public FinalResult(List<FTree> results) {
-            this.canceledDueToLowScore = false;
-            this.results = results;
-        }
-
-        public FinalResult() {
-            this.canceledDueToLowScore = true;
-            this.results = null;
-        }
-
-        public List<FTree> getResults() {
-            return results;
         }
     }
 

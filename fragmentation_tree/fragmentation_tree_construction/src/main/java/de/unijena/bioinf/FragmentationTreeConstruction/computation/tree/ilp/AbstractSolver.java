@@ -223,10 +223,10 @@ abstract public class AbstractSolver {
         }
 
         forEachFragment:
-        for (int i = 0; i < this.graph.numberOfVertices(); ++i) {
+        for (int i = 1; i < this.graph.numberOfVertices(); ++i) {
             final Fragment fragment = this.graph.getFragmentAt(i);
             final Fragment treeFragment = fragmentMap.get(fragment.getFormula());
-            if (treeFragment != null) {
+            if (treeFragment != null && !treeFragment.isRoot()) {
                 final MolecularFormula lf = treeFragment.getIncomingEdge().getFormula();
                 // find corresponding loss
                 forEachLoss:

@@ -31,6 +31,8 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.UnregardedCandidatesUpperBound;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.AbstractTreeComputationInstance;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
@@ -97,7 +99,7 @@ public class Sirius {
 
         @Override
         protected List<IdentificationResult> compute() throws Exception {
-            final TreeComputationInstance instance = new TreeComputationInstance(jobManager(), getMs2Analyzer(), experiment, numberOfResultsToKeep);
+            final FasterTreeComputationInstance instance = new FasterTreeComputationInstance(jobManager(), getMs2Analyzer(), experiment, numberOfResultsToKeep);
             instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
@@ -107,7 +109,7 @@ public class Sirius {
             final ProcessedInput pinput = instance.validateInput();
             performMs1Analysis(instance, IsotopePatternHandling.both);
             submitSubJob(instance);
-            TreeComputationInstance.FinalResult fr = instance.awaitResult();
+            FasterTreeComputationInstance.FinalResult fr = instance.awaitResult();
             /*try {
                 fr = instance.awaitResult();
             } catch (ExecutionException e) {
@@ -121,7 +123,7 @@ public class Sirius {
             return r;
         }
 
-        private List<IdentificationResult> createIdentificationResults(TreeComputationInstance.FinalResult fr) {
+        private List<IdentificationResult> createIdentificationResults(AbstractTreeComputationInstance.FinalResult fr) {
             final List<IdentificationResult> irs = new ArrayList<>();
             int k = 0;
             for (FTree tree : fr.getResults()) {
@@ -319,6 +321,13 @@ public class Sirius {
     }
 
     /**
+     * for internal use to easily switch and experiment with implementation details
+     */
+    protected AbstractTreeComputationInstance getTreeComputationImplementation(JobManager manager, FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep) {
+        return new TreeComputationInstance(manager, analyzer, input, numberOfResultsToKeep);
+    }
+
+    /**
      * try to guess ionization from MS1. multiple  suggestions possible. In doubt [M]+ is ignored (cannot distinguish from isotope pattern)!
      *
      * @param experiment
@@ -391,11 +400,11 @@ public class Sirius {
      * @return a list of identified molecular formulas together with their tree
      */
     public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates) {
-        final TreeComputationInstance instance = new TreeComputationInstance(jobManager, getMs2Analyzer(), uexperiment, numberOfCandidates);
+        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(jobManager, getMs2Analyzer(), uexperiment, numberOfCandidates);
         final ProcessedInput pinput = instance.validateInput();
         performMs1Analysis(instance, IsotopePatternHandling.both);
         jobManager.submitSubJob(instance);
-        TreeComputationInstance.FinalResult fr = instance.takeResult();
+        AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = new ArrayList<>();
         int k = 0;
         for (FTree tree : fr.getResults()) {
@@ -423,13 +432,13 @@ public class Sirius {
      */
     @Deprecated
     public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope, Set<MolecularFormula> whiteList) {
-        final TreeComputationInstance instance = new TreeComputationInstance(jobManager, getMs2Analyzer(), uexperiment, numberOfCandidates);
+        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(jobManager, getMs2Analyzer(), uexperiment, numberOfCandidates);
         final ProcessedInput pinput = instance.validateInput();
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
         if (whiteList != null) pinput.setAnnotation(Whiteset.class, new Whiteset(whiteList));
         performMs1Analysis(instance, deisotope);
         jobManager.submitSubJob(instance);
-        TreeComputationInstance.FinalResult fr = instance.takeResult();
+        AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = new ArrayList<>();
         int k = 0;
         for (FTree tree : fr.getResults()) {
@@ -473,13 +482,13 @@ public class Sirius {
      * @return a list of identified molecular formulas together with their tree
      */
     public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope, FormulaConstraints formulaConstraints) {
-        final TreeComputationInstance instance = new TreeComputationInstance(jobManager, getMs2Analyzer(), uexperiment, numberOfCandidates);
+        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(jobManager, getMs2Analyzer(), uexperiment, numberOfCandidates);
         final ProcessedInput pinput = instance.validateInput();
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
         if (formulaConstraints != null) pinput.getMeasurementProfile().setFormulaConstraints(formulaConstraints);
         performMs1Analysis(instance, deisotope);
         jobManager.submitSubJob(instance);
-        TreeComputationInstance.FinalResult fr = instance.takeResult();
+        AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = new ArrayList<>();
         int k = 0;
         for (FTree tree : fr.getResults()) {
@@ -507,7 +516,7 @@ public class Sirius {
      * @return A single instance of IdentificationResult containing the computed fragmentation tree
      */
     public IdentificationResult compute(Ms2Experiment experiment, MolecularFormula formula, boolean recalibrating) {
-        final TreeComputationInstance instance = new TreeComputationInstance(jobManager, getMs2Analyzer(), experiment, 1);
+        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(jobManager, getMs2Analyzer(), experiment, 1);
         final ProcessedInput pinput = instance.validateInput();
         pinput.setAnnotation(Whiteset.class, Whiteset.of(formula));
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
@@ -981,7 +990,7 @@ public class Sirius {
     /*
     TODO: We have to move this at some point back into the FragmentationPatternAnalysis pipeline -_-
      */
-    protected boolean performMs1Analysis(TreeComputationInstance instance, IsotopePatternHandling handling) {
+    protected boolean performMs1Analysis(AbstractTreeComputationInstance instance, IsotopePatternHandling handling) {
         if (handling == IsotopePatternHandling.omit) return false;
         final ProcessedInput input = instance.validateInput();
         final ExtractedIsotopePattern pattern = extractedIsotopePattern(input);
