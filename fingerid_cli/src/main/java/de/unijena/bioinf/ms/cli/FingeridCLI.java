@@ -148,6 +148,9 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
 
     protected ExperimentResult createExperimentResult(BufferedJJobSubmitter<Instance>.JobContainer jc, Sirius.SiriusIdentificationJob siriusJob, List<IdentificationResult> results) {
         FingerIDJJob fid = jc.getJob(FingerIDJJob.class);
+        if (fid==null) {
+            return new ExperimentResult(siriusJob.getExperiment(), results);
+        }
         fid.takeResult();
         final List<IdentificationResult> total = new ArrayList<>(results);
         total.addAll(fid.getAddedIdentificationResults());
