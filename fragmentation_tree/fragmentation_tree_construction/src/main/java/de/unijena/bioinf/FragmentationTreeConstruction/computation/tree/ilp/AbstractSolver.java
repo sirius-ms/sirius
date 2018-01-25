@@ -65,6 +65,9 @@ abstract public class AbstractSolver {
     }
 
     public TreeBuilder.Result compute() {
+        if (graph.numberOfEdges() == 1)
+            return new TreeBuilder.Result(buildSolution(graph.getRoot().getOutgoingEdge(0).getWeight(), new boolean[]{true}), true, TreeBuilder.AbortReason.COMPUTATION_CORRECT);
+        
         prepareSolver();
         return solve();
     }
@@ -101,6 +104,7 @@ abstract public class AbstractSolver {
             setConstraints();
             setObjective();
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException(String.valueOf(e.getMessage()), e);
         }
     }
@@ -164,9 +168,6 @@ abstract public class AbstractSolver {
      * @return
      */
     protected TreeBuilder.Result solve() {
-        if (graph.numberOfEdges() == 1) {
-            return new TreeBuilder.Result(buildSolution(graph.getRoot().getOutgoingEdge(0).getWeight(), new boolean[]{true}), true, TreeBuilder.AbortReason.COMPUTATION_CORRECT);
-        }
         try {
             // get optimal solution (score) if existing
             TreeBuilder.AbortReason c = solveMIP();

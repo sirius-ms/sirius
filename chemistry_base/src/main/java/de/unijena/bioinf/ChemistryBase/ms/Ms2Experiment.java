@@ -149,6 +149,10 @@ public interface Ms2Experiment extends Cloneable {
      */
     <T> Object clearAnnotation(Class<T> klass);
 
+    /**
+     * Remove all annotations from this experiment
+     */
+    void clearAllAnnotations();
 
     /**
      * Allow cloning/copying of Ms2Experiments

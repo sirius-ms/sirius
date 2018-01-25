@@ -12,5 +12,7 @@ public interface ScoreProbabilityDistribution extends Cloneable {
 
     double toLogPvalue(double score);
 
+    double cdf(double score);
+
     ScoreProbabilityDistribution clone();
 }

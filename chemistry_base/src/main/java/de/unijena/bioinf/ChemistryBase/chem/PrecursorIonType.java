@@ -179,6 +179,11 @@ public class PrecursorIonType {
 
     }
 
+    public boolean isUnknownNoCharge() {
+        return isIonizationUnknown() && getCharge() == 0;
+
+    }
+
     public int getCharge() {
         return ionization.getCharge();
     }

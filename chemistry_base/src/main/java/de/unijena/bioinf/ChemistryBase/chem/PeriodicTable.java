@@ -891,6 +891,15 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * [M+H]+
      */
     public PrecursorIonType ionByName(String name) {
+        PrecursorIonType re = ionByNameFromTableOrNull(name);
+        return re != null ? re : parseIonType(name);
+    }
+
+    public boolean hasIon(String name) {
+        return ionByNameFromTableOrNull(name) != null;
+    }
+
+    private PrecursorIonType ionByNameFromTableOrNull(String name) {
         if (name == null || name.isEmpty()) return PrecursorIonType.unknown();
 
         name = canonicalizeIonName(name);
@@ -899,12 +908,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         if (name.equals(Charge.NEGATIVE_CHARGE) || name.equals("M+?-")) return PrecursorIonType.unknownNegative();
 
         if (knownIonTypes.containsKey(name)) return knownIonTypes.get(name);
-        return parseIonType(name);
-    }
-
-    public boolean hasIon(String name) {
-        name = canonicalizeIonName(name);
-        return knownIonTypes.containsKey(name);
+        return null;
     }
 
 

@@ -35,7 +35,12 @@ public class EmpiricalScoreProbabilityDistribution implements ScoreProbabilityDi
 
     @Override
     public double toLogPvalue(double score) {
-        return Math.log(toLogPvalue(score));
+        return Math.log(toPvalue(score));
+    }
+
+    @Override
+    public double cdf(double score) {
+        return 1-toPvalue(score);
     }
 
     public ScoreProbabilityDistribution clone() {
