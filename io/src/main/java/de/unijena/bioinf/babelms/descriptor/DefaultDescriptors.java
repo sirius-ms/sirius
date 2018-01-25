@@ -34,7 +34,7 @@ class DefaultDescriptors {
 
         registry.put(FTree.class, IonTreeUtils.Type.class, new IonTypeDescriptor());
 
-        registry.put(FTree.class, UnregardedCandidatesUpperBound.class, new UnregardedCandidatesUpperBoundDescriptor());
+        registry.put(FTree.class, UnconsideredCandidatesUpperBound.class, new UnregardedCandidatesUpperBoundDescriptor());
     }
 
     private static class IonizationDescriptor implements Descriptor<Ionization> {
@@ -509,28 +509,28 @@ class DefaultDescriptors {
         }
     }
 
-    private static class UnregardedCandidatesUpperBoundDescriptor implements Descriptor<UnregardedCandidatesUpperBound> {
+    private static class UnregardedCandidatesUpperBoundDescriptor implements Descriptor<UnconsideredCandidatesUpperBound> {
 
         @Override
         public String[] getKeywords() {
-            return new String[]{"numberOfUnregardedCandidates", "lowestConsideredCandidateScore"};
+            return new String[]{"numberOfUnconsideredCandidates", "lowestConsideredCandidateScore"};
         }
 
         @Override
-        public Class<UnregardedCandidatesUpperBound> getAnnotationClass() {
-            return UnregardedCandidatesUpperBound.class;
+        public Class<UnconsideredCandidatesUpperBound> getAnnotationClass() {
+            return UnconsideredCandidatesUpperBound.class;
         }
 
         @Override
-        public <G, D, L> UnregardedCandidatesUpperBound read(DataDocument<G, D, L> document, D dictionary) {
-            final int numberOfUnregardedCandidates = (int)document.getIntFromDictionary(dictionary, "numberOfUnregardedCandidates");
+        public <G, D, L> UnconsideredCandidatesUpperBound read(DataDocument<G, D, L> document, D dictionary) {
+            final int numberOfUnconsideredCandidates = (int)document.getIntFromDictionary(dictionary, "numberOfUnconsideredCandidates");
             final double lowestConsideredCandidateScore = document.getDoubleFromDictionary(dictionary, "lowestConsideredCandidateScore");
-            return new UnregardedCandidatesUpperBound(numberOfUnregardedCandidates, lowestConsideredCandidateScore);
+            return new UnconsideredCandidatesUpperBound(numberOfUnconsideredCandidates, lowestConsideredCandidateScore);
         }
 
         @Override
-        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, UnregardedCandidatesUpperBound annotation) {
-            document.addToDictionary(dictionary, "numberOfUnregardedCandidates", annotation.getNumberOfUnregardedCandidates());
+        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, UnconsideredCandidatesUpperBound annotation) {
+            document.addToDictionary(dictionary, "numberOfUnconsideredCandidates", annotation.getNumberOfUnconsideredCandidates());
             document.addToDictionary(dictionary, "lowestConsideredCandidateScore", annotation.getLowestConsideredCandidateScore());
         }
     }
