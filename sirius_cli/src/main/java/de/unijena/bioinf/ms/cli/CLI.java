@@ -574,14 +574,14 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                     Logger.getLogger(outerClassName).warning(message);
                 }
             });
-            if (options.getElements() == null) {
-                // autodetect and use default set
-                ms1Prof.setFormulaConstraints(getDefaultElementSet(options));
-                ms2Prof.setFormulaConstraints(getDefaultElementSet(options));
-            } else {
-                ms2Prof.setFormulaConstraints(options.getElements());
-                ms1Prof.setFormulaConstraints(options.getElements());
-            }
+//            if (options.getElements() == null) {
+//                // autodetect and use default set
+//                ms1Prof.setFormulaConstraints(getDefaultElementSet(options));
+//                ms2Prof.setFormulaConstraints(getDefaultElementSet(options));
+//            } else {
+//                ms2Prof.setFormulaConstraints(options.getElements());
+//                ms1Prof.setFormulaConstraints(options.getElements());
+//            }
 
             if (options.getMedianNoise() != null) {
                 ms2Prof.setMedianNoiseIntensity(options.getMedianNoise());
