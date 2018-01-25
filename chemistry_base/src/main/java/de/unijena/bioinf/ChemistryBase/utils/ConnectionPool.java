@@ -117,7 +117,12 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
                 size.decrementAndGet();
             }
         }
-        noFreeConnectionsLeft.signalAll(); // we might get new capacity free
+        connectionLock.lock();
+        try {
+            noFreeConnectionsLeft.signalAll(); // we might get new capacity free
+        } finally {
+            connectionLock.unlock();
+        }
     }
 
     /**
@@ -134,7 +139,12 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
             }
         }
         freeConnections.addAll(refreshedConnections);
-        noFreeConnectionsLeft.signalAll();
+        connectionLock.lock();
+        try {
+            noFreeConnectionsLeft.signalAll(); // we might get new capacity free
+        } finally {
+            connectionLock.unlock();
+        }
     }
 
     private PooledConnection<T> waitForNewConnectionComesIn() throws InterruptedException, IOException {
@@ -220,7 +230,12 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
         while (!freeConnections.isEmpty()) {
             connector.close(freeConnections.poll());
         }
-        noFreeConnectionsLeft.signalAll();
+        connectionLock.lock();
+        try {
+            noFreeConnectionsLeft.signalAll(); // we might get new capacity free
+        } finally {
+            connectionLock.unlock();
+        }
     }
 
     public ConnectionPool<T> newSharedConnectionPool() {
