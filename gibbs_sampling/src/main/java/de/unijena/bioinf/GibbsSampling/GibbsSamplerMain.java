@@ -6,6 +6,9 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.GibbsSampling.model.distributions.*;
 import de.unijena.bioinf.GibbsSampling.model.scorer.*;
@@ -86,6 +89,10 @@ public class GibbsSamplerMain {
     }
 
     public static void main(String[] args) throws IOException {
+        if (args.length>0 && args[0].equalsIgnoreCase("--testIonization")){
+            testIonization(Paths.get(args[1]));
+            return;
+        }
         GibbsSamplerMain main = new GibbsSamplerMain();
         if(args.length != 0 && !args[0].equals("--help") && !args[0].equals("-h")) {
             GibbsSamplerOptions opts = CliFactory.createCli(GibbsSamplerOptions.class).parseArguments(args);
@@ -186,6 +193,114 @@ public class GibbsSamplerMain {
         } else {
             System.out.println(CliFactory.createCli(GibbsSamplerOptions.class).getHelpMessage());
         }
+    }
+
+    private static void testIonization(Path mgf) throws IOException {
+        final MsExperimentParser parser = new MsExperimentParser();
+        List<Ms2Experiment> allExperiments = parser.getParser(mgf.toFile()).parseFromFile(mgf.toFile());
+
+        Deviation deviation = new Deviation(10);
+        String[] ions = new String[]{"[M+H]+", "[M+K]+", "[M+Na]+"};
+        PrecursorIonType[] ionTypes = new PrecursorIonType[ions.length];
+        for (int i = 0; i < ionTypes.length; i++) {
+            ionTypes[i] = PrecursorIonType.getPrecursorIonType(ions[i]);
+
+        }
+
+        for (Ms2Experiment experiment : allExperiments) {
+            if (experiment.getMs1Spectra().size()==0) {
+                System.err.println("no MS1 for "+experiment.getName());
+                continue;
+            }
+            double precursorMass = experiment.getIonMass();
+            int mostIntensiveIdx = -1;
+            double maxIntensity = -1d;
+            int pos = -1;
+            //one ms1 corresponds to one ms2. we take ms2 with most intense ms1 precursor peak
+            for (Spectrum<Peak> spectrum : experiment.getMs1Spectra()) {
+                ++pos;
+                Deviation dev = new Deviation(100);
+                int idx = Spectrums.mostIntensivePeakWithin(spectrum, precursorMass, dev);
+                if (idx<0) continue;
+                double intensity = spectrum.getIntensityAt(idx);
+                if (intensity>maxIntensity){
+                    maxIntensity = intensity;
+                    mostIntensiveIdx = pos;
+                }
+            }
+
+            if (mostIntensiveIdx<0){
+                System.err.println("no precursor peak for "+experiment.getName());
+            }
+
+            Spectrum<Peak> ms1 = experiment.getMs1Spectra().get(mostIntensiveIdx);
+
+            SimpleMutableSpectrum mutableSpectrum = new SimpleMutableSpectrum(ms1);
+            Spectrums.normalizeToMax(mutableSpectrum, 100d);
+            Spectrums.applyBaseline(mutableSpectrum, 5d);
+
+            PrecursorIonType[] guessed = Spectrums.guessIonization(mutableSpectrum, experiment.getIonMass(), deviation, ionTypes);
+            if (guessed==null){
+                System.out.println(experiment.getName()+"\t"+"unknown");
+            } else {
+                System.out.print(experiment.getName());
+                for (PrecursorIonType precursorIonType : guessed) {
+                    System.out.print("\t"+precursorIonType.toString());
+                }
+                System.out.println();
+            }
+
+        }
+
+    }
+
+    protected void onlyKeepMostIntenseMS2(MutableMs2Experiment experiment){
+        if (experiment.getMs2Spectra().size()==0) return;
+        double precursorMass = experiment.getIonMass();
+        int mostIntensiveIdx = -1;
+        double maxIntensity = -1d;
+        int pos = -1;
+        if (experiment.getMs1Spectra().size()==experiment.getMs2Spectra().size()){
+            //one ms1 corresponds to one ms2. we take ms2 with most intense ms1 precursor peak
+            for (Spectrum<Peak> spectrum : experiment.getMs1Spectra()) {
+                ++pos;
+                Deviation dev = new Deviation(100);
+                int idx = Spectrums.mostIntensivePeakWithin(spectrum, precursorMass, dev);
+                if (idx<0) continue;
+                double intensity = spectrum.getIntensityAt(idx);
+                if (intensity>maxIntensity){
+                    maxIntensity = intensity;
+                    mostIntensiveIdx = pos;
+                }
+            }
+        }
+        if (mostIntensiveIdx<0){
+            //take ms2 with highest summed intensity
+            pos = -1;
+            for (Spectrum<Peak> spectrum : experiment.getMs2Spectra()) {
+                ++pos;
+                final int n = spectrum.size();
+                double sumIntensity = 0d;
+                for (int i = 0; i < n; ++i) {
+                    sumIntensity += spectrum.getIntensityAt(i);
+                }
+                if (sumIntensity>maxIntensity){
+                    maxIntensity = sumIntensity;
+                    mostIntensiveIdx = pos;
+                }
+            }
+        }
+
+        List<SimpleSpectrum> ms1List = new ArrayList<>();
+        List<MutableMs2Spectrum> ms2List = new ArrayList<>();
+        if (experiment.getMs1Spectra().size()==experiment.getMs2Spectra().size()){
+            ms1List.add(experiment.getMs1Spectra().get(mostIntensiveIdx));
+        } else {
+            ms1List.addAll(experiment.getMs1Spectra());
+        }
+        ms2List.add(experiment.getMs2Spectra().get(mostIntensiveIdx));
+        experiment.setMs1Spectra(ms1List);
+        experiment.setMs2Spectra(ms2List);
     }
 
     private void evalZodiacOutput(Path workspace, Path zodiacSummary, Path mgfFile, Path libraryHitsPath) throws IOException {
