@@ -85,9 +85,9 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             candidate.addAnnotation(MolecularFormula.class, formula);
             candidate.addAnnotation(PrecursorIonType.class, ionType);
             candidate.addAnnotation(FTree.class, tree);
-            UnregardedCandidatesUpperBound unregardedCandidatesUpperBound = tree.getAnnotationOrNull(UnregardedCandidatesUpperBound.class);
-            if (unregardedCandidatesUpperBound!=null) {
-                candidate.addAnnotation(UnregardedCandidatesUpperBound.class, unregardedCandidatesUpperBound);
+            UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = tree.getAnnotationOrNull(UnconsideredCandidatesUpperBound.class);
+            if (unconsideredCandidatesUpperBound !=null) {
+                candidate.addAnnotation(UnconsideredCandidatesUpperBound.class, unconsideredCandidatesUpperBound);
             }
 
 
