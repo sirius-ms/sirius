@@ -25,10 +25,6 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecular
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
-import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -463,11 +459,11 @@ public class Sirius {
         for (IdentificationResult identificationResult : identificationResults) {
             FTree tree = identificationResult.getStandardTree();
             FTree beautifulTree = identificationResult.getBeautifulTree();
-            UnregardedCandidatesUpperBound unregardedCandidatesUpperBound = new UnregardedCandidatesUpperBound(numberOfUnconsideredCandidates, lowestConsideredCandidatesScore);
+            UnconsideredCandidatesUpperBound unregardedCandidatesUpperBound = new UnconsideredCandidatesUpperBound(numberOfUnconsideredCandidates, lowestConsideredCandidatesScore);
 
-            tree.addAnnotation(UnregardedCandidatesUpperBound.class, unregardedCandidatesUpperBound);
+            tree.addAnnotation(UnconsideredCandidatesUpperBound.class, unregardedCandidatesUpperBound);
             if (beautifulTree != null)
-                beautifulTree.addAnnotation(UnregardedCandidatesUpperBound.class, unregardedCandidatesUpperBound);
+                beautifulTree.addAnnotation(UnconsideredCandidatesUpperBound.class, unregardedCandidatesUpperBound);
         }
     }
 
