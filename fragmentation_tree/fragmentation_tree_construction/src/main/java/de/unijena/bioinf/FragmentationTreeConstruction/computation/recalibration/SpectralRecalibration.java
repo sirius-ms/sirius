@@ -1,10 +1,12 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration;
 
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.ft.RecalibrationFunction;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Peak;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 public class SpectralRecalibration {
 
@@ -54,4 +56,12 @@ public class SpectralRecalibration {
     }
 
 
+    public RecalibrationFunction toPolynomial() {
+        final UnivariateFunction f = getRecalibrationFunction();
+        if (f instanceof PolynomialFunction)
+            return new RecalibrationFunction(((PolynomialFunction) f).getCoefficients());
+        else if (f instanceof Identity)
+            return RecalibrationFunction.identity();
+        else throw new RuntimeException("Cannot represent " + f + " as polynomial function");
+    }
 }

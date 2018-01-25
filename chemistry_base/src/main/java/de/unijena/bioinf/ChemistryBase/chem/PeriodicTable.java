@@ -903,7 +903,6 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         if (name == null || name.isEmpty()) return PrecursorIonType.unknown();
 
         name = canonicalizeIonName(name);
-        if (name.equals(Charge.UNKNOWN_CHARGE) || name.equals("M+?")) return PrecursorIonType.unknown();
         if (name.equals(Charge.POSITIVE_CHARGE) || name.equals("M+?+")) return PrecursorIonType.unknownPositive();
         if (name.equals(Charge.NEGATIVE_CHARGE) || name.equals("M+?-")) return PrecursorIonType.unknownNegative();
 
@@ -938,7 +937,6 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
     public Set<PrecursorIonType> getAdductsAndUnKnowns() {
         Set<PrecursorIonType> adducts = getAdducts();
-        adducts.add(PrecursorIonType.unknown());
         adducts.add(PrecursorIonType.unknownPositive());
         adducts.add(PrecursorIonType.unknownNegative());
         return adducts;
