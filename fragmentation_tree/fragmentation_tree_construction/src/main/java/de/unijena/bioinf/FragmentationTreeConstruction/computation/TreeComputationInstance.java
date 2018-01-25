@@ -248,7 +248,17 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
                     System.err.println("increase tree size to " + inc);
                     treeSizeBonus = new TreeSizeScorer.TreeSizeBonus(treeSizeBonus.score + TREE_SIZE_INCREASE);
                     tss.fastReplace(pinput, treeSizeBonus);
-                } else return fr;
+                } else {
+                    //add annotation of score bound on unconsidered instances
+                    int numberOfUnconsideredCandidates = n-numberOfResultsToKeep;
+                    double lowestConsideredCandidatesScore = fr.getResults().get(fr.getResults().size()-1).getAnnotationOrThrow(TreeScoring.class).getOverallScore();
+                    UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = new UnconsideredCandidatesUpperBound(numberOfUnconsideredCandidates, lowestConsideredCandidatesScore);
+                    for (FTree tree : fr.results) {
+                        tree.addAnnotation(UnconsideredCandidatesUpperBound.class, unconsideredCandidatesUpperBound);
+                    }
+                    ///////
+                    return fr;
+                }
                 //
             }
         } finally {
