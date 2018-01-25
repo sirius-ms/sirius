@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
@@ -161,12 +162,68 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             }
         }
 
+        if (options.isMostIntenseMs2()){
+            onlyKeepMostIntenseMS2(i.experiment);
+        }
+
         sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
         sirius.setIsotopeMode(i.experiment, options.getIsotopes());
         if (whiteset != null) sirius.setFormulaSearchList(i.experiment, whiteset);
 
         job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
         return job;
+    }
+
+    /*
+    remove all but the most intense ms2
+     */
+    protected void onlyKeepMostIntenseMS2(MutableMs2Experiment experiment){
+        if (experiment.getMs2Spectra().size()==0) return;
+        double precursorMass = experiment.getIonMass();
+        int mostIntensiveIdx = -1;
+        double maxIntensity = -1d;
+        int pos = -1;
+        if (experiment.getMs1Spectra().size()==experiment.getMs2Spectra().size()){
+            //one ms1 corresponds to one ms2. we take ms2 with most intense ms1 precursor peak
+            for (Spectrum<Peak> spectrum : experiment.getMs1Spectra()) {
+                ++pos;
+                Deviation dev = new Deviation(100);
+                int idx = Spectrums.mostIntensivePeakWithin(spectrum, precursorMass, dev);
+                if (idx<0) continue;
+                double intensity = spectrum.getIntensityAt(idx);
+                if (intensity>maxIntensity){
+                    maxIntensity = intensity;
+                    mostIntensiveIdx = pos;
+                }
+            }
+        }
+        if (mostIntensiveIdx<0){
+            //take ms2 with highest summed intensity
+            pos = -1;
+            for (Spectrum<Peak> spectrum : experiment.getMs2Spectra()) {
+                ++pos;
+                final int n = spectrum.size();
+                double sumIntensity = 0d;
+                for (int i = 0; i < n; ++i) {
+                    sumIntensity += spectrum.getIntensityAt(i);
+                }
+                if (sumIntensity>maxIntensity){
+                    maxIntensity = sumIntensity;
+                    mostIntensiveIdx = pos;
+                }
+            }
+        }
+
+        List<SimpleSpectrum> ms1List = new ArrayList<>();
+        List<MutableMs2Spectrum> ms2List = new ArrayList<>();
+        if (experiment.getMs1Spectra().size()==experiment.getMs2Spectra().size()){
+            ms1List.add(experiment.getMs1Spectra().get(mostIntensiveIdx));
+        } else {
+            ms1List.addAll(experiment.getMs1Spectra());
+        }
+        ms2List.add(experiment.getMs2Spectra().get(mostIntensiveIdx));
+        experiment.setMs1Spectra(ms1List);
+        experiment.setMs2Spectra(ms2List);
     }
 
     protected void handleSiriusResults(BufferedJJobSubmitter<Instance>.JobContainer jc, Sirius.SiriusIdentificationJob siriusJob) throws IOException {
@@ -518,14 +575,14 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                     Logger.getLogger(outerClassName).warning(message);
                 }
             });
-            if (options.getElements() == null) {
-                // autodetect and use default set
-                ms1Prof.setFormulaConstraints(getDefaultElementSet(options));
-                ms2Prof.setFormulaConstraints(getDefaultElementSet(options));
-            } else {
-                ms2Prof.setFormulaConstraints(options.getElements());
-                ms1Prof.setFormulaConstraints(options.getElements());
-            }
+//            if (options.getElements() == null) {
+//                // autodetect and use default set
+//                ms1Prof.setFormulaConstraints(getDefaultElementSet(options));
+//                ms2Prof.setFormulaConstraints(getDefaultElementSet(options));
+//            } else {
+//                ms2Prof.setFormulaConstraints(options.getElements());
+//                ms1Prof.setFormulaConstraints(options.getElements());
+//            }
 
             if (options.getMedianNoise() != null) {
                 ms2Prof.setMedianNoiseIntensity(options.getMedianNoise());
