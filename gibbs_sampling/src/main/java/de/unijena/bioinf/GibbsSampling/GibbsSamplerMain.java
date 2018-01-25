@@ -1821,15 +1821,15 @@ public class GibbsSamplerMain {
             List<FragmentsCandidate> candidates = candidateMap.get(id);
             Ms2Experiment experiment = candidates.get(0).getExperiment();
 
-            UnregardedCandidatesUpperBound unregardedCandidatesUpperBound = candidates.get(0).getAnnotationOrNull(UnregardedCandidatesUpperBound.class);
+            UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = candidates.get(0).getAnnotationOrNull(UnconsideredCandidatesUpperBound.class);
 
-            if (unregardedCandidatesUpperBound==null){
+            if (unconsideredCandidatesUpperBound ==null){
                 LOG.warn("Cannot create dummy node. Information missing.");
                 break;
             }
 
-            double worstScore = unregardedCandidatesUpperBound.getLowestConsideredCandidateScore();
-            int numberOfIgnored = unregardedCandidatesUpperBound.getNumberOfUnregardedCandidates();
+            double worstScore = unconsideredCandidatesUpperBound.getLowestConsideredCandidateScore();
+            int numberOfIgnored = unconsideredCandidatesUpperBound.getNumberOfUnconsideredCandidates();
 
             if (candidates.size()>maxCandidates) {
                 numberOfIgnored += candidates.size()-maxCandidates;
