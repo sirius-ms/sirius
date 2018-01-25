@@ -22,10 +22,8 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
     //todo should we remove subjobs if they are finished?
     //todo we proof for cancellation??
     protected final JobManager jobManager;
-    protected final FragmentationPatternAnalysis analyzer;
     protected final Ms2Experiment experiment;
     protected final int numberOfResultsToKeep;
-    protected ProcessedInput pinput;
     // yet another workaround =/
     // 0 = unprocessed, 1 = validated, 2 =  preprocessed, 3 = scored
     protected int state = 0;
@@ -37,9 +35,8 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
     protected int restTime, secondsPerInstance, secondsPerTree;
 
     public TreeComputationInstance(JobManager manager, FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep) {
-        super();
+        super(analyzer);
         this.jobManager = manager;
-        this.analyzer = analyzer;
         this.experiment = input;
         this.numberOfResultsToKeep = numberOfResultsToKeep;
         this.ticks = new AtomicInteger(0);
@@ -244,7 +241,6 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
                 }
                 if (tss != null && retryWithHigherScore && fr.canceledDueToLowScore) {
                     inc += TREE_SIZE_INCREASE;
-                    System.err.println("increase tree size to " + inc);
                     treeSizeBonus = new TreeSizeScorer.TreeSizeBonus(treeSizeBonus.score + TREE_SIZE_INCREASE);
                     tss.fastReplace(pinput, treeSizeBonus);
                 } else return fr;
@@ -309,7 +305,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
             graphCache = null;
         }
 
-        final double[] threshold = new double[]{Double.NEGATIVE_INFINITY, 0d};
+        final double[] threshold = new double[]{Double.NEGATIVE_INFINITY, 0d, 0d};
 
         final boolean IS_SINGLETHREADED = intermediateResults.size() < 200 && !analyzer.getTreeBuilder().isThreadSafe();
 
@@ -329,8 +325,8 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
 
                 final GraphBuildingJob graphBuildingJob = graphs.get(j);
                 final IntermediateResult intermediateResult = batch.get(j);
-
                 if (intermediateResult.heuristicScore >= threshold[0]) {
+                    threshold[2] = Math.max(threshold[2],intermediateResult.heuristicScore);
                     final ExactComputationWithThreshold exactJob = new ExactComputationWithThreshold(threshold, graphBuildingJob, intermediateResult);
                     if (IS_SINGLETHREADED) {
                         final ExactResult ex = exactJob.computeExact();
@@ -358,7 +354,8 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
                 }
             }
         }
-        progressInfo("Computed " + treesComputed + " / " + intermediateResults.size() + " trees with maximum gap is " + threshold[1]);
+        if (threshold[2]>0) // if heuristic enabled
+            progressInfo("Computed " + treesComputed + " / " + intermediateResults.size() + " trees with maximum gap is " + threshold[1]);
 
         if (graphCache != null) {
             for (ExactResult r : graphCache) {
@@ -372,12 +369,12 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
         for (ExactResult r : queue) {
             exactResults.add(new ExactResult(r.decomposition, r.graph, r.tree, r.score));
             if (CHECK_FOR_TREESIZE && exactResults.size() >= MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY) {
-                if (!checkForTreeQuality(exactResults)) return new FinalResult();
+                if (!checkForTreeQuality(exactResults,false)) return new FinalResult();
                 CHECK_FOR_TREESIZE = false;
             }
         }
         if (CHECK_FOR_TREESIZE && exactResults.size() < MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY) {
-            if (!checkForTreeQuality(exactResults)) return new FinalResult();
+            if (!checkForTreeQuality(exactResults,false)) return new FinalResult();
             CHECK_FOR_TREESIZE = false;
         }
         // now recalibrate trees
@@ -421,8 +418,10 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
         Collections.sort(exactResults, Collections.reverseOrder());
         final int nl = Math.min(numberOfResultsToKeep, exactResults.size());
         final ArrayList<FTree> finalResults = new ArrayList<>(nl);
+        checkForTreeQuality(exactResults.subList(0,nl),true);
         for (int m = 0; m < nl; ++m) {
-            final double score = analyzer.recalculateScores(exactResults.get(m).tree);
+            final TreeScoring sc = exactResults.get(m).tree.getAnnotationOrThrow(TreeScoring.class);
+            final double score = analyzer.recalculateScores(exactResults.get(m).tree) - sc.getBeautificationPenalty() - sc.getRecalibrationPenalty();
             if (Math.abs(score - exactResults.get(m).tree.getTreeWeight()) > 0.1) {
                 LoggerFactory.getLogger(TreeComputationInstance.class).warn("Score of " + exactResults.get(m).decomposition.toString() + " differs significantly from recalculated score: " + score + " vs " + exactResults.get(m).tree.getTreeWeight() + " with tree size is " + exactResults.get(m).tree.getFragmentAnnotationOrThrow(Score.class).get(exactResults.get(m).tree.getFragmentAt(1)).get("TreeSizeScorer") + " and " + exactResults.get(m).tree.getAnnotationOrThrow(ProcessedInput.class).getAnnotationOrThrow(TreeSizeScorer.TreeSizeBonus.class).score + " sort key is score " + exactResults.get(m).score);
                 analyzer.recalculateScores(exactResults.get(m).tree);
@@ -432,8 +431,6 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
             }
             finalResults.add(exactResults.get(m).tree);
         }
-
-
         return new FinalResult(finalResults);
     }
 
@@ -489,23 +486,6 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
             analyzer.addTreeAnnotations(graph, r.tree);
         }
     }
-
-    private static final double MAX_TREESIZE_INCREASE = 3d;
-    private static final double TREE_SIZE_INCREASE = 1d;
-    private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;
-    private static final double MIN_EXPLAINED_INTENSITY = 0.7d;
-    private static final int MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY = 5;
-
-    private boolean checkForTreeQuality(List<ExactResult> results) {
-        for (ExactResult r : results) {
-            final FTree tree = r.tree;
-            if (analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput, tree, r.decomposition.getIon()) >= MIN_EXPLAINED_INTENSITY && tree.numberOfVertices() >= Math.min(pinput.getMergedPeaks().size() - 2, MIN_NUMBER_OF_EXPLAINED_PEAKS)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     /*
 
     - jeder Kandidat besteht aus Molekülformel + Ionisierung (nicht PrecursorIonType!)
@@ -545,7 +525,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
 
         @Override
         protected IntermediateResult compute() throws Exception {
-            final FGraph graph = analyzer.buildGraph(pinput, decomposition);
+            final FGraph graph = analyzer.buildGraphWithoutReduction(pinput, decomposition);
             // compute heuristic
 
             //final FTree heuristic = new CriticalPathSolver(graph).solve();
@@ -586,6 +566,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
         //System.out.println("Recalibrate " + tree.getRoot().getFormula() + " => " + rec.getRecalibrationFunction() + "  ( " + (recalibratedTree.getTreeWeight() - tree.getTreeWeight()) + ")");
         recalibratedTree.setAnnotation(SpectralRecalibration.class, rec);
         recalibratedTree.setAnnotation(ProcessedInput.class, pin);
+        recalibratedTree.setAnnotation(RecalibrationFunction.class, rec.toPolynomial());
         return new ExactResult(l.getDecompositions().get(0), graph, recalibratedTree, recalibratedTree.getTreeWeight());
     }
 
@@ -610,37 +591,6 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
         }
     }
 
-    protected final static class ExactResult implements Comparable<ExactResult> {
-
-        protected final Decomposition decomposition;
-        protected final double score;
-        protected final FGraph graph;
-        protected FTree tree;
-
-        public ExactResult(Decomposition decomposition, FGraph graph, FTree tree, double score) {
-            this.decomposition = decomposition;
-            this.score = score;
-            this.tree = tree;
-            this.graph = graph;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (o instanceof ExactResult) return equals((ExactResult) o);
-            else return false;
-        }
-
-        public boolean equals(ExactResult o) {
-            return score == o.score && decomposition.getCandidate().equals(o.decomposition.getCandidate());
-        }
-
-        @Override
-        public int compareTo(ExactResult o) {
-            final int a = Double.compare(score, o.score);
-            if (a != 0) return a;
-            return decomposition.getCandidate().compareTo(o.decomposition.getCandidate());
-        }
-    }
 
     protected static class ExactResultComparator implements Comparator<ExactResult> {
 

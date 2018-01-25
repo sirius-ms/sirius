@@ -470,7 +470,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         } else if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
             // use given ionization
             final PrecursorIonType ionType = experiment.getPrecursorIonType();
-            final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ionType.precursorMassToNeutralMass(parentPeak.getOriginalMz()), parentDeviation, constraints);
+            final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ionType.precursorMassToNeutralMass(parentPeak.getOriginalMz()), parentDeviation.absoluteFor(parentPeak.getOriginalMz()), constraints);
             pmds = new ArrayList<>();
             for (MolecularFormula f : forms)  {
                 final MolecularFormula neutralMeasuredFormula = ionType.neutralMoleculeToMeasuredNeutralMolecule(f);
@@ -483,7 +483,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
             pmds = new ArrayList<>();
             for (Ionization ion : ionModes) {
-                final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ion.subtractFromMass(parentPeak.getOriginalMz()), parentDeviation, constraints);
+                final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ion.subtractFromMass(parentPeak.getOriginalMz()), parentDeviation.absoluteFor(parentPeak.getOriginalMz()), constraints);
                 pmds.addAll(forms);
                 for (MolecularFormula f : forms) decomps.add(new Decomposition(f, ion, 0d));
             }
@@ -506,7 +506,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 if (mass > 0) {
                     final HashSet<MolecularFormula> formulas = new HashSet<>();
                     for (int D=0; D < decomposers.size(); ++D) {
-                        formulas.addAll(decomposers.get(D).decomposeToFormulas(mass, fragmentDeviation, constraintList.get(D)));
+                        formulas.addAll(decomposers.get(D).decomposeToFormulas(mass, fragmentDeviation.absoluteFor(peak.getMass()), constraintList.get(D)));
                     }
                     for (MolecularFormula f : formulas) decompositions.add(new Decomposition(f, ion, 0d));
                 }
@@ -1237,6 +1237,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         treeScoring.setExplainedIntensity(getIntensityRatioOfExplainedPeaks(tree));
         treeScoring.setExplainedIntensityOfExplainablePeaks(getIntensityRatioOfExplainablePeaks(tree));
         treeScoring.setRatioOfExplainedPeaks((double)tree.numberOfVertices() / (double)originalGraph.getAnnotationOrThrow(ProcessedInput.class).getMergedPeaks().size());
+
+        if (tree.getAnnotationOrNull(SpectralRecalibration.class)!=null) {
+            tree.setAnnotation(RecalibrationFunction.class, tree.getAnnotationOrNull(SpectralRecalibration.class).toPolynomial());
+        }
+
     }
 
     /**
@@ -1365,23 +1370,26 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         Arrays.sort(fragmentMasses);
         double explainedIntensity = 0d, totalIntensity = 0d;
         for (ProcessedPeak p : input.getMergedPeaks()) {
+            if (p == input.getParentPeak()) continue;
             totalIntensity += p.getRelativeIntensity();
             int index = Arrays.binarySearch(fragmentMasses, p.getMz());
             if (index < 0) {
                 index = -(index+1);
-                double diff;
+                double diff1,diff2,diff3;
                 if (index < fragmentMasses.length) {
-                    diff = Math.abs(fragmentMasses[index] - p.getMz());
-                    if (index > 0 && Math.abs(fragmentMasses[index-1] - p.getMz()) < diff) {
-                        --index;
-                    }
-                } else if (--index <= 0)
+                    diff1 = Math.abs(fragmentMasses[index] - p.getMz());
+                    diff2 = index<=0 ? Double.POSITIVE_INFINITY :  Math.abs(fragmentMasses[index-1] - p.getMz());
+                    diff3 = index+1>=fragmentMasses.length ? Double.POSITIVE_INFINITY : Math.abs(fragmentMasses[index+1] - p.getMz());
+                    if (diff2 < diff1 && diff2 <= diff3) --index;
+                    else if (diff3 < diff1 && diff3 <= diff2) ++index;
+                } else if (--index < 0)
                     continue;
                 if (input.getMeasurementProfile().getAllowedMassDeviation().inErrorWindow(p.getMz(),fragmentMasses[index])) {
                     explainedIntensity += p.getRelativeIntensity();
                 }
             }
         }
+        if (totalIntensity==0) return 0;
         return explainedIntensity/totalIntensity;
     }
     public double getIntensityRatioOfExplainedPeaks(FTree tree) {

@@ -24,10 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransform
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
-import de.unijena.bioinf.ChemistryBase.ms.ft.UnregardedCandidatesUpperBound;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -99,7 +96,7 @@ public class Sirius {
 
         @Override
         protected List<IdentificationResult> compute() throws Exception {
-            final FasterTreeComputationInstance instance = new FasterTreeComputationInstance(jobManager(), getMs2Analyzer(), experiment, numberOfResultsToKeep);
+            final AbstractTreeComputationInstance instance = getTreeComputationImplementation(jobManager(), getMs2Analyzer(), experiment, numberOfResultsToKeep);
             instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
@@ -109,7 +106,7 @@ public class Sirius {
             final ProcessedInput pinput = instance.validateInput();
             performMs1Analysis(instance, IsotopePatternHandling.both);
             submitSubJob(instance);
-            FasterTreeComputationInstance.FinalResult fr = instance.awaitResult();
+            AbstractTreeComputationInstance.FinalResult fr = instance.awaitResult();
             /*try {
                 fr = instance.awaitResult();
             } catch (ExecutionException e) {
@@ -323,8 +320,12 @@ public class Sirius {
     /**
      * for internal use to easily switch and experiment with implementation details
      */
+    public static boolean USE_FAST_MODE = false;
     protected AbstractTreeComputationInstance getTreeComputationImplementation(JobManager manager, FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep) {
-        return new TreeComputationInstance(manager, analyzer, input, numberOfResultsToKeep);
+        if (USE_FAST_MODE)
+            return new FasterTreeComputationInstance(manager, analyzer, input, numberOfResultsToKeep);
+        else
+            return new TreeComputationInstance(manager, analyzer, input, numberOfResultsToKeep);
     }
 
     /**
@@ -552,6 +553,8 @@ public class Sirius {
     }
 
     public FTree beautifyTree(FTree tree, Ms2Experiment experiment, boolean recalibrating) {
+
+        if (tree.getAnnotation(Beautified.class, Beautified.IS_UGGLY).isBeautiful()) return tree;
         final PrecursorIonType ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
         final MutableMs2Experiment mexp = new MutableMs2Experiment(experiment);
         mexp.setPrecursorIonType(ionType);
@@ -568,10 +571,11 @@ public class Sirius {
                 break;
             case RAW:
             default:
-                formula = ionType.measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
+                formula = ionType.measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());;
                 break;
         }
         final IdentificationResult ir = compute(mexp, formula, recalibrating);
+        ir.getRawTree().setAnnotation(Beautified.class, Beautified.IS_BEAUTIFUL);
         return ir.getRawTree();
     }
 

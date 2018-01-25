@@ -1,8 +1,10 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Beautified;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.RecalibrationFunction;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration2;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
@@ -14,16 +16,17 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FasterTreeComputationInstance extends AbstractTreeComputationInstance {
 
     protected final JobManager jobManager;
-    protected final FragmentationPatternAnalysis analyzer;
     protected final Ms2Experiment experiment;
     protected final int numberOfResultsToKeep;
-    protected ProcessedInput pinput;
     // yet another workaround =/
     // 0 = unprocessed, 1 = validated, 2 =  preprocessed, 3 = scored
     protected int state = 0;
@@ -35,9 +38,8 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
     protected int restTime, secondsPerInstance, secondsPerTree;
 
     public FasterTreeComputationInstance(JobManager manager, FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep) {
-        super();
+        super(analyzer);
         this.jobManager = manager;
-        this.analyzer = analyzer;
         this.experiment = input;
         this.numberOfResultsToKeep = numberOfResultsToKeep;
         this.ticks = new AtomicInteger(0);
@@ -122,6 +124,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         final ExactResult[] results = estimateTreeSizeAndRecalibration(decompositions, useHeuristic);
         final List<FTree> trees = new ArrayList<>(results.length);
         for (ExactResult r : results) trees.add(r.tree);
+        trees.forEach(analyzer::recalculateScores);
         return new FinalResult(trees);
     }
 
@@ -158,7 +161,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             }
             Collections.sort(results, Collections.reverseOrder());
             final int treeSizeCheck = Math.min(results.size(),MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY);
-            if (checkForTreeQuality(results.subList(0,treeSizeCheck))) {
+            if (checkForTreeQuality(results.subList(0,treeSizeCheck),false)) {
                 break;
             }
             inc += TREE_SIZE_INCREASE;
@@ -181,7 +184,13 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             submitSubJob(recalibrationJob);
             recalibrationJobs.add(recalibrationJob);
         }
-        final ExactResult[] exact = recalibrationJobs.stream().map(JJob::takeResult).sorted(Collections.reverseOrder()).toArray(ExactResult[]::new);
+        final ExactResult[] exact = recalibrationJobs.stream().map(JJob::takeResult).sorted(Collections.reverseOrder()).limit(numberOfResultsToKeep).toArray(ExactResult[]::new);
+
+        if (inc >= MAX_TREESIZE_INCREASE) {
+            for (ExactResult t : exact) t.tree.setAnnotation(Beautified.class,Beautified.IS_BEAUTIFUL);
+        } else {
+            checkForTreeQuality(Arrays.asList(exact),true);
+        }
         return exact;
     }
 
@@ -277,22 +286,6 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         }
     }
 
-    private static final double MAX_TREESIZE_INCREASE = 3d;
-    private static final double TREE_SIZE_INCREASE = 1d;
-    private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;
-    private static final double MIN_EXPLAINED_INTENSITY = 0.7d;
-    private static final int MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY = 5;
-
-    private boolean checkForTreeQuality(List<ExactResult> results) {
-        for (ExactResult r : results) {
-            final FTree tree = r.tree;
-            if (analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput, tree, r.decomposition.getIon()) >= MIN_EXPLAINED_INTENSITY && tree.numberOfVertices() >= Math.min(pinput.getMergedPeaks().size() - 2, MIN_NUMBER_OF_EXPLAINED_PEAKS)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     protected ExactResult recalibrate(ProcessedInput input, FTree tree) {
         final SpectralRecalibration rec = new HypothesenDrivenRecalibration2().collectPeaksFromMs2(input.getExperimentInformation(), tree);
         final ProcessedInput pin = input.getRecalibratedVersion(rec);
@@ -307,46 +300,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         final FTree recalibratedTree = analyzer.computeTree(graph);
         recalibratedTree.setAnnotation(SpectralRecalibration.class, rec);
         recalibratedTree.setAnnotation(ProcessedInput.class, pin);
+        recalibratedTree.setAnnotation(RecalibrationFunction.class, rec.toPolynomial());
         return new ExactResult(l.getDecompositions().get(0), graph, recalibratedTree, recalibratedTree.getTreeWeight());
-    }
-
-    protected final static class ExactResult implements Comparable<ExactResult> {
-
-        protected final Decomposition decomposition;
-        protected final double score;
-        protected FGraph graph;
-        protected FTree tree;
-
-        public ExactResult(Decomposition decomposition, FGraph graph, FTree tree, double score) {
-            this.decomposition = decomposition;
-            this.score = score;
-            this.tree = tree;
-            this.graph = graph;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (o instanceof ExactResult) return equals((ExactResult) o);
-            else return false;
-        }
-
-        public boolean equals(ExactResult o) {
-            return score == o.score && decomposition.getCandidate().equals(o.decomposition.getCandidate());
-        }
-
-        @Override
-        public int compareTo(ExactResult o) {
-            final int a = Double.compare(score, o.score);
-            if (a != 0) return a;
-            return decomposition.getCandidate().compareTo(o.decomposition.getCandidate());
-        }
-    }
-
-    protected static class ExactResultComparator implements Comparator<ExactResult> {
-
-        @Override
-        public int compare(ExactResult o1, ExactResult o2) {
-            return o1.decomposition.getCandidate().compareTo(o2.decomposition.getCandidate());
-        }
     }
 }

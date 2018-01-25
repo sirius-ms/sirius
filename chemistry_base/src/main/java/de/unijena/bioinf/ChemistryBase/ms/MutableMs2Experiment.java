@@ -11,7 +11,7 @@ import java.util.*;
 
 public class MutableMs2Experiment implements Ms2Experiment {
 
-    private PrecursorIonType precursorIonType = PrecursorIonType.unknown();
+    private PrecursorIonType precursorIonType;
     private List<SimpleSpectrum> ms1Spectra;
     private SimpleSpectrum mergedMs1Spectrum;
     private List<MutableMs2Spectrum> ms2Spectra;
