@@ -250,8 +250,9 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
                     tss.fastReplace(pinput, treeSizeBonus);
                 } else {
                     //add annotation of score bound on unconsidered instances
-                    int numberOfUnconsideredCandidates = n-numberOfResultsToKeep;
-                    double lowestConsideredCandidatesScore = fr.getResults().get(fr.getResults().size()-1).getAnnotationOrThrow(TreeScoring.class).getOverallScore();
+                    int numberOfResults = fr.getResults().size();
+                    int numberOfUnconsideredCandidates = n-numberOfResults;
+                    double lowestConsideredCandidatesScore = fr.getResults().get(numberOfResults-1).getAnnotationOrThrow(TreeScoring.class).getOverallScore();
                     UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = new UnconsideredCandidatesUpperBound(numberOfUnconsideredCandidates, lowestConsideredCandidatesScore);
                     for (FTree tree : fr.results) {
                         tree.addAnnotation(UnconsideredCandidatesUpperBound.class, unconsideredCandidatesUpperBound);
