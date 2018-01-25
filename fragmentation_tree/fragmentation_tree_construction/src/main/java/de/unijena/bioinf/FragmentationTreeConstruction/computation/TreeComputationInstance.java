@@ -247,7 +247,18 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
                     System.err.println("increase tree size to " + inc);
                     treeSizeBonus = new TreeSizeScorer.TreeSizeBonus(treeSizeBonus.score + TREE_SIZE_INCREASE);
                     tss.fastReplace(pinput, treeSizeBonus);
-                } else return fr;
+                } else {
+                    //add annotation of score bound on unconsidered instances
+                    int numberOfResults = fr.getResults().size();
+                    int numberOfUnconsideredCandidates = n-numberOfResults;
+                    double lowestConsideredCandidatesScore = fr.getResults().get(numberOfResults-1).getAnnotationOrThrow(TreeScoring.class).getOverallScore();
+                    UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = new UnconsideredCandidatesUpperBound(numberOfUnconsideredCandidates, lowestConsideredCandidatesScore);
+                    for (FTree tree : fr.results) {
+                        tree.addAnnotation(UnconsideredCandidatesUpperBound.class, unconsideredCandidatesUpperBound);
+                    }
+                    ///////
+                    return fr;
+                }
                 //
             }
         } finally {
