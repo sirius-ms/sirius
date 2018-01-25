@@ -148,9 +148,11 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
 
     protected ExperimentResult createExperimentResult(BufferedJJobSubmitter<Instance>.JobContainer jc, Sirius.SiriusIdentificationJob siriusJob, List<IdentificationResult> results) {
         FingerIDJJob fid = jc.getJob(FingerIDJJob.class);
-        fid.takeResult();
         final List<IdentificationResult> total = new ArrayList<>(results);
-        total.addAll(fid.getAddedIdentificationResults());
+        if (fid!=null) {
+            fid.takeResult();
+            total.addAll(fid.getAddedIdentificationResults());
+        }
         return new ExperimentResult(siriusJob.getExperiment(), total);
     }
 
