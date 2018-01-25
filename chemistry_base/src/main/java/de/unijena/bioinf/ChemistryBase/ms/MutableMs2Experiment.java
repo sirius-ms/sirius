@@ -176,6 +176,10 @@ public class MutableMs2Experiment implements Ms2Experiment {
         return annotations.remove(klass);
     }
 
+    @Override
+    public void clearAllAnnotations() {
+        annotations.clear();
+    }
 
 
     //overrides existing

@@ -28,7 +28,7 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
 
 
 
-        if (percentageWithoutZeroScores) sampledScores = excludeZeros(sampledScores);
+//        if (percentageWithoutZeroScores) sampledScores = (sampledScores);
         Arrays.sort(sampledScores);
         int idx = (int)(percentageOfEdgesBelowThreshold *sampledScores.length);
         if (idx>=sampledScores.length){
@@ -36,6 +36,12 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
         } else {
             threshold = scoreProbabilityDistribution.toLogPvalue(sampledScores[idx]);
         }
+        //set threshold estimate from real scores not estimated distribution!
+
+//        System.out.println("prepare old threshold "+threshold);
+//        threshold = findThresholdFromCdf();
+//        threshold = scoreProbabilityDistribution.toLogPvalue(threshold);
+//        System.out.println("prepare threshold "+threshold);
     }
 
     private double[] excludeZeros(double[] sampledScores){
@@ -61,7 +67,9 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
                         C cc1 = c1[k];
                         for (int l = 0; l < c2.length; l++) {
                             C cc2 = c2[l];
-                            sampledScoresList.add(this.edgeScorer.scoreWithoutThreshold(cc1, cc2));
+                            double score = this.edgeScorer.scoreWithoutThreshold(cc1, cc2);
+                            if (percentageWithoutZeroScores && score<=0) continue;
+                            sampledScoresList.add(score);
                         }
                     }
                 }
@@ -71,7 +79,8 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
             int numberOfSamples = 100000;
             HighQualityRandom random = new HighQualityRandom();
             sampledScores = new double[numberOfSamples];
-            for(int i = 0; i < numberOfSamples; ++i) {
+            int pos = 0;
+            while (pos<numberOfSamples){
                 int color1 = random.nextInt(candidates.length);
                 int color2 = random.nextInt(candidates.length - 1);
                 if(color2 >= color1) {
@@ -80,7 +89,9 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
 
                 int mf1 = random.nextInt(candidates[color1].length);
                 int mf2 = random.nextInt(candidates[color2].length);
-                sampledScores[i] = this.edgeScorer.scoreWithoutThreshold(candidates[color1][mf1], candidates[color2][mf2]);
+                double score = this.edgeScorer.scoreWithoutThreshold(candidates[color1][mf1], candidates[color2][mf2]);
+                if (percentageWithoutZeroScores && score<=0) continue;
+                sampledScores[pos++] = score;
             }
         }
         return sampledScores;
@@ -92,7 +103,7 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
         double[] sampledScores = sampleScores(candidates);
         estimateDistribution(sampledScores);
 
-        if (percentageWithoutZeroScores) sampledScores = excludeZeros(sampledScores);
+//        if (percentageWithoutZeroScores) sampledScores = excludeZeros(sampledScores);
         Arrays.sort(sampledScores);
         int idx = (int)(percentageOfEdgesBelowThreshold *sampledScores.length);
         if (idx>=sampledScores.length){
@@ -100,6 +111,9 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
         } else {
             threshold = sampledScores[idx];
         }
+//        System.out.println("old threshold "+threshold);
+//        threshold = findThresholdFromCdf();
+//        System.out.println("threshold "+threshold);
 
         //set adjusted threshold for scorer
         edgeScorer.setThreshold(threshold);
@@ -112,6 +126,28 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
 
         if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("true log p value is "+threshold);
 
+    }
+
+    protected double findThresholdFromCdf(){
+        double lb = 0d;
+        double ub = Double.POSITIVE_INFINITY;
+        double score = 1d;
+        double resultingEdgeRatio = scoreProbabilityDistribution.cdf(score);
+        while (Math.abs(resultingEdgeRatio-percentageOfEdgesBelowThreshold)>0.0001){
+            if (resultingEdgeRatio<percentageOfEdgesBelowThreshold){
+                lb = Math.max(lb, score);
+            } else {
+                ub = Math.min(ub, score);
+            }
+
+            if (Double.isInfinite(ub)){
+                score = 2*score;
+            } else {
+                score = (ub-lb)/2d+lb;
+            }
+            resultingEdgeRatio = scoreProbabilityDistribution.cdf(score);
+        }
+        return score;
     }
 
     protected void estimateDistribution(double[] sampledScores){

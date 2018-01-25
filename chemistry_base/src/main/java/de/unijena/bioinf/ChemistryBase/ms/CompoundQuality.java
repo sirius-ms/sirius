@@ -76,8 +76,8 @@ public class CompoundQuality {
             quality = new CompoundQuality(property);
             experiment.setAnnotation(CompoundQuality.class, quality);
         } else {
-            quality.addProperty(property);
             quality.removeProperty(SpectrumProperty.Good);//all other properties are negative!
+            quality.addProperty(property);
         }
     }
 
