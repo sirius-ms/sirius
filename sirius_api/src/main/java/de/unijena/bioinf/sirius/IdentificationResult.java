@@ -21,10 +21,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
-import de.unijena.bioinf.ChemistryBase.ms.ft.RecalibrationFunction;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
@@ -204,6 +201,18 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
         beautifulScoring.setBeautificationPenalty(beautifulScoring.getOverallScore() - treeScoring.getOverallScore());
         beautifulScoring.setOverallScore(treeScoring.getOverallScore());
 
+        copyAnnotations(tree, beautifulTree);
+    }
+
+    private void copyAnnotations(FTree tree, FTree beautifulTree){
+        //todo do this for all annotations?
+        UnconsideredCandidatesUpperBound upperBound = tree.getAnnotationOrNull(UnconsideredCandidatesUpperBound.class);
+        if (upperBound==null) return;
+        //TODO always update as beautified trees are computed each separately!?
+//        if (beautifulTree.getAnnotationOrNull(UnconsideredCandidatesUpperBound.class)==null){
+        beautifulTree.removeAnnotation(UnconsideredCandidatesUpperBound.class);
+            beautifulTree.addAnnotation(UnconsideredCandidatesUpperBound.class, upperBound);
+//        }
     }
 
     public double getTreeScore() {
