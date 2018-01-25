@@ -38,7 +38,7 @@ import java.util.concurrent.ExecutionException;
 
 import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 
-public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Options> {
+public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
     static {
         CustomDatabase.customDatabases(true);
         DEFAULT_LOGGER.info("Custom DBs initialized!");
@@ -148,12 +148,11 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
 
     protected ExperimentResult createExperimentResult(BufferedJJobSubmitter<Instance>.JobContainer jc, Sirius.SiriusIdentificationJob siriusJob, List<IdentificationResult> results) {
         FingerIDJJob fid = jc.getJob(FingerIDJJob.class);
-        if (fid==null) {
-            return new ExperimentResult(siriusJob.getExperiment(), results);
-        }
-        fid.takeResult();
         final List<IdentificationResult> total = new ArrayList<>(results);
-        total.addAll(fid.getAddedIdentificationResults());
+        if (fid!=null) {
+            fid.takeResult();
+            total.addAll(fid.getAddedIdentificationResults());
+        }
         return new ExperimentResult(siriusJob.getExperiment(), total);
     }
 

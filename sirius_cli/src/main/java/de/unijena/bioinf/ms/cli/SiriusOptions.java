@@ -41,6 +41,14 @@ public interface SiriusOptions {
     @Option(longName = {"sirius", "workspace"}, shortName = "w", description = "store workspace into given file, such that it can be loaded by SIRIUS GUI afterwards", defaultToNull = true)
     String getSirius();
 
+    /////////////////////////////////////////////////
+    // run Zodiac
+
+    @Option(longName = {"zodiac"}, description = "run zodiac on a given sirius workspace.", hidden = true)
+    boolean isZodiac();
+
+    /////////////////////////////////////////////////
+
     @Option
     boolean isVersion();
 
@@ -125,6 +133,9 @@ public interface SiriusOptions {
 
     @Option(longName = "maxmz", description = "Just consider compounds with a precursor mz lower or equal this maximum mz. All other compounds in the input file are ignored.", defaultToNull = true)
     Double getMaxMz();
+
+    @Option(longName = "mostintense-ms2", description = "Only use the fragmentation spectrum with the most intense precursor peak (for each compound).")
+    boolean isMostIntenseMs2();
 
 
     //technical stuff

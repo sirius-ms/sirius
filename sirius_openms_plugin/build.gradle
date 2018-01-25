@@ -2,11 +2,11 @@ import java.nio.file.Files
 
 dependencies {
 //project
-    compile project(':fingerid_cli')
+    compile project(':sirius_cli')
 }
 
 /*################### Environment variables ################### */
-mainClassName = "de.unijena.bioinf.ms.cli.FingeridApplication"
+mainClassName = 'de.unijena.bioinf.ms.cli.SiriusCLIApplication'
 project.ext.set("type", "console")
 
 /*################### Jar build Stuff ################### */
@@ -23,7 +23,8 @@ launch4j {
     jreRuntimeBits = "$project.arch"
     outfile = "${project.appName}.exe"
     jar = "../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}"
-    classPath = ["${runtimeClasspath.replace('${', '%').replace('}', '%')}", "../../../All/Sirius/lib/*"]
+
+    classPath += ["../../../All/Sirius/lib/*"] //add
 }
 
 startScripts {
