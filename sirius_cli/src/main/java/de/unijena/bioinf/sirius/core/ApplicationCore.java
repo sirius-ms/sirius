@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.LogManager;
@@ -45,12 +46,15 @@ public abstract class ApplicationCore {
 
     //creating
     static {
-        //init workspace
-        String home = System.getProperty("user.home");
-        String path = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.ws", ".sirius");
+        final String version = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.version");
+        final String build = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build");
+
+        //#################### start init workspace ################################
+        final String home = System.getProperty("user.home");
+        final String path = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.ws", ".sirius");
         final Path DEFAULT_WORKSPACE = Paths.get(home).resolve(path);
         final Map<String, String> env = System.getenv();
-        String ws = env.get("SIRIUS_WORKSPACE");
+        final String ws = env.get("SIRIUS_WORKSPACE");
 
         if (ws != null) {
             Path wsDir = Paths.get(ws);
@@ -84,8 +88,37 @@ public abstract class ApplicationCore {
             }
         }
 
-        //init logging stuff
+        // create ws files
         Path loggingPropFile = WORKSPACE.resolve("logging.properties");
+        Path siriusPropsFile = WORKSPACE.resolve("sirius.properties");
+        Path versionFile = WORKSPACE.resolve("version");
+        try {
+            if (Files.exists(versionFile)) {
+                List<String> lines = Files.readAllLines(versionFile);
+                if (lines == null || lines.isEmpty() || !lines.get(0).equals(version)) {
+                    deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile);
+                    Files.write(versionFile, version.getBytes(), StandardOpenOption.CREATE);
+                }
+            } else {
+                deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile);
+                Files.write(versionFile, version.getBytes(), StandardOpenOption.CREATE);
+            }
+        } catch (IOException e) {
+            System.err.println("Error while reading/writing workspace version file!");
+            e.printStackTrace();
+            deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile);
+            try {
+                Files.write(versionFile, version.getBytes(), StandardOpenOption.CREATE);
+            } catch (IOException e1) {
+                System.err.println("Error while writing workspace version file!");
+                e1.printStackTrace();
+            }
+        }
+
+        //#################### end init workspace ################################
+
+
+        //init logging stuff
         if (Files.notExists(loggingPropFile)) {
             try (InputStream input = ApplicationCore.class.getResourceAsStream("/logging.properties")) {
                 // move default properties file
@@ -143,9 +176,6 @@ public abstract class ApplicationCore {
         DEFAULT_LOGGER.debug("java.class.path = " + System.getProperty("java.class.path"));
         DEFAULT_LOGGER.info("Sirius Workspace Successfull initialized at: " + WORKSPACE.toAbsolutePath().toString());
 
-        final String version = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.version");
-        final String build = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build");
-
 
         VERSION_STRING = (version != null && build != null) ? "Sirius " + version + " (build " + build + ")" : "Sirius";
         DEFAULT_LOGGER.debug(VERSION_STRING);
@@ -167,7 +197,7 @@ public abstract class ApplicationCore {
         }
 
 
-        SIRIUS_PROPERTIES_FILE = new PersistentProperties(WORKSPACE.resolve("sirius.properties"), defaultProps, USER_PROPERTIES_FILE_HAEDER);
+        SIRIUS_PROPERTIES_FILE = new PersistentProperties(siriusPropsFile, defaultProps, USER_PROPERTIES_FILE_HAEDER);
         SIRIUS_PROPERTIES_FILE.store();
         PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.workspace", WORKSPACE.toAbsolutePath().toString());
         DEFAULT_LOGGER.debug("application properties initialized!");
@@ -186,6 +216,17 @@ public abstract class ApplicationCore {
         //bug reporting
         ErrorReporter.INIT_PROPS(PropertyManager.PROPERTIES);
         DEFAULT_LOGGER.info("Bug reporter initialized!");
+    }
+
+    private static void deleteFromWorkspace(final Path... files) {
+        for (Path file : files) {
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException e) {
+                System.err.println("Could NOT delete " + file.toAbsolutePath().toString());
+                e.printStackTrace();
+            }
+        }
     }
 
 
