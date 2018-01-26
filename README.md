@@ -152,25 +152,40 @@ literature to cite transparent to the user.
 
 #### 3.6
 
--   Fragmentation tree heuristics
+-   **Fragmentation tree heuristics**
 
--   Custom adducts can be specified
+-   **CPLEX** ILP solver support
 
--   Adduct candidates from database
+-   Custom ionizations/adducts can be specified
 
--   CSI:FingerID results can be filtered by **Custom databases**.
+-   Consider a specific list of **ionizations for Sirius**
 
--   Improved parallelization and task management
+-   Consider a specific list of **adducts for CSI:FingerID** (CLI only,
+    GUI is coming soon)
 
--   Better stability of CSI:FingerID webservice
+-   **Full-featured** standalone **command line version** (headless
+    version)
 
--   Better DB filter performance
+-   Improved **parallelization** and task management
 
--   Bug fix in Database filtering view
+-   Improved stability of CSI:FingerID webservice
 
--   Error Reporter Bug fixed
+-   Time limit for Fragmentation tree computation
 
--   Logging Bug fixed
+-   Specify fields to import name and ID from .sdf into custom database
+    (GUI).
+
+-   CSI:FingerID results can be **filtered by Custom databases** (GUI).
+
+-   Better filtering performance (GUI)
+
+-   Bug fix in Database filtering view (GUI)
+
+-   Error Reporter bug fixed (GUI)
+
+-   Logging bug fixed
+
+-   Many minor bug fixes
 
 #### 3.5
 
