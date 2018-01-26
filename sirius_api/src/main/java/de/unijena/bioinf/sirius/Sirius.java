@@ -338,6 +338,17 @@ public class Sirius {
     public PrecursorIonType[] guessIonization(Ms2Experiment experiment, PrecursorIonType[] candidateIonizations) {
         Spectrum<Peak> spec = experiment.getMergedMs1Spectrum();
         if (spec == null) spec = experiment.getMs1Spectra().get(0);
+        else {
+            //todo this is a hack: if merged spectrum only contains isotopes of the compound, like all other correlating peaks have been removed from the data
+            System.out.println("take another MS1 to guess ionizations");
+            SimpleMutableSpectrum mutableSpectrum = new MutableMs2Spectrum(spec);
+            Spectrums.filterIsotpePeaks(mutableSpectrum, new Deviation(100));
+            if (mutableSpectrum.size()==1 && experiment.getMs1Spectra().size()>0){
+                spec = Spectrums.selectSpectrumWithMostIntensePrecursor(experiment.getMs1Spectra(), experiment.getIonMass(), getMs1Analyzer().getDefaultProfile().getAllowedMassDeviation());
+                if (spec==null) experiment.getMs1Spectra().get(0);
+            }
+        }
+
 
         SimpleMutableSpectrum mutableSpectrum = new SimpleMutableSpectrum(spec);
         Spectrums.normalizeToMax(mutableSpectrum, 100d);

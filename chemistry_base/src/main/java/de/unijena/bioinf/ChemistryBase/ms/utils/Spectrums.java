@@ -1134,6 +1134,34 @@ public class Spectrums {
         });
     }
 
+
+    /**
+     * select the spectrum from a list of spectra which contains the most intense peak with the specified window
+     * @param spectra
+     * @param precursorMass
+     * @param dev
+     * @param <S>
+     * @param <P>
+     * @return
+     */
+    public static <S extends Spectrum<P>, P extends Peak> S selectSpectrumWithMostIntensePrecursor(List<S> spectra, double precursorMass, Deviation dev) {
+        int mostIntenseIdx = -1;
+        double highestIntensity = -1d;
+        int idx = 0;
+        for (S spectrum : spectra) {
+            int i = mostIntensivePeakWithin(spectrum, precursorMass, dev);
+            if (i<0) continue;
+            double intensity = spectrum.getIntensityAt(i);
+            if (mostIntenseIdx<0 || intensity>highestIntensity) {
+                mostIntenseIdx = idx;
+                highestIntensity = intensity;
+            }
+            ++idx;
+        }
+        if (mostIntenseIdx<0) return null;
+        return spectra.get(mostIntenseIdx);
+    }
+
 	/* *******************************************************************************************
 	 * 
 	 * 								Private static methods
