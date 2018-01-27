@@ -5,7 +5,6 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.GibbsSampling.GibbsSamplerMain;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ExponentialDistribution;
@@ -70,7 +69,8 @@ public class Zodiac {
 
 
             LOG.info("Read sirius input");
-            List<ExperimentResult> input = newLoad(workSpacePath.toFile());
+//            List<ExperimentResult> input = newLoad(workSpacePath.toFile());
+
 
             Map<String, List<FragmentsCandidate>> candidatesMap = GibbsSamplerMain.parseMFCandidatesFromWorkspace(workSpacePath, originalSpectraPath);
 
@@ -84,7 +84,7 @@ public class Zodiac {
             GibbsSamplerMain.addNotExplainableDummy(candidatesMap, maxCandidates);
 
 
-            String[] ids = getIdsOfKnownEmptyCompounds(candidatesMap, input);
+            String[] ids = getIdsOfCompoundsWithCandidates(candidatesMap);
             FragmentsCandidate[][] candidatesArray = new FragmentsCandidate[ids.length][];
 
             for (int i = 0; i < ids.length; i++) {
@@ -311,7 +311,7 @@ public class Zodiac {
         }
     }
 
-    private <C> String[] getIdsOfKnownEmptyCompounds(Map<String, List<C>> candidatesMap, List<ExperimentResult> input) {
+    private <C> String[] getIdsOfCompoundsWithCandidates(Map<String, List<C>> candidatesMap) {
         List<String> ids = new ArrayList<>();
 //        for (ExperimentResult experimentResult : input) {
 //            if (experimentResult.getExperiment()==null) continue;
