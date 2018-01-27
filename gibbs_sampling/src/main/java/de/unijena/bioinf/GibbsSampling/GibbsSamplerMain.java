@@ -225,7 +225,7 @@ public class GibbsSamplerMain {
             List<FragmentsCandidate> candidates = candidatesMap.get(id);
             List<Scored<FragmentsCandidate>> scoredCandidates = new ArrayList<>();
             List<Scored<MolecularFormula>> results = zodiacResults.get(id);
-            if (candidates.size()<results.size()) throw new RuntimeException("results are missing from candidates set for id "+id);
+//            if (candidates.size()<results.size()) throw new RuntimeException("results are missing from candidates set for id "+id); //ignores dummy
             //map candidates and results
             for (Scored<MolecularFormula> result : results) {
                 MolecularFormula mf = result.getCandidate();
@@ -233,7 +233,7 @@ public class GibbsSamplerMain {
                 if (DummyFragmentCandidate.dummy.equals(mf)){
                     fragmentsCandidate = DummyFragmentCandidate.newDummy(-1, -1, null);
                 } else {
-                    fragmentsCandidate = findCandidate(candidates, mf);
+                    fragmentsCandidate = findCandidate(candidates, mf, id);
                 }
                 scoredCandidates.add(new Scored<>(fragmentsCandidate, result.getScore()));
             }
@@ -242,11 +242,11 @@ public class GibbsSamplerMain {
         return scored;
     }
 
-    private FragmentsCandidate findCandidate(List<FragmentsCandidate> candidates, MolecularFormula mf){
+    private FragmentsCandidate findCandidate(List<FragmentsCandidate> candidates, MolecularFormula mf, String id){
         for (FragmentsCandidate candidate : candidates) {
             if (candidate.getFormula().equals(mf)) return candidate;
         }
-        throw new RuntimeException("cannot find candidate for "+mf);
+        throw new RuntimeException("cannot find candidate for "+mf+" for id "+id);
     }
 
     private Map<String, List<Scored<MolecularFormula>>> parseZodiacCliResults(Path zodiacSummary) throws IOException {
