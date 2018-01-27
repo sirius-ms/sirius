@@ -36,18 +36,19 @@ public class TreeSizeScorer implements PeakScorer {
         }
     }
 
-    public void fastReplace(final ProcessedInput processedInput, final TreeSizeBonus newBonus) {
+    public double fastReplace(final ProcessedInput processedInput, final TreeSizeBonus newBonus) {
         // fast replace of peak scores. Dirty hack. be careful what you are doing!
         final Scoring scoring = processedInput.getAnnotationOrThrow(Scoring.class);
         final TreeSizeBonus oldBonus = processedInput.getAnnotation(TreeSizeBonus.class, defaultBonus);
-        if (Math.abs(oldBonus.score-newBonus.score) > 1e-12) {
+        final double diff = newBonus.score - oldBonus.score;
+        if (Math.abs(diff) > 1e-12) {
             final double[] xs = scoring.getPeakScores();
-            final double diff = newBonus.score - oldBonus.score;
             for (int i=0, n = xs.length-1; i<n; ++i) {
                 xs[i] += diff;
             }
         }
         processedInput.setAnnotation(TreeSizeBonus.class, newBonus);
+        return diff;
 
     }
 
