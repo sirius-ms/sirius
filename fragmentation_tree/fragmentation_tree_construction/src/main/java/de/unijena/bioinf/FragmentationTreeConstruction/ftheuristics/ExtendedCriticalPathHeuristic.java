@@ -85,6 +85,7 @@ public class ExtendedCriticalPathHeuristic {
             t.setTreeWeight(bestFrag.getIncomingEdge().getWeight());
             return t;
         }
+        Arrays.sort(usedEdges, 0, numberOfSelectedEdges, Comparator.comparingInt(a -> a.getTarget().getColor()));
         final FTree tree = new FTree(usedEdges[0].getTarget().getFormula());
         final HashMap<MolecularFormula, Fragment> fragmentsByFormula = new HashMap<>();
         fragmentsByFormula.put(tree.getRoot().getFormula(), tree.getRoot());
@@ -194,19 +195,6 @@ public class ExtendedCriticalPathHeuristic {
             //if (relocate(l)) ++c;
             relocate(l);
         }
-        Arrays.sort(usedEdges, 0, numberOfSelectedEdges, new Comparator<Loss>() {
-            @Override
-            public int compare(Loss o1, Loss o2) {
-                return o2.getTarget().getColor() - o1.getTarget().getColor();
-            }
-        });
-        /*
-        for (int l=0; l < numberOfSelectedEdges; ++l) {
-            score -= usedEdges[l].getWeight();
-        }
-        */
-        //System.err.println(c + " => " + (-score));
-
     }
 
     protected void relocateBySpanningTree() {
@@ -235,8 +223,6 @@ public class ExtendedCriticalPathHeuristic {
             usedEdges[numberOfSelectedEdges++] = maximum;
             availableLosses.remove(maximum.getTarget().getVertexId());
         }
-        Arrays.sort(usedEdges, 0, numberOfSelectedEdges, (a,b)->a.getTarget().getColor()-b.getTarget().getColor());
-
     }
 
     protected Loss findMax(TIntObjectHashMap<ArrayList<Loss>> map) {

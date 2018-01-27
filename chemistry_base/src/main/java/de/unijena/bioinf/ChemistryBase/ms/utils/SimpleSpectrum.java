@@ -68,8 +68,7 @@ public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectr
 		
 	private static Spectrum<? extends Peak> orderedSpectrum(Spectrum<? extends Peak> s) {
         if (s instanceof OrderedSpectrum) return s;
-        final MutableSpectrum<? extends Peak> t = (s instanceof MutableSpectrum) ? (MutableSpectrum<? extends Peak>)s :
-															new ArrayWrapperSpectrum(s);
+        final MutableSpectrum<? extends Peak> t = new SimpleMutableSpectrum(s);
 		Spectrums.sortSpectrumByMass(t);
 		return t;
 	}
