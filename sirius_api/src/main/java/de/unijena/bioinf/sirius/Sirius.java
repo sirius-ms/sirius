@@ -201,7 +201,7 @@ public class Sirius {
      * is unbounded by default.
      *
      * @param newConstraints
-     * @Deprecated Formula Constraits are now set per input instance via {@link #setFormulaConstraints(MutableMs2Experiment, FormulaConstraints)}
+     * @Deprecated Formula Constraits are now set per input instance via {@link #setFormulaConstraints(Ms2Experiment, FormulaConstraints)}
      */
     @Deprecated
     public void setFormulaConstraints(String newConstraints) {
@@ -216,7 +216,7 @@ public class Sirius {
      * is unbounded by default.
      *
      * @param constraints
-     * @Deprecated Formula Constraits are now set per input instance via {@link #setFormulaConstraints(MutableMs2Experiment, FormulaConstraints)}
+     * @Deprecated Formula Constraits are now set per input instance via {@link #setFormulaConstraints(Ms2Experiment, FormulaConstraints)}
      */
     @Deprecated
     public void setFormulaConstraints(FormulaConstraints constraints) {
@@ -337,18 +337,18 @@ public class Sirius {
      */
     public PrecursorIonType[] guessIonization(Ms2Experiment experiment, PrecursorIonType[] candidateIonizations) {
         Spectrum<Peak> spec = experiment.getMergedMs1Spectrum();
-        if (spec == null) spec = experiment.getMs1Spectra().get(0);
-        else {
-            //todo this is a hack: if merged spectrum only contains isotopes of the compound, like all other correlating peaks have been removed from the data
+        SimpleMutableSpectrum mutableMerged = null;
+        if (spec!=null){
+            mutableMerged = new MutableMs2Spectrum(spec);
+            Spectrums.filterIsotpePeaks(mutableMerged, new Deviation(100));
+        }
+        if ((mutableMerged==null || mutableMerged.size()==1) && experiment.getMs1Spectra().size()>0) {
             System.out.println("take another MS1 to guess ionizations");
-            SimpleMutableSpectrum mutableSpectrum = new MutableMs2Spectrum(spec);
-            Spectrums.filterIsotpePeaks(mutableSpectrum, new Deviation(100));
-            if (mutableSpectrum.size()==1 && experiment.getMs1Spectra().size()>0){
-                spec = Spectrums.selectSpectrumWithMostIntensePrecursor(experiment.getMs1Spectra(), experiment.getIonMass(), getMs1Analyzer().getDefaultProfile().getAllowedMassDeviation());
-                if (spec==null) experiment.getMs1Spectra().get(0);
-            }
+            spec = Spectrums.selectSpectrumWithMostIntensePrecursor(experiment.getMs1Spectra(), experiment.getIonMass(), getMs1Analyzer().getDefaultProfile().getAllowedMassDeviation());
+            if (spec==null) spec = experiment.getMs1Spectra().get(0);
         }
 
+        if (spec==null) return candidateIonizations;
 
         SimpleMutableSpectrum mutableSpectrum = new SimpleMutableSpectrum(spec);
         Spectrums.normalizeToMax(mutableSpectrum, 100d);
@@ -665,17 +665,17 @@ public class Sirius {
         }
     }
 
-    public void setAutomaticElementDetectionFor(MutableMs2Experiment experiment, Element elements) {
+    public void setAutomaticElementDetectionFor(Ms2Experiment experiment, Element elements) {
         FormulaSettings current = experiment.getAnnotation(FormulaSettings.class, FormulaSettings.defaultWithMs2Only());
         experiment.setAnnotation(FormulaSettings.class, current.withoutAutoDetect().autoDetect(elements));
     }
 
-    public void setFormulaConstraints(MutableMs2Experiment experiment, FormulaConstraints constraints) {
+    public void setFormulaConstraints(Ms2Experiment experiment, FormulaConstraints constraints) {
         FormulaSettings current = experiment.getAnnotation(FormulaSettings.class, FormulaSettings.defaultWithMs2Only());
         experiment.setAnnotation(FormulaSettings.class, current.withConstraints(constraints));
     }
 
-    public void enableAutomaticElementDetection(MutableMs2Experiment experiment, boolean enabled) {
+    public void enableAutomaticElementDetection(Ms2Experiment experiment, boolean enabled) {
         FormulaSettings current = experiment.getAnnotation(FormulaSettings.class, FormulaSettings.defaultWithMs2Only());
         if (enabled) {
             experiment.setAnnotation(FormulaSettings.class, current.autoDetect(getElementPrediction().getChemicalAlphabet().getElements().toArray(new Element[0])));
