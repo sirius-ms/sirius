@@ -752,6 +752,9 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             if (exp.getName() == null) {
                 exp.setName("unknown");
             }
+            if (constraints!=null) {
+                sirius.setFormulaConstraints(exp, constraints);
+            }
             instances.add(new Instance(exp, options.getMs2().get(0)));
         } else if (options.getMs1() != null && !options.getMs1().isEmpty()) {
             throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
@@ -810,6 +813,9 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                             if (options.getMaxMz() != null) {
                                 //skip high-mass compounds
                                 if (experiment.getIonMass() > options.getMaxMz()) continue start;
+                            }
+                            if (constraints!=null) {
+                                sirius.setFormulaConstraints(experiment, constraints);
                             }
                             instances.add(new Instance(experiment, currentFile));
                             return experimentIterator;
