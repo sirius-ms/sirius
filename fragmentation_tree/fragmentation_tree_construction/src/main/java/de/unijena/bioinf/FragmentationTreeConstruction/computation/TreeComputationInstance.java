@@ -394,7 +394,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
 
             final ArrayList<RecalibrationJob> recalibrationJobs = new ArrayList<>();
             checkTimeout();
-            for (int i = 0, nn = Math.min(exactResults.size(), numberOfResultsToKeep); i < nn; ++i) {
+            for (int i = 0, nn = exactResults.size(); i < nn; ++i) {
                 ExactResult r = exactResults.get(i);
                 final RecalibrationJob rj = new RecalibrationJob(r);
                 recalibrationJobs.add(rj);
@@ -431,8 +431,10 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
         final ArrayList<FTree> finalResults = new ArrayList<>(nl);
         checkForTreeQuality(exactResults.subList(0,nl),true);
         for (int m = 0; m < nl; ++m) {
+            double score = analyzer.recalculateScores(exactResults.get(m).tree);
             final TreeScoring sc = exactResults.get(m).tree.getAnnotationOrThrow(TreeScoring.class);
-            final double score = analyzer.recalculateScores(exactResults.get(m).tree) - sc.getBeautificationPenalty() - sc.getRecalibrationPenalty();
+            score  -= sc.getBeautificationPenalty();
+            score -= sc.getRecalibrationPenalty();
             if (Math.abs(score - exactResults.get(m).tree.getTreeWeight()) > 0.1) {
                 LoggerFactory.getLogger(TreeComputationInstance.class).warn("Score of " + exactResults.get(m).decomposition.toString() + " differs significantly from recalculated score: " + score + " vs " + exactResults.get(m).tree.getTreeWeight() + " with tree size is " + exactResults.get(m).tree.getFragmentAnnotationOrThrow(Score.class).get(exactResults.get(m).tree.getFragmentAt(1)).get("TreeSizeScorer") + " and " + exactResults.get(m).tree.getAnnotationOrThrow(ProcessedInput.class).getAnnotationOrThrow(TreeSizeScorer.TreeSizeBonus.class).score + " sort key is score " + exactResults.get(m).score);
                 analyzer.recalculateScores(exactResults.get(m).tree);
@@ -578,6 +580,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
         recalibratedTree.setAnnotation(SpectralRecalibration.class, rec);
         recalibratedTree.setAnnotation(ProcessedInput.class, pin);
         recalibratedTree.setAnnotation(RecalibrationFunction.class, rec.toPolynomial());
+        analyzer.addTreeAnnotations(graph,recalibratedTree);
         return new ExactResult(l.getDecompositions().get(0), graph, recalibratedTree, recalibratedTree.getTreeWeight());
     }
 

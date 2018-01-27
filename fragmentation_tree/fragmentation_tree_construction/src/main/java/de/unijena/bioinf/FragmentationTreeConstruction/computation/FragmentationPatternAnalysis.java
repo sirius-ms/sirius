@@ -1207,7 +1207,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         treeScoring.setIsotopeMs1Score(0d);
         for (Fragment treeFragment : tree) {
             final Fragment graphFragment = formula2graphFragment.get(treeFragment.getFormula());
+            if (graphFragment==null)
+                throw new NullPointerException("do not find graph fragment with formula " + treeFragment.getFormula());
             final ProcessedPeak graphPeak = graphPeakAno.get(graphFragment);
+            if (graphPeak==null)
+                throw new NullPointerException("graph node has no associated peak");
             peakAno.set(treeFragment, graphPeak);
             simplePeakAnnotation.set(treeFragment, graphPeak);
             peakAnnotation.set(treeFragment, graphPeak.toAnnotatedPeak(treeFragment.getFormula(), ionType));
@@ -1263,40 +1267,29 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     public FGraph buildGraphWithoutReduction(ProcessedInput input, Decomposition candidate) {
+        return buildGraphWithoutReduction(input,candidate,true);
+    }
+
+    private FGraph buildGraphWithoutReduction(ProcessedInput input, Decomposition candidate, boolean topologicalSort) {
         // build Graph
-        final FGraph graph = graphBuilder.fillGraph(
+        FGraph graph = graphBuilder.fillGraph(
                 graphBuilder.addRoot(graphBuilder.initializeEmptyGraph(input),
                         input.getParentPeak(), Collections.singletonList(candidate)));
         graph.addAliasForFragmentAnnotation(ProcessedPeak.class, Peak.class);
-        return performGraphScoring(graph);
+        graph = performGraphScoring(graph);
+        if (topologicalSort) {
+            graph.sortTopological();
+        }
+        return graph;
     }
 
     public FGraph buildGraph(ProcessedInput input, Decomposition candidate) {
-        return performGraphReduction(buildGraphWithoutReduction(input,candidate));
+        return performGraphReduction(buildGraphWithoutReduction(input,candidate,reduction!=null),0d);
     }
 
     public FGraph performGraphReduction(FGraph fragments, double lowerbound) {
-        ////// bug in reduction code for isotopes
-        //if (fragments.getAnnotationOrNull(IsotopicMarker.class)!=null) return fragments;
-        /////
-        if (reduction == null) {
-            // do topological sort
-            fragments.sortTopological();
-            return fragments;
-        }
+        if(reduction==null) return fragments;
         return reduction.reduce(fragments, lowerbound);
-    }
-
-    public FGraph performGraphReduction(FGraph fragments) {
-        ////// bug in reduction code for isotopes
-        //if (fragments.getAnnotationOrNull(IsotopicMarker.class)!=null) return fragments;
-        /////
-        if (reduction == null) {
-            // do topological sort
-            fragments.sortTopological();
-            return fragments;
-        }
-        return reduction.reduce(fragments, 0d);
     }
 
     /*
