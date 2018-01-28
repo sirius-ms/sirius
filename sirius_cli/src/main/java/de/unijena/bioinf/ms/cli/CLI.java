@@ -120,7 +120,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     //override to add more jobs
     protected void handleJobs(BufferedJJobSubmitter<Instance>.JobContainer jc) throws IOException {
         Sirius.SiriusIdentificationJob j = jc.getJob(Sirius.SiriusIdentificationJob.class);
-        progress.info("Sirius results for: '" + jc.sourceInstance.file.getName() + "'");
+        progress.info("Sirius results for: '" + jc.sourceInstance.file.getName() + "', " + jc.sourceInstance.experiment.getName());
         if (j != null)
             handleSiriusResults(jc, j); //handle results
         else
@@ -235,7 +235,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                     int n = Math.max(1, (int) Math.ceil(Math.log10(results.size())));
                     for (IdentificationResult result : results) {
                         final IsotopePattern pat = result.getRawTree().getAnnotationOrNull(IsotopePattern.class);
-                        final int isoPeaks = pat == null ? 0 : pat.getPattern().size() - 1;
+                        final int isoPeaks = pat == null ? 0 : pat.getPattern().size();
                         printf("%" + n + "d.) %s\t%s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\texplained intensity: %.2f %%\tisotope peaks: %d\n", rank++, result.getMolecularFormula().toString(), String.valueOf(result.getResolvedTree().getAnnotationOrNull(PrecursorIonType.class)), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getResolvedTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getResolvedTree()) * 100, isoPeaks);
                     }
 
@@ -809,7 +809,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                                 }
                             } else return null;
                         } else {
-                            Ms2Experiment experiment = experimentIterator.next();
+                            MutableMs2Experiment experiment = sirius.makeMutable(experimentIterator.next());
                             if (options.getMaxMz() != null) {
                                 //skip high-mass compounds
                                 if (experiment.getIonMass() > options.getMaxMz()) continue start;
