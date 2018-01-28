@@ -117,7 +117,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         // preprocess input
         List<Decomposition> decompositions = pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions();
         // as long as we do not find good quality results
-        final boolean useHeuristic = true;//pinput.getParentPeak().getMz() > 300;
+        final boolean useHeuristic = pinput.getParentPeak().getMz() > 300;
         final ExactResult[] results = estimateTreeSizeAndRecalibration(decompositions, useHeuristic);
         final List<FTree> trees = new ArrayList<>(results.length);
         for (ExactResult r : results) trees.add(r.tree);
@@ -186,7 +186,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         }
         final List<RecalibrationJob> recalibrationJobs = new ArrayList<>();
         for (ExactResult r : topResults) {
-            final RecalibrationJob recalibrationJob = new RecalibrationJob(r);
+            final RecalibrationJob recalibrationJob = new RecalibrationJob(r, useHeuristic ? new ExtendedCriticalPathHeuristicTreeBuilder() : analyzer.getTreeBuilder());
             submitSubJob(recalibrationJob);
             recalibrationJobs.add(recalibrationJob);
         }
@@ -273,9 +273,11 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
 
     private class RecalibrationJob extends BasicJJob<ExactResult> {
         private final ExactResult r;
+        private final TreeBuilder tb;
 
-        public RecalibrationJob(ExactResult input) {
+        public RecalibrationJob(ExactResult input, TreeBuilder tb) {
             this.r = input;
+            this.tb = tb;
         }
 
         @Override
@@ -285,11 +287,11 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
                 graph = analyzer.buildGraph(pinput, r.decomposition);
             } else graph = r.graph;
             final FTree tree = r.tree;
-            return recalibrate(pinput, tree,graph);
+            return recalibrate(pinput, tb, tree,graph);
         }
     }
 
-    protected ExactResult recalibrate(ProcessedInput input, FTree tree,FGraph origGraph) {
+    protected ExactResult recalibrate(ProcessedInput input, TreeBuilder tb, FTree tree,FGraph origGraph) {
         if (tree.getAnnotationOrNull(ProcessedInput.class) == null)
             analyzer.addTreeAnnotations(origGraph, tree);
         final SpectralRecalibration rec = new HypothesenDrivenRecalibration2().collectPeaksFromMs2(input.getExperimentInformation(), tree);
@@ -304,7 +306,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         graph.setAnnotation(ProcessedInput.class, pin);
 
 
-        final FTree recal = new ExtendedCriticalPathHeuristicTreeBuilder().computeTree().solve(pin, graph).tree;
+        final FTree recal = tb.computeTree().solve(pin, graph).tree;
         final FTree finalTree;
         if (recal.getTreeWeight() > tree.getTreeWeight()) {
             finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(secondsPerTree).withTemplate(recal).withMinimalScore(recal.getTreeWeight()-1e-3).solve(pin, graph).tree;
