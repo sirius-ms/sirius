@@ -100,6 +100,7 @@ public enum BioTransformation {
     C10H15N3O6S ("",new String[]{"MyCompoundID"}),
     C12H20O10 ("",new String[]{"MyCompoundID"}),
 
+    //symmetric
     SH("Sulfonic acid <-> Thiol (-O3)",new String[]{"MyCompoundID"},"SO3H",true),
     C5H5N5("Adenine loss",new String[]{"MyCompoundID"},"H2O",true);
 
