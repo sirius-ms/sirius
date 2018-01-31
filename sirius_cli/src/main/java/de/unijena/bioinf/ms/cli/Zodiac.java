@@ -84,7 +84,14 @@ public class Zodiac {
             GibbsSamplerMain.addNotExplainableDummy(candidatesMap, maxCandidates);
 
 
-            String[] ids = getIdsOfCompoundsWithCandidates(candidatesMap);
+            //cluster compounds
+            Map<String, Ms2Experiment> allExperimentsMap = extractExperiments(candidatesMap);
+            Map<String, String[]> representativeToCluster = GibbsSamplerMain.clusterCompounds(candidatesMap);
+            candidatesMap = GibbsSamplerMain.mergeCluster(candidatesMap, representativeToCluster);
+            LOG.info("remaining clusters: " + candidatesMap.size());
+
+
+            String[] ids = getIdsOfCompoundsWithCandidates(candidatesMap); //already removed while clustering?
             FragmentsCandidate[][] candidatesArray = new FragmentsCandidate[ids.length][];
 
             for (int i = 0; i < ids.length; i++) {
@@ -154,14 +161,25 @@ public class Zodiac {
 
             Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.getChosenFormulas();
 
-            GibbsSamplerMain.writeZodiacOutput(ids, bestInitial, result, graph, outputPath.resolve("zodiac_summary.csv"));
-            writeSpectra(ids, result, outputPath);
+            GibbsSamplerMain.writeZodiacOutput(ids, bestInitial, result, graph, representativeToCluster, outputPath.resolve("zodiac_summary.csv"));
+            writeClusters(representativeToCluster, outputPath.resolve("clusters.csv"));
+            writeSpectra(ids, result, representativeToCluster, allExperimentsMap, outputPath);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private static Map<String, Ms2Experiment> extractExperiments(Map<String, List<FragmentsCandidate>> candidatesMap){
+        Map<String, Ms2Experiment> experimentMap = new HashMap<>();
+        for (Map.Entry<String, List<FragmentsCandidate>> stringListEntry : candidatesMap.entrySet()) {
+            final String id = stringListEntry.getKey();
+            final List<FragmentsCandidate> list = stringListEntry.getValue();
+
+            if (list.size()>0) experimentMap.put(id, list.get(0).getExperiment());
+        }
+        return experimentMap;
+    }
 
     protected static List<ExperimentResult> newLoad(File file) throws IOException {
         final List<ExperimentResult> results = new ArrayList<>();
@@ -180,25 +198,43 @@ public class Zodiac {
         return results;
     }
 
+    private static void writeClusters(Map<String, String[]> representativeToCluster, Path outputPath) throws IOException {
+        final BufferedWriter writer = Files.newBufferedWriter(outputPath, Charset.defaultCharset());
+        writer.write("representative\tcluster_ids");
+        for (Map.Entry<String, String[]> stringEntry : representativeToCluster.entrySet()) {
+            String repId = stringEntry.getKey();
+            String[] ids = stringEntry.getValue();
+            StringJoiner joiner = new StringJoiner("\t");
+            joiner.add(repId);
+            for (String id : ids) {
+                joiner.add(id);
+            }
+            writer.write("\n");
+            writer.write(joiner.toString());
 
-    private static void writeSpectra(String[] ids, Scored<FragmentsCandidate>[][] result, Path outputPath) throws IOException {
+        }
+        writer.close();
+    }
+
+
+    private static void writeSpectra(String[] ids, Scored<FragmentsCandidate>[][] result, Map<String, String[]> representativeToCluster, Map<String, Ms2Experiment> experimentMap, Path outputPath) throws IOException {
         for (int i = 0; i < ids.length; i++) {
-
-            final String id = ids[i];
-
             final Scored<FragmentsCandidate>[] currentResults = result[i];
             final Scored<FragmentsCandidate> bestResult = currentResults[0];
 
             if (DummyFragmentCandidate.isDummy(bestResult.getCandidate())) continue;
+            final String repId = ids[i];
+            String[] clusterIds = representativeToCluster.get(repId);
 
-            MutableMs2Experiment experiment = new MutableMs2Experiment(bestResult.getCandidate().getExperiment());
-            experiment.setMolecularFormula(bestResult.getCandidate().getFormula());
-            experiment.setPrecursorIonType(bestResult.getCandidate().getIonType());
-            Path file = outputPath.resolve(Integer.toString(i + 1) + "_" + id + ".ms");
-            final BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset());
-            new JenaMsWriter().write(writer, experiment);
-            writer.close();
-
+            for (String id : clusterIds) {
+                MutableMs2Experiment experiment = new MutableMs2Experiment(experimentMap.get(id));
+                experiment.setMolecularFormula(bestResult.getCandidate().getFormula());
+                experiment.setPrecursorIonType(bestResult.getCandidate().getIonType());
+                Path file = outputPath.resolve(Integer.toString(i + 1) + "_" + id + ".ms");
+                final BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset());
+                new JenaMsWriter().write(writer, experiment);
+                writer.close();
+            }
         }
 
     }
@@ -302,7 +338,7 @@ public class Zodiac {
                 }
                 if (matches) {
                     candidate.setCorrect(true);
-                    System.out.println("Compound " + id + " has library hit. candidate MF is " + candidate.getFormula() + ". Library hit is " + correctMF);
+                    LOG.info("Compound " + id + " has library hit. candidate MF is " + candidate.getFormula() + ". Library hit is " + correctMF);
                 }
                 candidate.setInTrainingSet(true);
 
