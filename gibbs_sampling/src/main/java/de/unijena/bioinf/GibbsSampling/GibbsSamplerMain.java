@@ -1267,9 +1267,12 @@ public class GibbsSamplerMain {
         }
     }
 
+    public static void writeZodiacOutput(String[] ids, Scored<FragmentsCandidate>[][] initial, Scored<FragmentsCandidate>[][] result, Graph<FragmentsCandidate> graph, Path outputPath) throws IOException {
+        writeZodiacOutput(ids, initial, result, graph, null, outputPath);
+    }
 
     private final static int NUMBER_OF_HITS = Integer.MAX_VALUE;
-    public static void writeZodiacOutput(String[] ids, Scored<FragmentsCandidate>[][] initial, Scored<FragmentsCandidate>[][] result, Graph<FragmentsCandidate> graph, Path outputPath) throws IOException {
+    public static void writeZodiacOutput(String[] ids, Scored<FragmentsCandidate>[][] initial, Scored<FragmentsCandidate>[][] result, Graph<FragmentsCandidate> graph, Map<String, String[]> representativeToCluster, Path outputPath) throws IOException {
         int[] connectingPeaks = graph.getMaxConnectedCompoundsCounts();
         String[] ids2 = graph.getIds();
         if (ids.length!=ids2.length) throw new RuntimeException("unexpected number of solved instances");
@@ -1279,8 +1282,6 @@ public class GibbsSamplerMain {
         //changed connectingPeaks -> connectedCompounds
         writer.write("id" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "connectedCompounds" + SEP + "ZodiacMF" + SEP + "ZodiacScore");
         for (int i = 0; i < ids.length; i++) {
-            final StringBuffer buffer = new StringBuffer();
-
             final String id = ids[i];
             final String siriusMF = initial[i][0].getCandidate().getFormula().formatByHill();
             final double siriusScore = initial[i][0].getScore();
@@ -1288,36 +1289,48 @@ public class GibbsSamplerMain {
             final int connections = connectingPeaks[i];
             if (!id.equals(ids2[i])) throw new RuntimeException("different ids: "+id+" vs "+ids2[i]);
 
-
-            buffer.append(id);
-            buffer.append(SEP);
-            buffer.append(siriusMF);
-            buffer.append(SEP);
-            buffer.append(Double.toString(siriusScore));
-            buffer.append(SEP);
-            buffer.append(connections);
-
-            final Scored<FragmentsCandidate>[] currentResults = result[i];
-            for (int j = 0; j < Math.min(currentResults.length, NUMBER_OF_HITS); j++) {
-                Scored<FragmentsCandidate> currentResult = currentResults[j];
-                final String mf = currentResult.getCandidate().getFormula().formatByHill();
-                final double score = currentResult.getScore();
-
-                if (score <= 0) break; //don't write MF with 0 probability
-
-                buffer.append(SEP);
-                buffer.append(mf);
-                buffer.append(SEP);
-                buffer.append(Double.toString(score));
+            if (representativeToCluster==null){
+                String summeryLine = createSummaryLine(id, siriusMF, siriusScore, connections, result[i]);
+                writer.write("\n");
+                writer.write(summeryLine);
+            } else {
+                String[] clusterIds = representativeToCluster.get(id);
+                for (String clusterId : clusterIds) {
+                    String summeryLine = createSummaryLine(clusterId, siriusMF, siriusScore, connections, result[i]);
+                    writer.write("\n");
+                    writer.write(summeryLine);
+                }
             }
-
-            writer.write("\n");
-            writer.write(buffer.toString());
 
         }
 
         writer.close();
 
+    }
+
+    private static String createSummaryLine(String id, String siriusMF, double siriusScore, int numberConnections, Scored<FragmentsCandidate>[] result){
+        StringBuilder builder = new StringBuilder();
+        builder.append(id);
+        builder.append(SEP);
+        builder.append(siriusMF);
+        builder.append(SEP);
+        builder.append(Double.toString(siriusScore));
+        builder.append(SEP);
+        builder.append(numberConnections);
+
+        for (int j = 0; j < Math.min(result.length, NUMBER_OF_HITS); j++) {
+            Scored<FragmentsCandidate> currentResult = result[j];
+            final String mf = currentResult.getCandidate().getFormula().formatByHill();
+            final double score = currentResult.getScore();
+
+            if (score <= 0) break; //don't write MF with 0 probability
+
+            builder.append(SEP);
+            builder.append(mf);
+            builder.append(SEP);
+            builder.append(Double.toString(score));
+        }
+        return builder.toString();
     }
 
     private void writeBestFormulas(Scored<FragmentsCandidate>[][] results, Graph<FragmentsCandidate> graph, Path outputFile) throws IOException {
@@ -1817,15 +1830,17 @@ public class GibbsSamplerMain {
     public static void addNotExplainableDummy(Map<String, List<FragmentsCandidate>> candidateMap, int maxCandidates){
         List<String> idList = new ArrayList<>(candidateMap.keySet());
 
+        int missingCounter = 0;
         for (String id : idList) {
             List<FragmentsCandidate> candidates = candidateMap.get(id);
+            if (candidateMap.size()==0) continue;
             Ms2Experiment experiment = candidates.get(0).getExperiment();
 
             UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = candidates.get(0).getAnnotationOrNull(UnconsideredCandidatesUpperBound.class);
 
             if (unconsideredCandidatesUpperBound ==null){
-                LOG.warn("Cannot create dummy node. Information missing.");
-                break;
+                ++missingCounter;
+                continue;
             }
 
             double worstScore = unconsideredCandidatesUpperBound.getLowestConsideredCandidateScore();
@@ -1842,12 +1857,121 @@ public class GibbsSamplerMain {
 
             if (numberOfIgnored>0) {
                 FragmentsCandidate dummyCandidate = DummyFragmentCandidate.newDummy(worstScore, numberOfIgnored, experiment);
+                if (candidates.get(0).hasLibraryHit()) dummyCandidate.setLibraryHit(candidates.get(0).getLibraryHit());
                 candidates.add(dummyCandidate);
             }
 
         }
+
+        if (missingCounter>0){
+            LOG.warn("Cannot create dummy nodes for "+missingCounter+" compounds. Information missing.");
+        }
     }
 
+
+    /**
+     *
+     * cluster spectra based on same MF and retention time information?!
+     * //todo removes compounds with no candidate
+     * //todo possibly also use library hits?
+     * //todo look ate topN identifications?! best hit is not restrictive enough for high mass compounds
+     * //todo does not look at {@link CompoundQuality}
+     * @param candidateMap
+     * @return mapping from cluster representative to cluster
+     */
+    public static Map<String, String[]> clusterCompounds(Map<String, List<FragmentsCandidate>> candidateMap){
+        List<String> idList = new ArrayList<>(candidateMap.keySet());
+
+        Map<MolecularFormula, List<String>> bestMFToId = new HashMap<>();
+        for (String id : idList) {
+            final List<FragmentsCandidate> candidates = candidateMap.get(id);
+            if (candidates.size()==0) continue;
+            MolecularFormula mf = candidates.get(0).getFormula();
+            List<String> ids = bestMFToId.get(mf);
+            if (ids==null){
+                ids = new ArrayList<>();
+                bestMFToId.put(mf, ids);
+            } else {
+                //todo resolve
+                Ms2Experiment experiment1 = candidateMap.get(ids.get(0)).get(0).getExperiment();
+                Ms2Experiment experiment2 = candidates.get(0).getExperiment();
+                if (experiment1.hasAnnotation(RetentionTime.class) && experiment2.hasAnnotation(RetentionTime.class)){
+                    double time1 = experiment1.getAnnotation(RetentionTime.class).getRetentionTimeInSeconds();
+                    double time2 = experiment2.getAnnotation(RetentionTime.class).getRetentionTimeInSeconds();
+                    if (Math.abs(time1-time2)>20) LOG.warn("merged compounds retention time differs by "+(Math.abs(time1-time2)));
+                }
+            }
+
+            ids.add(id);
+        }
+
+        Map<String, String[]> idToCluster = new HashMap<>();
+        for (List<String> ids : bestMFToId.values()) {
+            double maxScore = Double.NEGATIVE_INFINITY;
+            String bestId = null;
+            for (String id : ids) {
+                double score = candidateMap.get(id).get(0).getScore();
+                if (score>maxScore){
+                    maxScore = score;
+                    bestId = id;
+                }
+            }
+            assert bestId!=null;
+
+            idToCluster.put(bestId, ids.toArray(new String[0]));
+        }
+        return idToCluster;
+    }
+
+
+    public static Map<String, List<FragmentsCandidate>> mergeCluster(Map<String, List<FragmentsCandidate>> candidateMap, Map<String, String[]> representativeToCluster){
+        Map<String, List<FragmentsCandidate>> candidateMapNew = new HashMap<>();
+
+        for (String repId : representativeToCluster.keySet()) {
+            String[] clusterIds = representativeToCluster.get(repId);
+            LibraryHit bestHit = null;
+            MolecularFormula correct = null;
+            for (String id : clusterIds) {
+                List<FragmentsCandidate> candidates = candidateMap.get(id);
+                if (candidates.get(0).hasLibraryHit()){
+                    for (FragmentsCandidate candidate : candidates) {
+                        if (candidate.isCorrect()){
+                            LibraryHit hit = candidate.getLibraryHit();
+                            if (bestHit==null){
+                                bestHit = hit;
+                                correct = candidate.getFormula();
+                            } else {
+                                if (hit.getCosine()>bestHit.getCosine()){
+                                    bestHit = hit;
+                                    correct = candidate.getFormula();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+
+
+            List<FragmentsCandidate> repCandidates = candidateMap.get(repId);
+            final FragmentsCandidate repC  = repCandidates.get(0);
+            if (correct!=null && (!repC.hasLibraryHit() || !repC.getLibraryHit().getQueryExperiment().equals(bestHit.getQueryExperiment()))){
+                //update with 'better' library hit
+                for (FragmentsCandidate candidate : repCandidates) {
+                    candidate.setLibraryHit(bestHit);
+                    candidate.setInTrainingSet(true);
+                    if (DummyFragmentCandidate.isDummy(candidate)) continue;
+                    if (candidate.getFormula().equals(correct)){
+                        candidate.setCorrect(true);
+                    }
+                }
+            }
+
+            candidateMapNew.put(repId, repCandidates);
+        }
+
+        return candidateMapNew;
+    }
 
     private int[] statisticsOfKnownCompounds(Scored<FragmentsCandidate>[] result, String ids[], Set<String> evaluationIDs, Map<String, MolecularFormula> correctHitsMap){
         List<String> correctIds = new ArrayList<>();
