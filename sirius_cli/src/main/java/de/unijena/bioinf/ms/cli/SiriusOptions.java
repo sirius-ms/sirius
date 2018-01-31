@@ -155,6 +155,15 @@ public interface SiriusOptions {
     @Option(longName = "initial-compound-buffer", description = "Number of compounds that will be loaded initially into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores", defaultToNull = true)
     Integer getMinInstanceBuffer();
 
+    ///// some hidden parameters
+
+    @Option(longName = "disable-element-detection", hidden = true)
+    public boolean isDisableElementDetection();
+
+    @Option(longName = "enable-silicon-detection", hidden = true)
+    public boolean isEnableSiliconDetection();
+
+
     /**
      * Just to artificially separate list parameters from rest parameters -_-
      */
