@@ -36,6 +36,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
+import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNRegressionPredictor;
+import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.SpectralParser;
@@ -604,6 +606,14 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
             sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
             sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
+
+            if (options.isEnableSiliconDetection()){
+                ElementPredictor elementPredictor = sirius.getElementPrediction();
+                if (elementPredictor instanceof DNNRegressionPredictor){
+                    ((DNNRegressionPredictor) elementPredictor).enableSilicon();
+                }
+            }
+
             /*
             if (options.getPossibleIonizations() != null) {
                 List<String> ionList = options.getPossibleIonizations();
@@ -755,6 +765,9 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             if (constraints!=null) {
                 sirius.setFormulaConstraints(exp, constraints);
             }
+            if (options.isDisableElementDetection()){
+                sirius.enableAutomaticElementDetection(exp, false);
+            }
             instances.add(new Instance(exp, options.getMs2().get(0)));
         } else if (options.getMs1() != null && !options.getMs1().isEmpty()) {
             throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
@@ -816,6 +829,9 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                             }
                             if (constraints!=null) {
                                 sirius.setFormulaConstraints(experiment, constraints);
+                            }
+                            if (options.isDisableElementDetection()){
+                                sirius.enableAutomaticElementDetection(experiment, false);
                             }
                             instances.add(new Instance(experiment, currentFile));
                             return experimentIterator;
