@@ -325,7 +325,7 @@ public class Sirius {
     /**
      * for internal use to easily switch and experiment with implementation details
      */
-    public static boolean USE_FAST_MODE = false;
+    public static boolean USE_FAST_MODE = true;
     protected AbstractTreeComputationInstance getTreeComputationImplementation(JobManager manager, FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep) {
         if (USE_FAST_MODE)
             return new FasterTreeComputationInstance(manager, analyzer, input, numberOfResultsToKeep);
