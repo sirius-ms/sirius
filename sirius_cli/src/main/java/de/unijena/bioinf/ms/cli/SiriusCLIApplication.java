@@ -13,8 +13,10 @@ public class SiriusCLIApplication {
         try {
             final FingeridCLI<FingerIdOptions> cli = new FingeridCLI<>();
             if (isZodiac(args)){
-                if (args.length==1)  cli.println(CliFactory.createCli(ZodiacOptions.class).getHelpMessage());
-                System.exit(0);
+                if (args.length==1){
+                    cli.println(CliFactory.createCli(ZodiacOptions.class).getHelpMessage());
+                    System.exit(0);
+                }
                 ZodiacOptions options = null;
                 try {
                     options = CliFactory.createCli(ZodiacOptions.class).parseArguments(removeFromArrayIgnoreCase(args, "--zodiac"));
