@@ -50,6 +50,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+
+//todo we should cleanup the api methods, proof which should be private and which are no longer needed, or at least change them, so that they use the identification job
 public class Sirius {
 
     private static final double MAX_TREESIZE_INCREASE = 3d;
@@ -81,6 +83,7 @@ public class Sirius {
             e.printStackTrace();
         }
     }
+
 
     public class SiriusIdentificationJob extends MasterJJob<List<IdentificationResult>> {
         private final Ms2Experiment experiment;
@@ -402,6 +405,7 @@ public class Sirius {
      * @param uexperiment input data
      * @return the top tree
      */
+    @Deprecated
     public IdentificationResult identify(Ms2Experiment uexperiment) {
         return identify(uexperiment, 1).get(0);
     }
@@ -413,6 +417,7 @@ public class Sirius {
      * @param numberOfCandidates number of top candidates to return
      * @return a list of identified molecular formulas together with their tree
      */
+    @Deprecated
     public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates) {
         final AbstractTreeComputationInstance instance = getTreeComputationImplementation(jobManager, getMs2Analyzer(), uexperiment, numberOfCandidates);
         final ProcessedInput pinput = instance.validateInput();
