@@ -98,8 +98,8 @@ public interface SiriusOptions {
     @Option(shortName = "p", description = "name of the configuration profile. Some of the default profiles are: 'qtof', 'orbitrap', 'fticr'.", defaultValue = "default")
     String getProfile();
 
-    @Option(longName = "fast-mode", hidden = true)
-    public boolean isFastMode();
+    @Option(longName = "disable-fast-mode", hidden = true)
+    public boolean isDisableFastMode();
 
     @Option(shortName = "1", longName = "ms1", description = "MS1 spectrum file name", minimum = 0, defaultToNull = true)
     List<File> getMs1();

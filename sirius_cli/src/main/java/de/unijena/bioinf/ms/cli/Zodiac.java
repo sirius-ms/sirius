@@ -60,6 +60,16 @@ public class Zodiac {
 //            int workerCount = PropertyManager.getNumberOfCores();
             int workerCount = options.getNumOfCores()>0 ? options.getNumOfCores() : (new SystemInfo()).getHardware().getProcessor().getPhysicalProcessorCount()-1;
 
+            //create output dir
+            if (Files.exists(outputPath)){
+                if (!Files.isDirectory(outputPath)){
+                    LOG.error("specified output path must be a directory.");
+                    return;
+                }
+            } else {
+                Files.createDirectories(outputPath);
+            }
+
 //        //reactions
             Reaction[] reactions = GibbsSamplerMain.parseReactions(1);
             Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
