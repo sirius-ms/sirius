@@ -391,12 +391,11 @@ public class Sirius {
     }
     public void detectPossibleIonModesFromMs1(MutableMs2Experiment experiment,PrecursorIonType... allowedIonModes) {
         final PrecursorIonType[] ionModes = guessIonization(experiment, allowedIonModes);
-        final Set<Ionization> ionizations = new HashSet<>();
-        for (PrecursorIonType ionType : ionModes) ionizations.add(ionType.getIonization());
-        if (ionizations.isEmpty()) {
-            for (PrecursorIonType ionType : allowedIonModes) ionizations.add(ionType.getIonization());
+        final PossibleIonModes pa = experiment.getAnnotation(PossibleIonModes.class,new PossibleIonModes());
+        for (PrecursorIonType ion : ionModes) {
+            pa.add(ion.getIonization(), 1d);
         }
-        setAllowedIonModes(experiment, ionizations.toArray(new Ionization[ionizations.size()]));
+        experiment.setAnnotation(PossibleIonModes.class,pa);
     }
 
     /**
@@ -1020,9 +1019,9 @@ public class Sirius {
         PossibleIonModes pim = input.getExperimentInformation().getAnnotation(PossibleIonModes.class,null);
         if (pim==null)
             detectPossibleIonModesFromMs1(input.getExperimentInformation());
-        else if (pim.isGuessFromMs1Enabled())
+        else if (pim.isGuessFromMs1Enabled()) {
             detectPossibleIonModesFromMs1(input.getExperimentInformation(), pim.getIonModesAsPrecursorIonType().toArray(new PrecursorIonType[0]));
-
+        }
         // step 3: Isotope pattern analysis
         if (input.getAnnotation(IsotopeScoring.class, IsotopeScoring.DEFAULT).getIsotopeScoreWeighting() <= 0)
             return false;
