@@ -146,6 +146,9 @@
         "useOriginalMz": true
       },
       {
+        "$name": "AdductTypeScorer"
+      },
+      {
         "$name": "IntrinsicallyChargedScorer",
         "score": -4.605170185988091
       },
@@ -416,9 +419,6 @@
       {
         "$name": "PureCarbonNitrogenLossScorer",
         "penalty": -2.3025850929940455
-      },
-      {
-        "$name": "AdductFragmentScorer"
       },
       {
         "$name": "StrangeElementLossScorer",
