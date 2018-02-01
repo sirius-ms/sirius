@@ -41,7 +41,6 @@ public class SiriusCLIApplication {
                 e.printStackTrace();
                 System.exit(0);
             }
-            System.out.println("Time: " + ((double) (System.currentTimeMillis() - t)) / 1000d);
         }
     }
 
