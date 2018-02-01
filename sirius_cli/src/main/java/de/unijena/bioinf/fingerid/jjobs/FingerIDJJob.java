@@ -175,7 +175,9 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
             final PossibleAdducts adductTypes = validatedExperiment.getAnnotation(PossibleAdducts.class, new PossibleAdducts(PeriodicTable.getInstance().adductsByIonisation(experiment.getPrecursorIonType())));
             for (PrecursorIonType ionType : adductTypes) {
                 if (!ionType.equals(ir.getBeautifulTree().getAnnotationOrThrow(PrecursorIonType.class)) && new IonTreeUtils().isResolvable(ir.getBeautifulTree(), ionType)) {
-                    ionTypes.add(IdentificationResult.withPrecursorIonType(ir, ionType));
+                    IdentificationResult newIr = IdentificationResult.withPrecursorIonType(ir, ionType);
+                    if (newIr.getResolvedTree().numberOfVertices()>=3)
+                        ionTypes.add(newIr);
                 }
             }
         }

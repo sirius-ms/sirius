@@ -21,10 +21,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
@@ -68,6 +65,22 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
     protected org.slf4j.Logger logger = LoggerFactory.getLogger(CLI.class);
 
+
+    public static void main(String[] args) {
+        try {
+            SiriusWorkspaceReader w = new SiriusWorkspaceReader(new File("/home/kaidu/data/datasets/irina_dataset/final.sirius"));
+
+            ProjectReader reader = new DirectoryReader(w);
+            while (reader.hasNext()) {
+                ExperimentResult exp = reader.next();
+                if (exp.getExperiment()==null)
+                    System.out.println(exp.getExperimentName());
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public void print(String s) {
         if (!shellOutputSurpressed) System.out.print(s);
@@ -131,9 +144,14 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
     private void setPrecursorIonTypes(MutableMs2Experiment exp, PossibleAdducts pa, boolean guessFromMS1) {
         exp.setAnnotation(PossibleAdducts.class, pa);
-        exp.setAnnotation(PossibleIonModes.class, pa.merge(exp.getAnnotation(PossibleIonModes.class, new PossibleIonModes())));
-        PossibleIonModes im = exp.getAnnotation(PossibleIonModes.class);
-        im.enableGuessFromMs1(guessFromMS1);
+        PossibleIonModes im = exp.getAnnotation(PossibleIonModes.class, new PossibleIonModes());
+        final Set<Ionization> ionModes = new HashSet<>(pa.getIonModes());
+        for (Ionization ion : ionModes) {
+            im.add(ion, 0.02);
+        }
+        im.add(PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization(),1d);
+        if (guessFromMS1) im.enableGuessFromMs1WithCommonIonModes(exp.getPrecursorIonType().getCharge());
+        exp.setAnnotation(PossibleIonModes.class,im);
     }
 
     protected Sirius.SiriusIdentificationJob makeSiriusJob(final Instance i) {
@@ -868,11 +886,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     protected static PrecursorIonType getIonFromOptions(SiriusOptions opt, int charge) {
         List<String> ionStr = opt.getIon();
         if (ionStr == null) {
-            if (opt.isAutoCharge()) return PrecursorIonType.unknown(charge);
-            else if (charge == 0) throw new IllegalArgumentException("Please specify the charge");
-            else if (charge == 1) return PrecursorIonType.getPrecursorIonType("[M+H]+");
-            else if (charge == -1) return PrecursorIonType.getPrecursorIonType("[M-H]-");
-            else throw new IllegalArgumentException("SIRIUS does not support multiple charges");
+            return PrecursorIonType.unknown(charge);
         } else if (ionStr.size()==1){
             final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(opt.getIon().get(0));
             if (ionType.isIonizationUnknown() && !opt.isAutoCharge()) {
