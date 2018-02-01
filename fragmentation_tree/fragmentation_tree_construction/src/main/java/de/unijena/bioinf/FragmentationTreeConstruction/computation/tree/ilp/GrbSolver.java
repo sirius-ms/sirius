@@ -142,7 +142,6 @@ public class GrbSolver extends AbstractSolver{
             case GRB.OPTIMAL:
                 return TreeBuilder.AbortReason.COMPUTATION_CORRECT;
             case GRB.TIME_LIMIT:
-                logger.info("Timeout reached.");
                 return TreeBuilder.AbortReason.TIMEOUT;
 
 

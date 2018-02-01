@@ -9,7 +9,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.treebuilder.ExtendedCriticalPathHeuristicTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
 
@@ -158,12 +157,17 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             final List<TreeComputationJob> jobs = new ArrayList<>(decompositions.size());
             final TreeBuilder builder = useHeuristic ? new ExtendedCriticalPathHeuristicTreeBuilder() : analyzer.getTreeBuilder();
             for (Decomposition d : decompositions) {
+                if (Double.isInfinite(d.getScore())) continue;
                 final TreeComputationJob job = new TreeComputationJob(builder,null,d);
                 submitSubJob(job);
                 jobs.add(job);
             }
+            int counter=0;
             for (TreeComputationJob job : jobs) {
                 results.add(job.takeResult());
+                if (++counter % 100 == 0) {
+                    checkTimeout();
+                }
             }
             Collections.sort(results, Collections.reverseOrder());
             final int treeSizeCheck = Math.min(results.size(),MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY);
@@ -182,7 +186,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
                 topResults.forEach((t)->jobs.add(new AnnotationJob(t)));
             }
             jobs.forEach(this::submitSubJob);
-            return jobs.stream().map(JJob::takeResult).sorted(Collections.reverseOrder()).toArray(ExactResult[]::new);
+            return jobs.stream().map(this::takeResultAndCheckTime).sorted(Collections.reverseOrder()).toArray(ExactResult[]::new);
         }
         final List<RecalibrationJob> recalibrationJobs = new ArrayList<>();
         for (ExactResult r : topResults) {
@@ -190,7 +194,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             submitSubJob(recalibrationJob);
             recalibrationJobs.add(recalibrationJob);
         }
-        final ExactResult[] exact = recalibrationJobs.stream().map(JJob::takeResult).sorted(Collections.reverseOrder()).limit(numberOfResultsToKeep).toArray(ExactResult[]::new);
+        final ExactResult[] exact = recalibrationJobs.stream().map(this::takeResultAndCheckTime).sorted(Collections.reverseOrder()).limit(numberOfResultsToKeep).toArray(ExactResult[]::new);
 
         if (inc >= MAX_TREESIZE_INCREASE) {
             for (ExactResult t : exact) t.tree.setAnnotation(Beautified.class,Beautified.IS_BEAUTIFUL);
@@ -198,6 +202,12 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             checkForTreeQuality(Arrays.asList(exact),true);
         }
         return exact;
+    }
+
+    private ExactResult takeResultAndCheckTime(BasicJJob<ExactResult> r) {
+        final ExactResult result = r.takeResult();
+        checkTimeout();
+        return result;
     }
 
     protected class ExactJob extends BasicJJob<ExactResult> {
@@ -210,7 +220,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         @Override
         protected ExactResult compute() throws Exception {
             FGraph graph = analyzer.buildGraph(pinput, template.decomposition);
-            final FTree tree = analyzer.getTreeBuilder().computeTree().withMultithreading(1).withTimeLimit(secondsPerTree).withMinimalScore(template.score-1e-3)/*.withTemplate(template.tree)*/.solve(pinput, graph).tree;
+            final FTree tree = analyzer.getTreeBuilder().computeTree().withMultithreading(1).withTimeLimit(Math.min(restTime,secondsPerTree)).withMinimalScore(template.score-1e-3)/*.withTemplate(template.tree)*/.solve(pinput, graph).tree;
             analyzer.addTreeAnnotations(graph,tree);
             return new ExactResult(template.decomposition,null,tree,tree.getTreeWeight());
         }
@@ -245,8 +255,8 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
 
         @Override
         protected ExactResult compute() throws Exception {
-            final FGraph graph = analyzer.buildGraphWithoutReduction(pinput, decomposition);
-            final FTree tree = treeBuilder.computeTree().withTimeLimit(secondsPerTree).solve(pinput, graph).tree;
+            final FGraph graph = treeBuilder instanceof ExtendedCriticalPathHeuristicTreeBuilder ? analyzer.buildGraphWithoutReduction(pinput, decomposition) : analyzer.buildGraph(pinput,decomposition);
+            final FTree tree = treeBuilder.computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).solve(pinput, graph).tree;
             final ExactResult er = new ExactResult(decomposition,null,tree,tree.getTreeWeight());
             if (graphCache!=null) {
                 double score = graphCache.getWeightLowerbound();
@@ -306,16 +316,16 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         graph.setAnnotation(ProcessedInput.class, pin);
 
 
-        final FTree recal = tb.computeTree().solve(pin, graph).tree;
+        final FTree recal = tb.computeTree().withTimeLimit(Math.min(restTime,secondsPerTree)).solve(pin, graph).tree;
         final FTree finalTree;
         if (recal.getTreeWeight() > tree.getTreeWeight()) {
-            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(secondsPerTree).withTemplate(recal).withMinimalScore(recal.getTreeWeight()-1e-3).solve(pin, graph).tree;
+            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime,secondsPerTree)).withTemplate(recal).withMinimalScore(recal.getTreeWeight()-1e-3).solve(pin, graph).tree;
             finalTree.setAnnotation(SpectralRecalibration.class, rec);
             finalTree.setAnnotation(ProcessedInput.class, pin);
             finalTree.setAnnotation(RecalibrationFunction.class, rec.toPolynomial());
             analyzer.addTreeAnnotations(graph,finalTree);
         } else {
-            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(secondsPerTree).withTemplate(tree).withMinimalScore(tree.getTreeWeight()-1e-3).solve(input, origGraph).tree;
+            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime,secondsPerTree)).withTemplate(tree).withMinimalScore(tree.getTreeWeight()-1e-3).solve(input, origGraph).tree;
             finalTree.setAnnotation(ProcessedInput.class,input);
             finalTree.setAnnotation(RecalibrationFunction.class, RecalibrationFunction.identity());
             finalTree.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
