@@ -12,8 +12,8 @@ public class SiriusCLIApplication {
         long t = System.currentTimeMillis();
         try {
             final FingeridCLI<FingerIdOptions> cli = new FingeridCLI<>();
-            if (isZodiac(args)){
-                if (args.length==1){
+            if (isZodiac(args)) {
+                if (args.length == 1) {
                     cli.println(CliFactory.createCli(ZodiacOptions.class).getHelpMessage());
                     System.exit(0);
                 }
@@ -35,13 +35,13 @@ public class SiriusCLIApplication {
         } catch (Exception e) {
             LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unkown Error!", e);
         } finally {
-            System.out.println("Time: " + ((double) (System.currentTimeMillis() - t)) / 1000d);
             try {
                 JobManager.shutDownAllInstances();
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 System.exit(0);
             }
+            System.out.println("Time: " + ((double) (System.currentTimeMillis() - t)) / 1000d);
         }
     }
 
@@ -55,16 +55,16 @@ public class SiriusCLIApplication {
     private static String[] removeFromArrayIgnoreCase(String[] args, String param) {
         int idx = -1;
         for (int i = 0; i < args.length; i++) {
-            if (args[i].equalsIgnoreCase(param)){
+            if (args[i].equalsIgnoreCase(param)) {
                 idx = i;
                 break;
             }
 
         }
-        if (idx<0) return args.clone();
-        String[] argsNew = Arrays.copyOf(args, args.length-1);
-        for (int i = idx+1; i < args.length; i++) {
-            argsNew[i-1] = args[i];
+        if (idx < 0) return args.clone();
+        String[] argsNew = Arrays.copyOf(args, args.length - 1);
+        for (int i = idx + 1; i < args.length; i++) {
+            argsNew[i - 1] = args[i];
         }
         return argsNew;
     }
