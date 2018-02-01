@@ -566,8 +566,8 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     public void setup() {
         try {
             this.sirius = new Sirius(options.getProfile());
-            Sirius.USE_FAST_MODE = options.isFastMode();
-            if (options.isFastMode()) LoggerFactory.getLogger(CLI.class).info("Use experimental fast mode. Results might differ from default mode.");
+            Sirius.USE_FAST_MODE = !options.isDisableFastMode();
+//            if (options.isDisableFastMode()) LoggerFactory.getLogger(CLI.class).info("Use experimental fast mode. Results might differ from default mode.");
             final FragmentationPatternAnalysis ms2 = sirius.getMs2Analyzer();
             final IsotopePatternAnalysis ms1 = sirius.getMs1Analyzer();
             final MutableMeasurementProfile ms1Prof = new MutableMeasurementProfile(ms1.getDefaultProfile());
