@@ -1855,7 +1855,7 @@ public class GibbsSamplerMain {
                 worstScore = candidates.get(candidates.size()-1).getScore();
             }
 
-            if (numberOfIgnored>0) {
+            if (numberOfIgnored>0 && worstScore>0) {
                 FragmentsCandidate dummyCandidate = DummyFragmentCandidate.newDummy(worstScore, numberOfIgnored, experiment);
                 if (candidates.get(0).hasLibraryHit()) dummyCandidate.setLibraryHit(candidates.get(0).getLibraryHit());
                 candidates.add(dummyCandidate);
