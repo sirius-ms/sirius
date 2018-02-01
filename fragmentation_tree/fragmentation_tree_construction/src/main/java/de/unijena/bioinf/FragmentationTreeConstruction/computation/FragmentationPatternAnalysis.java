@@ -208,15 +208,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         if (pinput.getExperimentInformation().getPrecursorIonType().isIonizationUnknown()) {
             PossibleIonModes adductTypes = pinput.getExperimentInformation().getAnnotation(PossibleIonModes.class, null);
             if (adductTypes==null) {
-                adductTypes = new PossibleIonModes();
-                if (pinput.getExperimentInformation().getPrecursorIonType().getCharge()>0) {
-                    adductTypes.add(PrecursorIonType.getPrecursorIonType("[M+H]+"), 0.9);
-                    adductTypes.add(PrecursorIonType.getPrecursorIonType("[M+Na]+"), 0.05);
-                    adductTypes.add(PrecursorIonType.getPrecursorIonType("[M+K]+"), 0.05);
-                } else {
-                    adductTypes.add(PrecursorIonType.getPrecursorIonType("[M-H]-"), 0.95);
-                    adductTypes.add(PrecursorIonType.getPrecursorIonType("[M+Cl]-"), 0.05);
-                }
+                adductTypes = PossibleIonModes.defaultFor(pinput.getExperimentInformation().getPrecursorIonType().getCharge());
             }
             pinput.setAnnotation(PossibleIonModes.class, adductTypes);
         } else {
@@ -451,7 +443,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         Collections.sort(processedPeaks, new ProcessedPeak.MassComparator());
         final ProcessedPeak parentPeak = processedPeaks.get(processedPeaks.size() - 1);
         // decompose peaks
-        final List<Ionization> ionModes = input.getAnnotationOrThrow(PossibleIonModes.class).getIonModes();
+        final List<Ionization> ionModes = input.getAnnotationOrThrow(PossibleIonModes.class).getIonModesWithProbabilityAboutZero();
         final PeakAnnotation<DecompositionList> decompositionList = input.getOrCreatePeakAnnotation(DecompositionList.class);
         final MassToFormulaDecomposer decomposer = decomposers.getDecomposer(constraints.getChemicalAlphabet());
         final Deviation fragmentDeviation = input.getMeasurementProfile().getAllowedMassDeviation();
