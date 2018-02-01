@@ -116,11 +116,13 @@ public class Sirius {
                 return null;
             }*/
 
-            List<IdentificationResult> r = createIdentificationResults(fr);//postprocess results
+            List<IdentificationResult> r = createIdentificationResults(fr, instance);//postprocess results
             return r;
         }
 
-        private List<IdentificationResult> createIdentificationResults(AbstractTreeComputationInstance.FinalResult fr) {
+        private List<IdentificationResult> createIdentificationResults(AbstractTreeComputationInstance.FinalResult fr, AbstractTreeComputationInstance computationInstance) {
+            addScoreThresholdOnUnconsideredCandidates(fr, computationInstance.precompute());
+
             final List<IdentificationResult> irs = new ArrayList<>();
             int k = 0;
             for (FTree tree : fr.getResults()) {
@@ -340,10 +342,10 @@ public class Sirius {
         SimpleMutableSpectrum mutableMerged = null;
         if (spec!=null){
             mutableMerged = new MutableMs2Spectrum(spec);
-            Spectrums.filterIsotpePeaks(mutableMerged, new Deviation(100));
+            Spectrums.filterIsotpePeaks(mutableMerged, new Deviation(100), 0.3,0.75,5, new ChemicalAlphabet());
         }
+        //todo hack: if the merged spectrum only contains a single monoisotopic peak: use most intense MS1 (problem if only M+H+ and M+ in merged MS1?)
         if ((mutableMerged==null || mutableMerged.size()==1) && experiment.getMs1Spectra().size()>0) {
-            System.out.println("take another MS1 to guess ionizations");
             spec = Spectrums.selectSpectrumWithMostIntensePrecursor(experiment.getMs1Spectra(), experiment.getIonMass(), getMs1Analyzer().getDefaultProfile().getAllowedMassDeviation());
             if (spec==null) spec = experiment.getMs1Spectra().get(0);
         }
@@ -417,11 +419,7 @@ public class Sirius {
         performMs1Analysis(instance, IsotopePatternHandling.both);
         jobManager.submitSubJob(instance);
         AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
-        final List<IdentificationResult> irs = new ArrayList<>();
-        int k = 0;
-        for (FTree tree : fr.getResults()) {
-            irs.add(new IdentificationResult(tree, ++k));
-        }
+        final List<IdentificationResult> irs = createIdentificationResults(fr, instance);//postprocess results
         return irs;
     }
 
@@ -451,30 +449,33 @@ public class Sirius {
         performMs1Analysis(instance, deisotope);
         jobManager.submitSubJob(instance);
         AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
+        final List<IdentificationResult> irs = createIdentificationResults(fr, instance);//postprocess results
+        return irs;
+    }
+
+    protected List<IdentificationResult> createIdentificationResults(AbstractTreeComputationInstance.FinalResult fr, AbstractTreeComputationInstance computationInstance){
+        addScoreThresholdOnUnconsideredCandidates(fr, computationInstance.precompute());
+
         final List<IdentificationResult> irs = new ArrayList<>();
         int k = 0;
         for (FTree tree : fr.getResults()) {
-            irs.add(new IdentificationResult(tree, ++k));
+            IdentificationResult result = new IdentificationResult(tree, ++k);
+            irs.add(result);
+
         }
         return irs;
     }
 
-    private void addScoreThresholdOnUnconsideredCandidates(List<IdentificationResult> identificationResults, int numberOfCandidates) {
-        double lowestConsideredCandidatesScore = Double.POSITIVE_INFINITY;
-        int numberOfUnconsideredCandidates = numberOfCandidates - identificationResults.size();
-        for (IdentificationResult identificationResult : identificationResults) {
-            final double score = identificationResult.getScore();
-            if (score < lowestConsideredCandidatesScore) lowestConsideredCandidatesScore = score;
-        }
-
-        for (IdentificationResult identificationResult : identificationResults) {
-            FTree tree = identificationResult.getStandardTree();
-            FTree beautifulTree = identificationResult.getBeautifulTree();
-            UnconsideredCandidatesUpperBound unregardedCandidatesUpperBound = new UnconsideredCandidatesUpperBound(numberOfUnconsideredCandidates, lowestConsideredCandidatesScore);
-
-            tree.addAnnotation(UnconsideredCandidatesUpperBound.class, unregardedCandidatesUpperBound);
-            if (beautifulTree != null)
-                beautifulTree.addAnnotation(UnconsideredCandidatesUpperBound.class, unregardedCandidatesUpperBound);
+    private static void addScoreThresholdOnUnconsideredCandidates(AbstractTreeComputationInstance.FinalResult fr, ProcessedInput processedInput) {
+        //add annotation of score bound on unconsidered instances
+        int numberOfDecompositions = processedInput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size();
+        int numberOfResults = fr.getResults().size();
+        int numberOfUnconsideredCandidates = numberOfDecompositions-numberOfResults;
+        //trees should be sorted by score
+        double lowestConsideredCandidatesScore = fr.getResults().get(numberOfResults-1).getAnnotationOrThrow(TreeScoring.class).getOverallScore();
+        UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = new UnconsideredCandidatesUpperBound(numberOfUnconsideredCandidates, lowestConsideredCandidatesScore);
+        for (FTree tree : fr.getResults()) {
+            tree.addAnnotation(UnconsideredCandidatesUpperBound.class, unconsideredCandidatesUpperBound);
         }
     }
 
@@ -501,11 +502,7 @@ public class Sirius {
         performMs1Analysis(instance, deisotope);
         jobManager.submitSubJob(instance);
         AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
-        final List<IdentificationResult> irs = new ArrayList<>();
-        int k = 0;
-        for (FTree tree : fr.getResults()) {
-            irs.add(new IdentificationResult(tree, ++k));
-        }
+        final List<IdentificationResult> irs = createIdentificationResults(fr, instance);//postprocess results
         return irs;
     }
 
