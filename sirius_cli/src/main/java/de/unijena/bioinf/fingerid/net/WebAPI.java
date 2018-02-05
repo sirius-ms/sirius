@@ -18,10 +18,7 @@
 
 package de.unijena.bioinf.fingerid.net;
 
-import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -49,6 +46,7 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -180,7 +178,7 @@ public class WebAPI implements Closeable {
     public VersionsInfo getVersionInfo() {
         VersionsInfo v = null;
         try {
-            v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdBaseURI()).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("sirius_guiVersion", FingerIDProperties.sirius_guiVersion()).build()));
+            v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdBaseURI()).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build()));
             if (v == null) {
                 LoggerFactory.getLogger(this.getClass()).warn("Could not reach fingerid root url for version verification. Try to reach version specific url");
                 v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdURI(null)).build()));
@@ -194,6 +192,8 @@ public class WebAPI implements Closeable {
     }
 
     private VersionsInfo getVersionInfo(final HttpGet get) {
+        final int timeoutInSeconds = 8000;
+        get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
         try (CloseableHttpResponse response = client.execute(get)) {
             try (final JsonReader r = Json.createReader(new InputStreamReader(response.getEntity().getContent()))) {
                 JsonObject o = r.readObject();
