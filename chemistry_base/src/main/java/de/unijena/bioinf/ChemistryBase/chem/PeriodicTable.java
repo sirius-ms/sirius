@@ -462,6 +462,14 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             }
             if (usedIonMode != null) break;
         }
+        if (usedIonMode==null && adducts.size()>0 && charge < 0 ) {
+            adducts.add(MolecularFormula.getHydrogen());
+            usedIonMode = DEPROTONATION;
+        } else if (usedIonMode==null && !insourceFrags.isEmpty() && charge > 0) {
+            insourceFrags.add(MolecularFormula.getHydrogen());
+            usedIonMode = PROTONATION;
+        }
+
 
         MolecularFormula adduct = MolecularFormula.emptyFormula();
         for (MolecularFormula f : adducts) adduct = adduct.add(f);
