@@ -43,6 +43,7 @@ import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.MasterJJob;
+import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -586,9 +587,12 @@ public class Sirius {
                 formula = ionType.measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());;
                 break;
         }
-        final IdentificationResult ir = compute(mexp, formula, recalibrating);
-        ir.getRawTree().setAnnotation(Beautified.class, Beautified.IS_BEAUTIFUL);
-        return ir.getRawTree();
+        FTree btree = jobManager.invokeSubJob(TreeComputationInstance.beautify(jobManager,getMs2Analyzer(), tree)).getResults().get(0);
+        if (!btree.getAnnotation(Beautified.class, Beautified.IS_UGGLY).isBeautiful()){
+            LoggerFactory.getLogger(Sirius.class).warn("Tree beautification annotation is not properly set.");
+            btree.setAnnotation(Beautified.class, Beautified.IS_BEAUTIFUL);
+        }
+        return btree;
     }
 
 
