@@ -95,7 +95,15 @@ public class Compound {
         this.fingerprint = candidate.getFingerprint();
         final Set<String> names = DatasourceService.getDataSourcesFromBitFlags(candidate.getBitset());
         this.databases = ArrayListMultimap.create(names.size(), 1);
-        for (String aname : names) this.databases.put(aname, null);
+        if (candidate.getLinks()!=null) {
+            for (DBLink link : candidate.getLinks()) {
+                this.databases.put(link.name, link.id);
+            }
+        }
+
+        for (String aname : names)
+            if (!this.databases.containsKey(aname))
+                this.databases.put(aname, null);
         this.pLayer = candidate.getpLayer();
         this.qLayer = candidate.getqLayer();
         this.xlogP = candidate.getXlogp();
