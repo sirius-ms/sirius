@@ -95,8 +95,7 @@ public class CPLEXSolver extends AbstractSolver {
     }
 
     @Override
-    protected void defineVariablesWithStartValues(int[] selectedEdges) throws Exception {
-        defineVariables();
+    protected void setVariableStartValues(int[] selectedEdges) throws Exception {
         final double[] values = new double[variables.length];
         for (int index : selectedEdges) {
             values[index] = 1d;

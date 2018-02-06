@@ -46,10 +46,6 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         return jobManager;
     }
 
-
-    /////////////////
-
-
     public ProcessedInput validateInput() {
         if (state <= 0) {
             pinput = analyzer.performValidation(experiment);
@@ -314,8 +310,6 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         FGraph graph = analyzer.buildGraph(pin, l.getDecompositions().get(0));
         graph.addAnnotation(SpectralRecalibration.class, rec);
         graph.setAnnotation(ProcessedInput.class, pin);
-
-
         final FTree recal = tb.computeTree().withTimeLimit(Math.min(restTime,secondsPerTree)).solve(pin, graph).tree;
         final FTree finalTree;
         if (recal.getTreeWeight() > tree.getTreeWeight()) {

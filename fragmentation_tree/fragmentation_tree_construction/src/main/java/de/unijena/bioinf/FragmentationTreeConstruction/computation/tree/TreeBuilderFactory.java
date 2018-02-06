@@ -122,16 +122,25 @@ public final class TreeBuilderFactory {
 
 
     public TreeBuilder getTreeBuilder(DefaultBuilder builder) {
+        IlpFactory factory = null;
         switch (builder) {
             case GUROBI:
-                return new AbstractTreeBuilder(getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GrbSolver")); //we have to use classloader, to prevent class not found exception. because it could be possible that gurobi.jar doe not exist -> runtime dependency
+                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GrbSolver"); //we have to use classloader, to prevent class not found exception. because it could be possible that gurobi.jar doe not exist -> runtime dependency
+                break;
             case GLPK:
-                return new AbstractTreeBuilder<GLPKSolver>(getTreeBuilderFromClass(GLPKSolver.class)); //we deliver the jar file so we can be sure that th class exists
+                factory = getTreeBuilderFromClass(GLPKSolver.class); //we deliver the jar file so we can be sure that th class exists
+                break;
             case CPLEX:
-                return new AbstractTreeBuilder(getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver"));
+                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver");
+                break;
             default:
                 LoggerFactory.getLogger(this.getClass()).warn("TreeBuilder " + builder.toString() + " is Unknown, supported are: " + Arrays.toString(DefaultBuilder.values()), new IllegalArgumentException("Unknown BuilderType!"));
                 return null;
+        }
+        if (factory == null) {
+            return null;
+        } else {
+            return new AbstractTreeBuilder(factory);
         }
     }
 
@@ -141,6 +150,7 @@ public final class TreeBuilderFactory {
             if (b != null)
                 return b;
         }
+        LoggerFactory.getLogger(TreeBuilderFactory.class).error("Your system does not ship with any ILP solver. Please install either GLPK for java, Gurobi or CPLEX to use SIRIUS.");
         return null;
     }
 }
