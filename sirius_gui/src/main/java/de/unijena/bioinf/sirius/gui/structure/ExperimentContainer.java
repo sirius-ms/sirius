@@ -135,7 +135,7 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
         setResults(SiriusResultElementConverter.convertResults(results));
     }
 
-    private void setResults(List<SiriusResultElement> myxoresults) {
+    public void setResults(List<SiriusResultElement> myxoresults) {
         List<SiriusResultElement> old = this.results;
         this.results = myxoresults;
         firePropertyChange("results_upadated", old, this.results);

@@ -26,7 +26,7 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
     private final FormulaScoreListStats stats;
 
     public FormulaListTextCellRenderer(FormulaScoreListStats stats) {
-        this.setPreferredSize(new Dimension(200, 45));
+        this.setPreferredSize(new Dimension(250, 45));
         initColorsAndFonts();
         sre = null;
 //        this.numberFormat = new DecimalFormat("#0.000000");

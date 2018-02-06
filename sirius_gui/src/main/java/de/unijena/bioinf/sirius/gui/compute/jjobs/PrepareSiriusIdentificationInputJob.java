@@ -93,6 +93,9 @@ public class PrepareSiriusIdentificationInputJob extends BasicJJob<MutableMs2Exp
             exp.setAnnotation(PossibleAdducts.class, PossibleAdducts.intersection(possibleAdducts, allPossible));
         }
 
+        exp.setAnnotation(PossibleIonModes.class, possibleIonModes);
+        exp.setAnnotation(PossibleAdducts.class, possibleAdducts);
+
         sirius.setTimeout(exp, -1, Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.treebuilder.timeout", "0")));
         sirius.setFormulaConstraints(exp, constraints);
         sirius.setAllowedMassDeviation(exp, massDev);

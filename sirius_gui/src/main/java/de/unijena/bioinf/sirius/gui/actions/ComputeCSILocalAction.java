@@ -8,9 +8,9 @@ package de.unijena.bioinf.sirius.gui.actions;
 import ca.odell.glazedlists.EventList;
 import de.unijena.bioinf.fingerid.FingerIdDialog;
 import de.unijena.bioinf.fingerid.FingerIdTask;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
-import de.unijena.bioinf.sirius.gui.configs.Icons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -47,7 +47,7 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
             }
 
             if (returnState == FingerIdDialog.COMPUTE_ALL) {
-                MF.getCsiFingerId().compute(ec, dialog.getSearchDb());
+                MF.getCsiFingerId2().compute(ec, dialog.getSearchDb());
             } else {
                 java.util.List<SiriusResultElement> selected = MF.getFormulaList().getSelecteValues();
                 java.util.List<FingerIdTask> tasks = new ArrayList<>(selected.size());
@@ -55,7 +55,7 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
                     if (element.getCharge() > 0 || element.getResult().getResolvedTree().numberOfEdges() > 0)
                         tasks.add(new FingerIdTask(dialog.getSearchDb(), ec, element));
                 }
-                MF.getCsiFingerId().computeAll(tasks);
+                MF.getCsiFingerId2().computeAll(tasks);
             }
         }
     }

@@ -5,12 +5,14 @@ import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.*;
+import de.unijena.bioinf.fingerid.db.FingerblastSearchEngine;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
 import javax.json.JsonArray;
+import javax.json.JsonObject;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -31,8 +33,12 @@ public class CachedRESTDB {
 
     protected File directory;
     protected MaskedFingerprintVersion fingerprintVersion;
-    protected HashMap<String, FilebasedDatabase> customDatabases;
+    protected HashMap<String, FileCompoundStorage> customDatabases;
     protected VersionsInfo versionsInfo;
+
+    public CachedRESTDB(VersionsInfo versionsInfo, MaskedFingerprintVersion fingerprintVersion) {
+        this(versionsInfo,fingerprintVersion,getDefaultDirectory());
+    }
 
     public CachedRESTDB(VersionsInfo versionsInfo, MaskedFingerprintVersion fingerprintVersion, File dir) {
         this.versionsInfo = versionsInfo;
@@ -62,6 +68,10 @@ public class CachedRESTDB {
             }
         }
         return true;
+    }
+
+    public FingerblastSearchEngine getSearchEngine(SearchableDatabase db) {
+        return new FingerblastSearchEngine(this,db);
     }
 
 
@@ -121,11 +131,11 @@ public class CachedRESTDB {
         return mergeCompounds(candidates);
     }
 
-    protected FilebasedDatabase getCustomDb(SearchableDatabase db) throws IOException {
+    protected FileCompoundStorage getCustomDb(SearchableDatabase db) throws IOException {
         if (customDatabases.containsKey(db.name()))
             return customDatabases.get(db.name());
         else {
-            final FilebasedDatabase custom = new FilebasedDatabase(fingerprintVersion.getMaskedFingerprintVersion(), db.getDatabasePath());
+            final FileCompoundStorage custom = new FileCompoundStorage(db.getDatabasePath(),fingerprintVersion.getMaskedFingerprintVersion());
             customDatabases.put(db.name(), custom);
             return custom;
         }
@@ -142,13 +152,14 @@ public class CachedRESTDB {
         }
     }
 
-    private void search(WebAPI webAPI, MolecularFormula formula, List<FingerprintCandidate> candidates, FilebasedDatabase db) throws IOException, DatabaseException {
+    private void search(WebAPI webAPI, MolecularFormula formula, List<FingerprintCandidate> candidates, FileCompoundStorage db) throws IOException, DatabaseException {
         candidates.addAll(db.lookupStructuresAndFingerprintsByFormula(formula));
     }
 
     private void parseJson(File f, List<FingerprintCandidate> candidates) throws IOException {
         try (final BufferedReader reader = FileUtils.getReader(f)) {
-            final JsonArray array = Json.createReader(reader).readArray();
+            final JsonObject obj = Json.createReader(reader).readObject();
+            final JsonArray array = obj.getJsonArray("compounds");
             for (int i = 0; i < array.size(); ++i) {
                 candidates.add(FingerprintCandidate.fromJSON(fingerprintVersion.getMaskedFingerprintVersion(), array.getJsonObject(i)));
             }
@@ -165,7 +176,14 @@ public class CachedRESTDB {
      */
     private List<FingerprintCandidate> mergeCompounds(List<FingerprintCandidate> compounds) {
         final HashMap<String, FingerprintCandidate> cs = new HashMap<>();
-        for (FingerprintCandidate c : compounds) cs.put(c.getInchi().key2D(), c);
+        for (FingerprintCandidate c : compounds) {
+            FingerprintCandidate x = cs.get(c.getInchiKey2D());
+            if (x!=null) {
+                // TODO: merge database links
+            } else {
+                cs.put(c.getInchi().key2D(), c);
+            }
+        }
         return new ArrayList<>(cs.values());
     }
 

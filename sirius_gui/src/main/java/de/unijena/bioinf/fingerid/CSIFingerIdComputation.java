@@ -789,7 +789,6 @@ public class CSIFingerIdComputation {
                             LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                         }
                     } else {
-                        // download molecular formulas
                         final MolecularFormula formula = container.result.getMolecularFormula();
                         final JobLog.Job job = JobLog.getInstance().submitRunning(container.experiment.getGUIName(), "Download " + formula.toString());
                         try {

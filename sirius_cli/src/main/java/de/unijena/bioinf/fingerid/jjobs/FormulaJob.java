@@ -2,10 +2,10 @@ package de.unijena.bioinf.fingerid.jjobs;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeLayer;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.SearchStructureByFormula;
 import de.unijena.bioinf.jjobs.BasicJJob;
 
 import java.util.List;
@@ -13,10 +13,10 @@ import java.util.List;
 public class FormulaJob extends BasicJJob<List<FingerprintCandidate>> {
 
     protected final MolecularFormula formula;
-    protected final AbstractChemicalDatabase searchDatabase;
+    protected final SearchStructureByFormula searchDatabase;
     protected final PrecursorIonType ionType;
 
-    public FormulaJob(MolecularFormula formula, AbstractChemicalDatabase searchDatabase, PrecursorIonType precursorIonType) {
+    public FormulaJob(MolecularFormula formula, SearchStructureByFormula searchDatabase, PrecursorIonType precursorIonType) {
         super(JobType.REMOTE);
         this.formula = formula;
         this.searchDatabase = searchDatabase;
