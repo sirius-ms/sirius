@@ -9,7 +9,6 @@ import java.util.Arrays;
 
 public class SiriusCLIApplication {
     public static void main(String[] args) throws InterruptedException {
-        long t = System.currentTimeMillis();
         try {
             final FingeridCLI<FingerIdOptions> cli = new FingeridCLI<>();
             if (isZodiac(args)) {
