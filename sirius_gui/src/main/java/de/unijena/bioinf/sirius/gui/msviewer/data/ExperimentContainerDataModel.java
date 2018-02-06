@@ -185,9 +185,11 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
                 }
 
                 // remove peaks behind the parent
+                /*
                 for (MutableMs2Spectrum ms2spec : ms2.getMs2Spectra()) {
                     Spectrums.cutByMassThreshold(ms2spec, ionMass + 1d);
                 }
+                */
 
                 underlyingModel = new SiriusMergedMs2Annotated(tree, ms2, minMz, maxMz);
             } else {

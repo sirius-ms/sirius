@@ -37,6 +37,7 @@ public class FingerIdData extends AbstractEDTBean {
     private double confidence;
     private double topScore;
 
+
     public FingerIdData(SearchableDatabase db, Compound[] compounds, double[] scores, double[] tanimotoScores, ProbabilityFingerprint platts) {
         this.db = db;
         this.compounds = compounds;

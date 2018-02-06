@@ -18,6 +18,7 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -72,6 +73,10 @@ public abstract class Workspace {
                     ec.getMs2Experiment().setMolecularFormula(MolecularFormula.parse(f));
             }
 
+            if (ec.getMs2Experiment().getPrecursorIonType()==null) {
+                LoggerFactory.getLogger(Workspace.class).warn("Input experiment with name '" + ec.getName() + "' does not have a charge nor an ion type annotation." );
+                ec.getMs2Experiment().setPrecursorIonType(PeriodicTable.getInstance().getUnknownPrecursorIonType(1));
+            }
             clearExperimentAnotations(ec);
             addIonToPeriodicTable(ec.getIonization());
             resolveCompundNameConflict(ec);

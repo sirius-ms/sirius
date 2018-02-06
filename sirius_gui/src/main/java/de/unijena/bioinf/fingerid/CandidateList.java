@@ -1,5 +1,6 @@
 package de.unijena.bioinf.fingerid;
 
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -9,10 +10,7 @@ import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.sirius.gui.table.list_stats.DoubleListStats;
 
 import javax.swing.*;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by fleisch on 15.05.17.
@@ -69,7 +67,7 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
                 }
                 break;
         }
-
+        final List<LoadMoleculeJob> jobs = new ArrayList<>();
         for (SiriusResultElement e : formulasToShow) {
             if (e != null && e.getFingerIdComputeState().equals(ComputingStatus.COMPUTED)) {
                 for (int j = 0; j < e.getFingerIdData().compounds.length; j++) {
@@ -79,6 +77,11 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
                     logPStats.addValue(c.compound.getXlogP());
                     tanimotoStats.addValue(c.getTanimotoScore());
                     data.add(c.data);
+                    if (c.data!=null) {
+                        LoadMoleculeJob e1 = new LoadMoleculeJob(c.data.compounds);
+                        jobs.add(e1);
+                        Jobs.MANAGER.submitJob(e1);
+                    }
                 }
             }
         }

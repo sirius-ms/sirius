@@ -30,7 +30,6 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
 import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.inchi.InChIToStructure;
@@ -39,6 +38,7 @@ import org.openscience.cdk.qsar.descriptors.molecular.XLogPDescriptor;
 import org.openscience.cdk.qsar.result.DoubleResult;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -337,6 +337,8 @@ public class Compound {
             final InChIGeneratorFactory f = InChIGeneratorFactory.getInstance();
             final InChIToStructure s = f.getInChIToStructure(inchi.in2D, SilentChemObjectBuilder.getInstance());
             if (s.getReturnStatus() == INCHI_RET.OKAY && (s.getReturnStatus() == INCHI_RET.OKAY || s.getReturnStatus() == INCHI_RET.WARNING)) {
+                AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(s.getAtomContainer());
+
                 return s.getAtomContainer();
             } else {
                 logger.warn("Cannot parse InChI: " + String.valueOf(inchi.in2D) + " due to the following error: " + String.valueOf(s.getMessage() + " Return code: " + s.getReturnStatus() + ", Return status: " + s.getReturnStatus().toString()));
@@ -375,8 +377,10 @@ public class Compound {
 
     private IAtomContainer parseMoleculeFromSmiles() {
         try {
-            return new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles.smiles);
-        } catch (InvalidSmilesException e) {
+            final IAtomContainer c =  new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles.smiles);
+            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(c);
+            return c;
+        } catch (CDKException e) {
             throw new RuntimeException(e.getMessage());
         }
     }

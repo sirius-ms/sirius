@@ -1,6 +1,5 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
-import com.google.common.base.Function;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -47,12 +46,7 @@ public class SiriusResultElementConverter {
 //		
 //		TreeNode root = initConvertNode(ft, peakAno, lscore, fscore, maxInt);
 //		out.setTree(root);
-        out.buildTreeVisualization(new Function<FTree, TreeNode>() {
-            @Override
-            public TreeNode apply(FTree input) {
-                return convertTree(input);
-            }
-        });
+        out.buildTreeVisualization(input -> convertTree(input));
         return out;
     }
 

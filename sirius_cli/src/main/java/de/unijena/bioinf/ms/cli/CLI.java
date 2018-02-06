@@ -161,7 +161,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
         final Set<MolecularFormula> whiteset = getFormulaWhiteset(i, whitelist);
 
-        if (options.isAutoCharge()) {
+        if (options.isAutoCharge()) { //TODO: add optiosn.getIon into this case
             if (i.experiment.getPrecursorIonType().isIonizationUnknown() || i.experiment.getPrecursorIonType().isPlainProtonationOrDeprotonation()) {
                 i.experiment.setAnnotation(PossibleAdducts.class, null);
                 if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
