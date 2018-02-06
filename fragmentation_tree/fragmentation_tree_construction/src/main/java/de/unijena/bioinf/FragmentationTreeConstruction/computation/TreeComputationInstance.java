@@ -1,6 +1,5 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration2;
@@ -56,85 +55,6 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
     protected JobManager jobManager() {
         return jobManager;
     }
-
-    ////////////////
-
-    public String testHeuristics() {
-
-        final MolecularFormula neutralFormula = experiment.getPrecursorIonType().neutralMoleculeToMeasuredNeutralMolecule(experiment.getMolecularFormula());
-        final TreeSizeScorer tss = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
-        experiment.setAnnotation(Whiteset.class, Whiteset.of(experiment.getMolecularFormula()));
-        precompute();
-        final FGraph graph = analyzer.buildGraph(pinput, pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().get(0));
-
-        final FTree exact = analyzer.computeTree(graph);
-        final double p1 = analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput, exact, experiment.getPrecursorIonType().getIonization());
-        final FTree heuristic = new ExtendedCriticalPathHeuristic(graph).solve();
-
-        // how many peaks are explained?
-        final double p2 = analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput, heuristic, experiment.getPrecursorIonType().getIonization());
-        final int n1 = exact.numberOfVertices(), n2 = heuristic.numberOfVertices();
-        final double[] stats1 = sharedFragments(exact, heuristic);
-
-        // now beautify tree!
-        tss.fastReplace(pinput, new TreeSizeScorer.TreeSizeBonus(tss.getTreeSizeScore() + MAX_TREESIZE_INCREASE));
-        final FGraph graph2 = analyzer.buildGraph(pinput, pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().get(0));
-        final FTree exact2 = analyzer.computeTree(graph2);
-        final double p3 = analyzer.getIntensityRatioOfExplainedPeaks(pinput, exact2);
-        final FTree heuristic2 = new ExtendedCriticalPathHeuristic(graph2).solve();
-        final double p4 = analyzer.getIntensityRatioOfExplainedPeaks(pinput, heuristic2);
-        final int n3 = exact2.numberOfVertices(), n4 = heuristic2.numberOfVertices();
-
-        // how many fragments are the same
-        final double[] stats2 = sharedFragments(exact2, heuristic2);
-        //
-        String header = "mass\theuristic.score\texact.score\theuristic.rpeaks\texact.rpeaks\theuristic.npeaks\texact.npeaks\tjaccard\tfraction\tshared\theuristic.bscore\texact.bscore\theuristic.brpeaks\texact.brpeaks\theuristic.bnpeaks\texact.bnpeaks\tb.jaccard\tb.fraction\tb.shared";
-        return String.format(Locale.US,
-                "%f\t%f\t%f\t%f\t%f\t%d\t%d\t%f\t%f\t%d\t%f\t%f\t%f\t%f\t%d\t%d\t%f\t%f\t%d",
-
-                experiment.getMolecularFormula().getMass(),
-                heuristic.getTreeWeight(),
-                exact.getTreeWeight(),
-                p1,
-                p2,
-                n1,
-                n2,
-                stats1[0], stats1[1], (int) stats1[2],
-                heuristic2.getTreeWeight(),
-                exact2.getTreeWeight(),
-                p3,
-                p4,
-                n3,
-                n4,
-                stats2[0], stats2[1], (int) stats2[2]
-
-        );
-
-    }
-
-    // jaccard, contains, absolute number
-    protected double[] sharedFragments(FTree a, FTree b) {
-        final HashSet<MolecularFormula> fs = new HashSet<>();
-        for (Fragment f : a) fs.add(f.getFormula());
-        final HashSet<MolecularFormula> gs = new HashSet<>();
-        for (Fragment f : b) gs.add(f.getFormula());
-        // remove root
-        fs.remove(a.getRoot().getFormula());
-        gs.remove(b.getRoot().getFormula());
-        double union = gs.size();
-        double intersection = 0;
-        for (MolecularFormula f : fs) {
-            if (gs.contains(f)) {
-                ++intersection;
-            } else ++union;
-        }
-
-        return new double[]{intersection / union, intersection / fs.size(), intersection};
-
-    }
-
-    /////////////////
-
 
     public ProcessedInput validateInput() {
         if (state <= 0) {

@@ -67,8 +67,6 @@ abstract public class AbstractSolver {
     public TreeBuilder.Result compute() {
         if (graph.numberOfEdges() == 1)
             return new TreeBuilder.Result(buildSolution(graph.getRoot().getOutgoingEdge(0).getWeight(), new boolean[]{true}), true, TreeBuilder.AbortReason.COMPUTATION_CORRECT);
-        
-        prepareSolver();
         return solve();
     }
 
@@ -95,10 +93,9 @@ abstract public class AbstractSolver {
             computeOffsets();
             assert (edgeOffsets != null && (edgeOffsets.length != 0 || losses.size() == 0)) : "Edge edgeOffsets were not calculated?!";
 
+            defineVariables();
             if (options.getTemplate() != null) {
-                defineVariablesWithStartValues(options.getTemplate());
-            } else {
-                defineVariables();
+                setVariableStartValues(options.getTemplate());
             }
 
             setConstraints();
@@ -169,6 +166,7 @@ abstract public class AbstractSolver {
      */
     protected TreeBuilder.Result solve() {
         try {
+            prepareSolver();
             // get optimal solution (score) if existing
             TreeBuilder.AbortReason c = solveMIP();
 
@@ -206,7 +204,7 @@ abstract public class AbstractSolver {
      */
     abstract protected void defineVariables() throws Exception;
 
-    protected void defineVariablesWithStartValues(FTree presolvedTree) throws Exception {
+    protected void setVariableStartValues(FTree presolvedTree) throws Exception {
         // map edges in presolved tree to edge ids
         final HashMap<MolecularFormula, Fragment> fragmentMap = new HashMap<>(presolvedTree.numberOfVertices());
         for (Fragment f : presolvedTree) fragmentMap.put(f.getFormula(), f);
@@ -244,10 +242,10 @@ abstract public class AbstractSolver {
 
         if (k < selectedEdges.length)
             selectedEdges = Arrays.copyOf(selectedEdges, k);
-        defineVariablesWithStartValues(selectedEdges);
+        setVariableStartValues(selectedEdges);
     }
 
-    protected abstract void defineVariablesWithStartValues(int[] usedEdgeIds) throws Exception;
+    protected abstract void setVariableStartValues(int[] usedEdgeIds) throws Exception;
 
     /**
      * - relaxed version: for each vertex, there are only one or more outgoing edges,
