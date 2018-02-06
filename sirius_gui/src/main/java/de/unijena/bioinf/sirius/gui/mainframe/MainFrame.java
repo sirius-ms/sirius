@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.fingerid.CSIFingerIDComputation2;
 import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
@@ -41,6 +42,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     //left side panel
     private ExperimentList experimentList;
+    private CSIFingerIDComputation2 csiFingerId2;
 
     public ExperimentList getExperimentList() {
         return experimentList;
@@ -71,6 +73,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public CSIFingerIdComputation getCsiFingerId() {
         return csiFingerId;
     }
+    public CSIFingerIDComputation2 getCsiFingerId2() {
+        return csiFingerId2;
+    }
 
     private JobDialog jobDialog;
 
@@ -96,6 +101,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     private static void decoradeMainFrameInstance(final MainFrame mf) {
         //create computation
+        mf.csiFingerId2 = new CSIFingerIDComputation2();
         mf.csiFingerId = new CSIFingerIdComputation();
 
         // create models for views

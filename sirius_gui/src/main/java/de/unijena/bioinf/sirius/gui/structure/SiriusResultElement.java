@@ -82,7 +82,7 @@ public class SiriusResultElement extends AbstractEDTBean implements Comparable<S
     private final static Pattern pat = Pattern.compile("^\\s*\\[\\s*M\\s*|\\s*\\]\\s*\\d*\\s*[\\+\\-]\\s*$");
 
     public String getFormulaAndIonText() {
-        final PrecursorIonType ionType = resultElement.getRawTree().getAnnotationOrThrow(PrecursorIonType.class);
+        final PrecursorIonType ionType = resultElement.getPrecursorIonType();
         final MolecularFormula mf = resultElement.getMolecularFormula();
         String niceName = ionType.toString();
         niceName = pat.matcher(niceName).replaceAll("");

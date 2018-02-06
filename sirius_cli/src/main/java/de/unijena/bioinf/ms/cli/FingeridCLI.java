@@ -39,14 +39,11 @@ import java.util.concurrent.ExecutionException;
 import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 
 public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
-    static {
-        CustomDatabase.customDatabases(true);
-        DEFAULT_LOGGER.info("Custom DBs initialized!");
-    }
 
     protected Fingerblast fingerblast;
     protected QueryPredictor confidence, bioConfidence;
     protected MaskedFingerprintVersion fingerprintVersion;
+    protected VersionsInfo fingerIdVersionsInfo;
 
 
     @Override
@@ -72,8 +69,9 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
 
     @Override
     protected void parseArgsAndInit(String[] args, Class<Options> optionsClass) {
+        CustomDatabase.customDatabases(true);
         super.parseArgsAndInit(args, optionsClass);
-
+        initDatabasesAndVersionInfoIfNecessary();
         if (options.getGeneratingCompoundDatabase() != null) {
             try {
                 generateCustomDatabase(options);
@@ -90,6 +88,20 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
         }
     }
 
+    private void initDatabasesAndVersionInfoIfNecessary() {
+        if (isOffline()) return;
+        try {
+            try (final WebAPI api = WebAPI.newInstance()) {
+                this.fingerIdVersionsInfo = api.getVersionInfo();
+            }
+        } catch (IOException e) {
+            System.err.println("Cannot connect to CSI:FingerID webserver and online chemical database. You can still use SIRIUS in offline mode: just do not use any chemical database and omit the --fingerid option.");
+            LoggerFactory.getLogger(FingeridCLI.class).error(e.getMessage(),e);
+            System.exit(1);
+        }
+
+    }
+
 
     @Override
     protected void handleJobs(final BufferedJJobSubmitter<Instance>.JobContainer jc) throws IOException {
@@ -99,19 +111,6 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
             FingerIDJJob fij = jc.getJob(FingerIDJJob.class);
             if (fij != null)
                 handleFingerIdResults(jc.sourceInstance, fij); //handle results
-        }
-    }
-
-    @Override
-    public void compute() {
-        try {
-            super.compute();
-        } finally {
-            try {
-                if (fingerblast != null) fingerblast.getSearchEngine().close();
-            } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-            }
         }
     }
 
@@ -128,13 +127,17 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
         if (flagW == null) flagW = 0L;
         final long flag = flagW;
 
-        FingerIDJJob fingerIdJob = new FingerIDJJob(fingerblast, fingerprintVersion, options.getPredictors().toArray(new PredictorType[options.getPredictors().size()]));
+        FingerIDJJob fingerIdJob = new FingerIDJJob(fingerblast, fingerprintVersion, new CachedRESTDB(fingerIdVersionsInfo,fingerprintVersion), getFingerIdDatabase(), options.getPredictors().toArray(new PredictorType[options.getPredictors().size()]));
         fingerIdJob.addRequiredJob(siriusJob);
         fingerIdJob.setDbFlag(flag);
         fingerIdJob.setBioFilter(getBioFilter());
         fingerIdJob.setCanopus(canopus);
 
         return fingerIdJob;
+    }
+
+    public boolean isOffline() {
+        return !options.isFingerid() && !options.getDatabase().equals(CONSIDER_ALL_FORMULAS);
     }
 
     protected static final class CandidateElement extends Scored<FingerprintCandidate> {
@@ -353,9 +356,8 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
     private void initFingerBlast() {
         progress.info("Initialize CSI:FingerId...");
         try (WebAPI webAPI = WebAPI.newInstance()) {
-            final VersionsInfo needsUpdate = webAPI.getVersionInfo();
-            if (needsUpdate != null && needsUpdate.outdated()) {
-                progress.info("Your current SIRIUS+CSI:FingerID version is outdated. Please download the latest software version if you want to use CSI:FingerId search. Current version: " + WebAPI.VERSION + ". New version is " + needsUpdate.siriusGuiVersion + ". You can download the last version here: " + WebAPI.SIRIUS_DOWNLOAD);
+            if (fingerIdVersionsInfo != null && fingerIdVersionsInfo.outdated()) {
+                progress.info("Your current SIRIUS+CSI:FingerID version is outdated. Please download the latest software version if you want to use CSI:FingerId search. Current version: " + WebAPI.VERSION + ". New version is " + fingerIdVersionsInfo.siriusGuiVersion + ". You can download the last version here: " + WebAPI.SIRIUS_DOWNLOAD);
                 System.exit(1);
             }
             final TIntArrayList indizes = new TIntArrayList();
@@ -372,11 +374,11 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
             this.fingerprintVersion = b.toMask();
 
             {
-                CachedRESTDB db = new CachedRESTDB(needsUpdate, fingerprintVersion, CachedRESTDB.getDefaultDirectory());
+                CachedRESTDB db = new CachedRESTDB(fingerIdVersionsInfo, fingerprintVersion, CachedRESTDB.getDefaultDirectory());
                 db.checkCache();
             }
 
-            this.fingerblast = new Fingerblast(webAPI.getCovarianceScoring(this.fingerprintVersion, 1d / performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts()), getFingerIdDatabaseWrapper());
+            this.fingerblast = new Fingerblast(webAPI.getCovarianceScoring(this.fingerprintVersion, 1d / performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts()), null);
         } catch (IOException e) {
             LoggerFactory.getLogger(this.getClass()).error("Our webservice is currently not available. You can still use SIRIUS without the --fingerid option. Please feel free to mail us at sirius-devel@listserv.uni-jena.de", e);
             System.exit(1);
@@ -404,91 +406,6 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
                 System.err.println("Cannot load given canopus model: " + e.getMessage());
             }
         }
-    }
-
-    // bad hack
-    private AbstractChemicalDatabase getFingerIdDatabaseWrapper() {
-        final SearchableDatabase db = getFingerIdDatabase();
-        if (db.isCustomDb()) {
-            return new AbstractChemicalDatabase() {
-                @Override
-                public List<FormulaCandidate> lookupMolecularFormulas(double v, Deviation deviation, PrecursorIonType precursorIonType) throws DatabaseException {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula molecularFormula) throws DatabaseException {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula molecularFormula, T fingerprintCandidates) throws DatabaseException {
-                    try (final WebAPI webAPI = WebAPI.newInstance()) {
-                        if (db.searchInBio()) {
-                            try (final RESTDatabase db = webAPI.getRESTDb(BioFilter.ONLY_BIO, db_cache_dir)) {
-                                fingerprintCandidates = db.lookupStructuresAndFingerprintsByFormula(molecularFormula, fingerprintCandidates);
-                            }
-                        }
-                        if (db.searchInPubchem()) {
-                            try (final RESTDatabase db = webAPI.getRESTDb(BioFilter.ONLY_NONBIO, db_cache_dir)) {
-                                fingerprintCandidates = db.lookupStructuresAndFingerprintsByFormula(molecularFormula, fingerprintCandidates);
-                            }
-                        }
-                        if (db.isCustomDb()) {
-                            fingerprintCandidates = getFileBasedDb(db).lookupStructuresAndFingerprintsByFormula(molecularFormula, fingerprintCandidates);
-                        }
-                        return fingerprintCandidates;
-                    } catch (IOException e) {
-                        logger.error(e.getMessage(), e);
-                        throw new RuntimeException(e);
-                    }
-                }
-
-                @Override
-                public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> iterable) throws DatabaseException {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> iterable) throws DatabaseException {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> iterable) throws DatabaseException {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> iterable) throws DatabaseException {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public void annotateCompounds(List<? extends CompoundCandidate> list) throws DatabaseException {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public List<InChI> findInchiByNames(List<String> list) throws DatabaseException {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public void close() throws IOException {
-
-                }
-            };
-        } else {
-            final BioFilter bf = getBioFilter();
-            return new RESTDatabase(pubchemDatabase.getDatabasePath(), bf) {
-                @Override
-                public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws DatabaseException {
-                    return filterByFlag(super.lookupStructuresAndFingerprintsByFormula(formula, fingerprintCandidates), getFingerIdDatabaseOption());
-                }
-            };
-        }
-
     }
 
     private <T extends Collection<FingerprintCandidate>> T filterByFlag(T fingerprintCandidates, String fingerIdDatabaseOption) {
@@ -582,6 +499,8 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
 
     }
 
+    protected static final String CONSIDER_ALL_FORMULAS = "all";
+
     private HashMap<String, Long> getDatabaseAliasMap() {
         final HashMap<String, Long> aliasMap = new HashMap<>();
         for (DatasourceService.Sources source : DatasourceService.Sources.values()) {
@@ -589,8 +508,8 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
         }
         aliasMap.put("biocyc", DatasourceService.Sources.METACYC.flag);
         aliasMap.put("bio", DatasourceService.Sources.BIO.searchFlag);
-        aliasMap.put("undp", DatasourceService.Sources.UNDP.flag);
-        aliasMap.put("all", 0L);
+        aliasMap.put("unpd", DatasourceService.Sources.UNDP.flag);
+        aliasMap.put(CONSIDER_ALL_FORMULAS, 0L);
         if (!aliasMap.containsKey(options.getDatabase().toLowerCase()) && !new File(options.getDatabase()).exists() && !customDatabases.containsKey(options.getDatabase())) {
             unknownDatabaseError(options.getDatabase().toLowerCase(), aliasMap);
         }
