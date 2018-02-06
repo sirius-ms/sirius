@@ -42,6 +42,16 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
         this.ticks = new AtomicInteger(0);
     }
 
+    public static TreeComputationInstance beautify(JobManager manager, FragmentationPatternAnalysis analyzer, FTree tree) {
+        return new TreeComputationInstance(manager,analyzer,tree.getAnnotationOrThrow(ProcessedInput.class));
+    }
+
+    private TreeComputationInstance(JobManager manager, FragmentationPatternAnalysis analyzer, ProcessedInput input) {
+        this(manager,analyzer,input.getOriginalInput(),1);
+        this.pinput = input;
+        this.state = 3;
+    }
+
     @Override
     protected JobManager jobManager() {
         return jobManager;
