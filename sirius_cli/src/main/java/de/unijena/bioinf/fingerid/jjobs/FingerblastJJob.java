@@ -65,7 +65,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
         // this is somehow the wrong place for it. But I don't know where to put it...
         final List<Scored<FingerprintCandidate>> cds = fingerblast.score(searchList, fp);
 
-        Collections.sort(cds);
+        Collections.sort(cds, Scored.desc());
 
         return new FingerIdResult(cds, 0d, fp, this.resolvedTree);
     }
