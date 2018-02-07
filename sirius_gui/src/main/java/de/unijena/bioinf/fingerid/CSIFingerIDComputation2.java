@@ -184,6 +184,10 @@ public class CSIFingerIDComputation2 {
             this.db = db;
         }
 
+        public String toString() {
+            return "Predict " + originalResultElement.getResult().getMolecularFormula();
+        }
+
         @Override
         protected Boolean compute() throws Exception {
             final PrecursorIonType origIonType = originalResultElement.getResult().getPrecursorIonType();
@@ -194,7 +198,11 @@ public class CSIFingerIDComputation2 {
             // generate additional result elements
             for (PrecursorIonType ion : pa.getAdducts(origIonType.getIonization())) {
                 if (!ion.equals(origIonType) && originalResultElement.getResult().getMolecularFormula().isSubtractable(ion.getAdduct())) {
-                    addedResultElements.add(new SiriusResultElement(IdentificationResult.withPrecursorIonType(originalResultElement.getResult(),ion)));
+                    try {
+                        addedResultElements.add(new SiriusResultElement(IdentificationResult.withPrecursorIonType(originalResultElement.getResult(),ion)));
+                    } catch (RuntimeException e) {
+                        LoggerFactory.getLogger(CSIFingerIDComputation2.class).error("Cannot neutralize " + originalResultElement.getResult().getMolecularFormula() + " with precursor ion type " + ion + ", although adduct " + ion.getAdduct() + " is subtractable? " + originalResultElement.getResult().getMolecularFormula().isSubtractable(ion.getAdduct()) + ", tree root is " + originalResultElement.getResult().getBeautifulTree());
+                    }
                 }
             }
 
@@ -219,7 +227,7 @@ public class CSIFingerIDComputation2 {
             for (int i=0; i < searchJobs.size(); ++i) {
                 FingerIdResult result = searchJobs.get(i).takeResult();
                 if (result==null) {
-                    if (i!=0) {
+                    if (i==0) {
                         LoggerFactory.getLogger(CSIFingerIDComputation2.class).warn("Got null value from fingerblast. CSIFingerIDComputation2:119");
                     }
                 } else {

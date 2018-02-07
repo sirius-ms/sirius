@@ -119,19 +119,20 @@ task downloadGLPK(type: Copy) {
     project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
 
     Path dir = project.glpkPath.toPath().getParent()
+    if (!dir.resolve('glpk').toFile().exists()) {
+        copy {
+            println(dir.toString())
+            dir.resolve('glpk').toFile().deleteDir()
+            Files.createDirectories(dir)
 
-    copy {
-        println(dir.toString())
-        dir.resolve('glpk').toFile().deleteDir()
-        Files.createDirectories(dir)
+            def glpkZipFile = Paths.get('glpk.zip')
+            def file = dir.resolve(glpkZipFile).newOutputStream()
+            file << glpkURL.openStream()
+            file.close()
 
-        def glpkZipFile = Paths.get('glpk.zip')
-        def file = dir.resolve(glpkZipFile).newOutputStream()
-        file << glpkURL.openStream()
-        file.close()
-
-        from zipTree(dir.resolve(glpkZipFile).toFile())
-        into dir.toFile()
+            from zipTree(dir.resolve(glpkZipFile).toFile())
+            into dir.toFile()
+        }
     }
 }
 

@@ -35,7 +35,10 @@ public class SiriusIdentificationGuiJob extends DependentJJob<List<SiriusResultE
 
         //todo find a nice way to combine progress between subjobs
         updateProgress(0, 110, 1);
-        final Sirius.SiriusIdentificationJob identificationJob = sirius.makeIdentificationJob(experiment, numberOfCandidates);
+        //TODO: I think we have to copy the experiment for computation. Otherwise
+        // it might be possible to change the experiment in GUI while computing it.
+        // its a bit nasty, though, as internally, SIRIUS will make another copy =/
+        final Sirius.SiriusIdentificationJob identificationJob = sirius.makeIdentificationJob(new MutableMs2Experiment(experiment), numberOfCandidates);
         identificationJob.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> {
             JobProgressEvent e = (JobProgressEvent) evt;
             updateProgress(e.getMinValue(), e.getMaxValue() + 10, e.getNewValue());
