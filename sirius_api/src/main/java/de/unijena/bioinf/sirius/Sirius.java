@@ -587,7 +587,7 @@ public class Sirius {
                 formula = ionType.measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());;
                 break;
         }
-        FTree btree = jobManager.invokeSubJob(TreeComputationInstance.beautify(jobManager,getMs2Analyzer(), tree)).getResults().get(0);
+        FTree btree = jobManager.invokeSubJob(FasterTreeComputationInstance.beautify(jobManager,getMs2Analyzer(), tree)).getResults().get(0);
         if (!btree.getAnnotation(Beautified.class, Beautified.IS_UGGLY).isBeautiful()){
             LoggerFactory.getLogger(Sirius.class).warn("Tree beautification annotation is not properly set.");
             btree.setAnnotation(Beautified.class, Beautified.IS_BEAUTIFUL);

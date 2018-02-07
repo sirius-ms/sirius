@@ -172,7 +172,7 @@ public class IonTreeUtils {
                 tree.deleteSubtree(vertex);
             }
         } else {
-            logger.warn("Cannot remove adduct from ion formula: " + vertex.getFormula() + " with adduct " + iontype.toString());
+            logger.warn("Cannot remove adduct from ion formula: " + vertex.getFormula() + " with adduct " + iontype.toString() + " in tree " + tree.getRoot().getFormula());
         }
     }
     protected static Logger logger = LoggerFactory.getLogger(IonTreeUtils.class);

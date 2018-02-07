@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 
 public class IdentificationResult implements Cloneable, Comparable<IdentificationResult> {
 
+    // TODO: we have to get rid of all these -_-
     protected FTree tree, beautifulTree, resolvedBeautifulTree;
     protected MolecularFormula formula;
     protected int rank;

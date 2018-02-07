@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration2;
@@ -11,6 +12,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +41,18 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         this.experiment = input;
         this.numberOfResultsToKeep = numberOfResultsToKeep;
         this.ticks = new AtomicInteger(0);
+    }
+
+
+    public static FasterTreeComputationInstance beautify(JobManager manager, FragmentationPatternAnalysis analyzer, FTree tree) {
+        return new FasterTreeComputationInstance(manager,analyzer,tree.getAnnotationOrThrow(ProcessedInput.class), tree);
+    }
+
+    private FasterTreeComputationInstance(JobManager manager, FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree) {
+        this(manager,analyzer,input.getOriginalInput(),1);
+        this.pinput = input;
+        this.pinput.setAnnotation(DecompositionList.class, new DecompositionList(Arrays.asList(new Decomposition(tree.getRoot().getFormula(), tree.getAnnotationOrThrow(PrecursorIonType.class).getIonization(), tree.getAnnotationOrThrow(TreeScoring.class).getRootScore()))));
+        this.state = 3;
     }
 
     @Override
@@ -174,7 +188,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             treeSize += TREE_SIZE_INCREASE;
         }
         final List<ExactResult> topResults = results.subList(0,Math.min(results.size(), n+10));
-        if (pinput.getAnnotation(ForbidRecalibration.class, ForbidRecalibration.FORBIDDEN).isForbidden()) {
+        if (pinput.getAnnotation(ForbidRecalibration.class, ForbidRecalibration.ALLOWED).isForbidden()) {
             final List<BasicJJob<ExactResult>> jobs = new ArrayList<>();
             if (useHeuristic) {
                 topResults.forEach((t)->jobs.add(new ExactJob(t)));
@@ -182,6 +196,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
                 topResults.forEach((t)->jobs.add(new AnnotationJob(t)));
             }
             jobs.forEach(this::submitSubJob);
+            LoggerFactory.getLogger(FasterTreeComputationInstance.class).warn("Recalibration is disabled!");
             return jobs.stream().map(this::takeResultAndCheckTime).sorted(Collections.reverseOrder()).toArray(ExactResult[]::new);
         }
         final List<RecalibrationJob> recalibrationJobs = new ArrayList<>();
