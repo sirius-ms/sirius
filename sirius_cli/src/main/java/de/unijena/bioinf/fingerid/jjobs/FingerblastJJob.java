@@ -43,7 +43,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
     @Override
     protected void initInput() {
         super.initInput();
-        if (searchList==null) {
+        if (searchList == null) {
             for (JJob j : requiredJobs) {
                 if (j instanceof FormulaJob) {
                     FormulaJob job = ((FormulaJob) j);
