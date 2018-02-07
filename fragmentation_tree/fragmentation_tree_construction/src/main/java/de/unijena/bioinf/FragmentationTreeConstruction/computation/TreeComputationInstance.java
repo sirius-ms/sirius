@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration2;
@@ -17,6 +18,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Deprecated
 public class TreeComputationInstance extends AbstractTreeComputationInstance {
     //todo should we remove subjobs if they are finished?
     //todo we proof for cancellation??
@@ -42,12 +44,13 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
     }
 
     public static TreeComputationInstance beautify(JobManager manager, FragmentationPatternAnalysis analyzer, FTree tree) {
-        return new TreeComputationInstance(manager,analyzer,tree.getAnnotationOrThrow(ProcessedInput.class));
+        return new TreeComputationInstance(manager,analyzer,tree.getAnnotationOrThrow(ProcessedInput.class), tree);
     }
 
-    private TreeComputationInstance(JobManager manager, FragmentationPatternAnalysis analyzer, ProcessedInput input) {
+    private TreeComputationInstance(JobManager manager, FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree) {
         this(manager,analyzer,input.getOriginalInput(),1);
         this.pinput = input;
+        this.pinput.setAnnotation(DecompositionList.class, new DecompositionList(Arrays.asList(new Decomposition(tree.getRoot().getFormula(), tree.getAnnotationOrThrow(PrecursorIonType.class).getIonization(), tree.getAnnotationOrThrow(TreeScoring.class).getRootScore()))));
         this.state = 3;
     }
 
