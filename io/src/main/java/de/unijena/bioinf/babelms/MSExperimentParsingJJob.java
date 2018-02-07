@@ -1,17 +1,15 @@
 package de.unijena.bioinf.babelms;
 
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.jjobs.MasterJJob;
 
 import java.io.File;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MSExperimentParsingJJob extends MasterJJob<List<Ms2Experiment>> {
+public class MSExperimentParsingJJob extends BasicMasterJJob<List<Ms2Experiment>> {
     private final List<File> inputFiles;
 
     public MSExperimentParsingJJob(List<File> filesToParse) {
@@ -54,10 +52,5 @@ public class MSExperimentParsingJJob extends MasterJJob<List<Ms2Experiment>> {
         checkForInterruption();
 
         return results;
-    }
-
-    @Override
-    protected JobManager jobManager() {
-        return SiriusJobs.getGlobalJobManager();
     }
 }
