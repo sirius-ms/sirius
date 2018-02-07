@@ -6,11 +6,11 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Decomposition;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.MasterJJob;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
 
 import java.util.List;
 
-public abstract class AbstractTreeComputationInstance extends MasterJJob<AbstractTreeComputationInstance.FinalResult> {
+public abstract class AbstractTreeComputationInstance extends BasicMasterJJob<AbstractTreeComputationInstance.FinalResult> {
 
     protected final FragmentationPatternAnalysis analyzer;
     protected ProcessedInput pinput;

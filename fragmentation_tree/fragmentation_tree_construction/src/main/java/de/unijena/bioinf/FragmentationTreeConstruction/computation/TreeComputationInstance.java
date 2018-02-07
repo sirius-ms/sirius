@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TreeComputationInstance extends AbstractTreeComputationInstance {
     //todo should we remove subjobs if they are finished?
     //todo we proof for cancellation??
-    protected final JobManager jobManager;
+//    protected final JobManager jobManager;
     protected final Ms2Experiment experiment;
     protected final int numberOfResultsToKeep;
     // yet another workaround =/
@@ -35,28 +35,22 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
     protected long startTime;
     protected int restTime, secondsPerInstance, secondsPerTree;
 
-    public TreeComputationInstance(JobManager manager, FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep) {
+    public TreeComputationInstance(FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep) {
         super(analyzer);
-        this.jobManager = manager;
         this.experiment = input;
         this.numberOfResultsToKeep = numberOfResultsToKeep;
         this.ticks = new AtomicInteger(0);
     }
 
-    public static TreeComputationInstance beautify(JobManager manager, FragmentationPatternAnalysis analyzer, FTree tree) {
-        return new TreeComputationInstance(manager,analyzer,tree.getAnnotationOrThrow(ProcessedInput.class), tree);
+    public static TreeComputationInstance beautify(FragmentationPatternAnalysis analyzer, FTree tree) {
+        return new TreeComputationInstance(analyzer,tree.getAnnotationOrThrow(ProcessedInput.class), tree);
     }
 
-    private TreeComputationInstance(JobManager manager, FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree) {
-        this(manager,analyzer,input.getOriginalInput(),1);
+    private TreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree) {
+        this(analyzer,input.getOriginalInput(),1);
         this.pinput = input;
         this.pinput.setAnnotation(DecompositionList.class, new DecompositionList(Arrays.asList(new Decomposition(tree.getRoot().getFormula(), tree.getAnnotationOrThrow(PrecursorIonType.class).getIonization(), tree.getAnnotationOrThrow(TreeScoring.class).getRootScore()))));
         this.state = 3;
-    }
-
-    @Override
-    protected JobManager jobManager() {
-        return jobManager;
     }
 
     public ProcessedInput validateInput() {
@@ -226,7 +220,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
     private FinalResult computeExactTreesSinglethreaded(List<IntermediateResult> intermediateResults, boolean earlyStopping) throws TimeoutException {
         // compute in batches
         configureProgress(20, 80, (int) Math.ceil(intermediateResults.size() * 0.2));
-        final int NCPUS = jobManager().getCPUThreads();
+        final int NCPUS = jobManager.getCPUThreads();
         final int BATCH_SIZE = Math.min(4 * NCPUS, Math.max(30, NCPUS));
         final int MAX_GRAPH_CACHE_SIZE = Math.max(30, BATCH_SIZE);
 
