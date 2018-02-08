@@ -142,7 +142,7 @@ public class CachedRESTDB {
     }
 
     private void search(WebAPI webAPI, MolecularFormula formula, List<FingerprintCandidate> candidates, boolean isBio) throws IOException, DatabaseException {
-        final File f = new File(getBioDirectory(), formula.toString() + ".json.gz");
+        final File f = new File(isBio ? getBioDirectory() : getNonBioDirectory(), formula.toString() + ".json.gz");
         if (f.exists())
             parseJson(f, candidates);
         else {
