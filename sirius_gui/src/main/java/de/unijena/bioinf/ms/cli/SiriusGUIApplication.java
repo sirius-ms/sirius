@@ -12,6 +12,7 @@ import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
 import de.unijena.bioinf.sirius.net.ProxyManager;
@@ -29,7 +30,7 @@ public class SiriusGUIApplication {
         final ZodiacCLI<SiriusGUIOptions> cli = new ZodiacCLI<>();
         cli.parseArgs(args, SiriusGUIOptions.class);
 
-        if (cli.options.isZodiac()){
+        if (cli.options.isZodiac()) {
             ZodiacOptions options = null;
             try {
                 String[] newArgs = removeFromArrayIgnoreCase(args, "--zodiac");
@@ -64,7 +65,7 @@ public class SiriusGUIApplication {
                         ApplicationCore.SIRIUS_PROPERTIES_FILE.store();
                     } finally {
                         try {
-
+                            Jobs.cancelALL();//cancel all instances to quit
                             JobManager.shutDownAllInstances();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
@@ -96,16 +97,16 @@ public class SiriusGUIApplication {
     private static String[] removeFromArrayIgnoreCase(String[] args, String param) {
         int idx = -1;
         for (int i = 0; i < args.length; i++) {
-            if (args[i].equalsIgnoreCase(param)){
+            if (args[i].equalsIgnoreCase(param)) {
                 idx = i;
                 break;
             }
 
         }
-        if (idx<0) return args.clone();
-        String[] argsNew = Arrays.copyOf(args, args.length-1);
-        for (int i = idx+1; i < args.length; i++) {
-            argsNew[i-1] = args[i];
+        if (idx < 0) return args.clone();
+        String[] argsNew = Arrays.copyOf(args, args.length - 1);
+        for (int i = idx + 1; i < args.length; i++) {
+            argsNew[i - 1] = args[i];
         }
         return argsNew;
     }
