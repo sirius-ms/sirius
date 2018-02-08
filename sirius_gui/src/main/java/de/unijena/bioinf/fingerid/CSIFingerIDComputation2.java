@@ -47,7 +47,6 @@ public class CSIFingerIDComputation2 {
 
     public CSIFingerIDComputation2() {
         initialize();
-
     }
 
     private void initialize() {
@@ -101,7 +100,7 @@ public class CSIFingerIDComputation2 {
 
     public void computeAll(Collection<FingerIdTask> compounds) {
         for (FingerIdTask task : compounds) {
-            SwingJJobContainer container = new SwingJJobContainer<Boolean>(new FingerIDGUITask(task.experiment, task.result, task.db), "Predict structure for " + task.result.getMolecularFormula());
+            SwingJJobContainer<Boolean> container = new TextAreaJJobContainer<>(new FingerIDGUITask(task.experiment, task.result, task.db), "Predict structure for " + task.result.getMolecularFormula());
             Jobs.MANAGER.submitSwingJob(container);
         }
     }
@@ -223,7 +222,7 @@ public class CSIFingerIDComputation2 {
                 submitSubJob(bj);
             }
             for (int i = 0; i < searchJobs.size(); ++i) {
-                FingerIdResult result = searchJobs.get(i).takeResult();
+                FingerIdResult result = searchJobs.get(i).awaitResult();
                 if (result == null) {
                     if (i == 0) {
                         LoggerFactory.getLogger(CSIFingerIDComputation2.class).warn("Got null value from fingerblast. CSIFingerIDComputation2:119");
@@ -332,12 +331,12 @@ public class CSIFingerIDComputation2 {
 
         @Override
         protected ProbabilityFingerprint compute() throws Exception {
-            if (requireCandidates && formulaJob.takeResult().isEmpty())
+            if (requireCandidates && formulaJob.awaitResult().isEmpty())
                 return null;
             try (final WebAPI webAPI = WebAPI.newInstance()) {
                 final WebAPI.PredictionJJob job = webAPI.makePredictionJob(container.getMs2Experiment(), re.getResult(), re.getResult().getResolvedTree(), fpVersion, PredictorType.CSI_FINGERID);
                 submitSubJob(job);
-                return job.takeResult();
+                return job.awaitResult();
             }
 
         }
@@ -360,9 +359,9 @@ public class CSIFingerIDComputation2 {
 
         @Override
         protected FingerIdResult compute() throws Exception {
-            final List<FingerprintCandidate> candidates = formulaJob.takeResult();
+            final List<FingerprintCandidate> candidates = formulaJob.awaitResult();
             if (candidates == null) return null;
-            final ProbabilityFingerprint fp = predictJob.takeResult();
+            final ProbabilityFingerprint fp = predictJob.awaitResult();
             if (fp == null) {
                 return null;
             }

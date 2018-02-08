@@ -9,6 +9,8 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.IdentificationResultAnnotationJJob;
 
+import java.util.concurrent.ExecutionException;
+
 public abstract class FingerprintDependentJJob<R> extends BasicDependentJJob<R> implements IdentificationResultAnnotationJJob<R> {
     protected IdentificationResult identificationResult;
     protected ProbabilityFingerprint fp;
@@ -21,14 +23,14 @@ public abstract class FingerprintDependentJJob<R> extends BasicDependentJJob<R> 
         this.fp = fp;
     }
 
-    protected void initInput() {
+    protected void initInput() throws ExecutionException {
         if (identificationResult == null || fp == null) {
             for (JJob j : requiredJobs) {
                 if (j instanceof WebAPI.PredictionJJob) {
                     WebAPI.PredictionJJob job = ((WebAPI.PredictionJJob) j);
-                    if (job.result != null && job.takeResult() != null) {
+                    if (job.result != null && job.awaitResult() != null) {
                         identificationResult = job.result;
-                        fp = job.takeResult();
+                        fp = job.awaitResult();
                         resolvedTree = job.ftree;
                         formula = job.ftree.getRoot().getFormula();
 
