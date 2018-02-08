@@ -455,8 +455,9 @@ public class Sirius {
 
     private static void addScoreThresholdOnUnconsideredCandidates(AbstractTreeComputationInstance.FinalResult fr, ProcessedInput processedInput) {
         //add annotation of score bound on unconsidered instances
-        int numberOfDecompositions = processedInput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size();
         int numberOfResults = fr.getResults().size();
+        if (numberOfResults==0) return;
+        int numberOfDecompositions = processedInput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size();
         int numberOfUnconsideredCandidates = numberOfDecompositions - numberOfResults;
         //trees should be sorted by score
         double lowestConsideredCandidatesScore = fr.getResults().get(numberOfResults - 1).getAnnotationOrThrow(TreeScoring.class).getOverallScore();
