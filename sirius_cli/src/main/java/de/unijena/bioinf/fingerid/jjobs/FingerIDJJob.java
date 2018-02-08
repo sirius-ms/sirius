@@ -117,7 +117,7 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
                     } else if (experiment != job.getExperiment()) {
                         throw new IllegalArgumentException("SiriusIdentificationJobs to collect are from different MS2Experments");
                     }
-                    input.addAll(job.takeResult());
+                    input.addAll(job.awaitResult());
                 }
             }
 
@@ -229,7 +229,7 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
             //collect results
             Map<IdentificationResult, ProbabilityFingerprint> fps = new HashMap<>(input.size());
             for (WebAPI.PredictionJJob predictionJob : predictionJobs) {
-                ProbabilityFingerprint r = predictionJob.takeResult();
+                ProbabilityFingerprint r = predictionJob.awaitResult();
                 if (r != null)
                     fps.put(predictionJob.result, r);
             }

@@ -44,7 +44,6 @@ public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<Si
             JobProgressEvent e = (JobProgressEvent) evt;
             updateProgress(e.getMinValue(), e.getMaxValue() + 10, e.getNewValue());
         });
-        swingJobContainer.registerJobLog(identificationJob);
 
         final List<IdentificationResult> results = submitSubJob(identificationJob).awaitResult();
 
