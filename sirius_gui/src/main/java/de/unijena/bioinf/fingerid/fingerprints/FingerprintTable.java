@@ -1,5 +1,6 @@
 package de.unijena.bioinf.fingerid.fingerprints;
 
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FPIter;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
@@ -38,6 +39,7 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Si
         final CSIFingerIDComputation csi = MainFrame.MF.getCsiFingerId();
         final PredictionPerformance[] performances = csi.getPerformances();
         int k = 0;
+        fscores = new double[CdkFingerprintVersion.getComplete().size()];
         for (int index : csi.getFingerprintVersion().allowedIndizes()) {
             this.fscores[index] = performances[k++].getF();
         }
@@ -45,7 +47,6 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Si
 
     @Override
     public void resultsChanged(ExperimentContainer experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selections) {
-
         try {
             elementList.getReadWriteLock().writeLock().lock();
             elementList.clear();
