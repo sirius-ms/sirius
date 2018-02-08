@@ -9,9 +9,9 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.Arrays;
 import java.util.BitSet;
 
-public class InsertionHeuristic extends AbstractHeuristic{
+public class LegacyInsertionHeuristic extends AbstractHeuristic{
 
-    public InsertionHeuristic(FGraph graph) {
+    public LegacyInsertionHeuristic(FGraph graph) {
         super(graph);
         usedColors = new BitSet(ncolors);
         color2Edge = new TIntObjectHashMap<>(ncolors,0.75f,-1);
