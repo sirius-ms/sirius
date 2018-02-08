@@ -14,6 +14,7 @@ import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistr
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
+import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.projectspace.DirectoryReader;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
@@ -30,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 
 /**
@@ -59,6 +61,8 @@ public class Zodiac {
             //todo For the official release zodiac should become a job an create subjobs in the jobmanager for multithreading
 //            int workerCount = PropertyManager.getNumberOfCores();
             int workerCount = options.getNumOfCores()>0 ? options.getNumOfCores() : (new SystemInfo()).getHardware().getProcessor().getPhysicalProcessorCount()-1;
+            JobManager jobManager = new JobManager(workerCount); //todo how to get job manager?
+
 
             //create output dir
             if (Files.exists(outputPath)){
@@ -150,7 +154,7 @@ public class Zodiac {
             ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
             EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
 
-            TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, options.getSeparateRuns());
+            TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager, options.getSeparateRuns());
 
             //validate Graph
             Graph<FragmentsCandidate> graph = twoPhaseGibbsSampling.getGraph();
@@ -164,18 +168,23 @@ public class Zodiac {
                 LoggerFactory.getLogger(this.getClass()).warn(validationMessage.getMessage());
             }
 
-            twoPhaseGibbsSampling.run(options.getIterationSteps(), options.getBurnInSteps());
-            graph = twoPhaseGibbsSampling.getGraph(); //update, get complete graph
+            twoPhaseGibbsSampling.setIterationSteps(options.getIterationSteps(), options.getBurnInSteps());
+            jobManager.submitJob(twoPhaseGibbsSampling);
+            ZodiacResult<FragmentsCandidate> zodiacResult = twoPhaseGibbsSampling.awaitResult();
+            Scored<FragmentsCandidate>[][] result = zodiacResult.getResults();
 
+            graph = twoPhaseGibbsSampling.getGraph(); //update, get complete graph
             Scored<FragmentsCandidate>[][] bestInitial = GibbsSamplerMain.getBestInitialAssignments(ids, candidatesMap);
 
-            Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.getChosenFormulas();
+
 
             GibbsSamplerMain.writeZodiacOutput(ids, bestInitial, result, graph, representativeToCluster, outputPath.resolve("zodiac_summary.csv"));
             writeClusters(representativeToCluster, outputPath.resolve("clusters.csv"));
             writeSpectra(ids, result, representativeToCluster, allExperimentsMap, outputPath);
 
         } catch (IOException e) {
+            LOG.error("Error while running ZODIAC: " + e.getMessage(), e);
+        } catch (ExecutionException e) {
             e.printStackTrace();
         }
     }
