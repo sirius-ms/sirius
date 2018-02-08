@@ -109,7 +109,7 @@ public class ProcessedInput implements Cloneable {
             dl.set(recalibrated, new DecompositionList(new ArrayList<>()));
             p.mergedPeaks.add(recalibrated);
         }
-        p.addAnnotation(SpectralRecalibration.class, rec);
+        p.setAnnotation(SpectralRecalibration.class, rec);
         p.setAnnotation(Scoring.class,new Scoring());
         return p;
     }
