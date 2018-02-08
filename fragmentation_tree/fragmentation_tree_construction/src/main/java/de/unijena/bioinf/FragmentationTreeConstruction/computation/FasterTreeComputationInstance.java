@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FasterTreeComputationInstance extends AbstractTreeComputationInstance {
@@ -136,7 +137,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         }
     }
 
-    public ExactResult[] estimateTreeSizeAndRecalibration(List<Decomposition> decompositions, boolean useHeuristic) {
+    public ExactResult[] estimateTreeSizeAndRecalibration(List<Decomposition> decompositions, boolean useHeuristic) throws ExecutionException {
         final int NCPUS = jobManager.getCPUThreads();
         final int BATCH_SIZE = Math.min(4 * NCPUS, Math.max(30, NCPUS));
         final int MAX_GRAPH_CACHE_SIZE = Math.max(30, BATCH_SIZE);
@@ -167,7 +168,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             }
             int counter = 0;
             for (TreeComputationJob job : jobs) {
-                results.add(job.takeResult());
+                results.add(job.awaitResult());
                 if (++counter % 100 == 0) {
                     checkTimeout();
                 }

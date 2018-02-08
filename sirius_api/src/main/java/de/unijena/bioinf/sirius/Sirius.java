@@ -98,6 +98,7 @@ public class Sirius {
 
         @Override
         protected List<IdentificationResult> compute() throws Exception {
+            updateProgress(0,1,0,"Start Identification job");
             final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, numberOfResultsToKeep);
             instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, (int) evt.getNewValue(), 105));
             final ProcessedInput pinput = instance.validateInput();
@@ -106,6 +107,7 @@ public class Sirius {
             AbstractTreeComputationInstance.FinalResult fr = instance.awaitResult();
 
             List<IdentificationResult> r = createIdentificationResults(fr, instance);//postprocess results
+            LOG().warn("test test test");
             return r;
         }
 
