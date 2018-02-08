@@ -44,14 +44,14 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
     }
 
 
-    protected final CSIFingerIdComputation storage;
+    protected final CSIFingerIDComputation storage;
     protected CandidateListDetailView list;
     protected JButton searchCSIButton;
 
     protected CardLayout layout;
 
 
-    public CandidateListDetailViewPanel(CSIFingerIdComputation storage, CandidateList sourceList) {
+    public CandidateListDetailViewPanel(CSIFingerIDComputation storage, CandidateList sourceList) {
         super();
         this.storage = storage;
         list = new CandidateListDetailView(storage, sourceList);

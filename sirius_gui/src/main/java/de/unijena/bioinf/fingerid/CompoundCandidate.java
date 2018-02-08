@@ -231,9 +231,9 @@ public class CompoundCandidate extends AbstractEDTBean implements Comparable<Com
         }
     }
 
-    public FingerprintAgreement getSubstructures(CSIFingerIdComputation computations, ProbabilityFingerprint prediction) {
+    public FingerprintAgreement getSubstructures(CSIFingerIDComputation computations, ProbabilityFingerprint prediction) {
         if (substructures == null)
-            substructures = FingerprintAgreement.getSubstructures(prediction.getFingerprintVersion(), prediction.toProbabilityArray(), compound.fingerprint.toBooleanArray(), computations.performances, 0.25);
+            substructures = FingerprintAgreement.getSubstructures(prediction.getFingerprintVersion(), prediction.toProbabilityArray(), compound.fingerprint.toBooleanArray(), computations.getPerformances(), 0.25);
         return substructures;
     }
 
