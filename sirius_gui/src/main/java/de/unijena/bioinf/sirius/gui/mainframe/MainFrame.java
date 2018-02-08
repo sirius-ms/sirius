@@ -2,8 +2,7 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.fingerid.CSIFingerIDComputation2;
-import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
+import de.unijena.bioinf.fingerid.CSIFingerIDComputation;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
@@ -42,7 +41,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     //left side panel
     private ExperimentList experimentList;
-    private CSIFingerIDComputation2 csiFingerId2;
+    private CSIFingerIDComputation csiFingerId2;
 
     public ExperimentList getExperimentList() {
         return experimentList;
@@ -68,13 +67,10 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return resultsPanel;
     }
 
-    private CSIFingerIdComputation csiFingerId;
+    private CSIFingerIDComputation csiFingerId;
 
-    public CSIFingerIdComputation getCsiFingerId() {
+    public CSIFingerIDComputation getCsiFingerId() {
         return csiFingerId;
-    }
-    public CSIFingerIDComputation2 getCsiFingerId2() {
-        return csiFingerId2;
     }
 
     private JobDialog jobDialog;
@@ -101,8 +97,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     private static void decoradeMainFrameInstance(final MainFrame mf) {
         //create computation
-        mf.csiFingerId2 = new CSIFingerIDComputation2();
-        mf.csiFingerId = new CSIFingerIdComputation();
+        mf.csiFingerId = new CSIFingerIDComputation();
 
         // create models for views
         mf.experimentList = new ExperimentList();
@@ -163,7 +158,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 final int errorState = (int) chunks.get(1);
 
                 if (versionsNumber != null) {
-                    mf.csiFingerId.setVersionNumber(versionsNumber);
                     if (versionsNumber.expired()) {
                         new UpdateDialog(mf, versionsNumber);
                     }
@@ -201,7 +195,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
     @Override
     public void dispose() {
         resultsPanel.dispose();
-        csiFingerId.shutdown();
         super.dispose();
     }
 
@@ -257,10 +250,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
             if (f.getName().toLowerCase().endsWith(".sirius")) {
                 siriusFiles.add(f);
                 rawFileIterator.remove();
-            } else if (CANOPUS_PATTERN.matcher(f.getName()).matches()) {
+            }
+            //todo CANOPUS
+            /*else if (CANOPUS_PATTERN.matcher(f.getName()).matches()) {
                 importCanopus(f);
                 rawFileIterator.remove();
-            }
+            }*/
         }
 
         if (siriusFiles.size() > 0) {
@@ -311,7 +306,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
         }
     }
 
-    private void importCanopus(final File f) {
+    //todo insert canopus here
+    /*private void importCanopus(final File f) {
         final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
             @Override
             protected Object doInBackground() throws Exception {
@@ -333,7 +329,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
             }
         };
         worker.execute();
-    }
+    }*/
 
     private void activateCanopus() {
         resultsPanel.enableCanopus();

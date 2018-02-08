@@ -28,29 +28,35 @@ import de.unijena.bioinf.sirius.logging.TextAreaJJobContainer;
 import gnu.trove.list.array.TIntArrayList;
 import org.slf4j.LoggerFactory;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-public class CSIFingerIDComputation2 {
+public class CSIFingerIDComputation {
 
     protected CachedRESTDB database;
-    protected MaskedFingerprintVersion fpVersion;
+    private MaskedFingerprintVersion fpVersion;
     protected Fingerblast blaster;
     protected boolean initialized;
+    private PredictionPerformance[] performances;
+
 
     protected List<CustomDatabase> customDatabases;
-    protected SearchableDatabase bio, pubchem;
+    private SearchableDatabase bio, pubchem;
 
-    public CSIFingerIDComputation2() {
+
+    public CSIFingerIDComputation() {
         initialize();
     }
 
     private void initialize() {
-        SwingJJobContainer<Boolean> container = new TextAreaJJobContainer<>(new InitializeCSIFingerID(), "Initialize CSI:FingerID");
+        SwingJJobContainer<Boolean> container = new TextAreaJJobContainer<>(new InitializeCSIFingerID(), "Initialize CSI:FingerID", "CSI:FingerID");
         Jobs.MANAGER.submitSwingJob(container);
     }
 
@@ -100,13 +106,14 @@ public class CSIFingerIDComputation2 {
 
     public void computeAll(Collection<FingerIdTask> compounds) {
         for (FingerIdTask task : compounds) {
-            SwingJJobContainer<Boolean> container = new TextAreaJJobContainer<>(new FingerIDGUITask(task.experiment, task.result, task.db), "Predict structure for " + task.result.getMolecularFormula());
+            SwingJJobContainer<Boolean> container = new TextAreaJJobContainer<>(new FingerIDGUITask(task.experiment, task.result, task.db), task.result.getMolecularFormula().toString(), "Structure Prediction");
             Jobs.MANAGER.submitSwingJob(container);
         }
     }
 
 
     protected class InitializeCSIFingerID extends BasicJJob<Boolean> {
+
 
         public InitializeCSIFingerID() {
             super(JobType.REMOTE);
@@ -115,9 +122,8 @@ public class CSIFingerIDComputation2 {
         @Override
         protected Boolean compute() throws Exception {
             try (final WebAPI webAPI = WebAPI.newInstance()) {
-                VersionsInfo versionsInfo = webAPI.getVersionInfo();
                 final TIntArrayList list = new TIntArrayList(4096);
-                PredictionPerformance[] performances = webAPI.getStatistics(list);
+                PredictionPerformance[] perf = webAPI.getStatistics(list);
 
                 final CdkFingerprintVersion version = (CdkFingerprintVersion) WebAPI.getFingerprintVersion();
 
@@ -132,22 +138,34 @@ public class CSIFingerIDComputation2 {
 
                 MaskedFingerprintVersion fingerprintVersion = v.toMask();
 
-                FingerblastScoringMethod method = webAPI.getCovarianceScoring(fingerprintVersion, 1d / performances[0].withPseudoCount(0.25).numberOfSamples());
+                FingerblastScoringMethod method = webAPI.getCovarianceScoring(fingerprintVersion, 1d / perf[0].withPseudoCount(0.25).numberOfSamples());
 
                 final List<CustomDatabase> cds = CustomDatabase.customDatabases(true);
-                final File directory = getDefaultDirectory();
-                synchronized (CSIFingerIDComputation2.this) {
-                    database = new CachedRESTDB(versionsInfo, fingerprintVersion, getDefaultDirectory());
+
+                synchronized (CSIFingerIDComputation.this) {
+                    performances = perf;
                     fpVersion = fingerprintVersion;
                     blaster = new Fingerblast(method, null);
                     initialized = true;
-                    bio = new SearchableDbOnDisc("biological database", new File(directory, "bio"), false, true, false);
-                    pubchem = new SearchableDbOnDisc("PubChem", new File(directory, "not-bio"), true, true, false);
+                    refreshCacheDir();
                     customDatabases = cds;
                 }
             }
             return true;
         }
+    }
+
+    public void refreshCacheDir() throws IOException {
+        try (final WebAPI webAPI = WebAPI.newInstance()) {
+            final File directory = getDefaultDirectory();
+            VersionsInfo versionsInfo = webAPI.getVersionInfo();
+
+            database = new CachedRESTDB(versionsInfo, fpVersion, directory);
+            bio = new SearchableDbOnDisc("biological database", new File(directory, "bio"), false, true, false);
+            pubchem = new SearchableDbOnDisc("PubChem", new File(directory, "not-bio"), true, true, false);
+            database.checkCache();
+        }
+
     }
 
     public List<SearchableDatabase> getAvailableDatabases() {
@@ -174,7 +192,7 @@ public class CSIFingerIDComputation2 {
         public final SearchableDatabase db;
 
         public FingerIDGUITask(ExperimentContainer container, SiriusResultElement originalResultElement, SearchableDatabase db) {
-            super(JobType.SCHEDULER);
+            super(JobType.WEBSERVICE);
             this.container = container;
             this.originalResultElement = originalResultElement;
             this.addedResultElements = new ArrayList<>();
@@ -187,8 +205,12 @@ public class CSIFingerIDComputation2 {
 
         @Override
         protected Boolean compute() throws Exception {
+            LOG().info("Predicting structure for: " + originalResultElement.getMolecularFormula().toString());
             final PrecursorIonType origIonType = originalResultElement.getResult().getPrecursorIonType();
+
+
             // step 1: download molecular formulas and predict fingerprints
+            LOG().info("downloading molecular formulas and predicting fingerprints");
             final PossibleAdducts pa = container.getMs2Experiment().getAnnotation(PossibleAdducts.class, new PossibleAdducts());
             pa.addAdduct(origIonType);
 
@@ -198,7 +220,7 @@ public class CSIFingerIDComputation2 {
                     try {
                         addedResultElements.add(new SiriusResultElement(IdentificationResult.withPrecursorIonType(originalResultElement.getResult(), ion)));
                     } catch (RuntimeException e) {
-                        LoggerFactory.getLogger(CSIFingerIDComputation2.class).error("Cannot neutralize " + originalResultElement.getResult().getMolecularFormula() + " with precursor ion type " + ion + ", although adduct " + ion.getAdduct() + " is subtractable? " + originalResultElement.getResult().getMolecularFormula().isSubtractable(ion.getAdduct()) + ", tree root is " + originalResultElement.getResult().getBeautifulTree());
+                        LoggerFactory.getLogger(CSIFingerIDComputation.class).error("Cannot neutralize " + originalResultElement.getResult().getMolecularFormula() + " with precursor ion type " + ion + ", although adduct " + ion.getAdduct() + " is subtractable? " + originalResultElement.getResult().getMolecularFormula().isSubtractable(ion.getAdduct()) + ", tree root is " + originalResultElement.getResult().getBeautifulTree());
                     }
                 }
             }
@@ -225,7 +247,7 @@ public class CSIFingerIDComputation2 {
                 FingerIdResult result = searchJobs.get(i).awaitResult();
                 if (result == null) {
                     if (i == 0) {
-                        LoggerFactory.getLogger(CSIFingerIDComputation2.class).warn("Got null value from fingerblast. CSIFingerIDComputation2:119");
+                        LoggerFactory.getLogger(CSIFingerIDComputation.class).warn("Got null value from fingerblast. CSIFingerIDComputation:119");
                     }
                 } else {
 
@@ -248,6 +270,7 @@ public class CSIFingerIDComputation2 {
                 }
 
             }
+            LOG().info("Collecting results");
             // replace result list
             final HashMap<Ion, SiriusResultElement> elems = new HashMap<>();
             for (SiriusResultElement e : container.getResults()) {
@@ -370,6 +393,54 @@ public class CSIFingerIDComputation2 {
             result.setAnnotation(SearchableDatabase.class, db);
             return result;
         }
+    }
+
+
+    /////////////////////////////////// API /////////////////////////////////
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(listener);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        pcs.removePropertyChangeListener(listener);
+    }
+
+    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(propertyName, listener);
+    }
+
+    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        pcs.removePropertyChangeListener(propertyName, listener);
+    }
+
+    private boolean enabled;
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        boolean old = this.enabled;
+        this.enabled = enabled;
+        pcs.firePropertyChange("enabled", old, this.enabled);
+    }
+
+    public MaskedFingerprintVersion getFingerprintVersion() {
+        return fpVersion;
+    }
+
+    public PredictionPerformance[] getPerformances() {
+        return performances;
+    }
+
+    public SearchableDatabase getPubchemDb() {
+        return pubchem;
+    }
+
+    public SearchableDatabase getBioDb() {
+        return bio;
     }
 
 }
