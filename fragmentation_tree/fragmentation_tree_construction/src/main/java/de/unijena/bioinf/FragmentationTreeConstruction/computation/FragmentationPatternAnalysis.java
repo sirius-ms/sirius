@@ -1276,7 +1276,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     public FGraph buildGraph(ProcessedInput input, Decomposition candidate) {
-        return performGraphReduction(buildGraphWithoutReduction(input,candidate,reduction!=null),0d);
+        return performGraphReduction(buildGraphWithoutReduction(input,candidate,reduction==null),0d);
     }
 
     public FGraph performGraphReduction(FGraph fragments, double lowerbound) {

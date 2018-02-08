@@ -2,6 +2,8 @@ package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JobManager;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TObjectIntMap;
@@ -12,20 +14,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * compute Gibbs Sampling first with good quality spectra. Then, insert other ones and compute again.
  * @param <C>
  */
-public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
+public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJob<ZodiacResult<C>> {
     private static final Logger LOG = LoggerFactory.getLogger(TwoPhaseGibbsSampling.class);
     private String[] ids;
     private C[][] possibleFormulas;
     private NodeScorer<C>[] nodeScorers;
     private EdgeScorer<C>[] edgeScorers;
     private EdgeFilter edgeFilter;
-    private int workersCount;
     private int repetitions;
     private Class<C> cClass;
 
@@ -39,18 +43,21 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
     private String[] firstRoundIds;
     private TIntArrayList firstRoundCompoundsIdx;
 
-    public TwoPhaseGibbsSampling(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int workersCount, int repetitions) {
+    private JobManager jobManager;
+
+    public TwoPhaseGibbsSampling(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, JobManager jobManager, int repetitions) throws ExecutionException {
+        super(JobType.CPU);
         this.ids = ids;
         this.possibleFormulas = possibleFormulas;
         this.nodeScorers = nodeScorers;
         this.edgeScorers = edgeScorers;
         this.edgeFilter = edgeFilter;
-        this.workersCount = workersCount;
+        this.jobManager = jobManager;
         this.repetitions = repetitions;
         init();
     }
 
-    private void init(){
+    private void init() throws ExecutionException {
         firstRoundCompoundsIdx = new TIntArrayList();
         for (int i = 0; i < possibleFormulas.length; i++) {
             C[] poss = possibleFormulas[i];
@@ -78,14 +85,26 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
 
 
         LOG.info("running first round with "+firstRoundIds.length+" compounds.");
-        gibbsParallel = new GibbsParallel<>(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, workersCount, repetitions);
-        graph = gibbsParallel.getGraph();
+        GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, jobManager);
+        graph = jobManager.submitJob(graphBuilder).awaitResult();
+        gibbsParallel = new GibbsParallel<>(graph, repetitions);
     }
 
-    public void run(int maxSteps, final int burnIn){
-        gibbsParallel.iteration(maxSteps, burnIn);
+    private int maxSteps = -1;
+    private int burnIn = -1;
 
-        results1 = gibbsParallel.getChosenFormulasBySampling();
+    public void setIterationSteps(int maxSteps, int burnIn) {
+        this.maxSteps = maxSteps;
+        this.burnIn = burnIn;
+    }
+
+    @Override
+    protected ZodiacResult<C> compute() throws Exception {
+        if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
+        gibbsParallel.setIterationSteps(maxSteps, burnIn);
+        submitSubJob(gibbsParallel);
+
+        results1 = gibbsParallel.awaitResult();
 
         firstRoundIds = gibbsParallel.getGraph().getIds();
 
@@ -105,21 +124,22 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
             //todo rather sample everything and just use results of low quality compounds? may there arise problems? in principle should not as we still sample all compounds (even 'fixed')
             C[][] candidatesNewRound = combineNewAndOldAndSetFixedProbabilities(results1, firstRoundCompoundsIdx);
             //todo this stupid thing creates a complete new graph.
-            gibbsParallel = new GibbsParallel<>(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, new TIntHashSet(firstRoundCompoundsIdx), workersCount, repetitions);
 
+            GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, new TIntHashSet(firstRoundCompoundsIdx), jobManager);
+            graph = submitSubJob(graphBuilder).awaitResult();
 
+            gibbsParallel = new GibbsParallel<>(graph, repetitions);
+            gibbsParallel.setIterationSteps(maxSteps, burnIn);
+            submitSubJob(gibbsParallel);
 
-            gibbsParallel.iteration(maxSteps, burnIn);
-
-            results2 = gibbsParallel.getChosenFormulasBySampling();
+            results2 = gibbsParallel.awaitResult();
 
             usedIds = gibbsParallel.getGraph().ids;
 
             combinedResult = combineResults(results1, firstRoundIds, results2, usedIds);
 
-            graph = gibbsParallel.getGraph();
         }
-
+        return new ZodiacResult(ids, graph, combinedResult);
     }
 
     private Scored<C>[][] combineResults(Scored<C>[][] results1, String[] resultIds1, Scored<C>[][] results2, String[] resultIds2) {
@@ -240,5 +260,15 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
 
     public String[] getIds() {
         return usedIds;
+    }
+
+    @Override
+    public void updateProgress(int min, int max, int progress) {
+
+    }
+
+    @Override
+    public void updateProgress(int progress) {
+
     }
 }
