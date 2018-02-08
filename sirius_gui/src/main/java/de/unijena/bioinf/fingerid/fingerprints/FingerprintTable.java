@@ -37,6 +37,7 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Si
     private void setFScores() {
         final CSIFingerIDComputation csi = MainFrame.MF.getCsiFingerId();
         final PredictionPerformance[] performances = csi.getPerformances();
+        this.fscores = new double[csi.getFingerprintVersion().getMaskedFingerprintVersion().size()];
         int k = 0;
         for (int index : csi.getFingerprintVersion().allowedIndizes()) {
             this.fscores[index] = performances[k++].getF();
