@@ -182,7 +182,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
         //return null;
     }
 
-    private FinalResult computeExactTreesInParallel(List<IntermediateResult> intermediateResults, boolean earlyStopping) {
+    private FinalResult computeExactTreesInParallel(List<IntermediateResult> intermediateResults, boolean earlyStopping) throws ExecutionException {
         return computeExactTreesSinglethreaded(intermediateResults, earlyStopping);
     }
 
@@ -198,13 +198,13 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
             this.intermediateResult = intermediateResult;
         }
 
-        protected ExactResult computeExact() {
+        protected ExactResult computeExact() throws ExecutionException {
             final double threshold = sharedVariable[0];
             if (intermediateResult.heuristicScore < threshold) {
                 graphJJob.cancel(true);
                 return null; // early stopping
             }
-            final FGraph graph = graphJJob.takeResult();
+            final FGraph graph = graphJJob.awaitResult();
             graph.setAnnotation(Timeout.class, Timeout.newTimeout(secondsPerInstance, restTime));
             final FTree tree = analyzer.computeTreeWithoutAnnotating(graph, intermediateResult.heuristicScore - 1e-3);
             if (tree == null) return null;
@@ -217,7 +217,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
         }
     }
 
-    private FinalResult computeExactTreesSinglethreaded(List<IntermediateResult> intermediateResults, boolean earlyStopping) throws TimeoutException {
+    private FinalResult computeExactTreesSinglethreaded(List<IntermediateResult> intermediateResults, boolean earlyStopping) throws TimeoutException, ExecutionException {
         // compute in batches
         configureProgress(20, 80, (int) Math.ceil(intermediateResults.size() * 0.2));
         final int NCPUS = jobManager.getCPUThreads();
@@ -274,7 +274,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
                 for (int JJ = batchJobs.size() - 1; JJ >= 0; --JJ)
                     submitSubJob(batchJobs.get(JJ));
                 for (ExactComputationWithThreshold job : batchJobs) {
-                    final ExactResult r = job.takeResult();
+                    final ExactResult r = job.awaitResult();
                     tick();
                     if (r != null) {
                         ++treesComputed;
@@ -319,7 +319,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
                 submitSubJob(rj);
             }
             for (int i = 0, nn = recalibrationJobs.size(); i < nn; ++i) {
-                ExactResult recalibratedResult = recalibrationJobs.get(i).takeResult();
+                ExactResult recalibratedResult = recalibrationJobs.get(i).awaitResult();
                 final FTree recalibrated = recalibratedResult.tree;
 
                 final TreeScoring sc = recalibrated.getAnnotationOrThrow(TreeScoring.class);
