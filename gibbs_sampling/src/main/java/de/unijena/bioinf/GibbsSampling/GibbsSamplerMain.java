@@ -13,6 +13,7 @@ import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
+import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
 import de.unijena.bioinf.sirius.Sirius;
@@ -85,7 +86,7 @@ public class GibbsSamplerMain {
     public GibbsSamplerMain() {
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
         GibbsSamplerMain main = new GibbsSamplerMain();
         if(args.length != 0 && !args[0].equals("--help") && !args[0].equals("-h")) {
             GibbsSamplerOptions opts = CliFactory.createCli(GibbsSamplerOptions.class).parseArguments(args);
@@ -526,7 +527,7 @@ public class GibbsSamplerMain {
     }
 
 
-    protected void testRobustness(Path treeDir, Path mgfFile, Path libraryHitsPath, Path outputFile, EdgeScorer[] edgeScorers, GibbsSamplerOptions opts) throws IOException {
+    protected void testRobustness(Path treeDir, Path mgfFile, Path libraryHitsPath, Path outputFile, EdgeScorer[] edgeScorers, GibbsSamplerOptions opts) throws IOException, ExecutionException, InterruptedException {
 //        if (GibbsMFCorrectionNetwork.iniAssignMostLikely) throw new RuntimeException("don't initialize MF candidates by most likely");
         int workerCount = Runtime.getRuntime().availableProcessors();
 //            workerCount = 6;
@@ -593,13 +594,16 @@ public class GibbsSamplerMain {
         List<Scored<FragmentsCandidate>[][]> listOfResults = new ArrayList<>();
         String[] resultIds = ids;
 
+        JobManager jobManager = new JobManager(workerCount);
         if (is2Phase){
             for (int i = 0; i < numberOfRuns; i++) {
-                TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 1);
+                TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager, 1);
                 System.out.println("start");
-                twoPhaseGibbsSampling.run(iterationSteps, burnInIterations);
+                twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnInIterations);
+                jobManager.submitJob(twoPhaseGibbsSampling);
 
-                Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.getChosenFormulas();
+
+                Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.awaitResult().getResults();
                 resultIds = twoPhaseGibbsSampling.getIds();
 
                 System.out.println("result");
@@ -650,27 +654,30 @@ public class GibbsSamplerMain {
 
                 EdgeScorer[] currentEdgeScorers = new EdgeScorer[]{scoreProbabilityDistributionEstimator};
 
-                GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, currentEdgeScorers, edgeFilter, workerCount, 1);
-
-
+                GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager);
+                jobManager.submitJob(graphBuilder);
+                Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
+                GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(graph, 1);
 
                 System.out.println("start");
-                gibbsParallel.iteration(iterationSteps, burnInIterations);
+                gibbsParallel.setIterationSteps(iterationSteps, burnInIterations);
+                jobManager.submitJob(gibbsParallel);
+                Scored<FragmentsCandidate>[][] result = gibbsParallel.awaitResult();
 
-                Scored<FragmentsCandidate>[][] result = gibbsParallel.getChosenFormulasBySampling();
                 System.out.println("result");
                 statisticsOfKnownCompounds(result, resultIds, evaluationIds, correctHits, gibbsParallel.getGraph());
                 listOfResults.add(result);
             }
         }
 
+        jobManager.shutdown();
 
         System.out.println("final results");
         statisticsOfKnownCompounds(listOfResults, resultIds, evaluationIds, correctHits);
     }
 
 
-    protected void testGraphGeneration(Path treeDir, Path mgfFile, Path libraryHitsPath, EdgeScorer[] edgeScorers, GibbsSamplerOptions opts) throws IOException {
+    protected void testGraphGeneration(Path treeDir, Path mgfFile, Path libraryHitsPath, EdgeScorer[] edgeScorers, GibbsSamplerOptions opts) throws IOException, ExecutionException, InterruptedException {
 //        if (GibbsMFCorrectionNetwork.iniAssignMostLikely) throw new RuntimeException("don't initialize MF candidates by most likely");
         int workerCount = Runtime.getRuntime().availableProcessors();
 //            workerCount = 6;
@@ -725,16 +732,21 @@ public class GibbsSamplerMain {
         }
 
 
-
+        JobManager jobManager = new JobManager(workerCount);
         //1. are their any changes after running gibbs?
         {
-            GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 1);
+            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager);
+            jobManager.submitJob(graphBuilder);
+            Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
+            GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(graph, 1);
             System.out.println("number of candidates: "+gibbsParallel.getGraph().getSize());
 
             Graph graphBefore = gibbsParallel.getGraph();
 
             System.out.println("start");
-            gibbsParallel.iteration(iterationSteps, burnInIterations);
+            gibbsParallel.setIterationSteps(iterationSteps, burnInIterations);
+            jobManager.submitJob(gibbsParallel);
+            gibbsParallel.awaitResult();
 
             Graph graphAfter = gibbsParallel.getGraph();
 
@@ -746,7 +758,10 @@ public class GibbsSamplerMain {
         //2. differences for different EdgeFilter
         {
             edgeFilter = new EdgeThresholdFilter(0.9);
-            GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 1);
+            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager);
+            jobManager.submitJob(graphBuilder);
+            Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
+            GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(graph,  1);
             System.out.println("number of candidates: "+gibbsParallel.getGraph().getSize());
 
 
@@ -796,17 +811,18 @@ public class GibbsSamplerMain {
 
 
             edgeFilter = new EdgeThresholdMinConnectionsFilter(0.9, 1, 10);
-            gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 1);
+            graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager);
+            jobManager.submitJob(graphBuilder);
+            Graph<FragmentsCandidate> graphComplexThres = graphBuilder.awaitResult();
+            gibbsParallel = new GibbsParallel(graph, 1);
             System.out.println("number of candidates: "+gibbsParallel.getGraph().getSize());
-
-            Graph graphComplexThres = gibbsParallel.getGraph();
 
             compare(graphSimpleThres, graphComplexThres);
 
 
         }
 
-
+        jobManager.shutdown();
 
     }
 
@@ -988,7 +1004,7 @@ public class GibbsSamplerMain {
         return false;
     }
 
-    protected void doEvaluation(Path treeDir, Path mgfFile, Path libraryHitsPath, Path outputFile, EdgeScorer[] edgeScorers) throws IOException {
+    protected void doEvaluation(Path treeDir, Path mgfFile, Path libraryHitsPath, Path outputFile, EdgeScorer[] edgeScorers) throws IOException, ExecutionException, InterruptedException {
         if (!GibbsMFCorrectionNetwork.iniAssignMostLikely) throw new RuntimeException("initialize MF candidates by most likely");
         int workerCount = Runtime.getRuntime().availableProcessors();
 //            workerCount = 6;
@@ -1072,9 +1088,10 @@ public class GibbsSamplerMain {
         }
 
 
+        JobManager jobManager = new JobManager(workerCount);
         if (is3Phase){
             int numberOfCandidatesInFirstRound = maxCandidates;
-            ThreePhaseGibbsSampling threePhaseGibbsSampling = new ThreePhaseGibbsSampling(ids, candidatesArray, numberOfCandidatesInFirstRound, nodeScorers, edgeScorers, edgeFilter, workerCount, 1);
+            ThreePhaseGibbsSampling threePhaseGibbsSampling = new ThreePhaseGibbsSampling(ids, candidatesArray, numberOfCandidatesInFirstRound, nodeScorers, edgeScorers, edgeFilter, jobManager, 1);
             System.out.println("start");
             threePhaseGibbsSampling.run(iterationSteps, burnInIterations);
 
@@ -1085,11 +1102,12 @@ public class GibbsSamplerMain {
             if (outputFile!=null) writeBestFormulas(threePhaseGibbsSampling.getChosenFormulas(), threePhaseGibbsSampling.getGraph(), outputFile);
         }
         else if (is2Phase){
-            TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 1);
+            TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager, 1);
             System.out.println("start");
-            twoPhaseGibbsSampling.run(iterationSteps, burnInIterations);
+            twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnInIterations);
+            jobManager.submitJob(twoPhaseGibbsSampling);
 
-            Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.getChosenFormulas();
+            Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.awaitResult().getResults();
             System.out.println("standard");
             statisticsOfKnownCompounds(result, twoPhaseGibbsSampling.getIds(), evaluationIds, correctHits, twoPhaseGibbsSampling.getGraph());
 
@@ -1097,27 +1115,24 @@ public class GibbsSamplerMain {
         } else {
             //GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 20);
             //changed
-            GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 1);
+
+            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager);
+            jobManager.submitJob(graphBuilder);
+            Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
+            GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(graph, 1);
 
 
-            if (graphOutputDir!=null) writeMFNetworkToDir(graphOutputDir, gibbsParallel.getGraph());
+            if (graphOutputDir!=null) writeMFNetworkToDir(graphOutputDir, gibbsParallel.getGraph(), edgeScorers);
 
 
 
 
             System.out.println("start");
-            gibbsParallel.iteration(iterationSteps, burnInIterations);
+            gibbsParallel.setIterationSteps(iterationSteps, burnInIterations);
+            jobManager.submitJob(gibbsParallel);
 
-            Scored<FragmentsCandidate>[][] result = gibbsParallel.getChosenFormulasBySampling();
+            Scored<FragmentsCandidate>[][] result = gibbsParallel.awaitResult();
             System.out.println("standard");
-            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits, gibbsParallel.getGraph());
-
-            result = gibbsParallel.getChosenFormulasByAddedUpPosterior();
-            System.out.println("addedPosterior");
-            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits, gibbsParallel.getGraph());
-
-            result = gibbsParallel.getChosenFormulasByMaxPosterior();
-            System.out.println("maxPosterior");
             statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits, gibbsParallel.getGraph());
 
             if (outputFile!=null){
@@ -1127,9 +1142,11 @@ public class GibbsSamplerMain {
                 writeZodiacOutput(ids, bestInitial, gibbsParallel.getChosenFormulasBySampling(), gibbsParallel.getGraph(), zodiacOutput);
             }
         }
+
+        jobManager.shutdown();
     }
 
-    protected void doCVEvaluation(Path treeDir, Path mgfFile, Path libraryHitsPath, Path outputFile, EdgeScorer[] edgeScorers) throws IOException {
+    protected void doCVEvaluation(Path treeDir, Path mgfFile, Path libraryHitsPath, Path outputFile, EdgeScorer[] edgeScorers) throws IOException, ExecutionException {
         if (!GibbsMFCorrectionNetwork.iniAssignMostLikely) throw new RuntimeException("initialize MF candidates by most likely");
         System.out.println("do crossval");
         int workerCount = Runtime.getRuntime().availableProcessors();
@@ -1225,23 +1242,20 @@ public class GibbsSamplerMain {
 //            edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
 
             int repetitions = workerCount;
-            GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel<FragmentsCandidate>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, repetitions);
+            JobManager jobManager = new JobManager(workerCount);
+            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager);
+            jobManager.submitJob(graphBuilder);
+            Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
+            GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel<FragmentsCandidate>(graph, repetitions);
 
 
             System.out.println("start");
-            gibbsParallel.iteration(iterationSteps, burnInIterations);
+            gibbsParallel.setIterationSteps(iterationSteps, burnInIterations);
+            jobManager.submitJob(gibbsParallel);
 
-            Scored<FragmentsCandidate>[][] standardresult = gibbsParallel.getChosenFormulasBySampling();
+            Scored<FragmentsCandidate>[][] standardresult = gibbsParallel.awaitResult();
             System.out.println("standard");
             statisticsOfKnownCompounds(standardresult, ids, evaluationIds, correctHits, gibbsParallel.getGraph());
-
-            Scored<FragmentsCandidate>[][] result = gibbsParallel.getChosenFormulasByAddedUpPosterior();
-            System.out.println("addedPosterior");
-            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits, gibbsParallel.getGraph());
-
-            result = gibbsParallel.getChosenFormulasByMaxPosterior();
-            System.out.println("maxPosterior");
-            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits, gibbsParallel.getGraph());
 
 
             writeBestFormulas(standardresult, gibbsParallel.getGraph(), outputFile);
@@ -2723,13 +2737,12 @@ public class GibbsSamplerMain {
     }
 
 
-    public void writeMFNetworkToDir(Path outputDir, Graph<FragmentsCandidate> graph) throws IOException {
+    public void writeMFNetworkToDir(Path outputDir, Graph<FragmentsCandidate> graph, EdgeScorer[] edgeScorers ) throws IOException {
         if (!Files.exists(outputDir)) Files.createDirectory(outputDir);
 
         BufferedWriter edgeWriter = Files.newBufferedWriter(outputDir.resolve("edges.csv"));
         BufferedWriter nodesWriter = Files.newBufferedWriter(outputDir.resolve("nodesInfo.csv"));
 
-        EdgeScorer[] edgeScorers = graph.getUsedEdgeScorers();
 
         List<String> header = new ArrayList<>(Arrays.asList("Source","Target", "treeSizeSource", "treeSizeTarget", "weight"));
         for (EdgeScorer edgeScorer : edgeScorers) {
@@ -2834,7 +2847,7 @@ public class GibbsSamplerMain {
     }
 
 
-    private static void test(){
+    private static void test() throws InterruptedException {
 //        String[] reactionStrings = new String[]{"H2O"};
 
         PeriodicTable table = PeriodicTable.getInstance().getInstance();
@@ -2928,16 +2941,26 @@ public class GibbsSamplerMain {
             mfCandidates[i] = scoredCandidateArray;
         }
 
-        GibbsMFCorrectionNetwork<Candidate<MolecularFormula>> gibbsMFCorrectionNetwork = new GibbsMFCorrectionNetwork(compounds, mfCandidates, reactions);
+        JobManager jobManager = new JobManager(1);
+        try {
+            GibbsMFCorrectionNetwork<Candidate<MolecularFormula>> gibbsMFCorrectionNetwork = new GibbsMFCorrectionNetwork(compounds, mfCandidates, reactions, jobManager);
 
-        gibbsMFCorrectionNetwork.iteration(10000,1000);
 
-        Scored<Candidate<MolecularFormula>>[][] result = gibbsMFCorrectionNetwork.getChosenFormulas();
+            gibbsMFCorrectionNetwork.setIterationSteps(10000,1000);
+            jobManager.submitJob(gibbsMFCorrectionNetwork);
+            gibbsMFCorrectionNetwork.awaitResult();
 
-        for (int i = 0; i < result.length; i++) {
-            Scored<Candidate<MolecularFormula>> scoredCandidate = result[i][0];
-            System.out.println(scoredCandidate.getCandidate().getCandidate()+" -- "+scoredCandidate.getScore());
+            Scored<Candidate<MolecularFormula>>[][] result = gibbsMFCorrectionNetwork.getChosenFormulas();
+
+            for (int i = 0; i < result.length; i++) {
+                Scored<Candidate<MolecularFormula>> scoredCandidate = result[i][0];
+                System.out.println(scoredCandidate.getCandidate().getCandidate()+" -- "+scoredCandidate.getScore());
+            }
+        } catch (ExecutionException e) {
+            e.printStackTrace();
         }
+
+        jobManager.shutdown();
 
 
     }
