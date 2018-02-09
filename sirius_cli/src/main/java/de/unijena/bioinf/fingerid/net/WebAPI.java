@@ -454,11 +454,11 @@ public class WebAPI implements Closeable {
      * @return
      * @throws IOException
      */
-    public PredictionPerformance[] getStatistics(final TIntArrayList fingerprintIndizes) throws IOException {
+    public PredictionPerformance[] getStatistics(PredictorType predictorType, final TIntArrayList fingerprintIndizes) throws IOException {
         fingerprintIndizes.clear();
         final HttpGet get;
         try {
-            get = new HttpGet(getFingerIdURI("/webapi/statistics.csv").build());
+            get = new HttpGet(getFingerIdURI("/webapi/statistics.csv").setParameter("predictor", predictorType.toBitsAsString()).build());
         } catch (URISyntaxException e) {
             LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             throw new RuntimeException(e);
