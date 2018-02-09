@@ -3,18 +3,13 @@ package de.unijena.bioinf.fingerid;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.fingerid.blast.Fingerblast;
-import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
 import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.fingerid.db.SearchableDbOnDisc;
 import de.unijena.bioinf.fingerid.jjobs.FormulaJob;
-import de.unijena.bioinf.fingerid.net.CachedRESTDB;
-import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
 import de.unijena.bioinf.jjobs.*;
@@ -25,33 +20,21 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElementConverter;
 import de.unijena.bioinf.sirius.logging.TextAreaJJobContainer;
-import gnu.trove.list.array.TIntArrayList;
 import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class CSIFingerIDComputation {
 
-    protected CachedRESTDB database;
-    private MaskedFingerprintVersion fpVersion;
-    protected Fingerblast blaster;
-    protected boolean initialized;
-    private PredictionPerformance[] performances;
-
-
-    protected List<CustomDatabase> customDatabases;
-    private SearchableDatabase bio, pubchem;
+    protected final CSIPredictor positiveMode, negativeMode;
 
 
     public CSIFingerIDComputation() {
+        this.positiveMode = new CSIPredictor(PredictorType.CSI_FINGERID_POSITIVE);
+        this.negativeMode = new CSIPredictor(PredictorType.CSI_FINGERID_NEGATIVE);
         initialize();
     }
 
@@ -111,6 +94,31 @@ public class CSIFingerIDComputation {
         }
     }
 
+    /**
+     * TODO: shouldn be part of this class
+     */
+    public List<SearchableDatabase> getAvailableDatabases() {
+        final List<SearchableDatabase> db = new ArrayList<>();
+        db.add(positiveMode.pubchem);
+        db.add(positiveMode.bio);
+        db.addAll(CustomDatabase.customDatabases(true));
+        return db;
+    }
+
+    public SearchableDatabase getBioDb() {
+        return positiveMode.bio;
+    }
+
+    public SearchableDatabase getPubchemDb() {
+        return positiveMode.pubchem;
+    }
+
+    public void refreshCacheDir() throws IOException {
+        positiveMode.refreshCacheDir();
+        negativeMode.refreshCacheDir();
+
+    }
+
 
     protected class InitializeCSIFingerID extends BasicJJob<Boolean> {
 
@@ -121,68 +129,11 @@ public class CSIFingerIDComputation {
 
         @Override
         protected Boolean compute() throws Exception {
-            try (final WebAPI webAPI = WebAPI.newInstance()) {
-                final TIntArrayList list = new TIntArrayList(4096);
-                PredictionPerformance[] perf = webAPI.getStatistics(list);
-
-                final CdkFingerprintVersion version = (CdkFingerprintVersion) WebAPI.getFingerprintVersion();
-
-                final MaskedFingerprintVersion.Builder v = MaskedFingerprintVersion.buildMaskFor(version);
-                v.disableAll();
-
-                int[] fingerprintIndizes = list.toArray();
-
-                for (int index : fingerprintIndizes) {
-                    v.enable(index);
-                }
-
-                MaskedFingerprintVersion fingerprintVersion = v.toMask();
-
-                FingerblastScoringMethod method = webAPI.getCovarianceScoring(fingerprintVersion, 1d / perf[0].withPseudoCount(0.25).numberOfSamples());
-
-                final List<CustomDatabase> cds = CustomDatabase.customDatabases(true);
-
-                synchronized (CSIFingerIDComputation.this) {
-                    performances = perf;
-                    fpVersion = fingerprintVersion;
-                    blaster = new Fingerblast(method, null);
-                    initialized = true;
-                    refreshCacheDir();
-                    customDatabases = cds;
-                }
-            }
+            positiveMode.initialize();
+            negativeMode.initialize();
             return true;
         }
-    }
 
-    public void refreshCacheDir() throws IOException {
-        try (final WebAPI webAPI = WebAPI.newInstance()) {
-            final File directory = getDefaultDirectory();
-            VersionsInfo versionsInfo = webAPI.getVersionInfo();
-
-            database = new CachedRESTDB(versionsInfo, fpVersion, directory);
-            bio = new SearchableDbOnDisc("biological database", new File(directory, "bio"), false, true, false);
-            pubchem = new SearchableDbOnDisc("PubChem", new File(directory, "not-bio"), true, true, false);
-            database.checkCache();
-        }
-
-    }
-
-    public List<SearchableDatabase> getAvailableDatabases() {
-        final List<SearchableDatabase> db = new ArrayList<>();
-        db.add(pubchem);
-        db.add(bio);
-        db.addAll(CustomDatabase.customDatabases(true));
-        return db;
-    }
-
-    public synchronized boolean isInitialized() {
-        return initialized;
-    }
-
-    public File getDefaultDirectory() {
-        final String val = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
-        return Paths.get(val).toFile();
     }
 
     protected class FingerIDGUITask extends BasicMasterJJob<Boolean> {
@@ -232,14 +183,15 @@ public class CSIFingerIDComputation {
             final ArrayList<PredictFingerprintJob> predictionJobs = new ArrayList<>();
             final ArrayList<FingerblastJob> searchJobs = new ArrayList<>();
             for (SiriusResultElement elem : inputs) {
+                final CSIPredictor csi = elem.getResult().getPrecursorIonType().getCharge() > 0 ? positiveMode : negativeMode;
                 // search in database
-                final FormulaJob fj = new FormulaJob(elem.getMolecularFormula(), database.getSearchEngine(db), elem.getResult().getPrecursorIonType());
+                final FormulaJob fj = new FormulaJob(elem.getMolecularFormula(), csi.database.getSearchEngine(db), elem.getResult().getPrecursorIonType());
                 formulaJobs.add(fj);
-                final PredictFingerprintJob pj = new PredictFingerprintJob(container, elem, fj, elem != originalResultElement);
+                final PredictFingerprintJob pj = new PredictFingerprintJob(csi, container, elem, fj, elem != originalResultElement);
                 predictionJobs.add(pj);
                 submitSubJob(fj);
                 submitSubJob(pj);
-                final FingerblastJob bj = new FingerblastJob(fj, pj, db);
+                final FingerblastJob bj = new FingerblastJob(csi, fj, pj, db);
                 searchJobs.add(bj);
                 submitSubJob(bj);
             }
@@ -338,13 +290,15 @@ public class CSIFingerIDComputation {
 
     protected class PredictFingerprintJob extends BasicDependentMasterJJob<ProbabilityFingerprint> {
 
+        protected final CSIPredictor predictor;
         protected final ExperimentContainer container;
         protected final SiriusResultElement re;
         protected final FormulaJob formulaJob;
         protected final boolean requireCandidates;
 
-        public PredictFingerprintJob(ExperimentContainer container, SiriusResultElement originalResultElement, FormulaJob formulaJob, boolean requireCandidates) {
+        public PredictFingerprintJob(CSIPredictor predictor, ExperimentContainer container, SiriusResultElement originalResultElement, FormulaJob formulaJob, boolean requireCandidates) {
             super(JobType.REMOTE);
+            this.predictor = predictor;
             this.container = container;
             this.re = originalResultElement;
             this.formulaJob = formulaJob;
@@ -357,7 +311,7 @@ public class CSIFingerIDComputation {
             if (requireCandidates && formulaJob.awaitResult().isEmpty())
                 return null;
             try (final WebAPI webAPI = WebAPI.newInstance()) {
-                final WebAPI.PredictionJJob job = webAPI.makePredictionJob(container.getMs2Experiment(), re.getResult(), re.getResult().getResolvedTree(), fpVersion, PredictorType.CSI_FINGERID);
+                final WebAPI.PredictionJJob job = webAPI.makePredictionJob(container.getMs2Experiment(), re.getResult(), re.getResult().getResolvedTree(), predictor.fpVersion, EnumSet.of(predictor.predictorType));
                 submitSubJob(job);
                 return job.awaitResult();
             }
@@ -370,9 +324,11 @@ public class CSIFingerIDComputation {
         protected final FormulaJob formulaJob;
         protected final PredictFingerprintJob predictJob;
         protected final SearchableDatabase db;
+        protected final CSIPredictor predictor;
 
-        public FingerblastJob(FormulaJob formulaJob, PredictFingerprintJob predictJob, SearchableDatabase db) {
+        public FingerblastJob(CSIPredictor csi, FormulaJob formulaJob, PredictFingerprintJob predictJob, SearchableDatabase db) {
             super(JobType.CPU);
+            this.predictor = csi;
             this.formulaJob = formulaJob;
             this.predictJob = predictJob;
             this.db = db;
@@ -388,7 +344,7 @@ public class CSIFingerIDComputation {
             if (fp == null) {
                 return null;
             }
-            final List<Scored<FingerprintCandidate>> scored = blaster.score(candidates, fp);
+            final List<Scored<FingerprintCandidate>> scored = predictor.blaster.score(candidates, fp);
             final FingerIdResult result = new FingerIdResult(scored, 0d, fp, predictJob.re.getResult().getResolvedTree());
             result.setAnnotation(SearchableDatabase.class, db);
             return result;
@@ -427,20 +383,15 @@ public class CSIFingerIDComputation {
         pcs.firePropertyChange("enabled", old, this.enabled);
     }
 
-    public MaskedFingerprintVersion getFingerprintVersion() {
-        return fpVersion;
+    public CSIPredictor getPredictor(PrecursorIonType type) {
+        if (type.getCharge() >= 0 ) return positiveMode;
+        else return negativeMode;
     }
 
-    public PredictionPerformance[] getPerformances() {
-        return performances;
-    }
-
-    public SearchableDatabase getPubchemDb() {
-        return pubchem;
-    }
-
-    public SearchableDatabase getBioDb() {
-        return bio;
+    public CSIPredictor getPredictor(PredictorType type) {
+        if (type==PredictorType.CSI_FINGERID_POSITIVE) return positiveMode;
+        else if (type == PredictorType.CSI_FINGERID_NEGATIVE) return negativeMode;
+        else throw new NoSuchElementException("Unknown predictor type " + type);
     }
 
 }
