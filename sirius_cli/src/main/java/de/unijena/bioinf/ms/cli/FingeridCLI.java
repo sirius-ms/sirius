@@ -22,6 +22,7 @@ import de.unijena.bioinf.fingerid.net.CachedRESTDB;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
+import de.unijena.bioinf.fingeriddb.job.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -127,7 +128,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
         if (flagW == null) flagW = 0L;
         final long flag = flagW;
 
-        FingerIDJJob fingerIdJob = new FingerIDJJob(fingerblast, fingerprintVersion, new CachedRESTDB(fingerIdVersionsInfo,fingerprintVersion), getFingerIdDatabase(), options.getPredictors().toArray(new PredictorType[options.getPredictors().size()]));
+        FingerIDJJob fingerIdJob = new FingerIDJJob(fingerblast, fingerprintVersion, new CachedRESTDB(fingerIdVersionsInfo,fingerprintVersion), getFingerIdDatabase(), options.getPredictors());
         fingerIdJob.addRequiredJob(siriusJob);
         fingerIdJob.setDbFlag(flag);
         fingerIdJob.setBioFilter(getBioFilter());
