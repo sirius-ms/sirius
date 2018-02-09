@@ -10,7 +10,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.treebuilder.ExtendedCriticalPathHeuristicTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +32,8 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
     protected int ticksPerProgress, progressPerTick;
 
     protected long startTime;
-    protected int restTime, secondsPerInstance, secondsPerTree;
+    protected volatile int restTime;
+    protected int secondsPerInstance, secondsPerTree;
 
     public FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep) {
         super(analyzer);
