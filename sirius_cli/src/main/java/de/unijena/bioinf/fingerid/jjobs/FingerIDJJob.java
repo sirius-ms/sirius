@@ -4,7 +4,6 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
@@ -18,10 +17,9 @@ import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.net.CachedRESTDB;
 import de.unijena.bioinf.fingerid.net.WebAPI;
-import de.unijena.bioinf.fingeriddb.job.PredictorType;
+import de.unijena.bioinf.fingeriddb.job.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 
@@ -34,7 +32,7 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
     private boolean filterIdentifications = true;
 
     //prediction options
-    private final PredictorType[] predicors;
+    private final Collection<UserDefineablePredictorType> predictors;
     private final MaskedFingerprintVersion fingerprintVersion;
 
     //fingerblast options
@@ -51,15 +49,11 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
 
     protected List<IdentificationResult> addedIdentificationResults = new ArrayList<>();
 
-    public FingerIDJJob(Fingerblast fingerblast, MaskedFingerprintVersion fingerprintVersion, CachedRESTDB database, SearchableDatabase queryDb) {
-        this(fingerblast, fingerprintVersion, database, queryDb, PredictorType.CSI_FINGERID);
-    }
-
-    public FingerIDJJob(Fingerblast fingerblast, MaskedFingerprintVersion fingerprintVersion, CachedRESTDB database, SearchableDatabase queryDb, PredictorType... predicors) {
+    public FingerIDJJob(Fingerblast fingerblast, MaskedFingerprintVersion fingerprintVersion, CachedRESTDB database, SearchableDatabase queryDb, Collection<UserDefineablePredictorType> predictors) {
         super(JobType.CPU);
         this.fingerblast = fingerblast;
         this.fingerprintVersion = fingerprintVersion;
-        this.predicors = predicors;
+        this.predictors = predictors;
         this.database = database;
         this.queryDb = queryDb;
     }
@@ -201,7 +195,7 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
             List<FingerprintDependentJJob> annotationJobs = new ArrayList<>();
 
             for (IdentificationResult fingeridInput : filteredResults) {
-                WebAPI.PredictionJJob predictionJob = webAPI.makePredictionJob(experiment, fingeridInput, fingeridInput.getResolvedTree(), fingerprintVersion, predicors);
+                WebAPI.PredictionJJob predictionJob = webAPI.makePredictionJob(experiment, fingeridInput, fingeridInput.getResolvedTree(), fingerprintVersion, predictors);
                 submitSubJob(predictionJob);
                 predictionJobs.add(predictionJob);
 

@@ -32,6 +32,7 @@ import de.unijena.bioinf.fingerid.Compound;
 import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
+import de.unijena.bioinf.fingeriddb.job.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -56,6 +57,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
@@ -331,10 +333,7 @@ public class WebAPI implements Closeable {
         return data.toArray();
     }
 
-    /*public FingerIdJob submitJob(final Ms2Experiment experiment, final FTree ftree, MaskedFingerprintVersion version) throws IOException, URISyntaxException {
-        return submitJob(experiment,ftree,version,PredictorType.CSI_FINGERID);
-    }*/
-    public FingerIdJob submitJob(final Ms2Experiment experiment, final FTree ftree, MaskedFingerprintVersion version, PredictorType... types) throws IOException, URISyntaxException {
+    public FingerIdJob submitJob(final Ms2Experiment experiment, final FTree ftree, MaskedFingerprintVersion version, @NotNull EnumSet<PredictorType> types) throws IOException, URISyntaxException {
         final HttpPost post = new HttpPost(getFingerIdURI("/webapi/predict.json").build());
         final String stringMs, jsonTree;
         {
@@ -355,7 +354,8 @@ public class WebAPI implements Closeable {
         final NameValuePair ms = new BasicNameValuePair("ms", stringMs);
         final NameValuePair tree = new BasicNameValuePair("ft", jsonTree);
 
-        if (types == null || types.length == 0) types = new PredictorType[]{PredictorType.CSI_FINGERID};
+        if (types.isEmpty())
+            types = EnumSet.of(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(experiment.getPrecursorIonType()));
         final NameValuePair predictor = new BasicNameValuePair("predictors", PredictorType.getBitsAsString(types));
 
         final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(ms, tree, predictor, UID));
@@ -380,25 +380,29 @@ public class WebAPI implements Closeable {
         }
     }
 
-    public Future<ProbabilityFingerprint> predictFingerprint(ExecutorService service, final Ms2Experiment experiment, final FTree tree, final MaskedFingerprintVersion version, final PredictorType... predicors) {
+    public Future<ProbabilityFingerprint> predictFingerprint(@NotNull ExecutorService service, final Ms2Experiment experiment, final FTree tree, final MaskedFingerprintVersion version, final EnumSet<PredictorType> predicors) {
         return service.submit(new PredictionJJob(experiment, null, tree, version, predicors));
     }
 
-    public PredictionJJob predictFingerprint(JobManager manager, final Ms2Experiment experiment, final FTree tree, final MaskedFingerprintVersion version, final PredictorType... predicors) {
+    public PredictionJJob predictFingerprint(@NotNull JobManager manager, final Ms2Experiment experiment, final FTree tree, final MaskedFingerprintVersion version, final EnumSet<PredictorType> predicors) {
         return predictFingerprint(manager, experiment, tree, version, predicors);
     }
 
-    public PredictionJJob predictFingerprint(JobManager manager, final Ms2Experiment experiment, final IdentificationResult result, final MaskedFingerprintVersion version, final PredictorType... predicors) {
+    public PredictionJJob predictFingerprint(@NotNull JobManager manager, final Ms2Experiment experiment, final IdentificationResult result, final MaskedFingerprintVersion version, final EnumSet<PredictorType> predicors) {
         return predictFingerprint(manager, experiment, result, result.getResolvedTree(), version, predicors);
     }
 
-    public PredictionJJob predictFingerprint(JobManager manager, final Ms2Experiment experiment, final IdentificationResult result, final FTree tree, final MaskedFingerprintVersion version, final PredictorType... predicors) {
+    public PredictionJJob predictFingerprint(@NotNull JobManager manager, final Ms2Experiment experiment, final IdentificationResult result, final FTree tree, final MaskedFingerprintVersion version, final EnumSet<PredictorType> predicors) {
         PredictionJJob jjob = makePredictionJob(experiment, result, tree, version, predicors);
         manager.submitJob(jjob);
         return jjob;
     }
 
-    public PredictionJJob makePredictionJob(final Ms2Experiment experiment, final IdentificationResult result, final FTree tree, final MaskedFingerprintVersion version, final PredictorType... predicors) {
+    public PredictionJJob makePredictionJob(final Ms2Experiment experiment, final IdentificationResult result, final FTree tree, final MaskedFingerprintVersion version, final Collection<UserDefineablePredictorType> predicors) {
+        return makePredictionJob(experiment, result, tree, version, UserDefineablePredictorType.toPredictorTypes(result.getPrecursorIonType(), predicors));
+    }
+
+    public PredictionJJob makePredictionJob(final Ms2Experiment experiment, final IdentificationResult result, final FTree tree, final MaskedFingerprintVersion version, final EnumSet<PredictorType> predicors) {
         return new PredictionJJob(experiment, result, tree, version, predicors);
 
     }
@@ -413,18 +417,9 @@ public class WebAPI implements Closeable {
         public final FTree ftree;
         public final IdentificationResult result;
         public final MaskedFingerprintVersion version;
-        private final PredictorType[] predicors;
+        private final EnumSet<PredictorType> predicors;
 
-
-        /*public PredictionJJob(final Ms2Experiment experiment, IdentificationResult identificationResult, MaskedFingerprintVersion version, PredictorType... predicors) {
-            this(experiment, identificationResult, identificationResult.getResolvedTree(), version, predicors);
-        }
-
-        public PredictionJJob(final Ms2Experiment experiment, final FTree ftree, MaskedFingerprintVersion version, PredictorType... predicors) {
-            this(experiment, null, ftree, version, predicors);
-        }*/
-
-        public PredictionJJob(final Ms2Experiment experiment, final IdentificationResult result, final FTree ftree, MaskedFingerprintVersion version, PredictorType... predicors) {
+        public PredictionJJob(final Ms2Experiment experiment, final IdentificationResult result, final FTree ftree, MaskedFingerprintVersion version, EnumSet<PredictorType> predicors) {
             super(JobType.WEBSERVICE);
             this.experiment = experiment;
             this.ftree = ftree;
