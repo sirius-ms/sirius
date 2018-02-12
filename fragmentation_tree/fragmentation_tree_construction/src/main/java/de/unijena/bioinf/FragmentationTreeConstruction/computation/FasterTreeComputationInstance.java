@@ -132,7 +132,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         double oldScore = tree.getTreeWeight();
         double newScore = analyzer.recalculateScores(tree);
         if (Math.abs(newScore - oldScore) > 0.1) {
-            final double treeSize = tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(tree.numberOfVertices() - 1)).get("TreeSizeScorer");
+            final double treeSize = tree.numberOfVertices()==1 ? 0 : tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(tree.numberOfVertices() - 1)).get("TreeSizeScorer");
             this.LOG().warn("Score of " + tree.getRoot().getFormula() + " differs significantly from recalculated score: " + oldScore + " vs " + newScore + " with tree size is " + pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(-0.5d)).score + " and " + treeSize + " sort key is score " + tree.getTreeWeight() + " and filename is " + String.valueOf(pinput.getExperimentInformation().getSource()));
         }
     }
@@ -335,7 +335,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             finalTree.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
             analyzer.addTreeAnnotations(origGraph, finalTree);
         }
-
+        assert finalTree!=null;
         return new ExactResult(l.getDecompositions().get(0), null, finalTree, finalTree.getTreeWeight());
     }
 }
