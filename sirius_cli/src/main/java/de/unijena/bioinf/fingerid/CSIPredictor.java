@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
+import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
 import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDbOnDisc;
@@ -85,7 +86,7 @@ public class CSIPredictor {
 
             MaskedFingerprintVersion fingerprintVersion = v.toMask();
 
-            FingerblastScoringMethod method = webAPI.getCovarianceScoring(fingerprintVersion, 1d / perf[0].withPseudoCount(0.25).numberOfSamples());
+            FingerblastScoringMethod method = (predictorType==PredictorType.CSI_FINGERID_NEGATIVE) ? new ScoringMethodFactory.CSIFingerIdScoringMethod(perf) : webAPI.getCovarianceScoring(fingerprintVersion, 1d / perf[0].withPseudoCount(0.25).numberOfSamples());
 
             final List<CustomDatabase> cds = CustomDatabase.customDatabases(true);
             synchronized(this) {
