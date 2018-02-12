@@ -40,6 +40,7 @@ import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNRegressionPredicto
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.MasterJJob;
@@ -500,6 +501,14 @@ public class Sirius {
 
     public IdentificationResult compute(Ms2Experiment experiment, MolecularFormula formula) {
         return compute(experiment, formula, true);
+    }
+
+    public BasicJJob<IdentificationResult> makeComputeJob(Ms2Experiment experiment, MolecularFormula formula) {
+        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, 1);
+        final ProcessedInput pinput = instance.validateInput();
+        pinput.setAnnotation(Whiteset.class, Whiteset.of(formula));
+        pinput.setAnnotation(ForbidRecalibration.class, ForbidRecalibration.ALLOWED);
+        return instance.wrap((f)->new IdentificationResult(f.getResults().get(0), 1));
     }
 
     /**
