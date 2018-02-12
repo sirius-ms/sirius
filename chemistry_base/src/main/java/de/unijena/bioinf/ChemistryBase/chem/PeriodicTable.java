@@ -283,6 +283,8 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         // add common misspelled aliases...
         final PrecursorIonType hplus = knownIonTypes.get("[M+H]+");
         final PrecursorIonType hminus = knownIonTypes.get("[M-H]-");
+        PROTONATION_PRECURSOR = hplus;
+        DEPROTONATION_PRECURSOR = hminus;
         knownIonTypes.put("M+H", hplus);
         knownIonTypes.put("M+H+", hplus);
         knownIonTypes.put("[M+H]", hplus);
@@ -492,6 +494,15 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         return DEPROTONATION;
     }
 
+    private PrecursorIonType PROTONATION_PRECURSOR, DEPROTONATION_PRECURSOR;
+
+    public PrecursorIonType getPrecursorProtonation() {
+        return PROTONATION_PRECURSOR;
+    }
+    public PrecursorIonType getPrecursorDeprotonation() {
+        return DEPROTONATION_PRECURSOR;
+    }
+
     public PrecursorIonType getPrecursorIonTypeFromIonization(Ionization ion) {
         if (ion instanceof Charge) {
             if (ion.getCharge() == 1) return UNKNOWN_POSITIVE_IONTYPE;
@@ -502,7 +513,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         }
 
         for (PrecursorIonType i : knownIonTypes.values()) {
-            if (i.getIonization().equals(ion) && i.getAdduct().atomCount() == 0 && i.getInSourceFragmentation().atomCount() == 0)
+            if (!i.isIntrinsicalCharged() && i.getIonization().equals(ion) && i.getAdduct().atomCount() == 0 && i.getInSourceFragmentation().atomCount() == 0)
                 return i;
         }
         return new PrecursorIonType(ion, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.REGULAR);
@@ -877,6 +888,10 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * @return an ion with the given mass or null if no ion is found
      */
     public PrecursorIonType ionByMass(double mass, double absError, int charge) {
+        if (charge > 0 && Math.abs(mass-PROTONATION.getMass())<absError)
+            return PROTONATION_PRECURSOR;
+        else if (charge < 0 && Math.abs(mass-DEPROTONATION.getMass())<absError)
+            return DEPROTONATION_PRECURSOR;
         PrecursorIonType minIon = null;
         double minDistance = Double.MAX_VALUE;
         for (PrecursorIonType iontype : knownIonTypes.values()) {
