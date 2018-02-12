@@ -19,10 +19,10 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
-import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.utils.PanelDescription;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
@@ -111,13 +111,13 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
             searchCSIButton.setEnabled(false);
             searchCSIButton.setToolTipText("Fragmentation tree must explain at least 3 peaks");
         } else {
-            if (resultElement.getCharge() > 0) {
+            //if (resultElement.getCharge() > 0) {
                 searchCSIButton.setEnabled(true);
                 searchCSIButton.setToolTipText("Start CSI:FingerId online search to identify the molecular structure of the measured compound");
-            } else {
+            /*} else {
                 searchCSIButton.setEnabled(false);
                 searchCSIButton.setToolTipText("With this version, negative ion mode is not supported for CSI:FingerId");
-            }
+            }*/
         }
 
     }

@@ -459,6 +459,7 @@ public class WebAPI implements Closeable {
         final HttpGet get;
         try {
             get = new HttpGet(getFingerIdURI("/webapi/statistics.csv").setParameter("predictor", predictorType.toBitsAsString()).build());
+            System.err.println(get.getURI());
         } catch (URISyntaxException e) {
             LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             throw new RuntimeException(e);
