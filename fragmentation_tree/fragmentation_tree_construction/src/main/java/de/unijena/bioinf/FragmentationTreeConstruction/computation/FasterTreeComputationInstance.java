@@ -86,13 +86,17 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         final int t = ticks.incrementAndGet();
         if (t == nextProgress) {
             final int incrementation = (t * progressPerTick) / ticksPerProgress;
-            updateProgress(Math.min(incrementation, max));
+            updateProgress(0, 100, Math.min(incrementation, max));
             while (true) {
                 int x = ticks.get();
-                nextProgress = (x * progressPerTick) + ticksPerProgress;
-                if (ticks.get() == x) break;
+                nextProgress = x + ticksPerProgress;
+                if (ticks.get() < nextProgress) break;
             }
         }
+    }
+
+    protected void configureProgress(int to, int numberOfTicks) {
+        configureProgress(Math.min(to-1,this.currentProgress().getNewValue()), to, numberOfTicks);
     }
 
     protected void configureProgress(int from, int to, int numberOfTicks) {
@@ -104,13 +108,14 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             ticksPerProgress = 1;
             progressPerTick = span / numberOfTicks;
         }
-        ticks.set(from * ticksPerProgress);
-        nextProgress = (from + 1) * ticksPerProgress;
+        ticks.set((from * ticksPerProgress)/progressPerTick);
+        nextProgress = ((from + progressPerTick) * ticksPerProgress)/progressPerTick;
         updateProgress(from);
     }
 
     @Override
     protected FinalResult compute() throws Exception {
+        configureProgress(0, 2, 1);
         score();
         startTime = System.currentTimeMillis();
         final Timeout timeout = pinput.getAnnotation(Timeout.class, Timeout.NO_TIMEOUT);
@@ -156,6 +161,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         final List<ExactResult> results = new ArrayList<>(decompositions.size());
         // TREE SIZE
         while (inc <= MAX_TREESIZE_INCREASE) {
+            configureProgress(2, useHeuristic ? 50 : 90,decompositions.size());
             if (tss != null) tss.fastReplace(pinput, new TreeSizeScorer.TreeSizeBonus(treeSize));
             results.clear();
             final List<TreeComputationJob> jobs = new ArrayList<>(decompositions.size());
@@ -182,6 +188,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             treeSize += TREE_SIZE_INCREASE;
         }
         final List<ExactResult> topResults = results.subList(0, Math.min(results.size(), n + 10));
+        configureProgress(100, topResults.size());
         if (pinput.getAnnotation(ForbidRecalibration.class, ForbidRecalibration.ALLOWED).isForbidden()) {
             final List<BasicJJob<ExactResult>> jobs = new ArrayList<>();
             if (useHeuristic) {
@@ -227,6 +234,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             FGraph graph = analyzer.buildGraph(pinput, template.decomposition);
             final FTree tree = analyzer.getTreeBuilder().computeTree().withMultithreading(1).withTimeLimit(Math.min(restTime, secondsPerTree)).withMinimalScore(template.score - 1e-3)/*.withTemplate(template.tree)*/.solve(pinput, graph).tree;
             analyzer.addTreeAnnotations(graph, tree);
+            tick();
             return new ExactResult(template.decomposition, null, tree, tree.getTreeWeight());
         }
     }
@@ -243,6 +251,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             FGraph graph = analyzer.buildGraph(pinput, template.decomposition);
             final FTree tree = template.tree;
             analyzer.addTreeAnnotations(graph, tree);
+            tick();
             return new ExactResult(template.decomposition, null, tree, tree.getTreeWeight());
         }
     }
@@ -276,6 +285,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
                     }
                 }
             }
+            tick();
             return er;
         }
     }
@@ -336,6 +346,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             analyzer.addTreeAnnotations(origGraph, finalTree);
         }
         assert finalTree!=null;
+        tick();
         return new ExactResult(l.getDecompositions().get(0), null, finalTree, finalTree.getTreeWeight());
     }
 }
