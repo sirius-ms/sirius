@@ -1,9 +1,12 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
+import de.unijena.bioinf.graphUtils.tree.GraphException;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.jjobs.MasterJJob;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TObjectIntMap;
@@ -24,7 +27,6 @@ import java.util.concurrent.ExecutionException;
  * @param <C>
  */
 public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJob<ZodiacResult<C>> {
-    private static final Logger LOG = LoggerFactory.getLogger(TwoPhaseGibbsSampling.class);
     private String[] ids;
     private C[][] possibleFormulas;
     private NodeScorer<C>[] nodeScorers;
@@ -33,9 +35,9 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
     private int repetitions;
     private Class<C> cClass;
 
-    private Scored<C>[][] results1;
-    private Scored<C>[][] results2;
-    private Scored<C>[][] combinedResult;
+    private CompoundResult<C>[] results1;
+    private CompoundResult<C>[] results2;
+    private CompoundResult<C>[] combinedResult;
     private String[] usedIds;
 
     private Graph<C> graph;
@@ -43,19 +45,46 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
     private String[] firstRoundIds;
     private TIntArrayList firstRoundCompoundsIdx;
 
-    private JobManager jobManager;
+//    private JobManager jobManager;
+//    private MasterJJob masterJJob;
 
-    public TwoPhaseGibbsSampling(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, JobManager jobManager, int repetitions) throws ExecutionException {
+
+
+    public TwoPhaseGibbsSampling(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int repetitions){
         super(JobType.CPU);
         this.ids = ids;
         this.possibleFormulas = possibleFormulas;
         this.nodeScorers = nodeScorers;
         this.edgeScorers = edgeScorers;
         this.edgeFilter = edgeFilter;
-        this.jobManager = jobManager;
         this.repetitions = repetitions;
-        init();
     }
+
+//
+//    protected TwoPhaseGibbsSampling(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int repetitions, MasterJJob masterJJob, JobManager jobManager){
+//        super(JobType.CPU);
+//        this.ids = ids;
+//        this.possibleFormulas = possibleFormulas;
+//        this.nodeScorers = nodeScorers;
+//        this.edgeScorers = edgeScorers;
+//        this.edgeFilter = edgeFilter;
+//        this.repetitions = repetitions;
+//        this.masterJJob = masterJJob;
+//        this.jobManager = jobManager;
+//        if (masterJJob==null && jobManager==null) this.jobManager = SiriusJobs.getGlobalJobManager();
+//    }
+
+//    public TwoPhaseGibbsSampling(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int repetitions, MasterJJob masterJJob) throws ExecutionException {
+//        this(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, repetitions, masterJJob, null);
+//    }
+//
+//    public TwoPhaseGibbsSampling(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int repetitions, JobManager jobManager) throws ExecutionException {
+//        this(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, repetitions, null, jobManager);
+//    }
+//
+//    public TwoPhaseGibbsSampling(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int repetitions) throws ExecutionException {
+//        this(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, repetitions, null, null);
+//    }
 
     private void init() throws ExecutionException {
         firstRoundCompoundsIdx = new TIntArrayList();
@@ -84,10 +113,18 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 
 
 
-        LOG.info("running first round with "+firstRoundIds.length+" compounds.");
-        GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, jobManager);
-        graph = jobManager.submitJob(graphBuilder).awaitResult();
-        gibbsParallel = new GibbsParallel<>(graph, repetitions);
+        LOG().info("running first round with "+firstRoundIds.length+" compounds.");
+        GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter);
+        graph = submitSubJob(graphBuilder).awaitResult();
+    }
+
+    private void validate(Graph graph) throws Exception {
+        GraphValidationMessage validationMessage = graph.validate();
+        if (validationMessage.isError()) {
+            throw new Exception(validationMessage.getMessage());
+        } else if (validationMessage.isWarning()) {
+            LOG().warn(validationMessage.getMessage());
+        }
     }
 
     private int maxSteps = -1;
@@ -101,6 +138,10 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
     @Override
     protected ZodiacResult<C> compute() throws Exception {
         if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
+
+        init();
+        validate(graph);
+        gibbsParallel = new GibbsParallel<>(graph, repetitions);
         gibbsParallel.setIterationSteps(maxSteps, burnIn);
         submitSubJob(gibbsParallel);
 
@@ -108,9 +149,10 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 
         firstRoundIds = gibbsParallel.getGraph().getIds();
 
+//        addConnectivityInfo(results1, graph, false);
 
         if (firstRoundIds.length==possibleFormulas.length){
-            combinedResult = gibbsParallel.getChosenFormulasBySampling();
+            combinedResult = results1;
             usedIds = firstRoundIds;
         } else {
 //            //todo that's no good idea. Candidates should rather keep their probabilities
@@ -120,35 +162,49 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 //            gibbsParallel = new GibbsParallel<>(ids, combined, nodeScorers, edgeScorers, edgeFilter, workersCount, repetitions);
 
             //changed same as in 3phase
-            LOG.info("score low quality compounds. overall "+ids.length+" compounds");
+            LOG().info("score low quality compounds. overall "+ids.length+" compounds");
             //todo rather sample everything and just use results of low quality compounds? may there arise problems? in principle should not as we still sample all compounds (even 'fixed')
             C[][] candidatesNewRound = combineNewAndOldAndSetFixedProbabilities(results1, firstRoundCompoundsIdx);
             //todo this stupid thing creates a complete new graph.
 
-            GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, new TIntHashSet(firstRoundCompoundsIdx), jobManager);
+            TIntHashSet fixedIds = new TIntHashSet(firstRoundCompoundsIdx);
+            GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, fixedIds);
             graph = submitSubJob(graphBuilder).awaitResult();
 
-            gibbsParallel = new GibbsParallel<>(graph, repetitions);
+            validate(graph);
+
+            gibbsParallel = new GibbsParallel<>(graph, repetitions, fixedIds);
             gibbsParallel.setIterationSteps(maxSteps, burnIn);
             submitSubJob(gibbsParallel);
 
             results2 = gibbsParallel.awaitResult();
 
+//            addConnectivityInfo(results2, graph, true);
+
             usedIds = gibbsParallel.getGraph().ids;
 
+            //still necessary e.g. because of connectivity infos from first round
             combinedResult = combineResults(results1, firstRoundIds, results2, usedIds);
 
         }
         return new ZodiacResult(ids, graph, combinedResult);
     }
 
-    private Scored<C>[][] combineResults(Scored<C>[][] results1, String[] resultIds1, Scored<C>[][] results2, String[] resultIds2) {
+    private void addConnectivityInfo(CompoundResult<C>[] results, Graph<C> graph, boolean onlyAddNew){
+        for (int i = 0; i < results.length; i++) {
+            CompoundResult<C> result = results[i];
+            if (onlyAddNew && result.hasAnnotation(Connectivity.class)) continue;
+            result.addAnnotation(Connectivity.class, new Connectivity(graph.getMaxNumberOfConnectedCompounds(i)));
+        }
+    }
+
+    private CompoundResult<C>[] combineResults(CompoundResult<C>[] results1, String[] resultIds1, CompoundResult<C>[] results2, String[] resultIds2) {
         TObjectIntMap<String> idMap = new TObjectIntHashMap<>();
         for (int i = 0; i < resultIds1.length; i++) {
             idMap.put(resultIds1[i], i);
         }
 
-        Scored<C>[][] combinedResults = new Scored[results2.length][];
+        CompoundResult<C>[] combinedResults = new CompoundResult[results2.length];
         for (int i = 0; i < resultIds2.length; i++) {
             String id = resultIds2[i];
             if (idMap.containsKey(id)){
@@ -159,6 +215,24 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
         }
         return combinedResults;
     }
+
+//    private Scored<C>[][] combineResults(Scored<C>[][] results1, String[] resultIds1, Scored<C>[][] results2, String[] resultIds2) {
+//        TObjectIntMap<String> idMap = new TObjectIntHashMap<>();
+//        for (int i = 0; i < resultIds1.length; i++) {
+//            idMap.put(resultIds1[i], i);
+//        }
+//
+//        Scored<C>[][] combinedResults = new Scored[results2.length][];
+//        for (int i = 0; i < resultIds2.length; i++) {
+//            String id = resultIds2[i];
+//            if (idMap.containsKey(id)){
+//                combinedResults[i] = results1[idMap.get(id)];
+//            } else {
+//                combinedResults[i] = results2[i];
+//            }
+//        }
+//        return combinedResults;
+//    }
 
     /**
      * results must be sorted!
@@ -200,7 +274,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
     /**
      * results must be sorted!
      */
-    private C[][] combineNewAndOldAndSetFixedProbabilities(Scored<C>[][] results, TIntArrayList resultIdxs) {
+    private C[][] combineNewAndOldAndSetFixedProbabilities(CompoundResult<C>[] results, TIntArrayList resultIdxs) {
         if (results.length == 0){
             return possibleFormulas;
         }
@@ -217,7 +291,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
         for (int i = 0; i < possibleFormulas.length; i++) {
             try {
                 if (idxMap.containsKey(i)) {
-                    Scored<C>[] scoreds = results[idxMap.get(i)];
+                    Scored<C>[] scoreds = results[idxMap.get(i)].getCandidates();
                     List<C> candidates = new ArrayList<>();
                     for (Scored<C> scored : scoreds) {
                         C candidate = scored.getCandidate();
@@ -233,7 +307,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
             } catch (Exception e) {
                 System.out.println("Error: "+e.getMessage());
                 System.out.println(idxMap.containsKey(i));
-                Scored<C>[] scoreds = results[idxMap.get(i)];
+                Scored<C>[] scoreds = results[idxMap.get(i)].getCandidates();
                 System.out.println(Arrays.toString(scoreds));
                 for (int j = 0; j < scoreds.length; j++) {
                     Scored<C> scored = scoreds[j];
@@ -251,7 +325,11 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
     }
 
     public Scored<C>[][] getChosenFormulas(){
-        return combinedResult;
+        Scored<C>[][] scoredCandidates = new Scored[combinedResult.length][];
+        for (int i = 0; i < combinedResult.length; i++) {
+            scoredCandidates[i] = combinedResult[i].getCandidates();
+        }
+        return scoredCandidates;
     }
 
     public Graph<C> getGraph() {
