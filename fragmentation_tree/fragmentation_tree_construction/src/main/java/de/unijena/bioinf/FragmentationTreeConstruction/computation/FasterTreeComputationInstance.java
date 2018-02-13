@@ -101,6 +101,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
 
     protected void configureProgress(int from, int to, int numberOfTicks) {
         int span = to - from;
+        if (numberOfTicks<1) numberOfTicks=1;
         if (numberOfTicks > span) {
             ticksPerProgress = numberOfTicks / span;
             progressPerTick = 1;
