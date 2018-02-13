@@ -2,9 +2,10 @@ package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.GibbsSampling.GibbsSamplerMain;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ExponentialDistribution;
@@ -13,13 +14,17 @@ import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistr
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
+import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
+import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.projectspace.DirectoryReader;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import de.unijena.bioinf.sirius.projectspace.SiriusFileReader;
 import de.unijena.bioinf.sirius.projectspace.SiriusWorkspaceReader;
+import org.apache.commons.math3.analysis.function.Exp;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 
@@ -32,6 +37,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 
 
 /**
@@ -53,15 +59,17 @@ public class Zodiac {
         this.options = options;
     }
 
-
     public void run() {
+
+        //todo problem with name/id simplification
+        //todo force name = id
         maxCandidates = (options.getNumberOfCandidates() == null ? Integer.MAX_VALUE : options.getNumberOfCandidates());
         Path originalSpectraPath = Paths.get(options.getSpectraFile());
         try {
             //todo For the official release zodiac should become a job an create subjobs in the jobmanager for multithreading
 //            int workerCount = PropertyManager.getNumberOfCores();
             int workerCount = options.getNumOfCores()>0 ? options.getNumOfCores() : (new SystemInfo()).getHardware().getProcessor().getPhysicalProcessorCount()-1;
-            JobManager jobManager = new JobManager(workerCount); //todo how to get job manager?
+            PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(workerCount));
 
 
             //create output dir
@@ -74,50 +82,24 @@ public class Zodiac {
                 Files.createDirectories(outputPath);
             }
 
-//        //reactions
-            Reaction[] reactions = GibbsSamplerMain.parseReactions(1);
-            Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
-            for (Reaction reaction : reactions) {
-                netSingleReactionDiffs.add(reaction.netChange());
-            }
+
+            List<ExperimentResult> experimentResults = newLoad(workSpacePath.toFile());
+            //tdo reads original experiments twice!
+            experimentResults = updateQuality(experimentResults, originalSpectraPath);
 
 
-            LOG.info("Read sirius input");
-//            List<ExperimentResult> input = newLoad(workSpacePath.toFile());
-
-
-            Map<String, List<FragmentsCandidate>> candidatesMap = GibbsSamplerMain.parseMFCandidatesFromWorkspace(workSpacePath, originalSpectraPath);
-
-            LOG.info("number of compounds: " + candidatesMap.size());
-
-
-            if (libraryHitsFile != null)
-                GibbsSamplerMain.parseLibraryHits(libraryHitsFile, originalSpectraPath, candidatesMap);
-            setKnownCompounds(candidatesMap, netSingleReactionDiffs);
-
-            GibbsSamplerMain.addNotExplainableDummy(candidatesMap, maxCandidates);
-
-
-            //cluster compounds
-            Map<String, Ms2Experiment> allExperimentsMap = extractExperiments(candidatesMap);
-            Map<String, String[]> representativeToCluster = GibbsSamplerMain.clusterCompounds(candidatesMap);
-            candidatesMap = GibbsSamplerMain.mergeCluster(candidatesMap, representativeToCluster);
-            LOG.info("remaining clusters: " + candidatesMap.size());
-
-
-            String[] ids = getIdsOfCompoundsWithCandidates(candidatesMap); //already removed while clustering?
-            FragmentsCandidate[][] candidatesArray = new FragmentsCandidate[ids.length][];
-
-            for (int i = 0; i < ids.length; i++) {
-                String id = ids[i];
-                candidatesArray[i] = candidatesMap.get(id).toArray(new FragmentsCandidate[0]);
-            }
+            List<LibraryHit> anchors = (libraryHitsFile==null)?null:GibbsSamplerMain.parseLibraryHits(libraryHitsFile, originalSpectraPath); //only specific GNPS format
 
 
             NodeScorer[] nodeScorers;
             boolean useLibraryHits = (libraryHitsFile != null);
             double libraryScore = 1d;//todo which lambda to use!?
             if (useLibraryHits) {
+                Reaction[] reactions = GibbsSamplerMain.parseReactions(1);
+                Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
+                for (Reaction reaction : reactions) {
+                    netSingleReactionDiffs.add(reaction.netChange());
+                }
                 nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(libraryScore, 0.3, netSingleReactionDiffs)};
             } else {
                 nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d)};
@@ -154,33 +136,25 @@ public class Zodiac {
             ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
             EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
 
-            TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager, options.getSeparateRuns());
-
-            //validate Graph
-            Graph<FragmentsCandidate> graph = twoPhaseGibbsSampling.getGraph();
-
-            GraphValidationMessage validationMessage = graph.validate();
-
-            if (validationMessage.isError()) {
-                LoggerFactory.getLogger(this.getClass()).error(validationMessage.getMessage());
-                return;
-            } else if (validationMessage.isWarning()) {
-                LoggerFactory.getLogger(this.getClass()).warn(validationMessage.getMessage());
-            }
-
-            twoPhaseGibbsSampling.setIterationSteps(options.getIterationSteps(), options.getBurnInSteps());
-            jobManager.submitJob(twoPhaseGibbsSampling);
-            ZodiacResult<FragmentsCandidate> zodiacResult = twoPhaseGibbsSampling.awaitResult();
-            Scored<FragmentsCandidate>[][] result = zodiacResult.getResults();
-
-            graph = twoPhaseGibbsSampling.getGraph(); //update, get complete graph
-            Scored<FragmentsCandidate>[][] bestInitial = GibbsSamplerMain.getBestInitialAssignments(ids, candidatesMap);
 
 
+            de.unijena.bioinf.GibbsSampling.Zodiac zodiac = new de.unijena.bioinf.GibbsSampling.Zodiac(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates);
 
-            GibbsSamplerMain.writeZodiacOutput(ids, bestInitial, result, graph, representativeToCluster, outputPath.resolve("zodiac_summary.csv"));
+
+            ZodiacResultsWithClusters zodiacResult = zodiac.compute(options.getIterationSteps(), options.getBurnInSteps(), options.getSeparateRuns());
+            CompoundResult<FragmentsCandidate>[] result = zodiacResult.getResults();
+
+            Graph<FragmentsCandidate> graph = zodiacResult.getGraph(); //update, get complete graph
+
+            String[] ids = zodiacResult.getIds();
+
+
+            Map<String, ExperimentResult> experimentResultMap = createMap(experimentResults);
+            Map<String, String[]> representativeToCluster = zodiacResult.getRepresentativeToCluster();
+            Scored<IdentificationResult>[] bestInitial = bestInitial(ids, experimentResultMap);
+            writeZodiacOutput(ids, bestInitial, result, outputPath.resolve("zodiac_summary.csv"));
             writeClusters(representativeToCluster, outputPath.resolve("clusters.csv"));
-            writeSpectra(ids, result, representativeToCluster, allExperimentsMap, outputPath);
+            writeSpectra(ids, result, experimentResultMap, outputPath);
 
         } catch (IOException e) {
             LOG.error("Error while running ZODIAC: " + e.getMessage(), e);
@@ -189,16 +163,183 @@ public class Zodiac {
         }
     }
 
-    private static Map<String, Ms2Experiment> extractExperiments(Map<String, List<FragmentsCandidate>> candidatesMap){
-        Map<String, Ms2Experiment> experimentMap = new HashMap<>();
-        for (Map.Entry<String, List<FragmentsCandidate>> stringListEntry : candidatesMap.entrySet()) {
-            final String id = stringListEntry.getKey();
-            final List<FragmentsCandidate> list = stringListEntry.getValue();
-
-            if (list.size()>0) experimentMap.put(id, list.get(0).getExperiment());
+    private List<ExperimentResult> updateQuality(List<ExperimentResult> experimentResults, Path originalMsInformation) throws IOException {
+        final MsExperimentParser parser = new MsExperimentParser();
+        List<Ms2Experiment> rawExperiments = parser.getParser(originalMsInformation.toFile()).parseFromFile(originalMsInformation.toFile());
+        Map<String, List<Ms2Experiment>> nameToExperiment = new HashMap<>();
+        for (Ms2Experiment rawExperiment : rawExperiments) {
+            String name = rawExperiment.getName();
+            List<Ms2Experiment> experimentList = nameToExperiment.get(name);
+            if (experimentList==null){
+                //should always be the case?
+                experimentList = new ArrayList<>();
+                nameToExperiment.put(name, experimentList);
+            }
+            experimentList.add(rawExperiment);
         }
-        return experimentMap;
+
+        List<Ms2Experiment> allExperiments = new ArrayList<>();
+        for (ExperimentResult result : experimentResults) {
+            MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(result.getExperiment());
+            String name = mutableMs2Experiment.getName();
+            List<Ms2Experiment> experimentList = nameToExperiment.get(name);
+            Ms2Experiment experiment2 = null;
+            if (experimentList.size()==1){
+                experiment2 = experimentList.get(0);
+            } else if (experimentList.size()>1){
+                for (Ms2Experiment experiment : experimentList) {
+                    if (Math.abs(mutableMs2Experiment.getIonMass()-experiment.getIonMass())<1e-15){
+                        experiment2 = experiment;
+                        break;
+                    }
+                }
+            }
+            if (experiment2==null){
+                LOG.error("cannot find original MS data for compound in sirius workspace: "+mutableMs2Experiment.getName());
+            } else {
+                mutableMs2Experiment.setMergedMs1Spectrum(experiment2.getMergedMs1Spectrum());
+                mutableMs2Experiment.setMs1Spectra(experiment2.getMs1Spectra());
+                mutableMs2Experiment.setMs2Spectra(experiment2.getMs2Spectra());
+            }
+            allExperiments.add(mutableMs2Experiment);
+
+        }
+        Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
+        Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
+        dataset = preprocessor.preprocess(dataset);
+        allExperiments = dataset.getExperiments();
+
+        int pos = 0;
+        List<ExperimentResult> newExperimentResults = new ArrayList<>();
+        for (ExperimentResult result : experimentResults) {
+            List<FTree> trees = new ArrayList<>();
+            Ms2Experiment experiment = allExperiments.get(pos++); //use experiments with assigned quality
+            for (IdentificationResult identificationResult : result.getResults()) {
+//                trees.add(identificationResult.getRawTree());
+                trees.add(identificationResult.getResolvedTree()); //todo use rawTree or resolvedTree?!
+            }
+
+
+            if (!atLeastOneTreeExplainsSomeIntensity(trees, 0.5)){
+                CompoundQuality.setProperty(experiment, SpectrumProperty.PoorlyExplained);
+            }
+            if (!atLeastOneTreeExplainsSomePeaks(trees, 3)){
+                CompoundQuality.setProperty(experiment, SpectrumProperty.PoorlyExplained);
+            }
+
+
+            newExperimentResults.add(new ExperimentResult(experiment, result.getResults()));
+        }
+
+        return newExperimentResults;
     }
+
+    public static boolean atLeastOneTreeExplainsSomeIntensity(List<FTree> trees, double threshold){
+        for (FTree tree : trees) {
+            final double intensity = tree.getAnnotationOrThrow(TreeScoring.class).getExplainedIntensity();
+            if (intensity>threshold) return true;
+        }
+        return false;
+    }
+
+    public static boolean atLeastOneTreeExplainsSomePeaks(List<FTree> trees, int threshold){
+        for (FTree tree : trees) {
+            if (tree.numberOfVertices()>=threshold) return true;
+        }
+        return false;
+    }
+
+    private final static int NUMBER_OF_HITS = Integer.MAX_VALUE;
+    private final static String SEP = "\t";
+    public static void writeZodiacOutput(String[] ids, Scored<IdentificationResult>[] initial, CompoundResult<FragmentsCandidate>[] result, Path outputPath) throws IOException {
+        BufferedWriter writer = Files.newBufferedWriter(outputPath, Charset.defaultCharset());
+        writer.write("id" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "connectedCompounds" + SEP + "ZodiacMF" + SEP + "ZodiacScore");
+        for (int i = 0; i < ids.length; i++) {
+            final String id = ids[i];
+            final String id2 = result[i].getId();
+
+            if (!id.equals(id2)) throw new RuntimeException("different ids: "+id+" vs "+id2);
+
+            final String siriusMF = initial[i].getCandidate().getMolecularFormula().formatByHill();
+            final double siriusScore = initial[i].getScore();
+
+            int connections = result[i].getAnnotationOrThrow(Connectivity.class).getNumberOfConnectedCompounds();
+            String summeryLine = createSummaryLine(id, siriusMF, siriusScore, connections, result[i].getCandidates());
+            writer.write("\n");
+            writer.write(summeryLine);
+        }
+
+        writer.close();
+
+    }
+
+    private static String createSummaryLine(String id, String siriusMF, double siriusScore, int numberConnections, Scored<FragmentsCandidate>[] result){
+        StringBuilder builder = new StringBuilder();
+        builder.append(id);
+        builder.append(SEP);
+        builder.append(siriusMF);
+        builder.append(SEP);
+        builder.append(Double.toString(siriusScore));
+        builder.append(SEP);
+        builder.append(numberConnections);
+
+        for (int j = 0; j < Math.min(result.length, NUMBER_OF_HITS); j++) {
+            Scored<FragmentsCandidate> currentResult = result[j];
+            final String mf = currentResult.getCandidate().getFormula().formatByHill();
+            final double score = currentResult.getScore();
+
+            if (score <= 0) break; //don't write MF with 0 probability
+
+            builder.append(SEP);
+            builder.append(mf);
+            builder.append(SEP);
+            builder.append(Double.toString(score));
+        }
+        return builder.toString();
+    }
+
+    private Scored<IdentificationResult>[] bestInitial(String[] ids, Map<String, ExperimentResult> experimentResultMap){
+        Scored<IdentificationResult>[] best = new Scored[ids.length];
+        for (int i = 0; i < ids.length; i++) {
+            String id = ids[i];
+            ExperimentResult result = experimentResultMap.get(id);
+
+
+            //normalize
+            double max = Double.NEGATIVE_INFINITY;
+            for (IdentificationResult identificationResult : result.getResults()) {
+                double score = identificationResult.getScore();
+                if (score > max) {
+                    max = score;
+                }
+
+
+            }
+
+            double sum = 0.0D;
+            double[] scores = new double[result.getResults().size()];
+            for (int j = 0; j < result.getResults().size(); ++j) {
+                final IdentificationResult identificationResult = result.getResults().get(j);
+                double expS = Math.exp(1d * (identificationResult.getScore() - max));
+                sum += expS;
+                scores[j] = expS;
+            }
+
+            //save best with probability
+            best[i] = new Scored<>(result.getResults().get(0), scores[0]/sum);
+
+        }
+        return best;
+    }
+
+    private Map<String, ExperimentResult> createMap(List<ExperimentResult> experimentResults){
+        Map<String, ExperimentResult> map = new HashMap<>();
+        for (ExperimentResult experimentResult : experimentResults) {
+            map.put(experimentResult.getExperimentName(), experimentResult);
+        }
+        return map;
+    }
+
 
     protected static List<ExperimentResult> newLoad(File file) throws IOException {
         final List<ExperimentResult> results = new ArrayList<>();
@@ -236,214 +377,30 @@ public class Zodiac {
     }
 
 
-    private static void writeSpectra(String[] ids, Scored<FragmentsCandidate>[][] result, Map<String, String[]> representativeToCluster, Map<String, Ms2Experiment> experimentMap, Path outputPath) throws IOException {
+    /*
+    experimentMap necessary since FragmentsCandidate might be the cluster representative.
+     */
+    private static void writeSpectra(String[] ids, CompoundResult<FragmentsCandidate>[] result, Map<String, ExperimentResult> experimentMap, Path outputPath) throws IOException {
         for (int i = 0; i < ids.length; i++) {
-            final Scored<FragmentsCandidate>[] currentResults = result[i];
+            final Scored<FragmentsCandidate>[] currentResults = result[i].getCandidates();
             final Scored<FragmentsCandidate> bestResult = currentResults[0];
 
             if (DummyFragmentCandidate.isDummy(bestResult.getCandidate())) continue;
-            final String repId = ids[i];
-            String[] clusterIds = representativeToCluster.get(repId);
 
-            for (String id : clusterIds) {
-                MutableMs2Experiment experiment = new MutableMs2Experiment(experimentMap.get(id));
-                experiment.setMolecularFormula(bestResult.getCandidate().getFormula());
-                experiment.setPrecursorIonType(bestResult.getCandidate().getIonType());
-                Path file = outputPath.resolve(Integer.toString(i + 1) + "_" + id + ".ms");
-                final BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset());
-                new JenaMsWriter().write(writer, experiment);
-                writer.close();
-            }
-        }
-
-    }
-
-//    private final static String SEP = "\t";
-//    private final static int NUMBER_OF_HITS = Integer.MAX_VALUE;
-//
-//    private static void writeZodiacOutput(String[] ids, Scored<FragmentsCandidate>[][] initial, Scored<FragmentsCandidate>[][] result, Graph<FragmentsCandidate> graph, Path outputPath) throws IOException {
-//        int[] connectingPeaks = graph.getMaxConnectionCounts();
-//        String[] ids2 = graph.getIds();
-//
-//        BufferedWriter writer = Files.newBufferedWriter(outputPath, Charset.defaultCharset());
-//        //changed connectingPeaks -> connectedCompounds
-//        writer.write("id" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "connectedCompounds" + SEP + "ZodiacMF" + SEP + "ZodiacScore");
-//        for (int i = 0; i < ids.length; i++) {
-//            final StringBuffer buffer = new StringBuffer();
-//
-//            final String id = ids[i];
-//            final String siriusMF = initial[i][0].getCandidate().getFormula().formatByHill();
-//            final double siriusScore = initial[i][0].getScore();
-//
-//            final int connections = connectingPeaks[i];
-//            if (!id.equals(ids2[i])) throw new RuntimeException("different ids");
-//
-//
-//            buffer.append(id);
-//            buffer.append(SEP);
-//            buffer.append(siriusMF);
-//            buffer.append(SEP);
-//            buffer.append(Double.toString(siriusScore));
-//            buffer.append(SEP);
-//            buffer.append(connections);
-//
-//            final Scored<FragmentsCandidate>[] currentResults = result[i];
-//            for (int j = 0; j < Math.min(currentResults.length, NUMBER_OF_HITS); j++) {
-//                Scored<FragmentsCandidate> currentResult = currentResults[j];
-//                final String mf = currentResult.getCandidate().getFormula().formatByHill();
-//                final double score = currentResult.getScore();
-//
-//                if (score <= 0) break; //don't write MF with 0 probability
-//
-//                buffer.append(SEP);
-//                buffer.append(mf);
-//                buffer.append(SEP);
-//                buffer.append(Double.toString(score));
-//            }
-//
-//            writer.write("\n");
-//            writer.write(buffer.toString());
-//
-//        }
-//
-//        writer.close();
-//
-//    }
-
-    public static Map<String, List<FragmentsCandidate>> parseMFCandidates(List<ExperimentResult> experimentResults, int maxCandidates) throws IOException {
-        final Map<String, List<FragmentsCandidate>> listMap = new HashMap<>();
-        for (ExperimentResult experimentResult : experimentResults) {
-            Ms2Experiment experiment = experimentResult.getExperiment();
-            List<IdentificationResult> identificationResults = experimentResult.getResults();
-            //todo beautify trees!!!!
-            List<FTree> trees = new ArrayList<>();
-            for (IdentificationResult identificationResult : identificationResults) {
-                trees.add(identificationResult.getResolvedTree());
-            }
-            List<FragmentsCandidate> candidates = FragmentsCandidate.createAllCandidateInstances(trees, experiment);
-            Collections.sort(candidates);
-            if (candidates.size() > maxCandidates) candidates = candidates.subList(0, maxCandidates);
-
-            if (candidates.size() > 0) listMap.put(experiment.getName(), candidates);
-
+            final String id = ids[i];
+            MutableMs2Experiment experiment = new MutableMs2Experiment(experimentMap.get(id).getExperiment());
+            experiment.setMolecularFormula(bestResult.getCandidate().getFormula());
+            experiment.setPrecursorIonType(bestResult.getCandidate().getIonType());
+            Path file = outputPath.resolve(Integer.toString(i + 1) + "_" + id + ".ms");
+            final BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset());
+            new JenaMsWriter().write(writer, experiment);
+            writer.close();
 
         }
 
-
-        return listMap;
-    }
-
-    private void setKnownCompounds(Map<String, List<FragmentsCandidate>> candidatesMap, Set<MolecularFormula> allowedDifferences) {
-        Set<String> ids = candidatesMap.keySet();
-        for (String id : ids) {
-            final List<FragmentsCandidate> candidateList = candidatesMap.get(id);
-            if (!candidateList.get(0).hasLibraryHit()) continue;
-
-            final LibraryHit libraryHit = candidateList.get(0).getLibraryHit();
-
-            //todo at least 5 peaks match, no cosine threshold?
-            if (libraryHit.getSharedPeaks() < 5) continue;
-
-            MolecularFormula correctMF = libraryHit.getMolecularFormula();
-            List<FragmentsCandidate> candidates = candidatesMap.get(id);
-
-            //todo does the ionization of library hit and compound have to match!?
-            for (FragmentsCandidate candidate : candidates) {
-                boolean matches = candidate.getFormula().equals(correctMF);
-                if (!matches) {
-                    MolecularFormula diff = candidate.getFormula().subtract(correctMF);
-                    if (diff.getMass() < 0) diff = diff.negate();
-                    matches = allowedDifferences.contains(diff);
-                }
-                if (matches) {
-                    candidate.setCorrect(true);
-                    LOG.info("Compound " + id + " has library hit. candidate MF is " + candidate.getFormula() + ". Library hit is " + correctMF);
-                }
-                candidate.setInTrainingSet(true);
-
-
-            }
-        }
-    }
-
-    private <C> String[] getIdsOfCompoundsWithCandidates(Map<String, List<C>> candidatesMap) {
-        List<String> ids = new ArrayList<>();
-//        for (ExperimentResult experimentResult : input) {
-//            if (experimentResult.getExperiment()==null) continue;
-//            final String id = experimentResult.getExperiment().getName();
-//            if (candidatesMap.containsKey(id)) ids.add(id);
-//        }
-        //changed
-        for (String key : candidatesMap.keySet()) {
-            if (candidatesMap.get(key).size() > 0) ids.add(key);
-        }
-        return ids.toArray(new String[0]);
     }
 
 
-    private <T> boolean arrayContains(T[] array, T object) {
-        return this.arrayFind(array, object) >= 0;
-    }
-
-    private <T> int arrayFind(T[] array, T object) {
-        for (int i = 0; i < array.length; ++i) {
-            Object t = array[i];
-            if (t.equals(object)) {
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
-
-//    /**
-//     * @param ids
-//     * @param explanationsMap
-//     * @return best initial formulas with RELATIVE SCORE!!
-//     */
-//    private static Scored<FragmentsCandidate>[][] getBestInitialAssignments(String[] ids, Map<String, List<FragmentsCandidate>> explanationsMap) {
-//        Scored<FragmentsCandidate>[][] array = new Scored[ids.length][];
-//        for (int i = 0; i < ids.length; i++) {
-//            List<FragmentsCandidate> smfList = explanationsMap.get(ids[i]);
-//            Scored<FragmentsCandidate>[] smfarray = new Scored[smfList.size()];
-//
-//            if (true) {
-//                //normalize
-//                double max = Double.NEGATIVE_INFINITY;
-//                for (int j = 0; j < smfList.size(); ++j) {
-//                    final Candidate candidate = smfList.get(j);
-//                    double score = candidate.getScore();
-//                    if (score > max) {
-//                        max = score;
-//                    }
-//                }
-//
-//                double sum = 0.0D;
-//                double[] scores = new double[smfList.size()];
-//
-//                for (int j = 0; j < smfList.size(); ++j) {
-//                    final Candidate candidate = smfList.get(j);
-//                    double expS = Math.exp(1d * (candidate.getScore() - max));
-//                    sum += expS;
-//                    scores[j] = expS;
-//                }
-//
-//                for (int j = 0; j < smfList.size(); ++j) {
-//                    smfarray[j] = new Scored<FragmentsCandidate>(smfList.get(j), scores[j] / sum);
-//                }
-//
-//            } else {
-//                for (int j = 0; j < smfarray.length; j++) {
-//                    smfarray[j] = new Scored<FragmentsCandidate>(smfList.get(j), smfList.get(j).getScore());
-//                }
-//            }
-//
-//            Arrays.sort(smfarray, Collections.<Scored<FragmentsCandidate>>reverseOrder());
-//            array[i] = smfarray;
-//        }
-//        return array;
-//    }
 
 
 }
