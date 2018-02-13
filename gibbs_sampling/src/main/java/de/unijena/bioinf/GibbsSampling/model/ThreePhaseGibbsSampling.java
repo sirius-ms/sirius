@@ -113,7 +113,7 @@ public class ThreePhaseGibbsSampling {
 
 
         LOG.info("run Zodiac on good quality compounds only. Use "+firstRoundIds.length+" of "+ids.length+" compounds.");
-        GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, jobManager);
+        GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter);
         jobManager.submitJob(graphBuilder); //todo might dead lock??
         graph = graphBuilder.awaitResult();
         gibbsParallel = new GibbsParallel<>(graph, repetitions);
@@ -149,7 +149,9 @@ public class ThreePhaseGibbsSampling {
         //1. run only on best quality spectra with restricted number of candidates
         gibbsParallel.setIterationSteps(maxSteps, burnIn);
         jobManager.submitJob(gibbsParallel);
-        results1 = gibbsParallel.awaitResult();
+
+        gibbsParallel.awaitResult();
+        results1 = gibbsParallel.getChosenFormulas();
 
         firstRoundIds = gibbsParallel.getGraph().getIds();
 
@@ -249,15 +251,17 @@ public class ThreePhaseGibbsSampling {
         //todo rather sample everything and just use results of low quality compounds? may there arise problems? in principle should not as we still sample all compounds (even 'fixed')
         FragmentsCandidate[][] candidatesNewRound = combineNewAndOldAndSetFixedProbabilities(results1, firstRoundCompoundsIdx);
         //todo this stupid thing creates a complete new graph.
-        GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, new TIntHashSet(firstRoundCompoundsIdx), jobManager);
+        TIntHashSet fixedIds = new TIntHashSet(firstRoundCompoundsIdx);
+        GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, fixedIds);
         jobManager.submitJob(graphBuilder); //todo might dead lock??
         graph = graphBuilder.awaitResult();
-        gibbsParallel = new GibbsParallel<>(graph, repetitions);
+        gibbsParallel = new GibbsParallel<>(graph, repetitions, fixedIds);
 
         gibbsParallel.setIterationSteps(maxSteps, burnIn);
         jobManager.submitJob(gibbsParallel);
 
-        results2 = gibbsParallel.awaitResult();
+        gibbsParallel.awaitResult();
+        results2 = gibbsParallel.getChosenFormulas();
 
         usedIds = gibbsParallel.getGraph().ids;
 
