@@ -1,14 +1,8 @@
 package de.unijena.bioinf.sirius.gui.compute.jjobs;
 
-import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import org.slf4j.LoggerFactory;
@@ -17,7 +11,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 
 public class Jobs {
     public static final SwingJobManager MANAGER = (SwingJobManager) SiriusJobs.getGlobalJobManager();
@@ -143,10 +136,5 @@ public class Jobs {
 
     public static ComputingStatus getComputingState(JJob.JobState newValue) {
         return stateMap[newValue.ordinal()];
-    }
-
-    //todo remove if old job system is gone
-    public static boolean areJobsRunning() {
-        return JobLog.getInstance().hasActiveJobs() || Jobs.MANAGER.hasActiveJobs();
     }
 }

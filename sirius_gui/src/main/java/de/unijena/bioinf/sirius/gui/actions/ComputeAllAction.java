@@ -8,7 +8,6 @@ package de.unijena.bioinf.sirius.gui.actions;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.compute.BatchComputeDialog;
-import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
@@ -43,42 +42,9 @@ public class ComputeAllAction extends AbstractAction {
             }
         });
 
-        //TODO REMOVE
-        JobLog.getInstance().addListener(new JobLog.JobListener() {
-            @Override
-            public void jobIsSubmitted(JobLog.Job job) {
-                SwingUtilities.invokeLater(() -> {
-                    if (Jobs.areJobsRunning()) {
-                        computationStarted();
-                    } else {
-                        computationCanceled();
-                    }
-                });
-            }
-
-            @Override
-            public void jobIsRunning(JobLog.Job job) {
-                jobIsSubmitted(job);
-            }
-
-            @Override
-            public void jobIsDone(final JobLog.Job job) {
-                jobIsSubmitted(job);
-            }
-
-            @Override
-            public void jobIsFailed(JobLog.Job job) {
-                jobIsSubmitted(job);
-            }
-
-            @Override
-            public void jobDescriptionChanged(JobLog.Job job) {
-            }
-        });
-
         //Listen if there are active gui jobs
         Jobs.MANAGER.getJobs().addListEventListener(listChanges -> {
-            if (Jobs.areJobsRunning()) {
+            if (Jobs.MANAGER.hasActiveJobs()) {
                 computationStarted();
             } else {
                 computationCanceled();

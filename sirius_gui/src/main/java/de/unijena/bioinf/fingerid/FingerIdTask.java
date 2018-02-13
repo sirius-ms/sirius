@@ -18,26 +18,15 @@
 
 package de.unijena.bioinf.fingerid;
 
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
-
-import java.util.List;
 
 public class FingerIdTask {
 
     public final ExperimentContainer experiment;
     public final SiriusResultElement result;
-    public JobLog.Job job;
     public SearchableDatabase db;
-    protected volatile List<Compound> candidateList;
-
-    protected volatile boolean structuresDownloaded, fingerprintPredicted, blastDone;
-    protected volatile int cycle=0;
-
-    public volatile ProbabilityFingerprint prediction;
 
     public FingerIdTask(SearchableDatabase db, ExperimentContainer experiment, SiriusResultElement result) {
         this.experiment = experiment;
