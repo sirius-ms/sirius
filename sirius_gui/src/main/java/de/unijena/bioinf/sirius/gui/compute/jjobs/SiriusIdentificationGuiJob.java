@@ -43,12 +43,12 @@ public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<Si
         final Sirius.SiriusIdentificationJob identificationJob = sirius.makeIdentificationJob(new MutableMs2Experiment(experiment), numberOfCandidates);
         identificationJob.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> {
             JobProgressEvent e = (JobProgressEvent) evt;
-            updateProgress(e.getMinValue(), e.getMaxValue() + 10, e.getNewValue());
+            updateProgress(e.getMinValue(), e.getMaxValue(), e.getNewValue());
         });
 
         final List<IdentificationResult> results = submitSubJob(identificationJob).awaitResult();
 
-        updateProgress(0, 110, 109, "Identification done, collecting Results");
+        updateProgress(0, 110, 105, "Identification done, collecting Results");
         checkForInterruption();
         ec.setRawResults(results);
         return ec.getResults();
