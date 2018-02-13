@@ -149,7 +149,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         for (Ionization ion : ionModes) {
             im.add(ion, 0.02);
         }
-        im.add(PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization(), 1d);
+        im.add(exp.getPrecursorIonType().getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization() : PrecursorIonType.getPrecursorIonType("[M-H]-").getIonization(), 1d);
         if (guessFromMS1) im.enableGuessFromMs1WithCommonIonModes(exp.getPrecursorIonType().getCharge());
         exp.setAnnotation(PossibleIonModes.class, im);
     }
