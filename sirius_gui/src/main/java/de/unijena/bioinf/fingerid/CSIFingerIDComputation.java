@@ -47,9 +47,7 @@ public class CSIFingerIDComputation {
     public void compute(ExperimentContainer c, SearchableDatabase db) {
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
         for (SiriusResultElement e : getTopSiriusCandidates(c)) {
-            if (e.getCharge() > 0) {
-                tasks.add(new FingerIdTask(db, c, e));
-            }
+            tasks.add(new FingerIdTask(db, c, e));
         }
         computeAll(tasks);
     }
@@ -59,9 +57,7 @@ public class CSIFingerIDComputation {
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
         for (ExperimentContainer c : compounds) {
             for (SiriusResultElement e : getTopSiriusCandidates(c)) {
-                if (e.getCharge() > 0) {
-                    tasks.add(new FingerIdTask(db, c, e));
-                }
+                tasks.add(new FingerIdTask(db, c, e));
             }
         }
         computeAll(tasks);
@@ -384,12 +380,12 @@ public class CSIFingerIDComputation {
     }
 
     public CSIPredictor getPredictor(PrecursorIonType type) {
-        if (type.getCharge() >= 0 ) return positiveMode;
+        if (type.getCharge() >= 0) return positiveMode;
         else return negativeMode;
     }
 
     public CSIPredictor getPredictor(PredictorType type) {
-        if (type==PredictorType.CSI_FINGERID_POSITIVE) return positiveMode;
+        if (type == PredictorType.CSI_FINGERID_POSITIVE) return positiveMode;
         else if (type == PredictorType.CSI_FINGERID_NEGATIVE) return negativeMode;
         else throw new NoSuchElementException("Unknown predictor type " + type);
     }
