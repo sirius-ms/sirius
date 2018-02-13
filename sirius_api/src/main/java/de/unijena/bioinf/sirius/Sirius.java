@@ -100,7 +100,7 @@ public class Sirius {
         @Override
         protected List<IdentificationResult> compute() throws Exception {
             final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, numberOfResultsToKeep);
-            instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, (int) evt.getNewValue(), 105));
+            instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, 105, (int) evt.getNewValue()));
             final ProcessedInput pinput = instance.validateInput();
             performMs1Analysis(instance, IsotopePatternHandling.both);
             submitSubJob(instance);
@@ -455,7 +455,7 @@ public class Sirius {
     private static void addScoreThresholdOnUnconsideredCandidates(AbstractTreeComputationInstance.FinalResult fr, ProcessedInput processedInput) {
         //add annotation of score bound on unconsidered instances
         int numberOfResults = fr.getResults().size();
-        if (numberOfResults==0) return;
+        if (numberOfResults == 0) return;
         int numberOfDecompositions = processedInput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size();
         int numberOfUnconsideredCandidates = numberOfDecompositions - numberOfResults;
         //trees should be sorted by score
@@ -508,7 +508,7 @@ public class Sirius {
         final ProcessedInput pinput = instance.validateInput();
         pinput.setAnnotation(Whiteset.class, Whiteset.of(formula));
         pinput.setAnnotation(ForbidRecalibration.class, ForbidRecalibration.ALLOWED);
-        return instance.wrap((f)->new IdentificationResult(f.getResults().get(0), 1));
+        return instance.wrap((f) -> new IdentificationResult(f.getResults().get(0), 1));
     }
 
     /**
