@@ -178,7 +178,8 @@ public class GibbsSamplerMain {
 //                System.out.println("test graph");
 //                main.testGraphGeneration(treeDir, mgfFile, libraryHits, edgeScorers, opts);
             } else if(opts.getEvalCliOutput()!=null) {
-                main.evalZodiacOutput(treeDir, Paths.get(opts.getEvalCliOutput()), mgfFile, libraryHits);
+                Path clusterSummary = opts.getClusterSummary()==null?null:Paths.get(opts.getClusterSummary());
+                main.evalZodiacOutput(treeDir, Paths.get(opts.getEvalCliOutput()), mgfFile, libraryHits, clusterSummary);
             } else {
                 System.out.println("do evaluation");
                 main.doEvaluation(treeDir, mgfFile, libraryHits, outputFile, edgeScorers);
@@ -189,7 +190,7 @@ public class GibbsSamplerMain {
         }
     }
 
-    private void evalZodiacOutput(Path workspace, Path zodiacSummary, Path mgfFile, Path libraryHitsPath) throws IOException {
+    private void evalZodiacOutput(Path workspace, Path zodiacSummary, Path mgfFile, Path libraryHitsPath, Path clusterSummary) throws IOException {
         Map<String, List<FragmentsCandidate>> candidatesMap;
         System.out.println("Reading from Sirius workspace");
         candidatesMap = parseMFCandidatesFromWorkspace(workspace, mgfFile);
@@ -209,7 +210,11 @@ public class GibbsSamplerMain {
         String[] ids = candidatesMap.keySet().stream().filter(key -> candidatesMap.get(key).size()>0).toArray(s -> new String[s]);
 
 
-        Scored<FragmentsCandidate>[][] result = mergeCandidatesWithZodiacResults(ids, candidatesMap, zodiacResults);
+        Map<String, String> instanceToClusterRep;
+        if (clusterSummary==null) instanceToClusterRep=null;
+        else instanceToClusterRep = readCluster(clusterSummary);
+
+        Scored<FragmentsCandidate>[][] result = mergeCandidatesWithZodiacResults(ids, candidatesMap, zodiacResults, instanceToClusterRep);
 
 
         int[] numberOfIds = statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits, null);
@@ -219,11 +224,34 @@ public class GibbsSamplerMain {
 
     }
 
-    private Scored<FragmentsCandidate>[][] mergeCandidatesWithZodiacResults(String[] ids, Map<String, List<FragmentsCandidate>> candidatesMap, Map<String, List<Scored<MolecularFormula>>> zodiacResults) {
+    private Map<String, String> readCluster(Path clusterSummary) throws IOException {
+        List<String> lines = Files.readAllLines(clusterSummary);
+        Map<String, String> instanceToRepresentative = new HashMap<>();
+        for (String line : lines) {
+            String[] row = line.split("\t");
+            String rep = row[0];
+            for (int i = 1; i < row.length; i++) {
+                String id = row[i];
+                if (instanceToRepresentative.containsKey(id)){
+                    throw new RuntimeException("id already contained in another cluster: "+id);
+                }
+                instanceToRepresentative.put(id, rep);
+
+            }
+        }
+        return instanceToRepresentative;
+
+    }
+
+    private Scored<FragmentsCandidate>[][] mergeCandidatesWithZodiacResults(String[] ids, Map<String, List<FragmentsCandidate>> candidatesMap, Map<String, List<Scored<MolecularFormula>>> zodiacResults, Map<String, String> instanceToClusterRepresentative) {
         Scored<FragmentsCandidate>[][] scored = new Scored[ids.length][];
         for (int i = 0; i < ids.length; i++) {
             String id = ids[i];
-            List<FragmentsCandidate> candidates = candidatesMap.get(id);
+            String repId;
+            if (instanceToClusterRepresentative==null) repId = id;
+            else repId = instanceToClusterRepresentative.get(id);
+            List<FragmentsCandidate> candidates = candidatesMap.get(repId);
+
             List<Scored<FragmentsCandidate>> scoredCandidates = new ArrayList<>();
             List<Scored<MolecularFormula>> results = zodiacResults.get(id);
 //            if (candidates.size()<results.size()) throw new RuntimeException("results are missing from candidates set for id "+id); //ignores dummy
@@ -597,13 +625,14 @@ public class GibbsSamplerMain {
         JobManager jobManager = new JobManager(workerCount);
         if (is2Phase){
             for (int i = 0; i < numberOfRuns; i++) {
-                TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager, 1);
+                TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, 1);
                 System.out.println("start");
                 twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnInIterations);
                 jobManager.submitJob(twoPhaseGibbsSampling);
 
 
-                Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.awaitResult().getResults();
+                twoPhaseGibbsSampling.awaitResult();
+                Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.getChosenFormulas();
                 resultIds = twoPhaseGibbsSampling.getIds();
 
                 System.out.println("result");
@@ -654,7 +683,7 @@ public class GibbsSamplerMain {
 
                 EdgeScorer[] currentEdgeScorers = new EdgeScorer[]{scoreProbabilityDistributionEstimator};
 
-                GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager);
+                GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter);
                 jobManager.submitJob(graphBuilder);
                 Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
                 GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(graph, 1);
@@ -662,7 +691,8 @@ public class GibbsSamplerMain {
                 System.out.println("start");
                 gibbsParallel.setIterationSteps(iterationSteps, burnInIterations);
                 jobManager.submitJob(gibbsParallel);
-                Scored<FragmentsCandidate>[][] result = gibbsParallel.awaitResult();
+                gibbsParallel.awaitResult();
+                Scored<FragmentsCandidate>[][] result = gibbsParallel.getChosenFormulas();
 
                 System.out.println("result");
                 statisticsOfKnownCompounds(result, resultIds, evaluationIds, correctHits, gibbsParallel.getGraph());
@@ -735,7 +765,7 @@ public class GibbsSamplerMain {
         JobManager jobManager = new JobManager(workerCount);
         //1. are their any changes after running gibbs?
         {
-            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager);
+            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter);
             jobManager.submitJob(graphBuilder);
             Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
             GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(graph, 1);
@@ -758,7 +788,7 @@ public class GibbsSamplerMain {
         //2. differences for different EdgeFilter
         {
             edgeFilter = new EdgeThresholdFilter(0.9);
-            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager);
+            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter);
             jobManager.submitJob(graphBuilder);
             Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
             GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(graph,  1);
@@ -811,7 +841,7 @@ public class GibbsSamplerMain {
 
 
             edgeFilter = new EdgeThresholdMinConnectionsFilter(0.9, 1, 10);
-            graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager);
+            graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter);
             jobManager.submitJob(graphBuilder);
             Graph<FragmentsCandidate> graphComplexThres = graphBuilder.awaitResult();
             gibbsParallel = new GibbsParallel(graph, 1);
@@ -1102,12 +1132,12 @@ public class GibbsSamplerMain {
             if (outputFile!=null) writeBestFormulas(threePhaseGibbsSampling.getChosenFormulas(), threePhaseGibbsSampling.getGraph(), outputFile);
         }
         else if (is2Phase){
-            TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager, 1);
+            TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter,1);
             System.out.println("start");
             twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnInIterations);
             jobManager.submitJob(twoPhaseGibbsSampling);
-
-            Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.awaitResult().getResults();
+            twoPhaseGibbsSampling.awaitResult();
+            Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.getChosenFormulas();
             System.out.println("standard");
             statisticsOfKnownCompounds(result, twoPhaseGibbsSampling.getIds(), evaluationIds, correctHits, twoPhaseGibbsSampling.getGraph());
 
@@ -1116,7 +1146,7 @@ public class GibbsSamplerMain {
             //GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 20);
             //changed
 
-            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager);
+            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter);
             jobManager.submitJob(graphBuilder);
             Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
             GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(graph, 1);
@@ -1130,8 +1160,8 @@ public class GibbsSamplerMain {
             System.out.println("start");
             gibbsParallel.setIterationSteps(iterationSteps, burnInIterations);
             jobManager.submitJob(gibbsParallel);
-
-            Scored<FragmentsCandidate>[][] result = gibbsParallel.awaitResult();
+            gibbsParallel.awaitResult();
+            Scored<FragmentsCandidate>[][] result = gibbsParallel.getChosenFormulas();
             System.out.println("standard");
             statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits, gibbsParallel.getGraph());
 
@@ -1243,7 +1273,7 @@ public class GibbsSamplerMain {
 
             int repetitions = workerCount;
             JobManager jobManager = new JobManager(workerCount);
-            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, jobManager);
+            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter);
             jobManager.submitJob(graphBuilder);
             Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
             GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel<FragmentsCandidate>(graph, repetitions);
@@ -1252,8 +1282,8 @@ public class GibbsSamplerMain {
             System.out.println("start");
             gibbsParallel.setIterationSteps(iterationSteps, burnInIterations);
             jobManager.submitJob(gibbsParallel);
-
-            Scored<FragmentsCandidate>[][] standardresult = gibbsParallel.awaitResult();
+            gibbsParallel.awaitResult();
+            Scored<FragmentsCandidate>[][] standardresult = gibbsParallel.getChosenFormulas();
             System.out.println("standard");
             statisticsOfKnownCompounds(standardresult, ids, evaluationIds, correctHits, gibbsParallel.getGraph());
 
@@ -1473,9 +1503,8 @@ public class GibbsSamplerMain {
     }
 
     private Set<String> setKnownCompounds(Collection<String> ids, Map<String, LibraryHit> correctHitsMap, Map<String, List<FragmentsCandidate>> candidatesMap, Set<MolecularFormula> allowedDifferences, boolean eval) {
-        System.out.println("allowedDifferences "+allowedDifferences.size());
+//        System.out.println("allowedDifferences "+allowedDifferences.size());
         Set<String> usedIds = new HashSet<>();
-        System.out.println("measuredMass trueMass");
         for (String id : ids) {
             LibraryHit libraryHit = correctHitsMap.get(id);
             MolecularFormula correctMF = libraryHit.getMolecularFormula();
@@ -1483,7 +1512,7 @@ public class GibbsSamplerMain {
             if (candidates==null){
                 System.out.println();
 //                throw new RuntimeException("all candidates have been removed: "+id);
-                System.err.println("all candidates have been removed: "+id);
+                LOG.error("all candidates have been removed: "+id);
             } else {
 //                System.out.println("candidates size "+candidates.size()+" for "+id);
 //                List<MFCandidate> newCandidates = new ArrayList<>();
@@ -1510,9 +1539,18 @@ public class GibbsSamplerMain {
                     }
                 }
                 //if ==0 presumably correct is not in our list.
-                assert correctHits<=1;
                 if (correctHits>1){
-                    throw new RuntimeException("unexpected number of correct hits : "+correctHits);
+                    List<String> corrects = new ArrayList<>();
+                    for (FragmentsCandidate candidate : candidates) {
+                        if (candidate.isCorrect()) corrects.add(candidate.getFormula().formatByHill());
+                        candidate.setCorrect(false);
+                        candidate.setInTrainingSet(false);
+                        candidate.setInEvaluationSet(false);
+                    }
+                    LOG.warn("exclude "+id+
+                            ". multiple potentially correct hits: "+Arrays.toString(corrects.toArray())+
+                            ". Library hit is: "+libraryHit.getMolecularFormula());
+
                 }
                 if (correctHits==1){
                     usedIds.add(id);
@@ -1761,6 +1799,93 @@ public class GibbsSamplerMain {
 
     }
 
+
+    public static  List<LibraryHit> parseLibraryHits(Path libraryHitsPath, Path mgfFile) throws IOException {
+        try {
+            List<String> featureIDs = new ArrayList<>();
+            try(BufferedReader reader = Files.newBufferedReader(mgfFile)){
+                String line;
+                String lastID = null;
+                while ((line=reader.readLine())!=null){
+                    if (line.toLowerCase().startsWith("feature_id=")){
+                        String id = line.split("=")[1];
+                        if (!id.equals(lastID)){
+                            featureIDs.add(id);
+                            lastID = id;
+                        }
+                    }
+                }
+            }
+
+
+//            if (isAllIdsOrdered(featureIDs)) System.out.println("all experiment ids in ascending order without any missing");
+
+
+            final MsExperimentParser parser = new MsExperimentParser();
+            List<Ms2Experiment> experiments = parser.getParser(mgfFile.toFile()).parseFromFile(mgfFile.toFile());
+
+
+            //todo clean string !?!?
+            final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
+            for (Ms2Experiment experiment : experiments) {
+                String name = cleanString(experiment.getName());
+                if (experimentMap.containsKey(name)) throw new RuntimeException("experiment name duplicate: "+name);
+                experimentMap.put(name, experiment);
+            }
+
+            //todo change nasty hack
+
+
+            List<String> lines = Files.readAllLines(libraryHitsPath, Charset.defaultCharset());
+            String[] header = lines.remove(0).split("\t");
+//        String[] ofInterest = new String[]{"Feature_id", "Formula", "Structure", "Adduct", "Cosine", "SharedPeaks", "Quality"};
+            String[] ofInterest = new String[]{"#Scan#", "INCHI", "Smiles", "Adduct", "MQScore", "SharedPeaks", "Quality"};
+            int[] indices = new int[ofInterest.length];
+            for (int i = 0; i < ofInterest.length; i++) {
+                int idx = arrayFind(header, ofInterest[i]);
+                if (idx<0){
+                    int[] more = arrayFindSimilar(header, ofInterest[i]);
+                    if (more.length!=1) throw new RuntimeException("Cannot parse spectral library hits file. Column "+ofInterest[i]+" not found.");
+                    else idx = more[0];
+                }
+                indices[i] = idx;
+            }
+
+
+            List<LibraryHit> libraryHits = new ArrayList<>();
+            for (String line : lines) {
+                try {
+                    String[] cols = line.split("\t");
+                    final int scanNumber = Integer.parseInt(cols[indices[0]]);
+                    final String featureId = featureIDs.get(scanNumber-1); //starting with 1!
+
+                    final Ms2Experiment experiment = experimentMap.get(featureId);
+                    final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
+
+                    if (formula==null){
+                        System.err.println("cannot parse molecular formula of library hit #SCAN# "+scanNumber);
+                        continue;
+                    }
+
+                    final String structure = (isInchi(cols[indices[1]]) ? cols[indices[1]] : cols[indices[2]]);
+                    final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(cols[indices[3]]);
+                    final double cosine = Double.parseDouble(cols[indices[4]]);
+                    final int sharedPeaks = Integer.parseInt(cols[indices[5]]);
+                    final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
+                    LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
+                    libraryHits.add(libraryHit);
+                } catch (Exception e) {
+                    System.err.println("Warning: Cannot parse library hit. Reason: "+ e.getMessage());
+                }
+
+            }
+
+            return libraryHits;
+        } catch (Exception e){
+            throw new IOException("cannot parse library hits. Reason "+e.getMessage());
+        }
+
+    }
 
     private static MolecularFormula getFormulaFromStructure(String inchi, String smiles){
 
@@ -2943,7 +3068,12 @@ public class GibbsSamplerMain {
 
         JobManager jobManager = new JobManager(1);
         try {
-            GibbsMFCorrectionNetwork<Candidate<MolecularFormula>> gibbsMFCorrectionNetwork = new GibbsMFCorrectionNetwork(compounds, mfCandidates, reactions, jobManager);
+
+            NodeScorer<Candidate<MolecularFormula>>[] nodeScorer = new NodeScorer[]{new StandardNodeScorer()};
+            EdgeScorer<Candidate<MolecularFormula>>[] edgeScorer = new EdgeScorer[]{new ReactionScorer(reactions, new ReactionStepSizeScorer.ConstantReactionStepSizeScorer())};
+            EdgeFilter edgeFilter = new EdgeThresholdFilter(1.0D);
+            GraphBuilder<Candidate<MolecularFormula>> graphBuilder = GraphBuilder.createGraphBuilder(compounds, mfCandidates,nodeScorer,edgeScorer, edgeFilter);
+            GibbsMFCorrectionNetwork<Candidate<MolecularFormula>> gibbsMFCorrectionNetwork = new GibbsMFCorrectionNetwork(jobManager.submitJob(graphBuilder).awaitResult());
 
 
             gibbsMFCorrectionNetwork.setIterationSteps(10000,1000);
