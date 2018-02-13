@@ -62,7 +62,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
     protected int selectedCompoundId;
 
 
-    public CandidateListDetailView(final CSIFingerIdComputation computation, CandidateList sourceList) {
+    public CandidateListDetailView(final CSIFingerIDComputation computation, CandidateList sourceList) {
         super(sourceList);
         candidateList = new CandidateInnerList(new DefaultEventListModel<CompoundCandidate>(filteredSource));
 

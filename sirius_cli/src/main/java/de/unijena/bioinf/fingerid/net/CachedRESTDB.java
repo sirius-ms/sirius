@@ -142,13 +142,18 @@ public class CachedRESTDB {
     }
 
     private void search(WebAPI webAPI, MolecularFormula formula, List<FingerprintCandidate> candidates, boolean isBio) throws IOException, DatabaseException {
-        final File f = new File(getBioDirectory(), formula.toString() + ".json.gz");
-        if (f.exists())
-            parseJson(f, candidates);
-        else {
-            try (final RESTDatabase restDb = webAPI.getRESTDb(isBio ? BioFilter.ONLY_BIO : BioFilter.ONLY_NONBIO, directory)) {
-                candidates.addAll(restDb.lookupStructuresAndFingerprintsByFormula(formula));
+        final File f = new File(isBio ? getBioDirectory() : getNonBioDirectory(), formula.toString() + ".json.gz");
+        if (f.exists()) {
+            try {
+                parseJson(f, candidates);
+                return;
+            } catch (Exception e) {
+                LoggerFactory.getLogger(CachedRESTDB.class).error(e.getMessage(),e);
+                f.delete();
             }
+        }
+        try (final RESTDatabase restDb = webAPI.getRESTDb(isBio ? BioFilter.ONLY_BIO : BioFilter.ONLY_NONBIO, directory)) {
+            candidates.addAll(restDb.lookupStructuresAndFingerprintsByFormula(formula));
         }
     }
 

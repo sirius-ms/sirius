@@ -62,7 +62,7 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
             new SwingWorker<Integer, String>() {
                 @Override
                 protected Integer doInBackground() throws Exception {
-                    MF.getCsiFingerId().setDirectory(dir.toFile());
+                    MF.getCsiFingerId().refreshCacheDir();
                     return 1;
                 }
             }.execute();
