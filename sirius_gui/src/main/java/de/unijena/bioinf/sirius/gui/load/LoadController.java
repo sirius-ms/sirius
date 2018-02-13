@@ -207,7 +207,7 @@ public class LoadController implements LoadDialogListener {
         if (expToModify.getMs2Experiment().getSource() == null)
             expToModify.getMs2Experiment().setSource(experiment.getSource());
 
-        if (loadDialog.getIonization().isIonizationUnknown() && experiment.getPrecursorIonType() != null && !experiment.getPrecursorIonType().isIonizationUnknown())
+        if (experiment.getPrecursorIonType() != null && loadDialog.getIonization().isIonizationUnknown() && !experiment.getPrecursorIonType().equals(loadDialog.getIonization()))
             addIonToPeriodicTableAndFireChange(experiment.getPrecursorIonType());
 
         final String formula = loadDialog.editPanel.formulaTF.getText();
