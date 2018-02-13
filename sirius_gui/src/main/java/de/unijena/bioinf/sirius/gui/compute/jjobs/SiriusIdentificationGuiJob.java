@@ -13,7 +13,7 @@ import de.unijena.bioinf.sirius.logging.TextAreaJJobContainer;
 
 import java.util.List;
 
-//todo woud be nicer to simply extend the sirius identification job, or simply wrap it, but its not static
+//todo would be nicer to simply extend the sirius identification job, or simply wrap it, but its not a static class
 public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<SiriusResultElement>> implements GuiObservableJJob<List<SiriusResultElement>> {
     final ExperimentContainer ec;
     final int numberOfCandidates;
@@ -36,7 +36,8 @@ public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<Si
 
         //todo find a nice way to combine progress between subjobs
         updateProgress(0, 110, 1, "Setting up Identification Job");
-        //TODO: I think we have to copy the experiment for computation. Otherwise
+
+        //I think we have to copy the experiment for computation. Otherwise
         // it might be possible to change the experiment in GUI while computing it.
         // its a bit nasty, though, as internally, SIRIUS will make another copy =/
         final Sirius.SiriusIdentificationJob identificationJob = sirius.makeIdentificationJob(new MutableMs2Experiment(experiment), numberOfCandidates);
@@ -44,7 +45,6 @@ public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<Si
             JobProgressEvent e = (JobProgressEvent) evt;
             updateProgress(e.getMinValue(), e.getMaxValue() + 10, e.getNewValue());
         });
-        swingJobContainer.registerJobLog(identificationJob);
 
         final List<IdentificationResult> results = submitSubJob(identificationJob).awaitResult();
 

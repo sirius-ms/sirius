@@ -1,6 +1,6 @@
 package de.unijena.bioinf.sirius.gui.compute.jjobs;
 
-import de.unijena.bioinf.fingerid.CSIFingerIDComputation2;
+import de.unijena.bioinf.fingerid.CSIFingerIDComputation;
 import de.unijena.bioinf.fingerid.FingerIdData;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
@@ -26,7 +26,7 @@ public class FingerIDSearchGuiJob extends BasicDependentMasterJJob<FingerIdData>
         if (ec.getSiriusComputeState() != ComputingStatus.COMPUTED)
             throw new IllegalArgumentException("Input Data does not contain Sirius Identification results. Run Sirius job first!");
 
-        CSIFingerIDComputation2 csiFingerID = MainFrame.MF.getCsiFingerId2();
+        CSIFingerIDComputation csiFingerID = MainFrame.MF.getCsiFingerId();
         csiFingerID.compute(ec, db);
         return null;
     }
