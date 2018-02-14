@@ -1056,7 +1056,7 @@ public class Sirius {
                 while (iter.hasNext()) {
                     final Decomposition d = iter.next();
                     final IsotopePattern p = pattern.getExplanations().get(d.getCandidate());
-                    if (p.getScore() < ((isoPeaks * ISOTOPE_SCORE_FILTER_THRESHOLD))) {
+                    if (p==null || p.getScore() < ((isoPeaks * ISOTOPE_SCORE_FILTER_THRESHOLD))) {
                         iter.remove();
                     }
                 }

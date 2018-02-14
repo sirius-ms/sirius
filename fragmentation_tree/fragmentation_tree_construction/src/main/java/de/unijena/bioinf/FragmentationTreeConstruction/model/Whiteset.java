@@ -3,6 +3,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.model;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import gnu.trove.set.hash.TCustomHashSet;
 
 import java.util.*;
 
@@ -30,17 +31,18 @@ public class Whiteset {
      * of the precursor ions
      */
     public List<Decomposition> resolve(double parentMass, Deviation deviation, Collection<PrecursorIonType> allowedPrecursorIonTypes) {
-        final List<Decomposition> decompositions = new ArrayList<>();
+
+        final TCustomHashSet<Decomposition> decompositionSet = Decomposition.newDecompositionSet();
         eachFormula:
         for (MolecularFormula formula : formulas) {
             for (PrecursorIonType ionType : allowedPrecursorIonTypes) {
                 if (deviation.inErrorWindow(parentMass, ionType.neutralMassToPrecursorMass(formula.getMass()))) {
-                    decompositions.add(new Decomposition(ionType.neutralMoleculeToMeasuredNeutralMolecule(formula), ionType.getIonization(), 0d));
+                    decompositionSet.add(new Decomposition(ionType.neutralMoleculeToMeasuredNeutralMolecule(formula), ionType.getIonization(), 0d));
                     continue eachFormula;
                 }
             }
         }
-        return decompositions;
+        return Arrays.asList(decompositionSet.toArray(new Decomposition[decompositionSet.size()]));
     }
 
 }
