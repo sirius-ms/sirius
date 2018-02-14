@@ -159,8 +159,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         sirius.setTimeout(i.experiment, options.getInstanceTimeout(), options.getTreeTimeout());
         final List<String> whitelist = formulas;
 
-        final Set<MolecularFormula> whiteset = getFormulaWhiteset(i, whitelist);
-
         if (options.isAutoCharge()) { //TODO: add optiosn.getIon into this case
             if (i.experiment.getPrecursorIonType().isIonizationUnknown() || i.experiment.getPrecursorIonType().isPlainProtonationOrDeprotonation()) {
                 i.experiment.setAnnotation(PossibleAdducts.class, null);
@@ -185,6 +183,8 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         if (options.isMostIntenseMs2()) {
             onlyKeepMostIntenseMS2(i.experiment);
         }
+
+        final Set<MolecularFormula> whiteset = getFormulaWhiteset(i, whitelist);
 
         sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
         sirius.setIsotopeMode(i.experiment, options.getIsotopes());
