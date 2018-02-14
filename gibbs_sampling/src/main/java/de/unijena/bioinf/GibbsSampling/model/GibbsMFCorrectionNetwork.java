@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMasterJJob<Scored<C>[][]> {
     private static final Logger LOG = LoggerFactory.getLogger(GibbsMFCorrectionNetwork.class);
@@ -51,32 +50,15 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
      */
     private TIntHashSet fixedCompounds;
 
-    public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds, JobManager jobManager) throws ExecutionException {
-        super(JobType.CPU);
-        for (Candidate[] pF : possibleFormulas) {
-            if (pF==null || pF.length==0) throw new RuntimeException("some peaks don\'t have any explanation");
-        }
-
-        this.jobManager = jobManager;
-        this.fixedCompounds = fixedCompounds==null?new TIntHashSet():fixedCompounds;
-        GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, fixedCompounds, jobManager);
-        this.graph = jobManager.submitJob(graphBuilder).awaitResult();
-        this.random = new Random();
-        this.setActive();
-
-    }
-
-    public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, JobManager jobManager) throws ExecutionException {
-        this(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, null, jobManager);
-    }
-
-    public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, Reaction[] reactions, JobManager jobManager) throws ExecutionException {
-        this(ids, possibleFormulas, new NodeScorer[]{new StandardNodeScorer()}, new EdgeScorer[]{new ReactionScorer(reactions, new ConstantReactionStepSizeScorer())}, new EdgeThresholdFilter(1.0D), null, jobManager);
-    }
 
     public GibbsMFCorrectionNetwork(Graph graph) {
+        this(graph, null);
+    }
+
+    public GibbsMFCorrectionNetwork(Graph graph, TIntHashSet fixedCompounds) {
         super(JobType.CPU);
         this.graph = graph;
+        this.fixedCompounds = fixedCompounds==null?new TIntHashSet():fixedCompounds;
         this.random = new Random();
         this.setActive();
     }
@@ -298,7 +280,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
                 Scored<C>[] candidatesScored = new Scored[candidatesLogScore.length];
                 for (int j = 0; j < candidatesScored.length; j++) {
                     //todo normalize??
-                    candidatesScored[i] = new Scored<>(candidatesLogScore[i].getCandidate(), Math.exp(candidatesLogScore[i].getScore()));
+                    candidatesScored[j] = new Scored<>(candidatesLogScore[j].getCandidate(), Math.exp(candidatesLogScore[j].getScore()));
                 }
                 candidatesByCompound[i] = candidatesScored;
                 continue;

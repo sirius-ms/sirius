@@ -27,33 +27,29 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
     EdgeScorer<C>[] edgeScorers;
     EdgeFilter edgeFilter;
 
-    private JobManager jobManager;
-
-    private int numberOfFinishedComputations;
+    private int numberOfFinishedComputations = 0;
     private int step;
     private int size;
 
-    public GraphBuilder(Graph<C> graph, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, JobManager jobManager) {
+    public GraphBuilder(Graph<C> graph, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter) {
         super(JobType.CPU);
         this.graph = graph;
         this.edgeScorers = edgeScorers;
         this.edgeFilter = edgeFilter;
-        this.jobManager = jobManager;
     }
 
-    public GraphBuilder(String[] ids, Scored<C>[][] possibleFormulas,  EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, JobManager jobManager) {
+    public GraphBuilder(String[] ids, Scored<C>[][] possibleFormulas,  EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter) {
         super(JobType.CPU);
         this.graph = new Graph<>(ids, possibleFormulas);
         this.edgeScorers = edgeScorers;
         this.edgeFilter = edgeFilter;
-        this.jobManager = jobManager;
     }
 
-    public static <C extends Candidate<?>> GraphBuilder<C> createGraphBuilder(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, JobManager jobManager){
-        return createGraphBuilder(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, null, jobManager);
+    public static <C extends Candidate<?>> GraphBuilder<C> createGraphBuilder(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter){
+        return createGraphBuilder(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, null);
     }
 
-    public static <C extends Candidate<?>> GraphBuilder<C> createGraphBuilder(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds, JobManager jobManager){
+    public static <C extends Candidate<?>> GraphBuilder<C> createGraphBuilder(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds){
         for (NodeScorer<C> nodeScorer : nodeScorers) {
             for (int i = 0; i < possibleFormulas.length; i++) {
                 if (isFixed(fixedCompounds, i)) continue;
@@ -83,7 +79,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
         String[] filteredIds = newIds.toArray(new String[0]);
         Scored<C>[][] scoredPossibleFormulas = newFormulas.toArray(new Scored[0][]);
 
-        return new GraphBuilder<C>(filteredIds, scoredPossibleFormulas, edgeScorers, edgeFilter, jobManager);
+        return new GraphBuilder<C>(filteredIds, scoredPossibleFormulas, edgeScorers, edgeFilter);
     }
 
     private static boolean isFixed(TIntHashSet fixedCompounds, int i) {
@@ -94,8 +90,6 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
     @Override
     protected Graph<C> compute() throws Exception {
-//        graph.edgeScorers = edgeScorers;
-//        graph.edgeFilter = edgeFilter;
         if (graph.possibleFormulas.length==0){
             graph.connections = new int[0][0];
         } else {
@@ -113,13 +107,6 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
 
     private void calculateWeight() throws ExecutionException {
-//    private void calculateWeight(int threads) {
-//        ExecutorService executorService = Executors.newFixedThreadPool(threads);
-
-
-//        ArrayList futures = new ArrayList();
-//        C[][] allCandidates = (C[][])new Candidate[this.getPossibleFormulas().length][];
-
         Class<C> cClass = getCandidateClass();
 
 
@@ -164,11 +151,6 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
         this.edgeFilter.setThreshold(minV);
         final Graph final_graph = graph;
-//        long time = System.currentTimeMillis();
-
-
-//        List<BasicJJob> jobs = new ArrayList<>();
-//        AtomicInteger counter = new AtomicInteger(0);
         size = graph.getSize();
         step = Math.max(size/20, 1);
         updateProgress(0, size,0, "start computing edges");
@@ -199,12 +181,6 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
                     edgeFilter.filterEdgesAndSetThreshold(final_graph, final_i, scores.toArray());
 
                     //progess
-//                    int progress = counter.incrementAndGet();
-//                    if((progress-1) % step == 0 || (progress)==(size)) {
-//                        LOG.info((100*(progress)/size)+"%");
-//                        //todo write some job progress
-//                    }
-                    //finished
                     updateProgress(100);
 
                     return null;
@@ -214,49 +190,9 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
             job.addPropertyChangeListener(this);
             submitSubJob(job);
-//            jobs.add(job);
-
-
-//            futures.add(executorService.submit(new Runnable() {
-//                public void run() {
-//                    TDoubleArrayList scores = new TDoubleArrayList(Graph.this.getSize());
-//
-//                    for(int j = 0; j < Graph.this.getSize(); ++j) {
-//                        if(Graph.this.getPeakIdx(final_i) == Graph.this.getPeakIdx(j)) {
-//                            scores.add(0.0D);
-//                        } else {
-//                            C candidate2 = Graph.this.getPossibleFormulas1D(j).getCandidate();
-//                            double score = 0.0D;
-//
-//                            for(int k = 0; k < edgeScorers.length; ++k) {
-//                                EdgeScorer edgeScorer = edgeScorers[k];
-//                                score += edgeScorer.score(candidate, candidate2);
-//                            }
-//
-//                            scores.add(score);
-//                        }
-//                    }
-//
-//                    edgeFilter.filterEdgesAndSetThreshold(final_graph, final_i, scores.toArray());
-//
-//                    //progess
-//                    int progress = counter.incrementAndGet();
-//                    if((progress-1) % step == 0 || (progress)==(size)) {
-//                        LOG.info((100*(progress)/size)+"%");
-//                    }
-//                }
-//            }));
         }
 
-//        this.futuresGet(futures);
-//        awaitJobs(jobs);
         awaitAllSubJobs();
-
-//        if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("computing edges in ms: "+(System.currentTimeMillis()-time));
-
-//        for (EdgeScorer edgeScorer : edgeScorers) {
-//            edgeScorer.clean(); //changed don't clean. we need this information later on
-//        }
 
     }
 
@@ -329,15 +265,6 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
     }
 
-
-
-//    private void awaitJobs(List<BasicJJob> jobs) throws ExecutionException {
-//        for (BasicJJob job : jobs) {
-//            job.awaitResult();
-//        }
-//    }
-
-
     private Class<C> getCandidateClass(){
         for (Scored<C>[] s : graph.getPossibleFormulas()) {
             for (Scored<C> scored : s) {
@@ -350,10 +277,12 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
     @Override
     public void progressChanged(JobProgressEvent progressEvent) {
         if (progressEvent.getNewValue()!=100) return;
+        ++numberOfFinishedComputations;
         if((numberOfFinishedComputations-1) % step == 0 || (numberOfFinishedComputations)==(size)) {
 //            LOG.info((100*(progress)/size)+"%");
 //            //todo write some job progress
             updateProgress(0, size, numberOfFinishedComputations);
+
         }
     }
 
