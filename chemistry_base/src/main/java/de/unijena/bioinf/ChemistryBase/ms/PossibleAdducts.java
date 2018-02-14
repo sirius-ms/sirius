@@ -71,6 +71,12 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType> {
         return copy;
     }
 
+    public void update(PossibleIonModes ionModes) {
+        for (PrecursorIonType precursorIonType : ionModes.getIonModesAsPrecursorIonType()) {
+            addAdduct(precursorIonType);
+        }
+    }
+
     public void addAdduct(String adductName) {
         addAdduct(PrecursorIonType.getPrecursorIonType(adductName));
     }

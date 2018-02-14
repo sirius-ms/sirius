@@ -175,6 +175,13 @@ public interface GibbsSamplerOptions {
     )
     String getEvalCliOutput();
 
+    @Option(
+            longName = {"clusters"},
+            description = "cluster.csv file; only used for eval",
+            defaultToNull = true
+    )
+    String getClusterSummary();
+
 //    @Option(longName = "test", description = "do some tests on graph generation", defaultToNull = true)
 //    boolean isTestGraphGeneration();
 
