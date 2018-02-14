@@ -346,37 +346,38 @@ public class Sirius {
     /**
      * Search for peaks in MS1 that indicate certain
      *
-     * @param experiment
+     * @param processedInput
      */
     @Deprecated
-    public void detectPossibleAdductsFromMs1(ProcessedInput experiment) {
+    public void detectPossibleAdductsFromMs1(ProcessedInput processedInput) {
         final PrecursorIonType[] adductTypes;
-        if (experiment.getExperimentInformation().getPrecursorIonType().isIonizationUnknown()) {
-            adductTypes = guessIonization(experiment.getExperimentInformation(), Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(experiment.getExperimentInformation().getPrecursorIonType().getCharge()), PrecursorIonType.class));
+        if (processedInput.getExperimentInformation().getPrecursorIonType().isIonizationUnknown()) {
+            adductTypes = guessIonization(processedInput.getExperimentInformation(), Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(processedInput.getExperimentInformation().getPrecursorIonType().getCharge()), PrecursorIonType.class));
         } else {
-            adductTypes = guessIonization(experiment.getExperimentInformation(), PeriodicTable.getInstance().adductsByIonisation(experiment.getExperimentInformation().getPrecursorIonType()).toArray(new PrecursorIonType[0]));
+            adductTypes = guessIonization(processedInput.getExperimentInformation(), PeriodicTable.getInstance().adductsByIonisation(processedInput.getExperimentInformation().getPrecursorIonType()).toArray(new PrecursorIonType[0]));
         }
-        setAllowedAdducts(experiment, adductTypes);
+        setAllowedAdducts(processedInput, adductTypes);
         final Set<Ionization> ionModes = new HashSet<>();
         for (PrecursorIonType ionType : adductTypes) ionModes.add(ionType.getIonization());
-        setAllowedIonModes(experiment, ionModes.toArray(new Ionization[ionModes.size()]));
+        setAllowedIonModes(processedInput, ionModes.toArray(new Ionization[ionModes.size()]));
     }
 
-    public void detectPossibleIonModesFromMs1(ProcessedInput experiment) {
+    public void detectPossibleIonModesFromMs1(ProcessedInput processedInput) {
         final List<PrecursorIonType> ionTypes = new ArrayList<>();
-        for (Ionization ionMode : PeriodicTable.getInstance().getKnownIonModes(experiment.getExperimentInformation().getPrecursorIonType().getCharge())) {
+        for (Ionization ionMode : PeriodicTable.getInstance().getKnownIonModes(processedInput.getExperimentInformation().getPrecursorIonType().getCharge())) {
             ionTypes.add(PrecursorIonType.getPrecursorIonType(ionMode));
         }
-        detectPossibleIonModesFromMs1(experiment, ionTypes.toArray(new PrecursorIonType[ionTypes.size()]));
+        detectPossibleIonModesFromMs1(processedInput, ionTypes.toArray(new PrecursorIonType[ionTypes.size()]));
     }
 
-    public void detectPossibleIonModesFromMs1(ProcessedInput experiment, PrecursorIonType... allowedIonModes) {
-        final PrecursorIonType[] ionModes = guessIonization(experiment.getExperimentInformation(), allowedIonModes);
-        final PossibleIonModes pa = experiment.getAnnotation(PossibleIonModes.class, new PossibleIonModes());
-        for (PrecursorIonType ion : ionModes) {
-            pa.add(ion.getIonization(), 1d);
-        }
-        experiment.setAnnotation(PossibleIonModes.class, pa);
+    public void detectPossibleIonModesFromMs1(ProcessedInput processedInput, PrecursorIonType... allowedIonModes) {
+        final PrecursorIonType[] ionModes = guessIonization(processedInput.getExperimentInformation(), allowedIonModes);
+        final PossibleIonModes pim = processedInput.getAnnotation(PossibleIonModes.class, new PossibleIonModes());
+        if (ionModes.length>0) pim.updateGuessedIons(ionModes);
+        processedInput.setAnnotation(PossibleIonModes.class, pim);
+        //also update PossibleAdducts
+        final PossibleAdducts pa = processedInput.getAnnotation(PossibleAdducts.class, new PossibleAdducts());
+        pa.update(pim);
     }
 
     /**
@@ -646,9 +647,9 @@ public class Sirius {
         final PossibleAdducts ad = new PossibleAdducts(adducts);
         experiment.setAnnotation(PossibleAdducts.class, ad);
     }
-    public void setAllowedAdducts(ProcessedInput experiment, PrecursorIonType... adducts) {
+    public void setAllowedAdducts(ProcessedInput processedInput, PrecursorIonType... adducts) {
         final PossibleAdducts ad = new PossibleAdducts(adducts);
-        experiment.setAnnotation(PossibleAdducts.class, ad);
+        processedInput.setAnnotation(PossibleAdducts.class, ad);
     }
 
     public void setFormulaSearchList(Ms2Experiment experiment, MolecularFormula... formulas) {
