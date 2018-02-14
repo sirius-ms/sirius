@@ -2,9 +2,13 @@ package de.unijena.bioinf.ms.cli;
 
 import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.*;
@@ -408,16 +412,9 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
             final Deviation dev;
             if (options.getPPMMax() != null) dev = new Deviation(options.getPPMMax());
             else dev = sirius.getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation();
-            final List<PrecursorIonType> allowedIonTypes = new ArrayList<>();
-            if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
-                int charge = i.experiment.getPrecursorIonType().getCharge();
-                if (charge > 0) {
-                    allowedIonTypes.addAll(PeriodicTable.getInstance().getPositiveIonizations());
-                } else if (charge < 0) {
-                    allowedIonTypes.addAll(PeriodicTable.getInstance().getPositiveIonizations());
-                } else {
-                    allowedIonTypes.addAll(PeriodicTable.getInstance().getIonizations());
-                }
+            final Set<PrecursorIonType> allowedIonTypes = new HashSet<>();
+            if (i.experiment.getPrecursorIonType()==null||i.experiment.getPrecursorIonType().isIonizationUnknown()) {
+                allowedIonTypes.addAll(i.experiment.getAnnotation(PossibleAdducts.class).getAdducts());
             } else {
                 allowedIonTypes.add(i.experiment.getPrecursorIonType());
             }
