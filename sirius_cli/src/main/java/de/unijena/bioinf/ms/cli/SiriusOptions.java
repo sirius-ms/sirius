@@ -140,6 +140,10 @@ public interface SiriusOptions {
     @Option(longName = "mostintense-ms2", description = "Only use the fragmentation spectrum with the most intense precursor peak (for each compound).")
     boolean isMostIntenseMs2();
 
+    @Option(longName = "trust-ion-prediction", description = "By default we use MS1 information to select additional ionizations ([M+Na]+,[M+K]+,[M+Cl]-,[M+Br]-) for considerations. With this parameter we trust the MS1 prediction and only consider these found ionizations.")
+    boolean isTrustGuessIonFromMS1();
+
+
 
     //technical stuff
     @Option(

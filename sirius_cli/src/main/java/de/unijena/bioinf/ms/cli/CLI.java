@@ -142,15 +142,31 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             logger.error("Could not load results for " + jc.sourceInstance.file.getName());
     }
 
-    private void setPrecursorIonTypes(MutableMs2Experiment exp, PossibleAdducts pa, boolean guessFromMS1) {
+    private void setPrecursorIonTypes(MutableMs2Experiment exp, PossibleAdducts pa, PossibleIonModes.GuessingMode guessingMode, boolean preferProtonation) {
         exp.setAnnotation(PossibleAdducts.class, pa);
         PossibleIonModes im = exp.getAnnotation(PossibleIonModes.class, new PossibleIonModes());
-        final Set<Ionization> ionModes = new HashSet<>(pa.getIonModes());
-        for (Ionization ion : ionModes) {
-            im.add(ion, 0.02);
+        im.setGuessFromMs1(guessingMode);
+
+
+        if (preferProtonation){
+            if (guessingMode.isEnabled()) im.enableGuessFromMs1WithCommonIonModes(exp.getPrecursorIonType().getCharge());
+            final Set<Ionization> ionModes = new HashSet<>(pa.getIonModes());
+            for (Ionization ion : ionModes) {
+                im.add(ion, 0.02);
+            }
+            if (exp.getPrecursorIonType().getCharge()>0){
+                im.add(PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization(), 1d);
+            } else {
+                im.add(PrecursorIonType.getPrecursorIonType("[M-H]-").getIonization(), 1d);
+
+            }
+        } else {
+            final Set<Ionization> ionModes = new HashSet<>(pa.getIonModes());
+            for (Ionization ion : ionModes) {
+                im.add(ion, 1d);
+            }
         }
-        im.add(exp.getPrecursorIonType().getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization() : PrecursorIonType.getPrecursorIonType("[M-H]-").getIonization(), 1d);
-        if (guessFromMS1) im.enableGuessFromMs1WithCommonIonModes(exp.getPrecursorIonType().getCharge());
+
         exp.setAnnotation(PossibleIonModes.class, im);
     }
 
@@ -159,32 +175,34 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         sirius.setTimeout(i.experiment, options.getInstanceTimeout(), options.getTreeTimeout());
         final List<String> whitelist = formulas;
 
+        final Set<MolecularFormula> whiteset = getFormulaWhiteset(i, whitelist);
+
+        PossibleIonModes.GuessingMode enabledGuessingMode = options.isTrustGuessIonFromMS1()? PossibleIonModes.GuessingMode.SELECT : PossibleIonModes.GuessingMode.ADD_IONS;
+
         if (options.isAutoCharge()) { //TODO: add optiosn.getIon into this case
             if (i.experiment.getPrecursorIonType().isIonizationUnknown() || i.experiment.getPrecursorIonType().isPlainProtonationOrDeprotonation()) {
                 i.experiment.setAnnotation(PossibleAdducts.class, null);
                 if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
-                    setPrecursorIonTypes(i.experiment, new PossibleAdducts(Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(i.experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class)), true);
+                    setPrecursorIonTypes(i.experiment, new PossibleAdducts(Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(i.experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class)), enabledGuessingMode, true);
                 }
             } else {
-                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()), false);
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()), PossibleIonModes.GuessingMode.DISABLED, false);
             }
         } else if (options.getIon() != null && options.getIon().size() > 1) {
             final List<PrecursorIonType> ionTypes = new ArrayList<>();
             for (String ion : options.getIon()) ionTypes.add(PrecursorIonType.getPrecursorIonType(ion));
-            setPrecursorIonTypes(i.experiment, new PossibleAdducts(ionTypes), true);
+            setPrecursorIonTypes(i.experiment, new PossibleAdducts(ionTypes), enabledGuessingMode, false);
         } else {
             if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
-                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType().getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-")), true); // TODO: ins MS1 gucken
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType().getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-")), enabledGuessingMode, true); // TODO: ins MS1 gucken
             } else {
-                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()), false);
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()), PossibleIonModes.GuessingMode.DISABLED, false);
             }
         }
 
         if (options.isMostIntenseMs2()) {
             onlyKeepMostIntenseMS2(i.experiment);
         }
-
-        final Set<MolecularFormula> whiteset = getFormulaWhiteset(i, whitelist);
 
         sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
         sirius.setIsotopeMode(i.experiment, options.getIsotopes());
