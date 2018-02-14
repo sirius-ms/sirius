@@ -135,7 +135,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
     }
 
     public boolean isOffline() {
-        return !options.isFingerid() && !options.getDatabase().equals(CONSIDER_ALL_FORMULAS);
+        return !options.isFingerid() && options.getDatabase().equals(CONSIDER_ALL_FORMULAS);
     }
 
     protected static final class CandidateElement extends Scored<FingerprintCandidate> {
