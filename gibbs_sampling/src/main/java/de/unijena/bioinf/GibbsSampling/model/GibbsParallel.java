@@ -16,24 +16,28 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Scored<C>[][]> {
+public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<CompoundResult<C>[]> {
     private int repetitions;
     private final List<GibbsMFCorrectionNetwork> gibbsNetworks;
     private Scored<C>[][] sampling;
     private Graph graph;
 
-    public GibbsParallel(Graph<C> graph, int repetitions) throws ExecutionException {
+    public GibbsParallel(Graph<C> graph, int repetitions, TIntHashSet fixedCompounds) throws ExecutionException {
         super(JobType.CPU);
         this.repetitions = repetitions;
         this.graph = graph;
-        this.gibbsNetworks = init(repetitions);
+        this.gibbsNetworks = init(repetitions, fixedCompounds);
     }
 
-    private List<GibbsMFCorrectionNetwork> init(int size){
+    public GibbsParallel(Graph<C> graph, int repetitions) throws ExecutionException {
+        this(graph, repetitions, null);
+    }
+
+    private List<GibbsMFCorrectionNetwork> init(int size, TIntHashSet fixedCompounds){
         List<GibbsMFCorrectionNetwork> networkList = new ArrayList<>();
         int i = 0;
         while(i++ < size) {
-            networkList.add(new GibbsMFCorrectionNetwork(graph));
+            networkList.add(new GibbsMFCorrectionNetwork(graph, fixedCompounds));
         }
         return networkList;
     }
@@ -111,7 +115,7 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Score
     }
 
     @Override
-    protected Scored<C>[][] compute() throws Exception {
+    protected CompoundResult<C>[] compute() throws Exception {
         if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
         final int maxStepProportioned = maxSteps / this.repetitions;
         
@@ -124,11 +128,30 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Score
 
         combineResults();
 
-        return this.sampling;
+        return createCompoundResults();
 
     }
 
+
+    protected CompoundResult<C>[] createCompoundResults(){
+        final String[] ids = graph.getIds();
+        final CompoundResult<C>[] results = new CompoundResult[ids.length];
+        for (int i = 0; i < ids.length; i++) {
+            String id = ids[i];
+            Scored<C>[] candidates = sampling[i];
+            final CompoundResult<C> compoundResult = new CompoundResult(id, candidates);
+            compoundResult.addAnnotation(Connectivity.class, new Connectivity(graph.getMaxNumberOfConnectedCompounds(i)));
+            results[i] = compoundResult;
+        }
+        return results;
+    }
+
+    @Deprecated
     public Scored<C>[][] getChosenFormulasBySampling() {
+        return this.sampling;
+    }
+
+    public Scored<C>[][] getChosenFormulas() {
         return this.sampling;
     }
 
