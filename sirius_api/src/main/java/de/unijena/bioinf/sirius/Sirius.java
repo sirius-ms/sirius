@@ -102,7 +102,7 @@ public class Sirius {
             final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, numberOfResultsToKeep);
             instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, 105, (int) evt.getNewValue()));
             final ProcessedInput pinput = instance.validateInput();
-            performMs1Analysis(instance, IsotopePatternHandling.both);
+            performMs1Analysis(instance);
             submitSubJob(instance);
             AbstractTreeComputationInstance.FinalResult fr = instance.awaitResult();
 
@@ -402,7 +402,7 @@ public class Sirius {
     public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates) {
         final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), uexperiment, numberOfCandidates);
         final ProcessedInput pinput = instance.validateInput();
-        performMs1Analysis(instance, IsotopePatternHandling.both);
+        performMs1Analysis(instance);
         SiriusJobs.getGlobalJobManager().submitJob(instance);
         AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = createIdentificationResults(fr, instance);//postprocess results
@@ -1011,6 +1011,18 @@ public class Sirius {
             experiment.setMergedMs1Spectrum(Spectrums.mergeSpectra(experiment.<Spectrum<Peak>>getMs1Spectra()));
             return experiment.getMergedMs1Spectrum();
         } else return new SimpleSpectrum(new double[0], new double[0]);
+    }
+
+    protected boolean performMs1Analysis(AbstractTreeComputationInstance instance) {
+        FormulaSettings fs = instance.validateInput().getAnnotation(FormulaSettings.class,null);
+        IsotopeScoring iso = instance.validateInput().getAnnotation(IsotopeScoring.class,null);
+        if (fs==null || fs.isAllowIsotopeElementFiltering()) {
+            if (iso==null || iso.getIsotopeScoreWeighting()>0) {
+                return performMs1Analysis(instance,IsotopePatternHandling.both);
+            } else return performMs1Analysis(instance,IsotopePatternHandling.filter);
+        } else if (iso==null || iso.getIsotopeScoreWeighting()>0)
+            return performMs1Analysis(instance,IsotopePatternHandling.score);
+        else return performMs1Analysis(instance,IsotopePatternHandling.omit);
     }
 
     /*
