@@ -67,42 +67,73 @@ public class PossibleIonModes {
         }
     }
 
-    protected List<ProbabilisticIonization> ionTypes;
+    public static enum GuessingMode {DISABLED, SELECT, ADD_IONS;
+        public boolean isEnabled(){
+            return this.equals(SELECT) || this.equals(ADD_IONS);
+        }
+
+    };
+    protected static final GuessingMode DEFAULT_ENABLED_GUESSING_MODE = GuessingMode.ADD_IONS;
+
+    protected List<ProbabilisticIonization> ionTypes;//todo i think class is currently not save for having ionization multiple times in the list
     protected double totalProb;
-    protected boolean enableGuessFromMs1;
+    protected GuessingMode GuessingModeFromMs1;
+
 
     public PossibleIonModes(PossibleIonModes pi) {
         this.ionTypes = new ArrayList<>();
         for (ProbabilisticIonization i : pi.ionTypes)
             this.ionTypes.add(new ProbabilisticIonization(i.ionMode, i.probability));
         this.totalProb = pi.totalProb;
-        this.enableGuessFromMs1 = pi.enableGuessFromMs1;
+        this.GuessingModeFromMs1 = pi.GuessingModeFromMs1;
     }
 
     public PossibleIonModes() {
         this.ionTypes = new ArrayList<>();
-        this.enableGuessFromMs1 = true;
+        this.GuessingModeFromMs1 = DEFAULT_ENABLED_GUESSING_MODE;
     }
 
     public boolean isGuessFromMs1Enabled() {
-        return enableGuessFromMs1;
+        return GuessingModeFromMs1.isEnabled();
     }
 
-    public void enableGuessFromMs1(boolean enabled) {
-        this.enableGuessFromMs1 = enabled;
+    public void setGuessFromMs1(GuessingMode mode) {
+        this.GuessingModeFromMs1 = mode;
     }
+
     public void enableGuessFromMs1WithCommonIonModes(int charge) {
-        enableGuessFromMs1(true);
+        if (!isGuessFromMs1Enabled()) setGuessFromMs1(DEFAULT_ENABLED_GUESSING_MODE);
         final PossibleIonModes pm = PossibleIonModes.useAlwaysProtonationButAllowMs1Detection(charge);
         for (ProbabilisticIonization pa : pm.ionTypes) {
-            if (getProbabilityFor(pa.ionMode)<=0) this.ionTypes.add(pa);
+            if (getProbabilityFor(pa.ionMode)<=0) takeMaxProbability(pa);
         }
     }
     public void enableGuessFromMs1(){
-        enableGuessFromMs1(true);
+        setGuessFromMs1(DEFAULT_ENABLED_GUESSING_MODE);
     }
     public void disableGuessFromMs1() {
-        enableGuessFromMs1(false);
+        setGuessFromMs1(GuessingMode.DISABLED);
+    }
+
+    public GuessingMode getGuessingMode() {
+        return GuessingModeFromMs1;
+    }
+
+    protected void takeMaxProbability(ProbabilisticIonization pi){
+        final ListIterator<ProbabilisticIonization> iter = ionTypes.listIterator();
+        while (iter.hasNext()) {
+            final ProbabilisticIonization ion = iter.next();
+            if (ion.ionMode.equals(pi.ionMode)) {
+                if (ion.probability>=pi.probability) return;
+                totalProb -= ion.probability;
+                iter.set(pi);
+                totalProb += pi.probability;
+                return;
+            }
+        }
+        ionTypes.add(pi);
+        totalProb += pi.probability;
+        return;
     }
 
     public void add(ProbabilisticIonization ionMode) {
@@ -135,6 +166,49 @@ public class PossibleIonModes {
 
     public void add(Ionization ionType) {
         add(PrecursorIonType.getPrecursorIonType(ionType), 1d);
+    }
+
+    public void add(PrecursorIonType[] ionTypes, double[] probabilities) {
+        for (int i = 0; i < ionTypes.length; i++) {
+            add(ionTypes[i], probabilities[i]);
+        }
+    }
+
+    public void updateGuessedIons(PrecursorIonType[] ionTypes) {
+        updateGuessedIons(ionTypes, null);
+    }
+
+    /**
+     * use this method to update this {@link PossibleIonModes} after guessing from MS1.
+     * Don't forget to set appropriate {@link GuessingMode}
+     * @param ionTypes
+     * @param probabilities
+     */
+    public void updateGuessedIons(PrecursorIonType[] ionTypes, double[] probabilities) {
+        if (probabilities==null){
+            probabilities = new double[ionTypes.length];
+            Arrays.fill(probabilities, 1d);
+        }
+
+        if (GuessingModeFromMs1.equals(GuessingMode.ADD_IONS)){
+            //adds new ions with their probabilities
+            add(ionTypes, probabilities);
+        } else if (GuessingModeFromMs1.equals(GuessingMode.SELECT)){
+            //selects from known ion modes. no new modes allowed
+            //set all probabilities to 0
+            for (ProbabilisticIonization ionType : this.ionTypes) {
+                add(new ProbabilisticIonization(ionType.ionMode, 0d));
+            }
+            //add new probabilities
+            for (int i = 0; i < ionTypes.length; i++) {
+                if (add(ionTypes[i],probabilities[i])){
+                    throw new RuntimeException("Adding new ion mode is forbidden. It is only allowed to select known ion modes.");
+                }
+
+            }
+        } else {
+            throw new RuntimeException("guessing ionization is disabled");
+        }
     }
 
     public List<ProbabilisticIonization> probabilisticIonizations() {
