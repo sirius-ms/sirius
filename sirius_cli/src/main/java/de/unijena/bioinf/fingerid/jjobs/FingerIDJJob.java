@@ -102,10 +102,9 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
             }
 
             //collect input from dependent jobs
-            for (JJob j : requiredJobs) {
+            for (JJob j : getRequiredJobs()) {
                 if (j instanceof Sirius.SiriusIdentificationJob) {
                     Sirius.SiriusIdentificationJob job = (Sirius.SiriusIdentificationJob) j;
-                    //todo i am not 100% sure if this is needed
                     if (experiment == null) {
                         experiment = job.getExperiment();
                     } else if (experiment != job.getExperiment()) {

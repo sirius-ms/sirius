@@ -9,6 +9,7 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.IdentificationResultAnnotationJJob;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public abstract class FingerprintDependentJJob<R> extends BasicDependentJJob<R> implements IdentificationResultAnnotationJJob<R> {
@@ -25,6 +26,7 @@ public abstract class FingerprintDependentJJob<R> extends BasicDependentJJob<R> 
 
     protected void initInput() throws ExecutionException {
         if (identificationResult == null || fp == null) {
+            final List<JJob<?>> requiredJobs = getRequiredJobs();
             for (JJob j : requiredJobs) {
                 if (j instanceof WebAPI.PredictionJJob) {
                     WebAPI.PredictionJJob job = ((WebAPI.PredictionJJob) j);

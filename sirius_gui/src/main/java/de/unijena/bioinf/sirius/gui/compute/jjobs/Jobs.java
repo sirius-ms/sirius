@@ -11,6 +11,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class Jobs {
     public static final SwingJobManager MANAGER = (SwingJobManager) SiriusJobs.getGlobalJobManager();
@@ -120,9 +121,10 @@ public class Jobs {
     }
 
     public static void cancelALL() {
-        for (SwingJJobContainer swingJJobContainer : MANAGER.getJobs()) {
-            swingJJobContainer.getSourceJob().cancel();
-        }
+        //iterator needed to prevent current modification exception
+        Iterator<SwingJJobContainer> it = MANAGER.getJobs().iterator();
+        while (it.hasNext())
+            it.next().getSourceJob().cancel();
     }
 
     public static void cancel(ExperimentContainer cont) {
