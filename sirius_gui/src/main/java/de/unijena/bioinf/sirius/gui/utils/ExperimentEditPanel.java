@@ -10,13 +10,13 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import javax.swing.*;
 
 //todo property change support so that other vie can listen to changes input data before applying them
-public class ExperiemtEditPanel extends JPanel {
+public class ExperimentEditPanel extends JPanel {
     public final PrecursorSelector precursorSelection;
     public final PrecursorIonTypeSelector ionizationCB;
     public final JTextField nameTF;
     public final JTextField formulaTF;
 
-    public ExperiemtEditPanel() {
+    public ExperimentEditPanel() {
         RelativeLayout rl = new RelativeLayout(RelativeLayout.X_AXIS, 15);
         rl.setAlignment(RelativeLayout.LEADING);
         setLayout(rl);
@@ -34,7 +34,7 @@ public class ExperiemtEditPanel extends JPanel {
         add(new TextHeaderBoxPanel("Molecular Formula", formulaTF));
     }
 
-    public ExperiemtEditPanel(ExperimentContainer ec) {
+    public ExperimentEditPanel(ExperimentContainer ec) {
         this();
         if (ec != null) {
             setData(ec);

@@ -34,10 +34,6 @@ import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 public class MainFrame extends JFrame implements DropTargetListener {
     public static final MainFrame MF = new MainFrame();
 
-    static {
-        decoradeMainFrameInstance(MF);
-    }
-
     //left side panel
     private ExperimentList experimentList;
 
@@ -93,21 +89,21 @@ public class MainFrame extends JFrame implements DropTargetListener {
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this); //todo do we want to have the left table as drop target?
     }
 
-    private static void decoradeMainFrameInstance(final MainFrame mf) {
+    public void decoradeMainFrameInstance() {
         //create computation
-        mf.csiFingerId= new CSIFingerIDComputation();
+        csiFingerId= new CSIFingerIDComputation();
 
         // create models for views
-        mf.experimentList = new ExperimentList();
-        mf.formulaList = new FormulaList(mf.experimentList);
+        experimentList = new ExperimentList();
+        formulaList = new FormulaList(experimentList);
 
 
         //CREATE VIEWS
-        mf.jobDialog = new JobDialog(mf);
+        jobDialog = new JobDialog(this);
         // results Panel
-        mf.resultsPanel = new ResultPanel(mf.formulaList);
+        resultsPanel = new ResultPanel(formulaList);
 
-        mf.toolbar = new SiriusToolbar();
+        toolbar = new SiriusToolbar();
 
 
         //Init actions
@@ -116,10 +112,10 @@ public class MainFrame extends JFrame implements DropTargetListener {
         final JPanel mainPanel = new JPanel(new BorderLayout());
 
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 1, 5, 1));
-        mf.add(mainPanel, BorderLayout.CENTER);
+        add(mainPanel, BorderLayout.CENTER);
 
         //build left sidepane
-        FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(mf.experimentList));
+        FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(experimentList));
 
         //BUILD the MainFrame (GUI)
         final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
@@ -128,9 +124,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
         tabbedPane.setEnabledAt(1, false);
         tabbedPane.setPreferredSize(new Dimension(218, (int) tabbedPane.getPreferredSize().getHeight()));
         mainPanel.add(tabbedPane, BorderLayout.WEST);
-        mainPanel.add(mf.resultsPanel, BorderLayout.CENTER);
-        mf.add(mf.toolbar, BorderLayout.NORTH);
-        mf.setSize(new Dimension(1368, 1024));
+        mainPanel.add(resultsPanel, BorderLayout.CENTER);
+        add(toolbar, BorderLayout.NORTH);
+        setSize(new Dimension(1368, 1024));
 
 
         //finger id observer
@@ -142,7 +138,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                     int errorState = api.checkConnection();
                     versionsNumber = api.getVersionInfo();
                     publish(versionsNumber, errorState);
-                    LoggerFactory.getLogger(mf.getClass()).debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
+                    LoggerFactory.getLogger(getClass()).debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
                 } catch (Exception e) {
                     LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 }
@@ -157,17 +153,17 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
                 if (versionsNumber != null) {
                     if (versionsNumber.expired()) {
-                        new UpdateDialog(mf, versionsNumber);
+                        new UpdateDialog(MainFrame.this, versionsNumber);
                     }
                     if (!versionsNumber.outdated()) {
-                        mf.csiFingerId.setEnabled(true);
+                       csiFingerId.setEnabled(true);
                     }
                     if (versionsNumber.hasNews()) {
-                        new NewsDialog(mf, versionsNumber.getNews());
+                        new NewsDialog(MainFrame.this, versionsNumber.getNews());
                     }
                 }
                 if (errorState != 0)
-                    new ConnectionDialog(mf, errorState);
+                    new ConnectionDialog(MainFrame.this, errorState);
             }
 
             @Override
@@ -183,11 +179,11 @@ public class MainFrame extends JFrame implements DropTargetListener {
         try {
             w.get();
         } catch (Exception e) {
-            LoggerFactory.getLogger(mf.getClass()).error("Error during connection test", e);
+            LoggerFactory.getLogger(getClass()).error("Error during connection test", e);
         }
 
 
-        mf.setVisible(true);
+        setVisible(true);
     }
 
     @Override
