@@ -10,7 +10,7 @@ import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.msviewer.MSViewerPanel;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
-import de.unijena.bioinf.sirius.gui.utils.ExperiemtEditPanel;
+import de.unijena.bioinf.sirius.gui.utils.ExperimentEditPanel;
 import de.unijena.bioinf.sirius.gui.utils.TextHeaderBoxPanel;
 
 import javax.swing.*;
@@ -31,7 +31,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     private JButton add, remove, ok, abort;
 
     private JList<SpectrumContainer> msList;
-    ExperiemtEditPanel editPanel;
+    ExperimentEditPanel editPanel;
 
     private MSViewerPanel msviewer;
     private JButton editCE;
@@ -95,7 +95,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
 
         //edit panel
-        editPanel = new ExperiemtEditPanel();
+        editPanel = new ExperimentEditPanel();
         list.addListEventListener(listChanges -> {
             editPanel.precursorSelection.setData(list, editPanel.getSelectedIonMass());
         });

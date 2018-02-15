@@ -77,6 +77,7 @@ public class SiriusGUIApplication {
             });
             MainFrame.MF.setLocationRelativeTo(null);//init mainframe
             FingeridCLI.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
+            MainFrame.MF.decoradeMainFrameInstance();
         } else {
             try {
                 cli.setup();
