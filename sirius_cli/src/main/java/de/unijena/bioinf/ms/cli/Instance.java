@@ -19,6 +19,7 @@ package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.sirius.projectspace.Index;
 
 import java.io.File;
 
@@ -27,15 +28,19 @@ public class Instance {
 
     final MutableMs2Experiment experiment;
     final File file;
+    final int index;
 
     private Instance() {
         experiment = null;
         file = null;
+        index = 0;
     }
 
-    public Instance(Ms2Experiment experiment, File file) {
+    public Instance(Ms2Experiment experiment, File file, int index) {
         this.experiment = new MutableMs2Experiment(experiment);
         this.file = file;
+        this.index = index;
+        this.experiment.setAnnotation(Index.class, new Index(index));
     }
 
     public String fileNameWithoutExtension() {
