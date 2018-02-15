@@ -42,7 +42,7 @@ import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import de.unijena.bioinf.sirius.gui.utils.ExperiemtEditPanel;
+import de.unijena.bioinf.sirius.gui.utils.ExperimentEditPanel;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -66,7 +66,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private JButton elementAutoDetect = null;
 
     private ElementsPanel elementPanel;
-    private ExperiemtEditPanel editPanel;
+    private ExperimentEditPanel editPanel;
     private SearchProfilePanel searchProfilePanel;
     private FingerIDComputationPanel csiOptions;
 
@@ -235,7 +235,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
 
         final double ionMass = editPanel.getSelectedIonMass();
-        if (ionMass <= 0)
+        if (ionMass > 0)
             ec.setIonMass(ionMass);
         ec.setName(editPanel.getExperiementName());
         ec.setIonization(editPanel.getSelectedIonization());
@@ -346,7 +346,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
 
         ExperimentContainer ec = compoundsToProcess.get(0);
-        editPanel = new ExperiemtEditPanel();
+        editPanel = new ExperimentEditPanel();
         editPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Edit Input Data"));
         north.add(editPanel, BorderLayout.NORTH);
 
