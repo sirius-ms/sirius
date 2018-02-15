@@ -8,10 +8,13 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.beans.PropertyChangeListener;
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends AbstractEDTBean, D> extends JPanel implements ActiveElementChangedListener<E, D> {
+public class FilterRangeSlider<L extends ActionList<E, D>, E extends AbstractEDTBean, D> extends JPanel implements ActiveElementChangedListener<E, D> {
+    private static final String RANGE_CHANGE = "range-change";
     public static final String DEFAUTL_INT_FORMAT = "##0";
     public static final String DEFAUTL_DOUBLE_FORMAT = "##0.00";
 
@@ -19,7 +22,7 @@ public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends Ab
     protected final RangeSlider rangeSlider;
     protected final JLabel left, right;
     protected final DecimalFormat format;
-    protected boolean isRefreshing;
+    private AtomicBoolean isRefreshing = new AtomicBoolean(false);
     protected final DoubleListStats stats;
 
     private final double valueMultiplier;
@@ -27,31 +30,31 @@ public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends Ab
     private final int numberLength;
 
 
-    public FilterRangeSlider(L source) {
-        this(source, false, DEFAUTL_DOUBLE_FORMAT);
+    public FilterRangeSlider(L source, DoubleListStats stats) {
+        this(source, stats, false, DEFAUTL_DOUBLE_FORMAT);
     }
 
-    public FilterRangeSlider(L source, boolean percentage) {
-        this(source, percentage, DEFAUTL_DOUBLE_FORMAT);
+    public FilterRangeSlider(L source, DoubleListStats stats, boolean percentage) {
+        this(source, stats, percentage, DEFAUTL_DOUBLE_FORMAT);
     }
 
-    public FilterRangeSlider(L source, boolean percentage, String decimalFormat) {
-        this.percentage = percentage;
-        stats = getDoubleListStats(source);
+    public FilterRangeSlider(L source, DoubleListStats stats, boolean percentage, String decimalFormat) {
+
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createEtchedBorder());
+
+        this.percentage = percentage;
+        this.stats = stats;
 
         rangeSlider = new RangeSlider(Integer.MIN_VALUE, Integer.MAX_VALUE);
         rangeSlider.setLowerValue(rangeSlider.getMinimum());
         rangeSlider.setUpperValue(rangeSlider.getMaximum());
         rangeSlider.setThumbShape(RangeSlider.ThumbShape.DROP);
-        rangeSlider.getModel().addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if (!isRefreshing)
-                    refreshText();
-            }
+        rangeSlider.getModel().addChangeListener(e -> {
+            if (!isRefreshing.get())
+                refreshText();
         });
+
 
         String prototype = "0000";
         if (percentage) {
@@ -84,14 +87,19 @@ public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends Ab
         add(right, BorderLayout.EAST);
 
         source.addActiveResultChangedListener(this);
-
+        rangeSlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                firePropertyChange(RANGE_CHANGE, null, rangeSlider);
+            }
+        });
     }
 
-    public void addChangeListener(ChangeListener listener) {
-        rangeSlider.addChangeListener(listener);
+
+    public void addRangeListener(PropertyChangeListener listener) {
+        addPropertyChangeListener(RANGE_CHANGE, listener);
     }
 
-    protected abstract DoubleListStats getDoubleListStats(L list);
 
     public double getMaxSelected() {
         return (rangeSlider.getLowerValue() + rangeSlider.getModel().getExtent()) / valueMultiplier;
@@ -108,8 +116,7 @@ public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends Ab
 
     @Override
     public void resultsChanged(D experiment, E sre, List<E> resultElements, ListSelectionModel selections) {
-        if (!isRefreshing) {
-            isRefreshing = true;
+        if (!isRefreshing.getAndSet(true)) {
             try {
                 int pmin = ((int) Math.floor(stats.getMin())) * (int) valueMultiplier;
                 int pmax = ((int) Math.ceil(stats.getMax())) * (int) valueMultiplier;
@@ -120,12 +127,13 @@ public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends Ab
                 rangeSlider.setMaximum(pmax);
                 rangeSlider.setUpperValue(pmax);
 
-
                 refreshText();
 
             } finally {
-                isRefreshing = false;
+                isRefreshing.set(false);
             }
+
+            firePropertyChange(RANGE_CHANGE, null, rangeSlider);
         }
     }
 }
