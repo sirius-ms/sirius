@@ -47,7 +47,10 @@ import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.projectspace.*;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.logging.ConsoleHandler;
@@ -682,7 +685,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             exp.setPrecursorIonType(getIonFromOptions(options, exp.getPrecursorIonType() == null ? 0 : exp.getPrecursorIonType().getCharge()));
         if (formulas != null && formulas.size() == 1) exp.setMolecularFormula(MolecularFormula.parse(formulas.get(0)));
         if (options.getParentMz() != null) exp.setIonMass(options.getParentMz());
-        return new Instance(exp, inst.file);
+        return new Instance(exp, inst.file, inst.index);
     }
 
     public Iterator<Instance> handleInput(final SiriusOptions options) throws IOException {
@@ -804,7 +807,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             if (options.isDisableElementDetection()) {
                 sirius.enableAutomaticElementDetection(exp, false);
             }
-            instances.add(new Instance(exp, options.getMs2().get(0)));
+            instances.add(new Instance(exp, options.getMs2().get(0), 1));
         } else if (options.getMs1() != null && !options.getMs1().isEmpty()) {
             throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
         }
@@ -812,23 +815,24 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         if (!inputs.isEmpty()) {
             final Iterator<File> fileIter;
             final ArrayList<File> infiles = new ArrayList<File>();
+            Collections.sort(inputs);
             for (String f : inputs) {
                 final File g = new File(f);
                 if (g.isDirectory()) {
-                    infiles.addAll(Arrays.asList(g.listFiles(new FileFilter() {
-                        @Override
-                        public boolean accept(File pathname) {
-                            return pathname.isFile();
-                        }
-                    })));
+                    File[] ins = g.listFiles(pathname -> pathname.isFile());
+                    if (ins != null) {
+                        Arrays.sort(ins, Comparator.comparing(File::getName));
+                        infiles.addAll(Arrays.asList(ins));
+                    }
                 } else {
                     infiles.add(g);
                 }
             }
             fileIter = infiles.iterator();
             return new Iterator<Instance>() {
-                Iterator<Ms2Experiment> experimentIterator = fetchNext();
                 File currentFile;
+                int index = 0;
+                Iterator<Ms2Experiment> experimentIterator = fetchNext();
 
                 @Override
                 public boolean hasNext() {
@@ -839,7 +843,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                 public Instance next() {
                     fetchNext();
                     Instance c = instances.poll();
-                    return setupInstance(new Instance(c.experiment, c.file));
+                    return setupInstance(c);
                 }
 
                 private Iterator<Ms2Experiment> fetchNext() {
@@ -869,7 +873,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                             if (options.isDisableElementDetection()) {
                                 sirius.enableAutomaticElementDetection(experiment, false);
                             }
-                            instances.add(new Instance(experiment, currentFile));
+                            instances.add(new Instance(experiment, currentFile, ++index));
                             return experimentIterator;
                         }
                     }
