@@ -61,7 +61,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         spectraSelection = new JComboBox<String>(model.getComboBoxModel());
         spectraSelection.setToolTipText("select spectrum");
 
-        resetLogic();
+        updateLogic();
 
         JLabel l = new JLabel("Spectrum:");
         l.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
@@ -98,7 +98,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     }
 
 
-    private void resetLogic() {
+    private void updateLogic() {
         this.zoomIn.setEnabled(false);
         this.zoomOut.setEnabled(false);
         this.zoomInMI.setEnabled(false);
@@ -107,10 +107,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     }
 
     private void spectraSelectionAction() {
-        String wasSelected = (String) spectraSelection.getSelectedItem();
-        if (wasSelected == null)
-            wasSelected = spectraSelection.getItemCount() > 0 ? spectraSelection.getItemAt(0) : null;
-        model.selectSpectrum(wasSelected);
+        model.selectSpectrum((String) spectraSelection.getSelectedItem());
         msviewer.setData(model);
         showMolecularFormulaMarkings();
     }
@@ -158,12 +155,16 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         if (model.changeData(experiment, sre)) {
             spectraSelection.removeActionListener(this);
 
-            resetLogic();
+            updateLogic();
 
             spectraSelection.setSelectedItem(selected);
-            if (spectraSelection.getSelectedItem() == null)
-                spectraSelection.setSelectedIndex(0);
-
+            if (spectraSelection.getSelectedItem() == null) {
+                for (int i=0, n = spectraSelection.getModel().getSize(); i<n; ++i) {
+                    if (spectraSelection.getModel().getElementAt(i).equals(ExperimentContainerDataModel.MSMS_MERGED_DISPLAY) || i == n-1) {
+                        spectraSelection.setSelectedIndex(i);
+                    }
+                }
+            }
             spectraSelectionAction();
             spectraSelection.addActionListener(this);
 

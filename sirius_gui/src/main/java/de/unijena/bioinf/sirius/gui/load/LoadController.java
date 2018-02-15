@@ -226,7 +226,7 @@ public class LoadController implements LoadDialogListener {
             addToSpectra(sp);
         }
 
-        if (expToModify.getIonMass() <= 0)
+        if (expToModify.getIonMass() >= 0)
             loadDialog.setParentMass(experiment.getIonMass());
     }
 
