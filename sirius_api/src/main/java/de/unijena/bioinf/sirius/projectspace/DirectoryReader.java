@@ -101,6 +101,7 @@ public class DirectoryReader implements ProjectReader {
         if (names.contains("spectrum.ms")) {
             input = parseSpectrum(instance);
         }
+        input.setAnnotation(Index.class, new Index(instance.index));
         // read trees
         if (names.contains("trees")) {
             env.enterDirectory("trees");

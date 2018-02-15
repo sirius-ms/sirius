@@ -309,7 +309,8 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     protected String makeFileName(ExperimentResult exp) {
-        return counter + "_" + exp.experimentSource + "_" + exp.experimentName;
+        final int index = exp.getExperiment().getAnnotation(Index.class,Index.NO_INDEX).index;
+        return (index>=0 ? index : counter) + "_" + exp.experimentSource + "_" + exp.experimentName;
     }
 
     protected interface Do {
