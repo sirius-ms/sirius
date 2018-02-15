@@ -61,7 +61,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         spectraSelection = new JComboBox<String>(model.getComboBoxModel());
         spectraSelection.setToolTipText("select spectrum");
 
-        updateLogic();
+        resetLogic();
 
         JLabel l = new JLabel("Spectrum:");
         l.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
@@ -98,7 +98,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     }
 
 
-    private void updateLogic() {
+    private void resetLogic() {
         this.zoomIn.setEnabled(false);
         this.zoomOut.setEnabled(false);
         this.zoomInMI.setEnabled(false);
@@ -107,7 +107,10 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     }
 
     private void spectraSelectionAction() {
-        model.selectSpectrum((String) spectraSelection.getSelectedItem());
+        String wasSelected = (String) spectraSelection.getSelectedItem();
+        if (wasSelected == null)
+            wasSelected = spectraSelection.getItemCount() > 0 ? spectraSelection.getItemAt(0) : null;
+        model.selectSpectrum(wasSelected);
         msviewer.setData(model);
         showMolecularFormulaMarkings();
     }
@@ -155,11 +158,11 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         if (model.changeData(experiment, sre)) {
             spectraSelection.removeActionListener(this);
 
-            updateLogic();
+            resetLogic();
 
             spectraSelection.setSelectedItem(selected);
             if (spectraSelection.getSelectedItem() == null)
-                spectraSelection.setSelectedItem(ExperimentContainerDataModel.MSMS_MERGED_DISPLAY);
+                spectraSelection.setSelectedIndex(0);
 
             spectraSelectionAction();
             spectraSelection.addActionListener(this);
