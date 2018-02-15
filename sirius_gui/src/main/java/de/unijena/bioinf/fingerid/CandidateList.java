@@ -67,7 +67,6 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
                 }
                 break;
         }
-        final List<LoadMoleculeJob> jobs = new ArrayList<>();
         for (SiriusResultElement e : formulasToShow) {
             if (e != null && e.getFingerIdComputeState().equals(ComputingStatus.COMPUTED)) {
                 for (int j = 0; j < e.getFingerIdData().compounds.length; j++) {
@@ -79,7 +78,6 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
                     data.add(c.data);
                     if (c.data!=null) {
                         LoadMoleculeJob e1 = new LoadMoleculeJob(c.data.compounds);
-                        jobs.add(e1);
                         Jobs.MANAGER.submitJob(e1);
                     }
                 }
