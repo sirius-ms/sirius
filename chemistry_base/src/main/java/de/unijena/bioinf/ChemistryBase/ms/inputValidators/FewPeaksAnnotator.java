@@ -33,7 +33,7 @@ public class FewPeaksAnnotator implements QualityAnnotator {
     }
 
     /**
-     * merges Ms2 and counts number of peaks with intensity >= 2 * median noise intensity.
+     * merges Ms2 and counts number of peaks with intensity &gt;= 2 * median noise intensity.
      * annotates {@link Ms2Experiment} with SpectrumProperty.FewPeaks if it contains less than minNumberOfPeaks
      * @param dataset
      */
