@@ -82,18 +82,8 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
         tb.setFloatable(false);
         tb.setBorderPainted(false);
         final DoubleListStats stats1 = new DoubleListStats(new double[]{0,1});
-        probabilitySlider = new FilterRangeSlider(source) {
-            @Override
-            protected DoubleListStats getDoubleListStats(ActionList list) {
-                return stats1;
-            }
-        };
-        atomSizeSlider = new FilterRangeSlider(source, false, FilterRangeSlider.DEFAUTL_INT_FORMAT) {
-            @Override
-            protected DoubleListStats getDoubleListStats(ActionList list) {
-                return __atomsizestats__;
-            }
-        };
+        probabilitySlider = new FilterRangeSlider<>(source,stats1);
+        atomSizeSlider = new FilterRangeSlider<>(source, __atomsizestats__,false, FilterRangeSlider.DEFAUTL_INT_FORMAT);
 
 
         tb.add(new NameFilterRangeSlider("Probability:", probabilitySlider));

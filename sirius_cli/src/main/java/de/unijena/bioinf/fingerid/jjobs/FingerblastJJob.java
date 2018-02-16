@@ -14,6 +14,7 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
 
@@ -41,13 +42,14 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
     }
 
     @Override
-    protected void initInput() {
+    protected void initInput() throws ExecutionException {
         super.initInput();
-        if (searchList==null) {
-            for (JJob j : requiredJobs) {
+        if (searchList == null) {
+            final List<JJob<?>> requireJobs = getRequiredJobs();
+            for (JJob<?> j : requireJobs) {
                 if (j instanceof FormulaJob) {
                     FormulaJob job = ((FormulaJob) j);
-                    searchList = job.takeResult();
+                    searchList = job.awaitResult();
                 }
             }
         }

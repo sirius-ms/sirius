@@ -1,6 +1,6 @@
 package de.unijena.bioinf.sirius.gui.table;
 
-import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
+import de.unijena.bioinf.fingerid.CSIFingerIDComputation;
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaScoreListStats;
 
 import javax.swing.*;
@@ -24,7 +24,7 @@ public class FingerIDScoreBarRenderer extends ListStatBarTableCellRenderer {
 
     @Override
     protected double getThresh(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
-        return CSIFingerIdComputation.calculateThreshold(
+        return CSIFingerIDComputation.calculateThreshold(
                 getMax(table, isSelected, hasFocus, row, column)
         );
     }

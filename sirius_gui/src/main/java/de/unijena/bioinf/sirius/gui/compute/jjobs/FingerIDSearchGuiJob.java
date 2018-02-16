@@ -1,18 +1,16 @@
 package de.unijena.bioinf.sirius.gui.compute.jjobs;
 
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.fingerid.CSIFingerIDComputation2;
+import de.unijena.bioinf.fingerid.CSIFingerIDComputation;
 import de.unijena.bioinf.fingerid.FingerIdData;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.jjobs.DependentMasterJJob;
-import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.SwingJJobContainer;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.logging.TextAreaJJobContainer;
 
-public class FingerIDSearchGuiJob extends DependentMasterJJob<FingerIdData> implements GuiObservableJJob<FingerIdData> {
+public class FingerIDSearchGuiJob extends BasicDependentMasterJJob<FingerIdData> implements GuiObservableJJob<FingerIdData> {
     final ExperimentContainer ec;
     final SearchableDatabase db;
 
@@ -24,16 +22,11 @@ public class FingerIDSearchGuiJob extends DependentMasterJJob<FingerIdData> impl
     }
 
     @Override
-    protected JobManager jobManager() {
-        return SiriusJobs.getGlobalJobManager();
-    }
-
-    @Override
     protected FingerIdData compute() throws Exception {
         if (ec.getSiriusComputeState() != ComputingStatus.COMPUTED)
             throw new IllegalArgumentException("Input Data does not contain Sirius Identification results. Run Sirius job first!");
 
-        CSIFingerIDComputation2 csiFingerID = MainFrame.MF.getCsiFingerId2();
+        CSIFingerIDComputation csiFingerID = MainFrame.MF.getCsiFingerId();
         csiFingerID.compute(ec, db);
         return null;
     }

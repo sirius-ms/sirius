@@ -76,7 +76,7 @@ public class Compound {
     protected InChI inchi;
     protected Smiles smiles;
     protected String name;
-    protected IAtomContainer molecule;
+    private volatile IAtomContainer molecule;
     protected double xlogP = Double.NaN;
     protected long bitset;
 
@@ -95,7 +95,7 @@ public class Compound {
         this.fingerprint = candidate.getFingerprint();
         final Set<String> names = DatasourceService.getDataSourcesFromBitFlags(candidate.getBitset());
         this.databases = ArrayListMultimap.create(names.size(), 1);
-        if (candidate.getLinks()!=null) {
+        if (candidate.getLinks() != null) {
             for (DBLink link : candidate.getLinks()) {
                 this.databases.put(link.name, link.id);
             }
@@ -336,8 +336,14 @@ public class Compound {
     }
 
     public IAtomContainer getMolecule() {
-        if (molecule == null) molecule = parseMoleculeFromInChi();
+        if (molecule == null) {
+            molecule = parseMoleculeFromInChi();
+        }
         return molecule;
+    }
+
+    public boolean hasAtomContainer() {
+        return molecule != null;
     }
 
     private IAtomContainer parseMoleculeFromInChi() {
@@ -385,7 +391,7 @@ public class Compound {
 
     private IAtomContainer parseMoleculeFromSmiles() {
         try {
-            final IAtomContainer c =  new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles.smiles);
+            final IAtomContainer c = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles.smiles);
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(c);
             return c;
         } catch (CDKException e) {

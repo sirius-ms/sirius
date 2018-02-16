@@ -14,6 +14,7 @@ import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.SwingJJobContainer;
+import de.unijena.bioinf.sirius.IsotopePatternHandling;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.FormulaWhiteListJob;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -93,17 +94,14 @@ public class PrepareSiriusIdentificationInputJob extends BasicJJob<MutableMs2Exp
             exp.setAnnotation(PossibleAdducts.class, PossibleAdducts.intersection(possibleAdducts, allPossible));
         }
 
-        exp.setAnnotation(PossibleIonModes.class, possibleIonModes);
+        exp.setAnnotation(PossibleIonModes.class, possibleIonModes); //todo autodetect
         exp.setAnnotation(PossibleAdducts.class, possibleAdducts);
 
         sirius.setTimeout(exp, -1, Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.treebuilder.timeout", "0")));
         sirius.setFormulaConstraints(exp, constraints);
         sirius.setAllowedMassDeviation(exp, massDev);
-        //todo iosope stuff
-        //todo recalibration
-        //sirius.setIsotopeHandling(container.enableIsotopesInMs2 ? FragmentationPatternAnalysis.IsotopeInMs2Handling.ALWAYS : FragmentationPatternAnalysis.IsotopeInMs2Handling.IGNORE);
-//        sirius.enableRecalibration(experiment, true);
-//        sirius.setIsotopeMode(experiment, IsotopePatternHandling.both);
+        sirius.enableRecalibration(exp, true); //todo maybe as gui option
+        sirius.setIsotopeMode(exp, IsotopePatternHandling.both); //todo maybe as gui option
 
         if (exp.getMolecularFormula() == null) {
             if (searchableDatabase != null) {

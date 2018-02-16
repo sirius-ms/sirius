@@ -350,7 +350,7 @@ public class DatabaseDialog extends JDialog {
         protected SwingWorker<List<InChI>, ImportStatus> worker;
 
         public ImportCompoundsDialog(CustomDatabase.Importer importer) {
-            super(owner, "Import compounds", true);
+            super(owner, "Import compounds", false);
             this.importer = importer;
             JPanel panel = new JPanel();
             panel.setLayout(new BorderLayout());
@@ -402,16 +402,10 @@ public class DatabaseDialog extends JDialog {
             progressBar.setMinimum(0);
             progressBar.setMaximum(stringsOrFiles.size());
             progressBar.setValue(0);
-            if (stringsOrFiles.size() > 0 && stringsOrFiles.get(0) instanceof File) {
-                new AskForFieldsToImportDialog(DatabaseDialog.this, importer);
-                statusText.setText("Parse " + stringsOrFiles.size() + " files");
-            } else {
-                statusText.setText("Predict fingerprints for " + stringsOrFiles.size() + " compounds");
-            }
 
             GeneralCSVDialog parser = null;
             final GeneralCSVDialog.Field inchi = new CsvFields.InChIField(0, 1), smiles = new CsvFields.SMILESField(0, 1), id = new CsvFields.IDField(0, 1);
-
+            boolean nonCsvFile = false;
             outer:
             for (Object o : stringsOrFiles) {
                 if (o instanceof File) {
@@ -420,17 +414,29 @@ public class DatabaseDialog extends JDialog {
                         final List<String> preview = getPreviewIfIsCsv(f);
                         if (preview != null) {
 
-                            parser = GeneralCSVDialog.makeCsvImporterDialog(getOwner(), preview, new Predicate<GeneralCSVDialog>() {
+                            parser = GeneralCSVDialog.makeCsvImporterDialog(this, preview, new Predicate<GeneralCSVDialog>() {
                                 @Override
                                 public boolean apply(GeneralCSVDialog input) {
                                     return input.getFirstColumnFor(inchi) >= 0 || input.getFirstColumnFor(smiles) >= 0;
                                 }
                             }, inchi, smiles, id);
                             break outer;
+                        } else {
+                            nonCsvFile = true;
                         }
                     }
                 }
             }
+
+            if (nonCsvFile) {
+                if (stringsOrFiles.size() > 0 && stringsOrFiles.get(0) instanceof File) {
+                    new AskForFieldsToImportDialog(DatabaseDialog.this, importer);
+                    statusText.setText("Parse " + stringsOrFiles.size() + " files");
+                } else {
+                    statusText.setText("Predict fingerprints for " + stringsOrFiles.size() + " compounds");
+                }
+            }
+
             final GeneralCSVDialog csvDialog = parser;
             final SimpleCsvParser csvParser = csvDialog != null ? csvDialog.getParser() : null;
             final int inchiColumn = csvDialog != null ? csvDialog.getFirstColumnFor(inchi) : 0, smilesColumn = csvDialog != null ? csvDialog.getFirstColumnFor(smiles) : 0, idColumn = csvDialog != null ? csvDialog.getFirstColumnFor(id) : 0;
@@ -616,7 +622,7 @@ public class DatabaseDialog extends JDialog {
         private static final String NONE = "None", BIO = "Biological database", PUBCHEM = "PubChem";
 
         public ImportDatabaseDialog(String name) {
-            super(owner, "Import " + name + " database", true);
+            super(owner, "Import " + name + " database", false);
             database = CustomDatabase.createNewdatabase(name, new File(CONFIG_STORAGE.getCustomDatabaseDirectory(), name), (CdkFingerprintVersion) WebAPI.getFingerprintVersion());
             importer = database.getImporter();
             importer.init();

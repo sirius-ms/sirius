@@ -1,34 +1,52 @@
 package de.unijena.bioinf.sirius.logging;
 
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.jjobs.SwingJJobContainer;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class TextAreaJJobContainer<R> extends SwingJJobContainer<R> {
     private final JTextArea jobLog;
+    private final TextAreaHandler textAreaLogHandler;
 
     public TextAreaJJobContainer(ProgressJJob<R> sourceJob, String jobName) {
         super(sourceJob, jobName);
-        jobLog = connectToJobLogTextArea(this);
+        jobLog = new JTextArea();
+        textAreaLogHandler = connectJobLogToTextArea();
+        registerJobLog(sourceJob);
     }
 
     public TextAreaJJobContainer(ProgressJJob<R> sourceJob, String jobName, String jobCategory) {
         super(sourceJob, jobName, jobCategory);
-        jobLog = connectToJobLogTextArea(this);
+        jobLog = new JTextArea();
+        textAreaLogHandler = connectJobLogToTextArea();
+        registerJobLog(sourceJob);
     }
 
     public JTextArea getJobLog() {
         return jobLog;
     }
 
-    public static JTextArea connectToJobLogTextArea(SwingJJobContainer swingjob) {
-        Logger logger = Logger.getLogger(swingjob.getSourceJob().LOG().getName());
-        JTextArea logArea = new JTextArea();
-        logger.addHandler(new TextAreaHandler(new TextAreaOutputStream(logArea), Level.INFO));
+    private TextAreaHandler connectJobLogToTextArea() {
+        return new TextAreaHandler(new TextAreaOutputStream(jobLog), Level.INFO);
+    }
 
-        return logArea;
+    public void registerJobLogs(JJob... jobs) {
+        registerJobLogs(Arrays.asList(jobs));
+    }
+
+    public void registerJobLogs(Iterable<JJob> jobs) {
+        for (JJob job : jobs) {
+            registerJobLog(job);
+        }
+    }
+
+    public void registerJobLog(JJob job) {
+        Logger logger = Logger.getLogger(job.LOG().getName());
+        logger.addHandler(textAreaLogHandler);
     }
 }

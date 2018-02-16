@@ -39,10 +39,7 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
 
     @Override
     public void resultsChanged(ExperimentContainer experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selectionModel) {
-//        System.out.println("Lock");
-        elementList.getReadWriteLock().writeLock().lock();
-//        elementList.getReadWriteLock().readLock().lock();
-
+        //call only from EDT
         elementList.clear();
         scoreStats.reset();
         logPStats.reset();
@@ -67,28 +64,26 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
                 }
                 break;
         }
-        final List<LoadMoleculeJob> jobs = new ArrayList<>();
+
+        List<CompoundCandidate> emChache = new ArrayList<>();
         for (SiriusResultElement e : formulasToShow) {
             if (e != null && e.getFingerIdComputeState().equals(ComputingStatus.COMPUTED)) {
                 for (int j = 0; j < e.getFingerIdData().compounds.length; j++) {
                     CompoundCandidate c = new CompoundCandidate(j + 1, j, e.getFingerIdData(), e.getResult().getPrecursorIonType());
-                    elementList.add(c);
+                    emChache.add(c);
                     scoreStats.addValue(c.getScore());
                     logPStats.addValue(c.compound.getXlogP());
                     tanimotoStats.addValue(c.getTanimotoScore());
                     data.add(c.data);
-                    if (c.data!=null) {
-                        LoadMoleculeJob e1 = new LoadMoleculeJob(c.data.compounds);
-                        jobs.add(e1);
-                        Jobs.MANAGER.submitJob(e1);
-                    }
+                }
+                if (e.getFingerIdData() != null) {
+                    LoadMoleculeJob e1 = new LoadMoleculeJob(e.getFingerIdData().compounds);
+                    Jobs.MANAGER.submitJob(e1);
                 }
             }
         }
 
-//        elementList.getReadWriteLock().readLock().unlock(); //todo maybe reanable
-        elementList.getReadWriteLock().writeLock().unlock();
-//        System.out.println("unlocked");
+        elementList.addAll(emChache);
         notifyListeners(data, null, getElementList(), getResultListSelectionModel());
     }
 }

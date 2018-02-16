@@ -24,10 +24,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class LoadController implements LoadDialogListener {
@@ -47,7 +44,7 @@ public class LoadController implements LoadDialogListener {
 
         if (exp != null) {
             expToModify = exp;
-            spectra = GlazedListsSwing.swingThreadProxyList(new BasicEventList<>(expToModify.getMs1Spectra().size() + expToModify.getMs2Spectra().size()));
+            spectra = new BasicEventList<>(expToModify.getMs1Spectra().size() + expToModify.getMs2Spectra().size());
             loadDialog = new DefaultLoadDialog(owner, spectra);
 
 
@@ -57,15 +54,10 @@ public class LoadController implements LoadDialogListener {
 
             loadDialog.experimentNameChanged(exp.getName());
 
-            for (Spectrum<? extends Peak> spectrum : expToModify.getMs1Spectra()) {
-                addToSpectra(spectrum);
-            }
-
-            for (Spectrum<? extends Peak> spectrum : expToModify.getMs2Spectra()) {
-                addToSpectra(spectrum);
-            }
-
             loadDialog.setParentMass(expToModify.getIonMass());
+
+            addToSpectra(expToModify.getMs1Spectra());
+            addToSpectra(expToModify.getMs2Spectra());
         } else {
             expToModify = new ExperimentContainer(new MutableMs2Experiment());
             spectra = GlazedListsSwing.swingThreadProxyList(new BasicEventList<>());
@@ -86,8 +78,14 @@ public class LoadController implements LoadDialogListener {
         loadDialog.showDialog();
     }
 
-    private void addToSpectra(Spectrum<?>... sps) {
-        spectra.addAll(Arrays.stream(sps).map(SpectrumContainer::new).collect(Collectors.toList()));
+    private void addToSpectra(Collection<? extends Spectrum> sps) {
+        List<SpectrumContainer> containers = sps.stream().map(SpectrumContainer::new).collect(Collectors.toList());
+        spectra.getReadWriteLock().writeLock().lock();
+        try {
+            spectra.addAll(containers);
+        } finally {
+            spectra.getReadWriteLock().writeLock().unlock();
+        }
     }
 
     @Override
@@ -150,7 +148,7 @@ public class LoadController implements LoadDialogListener {
                             cont = diag.getResults();
                             CSVToSpectrumConverter conv = new CSVToSpectrumConverter();
                             Spectrum<?> sp = conv.convertCSVToSpectrum(list.get(0), cont);
-                            addToSpectra(sp);
+                            addToSpectra(Collections.singleton(sp));
                         } else {
                             return; //breche ab
                         }
@@ -165,7 +163,7 @@ public class LoadController implements LoadDialogListener {
                             for (List<TDoubleArrayList> data : list) {
                                 CSVToSpectrumConverter conv = new CSVToSpectrumConverter();
                                 Spectrum<?> sp = conv.convertCSVToSpectrum(data, cont);
-                                addToSpectra(sp);
+                                addToSpectra(Collections.singleton(sp));
                             }
                         }
                     }
@@ -181,12 +179,56 @@ public class LoadController implements LoadDialogListener {
             @Override
             protected Object compute() {
                 List<Ms2Experiment> r = batchImportDialog.getResults();
+                final int maxProg = r.size() + 1;
                 int i = 0;
-                updateProgress(0, r.size(), i);
-                for (Ms2Experiment exp : r) {
-                    importExperiment(exp);
-                    updateProgress(0, r.size(), ++i);
+                updateProgress(0, maxProg, i);
+
+                PrecursorIonType precursorIonType = null;
+                String name = null;
+                Ms2Experiment formulaExp = null;
+                double ionMass = -1;
+                List<Spectrum<?>> spectra = new ArrayList<>();
+
+                for (Ms2Experiment experiment : r) {
+                    expToModify.getMs2Experiment().addAnnotationsFrom(experiment);
+
+                    if (expToModify.getMs2Experiment().getSource() == null)
+                        expToModify.getMs2Experiment().setSource(experiment.getSource());
+
+                    if (name == null || name.isEmpty())
+                        name = experiment.getName();
+
+                    if (precursorIonType == null || experiment.getPrecursorIonType().isIonizationUnknown())
+                        precursorIonType = experiment.getPrecursorIonType();
+
+                    if (formulaExp == null && experiment.getMolecularFormula() != null)
+                        formulaExp = experiment;
+
+                    if (ionMass < 0 && experiment.getIonMass() > 0) {
+                        ionMass = experiment.getIonMass();
+                    }
+
+                    spectra.addAll(experiment.getMs1Spectra());
+                    spectra.addAll(experiment.getMs2Spectra());
+
+                    updateProgress(0, maxProg, ++i);
                 }
+
+                if (precursorIonType != null) {
+                    addIonToPeriodicTableAndFireChange(precursorIonType);
+                }
+
+                if (formulaExp != null)
+                    loadDialog.editPanel.setMolecularFomula(formulaExp);
+
+                if (name != null && !name.isEmpty())
+                    loadDialog.experimentNameChanged(name);
+
+                loadDialog.setParentMass(ionMass);
+
+                addToSpectra(spectra);
+
+                updateProgress(0, maxProg, maxProg);
                 return true;
             }
         });
@@ -198,36 +240,6 @@ public class LoadController implements LoadDialogListener {
             new ExceptionDialog(this.owner, errorStorage.get(0));
         }
 
-    }
-
-    //this imports an merges the experiments
-    private void importExperiment(Ms2Experiment experiment) {
-        expToModify.getMs2Experiment().addAnnotationsFrom(experiment);
-
-        if (expToModify.getMs2Experiment().getSource() == null)
-            expToModify.getMs2Experiment().setSource(experiment.getSource());
-
-        if (loadDialog.getIonization().isIonizationUnknown() && experiment.getPrecursorIonType() != null && !experiment.getPrecursorIonType().isIonizationUnknown())
-            addIonToPeriodicTableAndFireChange(experiment.getPrecursorIonType());
-
-        final String formula = loadDialog.editPanel.formulaTF.getText();
-        if (formula == null || formula.isEmpty())
-            loadDialog.editPanel.setMolecularFomula(experiment);
-
-        final String name = loadDialog.getExperimentName();
-        if (name == null || name.isEmpty())
-            loadDialog.experimentNameChanged(experiment.getName());
-
-        for (Spectrum<Peak> sp : experiment.getMs1Spectra()) {
-            addToSpectra(sp);
-        }
-
-        for (Ms2Spectrum<Peak> sp : experiment.getMs2Spectra()) {
-            addToSpectra(sp);
-        }
-
-        if (expToModify.getIonMass() <= 0)
-            loadDialog.setParentMass(experiment.getIonMass());
     }
 
     public ExperimentContainer getExperiment() {
@@ -244,12 +256,18 @@ public class LoadController implements LoadDialogListener {
 
     @Override
     public void removeSpectra(List<SpectrumContainer> sps) {
-        spectra.removeAll(sps);
-        if (spectra.isEmpty()) {
-            loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
-            loadDialog.experimentNameChanged("");
-            loadDialog.editPanel.formulaTF.setText("");
+        spectra.getReadWriteLock().writeLock().lock();
+        try {
+            spectra.removeAll(sps);
+        } finally {
+            spectra.getReadWriteLock().writeLock().unlock();
+            if (spectra.isEmpty()) {
+                loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
+                loadDialog.experimentNameChanged("");
+                loadDialog.editPanel.formulaTF.setText("");
+            }
         }
+
     }
 
 

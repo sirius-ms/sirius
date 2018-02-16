@@ -2,24 +2,25 @@ package de.unijena.bioinf.ms.cli;
 
 import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.*;
+import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.FingerIdResultReader;
 import de.unijena.bioinf.fingerid.FingerIdResultWriter;
-import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.DatabaseImporter;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDbOnDisc;
 import de.unijena.bioinf.fingerid.jjobs.FingerIDJJob;
-import de.unijena.bioinf.fingerid.net.CachedRESTDB;
-import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -27,7 +28,6 @@ import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.projectspace.*;
-import gnu.trove.list.array.TIntArrayList;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
@@ -40,10 +40,7 @@ import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 
 public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
 
-    protected Fingerblast fingerblast;
-    protected QueryPredictor confidence, bioConfidence;
-    protected MaskedFingerprintVersion fingerprintVersion;
-    protected VersionsInfo fingerIdVersionsInfo;
+    protected CSIPredictor positivePredictor, negativePredictor;
 
 
     @Override
@@ -91,9 +88,10 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
     private void initDatabasesAndVersionInfoIfNecessary() {
         if (isOffline()) return;
         try {
-            try (final WebAPI api = WebAPI.newInstance()) {
-                this.fingerIdVersionsInfo = api.getVersionInfo();
-            }
+            positivePredictor = new CSIPredictor(PredictorType.CSI_FINGERID_POSITIVE);
+            negativePredictor = new CSIPredictor(PredictorType.CSI_FINGERID_NEGATIVE);
+            positivePredictor.initialize();
+            negativePredictor.initialize();
         } catch (IOException e) {
             System.err.println("Cannot connect to CSI:FingerID webserver and online chemical database. You can still use SIRIUS in offline mode: just do not use any chemical database and omit the --fingerid option.");
             LoggerFactory.getLogger(FingeridCLI.class).error(e.getMessage(),e);
@@ -126,8 +124,8 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
         Long flagW = dbMap.get(options.getDatabase());
         if (flagW == null) flagW = 0L;
         final long flag = flagW;
-
-        FingerIDJJob fingerIdJob = new FingerIDJJob(fingerblast, fingerprintVersion, new CachedRESTDB(fingerIdVersionsInfo,fingerprintVersion), getFingerIdDatabase(), options.getPredictors().toArray(new PredictorType[options.getPredictors().size()]));
+        CSIPredictor csi = i.experiment.getPrecursorIonType().getCharge() > 0 ? positivePredictor : negativePredictor;
+        FingerIDJJob fingerIdJob = new FingerIDJJob(csi.getBlaster(), csi.getFingerprintVersion(), csi.getDatabase(), getFingerIdDatabase(), options.getPredictors());
         fingerIdJob.addRequiredJob(siriusJob);
         fingerIdJob.setDbFlag(flag);
         fingerIdJob.setBioFilter(getBioFilter());
@@ -137,7 +135,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
     }
 
     public boolean isOffline() {
-        return !options.isFingerid() && !options.getDatabase().equals(CONSIDER_ALL_FORMULAS);
+        return !options.isFingerid() && options.getDatabase().equals(CONSIDER_ALL_FORMULAS);
     }
 
     protected static final class CandidateElement extends Scored<FingerprintCandidate> {
@@ -228,10 +226,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
                     String name = fc.getName();
                     if (name == null || name.isEmpty()) name = fc.getSmiles();
                     if (name == null || name.isEmpty()) name = "";
-                    if (true || bioConfidence == null)
-                        progress.info(String.format(Locale.US, "Top biocompound is %s %s (%s)\n", name, topBio.origin.getPrecursorIonType().toString(), fc.getInchi().in2D));
-                    else {
-                    }
+                    progress.info(String.format(Locale.US, "Top biocompound is %s %s (%s)\n", name, topBio.origin.getPrecursorIonType().toString(), fc.getInchi().in2D));
                     //progress.info(String.format(Locale.US, "Top biocompound is %s %s (%s) with confidence %.2f\n", name, topBio.origin.getPrecursorIonType().toString(), fc.getInchi().in2D, confidenceScore));
                 }
 
@@ -354,36 +349,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
     }
 
     private void initFingerBlast() {
-        progress.info("Initialize CSI:FingerId...");
-        try (WebAPI webAPI = WebAPI.newInstance()) {
-            if (fingerIdVersionsInfo != null && fingerIdVersionsInfo.outdated()) {
-                progress.info("Your current SIRIUS+CSI:FingerID version is outdated. Please download the latest software version if you want to use CSI:FingerId search. Current version: " + WebAPI.VERSION + ". New version is " + fingerIdVersionsInfo.siriusGuiVersion + ". You can download the last version here: " + WebAPI.SIRIUS_DOWNLOAD);
-                System.exit(1);
-            }
-            final TIntArrayList indizes = new TIntArrayList();
-            final BioFilter bioFilter = getBioFilter(getFingerIdDatabaseOption());
-            final PredictionPerformance[] performances = webAPI.getStatistics(indizes);
-//            this.fingerblast.setScoring(new CSIFingerIdScoring(performances));
-            this.confidence = webAPI.getConfidenceScore(bioFilter != BioFilter.ALL);
-            this.bioConfidence = bioFilter != BioFilter.ALL ? confidence : webAPI.getConfidenceScore(true);
-            MaskedFingerprintVersion.Builder b = MaskedFingerprintVersion.buildMaskFor(WebAPI.getFingerprintVersion());
-            b.disableAll();
-            for (int index : indizes.toArray()) {
-                b.enable(index);
-            }
-            this.fingerprintVersion = b.toMask();
 
-            {
-                CachedRESTDB db = new CachedRESTDB(fingerIdVersionsInfo, fingerprintVersion, CachedRESTDB.getDefaultDirectory());
-                db.checkCache();
-            }
-
-            this.fingerblast = new Fingerblast(webAPI.getCovarianceScoring(this.fingerprintVersion, 1d / performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts()), null);
-        } catch (IOException e) {
-            LoggerFactory.getLogger(this.getClass()).error("Our webservice is currently not available. You can still use SIRIUS without the --fingerid option. Please feel free to mail us at sirius-devel@listserv.uni-jena.de", e);
-            System.exit(1);
-        }
-        progress.info("CSI:FingerId initialization done.");
     }
 
     protected Canopus canopus = null;
@@ -446,16 +412,9 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
             final Deviation dev;
             if (options.getPPMMax() != null) dev = new Deviation(options.getPPMMax());
             else dev = sirius.getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation();
-            final List<PrecursorIonType> allowedIonTypes = new ArrayList<>();
-            if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
-                int charge = i.experiment.getPrecursorIonType().getCharge();
-                if (charge > 0) {
-                    allowedIonTypes.addAll(PeriodicTable.getInstance().getPositiveIonizations());
-                } else if (charge < 0) {
-                    allowedIonTypes.addAll(PeriodicTable.getInstance().getPositiveIonizations());
-                } else {
-                    allowedIonTypes.addAll(PeriodicTable.getInstance().getIonizations());
-                }
+            final Set<PrecursorIonType> allowedIonTypes = new HashSet<>();
+            if (i.experiment.getPrecursorIonType()==null||i.experiment.getPrecursorIonType().isIonizationUnknown()) {
+                allowedIonTypes.addAll(i.experiment.getAnnotation(PossibleAdducts.class).getAdducts());
             } else {
                 allowedIonTypes.add(i.experiment.getPrecursorIonType());
             }
