@@ -39,9 +39,7 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
 
     @Override
     public void resultsChanged(ExperimentContainer experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selectionModel) {
-//        System.out.println("Lock");
-        elementList.getReadWriteLock().writeLock().lock();
-//        elementList.getReadWriteLock().readLock().lock();
+        //call only from EDT
 
         elementList.clear();
         scoreStats.reset();
@@ -84,9 +82,6 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
             }
         }
 
-//        elementList.getReadWriteLock().readLock().unlock(); //todo maybe reanable
-        elementList.getReadWriteLock().writeLock().unlock();
-//        System.out.println("unlocked");
         notifyListeners(data, null, getElementList(), getResultListSelectionModel());
     }
 }
