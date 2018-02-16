@@ -108,8 +108,10 @@ public class Zodiac {
 
             EdgeFilter edgeFilter = null;
 
-            if (options.getThresholdFilter() > 0.0D && options.getLocalFilter() > 0.0D) {
-                edgeFilter = new EdgeThresholdMinConnectionsFilter(options.getThresholdFilter(), options.getLocalFilter(), options.getMinLocalConnections());
+            if (options.getThresholdFilter() > 0.0D && (options.getLocalFilter() > 0.0D || options.getMinLocalConnections() > 0d)){
+                int numberOfCandidates = Math.max(options.getLocalFilter(),1);
+                int numberOfConnections = options.getMinLocalConnections()>0?options.getMinLocalConnections():10;
+                edgeFilter = new EdgeThresholdMinConnectionsFilter(options.getThresholdFilter(), numberOfCandidates, numberOfConnections);
             } else if (options.getThresholdFilter() > 0.0D) {
                 edgeFilter = new EdgeThresholdFilter(options.getThresholdFilter());
             } else if (options.getLocalFilter() > 0.0D) {
