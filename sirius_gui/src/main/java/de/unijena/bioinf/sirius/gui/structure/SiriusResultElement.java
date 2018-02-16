@@ -9,8 +9,10 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.Compound;
 import de.unijena.bioinf.fingerid.FingerIdData;
 import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.jjobs.JobStateEvent;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -120,7 +122,7 @@ public class SiriusResultElement extends AbstractEDTBean implements Comparable<S
         return fingerIdComputeState;
     }
 
-    public void setFingerIdComputeState(final ComputingStatus fingerIdComputeState) {
+    public synchronized void setFingerIdComputeState(final ComputingStatus fingerIdComputeState) {
         final ComputingStatus old = this.fingerIdComputeState;
         this.fingerIdComputeState = fingerIdComputeState;
         firePropertyChange("finger_compute_state", old, this.fingerIdComputeState);
@@ -128,6 +130,9 @@ public class SiriusResultElement extends AbstractEDTBean implements Comparable<S
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        //todo handle fingeridjobs in the future
+        if (evt instanceof JobStateEvent) {
+            JobStateEvent e = (JobStateEvent) evt;
+            setFingerIdComputeState(Jobs.getComputingState(e.getNewValue()));
+        }
     }
 }

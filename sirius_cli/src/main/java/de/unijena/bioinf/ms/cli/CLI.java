@@ -47,7 +47,10 @@ import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.projectspace.*;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.logging.ConsoleHandler;
@@ -142,15 +145,31 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             logger.error("Could not load results for " + jc.sourceInstance.file.getName());
     }
 
-    private void setPrecursorIonTypes(MutableMs2Experiment exp, PossibleAdducts pa, boolean guessFromMS1) {
+    private void setPrecursorIonTypes(MutableMs2Experiment exp, PossibleAdducts pa, PossibleIonModes.GuessingMode guessingMode, boolean preferProtonation) {
         exp.setAnnotation(PossibleAdducts.class, pa);
         PossibleIonModes im = exp.getAnnotation(PossibleIonModes.class, new PossibleIonModes());
-        final Set<Ionization> ionModes = new HashSet<>(pa.getIonModes());
-        for (Ionization ion : ionModes) {
-            im.add(ion, 0.02);
+        im.setGuessFromMs1(guessingMode);
+
+
+        if (preferProtonation){
+            if (guessingMode.isEnabled()) im.enableGuessFromMs1WithCommonIonModes(exp.getPrecursorIonType().getCharge());
+            final Set<Ionization> ionModes = new HashSet<>(pa.getIonModes());
+            for (Ionization ion : ionModes) {
+                im.add(ion, 0.02);
+            }
+            if (exp.getPrecursorIonType().getCharge()>0){
+                im.add(PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization(), 1d);
+            } else {
+                im.add(PrecursorIonType.getPrecursorIonType("[M-H]-").getIonization(), 1d);
+
+            }
+        } else {
+            final Set<Ionization> ionModes = new HashSet<>(pa.getIonModes());
+            for (Ionization ion : ionModes) {
+                im.add(ion, 1d);
+            }
         }
-        im.add(PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization(), 1d);
-        if (guessFromMS1) im.enableGuessFromMs1WithCommonIonModes(exp.getPrecursorIonType().getCharge());
+
         exp.setAnnotation(PossibleIonModes.class, im);
     }
 
@@ -161,24 +180,26 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
         final Set<MolecularFormula> whiteset = getFormulaWhiteset(i, whitelist);
 
+        PossibleIonModes.GuessingMode enabledGuessingMode = options.isTrustGuessIonFromMS1()? PossibleIonModes.GuessingMode.SELECT : PossibleIonModes.GuessingMode.ADD_IONS;
+
         if (options.isAutoCharge()) { //TODO: add optiosn.getIon into this case
             if (i.experiment.getPrecursorIonType().isIonizationUnknown() || i.experiment.getPrecursorIonType().isPlainProtonationOrDeprotonation()) {
                 i.experiment.setAnnotation(PossibleAdducts.class, null);
                 if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
-                    setPrecursorIonTypes(i.experiment, new PossibleAdducts(Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(i.experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class)), true);
+                    setPrecursorIonTypes(i.experiment, new PossibleAdducts(Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(i.experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class)), enabledGuessingMode, true);
                 }
             } else {
-                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()), false);
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()), PossibleIonModes.GuessingMode.DISABLED, false);
             }
         } else if (options.getIon() != null && options.getIon().size() > 1) {
             final List<PrecursorIonType> ionTypes = new ArrayList<>();
             for (String ion : options.getIon()) ionTypes.add(PrecursorIonType.getPrecursorIonType(ion));
-            setPrecursorIonTypes(i.experiment, new PossibleAdducts(ionTypes), true);
+            setPrecursorIonTypes(i.experiment, new PossibleAdducts(ionTypes), enabledGuessingMode, false);
         } else {
             if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
-                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType().getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-")), true); // TODO: ins MS1 gucken
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType().getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-")), enabledGuessingMode, true); // TODO: ins MS1 gucken
             } else {
-                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()), false);
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()), PossibleIonModes.GuessingMode.DISABLED, false);
             }
         }
 
@@ -267,6 +288,9 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                     }
                 } else {
                     logger.warn("Cannot find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
+                    if (projectWriter != null) {
+                        projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), null, "NORESULTS"));
+                    }
                 }
             } catch (TimeoutException e) {
                 println("Ignore " + siriusJob.getExperiment().getName() + " due to timeout!");
@@ -664,7 +688,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             exp.setPrecursorIonType(getIonFromOptions(options, exp.getPrecursorIonType() == null ? 0 : exp.getPrecursorIonType().getCharge()));
         if (formulas != null && formulas.size() == 1) exp.setMolecularFormula(MolecularFormula.parse(formulas.get(0)));
         if (options.getParentMz() != null) exp.setIonMass(options.getParentMz());
-        return new Instance(exp, inst.file);
+        return new Instance(exp, inst.file, inst.index);
     }
 
     public Iterator<Instance> handleInput(final SiriusOptions options) throws IOException {
@@ -786,7 +810,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             if (options.isDisableElementDetection()) {
                 sirius.enableAutomaticElementDetection(exp, false);
             }
-            instances.add(new Instance(exp, options.getMs2().get(0)));
+            instances.add(new Instance(exp, options.getMs2().get(0), 1));
         } else if (options.getMs1() != null && !options.getMs1().isEmpty()) {
             throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
         }
@@ -794,23 +818,24 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         if (!inputs.isEmpty()) {
             final Iterator<File> fileIter;
             final ArrayList<File> infiles = new ArrayList<File>();
+            Collections.sort(inputs);
             for (String f : inputs) {
                 final File g = new File(f);
                 if (g.isDirectory()) {
-                    infiles.addAll(Arrays.asList(g.listFiles(new FileFilter() {
-                        @Override
-                        public boolean accept(File pathname) {
-                            return pathname.isFile();
-                        }
-                    })));
+                    File[] ins = g.listFiles(pathname -> pathname.isFile());
+                    if (ins != null) {
+                        Arrays.sort(ins, Comparator.comparing(File::getName));
+                        infiles.addAll(Arrays.asList(ins));
+                    }
                 } else {
                     infiles.add(g);
                 }
             }
             fileIter = infiles.iterator();
             return new Iterator<Instance>() {
-                Iterator<Ms2Experiment> experimentIterator = fetchNext();
                 File currentFile;
+                int index = 0;
+                Iterator<Ms2Experiment> experimentIterator = fetchNext();
 
                 @Override
                 public boolean hasNext() {
@@ -821,7 +846,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                 public Instance next() {
                     fetchNext();
                     Instance c = instances.poll();
-                    return setupInstance(new Instance(c.experiment, c.file));
+                    return setupInstance(c);
                 }
 
                 private Iterator<Ms2Experiment> fetchNext() {
@@ -851,7 +876,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                             if (options.isDisableElementDetection()) {
                                 sirius.enableAutomaticElementDetection(experiment, false);
                             }
-                            instances.add(new Instance(experiment, currentFile));
+                            instances.add(new Instance(experiment, currentFile, ++index));
                             return experimentIterator;
                         }
                     }

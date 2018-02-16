@@ -53,12 +53,7 @@ public class ComputeCSIAction extends AbstractAction implements PropertyChangeLi
             }
         });
 
-        MF.getCsiFingerId().getEnabledListeners().add(new Runnable() {
-            @Override
-            public void run() {
-                setEnabled(proofCSI(((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).isActive.get()));
-            }
-        });
+        MF.getCsiFingerId().addPropertyChangeListener("enabled", evt -> setEnabled(proofCSI(((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).isActive.get())));
 
         SiriusActions.CHECK_CONNECTION.getInstance().addPropertyChangeListener(this);
     }
@@ -75,10 +70,10 @@ public class ComputeCSIAction extends AbstractAction implements PropertyChangeLi
         final SearchableDatabase db = dialog.getSearchDb();
         if (returnState == FingerIdDialog.COMPUTE_ALL) {
             //MF.getCsiFingerId().computeAll(MF.getCompounds(), db);
-            MF.getCsiFingerId2().computeAll(MF.getCompounds(), db);
+            MF.getCsiFingerId().computeAll(MF.getCompounds(), db);
         } else if (returnState == FingerIdDialog.COMPUTE) {
             //MF.getCsiFingerId().computeAll(MF.getCompoundListSelectionModel().getSelected(), db);
-            MF.getCsiFingerId2().computeAll(MF.getCompoundListSelectionModel().getSelected(), db);
+            MF.getCsiFingerId().computeAll(MF.getCompoundListSelectionModel().getSelected(), db);
         }
     }
 

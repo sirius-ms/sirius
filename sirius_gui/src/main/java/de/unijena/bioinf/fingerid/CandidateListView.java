@@ -4,19 +4,17 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.Filterator;
 import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.matchers.MatcherEditor;
+import de.unijena.bioinf.fingerid.candidate_filters.CandidateStringMatcherEditor;
+import de.unijena.bioinf.fingerid.candidate_filters.DatabaseFilterMatcherEditor;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
-import de.unijena.bioinf.fingerid.candidate_filters.CandidateStringMatcherEditor;
-import de.unijena.bioinf.fingerid.candidate_filters.DatabaseFilterMatcherEditor;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import de.unijena.bioinf.sirius.gui.table.ActionList;
 import de.unijena.bioinf.sirius.gui.table.ActionListDetailView;
 import de.unijena.bioinf.sirius.gui.table.FilterRangeSlider;
 import de.unijena.bioinf.sirius.gui.table.MinMaxMatcherEditor;
-import de.unijena.bioinf.sirius.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.sirius.gui.utils.NameFilterRangeSlider;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.sirius.gui.utils.WrapLayout;
@@ -63,19 +61,8 @@ public class CandidateListView extends ActionListDetailView<CompoundCandidate, S
         tb.setBorderPainted(false);
         tb.setLayout(new WrapLayout(FlowLayout.LEFT, 0, 0));
 
-        logPSlider = new FilterRangeSlider(source) {
-            @Override
-            protected DoubleListStats getDoubleListStats(ActionList list) {
-                return ((CandidateList) list).logPStats;
-            }
-        };
-
-        tanimotoSlider = new FilterRangeSlider(source, true) {
-            @Override
-            protected DoubleListStats getDoubleListStats(ActionList list) {
-                return ((CandidateList) list).tanimotoStats;
-            }
-        };
+        logPSlider = new FilterRangeSlider<>(source, source.logPStats);
+        tanimotoSlider = new FilterRangeSlider<>(source, source.tanimotoStats, true);
 
         dbFilterPanel = new DBFilterPanel(source);
         dbFilterPanel.toggle();
@@ -164,19 +151,9 @@ public class CandidateListView extends ActionListDetailView<CompoundCandidate, S
     @Override
     protected EventList<MatcherEditor<CompoundCandidate>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
-                (MatcherEditor<CompoundCandidate>) new CandidateStringMatcherEditor(searchField.textField),
-                new MinMaxMatcherEditor<>(logPSlider, new Filterator<Double, CompoundCandidate>() {
-                    @Override
-                    public void getFilterValues(java.util.List<Double> baseList, CompoundCandidate element) {
-                        baseList.add(element.getXLogP());
-                    }
-                }),
-                new MinMaxMatcherEditor<>(tanimotoSlider, new Filterator<Double, CompoundCandidate>() {
-                    @Override
-                    public void getFilterValues(java.util.List<Double> baseList, CompoundCandidate element) {
-                        baseList.add(element.getTanimotoScore());
-                    }
-                }),
+                new CandidateStringMatcherEditor(searchField.textField),
+                new MinMaxMatcherEditor<>(logPSlider, (Filterator<Double, CompoundCandidate>) (baseList, element) -> baseList.add(element.getXLogP())),
+                new MinMaxMatcherEditor<>(tanimotoSlider, (Filterator<Double, CompoundCandidate>) (baseList, element) -> baseList.add(element.getTanimotoScore())),
                 new DatabaseFilterMatcherEditor(dbFilterPanel)
         );
     }

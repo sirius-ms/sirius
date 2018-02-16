@@ -54,12 +54,7 @@ class CompoundStructureImage extends JPanel {
         java.util.List<IGenerator<IAtomContainer>> generators = new ArrayList<IGenerator<IAtomContainer>>();
         generators.add(new BasicSceneGenerator());
         generators.add(new StandardGenerator(nameFont));
-        /*
-        generators.add(new BasicBondGenerator());
-        generators.add(new RingGenerator());
-        generators.add(new BasicAtomGenerator());
-        generators.add(new HighlightGenerator());
-        */
+
         // setup the renderer
         this.renderer = new AtomContainerRenderer(generators, new AWTFontManager());
 
@@ -73,72 +68,43 @@ class CompoundStructureImage extends JPanel {
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-        if (molecule.compound.molecule != null) {
-            final Graphics2D gg = (Graphics2D) g;
-            StructureDiagramGenerator sdg = new StructureDiagramGenerator();
-            sdg.setMolecule(molecule.compound.getMolecule(), false);
-            try {
-                sdg.generateCoordinates();
-            } catch (CDKException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-            }
-            renderer.getRenderer2DModel().set(BasicSceneGenerator.BackgroundColor.class, backgroundColor);
-            synchronized (molecule.compound) {
-                renderer.paint(molecule.compound.getMolecule(), new AWTDrawVisitor(gg),
-                        new Rectangle2D.Double(7, 14, 360, 185), true);
-            }
-            if (molecule.compound.name != null) {
-                gg.setFont(nameFont);
-                gg.drawString(molecule.compound.name, 3, 16);
-            }
-            gg.setFont(rankFont);
-            final String rankString = String.valueOf(molecule.rank);
-            final Rectangle2D bound = gg.getFontMetrics().getStringBounds(rankString, gg);
-            {
-                final int x = 3;
-                final int y = getHeight() - (int) (bound.getHeight());
-                final int h = (int) (y + bound.getHeight());
-                gg.drawString(rankString, x, h - 2);
-            }
-//                gg.setFont(nameFont);
-//                final String scoreText1 = "(score: e";
-//                final String scoreText2 = String.format(Locale.US, "%d", (long) Math.round(molecule.score));
-//                final String scoreText3 = ")";
-//
-//                double w = gg.getFontMetrics(nameFont).getStringBounds(scoreText1, gg).getWidth();
-//                double w2 = gg.getFontMetrics(scoreSuperscriptFont).getStringBounds(scoreText2, gg).getWidth();
-//                double w3 = gg.getFontMetrics(nameFont).getStringBounds(scoreText3, gg).getWidth();
-//                double h2 = gg.getFontMetrics(scoreSuperscriptFont).getStringBounds(scoreText2, gg).getHeight();
-
-            final String tanimotoText = String.format(Locale.US, "%.2f", molecule.getTanimotoScore() * 100d) + "%";
-            double tw = gg.getFontMetrics(matchFont).getStringBounds(tanimotoText, gg).getWidth();
-//                double th = gg.getFontMetrics(matchFont).getStringBounds(tanimotoText, gg).getHeight();
-
-            /*{
-                Color from = new Color(backgroundColor.getRed(),backgroundColor.getGreen(),backgroundColor.getBlue(),0);
-                Color to = new Color(backgroundColor.getRed(),backgroundColor.getGreen(),backgroundColor.getBlue(),255);
-
-                int xx = (int)(getWidth()-(w + w2)), yy = (int)(getHeight()-30);
-                int mid = xx + (getWidth()-xx)/2;
-                GradientPaint paint = new GradientPaint(mid, yy, from,
-                        mid, yy+15, to, false);
-                Paint oldPaint = gg.getPaint();
-                gg.setPaint(paint);
-                gg.fillRect(xx, yy, getWidth()-xx, getHeight()-yy);
-                gg.setPaint(oldPaint);
-            }*/
-
-//                gg.setFont(nameFont);
-//                gg.drawString(scoreText1, (int) (getWidth() - (tw + w + w2 + w3 + 8)), getHeight() - 4);
-//                gg.setFont(scoreSuperscriptFont);
-//                gg.drawString(scoreText2, (int) (getWidth() - (tw + w2 + w3 + 8)), (int) (getHeight() - 4));
-//                gg.setFont(nameFont);
-//                gg.drawString(scoreText3, (int) (getWidth() - (tw + w3 + 8)), (int) (getHeight() - 4));
-
-            gg.setFont(matchFont);
-            gg.drawString(tanimotoText, (int) (getWidth() - (tw + 4)), getHeight() - 4);
-
-
+        if (molecule.compound.hasAtomContainer()) {
+            renderImage(molecule.compound, (Graphics2D) g);
         }
+    }
+
+    private void renderImage(final Compound compound, final Graphics2D gg) {
+        StructureDiagramGenerator sdg = new StructureDiagramGenerator();
+        sdg.setMolecule(molecule.compound.getMolecule(), false);
+        try {
+            sdg.generateCoordinates();
+        } catch (CDKException e) {
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+        }
+        renderer.getRenderer2DModel().set(BasicSceneGenerator.BackgroundColor.class, backgroundColor);
+        synchronized (molecule.compound) {
+            renderer.paint(molecule.compound.getMolecule(), new AWTDrawVisitor(gg),
+                    new Rectangle2D.Double(7, 14, 360, 185), true);
+        }
+        if (molecule.compound.name != null) {
+            gg.setFont(nameFont);
+            gg.drawString(molecule.compound.name, 3, 16);
+        }
+        gg.setFont(rankFont);
+        final String rankString = String.valueOf(molecule.rank);
+        final Rectangle2D bound = gg.getFontMetrics().getStringBounds(rankString, gg);
+        {
+            final int x = 3;
+            final int y = getHeight() - (int) (bound.getHeight());
+            final int h = (int) (y + bound.getHeight());
+            gg.drawString(rankString, x, h - 2);
+        }
+//
+
+        final String tanimotoText = String.format(Locale.US, "%.2f", molecule.getTanimotoScore() * 100d) + "%";
+        double tw = gg.getFontMetrics(matchFont).getStringBounds(tanimotoText, gg).getWidth();
+
+        gg.setFont(matchFont);
+        gg.drawString(tanimotoText, (int) (getWidth() - (tw + 4)), getHeight() - 4);
     }
 }

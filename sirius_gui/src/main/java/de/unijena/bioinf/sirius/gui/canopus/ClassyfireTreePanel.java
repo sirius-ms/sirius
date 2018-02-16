@@ -32,7 +32,9 @@ public class ClassyfireTreePanel extends TreeRenderPanel {
 
     public ClassyfireTreePanel() {
         super();
-        this.canopus = MainFrame.MF.getCsiFingerId().getCanopus();
+        //todo CANOPUS
+        this.canopus = null ;//MainFrame.MF.getCsiFingerId().getCanopus();
+
         this.version = canopus.getClassyFireFingerprintVersion();
         this.mask = canopus.getCanopusMask();
     }

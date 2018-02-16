@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.cli;
 
 import com.lexicalscope.jewel.cli.Option;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
+import de.unijena.bioinf.fingeriddb.job.UserDefineablePredictorType;
 
 import java.io.File;
 import java.util.List;
@@ -18,7 +19,7 @@ public interface FingerIdOptions extends SiriusOptions {
     boolean isFingerid();
 
     @Option(longName = {"fingerid-predictors"}, shortName = "P", description = "Predictors used to search structure with CSI:FingerId", defaultValue = "CSI_FINGERID")
-    List<PredictorType> getPredictors();
+    List<UserDefineablePredictorType> getPredictors();
 
     @Option(longName = "generate-custom-db", description = "EXPERIMENTAL FEATURE: generate a custom compound database. Ignore all other options. Import compounds from all given files. Usage: sirius --generate-custom-db [DATABASENAME] [INPUTFILE1] [INPUTFILE2] ... ", defaultToNull = true)
     String getGeneratingCompoundDatabase();

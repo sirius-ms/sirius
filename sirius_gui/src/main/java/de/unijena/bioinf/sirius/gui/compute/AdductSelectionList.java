@@ -34,7 +34,7 @@ public class AdductSelectionList extends JCheckBoxList<String> implements ListSe
             }
         }
         replaceElements(m);
-        checkAll();
+        checkAll(source.getCheckedItems());
         setEnabled(enabled);
         firePropertyChange("refresh", null, null);
     }

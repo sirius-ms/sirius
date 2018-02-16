@@ -3,7 +3,7 @@ package de.unijena.bioinf.sirius.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
-import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
+import de.unijena.bioinf.fingerid.CSIFingerIDComputation;
 import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
@@ -127,8 +127,7 @@ public class SearchProfilePanel extends JPanel {
             add(new TwoCloumnPanel(label, formulaCombobox));
         }
 
-        refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().getName()).collect(Collectors.toSet()));
-
+        refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().toString()).collect(Collectors.toSet()));
     }
 
     public void refreshPossibleIonizations(Set<String> ionTypes) {
@@ -185,7 +184,7 @@ public class SearchProfilePanel extends JPanel {
     }
 
     public SearchableDatabase getFormulaSource() {
-        final CSIFingerIdComputation csi = MainFrame.MF.getCsiFingerId();
+        final CSIFingerIDComputation csi = MainFrame.MF.getCsiFingerId();
         if (formulaCombobox.getSelectedIndex() == 0) return null;
         else if (formulaCombobox.getSelectedIndex() <= 2) return csi.getPubchemDb();
         else if (formulaCombobox.getSelectedIndex() == 3) return csi.getBioDb();

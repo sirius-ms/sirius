@@ -157,13 +157,19 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
             updateLogic();
 
-            spectraSelection.setSelectedItem(selected);
-            if (spectraSelection.getSelectedItem() == null)
-                spectraSelection.setSelectedItem(ExperimentContainerDataModel.MSMS_MERGED_DISPLAY);
+            if (spectraSelection.getItemCount() > 0) {
+                spectraSelection.setSelectedItem(selected);
+                if (spectraSelection.getSelectedItem() == null) {
+                    spectraSelection.setSelectedItem(ExperimentContainerDataModel.MSMS_MERGED_DISPLAY);
+                    if (spectraSelection.getSelectedItem() == null)
+                        spectraSelection.setSelectedIndex(0);
+                }
+            } else {
+                spectraSelection.setSelectedItem(null); //clear selection
+            }
 
             spectraSelectionAction();
             spectraSelection.addActionListener(this);
-
         }
     }
 

@@ -2,13 +2,11 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.fingerid.CSIFingerIDComputation2;
-import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
+import de.unijena.bioinf.fingerid.CSIFingerIDComputation;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.JobDialog;
-import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
@@ -36,13 +34,8 @@ import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 public class MainFrame extends JFrame implements DropTargetListener {
     public static final MainFrame MF = new MainFrame();
 
-    static {
-        decoradeMainFrameInstance(MF);
-    }
-
     //left side panel
     private ExperimentList experimentList;
-    private CSIFingerIDComputation2 csiFingerId2;
 
     public ExperimentList getExperimentList() {
         return experimentList;
@@ -68,13 +61,10 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return resultsPanel;
     }
 
-    private CSIFingerIdComputation csiFingerId;
+    private CSIFingerIDComputation csiFingerId;
 
-    public CSIFingerIdComputation getCsiFingerId() {
+    public CSIFingerIDComputation getCsiFingerId() {
         return csiFingerId;
-    }
-    public CSIFingerIDComputation2 getCsiFingerId2() {
-        return csiFingerId2;
     }
 
     private JobDialog jobDialog;
@@ -99,22 +89,21 @@ public class MainFrame extends JFrame implements DropTargetListener {
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this); //todo do we want to have the left table as drop target?
     }
 
-    private static void decoradeMainFrameInstance(final MainFrame mf) {
+    public void decoradeMainFrameInstance() {
         //create computation
-        mf.csiFingerId2 = new CSIFingerIDComputation2();
-        mf.csiFingerId = new CSIFingerIdComputation();
+        csiFingerId = new CSIFingerIDComputation();
 
         // create models for views
-        mf.experimentList = new ExperimentList();
-        mf.formulaList = new FormulaList(mf.experimentList);
+        experimentList = new ExperimentList();
+        formulaList = new FormulaList(experimentList);
 
 
         //CREATE VIEWS
-        mf.jobDialog = new JobDialog(mf);
+        jobDialog = new JobDialog(this);
         // results Panel
-        mf.resultsPanel = new ResultPanel(mf.formulaList);
+        resultsPanel = new ResultPanel(formulaList);
 
-        mf.toolbar = new SiriusToolbar();
+        toolbar = new SiriusToolbar();
 
 
         //Init actions
@@ -123,10 +112,10 @@ public class MainFrame extends JFrame implements DropTargetListener {
         final JPanel mainPanel = new JPanel(new BorderLayout());
 
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 1, 5, 1));
-        mf.add(mainPanel, BorderLayout.CENTER);
+        add(mainPanel, BorderLayout.CENTER);
 
         //build left sidepane
-        FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(mf.experimentList));
+        FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(experimentList));
 
         //BUILD the MainFrame (GUI)
         final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
@@ -135,9 +124,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
         tabbedPane.setEnabledAt(1, false);
         tabbedPane.setPreferredSize(new Dimension(218, (int) tabbedPane.getPreferredSize().getHeight()));
         mainPanel.add(tabbedPane, BorderLayout.WEST);
-        mainPanel.add(mf.resultsPanel, BorderLayout.CENTER);
-        mf.add(mf.toolbar, BorderLayout.NORTH);
-        mf.setSize(new Dimension(1368, 1024));
+        mainPanel.add(resultsPanel, BorderLayout.CENTER);
+        add(toolbar, BorderLayout.NORTH);
+        setSize(new Dimension(1368, 1024));
 
 
         //finger id observer
@@ -149,7 +138,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                     int errorState = api.checkConnection();
                     versionsNumber = api.getVersionInfo();
                     publish(versionsNumber, errorState);
-                    LoggerFactory.getLogger(mf.getClass()).debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
+                    LoggerFactory.getLogger(getClass()).debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
                 } catch (Exception e) {
                     LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 }
@@ -163,19 +152,18 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 final int errorState = (int) chunks.get(1);
 
                 if (versionsNumber != null) {
-                    mf.csiFingerId.setVersionNumber(versionsNumber);
                     if (versionsNumber.expired()) {
-                        new UpdateDialog(mf, versionsNumber);
+                        new UpdateDialog(MainFrame.this, versionsNumber);
                     }
                     if (!versionsNumber.outdated()) {
-                        mf.csiFingerId.setEnabled(true);
+                        csiFingerId.setEnabled(true);
                     }
                     if (versionsNumber.hasNews()) {
-                        new NewsDialog(mf, versionsNumber.getNews());
+                        new NewsDialog(MainFrame.this, versionsNumber.getNews());
                     }
                 }
                 if (errorState != 0)
-                    new ConnectionDialog(mf, errorState);
+                    new ConnectionDialog(MainFrame.this, errorState);
             }
 
             @Override
@@ -191,17 +179,16 @@ public class MainFrame extends JFrame implements DropTargetListener {
         try {
             w.get();
         } catch (Exception e) {
-            LoggerFactory.getLogger(mf.getClass()).error("Error during connection test", e);
+            LoggerFactory.getLogger(getClass()).error("Error during connection test", e);
         }
 
 
-        mf.setVisible(true);
+        setVisible(true);
     }
 
     @Override
     public void dispose() {
         resultsPanel.dispose();
-        csiFingerId.shutdown();
         super.dispose();
     }
 
@@ -254,13 +241,15 @@ public class MainFrame extends JFrame implements DropTargetListener {
         final Iterator<File> rawFileIterator = rawFiles.iterator();
         while (rawFileIterator.hasNext()) {
             final File f = rawFileIterator.next();
-            if (f.getName().toLowerCase().endsWith(".sirius")) {
+            if (f.getName().toLowerCase().endsWith(".sirius") || (f.isDirectory() && WorkspaceIO.isSiriusWorkspaceDirectory(f))) {
                 siriusFiles.add(f);
                 rawFileIterator.remove();
-            } else if (CANOPUS_PATTERN.matcher(f.getName()).matches()) {
+            }
+            //todo CANOPUS
+            /*else if (CANOPUS_PATTERN.matcher(f.getName()).matches()) {
                 importCanopus(f);
                 rawFileIterator.remove();
-            }
+            }*/
         }
 
         if (siriusFiles.size() > 0) {
@@ -279,39 +268,34 @@ public class MainFrame extends JFrame implements DropTargetListener {
         if (csvFiles.isEmpty() && msFiles.isEmpty() && mgfFiles.isEmpty()) return;
 
         //Frage den Anwender ob er batch-Import oder alles zu einen Experiment packen moechte
-        if ((csvFiles.size() > 0 && (msFiles.size() + mgfFiles.size() == 0)) ||
-                (csvFiles.size() == 0 && msFiles.size() == 1 && mgfFiles.size() == 0)) {   //nur CSV bzw. nur ein File
-            LoadController lc = new LoadController(this, CONFIG_STORAGE);
-            lc.addSpectra(csvFiles, msFiles, mgfFiles);
-            lc.showDialog();
-
-            ExperimentContainer ec = lc.getExperiment();
-            if (ec != null) {
-                Workspace.importCompound(ec);
-            }
+        if ((csvFiles.size() > 0 && (msFiles.size() + mgfFiles.size() == 0))) {   //nur CSV bzw. nur ein File
+            openImporterWindow(csvFiles, msFiles, mgfFiles);
         } else if (csvFiles.size() == 0 && mgfFiles.size() == 0 && msFiles.size() > 0) {
             WorkspaceIO.importOneExperimentPerFile(msFiles, mgfFiles);
         } else {
             DragAndDropOpenDialog diag = new DragAndDropOpenDialog(this);
             DragAndDropOpenDialogReturnValue rv = diag.getReturnValue();
             if (rv == DragAndDropOpenDialogReturnValue.abort) {
-                return;
             } else if (rv == DragAndDropOpenDialogReturnValue.oneExperimentForAll) {
-                LoadController lc = new LoadController(this, CONFIG_STORAGE);
-                lc.addSpectra(csvFiles, msFiles, mgfFiles);
-                lc.showDialog();
-
-                ExperimentContainer ec = lc.getExperiment();
-                if (ec != null) {
-                    Workspace.importCompound(ec);
-                }
+                openImporterWindow(csvFiles, msFiles, mgfFiles);
             } else if (rv == DragAndDropOpenDialogReturnValue.oneExperimentPerFile) {
                 WorkspaceIO.importOneExperimentPerFile(msFiles, mgfFiles);
             }
         }
     }
 
-    private void importCanopus(final File f) {
+    private void openImporterWindow(List<File> csvFiles, List<File> msFiles, List<File> mgfFiles) {
+        LoadController lc = new LoadController(this, CONFIG_STORAGE);
+        lc.addSpectra(csvFiles, msFiles, mgfFiles);
+        lc.showDialog();
+
+        ExperimentContainer ec = lc.getExperiment();
+        if (ec != null) {
+            Workspace.importCompound(ec);
+        }
+    }
+    //todo insert canopus here
+    /*private void importCanopus(final File f) {
         final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
             @Override
             protected Object doInBackground() throws Exception {
@@ -333,7 +317,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
             }
         };
         worker.execute();
-    }
+    }*/
 
     private void activateCanopus() {
         resultsPanel.enableCanopus();

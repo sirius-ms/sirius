@@ -63,12 +63,10 @@ public class FormulaList extends ActionList<SiriusResultElement, ExperimentConta
 
     private void setData(final ExperimentContainer ec) {
         this.data = ec;
-        elementList.getReadWriteLock().writeLock().lock();
         if (this.data != null && this.data.getResults() != null && !this.data.getResults().isEmpty()) {
             if (!this.data.getResults().equals(elementList)) {
                 selectionModel.clearSelection();
                 elementList.clear();
-//                elementList.addAll(this.ec.getResults());
                 intiResultList();
             }
         } else {
@@ -86,7 +84,6 @@ public class FormulaList extends ActionList<SiriusResultElement, ExperimentConta
             sre = elementList.get(selectionModel.getMinSelectionIndex());
         }
 
-        elementList.getReadWriteLock().writeLock().unlock();
         selectionModel.setValueIsAdjusting(false);
         notifyListeners(this.data, sre, elementList, selectionModel);
     }
@@ -110,7 +107,7 @@ public class FormulaList extends ActionList<SiriusResultElement, ExperimentConta
     }
 
 
-    public List<SiriusResultElement> getSelecteValues() {
+    public List<SiriusResultElement> getSelectedValues() {
         List<SiriusResultElement> selected = new ArrayList<>();
         for (int i = selectionModel.getMinSelectionIndex(); i <= selectionModel.getMaxSelectionIndex(); i++) {
             if (selectionModel.isSelectedIndex(i)) {

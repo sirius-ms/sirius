@@ -32,14 +32,14 @@ public class FingerIdDialog extends JDialog {
     protected boolean showComputeButton;
     protected int returnState = CANCELED;
     protected FingerIDComputationPanel dbForm;
-    protected CSIFingerIdComputation storage;
+    protected CSIFingerIDComputation storage;
     private String buttonSuffix = "compounds";
 
-    public FingerIdDialog(Frame owner, CSIFingerIdComputation storage, boolean showComputeButton, boolean local) {
+    public FingerIdDialog(Frame owner, CSIFingerIDComputation storage, boolean showComputeButton, boolean local) {
         super(owner, "Search with CSI:FingerId", true);
         this.storage = storage;
         dbForm = new FingerIDComputationPanel(storage.getAvailableDatabases());
-        if (this.storage.enforceBio) dbForm.dbSelectionOptions.setIsBioDB(true);
+//        dbForm.dbSelectionOptions.setIsBioDB(PropertyManager.PROPERTIES.getProperty("de."));//todo remember selection
         this.showComputeButton = showComputeButton;
         setLocationRelativeTo(owner);
         if (local)

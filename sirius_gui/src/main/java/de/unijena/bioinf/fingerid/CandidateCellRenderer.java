@@ -35,12 +35,12 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
     private DescriptionPanel descriptionPanel;
     private CompoundCandidate currentCandidate;
 
-    private final CSIFingerIdComputation computation;
+    private final CSIFingerIDComputation computation;
     private final DoubleListStats stats;
 
     protected final CandidateListDetailView candidateJList; //todo remove me to make conversion complete
 
-    public CandidateCellRenderer(CSIFingerIdComputation computation, DoubleListStats stats, CandidateListDetailView candidateJList) {
+    public CandidateCellRenderer(CSIFingerIDComputation computation, DoubleListStats stats, CandidateListDetailView candidateJList) {
         this.candidateJList = candidateJList;
         this.computation = computation;
         this.stats = stats;

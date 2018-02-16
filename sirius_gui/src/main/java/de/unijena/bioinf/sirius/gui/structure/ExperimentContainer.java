@@ -8,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.jjobs.JobStateEvent;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.SiriusIdentificationGuiJob;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -193,7 +194,7 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
     }
 
 
-    public void setSiriusComputeState(ComputingStatus st) {
+    public synchronized void setSiriusComputeState(ComputingStatus st) {
         ComputingStatus oldST = this.siriusComputeState;
         this.siriusComputeState = st;
         firePropertyChange("siriusComputeState", oldST, this.siriusComputeState);
@@ -216,7 +217,8 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt instanceof JobStateEvent) {
             JobStateEvent e = (JobStateEvent) evt;
-            setSiriusComputeState(Jobs.getComputingState(e.getNewValue()));
+            if (e.getSource() instanceof SiriusIdentificationGuiJob)
+                setSiriusComputeState(Jobs.getComputingState(e.getNewValue()));
         }
     }
 }

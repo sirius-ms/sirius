@@ -4,7 +4,6 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
@@ -18,23 +17,22 @@ import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.net.CachedRESTDB;
 import de.unijena.bioinf.fingerid.net.WebAPI;
-import de.unijena.bioinf.fingeriddb.job.PredictorType;
-import de.unijena.bioinf.jjobs.DependentMasterJJob;
+import de.unijena.bioinf.fingeriddb.job.UserDefineablePredictorType;
+import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 
 import java.util.*;
 
-public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, ProbabilityFingerprint>> {
+public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationResult, ProbabilityFingerprint>> {
     private List<IdentificationResult> input = null;
     private Ms2Experiment experiment = null;
     private int maxResults = Integer.MAX_VALUE;
     private boolean filterIdentifications = true;
 
     //prediction options
-    private final PredictorType[] predicors;
+    private final Collection<UserDefineablePredictorType> predictors;
     private final MaskedFingerprintVersion fingerprintVersion;
 
     //fingerblast options
@@ -51,15 +49,11 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
 
     protected List<IdentificationResult> addedIdentificationResults = new ArrayList<>();
 
-    public FingerIDJJob(Fingerblast fingerblast, MaskedFingerprintVersion fingerprintVersion, CachedRESTDB database, SearchableDatabase queryDb) {
-        this(fingerblast, fingerprintVersion, database, queryDb, PredictorType.CSI_FINGERID);
-    }
-
-    public FingerIDJJob(Fingerblast fingerblast, MaskedFingerprintVersion fingerprintVersion, CachedRESTDB database, SearchableDatabase queryDb, PredictorType... predicors) {
+    public FingerIDJJob(Fingerblast fingerblast, MaskedFingerprintVersion fingerprintVersion, CachedRESTDB database, SearchableDatabase queryDb, Collection<UserDefineablePredictorType> predictors) {
         super(JobType.CPU);
         this.fingerblast = fingerblast;
         this.fingerprintVersion = fingerprintVersion;
-        this.predicors = predicors;
+        this.predictors = predictors;
         this.database = database;
         this.queryDb = queryDb;
     }
@@ -108,16 +102,15 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
             }
 
             //collect input from dependent jobs
-            for (JJob j : requiredJobs) {
+            for (JJob j : getRequiredJobs()) {
                 if (j instanceof Sirius.SiriusIdentificationJob) {
                     Sirius.SiriusIdentificationJob job = (Sirius.SiriusIdentificationJob) j;
-                    //todo i am not 100% sure if this is needed
                     if (experiment == null) {
                         experiment = job.getExperiment();
                     } else if (experiment != job.getExperiment()) {
                         throw new IllegalArgumentException("SiriusIdentificationJobs to collect are from different MS2Experments");
                     }
-                    input.addAll(job.takeResult());
+                    input.addAll(job.awaitResult());
                 }
             }
 
@@ -187,7 +180,7 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
                 for (PrecursorIonType ionType : adductTypes) {
                     if (!ionType.equals(ir.getBeautifulTree().getAnnotationOrThrow(PrecursorIonType.class)) && new IonTreeUtils().isResolvable(ir.getBeautifulTree(), ionType)) {
                         IdentificationResult newIr = IdentificationResult.withPrecursorIonType(ir, ionType);
-                        if (newIr.getResolvedTree().numberOfVertices()>=3)
+                        if (newIr.getResolvedTree().numberOfVertices() >= 3)
                             ionTypes.add(newIr);
                     }
                 }
@@ -201,7 +194,7 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
             List<FingerprintDependentJJob> annotationJobs = new ArrayList<>();
 
             for (IdentificationResult fingeridInput : filteredResults) {
-                WebAPI.PredictionJJob predictionJob = webAPI.makePredictionJob(experiment, fingeridInput, fingeridInput.getResolvedTree(), fingerprintVersion, predicors);
+                WebAPI.PredictionJJob predictionJob = webAPI.makePredictionJob(experiment, fingeridInput, fingeridInput.getResolvedTree(), fingerprintVersion, predictors);
                 submitSubJob(predictionJob);
                 predictionJobs.add(predictionJob);
 
@@ -229,7 +222,7 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
             //collect results
             Map<IdentificationResult, ProbabilityFingerprint> fps = new HashMap<>(input.size());
             for (WebAPI.PredictionJJob predictionJob : predictionJobs) {
-                ProbabilityFingerprint r = predictionJob.takeResult();
+                ProbabilityFingerprint r = predictionJob.awaitResult();
                 if (r != null)
                     fps.put(predictionJob.result, r);
             }
@@ -243,7 +236,7 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
             final List<IdentificationResult> toDelete = new ArrayList<>();
             for (IdentificationResult ar : addedIdentificationResults) {
                 FingerIdResult fr = ar.getAnnotationOrNull(FingerIdResult.class);
-                if (fr==null || fr.getCandidates().isEmpty()) {
+                if (fr == null || fr.getCandidates().isEmpty()) {
                     toDelete.add(ar);
                 }
             }
@@ -253,10 +246,5 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
 
             return fps;
         }
-    }
-
-    @Override
-    protected JobManager jobManager() {
-        return SiriusJobs.getGlobalJobManager();
     }
 }

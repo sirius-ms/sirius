@@ -360,21 +360,21 @@ from \url{https://java.com/}.  Press ``Download'', but \emph{do not use the
 big red button to download Java!}  Instead, go to ``See all Java Downloads'',
 then choose ``Windows 64-bit''.
 
-Go to the SIRIUS~3 directory.  Run \code{sirius3-gui.exe} to start the
+Go to the SIRIUS directory.  Run \code{sirius-gui.exe} to start the
 graphical user interface.  You might want to create a link on your desktop:
-Click and drag the file \code{sirius3-gui.exe} to the desktop, keeping the
+Click and drag the file \code{sirius-gui.exe} to the desktop, keeping the
 ALT key pressed.  You can rename the link on your desktop as you like.  You
 start SIRIUS~3 by double-clicking this link.
 
-Run \code{sirius3-console.exe} for the SIRIUS~3 command line tool.  To
+Run \code{sirius-console.exe} for the SIRIUS~3 command line tool.  To
 execute the SIRIUS~3 command line tool from every location on your system,
-you have to add the location of the \code{sirius3-console.exe} to your PATH
+you have to add the location of the \code{sirius-console.exe} to your PATH
 environment variable: Open the Windows Setting, type ``advanced'' in the
 search window, say ``yes'' if Windows asks you.  Press the ``Environment
 Variables'' button, select the ``Path'' variable in the lower panel, press
 ``Edit\dots'', press ``New'', enter the full directory path of SIRIUS~3,
 press RETURN.  Close the Command Prompt, open a new one,
-type \code{sirius3-console-64.exe}.
+type \code{sirius-console-64.exe}.
 
 \paragraph{Frequently asked questions}
 
@@ -402,24 +402,24 @@ type \code{sirius3-console-64.exe}.
 For Mac OS\,X, make sure that you have installed JAVA version~8 or higher
 from \url{https://java.com/}; Apple only provides the deprecated version~6.
 
-Extract SIRIUS into a folder of your choice, for example \code{\textasciitilde{}/sirius3}.
+Extract SIRIUS into a folder of your choice, for example \code{\textasciitilde{}/sirius}.
 
-To start the SIRIUS~3 command line tool you then have to enter:
+To start the SIRIUS command line tool you then have to enter:
 \begin{Verbatim}[commandchars=\\\{\}]
-\textasciitilde{}/sirius3/bin/sirius3
+\textasciitilde{}/sirius/bin/sirius
 \end{Verbatim}
 
 To start the graphical user interface of SIRIUS~3:
 \begin{Verbatim}[commandchars=\\\{\}]
-\textasciitilde{}/sirius3/bin/sirius3-gui
+\textasciitilde{}/sirius/bin/sirius-gui
 \end{Verbatim}
 
 To execute SIRIUS~3 from every location you have to add 
-\code{/path/to/sirius3/bin} 
+\code{/path/to/sirius/bin}
 to your PATH variable. To do so, open \code{\textasciitilde{}/.bashrc} in an 
 editor and add the following line (replacing the placeholder path):
 \begin{Verbatim}[commandchars=\\\{\}]
-export PATH=\PYGZdl{}PATH:\textasciitilde{}/sirius3/bin/sirius3/bin
+export PATH=\PYGZdl{}PATH:\textasciitilde{}/sirius/bin/
 \end{Verbatim}
 Note that you have to reopen your ''bash'' shell to make the changes effective.
 
