@@ -10,6 +10,6 @@ import com.lexicalscope.jewel.cli.Option;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public interface SiriusGUIOptions extends FingerIdOptions {
-    @Option(shortName = "u", longName = "gui", description = "if set, Sirius 3 graphical user interface gets started")
+    @Option(shortName = "u", longName = "gui", description = "if set, SIRIUS graphical user interface gets started")
     boolean isGUI();
 }
