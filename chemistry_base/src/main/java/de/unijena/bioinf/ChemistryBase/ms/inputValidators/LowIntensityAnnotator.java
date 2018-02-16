@@ -40,7 +40,7 @@ public class LowIntensityAnnotator implements QualityAnnotator{
     }
 
     /**
-     * annotates {@link Ms2Experiment} with SpectrumProperty.LowIntensity if NOT ANY MS1 contains the  precursor peak with relative intensity > minRelMs1Intensity
+     * annotates {@link Ms2Experiment} with SpectrumProperty.LowIntensity if NOT ANY MS1 contains the  precursor peak with relative intensity &gt; minRelMs1Intensity
      * ignores merged MS1 spectrum (this might be a artificial spectrum. E.g. isotopes.)
      * @param experiment
      */

@@ -2,7 +2,7 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 /**
  * This annotation is used when a tree is "beautiful" ;)
- * -> either it explains enough peaks or we already maxed out its tree size score
+ * either it explains enough peaks or we already maxed out its tree size score
  */
 public final class Beautified {
 

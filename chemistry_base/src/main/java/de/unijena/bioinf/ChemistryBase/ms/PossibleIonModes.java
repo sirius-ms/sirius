@@ -8,7 +8,7 @@ import java.util.*;
 
 /**
  * Can be attached to a Ms2Experiment or ProcessedInput. If PrecursorIonType is unknown, SIRIUS will use this
- * object and compute trees for all ion types with probability > 0.
+ * object and compute trees for all ion types with probability &gt; 0.
  * If probability is unknown, you can assign a constant to each ion type.
  */
 public class PossibleIonModes {
