@@ -220,7 +220,7 @@ public class CompoundCandidate extends AbstractEDTBean implements Comparable<Com
                 final HashSet<IAtom> atoms = new HashSet<>(relevantFps[index].atoms.length);
                 for (int i : relevantFps[index].atoms) atoms.add(molecule.getAtom(i));
                 for (int atom : relevantFps[index].atoms) {
-                    colorMap.put(compound.molecule.getAtom(atom), 0);
+                    colorMap.put(compound.getMolecule().getAtom(atom), 0);
                     molecule.getAtom(atom).setProperty(StandardGenerator.HIGHLIGHT_COLOR, CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR);
                     for (IBond b : molecule.getConnectedBondsList(molecule.getAtom(atom))) {
                         if (atoms.contains(b.getAtom(0)) && atoms.contains(b.getAtom(1))) {

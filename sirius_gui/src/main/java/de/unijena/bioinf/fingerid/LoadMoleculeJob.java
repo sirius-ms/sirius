@@ -6,11 +6,11 @@ public class LoadMoleculeJob extends BasicJJob<Boolean> {
 
     protected Compound[] compounds;
 
-    public LoadMoleculeJob(Compound[] compounds) {
-        this(compounds, JobPriority.HIGH);
+    public LoadMoleculeJob(Compound... compounds) {
+        this(JobPriority.HIGH, compounds);
     }
 
-    public LoadMoleculeJob(Compound[] compounds, JobPriority prio) {
+    public LoadMoleculeJob(JobPriority prio, Compound... compounds) {
         super(JobType.CPU);
         setPriority(prio);
         this.compounds = compounds;
