@@ -75,10 +75,10 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
                     logPStats.addValue(c.compound.getXlogP());
                     tanimotoStats.addValue(c.getTanimotoScore());
                     data.add(c.data);
-                    if (c.data != null) {
-                        LoadMoleculeJob e1 = new LoadMoleculeJob(c.data.compounds);
-                        Jobs.MANAGER.submitJob(e1);
-                    }
+                }
+                if (e.getFingerIdData() != null) {
+                    LoadMoleculeJob e1 = new LoadMoleculeJob(e.getFingerIdData().compounds);
+                    Jobs.MANAGER.submitJob(e1);
                 }
             }
         }

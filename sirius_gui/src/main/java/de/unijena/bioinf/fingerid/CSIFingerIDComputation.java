@@ -161,20 +161,32 @@ public class CSIFingerIDComputation {
             LOG().info("downloading molecular formulas and predicting fingerprints");
             final PossibleAdducts pa = container.getMs2Experiment().getAnnotation(PossibleAdducts.class, new PossibleAdducts());
             pa.addAdduct(origIonType);
-
+            final List<SiriusResultElement> inputs = new ArrayList<>();
+            inputs.add(originalResultElement);
+            final HashMap<Ion, SiriusResultElement> knownIonMap = new HashMap<>();
+            for (SiriusResultElement elem : container.getResults()) {
+                if (elem.getResult()!=null)
+                    knownIonMap.put(new Ion(elem.getResult().getMolecularFormula(), elem.getResult().getPrecursorIonType()), elem);
+            }
             // generate additional result elements
             for (PrecursorIonType ion : pa.getAdducts(origIonType.getIonization())) {
                 if (!ion.equals(origIonType) && originalResultElement.getResult().getMolecularFormula().isSubtractable(ion.getAdduct())) {
                     try {
-                        addedResultElements.add(new SiriusResultElement(IdentificationResult.withPrecursorIonType(originalResultElement.getResult(), ion)));
+                        final Ion addIon = new Ion(ion.measuredNeutralMoleculeToNeutralMolecule(originalResultElement.getResult().getMolecularFormula()), ion);
+                        SiriusResultElement e = knownIonMap.get(addIon);
+                        if (e==null) {
+                            e = new SiriusResultElement(IdentificationResult.withPrecursorIonType(originalResultElement.getResult(), ion));
+                            addedResultElements.add(e);
+                        } else {
+                            inputs.add(e);
+                        }
+
                     } catch (RuntimeException e) {
                         LoggerFactory.getLogger(CSIFingerIDComputation.class).error("Cannot neutralize " + originalResultElement.getResult().getMolecularFormula() + " with precursor ion type " + ion + ", although adduct " + ion.getAdduct() + " is subtractable? " + originalResultElement.getResult().getMolecularFormula().isSubtractable(ion.getAdduct()) + ", tree root is " + originalResultElement.getResult().getBeautifulTree());
                     }
                 }
             }
 
-            final List<SiriusResultElement> inputs = new ArrayList<>();
-            inputs.add(originalResultElement);
             inputs.addAll(addedResultElements);
             final ArrayList<FormulaJob> formulaJobs = new ArrayList<>();
             final ArrayList<PredictFingerprintJob> predictionJobs = new ArrayList<>();
