@@ -151,19 +151,9 @@ public class CandidateListView extends ActionListDetailView<CompoundCandidate, S
     @Override
     protected EventList<MatcherEditor<CompoundCandidate>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
-                (MatcherEditor<CompoundCandidate>) new CandidateStringMatcherEditor(searchField.textField),
-                new MinMaxMatcherEditor<>(logPSlider, new Filterator<Double, CompoundCandidate>() {
-                    @Override
-                    public void getFilterValues(java.util.List<Double> baseList, CompoundCandidate element) {
-                        baseList.add(element.getXLogP());
-                    }
-                }),
-                new MinMaxMatcherEditor<>(tanimotoSlider, new Filterator<Double, CompoundCandidate>() {
-                    @Override
-                    public void getFilterValues(java.util.List<Double> baseList, CompoundCandidate element) {
-                        baseList.add(element.getTanimotoScore());
-                    }
-                }),
+                new CandidateStringMatcherEditor(searchField.textField),
+                new MinMaxMatcherEditor<>(logPSlider, (Filterator<Double, CompoundCandidate>) (baseList, element) -> baseList.add(element.getXLogP())),
+                new MinMaxMatcherEditor<>(tanimotoSlider, (Filterator<Double, CompoundCandidate>) (baseList, element) -> baseList.add(element.getTanimotoScore())),
                 new DatabaseFilterMatcherEditor(dbFilterPanel)
         );
     }
