@@ -67,7 +67,6 @@ public class FormulaList extends ActionList<SiriusResultElement, ExperimentConta
             if (!this.data.getResults().equals(elementList)) {
                 selectionModel.clearSelection();
                 elementList.clear();
-//                elementList.addAll(this.ec.getResults());
                 intiResultList();
             }
         } else {
@@ -108,7 +107,7 @@ public class FormulaList extends ActionList<SiriusResultElement, ExperimentConta
     }
 
 
-    public List<SiriusResultElement> getSelecteValues() {
+    public List<SiriusResultElement> getSelectedValues() {
         List<SiriusResultElement> selected = new ArrayList<>();
         for (int i = selectionModel.getMinSelectionIndex(); i <= selectionModel.getMaxSelectionIndex(); i++) {
             if (selectionModel.isSelectedIndex(i)) {
