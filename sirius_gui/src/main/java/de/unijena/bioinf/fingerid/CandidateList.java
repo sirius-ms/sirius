@@ -84,8 +84,6 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
         }
 
         elementList.addAll(emChache);
-
-
         notifyListeners(data, null, getElementList(), getResultListSelectionModel());
     }
 }

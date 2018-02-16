@@ -1,8 +1,5 @@
 package de.unijena.bioinf.fingerid;
 
-import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.JobStateEvent;
-import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Fonts;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -19,15 +16,13 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Locale;
 
 /**
  * Created by fleisch on 24.05.17.
  */
-class CompoundStructureImage extends JPanel implements PropertyChangeListener {
+class CompoundStructureImage extends JPanel {
 
     protected static final Font nameFont, rankFont, matchFont;
 
@@ -75,10 +70,6 @@ class CompoundStructureImage extends JPanel implements PropertyChangeListener {
         super.paint(g);
         if (molecule.compound.hasAtomContainer()) {
             renderImage(molecule.compound, (Graphics2D) g);
-        } else {
-            LoadMoleculeJob moleculeJob = new LoadMoleculeJob(molecule.compound);
-            moleculeJob.addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, this);
-            Jobs.MANAGER.submitJob(moleculeJob);
         }
     }
 
@@ -115,16 +106,5 @@ class CompoundStructureImage extends JPanel implements PropertyChangeListener {
 
         gg.setFont(matchFont);
         gg.drawString(tanimotoText, (int) (getWidth() - (tw + 4)), getHeight() - 4);
-    }
-
-
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-        if (((JobStateEvent) evt).getNewValue().equals(JJob.JobState.DONE)) {
-            SwingUtilities.invokeLater(() -> {
-                revalidate();
-                repaint();
-            });
-        }
     }
 }
