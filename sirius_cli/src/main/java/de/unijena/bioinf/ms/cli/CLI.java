@@ -288,6 +288,9 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                     }
                 } else {
                     logger.warn("Cannot find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
+                    if (projectWriter != null) {
+                        projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), null, "NORESULTS"));
+                    }
                 }
             } catch (TimeoutException e) {
                 println("Ignore " + siriusJob.getExperiment().getName() + " due to timeout!");
