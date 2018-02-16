@@ -281,8 +281,8 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         }
 
         // add common misspelled aliases...
-        final PrecursorIonType hplus = knownIonTypes.get("[M+H]+");
-        final PrecursorIonType hminus = knownIonTypes.get("[M-H]-");
+        final PrecursorIonType hplus = ionByName("[M+H]+");
+        final PrecursorIonType hminus = ionByName("[M-H]-");
         PROTONATION_PRECURSOR = hplus;
         DEPROTONATION_PRECURSOR = hminus;
         knownIonTypes.put("M+H", hplus);
@@ -291,8 +291,8 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         knownIonTypes.put("M-H", hminus);
         knownIonTypes.put("M-H-", hminus);
         knownIonTypes.put("[M-H]", hminus);
-        knownIonTypes.put("M+", knownIonTypes.get("[M]+"));
-        knownIonTypes.put("M-", knownIonTypes.get("[M]-"));
+        knownIonTypes.put("M+", ionByName("[M]+"));
+        knownIonTypes.put("M-", ionByName("[M]-"));
     }
 
     protected Pattern MULTIMERE_PATTERN = Pattern.compile("\\d+M([+-]|\\])");
@@ -464,10 +464,10 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             }
             if (usedIonMode != null) break;
         }
-        if (usedIonMode==null && adducts.size()>0 && charge < 0 ) {
+        if (usedIonMode == null && adducts.size() > 0 && charge < 0) {
             adducts.add(MolecularFormula.getHydrogen());
             usedIonMode = DEPROTONATION;
-        } else if (usedIonMode==null && !insourceFrags.isEmpty() && charge > 0) {
+        } else if (usedIonMode == null && !insourceFrags.isEmpty() && charge > 0) {
             insourceFrags.add(MolecularFormula.getHydrogen());
             usedIonMode = PROTONATION;
         }
@@ -499,6 +499,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     public PrecursorIonType getPrecursorProtonation() {
         return PROTONATION_PRECURSOR;
     }
+
     public PrecursorIonType getPrecursorDeprotonation() {
         return DEPROTONATION_PRECURSOR;
     }
@@ -617,6 +618,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * @throws IllegalArgumentException if the name is already used for a different ion type
      */
     public boolean addCommonIonType(String name, PrecursorIonType ionType) {
+        name = canonicalizeIonName(name);
         if (knownIonTypes.containsKey(name)) {
             if (ionType.equals(knownIonTypes.get(name))) return false;
             else throw new IllegalArgumentException("There is already an ionization with name '" + name + "'");
@@ -626,7 +628,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         knownIonTypes.put(name, ionType);
 
         //check if the ionisation is already in knownIonTypes and add it if not
-        String ionName = ionType.getIonization().getName();
+        final String ionName = canonicalizeIonName(ionType.getIonization().getName());
         addCommonIonType(ionName, ionByName(ionName));
 
         //add adduct to list of adducts with common ionisation
@@ -737,7 +739,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * @return the set of different Ionization types
      */
     public Set<String> getIonizationsAsString() {
-        return ionizationToAdduct.keySet();
+        return ionizationToAdduct.keySet().stream().map((it) -> knownIonTypes.get(it).getIonization().getName()).collect(Collectors.toSet());
     }
 
     /**
@@ -773,9 +775,10 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      */
     public Set<String> getPositiveIonizationsAsString() {
         Set<String> positives = new HashSet<>();
-        for (String ionType : ionizationToAdduct.keySet()) {
-            if (knownIonTypes.get(ionType).getIonization().getCharge() > 0)
-                positives.add(ionType);
+        for (String name : ionizationToAdduct.keySet()) {
+            PrecursorIonType ionType = knownIonTypes.get(name);
+            if (ionType.getIonization().getCharge() > 0)
+                positives.add(ionType.getIonization().getName());
         }
         return positives;
     }
@@ -797,9 +800,10 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      */
     public Set<String> getNegativeIonizationsAsString() {
         Set<String> negatives = new HashSet<>();
-        for (String ionType : ionizationToAdduct.keySet()) {
-            if (knownIonTypes.get(ionType).getIonization().getCharge() < 0)
-                negatives.add(ionType);
+        for (String name : ionizationToAdduct.keySet()) {
+            PrecursorIonType ionType = knownIonTypes.get(name);
+            if (ionType.getIonization().getCharge() < 0)
+                negatives.add(ionType.getIonization().getName());
         }
         return negatives;
     }
@@ -888,9 +892,9 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * @return an ion with the given mass or null if no ion is found
      */
     public PrecursorIonType ionByMass(double mass, double absError, int charge) {
-        if (charge > 0 && Math.abs(mass-PROTONATION.getMass())<absError)
+        if (charge > 0 && Math.abs(mass - PROTONATION.getMass()) < absError)
             return PROTONATION_PRECURSOR;
-        else if (charge < 0 && Math.abs(mass-DEPROTONATION.getMass())<absError)
+        else if (charge < 0 && Math.abs(mass - DEPROTONATION.getMass()) < absError)
             return DEPROTONATION_PRECURSOR;
         PrecursorIonType minIon = null;
         double minDistance = Double.MAX_VALUE;
@@ -926,8 +930,8 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         if (name == null || name.isEmpty()) return PrecursorIonType.unknown();
 
         name = canonicalizeIonName(name);
-        if (name.equals(Charge.POSITIVE_CHARGE) || name.equals("M+?+")) return PrecursorIonType.unknownPositive();
-        if (name.equals(Charge.NEGATIVE_CHARGE) || name.equals("M+?-")) return PrecursorIonType.unknownNegative();
+        if (name.equals(canonicalizeIonName(Charge.POSITIVE_CHARGE)) || name.equals("M+?+")) return PrecursorIonType.unknownPositive();
+        if (name.equals(canonicalizeIonName(Charge.NEGATIVE_CHARGE)) || name.equals("M+?-")) return PrecursorIonType.unknownNegative();
 
         if (knownIonTypes.containsKey(name)) return knownIonTypes.get(name);
         return null;
@@ -997,9 +1001,10 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     }
 
     private Set<PrecursorIonType> adductsFromIonizationName(String name) {
+        name = canonicalizeIonName(name);
         PrecursorIonType p = knownIonTypes.get(name);
         if (p == null) return Collections.emptySet();
-        Set<PrecursorIonType> r = ionizationToAdduct.get(p.getIonization().getName());
+        Set<PrecursorIonType> r = ionizationToAdduct.get(canonicalizeIonName(p.getIonization().getName()));
         return r == null ? Collections.<PrecursorIonType>emptySet() : Collections.unmodifiableSet(r);
     }
 
