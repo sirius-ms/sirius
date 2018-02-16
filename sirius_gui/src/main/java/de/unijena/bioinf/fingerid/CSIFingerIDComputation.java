@@ -235,40 +235,44 @@ public class CSIFingerIDComputation {
 
             }
             LOG().info("Collecting results");
-            // replace result list
-            final HashMap<Ion, SiriusResultElement> elems = new HashMap<>();
-            for (SiriusResultElement e : container.getResults()) {
-                elems.put(new Ion(e.getResult().getMolecularFormula(), e.getResult().getPrecursorIonType()), e);
-            }
-            for (SiriusResultElement e : inputs) {
-                elems.put(new Ion(e.getResult().getMolecularFormula(), e.getResult().getPrecursorIonType()), e);
-            }
-            final ArrayList<SiriusResultElement> sorted = new ArrayList<>(elems.values());
-            sorted.sort((a, b) -> {
-                int compare = Integer.compare(a.getRank(), b.getRank());
-                if (compare == 0) {
-                    if (a.getFingerIdData() != null && b.getFingerIdData() != null) {
-                        return Double.compare(b.getFingerIdData().getTopScore(), a.getFingerIdData().getTopScore());
-                    } else if (a.getFingerIdData() != null) {
-                        return -1;
-                    } else if (b.getFingerIdData() != null)
-                        return 1;
-                    else return 0;
+            synchronized (container) {
+                // replace result list
+                final HashMap<Ion, SiriusResultElement> elems = new HashMap<>();
+                for (SiriusResultElement e : container.getResults()) {
+                    elems.put(new Ion(e.getResult().getMolecularFormula(), e.getResult().getPrecursorIonType()), e);
                 }
-                return compare;
-            });
-            sorted.forEach(x -> x.buildTreeVisualization(SiriusResultElementConverter::convertTree));
-            container.setResults(sorted);
-            double topHitScore = Double.NEGATIVE_INFINITY;
-            SiriusResultElement topHit = null;
-            for (SiriusResultElement elem : container.getResults()) {
-                double score = elem.getFingerIdData() != null ? elem.getFingerIdData().getTopScore() : Double.NEGATIVE_INFINITY;
-                if (score > topHitScore) {
-                    topHit = elem;
-                    topHitScore = score;
+                for (SiriusResultElement e : inputs) {
+                    if (e.getFingerIdData()!=null) {
+                        elems.put(new Ion(e.getResult().getMolecularFormula(), e.getResult().getPrecursorIonType()), e);
+                    }
                 }
+                final ArrayList<SiriusResultElement> sorted = new ArrayList<>(elems.values());
+                sorted.sort((a, b) -> {
+                    int compare = Integer.compare(a.getRank(), b.getRank());
+                    if (compare == 0) {
+                        if (a.getFingerIdData() != null && b.getFingerIdData() != null) {
+                            return Double.compare(b.getFingerIdData().getTopScore(), a.getFingerIdData().getTopScore());
+                        } else if (a.getFingerIdData() != null) {
+                            return -1;
+                        } else if (b.getFingerIdData() != null)
+                            return 1;
+                        else return 0;
+                    }
+                    return compare;
+                });
+                sorted.forEach(x -> x.buildTreeVisualization(SiriusResultElementConverter::convertTree));
+                container.setResults(sorted);
+                double topHitScore = Double.NEGATIVE_INFINITY;
+                SiriusResultElement topHit = null;
+                for (SiriusResultElement elem : container.getResults()) {
+                    double score = elem.getFingerIdData() != null ? elem.getFingerIdData().getTopScore() : Double.NEGATIVE_INFINITY;
+                    if (score > topHitScore) {
+                        topHit = elem;
+                        topHitScore = score;
+                    }
+                }
+                container.setBestHit(topHit);
             }
-            container.setBestHit(topHit);
             return true;
 
         }
