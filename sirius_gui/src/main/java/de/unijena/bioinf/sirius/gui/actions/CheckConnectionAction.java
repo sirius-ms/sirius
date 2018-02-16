@@ -2,7 +2,7 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.ConnectionDialog;
-import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.net.ProxyManager;
 

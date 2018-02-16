@@ -1,6 +1,6 @@
 package de.unijena.bioinf.sirius.gui.table;
 
-import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
+import de.unijena.bioinf.fingerid.CSIFingerIDComputation;
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaScoreListStats;
 
 import javax.swing.*;
@@ -23,19 +23,19 @@ public class FingerIDScoreBarRenderer extends ListStatBarTableCellRenderer {
 
 
     @Override
-    protected float getThresh(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
-        return (float) Math.abs(CSIFingerIdComputation.calculateThreshold(
+    protected double getThresh(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
+        return CSIFingerIDComputation.calculateThreshold(
                 getMax(table, isSelected, hasFocus, row, column)
-        ));
+        );
     }
 
     @Override
-    protected float getSum(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
-        return (float) ((FormulaScoreListStats) stats).getExpScoreSum();
+    protected double getSum(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
+        return ((FormulaScoreListStats) stats).getExpScoreSum();
     }
 
     @Override
-    protected float getPercentage(JTable table, float value, boolean isSelected, boolean hasFocus, int row, int column) {
-        return ((float)Math.exp(value) / getSum(table,isSelected,hasFocus,row,column) * 100f);
+    protected double getPercentage(JTable table, double value, boolean isSelected, boolean hasFocus, int row, int column) {
+        return Math.exp(value) / getSum(table, isSelected, hasFocus, row, column) * 100d;
     }
 }

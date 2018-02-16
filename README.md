@@ -26,18 +26,18 @@ CSI:FingerID.</span>
 
 ### Documentation
 - [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-manual.pdf)
+- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.0-SNAPSHOT/sirius-4.0-SNAPSHOT-manual.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 3.5.1 (Build 7 from 2017-12-20)
-- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-win64.zip)
-- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-linux64.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-osx64.zip)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 4.0-SNAPSHOT (Build 1 from 2018-02-16)
+- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.0-SNAPSHOT/sirius-4.0-SNAPSHOT-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.0-SNAPSHOT/sirius-4.0-SNAPSHOT-win64.zip)
+- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.0-SNAPSHOT/sirius-4.0-SNAPSHOT-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.0-SNAPSHOT/sirius-4.0-SNAPSHOT-linux64.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.0-SNAPSHOT/sirius-4.0-SNAPSHOT-osx64.zip)
 
-### SIRIUS Commandline Version 3.5.1
-- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-win64-headless.zip)
-- for Linux/Unix [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-linux64-headless.zip)
-- for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-osx64-headless.zip)
+### SIRIUS+CSI:FingerID Commandline only - Version 4.0-SNAPSHOT (Build 1 from 2018-02-16)
+- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.0-SNAPSHOT/sirius-4.0-SNAPSHOT-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.0-SNAPSHOT/sirius-4.0-SNAPSHOT-win64-headless.zip)
+- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.0-SNAPSHOT/sirius-4.0-SNAPSHOT-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.0-SNAPSHOT/sirius-4.0-SNAPSHOT-linux64-headless.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.0-SNAPSHOT/sirius-4.0-SNAPSHOT-osx64-headless.zip)
 
 ### Sources on GitHub
 - [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)
@@ -149,6 +149,43 @@ literature to cite transparent to the user.
 ## Changelog
 
 <!--begin changelog-->
+
+#### 3.6
+
+-   **Fragmentation tree heuristics**
+
+-   **CPLEX** ILP solver support
+
+-   Custom ionizations/adducts can be specified
+
+-   Consider a specific list of **ionizations for Sirius**
+
+-   Consider a specific list of **adducts for CSI:FingerID** (CLI only,
+    GUI is coming soon)
+
+-   **Full-featured** standalone **command line version** (headless
+    version)
+
+-   Improved **parallelization** and task management
+
+-   Improved stability of CSI:FingerID webservice
+
+-   Time limit for Fragmentation tree computation
+
+-   Specify fields to import name and ID from .sdf into custom database
+    (GUI).
+
+-   CSI:FingerID results can be **filtered by Custom databases** (GUI).
+
+-   Better filtering performance (GUI)
+
+-   Bug fix in Database filtering view (GUI)
+
+-   Error Reporter bug fixed (GUI)
+
+-   Logging bug fixed
+
+-   Many minor bug fixes
 
 #### 3.5
 

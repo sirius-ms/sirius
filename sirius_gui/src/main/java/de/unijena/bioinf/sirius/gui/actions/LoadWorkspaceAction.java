@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.gui.actions;
  * 29.01.17.
  */
 
+import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 
@@ -13,8 +14,8 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.Arrays;
 
+import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
-import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.CONFIG_STORAGE;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -33,13 +34,13 @@ public class LoadWorkspaceAction extends AbstractAction {
         jfc.setCurrentDirectory(CONFIG_STORAGE.getDefaultSaveFilePath());
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
-        jfc.addChoosableFileFilter(new Workspace.SiriusSaveFileFilter());
+        jfc.addChoosableFileFilter(WorkspaceIO.SAVE_FILE_FILTER);
 
         int returnVal = jfc.showOpenDialog(MF);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File selFile = jfc.getSelectedFile();
             CONFIG_STORAGE.setDefaultSaveFilePath(selFile.getParentFile());
-            Workspace.importWorkspace(Arrays.asList(selFile));
+            WorkspaceIO.importWorkspace(Arrays.asList(selFile));
         }
     }
 }

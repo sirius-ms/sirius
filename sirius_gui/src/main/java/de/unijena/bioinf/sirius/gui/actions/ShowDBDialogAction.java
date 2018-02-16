@@ -5,7 +5,7 @@ package de.unijena.bioinf.sirius.gui.actions;
  * 29.01.17.
  */
 
-import de.unijena.bioinf.sirius.gui.db.DatabaseDialog;
+import de.unijena.bioinf.fingerid.db.DatabaseDialog;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 
 import javax.swing.*;

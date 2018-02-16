@@ -5,6 +5,8 @@ package de.unijena.bioinf.sirius.core.errorReport;
  * 29.09.16.
  */
 
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import org.slf4j.LoggerFactory;
@@ -21,28 +23,27 @@ public class SiriusDefaultErrorReport extends ErrorReport {
         super(subject);
         setUserMessage(userMessage);
         setUserEmail(userEmail);
+        setVersion(FingerIDProperties.sirius_guiVersion());
 
         File f = null;
         try {
             Properties prop = new Properties();
             prop.load(new FileInputStream(ApplicationCore.WORKSPACE.resolve("sirius.properties").toFile()));
-            prop.setProperty("de.unijena.bioinf.sirius.proxy.user","CLEANED");
-            prop.setProperty("de.unijena.bioinf.sirius.proxy.pw","CLEANED");
-            ByteArrayOutputStream stream =  new ByteArrayOutputStream();
-            prop.store(stream,"This is the cleaned (no passwords and usernames) version of the Properties File");
+            prop.setProperty("de.unijena.bioinf.sirius.proxy.user", "CLEANED");
+            prop.setProperty("de.unijena.bioinf.sirius.proxy.pw", "CLEANED");
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            prop.store(stream, "This is the cleaned (no passwords and usernames) version of the Properties File");
             ByteArrayInputStream in = new ByteArrayInputStream(stream.toByteArray());
-            addAdditionalFiles(in,"sirius.properties");
+            addAdditionalFiles(in, "sirius.properties");
 
             f = ApplicationCore.WORKSPACE.resolve("logging.properties").toFile();
             addAdditionalFiles(f);
-        } catch (FileNotFoundException e) {
-            LoggerFactory.getLogger(this.getClass()).error("Could not load file: " + f.getAbsolutePath(), e);
         } catch (IOException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error("Could not load file: " + f.getAbsolutePath(), e);
         }
         try {
             addAdditionalFiles(ErrorUtils.getErrorLoggingStream(), "sirius.log");
-        } catch (IOException e) {
+        } catch (Exception e) {
             LoggerFactory.getLogger(this.getClass()).error("Could not load Logging Stream", e);
         }
 
@@ -57,7 +58,7 @@ public class SiriusDefaultErrorReport extends ErrorReport {
     }
 
     //this constructor is just for deserialisation
-    public SiriusDefaultErrorReport(){
+    public SiriusDefaultErrorReport() {
         super();
 
     }

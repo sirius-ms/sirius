@@ -7,9 +7,10 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.configs.Icons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -41,6 +42,7 @@ public class CancelComputeAction extends AbstractAction {
                 }
                 setEnabled(false);
             }
+
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<ExperimentContainer> selection) {
 
@@ -53,7 +55,7 @@ public class CancelComputeAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         for (ExperimentContainer ec : MF.getCompoundListSelectionModel().getSelected()) {
-            MF.getBackgroundComputation().cancel(ec);
+            Jobs.cancel(ec);
         }
     }
 

@@ -5,7 +5,8 @@ package de.unijena.bioinf.sirius.core.errorReport;
  * 28.09.16.
  */
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
 
@@ -15,16 +16,23 @@ import java.util.logging.Logger;
 public abstract class ErrorUtils {
     private static ErrorReportHandler REPORT_HANDLER;
 
-    public static InputStream getErrorLoggingStream() throws IOException {
-        if (REPORT_HANDLER ==  null){
+    public static InputStream getErrorLoggingStream() throws Exception {
+        if (REPORT_HANDLER == null) {
             for (Handler h : Logger.getLogger("").getHandlers()) {
-                if (h instanceof ErrorReportHandler){
+                if (h instanceof ErrorReportHandler) {
                     REPORT_HANDLER = (ErrorReportHandler) h;
                     break;
                 }
             }
         }
-        ByteArrayInputStream in =  new ByteArrayInputStream(REPORT_HANDLER.flushToByteArray());
-        return in;
+        if (REPORT_HANDLER != null) {
+            byte[] arr = REPORT_HANDLER.flushToByteArray();
+            if (arr != null)
+                return new ByteArrayInputStream(arr);
+            else
+                throw new NullPointerException("Error logging Stream has no bytes");
+        } else {
+            throw new NullPointerException("No Error logging Stream available");
+        }
     }
 }

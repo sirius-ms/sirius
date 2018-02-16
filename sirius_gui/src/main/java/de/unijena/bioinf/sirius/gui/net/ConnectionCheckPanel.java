@@ -1,6 +1,5 @@
 package de.unijena.bioinf.sirius.gui.net;
 
-import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 

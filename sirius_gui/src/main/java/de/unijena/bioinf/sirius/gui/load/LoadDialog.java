@@ -1,25 +1,32 @@
 package de.unijena.bioinf.sirius.gui.load;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
+
+import java.util.List;
 
 public interface LoadDialog {
-	
-	void newCollisionEnergy(CompactSpectrum sp);
 
-	void ionizationChanged(PrecursorIonType ionization);
-	
-	void spectraAdded(CompactSpectrum sp);
-	
-	void spectraRemoved(CompactSpectrum sp);
-	
-	void msLevelChanged(CompactSpectrum sp);
-	
-	void addLoadDialogListener(LoadDialogListener ldl);
-	
-	void showDialog();
-	
-	void experimentNameChanged(String name);
+    void newCollisionEnergy(SpectrumContainer sp);
 
-	void parentMassChanged(double newMz);
+    void msLevelChanged(SpectrumContainer sp);
+
+    void addLoadDialogListener(LoadDialogListener ldl);
+
+    void showDialog();
+
+    void experimentNameChanged(String name);
+
+    String getExperimentName();
+
+    double getParentMass();
+
+    void setParentMass(double ionMass);
+
+    void ionizationChanged(PrecursorIonType ionization);
+
+
+    PrecursorIonType getIonization();
 }

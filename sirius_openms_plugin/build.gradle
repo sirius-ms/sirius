@@ -2,11 +2,11 @@ import java.nio.file.Files
 
 dependencies {
 //project
-    compile project(':sirius_gui')
+    compile project(':sirius_cli')
 }
 
 /*################### Environment variables ################### */
-mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
+mainClassName = 'de.unijena.bioinf.ms.cli.SiriusCLIApplication'
 project.ext.set("type", "console")
 
 /*################### Jar build Stuff ################### */
@@ -23,7 +23,8 @@ launch4j {
     jreRuntimeBits = "$project.arch"
     outfile = "${project.appName}.exe"
     jar = "../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}"
-    classPath = ["${runtimeClasspath.replace('${', '%').replace('}', '%')}", "../../../All/Sirius/lib/*"]
+
+    classPath += ["../../../All/Sirius/lib/*"] //add
 }
 
 startScripts {
@@ -81,7 +82,7 @@ distributions {
         contents {
             into('All/Sirius/lib') {
                 from("build/install/${project.name}/lib") {
-                    exclude("$gurobiExclude")
+                    exclude libExclude
                 }
             }
 

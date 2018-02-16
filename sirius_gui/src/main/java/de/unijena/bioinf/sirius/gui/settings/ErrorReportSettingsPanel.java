@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.gui.settings;
  * 07.10.16.
  */
 
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.utils.mailService.Mail;
 import org.slf4j.LoggerFactory;
@@ -12,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.util.Properties;
 
-import static de.unijena.bioinf.sirius.gui.utils.SwingUtils.SMALL_GAP;
+import static de.unijena.bioinf.sirius.gui.utils.GuiUtils.SMALL_GAP;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -21,35 +22,31 @@ public class ErrorReportSettingsPanel extends TwoCloumnPanel implements Settings
     private Properties props;
     private JTextField emailField;
     private JCheckBox uesrCopy, hardwareInfo;
+
     public ErrorReportSettingsPanel(Properties properties) {
         super();
         this.props = properties;
 
-        String email = System.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
+        String email = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
         if (email != null && !email.isEmpty())
             emailField = new JTextField(email);
         else
             emailField = new JTextField();
         add(new JLabel("Contact email adress: "), emailField);
 
-        hardwareInfo = new JCheckBox("Send hardware and OS information?", Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo")));
-        uesrCopy = new JCheckBox("Send a copy to my mail address?", Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail")));
-        add(hardwareInfo,SMALL_GAP,false);
+        hardwareInfo = new JCheckBox("Send hardware and OS information?", Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo")));
+        uesrCopy = new JCheckBox("Send a copy to my mail address?", Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail")));
+        add(hardwareInfo, SMALL_GAP, false);
         add(uesrCopy);
     }
 
 
     @Override
-    public void refreshValues() {
-
-    }
-
-    @Override
     public void saveProperties() {
         String mail = emailField.getText();
-        if (Mail.validateMailAdress(mail)){
+        if (Mail.validateMailAdress(mail)) {
             props.setProperty("de.unijena.bioinf.sirius.core.mailService.usermail", emailField.getText());
-        }else {
+        } else {
             LoggerFactory.getLogger(this.getClass()).warn("No Valid mail Address. Email Address not saved");
         }
 

@@ -10,14 +10,13 @@ dependencies {
     compile group: "de.unijena.bioinf.ms", name: "chemical_db", version: "$fingeridVersion"
 
     compile group: "de.unijena.bioinf.ms", name: "canopus_predict", version: "$fingeridVersion"
-
+    compile group: 'de.unijena.bioinf', name: 'jjobs-swing', version: "$jjobs_version"
 //external
     compile group: 'javax.json', name: 'javax.json-api', version: "$json_version"
     compile group: 'org.glassfish', name: 'javax.json', version: "$json_impl_version"
 
     compile "net.sf.opencsv:opencsv:2.3"
     compile "org.swinglabs.swingx:swingx-all:1.+"
-    compile "org.openscience.cdk:cdk-silent:$cdk_version"
     compile "org.openscience.cdk:cdk-render:$cdk_version"
     compile "org.openscience.cdk:cdk-renderextra:$cdk_version"
     compile "org.openscience.cdk:cdk-renderawt:$cdk_version"
@@ -31,16 +30,13 @@ dependencies {
     compile "org.openscience.cdk:cdk-sdg:$cdk_version"
     compile "org.openscience.cdk:cdk-smarts:$cdk_version"
 
-    compile group: "net.iharder", name: "base64", version: "2.3.8"
     compile group: 'net.java.dev.glazedlists', name: 'glazedlists_java16', version: '1.10.0'
-    compile group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
 
-
-
+    //compile group: 'com.kitfox.svg', name: 'svg-salamander', version: '1.0'
 }
 
 /*################### Environment variables ################### */
-mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
+mainClassName = "de.unijena.bioinf.ms.cli.SiriusGUIApplication"
 project.ext.set("type", "gui,console")
 
 /*################### Jar build Stuff ################### */
@@ -73,9 +69,9 @@ distributions {
             contents {
                 into('lib') {
                     from("build/install/${project.name}/lib") {
-                        exclude("$gurobiExclude")
+                        exclude libExclude
                     }
-                    from("${project.glpkPath}/l${ar}/"){
+                    from("${project.glpkPath}/l${ar}/") {
                         include('libglpk.so.40')
                         include('libglpk_java.so')
                     }
@@ -111,7 +107,7 @@ distributions {
             contents {
                 into('lib') {
                     from('build/launch4j/lib') {
-                        exclude("$gurobiExclude")
+                        exclude libExclude
                     }
                     exclude('*.zip')
                 }
@@ -143,7 +139,7 @@ distributions {
         contents {
             into('lib') {
                 from("build/install/${project.name}/lib") {
-                    exclude("$gurobiExclude")
+                    exclude libExclude
                 }
                 from("${project.glpkPath}/osx/")
                 exclude('*.zip')

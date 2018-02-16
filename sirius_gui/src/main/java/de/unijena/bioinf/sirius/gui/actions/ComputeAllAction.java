@@ -8,10 +8,10 @@ package de.unijena.bioinf.sirius.gui.actions;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.compute.BatchComputeDialog;
-import de.unijena.bioinf.sirius.gui.compute.JobLog;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.configs.Icons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -36,50 +36,27 @@ public class ComputeAllAction extends AbstractAction {
             public void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection) {
                 setEnabled(event.getSourceList().size() > 0);
             }
+
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentContainer> selection) {}
+            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentContainer> selection) {
+            }
         });
 
-        JobLog.getInstance().addListener(new JobLog.JobListener() {
-            @Override
-            public void jobIsSubmitted(JobLog.Job job) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (JobLog.getInstance().hasActiveJobs()) {
-                            computationStarted();
-                        } else {
-                            computationCanceled();
-                        }
-                    }
-                });
-            }
-
-            @Override
-            public void jobIsRunning(JobLog.Job job) {
-                jobIsSubmitted(job);
-            }
-
-            @Override
-            public void jobIsDone(final JobLog.Job job) {
-                jobIsSubmitted(job);
-            }
-
-            @Override
-            public void jobIsFailed(JobLog.Job job) {
-                jobIsSubmitted(job);
-            }
-
-            @Override
-            public void jobDescriptionChanged(JobLog.Job job) {
+        //Listen if there are active gui jobs
+        Jobs.MANAGER.getJobs().addListEventListener(listChanges -> {
+            if (Jobs.MANAGER.hasActiveJobs()) {
+                computationStarted();
+            } else {
+                computationCanceled();
             }
         });
     }
 
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (isActive.get()) {
-            MF.getBackgroundComputation().cancelAll();
+            Jobs.cancelALL();
         } else {
             new BatchComputeDialog(MF, MF.getCompounds());
         }

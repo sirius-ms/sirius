@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
+import de.unijena.bioinf.fingerid.storage.FileFormat;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeColor;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
 import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
@@ -10,7 +11,10 @@ import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.io.DotIO;
 import de.unijena.bioinf.sirius.gui.io.RasterGraphicsIO;
-import de.unijena.bioinf.sirius.gui.structure.*;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
+import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.structure.TreeCopyTool;
 import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.sirius.gui.utils.PanelDescription;
 import org.slf4j.LoggerFactory;
@@ -24,9 +28,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
 
+import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
-public class TreeVisualizationPanel extends JPanel implements ActionListener, ActiveElementChangedListener<SiriusResultElement,ExperimentContainer>, PanelDescription {
+public class TreeVisualizationPanel extends JPanel implements ActionListener, ActiveElementChangedListener<SiriusResultElement, ExperimentContainer>, PanelDescription {
     @Override
     public String getDescription() {
         return "Visualisation of the Fragmentation tree for the selected molecular formula";
@@ -146,7 +151,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             this.svp.repaint();
         } else if (e.getSource() == this.saveTreeB) {
             JFileChooser jfc = new JFileChooser();
-            jfc.setCurrentDirectory(Workspace.CONFIG_STORAGE.getDefaultTreeExportPath());
+            jfc.setCurrentDirectory(CONFIG_STORAGE.getDefaultTreeExportPath());
             jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
             jfc.setAcceptAllFileFilterUsed(false);
 
@@ -164,7 +169,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             jfc.addChoosableFileFilter(jsonFilter);
 //			jfc.addChoosableFileFilter(new FTreeJsonFilter());
 
-            FileFormat defaultFF = Workspace.CONFIG_STORAGE.getDefaultTreeFileFormat();
+            FileFormat defaultFF = CONFIG_STORAGE.getDefaultTreeFileFormat();
             if (defaultFF == FileFormat.dot) {
                 jfc.setFileFilter(dotFilter);
             } else if (defaultFF == FileFormat.gif) {
@@ -186,7 +191,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
                 if (returnval == JFileChooser.APPROVE_OPTION) {
                     File selFile = jfc.getSelectedFile();
 
-                    Workspace.CONFIG_STORAGE.setDefaultTreeExportPath(selFile.getParentFile());
+                    CONFIG_STORAGE.setDefaultTreeExportPath(selFile.getParentFile());
 
                     String name = selFile.getName();
                     if (jfc.getFileFilter() == dotFilter) {
@@ -234,7 +239,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             }
 
             if (ff != FileFormat.none) {
-                Workspace.CONFIG_STORAGE.setDefaultTreeFileFormat(ff);
+                CONFIG_STORAGE.setDefaultTreeFileFormat(ff);
             }
 
             if (selectedFile != null && ff != FileFormat.none) {

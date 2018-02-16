@@ -1,10 +1,10 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.sirius.gui.canopus.CanopusPanel;
-import de.unijena.bioinf.sirius.gui.fingerid.CandidateList;
-import de.unijena.bioinf.sirius.gui.fingerid.CandidateListDetailViewPanel;
-import de.unijena.bioinf.sirius.gui.fingerid.fingerprints.FingerprintPanel;
-import de.unijena.bioinf.sirius.gui.fingerid.fingerprints.FingerprintTable;
+import de.unijena.bioinf.fingerid.CandidateList;
+import de.unijena.bioinf.fingerid.CandidateListDetailViewPanel;
+import de.unijena.bioinf.fingerid.fingerprints.FingerprintPanel;
+import de.unijena.bioinf.fingerid.fingerprints.FingerprintTable;
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.sirius.gui.table.ActionList;
