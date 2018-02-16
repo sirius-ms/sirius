@@ -44,6 +44,7 @@ public class CachedRESTDB {
         this.versionsInfo = versionsInfo;
         this.fingerprintVersion = fingerprintVersion;
         this.directory = dir;
+        this.customDatabases = new HashMap<>();
 
     }
 
