@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.text.DecimalFormat;
@@ -59,10 +58,15 @@ public class PrecursorSelector extends JPanel {
         //build components
         box = createParentPeakSelector();
         autoDetectFM.setToolTipText("Set most intensive peak as parent mass");
-        autoDetectFM.addActionListener(e -> box.setSelectedItem(peaks.stream().max(Comparator.comparingDouble(Peak::getIntensity)).orElse(null)));
+        autoDetectFM.addActionListener(e -> setMostIntensivePrecursorMass());
 
         add(box);
         add(autoDetectFM);
+    }
+
+    protected boolean setMostIntensivePrecursorMass() {
+        box.setSelectedItem(peaks.stream().max(Comparator.comparingDouble(Peak::getIntensity)).orElse(null));
+        return box.getSelectedItem() == null;
     }
 
     //todo proress panel and backround task for setData
@@ -78,9 +82,10 @@ public class PrecursorSelector extends JPanel {
     public void setData(Collection<Peak> masses) {
         peaks.clear();
         peaks.addAll(masses);
-        if (peaks.isEmpty()) autoDetectFM.setEnabled(false);
+        if (peaks.isEmpty())
+            autoDetectFM.setEnabled(false);
         else
-            autoDetectFM.getAction().actionPerformed(new ActionEvent(autoDetectFM, 0, autoDetectFM.getActionCommand()));
+            setMostIntensivePrecursorMass();
     }
 
     public void setData(java.util.List<SpectrumContainer> spectra, double ioMass) {
@@ -139,9 +144,14 @@ public class PrecursorSelector extends JPanel {
     }
 
     public boolean setSelectedItem(double mass) {
-        MsExperiments.PrecursorCandidates masses = MsExperiments.findPossiblePrecursorPeaks(peaks, mass);
-        box.setSelectedItem(masses.getDefaultPrecursor() != null ? masses.getDefaultPrecursor() : String.valueOf(mass));
-        return true;
+        if (mass <= 0) {
+            setMostIntensivePrecursorMass();
+            return false;
+        }else {
+            MsExperiments.PrecursorCandidates masses = MsExperiments.findPossiblePrecursorPeaks(peaks, mass);
+            box.setSelectedItem(masses.getDefaultPrecursor() != null ? masses.getDefaultPrecursor() : String.valueOf(mass));
+            return true;
+        }
     }
 
     public double getSelectedIonMass() {
