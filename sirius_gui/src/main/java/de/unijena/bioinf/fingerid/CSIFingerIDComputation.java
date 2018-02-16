@@ -144,6 +144,7 @@ public class CSIFingerIDComputation {
             this.originalResultElement = originalResultElement;
             this.addedResultElements = new ArrayList<>();
             this.db = db;
+            addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, originalResultElement);
         }
 
         public String toString() {
@@ -229,15 +230,17 @@ public class CSIFingerIDComputation {
             }
             final ArrayList<SiriusResultElement> sorted = new ArrayList<>(elems.values());
             sorted.sort((a, b) -> {
-                if (a.getRank() < b.getRank()) return -1;
-                else if (a.getRank() > b.getRank()) return 1;
-                else {
+                int compare = Integer.compare(a.getRank(), b.getRank());
+                if (compare == 0) {
                     if (a.getFingerIdData() != null && b.getFingerIdData() != null) {
                         return Double.compare(b.getFingerIdData().getTopScore(), a.getFingerIdData().getTopScore());
                     } else if (a.getFingerIdData() != null) {
                         return -1;
-                    } else return 1;
+                    } else if (b.getFingerIdData() != null)
+                        return 1;
+                    else return 0;
                 }
+                return compare;
             });
             sorted.forEach(x -> x.buildTreeVisualization(SiriusResultElementConverter::convertTree));
             container.setResults(sorted);
@@ -253,6 +256,12 @@ public class CSIFingerIDComputation {
             container.setBestHit(topHit);
             return true;
 
+        }
+
+        @Override
+        protected void cleanup() {
+            super.cleanup();
+            this.removePropertyChangeListener(originalResultElement);
         }
     }
 

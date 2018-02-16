@@ -56,7 +56,7 @@ public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<Si
 
     @Override
     public void cleanup() {
-        removePropertyChangeListener(this.ec);
+        removePropertyChangeListener(ec);
     }
 
     @Override
