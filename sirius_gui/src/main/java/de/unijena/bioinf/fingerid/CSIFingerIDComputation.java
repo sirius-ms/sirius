@@ -166,7 +166,7 @@ public class CSIFingerIDComputation {
             if (originalResultElement.getResult().getPrecursorIonType().isPlainProtonationOrDeprotonation()) {
                 final HashMap<Ion, SiriusResultElement> knownIonMap = new HashMap<>();
                 for (SiriusResultElement elem : container.getResults()) {
-                    if (elem.getResult()!=null)
+                    if (elem.getResult() != null)
                         knownIonMap.put(new Ion(elem.getResult().getMolecularFormula(), elem.getResult().getPrecursorIonType()), elem);
                 }
                 // generate additional result elements
@@ -175,7 +175,7 @@ public class CSIFingerIDComputation {
                         try {
                             final Ion addIon = new Ion(ion.measuredNeutralMoleculeToNeutralMolecule(originalResultElement.getResult().getMolecularFormula()), ion);
                             SiriusResultElement e = knownIonMap.get(addIon);
-                            if (e==null) {
+                            if (e == null) {
                                 e = new SiriusResultElement(IdentificationResult.withPrecursorIonType(originalResultElement.getResult(), ion));
                                 addedResultElements.add(e);
                             } else {
@@ -189,11 +189,12 @@ public class CSIFingerIDComputation {
                 }
             }
 
-
+            LOG().info("Submitting Formula, Prediction and Search jobs");
             inputs.addAll(addedResultElements);
             final ArrayList<FormulaJob> formulaJobs = new ArrayList<>();
             final ArrayList<PredictFingerprintJob> predictionJobs = new ArrayList<>();
             final ArrayList<FingerblastJob> searchJobs = new ArrayList<>();
+
             for (SiriusResultElement elem : inputs) {
                 final CSIPredictor csi = elem.getResult().getPrecursorIonType().getCharge() > 0 ? positiveMode : negativeMode;
                 // search in database
@@ -208,10 +209,12 @@ public class CSIFingerIDComputation {
                 submitSubJob(bj);
             }
             for (int i = 0; i < searchJobs.size(); ++i) {
+                LOG().info("Awaiting search Job " + searchJobs.get(i).LOG().getName());
                 FingerIdResult result = searchJobs.get(i).awaitResult();
                 if (result == null) {
+                    LOG().info("Result for search Job " + searchJobs.get(i).LOG().getName() + " is NULL");
                     if (i == 0) {
-                        LoggerFactory.getLogger(CSIFingerIDComputation.class).warn("Got null value from fingerblast. CSIFingerIDComputation:119");
+                        LOG().warn("Got null value from fingerblast. CSIFingerIDComputation:119");
                     }
                 } else {
 
@@ -242,7 +245,7 @@ public class CSIFingerIDComputation {
                     elems.put(new Ion(e.getResult().getMolecularFormula(), e.getResult().getPrecursorIonType()), e);
                 }
                 for (SiriusResultElement e : inputs) {
-                    if (e.getFingerIdData()!=null) {
+                    if (e.getFingerIdData() != null) {
                         elems.put(new Ion(e.getResult().getMolecularFormula(), e.getResult().getPrecursorIonType()), e);
                     }
                 }
