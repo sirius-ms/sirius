@@ -241,7 +241,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         final Iterator<File> rawFileIterator = rawFiles.iterator();
         while (rawFileIterator.hasNext()) {
             final File f = rawFileIterator.next();
-            if (f.getName().toLowerCase().endsWith(".sirius")) {
+            if (f.getName().toLowerCase().endsWith(".sirius") || (f.isDirectory() && WorkspaceIO.isSiriusWorkspaceDirectory(f))) {
                 siriusFiles.add(f);
                 rawFileIterator.remove();
             }
