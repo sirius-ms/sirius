@@ -91,7 +91,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     public void decoradeMainFrameInstance() {
         //create computation
-        csiFingerId= new CSIFingerIDComputation();
+        csiFingerId = new CSIFingerIDComputation();
 
         // create models for views
         experimentList = new ExperimentList();
@@ -156,7 +156,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                         new UpdateDialog(MainFrame.this, versionsNumber);
                     }
                     if (!versionsNumber.outdated()) {
-                       csiFingerId.setEnabled(true);
+                        csiFingerId.setEnabled(true);
                     }
                     if (versionsNumber.hasNews()) {
                         new NewsDialog(MainFrame.this, versionsNumber.getNews());
@@ -268,38 +268,32 @@ public class MainFrame extends JFrame implements DropTargetListener {
         if (csvFiles.isEmpty() && msFiles.isEmpty() && mgfFiles.isEmpty()) return;
 
         //Frage den Anwender ob er batch-Import oder alles zu einen Experiment packen moechte
-        if ((csvFiles.size() > 0 && (msFiles.size() + mgfFiles.size() == 0)) ||
-                (csvFiles.size() == 0 && msFiles.size() == 1 && mgfFiles.size() == 0)) {   //nur CSV bzw. nur ein File
-            LoadController lc = new LoadController(this, CONFIG_STORAGE);
-            lc.addSpectra(csvFiles, msFiles, mgfFiles);
-            lc.showDialog();
-
-            ExperimentContainer ec = lc.getExperiment();
-            if (ec != null) {
-                Workspace.importCompound(ec);
-            }
+        if ((csvFiles.size() > 0 && (msFiles.size() + mgfFiles.size() == 0))) {   //nur CSV bzw. nur ein File
+            openImporterWindow(csvFiles, msFiles, mgfFiles);
         } else if (csvFiles.size() == 0 && mgfFiles.size() == 0 && msFiles.size() > 0) {
             WorkspaceIO.importOneExperimentPerFile(msFiles, mgfFiles);
         } else {
             DragAndDropOpenDialog diag = new DragAndDropOpenDialog(this);
             DragAndDropOpenDialogReturnValue rv = diag.getReturnValue();
             if (rv == DragAndDropOpenDialogReturnValue.abort) {
-                return;
             } else if (rv == DragAndDropOpenDialogReturnValue.oneExperimentForAll) {
-                LoadController lc = new LoadController(this, CONFIG_STORAGE);
-                lc.addSpectra(csvFiles, msFiles, mgfFiles);
-                lc.showDialog();
-
-                ExperimentContainer ec = lc.getExperiment();
-                if (ec != null) {
-                    Workspace.importCompound(ec);
-                }
+                openImporterWindow(csvFiles, msFiles, mgfFiles);
             } else if (rv == DragAndDropOpenDialogReturnValue.oneExperimentPerFile) {
                 WorkspaceIO.importOneExperimentPerFile(msFiles, mgfFiles);
             }
         }
     }
 
+    private void openImporterWindow(List<File> csvFiles, List<File> msFiles, List<File> mgfFiles) {
+        LoadController lc = new LoadController(this, CONFIG_STORAGE);
+        lc.addSpectra(csvFiles, msFiles, mgfFiles);
+        lc.showDialog();
+
+        ExperimentContainer ec = lc.getExperiment();
+        if (ec != null) {
+            Workspace.importCompound(ec);
+        }
+    }
     //todo insert canopus here
     /*private void importCanopus(final File f) {
         final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
