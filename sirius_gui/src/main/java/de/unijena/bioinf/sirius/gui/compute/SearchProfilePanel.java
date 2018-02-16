@@ -127,9 +127,7 @@ public class SearchProfilePanel extends JPanel {
             add(new TwoCloumnPanel(label, formulaCombobox));
         }
 
-        //todo dirty hack to make ionization name and precursor name equal -> should be changed in ionization
-        refreshPossibleIonizations(ecs.stream().map(it -> PrecursorIonType.getPrecursorIonType(it.getIonization().getIonization().getName()).toString()).collect(Collectors.toSet()));
-
+        refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().toString()).collect(Collectors.toSet()));
     }
 
     public void refreshPossibleIonizations(Set<String> ionTypes) {
