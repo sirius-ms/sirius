@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -18,6 +19,27 @@ import java.util.List;
 public class IonTreeUtils {
 
     public enum Type {RAW, RESOLVED, IONIZED}
+
+    public boolean isResolvable(FTree tree, PrecursorIonType ionType) {
+        return (tree.getAnnotationOrThrow(PrecursorIonType.class).getIonization().equals(ionType.getIonization()) && tree.getRoot().getFormula().isSubtractable(ionType.getAdduct()));
+    }
+
+    /**
+     * Takes a computed tree as input. Creates a copy of this tree and resolve the PrecursorIonType, such that insource
+     * fragmentations are reflected in the tree and all vertices in the tree have a neutral molecular formula excluding
+     * the adduct and ionization. Annotates each vertex with a PrecursorIonType.
+     */
+    public FTree treeToNeutralTree(FTree tree, PrecursorIonType ionType) {
+        if (tree.getAnnotationOrNull(Type.class) == Type.RESOLVED) {
+            throw new IllegalArgumentException("Cannot neutralize an already neutral tree");
+        }
+        if (!tree.getAnnotationOrThrow(PrecursorIonType.class).getIonization().equals(ionType.getIonization())) {
+            throw new IllegalArgumentException("Precursor Ion Type '" + ionType.toString() + "' does not match tree with ionization '" + tree.getAnnotationOrThrow(PrecursorIonType.class).toString() + "'");
+        }
+        tree = new FTree(tree);
+        tree.setAnnotation(PrecursorIonType.class, ionType);
+        return treeToNeutralTree(tree);
+    }
 
     /**
      * Takes a computed tree as input with a certain PrecursorIonType. Resolve the PrecursorIonType, such that insource
@@ -150,17 +172,19 @@ public class IonTreeUtils {
                 tree.deleteSubtree(vertex);
             }
         } else {
-            logger.warn("Cannot remove adduct from ion formula: " + vertex.getFormula() + " with adduct " + iontype.toString());
+            logger.warn("Cannot remove adduct from ion formula: " + vertex.getFormula() + " with adduct " + iontype.toString() + " in tree " + tree.getRoot().getFormula());
         }
     }
     protected static Logger logger = LoggerFactory.getLogger(IonTreeUtils.class);
 
     private void setPrecursorToEachNode(FTree tree, Fragment f, final PrecursorIonType ionType) {
         final FragmentAnnotation<PrecursorIonType> fa = tree.getOrCreateFragmentAnnotation(PrecursorIonType.class);
+        final FragmentAnnotation<Ionization> ia = tree.getOrCreateFragmentAnnotation(Ionization.class);
         new PostOrderTraversal<Fragment>(tree.getCursor(f)).run(new PostOrderTraversal.Run<Fragment>() {
             @Override
             public void run(Fragment vertex, boolean isRoot) {
                 fa.set(vertex, ionType);
+                ia.set(vertex,ionType.getIonization());
             }
         });
     }

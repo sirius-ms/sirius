@@ -305,8 +305,11 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
 
     public void setUpperbound(Element e, int upperbound) {
         final int i = chemicalAlphabet.indexOf(e);
-        if (i < 0 && upperbound > 0) {
-            throw new NoSuchElementException(e + " is not contained in the chemical alphabet " + chemicalAlphabet);
+        if (i < 0) {
+            if (upperbound > 0)
+                throw new NoSuchElementException(e + " is not contained in the chemical alphabet " + chemicalAlphabet);
+            else
+                return;
         }
         if (lowerbounds[i] > upperbound)
             throw new IllegalArgumentException("Upperbound is larger than lowerbound: " + e.getSymbol() + "[" + lowerbounds[i] + " - " + upperbound);

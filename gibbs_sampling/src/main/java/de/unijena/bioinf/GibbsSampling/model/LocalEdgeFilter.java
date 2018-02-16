@@ -19,7 +19,7 @@ public class LocalEdgeFilter implements EdgeFilter {
     }
 
     public void filterEdgesAndSetThreshold(Graph graph, int candidateIdx, double[] logEdgeScores) {
-        ArrayList weightedEdges = new ArrayList();
+        ArrayList<WeightedEdge> weightedEdges = new ArrayList();
         int peakIdx = graph.getPeakIdx(candidateIdx);
 
         int num;
@@ -35,9 +35,9 @@ public class LocalEdgeFilter implements EdgeFilter {
         int var12 = (int)Math.max(Math.round(this.alpha * (double)weightedEdges.size()), 1L);
         double threshold;
         if(var12 >= weightedEdges.size()) {
-            threshold = 0.0D;
+            threshold = weightedEdges.get(weightedEdges.size()-1).weight; //todo take smallest?
         } else {
-            threshold = ((LocalEdgeFilter.WeightedEdge)weightedEdges.get(var12)).weight;
+            threshold = weightedEdges.get(var12).weight;
         }
 
         Iterator var10 = weightedEdges.iterator();
@@ -59,7 +59,7 @@ public class LocalEdgeFilter implements EdgeFilter {
     }
 
     public int[][] postprocessCompleteGraph(Graph graph) {
-        return (int[][])null;
+        throw new NoSuchMethodError("not implemented");
     }
 
     protected class WeightedEdge implements Comparable<LocalEdgeFilter.WeightedEdge> {
@@ -74,7 +74,7 @@ public class LocalEdgeFilter implements EdgeFilter {
         }
 
         public int compareTo(LocalEdgeFilter.WeightedEdge o) {
-            return Double.compare(o.weight, this.weight);
+            return Double.compare(this.weight, o.weight);
         }
 
         public boolean equals(Object o) {

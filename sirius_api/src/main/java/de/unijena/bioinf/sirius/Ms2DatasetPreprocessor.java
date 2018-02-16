@@ -11,6 +11,8 @@ import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNRegressionPredicto
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.NotMonoisotopicAnnotatorUsingIPA;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -24,12 +26,38 @@ import java.util.*;
  * Do statistics and validation on Ms2Datasets
  */
 public class Ms2DatasetPreprocessor {
+    /*
+    BIG TODOS:
+        validators:
+            - create merged MS1 still experimental.
+        annotateNoise:
+            use only precursorIonType if set?
+            properly deal with peaks > ion mass (multiple charges?)
+        QualityAnnotators:
+            NotMonoisotopicAnnotatorUsingIPA: when is a peak considered not monoisotopic? just better score? 50% better score?
+            NoMs1PeakAnnotator:    - only if no MS1 has precursor?! or if any?!
+                                   - do we need skipPeak and trimToPossiblePattern and setUpperBounds?
+        estimateIsolationWindow:
+            - has to be tested thoroughly. Does it makes sense in this way?!
+            - estimated width if not estimated!?!!?
+        ChimericAnnotator:
+            - might give different results if estimateIsolationWindow changes
+            - do or don't remove isotopes from MS1 before gauging chimeric state //TODO test this first!?
+     */
+
 
     private static final boolean DEBUG = false;
 
-    private static String[] STANDARD_IONIZATIONS = new String[]{"[M]+", "[M+H]+", "[M+Na]+", "[M+K]+"};
+    protected final static Logger LOG = LoggerFactory.getLogger(Ms2DatasetPreprocessor.class);
+
+    //these ionizations do not include adducts as gauging adduct mass differences without peak correlation data is probably to risky
+    private static String[] STANDARD_IONIZATIONS_POSITIVE = new String[]{"[M]+", "[M+H]+", "[M+Na]+", "[M+K]+"};
+    private static String[] STANDARD_IONIZATIONS_NEGATIVE = new String[]{"[M]-", "[M-H]-", "[M+Cl]-"};
+
+    // intended precursor peak should be seen within this window.
     private static Deviation findMs1PeakDeviation = new Deviation(100, 0.1);
 
+    //minimum number of peaks for a good quality spectrum
     private int MIN_NUMBER_OF_PEAKS = 5;
 
     private Sirius sirius;
@@ -51,14 +79,29 @@ public class Ms2DatasetPreprocessor {
         setInitials();
     }
 
+    /*
+    preprocess
+        -> validate
+        -> flagBadQualitySpectra
+            -> init
+        -> estimateIsolationWindow
+        -> flag chimerics
+
+     */
 
     private void setInitials(){
         ms2ExperimentValidators = new ArrayList<>();
+        ms2ExperimentValidators.add(new EmptySpectraValidator());
         ms2ExperimentValidators.add(new MissingMergedSpectrumValidator());
         //todo MissingValueValidator???
-        this.validatorWarning = new Warning.Noop();
+        this.validatorWarning = new WarningLog();
     }
 
+    /**
+     * estimate isolation window and annotate {@link CompoundQuality}.
+     * ASSUMES NO BASELINE WAS APPLIED !!
+     * @return
+     */
     public List<Ms2Experiment> preprocess(List<Ms2Experiment> experiments) {
         Ms2Dataset dataset = new MutableMs2Dataset(experiments, "default", Double.NaN, new Sirius().getMs2Analyzer().getDefaultProfile());
         Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
@@ -66,20 +109,25 @@ public class Ms2DatasetPreprocessor {
         return dataset.getExperiments();
     }
 
+    /**
+     * estimate isolation window and annotate {@link CompoundQuality}.
+     * ASSUMES NO BASELINE WAS APPLIED !!
+     * @param ms2Dataset
+     * @return
+     */
     public Ms2Dataset preprocess(Ms2Dataset ms2Dataset) {
         //todo inplace?
         ms2Dataset = validate(ms2Dataset);
         ms2Dataset = flagBadQualitySpectra(ms2Dataset);
+        //todo this is this very alpha version. Has to be tested.
         estimateIsolationWindow((MutableMs2Dataset) ms2Dataset);
 
+        //todo as estimateIsolationWindow is in alpha version, chimeric annotation might also not perform perfect
         double max2ndMostIntenseRatio = 0.33;
         double maxSummedIntensitiesRatio = 1.0;
         ChimericAnnotator chimericAnnotator = new ChimericAnnotator(findMs1PeakDeviation, max2ndMostIntenseRatio, maxSummedIntensitiesRatio);
         chimericAnnotator.prepare(ms2Dataset.getDatasetStatistics());
         chimericAnnotator.annotate(ms2Dataset);
-
-//        ms2Dataset = flagChimericSpectra(ms2Dataset);
-
 
         for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
             experiment.setAnnotation(IsolationWindow.class,  ms2Dataset.getIsolationWindow());
@@ -93,20 +141,30 @@ public class Ms2DatasetPreprocessor {
     }
 
 
+    /**
+     * validate input experiments. Repair or remove errorneous experiments
+     * @param ms2Dataset
+     * @return
+     */
     public MutableMs2Dataset validate(Ms2Dataset ms2Dataset) {
         MutableMs2Dataset mutableMs2Dataset = new MutableMs2Dataset(ms2Dataset);
         List<Ms2Experiment> validatedExperiments = new ArrayList<>();
 
-        for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
-            for (Ms2ExperimentValidator ms2ExperimentValidator : ms2ExperimentValidators) {
-//                try {
-                    Ms2Experiment validatedExperiment = ms2ExperimentValidator.validate(experiment, validatorWarning, repairInput);
-                    validatedExperiments.add(validatedExperiment);
-//                } catch (InvalidException exception) {
-//                    //todo currently throw away all bad stuff
-//                }
 
+
+        for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
+            Ms2Experiment validatedExperiment = experiment;
+            for (Ms2ExperimentValidator ms2ExperimentValidator : ms2ExperimentValidators) {
+                try {
+                    validatedExperiment = ms2ExperimentValidator.validate(validatedExperiment, validatorWarning, repairInput);
+
+                } catch (InvalidException exception) {
+                    LOG.warn("validation error: remove compound "+experiment.getName());
+                    validatedExperiment = null;
+                    break;
+                }
             }
+            if (validatedExperiment!=null) validatedExperiments.add(validatedExperiment);
         }
         mutableMs2Dataset.setExperiments(validatedExperiments);
 
@@ -114,6 +172,10 @@ public class Ms2DatasetPreprocessor {
     }
 
 
+    /**
+     * initialized Sirus, ionizations, element predictors etc.
+     * @param ms2Dataset
+     */
     private void init(Ms2Dataset ms2Dataset) {
         try {
             sirius = new Sirius(ms2Dataset.getProfile());
@@ -121,21 +183,56 @@ public class Ms2DatasetPreprocessor {
             throw new RuntimeException(e);
         }
 
-        if (precursorIonTypes==null){
-            precursorIonTypes = new PrecursorIonType[STANDARD_IONIZATIONS.length];
-            for (int i = 0; i < STANDARD_IONIZATIONS.length; i++) {
-                precursorIonTypes[i] = PrecursorIonType.getPrecursorIonType(STANDARD_IONIZATIONS[i]);
 
-            }
+        int chargeSign;
+        try {
+          chargeSign  = testCharge(ms2Dataset);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("currently do not support preprocessing datasets with positive and negative charges.");
         }
+
+        String[] STANDARD_IONIZATIONS;
+        if (chargeSign<0){
+            STANDARD_IONIZATIONS = STANDARD_IONIZATIONS_NEGATIVE;
+        } else {
+            STANDARD_IONIZATIONS = STANDARD_IONIZATIONS_POSITIVE;
+        }
+        precursorIonTypes = new PrecursorIonType[STANDARD_IONIZATIONS.length];
+        for (int i = 0; i < STANDARD_IONIZATIONS.length; i++) {
+            precursorIonTypes[i] = PrecursorIonType.getPrecursorIonType(STANDARD_IONIZATIONS[i]);
+
+        }
+
+
 
         MeasurementProfile measurementProfile = ms2Dataset.getMeasurementProfile();
         sirius.getMs2Analyzer().setDefaultProfile(measurementProfile);
 
-        //use silicon
+        //use silicon for our purpose
         DNNRegressionPredictor defaultPredictor = new DNNRegressionPredictor();
 //        defaultPredictor.disableSilicon();
         sirius.setElementPrediction(defaultPredictor);
+    }
+
+    /**
+     * test for positive or negative charge
+     * @param ms2Dataset +1 if all ionizations either positive or 0; -1 if all ionizations either negative or zero; 0 if all 0 (unknown)
+     * @param ms2Dataset
+     * @return
+     * @throws IllegalArgumentException dataset contains positive and negative charges
+     */
+    private int testCharge(Ms2Dataset ms2Dataset) throws IllegalArgumentException{
+        int charge = 0;
+        for (Ms2Experiment experiment : ms2Dataset) {
+            PrecursorIonType precursorIonType = experiment.getPrecursorIonType();
+            int currentCharge = precursorIonType.getCharge();
+            if (charge==0){
+                charge = (int)Math.signum(currentCharge);
+            } else if (charge*currentCharge<0){ //different signs
+                throw new IllegalArgumentException("charge differs between experiments");
+            }
+        }
+        return charge;
     }
 
 
@@ -143,16 +240,17 @@ public class Ms2DatasetPreprocessor {
     public MutableMs2Dataset flagBadQualitySpectra(Ms2Dataset ms2Dataset){
         MutableMs2Dataset mutableMs2Dataset = new MutableMs2Dataset(ms2Dataset);
         init(ms2Dataset);
-        datasetStatistics = makeStatistics(mutableMs2Dataset);
+        datasetStatistics = makeStatistics(mutableMs2Dataset); //mainly noise, min max intensities
         mutableMs2Dataset.setDatasetStatistics(datasetStatistics);
-        //todo abosulte vs relative!!!!!
+        //todo this assumes relative noise intensity. we learned absolute. adjust at some point?
 //        ((MutableMeasurementProfile)mutableMs2Dataset.getMeasurementProfile()).setMedianNoiseIntensity(datasetStatistics.getMedianMs2NoiseIntensity());
 
         //todo add test to Annotator order
         NoMs1PeakAnnotator noMs1PeakAnnotator = new NoMs1PeakAnnotator(findMs1PeakDeviation);
         FewPeaksAnnotator fewPeaksAnnotator = new FewPeaksAnnotator(MIN_NUMBER_OF_PEAKS);
-        LowIntensityAnnotator lowIntensityAnnotator = new LowIntensityAnnotator(findMs1PeakDeviation, 0.01, 0d);
+        LowIntensityAnnotator lowIntensityAnnotator = new LowIntensityAnnotator(findMs1PeakDeviation, 0.01, 0d); //todo ... there is no abs intensity
 //        NotMonoisotopicAnnotator notMonoisotopicAnnotator = new NotMonoisotopicAnnotator(findMs1PeakDeviation);
+        //todo if you knew isolation window you could allways take teh most intense peak as precursor peak not just guessing the window with findMs1PeakDeviation;
         NotMonoisotopicAnnotatorUsingIPA notMonoisotopicAnnotator = new NotMonoisotopicAnnotatorUsingIPA(findMs1PeakDeviation);
 
         List<QualityAnnotator> qualityAnnotators = new ArrayList<>();
@@ -172,6 +270,12 @@ public class Ms2DatasetPreprocessor {
         return mutableMs2Dataset;
     }
 
+    /**
+     * statistics about noise intensity and stuff.
+     * assumes NO BASELINE was applied
+     * @param ms2Dataset
+     * @return
+     */
     private DatasetStatistics makeStatistics(Ms2Dataset ms2Dataset){
         //guess elements
         for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
@@ -182,9 +286,10 @@ public class Ms2DatasetPreprocessor {
         DatasetStatistics datasetStatistics = new DatasetStatistics();
 
 
+        //in these experiments, noise peaks can be annotated
         List<ExperimentWithAnnotatedSpectra> experiments = extractSpectra(ms2Dataset);
 
-        //.... do some statistics
+        //get min and max intensities
         for (ExperimentWithAnnotatedSpectra experiment : experiments) {
             for (Spectrum<PeakWithAnnotation> spectrum : experiment.getMs1spectra()) {
                 datasetStatistics.addMaxMs1Intensity(Spectrums.getMaximalIntensity(spectrum));
@@ -198,6 +303,7 @@ public class Ms2DatasetPreprocessor {
 
         }
 
+        //find (very high probability) noise
         for (ExperimentWithAnnotatedSpectra experiment : experiments) {
             annotateNoise(experiment);
             for (Spectrum<PeakWithAnnotation> spectrum : experiment.getMs2spectra()) {
@@ -228,86 +334,6 @@ public class Ms2DatasetPreprocessor {
 
 
         return datasetStatistics;
-    }
-
-
-    public MutableMs2Dataset flagChimericSpectra(Ms2Dataset ms2Dataset){
-        MutableMs2Dataset mutableMs2Dataset = new MutableMs2Dataset(ms2Dataset);
-
-        init(mutableMs2Dataset);
-        Deviation maxDeviation = mutableMs2Dataset.getMeasurementProfile().getAllowedMassDeviation();
-        IsolationWindow isolationWindow = ms2Dataset.getIsolationWindow();
-
-
-        for (Ms2Experiment experiment : mutableMs2Dataset.getExperiments()) {
-            Spectrum<Peak> ms1 = experiment.getMergedMs1Spectrum();
-
-            int ms1PrecursorIdx = Spectrums.mostIntensivePeakWithin(ms1, experiment.getIonMass(), findMs1PeakDeviation);
-            if (ms1PrecursorIdx<0){
-                if (!hasProperty(experiment, SpectrumProperty.NoMS1Peak)){
-//                    System.out.println("strange");
-                    setSpectrumProperty(experiment, SpectrumProperty.NoMS1Peak);
-                }
-                continue;
-            }
-            Peak precursorPeak = ms1.getPeakAt(ms1PrecursorIdx);
-            double precursorMz = precursorPeak.getMass();
-            double filteredPrecursorIntensity = isolationWindow.getIntensity(precursorPeak.getIntensity(), precursorMz, precursorMz);
-
-            double center = isolationWindow.getMassShift()+precursorPeak.getMass();
-            double left = center-isolationWindow.getMaxWindowSize()/2;
-            double right = center+isolationWindow.getMaxWindowSize()/2;
-
-            SimpleMutableSpectrum ms1IsotopesRemoved = new SimpleMutableSpectrum(ms1);
-            //todo which deviation to use? rather remove too much other peaks?
-            ChemicalAlphabet alphabet;
-            if (experiment.hasAnnotation(FormulaConstraints.class)){
-                alphabet = experiment.getAnnotation(FormulaConstraints.class).getChemicalAlphabet();
-            }else {
-                alphabet = mutableMs2Dataset.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet();
-            }
-            //todo rather remove too much?! chances that it's in fact an isotope are high
-            Spectrums.filterIsotpePeaks(ms1IsotopesRemoved, maxDeviation.multiply(2), 0.5, 1.2, 5, alphabet); //todo or add up isotope intensities
-
-            Spectrum<Peak> massSorted = Spectrums.getMassOrderedSpectrum(ms1IsotopesRemoved);
-            int precursorIdx = Spectrums.binarySearch(massSorted, precursorPeak.getMass());
-
-            if (precursorIdx<0) {
-                if (isNotMonoisotopicPeak(experiment, mutableMs2Dataset.getMeasurementProfile())){
-//                    setSpectrumProperty(experiment, SpectrumProperty.NotMonoisotopicPeak);
-//                    System.out.println("could be NotMonoisotopicPeak");
-                    continue;
-                } else {
-                    ms1IsotopesRemoved.addPeak(precursorPeak);
-                    massSorted = Spectrums.getMassOrderedSpectrum(ms1IsotopesRemoved);
-                    precursorIdx = Spectrums.binarySearch(massSorted, precursorPeak.getMass());
-                }
-            }
-
-            int idx = precursorIdx;
-            double summedIntensity = 0d;
-            double maxIntensity = 0d;
-            while ((++idx<massSorted.size()) && massSorted.getMzAt(idx)<=right) {
-                Peak p = massSorted.getPeakAt(idx);
-                double intensity = isolationWindow.getIntensity(p.getIntensity(), precursorMz, p.getMass());
-                maxIntensity = Math.max(maxIntensity, intensity);
-                summedIntensity += intensity;
-            }
-            idx = precursorIdx;
-            while ((--idx>=0) && massSorted.getMzAt(idx)>=left) {
-                Peak p = massSorted.getPeakAt(idx);
-                double intensity = isolationWindow.getIntensity(p.getIntensity(), precursorMz, p.getMass());
-                maxIntensity = Math.max(maxIntensity, intensity);
-                summedIntensity += intensity;
-            }
-
-
-            //todo best would be to look how much is fragmented in MS2. If nothing, it's not a problem
-            if (maxIntensity>=0.33*filteredPrecursorIntensity || summedIntensity>=filteredPrecursorIntensity){
-                setSpectrumProperty(experiment, SpectrumProperty.Chimeric);
-            }
-        }
-        return mutableMs2Dataset;
     }
 
 
@@ -399,7 +425,7 @@ public class Ms2DatasetPreprocessor {
 
 
     /**
-     *
+     * only annote peaks with very high possibility being noise (use large mass deviation window)
      * @param spectrum mass ordered spectrum
      */
     private void annotateNoise(Spectrum<PeakWithAnnotation> spectrum, Ms2Experiment experiment){
@@ -423,31 +449,38 @@ public class Ms2DatasetPreprocessor {
 
         MassToFormulaDecomposer decomposer = sirius.getMs2Analyzer().getDecomposerFor(constraints.getChemicalAlphabet());
 
+        Ionization[] ionizations = new Ionization[precursorIonTypes.length];
+        for (int i = 0; i < precursorIonTypes.length; i++) {
+            ionizations[i] = precursorIonTypes[i].getIonization();
 
-        double decomposableIntensityAboveIonMass = 0d;
-        double nonDecomposableIntensityAboveIonMass = 0d;
+        }
+
 
         int idx = 0;
         for (PeakWithAnnotation peakWithAnnotation : spectrum) {
             if (peakWithAnnotation.getMass()<= experiment.getIonMass()+5){ //all above isolation ion mass + some window
-                for (PrecursorIonType precursorIonType : precursorIonTypes) {
-                    double mass = precursorIonType.getIonization().subtractFromMass(peakWithAnnotation.getMass());
+                //todo use only precursorIonType of experiment if set?!
+                if (!experiment.getPrecursorIonType().isIonizationUnknown() && !contains(ionizations, experiment.getPrecursorIonType().getIonization())){
+                    double mass = experiment.getPrecursorIonType().getIonization().subtractFromMass(peakWithAnnotation.getMass());
                     if (isDecomposable(mass, decomposer, deviation, constraints)){
                         annotateNonNoisePattern(spectrum, idx, sirius.getMs2Analyzer().getDefaultProfile(), constraints.getChemicalAlphabet());
-                        break;
+                    }
+                }
+                for (Ionization ionization : ionizations) {
+                    double mass = ionization.subtractFromMass(peakWithAnnotation.getMass());
+                    if (isDecomposable(mass, decomposer, deviation, constraints)){
+                        annotateNonNoisePattern(spectrum, idx, sirius.getMs2Analyzer().getDefaultProfile(), constraints.getChemicalAlphabet());
+//                        break; don't break. Might be wrong
                     }
                 }
             } else {
                 //multiple charged or all noise
-//                e.g. at least 50% of intensity decomposable?
-                for (PrecursorIonType precursorIonType : precursorIonTypes) {
-                    double mass = precursorIonType.getIonization().subtractFromMass(peakWithAnnotation.getMass());
+                //todo currently not differently processed (multi charge)
+                for (Ionization ionization : ionizations) {
+                    double mass = ionization.subtractFromMass(peakWithAnnotation.getMass());
                     if (isDecomposable(mass, decomposer, deviation, constraints)){
-                        decomposableIntensityAboveIonMass += spectrum.getIntensityAt(idx);
                         annotateNonNoisePattern(spectrum, idx, sirius.getMs2Analyzer().getDefaultProfile(), constraints.getChemicalAlphabet());
-                        break;
-                    } else {
-                        nonDecomposableIntensityAboveIonMass += spectrum.getIntensityAt(idx);
+//                        break; don't break. Might be wrong
                     }
                 }
             }
@@ -455,28 +488,52 @@ public class Ms2DatasetPreprocessor {
             ++idx;
         }
 
-
-//        if  e.g. at least 50% of intensity decomposable? .....
-        if (nonDecomposableIntensityAboveIonMass>decomposableIntensityAboveIonMass) {
-            int ionIdx = Spectrums.binarySearch(spectrum, experiment.getIonMass()+5);
-            if (ionIdx<0) ionIdx = -(ionIdx+1);
-            for (int i = ionIdx; i < spectrum.size(); i++) {
-                spectrum.getPeakAt(i).setNoise(true);
-
-            }
-        }
+        //might be risky
+//        // if e.g. test at least 50% of intensity decomposable? else everything is noise !? what about chemical noise?
+//        double decomposableIntensityAboveIonMass = 0d;
+//        double nonDecomposableIntensityAboveIonMass = 0d;
+//        int ionIdx = Spectrums.binarySearch(spectrum, experiment.getIonMass()+5);
+//        if (ionIdx<0) ionIdx = -(ionIdx+1);
+//        for (int i = ionIdx; i < spectrum.size(); i++) {
+//            if (spectrum.getPeakAt(i).isNoise()) nonDecomposableIntensityAboveIonMass += spectrum.getIntensityAt(i);
+//            else decomposableIntensityAboveIonMass += spectrum.getIntensityAt(i);
+//        }
+//
+//        if (nonDecomposableIntensityAboveIonMass>decomposableIntensityAboveIonMass) {
+//            ionIdx = Spectrums.binarySearch(spectrum, experiment.getIonMass()+5);
+//            if (ionIdx<0) ionIdx = -(ionIdx+1);
+//            for (int i = ionIdx; i < spectrum.size(); i++) {
+//                spectrum.getPeakAt(i).setNoise(true);
+//
+//            }
+//        }
 
     }
 
+    /**
+     * TODO currently {@link FormulaConstraints} not used. This makes is so much slower.
+     * @param mass
+     * @param decomposer
+     * @param deviation
+     * @param constraints
+     * @return
+     */
     private boolean isDecomposable(double mass, MassToFormulaDecomposer decomposer, Deviation deviation, FormulaConstraints constraints){
-        //todo changed to bigger mass dev
         final double abs = deviation.absoluteFor(mass);
         return decomposer.maybeDecomposable(mass-abs, mass+abs);
-//        return decomposer.formulaIterator(mass, deviation, constraints).hasNext();
+//        return decomposer.formulaIterator(mass, deviation, constraints).hasNext(); this makes it must slower
     }
 
 
+    /**
+     * again, allow bigger deviation to annotate non-noise
+     * @param spectrum
+     * @param monoIdx
+     * @param profile
+     * @param alphabet
+     */
     private void annotateNonNoisePattern(Spectrum<PeakWithAnnotation> spectrum, int monoIdx, MeasurementProfile profile, ChemicalAlphabet alphabet) {
+        Deviation massDifferenceDeviation = profile.getStandardMassDifferenceDeviation().multiply(2d);
 
         spectrum.getPeakAt(monoIdx).setNoise(false);
         double monoMz = spectrum.getMzAt(monoIdx);
@@ -486,8 +543,8 @@ public class Ms2DatasetPreprocessor {
             final Range<Double> nextMz = PeriodicTable.getInstance().getIsotopicMassWindow(alphabet, profile.getAllowedMassDeviation(), monoMz, k);
             final double a = nextMz.lowerEndpoint();
             final double b = nextMz.upperEndpoint();
-            final double startPoint = a - profile.getStandardMassDifferenceDeviation().absoluteFor(a);
-            final double endPoint = b + profile.getStandardMassDifferenceDeviation().absoluteFor(b);
+            final double startPoint = a - massDifferenceDeviation.absoluteFor(a);
+            final double endPoint = b + massDifferenceDeviation.absoluteFor(b);
             final int nextIndex = Spectrums.indexOfFirstPeakWithin(spectrum, startPoint, endPoint);
             if (nextIndex < 0) break;
 
@@ -504,13 +561,14 @@ public class Ms2DatasetPreprocessor {
             double width = ms2Dataset.getIsolationWindowWidth();
             if (Double.isNaN(width) || width<=0){
                 width = 10;
-                ms2Dataset.setIsolationWindow(new SimpleIsolationWindow(width));
+                ms2Dataset.setIsolationWindow(new SimpleIsolationWindow(width, 0, true, findMs1PeakDeviation));
                 ms2Dataset.getIsolationWindow().estimate(ms2Dataset);
                 width = ms2Dataset.getIsolationWindow().getEstimatedWindowSize();
                 ms2Dataset.setIsolationWindowWidth(width);
             } else {
-                ms2Dataset.setIsolationWindow(new SimpleIsolationWindow(width));
+                ms2Dataset.setIsolationWindow(new SimpleIsolationWindow(width, 0, false, findMs1PeakDeviation));
                 ms2Dataset.getIsolationWindow().estimate(ms2Dataset);
+                //todo also set new isolationWindowWidth?
             }
 
         }
@@ -566,6 +624,14 @@ public class Ms2DatasetPreprocessor {
         return new PeaklistSpectrum<PeakWithAnnotation>(pList);
     }
 
+    private <T> boolean contains(T[] array, T object) {
+        for (T o : array) {
+            if (o.equals(object)){
+                return true;
+            }
+        }
+        return false;
+    }
 
     private class ExperimentWithAnnotatedSpectra {
 
@@ -613,4 +679,12 @@ public class Ms2DatasetPreprocessor {
         }
     }
 
+
+    private class WarningLog implements Warning {
+
+        @Override
+        public void warn(String message) {
+            LOG.warn(message);
+        }
+    }
 }

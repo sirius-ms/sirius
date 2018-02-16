@@ -1,26 +1,27 @@
 package de.unijena.bioinf.GibbsSampling.model.distributions;
 
+import de.unijena.bioinf.GibbsSampling.model.GibbsMFCorrectionNetwork;
 import gnu.trove.list.array.TDoubleArrayList;
 
 public class ExponentialDistribution implements ScoreProbabilityDistribution {
-    private final static boolean DEBUG = false;
-    private double estimationThreshold;
-    private double scoringThreshold;
-    private double scoringThresholdFreq;
     private double lambda;
     private boolean estimateByMedian;
-    private double normalizationForThreshold;
+    private final double DEFAULT_LAMBDA = 7d;
 
-    public ExponentialDistribution(double estimationThreshold, double scoringThresholdFreq, boolean estimateByMedian) {
-        this.estimationThreshold = estimationThreshold;
-        this.scoringThresholdFreq = scoringThresholdFreq;
+
+    public ExponentialDistribution(double lambda) {
+        this.lambda = lambda;
+    }
+
+    public ExponentialDistribution(boolean estimateByMedian) {
         this.estimateByMedian = estimateByMedian;
     }
 
-    public ExponentialDistribution(double threshold) {
-        this(threshold, threshold, false);
+    public ExponentialDistribution() {
+        this(false);
     }
 
+    @Override
     public void estimateDistribution(double[] exampleValues) {
         int l = 0;
         double sum = 0.0D;
@@ -28,69 +29,52 @@ public class ExponentialDistribution implements ScoreProbabilityDistribution {
 
         for(int lambdaByMedian = 0; lambdaByMedian < exampleValues.length; ++lambdaByMedian) {
             double v = exampleValues[lambdaByMedian];
-            if(v >= this.estimationThreshold && v > 0.0D) {
-                sum += v - this.estimationThreshold;
-                values.add(v - this.estimationThreshold);
+            if(v > 0.0D) {
+                sum += v;
+                values.add(v);
                 ++l;
             }
         }
 
-        if (values.size()==0){
-            this.lambda = 1;
+        if (values.size()<10){
+            System.out.println("warning: Problem estimating score distribution. Too few examples. Using default values.");
+            this.lambda = DEFAULT_LAMBDA;
         }else {
             this.lambda = (double)l / sum;
             values.sort();
             double median = values.get(values.size() / 2);
-            if (DEBUG) {
+            if (GibbsMFCorrectionNetwork.DEBUG) {
                 System.out.println("lambda estimate " + this.lambda);
                 System.out.println("mean: " + values.sum() / (double)l + " | estimate: " + this.lambda);
                 System.out.println("median "+median);
 
             }
             if(this.estimateByMedian) {
-                double var12 = Math.log(2.0D) / median;
-                if(var12 < this.estimationThreshold) {
-                    if (DEBUG) System.out.println("median smaller than x_min: fallback to estimation by mean");
-                } else {
-                    this.lambda = var12;
-                    if (DEBUG) System.out.println("lambda estimate by median" + this.lambda);
-                }
+                this.lambda = Math.log(2.0D) / median;
             }
         }
 
+        if (Double.isNaN(lambda) || Double.isInfinite(lambda)){
+            System.out.println("warning: Problem estimating score distribution. Using default values.");
+            lambda = DEFAULT_LAMBDA;
+        }
 
-        this.scoringThreshold = -Math.log(1.0D - this.scoringThresholdFreq) / this.lambda; //this computes the quantile for scoringThresholdFreq
-        this.normalizationForThreshold = 1.0D - Math.exp(-this.lambda * this.scoringThreshold);
-        if (DEBUG) System.out.println("scoringThreshold " + this.scoringThreshold + " normalizationForThreshold " + this.normalizationForThreshold);
+
+        if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("lambda estimate " + this.lambda);
     }
 
     public void setLambda(double lambda){
         this.lambda = lambda;
-        this.scoringThreshold = -Math.log(1.0D - this.scoringThresholdFreq) / this.lambda; //this computes the quantile for scoringThresholdFreq
-        this.normalizationForThreshold = 1.0D - Math.exp(-this.lambda * this.scoringThreshold);
-
-    }
-
-    public double toPvalue(double score) {
-        return this.cdf(score);
-    }
-
-    public double toPvalue2(double score) {
-        return score*lambda;
-    }
-
-    public double getMinProbability() {
-        return this.normalizationForThreshold;
-    }
-
-    public double getMinProbability2() {
-        return this.scoringThreshold*lambda;
     }
 
     @Override
-    public double getThreshold() {
-        if (DEBUG) System.out.println("lambda is "+lambda+ " | threshold "+scoringThreshold);
-        return scoringThreshold;
+    public double toPvalue(double score) {
+        return Math.exp(-this.lambda * score);
+    }
+
+    @Override
+    public double toLogPvalue(double score) {
+                return -this.lambda * score;
     }
 
     public double cdf(double value) {
@@ -98,6 +82,6 @@ public class ExponentialDistribution implements ScoreProbabilityDistribution {
     }
 
     public ScoreProbabilityDistribution clone() {
-        return new ExponentialDistribution(this.estimationThreshold, this.scoringThreshold, this.estimateByMedian);
+        return new ExponentialDistribution(this.estimateByMedian);
     }
 }

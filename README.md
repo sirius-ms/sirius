@@ -1,11 +1,11 @@
 Introduction
 ============
 
-SIRIUS 3 is a *java* library for analyzing metabolites from tandem mass
+SIRIUS is a *java* library for analyzing metabolites from tandem mass
 spectrometry data. It combines the analysis of isotope patterns in MS
 spectra with the analysis of fragmentation patterns in MS/MS spectra.
 
-SIRIUS 3 requires **high mass accuracy** data. The mass deviation of
+SIRIUS requires **high mass accuracy** data. The mass deviation of
 your MS and MS/MS spectra should be within 20 ppm. Mass Spectrometry
 instruments like TOF, Orbitrap and FTICR usually provide high mass
 accuracy data, as well as coupled instruments like Q-TOF, IT-TOF or
@@ -39,7 +39,7 @@ identify the 2D structure of the measured compound. For this purpose you
 can also use the SIRIUS library directly, instead of the command line
 interface. See SIRIUS Java Library.
 
-Since Sirius 3.1 our software ships with an **user interface**. The user
+Since SIRIUS 3.1 our software ships with an **user interface**. The user
 interface, however, have to be downloaded separately. If you want to use
 an user interface, use the file **SiriusGUI.exe** instead of sirius.exe.
 
@@ -113,7 +113,7 @@ operating system you also have to install a 64 bit java runtime!
 Windows
 -------
 
-The sirius3-console.exe as well as Sirius3-gui.exe should hopefully work
+The sirius-console.exe as well as Sirius-gui.exe should hopefully work
 out of the box. To execute the SIRIUS commandline tool from every
 location you have to add the location of the sirius.exe to your PATH
 environment variable.
@@ -155,7 +155,7 @@ there will be no differences in using Gurobi or GLPK.
 User Interface
 ==============
 
-With Sirius 3.1 our software ships with an user interface. Please be
+With SIRIUS 3.1 our software ships with an user interface. Please be
 aware that the user interface have to be downloaded separately from the
 commandline tool. Take sure that you downloaded a file named
 SiriusGUI.exe.

@@ -25,32 +25,45 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
  */
 public class MutableMs2Spectrum extends SimpleMutableSpectrum implements Ms2Spectrum<Peak> {
 
-    private double precursorMz=0d;
-    private CollisionEnergy collisionEnergy=null;
-    private double totalIoncount=0d;
-    private Ionization ionization=null;
-    private int msLevel=0;
+    private double precursorMz = 0d;
+    private CollisionEnergy collisionEnergy = null;
+    private double totalIoncount = 0d;
+    private Ionization ionization = null;
+    private int msLevel = 0;
+    private int scanNumber; // an arbitrary ID that is unique within the experiment object
 
     public MutableMs2Spectrum() {
     }
 
     public <T extends Peak, S extends Spectrum<T>> MutableMs2Spectrum(S spec, double parentmass, CollisionEnergy energy, int mslevel) {
         this(spec);
-        this.precursorMz=parentmass;
-        this.collisionEnergy=energy;
+        this.precursorMz = parentmass;
+        this.collisionEnergy = energy;
         this.msLevel = mslevel;
     }
 
     public MutableMs2Spectrum(Spectrum<? extends Peak> spec) {
         super(spec);
+        msLevel = spec.getMsLevel();
+        collisionEnergy = spec.getCollisionEnergy();
+
         if (spec instanceof Ms2Spectrum) {
             final Ms2Spectrum<Peak> ms2spec = (Ms2Spectrum<Peak>) spec;
             precursorMz = ms2spec.getPrecursorMz();
-            collisionEnergy = ms2spec.getCollisionEnergy();
+
             totalIoncount = ms2spec.getTotalIonCount();
             ionization = ms2spec.getIonization();
-            msLevel = ms2spec.getMsLevel();
+            if (spec instanceof MutableMs2Spectrum)
+                this.scanNumber = ((MutableMs2Spectrum) spec).scanNumber;
         }
+    }
+
+    public int getScanNumber() {
+        return scanNumber;
+    }
+
+    public void setScanNumber(int scanNumber) {
+        this.scanNumber = scanNumber;
     }
 
     @Override

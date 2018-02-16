@@ -1,42 +1,91 @@
-/*
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
- *  Copyright (C) 2013-2015 Kai Dührkop
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
- */
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
-import java.util.List;
-
-/**
- * @author Kai Dührkop
- */
 public interface TreeBuilder {
 
-    Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound);
+    public FluentInterface computeTree();
 
-    FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object preparation);
+    public Result computeTree(ProcessedInput input, FGraph graph, FluentInterface options);
 
-    FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound);
+    public boolean isThreadSafe();
 
-    List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound, Object preparation);
+    public static class FluentInterface {
+        private final TreeBuilder treeBuilder;
+        private final double minimalScore;
+        private final double timeLimitsInSeconds;
+        private final int numberOfCPUS;
+        private final FTree template;
 
-    List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound);
+        public FluentInterface(TreeBuilder treeBuilder) {
+            this(treeBuilder, Double.NEGATIVE_INFINITY, 0, 1, null);
+        }
 
-    String getDescription();
+        public FluentInterface(TreeBuilder treeBuilder, double minimalScore, double timeout, int numberOfCPUS, FTree template) {
+            this.treeBuilder = treeBuilder;
+            this.minimalScore = minimalScore;
+            this.timeLimitsInSeconds = timeout;
+            this.numberOfCPUS = numberOfCPUS;
+            this.template = template;
+        }
+
+        public double getMinimalScore() {
+            return minimalScore;
+        }
+
+        public double getTimeLimitsInSeconds() {
+            return timeLimitsInSeconds;
+        }
+
+        public int getNumberOfCPUS() {
+            return numberOfCPUS;
+        }
+
+        public FTree getTemplate() {
+            return template;
+        }
+
+        public FluentInterface withMinimalScore(double score) {
+            return new FluentInterface(treeBuilder, score, timeLimitsInSeconds, numberOfCPUS, template);
+        }
+
+        public FluentInterface withTimeLimit(double seconds) {
+            return new FluentInterface(treeBuilder, minimalScore, seconds, numberOfCPUS, template);
+        }
+
+        public FluentInterface withMultithreading(int numberOfCPUS) {
+            return new FluentInterface(treeBuilder, minimalScore, timeLimitsInSeconds, numberOfCPUS, template);
+        }
+
+        public FluentInterface withTemplate(FTree tree) {
+            return new FluentInterface(treeBuilder, minimalScore, timeLimitsInSeconds, numberOfCPUS, tree);
+        }
+
+        public Result solve(ProcessedInput input, FGraph graph) {
+            return treeBuilder.computeTree(input,graph,this);
+        }
+    }
+
+    public static enum AbortReason {
+        COMPUTATION_CORRECT, // when everything is fine
+        INFEASIBLE,     // should never happen
+        TIMEOUT,        // is used when timeout reached
+        NO_SOLUTION     // is used when no tree with reasonable score is found
+    };
+
+    public static class Result {
+
+        public final boolean isOptimal;
+        public final AbortReason error;
+        public final FTree tree;
+
+        public Result(FTree tree, boolean isOptimal, AbortReason error) {
+            this.isOptimal = isOptimal;
+            this.error = error;
+            this.tree = tree;
+        }
+    }
+
 }

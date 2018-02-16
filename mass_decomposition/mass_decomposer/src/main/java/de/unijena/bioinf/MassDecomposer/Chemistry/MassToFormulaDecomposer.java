@@ -82,6 +82,11 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
         };
     }
 
+    public List<MolecularFormula> decomposeToFormulas(double mass, double massTolerance, FormulaConstraints constraints) {
+
+        return decomposeToFormulas(mass, massTolerance, getBoundaries(constraints), FormulaFilterList.create(constraints.getFilters()));
+    }
+
     public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation, FormulaConstraints constraints) {
 
         return decomposeToFormulas(mass, deviation, getBoundaries(constraints), FormulaFilterList.create(constraints.getFilters()));
@@ -91,7 +96,7 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
         final Map<Element, Interval> boundaries = alphabet.toMap();
         if (!constraints.getChemicalAlphabet().equals(alphabet)) {
             for (Element e : constraints.getChemicalAlphabet()) {
-                if (constraints.hasElement(e) && alphabet.indexOf(e)<0) {
+                if (constraints.hasElement(e) && constraints.getLowerbound(e)>0 && alphabet.indexOf(e)<0) {
                     throw new IllegalArgumentException("Incompatible alphabet: " + alphabet +  " vs " + constraints);
                 }
             }
@@ -120,6 +125,18 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
         final Map<Element, Interval> boundaryMap;
         boundaryMap = boundaries;
         final List<int[]> decompositions = super.decompose(mass, deviation, boundaryMap);
+        final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(decompositions.size());
+        for (int[] ary : decompositions) {
+            final MolecularFormula formula = alphabet.decompositionToFormula(ary);
+            if (filter!=null && !filter.isValid(formula)) continue;
+            formulas.add(formula);
+        }
+        return formulas;
+    }
+    public List<MolecularFormula> decomposeToFormulas(double mass, double massTolerance, Map<Element, Interval> boundaries, final FormulaFilter filter) {
+        final Map<Element, Interval> boundaryMap;
+        boundaryMap = boundaries;
+        final List<int[]> decompositions = super.decompose(mass-massTolerance, mass+massTolerance, boundaryMap);
         final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(decompositions.size());
         for (int[] ary : decompositions) {
             final MolecularFormula formula = alphabet.decompositionToFormula(ary);

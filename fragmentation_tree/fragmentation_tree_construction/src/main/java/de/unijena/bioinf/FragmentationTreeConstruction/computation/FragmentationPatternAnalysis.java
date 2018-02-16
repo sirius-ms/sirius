@@ -44,19 +44,18 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidato
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighIntensityMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.Merger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakMerger;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.RecalibrationMethod;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration2;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
+import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.map.hash.TObjectLongHashMap;
 import gnu.trove.procedure.TLongProcedure;
-import org.apache.commons.math3.analysis.UnivariateFunction;
-import org.apache.commons.math3.analysis.function.Identity;
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 import java.util.*;
 
@@ -110,7 +109,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private List<PostProcessor> postProcessors;
     private TreeBuilder treeBuilder;
     private MutableMeasurementProfile defaultProfile;
-    private RecalibrationMethod recalibrationMethod;
     private GraphReduction reduction;
     private IsotopePatternInMs2Scorer isoInMs2Scorer;
     private IsotopeInMs2Handling isotopeInMs2Handling;
@@ -160,6 +158,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * Step 1-9: Preprocessing
      * Allows to use different values for decomposition
      */
+    public ProcessedInput preprocessingAfterValidation(ProcessedInput input) {
+        return performPeakScoring(performDecomposition(performParentPeakDetection(performPeakMerging(performNormalization(performPreprocessing(input))))));
+    }
+
     public ProcessedInput preprocessing(Ms2Experiment experiment, MeasurementProfile profile) {
         ProcessedInput input = performValidation(experiment);
         input.setMeasurementProfile(MutableMeasurementProfile.merge(input.getMeasurementProfile(), profile));
@@ -192,10 +194,30 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             exp = validator.validate(exp, validatorWarning, repairInput);
         }
 
-        final ProcessedInput pinput =  new ProcessedInput(new MutableMs2Experiment(exp), originalExperiment, new MutableMeasurementProfile(defaultProfile));
+        MeasurementProfile profile = input.getAnnotation(MeasurementProfile.class, null);
+        if (profile == null) profile = defaultProfile;
+        else profile = MutableMeasurementProfile.merge(defaultProfile, profile);
+
+        final ProcessedInput pinput =  new ProcessedInput(new MutableMs2Experiment(exp), originalExperiment, new MutableMeasurementProfile(profile));
 
         if (originalExperiment.getMolecularFormula()!=null) {
             pinput.getMeasurementProfile().setFormulaConstraints(pinput.getMeasurementProfile().getFormulaConstraints().getExtendedConstraints(FormulaConstraints.allSubsetsOf(originalExperiment.getMolecularFormula())));
+        }
+
+        // set precursor ion types
+        if (pinput.getExperimentInformation().getPrecursorIonType().isIonizationUnknown()) {
+            PossibleIonModes adductTypes = pinput.getExperimentInformation().getAnnotation(PossibleIonModes.class, null);
+            if (adductTypes==null) {
+                adductTypes = PossibleIonModes.defaultFor(pinput.getExperimentInformation().getPrecursorIonType().getCharge());
+            }
+            pinput.setAnnotation(PossibleIonModes.class, adductTypes);
+        } else {
+            pinput.setAnnotation(PossibleIonModes.class, PossibleIonModes.deterministic(pinput.getExperimentInformation().getPrecursorIonType()));
+        }
+
+        // set whiteset
+        if (input.getAnnotation(Whiteset.class, null)!=null) {
+            pinput.setAnnotation(Whiteset.class, input.getAnnotation(Whiteset.class));
         }
 
         return pinput;
@@ -226,7 +248,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final double parentMass = experiment.getIonMass();
         final ArrayList<ProcessedPeak> peaklist = new ArrayList<ProcessedPeak>(100);
         final Deviation mergeWindow = getDefaultProfile().getAllowedMassDeviation().divide(2d);
-        final Ionization ion = experiment.getPrecursorIonType().getIonization();
         double globalMaxIntensity = 0d;
         for (Ms2Spectrum s : experiment.getMs2Spectra()) {
             // merge peaks: iterate them from highest to lowest intensity and remove peaks which
@@ -253,7 +274,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             for (int i = 0; i < s.size(); ++i) {
                 if (!deletedPeaks.get(i)) {
                     final ProcessedPeak propeak = new ProcessedPeak(new MS2Peak(s, sortedByMass.getMzAt(i), sortedByMass.getIntensityAt(i)));
-                    propeak.setIon(ion);
                     peaklist.add(propeak);
 
                 }
@@ -413,6 +433,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * Decompose each peak as well as the parent peak
      */
     public ProcessedInput performDecomposition(ProcessedInput input) {
+        final PeriodicTable PT = PeriodicTable.getInstance();
         final Whiteset whiteset = input.getAnnotation(Whiteset.class, null);
         final FormulaConstraints constraints = input.getMeasurementProfile().getFormulaConstraints();
         final Ms2Experiment experiment = input.getExperimentInformation();
@@ -422,22 +443,42 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         Collections.sort(processedPeaks, new ProcessedPeak.MassComparator());
         final ProcessedPeak parentPeak = processedPeaks.get(processedPeaks.size() - 1);
         // decompose peaks
+        final List<Ionization> ionModes = input.getAnnotationOrThrow(PossibleIonModes.class).getIonModesWithProbabilityAboutZero();
         final PeakAnnotation<DecompositionList> decompositionList = input.getOrCreatePeakAnnotation(DecompositionList.class);
         final MassToFormulaDecomposer decomposer = decomposers.getDecomposer(constraints.getChemicalAlphabet());
-        final Ionization ion = experiment.getPrecursorIonType().getIonization();
         final Deviation fragmentDeviation = input.getMeasurementProfile().getAllowedMassDeviation();
 
         final List<MolecularFormula> pmds;
-        if (whiteset!=null && !whiteset.getFormulas().isEmpty()) {
-            pmds = new ArrayList<>(whiteset.getFormulas());
-            final Iterator<MolecularFormula> fiter = pmds.iterator();
-            while (fiter.hasNext()) {
-                if (!parentDeviation.inErrorWindow(parentPeak.getOriginalMz(), experiment.getPrecursorIonType().neutralMassToPrecursorMass(fiter.next().getMass()))) {
-                    fiter.remove();
+        final List<Decomposition> decomps = new ArrayList<>();
+        if (whiteset != null && !whiteset.getFormulas().isEmpty()) {
+
+            final Collection<PrecursorIonType> ionTypes;
+            if (experiment.getPrecursorIonType().isIonizationUnknown())
+                ionTypes = experiment.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
+            else ionTypes = Arrays.asList(experiment.getPrecursorIonType());
+            decomps.addAll(whiteset.resolve(parentPeak.getOriginalMz(), parentDeviation, ionTypes));
+            pmds = new ArrayList<>();
+            for (Decomposition d : decomps) pmds.add(d.getCandidate());
+        } else if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
+            // use given ionization
+            final PrecursorIonType ionType = experiment.getPrecursorIonType();
+            final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ionType.precursorMassToNeutralMass(parentPeak.getOriginalMz()), parentDeviation.absoluteFor(parentPeak.getOriginalMz()), constraints);
+            pmds = new ArrayList<>();
+            for (MolecularFormula f : forms)  {
+                final MolecularFormula neutralMeasuredFormula = ionType.neutralMoleculeToMeasuredNeutralMolecule(f);
+                if (neutralMeasuredFormula.isAllPositiveOrZero()) {
+                    decomps.add(new Decomposition(neutralMeasuredFormula, ionType.getIonization() , 0d));
+                    pmds.add(neutralMeasuredFormula);
                 }
             }
         } else {
-            pmds = decomposer.decomposeToFormulas(experiment.getPrecursorIonType().subtractIonAndAdduct(parentPeak.getOriginalMz()), parentDeviation, constraints);
+
+            pmds = new ArrayList<>();
+            for (Ionization ion : ionModes) {
+                final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ion.subtractFromMass(parentPeak.getOriginalMz()), parentDeviation.absoluteFor(parentPeak.getOriginalMz()), constraints);
+                pmds.addAll(forms);
+                for (MolecularFormula f : forms) decomps.add(new Decomposition(f, ion, 0d));
+            }
         }
 
 
@@ -446,30 +487,23 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final List<FormulaConstraints> constraintList = new ArrayList<>();
         getDecomposersFor(pmds, constraints, decomposers, constraintList);
 
-        // add adduct to molecular formula of the ion - because the adduct might get lost during fragmentation
-        {
-            final MolecularFormula adduct = experiment.getPrecursorIonType().getAdduct();
-            final ListIterator<MolecularFormula> iter = pmds.listIterator();
-            while (iter.hasNext()) {
-                final MolecularFormula f = iter.next();
-                iter.set(f.add(adduct));
-            }
-        }
-
-        decompositionList.set(parentPeak, DecompositionList.fromFormulas(pmds));
+        decompositionList.set(parentPeak, new DecompositionList(decomps));
         int j = 0;
         for (ProcessedPeak peak : processedPeaks.subList(0, processedPeaks.size() - 1)) {
             peak.setIndex(j++);
-            final double mass = peak.getUnmodifiedMass();
-            if (mass > 0) {
-                final HashSet<MolecularFormula> formulas = new HashSet<>();
-                for (int D=0; D < decomposers.size(); ++D) {
-                    formulas.addAll(decomposers.get(D).decomposeToFormulas(mass, fragmentDeviation, constraintList.get(D)));
+            final List<Decomposition> decompositions = new ArrayList<>();
+            final double mz = peak.getMass();
+            for (Ionization ion : ionModes) {
+                final double mass = ion.subtractFromMass(mz);
+                if (mass > 0) {
+                    final HashSet<MolecularFormula> formulas = new HashSet<>();
+                    for (int D=0; D < decomposers.size(); ++D) {
+                        formulas.addAll(decomposers.get(D).decomposeToFormulas(mass, fragmentDeviation.absoluteFor(peak.getMass()), constraintList.get(D)));
+                    }
+                    for (MolecularFormula f : formulas) decompositions.add(new Decomposition(f, ion, 0d));
                 }
-                decompositionList.set(peak, DecompositionList.fromFormulas(formulas));;
-            } else {
-                decompositionList.set(peak, new DecompositionList(new ArrayList<Scored<MolecularFormula>>(0)));
             }
+            decompositionList.set(peak, new DecompositionList(decompositions));
         }
         parentPeak.setIndex(processedPeaks.size() - 1);
         assert parentPeak == processedPeaks.get(processedPeaks.size() - 1);
@@ -478,26 +512,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final Deviation window = fragmentDeviation.multiply(2);
         for (int i = 1; i < processedPeaks.size() - 1; ++i) {
             if (window.inErrorWindow(processedPeaks.get(i).getMz(), processedPeaks.get(i - 1).getMz())) {
-                final HashSet<MolecularFormula> right = new HashSet<MolecularFormula>(decompositionList.get(processedPeaks.get(i)).getFormulas());
-                final ArrayList<MolecularFormula> left = new ArrayList<MolecularFormula>(decompositionList.get(processedPeaks.get(i-1)).getFormulas());
-                final double leftMass = ion.subtractFromMass(processedPeaks.get(i - 1).getMass());
-                final double rightMass = ion.subtractFromMass(processedPeaks.get(i).getMass());
-                final Iterator<MolecularFormula> leftIter = left.iterator();
-                while (leftIter.hasNext()) {
-                    final MolecularFormula leftFormula = leftIter.next();
-                    if (right.contains(leftFormula)) {
-                        if (Math.abs(leftFormula.getMass() - leftMass) < Math.abs(leftFormula.getMass() - rightMass)) {
-                            right.remove(leftFormula);
-                        } else {
-                            leftIter.remove();
-                        }
-                    }
-                }
-                decompositionList.set(processedPeaks.get(i - 1), DecompositionList.fromFormulas(left));
-                decompositionList.set(processedPeaks.get(i), DecompositionList.fromFormulas(right));
+                decompositionList.get(processedPeaks.get(i-1)).disjoin(decompositionList.get(processedPeaks.get(i)), processedPeaks.get(i-1).getMz(), processedPeaks.get(i).getMz());
             }
         }
-
+        input.setAnnotation(DecompositionList.class, decompositionList.get(parentPeak));
         return postProcess(PostProcessor.Stage.AFTER_DECOMPOSING, input);
     }
 
@@ -582,14 +600,14 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             for (DecompositionScorer<?> scorer : decompositionScorers) preparations.add(scorer.prepare(input));
             for (int i = 0; i < processedPeaks.size() - 1; ++i) {
                 final DecompositionList decomps = decomp.get(processedPeaks.get(i));
-                final ArrayList<Scored<MolecularFormula>> scored = new ArrayList<Scored<MolecularFormula>>(decomps.getDecompositions().size());
-                for (MolecularFormula f : decomps.getFormulas()) {
+                final ArrayList<Decomposition> scored = new ArrayList<Decomposition>(decomps.getDecompositions().size());
+                for (Decomposition f : decomps.getDecompositions()) {
                     double score = 0d;
                     int k = 0;
                     for (DecompositionScorer<?> scorer : decompositionScorers) {
-                        score += ((DecompositionScorer<Object>) scorer).score(f, processedPeaks.get(i), input, preparations.get(k++));
+                        score += ((DecompositionScorer<Object>) scorer).score(f.getCandidate(),f.getIon(), processedPeaks.get(i), input, preparations.get(k++));
                     }
-                    scored.add(new Scored<MolecularFormula>(f, score));
+                    scored.add(new Decomposition(f.getCandidate(),f.getIon(), score));
                 }
                 decomp.set(processedPeaks.get(i), new DecompositionList(scored));
             }
@@ -598,20 +616,20 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         {
             final ArrayList<Object> preparations = new ArrayList<Object>(rootScorers.size());
             for (DecompositionScorer<?> scorer : rootScorers) preparations.add(scorer.prepare(input));
-            final ArrayList<Scored<MolecularFormula>> scored = new ArrayList<Scored<MolecularFormula>>(decomp.get(parentPeak).getDecompositions());
+            final ArrayList<Decomposition> scored = new ArrayList<>(decomp.get(parentPeak).getDecompositions());
             for (int j=0; j < scored.size(); ++j) {
                 double score = 0d;
                 int k = 0;
-                final MolecularFormula f = scored.get(j).getCandidate();
+                final Decomposition f = scored.get(j);
                 for (DecompositionScorer<?> scorer : rootScorers) {
-                    score += ((DecompositionScorer<Object>) scorer).score(f, input.getParentPeak(), input, preparations.get(k++));
+                    score += ((DecompositionScorer<Object>) scorer).score(f.getCandidate(),f.getIon(), input.getParentPeak(), input, preparations.get(k++));
                 }
-                scored.set(j, new Scored<MolecularFormula>(f, score));
+                scored.set(j, new Decomposition(scored.get(j).getCandidate(), scored.get(j).getIon(), score));
 
             }
             Collections.sort(scored, Collections.reverseOrder());
             decomp.set(parentPeak, new DecompositionList(scored));
-            input.addAnnotation(DecompositionList.class, decomp.get(parentPeak));
+            input.setAnnotation(DecompositionList.class, decomp.get(parentPeak));
         }
         // set peak indizes
         for (int i = 0; i < processedPeaks.size(); ++i) processedPeaks.get(i).setIndex(i);
@@ -619,13 +637,17 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return input;
     }
 
-    ProcessedInput preprocessInputForGraphBuilding(ProcessedInput input) {
+    ProcessedInput preprocessInputBeforeScoring(ProcessedInput input) {
         input = performPreprocessing(input);
         input = performNormalization(input);
         input = performPeakMerging(input);
         input = performParentPeakDetection(input);
         input = performDecomposition(input);
-        input = performPeakScoring(input);
+        return input;
+    }
+
+    ProcessedInput preprocessInputForGraphBuilding(ProcessedInput input) {
+        input = performPeakScoring(preprocessInputBeforeScoring(input));
         return input;
     }
 
@@ -905,7 +927,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             initialize(o);
         }
         //initialize(treeBuilder);
-        initialize(recalibrationMethod);
         initialize(reduction);
         initialize(isoInMs2Scorer);
     }
@@ -1007,7 +1028,20 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @return an optimal fragmentation tree with at least lowerbound score or null, if no such tree exist
      */
     public FTree computeTree(FGraph graph, double lowerbound) {
-        return computeTree(graph, lowerbound, recalibrationMethod != null);
+        return computeTree(graph, lowerbound, false);
+    }
+
+
+    protected FTree computeTreeWithoutAnnotating(FGraph graph, double lowerbound) {
+        return computeTreeWithoutAnnotating(graph,lowerbound,graph.getAnnotation(Timeout.class,Timeout.NO_TIMEOUT).getNumberOfSecondsPerDecomposition());
+    }
+
+    protected FTree computeTreeWithoutAnnotating(FGraph graph, double lowerbound, int allowedTimeInSeconds) {
+        TreeBuilder.FluentInterface fluentInterface = getTreeBuilder().computeTree();
+        if (lowerbound>=0) fluentInterface = fluentInterface.withMinimalScore(lowerbound);
+        if (allowedTimeInSeconds<Integer.MAX_VALUE)
+            fluentInterface = fluentInterface.withTimeLimit(allowedTimeInSeconds);
+        return fluentInterface.withMultithreading(1).solve(graph.getAnnotationOrThrow(ProcessedInput.class), graph).tree;
     }
 
     /**
@@ -1019,11 +1053,42 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @return an optimal fragmentation tree with at least lowerbound score or null, if no such tree exist
      */
     public FTree computeTree(FGraph graph, double lowerbound, boolean recalibration) {
-        FTree tree = getTreeBuilder().buildTree(graph.getAnnotationOrThrow(ProcessedInput.class), graph, lowerbound);
+        FTree tree = computeTreeWithoutAnnotating(graph,lowerbound);
         if (tree == null) return null;
         addTreeAnnotations(graph, tree);
-        if (recalibration) tree = recalibrate(tree);
+        if (recalibration) tree = recalibrate(graph.getAnnotationOrThrow(ProcessedInput.class), tree);
         return tree;
+    }
+
+    /**
+     * Compute a single fragmentation tree
+     *
+     * @param graph         fragmentation graph from which the tree should be built
+     * @param lowerbound    minimal score of the tree. Higher lowerbounds may result in better runtime performance
+     * @param recalibration if true, the tree will be recalibrated
+     * @return an optimal fragmentation tree with at least lowerbound score or null, if no such tree exist
+     */
+    public FTree computeTree(FGraph graph, double lowerbound, boolean recalibration, int allowedTimeInSeconds) {
+        FTree tree = computeTreeWithoutAnnotating(graph,lowerbound, allowedTimeInSeconds);
+        if (tree == null) return null;
+        addTreeAnnotations(graph, tree);
+        if (recalibration) tree = recalibrate(graph.getAnnotationOrThrow(ProcessedInput.class), tree);
+        return tree;
+    }
+
+    protected FTree recalibrate(ProcessedInput input, FTree tree) {
+        final SpectralRecalibration rec = new HypothesenDrivenRecalibration2().collectPeaksFromMs2(input.getExperimentInformation(), tree);
+        final ProcessedInput pin = input.getRecalibratedVersion(rec);
+        // we have to completely rescore the input...
+        final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));
+        pin.setAnnotation(DecompositionList.class, l);
+        performDecomposition(pin);
+        performPeakScoring(pin);
+        FGraph graph = buildGraph(pin, l.getDecompositions().get(0));
+        graph.addAnnotation(SpectralRecalibration.class, rec);
+        final FTree recalibratedTree = computeTree(graph);
+        recalibratedTree.setAnnotation(SpectralRecalibration.class, rec);
+        return recalibratedTree;
     }
 
     protected static class Stackitem {
@@ -1047,24 +1112,33 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @param originalGraph
      * @param tree
      */
-    protected void addTreeAnnotations(FGraph originalGraph, FTree tree) {
-        tree.addAnnotation(ProcessedInput.class, originalGraph.getAnnotationOrNull(ProcessedInput.class));
-
+    public void addTreeAnnotations(FGraph originalGraph, FTree tree) {
+        final ProcessedInput pinput = originalGraph.getAnnotationOrNull(ProcessedInput.class);
+        tree.setAnnotation(ProcessedInput.class, pinput);
+        PrecursorIonType ionType = originalGraph.getAnnotationOrThrow(PrecursorIonType.class);
+        if (ionType.isIonizationUnknown()) {
+            // use ionization instead
+            for (Fragment root : originalGraph.getRoot().getChildren()) {
+                if (root.getFormula().equals(tree.getRoot().getFormula())) {
+                    Ionization ionMode = originalGraph.getFragmentAnnotationOrThrow(Ionization.class).get(root);
+                    ionType = PrecursorIonType.getPrecursorIonType(ionMode);
+                }
+            }
+        }
         // tree annotations
-        tree.addAnnotation(PrecursorIonType.class, originalGraph.getAnnotationOrNull(PrecursorIonType.class));
+        tree.setAnnotation(PrecursorIonType.class, ionType);
+        tree.setAnnotation(Ionization.class, ionType.getIonization());
         final TreeScoring treeScoring = new TreeScoring();
-        treeScoring.setRootScore(originalGraph.getLoss(originalGraph.getRoot(), tree.getRoot().getFormula()).getWeight());
 
         // calculate overall score
         double overallScore = 0d;
         for (Loss l : tree.losses()) {
             overallScore += l.getWeight();
         }
-        treeScoring.setOverallScore(treeScoring.getRootScore() + overallScore);
 
-        tree.addAnnotation(TreeScoring.class, treeScoring);
+        tree.setAnnotation(TreeScoring.class, treeScoring);
 
-        final FragmentAnnotation<Ms2IsotopePattern> msIsoAno;
+        final FragmentAnnotation<Ms2IsotopePattern> msIsoAno = tree.getOrCreateFragmentAnnotation(Ms2IsotopePattern.class);
 
         // fragment annotations
         final FragmentAnnotation<AnnotatedPeak> peakAnnotation = tree.getOrCreateFragmentAnnotation(AnnotatedPeak.class);
@@ -1083,9 +1157,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
 
         // remove pseudo nodes
+
         if (originalGraph.getFragmentAnnotationOrNull(IsotopicMarker.class)!=null) {
             final FragmentAnnotation<IsotopicMarker> marker = tree.getOrCreateFragmentAnnotation(IsotopicMarker.class);
-            msIsoAno = tree.getOrCreateFragmentAnnotation(Ms2IsotopePattern.class);
             final FragmentAnnotation<Ms2IsotopePattern> msIsoAnoG = originalGraph.getOrCreateFragmentAnnotation(Ms2IsotopePattern.class);
             final ArrayList<Fragment> subtreesToDelete = new ArrayList<Fragment>();
             for (Fragment f : tree) {
@@ -1116,101 +1190,54 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 }
             }
             for (Fragment f : subtreesToDelete) tree.deleteSubtree(f);
-        } else msIsoAno = null;
-
-        final FragmentAnnotation<ProcessedPeak> graphPeakAno = originalGraph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
-        for (Fragment treeFragment : tree) {
-            final Fragment graphFragment = formula2graphFragment.get(treeFragment.getFormula());
-            final ProcessedPeak graphPeak = graphPeakAno.get(graphFragment);
-            peakAno.set(treeFragment, graphPeak);
-            simplePeakAnnotation.set(treeFragment, graphPeak);
-            peakAnnotation.set(treeFragment, graphPeak.toAnnotatedPeak(treeFragment.getFormula()));
         }
 
+
+
+        final FragmentAnnotation<ProcessedPeak> graphPeakAno = originalGraph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+        // check for MS1 isotope scores
+        treeScoring.setIsotopeMs1Score(0d);
+        for (Fragment treeFragment : tree) {
+            final Fragment graphFragment = formula2graphFragment.get(treeFragment.getFormula());
+            if (graphFragment==null)
+                throw new NullPointerException("do not find graph fragment with formula " + treeFragment.getFormula());
+            final ProcessedPeak graphPeak = graphPeakAno.get(graphFragment);
+            if (graphPeak==null)
+                throw new NullPointerException("graph node has no associated peak");
+            peakAno.set(treeFragment, graphPeak);
+            simplePeakAnnotation.set(treeFragment, graphPeak);
+            peakAnnotation.set(treeFragment, graphPeak.toAnnotatedPeak(treeFragment.getFormula(), ionType));
+        }
+
+        // add isotopes
+        ExtractedIsotopePattern extr = pinput.getAnnotation(ExtractedIsotopePattern.class, null);
+        double rootIso = 0d;
+        if (extr!=null) {
+            for (Fragment f : tree) {
+                final IsotopePattern p = extr.getExplanations().get(f.getFormula());
+                if (p!=null) {
+                    msIsoAno.set(f, new Ms2IsotopePattern(Spectrums.extractPeakList(p.getPattern()).toArray(new Peak[0]), p.getScore()));
+                    treeScoring.setIsotopeMs1Score(treeScoring.getIsotopeMs1Score() + p.getScore());
+                    if (f.isRoot()) {
+                        rootIso = p.getScore();
+                        tree.setAnnotation(IsotopePattern.class, p);
+                    }
+                }
+            }
+        }
+
+        treeScoring.setRootScore(originalGraph.getLoss(originalGraph.getRoot(), tree.getRoot().getFormula()).getWeight() - rootIso);
+        treeScoring.setOverallScore(treeScoring.getRootScore() + overallScore + rootIso);
+        treeScoring.setIsotopeMs1Score(rootIso);
         // add statistics
         treeScoring.setExplainedIntensity(getIntensityRatioOfExplainedPeaks(tree));
         treeScoring.setExplainedIntensityOfExplainablePeaks(getIntensityRatioOfExplainablePeaks(tree));
         treeScoring.setRatioOfExplainedPeaks((double)tree.numberOfVertices() / (double)originalGraph.getAnnotationOrThrow(ProcessedInput.class).getMergedPeaks().size());
-    }
 
-    /**
-     * Recalibrates the tree
-     *
-     * @return Recalibration object containing score bonus and new tree
-     */
-    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FTree tree, boolean force) {
-        if (recalibrationMethod == null || tree == null) return null;
-        else return recalibrationMethod.recalibrate(tree, new MassDeviationVertexScorer(), force);
-    }
-
-    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FTree tree) {
-        return getRecalibrationFromTree(tree, false);
-    }
-
-    /**
-     * Recalibrates the tree. Returns either a new recalibrated tree or the old tree with recalibrated deviations and
-     * (maybe) higher scores. The FragmentationTree#getRecalibrationBonus returns the improvement of the score after
-     * recalibration
-     *
-     * @param tree
-     * @return
-     */
-    public FTree recalibrate(FTree tree, boolean force) {
-        if (tree == null) return null;
-        final TreeScoring treeScoring = tree.getAnnotationOrThrow(TreeScoring.class);
-        RecalibrationMethod.Recalibration rec = getRecalibrationFromTree(tree, force);
-        final UnivariateFunction func = (rec == null) ? null : rec.recalibrationFunction();
-        assert (func == null || (!(func instanceof PolynomialFunction) || ((PolynomialFunction) func).degree() >= 1));
-        if (rec == null || (!force && rec.getScoreBonus() <= 0)) return tree;
-        double oldScore = treeScoring.getOverallScore();
-        if (force || rec.shouldRecomputeTree()) {
-            final FTree newTree = rec.getCorrectedTree(this, tree);
-            final TreeScoring newTreeScoring = newTree.getAnnotationOrThrow(TreeScoring.class);
-            setRecalibrationBonusFromTree(tree, newTree);
-            if (force || newTreeScoring.getRecalibrationBonus()>0) {
-                tree = newTree;
-            }
-        } else {
-            treeScoring.setOverallScore(treeScoring.getOverallScore() + rec.getScoreBonus());
-            treeScoring.setRecalibrationBonus(rec.getScoreBonus());
+        if (tree.getAnnotationOrNull(SpectralRecalibration.class)!=null) {
+            tree.setAnnotation(RecalibrationFunction.class, tree.getAnnotationOrNull(SpectralRecalibration.class).toPolynomial());
         }
-        if (func != null) {
-            final RecalibrationFunction f = toPolynomial(func);
-            if (f!=null)
-                tree.addAnnotation(RecalibrationFunction.class, f);
-        }
-        return tree;
-    }
 
-    private static void setRecalibrationBonusFromTree(FTree old, FTree newTree) {
-        final TreeScoring a = old.getAnnotationOrThrow(TreeScoring.class);
-        final TreeScoring b = newTree.getAnnotationOrThrow(TreeScoring.class);
-        double aS = a.getOverallScore();
-        double bS = b.getOverallScore();
-        for (Map.Entry<String, Double> e : a.getAdditionalScores().entrySet()) {
-            if (b.getAdditionalScore(e.getKey())==0) aS -= e.getValue();
-        }
-        b.setRecalibrationBonus(bS-aS);
-    }
-
-    static RecalibrationFunction toPolynomial(UnivariateFunction func) {
-        if (func instanceof PolynomialFunction) {
-            return new RecalibrationFunction(((PolynomialFunction) func).getCoefficients());
-        }
-        if (func instanceof Identity) return RecalibrationFunction.identity();
-        return null;
-    }
-
-    public FTree recalibrate(FTree tree) {
-        return recalibrate(tree, false);
-    }
-
-    public RecalibrationMethod getRecalibrationMethod() {
-        return recalibrationMethod;
-    }
-
-    public void setRecalibrationMethod(RecalibrationMethod recalibrationMethod) {
-        this.recalibrationMethod = recalibrationMethod;
     }
 
     /**
@@ -1223,11 +1250,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return computeTree(graph, Double.NEGATIVE_INFINITY);
     }
 
-    public MultipleTreeComputation computeTrees(ProcessedInput input) {
-        return new MultipleTreeComputation(this, input, input.getPeakAnnotationOrThrow(DecompositionList.class).get(input.getParentPeak()).getDecompositions(),
-                0, Integer.MAX_VALUE, 1, recalibrationMethod != null, null);
-    }
-
     public GraphReduction getReduction() {
         return reduction;
     }
@@ -1236,34 +1258,46 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.reduction = reduction;
     }
 
-    public FGraph buildGraph(ProcessedInput input, Scored<MolecularFormula> candidate) {
+    public FGraph buildGraphWithoutReduction(ProcessedInput input, Decomposition candidate) {
+        return buildGraphWithoutReduction(input,candidate,true);
+    }
+
+    private FGraph buildGraphWithoutReduction(ProcessedInput input, Decomposition candidate, boolean topologicalSort) {
         // build Graph
-        final FGraph graph = graphBuilder.fillGraph(
+        FGraph graph = graphBuilder.fillGraph(
                 graphBuilder.addRoot(graphBuilder.initializeEmptyGraph(input),
                         input.getParentPeak(), Collections.singletonList(candidate)));
         graph.addAliasForFragmentAnnotation(ProcessedPeak.class, Peak.class);
-        return performGraphReduction(performGraphScoring(graph));
+        graph = performGraphScoring(graph);
+        if (topologicalSort) {
+            graph.sortTopological();
+        }
+        return graph;
+    }
+
+    public FGraph buildGraph(ProcessedInput input, Decomposition candidate) {
+        return performGraphReduction(buildGraphWithoutReduction(input,candidate,reduction==null),0d);
     }
 
     public FGraph performGraphReduction(FGraph fragments, double lowerbound) {
-        if (reduction == null) return fragments;
+        if(reduction==null) return fragments;
         return reduction.reduce(fragments, lowerbound);
     }
 
-    public FGraph performGraphReduction(FGraph fragments) {
-        if (reduction == null) return fragments;
-        return reduction.reduce(fragments, 0d);
-    }
-
+    /*
     public FGraph buildGraph(ProcessedInput input, List<ProcessedPeak> parentPeaks, List<List<Scored<MolecularFormula>>> candidatesPerParentPeak) {
+        throw new RuntimeException("Not supported yet"); // implement the possibility to allow several ion types per
+        // within the same graph
+
         // build Graph
         FGraph graph = graphBuilder.initializeEmptyGraph(input);
         for (int i = 0; i < parentPeaks.size(); ++i) {
             graph = graphBuilder.addRoot(graph, parentPeaks.get(i), candidatesPerParentPeak.get(i));
         }
         return performGraphReduction(performGraphScoring(graphBuilder.fillGraph(graph)));
-    }
 
+    }
+*/
     /**
      * @return the relative amount of intensity that is explained by this tree, considering only
      * peaks that have an explanation for the hypothetical precursor ion of the tree
@@ -1292,11 +1326,16 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     /**
      * @return the relative amount of intensity that is explained by this tree
      */
-    public double getIntensityRatioOfExplainedPeaks(FTree tree) {
+    public double getIntensityRatioOfExplainedPeaks(ProcessedInput input, FTree tree) {
         double treeIntensity = 0d, maxIntensity = 0d;
-        final FragmentAnnotation<ProcessedPeak> pp = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+        FragmentAnnotation<ProcessedPeak> pp = tree.getFragmentAnnotationOrNull(ProcessedPeak.class);
+        if (pp==null) {
+            pp = tree.getOrCreateFragmentAnnotation(ProcessedPeak.class);
+            for (Fragment f : tree) {
+                pp.set(f, input.getMergedPeaks().get(f.getColor()));
+            }
+        }
         for (Fragment f : tree.getFragmentsWithoutRoot()) treeIntensity += pp.get(f).getRelativeIntensity();
-        final ProcessedInput input = tree.getAnnotationOrThrow(ProcessedInput.class);
         final PeakAnnotation<DecompositionList> decomp = input.getPeakAnnotationOrThrow(DecompositionList.class);
         final MolecularFormula parent = tree.getRoot().getFormula();
         eachPeak:
@@ -1307,20 +1346,57 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         if (maxIntensity==0) return 0;
         return treeIntensity / maxIntensity;
     }
+    public double getIntensityRatioOfExplainedPeaksFromUnanotatedTree(ProcessedInput input, FTree tree, Ionization ionMode) {
+        final double[] fragmentMasses = new double[tree.numberOfVertices()];
+        int k=0;
+        for (Fragment f : tree) {
+            fragmentMasses[k++] = ionMode.addToMass(f.getFormula().getMass());
+        }
+        Arrays.sort(fragmentMasses);
+        double explainedIntensity = 0d, totalIntensity = 0d;
+        for (ProcessedPeak p : input.getMergedPeaks()) {
+            if (p == input.getParentPeak()) continue;
+            totalIntensity += p.getRelativeIntensity();
+            int index = Arrays.binarySearch(fragmentMasses, p.getMz());
+            if (index < 0) {
+                index = -(index+1);
+                double diff1,diff2,diff3;
+                if (index < fragmentMasses.length) {
+                    diff1 = Math.abs(fragmentMasses[index] - p.getMz());
+                    diff2 = index<=0 ? Double.POSITIVE_INFINITY :  Math.abs(fragmentMasses[index-1] - p.getMz());
+                    diff3 = index+1>=fragmentMasses.length ? Double.POSITIVE_INFINITY : Math.abs(fragmentMasses[index+1] - p.getMz());
+                    if (diff2 < diff1 && diff2 <= diff3) --index;
+                    else if (diff3 < diff1 && diff3 <= diff2) ++index;
+                } else if (--index < 0)
+                    continue;
+                if (input.getMeasurementProfile().getAllowedMassDeviation().inErrorWindow(p.getMz(),fragmentMasses[index])) {
+                    explainedIntensity += p.getRelativeIntensity();
+                }
+            }
+        }
+        if (totalIntensity==0) return 0;
+        return explainedIntensity/totalIntensity;
+    }
+    public double getIntensityRatioOfExplainedPeaks(FTree tree) {
+        final ProcessedInput input = tree.getAnnotationOrThrow(ProcessedInput.class);
+        return getIntensityRatioOfExplainedPeaks(input,tree);
+    }
 
     /**
      * Adds Score annotations to vertices and losses of the tree for every scoring method.
      * As the single scores are forgotten during tree computation, they have to be computed again.
      * @param tree
      */
-    public boolean recalculateScores(FTree tree) {
+    public double recalculateScores(FTree tree) {
         final Iterator<Loss> edges = tree.lossIterator();
         final ProcessedInput input = tree.getAnnotationOrThrow(ProcessedInput.class);
         final FragmentAnnotation<ProcessedPeak> peakAno = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
 
         final Object[] preparedLoss = new Object[lossScorers.size()];
         final Object[] preparedFrag = new Object[decompositionScorers.size()];
+        final PrecursorIonType ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
         final FragmentAnnotation<Ms2IsotopePattern> msIso = tree.getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
+        final FragmentAnnotation<IsotopePattern> msIso1 = tree.getFragmentAnnotationOrNull(IsotopePattern.class);
         final String[] fragmentScores;
         final String[] lossScores;
         final String[] rootScores;
@@ -1334,7 +1410,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 fragScores.add(getScoringMethodName(peakScorer));
                 preparedFrag[i++] = peakScorer.prepare(input);
             }
-            if (msIso!=null) fragScores.add("isotopes");
+            if (msIso!=null || msIso1!=null) fragScores.add("isotopes");
             fragmentScores = fragScores.toArray(new String[fragScores.size()]);
         }
         {
@@ -1389,13 +1465,18 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 fscore.set(k++, pseudoMatrix[0][0]);
             }
             for (int i=0; i < decompositionScorers.size(); ++i) {
-                fscore.set(k++, ((DecompositionScorer<Object>) decompositionScorers.get(i)).score(v.getFormula(), peakAno.get(v), input, preparedFrag[i]));
+                fscore.set(k++, ((DecompositionScorer<Object>) decompositionScorers.get(i)).score(v.getFormula(),ionType.getIonization(), peakAno.get(v), input, preparedFrag[i]));
             }
 
+            double isoScore = 0d;
             if (msIso!=null && msIso.get(v)!=null) {
-                final double score = msIso.get(v).getScore();
-                fscore.set("isotopes", score);
+                isoScore += msIso.get(v).getScore();
             }
+            if (msIso1!=null && msIso1.get(v)!=null) {
+                isoScore += msIso1.get(v).getScore();
+            }
+            if (isoScore>0)
+                fscore.set("isotopes", isoScore);
 
             fAno.set(v, fscore);
         }
@@ -1407,7 +1488,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final Score rootScore = new Score(rootScores);
         for (int k=0; k < rootScorers.size(); ++k) {
             final Object prepared = rootScorers.get(k).prepare(input);
-            final double score = ((DecompositionScorer<Object>)rootScorers.get(k)).score(root.getFormula(), peakAno.get(root), input, prepared);
+            final double score = ((DecompositionScorer<Object>)rootScorers.get(k)).score(root.getFormula(),ionType.getIonization(), peakAno.get(root), input, prepared);
             rootScore.set(k, score);
         }
         fAno.set(root, rootScore);
@@ -1422,7 +1503,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             scoreSum += s.sum();
         }
         scoreSum += fAno.get(root).sum();
-        return Math.abs(scoreSum-tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) < 1e-8;
+        return scoreSum;
 
     }
 
@@ -1486,13 +1567,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     private void scoreIsotopesInMs2(ProcessedInput input, FGraph graph) {
+        isoInMs2Scorer.scoreFromMs1(input, graph);
         if (isScoringIsotopes(input))
             isoInMs2Scorer.score(input, graph);
     }
 
     private void addSyntheticParent(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks, double parentmass) {
         final ProcessedPeak syntheticParent = new ProcessedPeak();
-        syntheticParent.setIon(experiment.getPrecursorIonType().getIonization());
         syntheticParent.setMz(parentmass);
         syntheticParent.setOriginalMz(parentmass);
         processedPeaks.add(syntheticParent);
@@ -1665,9 +1746,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             this.isoInMs2Scorer = (IsotopePatternInMs2Scorer) helper.unwrap(document, document.getFromDictionary(dictionary,"isotopesInMs2"));
         }
         peakMerger = (PeakMerger) helper.unwrap(document, document.getFromDictionary(dictionary, "merge"));
-        if (document.hasKeyInDictionary(dictionary, "recalibrationMethod")) {
-            recalibrationMethod = (RecalibrationMethod) helper.unwrap(document, document.getFromDictionary(dictionary, "recalibrationMethod"));
-        } else recalibrationMethod = null;
         if (document.hasKeyInDictionary(dictionary, "default"))
             defaultProfile = new MutableMeasurementProfile((MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dictionary, "default")));
         else
@@ -1712,8 +1790,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (LossScorer s : lossScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "lossScorers", list);
         document.addToDictionary(dictionary, "isotopesInMs2", helper.wrap(document, isoInMs2Scorer));
-        if (recalibrationMethod != null)
-            document.addToDictionary(dictionary, "recalibrationMethod", helper.wrap(document, recalibrationMethod));
         document.addToDictionary(dictionary, "merge", helper.wrap(document, peakMerger));
         if (withProfile)
             document.addToDictionary(dictionary, "default", helper.wrap(document, new MutableMeasurementProfile(defaultProfile)));

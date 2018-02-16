@@ -66,6 +66,7 @@ public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
             measuredSpectrum = Spectrums.getNormalizedSpectrum(measuredSpectrum, Normalization.Max(1));
             theoreticalSpectrum = Spectrums.getNormalizedSpectrum(theoreticalSpectrum, Normalization.Max(1));
         }
+        /*
         double score = 0d;
         for (int i = 1; i < Math.min(measuredSpectrum.size(), theoreticalSpectrum.size()); ++i) {
             final double measuredIntensity = measuredSpectrum.getIntensityAt(i);
@@ -79,6 +80,18 @@ public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
             final double probEpsilon = (1 / (SQRT2PI * sigmaA)) * (Math.pow(Math.E, (epsilon * epsilon / (-2 * sigmaA * sigmaA))));
             final double probability = probDelta * probEpsilon;
             score += Math.log(probability);
+            scores[i] += score;
+        }
+        */
+
+        double score = 0d;
+        for (int i = 1; i < Math.min(measuredSpectrum.size(), theoreticalSpectrum.size()); ++i) {
+            final double measuredIntensity = measuredSpectrum.getIntensityAt(i);
+            final double theoreticalIntensity = theoreticalSpectrum.getIntensityAt(i);
+            final double delta = measuredIntensity-theoreticalIntensity;
+
+            final double peakPropbability = Math.exp(-(delta*delta)/(2*(sigmaA*sigmaA + measuredIntensity*measuredIntensity*sigmaR*sigmaR)))/(2*Math.PI*measuredIntensity*sigmaR*sigmaA);
+            score += Math.log(peakPropbability);
             scores[i] += score;
         }
     }

@@ -236,6 +236,11 @@ public class CommonFragmentScorer implements EdgeScorer<FragmentsCandidate> {
         this.threshold = threshold;
     }
 
+    @Override
+    public double getThreshold() {
+        return threshold;
+    }
+
     public int getNumberOfCommon(FragmentsCandidate candidate1, FragmentsCandidate candidate2) {
         MolecularFormula[] fragments1 = (MolecularFormula[])this.fragmentsMap.get(candidate1);
         MolecularFormula[] fragments2 = (MolecularFormula[])this.fragmentsMap.get(candidate2);

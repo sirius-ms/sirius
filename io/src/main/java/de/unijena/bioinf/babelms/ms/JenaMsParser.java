@@ -36,23 +36,24 @@ import java.util.regex.Pattern;
 public class JenaMsParser implements Parser<Ms2Experiment> {
 
     // quickn dirty hack
-    BufferedReader lastReader=null;
-    String lastCompundName=null;
+    BufferedReader lastReader = null;
+    String lastCompundName = null;
 
     @Override
     public Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
-        ParserInstance p=null;
+        ParserInstance p = null;
         try {
-        if (reader==lastReader) {
-            p = new ParserInstance(source, reader);
-            p.newCompound(lastCompundName);
-            return p.parse();
-        } else {
-            p = new ParserInstance(source, reader);
-            return p.parse();
-        }}finally {
-            if (p!=null) {
-                if (p.compoundName!=null) {
+            if (reader == lastReader) {
+                p = new ParserInstance(source, reader);
+                p.newCompound(lastCompundName);
+                return p.parse();
+            } else {
+                p = new ParserInstance(source, reader);
+                return p.parse();
+            }
+        } finally {
+            if (p != null) {
+                if (p.compoundName != null) {
                     lastReader = reader;
                 }
                 lastCompundName = p.compoundName;
@@ -74,36 +75,41 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private int lineNumber;
         private String compoundName = null;
         private MolecularFormula formula;
-        private int charge=0;
+        private int charge = 0;
         private boolean isMs1 = false;
         private PrecursorIonType ionization;
         private CollisionEnergy currentEnergy;
-        private double tic=0, parentMass=0, retentionTime=0;
+        private double tic = 0, parentMass = 0, retentionTime = 0;
         private SimpleMutableSpectrum currentSpectrum;
         private ArrayList<MutableMs2Spectrum> ms2spectra = new ArrayList<MutableMs2Spectrum>();
         private ArrayList<SimpleSpectrum> ms1spectra = new ArrayList<SimpleSpectrum>();
         private String inchi, inchikey, smiles, splash, spectrumQualityString;
         private MutableMs2Experiment experiment;
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
-        private HashMap<String,String> fields;
+        private HashMap<String, String> fields;
 
         private void newCompound(String name) {
-            inchi=null; inchikey=null; smiles=null; splash=null;
+            inchi = null;
+            inchikey = null;
+            smiles = null;
+            splash = null;
             ms1spectra = new ArrayList<>();
             ms2spectra = new ArrayList<>();
-            tic=0; parentMass=0; retentionTime=0;
+            tic = 0;
+            parentMass = 0;
+            retentionTime = 0;
             currentEnergy = null;
             ionization = null;
-            isMs1=false;
-            charge=0;
-            formula=null;
+            isMs1 = false;
+            charge = 0;
+            formula = null;
             compoundName = name;
             instrumentation = MsInstrumentation.Unknown;
         }
 
         private MutableMs2Experiment parse() throws IOException {
             String line;
-            while ((line=reader.readLine())!=null) {
+            while ((line = reader.readLine()) != null) {
                 try {
                     ++lineNumber;
                     if (line.isEmpty()) {
@@ -122,14 +128,19 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                             if (m.find()) {
                                 final char token = m.group(1).charAt(0);
                                 switch (token) {
-                                    case '>': parseOption(line.trim()); break;
-                                    case '#': parseComment(line.trim()); break;
-                                    default: parsePeak(line.trim());
+                                    case '>':
+                                        parseOption(line.trim());
+                                        break;
+                                    case '#':
+                                        parseComment(line.trim());
+                                        break;
+                                    default:
+                                        parsePeak(line.trim());
                                 }
                             } else if (line.trim().isEmpty()) {
                                 parseEmptyLine();
                             } else {
-                                throw new IOException("Cannot parse line " + lineNumber + ":'" + line + "'" );
+                                throw new IOException("Cannot parse line " + lineNumber + ":'" + line + "'");
                             }
                         }
                     }
@@ -145,20 +156,20 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
         private static final String decimalPattern = "[+-]?\\s*\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?";
 
-        private static final Pattern MASS_PATTERN = Pattern.compile("("+decimalPattern + ")(?:\\s*Da)?");
+        private static final Pattern MASS_PATTERN = Pattern.compile("(" + decimalPattern + ")(?:\\s*Da)?");
 
-        private static final Pattern FLOAT_PATTERN = Pattern.compile("("+decimalPattern+")");
+        private static final Pattern FLOAT_PATTERN = Pattern.compile("(" + decimalPattern + ")");
 
-        private static final Pattern COLLISION_PATTERN = Pattern.compile("((" + decimalPattern + ")?|((?:Ramp\\s*)?" + decimalPattern + "\\s*-\\s*" + decimalPattern +"))");
+        private static final Pattern COLLISION_PATTERN = Pattern.compile("((" + decimalPattern + ")?|((?:Ramp\\s*)?" + decimalPattern + "\\s*-\\s*" + decimalPattern + "))");
 
         private static final Pattern RETENTION_PATTER = Pattern.compile("(?:PT)?(" + decimalPattern + ")S?");
 
         private static final Pattern PEAK_PATTERN = Pattern.compile("(" + decimalPattern + ")\\s+(" + decimalPattern + ")");
 
         private boolean parseOption(String line) throws IOException {
-            final String[] options = line.substring(line.indexOf('>')+1).split("\\s+", 2);
+            final String[] options = line.substring(line.indexOf('>') + 1).split("\\s+", 2);
             final String optionName = options[0].toLowerCase();
-            final String value = options.length==2 ? options[1] : "";
+            final String value = options.length == 2 ? options[1] : "";
             if (optionName.equals("compound")) {
                 final boolean newCompound = compoundName != null;
                 if (newCompound) {
@@ -201,10 +212,10 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 smiles = value;
             } else if (optionName.equalsIgnoreCase("splash")) {
                 splash = value;
-            } else if (optionName.equalsIgnoreCase("quality")){
+            } else if (optionName.equalsIgnoreCase("quality")) {
                 spectrumQualityString = value;
             } else if (optionName.contains("collision") || optionName.contains("energy") || optionName.contains("ms2")) {
-                if (currentSpectrum.size()>0) newSpectrum();
+                if (currentSpectrum.size() > 0) newSpectrum();
                 if (currentEnergy != null) warn("Collision energy is set twice");
                 if (value.isEmpty()) this.currentEnergy = CollisionEnergy.none();
                 else {
@@ -223,7 +234,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                     }
                 }
             } else if (optionName.equals("tic")) {
-                if (currentSpectrum.size()>0) newSpectrum();
+                if (currentSpectrum.size() > 0) newSpectrum();
                 if (tic != 0) warn("total ion count is set twice");
                 final Matcher m = FLOAT_PATTERN.matcher(value);
                 if (m.find()) {
@@ -232,13 +243,13 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                     error("Cannot parse total ion count: '" + value + "'");
                 }
             } else if (optionName.contains("ms1")) {
-                if (currentSpectrum.size()>0) newSpectrum();
+                if (currentSpectrum.size() > 0) newSpectrum();
                 this.isMs1 = true;
             } else if (optionName.equals("retention")) {
                 parseRetention(value);
             } else if (optionName.contains("ion")) {
                 final PrecursorIonType ion = PeriodicTable.getInstance().ionByName(value.trim());
-                if (ion==null) {
+                if (ion == null) {
                     warn("Unknown ionization: '" + value + "'");
                 } else {
                     this.ionization = ion;
@@ -254,29 +265,28 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private void flushCompound() {
             newSpectrum();
             experiment = null;
-            if (compoundName==null) return;
+            if (compoundName == null) return;
             final MutableMs2Experiment exp = new MutableMs2Experiment();
             exp.setIonMass(parentMass);
-            if (parentMass!=0 && ionization!=null)
-                exp.setMoleculeNeutralMass(ionization.precursorMassToNeutralMass(exp.getIonMass()));
             exp.setMolecularFormula(formula);
             exp.setName(compoundName);
-            if (ionization==null) {
-                if (charge!=0) {
+            if (ionization == null) {
+                if (charge != 0) {
                     exp.setPrecursorIonType(PrecursorIonType.unknown(charge));
                 }
-            } else  {
+            } else {
                 exp.setPrecursorIonType(ionization);
             }
             exp.setMs1Spectra(ms1spectra);
             exp.setMs2Spectra(ms2spectra);
             exp.setSource(source);
-            if (smiles!=null) exp.setAnnotation(Smiles.class, new Smiles(smiles));
-            if (splash!=null) exp.setAnnotation(Splash.class, new Splash(splash));
-            if (spectrumQualityString!=null) exp.setAnnotation(CompoundQuality.class, CompoundQuality.fromString(spectrumQualityString));
-            if (inchi!=null || inchikey != null) exp.setAnnotation(InChI.class, new InChI(inchikey, inchi));
-            if (instrumentation!=null) exp.setAnnotation(MsInstrumentation.class, instrumentation);
-            if (retentionTime!=0) exp.setAnnotation(RetentionTime.class, new RetentionTime(retentionTime));
+            if (smiles != null) exp.setAnnotation(Smiles.class, new Smiles(smiles));
+            if (splash != null) exp.setAnnotation(Splash.class, new Splash(splash));
+            if (spectrumQualityString != null)
+                exp.setAnnotation(CompoundQuality.class, CompoundQuality.fromString(spectrumQualityString));
+            if (inchi != null || inchikey != null) exp.setAnnotation(InChI.class, new InChI(inchikey, inchi));
+            if (instrumentation != null) exp.setAnnotation(MsInstrumentation.class, instrumentation);
+            if (retentionTime != 0) exp.setAnnotation(RetentionTime.class, new RetentionTime(retentionTime));
             if (fields != null) exp.setAnnotation(Map.class, fields);
             this.experiment = exp;
             fields = null;
@@ -294,19 +304,19 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private void parseComment(String line) {
             // legacy mode
             if (line.startsWith("#retention")) {
-                parseRetention(line.substring(line.indexOf("#retention")+"#retention".length()));
+                parseRetention(line.substring(line.indexOf("#retention") + "#retention".length()));
             }
-            if (line.charAt(0)=='#') {
-                final String[] options = line.substring(line.indexOf('#')+1).split("\\s+", 2);
+            if (line.charAt(0) == '#') {
+                final String[] options = line.substring(line.indexOf('#') + 1).split("\\s+", 2);
                 final String optionName = options[0].toLowerCase();
-                final String value = options.length==2 ? options[1] : "";
-                if (fields==null) fields = new HashMap<>();
+                final String value = options.length == 2 ? options[1] : "";
+                if (fields == null) fields = new HashMap<>();
                 fields.put(optionName, value);
             }
         }
 
         private void parseRetention(String value) {
-            if (currentSpectrum.size()>0) newSpectrum();
+            if (currentSpectrum.size() > 0) newSpectrum();
             final Matcher m = RETENTION_PATTER.matcher(value);
             if (m.find()) {
                 this.retentionTime = Double.parseDouble(m.group(1));
@@ -320,7 +330,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             if (m.find()) {
                 currentSpectrum.addPeak(new Peak(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2))));
             } else {
-                error("Cannot parse peak '" + line + "'" );
+                error("Cannot parse peak '" + line + "'");
             }
         }
 
@@ -332,11 +342,11 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                     ms2spectra.add(new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2));
                 }
             } else return;
-            isMs1=false;
-            this.tic=0;
-            this.retentionTime=0d;
-            this.currentEnergy=null;
-            this.currentSpectrum=new SimpleMutableSpectrum();
+            isMs1 = false;
+            this.tic = 0;
+            this.retentionTime = 0d;
+            this.currentEnergy = null;
+            this.currentSpectrum = new SimpleMutableSpectrum();
         }
 
         private void parseEmptyLine() {

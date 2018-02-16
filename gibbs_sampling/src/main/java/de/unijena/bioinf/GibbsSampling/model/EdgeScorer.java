@@ -8,6 +8,8 @@ package de.unijena.bioinf.GibbsSampling.model;
 public interface EdgeScorer<C extends Candidate<?>> {
     void setThreshold(double threshold);
 
+    double getThreshold();
+
     void prepare(C[][] var1);
 
     double score(C var1, C var2);

@@ -11,8 +11,11 @@ import java.util.Map;
 
 public class CriticalPathSolver extends HeuristicSolver {
 
+	protected double score = 0d;
+
 	public CriticalPathSolver(FGraph graph) {
 		super(graph);
+		score = graph.getRoot().getOutgoingEdge(0).getWeight();
 
 		this.treeSubtreeScore = new double[this.graph.numberOfVertices()];
 	}
@@ -34,6 +37,7 @@ public class CriticalPathSolver extends HeuristicSolver {
 		Loss bestLoss = this.getBestLoss();
 
 		while (bestLoss.getSource() != null) {
+			//System.out.println(".....");
 			this.addTreeFragment(bestLoss);
 
 			// add the path below the added loss
@@ -41,7 +45,15 @@ public class CriticalPathSolver extends HeuristicSolver {
 			addCriticalPath(pathChild);
 			bestLoss = this.getBestLoss();
 		}
+		tree.setTreeWeight(score);
 		return this.tree;
+	}
+
+	@Override
+	protected void addTreeFragment(Loss loss) {
+		super.addTreeFragment(loss);
+		score += loss.getWeight();
+		//System.out.println("ADD " + loss + " WITH WEIGHT " + loss.getWeight());
 	}
 
 	/**
@@ -134,7 +146,7 @@ public class CriticalPathSolver extends HeuristicSolver {
 						.contains(this.colorForEachVertex[childID])) {
 					Loss loss = this.graph.getLoss(startFragment, child);
 
-					if (this.treeSubtreeScore[startFragment.getVertexId()] == this.treeSubtreeScore[childID]
+					if (this.treeSubtreeScore[startFragment.getVertexId()] <= this.treeSubtreeScore[childID]
 							+ loss.getWeight()) {
 						addTreeFragment(loss);
 						startFragment = loss.getTarget();

@@ -25,8 +25,8 @@ public class MutableMs2Dataset implements Ms2Dataset {
     /**
      *
      * @param experiments
-     * @param profile profile which is used for Sirius
-     * @param isolationWindowWidth
+     * @param profile profile which is used for Sirius. MUST EXIST! But cannot be tested at this moment //todo find better solution to set profile. e.g. move MutableMs2Dataset
+     * @param isolationWindowWidth maximum isolation window width. will be used to bound isolation window estimation.
      * @param measurementProfile
      */
     public MutableMs2Dataset(List<Ms2Experiment> experiments, String profile, double isolationWindowWidth, MeasurementProfile measurementProfile) {
@@ -36,7 +36,7 @@ public class MutableMs2Dataset implements Ms2Dataset {
         }
         this.profile = profile;
         this.isolationWindowWidth = isolationWindowWidth;
-        this.measurementProfile = measurementProfile;
+        this.measurementProfile = measurementProfile; //todo do we need profile and Measurement profile!?
     }
 
     public MutableMs2Dataset(Ms2Dataset dataset) {

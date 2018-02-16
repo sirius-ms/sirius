@@ -101,7 +101,7 @@
 //        } catch (Exception var7) {
 //            var7.printStackTrace();
 //            System.out.println("FTreeAlignment failed for : " + candidate1.getExperiment().getName() + "(" + candidate1.getFormula() + ") vs " + candidate2.getExperiment().getName() + "(" + candidate2.getFormula() + ")");
-//            System.out.println("ionizations: " + candidate1.getIonType().toString() + " " + candidate2.getIonType().toString());
+//            System.out.println("ionizations: " + candidate1.getIonMode().toString() + " " + candidate2.getIonMode().toString());
 //            throw var7;
 //        }
 //

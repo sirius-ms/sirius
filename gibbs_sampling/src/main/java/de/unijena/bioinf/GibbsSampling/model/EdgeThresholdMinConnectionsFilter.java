@@ -12,7 +12,6 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
 
     public EdgeThresholdMinConnectionsFilter(double basicThreshold, int numberOfCandidatesWithMinConnCount, int minimumConnectionCount) {
         super(Double.NaN);
-        System.out.println("EdgeThresholdMinConnectionsFilter " + basicThreshold + " " + numberOfCandidatesWithMinConnCount + " " + minimumConnectionCount);
         if(minimumConnectionCount < 0) {
             throw new IllegalArgumentException("min connection count must be positive");
         } else if(numberOfCandidatesWithMinConnCount<0){
@@ -25,49 +24,63 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
     }
 
     public void filterEdgesAndSetThreshold(Graph graph, int candidateIdx, double[] logEdgeScores) {
-        ArrayList<WeightedEdge> weightedEdges = new ArrayList<>();
         int peakIdx = graph.getPeakIdx(candidateIdx);
 
-        for(int threshold = 0; threshold < logEdgeScores.length; ++threshold) {
-            if(peakIdx != graph.getPeakIdx(threshold)) {
-                double score = logEdgeScores[threshold];
-                weightedEdges.add(new WeightedEdge(candidateIdx, threshold, score));
+        double[] minThresholdPerPeak = new double[graph.numberOfCompounds()];
+        for(int i = 0; i < logEdgeScores.length; ++i) {
+            int peakIdxOther = graph.getPeakIdx(i);
+            if(peakIdx != peakIdxOther) {
+                double score = logEdgeScores[i];
+                //CHANGED just add edge if <0 (at least some matching fragments)
+                if (score>=0) continue;
+
+                minThresholdPerPeak[peakIdxOther] = Math.min(minThresholdPerPeak[peakIdxOther], score);
+//                //edges assigned in this 'reverse direction' (candidateIdx->i) to retrieve all of them later on
+//                //after that the graph is made symmetric anyways.
+//                weightedEdges.add(new WeightedEdge(candidateIdx, i, score));
             }
         }
 
-        Collections.sort(weightedEdges);
-//        System.out.println("weights " + weightedEdges.size() + " " + ((WeightedEdge)weightedEdges.get(0)).weight + " " + ((WeightedEdge)weightedEdges.get(weightedEdges.size() - 1)).weight);
+        //negative weights are good (p-values)
+        //take at least the top x edges. maybe even more if several are better than basic thres.
+        Arrays.sort(minThresholdPerPeak);
         double currentThreshold;
-        if(this.minimumConnectionCount >= weightedEdges.size()) {
-            currentThreshold = ((WeightedEdge)weightedEdges.get(weightedEdges.size() - 1)).weight;
+        if(this.minimumConnectionCount >= minThresholdPerPeak.length) {
+            currentThreshold = 0;//todo add pseudo???
         } else {
-            currentThreshold = ((WeightedEdge)weightedEdges.get(this.minimumConnectionCount)).weight;
-        }
-
-        if(Double.isInfinite(currentThreshold)) {
-            for(int i = Math.min(this.minimumConnectionCount, weightedEdges.size()) - 1; i >= 0; --i) {
-                double weightedEdge = ((WeightedEdge)weightedEdges.get(i)).weight;
-                if(isFinite(weightedEdge)) {
-                    currentThreshold = weightedEdge;
+            //get next best weight, so that minimumConnectionCount-1 edge gets positive weight
+            //if no bigger weight exists it is set to weight 0
+            //using 0 might make the score to 'strong'??
+            double thresholdScore = minThresholdPerPeak[minimumConnectionCount-1];
+            currentThreshold = thresholdScore;
+            for (int i = minimumConnectionCount; i < minThresholdPerPeak.length; i++) {
+                double weight = minThresholdPerPeak[i];
+                if (weight>currentThreshold){
+                    currentThreshold = weight;
                     break;
                 }
-            }
 
-            if(Double.isInfinite(currentThreshold)) {
-                currentThreshold = this.basicThreshold;
             }
-        } else if(currentThreshold > this.basicThreshold) {
+            if (currentThreshold==thresholdScore) currentThreshold = 0;
+        }
+
+
+        if(currentThreshold < this.basicThreshold) {
             currentThreshold = this.basicThreshold;
         }
 
-//        System.out.println("thres2 " + currentThreshold + " " + this.basicThreshold);
 
-        for (WeightedEdge weightedEdge : weightedEdges) {
-            if(weightedEdge.weight <= currentThreshold) {
-                break;
+        for(int i = 0; i < logEdgeScores.length; ++i) {
+            int peakIdxOther = graph.getPeakIdx(i);
+            if(peakIdx != peakIdxOther) {
+                double score = logEdgeScores[i];
+                if (score>=currentThreshold) continue;
+
+                graph.setLogWeight(candidateIdx, i, currentThreshold - score);
             }
-            graph.setLogWeight(weightedEdge.index1, weightedEdge.index2, weightedEdge.weight - currentThreshold);
         }
+
+
         graph.setEdgeThreshold(candidateIdx, currentThreshold);
     }
 
@@ -87,39 +100,30 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
             int right = graph.getPeakRightBoundary(i);
             double[] thresholds = new double[right - left + 1];
 
-            int w2;
-            for(w2 = left; w2 <= right; ++w2) {
-                thresholds[w2 - left] = graph.getEdgeThreshold(w2);
+            for(int j = left; j <= right; ++j) {
+                thresholds[j - left] = graph.getEdgeThreshold(j);
             }
 
             Arrays.sort(thresholds);
-//            w2 = (int)(this.numberOfCandidatesWithMinConnCount * (double)thresholds.length);
-            w2 = Math.min(this.numberOfCandidatesWithMinConnCount, thresholds.length); //changed
-            double t = w2 == 0?thresholds[thresholds.length - 1]:thresholds[thresholds.length - w2];
-            if(t > this.basicThreshold) {
-                t = this.basicThreshold;
+            int pos = Math.min(this.numberOfCandidatesWithMinConnCount, thresholds.length-1);
+            double t = pos == 0?thresholds[thresholds.length-1]:thresholds[pos-1];
+            if(t < this.basicThreshold) {
+                throw new RuntimeException("individual edge threshold must not be smaller than overall threshold");
             }
-
+            //rather really look at the number of edges (may be less)? -> not if worth threshold is 0
             for(int j = left; j <= right; ++j) {
                 double current_t = graph.getEdgeThreshold(j);
-                if(left == j) {
-//                    System.out.println("before " + current_t + " " + t);
-                }
-
-                if(current_t != t) {
+                if(current_t > t) {
                     double diff = t - current_t;
                     int[] connections1 = graph.getLogWeightConnections(j);
-//                    System.out.println("connection size " + connections1.length);
-//                    if(connections1.length < 10) {
-//                        System.out.println(((StandardCandidate)graph.getPossibleFormulas1D(j).getCandidate()).getFormula().formatByHill() + " is connected to " + Arrays.toString(connections1));
-//                    }
-
 
                     for(int k = 0; k < connections1.length; ++k) {
                         int c = connections1[k];
                         double w = graph.getLogWeight(j, c);
-                        graph.setLogWeight(j, c, Math.max(0.0D, w - diff));
+                        graph.setLogWeight(j, c, Math.max(0.0D, w + diff));
                     }
+
+                    graph.setEdgeThreshold(j, t);
                 }
             }
         }
@@ -139,9 +143,11 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
                     max = a;
                 }
 
-                if(max != 0.0D) {
+                if(max > 0.0D) {
                     connectionsList[i].add(j);
                     connectionsList[j].add(i);
+                } else if (max < 0d) {
+                    throw new RuntimeException("Edge has a negative weight");
                 }
             }
         }
@@ -150,16 +156,9 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
 
         for(int i = 0; i < graph.getSize(); ++i) {
             connections[i] = connectionsList[i].toArray();
-//            if(connections[i].length == 0) {
-//                System.out.println("no connections at all for "+ ((StandardCandidate)graph.getPossibleFormulas1D(i).getCandidate()).getExperiment().getName() +" with " + ((StandardCandidate)graph.getPossibleFormulas1D(i).getCandidate()).getFormula().formatByHill());
-//            }
         }
 
         return connections;
     }
 
-
-    private boolean isFinite(double d) {
-        return Math.abs(d) <= Double.MAX_VALUE;
-    }
 }

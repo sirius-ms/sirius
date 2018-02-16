@@ -20,22 +20,35 @@ package de.unijena.bioinf.FragmentationTreeConstruction.model;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 
 import java.util.*;
 
 public class DecompositionList {
 
-    private final List<Scored<MolecularFormula>> decompositions;
+    private final List<Decomposition> decompositions;
 
-    public static DecompositionList fromFormulas(Iterable<MolecularFormula> formulas) {
-        final ArrayList<Scored<MolecularFormula>> decompositions = new ArrayList<Scored<MolecularFormula>>(formulas instanceof Collection ? ((Collection) formulas).size() : 10);
-        for (MolecularFormula f : formulas) decompositions.add(new Scored<MolecularFormula>(f,0d));
+
+    public static DecompositionList fromFormulas(Iterable<MolecularFormula> formulas, Ionization ion) {
+        final ArrayList<Decomposition> decompositions = new ArrayList<>(formulas instanceof Collection ? ((Collection) formulas).size() : 10);
+        for (MolecularFormula f : formulas) decompositions.add(new Decomposition(f,ion,0d));
         return new DecompositionList(decompositions);
-
     }
 
-    public DecompositionList(List<Scored<MolecularFormula>> decompositions) {
+    public void replace(Decomposition... decs) {
+        this.decompositions.clear();
+        this.decompositions.addAll(Arrays.asList(decs));
+    }
+
+    public Decomposition find(MolecularFormula formula) {
+        for (Decomposition d : decompositions)
+            if (d.getCandidate().equals(formula)) return d;
+        return null;
+    }
+
+
+    public DecompositionList(List<Decomposition> decompositions) {
         this.decompositions = decompositions;
     }
 
@@ -58,7 +71,64 @@ public class DecompositionList {
         };
     }
 
-    public List<Scored<MolecularFormula>> getDecompositions() {
+    public void disjoin(DecompositionList other, double mzOwn, double mzOther) {
+        final HashMap<Ionization, HashSet<MolecularFormula>> ownMap = new HashMap<>(), otherMap = new HashMap<>();
+
+        for (Decomposition d : decompositions) {
+            Ionization i = d.ion;
+            if (!ownMap.containsKey(i)) {
+                ownMap.put(i, new HashSet<MolecularFormula>());
+                otherMap.put(i, new HashSet<MolecularFormula>());
+            }
+            ownMap.get(i).add(d.getCandidate());
+        }
+        for (Decomposition d : other.decompositions) {
+            Ionization i = d.ion;
+            if (otherMap.containsKey(i))
+                otherMap.get(i).add(d.getCandidate());
+        }
+        final HashSet<MolecularFormula> deleteLeft = new HashSet<>(), deleteRight = new HashSet<>();
+        for (Ionization ion : ownMap.keySet()) {
+            final double l = ion.subtractFromMass(mzOwn), r = ion.subtractFromMass(mzOther);
+            final HashSet<MolecularFormula> left = ownMap.get(ion), right = otherMap.get(ion);
+            for (MolecularFormula f : left) {
+                if (right.contains(f)) {
+                    if (Math.abs(l-f.getMass()) < Math.abs(r-f.getMass())) {
+                        deleteRight.add(f);
+                    } else deleteLeft.add(f);
+                }
+            }
+            if (deleteLeft.size()>0) {
+                Iterator<Decomposition> i = decompositions.iterator();
+                while (i.hasNext()) {
+                    final Decomposition d = i.next();
+                    if (d.ion.equals(ion) && deleteLeft.contains(d.getCandidate()))
+                        i.remove();
+                }
+            }
+            if (deleteRight.size()>0) {
+                Iterator<Decomposition> i = other.decompositions.iterator();
+                while (i.hasNext()) {
+                    final Decomposition d = i.next();
+                    if (d.ion.equals(ion) && deleteRight.contains(d.getCandidate()))
+                        i.remove();
+                }
+            }
+        }
+
+    }
+
+    public HashMap<Ionization, List<MolecularFormula>> getFormulasPerIonMode() {
+        final HashMap<Ionization, List<MolecularFormula>> map = new HashMap<>();
+        for (Decomposition d : decompositions) {
+            if (!map.containsKey(d.getIon()))
+                map.put(d.getIon(), new ArrayList<MolecularFormula>());
+            map.get(d.getIon()).add(d.getCandidate());
+        }
+        return map;
+    }
+
+    public List<Decomposition> getDecompositions() {
         return decompositions;
     }
 }

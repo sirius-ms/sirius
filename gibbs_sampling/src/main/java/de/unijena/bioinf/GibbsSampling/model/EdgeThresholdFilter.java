@@ -19,12 +19,11 @@ public class EdgeThresholdFilter extends AbstractEdgeFilter {
         for(int i = 0; i < logEdgeScores.length; ++i) {
             if(peakIdx != graph.getPeakIdx(i)) {
                 double score = logEdgeScores[i];
-                if(score > this.logThres) {
-                    graph.setLogWeight(candidateIdx, i, score - this.logThres);
+                if(score < this.logThres) {
+                    graph.setLogWeight(candidateIdx, i, this.logThres - score);
                 }
             }
         }
-
     }
 
     public void setThreshold(double threshold) {

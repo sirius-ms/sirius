@@ -1,39 +1,44 @@
 package de.unijena.bioinf.GibbsSampling.model.distributions;
 
 import de.unijena.bioinf.ChemistryBase.math.MathUtils;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
+import de.unijena.bioinf.GibbsSampling.model.GibbsMFCorrectionNetwork;
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.procedure.TDoubleProcedure;
+
+import java.util.Arrays;
 
 public class LogNormalDistribution implements ScoreProbabilityDistribution {
-    private double threshold;
-    private double thresholdFreq;
     private double logMean;
     private double logVar;
-    private double normalizationForThreshold;
-    private boolean estimateByMedian;
+    private boolean robustEstimator;
+    private static final double MAD_SCALE_FACTOR = 1.482602218505602;
+    private static final double DEFAULT_LOGMEAN = -1.8184825393688084;
+    private static final double DEFAULT_LOGVAR = 0.1640657366079353;
 
-    public LogNormalDistribution(double thresholdFreq, boolean estimateByMedian) {
-        this.thresholdFreq = thresholdFreq;
-        this.estimateByMedian = estimateByMedian;
-        if(estimateByMedian) {
-            throw new NoSuchMethodError("median estimation for log-normal not supported");
-        }
+
+    public LogNormalDistribution(double logMean, double logVar) {
+        this.logMean = logMean;
+        this.logVar = logVar;
     }
 
-    public LogNormalDistribution(double threshold) {
-        this(threshold, false);
+    public LogNormalDistribution(boolean robustEstimator) {
+        this.robustEstimator = robustEstimator;
     }
 
     public void estimateDistribution(double[] exampleValues) {
+        if (robustEstimator) estimateParametersRobust(exampleValues);
+        else estimateParameters(exampleValues);
+        if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("logmean " + logMean + " logvar " + logVar);
+
+    }
+
+    private void estimateParameters(double[] exampleValues){
         int l = 0;
         double logMean = 0.0D;
         double logVar = 0.0D;
-        double[] var7 = exampleValues;
-        int var8 = exampleValues.length;
 
-        int var9;
-        double v;
-        for(var9 = 0; var9 < var8; ++var9) {
-            v = var7[var9];
+        for(int i = 0; i < exampleValues.length; ++i) {
+            double v = exampleValues[i];
             if(v > 0.0D) {
                 logMean += Math.log(v);
                 ++l;
@@ -41,11 +46,9 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
         }
 
         logMean /= (double)l;
-        var7 = exampleValues;
-        var8 = exampleValues.length;
 
-        for(var9 = 0; var9 < var8; ++var9) {
-            v = var7[var9];
+        for(int i = 0; i < exampleValues.length; ++i) {
+            double v = exampleValues[i];
             if(v > 0.0D) {
                 double s = Math.log(v) - logMean;
                 logVar += s * s;
@@ -53,36 +56,52 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
         }
 
         logVar /= (double)(l - 1);
-        System.out.println("logmean " + logMean + " logvar " + logVar);
         this.logMean = logMean;
         this.logVar = logVar;
-        this.threshold = this.tryThreshold();
-        this.normalizationForThreshold = MathUtils.cdf(Math.log(this.threshold), logMean, logVar);
-        System.out.println("norm " + this.normalizationForThreshold);
     }
 
-    private double tryThreshold() {
-        double t = 0.0D;
+    private void estimateParametersRobust(double[] exampleValues){
+        TDoubleArrayList nonZeroSampleValues = new TDoubleArrayList();
+        for (double exampleValue : exampleValues) {
+            if (exampleValue>0d) nonZeroSampleValues.add(Math.log(exampleValue));
+        }
+        nonZeroSampleValues.sort();
 
-        for(double step = 0.001D; MathUtils.cdf(Math.log(t), this.logMean, this.logVar) < this.thresholdFreq; t += step) {
-            ;
+        if (nonZeroSampleValues.size()<10){
+            System.out.println("warning: cannot estimate score distribution. Too few examples. Using default values.");
+            if (logMean==0 || logVar==0){
+                logMean = DEFAULT_LOGMEAN;
+                logVar = DEFAULT_LOGVAR;
+            }
+            return;
         }
 
-        System.out.println("change threshold " + this.thresholdFreq + " to " + t);
-        return t;
+
+        double logMedian = nonZeroSampleValues.get((int)(nonZeroSampleValues.size()/2));
+        double[] distanceFromMedian = new double[nonZeroSampleValues.size()];
+        int[] counter = new int[]{0};
+        nonZeroSampleValues.forEach(new TDoubleProcedure() {
+            @Override
+            public boolean execute(double v) {
+                distanceFromMedian[counter[0]++] = Math.abs(v - logMedian);
+                return true;
+            }
+        });
+
+        Arrays.sort(distanceFromMedian);
+        double logMAD = distanceFromMedian[(int)(nonZeroSampleValues.size()/2)];
+
+        this.logMean = logMedian;
+        this.logVar = Math.pow(MAD_SCALE_FACTOR*logMAD,2);
     }
 
     public double toPvalue(double score) {
-        return this.cdf(score);
-    }
-
-    public double getMinProbability() {
-        return this.normalizationForThreshold;
+        return 1-this.cdf(score);
     }
 
     @Override
-    public double getThreshold() {
-        return threshold;
+    public double toLogPvalue(double score) {
+        return Math.log(toPvalue(score));
     }
 
     public double cdf(double value) {
@@ -90,6 +109,6 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
     }
 
     public LogNormalDistribution clone() {
-        return new LogNormalDistribution(this.threshold, this.estimateByMedian);
+        return new LogNormalDistribution(this.robustEstimator);
     }
 }

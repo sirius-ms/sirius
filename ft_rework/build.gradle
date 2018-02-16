@@ -22,7 +22,7 @@ shadowJar {
 //Global Properties
 ext{
     //version for external libraries
-    slf4j_version = '1.7.13'
+    slf4j_version = '1.7.25'
     json_version = '1.0'
     json_impl_version = "1.0.4"
     jewelcli_version = '0.8.+'
@@ -59,8 +59,8 @@ startScripts {
     apply plugin: "application"
 
     mainClassName = "de.unijena.bioinf.FragmentationTreeConstruction.TestMain"
-    sourceCompatibility = 1.7
-    targetCompatibility = 1.7
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 
     repositories {
         mavenLocal()
@@ -112,6 +112,7 @@ dependencies {
 
 
 task downloadGLPK (type: Copy){
+
     def glpkURL = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/glpk-${project.glpk_lib_version}.zip")
     project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
 
