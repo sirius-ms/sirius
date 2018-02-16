@@ -21,42 +21,70 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Scoring;
 
 import java.util.List;
 
 public class TreeSizeScorer implements PeakScorer {
 
-    private double treeSizeScore;
+
+    public final static class TreeSizeBonus {
+        public final double score;
+
+        public TreeSizeBonus(double score) {
+            this.score = score;
+        }
+    }
+
+    public double fastReplace(final ProcessedInput processedInput, final TreeSizeBonus newBonus) {
+        // fast replace of peak scores. Dirty hack. be careful what you are doing!
+        final Scoring scoring = processedInput.getAnnotationOrThrow(Scoring.class);
+        final TreeSizeBonus oldBonus = processedInput.getAnnotation(TreeSizeBonus.class, defaultBonus);
+        final double diff = newBonus.score - oldBonus.score;
+        if (Math.abs(diff) > 1e-12) {
+            final double[] xs = scoring.getPeakScores();
+            for (int i=0, n = xs.length-1; i<n; ++i) {
+                xs[i] += diff;
+            }
+        }
+        processedInput.setAnnotation(TreeSizeBonus.class, newBonus);
+        return diff;
+
+    }
+
+    private TreeSizeBonus defaultBonus;
 
     public TreeSizeScorer() {
     }
 
     public TreeSizeScorer(double treeSizeScore) {
-        this.treeSizeScore = treeSizeScore;
+        this.defaultBonus = new TreeSizeBonus(treeSizeScore);
     }
 
     public double getTreeSizeScore() {
-        return treeSizeScore;
+        return defaultBonus.score;
     }
 
+    @Deprecated
     public void setTreeSizeScore(double treeSizeScore) {
-        this.treeSizeScore = treeSizeScore;
+        this.defaultBonus = new TreeSizeBonus(treeSizeScore);
     }
 
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
+        final double bonus = input.getAnnotation(TreeSizeBonus.class, defaultBonus).score;
         for (int i=0; i < peaks.size(); ++i) {
-            scores[i] += treeSizeScore;
+            scores[i] += bonus;
         }
     }
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        treeSizeScore = document.getDoubleFromDictionary(dictionary, "score");
+        defaultBonus = new TreeSizeBonus(document.getDoubleFromDictionary(dictionary, "score"));
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        document.addToDictionary(dictionary, "score", treeSizeScore);
+        document.addToDictionary(dictionary, "score", defaultBonus.score);
     }
 }

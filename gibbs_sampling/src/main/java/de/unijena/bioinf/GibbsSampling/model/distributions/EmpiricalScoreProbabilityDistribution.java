@@ -1,15 +1,19 @@
 package de.unijena.bioinf.GibbsSampling.model.distributions;
 
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
 import java.util.Arrays;
 
 public class EmpiricalScoreProbabilityDistribution implements ScoreProbabilityDistribution {
     final double[] scores;
-    final double[] probabilities;
+    final double[] pValues;
 
-    public EmpiricalScoreProbabilityDistribution(double[] scores, double[] probabilities) {
+    /**
+     *
+     * @param scores
+     * @param pValues
+     */
+    public EmpiricalScoreProbabilityDistribution(double[] scores, double[] pValues) {
         this.scores = scores;
-        this.probabilities = probabilities;
+        this.pValues = pValues;
     }
 
     public void estimateDistribution(double[] exampleValues) {
@@ -18,27 +22,28 @@ public class EmpiricalScoreProbabilityDistribution implements ScoreProbabilityDi
     public double toPvalue(double score) {
         int idx = Arrays.binarySearch(this.scores, score);
         if(idx >= 0) {
-            return this.probabilities[idx];
+            return this.pValues[idx];
         } else {
             int insertIdx = -(idx + 1);
-            return insertIdx >= this.probabilities.length - 1?this.probabilities[this.probabilities.length - 1]:(insertIdx == 0?this.probabilities[0]:this.interpolate(score, insertIdx));
+            return insertIdx >= this.pValues.length - 1?this.pValues[this.pValues.length - 1]:(insertIdx == 0?this.pValues[0]:this.interpolate(score, insertIdx));
         }
     }
 
     private double interpolate(double score, int insertIdx) {
-        return ((score - this.scores[insertIdx]) * this.probabilities[insertIdx] + (this.scores[insertIdx + 1] - score) * this.probabilities[insertIdx + 1]) / (this.scores[insertIdx + 1] - this.scores[insertIdx]);
-    }
-
-    public double getMinProbability() {
-        return 0.0D;
+        return ((score - this.scores[insertIdx]) * this.pValues[insertIdx] + (this.scores[insertIdx + 1] - score) * this.pValues[insertIdx + 1]) / (this.scores[insertIdx + 1] - this.scores[insertIdx]);
     }
 
     @Override
-    public double getThreshold() {
-        return 0;
+    public double toLogPvalue(double score) {
+        return Math.log(toPvalue(score));
+    }
+
+    @Override
+    public double cdf(double score) {
+        return 1-toPvalue(score);
     }
 
     public ScoreProbabilityDistribution clone() {
-        return new EmpiricalScoreProbabilityDistribution(this.scores, this.probabilities);
+        return new EmpiricalScoreProbabilityDistribution(this.scores, this.pValues);
     }
 }

@@ -2,7 +2,11 @@ package de.unijena.bioinf.GibbsSampling;
 
 import com.lexicalscope.jewel.cli.Option;
 
+import java.util.List;
+
 public interface GibbsSamplerOptions {
+
+
 
     @Option(
             shortName = {"mgf"},
@@ -85,12 +89,6 @@ public interface GibbsSamplerOptions {
     int getMaxCandidates();
 
     @Option(
-            longName = {"normalize"},
-            description = "normalize edge scores"
-    )
-    boolean isNormalize();
-
-    @Option(
             longName = {"librarySearch"},
             description = "use spectral library hits for scoring",
             defaultValue = {"-1"}
@@ -104,17 +102,23 @@ public interface GibbsSamplerOptions {
     boolean isCrossvalidation();
 
     @Option(
+            longName = {"robustnesstest"},
+            description = "robustness test"
+    )
+    boolean isRobustnessTest();
+
+    @Option(
             longName = {"align"},
             description = "align fragmentation trees"
     )
     boolean isFTAlign();
 
-    @Option(
-            longName = {"pcp"},
-            description = "file with score and 1-PEP for CommonFragmentAndLossScorer",
-            defaultToNull = true
-    )
-    String getPCPScoreFile();
+//    @Option(
+//            longName = {"pcp"},
+//            description = "file with score and 1-PEP for CommonFragmentAndLossScorer",
+//            defaultToNull = true
+//    )
+//    String getPCPScoreFile();
 
     @Option(
             longName = {"correct"},
@@ -137,17 +141,17 @@ public interface GibbsSamplerOptions {
 
     @Option(
             longName = {"distribution"},
-            description = "which probability distribution to assume: exponential, pareto",
+            description = "which probability distribution to assume: exponential, lognormal, pareto. default is lognormal",
             defaultValue = {"exponential"}
     )
     String getProbabilityDistribution();
 
     @Option(
-            longName = {"lambda"},
-            description = "lambda for exponential distribution. If not set, it is estimated from the distribution",
-            defaultValue = {"-1"}
+            longName = {"parameters"},
+            description = "parameter for distribution, comma separated. If not set, it is estimated from the distribution. For lognormal give mean and variance. For exponential give lambda.",
+            defaultToNull = true
     )
-    double getLambda();
+    String getParameters();
 
 
 
@@ -161,11 +165,24 @@ public interface GibbsSamplerOptions {
     @Option(longName = "twophase", description = "do 2 rounds of gibbs sampling. First one with good quality compounds, second one with all.")
     boolean isTwoPhase();
 
-//    @Option(
-//            longName = {"treescoring"},
-//            description = ""
-//    )
-//    boolean useFTScoring();
+    @Option(longName = "threephase")
+    boolean isThreePhase();
 
+    @Option(
+            longName = {"eval"},
+            description = "evaluate zodiac cli output",
+            defaultToNull = true
+    )
+    String getEvalCliOutput();
+
+    @Option(
+            longName = {"clusters"},
+            description = "cluster.csv file; only used for eval",
+            defaultToNull = true
+    )
+    String getClusterSummary();
+
+//    @Option(longName = "test", description = "do some tests on graph generation", defaultToNull = true)
+//    boolean isTestGraphGeneration();
 
 }

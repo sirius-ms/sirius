@@ -90,7 +90,7 @@ public class DirectoryReader implements ProjectReader {
         }
     }
 
-    private final static Pattern RESULT_PATTERN = Pattern.compile("(\\d+)_(.+)\\.json");
+    private final static Pattern RESULT_PATTERN = Pattern.compile("(\\d+)_(.+)(_(.+))?\\.json");
 
     private ExperimentResult parseExperiment(final Instance instance) throws IOException {
         env.enterDirectory(instance.getDirectory());
@@ -101,6 +101,7 @@ public class DirectoryReader implements ProjectReader {
         if (names.contains("spectrum.ms")) {
             input = parseSpectrum(instance);
         }
+        input.setAnnotation(Index.class, new Index(instance.index));
         // read trees
         if (names.contains("trees")) {
             env.enterDirectory("trees");

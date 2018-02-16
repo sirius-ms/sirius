@@ -361,7 +361,15 @@ public class Spectrums {
         return spectrum;
     }
 
-    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum mergePeaksWithinSpectrum(S msms, Deviation mergeWindow, boolean sumIntensities) {
+    /**
+     * Merge peaks within a single spectrum
+     * @param msms input spectrum
+     * @param mergeWindow mass window within peaks should be merged
+     * @param sumIntensities if true, peak intensities are summed up. Otherwise, only max intensity is chosen
+     * @param mergeMasses if true, take weighted average of peak masses. Otherwise, chose mz of most intensive peak
+     * @return merged spectrum
+     */
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum mergePeaksWithinSpectrum(S msms, Deviation mergeWindow, boolean sumIntensities, boolean mergeMasses) {
         final SimpleSpectrum massOrdered = new SimpleSpectrum(msms);
         final SimpleMutableSpectrum intensityOrdered = new SimpleMutableSpectrum(msms);
         sortSpectrumByDescendingIntensity(intensityOrdered);
@@ -371,12 +379,27 @@ public class Spectrums {
             if (chosen[k]) continue;
             final double mz = intensityOrdered.getMzAt(k);
             final int a = indexOfFirstPeakWithin(massOrdered, mz, mergeWindow);
+            if (a < 0 || a > massOrdered.size())
+                continue;
             final double threshold = mz + Math.abs(mergeWindow.absoluteFor(mz));
+            double selectedMz = 0, selectedIntensity = 0, maxIntensity = Double.NEGATIVE_INFINITY;
+            int maxPeak = 0;
             for (int b=a; b < massOrdered.size(); ++b) {
-                if (massOrdered.getMzAt(b) > threshold) break;
+                final double m = massOrdered.getMzAt(b);
+                if (m > threshold) break;
+                final double p = massOrdered.getIntensityAt(b);
                 chosen[b]=true;
+                if (p > maxIntensity) {
+                    maxPeak = b;
+                    maxIntensity = p;
+                }
+                selectedMz += p*m;
+                selectedIntensity += p;
             }
-            buffer.addPeak(mz, intensityOrdered.getIntensityAt(k));
+            if (mergeMasses) selectedMz /= selectedIntensity;
+            else selectedMz = massOrdered.getMzAt(maxPeak);
+            if (!sumIntensities) selectedIntensity = massOrdered.getIntensityAt(maxPeak);
+            buffer.addPeak(selectedMz, selectedIntensity);
         }
         return new SimpleSpectrum(buffer);
     }
@@ -1109,6 +1132,34 @@ public class Spectrums {
                 return Double.compare(right.getIntensityAt(j), left.getIntensityAt(i));
             }
         });
+    }
+
+
+    /**
+     * select the spectrum from a list of spectra which contains the most intense peak with the specified window
+     * @param spectra
+     * @param precursorMass
+     * @param dev
+     * @param <S>
+     * @param <P>
+     * @return
+     */
+    public static <S extends Spectrum<P>, P extends Peak> S selectSpectrumWithMostIntensePrecursor(List<S> spectra, double precursorMass, Deviation dev) {
+        int mostIntenseIdx = -1;
+        double highestIntensity = -1d;
+        int idx = 0;
+        for (S spectrum : spectra) {
+            int i = mostIntensivePeakWithin(spectrum, precursorMass, dev);
+            if (i<0) continue;
+            double intensity = spectrum.getIntensityAt(i);
+            if (mostIntenseIdx<0 || intensity>highestIntensity) {
+                mostIntenseIdx = idx;
+                highestIntensity = intensity;
+            }
+            ++idx;
+        }
+        if (mostIntenseIdx<0) return null;
+        return spectra.get(mostIntenseIdx);
     }
 
 	/* *******************************************************************************************

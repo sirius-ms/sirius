@@ -8,6 +8,8 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TDoubleDoubleHashMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.set.hash.TDoubleHashSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -23,6 +25,7 @@ import java.util.List;
  * Created by ge28quv on 01/07/17.
  */
 public abstract class IsolationWindow {
+    private final static Logger LOG = LoggerFactory.getLogger(IsolationWindow.class);
     private static final boolean DEBUG = false;
 
 
@@ -92,11 +95,12 @@ public abstract class IsolationWindow {
     protected double maxWindowSize;
     protected double massShift = 0;
     protected boolean estimateSize;
+    protected Deviation findMs1PeakDeviation;
 
     private NormalDistribution normalDistribution;
 
     public IsolationWindow(double maxWindowSize) {
-        this(maxWindowSize, 0d, true);
+        this(maxWindowSize, 0d, true, null);
     }
 
     /**
@@ -105,7 +109,7 @@ public abstract class IsolationWindow {
      * @param massShift shift window relative to precursor mass
      * @param estimateSize if true estimate the real window size, else keep it fixed
      */
-    public IsolationWindow(double maxWindowSize, double massShift, boolean estimateSize) {
+    public IsolationWindow(double maxWindowSize, double massShift, boolean estimateSize, Deviation findMs1PeakDeviation) {
         this.maxWindowSize = maxWindowSize;
         this.massShift = massShift;
         this.estimateSize = estimateSize;
@@ -120,6 +124,14 @@ public abstract class IsolationWindow {
         return maxWindowSize;
     }
 
+    /**
+     * //todo currently inconsistent (different from what you expect from size
+     * @return
+     */
+    public abstract double getLeftBorder();
+
+    public abstract double getRightBorder();
+
     public abstract double getEstimatedWindowSize();
 
     public abstract double getEstimatedMassShift();
@@ -132,9 +144,14 @@ public abstract class IsolationWindow {
 
 
 
-
-
     public IsotopeRatioInformation extractIntensityRatios(Ms2Dataset ms2Dataset) {
+        Deviation findMs1PeakDeviation = this.findMs1PeakDeviation;
+        if (findMs1PeakDeviation==null) findMs1PeakDeviation = ms2Dataset.getMeasurementProfile().getAllowedMassDeviation();
+        return extractIntensityRatios(ms2Dataset, findMs1PeakDeviation);
+    }
+
+
+    protected IsotopeRatioInformation extractIntensityRatios(Ms2Dataset ms2Dataset, Deviation findMs1PeakDeviation) {
         List<NormalizedPattern> normalizedPatterns = new ArrayList<>();
         MutableMeasurementProfile mutableMeasurementProfile = new MutableMeasurementProfile(ms2Dataset.getMeasurementProfile());
 //        mutableMeasurementProfile.setAllowedMassDeviation(new Deviation(100, 0.01));
@@ -146,15 +163,16 @@ public abstract class IsolationWindow {
         int expCounter3 = 0;
         int expCounter4 = 0;
         for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
-//            if (!isGoodQuality(experiment)) continue;
-            if (!CompoundQuality.isNotBadQuality(experiment)){
-                CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
-                for (SpectrumProperty spectrumProperty : quality.getProperties()) {
-                    if (!spectrumProperty.equals(SpectrumProperty.Good) && spectrumProperty.equals(SpectrumProperty.Chimeric)){
-                        continue;
-                    }
-                }
-            }
+            if (!CompoundQuality.isNotBadQuality(experiment)) continue;
+            //changed now using the line above
+//            if (!CompoundQuality.isNotBadQuality(experiment)){
+//                CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
+//                for (SpectrumProperty spectrumProperty : quality.getProperties()) {
+//                    if (!spectrumProperty.equals(SpectrumProperty.Good) && spectrumProperty.equals(SpectrumProperty.Chimeric)){
+//                        continue;
+//                    }
+//                }
+//            }
 
             double ionMass = experiment.getIonMass();
 
@@ -163,18 +181,20 @@ public abstract class IsolationWindow {
             List<Spectrum<Peak>> ms2Spectra = new ArrayList<>();
 
             if (experiment.getMs1Spectra().size()== experiment.getMs2Spectra().size()){
+                //MS1 corresponds to one MS2
                 for (int i = 0; i < experiment.getMs1Spectra().size(); i++) {
                     ms1Spectra.add(experiment.getMs1Spectra().get(i));
                     ms2Spectra.add(experiment.getMs2Spectra().get(i));
                 }
             } else if (experiment.getMs1Spectra().size()==1){
+                //MS1 corresponds to all MS2
                 for (int i = 0; i < experiment.getMs2Spectra().size(); i++) {
                     ms1Spectra.add(experiment.getMs1Spectra().get(0));
                     ms2Spectra.add(experiment.getMs2Spectra().get(i));
                 }
             } else {
                 if (DEBUG) {
-                    System.out.println("warning: cannot match ms1 and ms2 spectra for isolation filter estimation: "+experiment.getName());
+                    LOG.warn("cannot match ms1 and ms2 spectra for isolation filter estimation: "+experiment.getName());
                 }
                 continue;
             }
@@ -203,8 +223,9 @@ public abstract class IsolationWindow {
                 Spectrums.filter(ms2, filter);
 
 
-                int monoMs1Idx = Spectrums.mostIntensivePeakWithin(ms1, ionMass, mutableMeasurementProfile.getAllowedMassDeviation());
-                int monoMs2Idx = Spectrums.mostIntensivePeakWithin(ms2, ionMass, mutableMeasurementProfile.getAllowedMassDeviation());
+                //find precursor/parent peak
+                int monoMs1Idx = Spectrums.mostIntensivePeakWithin(ms1, ionMass, findMs1PeakDeviation);
+                int monoMs2Idx = Spectrums.mostIntensivePeakWithin(ms2, ionMass, findMs1PeakDeviation);
 
 
                 //todo exclude low intensity ms1 and ms2 peaks !!!
@@ -212,7 +233,7 @@ public abstract class IsolationWindow {
                 if (monoMs2Idx<0) continue;
                 if (monoMs1Idx<0) {
                     if (DEBUG) {
-                        System.err.println("no molecular ion peak found in MS1 for "+experiment.getName());
+                        LOG.warn("no precursor peak found in MS1 for "+experiment.getName());
                     }
                     continue;
                 }
@@ -285,6 +306,10 @@ public abstract class IsolationWindow {
 
 
 
+        }
+
+        if (normalizedPatterns.size()==0){
+            LOG.warn("cannot estimate isolation window no isotope patterns (in MS1 or MS2) found.");
         }
 
         if (DEBUG) {
@@ -585,14 +610,6 @@ public abstract class IsolationWindow {
         return true;
     }
 
-    private boolean isGoodQuality(Ms2Experiment experiment) {
-        CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
-        if (quality!=null) return quality.isGoodQuality();
-        //todo all this preprocessing
-
-        return true;
-    }
-
     protected final static int[] charges = new int[]{1,2};
     public ChargedSpectrum extractPatternMs1(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz) {
         //test charge
@@ -623,7 +640,7 @@ public abstract class IsolationWindow {
         }
     }
 
-    final static boolean mergeIsotopePeaks = false;
+    final static boolean mergeIsotopePeaks = false; //TODO test with true
     public ChargedSpectrum extractPattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz, int absCharge) {
         Spectrum<Peak> spectrum = Spectrums.extractIsotopePattern(ms1Spec, profile, targetMz, absCharge, mergeIsotopePeaks);
         if (spectrum==null) return null;
