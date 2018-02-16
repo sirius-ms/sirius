@@ -16,6 +16,7 @@ import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, SiriusResultElement> implements ActiveElementChangedListener<SiriusResultElement, ExperimentContainer> {
@@ -38,7 +39,7 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Si
     }
 
     private void setFScores(PredictorType predictorType) {
-        if (this.predictorType==predictorType && fscores!=null) return;
+        if (this.predictorType == predictorType && fscores != null) return;
         this.predictorType = predictorType;
         final CSIPredictor csi = MainFrame.MF.getCsiFingerId().getPredictor(predictorType);
         final PredictionPerformance[] performances = csi.getPerformances();
@@ -51,20 +52,17 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Si
 
     @Override
     public void resultsChanged(ExperimentContainer experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selections) {
-        try {
-            elementList.getReadWriteLock().writeLock().lock();
-            elementList.clear();
-            if (sre != null && sre.getFingerIdData() != null) {
-                setFScores(sre.getResult().getPrecursorIonType().getCharge()>0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE);
-                final ProbabilityFingerprint fp = sre.getFingerIdData().getPlatts();
-                for (final FPIter iter : fp) {
-                    elementList.add(new MolecularPropertyTableEntry(fp, visualizations[iter.getIndex()], fscores[iter.getIndex()], iter.getIndex()));
-                }
+        //no lock all in edt
+        elementList.clear();
+        if (sre != null && sre.getFingerIdData() != null) {
+            setFScores(sre.getResult().getPrecursorIonType().getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE);
+            final ProbabilityFingerprint fp = sre.getFingerIdData().getPlatts();
+            List<MolecularPropertyTableEntry> tmp = new ArrayList<>();
+            for (final FPIter iter : fp) {
+                tmp.add(new MolecularPropertyTableEntry(fp, visualizations[iter.getIndex()], fscores[iter.getIndex()], iter.getIndex()));
             }
-            notifyListeners(sre, null, getElementList(), getResultListSelectionModel());
-        } finally {
-            elementList.getReadWriteLock().writeLock().unlock();
+            elementList.addAll(tmp);
         }
-
+        notifyListeners(sre, null, getElementList(), getResultListSelectionModel());
     }
 }
