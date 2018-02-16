@@ -10,6 +10,7 @@ public class InChI {
     public final String key;
 
     public InChI(String inchikey, String inchi) {
+        if (inchi.endsWith("/")) inchi = inchi.substring(0, inchi.length()-1);
         this.in3D = inchi;
         this.key = inchikey;
         this.in2D = inchi==null ? null : inchi2d(inchi);
