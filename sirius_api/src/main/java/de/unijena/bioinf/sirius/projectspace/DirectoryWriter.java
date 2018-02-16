@@ -175,13 +175,13 @@ public class DirectoryWriter extends AbstractProjectWriter {
         ++counter;
         this.currentExperimentName = makeFileName(result);
         W.enterDirectory(currentExperimentName);
+        // ms file
+        if (isAllowed(OutputOptions.INPUT))
+            writeMsFile(result);
     }
 
     @Override
     protected void startWritingIdentificationResults(ExperimentResult er, List<IdentificationResult> results)throws IOException  {
-        // ms file
-        if (isAllowed(OutputOptions.INPUT))
-            writeMsFile(er, results);
         // JSON and DOT
         if (isAllowed(OutputOptions.TREES_DOT) || isAllowed(OutputOptions.TREES_JSON)) {
             W.enterDirectory("trees");
@@ -241,6 +241,23 @@ public class DirectoryWriter extends AbstractProjectWriter {
             }
         });
     }
+
+
+    private void writeMsFile(ExperimentResult er) throws IOException {
+        // if experiment is stored in results we favour it, as it might be already cleaned and annotated
+        final Ms2Experiment experiment = er.getExperiment();
+        if (experiment!=null) {
+            write("spectrum.ms", new Do() {
+                @Override
+                public void run(Writer w) throws IOException {
+                    final BufferedWriter bw = new BufferedWriter(w);
+                    new JenaMsWriter().write(bw, experiment);
+                    bw.flush();
+                }
+            });
+        }
+    }
+
 
     protected void writeTrees(List<IdentificationResult> results) throws IOException {
         for (IdentificationResult result : results) {
