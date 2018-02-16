@@ -298,7 +298,6 @@ abstract public class AbstractSolver {
      * - a specific solver might need to do more (or release memory) after the solving process
      * - this is called after the solver() has been executed
      *
-     * @return
      * @throws Exception
      */
     abstract protected void pastBuildSolution() throws Exception;

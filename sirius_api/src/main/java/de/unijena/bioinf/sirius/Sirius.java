@@ -186,7 +186,7 @@ public class Sirius {
      * is unbounded by default.
      *
      * @param newConstraints
-     * @Deprecated Formula Constraits are now set per input instance via {@link #setFormulaConstraints(Ms2Experiment, FormulaConstraints)}
+     * Formula Constraits are now set per input instance via {@link #setFormulaConstraints(Ms2Experiment, FormulaConstraints)}
      */
     @Deprecated
     public void setFormulaConstraints(String newConstraints) {
@@ -201,7 +201,7 @@ public class Sirius {
      * is unbounded by default.
      *
      * @param constraints
-     * @Deprecated Formula Constraits are now set per input instance via {@link #setFormulaConstraints(Ms2Experiment, FormulaConstraints)}
+     * Formula Constraits are now set per input instance via {@link #setFormulaConstraints(Ms2Experiment, FormulaConstraints)}
      */
     @Deprecated
     public void setFormulaConstraints(FormulaConstraints constraints) {
@@ -240,7 +240,7 @@ public class Sirius {
     }
 
     /**
-     * @Deprecated Progress handling should be done via Job API
+     * Deprecated: Progress handling should be done via Job API
      */
     @Deprecated
     public Progress getProgress() {
@@ -248,7 +248,7 @@ public class Sirius {
     }
 
     /**
-     * @Deprecated Progress handling should be done via Job API
+     * Deprecated: Progress handling should be done via Job API
      */
     @Deprecated
     public void setProgress(Progress progress) {
