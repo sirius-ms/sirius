@@ -234,20 +234,20 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         this.POSITIVE_IONIZATION = new Charge(1);
         this.NEGATIVE_IONIZATION = new Charge(-1);
         this.UNKNOWN_IONIZATION = new Charge(0); //lets use zero for unknown
-        PROTONATION = new IonMode(1, "[M+H]+", MolecularFormula.parse("H"));
-        DEPROTONATION = new IonMode(-1, "[M-H]-", MolecularFormula.parse("H").negate());
+        PROTONATION = new IonMode(1, "[M + H]+", MolecularFormula.parse("H"));
+        DEPROTONATION = new IonMode(-1, "[M - H]-", MolecularFormula.parse("H").negate());
         this.UNKNOWN_NEGATIVE_IONTYPE = new PrecursorIonType(NEGATIVE_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
         this.UNKNOWN_POSITIVE_IONTYPE = new PrecursorIonType(POSITIVE_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
         this.UNKNOWN_IONTYPE = new PrecursorIonType(UNKNOWN_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
 
         this.POSITIVE_ION_MODES = new IonMode[]{
-                new IonMode(1, "[M+K]+", MolecularFormula.parse("K")),
-                new IonMode(1, "[M+Na]+", MolecularFormula.parse("Na")),
+                new IonMode(1, "[M + K]+", MolecularFormula.parse("K")),
+                new IonMode(1, "[M + Na]+", MolecularFormula.parse("Na")),
                 PROTONATION
         };
         this.NEGATIVE_ION_MODES = new IonMode[]{
-                new IonMode(-1, "[M+Cl]-", MolecularFormula.parse("Cl")),
-                new IonMode(-1, "[M+Br]-", MolecularFormula.parse("Br")),
+                new IonMode(-1, "[M + Cl]-", MolecularFormula.parse("Cl")),
+                new IonMode(-1, "[M + Br]-", MolecularFormula.parse("Br")),
                 DEPROTONATION
         };
         this.INTRINSICALLY_CHARGED_NEGATIVE = new PrecursorIonType(DEPROTONATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.INTRINSICAL_CHARGED);

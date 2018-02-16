@@ -53,9 +53,9 @@ public class Charge extends Ionization {
 		return charge > 0 ? POSITIVE_CHARGE : (charge < 0 ? NEGATIVE_CHARGE : UNKNOWN_CHARGE);
 	}
 
-	public static final String POSITIVE_CHARGE = "[M+?]+";
-	public static final String NEGATIVE_CHARGE ="[M+?]-";
-	public static final String UNKNOWN_CHARGE = "[M+?]";
+	public static final String POSITIVE_CHARGE = "[M + ?]+";
+	public static final String NEGATIVE_CHARGE ="[M + ?]-";
+	public static final String UNKNOWN_CHARGE = "[M + ?]";
 
 	
 
