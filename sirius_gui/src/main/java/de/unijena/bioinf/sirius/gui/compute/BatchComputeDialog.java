@@ -372,8 +372,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         editPanel.ionizationCB.addActionListener(e -> {
             PrecursorIonType ionType = editPanel.getSelectedIonization();
-            System.out.println(ionType.toString());
-            System.out.println(Collections.singleton(ionType.getIonization().getName()));
             searchProfilePanel.refreshPossibleIonizations(Collections.singleton(ionType.getIonization().getName()));
             pack();
         });
