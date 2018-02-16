@@ -5,12 +5,25 @@ dependencies {
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.1'
     compile group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
     compile group: 'de.unijena.bioinf.utils', name: 'error-reporter', version: "$error_reporter_version"
-    //todo workaround until cli codebase contains fingerid functionality
-    compile group: "de.unijena.bioinf.ms", name: "fingerid_kernel", version: "$fingeridVersion"
     compile group: 'com.google.classpath-explorer', name: 'classpath-explorer', version: '1.0'
+
+    //internal
+    compile group: "de.unijena.bioinf.ms", name: "fingerblast", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "confidence_score", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemdb_rest", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemdb_file", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemical_db", version: "$fingeridVersion"
+
+    compile group: "de.unijena.bioinf.ms", name: "canopus_predict", version: "$fingeridVersion"
+    compile group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
+    compile group: "net.iharder", name: "base64", version: "2.3.8"
+
+    //cdk
+    compile "org.openscience.cdk:cdk-silent:$cdk_version"
+
 }
 
-mainClassName = 'de.unijena.bioinf.sirius.cli.CLI'
+mainClassName = 'de.unijena.bioinf.ms.cli.SiriusCLIApplication'
 project.ext.set("type", "console")
 
 
@@ -41,9 +54,12 @@ distributions {
             contents {
                 into('lib') {
                     from("build/install/${project.name}/lib") {
-                        exclude("$gurobiExclude")
+                        exclude libExclude
                     }
-                    from("${project.glpkPath}/l${ar}/")
+                    from("${project.glpkPath}/l${ar}/") {
+                        include('libglpk.so.40')
+                        include('libglpk_java.so')
+                    }
                 }
 
                 into('bin') {
@@ -51,7 +67,7 @@ distributions {
                         exclude("*.bat")
                     }
                     from("${project.distPath}") {
-                        exclude('sirius3-gui')
+                        exclude('sirius-gui')
                     }
                     from("${getRootDir()}/LICENSE.txt")
                 }
@@ -77,12 +93,12 @@ distributions {
             contents {
                 into('lib') {
                     from('build/launch4j/lib') {
-                        exclude("$gurobiExclude")
+                        exclude libExclude
                     }
                 }
                 from { "${project.glpkPath}/w${ar}/" }
                 from("${project.distPath}") {
-                    exclude('sirius3-gui')
+                    exclude('sirius-gui')
                 }
                 from { "${getRootDir()}/LICENSE.txt" }
                 from('build/launch4j') {
@@ -108,7 +124,7 @@ distributions {
         contents {
             into('lib') {
                 from("build/install/${project.name}/lib") {
-                    exclude("$gurobiExclude")
+                    exclude libExclude
                 }
                 from("${project.glpkPath}/osx/")
                 exclude('*.zip')
@@ -118,7 +134,9 @@ distributions {
                 from("build/install/${project.name}/bin") {
                     exclude("*.bat")
                 }
-                from("${project.distPath}")
+                from("${project.distPath}") {
+                    exclude('sirius-gui')
+                }
                 from("${getRootDir()}/LICENSE.txt")
             }
             into('doc') {

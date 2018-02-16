@@ -1,7 +1,8 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
-import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
-import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import de.unijena.bioinf.fingerid.net.VersionsInfo;
+import de.unijena.bioinf.fingerid.net.WebAPI;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -24,7 +25,7 @@ public class UpdateDialog extends JDialog implements ActionListener {
         message.append("<html>There is a new version of SIRIUS available.<br> Update to <b>SIRIUS ")
                 .append(version.siriusGuiVersion)
                 .append("</b> to receive the newest upgrades.<br> Your current version is ")
-                .append(de.unijena.bioinf.fingerid.utils.PROPERTIES.sirius_guiVersion())
+                .append(FingerIDProperties.sirius_guiVersion())
                 .append("<br>");
         if (version.finishJobs()) {
             if (version.acceptJobs()) {
@@ -35,7 +36,7 @@ public class UpdateDialog extends JDialog implements ActionListener {
                         .append("<br>");
             }
             message.append("Submitted jobs will be allowed to finish until <b>").append(version.finishJobs.toString()).append("</b>.");
-        }else{
+        } else {
             message.append("Your Sirius version is not longer supported by the CSI:FingerID webservice.<br> Therefore the CSI:FingerId search is disabled in this version");
         }
         message.append("</html>");

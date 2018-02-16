@@ -7,11 +7,8 @@ package de.unijena.bioinf.sirius.gui.dialogs;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
-import de.unijena.bioinf.sirius.gui.settings.ErrorReportSettingsPanel;
-import de.unijena.bioinf.sirius.gui.settings.GerneralSettingsPanel;
-import de.unijena.bioinf.sirius.gui.settings.ProxySettingsPanel;
-import de.unijena.bioinf.sirius.gui.settings.SettingsPanel;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
+import de.unijena.bioinf.sirius.gui.settings.*;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -26,9 +23,11 @@ import java.util.Properties;
 public class SettingsDialog extends JDialog implements ActionListener {
     private JButton discard, save;
     private final Properties nuProps;
+    private AdductSettingsPanel addSettings;
     private ProxySettingsPanel proxSettings;
     private GerneralSettingsPanel genSettings;
     private ErrorReportSettingsPanel errorSettings;
+    //    private ILPSettings ilpSettings;
     private JTabbedPane settingsPane;
 
     public SettingsDialog(Frame owner) {
@@ -39,7 +38,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
         super(owner, true);
         setTitle("Settings");
         setLayout(new BorderLayout());
-        nuProps = ApplicationCore.getUserCopyOfUserProperties();
+        nuProps = ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties();
 
 //=============NORTH =================
         JPanel header = new DialogHaeder(Icons.GEAR_64);
@@ -51,12 +50,19 @@ public class SettingsDialog extends JDialog implements ActionListener {
         genSettings.addVerticalGlue();
         settingsPane.add(genSettings.name(), genSettings);
 
+        addSettings = new AdductSettingsPanel(nuProps);
+        settingsPane.add(addSettings.name(), addSettings);
+
+        /*ilpSettings = new ILPSettings(nuProps);
+        settingsPane.add(ilpSettings.name(),ilpSettings);*/
+
         proxSettings = new ProxySettingsPanel(nuProps);
         settingsPane.add(proxSettings.name(), proxSettings);
 
         errorSettings = new ErrorReportSettingsPanel(nuProps);
         errorSettings.addVerticalGlue();
         settingsPane.add(errorSettings.name(), errorSettings);
+
 
         if (activeTab >= 0 && activeTab < settingsPane.getTabCount())
             settingsPane.setSelectedIndex(activeTab);
@@ -82,12 +88,24 @@ public class SettingsDialog extends JDialog implements ActionListener {
         setVisible(true);
     }
 
-    private void collectChangedProps() {
+    private boolean collectChangedProps() {
+        boolean restartMessage = false;
         for (Component c : settingsPane.getComponents()) {
             if (c instanceof SettingsPanel) {
                 ((SettingsPanel) c).saveProperties();
+                restartMessage = restartMessage || ((SettingsPanel) c).restartRequired();
             }
         }
+
+        ApplicationCore.SIRIUS_PROPERTIES_FILE.setProperties(nuProps);
+
+        for (Component c : settingsPane.getComponents()) {
+            if (c instanceof SettingsPanel) {
+                ((SettingsPanel) c).reloadChanges();
+            }
+        }
+
+        return restartMessage;
     }
 
 
@@ -96,17 +114,19 @@ public class SettingsDialog extends JDialog implements ActionListener {
         if (e.getSource() == discard) {
             this.dispose();
         } else {
-            collectChangedProps();
+            boolean restartMessage = collectChangedProps();
             new SwingWorker<Integer, String>() {
                 @Override
                 protected Integer doInBackground() throws Exception {
                     LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
-                    ApplicationCore.changeDefaultProptertiesPersistent(nuProps);
+                    ApplicationCore.SIRIUS_PROPERTIES_FILE.store();
                     new CheckConnectionAction().actionPerformed(null); //todo maybe some run check function for the settings panels
                     return 1;
 
                 }
             }.execute();
+            if (restartMessage)
+                new ExceptionDialog(this, "For at least one change you made requires a restart of Sirius.");
             this.dispose();
         }
     }

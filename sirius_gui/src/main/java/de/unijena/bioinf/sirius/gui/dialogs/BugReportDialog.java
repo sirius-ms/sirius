@@ -5,12 +5,13 @@ package de.unijena.bioinf.sirius.gui.dialogs;
  * 13.10.16.
  */
 
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.errorReport.FinngerIDWebErrorReporter;
 import de.unijena.bioinf.sirius.core.errorReport.SiriusDefaultErrorReport;
 import de.unijena.bioinf.sirius.gui.settings.ErrorReportSettingsPanel;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
-import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
+import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -34,7 +35,7 @@ public class BugReportDialog extends JDialog {
     private final JComboBox<String> report;
     private static String[] reportTypes = {ErrorReport.TYPES[1], ErrorReport.TYPES[2]};
 
-    private final Properties props = ApplicationCore.getUserCopyOfUserProperties();
+    private final Properties props = ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties();
 
     public BugReportDialog(Frame owner) {
         super(owner, true);
@@ -47,14 +48,14 @@ public class BugReportDialog extends JDialog {
         //============= CENTER =================
         JPanel center = new JPanel();
         center.setLayout(new BoxLayout(center, BoxLayout.PAGE_AXIS));
-        center.setBorder(BorderFactory.createEmptyBorder(SwingUtils.LARGE_GAP, 0, 0, 0));
+        center.setBorder(BorderFactory.createEmptyBorder(GuiUtils.LARGE_GAP, 0, 0, 0));
 
         report = new JComboBox<>(reportTypes);
         center.add(report);
-        center.add(Box.createVerticalStrut(SwingUtils.MEDIUM_GAP));
+        center.add(Box.createVerticalStrut(GuiUtils.MEDIUM_GAP));
 
         reportSettings = new ErrorReportSettingsPanel(props);
-        reportSettings.add(new JXTitledSeparator("Report"), SwingUtils.MEDIUM_GAP, false);
+        reportSettings.add(new JXTitledSeparator("Report"), GuiUtils.MEDIUM_GAP, false);
 
 
         JPanel sub = new JPanel(new BorderLayout());
@@ -66,8 +67,8 @@ public class BugReportDialog extends JDialog {
         textarea.setEditable(true);
         final JScrollPane sc = new JScrollPane(textarea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         sc.setPreferredSize((new Dimension(sc.getPreferredSize().width, 200)));
-        sc.setBorder(new TitledBorder(new EmptyBorder(SwingUtils.SMALL_GAP, SwingUtils.SMALL_GAP, SwingUtils.SMALL_GAP, SwingUtils.SMALL_GAP), "Message"));
-        reportSettings.add(sc, SwingUtils.SMALL_GAP, true);
+        sc.setBorder(new TitledBorder(new EmptyBorder(GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP), "Message"));
+        reportSettings.add(sc, GuiUtils.SMALL_GAP, true);
 
         center.add(reportSettings);
 
@@ -86,23 +87,25 @@ public class BugReportDialog extends JDialog {
         send.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new SwingWorker<String,String>() {
+                SwingWorker<String, String> worker = new SwingWorker<String, String>() {
                     @Override
                     protected String doInBackground() throws Exception {
                         reportSettings.saveProperties();
-                        ApplicationCore.changeDefaultProptertiesPersistent(props);
+                        ApplicationCore.SIRIUS_PROPERTIES_FILE.setAndStoreProperties(props);
 
-                        boolean senMail = Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail"));
-                        String mail = System.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
-                        boolean systemInfo = Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo"));
-                        ErrorReporter repoter = new FinngerIDWebErrorReporter(new SiriusDefaultErrorReport(subjectField.getText(), textarea.getText(), mail, systemInfo));
+                        boolean senMail = Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail"));
+                        String mail = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
+                        boolean systemInfo = Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo"));
+                        SiriusDefaultErrorReport r = new SiriusDefaultErrorReport(subjectField.getText(), textarea.getText(), mail, systemInfo);
+                        ErrorReporter repoter = new FinngerIDWebErrorReporter(r);
                         repoter.getReport().setSendReportToUser(senMail);
                         repoter.getReport().setType((String) report.getSelectedItem());
                         repoter.call();
                         return "SUCCESS";
                     }
-                }.execute();
+                };
 
+                worker.execute();
                 dispose();
             }
         });

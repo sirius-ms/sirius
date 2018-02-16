@@ -25,8 +25,8 @@ plugins {
 //Global Properties
 ext {
     //version for external libraries
-    slf4j_version = '1.7.21'
-
+    slf4j_version = '1.7.25'
+    jjobs_version = '0.9.5'
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
 
@@ -36,13 +36,13 @@ ext {
     jewelcli_version = '0.8.+'
 
     //locations of runtime libraries
-    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar'
-    gurobiExclude = "gurobi-*.jar"
+    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
+    libExclude = ['gurobi-*.jar', 'cplex-*.jar']
 
 //    commons_email_version = '1.4'
 //    oshi_version = '3.2'
 
-    error_reporter_version = "0.9.1"
+    error_reporter_version = "0.9.2"
 
     logger.lifecycle('reading gradle properties file...')
     File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
@@ -84,8 +84,8 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
 
-    sourceCompatibility = 1.7
-    targetCompatibility = 1.7
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 
 
     version = "$siriusVersion"
@@ -119,19 +119,20 @@ task downloadGLPK(type: Copy) {
     project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
 
     Path dir = project.glpkPath.toPath().getParent()
+    if (!dir.resolve('glpk').toFile().exists()) {
+        copy {
+            println(dir.toString())
+            dir.resolve('glpk').toFile().deleteDir()
+            Files.createDirectories(dir)
 
-    copy {
-        println(dir.toString())
-        dir.resolve('glpk').toFile().deleteDir()
-        Files.createDirectories(dir)
+            def glpkZipFile = Paths.get('glpk.zip')
+            def file = dir.resolve(glpkZipFile).newOutputStream()
+            file << glpkURL.openStream()
+            file.close()
 
-        def glpkZipFile = Paths.get('glpk.zip')
-        def file = dir.resolve(glpkZipFile).newOutputStream()
-        file << glpkURL.openStream()
-        file.close()
-
-        from zipTree(dir.resolve(glpkZipFile).toFile())
-        into dir.toFile()
+            from zipTree(dir.resolve(glpkZipFile).toFile())
+            into dir.toFile()
+        }
     }
 }
 
@@ -279,7 +280,8 @@ subprojects {
         dontWrapJar = true
         jdkPreference = "preferJre"
 
-        classPath = ["${runtimeClasspath.replace('${', '%').replace('}', '%')}"]
+
+        classPath = runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':')
 
         sourceSets.main.resources {
             srcDir rootDir.toPath().resolve('src').resolve('main').resolve('resources').toString()
@@ -290,7 +292,7 @@ subprojects {
     startScripts {
         applicationName = "${project.appName}"
         doLast {
-            def siriusLibPath = '$GUROBI_HOME/lib:$APP_HOME/lib'
+            def siriusLibPath = '$GUROBI_HOME/lib:$CPLEX_HOME/bin/x86-64_linux:$CPLEX_HOME/bin/x86-64_osx:$CPLEX_HOME/bin/x64_win64:$CPLEX_HOME/bin/x86_win32:$APP_HOME/lib'
             def lines = unixScript.text.split(System.lineSeparator())
             int insertIndex = -1
             for (int i = 0; i < lines.length; i++) {
@@ -343,10 +345,12 @@ task refreshDownloadLinks {
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
                 "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
                 "",
-                "### SIRIUS Commandline Version $version",
-                "- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
-                "- for Linux/Unix [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64-headless.zip)",
-                "- for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.zip)",
+                "### SIRIUS+CSI:FingerID Commandline only - Version $version (Build ${project.buildNumber} from ${new Date().format('yyyy-MM-dd')})",
+                "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win32-headless.zip) / " +
+                        "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
+                "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32-headless.zip) / " +
+                        "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64-headless.zip)",
+                "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.zip)",
                 "",
                 "### Sources on GitHub",
                 "- [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)",
@@ -417,7 +421,7 @@ publishing {
             pom.withXml {}
             artifact source: pdfDokuArtifact
         }
-        manual(MavenPublication){
+        manual(MavenPublication) {
             artifactId = "manual"
             groupId = "${group}.${project.appName}"
             version = 'current'

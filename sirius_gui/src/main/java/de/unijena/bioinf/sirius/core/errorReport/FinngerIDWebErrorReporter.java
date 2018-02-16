@@ -5,7 +5,7 @@ package de.unijena.bioinf.sirius.core.errorReport;
  * 04.10.16.
  */
 
-import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 

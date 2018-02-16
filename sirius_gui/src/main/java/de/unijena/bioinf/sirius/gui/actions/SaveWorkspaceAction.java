@@ -7,22 +7,21 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import de.unijena.bioinf.sirius.gui.configs.Icons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.AbstractList;
 
+import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.COMPOUNT_LIST;
-import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.CONFIG_STORAGE;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -50,7 +49,7 @@ public class SaveWorkspaceAction extends AbstractAction {
         jfc.setCurrentDirectory(CONFIG_STORAGE.getDefaultSaveFilePath());
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
-        jfc.addChoosableFileFilter(new Workspace.SiriusSaveFileFilter());
+        jfc.addChoosableFileFilter(WorkspaceIO.SAVE_FILE_FILTER);
 
         File selectedFile = null;
 

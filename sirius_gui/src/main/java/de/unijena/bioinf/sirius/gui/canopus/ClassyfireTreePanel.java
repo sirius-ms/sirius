@@ -9,7 +9,7 @@ import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeNode;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
-import de.unijena.bioinf.sirius.gui.fingerid.FingerIdData;
+import de.unijena.bioinf.fingerid.FingerIdData;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
@@ -32,7 +32,9 @@ public class ClassyfireTreePanel extends TreeRenderPanel {
 
     public ClassyfireTreePanel() {
         super();
-        this.canopus = MainFrame.MF.getCsiFingerId().getCanopus();
+        //todo CANOPUS
+        this.canopus = null ;//MainFrame.MF.getCsiFingerId().getCanopus();
+
         this.version = canopus.getClassyFireFingerprintVersion();
         this.mask = canopus.getCanopusMask();
     }

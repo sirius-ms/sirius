@@ -2,3 +2,5 @@ rootProject.name = 'sirius_frontend'
 include ':sirius_cli'
 include ':sirius_gui'
 include 'sirius_openms_plugin'
+//include 'fingerid_cli'
+

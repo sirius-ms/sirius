@@ -7,7 +7,7 @@ package de.unijena.bioinf.sirius.gui.settings;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.PasswordCrypter;
-import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.net.ProxyManager;
 
@@ -142,10 +142,9 @@ public class ProxySettingsPanel extends TwoCloumnPanel implements ActionListener
                     ex.printStackTrace();
                 }
 
-                String s = ApplicationCore.VERSION_STRING;
                 JFrame frame = new JFrame("Testing");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.add(new ProxySettingsPanel(ApplicationCore.getUserCopyOfUserProperties()));
+                frame.add(new ProxySettingsPanel(ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties()));
                 frame.pack();
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);
