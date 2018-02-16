@@ -149,6 +149,10 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         return usedFingerprints.length;
     }
 
+    public boolean isFingerprintTypeInUse(USED_FINGERPRINTS type) {
+        return (fastCompareFlag & (1L<<type.defaultPosition)) != 0;
+    }
+
     @Deprecated
     public USED_FINGERPRINTS getFingerprintTypeAt(int index) {
         return usedFingerprints[index];

@@ -37,7 +37,7 @@ public interface Ms2Experiment extends Cloneable {
     String getName();
 
     /**
-     * @return the ionization type of the ion or null if this type is unknown
+     * @return the ionization type of the ion (not null)
      */
     PrecursorIonType getPrecursorIonType();
 
@@ -46,6 +46,7 @@ public interface Ms2Experiment extends Cloneable {
      * Notes:
      * - If the data is preprocessed, then there should be a *clean* and single isotope pattern of the
      * ion in each ms1 spectrum. Further peaks are not allowed!
+     *
      * @return a list of MS1 spectra with the isotope pattern of this compound
      */
     <T extends Spectrum<Peak>> List<T> getMs1Spectra();
@@ -54,6 +55,7 @@ public interface Ms2Experiment extends Cloneable {
      * In practice it seems more accurate to merge all MS1 spectra into a single one and only use this for further
      * analysis. Some tools provide a very accurate peak picking and merging, such that this is something which
      * should not be done in SIRIUS itself.
+     *
      * @return merge all ms1 spectra to single one
      */
     <T extends Spectrum<Peak>> T getMergedMs1Spectrum();
@@ -77,9 +79,16 @@ public interface Ms2Experiment extends Cloneable {
      * The neutral mass is the mass of the molecule. In contrast the ion mass is the mass of the molecule + ion adduct.
      * Notice that the molecule may be also charged. That doesn't matter. Neutral says nothing about the charge, but
      * about the absence of an ionization.
+     *
      * @return the *exact* (idealized) mass of the molecule or 0 if the mass is unknown
      */
-    double getMoleculeNeutralMass();
+    default double getMoleculeNeutralMass() {
+        if (getMolecularFormula() != null)
+            return getMolecularFormula().getMass();
+        if (!getPrecursorIonType().isIonizationUnknown() && getIonMass() > 0)
+            getPrecursorIonType().precursorMassToNeutralMass(getIonMass());
+        return 0;
+    }
 
     /**
      * @return molecular formula of the neutral molecule
@@ -106,8 +115,8 @@ public interface Ms2Experiment extends Cloneable {
     Iterator<Map.Entry<Class<Object>, Object>> forEachAnnotation();
 
     /**
-     * @throws NullPointerException if there is no entry for this key
      * @return annotation value for the given class/key
+     * @throws NullPointerException if there is no entry for this key
      */
     <T> T getAnnotationOrThrow(Class<T> klass);
 
@@ -128,14 +137,28 @@ public interface Ms2Experiment extends Cloneable {
 
     /**
      * Set the annotation with the given key
+     *
      * @return true if there was no previous value for this annotation
      */
     <T> boolean setAnnotation(Class<T> klass, T value);
+
+    /**
+     * Remove the annotation with the given key
+     *
+     * @return the value associated with this key or null if there is no value for this key
+     */
+    <T> Object clearAnnotation(Class<T> klass);
+
+    /**
+     * Remove all annotations from this experiment
+     */
+    void clearAllAnnotations();
 
     /**
      * Allow cloning/copying of Ms2Experiments
      * The implementation might choose if the cloning is deep or shallow
      */
     Ms2Experiment clone();
+
 
 }

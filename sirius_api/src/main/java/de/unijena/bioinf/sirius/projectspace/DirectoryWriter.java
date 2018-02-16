@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -174,13 +175,13 @@ public class DirectoryWriter extends AbstractProjectWriter {
         ++counter;
         this.currentExperimentName = makeFileName(result);
         W.enterDirectory(currentExperimentName);
+        // ms file
+        if (isAllowed(OutputOptions.INPUT))
+            writeMsFile(result);
     }
 
     @Override
     protected void startWritingIdentificationResults(ExperimentResult er, List<IdentificationResult> results)throws IOException  {
-        // ms file
-        if (isAllowed(OutputOptions.INPUT))
-            writeMsFile(er, results);
         // JSON and DOT
         if (isAllowed(OutputOptions.TREES_DOT) || isAllowed(OutputOptions.TREES_JSON)) {
             W.enterDirectory("trees");
@@ -241,6 +242,23 @@ public class DirectoryWriter extends AbstractProjectWriter {
         });
     }
 
+
+    private void writeMsFile(ExperimentResult er) throws IOException {
+        // if experiment is stored in results we favour it, as it might be already cleaned and annotated
+        final Ms2Experiment experiment = er.getExperiment();
+        if (experiment!=null) {
+            write("spectrum.ms", new Do() {
+                @Override
+                public void run(Writer w) throws IOException {
+                    final BufferedWriter bw = new BufferedWriter(w);
+                    new JenaMsWriter().write(bw, experiment);
+                    bw.flush();
+                }
+            });
+        }
+    }
+
+
     protected void writeTrees(List<IdentificationResult> results) throws IOException {
         for (IdentificationResult result : results) {
             writeJSONTree(result);
@@ -288,18 +306,28 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     @Override
-    protected void endWritingExperiment(Ms2Experiment experiment)throws IOException  {
+    protected void endWritingExperiment(ExperimentResult experiment)throws IOException  {
         W.leaveDirectory();
-        W.updateProgress(currentExperimentName + "\tdone.\n");
+        W.updateProgress(currentExperimentName + "\t" + errorCode(experiment) + "\n");
+    }
+
+    private String errorCode(ExperimentResult experiment) {
+        if (experiment.errorString==null) return "DONE";
+        else return experiment.errorString;
     }
 
     public static String makeFileName(IdentificationResult result) {
-        final String filename = result.getRank() + "_" + result.getMolecularFormula();
+        final String filename = result.getRank() + "_" + result.getMolecularFormula() + "_" + simplify(result.getPrecursorIonType());
         return filename;
     }
 
+    private static String simplify(PrecursorIonType precursorIonType) {
+        return precursorIonType.toString().replaceAll("[\\[\\] _]","");
+    }
+
     protected String makeFileName(ExperimentResult exp) {
-        return counter + "_" + exp.experimentSource + "_" + exp.experimentName;
+        final int index = exp.getExperiment().getAnnotation(Index.class,Index.NO_INDEX).index;
+        return (index>=0 ? index : counter) + "_" + exp.experimentSource + "_" + exp.experimentName;
     }
 
     protected interface Do {

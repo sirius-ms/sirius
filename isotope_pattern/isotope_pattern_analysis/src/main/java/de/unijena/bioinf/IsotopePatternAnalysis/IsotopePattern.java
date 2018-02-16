@@ -30,6 +30,10 @@ public class IsotopePattern extends Scored<MolecularFormula> {
         this.pattern = pattern;
     }
 
+    public IsotopePattern withScore(double newScore) {
+        return new IsotopePattern(getCandidate(),newScore,pattern);
+    }
+
     public SimpleSpectrum getPattern() {
         return pattern;
     }

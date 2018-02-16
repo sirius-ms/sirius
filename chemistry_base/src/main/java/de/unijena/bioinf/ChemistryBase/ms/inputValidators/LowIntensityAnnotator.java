@@ -39,18 +39,26 @@ public class LowIntensityAnnotator implements QualityAnnotator{
         }
     }
 
+    /**
+     * annotates {@link Ms2Experiment} with SpectrumProperty.LowIntensity if NOT ANY MS1 contains the  precursor peak with relative intensity &gt; minRelMs1Intensity
+     * ignores merged MS1 spectrum (this might be a artificial spectrum. E.g. isotopes.)
+     * @param experiment
+     */
     public void annotate(Ms2Experiment experiment) {
         //too low MS1 peak intensity
         double maxMs1Intensity = statistics.getMaxMs1Intensity();
-//      if (!isNotBadQuality(experiment)) continue; //todo fast or better statistics?
-        if (CompoundQuality.hasProperty(experiment, SpectrumProperty.NoMS1Peak)) return;
-        Spectrum<Peak> ms1 = experiment.getMergedMs1Spectrum();
-        double highestInCurrentMs1 = Spectrums.getMaximalIntensity(ms1);
-        double ionIntensity = ms1.getIntensityAt(Spectrums.mostIntensivePeakWithin(ms1, experiment.getIonMass(), findMs1PeakDeviation));
-        if (ionIntensity/highestInCurrentMs1<minRelMs1Intensity) CompoundQuality.setProperty(experiment, SpectrumProperty.LowIntensity);
-        else if (ionIntensity<minRelMs1Intensity) CompoundQuality.setProperty(experiment, SpectrumProperty.LowIntensity);
-        //todo another way with absolute intensities
-//      else if (ionIntensity<10*datasetStatistics.getMedianMs2NoiseIntensity()) setSpectrumProperty(experiment, SpectrumProperty.LowIntensity); //todo ???
+//        if (CompoundQuality.hasProperty(experiment, SpectrumProperty.NoMS1Peak)) return;
 
+        boolean isLowIntensity = true;
+        for (Spectrum<Peak> spectrum : experiment.getMs1Spectra()) {
+            double highestInCurrentMs1 = Spectrums.getMaximalIntensity(spectrum);
+            int idx = Spectrums.mostIntensivePeakWithin(spectrum, experiment.getIonMass(), findMs1PeakDeviation);
+            if (idx<0) continue;
+            double ionIntensity = spectrum.getIntensityAt(idx);
+            if (ionIntensity/highestInCurrentMs1>=minRelMs1Intensity) isLowIntensity = false;
+//            else if (ionIntensity>=minAbsMs1Intensity) isLowIntensity = false;
+            if (!isLowIntensity) break;
+        }
+        if (isLowIntensity) CompoundQuality.setProperty(experiment, SpectrumProperty.LowIntensity);
     }
 }

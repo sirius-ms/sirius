@@ -76,7 +76,8 @@ public class IsotopePatternAnalysis implements Parameterized {
 
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary, boolean withProfile) {
         document.addToDictionary(dictionary, "cutoff", cutoff);
-        if (withProfile && defaultProfile!=null) document.addToDictionary(dictionary, "default", helper.wrap(document, defaultProfile));
+        if (withProfile && defaultProfile != null)
+            document.addToDictionary(dictionary, "default", helper.wrap(document, defaultProfile));
         // export isotope distribution for relevant elements
         final ChemicalAlphabet alphabet;
         if (defaultProfile != null) {
@@ -99,12 +100,13 @@ public class IsotopePatternAnalysis implements Parameterized {
         final D dict = document.getDictionary(value);
         if (!document.hasKeyInDictionary(dict, ANALYZER_NAME))
             throw new IllegalArgumentException("No field 'IsotopePatternAnalysis' in profile");
-        final IsotopePatternAnalysis analyzer = (IsotopePatternAnalysis)helper.unwrap(document,
+        final IsotopePatternAnalysis analyzer = (IsotopePatternAnalysis) helper.unwrap(document,
                 document.getFromDictionary(dict, ANALYZER_NAME));
         if (document.hasKeyInDictionary(dict, "profile")) {
             final MeasurementProfile prof = ((MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dict, "profile")));
-            if (analyzer.defaultProfile==null) analyzer.defaultProfile=new MutableMeasurementProfile(prof);
-            else analyzer.defaultProfile = new MutableMeasurementProfile(MutableMeasurementProfile.merge(prof, analyzer.defaultProfile));
+            if (analyzer.defaultProfile == null) analyzer.defaultProfile = new MutableMeasurementProfile(prof);
+            else
+                analyzer.defaultProfile = new MutableMeasurementProfile(MutableMeasurementProfile.merge(prof, analyzer.defaultProfile));
         }
         return analyzer;
     }
@@ -114,7 +116,7 @@ public class IsotopePatternAnalysis implements Parameterized {
         final D dict = document.getDictionary(value);
         final D fpa = document.newDictionary();
         exportParameters(helper, document, fpa);
-        document.addToDictionary(fpa, "$name", ANALYZER_NAME );
+        document.addToDictionary(fpa, "$name", ANALYZER_NAME);
         document.addDictionaryToDictionary(dict, ANALYZER_NAME, fpa);
         if (document.hasKeyInDictionary(dict, "profile")) {
             final MeasurementProfile otherProfile = (MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dict, "profile"));
@@ -125,7 +127,7 @@ public class IsotopePatternAnalysis implements Parameterized {
                     document.addDictionaryToDictionary(fpa, "default", profDict);
                 }
             }
-        } else if (defaultProfile!=null){
+        } else if (defaultProfile != null) {
             final D profDict = document.newDictionary();
             new MutableMeasurementProfile(defaultProfile).exportParameters(helper, document, profDict);
             document.addDictionaryToDictionary(dict, "profile", profDict);
@@ -148,7 +150,7 @@ public class IsotopePatternAnalysis implements Parameterized {
         analyzer.intensityOffset = 0d;
         analyzer.isotopePatternScorers.add(new MassDifferenceDeviationScorer());
         analyzer.isotopePatternScorers.add(new NormalDistributedIntensityScorer());
-        final FormulaConstraints constr =  new FormulaConstraints(new ChemicalAlphabet(T.getAllByName("C", "H",
+        final FormulaConstraints constr = new FormulaConstraints(new ChemicalAlphabet(T.getAllByName("C", "H",
                 "N", "O", "P", "S", "Cl", "Na")), null);
         constr.setUpperbound(T.getByName("Cl"), 1);
         constr.setUpperbound(T.getByName("Na"), 1);
@@ -178,20 +180,20 @@ public class IsotopePatternAnalysis implements Parameterized {
     }
 
     public SimpleSpectrum extractPattern(Ms2Experiment experiment, double targetMz) {
-        return extractPattern(experiment, getDefaultProfile(), targetMz);
+        return extractPattern(experiment, getDefaultProfile(experiment), targetMz);
     }
 
     public SimpleSpectrum extractPattern(Ms2Experiment experiment, MeasurementProfile profile, double targetMz) {
         final Spectrum<Peak> s = experiment.getMergedMs1Spectrum();
-        if (s!=null) return extractPattern(s, profile, targetMz);
-        else if (experiment.getMs1Spectra()!=null && !experiment.getMs1Spectra().isEmpty()) {
+        if (s != null) return extractPattern(s, profile, targetMz);
+        else if (experiment.getMs1Spectra() != null && !experiment.getMs1Spectra().isEmpty()) {
             return extractPattern(experiment.getMs1Spectra().get(0), profile, targetMz);
         } else return null;
     }
 
     public SimpleSpectrum extractPattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz) {
         // extract all isotope peaks starting from the given target mz
-        final ChemicalAlphabet stdalphabet = ChemicalAlphabet.getExtendedAlphabet();
+        final ChemicalAlphabet stdalphabet = profile.getFormulaConstraints().getExtendedConstraints(new FormulaConstraints(ChemicalAlphabet.getExtendedAlphabet())).getChemicalAlphabet();
         final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(ms1Spec);
         final ArrayList<SimpleSpectrum> patterns = new ArrayList<SimpleSpectrum>();
         final int index = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, targetMz, profile.getAllowedMassDeviation());
@@ -199,22 +201,22 @@ public class IsotopePatternAnalysis implements Parameterized {
         final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
         spec.addPeak(massOrderedSpectrum.getPeakAt(index));
         // add additional peaks
-        for (int k=1; k <= 5; ++k) {
+        for (int k = 1; k <= 5; ++k) {
             final Range<Double> nextMz = PeriodicTable.getInstance().getIsotopicMassWindow(stdalphabet, profile.getAllowedMassDeviation(), spec.getMzAt(0), k);
             final double a = nextMz.lowerEndpoint();
             final double b = nextMz.upperEndpoint();
-            final double m = a+(b-a)/2d;
+            final double m = a + (b - a) / 2d;
             final double startPoint = a - profile.getStandardMassDifferenceDeviation().absoluteFor(a);
             final double endPoint = b + profile.getStandardMassDifferenceDeviation().absoluteFor(b);
             final int nextIndex = Spectrums.indexOfFirstPeakWithin(massOrderedSpectrum, startPoint, endPoint);
             if (nextIndex < 0) break;
             double mzBuffer = 0d;
             double intensityBuffer = 0d;
-            for (int i=nextIndex; i < massOrderedSpectrum.size(); ++i) {
+            for (int i = nextIndex; i < massOrderedSpectrum.size(); ++i) {
                 final double mz = massOrderedSpectrum.getMzAt(i);
                 if (mz > endPoint) break;
                 final double intensity = massOrderedSpectrum.getIntensityAt(i);
-                mzBuffer += mz*intensity;
+                mzBuffer += mz * intensity;
                 intensityBuffer += intensity;
             }
             mzBuffer /= intensityBuffer;
@@ -224,29 +226,30 @@ public class IsotopePatternAnalysis implements Parameterized {
     }
 
     private MeasurementProfile getProfile(MeasurementProfile measurementProfile) {
-        if (measurementProfile==null) return defaultProfile;
+        if (measurementProfile == null) return defaultProfile;
         return MutableMeasurementProfile.merge(defaultProfile, measurementProfile);
     }
 
 
-
     public List<IsotopePattern> deisotope(Ms2Experiment experiment, MeasurementProfile profile, List<MolecularFormula> formulas) {
-        if (experiment.getMs1Spectra().isEmpty() && experiment.getMergedMs1Spectrum()==null) return new ArrayList<>();
+        if (experiment.getMs1Spectra().isEmpty() && experiment.getMergedMs1Spectrum() == null) return new ArrayList<>();
         final SimpleSpectrum pattern = extractPattern(experiment, getProfile(profile), experiment.getIonMass());
-        if (pattern==null) return Collections.emptyList();
+        if (pattern == null) return Collections.emptyList();
         return scoreFormulas(pattern, formulas, experiment, profile);
     }
 
     public List<IsotopePattern> deisotope(Ms2Experiment experiment, MeasurementProfile profile) {
-        if (experiment.getMs1Spectra().isEmpty() && experiment.getMergedMs1Spectrum()==null) return new ArrayList<>();
+        if (experiment.getMs1Spectra().isEmpty() && experiment.getMergedMs1Spectrum() == null) return new ArrayList<>();
         final SimpleSpectrum pattern = extractPattern(experiment, getProfile(profile), experiment.getIonMass());
-        if (pattern==null) return Collections.emptyList();
+        if (pattern == null) return Collections.emptyList();
         final PrecursorIonType ionization = experiment.getPrecursorIonType();
         if (ionization.isIonizationUnknown()) {
             // try different ionization types
             final List<IsotopePattern> ionFormulas = new ArrayList<IsotopePattern>();
             final int charge = ionization.getCharge();
-            final Iterable<Ionization> ionModes = PeriodicTable.getInstance().getKnownIonModes(charge);
+            final Iterable<Ionization> ionModes = experiment.hasAnnotation(PossibleIonModes.class)
+                    ? experiment.getAnnotation(PossibleIonModes.class).getIonModes()
+                    : PeriodicTable.getInstance().getKnownIonModes(charge);
             for (Ionization ion : ionModes) {
                 final List<MolecularFormula> formulas = decomposer.getDecomposer(profile.getFormulaConstraints().getChemicalAlphabet()).decomposeToFormulas(ion.subtractFromMass(pattern.getMzAt(0)), profile.getAllowedMassDeviation(), profile.getFormulaConstraints());
                 ionFormulas.addAll(scoreFormulas(pattern, formulas, experiment, profile, PrecursorIonType.getPrecursorIonType(ion)));
@@ -273,30 +276,30 @@ public class IsotopePatternAnalysis implements Parameterized {
             normalize(spec, Normalization.Sum(1d));
         }
 
-        if (spec.getIntensityAt(0) < cutoff){
+        if (spec.getIntensityAt(0) < cutoff) {
             //intensity of first peak is below cutoff, cannot score
             return new ArrayList<>();
         }
-        while (spec.getIntensityAt(spec.size()-1) < cutoff) spec.removePeakAt(spec.size()-1);
+        while (spec.getIntensityAt(spec.size() - 1) < cutoff) spec.removePeakAt(spec.size() - 1);
         normalize(spec, Normalization.Max(1));
         final Spectrum<Peak> measuredSpectrum = new SimpleSpectrum(spec);
         final ArrayList<IsotopePattern> patterns = new ArrayList<>(formulas.size());
         final SimpleSpectrum[] allPatternVariants = new SimpleSpectrum[measuredSpectrum.size()];
         {
             final SimpleMutableSpectrum mut = new SimpleMutableSpectrum(allPatternVariants.length);
-            for (int k=0; k < allPatternVariants.length; ++k) {
+            for (int k = 0; k < allPatternVariants.length; ++k) {
                 mut.addPeak(measuredSpectrum.getMzAt(k), measuredSpectrum.getIntensityAt(k));
                 allPatternVariants[k] = new SimpleSpectrum(mut);
             }
         }
-        int k=0;
+        int k = 0;
         final double[] scoreBuffer = new double[allPatternVariants.length];
         for (MolecularFormula formula : formulas) {
             Arrays.fill(scoreBuffer, 0d);
             final MolecularFormula f = ion.neutralMoleculeToMeasuredNeutralMolecule(formula);
             Spectrum<Peak> measuredOne = measuredSpectrum;
             Spectrum<Peak> theoreticalSpectrum = patternGenerator.simulatePattern(f, ion.getIonization());
-            if (theoreticalSpectrum.size()==0) continue;
+            if (theoreticalSpectrum.size() == 0) continue;
             if (theoreticalSpectrum.size() > 10)
                 theoreticalSpectrum = Spectrums.getNormalizedSpectrum(Spectrums.subspectrum(theoreticalSpectrum, 0, 10), Normalization.Max(1d));
             if (measuredSpectrum.size() > theoreticalSpectrum.size())
@@ -305,8 +308,8 @@ public class IsotopePatternAnalysis implements Parameterized {
                 scorer.score(scoreBuffer, measuredOne, theoreticalSpectrum, Normalization.Max(1), experiment, profile);
             }
             int optScoreIndex = 0;
-            for (int j=0; j < scoreBuffer.length; ++j) {
-                if (scoreBuffer[j] > scoreBuffer[optScoreIndex]) optScoreIndex=j;
+            for (int j = 0; j < scoreBuffer.length; ++j) {
+                if (scoreBuffer[j] > scoreBuffer[optScoreIndex]) optScoreIndex = j;
             }
             patterns.add(new IsotopePattern(formula, scoreBuffer[optScoreIndex], allPatternVariants[optScoreIndex]));
         }
@@ -315,6 +318,15 @@ public class IsotopePatternAnalysis implements Parameterized {
     }
 
     public MutableMeasurementProfile getDefaultProfile() {
+        return defaultProfile;
+    }
+
+    public MutableMeasurementProfile getDefaultProfile(Ms2Experiment exp) {
+        if (exp.getMolecularFormula() != null) {
+            final MutableMeasurementProfile prof = new MutableMeasurementProfile(defaultProfile);
+            prof.setFormulaConstraints(prof.getFormulaConstraints().getExtendedConstraints(FormulaConstraints.allSubsetsOf(exp.getMolecularFormula())));
+            return prof;
+        }
         return defaultProfile;
     }
 
