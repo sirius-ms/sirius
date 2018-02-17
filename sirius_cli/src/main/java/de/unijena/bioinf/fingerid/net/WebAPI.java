@@ -240,7 +240,7 @@ public class WebAPI implements Closeable {
             if (ProxyManager.DEBUG) {
                 b = b.setPath("/frontend" + path);
             } else {
-                b = b.setPath("/csi_fingerid-" + FingerIDProperties.fingeridVersion() + path);
+                b = b.setPath("/csi-fingerid-" + FingerIDProperties.fingeridVersion() + path);
             }
         } catch (URISyntaxException e) {
             LoggerFactory.getLogger(WebAPI.class).error("Unacceptable URI for CSI:FingerID", e);
