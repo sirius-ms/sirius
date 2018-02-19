@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 
 public class SiriusCLIApplication {
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
         try {
             final FingeridCLI<FingerIdOptions> cli = new FingeridCLI<>();
             if (isZodiac(args)) {
