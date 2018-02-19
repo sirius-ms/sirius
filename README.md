@@ -153,6 +153,8 @@ literature to cite transparent to the user.
 
 -   **Fragmentation tree heuristics**
 
+-   **Negative ion mode data is now supported**
+
 -   **CPLEX** ILP solver support
 
 -   Consider a specific list of **ionizations for Sirius**
