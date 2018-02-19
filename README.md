@@ -13,9 +13,8 @@ landscape of de-novo identification of metabolites using single and
 tandem mass spectrometry. SIRIUS uses isotope pattern analysis for
 detecting the molecular formula and further analyses the fragmentation
 pattern of a compound using fragmentation trees. 
-<span style="color: #339966;">Starting with SIRIUS 3.2, fragmentation trees
-can be uploaded to CSI:FingerID via a web service, and results can be
-displayed in the SIRIUS 3.2 graphical user interface.</span> (This is
+<span style="color: #339966;">Fragmentation trees can be uploaded to CSI:FingerID via a web service,
+and results can be displayed in the SIRIUS graphical user interface.</span> (This is
 also possible using the command line version of SIRIUS.) 
 <span style="color: #339966;">This is the recommended way of using
 CSI:FingerID.</span>
