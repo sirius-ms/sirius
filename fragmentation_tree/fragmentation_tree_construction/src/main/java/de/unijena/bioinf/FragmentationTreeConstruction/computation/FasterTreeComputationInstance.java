@@ -135,7 +135,6 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
     }
 
     protected void recalculateScore(FTree tree) {
-        System.out.println("recalculate " +  tree.getRoot().getFormula());
         double oldScore = tree.getTreeWeight();
         double newScore = analyzer.recalculateScores(tree);
         if (Math.abs(newScore - oldScore) > 0.1) {
