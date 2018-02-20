@@ -20,7 +20,6 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
 public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<C>> implements JobProgressEventListener{
-    private static final Logger LOG = LoggerFactory.getLogger(GraphBuilder.class);
     protected static final boolean THIN_OUT_GRAPH = false;//never helped. is slow.
 
     Graph<C> graph;
@@ -40,7 +39,8 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
     public GraphBuilder(String[] ids, Scored<C>[][] possibleFormulas,  EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter) {
         super(JobType.CPU);
-        this.graph = new Graph<>(ids, possibleFormulas);
+        LOG().debug("initialize graph builder");
+        this.graph = Graph.getGraph(ids, possibleFormulas);
         this.edgeScorers = edgeScorers;
         this.edgeFilter = edgeFilter;
     }
@@ -203,7 +203,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
         HighQualityRandom random = new HighQualityRandom();
 
         if (GibbsMFCorrectionNetwork.DEBUG){
-            LOG.info("setting connections in: "+(System.currentTimeMillis()-time)+" ms");
+            LOG().info("setting connections in: "+(System.currentTimeMillis()-time)+" ms");
             TDoubleArrayList someScores = new TDoubleArrayList();
 
             for(int i = 0; i < 1000; ++i) {
@@ -232,7 +232,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
             sum += connection.length;
         }
 
-        LOG.info("number of connections " + sum / 2);
+        LOG().info("number of connections " + sum / 2);
 
         if (GibbsMFCorrectionNetwork.DEBUG) {
             final TDoubleArrayList samples = new TDoubleArrayList();

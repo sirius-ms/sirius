@@ -32,24 +32,27 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.LogManager;
 
 public class Graph<C extends Candidate<?>> {
-    private static final Logger LOG = LoggerFactory.getLogger(Graph.class);
-    final TIntIntHashMap[] indexMap;
-    final TDoubleArrayList[] weights;
-    double[] edgeThresholds;
-    int[][] connections;
-    int[] boundaries;
+    protected final TIntIntHashMap[] indexMap;
+    protected final TDoubleArrayList[] weights;
+    protected double[] edgeThresholds;
+    protected int[][] connections;
+    protected int[] boundaries;
     private int[] formulaIdxToPeakIdx;
     protected int size;
-    final String[] ids;
-    Scored<C>[][] possibleFormulas;
-    Scored<C>[] possibleFormulas1D;
+    protected final String[] ids;
+    protected Scored<C>[][] possibleFormulas;
+    protected Scored<C>[] possibleFormulas1D;
 //    private EdgeScorer<C>[] edgeScorers;
 //    private EdgeFilter edgeFilter;
 
+    @Deprecated
     public Graph(String[] ids, Scored<C>[][] possibleFormulas) {
         this.ids = ids;
         this.possibleFormulas = possibleFormulas;
-        this.possibleFormulas1D = this.setUp(possibleFormulas);
+        InitData initData= this.setUp(possibleFormulas);
+        this.boundaries = initData.boundaries;
+        this.formulaIdxToPeakIdx = initData.formulaIdxToPeakIdx;
+        this.possibleFormulas1D = initData.possibleFormulas1D;
         this.size = this.possibleFormulas1D.length;
         this.indexMap = new TIntIntHashMap[this.size];
         this.weights = new TDoubleArrayList[this.size];
@@ -60,14 +63,45 @@ public class Graph<C extends Candidate<?>> {
             this.weights[i] = new TDoubleArrayList(this.size / 100);
         }
 
-        this.assertInput();
+        this.assertInput(this);
+    }
+
+    protected Graph(String[] ids, Scored<C>[][] possibleFormulas, Scored<C>[] possibleFormulas1D, int[] boundaries, int[] formulaIdxToPeakIdx) {
+        this.ids = ids;
+        this.possibleFormulas = possibleFormulas;
+        this.possibleFormulas1D = possibleFormulas1D;
+        this.boundaries = boundaries;
+        this.formulaIdxToPeakIdx = formulaIdxToPeakIdx;
+        this.size = this.possibleFormulas1D.length;
+        this.indexMap = new TIntIntHashMap[this.size];
+        this.weights = new TDoubleArrayList[this.size];
+        this.edgeThresholds = new double[this.size];
+
+        for(int i = 0; i < this.indexMap.length; ++i) {
+            this.indexMap[i] = new TIntIntHashMap(this.size / 100, 0.75F, -1, -1);
+            this.weights[i] = new TDoubleArrayList(this.size / 100);
+        }
+
+        this.assertInput(this);
+    }
+
+    public static <C extends Candidate<?>> Graph<C> getGraph(String[] ids, Scored<C>[][] possibleFormulas){
+        InitData initData = setUp(possibleFormulas);
+        Scored<C>[] possibleFormulas1D = initData.possibleFormulas1D;
+        int[] boundaries = initData.boundaries;
+        int[] formulaIdxToPeakIdx = initData.formulaIdxToPeakIdx;
+        Graph<C> graph = new Graph<C>(ids, possibleFormulas, possibleFormulas1D, boundaries, formulaIdxToPeakIdx);
+        assertInput(graph);
+        return graph;
     }
 
     private Graph(String[] ids, Scored<C>[][] possibleFormulas, TIntIntHashMap[] indexMap, TDoubleArrayList[] weights, int[][] connections, double[] edgeThresholds) {
-//    private Graph(String[] ids, Scored<C>[][] possibleFormulas, TIntIntHashMap[] indexMap, TDoubleArrayList[] weights, int[][] connections, double[] edgeThresholds, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter) {
         this.ids = ids;
         this.possibleFormulas = possibleFormulas;
-        this.possibleFormulas1D = this.setUp(possibleFormulas);
+        InitData initData = this.setUp(possibleFormulas);
+        this.boundaries = initData.boundaries;
+        this.formulaIdxToPeakIdx = initData.formulaIdxToPeakIdx;
+        this.possibleFormulas1D = initData.possibleFormulas1D;
         this.size = this.possibleFormulas1D.length;
         this.indexMap = indexMap;
         this.weights = weights;
@@ -77,8 +111,8 @@ public class Graph<C extends Candidate<?>> {
 //        this.edgeFilter = edgeFilter;
     }
 
-    private void assertInput() {
-        Scored[][] var1 = this.possibleFormulas;
+    private static <C extends Candidate<?>> void assertInput(Graph<C> graph) {
+        Scored[][] var1 = graph.possibleFormulas;
         int var2 = var1.length;
 
         for(int var3 = 0; var3 < var2; ++var3) {
@@ -206,23 +240,6 @@ public class Graph<C extends Candidate<?>> {
         return weighList.toArray();
     }
 
-//    public void init(EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, MasterJJob masterJob) throws ExecutionException {
-////        this.edgeScorers = edgeScorers;
-////        this.edgeFilter = edgeFilter;
-//        if (possibleFormulas.length==0){
-//            connections = new int[0][0];
-//        } else {
-//            this.calculateWeight(masterJob);
-//            this.setConnections();
-//
-//            if (THIN_OUT_GRAPH){
-//                long time = System.currentTimeMillis();
-//                thinOutGraph();
-//                if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("thinning out graph in "+(System.currentTimeMillis()-time)+" ms");
-//            }
-//        }
-//    }
-
     public GraphValidationMessage validate(){
         if (isBadlyConnected()){
             return new GraphValidationMessage("the graph seems to be badly connected. You might want to enforce more connections using local edge thresholds ", false, true);
@@ -231,16 +248,15 @@ public class Graph<C extends Candidate<?>> {
     }
 
 
-    private Scored<C>[] setUp(Scored<C>[][] possibleFormulas) {
-        LOG.info("initialize");
+    private static InitData setUp(Scored[][] possibleFormulas) {
         int length = 0;
 
         for(int i = 0; i < possibleFormulas.length; ++i) {
             length += possibleFormulas[i].length;
         }
 
-        Scored[] var9 = new Scored[length];
-        this.formulaIdxToPeakIdx = new int[length];
+        Scored[] possibleFormulas1D = new Scored[length];
+        int[] formulaIdxToPeakIdx = new int[length];
         int z = 0;
 
         for(int i = 0; i < possibleFormulas.length; ++i) {
@@ -248,307 +264,22 @@ public class Graph<C extends Candidate<?>> {
 
             for(int j = 0; j < scoredFormulas.length; ++j) {
                 Scored smf = scoredFormulas[j];
-                var9[z] = smf;
-                this.formulaIdxToPeakIdx[z] = i;
+                possibleFormulas1D[z] = smf;
+                formulaIdxToPeakIdx[z] = i;
                 ++z;
             }
         }
 
-        this.boundaries = new int[possibleFormulas.length];
+        int[] boundaries = new int[possibleFormulas.length];
         int sum = -1;
 
         for(int i = 0; i < possibleFormulas.length; ++i) {
             sum += possibleFormulas[i].length;
-            this.boundaries[i] = sum;
+            boundaries[i] = sum;
         }
 
-        return var9;
+        return new InitData(boundaries, formulaIdxToPeakIdx, possibleFormulas1D);
     }
-
-//    private void setConnections() {
-//        long time = System.currentTimeMillis();
-//        this.connections = this.edgeFilter.postprocessCompleteGraph(this);
-//        HighQualityRandom random = new HighQualityRandom();
-//
-//        if (GibbsMFCorrectionNetwork.DEBUG){
-//            LOG.info("setting connections in: "+(System.currentTimeMillis()-time)+" ms");
-//            TDoubleArrayList someScores = new TDoubleArrayList();
-//
-//            for(int i = 0; i < 1000; ++i) {
-//                int a = random.nextInt(this.numberOfCompounds());
-//                if(this.connections[a].length != 0) {
-//                    int b = random.nextInt(this.connections[a].length);
-//                    someScores.add(this.getLogWeight(a, this.connections[a][b]));
-//                }
-//            }
-//
-////        System.out.println("some scores: " + Arrays.toString(someScores.toArray()));
-//        }
-//
-//
-//        assert this.isSymmetricSparse(this.connections);
-//
-//        if(!this.arePeaksConnected(this.connections)) {
-//            //todo
-////            System.out.println("warning: graph is not well connected. consider using less stringent EdgeFilters");
-//        }
-//
-//        long sum = 0;
-//
-//        for(int i = 0; i < connections.length; ++i) {
-//            int[] connection = connections[i];
-//            sum += connection.length;
-//        }
-//
-//        LOG.info("number of connections " + sum / 2);
-//
-//        if (GibbsMFCorrectionNetwork.DEBUG) {
-//            final TDoubleArrayList samples = new TDoubleArrayList();
-//            for (TDoubleArrayList weight : weights) {
-//                weight.forEach(new TDoubleProcedure() {
-//                    @Override
-//                    public boolean execute(double v) {
-//                        if (v<0) throw new RuntimeException("graph weights are negative");
-//                        if (random.nextDouble()<0.001) samples.add(v);
-//                        return true;
-//                    }
-//                });
-//            }
-//            samples.sort();
-//            System.out.println("all good");
-//            System.out.println("mean: "+samples.sum()/samples.size());
-//            System.out.println("median: "+samples.get(samples.size()/2));
-//            System.out.println("min: "+samples.min());
-//            System.out.println("max: "+samples.max());
-//
-//            final TDoubleList s2;
-//            if (samples.size()>1000){
-//                samples.shuffle(random);
-//                s2 = samples.subList(0, 1000);
-//            } else {
-//                s2 = samples;
-//            }
-//            System.out.println(Arrays.toString(s2.toArray()));
-//        }
-//
-//    }
-
-    private void makeWeightsSymmetricAndCreateConnectionsArray() {
-        TIntArrayList[] connectionsList = new TIntArrayList[this.getSize()];
-
-        int connections;
-        for(connections = 0; connections < this.getSize(); ++connections) {
-            connectionsList[connections] = new TIntArrayList(100);
-        }
-
-        int i;
-        for(connections = 0; connections < this.getSize(); ++connections) {
-            for(i = connections + 1; i < this.getSize(); ++i) {
-                double w1 = this.getLogWeight(connections, i);
-                double w2 = this.getLogWeight(i, connections);
-                double max;
-                if(w1 < w2) {
-                    this.setLogWeight(connections, i, w2);
-                    max = w2;
-                } else if(w2 < w1) {
-                    this.setLogWeight(i, connections, w1);
-                    max = w1;
-                } else {
-                    max = w1;
-                }
-
-                if(max != 0.0D) {
-                    connectionsList[connections].add(i);
-                }
-            }
-        }
-
-        int[][] var10 = new int[this.getSize()][];
-
-        for(i = 0; i < var10.length; ++i) {
-            var10[i] = connectionsList[i].toArray();
-        }
-
-        this.connections = var10;
-    }
-
-    private Class<C> getCandidateClass(){
-        for (Scored<C>[] s : getPossibleFormulas()) {
-            for (Scored<C> scored : s) {
-                return (Class<C>)scored.getCandidate().getClass();
-            }
-        }
-        throw new NoSuchElementException("no experiments with any molecular formula candidate given");
-    }
-
-//    private void calculateWeight(MasterJJob masterJob) throws ExecutionException {
-////    private void calculateWeight(int threads) {
-////        ExecutorService executorService = Executors.newFixedThreadPool(threads);
-//
-//
-////        ArrayList futures = new ArrayList();
-////        C[][] allCandidates = (C[][])new Candidate[this.getPossibleFormulas().length][];
-//
-//        Class<C> cClass = getCandidateClass();
-//
-//
-//        C[][] allCandidates = (C[][]) Array.newInstance(cClass, this.getPossibleFormulas().length, 1);
-//
-//        for(int minValue = 0; minValue < allCandidates.length; ++minValue) {
-//            Scored<C>[] scored = this.getPossibleFormulas(minValue);
-//            allCandidates[minValue] = (C[])Array.newInstance(cClass, scored.length);
-//
-//            for(int final_this = 0; final_this < scored.length; ++final_this) {
-//                allCandidates[minValue][final_this] = scored[final_this].getCandidate();
-//            }
-//        }
-//
-//
-//
-//        double minV = 0.0D;
-//        //todo this is a big hack!!!!
-//        for (EdgeScorer<C> edgeScorer : edgeScorers) {
-//            if (edgeScorer instanceof ScoreProbabilityDistributionFix){
-//                if (edgeFilter instanceof EdgeThresholdFilter){
-//                    ((ScoreProbabilityDistributionFix)edgeScorer).setThresholdAndPrepare(allCandidates);
-//                } else {
-//                    ((ScoreProbabilityDistributionFix)edgeScorer).prepare(allCandidates);
-//                }
-//
-//            } else if (edgeScorer instanceof ScoreProbabilityDistributionEstimator){
-//                if (edgeFilter instanceof EdgeThresholdFilter){
-//                    ((ScoreProbabilityDistributionEstimator)edgeScorer).setThresholdAndPrepare(allCandidates);
-//                } else {
-//                    ((ScoreProbabilityDistributionEstimator)edgeScorer).prepare(allCandidates);
-//                }
-//            } else {
-//                edgeScorer.prepare(allCandidates);
-//            }
-//
-//            minV += edgeScorer.getThreshold();
-//        }
-//
-//
-//        if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("minV "+minV);
-//
-//        this.edgeFilter.setThreshold(minV);
-//        final Graph final_graph = this;
-//        long time = System.currentTimeMillis();
-//
-//        LOG.info("start computing edges");
-//        int step = Math.max(this.getSize()/20, 1);
-//
-//
-//        List<BasicJJob> jobs = new ArrayList<>();
-//        AtomicInteger counter = new AtomicInteger(0);
-//        int size = this.getSize();
-//        for(int i = 0; i < this.getSize(); ++i) {
-//            final int final_i = i;
-//            final C candidate = this.getPossibleFormulas1D(i).getCandidate();
-//            BasicJJob job = new BasicJJob() {
-//                @Override
-//                protected Object compute() throws Exception {
-//                    TDoubleArrayList scores = new TDoubleArrayList(Graph.this.getSize());
-//
-//                    for(int j = 0; j < Graph.this.getSize(); ++j) {
-//                        if(Graph.this.getPeakIdx(final_i) == Graph.this.getPeakIdx(j)) {
-//                            scores.add(0.0D);
-//                        } else {
-//                            C candidate2 = Graph.this.getPossibleFormulas1D(j).getCandidate();
-//                            double score = 0.0D;
-//
-//                            for(int k = 0; k < edgeScorers.length; ++k) {
-//                                EdgeScorer edgeScorer = edgeScorers[k];
-//                                score += edgeScorer.score(candidate, candidate2);
-//                            }
-//
-//                            scores.add(score);
-//                        }
-//                    }
-//
-//                    edgeFilter.filterEdgesAndSetThreshold(final_graph, final_i, scores.toArray());
-//
-//                    //progess
-//                    int progress = counter.incrementAndGet();
-//                    if((progress-1) % step == 0 || (progress)==(size)) {
-//                        LOG.info((100*(progress)/size)+"%");
-//                        //todo write some job progress
-//                    }
-//
-//                    return null;
-//                }
-//            };
-//
-//
-//
-//            masterJob.jo.submitSubJob(job);
-//            jobs.add(job);
-//
-////            futures.add(executorService.submit(new Runnable() {
-////                public void run() {
-////                    TDoubleArrayList scores = new TDoubleArrayList(Graph.this.getSize());
-////
-////                    for(int j = 0; j < Graph.this.getSize(); ++j) {
-////                        if(Graph.this.getPeakIdx(final_i) == Graph.this.getPeakIdx(j)) {
-////                            scores.add(0.0D);
-////                        } else {
-////                            C candidate2 = Graph.this.getPossibleFormulas1D(j).getCandidate();
-////                            double score = 0.0D;
-////
-////                            for(int k = 0; k < edgeScorers.length; ++k) {
-////                                EdgeScorer edgeScorer = edgeScorers[k];
-////                                score += edgeScorer.score(candidate, candidate2);
-////                            }
-////
-////                            scores.add(score);
-////                        }
-////                    }
-////
-////                    edgeFilter.filterEdgesAndSetThreshold(final_graph, final_i, scores.toArray());
-////
-////                    //progess
-////                    int progress = counter.incrementAndGet();
-////                    if((progress-1) % step == 0 || (progress)==(size)) {
-////                        LOG.info((100*(progress)/size)+"%");
-////                    }
-////                }
-////            }));
-//        }
-//
-////        this.futuresGet(futures);
-//        awaitJobs(jobs);
-//
-//
-//        if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("computing edges in ms: "+(System.currentTimeMillis()-time));
-//
-////        for (EdgeScorer edgeScorer : edgeScorers) {
-////            edgeScorer.clean(); //changed don't clean. we need this information later on
-////        }
-//
-//    }
-//
-//    private void futuresGet(Iterable<Future> futures) {
-//        Iterator var2 = futures.iterator();
-//
-//        while(var2.hasNext()) {
-//            Future future = (Future)var2.next();
-//
-//            try {
-//                future.get();
-//            } catch (InterruptedException var5) {
-//                throw new RuntimeException(var5);
-//            } catch (ExecutionException var6) {
-//                throw new RuntimeException(var6);
-//            }
-//        }
-//
-//    }
-//
-//    private void awaitJobs(List<BasicJJob> jobs) throws ExecutionException {
-//        for (BasicJJob job : jobs) {
-//            job.awaitResult();
-//        }
-//    }
 
 
     protected void thinOutGraph() {
@@ -619,7 +350,10 @@ public class Graph<C extends Candidate<?>> {
 
             }
             this.possibleFormulas = possibleFormulasNew;
-            this.possibleFormulas1D = this.setUp(possibleFormulasNew);
+            InitData initData = this.setUp(possibleFormulas);
+            this.boundaries = initData.boundaries;
+            this.formulaIdxToPeakIdx = initData.formulaIdxToPeakIdx;
+            this.possibleFormulas1D = initData.possibleFormulas1D;
             this.size = this.possibleFormulas1D.length;
 
             int removedCount = 0;
@@ -1209,6 +943,16 @@ public class Graph<C extends Candidate<?>> {
         return connectedCompounds.size();
     }
 
+    protected static class InitData<C> {
+        int[] boundaries;
+        private int[] formulaIdxToPeakIdx;
+        Scored<C>[] possibleFormulas1D;
 
+        public InitData(int[] boundaries, int[] formulaIdxToPeakIdx, Scored<C>[] possibleFormulas1D) {
+            this.boundaries = boundaries;
+            this.formulaIdxToPeakIdx = formulaIdxToPeakIdx;
+            this.possibleFormulas1D = possibleFormulas1D;
+        }
+    }
 
 }
