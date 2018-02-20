@@ -2,6 +2,7 @@ package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
+import de.unijena.bioinf.jjobs.JobManager;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TObjectIntMap;
@@ -15,6 +16,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * compute Gibbs Sampling first with good quality spectra. Then, insert other ones and compute again.
@@ -26,7 +28,7 @@ public class ThreePhaseGibbsSampling {
     private NodeScorer<FragmentsCandidate>[] nodeScorers;
     private EdgeScorer<FragmentsCandidate>[] edgeScorers;
     private EdgeFilter edgeFilter;
-    private int workersCount;
+    private JobManager jobManager;
     private int repetitions;
     private Class<FragmentsCandidate> cClass;
 
@@ -44,13 +46,13 @@ public class ThreePhaseGibbsSampling {
 
 
     //todo extend from TwoPhaseGibbsSampling
-    public ThreePhaseGibbsSampling(String[] ids, FragmentsCandidate[][] possibleFormulas, int numberOfCandidatesFirstRound, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int workersCount, int repetitions) {
+    public ThreePhaseGibbsSampling(String[] ids, FragmentsCandidate[][] possibleFormulas, int numberOfCandidatesFirstRound, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, JobManager jobManager, int repetitions) throws ExecutionException {
         this.ids = ids;
         this.possibleFormulas = possibleFormulas;
         this.nodeScorers = nodeScorers;
         this.edgeScorers = edgeScorers;
         this.edgeFilter = edgeFilter;
-        this.workersCount = workersCount;
+        this.jobManager = jobManager;
         this.repetitions = repetitions;
         this.numberOfCandidatesFirstRound = numberOfCandidatesFirstRound;
         assertInput();
@@ -71,7 +73,7 @@ public class ThreePhaseGibbsSampling {
         }
     }
 
-    private void init(){
+    private void init() throws ExecutionException {
         firstRoundCompoundsIdx = new TIntArrayList();
         for (int i = 0; i < possibleFormulas.length; i++) {
             FragmentsCandidate[] poss = possibleFormulas[i];
@@ -111,7 +113,10 @@ public class ThreePhaseGibbsSampling {
 
 
         LOG.info("run Zodiac on good quality compounds only. Use "+firstRoundIds.length+" of "+ids.length+" compounds.");
-        gibbsParallel = new GibbsParallel<>(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, workersCount, repetitions);
+        GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter);
+        jobManager.submitJob(graphBuilder); //todo might dead lock??
+        graph = graphBuilder.awaitResult();
+        gibbsParallel = new GibbsParallel<>(graph, repetitions);
         graph = gibbsParallel.getGraph();
     }
 
@@ -135,12 +140,18 @@ public class ThreePhaseGibbsSampling {
         
     }
 
-    public void run(int maxSteps, final int burnIn){
+    public void run(int maxSteps, final int burnIn) throws ExecutionException {
+        run(maxSteps, burnIn, jobManager);
+    }
+
+    public void run(int maxSteps, final int burnIn, JobManager jobManager) throws ExecutionException {
 
         //1. run only on best quality spectra with restricted number of candidates
-        gibbsParallel.iteration(maxSteps, burnIn);
+        gibbsParallel.setIterationSteps(maxSteps, burnIn);
+        jobManager.submitJob(gibbsParallel);
 
-        results1 = gibbsParallel.getChosenFormulasBySampling();
+        gibbsParallel.awaitResult();
+        results1 = gibbsParallel.getChosenFormulas();
 
         firstRoundIds = gibbsParallel.getGraph().getIds();
 
@@ -185,7 +196,7 @@ public class ThreePhaseGibbsSampling {
             }
 
 
-            Graph<FragmentsCandidate> oneCompoundOfInterestGraph = graphWithFixedProbabilities.extractOneCompound(i, allScoredCandidates);
+            Graph<FragmentsCandidate> oneCompoundOfInterestGraph = graphWithFixedProbabilities.extractOneCompound(i, allScoredCandidates, edgeScorers);
 
 
             compareCompoundInteractions(graphWithFixedProbabilities, oneCompoundOfInterestGraph, i);
@@ -240,20 +251,21 @@ public class ThreePhaseGibbsSampling {
         //todo rather sample everything and just use results of low quality compounds? may there arise problems? in principle should not as we still sample all compounds (even 'fixed')
         FragmentsCandidate[][] candidatesNewRound = combineNewAndOldAndSetFixedProbabilities(results1, firstRoundCompoundsIdx);
         //todo this stupid thing creates a complete new graph.
-        gibbsParallel = new GibbsParallel<>(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, new TIntHashSet(firstRoundCompoundsIdx), workersCount, repetitions);
+        TIntHashSet fixedIds = new TIntHashSet(firstRoundCompoundsIdx);
+        GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, fixedIds);
+        jobManager.submitJob(graphBuilder); //todo might dead lock??
+        graph = graphBuilder.awaitResult();
+        gibbsParallel = new GibbsParallel<>(graph, repetitions, fixedIds);
 
+        gibbsParallel.setIterationSteps(maxSteps, burnIn);
+        jobManager.submitJob(gibbsParallel);
 
-
-        gibbsParallel.iteration(maxSteps, burnIn);
-
-        results2 = gibbsParallel.getChosenFormulasBySampling();
+        gibbsParallel.awaitResult();
+        results2 = gibbsParallel.getChosenFormulas();
 
         usedIds = gibbsParallel.getGraph().ids;
 
         combinedResult = combineResults(results1, firstRoundIds, results2, usedIds); //todo test. should not be necessary as all candidates are used anyways.
-
-        graph = gibbsParallel.getGraph();
-
 
     }
 
