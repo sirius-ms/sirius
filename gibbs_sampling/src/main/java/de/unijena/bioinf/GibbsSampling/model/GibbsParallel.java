@@ -1,9 +1,7 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.jjobs.BasicMasterJJob;
-import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.jjobs.MasterJJob;
+import de.unijena.bioinf.jjobs.*;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
@@ -16,11 +14,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<CompoundResult<C>[]> {
+public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<CompoundResult<C>[]> implements JobProgressEventListener {
     private int repetitions;
     private final List<GibbsMFCorrectionNetwork> gibbsNetworks;
     private Scored<C>[][] sampling;
     private Graph graph;
+    private int maxProgress;
+    private int currentProgress;
+    private int step;
 
     public GibbsParallel(Graph<C> graph, int repetitions, TIntHashSet fixedCompounds) throws ExecutionException {
         super(JobType.CPU);
@@ -118,9 +119,14 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
     protected CompoundResult<C>[] compute() throws Exception {
         if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
         final int maxStepProportioned = maxSteps / this.repetitions;
-        
+        maxProgress = maxStepProportioned*repetitions+burnIn*repetitions;
+        currentProgress = 0;
+        step = maxProgress/20;
+
+        updateProgress(0, maxProgress, 0, "sample probabilities");
         for (final GibbsMFCorrectionNetwork gibbsNetwork : gibbsNetworks) {
             gibbsNetwork.setIterationSteps(maxStepProportioned, burnIn);
+            gibbsNetwork.addPropertyChangeListener(this);
             submitSubJob(gibbsNetwork);
         }
 
@@ -157,5 +163,17 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
 
     public Graph getGraph() {
         return this.graph;
+    }
+
+
+    @Override
+    public void progressChanged(JobProgressEvent progressEvent) {
+        int progress = progressEvent.getNewValue();
+        if (progress<=0) return;
+        ++currentProgress;
+//        updateProgress(0, maxProgress, currentProgress, progressEvent.getMessage());
+        if(currentProgress % step == 0) {
+            LOG().info((100*(currentProgress)/maxProgress)+"%");
+        }
     }
 }

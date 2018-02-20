@@ -155,6 +155,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
     @Override
     protected Scored<C>[][] compute() throws Exception {
         if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
+        updateProgress(0, maxSteps+burnIn, 0);
         setActive();
         this.burnInRounds = burnIn;
         int iterationStepLength = this.graph.numberOfCompounds();
@@ -203,9 +204,11 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
             checkForInterruption();
             if (DEBUG && !changed) System.out.println("nothing changed in step "+i);
 
-            if((i % step == 0 && i>0) || i == (burnIn+maxSteps-1)) {
-                LOG().info("step "+((double)(((i+1)*100/(maxSteps+burnIn))))+"%");
-            }
+            updateProgress(0, maxSteps+burnIn, i+1);
+//            if((i % step == 0 && i>0) || i == (burnIn+maxSteps-1)) {
+//                LOG().info("step "+((double)(((i+1)*100/(maxSteps+burnIn))))+"%");
+//
+//            }
         }
         return getChosenFormulas();
     }

@@ -58,7 +58,6 @@ public class Zodiac {
         init();
 
         TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, repetitions);
-
         twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnIn);
         if (masterJJob!=null) masterJJob.submitSubJob(twoPhaseGibbsSampling);
         else SiriusJobs.getGlobalJobManager().submitJob(twoPhaseGibbsSampling);
@@ -292,4 +291,5 @@ public class Zodiac {
     public List<ExperimentResult> getAnnotatedExperimentResults(){
         return experimentResults;
     }
+
 }
