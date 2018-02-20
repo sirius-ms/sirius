@@ -125,7 +125,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         JPanel stack = new JPanel();
         stack.setLayout(new BorderLayout());
-        stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "CSI:FingerId - Structure Elucidation"));
+        stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "CSI:FingerID - Structure Elucidation"));
 
         stack.add(csiOptions, BorderLayout.CENTER);
         mainPanel.add(stack);

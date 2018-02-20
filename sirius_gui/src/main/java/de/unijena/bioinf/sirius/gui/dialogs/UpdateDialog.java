@@ -37,7 +37,7 @@ public class UpdateDialog extends JDialog implements ActionListener {
             }
             message.append("Submitted jobs will be allowed to finish until <b>").append(version.finishJobs.toString()).append("</b>.");
         } else {
-            message.append("Your Sirius version is not longer supported by the CSI:FingerID webservice.<br> Therefore the CSI:FingerId search is disabled in this version");
+            message.append("Your Sirius version is not longer supported by the CSI:FingerID webservice.<br> Therefore the CSI:FingerID search is disabled in this version");
         }
         message.append("</html>");
         final JLabel label = new JLabel(message.toString());

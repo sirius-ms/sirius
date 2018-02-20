@@ -36,9 +36,9 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
     public String getDescription() {
         return "<html>"
                 + "CSI:FingerID results for all selected molecular formulas that have been searched."
-                +"<br>"
+                + "<br>"
                 + "For each candidate structure all present molecular properties are represented by squares."
-                +"<br>"
+                + "<br>"
                 + "Click a square to highlight the molecular property in the structure."
                 + "</html>";
     }
@@ -111,13 +111,8 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
             searchCSIButton.setEnabled(false);
             searchCSIButton.setToolTipText("Fragmentation tree must explain at least 3 peaks");
         } else {
-            //if (resultElement.getCharge() > 0) {
-                searchCSIButton.setEnabled(true);
-                searchCSIButton.setToolTipText("Start CSI:FingerId online search to identify the molecular structure of the measured compound");
-            /*} else {
-                searchCSIButton.setEnabled(false);
-                searchCSIButton.setToolTipText("With this version, negative ion mode is not supported for CSI:FingerId");
-            }*/
+            searchCSIButton.setEnabled(true);
+            searchCSIButton.setToolTipText("Start CSI:FingerId online search to identify the molecular structure of the measured compound");
         }
 
     }
