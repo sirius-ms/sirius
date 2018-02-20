@@ -120,7 +120,7 @@ public class PrecursorIonType {
 
     @Override
     public int hashCode() {
-        return 31 * ionization.hashCode() + modification.hashCode();
+        return 31 * ionization.hashCode() + modification.hashCode() + 17*special.hashCode();
     }
 
     @Override
@@ -278,6 +278,6 @@ public class PrecursorIonType {
     }
 
     public boolean isPlainProtonationOrDeprotonation() {
-        return this.modification.isEmpty() && this.inSourceFragmentation.isEmpty() && ((getCharge() > 0 && ionization.equals(PeriodicTable.getInstance().getProtonation())) || (getCharge() < 0 && ionization.equals(PeriodicTable.getInstance().getDeprotonation())));
+        return this.modification.isEmpty() && this.inSourceFragmentation.isEmpty() && ((getCharge() > 0 && ionization.equals(PeriodicTable.getInstance().getProtonation())) || (getCharge() < 0 && ionization.equals(PeriodicTable.getInstance().getDeprotonation()))) && !isIntrinsicalCharged();
     }
 }

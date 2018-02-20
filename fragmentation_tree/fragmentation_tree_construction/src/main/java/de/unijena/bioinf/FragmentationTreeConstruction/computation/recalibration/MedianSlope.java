@@ -53,8 +53,10 @@ public class MedianSlope extends AbstractRecalibrationStrategy {
         preprocess(spectrum, ref);
         final double[] eps = new double[spectrum.size()];
         for (int k = 0; k < eps.length; ++k) eps[k] = this.epsilon.absoluteFor(spectrum.getMzAt(k));
-        final double[][] values = MzRecalibration.maxIntervalStabbing(spectrum, ref, eps, threshold);
-        //final double[][] values = getMedianSubset(spectrum, ref);//getMedianSubsetFairDistributed(spectrum, ref);
+        final double[][] values = //MzRecalibration.maxIntervalStabbing(spectrum, ref, eps, threshold);
+        //final double[][] values =
+                //getMedianSubset(spectrum, ref);
+        getMedianSubsetFairDistributed(spectrum, ref);
         // getMedianSubsetFairDistributed(spectrum, ref);
         if (values[0].length < minNumberOfPeaks) return new Identity();
 
@@ -93,10 +95,6 @@ public class MedianSlope extends AbstractRecalibrationStrategy {
                     return new Double(measured.getIntensityAt(o2)).compareTo(measured.getIntensityAt(o1));
                 }
             });
-        }
-
-        while (chosenPeaks[chosenPeaks.length - 1].size() < 4) {
-            chosenPeaks[chosenPeaks.length - 1].add(massOrderedSpectrum.size() - 1);
         }
 
         // take median of bin size

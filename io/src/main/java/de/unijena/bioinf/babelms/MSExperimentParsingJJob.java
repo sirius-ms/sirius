@@ -1,17 +1,15 @@
 package de.unijena.bioinf.babelms;
 
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.jjobs.MasterJJob;
 
 import java.io.File;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class MSExperimentParsingJJob extends MasterJJob<List<Ms2Experiment>> {
+public class MSExperimentParsingJJob extends BasicMasterJJob<List<Ms2Experiment>> {
     private final List<File> inputFiles;
 
     public MSExperimentParsingJJob(List<File> filesToParse) {
@@ -30,34 +28,27 @@ public class MSExperimentParsingJJob extends MasterJJob<List<Ms2Experiment>> {
         checkForInterruption();
 
         List<Ms2Experiment> results = new LinkedList<>();
-        Iterator<JJob> it = subJobs.iterator();
+//        Iterator<JJob> it = subJobs.iterator();
         //we do not want to check for interruption within the subjob iteration hence this is checked by the subjobs
-        int fileindex = 0;
-        while (it.hasNext()) {
-            JJob<List<Ms2Experiment>> subJob = (JJob<List<Ms2Experiment>>) it.next();
+        final AtomicInteger fileindex = new AtomicInteger(0);
+        forEachSubJob((it) -> {
+            JJob<List<Ms2Experiment>> subJob = (JJob<List<Ms2Experiment>>) it;
             List<Ms2Experiment> r = null; //todo do we want to fail if one import fails or skip it??
             try {
                 r = subJob.awaitResult();
                 if (r == null || r.isEmpty()) {
-                    LOG().warn(inputFiles.get(fileindex).getName() + " contains no Spectra!");
+                    LOG().warn(inputFiles.get(fileindex.get()).getName() + " contains no Spectra!");
                 } else {
                     results.addAll(r);
                 }
             } catch (Throwable e) {
-                LOG().error("Error parsing file (" + inputFiles.get(fileindex).getName() + "). No spectra resurned", e);
-            } finally {
-                removeSubJob(subJob);
+                LOG().error("Error parsing file (" + inputFiles.get(fileindex.get()).getName() + "). No spectra resurned", e);
             }
-            fileindex++;
-        }
-
+            fileindex.incrementAndGet();
+        });
+        //todo it would be nice to remove the subjobs to save memory
         checkForInterruption();
 
         return results;
-    }
-
-    @Override
-    protected JobManager jobManager() {
-        return SiriusJobs.getGlobalJobManager();
     }
 }

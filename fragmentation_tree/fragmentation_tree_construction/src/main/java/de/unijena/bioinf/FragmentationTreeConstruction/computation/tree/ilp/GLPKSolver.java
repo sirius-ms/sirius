@@ -93,7 +93,7 @@ public class GLPKSolver extends AbstractSolver {
     }
 
     @Override
-    protected void defineVariablesWithStartValues(int[] usedEdgeIds) throws Exception {
+    protected void setVariableStartValues(int[] usedEdgeIds) throws Exception {
         // not supported
     }
 

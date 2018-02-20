@@ -9,7 +9,7 @@ import de.unijena.bioinf.ChemistryBase.math.PartialParetoDistribution;
 
 import static java.lang.Math.*;
 
-class FormulaFeatureVector {
+public class FormulaFeatureVector {
 
     protected final static PeriodicTable T = PeriodicTable.getInstance();
 
@@ -303,6 +303,155 @@ class FormulaFeatureVector {
         return pdf/scale;
 
     }
+
+    // element distributions as discrete binned distributions
+    private double[] Sdist = new double[]{
+            1,
+            0.42589833895660972,
+            0.18368248186516192,
+            0.066918511509297132,
+            0.031651708812316527,
+            0.013920577538192307,
+            0.0098972100389640993,
+            0.0052166772921321018,
+            0.0041471282929048071,
+            0.0025
+            },
+        Pdist = new double[] {
+            1,0.11098968446934478,
+                0.03274865872527296,
+                0.013007213747221091,
+                0.0058455282622157838,
+                0.0031419714409409837,
+                0.0025
+        },
+        Cldist = new double[] {
+            1,
+                0.26346937582545255,
+                0.11599674477144897,
+                0.040649712199069467,
+                0.017716060771573196,
+                0.0068990933951010823,
+                0.0044928364877874129,
+                0.0025
+        },
+    Brdist = new double[]{1,0.12131982894522923,
+            0.033717281025597935,
+            0.0088774393663447367,
+            0.0045448982238727722,
+            0.0025},
+    Bdist = new double[]{1,0.15714561028228421,
+            0.0059405180964767906,
+            0.0025},
+    Idist = new double[]{1,0.051675839883673989,
+            0.0093185940773838332,
+            0.0031611520805513793,0.0025},
+    Fdist = new double[]{1,0.34968361078280757,
+            0.2510129204441871,
+            0.18875347763263411,
+            0.11016537364799325,0.1};
+
+
+    public double[] getAlternativeFeatures() {
+        double[] dists = distributions();
+
+        int nH = f.numberOfHydrogens(),
+                nC = f.numberOfCarbons(),
+                nN = f.numberOfNitrogens(),
+                nO = f.numberOfOxygens(),
+                nP = f.numberOf(P),
+                nS = f.numberOf(S),
+                nCl = f.numberOf(Cl),
+                nBr = f.numberOf(Br),
+                nI = f.numberOf(I),
+                nF = f.numberOf(F),
+                nAll = f.atomCount();
+        int nRest = nAll - nC - nN - nO - nP - nS - nCl - nBr - nI - nF;
+        int hetero = nAll - nH - nC;
+        final double normFactor = nAll, cc = nC+0.8d;
+        final double sqrnhetero = Math.sqrt(nAll-nH);
+
+        return new double[]{
+                rdbe() / 10d,                                         // 1
+                rdbeIsZero(),                                   // 2
+                mass() / 1000d,                                         // 3
+                Math.log(mass()) / Math.log(1000),                               // 4
+                rdbeDividedByMass(),                            // 5
+                hetero2carbon(),                                // 6
+                hetero2carbonWithoutOxygen(),                   // 7
+                no2carbon(),                                    // 8
+                halo2carbon(),                                  // 9
+                hydrogen2Carbon(),                              // 10
+                phosphor2oxygensulfur(),                        // 11
+
+
+                softlog(rdbeDistribution()),                    // 12
+                softlog(rdbeDividedByMassDistribution()),       // 13
+                softlog(rdbeDividedByMassDistribution2()),      // 14
+                softlog(hetero2carbonDistribution()),           // 15
+                softlog(hetero2carbonWithoutOxygenDist1()),     // 16
+                softlog(hetero2carbonWithoutOxygenDist2()),     // 17
+                softlog(no2carbonDist()),                       // 18
+                softlog(halo2carbonDist()),                     // 19
+                softlog(hydrogen2CarbonDist()),                 // 20
+                softlog(hydrogen2CarbonDist2()),                // 21
+                softlog(numberOfBenzolSubformulasPerRDBEDist()),// 22
+                softlog(numberOfBenzolSubformulasPerRDBEDist2()),// 23
+
+                //// ooooh, formula features
+                nH / normFactor,                                // 33
+                nC / normFactor,                            // 34
+                nN / normFactor,                          // 35
+                nO / normFactor,                            // 36
+                nP / normFactor,                                  // 37
+                nS / normFactor,                                  // 38
+                nCl / normFactor,                                 // 39
+                nBr / normFactor,                                 // 40
+                nI / normFactor,                                  // 41
+                nF / normFactor,                                  // 42
+                nO/(cc), // 53
+                nN/(cc),   // 54
+                nS/(cc),           // 55
+                nP/(cc),           // 56
+                nCl/(cc),          // 57
+                nBr/(cc),          // 58
+                nI/(cc),           // 59
+                nF/(cc),           // 60
+                nN/(nO+0.8f),   // 61
+                nN/(cc+nO), // 62,
+                hetero/normFactor,
+                has(f,O,P),
+                has(f,O,S),
+                has(f,P,S),
+                has(f,Br,Cl),
+
+                log(Cldist[Math.min(Cldist.length-1,nCl)]),
+                log(Brdist[Math.min(Brdist.length-1,nBr)]),
+                log(Fdist[Math.min(Fdist.length-1,nF)]),
+                log(Idist[Math.min(Idist.length-1,nI)]),
+                log(Sdist[Math.min(Sdist.length-1,nS)]),
+                log(Pdist[Math.min(Pdist.length-1,nP)]),
+
+                min(dists),
+                max(dists),
+
+                nBr / sqrnhetero,
+                nF / sqrnhetero,
+                nI / sqrnhetero,
+                nCl / sqrnhetero,
+                nP / sqrnhetero,
+                nS / sqrnhetero,
+                nBr==1 && nCl == 1 ? 1 : -1,
+                nS==3 && nP == 1 ? 1 : -1,
+                nP>=1 && nO>=nP/3 ? 1 : -1,
+                f.getNumberOfElements()/5d
+        };
+    }
+
+
+
+
+
 
 
 }

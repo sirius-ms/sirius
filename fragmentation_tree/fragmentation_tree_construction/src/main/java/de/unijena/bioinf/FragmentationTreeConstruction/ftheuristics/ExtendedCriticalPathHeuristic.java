@@ -73,7 +73,7 @@ public class ExtendedCriticalPathHeuristic {
         return buildSolution();
     }
 
-    public FTree buildSolution() {
+    protected FTree buildSolution() {
         if (numberOfSelectedEdges==0) {
             Fragment bestFrag = null;
             for (Fragment f : graph.getRoot().getChildren()) {
@@ -85,6 +85,7 @@ public class ExtendedCriticalPathHeuristic {
             t.setTreeWeight(bestFrag.getIncomingEdge().getWeight());
             return t;
         }
+        Arrays.sort(usedEdges, 0, numberOfSelectedEdges, Comparator.comparingInt(a -> a.getTarget().getColor()));
         final FTree tree = new FTree(usedEdges[0].getTarget().getFormula());
         final HashMap<MolecularFormula, Fragment> fragmentsByFormula = new HashMap<>();
         fragmentsByFormula.put(tree.getRoot().getFormula(), tree.getRoot());
@@ -104,7 +105,7 @@ public class ExtendedCriticalPathHeuristic {
     /*
      SIMPLE CASE: Graph is layered (i.e. no isotope peaks!)
      */
-    public boolean findCriticalPaths() {
+    protected boolean findCriticalPaths() {
         //System.out.println(".....");
         //Arrays.fill(criticalPaths, Double.NaN);
         double bestPathScore = 0d;
@@ -128,7 +129,7 @@ public class ExtendedCriticalPathHeuristic {
         return bestLoss!=null;
     }
 
-    private int backtrackBestPath(Loss loss,int maxColor) {
+    protected int backtrackBestPath(Loss loss,int maxColor) {
         usedEdges[numberOfSelectedEdges++] = loss;
         //System.out.println("ADD " + loss + " WITH WEIGHT " + loss.getWeight() );
         assert usedColors.get(loss.getTarget().getColor())==false;
@@ -156,7 +157,7 @@ public class ExtendedCriticalPathHeuristic {
         return maxColor;
     }
 
-    private double recomputeCriticalScore(int vertexId) {
+    protected double recomputeCriticalScore(int vertexId) {
         if (!Double.isNaN(criticalPaths[vertexId]))
             return criticalPaths[vertexId];
         final Fragment u = graph.getFragmentAt(vertexId);
@@ -172,7 +173,7 @@ public class ExtendedCriticalPathHeuristic {
     }
 
 
-    private void addSeletableEdgesFor(Fragment root) {
+    protected void addSeletableEdgesFor(Fragment root) {
         for (int i=0, n = root.getOutDegree(); i < n; ++i) {
             final Loss l = root.getOutgoingEdge(i);
             if (!usedColors.get(l.getTarget().getColor())) {
@@ -194,19 +195,6 @@ public class ExtendedCriticalPathHeuristic {
             //if (relocate(l)) ++c;
             relocate(l);
         }
-        Arrays.sort(usedEdges, 0, numberOfSelectedEdges, new Comparator<Loss>() {
-            @Override
-            public int compare(Loss o1, Loss o2) {
-                return o1.getTarget().getColor() - o2.getTarget().getColor();
-            }
-        });
-        /*
-        for (int l=0; l < numberOfSelectedEdges; ++l) {
-            score -= usedEdges[l].getWeight();
-        }
-        */
-        //System.err.println(c + " => " + (-score));
-
     }
 
     protected void relocateBySpanningTree() {
@@ -235,11 +223,9 @@ public class ExtendedCriticalPathHeuristic {
             usedEdges[numberOfSelectedEdges++] = maximum;
             availableLosses.remove(maximum.getTarget().getVertexId());
         }
-        Arrays.sort(usedEdges, 0, numberOfSelectedEdges, (a,b)->a.getTarget().getColor()-b.getTarget().getColor());
-
     }
 
-    private Loss findMax(TIntObjectHashMap<ArrayList<Loss>> map) {
+    protected Loss findMax(TIntObjectHashMap<ArrayList<Loss>> map) {
         Loss[] maxLoss = new Loss[1];
         map.forEachValue((x)->{
             for (Loss l : x) {
@@ -265,7 +251,4 @@ public class ExtendedCriticalPathHeuristic {
             return true;
         } else return false;
     }
-
-
-
 }

@@ -138,7 +138,7 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
         }
 
         final double neutralmass = input.getMoleculeNeutralMass();
-        if ((input.getMolecularFormula()!=null || neutralmass>0) && input.getIonMass()>0 && input.getPrecursorIonType()!=null) {
+        if ((input.getMolecularFormula()!=null || neutralmass>0) && input.getIonMass()>0 && input.getPrecursorIonType()!=null && !input.getPrecursorIonType().isIonizationUnknown()) {
             final double modification = input.getIonMass()-neutralmass;
             if (Math.abs(input.getPrecursorIonType().neutralMassToPrecursorMass(neutralmass)-input.getIonMass()) > 1e-2) {
                 final PrecursorIonType iontype = PeriodicTable.getInstance().ionByMass(modification, 1e-2, input.getPrecursorIonType().getCharge());

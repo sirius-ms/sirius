@@ -56,11 +56,13 @@ public class ExperimentResult {
     }
 
     private static String simplify(String name) {
+        if (name.length()>64)
+            name = name.substring(0,48);
         return name.replaceAll("[^A-Za-z0-9,\\-]+", "");
     }
     private static String simplifyURL(String filename) {
         filename = new File(filename).getName();
-        int i = filename.lastIndexOf('.');
+        int i = Math.min(48,filename.lastIndexOf('.'));
         return filename.substring(0,i);
     }
 }

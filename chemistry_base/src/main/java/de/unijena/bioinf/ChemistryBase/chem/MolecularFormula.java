@@ -428,6 +428,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
      * for all elements ei is (this(ei) - other(ei)) {@literal >=} 0
      */
     public boolean isSubtractable(MolecularFormula other) {
+        if (getMass() < other.getMass()) return false;
         final short[] amounts = buffer();
         final TableSelection selection = getTableSelection();
         if (selection != other.getTableSelection()) return isSubtractableInc(other);

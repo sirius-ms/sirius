@@ -12,10 +12,12 @@ import org.slf4j.LoggerFactory;
 public class GrbSolver extends AbstractSolver{
 
     public final static IlpFactory<GrbSolver> Factory = new IlpFactory<GrbSolver>() {
+        protected GRBEnv env = getDefaultEnv();
         @Override
         public GrbSolver create(ProcessedInput input, FGraph graph, TreeBuilder.FluentInterface options) {
-            return new GrbSolver(graph,input,options);
+            return new GrbSolver(env, graph,input,options);
         }
+
         @Override
         public boolean isThreadSafe() {
             return true;
@@ -27,12 +29,13 @@ public class GrbSolver extends AbstractSolver{
         }
     };
 
-    protected static GRBEnv env = getDefaultEnv();;
     protected GRBModel model;
     protected GRBVar[] variables;
+    protected GRBEnv env;
 
-    public GrbSolver(FGraph graph, ProcessedInput input, TreeBuilder.FluentInterface options) {
+    public GrbSolver(GRBEnv env, FGraph graph, ProcessedInput input, TreeBuilder.FluentInterface options) {
         super(graph, input, options);
+        this.env = env;
     }
 
     @Override
@@ -65,7 +68,7 @@ public class GrbSolver extends AbstractSolver{
     }
 
     @Override
-    protected void defineVariablesWithStartValues(int[] usedEdgeIds) throws Exception {
+    protected void setVariableStartValues(int[] usedEdgeIds) throws Exception {
         final double[] values = new double[losses.size()];
         for (int index : usedEdgeIds) values[index] = 1d;
         model.set(GRB.DoubleAttr.Start, variables, values);
@@ -141,7 +144,6 @@ public class GrbSolver extends AbstractSolver{
             case GRB.OPTIMAL:
                 return TreeBuilder.AbortReason.COMPUTATION_CORRECT;
             case GRB.TIME_LIMIT:
-                logger.info("Timeout reached.");
                 return TreeBuilder.AbortReason.TIMEOUT;
 
 

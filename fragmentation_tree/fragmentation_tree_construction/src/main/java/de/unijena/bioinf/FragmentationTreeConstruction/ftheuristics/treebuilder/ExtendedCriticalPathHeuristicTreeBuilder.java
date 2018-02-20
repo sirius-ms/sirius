@@ -2,7 +2,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.treebuilder
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.ExtendedCriticalPathHeuristic;
+import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.CriticalPathInsertionHeuristic;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
 public class ExtendedCriticalPathHeuristicTreeBuilder implements TreeBuilder {
@@ -14,7 +14,7 @@ public class ExtendedCriticalPathHeuristicTreeBuilder implements TreeBuilder {
 
     @Override
     public Result computeTree(ProcessedInput input, FGraph graph, FluentInterface options) {
-        return new Result(new ExtendedCriticalPathHeuristic(graph).buildSolution(), false, AbortReason.COMPUTATION_CORRECT);
+        return new Result(new CriticalPathInsertionHeuristic(graph).solve(), false, AbortReason.COMPUTATION_CORRECT);
     }
 
     @Override
