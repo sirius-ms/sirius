@@ -1,8 +1,10 @@
 package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
+import de.unijena.bioinf.sirius.projectspace.Index;
 import de.unijena.bioinf.sirius.projectspace.ProjectReader;
 import de.unijena.bioinf.sirius.projectspace.ProjectWriter;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +24,8 @@ public class ProjectSpaceMerger implements ProjectWriter {
     protected boolean zip;
     protected ProjectWriter underlyingWriter;
 
+    protected int numberOfWrittenExperiments;
+
     public ProjectSpaceMerger(CLI<?> cli, String file, boolean zip) throws IOException {
         this.cli = cli;
         this.zip = zip;
@@ -30,10 +34,16 @@ public class ProjectSpaceMerger implements ProjectWriter {
 
         this.tempFile = File.createTempFile("sirius", ".sirius");
         tempFile.deleteOnExit();
+        this.numberOfWrittenExperiments = 0;
         try (final ProjectWriter pw = cli.getSiriusOutputWriter(tempFile.getAbsolutePath(), cli.getWorkspaceWritingEnvironmentForSirius(tempFile.getAbsolutePath()))) {
             while (reader.hasNext()) {
-                final ExperimentResult er = reader.next();
-                pw.writeExperiment(er);
+                try {
+                    final ExperimentResult er = reader.next();
+                    pw.writeExperiment(er);
+                    numberOfWrittenExperiments = Math.max(numberOfWrittenExperiments, er.getExperiment().getAnnotation(Index.class, Index.NO_INDEX).index);
+                } catch (Throwable t) {
+                    LoggerFactory.getLogger(ProjectSpaceMerger.class).error(t.getMessage(),t);
+                }
             }
         }
         reader.close();
@@ -57,6 +67,9 @@ public class ProjectSpaceMerger implements ProjectWriter {
         this.underlyingWriter = zip ? cli.getSiriusOutputWriter(file, cli.getWorkspaceWritingEnvironmentForSirius(file)) : cli.getDirectoryOutputWriter(file, cli.getWorkspaceWritingEnvironmentForDirectoryOutput(file));
     }
 
+    public int getNumberOfWrittenExperiments() {
+        return numberOfWrittenExperiments;
+    }
 
     @Override
     public void writeExperiment(ExperimentResult result) throws IOException {
