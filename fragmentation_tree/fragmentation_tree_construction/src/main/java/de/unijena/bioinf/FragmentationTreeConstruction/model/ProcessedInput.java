@@ -115,7 +115,7 @@ public class ProcessedInput implements Cloneable {
     }
 
     @Override
-    protected ProcessedInput clone() {
+    public ProcessedInput clone() {
         try {
             ProcessedInput p =  (ProcessedInput) super.clone();
             p.annotations = new HashMap<>(p.annotations);
