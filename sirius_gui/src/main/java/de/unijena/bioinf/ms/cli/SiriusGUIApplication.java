@@ -24,10 +24,16 @@ import java.awt.event.WindowEvent;
 public class SiriusGUIApplication {
 
     public static void main(String[] args) {
+        /*
         final ZodiacCLI<SiriusGUIOptions> cli = new ZodiacCLI<>();
         cli.parseArgs(args, SiriusGUIOptions.class);
-
-        if (cli.options.isGUI()) {
+           */
+        boolean isGui = false;
+        for (String arg : args) {
+            if (arg.equalsIgnoreCase("--gui") || arg.equals("-u"))
+                isGui = true;
+        }
+        if (isGui) {
             final int cpuThreads = Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1"));
             SiriusJobs.setGlobalJobManager(new SwingJobManager(PropertyManager.getNumberOfThreads(), Math.min(cpuThreads, 3)));
             FingeridCLI.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
