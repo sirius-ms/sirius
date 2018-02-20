@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMasterJJob<Scored<C>[][]> {
-    private static final Logger LOG = LoggerFactory.getLogger(GibbsMFCorrectionNetwork.class);
     public static final boolean DEBUG = false;
     public static final int DEFAULT_CORRELATION_STEPSIZE = 10;
     private static final boolean OUTPUT_SAMPLE_PROBABILITY = false;
@@ -205,7 +204,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
             if (DEBUG && !changed) System.out.println("nothing changed in step "+i);
 
             if((i % step == 0 && i>0) || i == (burnIn+maxSteps-1)) {
-                LOG.info("step "+((double)(((i+1)*100/(maxSteps+burnIn))))+"%");
+                LOG().info("step "+((double)(((i+1)*100/(maxSteps+burnIn))))+"%");
             }
         }
         return getChosenFormulas();
