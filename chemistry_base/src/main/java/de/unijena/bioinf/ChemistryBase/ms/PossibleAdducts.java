@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Can be attached to a Ms2Experiment or ProcessedInput. If PrecursorIonType is unknown, CSI:FingerID will use this
@@ -38,6 +39,10 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType> {
         return Collections.unmodifiableSet(adducts);
     }
 
+    public Set<PrecursorIonType> getAdducts(Ionization ionMode) {
+        return adducts.stream().filter((a)->a.getIonization().equals(ionMode)).collect(Collectors.toSet());
+    }
+
     public boolean hasPositiveCharge() {
         for (PrecursorIonType a : adducts)
             if (a.getCharge() > 0)
@@ -64,6 +69,12 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType> {
         for (PrecursorIonType ionType : adducts)
             copy.add(ionType.getIonization());
         return copy;
+    }
+
+    public void update(PossibleIonModes ionModes) {
+        for (PrecursorIonType precursorIonType : ionModes.getIonModesAsPrecursorIonType()) {
+            addAdduct(precursorIonType);
+        }
     }
 
     public void addAdduct(String adductName) {

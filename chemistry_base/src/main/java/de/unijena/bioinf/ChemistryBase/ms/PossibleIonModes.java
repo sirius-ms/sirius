@@ -8,7 +8,7 @@ import java.util.*;
 
 /**
  * Can be attached to a Ms2Experiment or ProcessedInput. If PrecursorIonType is unknown, SIRIUS will use this
- * object and compute trees for all ion types with probability > 0.
+ * object and compute trees for all ion types with probability &gt; 0.
  * If probability is unknown, you can assign a constant to each ion type.
  */
 public class PossibleIonModes {
@@ -17,6 +17,22 @@ public class PossibleIonModes {
         final PossibleIonModes a = new PossibleIonModes();
         a.add(precursorIonType, 1);
         a.disableGuessFromMs1();
+        return a;
+    }
+
+    public static PossibleIonModes useAlwaysProtonationButAllowMs1Detection(int charge) {
+        final PossibleIonModes a = new PossibleIonModes();
+        final PeriodicTable t = PeriodicTable.getInstance();
+        if (charge > 0) {
+            a.add(t.ionByName("[M+H]+").getIonization(), 1);
+            a.add(t.ionByName("[M+Na]+").getIonization(), 0);
+            a.add(t.ionByName("[M+K]+").getIonization(), 0);
+        } else {
+            a.add(t.ionByName("[M-H]-").getIonization(), 1);
+            a.add(t.ionByName("[M+Cl]-").getIonization(), 0);
+            a.add(t.ionByName("[M+Br]-").getIonization(), 0);
+        }
+        a.enableGuessFromMs1();
         return a;
     }
 
@@ -51,45 +67,93 @@ public class PossibleIonModes {
         }
     }
 
-    protected List<ProbabilisticIonization> ionTypes;
+    public static enum GuessingMode {DISABLED, SELECT, ADD_IONS;
+        public boolean isEnabled(){
+            return this.equals(SELECT) || this.equals(ADD_IONS);
+        }
+
+    };
+    protected static final GuessingMode DEFAULT_ENABLED_GUESSING_MODE = GuessingMode.ADD_IONS;
+
+    protected List<ProbabilisticIonization> ionTypes;//todo i think class is currently not save for having ionization multiple times in the list
     protected double totalProb;
-    protected boolean enableGuessFromMs1;
+    protected GuessingMode GuessingModeFromMs1;
+
 
     public PossibleIonModes(PossibleIonModes pi) {
         this.ionTypes = new ArrayList<>();
         for (ProbabilisticIonization i : pi.ionTypes)
             this.ionTypes.add(new ProbabilisticIonization(i.ionMode, i.probability));
         this.totalProb = pi.totalProb;
-        this.enableGuessFromMs1 = pi.enableGuessFromMs1;
+        this.GuessingModeFromMs1 = pi.GuessingModeFromMs1;
     }
 
     public PossibleIonModes() {
         this.ionTypes = new ArrayList<>();
-        this.enableGuessFromMs1 = true;
+        this.GuessingModeFromMs1 = DEFAULT_ENABLED_GUESSING_MODE;
     }
 
     public boolean isGuessFromMs1Enabled() {
-        return enableGuessFromMs1;
+        return GuessingModeFromMs1.isEnabled();
     }
 
-    public void enableGuessFromMs1(boolean enabled) {
-        this.enableGuessFromMs1 = enabled;
+    public void setGuessFromMs1(GuessingMode mode) {
+        this.GuessingModeFromMs1 = mode;
+    }
+
+    public void enableGuessFromMs1WithCommonIonModes(int charge) {
+        if (!isGuessFromMs1Enabled()) setGuessFromMs1(DEFAULT_ENABLED_GUESSING_MODE);
+        final PossibleIonModes pm = PossibleIonModes.useAlwaysProtonationButAllowMs1Detection(charge);
+        for (ProbabilisticIonization pa : pm.ionTypes) {
+            if (getProbabilityFor(pa.ionMode)<=0) takeMaxProbability(pa);
+        }
     }
     public void enableGuessFromMs1(){
-        enableGuessFromMs1(true);
+        setGuessFromMs1(DEFAULT_ENABLED_GUESSING_MODE);
     }
     public void disableGuessFromMs1() {
-        enableGuessFromMs1(false);
+        setGuessFromMs1(GuessingMode.DISABLED);
+    }
+
+    public GuessingMode getGuessingMode() {
+        return GuessingModeFromMs1;
+    }
+
+    protected void takeMaxProbability(ProbabilisticIonization pi){
+        final ListIterator<ProbabilisticIonization> iter = ionTypes.listIterator();
+        while (iter.hasNext()) {
+            final ProbabilisticIonization ion = iter.next();
+            if (ion.ionMode.equals(pi.ionMode)) {
+                if (ion.probability>=pi.probability) return;
+                totalProb -= ion.probability;
+                iter.set(pi);
+                totalProb += pi.probability;
+                return;
+            }
+        }
+        ionTypes.add(pi);
+        totalProb += pi.probability;
+        return;
     }
 
     public void add(ProbabilisticIonization ionMode) {
-        ionTypes.add(ionMode);
-        totalProb += ionMode.probability;
+        add(ionMode.ionMode,ionMode.probability);
     }
 
-    public void add(PrecursorIonType ionType, double probability) {
+    public boolean add(PrecursorIonType ionType, double probability) {
+        final ListIterator<ProbabilisticIonization> iter = ionTypes.listIterator();
+        while (iter.hasNext()) {
+            final ProbabilisticIonization ion = iter.next();
+            if (ion.ionMode.equals(ionType.getIonization())) {
+                totalProb -= ion.probability;
+                iter.set(new ProbabilisticIonization(ionType.getIonization(),probability));
+                totalProb += probability;
+                return false;
+            }
+        }
         ionTypes.add(new ProbabilisticIonization(ionType.getIonization(), probability));
         totalProb += probability;
+        return true;
     }
 
     public void add(String ionType, double probability) {
@@ -101,12 +165,50 @@ public class PossibleIonModes {
     }
 
     public void add(Ionization ionType) {
-        double minProb = Double.POSITIVE_INFINITY;
-        for (ProbabilisticIonization pi : ionTypes)
-            if (pi.probability > 0)
-                minProb = Math.min(pi.probability, minProb);
-        if (Double.isInfinite(minProb)) minProb = 1d;
-        add(PrecursorIonType.getPrecursorIonType(ionType), minProb);
+        add(PrecursorIonType.getPrecursorIonType(ionType), 1d);
+    }
+
+    public void add(PrecursorIonType[] ionTypes, double[] probabilities) {
+        for (int i = 0; i < ionTypes.length; i++) {
+            add(ionTypes[i], probabilities[i]);
+        }
+    }
+
+    public void updateGuessedIons(PrecursorIonType[] ionTypes) {
+        updateGuessedIons(ionTypes, null);
+    }
+
+    /**
+     * use this method to update this {@link PossibleIonModes} after guessing from MS1.
+     * Don't forget to set appropriate {@link GuessingMode}
+     * @param ionTypes
+     * @param probabilities
+     */
+    public void updateGuessedIons(PrecursorIonType[] ionTypes, double[] probabilities) {
+        if (probabilities==null){
+            probabilities = new double[ionTypes.length];
+            Arrays.fill(probabilities, 1d);
+        }
+
+        if (GuessingModeFromMs1.equals(GuessingMode.ADD_IONS)){
+            //adds new ions with their probabilities
+            add(ionTypes, probabilities);
+        } else if (GuessingModeFromMs1.equals(GuessingMode.SELECT)){
+            //selects from known ion modes. no new modes allowed
+            //set all probabilities to 0
+            for (ProbabilisticIonization ionType : this.ionTypes) {
+                add(new ProbabilisticIonization(ionType.ionMode, 0d));
+            }
+            //add new probabilities
+            for (int i = 0; i < ionTypes.length; i++) {
+                if (add(ionTypes[i],probabilities[i])){
+                    throw new RuntimeException("Adding new ion mode is forbidden. It is only allowed to select known ion modes.");
+                }
+
+            }
+        } else {
+            throw new RuntimeException("guessing ionization is disabled");
+        }
     }
 
     public List<ProbabilisticIonization> probabilisticIonizations() {
@@ -142,6 +244,22 @@ public class PossibleIonModes {
             if (a.ionMode.equals(ionType)) prob += a.probability;
         }
         return prob / totalProb;
+    }
+
+    public List<Ionization> getIonModesWithProbabilityAboutZero() {
+        final Set<Ionization> ions = new HashSet<>(ionTypes.size());
+        for (ProbabilisticIonization a : ionTypes)
+            if (a.probability>0)
+                ions.add(a.ionMode);
+        return new ArrayList<>(ions);
+    }
+
+    public List<PrecursorIonType> getIonModesWithProbabilityAboutZeroAsPrecursorIonType() {
+        final Set<PrecursorIonType> ions = new HashSet<>(ionTypes.size());
+        for (ProbabilisticIonization a : ionTypes)
+            if (a.probability>0)
+                ions.add(PrecursorIonType.getPrecursorIonType(a.ionMode));
+        return new ArrayList<>(ions);
     }
 
     public List<Ionization> getIonModes() {

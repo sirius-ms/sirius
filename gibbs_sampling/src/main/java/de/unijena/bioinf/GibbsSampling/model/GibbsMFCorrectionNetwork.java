@@ -3,19 +3,16 @@ package de.unijena.bioinf.GibbsSampling.model;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.GibbsSampling.model.ReactionStepSizeScorer.ConstantReactionStepSizeScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.ReactionScorer;
-import gnu.trove.list.array.TDoubleArrayList;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JobManager;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
-public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
+public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMasterJJob<Scored<C>[][]> {
     private static final Logger LOG = LoggerFactory.getLogger(GibbsMFCorrectionNetwork.class);
     public static final boolean DEBUG = false;
     public static final int DEFAULT_CORRELATION_STEPSIZE = 10;
@@ -29,11 +26,11 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     int[] activeIdx;
     boolean[] active;
     int[] overallAssignmentFreq;
-    double[] assignmentFreqByPosterior;
-    double[] maxPosteriorProbs;
     double[] posteriorProbs;
     double[] posteriorProbSums;
     private Random random;
+    private JobManager jobManager;
+
 
     /*
     instead of using sum of log odds, use the maximum.
@@ -53,64 +50,17 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
      */
     private TIntHashSet fixedCompounds;
 
-    public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds, int threads) {
-        for (Candidate[] pF : possibleFormulas) {
-            if (pF==null || pF.length==0) throw new RuntimeException("some peaks don\'t have any explanation");
-        }
-
-        this.fixedCompounds = fixedCompounds==null?new TIntHashSet():fixedCompounds;
-        this.graph = buildGraph(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, fixedCompounds, threads);
-        this.random = new Random();
-        this.setActive();
-
-    }
-
-    public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int threads) {
-        this(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, null, threads);
-    }
-
-    public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, Reaction[] reactions) {
-        this(ids, possibleFormulas, new NodeScorer[]{new StandardNodeScorer()}, new EdgeScorer[]{new ReactionScorer(reactions, new ConstantReactionStepSizeScorer())}, new EdgeThresholdFilter(1.0D), null, 1);
-    }
 
     public GibbsMFCorrectionNetwork(Graph graph) {
-        this.graph = graph;
-        this.random = new Random();
-        this.setActive();
+        this(graph, null);
     }
 
-    public static <C extends Candidate<?>> Graph<C> buildGraph(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds, int numOfThreads) {
-        for (NodeScorer<C> nodeScorer : nodeScorers) {
-            for (int i = 0; i < possibleFormulas.length; i++) {
-                if (isFixed(fixedCompounds, i)) continue;
-                C[] candidates = possibleFormulas[i];
-                nodeScorer.score(candidates);
-            }
-        }
-
-        List<String> newIds = new ArrayList();
-        List<Scored<C>[]> newFormulas = new ArrayList();
-
-        for(int i = 0; i < possibleFormulas.length; ++i) {
-            C[] candidates = possibleFormulas[i];
-            String id = ids[i];
-            ArrayList<Scored<Candidate>> scoredCandidates = new ArrayList();
-
-            for (C candidate : candidates) {
-                scoredCandidates.add(new Scored(candidate, candidate.getNodeLogProb()));
-            }
-
-            if(scoredCandidates.size() > 0) {
-                newIds.add(id);
-                newFormulas.add(scoredCandidates.toArray(new Scored[0]));
-            }
-        }
-
-        String[] filteredIds = newIds.toArray(new String[0]);
-        Scored<C>[][] scoredPossibleFormulas = newFormulas.toArray(new Scored[0][]);
-        Graph<C> graph = new Graph<C>(filteredIds, scoredPossibleFormulas);
-        graph.init(edgeScorers, edgeFilter, numOfThreads);
-        return graph;
+    public GibbsMFCorrectionNetwork(Graph graph, TIntHashSet fixedCompounds) {
+        super(JobType.CPU);
+        this.graph = graph;
+        this.fixedCompounds = fixedCompounds==null?new TIntHashSet():fixedCompounds;
+        this.random = new Random();
+        this.setActive();
     }
 
     private static boolean isFixed(TIntHashSet fixedCompounds, int i) {
@@ -189,19 +139,23 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         }
 
         this.overallAssignmentFreq = new int[this.graph.getSize()];
-        this.assignmentFreqByPosterior = new double[this.graph.getSize()];
-        this.maxPosteriorProbs = new double[this.graph.getSize()];
     }
 
     private double getPosteriorScore(double prior, double score) {
         return prior + score;
     }
 
-    public void iteration(int maxSteps) {
-        this.iteration(maxSteps, maxSteps / 5);
+    private int maxSteps = -1;
+    private int burnIn = -1;
+
+    public void setIterationSteps(int maxSteps, int burnIn) {
+        this.maxSteps = maxSteps;
+        this.burnIn = burnIn;
     }
 
-    public void iteration(int maxSteps, int burnIn) {
+    @Override
+    protected Scored<C>[][] compute() throws Exception {
+        if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
         setActive();
         this.burnInRounds = burnIn;
         int iterationStepLength = this.graph.numberOfCompounds();
@@ -254,7 +208,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
                 LOG.info("step "+((double)(((i+1)*100/(maxSteps+burnIn))))+"%");
             }
         }
-
+        return getChosenFormulas();
     }
 
     public String[] getIds() {
@@ -326,7 +280,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
                 Scored<C>[] candidatesScored = new Scored[candidatesLogScore.length];
                 for (int j = 0; j < candidatesScored.length; j++) {
                     //todo normalize??
-                    candidatesScored[i] = new Scored<>(candidatesLogScore[i].getCandidate(), Math.exp(candidatesLogScore[i].getScore()));
+                    candidatesScored[j] = new Scored<>(candidatesLogScore[j].getCandidate(), Math.exp(candidatesLogScore[j].getScore()));
                 }
                 candidatesByCompound[i] = candidatesScored;
                 continue;
@@ -358,24 +312,13 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         return candidatesByCompound;
     }
 
-    public EdgeScorer[] getEdgeScorers() {
-        return this.graph.getUsedEdgeScorers();
-    }
-
     public Graph getGraph() {
         return this.graph;
     }
 
-    public Scored<C>[][] getChosenFormulasByMaxPosterior() {
-        return this.getFormulasSortedByScoring(this.maxPosteriorProbs);
-    }
 
     public Scored<C>[][] getChosenFormulasBySampling() {
         return this.getFormulasSortedByScoring(this.overallAssignmentFreq);
-    }
-
-    public Scored<C>[][] getChosenFormulasByAddedUpPosterior() {
-        return this.getFormulasSortedByScoring(this.assignmentFreqByPosterior);
     }
 
     public Scored<C>[][] getChosenFormulas() {
@@ -389,19 +332,8 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         double probSum = this.posteriorProbSums[peakIdx];
         int absIdx = this.getRandomIdx(min, max, probSum, this.posteriorProbs);
         if(this.currentRound > this.burnInRounds) {
-            double absCurrentActive;
             if((double)(this.currentRound - this.burnInRounds) % DEFAULT_CORRELATION_STEPSIZE == 0.0D) {
                 ++this.overallAssignmentFreq[absIdx];
-                for(int i = min; i <= max; ++i) {
-                    absCurrentActive = this.posteriorProbs[i];
-                    this.assignmentFreqByPosterior[i] += absCurrentActive;
-                }
-            }
-            for(int i = min; i <= max; ++i) {
-                absCurrentActive = this.posteriorProbs[i];
-                if(this.maxPosteriorProbs[i] < absCurrentActive) {
-                    this.maxPosteriorProbs[i] = absCurrentActive;
-                }
             }
         }
 

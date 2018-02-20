@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 
 public class IdentificationResult implements Cloneable, Comparable<IdentificationResult> {
 
+    // TODO: we have to get rid of all these -_-
     protected FTree tree, beautifulTree, resolvedBeautifulTree;
     protected MolecularFormula formula;
     protected int rank;
@@ -204,14 +205,14 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
         copyAnnotations(tree, beautifulTree);
     }
 
-    private void copyAnnotations(FTree tree, FTree beautifulTree){
+    private void copyAnnotations(FTree tree, FTree beautifulTree) {
         //todo do this for all annotations?
         UnconsideredCandidatesUpperBound upperBound = tree.getAnnotationOrNull(UnconsideredCandidatesUpperBound.class);
-        if (upperBound==null) return;
+        if (upperBound == null) return;
         //TODO always update as beautified trees are computed each separately!?
 //        if (beautifulTree.getAnnotationOrNull(UnconsideredCandidatesUpperBound.class)==null){
         beautifulTree.removeAnnotation(UnconsideredCandidatesUpperBound.class);
-            beautifulTree.addAnnotation(UnconsideredCandidatesUpperBound.class, upperBound);
+        beautifulTree.addAnnotation(UnconsideredCandidatesUpperBound.class, upperBound);
 //        }
     }
 

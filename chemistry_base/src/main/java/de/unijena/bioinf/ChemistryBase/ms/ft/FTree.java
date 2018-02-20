@@ -161,6 +161,8 @@ public class FTree extends AbstractFragmentationGraph {
      * @return number of newly created edges
      */
     public int deleteVertex(Fragment vertex) {
+        if (fragments.get(vertex.vertexId)!=vertex)
+            throw new IllegalArgumentException("given vertex stems from a different graph");
         final List<Fragment> children = new ArrayList<Fragment>(vertex.getChildren());
         final Fragment parent = vertex.getParent();
         deleteFragment(vertex);
@@ -170,6 +172,8 @@ public class FTree extends AbstractFragmentationGraph {
 
     public int deleteSubtree(Fragment root) {
         assert !root.isDeleted();
+        if (fragments.get(root.vertexId)!=root)
+            throw new IllegalArgumentException("given vertex stems from a different graph");
         if (root.isLeaf()) {
             deleteFragment(root);
             return 1;

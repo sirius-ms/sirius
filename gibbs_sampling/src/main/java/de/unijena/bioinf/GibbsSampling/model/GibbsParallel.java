@@ -1,6 +1,9 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.jjobs.MasterJJob;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
@@ -13,65 +16,40 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class GibbsParallel<C extends Candidate<?>> {
-    private String[] ids;
-    private C[][] possibleFormulas;
-    private NodeScorer<C>[] nodeScorers;
-    private EdgeScorer<C>[] edgeScorers;
-    private EdgeFilter edgeFilter;
-    private int workersCount;
+public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<CompoundResult<C>[]> {
     private int repetitions;
     private final List<GibbsMFCorrectionNetwork> gibbsNetworks;
-    private Scored<C>[][] maxPosterior;
-    private Scored<C>[][] addedUpPosterior;
     private Scored<C>[][] sampling;
     private Graph graph;
-    private TIntHashSet fixedCompounds;
 
-    public GibbsParallel(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds, int workersCount, int repetitions) {
-        this.ids = ids;
-        this.possibleFormulas = possibleFormulas;
-        this.nodeScorers = nodeScorers;
-        this.edgeScorers = edgeScorers;
-        this.edgeFilter = edgeFilter;
-        this.workersCount = workersCount;
+    public GibbsParallel(Graph<C> graph, int repetitions, TIntHashSet fixedCompounds) throws ExecutionException {
+        super(JobType.CPU);
         this.repetitions = repetitions;
-        this.gibbsNetworks = new ArrayList();
-        this.fixedCompounds = fixedCompounds;
-        this.graph = this.init();
+        this.graph = graph;
+        this.gibbsNetworks = init(repetitions, fixedCompounds);
     }
 
-    public GibbsParallel(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int workersCount, int repetitions) {
-        this(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, null, workersCount, repetitions);
+    public GibbsParallel(Graph<C> graph, int repetitions) throws ExecutionException {
+        this(graph, repetitions, null);
     }
 
-    private Graph<C> init() {
-        Graph<C> graph = GibbsMFCorrectionNetwork.buildGraph(this.ids, this.possibleFormulas, this.nodeScorers, this.edgeScorers, this.edgeFilter, this.fixedCompounds, this.workersCount);
-
+    private List<GibbsMFCorrectionNetwork> init(int size, TIntHashSet fixedCompounds){
+        List<GibbsMFCorrectionNetwork> networkList = new ArrayList<>();
         int i = 0;
-        while(i++ < this.repetitions) {
-            this.gibbsNetworks.add(new GibbsMFCorrectionNetwork(graph));
+        while(i++ < size) {
+            networkList.add(new GibbsMFCorrectionNetwork(graph, fixedCompounds));
         }
-
-        return graph;
+        return networkList;
     }
+
 
     private void combineResults() {
-        TObjectDoubleHashMap[] maxPosteriorCombined = this.createMap(this.possibleFormulas.length);
-        TObjectDoubleHashMap[] addedUpPosteriorCombined = this.createMap(this.possibleFormulas.length);
-        TObjectDoubleHashMap[] samplingCombined = this.createMap(this.possibleFormulas.length);
-        Iterator var4 = this.gibbsNetworks.iterator();
+        TObjectDoubleHashMap[] samplingCombined = this.createMap(graph.numberOfCompounds());
         for (GibbsMFCorrectionNetwork gibbsNetwork : gibbsNetworks) {
-            Scored[][] maxPosterior = gibbsNetwork.getChosenFormulasByMaxPosterior();
-            this.add(maxPosteriorCombined, maxPosterior, true, Double.NaN);
-            Scored[][] addedUpPosterior = gibbsNetwork.getChosenFormulasByAddedUpPosterior();
-            this.add(addedUpPosteriorCombined, addedUpPosterior, false, 1.0D / (double)this.gibbsNetworks.size());
             Scored[][] sampling = gibbsNetwork.getChosenFormulasBySampling();
-            this.add(samplingCombined, sampling, false, 1.0D / (double)this.gibbsNetworks.size());
+            add(samplingCombined, sampling, false, 1.0D / (double)this.gibbsNetworks.size());
         }
 
-        this.maxPosterior = this.toArray(maxPosteriorCombined);
-        this.addedUpPosterior = this.toArray(addedUpPosteriorCombined);
         this.sampling = this.toArray(samplingCombined);
     }
 
@@ -128,51 +106,52 @@ public class GibbsParallel<C extends Candidate<?>> {
         return map;
     }
 
-    public void iteration(int maxSteps, final int burnIn) {
+    private int maxSteps = -1;
+    private int burnIn = -1;
+
+    public void setIterationSteps(int maxSteps, int burnIn) {
+        this.maxSteps = maxSteps;
+        this.burnIn = burnIn;
+    }
+
+    @Override
+    protected CompoundResult<C>[] compute() throws Exception {
+        if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
         final int maxStepProportioned = maxSteps / this.repetitions;
-        ExecutorService executorService = Executors.newFixedThreadPool(this.workersCount);
-        ArrayList<Future> futures = new ArrayList();
         
         for (final GibbsMFCorrectionNetwork gibbsNetwork : gibbsNetworks) {
-            futures.add(executorService.submit(new Runnable() {
-                public void run() {
-
-                    final long time = System.currentTimeMillis();
-                    gibbsNetwork.iteration(maxStepProportioned, burnIn);
-                    if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("running gibbs with "+(maxStepProportioned+burnIn)+" steps took "+(System.currentTimeMillis()-time)+" ms");
-
-                }
-            }));
+            gibbsNetwork.setIterationSteps(maxStepProportioned, burnIn);
+            submitSubJob(gibbsNetwork);
         }
 
+        awaitAllSubJobs();
 
-        for (Future future : futures) {
-            try {
-                future.get();
-            } catch (InterruptedException var9) {
-                var9.printStackTrace();
-                throw new RuntimeException(var9);
-            } catch (ExecutionException var10) {
-                var10.printStackTrace();
-                throw new RuntimeException(var10);
-            }
+        combineResults();
+
+        return createCompoundResults();
+
+    }
+
+
+    protected CompoundResult<C>[] createCompoundResults(){
+        final String[] ids = graph.getIds();
+        final CompoundResult<C>[] results = new CompoundResult[ids.length];
+        for (int i = 0; i < ids.length; i++) {
+            String id = ids[i];
+            Scored<C>[] candidates = sampling[i];
+            final CompoundResult<C> compoundResult = new CompoundResult(id, candidates);
+            compoundResult.addAnnotation(Connectivity.class, new Connectivity(graph.getMaxNumberOfConnectedCompounds(i)));
+            results[i] = compoundResult;
         }
-        
-
-        executorService.shutdown();
-        this.combineResults();
-
+        return results;
     }
 
-    public Scored<C>[][] getChosenFormulasByMaxPosterior() {
-        return this.maxPosterior;
-    }
-
-    public Scored<C>[][] getChosenFormulasByAddedUpPosterior() {
-        return this.addedUpPosterior;
-    }
-
+    @Deprecated
     public Scored<C>[][] getChosenFormulasBySampling() {
+        return this.sampling;
+    }
+
+    public Scored<C>[][] getChosenFormulas() {
         return this.sampling;
     }
 
