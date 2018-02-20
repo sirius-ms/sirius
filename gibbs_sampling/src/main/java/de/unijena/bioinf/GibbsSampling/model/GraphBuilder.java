@@ -27,7 +27,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
     EdgeFilter edgeFilter;
 
     private int numberOfFinishedComputations = 0;
-    private int step;
+    private double step;
     private int size;
 
     public GraphBuilder(Graph<C> graph, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter) {
@@ -90,6 +90,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
     @Override
     protected Graph<C> compute() throws Exception {
+        numberOfFinishedComputations = 0;
         if (graph.possibleFormulas.length==0){
             graph.connections = new int[0][0];
         } else {
@@ -153,7 +154,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
         final Graph final_graph = graph;
         size = graph.getSize();
         step = Math.max(size/20, 1);
-        updateProgress(0, size,0, "start computing edges");
+        updateProgress(0, size,0, "computing edges");
         for(int i = 0; i < size; ++i) {
             final int final_i = i;
             final C candidate = graph.getPossibleFormulas1D(i).getCandidate();
@@ -181,8 +182,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
                     edgeFilter.filterEdgesAndSetThreshold(final_graph, final_i, scores.toArray());
 
-                    //progess
-                    updateProgress(100);
+                    //progess is always fired if job done
                     checkForInterruption();
                     return null;
                 }
@@ -275,15 +275,13 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
         throw new NoSuchElementException("no experiments with any molecular formula candidate given");
     }
 
+
     @Override
     public void progressChanged(JobProgressEvent progressEvent) {
         if (progressEvent.getNewValue()!=100) return;
         ++numberOfFinishedComputations;
-        if((numberOfFinishedComputations-1) % step == 0 || (numberOfFinishedComputations)==(size)) {
-//            LOG.info((100*(progress)/size)+"%");
-//            //todo write some job progress
-            updateProgress(0, size, numberOfFinishedComputations);
-
+        if(numberOfFinishedComputations % step == 0 || numberOfFinishedComputations==size) {
+            LOG().info(Math.round(100*(numberOfFinishedComputations)/size)+"%");
         }
     }
 
