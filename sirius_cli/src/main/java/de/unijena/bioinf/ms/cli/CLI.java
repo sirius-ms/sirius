@@ -440,6 +440,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     }
 
     protected void handleOutputOptions(Options options) {
+        int numberOfWrittenExperiments = 0;
         if (options.getNumOfCores() > 0) {
             PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(options.getNumOfCores()));
         }
@@ -459,9 +460,10 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             final ProjectWriter pw;
             if (new File(options.getOutput()).exists()) {
                 try {
-                    checkForValidProjectDirecotry(options.getOutput());
+                    checkForValidProjectDirectory(options.getOutput());
                     pw = new ProjectSpaceMerger(this, options.getOutput(), false);
                     writers.add(pw);
+                    numberOfWrittenExperiments = Math.max(numberOfWrittenExperiments,((ProjectSpaceMerger)pw).getNumberOfWrittenExperiments());
                 } catch (IOException e) {
 
                     logger.error("Cannot merge project " + options.getOutput() + ". Maybe the specified directory is not a valid SIRIUS workspace. You can still specify a new not existing filename to create a new workspace.\n" + e.getMessage(), e);
@@ -486,6 +488,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             } else if (new File(options.getSirius()).exists()) {
                 try {
                     pw = new ProjectSpaceMerger(this, options.getSirius(), true);
+                    numberOfWrittenExperiments = Math.max(numberOfWrittenExperiments,((ProjectSpaceMerger)pw).getNumberOfWrittenExperiments());
                 } catch (IOException e) {
                     System.err.println("Cannot merge " + options.getSirius() + ". The specified file might be no valid SIRIUS workspace. You can still specify a new not existing filename to create a new workspace.");
                     System.exit(1);
@@ -515,9 +518,12 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                 }
             };
         }
+        this.instanceIdOffset = numberOfWrittenExperiments;
     }
 
-    private void checkForValidProjectDirecotry(String output) throws IOException {
+    protected int instanceIdOffset;
+
+    private void checkForValidProjectDirectory(String output) throws IOException {
         final File f = new File(output);
         if (!f.exists()) return;
         if (!f.isDirectory()) throw new IOException("Expect a directory name. But " + output + " is an existing file.");
@@ -810,7 +816,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             if (options.isDisableElementDetection()) {
                 sirius.enableAutomaticElementDetection(exp, false);
             }
-            instances.add(new Instance(exp, options.getMs2().get(0), 1));
+            instances.add(new Instance(exp, options.getMs2().get(0), ++instanceIdOffset));
         } else if (options.getMs1() != null && !options.getMs1().isEmpty()) {
             throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
         }
@@ -834,7 +840,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             fileIter = infiles.iterator();
             return new Iterator<Instance>() {
                 File currentFile;
-                int index = 0;
+                int index = instanceIdOffset;
                 Iterator<Ms2Experiment> experimentIterator = fetchNext();
 
                 @Override
