@@ -44,7 +44,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
 
 
     public static FasterTreeComputationInstance beautify(FragmentationPatternAnalysis analyzer, FTree tree) {
-        return new FasterTreeComputationInstance(analyzer, tree.getAnnotationOrThrow(ProcessedInput.class), tree);
+        return new FasterTreeComputationInstance(analyzer, tree.getAnnotationOrThrow(ProcessedInput.class).clone(), tree);
     }
 
     private FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree) {
@@ -135,11 +135,13 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
     }
 
     protected void recalculateScore(FTree tree) {
+        System.out.println("recalculate " +  tree.getRoot().getFormula());
         double oldScore = tree.getTreeWeight();
         double newScore = analyzer.recalculateScores(tree);
         if (Math.abs(newScore - oldScore) > 0.1) {
             final double treeSize = tree.numberOfVertices()==1 ? 0 : tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(tree.numberOfVertices() - 1)).get("TreeSizeScorer");
             this.LOG().warn("Score of " + tree.getRoot().getFormula() + " differs significantly from recalculated score: " + oldScore + " vs " + newScore + " with tree size is " + pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(-0.5d)).score + " and " + treeSize + " sort key is score " + tree.getTreeWeight() + " and filename is " + String.valueOf(pinput.getExperimentInformation().getSource()));
+            System.out.println(analyzer.recalculateScores(tree));
         }
     }
 
@@ -152,12 +154,12 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         TreeSizeScorer.TreeSizeBonus treeSizeBonus;
         final TreeSizeScorer tss = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
         if (tss != null) {
-            treeSizeBonus = new TreeSizeScorer.TreeSizeBonus(tss.getTreeSizeScore());
+            treeSizeBonus = pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(tss.getTreeSizeScore()));
             pinput.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, treeSizeBonus);
         } else {
             treeSizeBonus = null;
         }
-        double inc = 0d;
+        double inc = tss == null ? 0d : treeSizeBonus.score - tss.getTreeSizeScore();
         double treeSize = treeSizeBonus == null ? 0d : treeSizeBonus.score;
         final List<ExactResult> results = new ArrayList<>(decompositions.size());
         // TREE SIZE
