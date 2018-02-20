@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 public class Zodiac {
-    private static final Logger LOG = LoggerFactory.getLogger(Zodiac.class);
+    private final Logger Log;
     List<ExperimentResult> experimentResults;
     List<LibraryHit> anchors;
     NodeScorer[] nodeScorers;
@@ -43,6 +43,7 @@ public class Zodiac {
         this.maxCandidates = maxCandidates;
         this.masterJJob = masterJJob;
         this.clusterCompounds = clusterCompounds;
+        this.Log = masterJJob!=null?masterJJob.LOG():LoggerFactory.getLogger(Zodiac.class);
     }
 
     public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, MasterJJob masterJJob) throws ExecutionException {
@@ -100,7 +101,7 @@ public class Zodiac {
             CompoundResult<FragmentsCandidate> compoundResult = idToCompoundResult.get(id);
             if (compoundResult==null){
                 //some ExperimentResult with no results was provided
-                LOG.warn("no Zodiac result for compounds with id "+id+".");
+                Log.warn("no Zodiac result for compounds with id "+id+".");
                 continue;
             }
             List<IdentificationResult> identificationResults = experimentResult.getResults();
@@ -113,7 +114,7 @@ public class Zodiac {
                 if (identificationResult==null){
                     //formula not found: might happen for clustered compounds
                     if (zodiacScore.getProbability()>0){
-                        LOG.warn("could not match Zodiac result to Sirius results");
+                        Log.warn("could not match Zodiac result to Sirius results");
                     }
                 } else {
                     identificationResult.setAnnotation(ZodiacScore.class, zodiacScore);
@@ -185,7 +186,7 @@ public class Zodiac {
 
             if (candidatesList == null) {
                 //todo check:q
-                LOG.error("no corresponding compound to library hit found: "+id);
+                Log.error("no corresponding compound to library hit found: "+id);
                 continue;
             }
 
@@ -197,7 +198,7 @@ public class Zodiac {
 
 
         //parse reactions
-        Reaction[] reactions = GibbsSamplerMain.parseReactions(1);
+        Reaction[] reactions = ZodiacUtils.parseReactions(1);
         Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
         for (Reaction reaction : reactions) {
             netSingleReactionDiffs.add(reaction.netChange());
@@ -214,7 +215,7 @@ public class Zodiac {
         //cluster compounds
         representativeToCluster = GibbsSamplerMain.clusterCompounds(candidatesMap);
         candidatesMap = GibbsSamplerMain.mergeCluster(candidatesMap, representativeToCluster);
-        LOG.info("remaining clusters: " + candidatesMap.size());
+        Log.info("remaining clusters: " + candidatesMap.size());
 
 
         ids = candidatesMap.keySet().toArray(new String[0]);
@@ -255,7 +256,7 @@ public class Zodiac {
                 }
                 if (matches) {
                     candidate.setCorrect(true);
-                    LOG.info("Compound " + id + " has library hit. candidate MF is " + candidate.getFormula() + ". Library hit is " + correctMF);
+                    Log.info("Compound " + id + " has library hit. candidate MF is " + candidate.getFormula() + ". Library hit is " + correctMF);
                 }
                 candidate.setInTrainingSet(true);
 
