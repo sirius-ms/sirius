@@ -268,7 +268,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
     public void validate() {
         super.validate();
         if (options.getFingerIdDb() != null && !options.isFingerid()) {
-            LoggerFactory.getLogger(this.getClass()).error("--fingerid_db defines the database CSI:FingerId should search in. This option makes only sense when used together with --fingerid. Use --db for setting up the database in which SIRIUS should search for molecular formulas.");
+            LoggerFactory.getLogger(this.getClass()).error("--fingerid_db defines the database CSI:FingerID should search in. This option makes only sense when used together with --fingerid. Use --db for setting up the database in which SIRIUS should search for molecular formulas.");
             System.exit(1);
         }
         if (options.getExperimentalCanopus() != null && !options.isFingerid()) {

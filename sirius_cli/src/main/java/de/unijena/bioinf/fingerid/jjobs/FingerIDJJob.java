@@ -129,7 +129,7 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
                 // first filterIdentifications identificationResult list by top scoring formulas
                 final IdentificationResult top = input.get(0);
                 if (top == null || top.getResolvedTree() == null) return null;
-                progressInfo("Filter Identification Results for CSI:FingerId usage");
+                progressInfo("Filter Identification Results for CSI:FingerID usage");
                 filteredResults.add(top);
                 final double threshold = Math.max(top.getScore(), 0) - Math.max(5, top.getScore() * 0.25);
                 for (int k = 1, n = input.size(); k < n; ++k) {
@@ -161,7 +161,7 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
                 return Collections.emptyMap();
             }
 
-            progressInfo("Search with CSI:FingerId");
+            progressInfo("Search with CSI:FingerID");
 
             // EXPAND LIST
 

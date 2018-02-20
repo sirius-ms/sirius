@@ -48,7 +48,7 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
         add(new JXTitledSeparator("CSI:FingerID"));
         String p = props.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
         db = new FileChooserPanel(p, JFileChooser.DIRECTORIES_ONLY);
-        db.setToolTipText("Specify the directory where CSI:FingerId should store the compound candidates.");
+        db.setToolTipText("Specify the directory where CSI:FingerID should store the compound candidates.");
         add(new JLabel("Database cache:"), db);
     }
 

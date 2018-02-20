@@ -29,7 +29,7 @@ import java.awt.event.ActionListener;
 
 public class ExporterAccessory extends JPanel implements ActionListener {
 
-    // export CSI:FingerId Instances
+    // export CSI:FingerID Instances
 
     private ButtonGroup exportAs;
     private JFileChooser fileChooser;
@@ -87,9 +87,9 @@ public class ExporterAccessory extends JPanel implements ActionListener {
         final JPanel fingeridPanel = new JPanel();
         fingeridPanel.setLayout(new BoxLayout(fingeridPanel, BoxLayout.PAGE_AXIS));
         fingeridPanel.setAlignmentX(0);
-        fingeridPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), "CSI:FingerId", TitledBorder.LEFT, TitledBorder.TOP ));
+        fingeridPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), "CSI:FingerID", TitledBorder.LEFT, TitledBorder.TOP ));
         {
-            exportingFingerId = new JCheckBox("export CSI:FingerId results");
+            exportingFingerId = new JCheckBox("export CSI:FingerID results");
             exportingFingerId.doClick();
             fingeridPanel.add(exportingFingerId);
         }

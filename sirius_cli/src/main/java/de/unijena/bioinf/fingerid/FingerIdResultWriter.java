@@ -29,7 +29,7 @@ public class FingerIdResultWriter extends DirectoryWriter {
     protected void startWritingIdentificationResults(ExperimentResult er, List<IdentificationResult> results) throws IOException {
         super.startWritingIdentificationResults(er, results);
         if (isAllowed(FingerIdResult.CANDIDATE_LISTS) && hasFingerId(results)) {
-            // now write CSI:FingerId results
+            // now write CSI:FingerID results
             W.enterDirectory("fingerprints");
             for (IdentificationResult result : results) {
                 final FingerIdResult f = result.getAnnotationOrNull(FingerIdResult.class);
@@ -57,7 +57,7 @@ public class FingerIdResultWriter extends DirectoryWriter {
                 }
                 W.leaveDirectory();
             }
-            // and CSI:FingerId summary
+            // and CSI:FingerID summary
             writeFingerIdResults(er, results, frs);
         }
     }
