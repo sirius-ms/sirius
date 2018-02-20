@@ -200,7 +200,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
             }
 
 
-
+            checkForInterruption();
             if (DEBUG && !changed) System.out.println("nothing changed in step "+i);
 
             if((i % step == 0 && i>0) || i == (burnIn+maxSteps-1)) {
