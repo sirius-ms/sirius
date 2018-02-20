@@ -146,8 +146,6 @@ public class Zodiac {
             ZodiacResultsWithClusters zodiacResult = zodiac.compute(options.getIterationSteps(), options.getBurnInSteps(), options.getSeparateRuns());
             CompoundResult<FragmentsCandidate>[] result = zodiacResult.getResults();
 
-            Graph<FragmentsCandidate> graph = zodiacResult.getGraph(); //update, get complete graph
-
             String[] ids = zodiacResult.getIds();
 
 
