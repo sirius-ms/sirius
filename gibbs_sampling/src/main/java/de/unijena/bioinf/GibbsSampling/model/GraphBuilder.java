@@ -157,6 +157,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
         for(int i = 0; i < size; ++i) {
             final int final_i = i;
             final C candidate = graph.getPossibleFormulas1D(i).getCandidate();
+            //todo use worker jobs
             BasicJJob job = new BasicJJob() {
                 @Override
                 protected Object compute() throws Exception {
@@ -182,7 +183,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
                     //progess
                     updateProgress(100);
-
+                    checkForInterruption();
                     return null;
                 }
             };

@@ -139,6 +139,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
     protected ZodiacResult<C> compute() throws Exception {
         if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
 
+        checkForInterruption();
         init();
         validate(graph);
         gibbsParallel = new GibbsParallel<>(graph, repetitions);
@@ -146,6 +147,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
         submitSubJob(gibbsParallel);
 
         results1 = gibbsParallel.awaitResult();
+        checkForInterruption();
 
         firstRoundIds = gibbsParallel.getGraph().getIds();
 
@@ -170,7 +172,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
             TIntHashSet fixedIds = new TIntHashSet(firstRoundCompoundsIdx);
             GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, fixedIds);
             graph = submitSubJob(graphBuilder).awaitResult();
-
+            checkForInterruption();
             validate(graph);
 
             gibbsParallel = new GibbsParallel<>(graph, repetitions, fixedIds);
@@ -178,6 +180,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
             submitSubJob(gibbsParallel);
 
             results2 = gibbsParallel.awaitResult();
+            checkForInterruption();
 
 //            addConnectivityInfo(results2, graph, true);
 
