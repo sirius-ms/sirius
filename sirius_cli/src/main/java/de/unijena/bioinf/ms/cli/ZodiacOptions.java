@@ -93,6 +93,9 @@ public interface ZodiacOptions {
     )
     EdgeScorings getProbabilityDistribution();
 
+    @Option(longName={"estimate-param"}, description = "parameters of distribution are estimated from the data. By default standard parameters are assumed.")
+    boolean isEstimateDistribution();
+
     @Option(
             longName = {"candidates"},
             description = "maximum number of candidate molecular formulas per compound to use in Zodiac. default: all",
