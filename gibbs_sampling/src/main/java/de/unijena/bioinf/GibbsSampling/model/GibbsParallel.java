@@ -117,13 +117,13 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
 
     @Override
     protected CompoundResult<C>[] compute() throws Exception {
-        if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
+        if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("Number of iterations steps not set.");
         final int maxStepProportioned = maxSteps / this.repetitions;
         maxProgress = maxStepProportioned*repetitions+burnIn*repetitions;
         currentProgress = 0;
         step = maxProgress/20;
 
-        updateProgress(0, maxProgress, 0, "sample probabilities");
+        updateProgress(0, maxProgress, 0, "Sample probabilities");
         for (final GibbsMFCorrectionNetwork gibbsNetwork : gibbsNetworks) {
             gibbsNetwork.setIterationSteps(maxStepProportioned, burnIn);
             gibbsNetwork.addPropertyChangeListener(this);

@@ -154,7 +154,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
         final Graph final_graph = graph;
         size = graph.getSize();
         step = Math.max(size/20, 1);
-        updateProgress(0, size,0, "computing edges");
+        updateProgress(0, size,0, "Computing edges");
         for(int i = 0; i < size; ++i) {
             final int final_i = i;
             final C candidate = graph.getPossibleFormulas1D(i).getCandidate();
@@ -233,7 +233,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
             sum += connection.length;
         }
 
-        LOG().info("number of connections " + sum / 2);
+        LOG().info("Number of connections " + sum / 2);
 
         if (GibbsMFCorrectionNetwork.DEBUG) {
             final TDoubleArrayList samples = new TDoubleArrayList();

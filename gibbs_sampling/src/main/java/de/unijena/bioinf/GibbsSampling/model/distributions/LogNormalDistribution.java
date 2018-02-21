@@ -4,10 +4,13 @@ import de.unijena.bioinf.ChemistryBase.math.MathUtils;
 import de.unijena.bioinf.GibbsSampling.model.GibbsMFCorrectionNetwork;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.procedure.TDoubleProcedure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 
 public class LogNormalDistribution implements ScoreProbabilityDistribution {
+    private static final Logger LOG = LoggerFactory.getLogger(LogNormalDistribution.class);
     private double logMean;
     private double logVar;
     private boolean robustEstimator;
@@ -32,6 +35,12 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
 
     }
 
+    @Override
+    public void setDefaultParameters() {
+        logMean = DEFAULT_LOGMEAN;
+        logVar = DEFAULT_LOGVAR;
+    }
+
     private void estimateParameters(double[] exampleValues){
         int l = 0;
         double logMean = 0.0D;
@@ -43,6 +52,15 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
                 logMean += Math.log(v);
                 ++l;
             }
+        }
+
+        if (l<10){
+            LOG.warn("Cannot estimate score distribution. Too few examples. Using default values.");
+            if (logMean==0 || logVar==0){
+                logMean = DEFAULT_LOGMEAN;
+                logVar = DEFAULT_LOGVAR;
+            }
+            return;
         }
 
         logMean /= (double)l;
@@ -68,7 +86,7 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
         nonZeroSampleValues.sort();
 
         if (nonZeroSampleValues.size()<10){
-            System.out.println("warning: cannot estimate score distribution. Too few examples. Using default values.");
+            LOG.warn("Cannot estimate score distribution. Too few examples. Using default values.");
             if (logMean==0 || logVar==0){
                 logMean = DEFAULT_LOGMEAN;
                 logVar = DEFAULT_LOGVAR;

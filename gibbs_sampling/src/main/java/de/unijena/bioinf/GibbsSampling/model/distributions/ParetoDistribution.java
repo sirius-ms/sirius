@@ -56,6 +56,11 @@ public class ParetoDistribution implements ScoreProbabilityDistribution {
         if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("alpha estimate " + this.alpha);
     }
 
+    @Override
+    public void setDefaultParameters() {
+        throw new NoSuchMethodError("Not implemented yet");
+    }
+
     public double toPvalue(double score) {
         return score <= this.xmin ? 1d : Math.pow(xmin / score, alpha);
     }

@@ -95,15 +95,17 @@ public class Zodiac {
         //todo add score to FTree not IdentificationResult?!?!!?!?!
         Map<String, CompoundResult<FragmentsCandidate>> idToCompoundResult = createInstanceMap(result);
         for (ExperimentResult experimentResult : experimentResults) {
+            List<IdentificationResult> identificationResults = experimentResult.getResults();
+            if (identificationResults.size()==0) continue;
+
             Ms2Experiment experiment = experimentResult.getExperiment();
             String id = experiment.getName();
             CompoundResult<FragmentsCandidate> compoundResult = idToCompoundResult.get(id);
             if (compoundResult==null){
                 //some ExperimentResult with no results was provided
-                Log.warn("no Zodiac result for compounds with id "+id+".");
+                Log.warn("no Zodiac result for compound with id "+id+".");
                 continue;
             }
-            List<IdentificationResult> identificationResults = experimentResult.getResults();
             Scored<FragmentsCandidate>[] zodiacResults = compoundResult.getCandidates();
             Map<MolecularFormula, IdentificationResult> idResultMap = createIdentificationResultMap(identificationResults);
             for (Scored<FragmentsCandidate> zodiacResult : zodiacResults) {
@@ -214,7 +216,7 @@ public class Zodiac {
         //cluster compounds
         representativeToCluster = GibbsSamplerMain.clusterCompounds(candidatesMap);
         candidatesMap = GibbsSamplerMain.mergeCluster(candidatesMap, representativeToCluster);
-        Log.info("remaining clusters: " + candidatesMap.size());
+        Log.info("Generated " + candidatesMap.size()+" compound clusters from "+experimentResults.size()+" compounds.");
 
 
         ids = candidatesMap.keySet().toArray(new String[0]);
