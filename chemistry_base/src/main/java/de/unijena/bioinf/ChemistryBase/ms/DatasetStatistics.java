@@ -76,7 +76,7 @@ public class DatasetStatistics {
     public double getMedianMs2NoiseIntensity(){
         //todo implement fast median
         if (Double.isNaN(medianNoiseIntensity)){
-            if (noiseIntensities.size()==0) throw new RuntimeException("cannot estimate median noise intensity.");
+            if (noiseIntensities.size()==0) throw new IllegalStateException("Cannot estimate median noise intensity. No noise peaks found.");
             TDoubleArrayList copy = new TDoubleArrayList(noiseIntensities);
             copy.sort();
             medianNoiseIntensity = copy.get(copy.size()/2);
