@@ -26,6 +26,7 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
 
     public LogNormalDistribution(boolean robustEstimator) {
         this.robustEstimator = robustEstimator;
+        setDefaultParameters();
     }
 
     public void estimateDistribution(double[] exampleValues) {
