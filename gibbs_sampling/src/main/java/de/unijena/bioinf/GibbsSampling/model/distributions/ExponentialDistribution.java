@@ -18,6 +18,7 @@ public class ExponentialDistribution implements ScoreProbabilityDistribution {
 
     public ExponentialDistribution(boolean estimateByMedian) {
         this.estimateByMedian = estimateByMedian;
+        setDefaultParameters();
     }
 
     public ExponentialDistribution() {
