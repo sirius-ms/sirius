@@ -8,10 +8,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.GibbsSampling.ZodiacUtils;
 import de.unijena.bioinf.GibbsSampling.model.*;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ExponentialDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.LogNormalDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
+import de.unijena.bioinf.GibbsSampling.model.distributions.*;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
 import de.unijena.bioinf.babelms.MsExperimentParser;
@@ -135,7 +132,13 @@ public class Zodiac {
 
 
             double minimumOverlap = 0.0D;
-            ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
+            ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer;
+            if (options.isEstimateDistribution()){
+                commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
+            } else {
+                commonFragmentAndLossScorer = new ScoreProbabilityDistributionFix(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
+            }
+
             EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
 
 
