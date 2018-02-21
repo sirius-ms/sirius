@@ -242,7 +242,7 @@ public class Graph<C extends Candidate<?>> {
 
     public GraphValidationMessage validate(){
         if (isBadlyConnected()){
-            return new GraphValidationMessage("the graph seems to be badly connected. You might want to enforce more connections using local edge thresholds ", false, true);
+            return new GraphValidationMessage("The graph seems to be badly connected. You might want to enforce more connections using local edge thresholds ", false, true);
         }
         return new GraphValidationMessage("", false, false);
     }

@@ -5,10 +5,13 @@ import de.unijena.bioinf.GibbsSampling.model.Candidate;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
 import de.unijena.bioinf.GibbsSampling.model.GibbsMFCorrectionNetwork;
 import gnu.trove.list.array.TDoubleArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 
 public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> implements EdgeScorer<C> {
+    private static final Logger LOG = LoggerFactory.getLogger(ScoreProbabilityDistributionEstimator.class);
     protected final EdgeScorer<C> edgeScorer;
     protected ScoreProbabilityDistribution scoreProbabilityDistribution;
     protected final double percentageOfEdgesBelowThreshold;
@@ -22,7 +25,7 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
     }
 
     public void prepare(C[][] candidates) {
-        double[] sampledScores = sampleScores(candidates);
+        double[] sampledScores = sampleScores(candidates); //might be empty
 
         estimateDistribution(sampledScores);
 
@@ -77,10 +80,14 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
             sampledScores = sampledScoresList.toArray();
         } else {
             int numberOfSamples = 100000;
+            int numberOfTrails = numberOfSamples*20;
             HighQualityRandom random = new HighQualityRandom();
             sampledScores = new double[numberOfSamples];
             int pos = 0;
+            int trialCount = 0;
             while (pos<numberOfSamples){
+                ++trialCount;
+                if (trialCount>numberOfTrails) break;;
                 int color1 = random.nextInt(candidates.length);
                 int color2 = random.nextInt(candidates.length - 1);
                 if(color2 >= color1) {
@@ -93,6 +100,7 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
                 if (percentageWithoutZeroScores && score<=0) continue;
                 sampledScores[pos++] = score;
             }
+            if (pos<numberOfSamples) sampledScores = Arrays.copyOf(sampledScores, pos);
         }
         return sampledScores;
     }
@@ -151,7 +159,13 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
     }
 
     protected void estimateDistribution(double[] sampledScores){
-        this.scoreProbabilityDistribution.estimateDistribution(sampledScores);
+        if (sampledScores==null || sampledScores.length==0){
+            LOG.warn("Cannot estimate score distribution. Too few examples. Using default parameters.");
+            this.scoreProbabilityDistribution.setDefaultParameters();
+        } else {
+            this.scoreProbabilityDistribution.estimateDistribution(sampledScores);
+        }
+
     }
 
     @Override
