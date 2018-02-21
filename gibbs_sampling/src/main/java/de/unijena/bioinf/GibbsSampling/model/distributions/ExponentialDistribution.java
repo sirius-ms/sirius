@@ -2,8 +2,11 @@ package de.unijena.bioinf.GibbsSampling.model.distributions;
 
 import de.unijena.bioinf.GibbsSampling.model.GibbsMFCorrectionNetwork;
 import gnu.trove.list.array.TDoubleArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ExponentialDistribution implements ScoreProbabilityDistribution {
+    private static final Logger LOG = LoggerFactory.getLogger(ExponentialDistribution.class);
     private double lambda;
     private boolean estimateByMedian;
     private final double DEFAULT_LAMBDA = 7d;
@@ -22,6 +25,11 @@ public class ExponentialDistribution implements ScoreProbabilityDistribution {
     }
 
     @Override
+    public void setDefaultParameters() {
+        lambda = DEFAULT_LAMBDA;
+    }
+
+    @Override
     public void estimateDistribution(double[] exampleValues) {
         int l = 0;
         double sum = 0.0D;
@@ -37,7 +45,7 @@ public class ExponentialDistribution implements ScoreProbabilityDistribution {
         }
 
         if (values.size()<10){
-            System.out.println("warning: Problem estimating score distribution. Too few examples. Using default values.");
+            LOG.warn("Cannot estimate score distribution. Too few examples. Using default values.");
             this.lambda = DEFAULT_LAMBDA;
         }else {
             this.lambda = (double)l / sum;
@@ -55,7 +63,7 @@ public class ExponentialDistribution implements ScoreProbabilityDistribution {
         }
 
         if (Double.isNaN(lambda) || Double.isInfinite(lambda)){
-            System.out.println("warning: Problem estimating score distribution. Using default values.");
+            LOG.warn("Problem estimating score distribution. Using default values.");
             lambda = DEFAULT_LAMBDA;
         }
 

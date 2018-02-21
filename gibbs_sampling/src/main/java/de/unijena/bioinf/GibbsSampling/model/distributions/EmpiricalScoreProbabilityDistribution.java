@@ -19,6 +19,11 @@ public class EmpiricalScoreProbabilityDistribution implements ScoreProbabilityDi
     public void estimateDistribution(double[] exampleValues) {
     }
 
+    @Override
+    public void setDefaultParameters() {
+
+    }
+
     public double toPvalue(double score) {
         int idx = Arrays.binarySearch(this.scores, score);
         if(idx >= 0) {
