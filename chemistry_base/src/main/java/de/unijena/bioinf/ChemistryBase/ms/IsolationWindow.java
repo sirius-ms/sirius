@@ -253,7 +253,14 @@ public abstract class IsolationWindow {
                 double maxMs2Intensity = Spectrums.getMaximalIntensity(spectrum2);
 //            double medianNoiseIntensity = mutableMeasurementProfile.getMedianNoiseIntensity();
                 DatasetStatistics datasetStatistics = ms2Dataset.getDatasetStatistics();
-                double medianNoiseIntensity = (datasetStatistics!=null ? datasetStatistics.getMedianMs2NoiseIntensity() : 0);
+                double medianNoiseIntensity;
+                try {
+                    medianNoiseIntensity = (datasetStatistics!=null ? datasetStatistics.getMedianMs2NoiseIntensity() : 0);
+                } catch (IllegalStateException e){
+                    medianNoiseIntensity = 0;
+                    LOG.warn("Unknown median noise intensity: No noise peaks found. Setting to 0.");
+                }
+
                 int ms1Idx = monoMs1Idx;
                 int ms2Idx;
                 double ms1Mass;
@@ -309,7 +316,7 @@ public abstract class IsolationWindow {
         }
 
         if (normalizedPatterns.size()==0){
-            LOG.warn("cannot estimate isolation window no isotope patterns (in MS1 or MS2) found.");
+            LOG.warn("Cannot estimate isolation window no isotope patterns (in MS1 or MS2) found.");
         }
 
         if (DEBUG) {
