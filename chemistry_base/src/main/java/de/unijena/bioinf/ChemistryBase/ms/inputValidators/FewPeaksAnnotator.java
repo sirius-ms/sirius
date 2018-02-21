@@ -3,10 +3,13 @@ package de.unijena.bioinf.ChemistryBase.ms.inputValidators;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class FewPeaksAnnotator implements QualityAnnotator {
+    private final static Logger LOG = LoggerFactory.getLogger(FewPeaksAnnotator.class);
     private DatasetStatistics statistics;
     private double intensityThreshold;
     private double minNumberOfPeaks;
@@ -29,7 +32,12 @@ public class FewPeaksAnnotator implements QualityAnnotator {
     public void prepare(DatasetStatistics statistics) {
         this.statistics = statistics;
         //todo better noise model
-        intensityThreshold = statistics.getMedianMs2NoiseIntensity();
+        try {
+            intensityThreshold = statistics.getMedianMs2NoiseIntensity();
+        } catch (IllegalStateException e){
+            intensityThreshold = 0;
+            LOG.warn("Unknown median noise intensity: No noise peaks found. Setting to 0.");
+        }
     }
 
     /**
