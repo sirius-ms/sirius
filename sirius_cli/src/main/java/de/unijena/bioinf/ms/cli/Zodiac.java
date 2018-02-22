@@ -6,12 +6,9 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.GibbsSampling.GibbsSamplerMain;
+import de.unijena.bioinf.GibbsSampling.ZodiacUtils;
 import de.unijena.bioinf.GibbsSampling.model.*;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ExponentialDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.LogNormalDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
+import de.unijena.bioinf.GibbsSampling.model.distributions.*;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
 import de.unijena.bioinf.babelms.MsExperimentParser;
@@ -24,7 +21,6 @@ import de.unijena.bioinf.sirius.projectspace.DirectoryReader;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import de.unijena.bioinf.sirius.projectspace.SiriusFileReader;
 import de.unijena.bioinf.sirius.projectspace.SiriusWorkspaceReader;
-import org.apache.commons.math3.analysis.function.Exp;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 
@@ -84,18 +80,18 @@ public class Zodiac {
 
 
             List<ExperimentResult> experimentResults = newLoad(workSpacePath.toFile());
-            //tdo reads original experiments twice!
+            //todo reads original experiments twice!
             experimentResults = updateQuality(experimentResults, originalSpectraPath);
 
 
-            List<LibraryHit> anchors = (libraryHitsFile==null)?null:GibbsSamplerMain.parseLibraryHits(libraryHitsFile, originalSpectraPath); //only specific GNPS format
+            List<LibraryHit> anchors = (libraryHitsFile==null)?null:ZodiacUtils.parseLibraryHits(libraryHitsFile, originalSpectraPath, LOG); //only specific GNPS format
 
 
             NodeScorer[] nodeScorers;
             boolean useLibraryHits = (libraryHitsFile != null);
             double libraryScore = 1d;//todo which lambda to use!?
             if (useLibraryHits) {
-                Reaction[] reactions = GibbsSamplerMain.parseReactions(1);
+                Reaction[] reactions = ZodiacUtils.parseReactions(1);
                 Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
                 for (Reaction reaction : reactions) {
                     netSingleReactionDiffs.add(reaction.netChange());
@@ -129,13 +125,20 @@ public class Zodiac {
             } else if (options.getProbabilityDistribution().equals(EdgeScorings.lognormal)) {
                 probabilityDistribution = new LogNormalDistribution(estimateByMedian);
             } else {
-                System.err.println("probability distribution is unknwown. Use 'lognormal' or 'exponential'.");
+                LOG.error("probability distribution is unknown. Use 'lognormal' or 'exponential'.");
+                return;
             }
 
 
 
             double minimumOverlap = 0.0D;
-            ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
+            ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer;
+            if (options.isEstimateDistribution()){
+                commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
+            } else {
+                commonFragmentAndLossScorer = new ScoreProbabilityDistributionFix(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
+            }
+
             EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
 
 
@@ -145,8 +148,6 @@ public class Zodiac {
 
             ZodiacResultsWithClusters zodiacResult = zodiac.compute(options.getIterationSteps(), options.getBurnInSteps(), options.getSeparateRuns());
             CompoundResult<FragmentsCandidate>[] result = zodiacResult.getResults();
-
-            Graph<FragmentsCandidate> graph = zodiacResult.getGraph(); //update, get complete graph
 
             String[] ids = zodiacResult.getIds();
 
