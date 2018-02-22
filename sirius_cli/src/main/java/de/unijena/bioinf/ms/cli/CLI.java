@@ -183,18 +183,21 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         PossibleIonModes.GuessingMode enabledGuessingMode = options.isTrustGuessIonFromMS1()? PossibleIonModes.GuessingMode.SELECT : PossibleIonModes.GuessingMode.ADD_IONS;
 
         if (options.isAutoCharge()) { //TODO: add optiosn.getIon into this case
-            if (i.experiment.getPrecursorIonType().isIonizationUnknown() || i.experiment.getPrecursorIonType().isPlainProtonationOrDeprotonation()) {
+            if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
                 i.experiment.setAnnotation(PossibleAdducts.class, null);
-                if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
-                    setPrecursorIonTypes(i.experiment, new PossibleAdducts(Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(i.experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class)), enabledGuessingMode, true);
-                }
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(i.experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class)), enabledGuessingMode, true);
             } else {
                 setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()), PossibleIonModes.GuessingMode.DISABLED, false);
             }
+            //todo whats with options.getIon().size() == 1 ?
         } else if (options.getIon() != null && options.getIon().size() > 1) {
-            final List<PrecursorIonType> ionTypes = new ArrayList<>();
-            for (String ion : options.getIon()) ionTypes.add(PrecursorIonType.getPrecursorIonType(ion));
-            setPrecursorIonTypes(i.experiment, new PossibleAdducts(ionTypes), enabledGuessingMode, false);
+            if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
+                final List<PrecursorIonType> ionTypes = new ArrayList<>();
+                for (String ion : options.getIon()) ionTypes.add(PrecursorIonType.getPrecursorIonType(ion));
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(ionTypes), enabledGuessingMode, false);
+            } else {
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()), PossibleIonModes.GuessingMode.DISABLED, false);
+            }
         } else {
             if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
                 setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType().getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-")), enabledGuessingMode, true); // TODO: ins MS1 gucken
