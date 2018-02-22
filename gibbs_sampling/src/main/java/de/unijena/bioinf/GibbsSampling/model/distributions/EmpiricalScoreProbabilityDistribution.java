@@ -11,12 +11,18 @@ public class EmpiricalScoreProbabilityDistribution implements ScoreProbabilityDi
      * @param scores
      * @param pValues
      */
+    @Deprecated
     public EmpiricalScoreProbabilityDistribution(double[] scores, double[] pValues) {
         this.scores = scores;
         this.pValues = pValues;
     }
 
     public void estimateDistribution(double[] exampleValues) {
+    }
+
+    @Override
+    public void setDefaultParameters() {
+
     }
 
     public double toPvalue(double score) {
