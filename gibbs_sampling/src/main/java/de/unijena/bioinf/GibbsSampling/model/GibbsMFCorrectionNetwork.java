@@ -1,14 +1,9 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.GibbsSampling.model.ReactionStepSizeScorer.ConstantReactionStepSizeScorer;
-import de.unijena.bioinf.GibbsSampling.model.scorer.ReactionScorer;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
-import de.unijena.bioinf.jjobs.JobManager;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -28,7 +23,6 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
     double[] posteriorProbs;
     double[] posteriorProbSums;
     private Random random;
-    private JobManager jobManager;
 
 
     /*
