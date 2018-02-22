@@ -9,12 +9,17 @@ public class ParetoDistribution implements ScoreProbabilityDistribution {
     private double alpha;
     private boolean estimateByMedian;
 
+    @Deprecated
+    /*
+    default parameters missing.
+     */
     public ParetoDistribution(double xmin, boolean estimateByMedian) {
         this.estimateByMedian = estimateByMedian;
         this.xmin = Math.max(xmin,0.001);
         if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("pareto xmin "+xmin);
     }
 
+    @Deprecated
     public ParetoDistribution(double xmin) {
         this(xmin, false);
     }
@@ -54,6 +59,11 @@ public class ParetoDistribution implements ScoreProbabilityDistribution {
         }
 
         if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("alpha estimate " + this.alpha);
+    }
+
+    @Override
+    public void setDefaultParameters() {
+        throw new NoSuchMethodError("Not implemented yet");
     }
 
     public double toPvalue(double score) {
