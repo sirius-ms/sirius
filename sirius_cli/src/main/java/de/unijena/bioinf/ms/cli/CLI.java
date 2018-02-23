@@ -315,49 +315,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         return new ExperimentResult(siriusJob.getExperiment(), results);
     }
 
-    /*
-    private PrecursorIonType[] guessIonization(Instance instance) {
-        final MutableMs2Experiment experimentMutable = new MutableMs2Experiment(instance.experiment);
-        experimentMutable.setPrecursorIonType(PrecursorIonType.unknown(instance.experiment.getPrecursorIonType().getCharge()));
-
-        PrecursorIonType[] specificIontypes = sirius.guessIonization(experimentMutable, ionTypes);
-        PrecursorIonType priorIonType = instance.experiment.getPrecursorIonType();
-        PrecursorIonType priorIonization = priorIonType.withoutAdduct().withoutInsource();
-        if (!priorIonization.isIonizationUnknown()) {
-            if (!arrayContains(specificIontypes, priorIonization)) {
-                specificIontypes = Arrays.copyOf(specificIontypes, specificIontypes.length + 1);
-                specificIontypes[specificIontypes.length - 1] = priorIonization;
-            } else {
-                specificIontypes = new PrecursorIonType[]{priorIonization};
-            }
-
-        }
-        if (specificIontypes.length == ionTypes.length) {
-            specificIontypes = ionTypesWithoutAdducts;
-        }
-        if (specificIontypes.length == 0) {
-            specificIontypes = ionTypesWithoutAdducts;
-            //todo: do something better: this is  a don't use M+ and M+H+ hack
-            PrecursorIonType m_plus = PrecursorIonType.getPrecursorIonType("[M]+");
-            PrecursorIonType m_plus_h = PrecursorIonType.getPrecursorIonType("[M+H]+");
-
-            if (arrayContains(specificIontypes, m_plus) && arrayContains(specificIontypes, m_plus_h)) {
-                PrecursorIonType[] copy = new PrecursorIonType[specificIontypes.length - 1];
-
-                int i = 0;
-                for (PrecursorIonType specificIontype : specificIontypes) {
-                    if (specificIontype.equals(m_plus)) continue;
-                    copy[i++] = specificIontype;
-                }
-                specificIontypes = copy;
-            }
-        }
-
-
-        return specificIontypes;
-    }
-    */
-
     protected Set<MolecularFormula> getFormulaWhiteset(Instance i, List<String> whitelist) {
         final Set<MolecularFormula> whiteset = new HashSet<MolecularFormula>();
         if (whitelist == null && (options.getNumberOfCandidates() == null) && i.experiment.getMolecularFormula() != null) {
