@@ -280,5 +280,3 @@ literature to cite transparent to the user.
 #### 3.0.0
 
 -   release version
-
-
