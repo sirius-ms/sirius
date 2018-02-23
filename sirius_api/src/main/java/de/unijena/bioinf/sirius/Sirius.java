@@ -1050,7 +1050,7 @@ public class Sirius {
         performAutomaticElementDetection(input, pattern.getPattern());
 
         // step 2: adduct type search
-        PossibleIonModes pim = input.getExperimentInformation().getAnnotation(PossibleIonModes.class, null);
+        PossibleIonModes pim = input.getAnnotation(PossibleIonModes.class, null);
         if (pim == null)
             detectPossibleIonModesFromMs1(input);
         else if (pim.isGuessFromMs1Enabled()) {
