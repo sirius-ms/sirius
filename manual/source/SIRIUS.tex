@@ -149,6 +149,9 @@
 \begin{document}
 
 \maketitle
+{\huge\textcolor{red}{ This manual is currently being updated to describe 
+all new features of SIRIUS 4.0.}}
+
 \tableofcontents
 \phantomsection\label{index::doc}
 
@@ -449,7 +452,7 @@ error occurred.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Installing Gurobi}
+\section{Installing Gurobi and CPLEX}
 \label{install:gurobi}
 
 SIRIUS ships with the GLPK (GNU Linear Programming Kit)
@@ -458,17 +461,23 @@ Integer Linear Program solver which allows us to swiftly compute
 fragmentation trees in most cases.  However, if you want to analyze large
 molecules and/or spectra with many peaks and/or a large number of spectra,
 you can greatly improve running time by using a faster solver.  SIRIUS also
-supports the Gurobi
+supports Integer Linear Program solvers Gurobi
 \footnote{\sphinxAtStartFootnote\url{http://www.gurobi.com/}} 
-Integer Linear Program solver.  This is a commercial solver which offers a
-free academic license for university members.  You can find the installation
-instruction for Gurobi on their website.  SIRIUS will automatically use
-Gurobi as its solver if the GUROBI\_HOME environment variable is set to a
-valid Gurobi installation location.  Using Gurobi will greatly improve the
+and CPLEX 
+\footnote{\sphinxAtStartFootnote\url{https://www.ibm.com/products/ilog-cplex-optimization-studio}}.
+These are commercial solvers which offer a
+free academic license for university members.  You can find installation
+instruction on their websites. Using Gurobi or CPLEX will greatly improve the
 speed of fragmentation tree computations, which is the most time-intense step
 of the computational analysis.  Beside this, there will be no differences in
-using Gurobi or GLPK.  You can set the preferred ILP solvers manually in the
-settings dialog (GUI).
+using Gurobi, CPLEX or GLPK.  
+To use Gurobi set the environment variable GUROBI\_HOME to a valid Gurobi 
+installation location e.g. \code{/path/to/gurobi750/linux64}.
+Similarly, to use CPLEX set CPLEX\_HOME to 
+\code{/path/to/CPLEX\_Studio/cplex/lib}.
+SIRIUS will automatically use Gurobi or CPLEX as its solver if corresponding 
+environment variables are specified.
+You can manually set the preferred ILP solvers in the settings dialog (GUI).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1277,7 +1286,9 @@ list if you expect the result to be contained in biomolecule databases.
 
 Each compound has an \gui{Overview} panel to display the most important
 information. The candidate list contains the best candidate molecular
-formulas ordered by score. Molecular formulas are always written in neutral
+formulas ordered by score. 
+\todo{all these new ionizations}
+Molecular formulas are always written in neutral
 form, except for compounds with unknown ionization mode. For the selected
 molecular formula candidates the \gui{Spectra view} visualizes which peak is
 assigned to a fragment.  The corresponding fragmentation tree is visualized
