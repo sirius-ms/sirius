@@ -30,7 +30,7 @@ peaks.
 
 SIRIUS does not identify the (2D or 3D) structure of compounds, nor does
 it look up compounds in databases. There are other tools for this
-purpose, e.g. CSI:FingerId, MetFrag, CFM, and MAGMa.
+purpose, e.g. CSI:FingerID, MetFrag, CFM, and MAGMa.
 
 SIRIUS can be used within an analysis pipeline. For example you can
 identify the molecular formula of the ion and the fragment peaks and use
@@ -290,20 +290,20 @@ Please consider the following:
         molecular formulas and have to download much smaller candidate
         structure lists.
 
-Identifying Molecular Structure with CSI:FingerId
+Identifying Molecular Structure with CSI:FingerID
 -------------------------------------------------
 
 After computing the fragmentation trees you can search these in a
 structure database. Again we provide a **single mode** and a **batch
 mode**. The single mode is available by clicking on the molecular
-formula of interest, then switching to the **CSI:FingerId** tab and
-pressing on the **Search online with CSI:FingerId** button. The batch
-mode can be triggered by pressing on the **CSI:FingerId** in the
+formula of interest, then switching to the **CSI:FingerID** tab and
+pressing on the **Search online with CSI:FingerID** button. The batch
+mode can be triggered by pressing on the **CSI:FingerID** in the
 toolbar.
 
 > \[image\]
 
-When starting the CSI:FingerId search you are again asked to choose
+When starting the CSI:FingerID search you are again asked to choose
 between PubChem or biological databases. This is mainly a performance
 issue because you can filter your result lists afterwards by any
 database you want to. Our biological database is several magnitudes
@@ -346,12 +346,12 @@ In the spectrum view all peaks that are annotated by the Fragmentation
 Tree are colored in blue. Peaks that are annotated as noise are colored
 black. Hovering with the mouse over a peak shows its annotation.
 
-### CSI:FingerId View
+### CSI:FingerID View
 
 > \[image\]
 
 This tab shows you the candidate structures for the selected molecular
-formula ordered by the CSI:FingerId search score. If you want to filter
+formula ordered by the CSI:FingerID search score. If you want to filter
 the candidate list by a certain database (e.g. only compounds from KEGG
 and Biocyc) you can press the filter button. A menu will open displaying
 all available databases. Only candidates will be displayed that are
@@ -366,10 +366,10 @@ you can use this slider to filter the candidate list by certain XLogP
 values. The slider allows you to define min and max values. XLogP is
 calculated using the CDK development kit \[1\].
 
-The green and red squares are some visualization of the CSI:FingerId
+The green and red squares are some visualization of the CSI:FingerID
 predictions and scoring. All green squares represent molecular
 structures that are found in the candidate structure and are predicted
-by CSI:FingerId to be present in the measured compound. As lighter the
+by CSI:FingerID to be present in the measured compound. As lighter the
 square as more likely is the predicted probability for the presence of
 this substructure. As larger the square as more reliable is the
 predictor. The red squares, however, represent structures that are
@@ -387,7 +387,7 @@ If the substructure matches several times in the molecule, it is once
 highlighted in dark blue while all other matches are highlighted in a
 translucent blue.
 
-Even if the correct structure is not found by CSI:FingerId -especially
+Even if the correct structure is not found by CSI:FingerID -especially
 if the correct structure is not contained in any database -you can get
 information about the structure by looking at the predicted structures:
 When clicking on the large light green squares you see which molecular
@@ -426,7 +426,7 @@ The Sirius Commandline Tool is able to output *.sirius* files by using
 the option **-O sirius**. You can import these files with the Sirius
 User Interface to get a visualization of the results.
 
-Currently, CSI:FingerId predictions are not stored in the *.sirius*
+Currently, CSI:FingerID predictions are not stored in the *.sirius*
 file. This will hopefully change in future releases.
 
 ### Export Results
@@ -450,7 +450,7 @@ files.
 
 ### Confidence View
 
-When identifying large amounts of spectra with CSI:FingerId you will,
+When identifying large amounts of spectra with CSI:FingerID you will,
 unfortunately, get a lot of wrong predictions among the correct ones.
 With SIRIUS 3.2 we offer a confidence score that reflects the likelihood
 that some identification is correct. You can list all identifications by
@@ -820,7 +820,7 @@ SIRIUS recognizes the following options:
 --fingerid
 
 > If this option is set, SIRIUS will search for molecular structure
-> using CSI:FingerId after determining the molecular formula
+> using CSI:FingerID after determining the molecular formula
 
 --database, -d
 
@@ -886,15 +886,15 @@ as only one tree is computed).
 ##### Identifying Molecular Structures
 
 With SIRIUS 3.2 you can also search for molecular structures with
-CSI:FingerId. Just add the option **--fingerid** to trigger a
-CSI:FingerId search after fragmentation tree computation. With
+CSI:FingerID. Just add the option **--fingerid** to trigger a
+CSI:FingerID search after fragmentation tree computation. With
 **--database** can now also specify the database SIRIUS should search
 in. Available are *pubchem* and *bio*. However, you can also specify
 certain databases like *kegg* and *hmdb*, although it is recommended to
 filter the list afterwards.
 
 SIRIUS will generate csv files for each input spectrum containing a
-ordered candidate list of structures with the CSI:FingerId score.
+ordered candidate list of structures with the CSI:FingerID score.
 Furthermore, another result csv file is generated only the top
 candidates from all input spectra ordered by their confidence.
 
