@@ -71,7 +71,7 @@ public class FingerIdWorkflow implements Workflow {
     protected void handleJobs(BufferedJJobSubmitter<Instance>.JobContainer jc) throws IOException {
         //sirius
         Sirius.SiriusIdentificationJob j = jc.getJob(Sirius.SiriusIdentificationJob.class);
-        CombinedCLI.progress.info("Sirius results for: '" + jc.sourceInstance.file.getName() + "', " + jc.sourceInstance.experiment.getName());
+        logger.info("Sirius results for: '" + jc.sourceInstance.file.getName() + "', " + jc.sourceInstance.experiment.getName());
         ExperimentResult experimentResult = null;
         if (j != null){
 //            handleSiriusResults(jc, j); //handle results

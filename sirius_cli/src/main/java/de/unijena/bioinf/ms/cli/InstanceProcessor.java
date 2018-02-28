@@ -8,4 +8,6 @@ public interface InstanceProcessor<T> {
 
     public void output(T result);
 
+    //public JJob makeJob();
+
 }

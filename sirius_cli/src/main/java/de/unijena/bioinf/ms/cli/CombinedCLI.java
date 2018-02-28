@@ -33,13 +33,11 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 public class CombinedCLI extends ApplicationCore {
-    protected final boolean shellMode;
-    protected static ShellProgress progress; //todo switch to logger!!!!!
 
     protected ProjectWriter projectWriter;
     protected static boolean shellOutputSurpressed = false; //todo switch to logger!!!!!
 
-    protected org.slf4j.Logger logger = LoggerFactory.getLogger(CLI.class);
+    protected org.slf4j.Logger logger = LoggerFactory.getLogger(CombinedCLI.class);
 
     protected Workflow workflow;
     protected SiriusInstanceProcessor siriusInstanceProcessor;
@@ -48,8 +46,6 @@ public class CombinedCLI extends ApplicationCore {
 
 
     public CombinedCLI() {
-        this.shellMode = System.console() != null;
-        this.progress = new ShellProgress(System.out, shellMode);
     }
 
     CombinedOptions options;
@@ -69,7 +65,7 @@ public class CombinedCLI extends ApplicationCore {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            progress.info("Computation time: " + (double) (System.currentTimeMillis() - time) / 1000d + "s");
+            logger.info("Computation time: " + (double) (System.currentTimeMillis() - time) / 1000d + "s");
         }
     }
 

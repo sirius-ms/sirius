@@ -18,6 +18,7 @@ import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
@@ -28,6 +29,8 @@ import java.util.*;
 import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 
 public class FingerIdInstanceProcessor implements InstanceProcessor<Map<IdentificationResult, ProbabilityFingerprint>> {
+
+    protected Logger logger = LoggerFactory.getLogger(CLI.class);
 
     FingerIdOptions options;
 
@@ -88,7 +91,7 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
         //sort by score
         allCandidates.sort(Scored.<FingerprintCandidate>desc());
         if (allCandidates.size() == 0) {
-            CombinedCLI.progress.info("No candidate structures found for given mass and computed trees.");
+            logger.info("No candidate structures found for given mass and computed trees.");
             return;
         }
 
@@ -139,7 +142,7 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
             String name = fc.getName();
             if (name == null || name.isEmpty()) name = fc.getSmiles();
             if (name == null || name.isEmpty()) name = "";
-            CombinedCLI.progress.info(String.format(Locale.US, "Top biocompound is %s %s (%s)\n", name, topBio.origin.getPrecursorIonType().toString(), fc.getInchi().in2D));
+            logger.info(String.format(Locale.US, "Top biocompound is %s %s (%s)\n", name, topBio.origin.getPrecursorIonType().toString(), fc.getInchi().in2D));
             //progress.info(String.format(Locale.US, "Top biocompound is %s %s (%s) with confidence %.2f\n", name, topBio.origin.getPrecursorIonType().toString(), fc.getInchi().in2D, confidenceScore));
         }
 
