@@ -9,38 +9,56 @@ import java.util.Arrays;
 
 public class SiriusCLIApplication {
     public static void main(String[] args) {
-        try {
-            final FingeridCLI<FingerIdOptions> cli = new FingeridCLI<>();
-            if (isZodiac(args)) {
-                if (args.length == 1) {
-                    cli.println(CliFactory.createCli(ZodiacOptions.class).getHelpMessage());
-                    System.exit(0);
-                }
-                ZodiacOptions options = null;
-                try {
-                    options = CliFactory.createCli(ZodiacOptions.class).parseArguments(removeFromArrayIgnoreCase(args, "--zodiac"));
-                } catch (HelpRequestedException e) {
-                    cli.println(e.getMessage());
-                    cli.println("");
-                    System.exit(0);
-                }
-
-                Zodiac zodiac = new Zodiac(options);
-                zodiac.run();
-            } else {
-                cli.parseArgsAndInit(args, FingerIdOptions.class);
-                cli.compute();
-            }
-        } catch (Exception e) {
-            LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unkown Error!", e);
-        } finally {
+        if (false){
             try {
-                JobManager.shutDownAllInstances();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                System.exit(0);
+                final FingeridCLI<FingerIdOptions> cli = new FingeridCLI<>();
+                if (isZodiac(args)) {
+                    if (args.length == 1) {
+                        cli.println(CliFactory.createCli(ZodiacOptions.class).getHelpMessage());
+                        System.exit(0);
+                    }
+                    ZodiacOptions options = null;
+                    try {
+                        options = CliFactory.createCli(ZodiacOptions.class).parseArguments(removeFromArrayIgnoreCase(args, "--zodiac"));
+                    } catch (HelpRequestedException e) {
+                        cli.println(e.getMessage());
+                        cli.println("");
+                        System.exit(0);
+                    }
+
+                    Zodiac zodiac = new Zodiac(options);
+                    zodiac.run();
+                } else {
+                    cli.parseArgsAndInit(args, FingerIdOptions.class);
+                    cli.compute();
+                }
+            } catch (Exception e) {
+                LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unkown Error!", e);
+            } finally {
+                try {
+                    JobManager.shutDownAllInstances();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    System.exit(0);
+                }
+            }
+        } else {
+            try {
+            CombinedCLI combinedCLI = new CombinedCLI();
+            combinedCLI.parseArgsAndInit(args);
+            combinedCLI.compute();
+            } catch (Exception e) {
+                LoggerFactory.getLogger(CombinedCLI.class).error("Unkown Error!", e);
+            } finally {
+                try {
+                    JobManager.shutDownAllInstances();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    System.exit(0);
+                }
             }
         }
+
     }
 
     private static boolean isZodiac(String[] args) {

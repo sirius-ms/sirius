@@ -22,6 +22,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.sirius.projectspace.Index;
 
 import java.io.File;
+import java.util.HashMap;
 
 public class Instance {
     public static final Instance NULL_INSTANCE = new Instance();
@@ -30,10 +31,14 @@ public class Instance {
     final File file;
     final int index;
 
+    //todo don't need them!?
+    protected final HashMap<Class<Object>, Object> annotations;
+
     private Instance() {
         experiment = null;
         file = null;
         index = 0;
+        annotations = new HashMap<>();
     }
 
     public Instance(Ms2Experiment experiment, File file, int index) {
@@ -41,6 +46,7 @@ public class Instance {
         this.file = file;
         this.index = index;
         this.experiment.setAnnotation(Index.class, new Index(index));
+        annotations = new HashMap<>();
     }
 
     public String fileNameWithoutExtension() {
@@ -48,5 +54,20 @@ public class Instance {
         final int i = name.lastIndexOf('.');
         if (i >= 0) return name.substring(0, i);
         else return name;
+    }
+
+    public <T> boolean setAnnotation(Class<T> klass, T annotation) {
+        return annotations.put((Class<Object>) klass, annotation) == annotation;
+    }
+
+    @SuppressWarnings("unchecked cast")
+    public <T> T getAnnotationOrThrow(Class<T> klass) {
+        final T ano = (T) annotations.get(klass);
+        if (ano == null) throw new NullPointerException("No annotation '" + klass.getName() + "' known.");
+        return ano;
+    }
+
+    public <T> T getAnnotationOrNull(Class<T> klass) {
+        return (T) annotations.get(klass);
     }
 }
