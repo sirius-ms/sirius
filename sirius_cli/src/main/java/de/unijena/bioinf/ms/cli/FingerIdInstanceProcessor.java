@@ -17,7 +17,10 @@ import de.unijena.bioinf.fingerid.jjobs.FingerIDJJob;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
+import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,9 +57,28 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
         return true;
     }
 
-    protected FingerIDJJob makeFingerIdJob(final Instance i, BasicJJob<List<IdentificationResult>> siriusJob) {
+//    protected FingerIDJJob makeFingerIdJob(final Instance i, BasicJJob<List<IdentificationResult>> siriusJob) {
+//        //todo make compatible with every job which provides List<IdentificationResult>
+//        if (siriusJob == null) return null;
+//
+//        //predict fingerprint
+//        final HashMap<String, Long> dbMap = getDatabaseAliasMap(); //todo this is the same for all instances or?????
+//        Long flagW = dbMap.get(options.getDatabase());
+//        if (flagW == null) flagW = 0L;
+//        final long flag = flagW;
+//        CSIPredictor csi = i.experiment.getPrecursorIonType().getCharge() > 0 ? positivePredictor : negativePredictor;
+//        FingerIDJJob fingerIdJob = new FingerIDJJob(csi.getBlaster(), csi.getFingerprintVersion(), csi.getDatabase(), getFingerIdDatabase(), options.getPredictors());
+//        fingerIdJob.addRequiredJob(siriusJob);
+//        fingerIdJob.setDbFlag(flag);
+//        fingerIdJob.setBioFilter(getBioFilter());
+//        fingerIdJob.setCanopus(canopus);
+//
+//        return fingerIdJob;
+//    }
+
+    protected FingerIDJJob makeFingerIdJob(final Instance i, ExperimentResultJJob experimentResultJJob) {
         //todo make compatible with every job which provides List<IdentificationResult>
-        if (siriusJob == null) return null;
+        if (experimentResultJJob == null) return null;
 
         //predict fingerprint
         final HashMap<String, Long> dbMap = getDatabaseAliasMap(); //todo this is the same for all instances or?????
@@ -65,7 +87,7 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
         final long flag = flagW;
         CSIPredictor csi = i.experiment.getPrecursorIonType().getCharge() > 0 ? positivePredictor : negativePredictor;
         FingerIDJJob fingerIdJob = new FingerIDJJob(csi.getBlaster(), csi.getFingerprintVersion(), csi.getDatabase(), getFingerIdDatabase(), options.getPredictors());
-        fingerIdJob.addRequiredJob(siriusJob);
+        fingerIdJob.addRequiredJob(experimentResultJJob);
         fingerIdJob.setDbFlag(flag);
         fingerIdJob.setBioFilter(getBioFilter());
         fingerIdJob.setCanopus(canopus);
