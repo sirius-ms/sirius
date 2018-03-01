@@ -10,6 +10,7 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNRegressionPredictor;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
+import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
@@ -158,50 +159,50 @@ public class SiriusInstanceProcessor implements  InstanceProcessor<ExperimentRes
     }
 
 
-    protected ExperimentResult handleSiriusResults(Sirius.SiriusIdentificationJob siriusJob) throws IOException {
-        if (siriusJob != null) {
-            try {
-                final List<IdentificationResult> results = siriusJob.takeResult();
-                if (!results.isEmpty()) {
-
-                    return createExperimentResult(siriusJob, results);
-                } else {
-
-                    return new ExperimentResult(siriusJob.getExperiment(), null, ExperimentResult.ErrorCause.NORESULTS);
-                }
-            } catch (TimeoutException e) {
-
-                return new ExperimentResult(siriusJob.getExperiment(), null, ExperimentResult.ErrorCause.TIMEOUT);
-            } catch (RuntimeException e) {
-                e.printStackTrace();
-//                println("Error during computation of " + siriusJob.getExperiment().getName() + ": " + e.getMessage());
-                logger.debug("Error during computation of " + siriusJob.getExperiment().getName(), e);
-                return new ExperimentResult(siriusJob.getExperiment(), null, ExperimentResult.ErrorCause.ERROR, e.getMessage());
-            }
-        } else {
-            logger.debug("Null job occurred!");
-            return null;
-        }
-
-    }
-
-
-
-
-    protected ExperimentResult createExperimentResult(Sirius.SiriusIdentificationJob siriusJob, List<IdentificationResult> results) {
-        return new ExperimentResult(siriusJob.getExperiment(), results);
-    }
-
-
-    protected Sirius.SiriusIdentificationJob makeSiriusJob(final Instance i) {
+    protected ExperimentResultForSiriusJJob makeSiriusJob(final Instance i) {
         Sirius.SiriusIdentificationJob job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
-        return job;
+        return new ExperimentResultForSiriusJJob(job);
     }
 
     private Integer getNumberOfCandidates() {
         return options.getNumberOfCandidates() != null ? options.getNumberOfCandidates() : 5;
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public class ExperimentResultForSiriusJJob extends BasicMasterJJob<ExperimentResult> implements ExperimentResultJJob {
+
+        private Sirius.SiriusIdentificationJob siriusIdentificationJob;
+
+        public ExperimentResultForSiriusJJob(Sirius.SiriusIdentificationJob siriusIdentificationJob) {
+            super(JobType.CPU);
+            this.siriusIdentificationJob = siriusIdentificationJob;
+        }
+
+        @Override
+        protected ExperimentResult compute() throws Exception {
+            try {
+                final List<IdentificationResult> results = submitSubJob(siriusIdentificationJob).takeResult();
+                if (!results.isEmpty()) {
+
+                    return new ExperimentResult(siriusIdentificationJob.getExperiment(), results);
+                } else {
+
+                    return new ExperimentResult(siriusIdentificationJob.getExperiment(), null, ExperimentResult.ErrorCause.NORESULTS);
+                }
+            } catch (TimeoutException e) {
+
+                return new ExperimentResult(siriusIdentificationJob.getExperiment(), null, ExperimentResult.ErrorCause.TIMEOUT);
+            }
+        }
+
+        @Override
+        public Ms2Experiment getExperiment() {
+            return siriusIdentificationJob.getExperiment();
+        }
+
+    }
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,5 +219,7 @@ public class SiriusInstanceProcessor implements  InstanceProcessor<ExperimentRes
         if (!CombinedCLI.shellOutputSurpressed)
             System.out.printf(Locale.US, msg, args);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }

@@ -7,12 +7,15 @@ import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.jjobs.FingerIDJJob;
+import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
+import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
 import de.unijena.bioinf.sirius.projectspace.ProjectWriter;
+import de.unijena.bioinf.sirius.projectspace.ProjectWriterJJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +57,7 @@ public class FingerIdWorkflow implements Workflow {
 
     @Override
     public void compute(Iterator<Instance> allInstances) {
-        //set oprtions todo: i would like to do this in the cli parser but how with jewelcli?
+        //set options todo: i would like to do this in the cli parser but how with jewelcli?
         int initBuffer = options.getMinInstanceBuffer() != null ? options.getMinInstanceBuffer() : PropertyManager.getNumberOfCores() * 2;
         int maxBuffer = options.getMaxInstanceBuffer() != null ? options.getMaxInstanceBuffer() : initBuffer * 2;
 
@@ -65,17 +68,26 @@ public class FingerIdWorkflow implements Workflow {
 
         JobSubmitter submitter = new JobSubmitter(allInstances);
         submitter.start(initBuffer, maxBuffer);
+
     }
 
 
     protected void handleJobs(BufferedJJobSubmitter<Instance>.JobContainer jc) throws IOException {
+        //todo add a getJobByIntanceOf method?!
         //sirius
-        Sirius.SiriusIdentificationJob j = jc.getJob(Sirius.SiriusIdentificationJob.class);
+        ExperimentResultJJob j = jc.getJob(SiriusInstanceProcessor.ExperimentResultForSiriusJJob.class);
         logger.info("Sirius results for: '" + jc.sourceInstance.file.getName() + "', " + jc.sourceInstance.experiment.getName());
         ExperimentResult experimentResult = null;
         if (j != null){
 //            handleSiriusResults(jc, j); //handle results
-            experimentResult = siriusInstanceProcessor.handleSiriusResults(j);
+            try {
+                experimentResult = j.takeResult();
+            } catch (RuntimeException e) {
+                //cannot happen!?
+                logger.debug("Error during computation of " + j.getExperiment().getName(), e);
+                experimentResult = new ExperimentResult(j.getExperiment(), null, ExperimentResult.ErrorCause.ERROR, e.getMessage());
+            }
+
             if (experimentResult!=null){
                 siriusInstanceProcessor.output(experimentResult);
             } else {
@@ -110,11 +122,13 @@ public class FingerIdWorkflow implements Workflow {
             }
         }
 
+        if (experimentResult!=null) writeResults(experimentResult);
+    }
 
-        //
-        // TODO: Dirty Hack
-        //
+    protected void writeResults(ExperimentResult experimentResult) throws IOException {
         if (projectWriter != null) {
+            //not thread-safe
+//            writerJJobs.add(SiriusJobs.getGlobalJobManager().submitJob(new ProjectWriterJJob(projectWriter, experimentResult)));
             projectWriter.writeExperiment(experimentResult);
         }
     }
@@ -128,7 +142,6 @@ public class FingerIdWorkflow implements Workflow {
             this.origin = ir;
         }
     }
-    
 
     protected class JobSubmitter extends BufferedJJobSubmitter<Instance> {
 
@@ -139,7 +152,7 @@ public class FingerIdWorkflow implements Workflow {
         @Override
         protected void submitJobs(final JobContainer watcher) {
             Instance instance = watcher.sourceInstance;
-            Sirius.SiriusIdentificationJob siriusJob = siriusInstanceProcessor.makeSiriusJob(instance);
+            ExperimentResultJJob siriusJob = siriusInstanceProcessor.makeSiriusJob(instance);
             submitJob(siriusJob, watcher);
             if (options.isFingerid()){
                 FingerIDJJob fingerIDJob = fingerIdInstanceProcessor.makeFingerIdJob(instance, siriusJob);
@@ -162,4 +175,5 @@ public class FingerIdWorkflow implements Workflow {
             return SiriusJobs.getGlobalJobManager();
         }
     }
+
 }
