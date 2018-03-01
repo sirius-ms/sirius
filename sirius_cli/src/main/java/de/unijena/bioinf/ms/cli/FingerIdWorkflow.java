@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
-public class FingerIdWorkflow implements Workflow {
+public class FingerIdWorkflow implements Workflow<Instance> {
 
     FingerIdOptions options;
     ProjectWriter projectWriter;
@@ -72,7 +72,7 @@ public class FingerIdWorkflow implements Workflow {
     }
 
 
-    protected void handleJobs(BufferedJJobSubmitter<Instance>.JobContainer jc) throws IOException {
+    protected ExperimentResult handleJobs(BufferedJJobSubmitter<Instance>.JobContainer jc) throws IOException {
         //todo add a getJobByIntanceOf method?!
         //sirius
         ExperimentResultJJob j = jc.getJob(SiriusInstanceProcessor.ExperimentResultForSiriusJJob.class);
@@ -123,6 +123,7 @@ public class FingerIdWorkflow implements Workflow {
         }
 
         if (experimentResult!=null) writeResults(experimentResult);
+        return experimentResult;
     }
 
     protected void writeResults(ExperimentResult experimentResult) throws IOException {
@@ -142,6 +143,7 @@ public class FingerIdWorkflow implements Workflow {
             this.origin = ir;
         }
     }
+
 
     protected class JobSubmitter extends BufferedJJobSubmitter<Instance> {
 
@@ -175,5 +177,53 @@ public class FingerIdWorkflow implements Workflow {
             return SiriusJobs.getGlobalJobManager();
         }
     }
+
+//    protected class JobSubmitter extends BufferedJJobSubmitter<Instance> implements Iterator<ExperimentResult> {
+//
+//        public JobSubmitter(Iterator<Instance> instances) {
+//            super(instances);
+//        }
+//
+//        @Override
+//        protected void submitJobs(final JobContainer watcher) {
+//            Instance instance = watcher.sourceInstance;
+//            ExperimentResultJJob siriusJob = siriusInstanceProcessor.makeSiriusJob(instance);
+//            submitJob(siriusJob, watcher);
+//            if (options.isFingerid()){
+//                FingerIDJJob fingerIDJob = fingerIdInstanceProcessor.makeFingerIdJob(instance, siriusJob);
+//                if (fingerIDJob!=null)
+//                    submitJob(fingerIDJob, watcher);
+//            }
+//        }
+//
+//        @Override
+//        protected void handleResults(JobContainer watcher) {
+//            try {
+//                handleJobs(watcher);
+//            } catch (IOException e) {
+//                logger.error("Error processing instance: " + watcher.sourceInstance.file.getName());
+//            }
+//        }
+//
+//        @Override
+//        protected JobManager jobManager() {
+//            return SiriusJobs.getGlobalJobManager();
+//        }
+//
+//        @Override
+//        public boolean hasNext() {
+//            return false;
+//        }
+//
+//        @Override
+//        public ExperimentResult next() {
+//            return null;
+//        }
+//
+//        @Override
+//        public void remove() {
+//            throw new UnsupportedOperationException();
+//        }
+//    }
 
 }

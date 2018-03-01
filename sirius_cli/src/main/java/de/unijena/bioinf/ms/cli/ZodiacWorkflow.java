@@ -22,7 +22,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
-public class ZodiacWorkflow implements Workflow {
+public class ZodiacWorkflow implements Workflow<ExperimentResult> {
 
     private static final  org.slf4j.Logger LOG = LoggerFactory.getLogger(Zodiac.class);
     private ZodiacOptions options;
@@ -47,17 +47,21 @@ public class ZodiacWorkflow implements Workflow {
         this.zodiacIP = new ZodiacInstanceProcessor(options);
     }
 
-
     @Override
-    public void compute(Iterator<Instance> allInstances) {
-        throw new NoSuchMethodError("not implemented");
-    }
-
-
-    public void compute(List<ExperimentResult> allExperimentResults) throws IOException {
+    public void compute(Iterator<ExperimentResult> experimentResultIterator) {
         Path originalSpectraPath = Paths.get(options.getSpectraFile());
+
+        List<ExperimentResult> allExperimentResults = new ArrayList<>();
+        while (experimentResultIterator.hasNext()) {
+            allExperimentResults.add(experimentResultIterator.next());
+        }
         //todo reads original experiments twice!
-        allExperimentResults = zodiacIP.updateQuality(allExperimentResults, originalSpectraPath);
+        try {
+            allExperimentResults = zodiacIP.updateQuality(allExperimentResults, originalSpectraPath);
+        } catch (IOException e) {
+            LOG.error("IOException while estimating data quality.", e);
+            return;
+        }
         ZodiacJJob zodiacJJob = zodiacIP.makeZodiacJob(allExperimentResults);
 
         try {
@@ -65,6 +69,9 @@ public class ZodiacWorkflow implements Workflow {
             zodiacIP.writeResults(allExperimentResults, zodiacResults);
         } catch (ExecutionException e) {
             LOG.error("An error occurred while running ZODIAC.", e);
+        }catch (IOException e) {
+            LOG.error("Error writing ZODIAC output.", e);
+
         }
     }
 
