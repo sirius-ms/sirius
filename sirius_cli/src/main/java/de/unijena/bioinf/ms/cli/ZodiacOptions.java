@@ -13,7 +13,8 @@ public interface ZodiacOptions {
     @Option(
             shortName = {"s"},
             longName = {"sirius"},
-            description = "Sirius output directory or workspace. This is the input for Zodiac"
+            description = "Sirius output directory or workspace. This is the input for Zodiac",
+            defaultToNull = true
     )
     String getSirius();
 
@@ -29,7 +30,8 @@ public interface ZodiacOptions {
     @Option(
             shortName = {"o"},
             longName = {"output"},
-            description = "output directory"
+            description = "output directory",
+            defaultToNull = true
     )
     String getOutput();
 

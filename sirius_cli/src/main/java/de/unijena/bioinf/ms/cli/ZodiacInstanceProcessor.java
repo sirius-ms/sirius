@@ -84,7 +84,19 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
 
     @Override
     public boolean validate() {
-        return false;
+        return testOptions();
+    }
+
+    private boolean testOptions(){
+        if (options.getOutput()==null){
+            LOG.error("Option is mandatory: --output -o value : output directory");
+            return false;
+        }
+        if (options.getSirius()==null){
+            LOG.error("Option is mandatory: --sirius -s value : Sirius output directory or workspace. This is the input for Zodiac");
+            return false;
+        }
+        return true;
     }
 
     @Override
