@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.cli;
 
+import com.lexicalscope.jewel.cli.ArgumentValidationException;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -49,10 +50,21 @@ public class Zodiac {
 
 
     public Zodiac(ZodiacOptions options) {
+        testOptions();
         this.workSpacePath = Paths.get(options.getSirius());
         this.libraryHitsFile = (options.getLibraryHitsFile() == null ? null : Paths.get(options.getLibraryHitsFile()));
         this.outputPath = Paths.get(options.getOutput());
         this.options = options;
+    }
+
+    private void testOptions(){
+        //this is for compatibility with new workflow
+        if (options.getOutput()==null){
+            throw new ArgumentValidationException("Option is mandatory: --output -o value : output directory");
+        }
+        if (options.getSirius()==null){
+            throw new ArgumentValidationException("Option is mandatory: --sirius -s value : Sirius output directory or workspace. This is the input for Zodiac");
+        }
     }
 
     public void run() {
