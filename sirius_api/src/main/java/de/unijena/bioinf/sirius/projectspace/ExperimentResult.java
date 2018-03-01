@@ -20,6 +20,7 @@ public class ExperimentResult {
         this.results = results;
         this.experimentName = name;
         this.experimentSource = source;
+        this.error = ErrorCause.NOERROR;
     }
 
     public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results) {
@@ -34,6 +35,7 @@ public class ExperimentResult {
     public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results, String errorString) {
         this(experiment,results);
         this.error = ErrorCause.valueOf(errorString);
+        if (error==null) error = ErrorCause.ERROR;
     }
 
     public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results, ErrorCause error) {
