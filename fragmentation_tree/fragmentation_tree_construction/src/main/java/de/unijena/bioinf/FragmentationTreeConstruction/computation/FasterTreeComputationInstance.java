@@ -333,7 +333,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         graph.setAnnotation(ProcessedInput.class, pin);
         final FTree recal = tb.computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).solve(pin, graph).tree;
         final FTree finalTree;
-        if (recal.getTreeWeight() > tree.getTreeWeight()) {
+        if (recal.getTreeWeight() >= tree.getTreeWeight()) {
             finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(recal).withMinimalScore(recal.getTreeWeight() - 1e-3).solve(pin, graph).tree;
             finalTree.setAnnotation(SpectralRecalibration.class, rec);
             finalTree.setAnnotation(ProcessedInput.class, pin);
