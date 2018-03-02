@@ -27,12 +27,12 @@ public class ProjectSpaceMerger2 implements ProjectWriter {
         this.readerWriterFactory = readerWriterFactory;
         this.zip = zip;
         // move project space into temp
-        final ProjectReader reader = zip ? readerWriterFactory.getSiriusOutputReader(file, ProjectspaceUtils.getWorkspaceReadingEnvironmentForSirius(file)) : readerWriterFactory.getDirectoryOutputReader(file, ProjectspaceUtils.getWorkspaceReadingEnvironmentForDirectoryOutput(file));
+        final ProjectReader reader = zip ? readerWriterFactory.getSiriusOutputReader(file, ProjectSpaceUtils.getWorkspaceReadingEnvironmentForSirius(file)) : readerWriterFactory.getDirectoryOutputReader(file, ProjectSpaceUtils.getWorkspaceReadingEnvironmentForDirectoryOutput(file));
 
         this.tempFile = File.createTempFile("sirius", ".sirius");
         tempFile.deleteOnExit();
         this.numberOfWrittenExperiments = 0;
-        try (final ProjectWriter pw = readerWriterFactory.getSiriusOutputWriter(tempFile.getAbsolutePath(), ProjectspaceUtils.getWorkspaceWritingEnvironmentForSirius(tempFile.getAbsolutePath()))) {
+        try (final ProjectWriter pw = readerWriterFactory.getSiriusOutputWriter(tempFile.getAbsolutePath(), ProjectSpaceUtils.getWorkspaceWritingEnvironmentForSirius(tempFile.getAbsolutePath()))) {
             while (reader.hasNext()) {
                 try {
                     final ExperimentResult er = reader.next();
@@ -61,7 +61,7 @@ public class ProjectSpaceMerger2 implements ProjectWriter {
         });
 
         // recreate file
-        this.underlyingWriter = zip ? readerWriterFactory.getSiriusOutputWriter(file, ProjectspaceUtils.getWorkspaceWritingEnvironmentForSirius(file)) : readerWriterFactory.getDirectoryOutputWriter(file, ProjectspaceUtils.getWorkspaceWritingEnvironmentForDirectoryOutput(file));
+        this.underlyingWriter = zip ? readerWriterFactory.getSiriusOutputWriter(file, ProjectSpaceUtils.getWorkspaceWritingEnvironmentForSirius(file)) : readerWriterFactory.getDirectoryOutputWriter(file, ProjectSpaceUtils.getWorkspaceWritingEnvironmentForDirectoryOutput(file));
     }
 
     public int getNumberOfWrittenExperiments() {
@@ -77,7 +77,7 @@ public class ProjectSpaceMerger2 implements ProjectWriter {
     @Override
     public void close() throws IOException {
         // re-add previous experiments
-        try (ProjectReader reader = readerWriterFactory.getSiriusOutputReader(tempFile.getAbsolutePath(), ProjectspaceUtils.getWorkspaceReadingEnvironmentForSirius(tempFile.getAbsolutePath()))) {
+        try (ProjectReader reader = readerWriterFactory.getSiriusOutputReader(tempFile.getAbsolutePath(), ProjectSpaceUtils.getWorkspaceReadingEnvironmentForSirius(tempFile.getAbsolutePath()))) {
             while (reader.hasNext()) {
                 final ExperimentResult result = reader.next();
                 if (!ignoreSet.contains(result.getExperimentSource() + "_" + result.getExperimentName())) {

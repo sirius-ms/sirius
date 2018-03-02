@@ -8,6 +8,9 @@ public interface Workflow<I> {
 
     public boolean validate();
 
+    /*
+    compute, output, write into projectspace, etc.
+     */
     public void compute(Iterator<I> allInstances); //todo maybe with output Iterator<O>
 
 }

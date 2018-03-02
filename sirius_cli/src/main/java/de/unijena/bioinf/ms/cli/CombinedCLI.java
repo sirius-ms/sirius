@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 public class CombinedCLI extends ApplicationCore {
 
     protected ProjectWriter projectWriter;
-    protected static boolean shellOutputSurpressed = false; //todo switch to logger!!!!!
+    protected static boolean shellOutputSurpressed = false; //todo extra Utils class?
 
     protected org.slf4j.Logger logger = LoggerFactory.getLogger(CombinedCLI.class);
 
@@ -119,9 +119,18 @@ public class CombinedCLI extends ApplicationCore {
 
         //decide for workflow
         if (options.isZodiac() && options.isFingerid()){
-            //todo implement workflows
-            //                ...;
+            logger.error("ZODIAC + CSI:FingerID is currently not supported");
+            System.exit(1);
         } else if (options.isZodiac()){
+            //todo better differentiate between reading from workspace and additionally running SIRIUS
+            if (options.getInput()==null || options.getInput().size()==0){
+                //todo tis might fail due to jewelCLI bug: see handleInput
+                workflow = new ZodiacWorkflow(options);
+            } else {
+                logger.error("SIRIUS + ZODIAC in one run is currently not supported");
+                System.exit(1);
+            }
+
 //                ...;
 //            } else if (options.isFingerid()){
 //                ...;
@@ -188,7 +197,7 @@ public class CombinedCLI extends ApplicationCore {
         }
 
         try {
-            ProjectspaceUtils.ProjectWriterInfo projectWriterInfo = ProjectspaceUtils.getProjectWriter(options.getOutput(), options.getSirius(), readerWriterFactory);
+            ProjectSpaceUtils.ProjectWriterInfo projectWriterInfo = ProjectSpaceUtils.getProjectWriter(options.getOutput(), options.getSirius(), readerWriterFactory);
             this.projectWriter = projectWriterInfo.getProjectWriter();
             this.instanceIdOffset = projectWriterInfo.getNumberOfWrittenExperiments();
         } catch (IOException e) {
