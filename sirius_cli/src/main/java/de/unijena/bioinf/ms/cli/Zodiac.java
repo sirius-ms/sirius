@@ -50,14 +50,14 @@ public class Zodiac {
 
 
     public Zodiac(ZodiacOptions options) {
-        testOptions();
+        testOptions(options);
         this.workSpacePath = Paths.get(options.getSirius());
         this.libraryHitsFile = (options.getLibraryHitsFile() == null ? null : Paths.get(options.getLibraryHitsFile()));
         this.outputPath = Paths.get(options.getOutput());
         this.options = options;
     }
 
-    private void testOptions(){
+    private void testOptions(ZodiacOptions options){
         //this is for compatibility with new workflow
         if (options.getOutput()==null){
             throw new ArgumentValidationException("Option is mandatory: --output -o value : output directory");

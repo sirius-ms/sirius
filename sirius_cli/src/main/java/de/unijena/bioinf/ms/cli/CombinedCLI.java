@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.cli;
 
 import com.google.common.collect.Iterables;
+import com.lexicalscope.jewel.cli.ArgumentValidationException;
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.ChemistryBase.chem.*;
@@ -26,6 +27,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
@@ -55,8 +58,17 @@ public class CombinedCLI extends ApplicationCore {
     public void compute() {
         final long time = System.currentTimeMillis();
         try {
-            Iterator<Instance> instanceIterator = handleInput(options);
-            workflow.compute(instanceIterator);
+            if (workflow instanceof ZodiacWorkflow){
+//                if (!(new ZodiacInstanceProcessor(options)).validate()){
+//                    System.exit(1);
+//                }
+                Path workspace = Paths.get(options.getSirius());
+                List<ExperimentResult> experimentResults = newLoad(workspace.toFile());
+                workflow.compute(experimentResults.iterator());
+            } else {
+                Iterator<Instance> instanceIterator = handleInput(options);
+                workflow.compute(instanceIterator);
+            }
         } catch (IOException e) {
             logger.error("Error while handling the input data", e);
         } finally {
@@ -82,8 +94,8 @@ public class CombinedCLI extends ApplicationCore {
 
     protected void parseArgsAndInit(String[] args) {
         parseArgs(args, CombinedOptions.class);
-        workflow.setup();
-        workflow.validate();
+        if (!workflow.setup()) System.exit(1);
+        if (!workflow.validate()) System.exit(1);
     }
 
     protected void parseArgs(String[] args, Class<CombinedOptions> optionsClass) {
@@ -182,13 +194,14 @@ public class CombinedCLI extends ApplicationCore {
             disableShellLogging();
         } else {
             //setup former print() to shell by logging
-            ConsoleHandler ch = getConsoleHandler();//todo this one always outputs into err
-            Logger logger = Logger.getLogger("shellOutputLogger");//todo do better
-            logger.removeHandler(ch);
-            Handler shellResultHandler = new ResultOutputHandler();
-            //todo both necessary?
-            Logger.getGlobal().addHandler(shellResultHandler);
-            logger.addHandler(shellResultHandler);
+            //todo do it right
+//            ConsoleHandler ch = getConsoleHandler();//todo this one always outputs into err
+//            Logger logger = Logger.getLogger("shellOutputLogger");//todo do better
+//            logger.removeHandler(ch);
+//            Handler shellResultHandler = new ResultOutputHandler();
+//            //todo both necessary?
+//            Logger.getGlobal().addHandler(shellResultHandler);
+//            logger.addHandler(shellResultHandler);
         }
 
         if ("-".equals(options.getOutput())) {
@@ -196,13 +209,16 @@ public class CombinedCLI extends ApplicationCore {
             System.exit(1);
         }
 
-        try {
-            ProjectSpaceUtils.ProjectWriterInfo projectWriterInfo = ProjectSpaceUtils.getProjectWriter(options.getOutput(), options.getSirius(), readerWriterFactory);
-            this.projectWriter = projectWriterInfo.getProjectWriter();
-            this.instanceIdOffset = projectWriterInfo.getNumberOfWrittenExperiments();
-        } catch (IOException e) {
-            logger.error(e.getMessage(), e);
-            System.exit(1);
+        //todo ZODIAC hack
+        if (!options.isZodiac()){
+            try {
+                ProjectSpaceUtils.ProjectWriterInfo projectWriterInfo = ProjectSpaceUtils.getProjectWriter(options.getOutput(), options.getSirius(), readerWriterFactory);
+                this.projectWriter = projectWriterInfo.getProjectWriter();
+                this.instanceIdOffset = projectWriterInfo.getNumberOfWrittenExperiments();
+            } catch (IOException e) {
+                logger.error(e.getMessage(), e);
+                System.exit(1);
+            }
         }
 
 
@@ -231,6 +247,25 @@ public class CombinedCLI extends ApplicationCore {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // parse input, setup each instance
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    //load workspace for Zodiac //todo integrate better
+    protected List<ExperimentResult> newLoad(File file) throws IOException {
+        final List<ExperimentResult> results = new ArrayList<>();
+        final DirectoryReader.ReadingEnvironment env;
+        if (file.isDirectory()) {
+            env = new SiriusFileReader(file);
+        } else {
+            env = new SiriusWorkspaceReader(file);
+        }
+        final DirectoryReader reader = new DirectoryReader(env);
+
+        while (reader.hasNext()) {
+            final ExperimentResult result = reader.next();
+            results.add(result);
+        }
+        return results;
+    }
 
     protected Iterator<Instance> handleInput(final SiriusOptions options) throws IOException {
         final ArrayDeque<Instance> instances = new ArrayDeque<Instance>();
