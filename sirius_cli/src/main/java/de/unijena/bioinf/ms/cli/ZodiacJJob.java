@@ -37,7 +37,7 @@ public class ZodiacJJob extends BasicMasterJJob<ZodiacResultsWithClusters>{
 
     @Override
     protected ZodiacResultsWithClusters compute() throws Exception {
-        Zodiac zodiac = new Zodiac(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates);
+        Zodiac zodiac = new Zodiac(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, this);
         zodiacResult = zodiac.compute(iterationSteps, burnInSteps, separateRuns);
         return zodiacResult;
     }
