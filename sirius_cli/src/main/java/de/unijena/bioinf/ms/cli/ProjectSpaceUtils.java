@@ -13,11 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class ProjectspaceUtils {
+public class ProjectSpaceUtils {
     protected static Logger logger = LoggerFactory.getLogger(CLI.class);
 
     // TODO: implement merge?
-    protected static DirectoryWriter.WritingEnvironment getWorkspaceWritingEnvironmentForSirius(String value) throws IOException {
+    public static DirectoryWriter.WritingEnvironment getWorkspaceWritingEnvironmentForSirius(String value) throws IOException {
         try {
             if (value.equals("-")) {
                 return new SiriusWorkspaceWriter(System.out);
@@ -29,7 +29,7 @@ public class ProjectspaceUtils {
         }
     }
 
-    protected static DirectoryWriter.WritingEnvironment getWorkspaceWritingEnvironmentForDirectoryOutput(String value) throws IOException {
+    public static DirectoryWriter.WritingEnvironment getWorkspaceWritingEnvironmentForDirectoryOutput(String value) throws IOException {
         final File root = new File(value);
         if (root.exists()) {
             throw new IOException("Cannot create directory " + root.getName() + ". File already exist.");
@@ -39,7 +39,7 @@ public class ProjectspaceUtils {
     }
 
 
-    protected static DirectoryReader.ReadingEnvironment getWorkspaceReadingEnvironmentForSirius(String value) throws IOException {
+    public static DirectoryReader.ReadingEnvironment getWorkspaceReadingEnvironmentForSirius(String value) throws IOException {
         try {
             return new SiriusWorkspaceReader(new File(value));
         } catch (IOException e) {
@@ -47,7 +47,7 @@ public class ProjectspaceUtils {
         }
     }
 
-    protected static DirectoryReader.ReadingEnvironment getWorkspaceReadingEnvironmentForDirectoryOutput(String value) {
+    public static DirectoryReader.ReadingEnvironment getWorkspaceReadingEnvironmentForDirectoryOutput(String value) {
         final File root = new File(value);
         return new SiriusFileReader(root);
     }
@@ -59,13 +59,12 @@ public class ProjectspaceUtils {
             try {
                 checkForValidProjectDirectory(directoryOutputPath);
                 pw = new ProjectSpaceMerger2(readerWriterFactory, directoryOutputPath.toString(), false);
-//                numberOfWrittenExperiments = Math.max(numberOfWrittenExperiments,((ProjectSpaceMerger)pw).getNumberOfWrittenExperiments());
             } catch (IOException e) {
                 throw new IOException("Cannot merge project " + directoryOutputPath + ". Maybe the specified directory is not a valid SIRIUS workspace. You can still specify a new not existing filename to create a new workspace.\n" + e.getMessage(), e);
             }
         } else {
             try {
-                pw = readerWriterFactory.getDirectoryOutputWriter(directoryOutputPath, ProjectspaceUtils.getWorkspaceWritingEnvironmentForDirectoryOutput(directoryOutputPath));
+                pw = readerWriterFactory.getDirectoryOutputWriter(directoryOutputPath, ProjectSpaceUtils.getWorkspaceWritingEnvironmentForDirectoryOutput(directoryOutputPath));
             } catch (IOException e) {
                 throw new IOException("Cannot write into " + directoryOutputPath + ":\n" + e.getMessage(), e);
             }
@@ -76,17 +75,15 @@ public class ProjectspaceUtils {
     public static ProjectWriter getSiriusOutputWriter(String sirius, ReaderWriterFactory readerWriterFactory) throws IOException {
         final ProjectWriter pw;
         if (sirius.equals("-")) {
-            pw = readerWriterFactory.getSiriusOutputWriter(sirius, ProjectspaceUtils.getWorkspaceWritingEnvironmentForSirius(sirius));
-//            shellOutputSurpressed = true; //todo already tested in CLI?
+            pw = readerWriterFactory.getSiriusOutputWriter(sirius, ProjectSpaceUtils.getWorkspaceWritingEnvironmentForSirius(sirius));
         } else if (new File(sirius).exists()) {
             try {
                 pw = new ProjectSpaceMerger2(readerWriterFactory, sirius, true);
-//                numberOfWrittenExperiments = Math.max(numberOfWrittenExperiments,((ProjectSpaceMerger)pw).getNumberOfWrittenExperiments());
             } catch (IOException e) {
                 throw new IOException("Cannot merge " + sirius + ". The specified file might be no valid SIRIUS workspace. You can still specify a new not existing filename to create a new workspace.");
             }
         } else {
-            pw = readerWriterFactory.getSiriusOutputWriter(sirius, ProjectspaceUtils.getWorkspaceWritingEnvironmentForSirius(sirius));
+            pw = readerWriterFactory.getSiriusOutputWriter(sirius, ProjectSpaceUtils.getWorkspaceWritingEnvironmentForSirius(sirius));
         }
         return pw;
     }
@@ -153,7 +150,7 @@ public class ProjectspaceUtils {
         private ProjectWriter projectWriter;
         private int numberOfWrittenExperiments;
 
-        public ProjectWriterInfo(ProjectWriter projectWriter, int numberOfWrittenExperiments) {
+        protected ProjectWriterInfo(ProjectWriter projectWriter, int numberOfWrittenExperiments) {
             this.projectWriter = projectWriter;
             this.numberOfWrittenExperiments = numberOfWrittenExperiments;
         }

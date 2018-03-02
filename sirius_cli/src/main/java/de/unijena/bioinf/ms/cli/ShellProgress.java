@@ -28,6 +28,7 @@ import java.util.Locale;
 /**
  * Created by kaidu on 20.04.2015.
  */
+@Deprecated
 public class ShellProgress implements Progress, JobProgressEventListener {
 
     private boolean shellMode;
