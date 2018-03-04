@@ -11,6 +11,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.treebuilder.
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -166,7 +167,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             if (tss != null) tss.fastReplace(pinput, new TreeSizeScorer.TreeSizeBonus(treeSize));
             results.clear();
             final List<TreeComputationJob> jobs = new ArrayList<>(decompositions.size());
-            final TreeBuilder builder = useHeuristic ? new ExtendedCriticalPathHeuristicTreeBuilder() : analyzer.getTreeBuilder();
+            final TreeBuilder builder = useHeuristic ? getHeuristicTreeBuilder() : analyzer.getTreeBuilder();
             for (Decomposition d : decompositions) {
                 if (Double.isInfinite(d.getScore())) continue;
                 final TreeComputationJob job = new TreeComputationJob(builder, null, d);
@@ -203,7 +204,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         }
         final List<RecalibrationJob> recalibrationJobs = new ArrayList<>();
         for (ExactResult r : topResults) {
-            final RecalibrationJob recalibrationJob = new RecalibrationJob(r, useHeuristic ? new ExtendedCriticalPathHeuristicTreeBuilder() : analyzer.getTreeBuilder());
+            final RecalibrationJob recalibrationJob = new RecalibrationJob(r, useHeuristic ? getHeuristicTreeBuilder() : analyzer.getTreeBuilder());
             submitSubJob(recalibrationJob);
             recalibrationJobs.add(recalibrationJob);
         }
@@ -215,6 +216,11 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             checkForTreeQuality(Arrays.asList(exact), true);
         }
         return exact;
+    }
+
+    @NotNull
+    private ExtendedCriticalPathHeuristicTreeBuilder getHeuristicTreeBuilder() {
+        return new ExtendedCriticalPathHeuristicTreeBuilder();
     }
 
     private ExactResult takeResultAndCheckTime(BasicJJob<ExactResult> r) {
