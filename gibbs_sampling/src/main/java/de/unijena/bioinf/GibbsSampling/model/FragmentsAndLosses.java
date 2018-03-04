@@ -22,22 +22,6 @@ public class FragmentsAndLosses {
         return losses;
     }
 
-//    public short[] getFragIndices() {
-//        return fragIndices;
-//    }
-//
-//    public short[] getLossIndices() {
-//        return lossIndices;
-//    }
-//
-//    public double[] getFragmentScores() {
-//        return fragmentScores;
-//    }
-//
-//    public double[] getLossScores() {
-//        return lossScores;
-//    }
-
 
     @Override
     public boolean equals(Object o) {

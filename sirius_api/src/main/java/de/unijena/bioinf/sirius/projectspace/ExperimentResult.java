@@ -7,16 +7,20 @@ import java.io.File;
 import java.util.List;
 
 public class ExperimentResult {
+    public static enum ErrorCause {TIMEOUT, NORESULTS, ERROR, NOERROR};
+
     protected String experimentName, experimentSource;
     protected Ms2Experiment experiment;
     protected List<IdentificationResult> results;
-    protected String errorString;
+    protected ErrorCause error;
+    protected String errorMessage;
 
     public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results, String source, String name) {
         this.experiment = experiment;
         this.results = results;
         this.experimentName = name;
         this.experimentSource = source;
+        this.error = ErrorCause.NOERROR;
     }
 
     public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results) {
@@ -24,19 +28,41 @@ public class ExperimentResult {
         this.results = results;
         this.experimentName = simplify(experiment.getName());
         this.experimentSource = simplifyURL(experiment.getSource().getFile());
+        this.error = ErrorCause.NOERROR;
     }
 
+    @Deprecated
     public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results, String errorString) {
         this(experiment,results);
-        this.errorString = errorString;
+        this.error = ErrorCause.valueOf(errorString);
+        if (error==null) error = ErrorCause.ERROR;
+    }
+
+    public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results, ErrorCause error) {
+        this(experiment,results);
+        this.error = error;
+    }
+
+    public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results, ErrorCause error, String errorMessage) {
+        this(experiment,results);
+        this.error = error;
+        this.errorMessage = errorMessage;
+    }
+
+    public boolean hasError(){
+        return !error.equals(ErrorCause.NOERROR);
     }
 
     public String getErrorString() {
-        return errorString;
+        return error.toString();
     }
 
-    public void setErrorString(String errorString) {
-        this.errorString = errorString;
+    public ErrorCause getError() {
+        return error;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
     }
 
     public String getExperimentName() {

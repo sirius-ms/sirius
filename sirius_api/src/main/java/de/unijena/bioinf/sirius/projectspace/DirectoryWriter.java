@@ -312,8 +312,8 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     private String errorCode(ExperimentResult experiment) {
-        if (experiment.errorString==null) return "DONE";
-        else return experiment.errorString;
+        if (!experiment.hasError()) return "DONE";
+        else return experiment.getErrorString();
     }
 
     public static String makeFileName(IdentificationResult result) {
