@@ -17,7 +17,7 @@ public class CriticalPathInsertionHeuristic extends AbstractHeuristic {
     protected BitSet usedColors;
     protected ArrayList<Loss> selectableEdges;
     protected double[] criticalPaths;
-    private final TIntObjectHashMap<Loss> color2Edge;
+    protected final TIntObjectHashMap<Loss> color2Edge;
     protected final TIntArrayList usedColorList;
 
     protected final double[] maxOut;
