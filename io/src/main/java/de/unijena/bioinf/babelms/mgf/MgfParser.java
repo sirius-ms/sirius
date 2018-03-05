@@ -18,6 +18,7 @@
 package de.unijena.bioinf.babelms.mgf;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
@@ -215,7 +216,11 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         if (i>=0) handleKeyword(prototype, line.substring(0, i), line.substring(i+1));
                     }
                 } catch (RuntimeException e) {
-                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                    if (e instanceof MultipleChargeException){
+                        LoggerFactory.getLogger(this.getClass()).warn("Compound ignored. SIRIUS does not support multiple charged compounds.");
+                    } else {
+                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                    }
                     if (reading) {
                         while ((line=reader.readLine())!=null) {
                             if (line.startsWith("END IONS")) {
