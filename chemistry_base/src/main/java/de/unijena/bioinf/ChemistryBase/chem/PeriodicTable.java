@@ -19,6 +19,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
 
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.utils.*;
+import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
@@ -185,7 +186,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     private PrecursorIonType UNKNOWN_IONTYPE, UNKNOWN_POSITIVE_IONTYPE, UNKNOWN_NEGATIVE_IONTYPE, INTRINSICALLY_CHARGED_POSITIVE, INTRINSICALLY_CHARGED_NEGATIVE;
 
     public Iterable<Ionization> getKnownIonModes(int charge) {
-        if (Math.abs(charge) != 1) throw new IllegalArgumentException("Do not support multiple charges yet");
+        if (Math.abs(charge) != 1) throw new MultipleChargeException("Do not support multiple charges yet");
         if (charge > 0) {
             return Arrays.asList((Ionization[]) POSITIVE_ION_MODES);
         } else {
@@ -202,7 +203,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * @return
      */
     public Iterable<PrecursorIonType> getKnownLikelyPrecursorIonizations(int charge) {
-        if (Math.abs(charge) != 1) throw new IllegalArgumentException("Do not support multiple charges yet");
+        if (Math.abs(charge) != 1) throw new MultipleChargeException("Do not support multiple charges yet");
         final HashSet<PrecursorIonType> ions = new HashSet<PrecursorIonType>();
         for (PrecursorIonType ionType : knownIonTypes.values()) {
             if (ionType.getCharge() == charge) ions.add(ionType);
@@ -349,14 +350,14 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
                     break; // ignore
                 case '+':
                     if (number != 1) {
-                        throw new IllegalArgumentException("Do not support multiple charges: '" + name + "'");
+                        throw new MultipleChargeException("Do not support multiple charges: '" + name + "'");
                     } else {
                         isAdd = true;
                         break;
                     }
                 case '-':
                     if (number != 1) {
-                        throw new IllegalArgumentException("Do not support multiple charges: '" + name + "'");
+                        throw new MultipleChargeException("Do not support multiple charges: '" + name + "'");
                     } else {
                         isAdd = false;
                         break;
@@ -510,7 +511,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             else if (ion.getCharge() == -1) return UNKNOWN_NEGATIVE_IONTYPE;
             else if (ion.getCharge() == 0) return UNKNOWN_IONTYPE;
 
-            else throw new IllegalArgumentException("Multiple charges are not supported yet");
+            else throw new MultipleChargeException("Multiple charges are not supported yet");
         }
 
         for (PrecursorIonType i : knownIonTypes.values()) {
@@ -536,7 +537,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         if (charge == 1) return UNKNOWN_POSITIVE_IONTYPE;
         else if (charge == -1) return UNKNOWN_NEGATIVE_IONTYPE;
         else if (charge == 0) return UNKNOWN_IONTYPE;
-        throw new IllegalArgumentException("Multiple charges are not allowed!");
+        throw new MultipleChargeException("Multiple charges are not allowed!");
     }
 
     private final static class ElementStack {
