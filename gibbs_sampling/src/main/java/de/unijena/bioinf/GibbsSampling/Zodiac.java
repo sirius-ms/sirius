@@ -186,8 +186,8 @@ public class Zodiac {
             List<FragmentsCandidate> candidatesList = candidatesMap.get(id);
 
             if (candidatesList == null) {
-                //todo check:q
-                Log.error("no corresponding compound to library hit found: "+id);
+                //library hits found in mgf. But there are no candidates (ExperimentResult) available.
+                Log.error("No compound with molecular formula candidates found which corresponds to spectral library hit with id "+id+".");
                 continue;
             }
 
@@ -257,7 +257,7 @@ public class Zodiac {
                 }
                 if (matches) {
                     candidate.setCorrect(true);
-                    Log.info("Compound " + id + " has library hit. candidate MF is " + candidate.getFormula() + ". Library hit is " + correctMF);
+                    Log.info("Compound " + id + " has library hit. Candidate MF is " + candidate.getFormula() + ". Library hit is " + correctMF+".");
                 }
                 candidate.setInTrainingSet(true);
 
