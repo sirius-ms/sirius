@@ -25,18 +25,18 @@ CSI:FingerID.</span>
 
 ### Documentation
 - [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0/sirius-4.0-manual.pdf)
+- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-manual.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 4.0 (Build 8 from 2018-02-22)
-- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0/sirius-4.0-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0/sirius-4.0-win64.zip)
-- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0/sirius-4.0-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0/sirius-4.0-linux64.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0/sirius-4.0-osx64.zip)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 4.1-SNAPSHOT (Build 0 from 2018-03-05)
+- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-win64.zip)
+- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-linux64.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-osx64.zip)
 
-### SIRIUS+CSI:FingerID Commandline only - Version 4.0 (Build 8 from 2018-02-22)
-- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0/sirius-4.0-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0/sirius-4.0-win64-headless.zip)
-- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0/sirius-4.0-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0/sirius-4.0-linux64-headless.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0/sirius-4.0-osx64-headless.zip)
+### SIRIUS+CSI:FingerID Commandline only - Version 4.1-SNAPSHOT (Build 0 from 2018-03-05)
+- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-win64-headless.zip)
+- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-linux64-headless.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-osx64-headless.zip)
 
 ### Sources on GitHub
 - [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)
@@ -144,141 +144,5 @@ Starting with version 3.4, SIRIUS is licensed under the [GNU General
 Public License (GPL)](https://www.gnu.org/licenses/gpl.html). If you integrate SIRIUS into other software, we
 strongly encourage you to make the usage of SIRIUS as well as the
 literature to cite transparent to the user.
-
-## Changelog
-
-<!--begin changelog-->
-
-#### 4.0
-
--   **Fragmentation tree heuristics**
-
--   **Negative ion mode data is now supported**
-
--   **CPLEX** ILP solver support
-
--   Consider a specific list of **ionizations for Sirius**
-
--   Consider a specific list of **adducts for CSI:FingerID**
-
--   Custom ionizations/adducts can be specified (CLI and GUI)
-
--   **Full-featured** standalone **command line version** (headless
-    version)
-
--   Improved **parallelization** and task management
-
--   Improved stability of the CSI:FingerID webservice
-
--   Time limit for fragmentation tree computations
-
--   Specify fields to import name and ID from .sdf into a custom
-    database (GUI).
-
--   CSI:FingerID results can be **filtered by Custom databases** (GUI).
-
--   Better filtering performance (GUI)
-
--   Bug fix in Database filtering view (GUI)
-
--   Error Reporter bug fixed (GUI)
-
--   Logging bugs fixed
-
--   Many minor bug fixes
-
-#### 3.5
-
--   **Custom databases** can be imported by hand or via csv file. You
-    can manage multiple databases within Sirius.
-
--   New **Bayesian Network scoring** for CSI:FingerID which takes
-    dependencies between molecular properties into account.
-
--   **CSI:FingerID Overview** which lists results for all molecular
-    formulas.
-
--   **Visualization of the predicted fingerprints**.
-
--   **ECFP fingerprints** are now also in the CSI:FingerID database and
-    do no longer have to be computed on the users side.
-
--   Connection error detection and refresh feature. No restart required
-    to apply Sirius internal proxy settings anymore.
-
--   **System wide proxy** settings are now supported.
-
--   Many minor bug fixes and small improvements of the GUI
-
-#### 3.4
-
--   **element prediction** using isotope pattern
-
--   CSI:FingerID now predicts **more molecular properties** which
-    improves structure identification
-
--   improved structure of the result output generated by the command
-    line tool **to its final version**
-
-#### 3.3
-
--   fix missing MS2 data error
-
--   MacOSX compatible start script
-
--   add proxy settings, bug reporter, feature request
-
--   new GUI look
-
-#### 3.2
-
--   integration of CSI:FingerID and structure identification into SIRIUS
-
--   it is now possible to search formulas or structures in molecular
-    databases
-
--   isotope pattern analysis is now rewritten and hopefully more stable
-    than before
-
-#### 3.1.3
-
--   fix bug with penalizing molecular formulas on intrinsically charged
-    mode
-
--   fix critical bug in CSV reader
-
-#### 3.1.0
-
--   Sirius User Interface
-
--   new output type *-O sirius*. The .sirius format can be imported into
-    the User Interface.
-
--   Experimental support for in-source fragmentations and adducts
-
-#### 3.0.3
-
--   fix crash when using GLPK solver
-
-#### 3.0.2
-
--   fix bug: SIRIUS uses the old scoring system by default when *-p*
-    parameter is not given
-
--   fix some minor bugs
-
-#### 3.0.1
-
--   if MS1 data is available, SIRIUS will now always use the parent peak
-    from MS1 to decompose the parent ion, instead of using the peak from
-    an MS/MS spectrum
-
--   fix bugs in isotope pattern selection
-
--   SIRIUS ships now with the correct version of the GLPK binary
-
-#### 3.0.0
-
--   release version
 
 
