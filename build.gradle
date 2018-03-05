@@ -163,7 +163,7 @@ task htmlDoku(type: Exec) {
 }
 htmlDoku.mustRunAfter cleanDoku
 
-
+//colleact files for docu and readme
 task createVersion {
     doFirst {
         Path out = Paths.get("${project.manualPath}", "/source/version.txt")
@@ -178,6 +178,51 @@ task createVersion {
         Files.write(out, Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
     }
 }
+
+
+/*task downloadChangelog {
+    project.ext.set("changelogPath", getBuildDir().toPath().resolve('tmp/changelog/').toFile())
+    outputs.file(file("${project.changelogPath}/Changelog.md"))
+} << {
+    def scriptURL = new URL("https://raw.githubusercontent.com/wiki/boecker-lab/sirius_frontend/Changelog.md")
+    java.nio.file.Path dir = project.changelogPath.toPath()
+    dir.toFile().deleteDir()
+    Files.createDirectories(dir)
+
+    java.nio.file.Path f = dir.resolve('Changelog.md')
+    if (Files.notExists(f)) {
+        def file = f.newOutputStream()
+        file << scriptURL.openStream()
+        file.close()
+        exec {
+            executable 'chmod'
+            args '755', f.toAbsolutePath().toString()
+        }
+    }
+}*/
+
+/*task downloadFAQ {
+    project.ext.set("faqPath", getBuildDir().toPath().resolve('tmp/faq/').toFile())
+    outputs.file(file("${project.faqPath}/FAQ.md"))
+} << {
+    def scriptURL = new URL("https://raw.githubusercontent.com/wiki/boecker-lab/sirius_frontend/FAQ.md")
+    java.nio.file.Path dir = project.faqPath.toPath()
+    dir.toFile().deleteDir()
+    Files.createDirectories(dir)
+
+    java.nio.file.Path f = dir.resolve('FAQ.md')
+    if (Files.notExists(f)) {
+        def file = f.newOutputStream()
+        file << scriptURL.openStream()
+        file.close()
+        exec {
+            executable 'chmod'
+            args '755', f.toAbsolutePath().toString()
+        }
+    }
+}*/
+
+
 task pdfDoku(type: Exec) {
     group = 'documentation'
     workingDir = file("${project.manualPath}/source")
@@ -212,6 +257,8 @@ task pdfDoku(type: Exec) {
     """
 }
 pdfDoku.dependsOn createVersion
+//pdfDoku.dependsOn downloadFAQ
+//pdfDoku.dependsOn downloadChangelog
 pdfDoku.mustRunAfter cleanDoku
 
 class Pdf extends AbstractArchiveTask {
@@ -365,21 +412,21 @@ task refreshDownloadLinks {
 }
 
 task refreshReadMe {
-    inputs.files(refreshDownloadLinks.outputs.files.singleFile, prepareChangelog.outputs.files.singleFile)
+    inputs.files(refreshDownloadLinks.outputs.files.singleFile/*, downloadChangelog.outputs.files.singleFile*/)
     outputs.file("${getRootDir()}/README.md")
     group = 'publishing'
 
     doFirst {
         File dld = inputs.files.getAt(0)
-        File clg = inputs.files.getAt(1)
+//        File clg = inputs.files.getAt(1)
         File out = outputs.files.singleFile
 
         List<String> links = Files.readAllLines(dld.toPath())
-        List<String> changes = Files.readAllLines(clg.toPath())
+//        List<String> changes = Files.readAllLines(clg.toPath())
 
 
-        Map<String, String> keywords = ['<!--begin download-->': '<!--end download-->', '<!--begin changelog-->': '<!--end changelog-->']
-        Map<String, List<String>> replacements = ['<!--begin download-->': links, '<!--begin changelog-->': changes]
+        Map<String, String> keywords = ['<!--begin download-->': '<!--end download-->'/*, '<!--begin changelog-->': '<!--end changelog-->'*/]
+        Map<String, List<String>> replacements = ['<!--begin download-->': links/*, '<!--begin changelog-->': changes*/]
 
         List<String> lines = Files.readAllLines(out.toPath())
         List<String> nuLines = new LinkedList<>()
@@ -410,7 +457,7 @@ task refreshReadMe {
         Files.write(out.toPath(), nuLines, StandardOpenOption.CREATE)
     }
 }
-refreshReadMe.dependsOn prepareChangelog
+//refreshReadMe.dependsOn downloadChangelog
 refreshReadMe.dependsOn refreshDownloadLinks
 
 publishing {
