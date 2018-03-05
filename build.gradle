@@ -179,48 +179,27 @@ task createVersion {
     }
 }
 
+task createChangelogTex(type: Exec) {
+    group = 'documentation'
+    inputs.file("${project.rootDir}/CHANGELOG.md")
+    outputs.file("${project.manualPath}/build/changelog.tex")
+    commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "latex", "-o", "${outputs.files.singleFile}"])
 
-/*task downloadChangelog {
-    project.ext.set("changelogPath", getBuildDir().toPath().resolve('tmp/changelog/').toFile())
-    outputs.file(file("${project.changelogPath}/Changelog.md"))
-} << {
-    def scriptURL = new URL("https://raw.githubusercontent.com/wiki/boecker-lab/sirius_frontend/Changelog.md")
-    java.nio.file.Path dir = project.changelogPath.toPath()
-    dir.toFile().deleteDir()
-    Files.createDirectories(dir)
-
-    java.nio.file.Path f = dir.resolve('Changelog.md')
-    if (Files.notExists(f)) {
-        def file = f.newOutputStream()
-        file << scriptURL.openStream()
-        file.close()
-        exec {
-            executable 'chmod'
-            args '755', f.toAbsolutePath().toString()
-        }
+    doFirst {
+        Files.createDirectories(Paths.get("${project.manualPath}/build"))
     }
-}*/
+}
 
-/*task downloadFAQ {
-    project.ext.set("faqPath", getBuildDir().toPath().resolve('tmp/faq/').toFile())
-    outputs.file(file("${project.faqPath}/FAQ.md"))
-} << {
-    def scriptURL = new URL("https://raw.githubusercontent.com/wiki/boecker-lab/sirius_frontend/FAQ.md")
-    java.nio.file.Path dir = project.faqPath.toPath()
-    dir.toFile().deleteDir()
-    Files.createDirectories(dir)
+task createFAQTex(type: Exec) {
+    group = 'documentation'
+    inputs.file("${project.rootDir}/FAQ.md")
+    outputs.file("${project.manualPath}/build/faq.tex")
+    commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "latex", "-o", "${outputs.files.singleFile}"])
 
-    java.nio.file.Path f = dir.resolve('FAQ.md')
-    if (Files.notExists(f)) {
-        def file = f.newOutputStream()
-        file << scriptURL.openStream()
-        file.close()
-        exec {
-            executable 'chmod'
-            args '755', f.toAbsolutePath().toString()
-        }
+    doFirst {
+        Files.createDirectories(Paths.get("${project.manualPath}/build"))
     }
-}*/
+}
 
 
 task pdfDoku(type: Exec) {
@@ -257,8 +236,8 @@ task pdfDoku(type: Exec) {
     """
 }
 pdfDoku.dependsOn createVersion
-//pdfDoku.dependsOn downloadFAQ
-//pdfDoku.dependsOn downloadChangelog
+pdfDoku.dependsOn createChangelogTex
+pdfDoku.dependsOn createFAQTex
 pdfDoku.mustRunAfter cleanDoku
 
 class Pdf extends AbstractArchiveTask {
@@ -356,17 +335,6 @@ subprojects {
             lines = (lines as List).plus(insertIndex + 1, "export DYLD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH\"")
             unixScript.text = lines.join(System.lineSeparator())
         }
-    }
-}
-
-task prepareChangelog(type: Exec) {
-    group = 'publishing'
-    inputs.file("${project.manualPath}/source/changelog.tex")
-    outputs.file("${project.manualPath}/build/changelog.md")
-    commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "markdown", "-o", "${outputs.files.singleFile}"])
-
-    doFirst {
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
     }
 }
 
@@ -498,7 +466,6 @@ artifactory {
 }
 
 artifactoryPublish.dependsOn 'refreshDownloadLinks'
-artifactoryPublish.dependsOn 'prepareChangelog'
 artifactoryPublish.dependsOn 'refreshReadMe'
 
 

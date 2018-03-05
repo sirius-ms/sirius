@@ -1,3 +1,4 @@
+## Microsoft Windows
 ### Is running Java a security problem?
 Only if you enable execution of Java programs in your web browser. Today, there is practically
 no need to run Java from the browser, so you should disable this option (it
