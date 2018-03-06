@@ -114,10 +114,10 @@ public class ClassyfireTreePanel extends TreeRenderPanel {
 
     private void showTree(ProbabilityFingerprint canopusFingerprint) {
         if (canopusFingerprint==null) {
-            super.showTree(null, NodeType.preview, NodeColor.rgScore);
+            super.showTree(null, NodeType.preview, NodeColor.rgbIntensity);
         } else {
             final ClassyfireNode n = buildTreeFromClassifications(mask, canopusFingerprint, 0.33d);
-            showTree(n, NodeType.preview, NodeColor.rgScore);
+            showTree(n, NodeType.preview, NodeColor.rgbIntensity);
         }
     }
 

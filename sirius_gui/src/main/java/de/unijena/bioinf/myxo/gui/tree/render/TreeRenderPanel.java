@@ -72,7 +72,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
         this.root = root;
         if (this.root != null) {
-            init(this.root, NodeType.small, NodeColor.rgScore);
+            init(this.root, NodeType.small, NodeColor.rgbIntensity);
         }
         this.treeInitNeeded = true;
         this.revalidate();
@@ -96,25 +96,18 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
     }
 
     protected void init(TreeNode root, NodeType nodeType, NodeColor nodeColor) {
-
-//		if(root==null) return;
-//		
-//		this.root = root;
-
         // @Marvin: init might be called several times, but it does not make
         //			sense to add the same listener several times to this class
         final boolean isInitializedTheFirstTime = thumbnailNodes == null;
 
         TreePositionCalculator calc = new MinimalWidthGreedyTreePositionCalculator();
-//		TreePositionCalculator calc = new WalkerTreePositionCalculator();
         calc.computeRelativePositions(root);
 
         PositionEdgeRearrangement rearr = new PositionEdgeRearrangement();
         rearr.rearrangeTreeNodes(root);
 
-//		nodeColorManager = new RBGNodeColorManager(root);
         if (nodeColorManager == null) {
-            this.nodeColor = NodeColor.rgbScore;
+            this.nodeColor = NodeColor.rgbIntensity;
             nodeColorManager = new RGBScoreNodeColorManager(root);
         }
 
@@ -123,8 +116,6 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         smallNodes = new HashMap<TreeNode, BufferedImage>();
         bigNodes = new HashMap<TreeNode, BufferedImage>();
         withScoresNodes = new HashMap<TreeNode, BufferedImage>();
-//		maximalNodes = new HashMap<TreeNode, BufferedImage>();
-
         positonsMap = new HashMap<TreeNode, PositionContainer>();
 
         scoreFormat = new DecimalFormat("###.#####");
@@ -132,14 +123,9 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         intFormat = new DecimalFormat("##.######");
         snFormat = new DecimalFormat("####.####");
 
-//		selectedNodeStyle = nanoNodes;
-
         initalizeFonts();
-
         changeNodeColorStep1(nodeColor);
-
         initalizeTreeNodeImages(root);
-
         changeNodeTypeStep1(nodeType);
 
         tooltipNode = null;
@@ -270,33 +256,28 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
     protected void changeNodeColorStep1(NodeColor nodeColor) {
         this.nodeColor = nodeColor;
-        if (nodeColor == NodeColor.rgbScore) {
-            this.nodeColorManager = new RGBScoreNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rgbIntensity) {
-            this.nodeColorManager = new RGBRelativeIntensityNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rbgScore) {
-            this.nodeColorManager = new RBGScoreNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rbgIntensity) {
-            this.nodeColorManager = new RBGRelativeIntensityNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rgbScore) {
-            this.nodeColorManager = new RGBScoreNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rgbIntensity) {
-            this.nodeColorManager = new RGBRelativeIntensityNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rgScore) {
-            this.nodeColorManager = new RGScoreNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rgIntensity) {
-            this.nodeColorManager = new RGRelativeIntensityNodeColorManager(root);
-        } else if (nodeColor == NodeColor.bgrScore) {
-            this.nodeColorManager = new BGRScoreNodeColorManager(root);
-        } else if (nodeColor == NodeColor.bgrIntensity) {
-            this.nodeColorManager = new BGRScoreNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rwbScore) {
-            this.nodeColorManager = new RWBScoreNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rwbIntensity) {
-            this.nodeColorManager = new RWBRelativeIntensityNodeColorManager(root);
-        } else if (nodeColor == NodeColor.none) {
-            this.nodeColorManager = new DummyNodeColorManager();
+
+        switch (nodeColor) {
+            case rgbIntensity:
+                this.nodeColorManager = new RGBRelativeIntensityNodeColorManager(root);
+                break;
+            case rbgIntensity:
+                this.nodeColorManager = new RBGRelativeIntensityNodeColorManager(root);
+                break;
+            case rgIntensity:
+                this.nodeColorManager = new RGRelativeIntensityNodeColorManager(root);
+                break;
+            case bgrIntensity:
+                this.nodeColorManager = new BGRRelativeIntensityNodeColorManager(root);
+                break;
+            case rwbIntensity:
+                this.nodeColorManager = new RWBRelativeIntensityNodeColorManager(root);
+                break;
+            default:
+                this.nodeColorManager = new DummyNodeColorManager();
+                break;
         }
+
     }
 
     public void changeNodeColor(NodeColor nodeColor) {
@@ -1118,9 +1099,9 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
                             int valY = labelHeight + corrVal + 2;
 
                             if (eastAncestorBorder >= westBorder) {
-                                if ((northAncestorBorder <= northBorder && southAncestorBorder >= northBorder) || (northAncestorBorder <= southBorder && southAncestorBorder >= southAncestorBorder) ||
-                                        (northAncestorBorder >= northBorder && southAncestorBorder <= southBorder)) {
-
+                                if ((northAncestorBorder <= northBorder && southAncestorBorder >= northBorder)
+                                || (northAncestorBorder <= southBorder && southAncestorBorder >= southAncestorBorder)
+                                || (northAncestorBorder >= northBorder && southAncestorBorder <= southBorder)) {
                                     int posY = southAncestorBorder + labelHeight + corrVal + 2;
                                     int posX = function.getXPosition(posY - (labelHeight + corrVal) / 2) - labelWidth / 2;
                                     g2.setColor(this.backColor);
@@ -1139,13 +1120,9 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
                                 g2.fillRect(westBorder - 1, northBorder - 1, valX, valY);
                                 g2.setColor(Color.BLACK);
                                 printLabel(g2, label, westBorder, southBorder, labelWidth, labelHeight, function);
-
                             }
-
                         }
-
                     }
-
                 }
             }
         }
