@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
+import javax.xml.soap.Node;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -53,8 +54,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
 
 //	private static final String[] COLOR_TYPES = {"RGB Score", "RGB Intensity", "RBG Score", "RBG Intensity", "RG Score", "RG Intensity", "BGR Score", "BGR Intensity", "none"};
 
-    private static final NodeColor[] COLOR_TYPES = {NodeColor.rgbScore, NodeColor.rgbIntensity, NodeColor.rgScore, NodeColor.rgIntensity,
-            NodeColor.rwbScore, NodeColor.rwbIntensity, NodeColor.none};
+    private static final NodeColor[] COLOR_TYPES = {NodeColor.rgbIntensity, NodeColor.rgbIntensity, NodeColor.rgbIntensity, NodeColor.rgIntensity, NodeColor.rwbIntensity, NodeColor.none};
 
 
     public TreeVisualizationPanel() {
@@ -111,8 +111,8 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             NodeType nt = this.nodeType.getItemAt(this.nodeType.getSelectedIndex());
             NodeColor nc = COLOR_TYPES[colorType.getSelectedIndex()];
             this.renderPanel.showTree(root, nt, nc);
-            if (nc == NodeColor.rgbScore || nc == NodeColor.rgbScore || nc == NodeColor.rwbScore) {
-                legendText.setText("score ");
+            if (nc == NodeColor.rgbMassDeviation) {
+                legendText.setText("mass deviation ");
             } else if (nc == NodeColor.none) {
                 legendText.setText(" ");
             } else {
@@ -141,12 +141,12 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             NodeColor nc = COLOR_TYPES[colorType.getSelectedIndex()];
             this.renderPanel.changeNodeColor(nc);
             this.svp.setNodeColorManager(this.renderPanel.getNodeColorManager());
-            if (nc == NodeColor.rgbScore || nc == NodeColor.rgbScore || nc == NodeColor.rwbScore) {
-                legendText.setText("score ");
+            if (nc == NodeColor.rgbMassDeviation) {
+                legendText.setText("mass deviation ");
             } else if (nc == NodeColor.none) {
                 legendText.setText(" ");
             } else {
-                legendText.setText("intensity");
+                legendText.setText("intensity ");
             }
             this.svp.repaint();
         } else if (e.getSource() == this.saveTreeB) {
