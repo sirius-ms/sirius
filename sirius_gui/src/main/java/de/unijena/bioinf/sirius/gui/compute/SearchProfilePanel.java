@@ -3,10 +3,10 @@ package de.unijena.bioinf.sirius.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
-import de.unijena.bioinf.fingerid.CSIFingerIDComputation;
 import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.fingerid.db.SearchableDatabases;
+import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.CheckBoxListItem;
@@ -59,7 +59,6 @@ public class SearchProfilePanel extends JPanel {
 
     private Window owner;
 
-    //    private Vector<String> ionizations;
     private Vector<Instruments> instruments;
     final JCheckboxListPanel<String> ionizationPanel;
     public final JComboBox<String> formulaCombobox;
@@ -115,11 +114,14 @@ public class SearchProfilePanel extends JPanel {
             JLabel label = new JLabel("Consider ");
             final Vector<String> values = new Vector<>();
             values.add("all molecular formulas");
-            values.add("all PubChem formulas");
-            values.add("organic PubChem formulas");
-            values.add("formulas from Bio databases");
 
-            for (CustomDatabase customDatabase : CustomDatabase.customDatabases(true)) {
+            if (WebAPI.canConnect()) { //to prevent database error when running sirius without network connection
+                values.add("all PubChem formulas");
+                values.add("organic PubChem formulas");
+                values.add("formulas from Bio databases");
+            }
+
+            for (CustomDatabase customDatabase : SearchableDatabases.getCustomDatabases()) {
                 values.add(customDatabase.name());
             }
 
@@ -184,13 +186,13 @@ public class SearchProfilePanel extends JPanel {
     }
 
     public SearchableDatabase getFormulaSource() {
-        final CSIFingerIDComputation csi = MainFrame.MF.getCsiFingerId();
+        //todo this is ugly and error prone
         if (formulaCombobox.getSelectedIndex() == 0) return null;
-        else if (formulaCombobox.getSelectedIndex() <= 2) return csi.getPubchemDb();
-        else if (formulaCombobox.getSelectedIndex() == 3) return csi.getBioDb();
+        else if (formulaCombobox.getSelectedIndex() <= 2) return SearchableDatabases.getPubchemDb();
+        else if (formulaCombobox.getSelectedIndex() == 3) return SearchableDatabases.getBioDb();
         else {
             final String name = (String) formulaCombobox.getSelectedItem();
-            for (CustomDatabase customDatabase : CustomDatabase.customDatabases(true)) {
+            for (CustomDatabase customDatabase : SearchableDatabases.getCustomDatabases()) {
                 if (customDatabase.name().equals(name)) return customDatabase;
             }
             logger.error("Unknown database '" + name + "' selected.");
@@ -201,36 +203,4 @@ public class SearchProfilePanel extends JPanel {
     public boolean restrictToOrganics() {
         return formulaCombobox.getSelectedIndex() == 2; // TODO: add checkbox instead
     }
-
-
-
-
-
-    /*private JPanel createFallbackIonissationOptionPanel(final JCheckBoxList<String> ionizationCB) {
-        JPanel main = createIonisationBasePanel();
-
-        JButton all = new JButton("all");
-        all.addActionListener(e -> ionizationCB.checkAll());
-        JButton pos = new JButton("+");
-        pos.addActionListener(e -> {
-            ionizationCB.uncheckAll();
-            ionizationCB.checkAll(PeriodicTable.getInstance().getPositiveIonizations());
-        });
-        JButton neg = new JButton("-");
-        neg.addActionListener(e -> {
-            ionizationCB.uncheckAll();
-            ionizationCB.checkAll(PeriodicTable.getInstance().getNegativeIonizations());
-        });
-        JButton none = new JButton("none");
-        none.addActionListener(e -> ionizationCB.uncheckAll());
-
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, 1, 1));
-        buttons.add(all);
-        buttons.add(pos);
-        buttons.add(neg);
-        buttons.add(none);
-
-        main.add(buttons);
-        return main;
-    }*/
 }

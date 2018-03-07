@@ -19,6 +19,7 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
+import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,8 +39,7 @@ public class FingerIdDialog extends JDialog {
     public FingerIdDialog(Frame owner, CSIFingerIDComputation storage, boolean showComputeButton, boolean local) {
         super(owner, "Search with CSI:FingerID", true);
         this.storage = storage;
-        dbForm = new FingerIDComputationPanel(storage.getAvailableDatabases());
-//        dbForm.dbSelectionOptions.setIsBioDB(PropertyManager.PROPERTIES.getProperty("de."));//todo remember selection
+        dbForm = new FingerIDComputationPanel(SearchableDatabases.getAvailableDatabases());
         this.showComputeButton = showComputeButton;
         setLocationRelativeTo(owner);
         if (local)

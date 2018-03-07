@@ -29,6 +29,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.fingerid.FingerIDComputationPanel;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
+import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.FingerIDSearchGuiJob;
@@ -109,7 +110,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
         });
 
-        csiOptions = new FingerIDComputationPanel(owner.getCsiFingerId().getAvailableDatabases(), searchProfilePanel.ionizationPanel.checkBoxList, true, true);
+        csiOptions = new FingerIDComputationPanel(SearchableDatabases.getAvailableDatabases(), searchProfilePanel.ionizationPanel.checkBoxList, true, true);
         if (!csiOptions.isEnabled()) csiOptions.dbSelectionOptions.setDb(searchProfilePanel.getFormulaSource());
         csiOptions.setMaximumSize(csiOptions.getPreferredSize());
 
