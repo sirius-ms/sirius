@@ -104,6 +104,11 @@ public class CSIFingerIDComputation {
 
         @Override
         protected Boolean compute() throws Exception {
+            //wait if no connection is there
+            while (!WebAPI.canConnect()){
+                Thread.sleep(5000);
+                checkForInterruption();
+            }
             positiveMode.initialize();
             negativeMode.initialize();
             return true;
