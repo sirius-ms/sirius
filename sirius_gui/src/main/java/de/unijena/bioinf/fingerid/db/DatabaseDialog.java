@@ -35,8 +35,6 @@ import java.io.*;
 import java.util.*;
 import java.util.List;
 
-import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
-
 public class DatabaseDialog extends JDialog {
 
     //todo we should separate the Dialog from the Database Managing part.
@@ -166,7 +164,7 @@ public class DatabaseDialog extends JDialog {
 
                 if (new QuestionDialog(getOwner(), msg).isSuccess()) {
                     if (index > 0) {
-                        new CustomDatabase(name, new File(CONFIG_STORAGE.getCustomDatabaseDirectory(), name)).deleteDatabase();
+                        new CustomDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name)).deleteDatabase();
                         customDatabases.remove(name);
                         dbList.setListData(collectDatabases().toArray(new String[0]));
                     } else {
@@ -179,7 +177,7 @@ public class DatabaseDialog extends JDialog {
 
         for (String name : databases) {
             if (!name.equalsIgnoreCase("pubchem"))
-                whenCustomDbIsAdded(new CustomDatabase(name, new File(CONFIG_STORAGE.getCustomDatabaseDirectory(), name)));
+                whenCustomDbIsAdded(new CustomDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name)));
         }
 
 
@@ -263,7 +261,7 @@ public class DatabaseDialog extends JDialog {
     private List<String> collectDatabases() {
         final List<String> databases = new ArrayList<>();
         databases.add("PubChem");
-        final File root = CONFIG_STORAGE.getDatabaseDirectory();
+        final File root = SearchableDatabases.getDatabaseDirectory();
         final File custom = new File(root, "custom");
         if (!custom.exists()) {
             return databases;
@@ -623,7 +621,7 @@ public class DatabaseDialog extends JDialog {
 
         public ImportDatabaseDialog(String name) {
             super(owner, "Import " + name + " database", false);
-            database = CustomDatabase.createNewdatabase(name, new File(CONFIG_STORAGE.getCustomDatabaseDirectory(), name), (CdkFingerprintVersion) WebAPI.getFingerprintVersion());
+            database = CustomDatabase.createNewdatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name), (CdkFingerprintVersion) WebAPI.getFingerprintVersion());
             importer = database.getImporter();
             importer.init();
             importer.addListener(this);
