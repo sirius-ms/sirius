@@ -90,31 +90,10 @@ public class CSIFingerIDComputation {
         }
     }
 
-    /**
-     * TODO: shouldn be part of this class
-     */
-    public List<SearchableDatabase> getAvailableDatabases() {
-        final List<SearchableDatabase> db = new ArrayList<>();
-        db.add(positiveMode.pubchem);
-        db.add(positiveMode.bio);
-        db.addAll(CustomDatabase.customDatabases(true));
-        return db;
-    }
-
-    public SearchableDatabase getBioDb() {
-        return positiveMode.bio;
-    }
-
-    public SearchableDatabase getPubchemDb() {
-        return positiveMode.pubchem;
-    }
-
-    public void refreshCacheDir() throws IOException {
+    public void refreshDatabaseCacheDir() throws IOException {
         positiveMode.refreshCacheDir();
         negativeMode.refreshCacheDir();
-
     }
-
 
     protected class InitializeCSIFingerID extends BasicJJob<Boolean> {
 

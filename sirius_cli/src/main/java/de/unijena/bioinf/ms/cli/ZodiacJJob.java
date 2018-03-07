@@ -2,14 +2,12 @@ package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.GibbsSampling.Zodiac;
 import de.unijena.bioinf.GibbsSampling.model.*;
-import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
 
 import java.util.List;
 
-public class ZodiacJJob extends BasicMasterJJob<ZodiacResultsWithClusters>{
+public class ZodiacJJob extends BasicMasterJJob<ZodiacResultsWithClusters> {
 
     private List<ExperimentResult> experimentResults;
     private List<LibraryHit> anchors;
@@ -21,7 +19,7 @@ public class ZodiacJJob extends BasicMasterJJob<ZodiacResultsWithClusters>{
     private int burnInSteps;
     private int separateRuns;
     private ZodiacResultsWithClusters zodiacResult;
-    
+
     public ZodiacJJob(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, int iterationSteps, int burnInSteps, int separateRuns) {
         super(JobType.CPU);
         this.experimentResults = experimentResults;
@@ -42,7 +40,7 @@ public class ZodiacJJob extends BasicMasterJJob<ZodiacResultsWithClusters>{
         return zodiacResult;
     }
 
-    public ZodiacResultsWithClusters getZodiacResult(){
+    public ZodiacResultsWithClusters getZodiacResult() {
         return zodiacResult;
     }
 }

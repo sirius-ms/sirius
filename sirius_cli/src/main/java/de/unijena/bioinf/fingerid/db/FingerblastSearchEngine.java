@@ -2,7 +2,6 @@ package de.unijena.bioinf.fingerid.db;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.chemdb.*;
-import de.unijena.bioinf.fingerid.net.CachedRESTDB;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 
 import java.io.IOException;

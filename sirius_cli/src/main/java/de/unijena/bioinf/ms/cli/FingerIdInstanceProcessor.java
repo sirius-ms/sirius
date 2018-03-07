@@ -10,10 +10,7 @@ import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.fingerid.db.CustomDatabase;
-import de.unijena.bioinf.fingerid.db.DatabaseImporter;
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.fingerid.db.SearchableDbOnDisc;
+import de.unijena.bioinf.fingerid.db.*;
 import de.unijena.bioinf.fingerid.jjobs.FingerIDJJob;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
@@ -186,9 +183,9 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
     @Override
     public boolean setup() {
         initializeDatabaseCache();
-
-        CustomDatabase.customDatabases(true);
+        SearchableDatabases.getCustomDatabases();
         initDatabasesAndVersionInfoIfNecessary();
+
         if (options.getGeneratingCompoundDatabase() != null) {
             try {
                 generateCustomDatabase(options);
@@ -289,7 +286,7 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
         bioDatabase = new SearchableDbOnDisc("biological database", d, true, true, false);
         this.customDatabaseCache = new HashMap<>();
         customDatabases = new HashMap<>();
-        for (SearchableDatabase db : CustomDatabase.customDatabases(true)) {
+        for (SearchableDatabase db : SearchableDatabases.getCustomDatabases()) {
             customDatabases.put(db.name(), db);
         }
     }
