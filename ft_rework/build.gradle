@@ -36,7 +36,7 @@ ext{
 
     liblinear_version = "1.95"
     libsvm_version = "3.20"
-    psql_version = "9.3-1104-jdbc41"
+    psql_version = "42.2.1"
     cdk_version = "1.5.14"
     batik_version = "1.8"
 
