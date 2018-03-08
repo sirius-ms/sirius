@@ -15,7 +15,7 @@ import de.unijena.bioinf.chemdb.SearchStructureByFormula;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.fingerid.net.CachedRESTDB;
+import de.unijena.bioinf.fingerid.db.CachedRESTDB;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;

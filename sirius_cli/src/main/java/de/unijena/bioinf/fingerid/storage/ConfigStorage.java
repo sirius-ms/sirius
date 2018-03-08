@@ -1,18 +1,15 @@
 package de.unijena.bioinf.fingerid.storage;
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-
 import java.io.File;
-import java.nio.file.Paths;
 
 //todo this should move to Properties File and SiriusProperties.java
+@Deprecated
 public class ConfigStorage {
+    @Deprecated
     public static final ConfigStorage CONFIG_STORAGE = new ConfigStorage();//todo generic file path remembering
 
     private File defaultLoadDialogPath, defaultTreeExportPath, defaultSaveFilePath, csvExportPath, defaultCompoundsExportPath;
     private FileFormat treeFileFormat;
-
-    protected File databaseDirectory;
 
     private boolean closeNeverAskAgain;
 
@@ -28,24 +25,6 @@ public class ConfigStorage {
         treeFileFormat = FileFormat.png;
         closeNeverAskAgain = false;
         enforceBio = true;
-    }
-
-    public File getCustomDatabaseDirectory() {
-        return new File(getDatabaseDirectory(), "custom");
-    }
-
-    public File getDatabaseDirectory() {
-        if (databaseDirectory == null) databaseDirectory = getDefaultDatabaseDirectory();
-        return databaseDirectory;
-    }
-
-    public File getDefaultDatabaseDirectory() {
-        final String val = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
-        return Paths.get(val).toFile();
-    }
-
-    public void setDatabaseDirectory(File databaseDirectory) {
-        this.databaseDirectory = databaseDirectory;
     }
 
     public File getCsvExportPath() {

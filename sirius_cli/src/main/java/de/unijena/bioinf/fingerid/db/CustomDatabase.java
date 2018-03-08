@@ -13,7 +13,6 @@ import de.unijena.bioinf.fingerid.Compound;
 import de.unijena.bioinf.fingerid.Fingerprinter;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
-import de.unijena.bioinf.fingerid.storage.ConfigStorage;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.inchi.InChIGenerator;
@@ -40,7 +39,6 @@ import java.util.*;
 import java.util.zip.GZIPInputStream;
 
 public class CustomDatabase implements SearchableDatabase {
-
     protected static Logger logger = LoggerFactory.getLogger(CustomDatabase.class);
 
     protected String name;
@@ -62,10 +60,9 @@ public class CustomDatabase implements SearchableDatabase {
         }
     }
 
-    public static List<CustomDatabase> customDatabases(boolean up2date) {
+    protected static List<CustomDatabase> customDatabases(boolean up2date) {
         final List<CustomDatabase> databases = new ArrayList<>();
-        final File root = ConfigStorage.CONFIG_STORAGE.getDatabaseDirectory();
-        final File custom = new File(root, "custom");
+        final File custom = SearchableDatabases.getCustomDatabaseDirectory();
         if (!custom.exists()) {
             return databases;
         }
@@ -84,6 +81,8 @@ public class CustomDatabase implements SearchableDatabase {
         }
         return databases;
     }
+
+
 
     protected boolean deriveFromPubchem, deriveFromBioDb;
     protected CdkFingerprintVersion version;
