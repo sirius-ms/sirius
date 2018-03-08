@@ -109,7 +109,115 @@ public class ZodiacUtils {
         }
     }
 
+    private final static String IDX_HEADER = "FEATURE_ID";
     public static List<LibraryHit> parseLibraryHits(Path libraryHitsPath, Path mgfFile, Logger logger) throws IOException {
+        BufferedReader reader = Files.newBufferedReader(libraryHitsPath);
+        String line = reader.readLine();
+        reader.close();
+        if (line==null) {
+            throw new IOException("Spectral library hits file is empty.");
+        }
+        String[] header = line.split("\t");
+        if (arrayFind(header, IDX_HEADER)>=0){
+            logger.info("Parsing spectral library hits file. Use "+IDX_HEADER+" column to match library hits to compounds in the spectrum file.");
+            return parseLibraryHitsByFeatureId(libraryHitsPath, mgfFile, logger);
+        } else {
+            logger.info("Parsing spectral library hits file. Use #Scan# column to match library hits to compounds by position in the spectrum file.");
+            return parseLibraryHitsByPosition(libraryHitsPath, mgfFile, logger);
+        }
+    }
+
+    private static List<LibraryHit> parseLibraryHitsByFeatureId(Path libraryHitsPath, Path mgfFile, Logger logger) throws IOException {
+        try {
+            List<String> featureIDs = new ArrayList<>();
+            try(BufferedReader reader = Files.newBufferedReader(mgfFile)){
+                String line;
+                String lastID = null;
+                while ((line=reader.readLine())!=null){
+                    if (line.toLowerCase().startsWith("feature_id=")){
+                        String id = line.split("=")[1];
+                        if (!id.equals(lastID)){
+                            featureIDs.add(id);
+                            lastID = id;
+                        }
+                    }
+                }
+            }
+
+
+            final MsExperimentParser parser = new MsExperimentParser();
+            List<Ms2Experiment> experiments = parser.getParser(mgfFile.toFile()).parseFromFile(mgfFile.toFile());
+
+
+            //todo clean string !?!?
+            final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
+            for (Ms2Experiment experiment : experiments) {
+                String name = cleanString(experiment.getName());
+                if (experimentMap.containsKey(name)) throw new IOException("compound id duplicate: "+name+". Ids must be unambiguous to map library hits");
+                experimentMap.put(name, experiment);
+            }
+
+            //todo change nasty hack
+
+
+            List<String> lines = Files.readAllLines(libraryHitsPath, Charset.defaultCharset());
+            String[] header = lines.remove(0).split("\t");
+//        String[] ofInterest = new String[]{"Feature_id", "Formula", "Structure", "Adduct", "Cosine", "SharedPeaks", "Quality"};
+            String[] ofInterest = new String[]{IDX_HEADER, "INCHI", "Smiles", "Adduct", "MQScore", "SharedPeaks", "Quality"};
+            int[] indices = new int[ofInterest.length];
+            for (int i = 0; i < ofInterest.length; i++) {
+                int idx = arrayFind(header, ofInterest[i]);
+                if (idx<0){
+                    int[] more = arrayFindSimilar(header, ofInterest[i]);
+                    if (more.length!=1) throw new IOException("Cannot parse spectral library hits file. Column "+ofInterest[i]+" not found.");
+                    else idx = more[0];
+                }
+                indices[i] = idx;
+            }
+
+
+            List<LibraryHit> libraryHits = new ArrayList<>();
+            for (String line : lines) {
+                try {
+                    String[] cols = line.split("\t");
+                    final String featureId = cols[indices[0]];
+
+                    final Ms2Experiment experiment = experimentMap.get(featureId);
+
+                    if (experiment==null){
+                        logger.error("No corresponding compound to spectral library hit found " +
+                                "(this also happens with multiple charged compounds which are not supported by Sirius). " +
+                                IDX_HEADER+" "+featureId);
+                        continue;
+                    }
+
+                    final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
+
+                    if (formula==null){
+                        logger.warn("Cannot parse molecular formula of library hit "+IDX_HEADER+" "+featureId);
+                        continue;
+                    }
+
+                    final String structure = (isInchi(cols[indices[1]]) ? cols[indices[1]] : cols[indices[2]]);
+                    final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(cols[indices[3]]);
+                    final double cosine = Double.parseDouble(cols[indices[4]]);
+                    final int sharedPeaks = Integer.parseInt(cols[indices[5]]);
+                    final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
+                    LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
+                    libraryHits.add(libraryHit);
+                } catch (Exception e) {
+                    logger.warn("Cannot parse library hit. Reason: "+ e.getMessage());
+                }
+
+            }
+
+            return libraryHits;
+        } catch (Exception e){
+            throw new IOException("cannot parse library hits. Reason "+e.getMessage());
+        }
+    }
+
+    private static List<LibraryHit> parseLibraryHitsByPosition(Path libraryHitsPath, Path mgfFile, Logger logger) throws IOException {
         try {
             List<String> featureIDs = new ArrayList<>();
             try(BufferedReader reader = Files.newBufferedReader(mgfFile)){
@@ -169,6 +277,14 @@ public class ZodiacUtils {
                     final String featureId = featureIDs.get(scanNumber-1); //starting with 1!
 
                     final Ms2Experiment experiment = experimentMap.get(featureId);
+
+                    if (experiment==null){
+                        logger.error("No corresponding compound to spectral library hit found " +
+                                "(this also happens with multiple charged compounds which are not supported by Sirius). " +
+                                "#Scan# "+scanNumber);
+                        continue;
+                    }
+
                     final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
 
                     if (formula==null){
