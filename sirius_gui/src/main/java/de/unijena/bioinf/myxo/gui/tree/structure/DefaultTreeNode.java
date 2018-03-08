@@ -14,6 +14,7 @@ public class DefaultTreeNode implements TreeNode {
 	private double formulaMass;
 	private String colEnergy;
 	private double score;
+	private double deviationMass;
 	
 	private int horSize, vertSize;
 	private int horPos, vertPos;
@@ -101,6 +102,16 @@ public class DefaultTreeNode implements TreeNode {
 	@Override
 	public double getScore() {
 		return this.score;
+	}
+
+	@Override
+	public double getDeviationMass() {
+		return deviationMass;
+	}
+
+	@Override
+	public void setDeviatonMass(double deviationMass) {
+		this.deviationMass = deviationMass;
 	}
 
 	@Override

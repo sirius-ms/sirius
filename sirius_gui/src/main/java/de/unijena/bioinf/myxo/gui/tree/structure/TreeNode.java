@@ -28,8 +28,12 @@ public interface TreeNode {
 	
 	@SuppressWarnings("unused")
     double getPeakSignalToNoise();
-	
+
 	double getScore();
+
+	double getDeviationMass();
+
+	void setDeviatonMass(double deviationMass);
 	
 	@SuppressWarnings("unused")
     String getCollisionEnergy();
