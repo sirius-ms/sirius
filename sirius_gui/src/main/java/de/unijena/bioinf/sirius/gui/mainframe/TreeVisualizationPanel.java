@@ -39,7 +39,6 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
     }
 
     private JScrollPane pane;
-    private JComboBox<NodeType> nodeType;
     private JComboBox<NodeColor> colorType;
     private TreeRenderPanel renderPanel;
     private ScoreVisualizationPanel svp;
@@ -48,14 +47,6 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
 
 
     private SiriusResultElement sre;
-
-
-    private static final NodeType[] NODE_TYPES = {NodeType.small, NodeType.big, NodeType.score};
-
-//	private static final String[] COLOR_TYPES = {"RGB Score", "RGB Intensity", "RBG Score", "RBG Intensity", "RG Score", "RG Intensity", "BGR Score", "BGR Intensity", "none"};
-
-    private static final NodeColor[] COLOR_TYPES = {NodeColor.rgbIntensity, NodeColor.rgbIntensity, NodeColor.rgbIntensity, NodeColor.rgIntensity, NodeColor.rwbIntensity, NodeColor.none};
-
 
     public TreeVisualizationPanel() {
         this.sre = null;
@@ -66,15 +57,9 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
         northPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
         northPanel.setFloatable(false);
 
-        nodeType = new JComboBox<>(NODE_TYPES);
-        nodeType.addActionListener(this);
-        JLabel l = new JLabel("Nodes");
-        l.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-        northPanel.add(l);
-        northPanel.add(nodeType);
-        colorType = new JComboBox<>(COLOR_TYPES);
+        colorType = new JComboBox<>(NodeColor.values());
         colorType.addActionListener(this);
-        l = new JLabel("Colors");
+        JLabel l = new JLabel("Colors");
         l.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
         northPanel.add(l);
         northPanel.add(colorType);
@@ -108,8 +93,8 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
         this.sre = sre;
         if (sre != null) {
             TreeNode root = sre.getTreeVisualization();
-            NodeType nt = this.nodeType.getItemAt(this.nodeType.getSelectedIndex());
-            NodeColor nc = COLOR_TYPES[colorType.getSelectedIndex()];
+            NodeType nt = NodeType.small;
+            NodeColor nc = (NodeColor)colorType.getSelectedItem();
             this.renderPanel.showTree(root, nt, nc);
             if (nc == NodeColor.rgbMassDeviation) {
                 legendText.setText("mass deviation ");
@@ -134,11 +119,8 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == this.nodeType) {
-            NodeType nt = this.nodeType.getItemAt(this.nodeType.getSelectedIndex());
-            this.renderPanel.changeNodeType(nt);
-        } else if (e.getSource() == this.colorType) {
-            NodeColor nc = COLOR_TYPES[colorType.getSelectedIndex()];
+       if (e.getSource() == this.colorType) {
+            NodeColor nc = (NodeColor)colorType.getSelectedItem();
             this.renderPanel.changeNodeColor(nc);
             this.svp.setNodeColorManager(this.renderPanel.getNodeColorManager());
             if (nc == NodeColor.rgbMassDeviation) {
