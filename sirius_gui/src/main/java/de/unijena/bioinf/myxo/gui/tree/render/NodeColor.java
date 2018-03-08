@@ -10,5 +10,5 @@ public enum NodeColor {
 	rwbIntensity {public String toString(){return "RWB intensity";}},
 	rgbMassDeviation {public String toString(){return "RGB mass deviation";}},
 	none {public String toString(){return "no color";}}
-
+//
 }
