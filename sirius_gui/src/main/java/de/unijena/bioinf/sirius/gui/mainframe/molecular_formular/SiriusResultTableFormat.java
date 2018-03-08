@@ -5,9 +5,16 @@ package de.unijena.bioinf.sirius.gui.mainframe.molecular_formular;
  * 25.01.17.
  */
 
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.SiriusTableFormat;
 import de.unijena.bioinf.sirius.gui.table.list_stats.ListStats;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
 
 /**
  * Display issues in a tabular form.
@@ -15,7 +22,7 @@ import de.unijena.bioinf.sirius.gui.table.list_stats.ListStats;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusResultTableFormat extends SiriusTableFormat<SiriusResultElement> {
-    private static final int COL_COUNT = 5;
+    private static final int COL_COUNT = 8;
 
     protected SiriusResultTableFormat(ListStats stats) {
         super(stats);
@@ -38,26 +45,62 @@ public class SiriusResultTableFormat extends SiriusTableFormat<SiriusResultEleme
     }
 
     public String getColumnName(int column) {
-        if (column == 0) return "Rank";
-        else if (column == 1) return "Molecular Formula";
-        else if (column == 2) return "Score";
-        else if (column == 3) return "Isotope Score";
-        else if (column == 4) return "Tree Score";
-        else if (column == 5) return "Best";
-
-
-        throw new IllegalStateException();
+        switch(column) {
+            case 0:
+                return "Rank";
+            case 1:
+                return "Molecular Formula";
+            case 2:
+                return "Score";
+            case 3:
+                return "Isotope Score";
+            case 4:
+                return "Tree Score";
+            case 5:
+                return "No. nodes";
+            case 6:
+                return "Total Explained Intensity";
+            case 7:
+                return "Median Absolute Mass Deviation";
+            default:
+                throw new IllegalStateException();
+        }
     }
 
     public Object getColumnValue(SiriusResultElement result, int column) {
-        if (column == 0) return result.getRank();
-        else if (column == 1) return result.getFormulaAndIonText();
-        else if (column == 2) return result.getScore();
-        else if (column == 3) return result.getResult().getIsotopeScore();
-        else if (column == 4) return result.getResult().getTreeScore();
-        else if (column == 5) return isBest(result);
+        switch (column) {
+            case 0:
+                return result.getRank();
+            case 1:
+                return result.getFormulaAndIonText();
+            case 2:
+                return result.getScore();
+            case 3:
+                return result.getResult().getIsotopeScore();
+            case 4:
+                return result.getResult().getTreeScore();
+            case 5:
+                return result.getResult().getBeautifulTree().getFragments().size();
+            case 6:
+                int treeIntensity = 0;
+                TreeScoring treeScoring = result.getResult().getBeautifulTree().getAnnotationOrNull(TreeScoring.class);
+                if(treeScoring != null)
+                    return treeScoring.getExplainedIntensity();
+                else
+                    return "value not found";
+            case 7:
+                ArrayList<Double> massDiviatons = new ArrayList<Double>();
 
-        throw new IllegalStateException();
+                TreeScoring treeScoring = result.getResult().getBeautifulTree().getAnnotationOrNull(TreeScoring.class);
+                if(treeScoring != null)
+                    return treeScoring.getExplainedIntensity();
+                else
+                    return "value not found";
+            case 8:
+                return isBest(result);
+            default:
+                throw new IllegalStateException();
+        }
     }
 
 
