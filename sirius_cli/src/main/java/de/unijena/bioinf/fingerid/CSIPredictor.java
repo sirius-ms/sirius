@@ -3,24 +3,17 @@ package de.unijena.bioinf.fingerid;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
-import de.unijena.bioinf.fingerid.db.CustomDatabase;
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.fingerid.db.SearchableDbOnDisc;
-import de.unijena.bioinf.fingerid.net.CachedRESTDB;
+import de.unijena.bioinf.fingerid.db.SearchableDatabases;
+import de.unijena.bioinf.fingerid.db.CachedRESTDB;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
 import gnu.trove.list.array.TIntArrayList;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 public class CSIPredictor {
     protected final PredictorType predictorType;
@@ -29,8 +22,6 @@ public class CSIPredictor {
     protected Fingerblast blaster;
     protected PredictionPerformance[] performances;
     protected boolean initialized;
-
-    protected SearchableDatabase bio, pubchem;
 
     public CSIPredictor(PredictorType predictorType) {
         this.predictorType = predictorType;
@@ -56,14 +47,6 @@ public class CSIPredictor {
         return performances;
     }
 
-    public SearchableDatabase getBio() {
-        return bio;
-    }
-
-    public SearchableDatabase getPubchem() {
-        return pubchem;
-    }
-
     public synchronized boolean isInitialized() {
         return initialized;
     }
@@ -86,10 +69,8 @@ public class CSIPredictor {
 
             MaskedFingerprintVersion fingerprintVersion = v.toMask();
 
-            FingerblastScoringMethod method = (predictorType==PredictorType.CSI_FINGERID_NEGATIVE) ? new ScoringMethodFactory.CSIFingerIdScoringMethod(perf) : webAPI.getCovarianceScoring(fingerprintVersion, 1d / perf[0].withPseudoCount(0.25).numberOfSamples());
-
-            final List<CustomDatabase> cds = CustomDatabase.customDatabases(true);
-            synchronized(this) {
+            FingerblastScoringMethod method = (predictorType == PredictorType.CSI_FINGERID_NEGATIVE) ? new ScoringMethodFactory.CSIFingerIdScoringMethod(perf) : webAPI.getCovarianceScoring(fingerprintVersion, 1d / perf[0].withPseudoCount(0.25).numberOfSamples());
+            synchronized (this) {
                 performances = perf;
                 fpVersion = fingerprintVersion;
                 blaster = new Fingerblast(method, null);
@@ -102,27 +83,9 @@ public class CSIPredictor {
 
     public void refreshCacheDir() throws IOException {
         try (final WebAPI webAPI = WebAPI.newInstance()) {
-            final File directory = getDefaultDirectory();
             VersionsInfo versionsInfo = webAPI.getVersionInfo();
-            database = new CachedRESTDB(versionsInfo, fpVersion, directory);
-            bio = new SearchableDbOnDisc("biological database", new File(directory, "bio"), false, true, false);
-            pubchem = new SearchableDbOnDisc("PubChem", new File(directory, "not-bio"), true, true, false);
+            database = SearchableDatabases.makeCachedRestDB(versionsInfo, fpVersion);
             database.checkCache();
         }
-
-    }
-
-
-    public List<SearchableDatabase> getAvailableDatabases() {
-        final List<SearchableDatabase> db = new ArrayList<>();
-        db.add(pubchem);
-        db.add(bio);
-        db.addAll(CustomDatabase.customDatabases(true));
-        return db;
-    }
-
-    public File getDefaultDirectory() {
-        final String val = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
-        return Paths.get(val).toFile();
     }
 }
