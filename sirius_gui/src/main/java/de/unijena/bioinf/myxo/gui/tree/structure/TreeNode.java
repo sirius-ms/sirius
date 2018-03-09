@@ -99,4 +99,7 @@ public interface TreeNode {
 	
 	void setNodeNumber(int number);
 
+	void setMedianMassDeviation(Double medianMassDeviation);
+	Double getMedianMassDeviation();
+
 }
