@@ -15,6 +15,7 @@ public class DefaultTreeNode implements TreeNode {
 	private String colEnergy;
 	private double score;
 	private double deviationMass;
+	private Double medianMassDeviation;
 	
 	private int horSize, vertSize;
 	private int horPos, vertPos;
@@ -242,6 +243,16 @@ public class DefaultTreeNode implements TreeNode {
 	@Override
 	public void setNodeNumber(int number) {
 		this.nodeNumber = number;
+	}
+
+	@Override
+	public void setMedianMassDeviation(Double medianMassDeviation) {
+		this.medianMassDeviation = medianMassDeviation;
+	}
+
+	@Override
+	public Double getMedianMassDeviation() {
+		return medianMassDeviation;
 	}
 
 
