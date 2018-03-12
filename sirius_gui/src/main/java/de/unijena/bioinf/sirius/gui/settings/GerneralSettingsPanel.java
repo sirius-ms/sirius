@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.gui.settings;
  * 07.10.16.
  */
 
+import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.sirius.gui.io.FileChooserPanel;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -62,7 +63,8 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
             new SwingWorker<Integer, String>() {
                 @Override
                 protected Integer doInBackground() throws Exception {
-                    MF.getCsiFingerId().refreshCacheDir();
+                    SearchableDatabases.invalidateCache();
+                    MF.getCsiFingerId().refreshDatabaseCacheDir();
                     return 1;
                 }
             }.execute();

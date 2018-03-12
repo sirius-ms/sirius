@@ -10,7 +10,26 @@ public class RWBRelativeIntensityNodeColorManager extends RWBNodeColorManager {
 
 	@Override
 	public double getValue(TreeNode node) {
-		return node.getPeakRelativeIntensity();
+		return java.lang.StrictMath.log10(node.getPeakRelativeIntensity());
 	}
 
+    @Override
+    public String getLegendLowText() {
+        return "0%";
+    }
+
+    @Override
+    public String getLegendMiddelText() {
+        return "10%";
+    }
+
+    @Override
+    public String getLegendHighText() {
+        return "100%";
+    }
+
+    @Override
+    public String getLegendName() {
+        return "Intensity";
+    }
 }

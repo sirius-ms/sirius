@@ -4,22 +4,17 @@ import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.fingerid.db.CustomDatabase;
-import de.unijena.bioinf.fingerid.db.DatabaseImporter;
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.fingerid.db.SearchableDbOnDisc;
+import de.unijena.bioinf.fingerid.db.*;
 import de.unijena.bioinf.fingerid.jjobs.FingerIDJJob;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,9 +22,9 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 
-import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 
 public class FingerIdInstanceProcessor implements InstanceProcessor<Map<IdentificationResult, ProbabilityFingerprint>> {
 
@@ -188,9 +183,9 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
     @Override
     public boolean setup() {
         initializeDatabaseCache();
-
-        CustomDatabase.customDatabases(true);
+        SearchableDatabases.getCustomDatabases();
         initDatabasesAndVersionInfoIfNecessary();
+
         if (options.getGeneratingCompoundDatabase() != null) {
             try {
                 generateCustomDatabase(options);
@@ -222,7 +217,7 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
             negativePredictor.initialize();
         } catch (IOException e) {
             System.err.println("Cannot connect to CSI:FingerID webserver and online chemical database. You can still use SIRIUS in offline mode: just do not use any chemical database and omit the --fingerid option.");
-            LoggerFactory.getLogger(FingeridCLI.class).error(e.getMessage(),e);
+            LoggerFactory.getLogger(FingeridCLI.class).error(e.getMessage(), e);
             System.exit(1);
         }
 
@@ -285,13 +280,13 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
     protected File db_cache_dir;
 
     protected void initializeDatabaseCache() {
-        final File d = CONFIG_STORAGE.getDatabaseDirectory();
+        final File d = Paths.get(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.fingerID.cache")).toFile();
         db_cache_dir = d;
         pubchemDatabase = new SearchableDbOnDisc("PubChem", d, true, true, false);
         bioDatabase = new SearchableDbOnDisc("biological database", d, true, true, false);
         this.customDatabaseCache = new HashMap<>();
         customDatabases = new HashMap<>();
-        for (SearchableDatabase db : CustomDatabase.customDatabases(true)) {
+        for (SearchableDatabase db : SearchableDatabases.getCustomDatabases()) {
             customDatabases.put(db.name(), db);
         }
     }
@@ -370,7 +365,6 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
             }
         }
     }
-
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////

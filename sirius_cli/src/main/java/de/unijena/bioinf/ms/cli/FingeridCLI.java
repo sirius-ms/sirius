@@ -16,10 +16,7 @@ import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.FingerIdResultReader;
 import de.unijena.bioinf.fingerid.FingerIdResultWriter;
-import de.unijena.bioinf.fingerid.db.CustomDatabase;
-import de.unijena.bioinf.fingerid.db.DatabaseImporter;
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.fingerid.db.SearchableDbOnDisc;
+import de.unijena.bioinf.fingerid.db.*;
 import de.unijena.bioinf.fingerid.jjobs.FingerIDJJob;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
@@ -35,8 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-
-import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 
 public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
 
@@ -66,7 +61,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
 
     @Override
     protected void parseArgsAndInit(String[] args, Class<Options> optionsClass) {
-        CustomDatabase.customDatabases(true);
+        SearchableDatabases.getCustomDatabases(); //todo why?
         super.parseArgsAndInit(args, optionsClass);
         initDatabasesAndVersionInfoIfNecessary();
         if (options.getGeneratingCompoundDatabase() != null) {
@@ -94,7 +89,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
             negativePredictor.initialize();
         } catch (IOException e) {
             System.err.println("Cannot connect to CSI:FingerID webserver and online chemical database. You can still use SIRIUS in offline mode: just do not use any chemical database and omit the --fingerid option.");
-            LoggerFactory.getLogger(FingeridCLI.class).error(e.getMessage(),e);
+            LoggerFactory.getLogger(FingeridCLI.class).error(e.getMessage(), e);
             System.exit(1);
         }
 
@@ -150,7 +145,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
     protected ExperimentResult createExperimentResult(BufferedJJobSubmitter<Instance>.JobContainer jc, Sirius.SiriusIdentificationJob siriusJob, List<IdentificationResult> results) {
         FingerIDJJob fid = jc.getJob(FingerIDJJob.class);
         final List<IdentificationResult> total = new ArrayList<>(results);
-        if (fid!=null) {
+        if (fid != null) {
             fid.takeResult();
             total.addAll(fid.getAddedIdentificationResults());
         }
@@ -318,13 +313,13 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
     protected File db_cache_dir;
 
     protected void initializeDatabaseCache() {
-        final File d = CONFIG_STORAGE.getDatabaseDirectory();
+        final File d = SearchableDatabases.getDatabaseDirectory();
         db_cache_dir = d;
         pubchemDatabase = new SearchableDbOnDisc("PubChem", d, true, true, false);
         bioDatabase = new SearchableDbOnDisc("biological database", d, true, true, false);
         this.customDatabaseCache = new HashMap<>();
         customDatabases = new HashMap<>();
-        for (SearchableDatabase db : CustomDatabase.customDatabases(true)) {
+        for (SearchableDatabase db : SearchableDatabases.getCustomDatabases()) {
             customDatabases.put(db.name(), db);
         }
     }
@@ -413,7 +408,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
             if (options.getPPMMax() != null) dev = new Deviation(options.getPPMMax());
             else dev = sirius.getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation();
             final Set<PrecursorIonType> allowedIonTypes = new HashSet<>();
-            if (i.experiment.getPrecursorIonType()==null||i.experiment.getPrecursorIonType().isIonizationUnknown()) {
+            if (i.experiment.getPrecursorIonType() == null || i.experiment.getPrecursorIonType().isIonizationUnknown()) {
                 allowedIonTypes.addAll(i.experiment.getAnnotation(PossibleAdducts.class).getAdducts());
             } else {
                 allowedIonTypes.add(i.experiment.getPrecursorIonType());

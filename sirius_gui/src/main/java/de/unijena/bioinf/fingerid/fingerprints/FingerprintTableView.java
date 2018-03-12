@@ -45,7 +45,7 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
 
         // set small width for ID column
         actionTable.getColumnModel().getColumn(0).setMaxWidth(50);
-
+        // write "undefined" for undefined atom size
         actionTable.getColumnModel().getColumn(3).setCellRenderer(new SiriusResultTableCellRenderer(-1){
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -59,6 +59,9 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
                 return super.getTableCellRendererComponent(table, newValue, isSelected, hasFocus, row, column);
             }
         });
+        // display color bar for posterior probability
+        final DoubleListStats ld = new DoubleListStats(new double[]{0d,1d});
+        actionTable.getColumnModel().getColumn(2).setCellRenderer(new ListStatBarTableCellRenderer(ld, true));
 
 
     }
