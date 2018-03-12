@@ -13,7 +13,13 @@ public interface NodeColorManager {
 	
 	@SuppressWarnings("unused")
     double getMaximalValue();
-	
+
+	String getLegendLowText();
+	String getLegendMiddelText();
+	String getLegendHighText();
+
+	String getLegendName();
+
 	Color getColor(double value);
 
 }

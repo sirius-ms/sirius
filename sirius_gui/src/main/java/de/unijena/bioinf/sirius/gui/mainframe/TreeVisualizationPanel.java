@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
-import javax.xml.soap.Node;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -71,7 +70,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
         northPanel.add(Box.createHorizontalGlue());
         northPanel.addSeparator(new Dimension(10, 10));
         svp = new ScoreVisualizationPanel();
-        legendText = new JLabel("Score ");
+        legendText = new JLabel("");
         legendText.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
         northPanel.add(legendText);
         northPanel.add(svp);
@@ -96,13 +95,8 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             NodeType nt = NodeType.small;
             NodeColor nc = (NodeColor)colorType.getSelectedItem();
             this.renderPanel.showTree(root, nt, nc);
-            if (nc == NodeColor.rgbMassDeviation) {
-                legendText.setText("mass deviation ");
-            } else if (nc == NodeColor.none) {
-                legendText.setText(" ");
-            } else {
-                legendText.setText("intensity");
-            }
+            legendText.setText(this.renderPanel.getNodeColorManager().getLegendName());
+
 //			pane.invalidate();
             this.svp.setNodeColorManager(this.renderPanel.getNodeColorManager());
             this.svp.repaint();
@@ -123,7 +117,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             NodeColor nc = (NodeColor)colorType.getSelectedItem();
             this.renderPanel.changeNodeColor(nc);
             this.svp.setNodeColorManager(this.renderPanel.getNodeColorManager());
-            if (nc == NodeColor.rgbMassDeviation) {
+            if (nc == NodeColor.rwbMassDeviation) {
                 legendText.setText("mass deviation ");
             } else if (nc == NodeColor.none) {
                 legendText.setText(" ");

@@ -23,8 +23,28 @@ public class DummyNodeColorManager implements NodeColorManager {
 	}
 
 	@Override
+	public String getLegendLowText() {
+		return "";
+	}
+
+	@Override
+	public String getLegendMiddelText() {
+		return "";
+	}
+
+	@Override
+	public String getLegendHighText() {
+		return "";
+	}
+
+	@Override
+	public String getLegendName() {
+		return "";
+	}
+
+	@Override
 	public Color getColor(double value) {
-		return Color.WHITE;
+		return new Color(1f,1f,1f,0f);
 	}
 
 }
