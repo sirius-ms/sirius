@@ -60,7 +60,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
     protected NodeType nodeType;
 
     protected NodeColorManager nodeColorManager;
-    protected NodeColor nodeColor = NodeColor.rgbIntensity;
+    protected NodeColor nodeColor = NodeColor.none;
 
     protected TreeNode tooltipNode;
 
@@ -73,7 +73,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
         this.root = root;
         if (this.root != null) {
-            init(this.root, NodeType.small, NodeColor.rgbIntensity);
+            init(this.root, NodeType.small, NodeColor.none);
         }
         this.treeInitNeeded = true;
         this.revalidate();
@@ -105,8 +105,8 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         positionEdgeRearrangement.rearrangeTreeNodes(root);
 
         if (nodeColorManager == null) {
-            this.nodeColor = NodeColor.rgbIntensity;
-            nodeColorManager = new RGBScoreNodeColorManager(root);
+            this.nodeColor = NodeColor.none;
+            nodeColorManager = new DummyNodeColorManager();
         }
 
         nodes = new HashMap<TreeNode, BufferedImage>();
@@ -211,29 +211,16 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         }
 
         switch (this.nodeColor) {
-            case rgbIntensity:
-                this.nodeColorManager = new RGBRelativeIntensityNodeColorManager(root);
-                break;
-            case rbgIntensity:
-                this.nodeColorManager = new RBGRelativeIntensityNodeColorManager(root);
-                break;
-            case rgIntensity:
-                this.nodeColorManager = new RGRelativeIntensityNodeColorManager(root);
-                break;
-            case bgrIntensity:
-                this.nodeColorManager = new BGRRelativeIntensityNodeColorManager(root);
-                break;
             case rwbIntensity:
                 this.nodeColorManager = new RWBRelativeIntensityNodeColorManager(root);
                 break;
-            case rgbMassDeviation:
+            case rwbMassDeviation:
                 this.nodeColorManager = new MassDeviationColorManager(root);
                 break;
             default:
                 this.nodeColorManager = new DummyNodeColorManager();
                 break;
         }
-
     }
 
     public void changeNodeColor(NodeColor nodeColor) {

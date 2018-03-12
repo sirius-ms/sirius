@@ -39,39 +39,42 @@ public class ScoreVisualizationPanel extends JPanel {
 	}
 	
 	@Override
-	public void paintComponent(Graphics g){
-		Graphics2D g2 = (Graphics2D) g;
-		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-		g2.setColor(Color.white);
-		g2.fillRect(0, 0, 200, 25);
-		if(ncm==null){
-			return;
-		}
-		double diff = ncm.getMaximalValue()-ncm.getMinimalValue();
-		double stepSize = diff/200;
+	public void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g;
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(new Color(1f, 1f, 1f, 0f));
+        g2.fillRect(0, 0, 200, 25);
+        if (ncm == null) {
+            return;
+        }
+        double diff = ncm.getMaximalValue() - ncm.getMinimalValue();
+        double stepSize = diff / 200;
 //		double value = ncm.getMinimalValue();
-		for(int i=0;i<199;i++){
-			Color c = ncm.getColor(ncm.getMinimalValue() + (i*stepSize));
-			g2.setColor(c);
-			g2.drawLine(i,0,i,12);
+        for (int i = 0; i < 199; i++) {
+            Color c = ncm.getColor(ncm.getMinimalValue() + (i * stepSize));
+            g2.setColor(c);
+            g2.drawLine(i, 0, i, 12);
 //			value += stepsize;
-		}
-		Color c = ncm.getColor(ncm.getMaximalValue());
-		g2.setColor(c);
-		g2.drawLine(199,0,199,12);
-		
-		g2.setFont(valueFont);
-		g2.setColor(c);
-		
-		g2.setColor(Color.black);
-		FontMetrics fm = g2.getFontMetrics(valueFont);
-		g2.drawString("low",5, 22);
-		
-		int middleLength = fm.stringWidth("average");
-		g2.drawString("average",100-(middleLength/2), 22);
-		
-		int rightLength = fm.stringWidth("high");
-		g2.drawString("high",194-rightLength, 22);
-	}
+        }
+        Color c = ncm.getColor(ncm.getMaximalValue());
+        g2.setColor(c);
+        g2.drawLine(199, 0, 199, 12);
+
+        g2.setFont(valueFont);
+        g2.setColor(c);
+
+        g2.setColor(Color.black);
+        FontMetrics fm = g2.getFontMetrics(valueFont);
+        String text = ncm.getLegendLowText();
+        g2.drawString(text, 0, 22);
+
+        text = ncm.getLegendMiddelText();
+        int textLength = fm.stringWidth(text);
+        g2.drawString(text, 100 - (textLength / 2), 22);
+
+        text = ncm.getLegendHighText();
+        textLength = fm.stringWidth(text);
+        g2.drawString(text, 200 - textLength, 22);
+    }
 
 }

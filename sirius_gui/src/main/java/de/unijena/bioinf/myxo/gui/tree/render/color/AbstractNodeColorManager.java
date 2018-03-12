@@ -49,9 +49,7 @@ public abstract class AbstractNodeColorManager implements NodeColorManager {
 	public Color getColor(TreeNode node) {
 		return getColor(getValue(node));
 	}
-	
-//	public abstract Color getColor(double value);
-	
+
 	public abstract double getValue(TreeNode node);
 
 }
