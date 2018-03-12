@@ -52,7 +52,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<SiriusResultEleme
             case 4:
                 return "Tree Score";
             case 5:
-                return "No. nodes";
+                return "Explained Peaks";
             case 6:
                 return "Total Explained Intensity";
             case 7:
