@@ -1,9 +1,9 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.chemdb.DatasourceService;
+import de.unijena.bioinf.fingerid.db.CustomDataSourceService;
 import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.configs.Fonts;
-import de.unijena.bioinf.fingerid.db.CustomDataSourceService;
 import de.unijena.bioinf.sirius.gui.table.list_stats.DoubleListStats;
 
 import javax.swing.*;
@@ -297,10 +297,10 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
             ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             if (Double.isNaN(score)) return;
             g.setFont(nameFont);
-            final String t1 = "Score: e";
+            final String t1 = "Score: ";
             int widthB = g.getFontMetrics().stringWidth(t1);
             g.drawString(t1, 0, 14);
-            g.setFont(scoreSuperscriptFont);
+            //g.setFont(scoreSuperscriptFont);
             g.drawString(format.format(score), widthB, 14);
         }
 

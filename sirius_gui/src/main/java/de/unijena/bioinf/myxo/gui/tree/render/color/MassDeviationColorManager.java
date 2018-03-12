@@ -2,34 +2,38 @@ package de.unijena.bioinf.myxo.gui.tree.render.color;
 
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 
-public class RWBRelativeIntensityNodeColorManager extends RWBNodeColorManager {
+import static java.lang.StrictMath.abs;
+import static java.lang.StrictMath.min;
 
-	public RWBRelativeIntensityNodeColorManager(TreeNode root) {
+public class MassDeviationColorManager extends RWBNodeColorManager {
+
+	public MassDeviationColorManager(TreeNode root) {
 		super(root);
+		setSwitchBlueAndRed(true);
 	}
 
 	@Override
 	public double getValue(TreeNode node) {
-		return java.lang.StrictMath.log10(node.getPeakRelativeIntensity());
+		return min(abs(node.getDeviationMass()), 10d);
 	}
 
     @Override
     public String getLegendLowText() {
-        return "0%";
+        return "0";
     }
 
     @Override
     public String getLegendMiddelText() {
-        return "10%";
+        return "±5ppm";
     }
 
     @Override
     public String getLegendHighText() {
-        return "100%";
+        return "±10ppm";
     }
 
     @Override
     public String getLegendName() {
-        return "Intensity";
+        return "mass deviation";
     }
 }

@@ -40,6 +40,9 @@
 
 \setcounter{tocdepth}{1}
 
+
+\def\tightlist{}
+
 \title{SIRIUS Documentation}
 \date{\today}
 \release{\IfFileExists{./version.txt}{\input{./version.txt}}{3}}
@@ -379,24 +382,6 @@ Variables'' button, select the ``Path'' variable in the lower panel, press
 press RETURN.  Close the Command Prompt, open a new one,
 type \code{sirius-console-64.exe}.
 
-\paragraph{Frequently asked questions}
-
-\begin{itemize}
-\item ``Is running Java a security problem?''  $\to$ Only if you enable
-  execution of Java programs in your web browser. Today, there is practically
-  no need to run Java from the browser, so you should disable this option (it
-  is probably disabled already).  Always keep your JRE up-to-date.
-
-\item ``I am running Windows and I get an error message, `ERROR: JAVA\_HOME is
-  set to an invalid directory'.'' $\to$ Probably, deleting the JAVA\_HOME
-  environment variable will solve the problem, see the instructions for the
-  PATH variable above.
-
-\item ``I want to run SIRIUS on Windows~XP!''  $\to$ Don't.  Running
-  Windows~XP on a computer connected to the internet is a security hazzard.
-\end{itemize}
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Linux and Mac OS\,X}
@@ -428,17 +413,7 @@ Note that you have to reopen your ''bash'' shell to make the changes effective.
 
 
 \paragraph{Frequently asked questions}
-
-\begin{itemize}
-\item ``Max OS~X ships with Java, do I still have to install a Java
-  version?''  $\to$ Yes. SIRIUS does not work with Apple Java~6, the latest
-  Java version OS~X installed and updated by default. Later OS~X version do
-  not contain an Apple Java, but instead suggest installing Oracle Java.
-
-\item ``I am running Mac OS~X with version before 10.7.3; how can I install
-  Java~7?'' $\to$ Java~7 installation is not possible for MAC OS~X versions
-  before 10.7.3. You need to upgrade to OS~X 10.7.3 or higher.
-\end{itemize}
+\input{../build/faq.tex}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -487,7 +462,7 @@ using Gurobi, CPLEX or GLPK.
 To use Gurobi set the environment variable GUROBI\_HOME to a valid Gurobi 
 installation location e.g. \code{/path/to/gurobi750/linux64}.
 Similarly, to use CPLEX set CPLEX\_HOME to 
-\code{/path/to/CPLEX\_Studio/cplex/lib}.
+\code{/path/to/CPLEX\_Studio/cplex}.
 SIRIUS will automatically use Gurobi or CPLEX as its solver if corresponding 
 environment variables are specified.
 You can manually set the preferred ILP solvers in the settings dialog (GUI).
@@ -2490,13 +2465,20 @@ Writes the annotated spectrum into a csv file.
 
 \end{fulllineitems}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  CHAPTER  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\chapter{Frequently asked questions (FAQ)}
+\input{../build/faq.tex}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  CHAPTER  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \chapter{Changelog}
-\input{./changelog.tex}
+\input{../build/changelog.tex}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%  BIBLIOGRAPHY  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
