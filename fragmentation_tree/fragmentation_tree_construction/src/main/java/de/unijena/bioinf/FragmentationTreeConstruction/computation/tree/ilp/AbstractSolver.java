@@ -224,6 +224,8 @@ abstract public class AbstractSolver {
         forEachFragment:
         for (int i = 1; i < this.graph.numberOfVertices(); ++i) {
             final Fragment fragment = this.graph.getFragmentAt(i);
+            if (fragment.getFormula().isEmpty())
+                continue;
             final Fragment treeFragment = fragmentMap.get(fragment.getFormula());
             if (treeFragment != null && !treeFragment.isRoot()) {
                 final MolecularFormula lf = treeFragment.getIncomingEdge().getFormula();
