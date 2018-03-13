@@ -116,7 +116,7 @@ public interface SiriusOptions {
     @Option(longName = "tree-timeout", description = "Time out in seconds per fragmentation tree computations. 0 for an infinite amount of time. Default: 0", defaultValue = "0")
     int getTreeTimeout();
 
-    @Option(longName = "compound-timeout", description = "Maximal computation time for a single compound. 0 for an infinite amount of time. Default: 0", defaultValue = "0")
+    @Option(longName = "compound-timeout", description = "Maximal computation time in seconds for a single compound. 0 for an infinite amount of time. Default: 0", defaultValue = "0")
     int getInstanceTimeout();
 
     @Unparsed

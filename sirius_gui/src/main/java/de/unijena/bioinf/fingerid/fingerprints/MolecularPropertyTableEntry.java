@@ -12,12 +12,14 @@ public class MolecularPropertyTableEntry extends AbstractEDTBean implements Comp
     protected final int absoluteIndex;
     protected final FingerprintVisualization visualization;
     protected final double fscore;
+    protected final int numberOfTrainingExamples;
 
-    public MolecularPropertyTableEntry(ProbabilityFingerprint underlyingFingerprint, FingerprintVisualization viz, double fscore, int absoluteIndex) {
+    public MolecularPropertyTableEntry(ProbabilityFingerprint underlyingFingerprint, FingerprintVisualization viz, double fscore, int absoluteIndex, int numberOfTrainingExamples) {
         this.visualization = viz;
         this.underlyingFingerprint = underlyingFingerprint;
         this.absoluteIndex = absoluteIndex;
         this.fscore = fscore;
+        this.numberOfTrainingExamples = numberOfTrainingExamples;
     }
 
     public double getProbability() {
@@ -72,7 +74,12 @@ public class MolecularPropertyTableEntry extends AbstractEDTBean implements Comp
 
     @Override
     public int compareTo(MolecularPropertyTableEntry o) {
-        return absoluteIndex - o.absoluteIndex;
+        int i = Double.compare(o.getProbability(), getProbability());
+        if (i==0) {
+            i = Integer.compare(o.getMatchSize(), getMatchSize());
+        }
+        if (i==0) return Integer.compare(absoluteIndex, o.absoluteIndex);
+        else return i;
     }
 
     @Override
