@@ -79,7 +79,7 @@ public class FingerIdWorkflow implements Workflow<Instance> {
         //todo add a getJobByIntanceOf method?!
         //sirius
         ExperimentResultJJob j = jc.getJob(SiriusInstanceProcessor.ExperimentResultForSiriusJJob.class);
-        logger.info("Sirius results for: '" + jc.sourceInstance.file.getName() + "', " + jc.sourceInstance.experiment.getName());
+        System.out.println("Sirius results for: '" + jc.sourceInstance.file.getName() + "', " + jc.sourceInstance.experiment.getName());
         ExperimentResult experimentResult = null;
         if (j != null){
 //            handleSiriusResults(jc, j); //handle results
@@ -107,7 +107,7 @@ public class FingerIdWorkflow implements Workflow<Instance> {
         if (fij != null) {
             try {
                 Map<IdentificationResult, ProbabilityFingerprint> propPrints = fij.awaitResult();
-                fingerIdInstanceProcessor.output(propPrints);
+                if (propPrints!=null) fingerIdInstanceProcessor.output(propPrints);
 
                 //todo necessary to test!?
                 if (experimentResult!=null && experimentResult.getResults()!=null){
