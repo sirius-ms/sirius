@@ -26,7 +26,13 @@ public interface ZodiacOptions {
     )
     String getSpectraFile();
 
+    //todo duplicate
+    //naming
+    @Option(longName = "naming-convention", description = "Specify a format for compounds' output directorys. Default %index_%filename_%compoundname",  defaultToNull = true)
+    String getNamingConvention();
 
+
+    //todo duplicate
     @Option(
             shortName = {"o"},
             longName = {"output"},

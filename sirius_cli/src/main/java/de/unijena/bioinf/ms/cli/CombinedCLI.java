@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
@@ -123,7 +124,21 @@ public class CombinedCLI extends ApplicationCore {
             System.exit(0);
         }
 
-        handleOutputOptions(options, new FingeridProjectSpaceFactory());
+        FilenameFormatter filenameFormatter = null;
+        if (options.getNamingConvention()!=null){
+            String formatString = options.getNamingConvention();
+            try {
+                filenameFormatter = new StandardMSFilenameFormatter(formatString);
+            } catch (ParseException e) {
+                logger.error("Cannot parse naming convention:\n" + e.getMessage(), e);
+                System.exit(1);
+            }
+        } else {
+            //default
+            filenameFormatter = new StandardMSFilenameFormatter();
+        }
+
+        handleOutputOptions(options, new FingeridProjectSpaceFactory(filenameFormatter));
 
         siriusInstanceProcessor = new SiriusInstanceProcessor(options);
         siriusInstanceProcessor.setup(); //todo don't setup twice

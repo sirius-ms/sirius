@@ -39,13 +39,13 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
 
 
     @Override
-    protected ProjectWriter getSiriusOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env) {
-        return new FingerIdResultWriter(env);
+    protected ProjectWriter getSiriusOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env, FilenameFormatter filenameFormatter) {
+        return new FingerIdResultWriter(env, filenameFormatter);
     }
 
     @Override
-    protected ProjectWriter getDirectoryOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env) {
-        return new FingerIdResultWriter(env);
+    protected ProjectWriter getDirectoryOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env, FilenameFormatter filenameFormatter) {
+        return new FingerIdResultWriter(env, filenameFormatter);
     }
 
     @Override
