@@ -204,9 +204,11 @@ each fragment peak.  Peaks that receive no annotation are assumed to be noise
 peaks.  Furthermore, a \textbf{fragmentation tree} is predicted; this tree
 contains the predicted fragmentation reaction leading to the fragment peaks.
 
-SIRIUS uses CSI:FingerID to identify the structure of a compound by
-searching in a molecular structure database.  Here, ``structure'' refers to
-``conformation'': 
+SIRIUS uses CSI:FingerID to identify the structure of a compound by searching
+in a molecular structure database.  Here and in the following, ``structure''
+refers to the identity and connectivity (with bond multiplicities) of the
+atoms, but no stereochemistry information.  Elucidation of stereochemistry is
+currently beyond the power of automated search engines.
 
 SIRIUS can be used within an analysis pipeline. For example, you can
 identify the molecular formula of the ion and the fragment peaks, and use
