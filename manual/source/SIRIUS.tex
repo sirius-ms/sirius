@@ -204,9 +204,11 @@ each fragment peak.  Peaks that receive no annotation are assumed to be noise
 peaks.  Furthermore, a \textbf{fragmentation tree} is predicted; this tree
 contains the predicted fragmentation reaction leading to the fragment peaks.
 
-SIRIUS uses CSI:FingerID to identify the structure of a compound by
-searching in a molecular structure database.  Here, ``structure'' refers to
-``conformation'': 
+SIRIUS uses CSI:FingerID to identify the structure of a compound by searching
+in a molecular structure database.  Here and in the following, ``structure''
+refers to the identity and connectivity (with bond multiplicities) of the
+atoms, but no stereochemistry information.  Elucidation of stereochemistry is
+currently beyond the power of automated search engines.
 
 SIRIUS can be used within an analysis pipeline. For example, you can
 identify the molecular formula of the ion and the fragment peaks, and use
@@ -774,7 +776,7 @@ SIRIUS, again rounded to six decimals for presentation.
 \textbf{We suggest to calibrate your instrument with ion masses as calculated
 above.}  In any case, you should \emph{be aware of this tiny mass
 difference}, as this can result in unexpected behavior when decomposing
-masses; see for example Pluskal \emph{et al.}, \emph{Anal Chem} 84:4396--4403.
+masses; see for example \citet{pluskal12highly}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -861,7 +863,7 @@ indicated that one can determine molecular formulas by searching in a
 structure database using tool such as MAGMa, CFM-ID or CSI:FingerID.
 (Somewhat consequently, the CASMI~2016 contest did no longer have a category
 for molecular formula identification.)  \textbf{We strongly advice against
-doing so, as this is apparently a hidden prior problem.}  Molecular formulas
+doing so, as this is apparently a wrong prior problem.}  Molecular formulas
 in a structure database are far from being uniformly distributed: For a
 certain precursor mass plus mass inaccuracy, you may find 90\% molecular
 structures with only one molecular formulas.  Assuming that the molecular
@@ -899,14 +901,17 @@ The optimization problem (finding a maximum colorful subtree) is NP-hard but
 nevertheless solved optimally, explaining why computations sometimes require
 significant running time for large molecules with rich fragmentation spectra.
 
-If you think that the computation process should be further speeded up, we
-ask you to cite our papers on swiftly computing fragmentation trees
-\citep{white15speedy, rauf13finding}, as this would give us an incentive to
-continue our work on this topic: We stress that the current version of
-SIRIUS is \textbf{many million times faster} than the initial version
-\citep{boecker08towards}.  In fact, this initial version could not process
-more than 15 peaks in the fragmentation spectrum, due to exploding running
-times \emph{and} memory requirements.
+With SIRIUS~4.0, fragmentation tree computation has again been speeded up
+significantly (around 36-fold to the previous version), through intricated
+algorithm engineering \citep{duehrkop18heuristic}.  If you think that
+computations should be speeded up even further, we ask you to cite our papers
+on swiftly computing fragmentation trees \citep{duehrkop18heuristic,
+white15speedy, rauf13finding}, as this would give us an incentive to continue
+our work on this topic: We stress that the current version of SIRIUS
+is \textbf{many million times faster} than the initial
+version \citep{boecker08towards}.  In fact, this initial version could not
+process more than 15 peaks in the fragmentation spectrum, due to exploding
+running times \emph{and} memory requirements.
 
 Modeling the fragmentation process as a tree comes with two restrictions:
 Namely, ``pull-ups'' and ``parallelograms''.  A \textbf{pull-up} is a
@@ -923,10 +928,17 @@ looses \ce{H2O} then \ce{CO2}, \emph{but also} \ce{CO2} then \ce{H2O}.
 SIRIUS will always decide for one order of such fragmentation reactions, as
 this is the only valid way to model the fragmentation as a tree.
 
-At present, SIRIUS does not make use of isotope patterns in the
-fragmentation spectra: Usually, SIRIUS will simply flag these peaks and
-ignore them in the optimization process.  This will likely change in an
-upcomming version of SIRIUS.
+We have incorporated support for experimental setups (MS\textsuperscript{E},
+MS\textsuperscript{all}, All Ion Fragmentation) where isotope peaks and
+fragment peaks are measured together in the same spectrum.  For such
+experiments, SIRIUS~4 offers a combined isotope and fragmentation pattern
+analysis.  For DDA (Data-Dependent Acquisition) fragmentation spectra,
+isotope patterns are disturbed through the mass filter, resulting in
+non-trivial modifications of masses and intensities.  At present, SIRIUS does
+not make use of these isotope patterns, but simply flags these peaks and
+ignore them in the optimization process.  Support for DDA isotope patterns
+will be added in an upcomming version of SIRIUS.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -2424,7 +2436,7 @@ spectrum containing the theoretical isotope pattern of this compound
 
 
 \subsection{Output type}
-\label{library:package-de.unijena.bioinf.sirius}\label{library:output-type}\index{de.unijena.bioinf.sirius (package)}\index{IdentificationResult (Java class)}
+\label{library:output-type}\index{de.unijena.bioinf.sirius (package)}\index{IdentificationResult (Java class)}
 
 \begin{fulllineitems}
 \phantomsection\label{library:de.unijena.bioinf.sirius.IdentificationResult}\pysigline{public class \bfcode{IdentificationResult}}

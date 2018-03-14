@@ -56,7 +56,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<SiriusResultEleme
             case 6:
                 return "Total Explained Intensity";
             case 7:
-                return "Median Absolute Mass Deviation";
+                return "Median Absolute Mass Deviation in ppm";
             case 8:
                 return "Best";
             default:
@@ -83,13 +83,13 @@ public class SiriusResultTableFormat extends SiriusTableFormat<SiriusResultEleme
                 if(treeScoring != null)
                     return treeScoring.getExplainedIntensity();
                 else
-                    return "value not found";
+                    return "Value not found";
             case 7:
                 TreeNode visibleTreeRoot = result.getTreeVisualization();
                 if(visibleTreeRoot != null && visibleTreeRoot.getMedianMassDeviation() != null)
                     return visibleTreeRoot.getMedianMassDeviation();
                 else
-                    return "value not found";
+                    return "Value not found";
             case 8:
                 return isBest(result);
             default:
