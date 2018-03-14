@@ -123,7 +123,8 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
                     } else if (experiment != experimentResult.getExperiment()) {
                         throw new IllegalArgumentException("SiriusIdentificationJobs to collect are from different MS2Experiments");
                     }
-                    input.addAll(experimentResult.getResults());
+                    List<IdentificationResult> results = experimentResult.getResults();
+                    if (results!=null) input.addAll(results);
                 }
             }
 
