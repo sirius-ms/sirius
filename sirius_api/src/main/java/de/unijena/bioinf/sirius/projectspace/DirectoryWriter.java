@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
@@ -21,11 +22,12 @@ public class DirectoryWriter extends AbstractProjectWriter {
     protected String currentExperimentName;
     protected WritingEnvironment W;
     private String versionString;
+    private FilenameFormatter filenameFormatter;
 
-
-    public DirectoryWriter(WritingEnvironment w, String versionString) {
+    public DirectoryWriter(WritingEnvironment w, String versionString, FilenameFormatter filenameFormatter) {
         W = w;
         this.versionString = versionString;
+        this.filenameFormatter = filenameFormatter;
         startWriting();
     }
 
@@ -327,7 +329,7 @@ public class DirectoryWriter extends AbstractProjectWriter {
 
     protected String makeFileName(ExperimentResult exp) {
         final int index = exp.getExperiment().getAnnotation(Index.class,Index.NO_INDEX).index;
-        return (index>=0 ? index : counter) + "_" + exp.experimentSource + "_" + exp.experimentName;
+        return filenameFormatter.formatName(exp, (index>=0 ? index : counter));
     }
 
     protected interface Do {

@@ -57,6 +57,12 @@ public class SiriusWorkspaceReader implements DirectoryReader.ReadingEnvironment
         stack.add(tree);
     }
 
+    @Override
+    public boolean isDirectory(String name) {
+        DirectoryTree tree = stack.get(stack.size()-1).children.get(name);
+        return tree!=null && tree.degree()>0;
+    }
+
     private String join(List<DirectoryTree> stack, String name) {
         StringBuilder buf = new StringBuilder();
         for (DirectoryTree t : stack) {
