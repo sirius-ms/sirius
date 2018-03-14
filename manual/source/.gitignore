@@ -8,3 +8,5 @@
 *.pdf
 *.run.xml
 *.toc
+*~
+bibtex
