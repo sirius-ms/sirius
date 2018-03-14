@@ -40,6 +40,7 @@ public class SiriusResultElementConverter {
         Fragment rootK = ft.getRoot();
         TreeNode rootM = new DefaultTreeNode();
         double maxIntensity = Double.NEGATIVE_INFINITY;
+
         for (Fragment fragment : ft.getFragments()) {
             if (peakAno.get(fragment) == null) continue;
             double fragIntensity = peakAno.get(fragment).getIntensity();
