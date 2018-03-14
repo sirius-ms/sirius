@@ -78,34 +78,17 @@ public class DirectoryReader implements ProjectReader {
     protected final List<Instance> experiments;
     protected int currentIndex = 0;
 
-    private static Pattern EXPP = Pattern.compile("(\\d+)_(.+)_(.+)");
     public DirectoryReader(ReadingEnvironment env) {
         this.env = env;
         List<String> names = env.list();
         this.experiments = new ArrayList<>(names.size());
         for (String name : names) {
-//            Path dir = null;
-//            try {
-//                dir = Paths.get(env.absolutePath(name).getFile());
-//            } catch (IOException e) {
-//                throw new RuntimeException("Cannot read directory: "+e.getMessage(), e);
-//            }
-//            //todo always a directory!?
-//            if (!Files.isDirectory(dir)) continue;
-//            if (!Files.exists(dir.resolve("spectrum.ms"))) continue;
-//            env.absolutePath("");
-//            env.
             try {
                 if (!containsSpectrumMS(env, name)) continue;
             } catch (IOException e) {
                 throw new RuntimeException("Cannot read directory: "+e.getMessage(), e);
             }
             experiments.add(new Instance(name));
-
-//            final Matcher m = EXPP.matcher(name);
-//            if (m.matches()) {
-//                experiments.add(new Instance(Integer.parseInt(m.group(1)), m.group(2), m.group(3)));
-//            }
         }
     }
 
