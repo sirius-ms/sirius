@@ -77,7 +77,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<SiriusResultEleme
             case 4:
                 return result.getResult().getTreeScore();
             case 5:
-                return result.getResult().getBeautifulTree().getFragments().size();
+                return result.getResult().getRawTree().getFragments().size();
             case 6:
                 TreeScoring treeScoring = result.getResult().getRawTree().getAnnotationOrNull(TreeScoring.class);
                 if(treeScoring != null)
