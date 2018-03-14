@@ -34,6 +34,12 @@ public class SiriusFileReader implements DirectoryReader.ReadingEnvironment {
     }
 
     @Override
+    public boolean isDirectory(String name) {
+        File file = new File(current, name);
+        return file.isDirectory();
+    }
+
+    @Override
     public InputStream openFile(String name) throws IOException {
         currentStream = new FileInputStream(new File(current, name));
         return currentStream;

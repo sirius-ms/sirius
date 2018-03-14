@@ -21,6 +21,7 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.babelms.Parser;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +71,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             this.currentSpectrum = new SimpleMutableSpectrum();
         }
 
-        private final URL source;
+        private URL source;
         private final BufferedReader reader;
         private int lineNumber;
         private String compoundName = null;
@@ -87,6 +88,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private MutableMs2Experiment experiment;
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
         private HashMap<String, String> fields;
+        private Index index;
 
         private void newCompound(String name) {
             inchi = null;
@@ -185,6 +187,11 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                         break;
                     }
                 }
+            } else if (optionName.equals("source")) {
+                //override in source set in ms file
+                this.source = new URL(value);
+            } else if (optionName.equals("index")) {
+                this.index = new Index(Integer.parseInt(value));
             } else if (optionName.equals("formula")) {
                 if (formula != null) warn("Molecular formula is set twice");
                 this.formula = MolecularFormula.parse(value);
@@ -280,6 +287,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             exp.setMs1Spectra(ms1spectra);
             exp.setMs2Spectra(ms2spectra);
             exp.setSource(source);
+            if (index != null) exp.setAnnotation(Index.class, index);
             if (smiles != null) exp.setAnnotation(Smiles.class, new Smiles(smiles));
             if (splash != null) exp.setAnnotation(Splash.class, new Splash(splash));
             if (spectrumQualityString != null)
