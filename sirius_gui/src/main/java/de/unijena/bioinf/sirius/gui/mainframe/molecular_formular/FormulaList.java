@@ -24,6 +24,8 @@ public class FormulaList extends ActionList<SiriusResultElement, ExperimentConta
     public final FormulaScoreListStats scoreStats = new FormulaScoreListStats();
     public final DoubleListStats isotopeScoreStats = new DoubleListStats();
     public final DoubleListStats treeScoreStats = new DoubleListStats();
+    public final DoubleListStats explainedPeaks = new DoubleListStats();
+    public final DoubleListStats explainedIntensity = new DoubleListStats();
 
     public FormulaList(final ExperimentList compoundList) {
         super(SiriusResultElement.class);
@@ -90,20 +92,32 @@ public class FormulaList extends ActionList<SiriusResultElement, ExperimentConta
 
     private void intiResultList() {
         List<SiriusResultElement> r = data.getResults();
-        double[] scores = new double[r.size()];
-        double[] iScores = new double[r.size()];
-        double[] tScores = new double[r.size()];
-        int i = 0;
-        for (SiriusResultElement element : r) {
-            elementList.add(element);
-            scores[i] = element.getScore();
-            iScores[i] = element.getResult().getIsotopeScore();
-            tScores[i++] = element.getResult().getTreeScore();
+        if (r != null && !r.isEmpty()) {
+            double[] scores = new double[r.size()];
+            double[] iScores = new double[r.size()];
+            double[] tScores = new double[r.size()];
+            int i = 0;
+            for (SiriusResultElement element : r) {
+                elementList.add(element);
+                scores[i] = element.getScore();
+                iScores[i] = element.getResult().getIsotopeScore();
+                tScores[i++] = element.getResult().getTreeScore();
+            }
+
+            this.scoreStats.update(scores);
+            this.isotopeScoreStats.update(iScores);
+            this.treeScoreStats.update(tScores);
+
+
+            this.explainedIntensity.setMinScoreValue(0);
+            this.explainedIntensity.setMaxScoreValue(1);
+            this.explainedIntensity.setScoreSum(this.explainedIntensity.getMax());
+
+            this.explainedPeaks.setMinScoreValue(0);
+            this.explainedPeaks.setMaxScoreValue(r.get(0).getNumberOfExplainablePeaks());
+            this.explainedPeaks.setScoreSum(this.explainedPeaks.getMax());
         }
 
-        this.scoreStats.update(scores);
-        this.isotopeScoreStats.update(iScores);
-        this.treeScoreStats.update(tScores);
     }
 
 
