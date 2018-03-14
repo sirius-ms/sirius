@@ -26,6 +26,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,7 +55,10 @@ public class FormulaListDetailView extends ActionListDetailView<SiriusResultElem
 
         table.getColumnModel().getColumn(2).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.scoreStats,true));
         table.getColumnModel().getColumn(3).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.isotopeScoreStats,false));
-        //table.getColumnModel().getColumn(4).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.treeScoreStats,false));
+        table.getColumnModel().getColumn(4).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.treeScoreStats,false));
+        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.explainedPeaks,false,true,new DecimalFormat("#0")));
+        table.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(),0,1,true));
+
 
         TableColumnModel v1 = table.getColumnModel();
         TableColumn v2 = v1.getColumn(5);
