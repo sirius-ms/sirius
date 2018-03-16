@@ -1,6 +1,6 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
-import de.unijena.bioinf.myxo.gui.tree.render.NodeColorManager;
+import de.unijena.bioinf.myxo.gui.tree.render.color.NodeColorManager;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -44,18 +44,17 @@ public class ScoreVisualizationPanel extends JPanel {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setColor(new Color(1f, 1f, 1f, 0f));
         g2.fillRect(0, 0, 200, 25);
-        if (ncm == null) {
-            return;
-        }
-        double diff = ncm.getMaximalValue() - ncm.getMinimalValue();
-        double stepSize = diff / 200;
-//		double value = ncm.getMinimalValue();
+
+        if (ncm == null) return;
+
+        double stepSize = ncm.getRange() / 200;
+
         for (int i = 0; i < 199; i++) {
             Color c = ncm.getColor(ncm.getMinimalValue() + (i * stepSize));
             g2.setColor(c);
             g2.drawLine(i, 0, i, 12);
-//			value += stepsize;
         }
+
         Color c = ncm.getColor(ncm.getMaximalValue());
         g2.setColor(c);
         g2.drawLine(199, 0, 199, 12);
