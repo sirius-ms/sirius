@@ -60,8 +60,10 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
             }
         });
         // display color bar for posterior probability
-        final DoubleListStats ld = new DoubleListStats(new double[]{0d,1d});
-        actionTable.getColumnModel().getColumn(2).setCellRenderer(new ListStatBarTableCellRenderer(ld, true));
+        BarTableCellRenderer barRenderer = new BarTableCellRenderer(-1, 0, 1, true);
+        barRenderer.setTwoWayBar(true);
+        actionTable.getColumnModel().getColumn(2).setCellRenderer(barRenderer);
+        actionTable.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(-1,0,1,false));
 
 
     }

@@ -5,7 +5,6 @@ package de.unijena.bioinf.sirius.gui.mainframe.molecular_formular;
  * 25.01.17.
  */
 
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.SiriusTableFormat;
@@ -40,7 +39,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<SiriusResultEleme
     }
 
     public String getColumnName(int column) {
-        switch(column) {
+        switch (column) {
             case 0:
                 return "Rank";
             case 1:
@@ -77,16 +76,20 @@ public class SiriusResultTableFormat extends SiriusTableFormat<SiriusResultEleme
             case 4:
                 return result.getResult().getTreeScore();
             case 5:
-                return result.getResult().getRawTree().getFragments().size();
-            case 6:
-                TreeScoring treeScoring = result.getResult().getRawTree().getAnnotationOrNull(TreeScoring.class);
-                if(treeScoring != null)
-                    return treeScoring.getExplainedIntensity();
-                else
+                final double expPeaks = result.getNumOfExplainedPeaks();
+                if (Double.isNaN(expPeaks))
                     return "Value not found";
+                else
+                    return expPeaks;
+            case 6:
+                final double intensity = result.getExplainedIntensityRatio();
+                if (Double.isNaN(intensity))
+                    return "Value not found";
+                else
+                    return intensity;
             case 7:
                 TreeNode visibleTreeRoot = result.getTreeVisualization();
-                if(visibleTreeRoot != null && visibleTreeRoot.getMedianMassDeviation() != null)
+                if (visibleTreeRoot != null && visibleTreeRoot.getMedianMassDeviation() != null)
                     return visibleTreeRoot.getMedianMassDeviation();
                 else
                     return "Value not found";
