@@ -85,16 +85,6 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             return false;
         }
 
-
-        Path libraryHitsFile = (options.getLibraryHitsFile() == null ? null : Paths.get(options.getLibraryHitsFile()));
-        Path originalSpectraPath = Paths.get(options.getSpectraFile());
-        try {
-            anchors = (libraryHitsFile == null) ? null : ZodiacUtils.parseLibraryHits(libraryHitsFile, originalSpectraPath, LOG); //only specific GNPS format
-        } catch (IOException e) {
-            LOG.error("Cannot load library hits from file.", e);
-            return false;
-        }
-
         return true;
     }
 
@@ -237,6 +227,17 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(workerCount));
 
 
+
+        Path libraryHitsFile = (options.getLibraryHitsFile() == null ? null : Paths.get(options.getLibraryHitsFile()));
+        try {
+            anchors = (libraryHitsFile == null) ? null : ZodiacUtils.parseLibraryHits(libraryHitsFile, experimentResults, LOG); //only specific GNPS format
+        } catch (IOException e) {
+            LOG.error("Cannot load library hits from file.", e);
+            return null;
+        }
+
+
+
         //todo init here (not setup) and not in setup because it might store infos after one run!?
         NodeScorer[] nodeScorers;
         boolean useLibraryHits = (anchors != null);
@@ -281,7 +282,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
 
 
-        ZodiacJJob zodiacJJob = new ZodiacJJob(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, options.getIterationSteps(), options.getBurnInSteps(), options.getSeparateRuns());
+        ZodiacJJob zodiacJJob = new ZodiacJJob(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, options.getIterationSteps(), options.getBurnInSteps(), options.getSeparateRuns(), options.isClusterCompounds());
 
         return zodiacJJob;
 

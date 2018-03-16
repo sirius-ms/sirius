@@ -111,6 +111,11 @@ public interface ZodiacOptions {
     )
     Integer getNumberOfCandidates();
 
+    @Option(
+            longName = {"cluster"},
+            description = "cluster compounds with the same best molecular formula candidate before running ZODIAC."
+    )
+    boolean isClusterCompounds();
 
     @Option(
             longName = {"processors", "cores"},
