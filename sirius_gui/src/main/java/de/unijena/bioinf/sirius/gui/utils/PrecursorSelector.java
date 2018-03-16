@@ -8,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.MsExperiments;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
@@ -16,19 +17,20 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 
+// todo dummy String for size calculation
 public class PrecursorSelector extends JPanel {
-    public static final String name = "Parent mass (m/z)";
+    public static final String name = "Precursor mass (m/z)";
 
     private final JComboBox<Peak> box;
     private final JButton autoDetectFM = new JButton("Most intensive");
     private final BasicEventList<Peak> peaks = new BasicEventList<>();
+    private double maxInt;
 
 
     public PrecursorSelector(final ExperimentContainer ec) {
@@ -82,10 +84,17 @@ public class PrecursorSelector extends JPanel {
     public void setData(Collection<Peak> masses) {
         peaks.clear();
         peaks.addAll(masses);
+        setMaxMass();
         if (peaks.isEmpty())
             autoDetectFM.setEnabled(false);
         else
             setMostIntensivePrecursorMass();
+    }
+
+    private void setMaxMass() {
+        maxInt = 0;
+        for (Peak peak : peaks)
+            maxInt = Math.max(maxInt, peak.getIntensity());
     }
 
     public void setData(java.util.List<SpectrumContainer> spectra, double ioMass) {
@@ -116,16 +125,17 @@ public class PrecursorSelector extends JPanel {
         MsExperiments.PrecursorCandidates masses = MsExperiments.findPossiblePrecursorPeaks(ms1, ms2, ioMass);
         peaks.clear();
         peaks.addAll(masses);
+        setMaxMass();
         box.setSelectedItem(masses.getDefaultPrecursor() != null ? masses.getDefaultPrecursor() : String.valueOf(ioMass));
         if (peaks.isEmpty()) autoDetectFM.setEnabled(false);
+
     }
 
 
     private JComboBox<Peak> createParentPeakSelector() {
         //create box
         JComboBox<Peak> box = new JComboBox<>(GlazedListsSwing.eventComboBoxModel(peaks));
-        MyListCellRenderer renderer = new MyListCellRenderer(peaks);
-        box.setRenderer(renderer);
+        box.setRenderer(new MyListCellRenderer());
         box.setEditable(true);
 
         AutoCompleteDecorator.decorate(box, new ObjectToStringConverter() {
@@ -147,7 +157,7 @@ public class PrecursorSelector extends JPanel {
         if (mass <= 0) {
             setMostIntensivePrecursorMass();
             return false;
-        }else {
+        } else {
             MsExperiments.PrecursorCandidates masses = MsExperiments.findPossiblePrecursorPeaks(peaks, mass);
             box.setSelectedItem(masses.getDefaultPrecursor() != null ? masses.getDefaultPrecursor() : String.valueOf(mass));
             return true;
@@ -167,158 +177,50 @@ public class PrecursorSelector extends JPanel {
     }
 
 
-    private class MyListCellRenderer extends JLabel implements ListCellRenderer<Peak> {
+    private class MyListCellRenderer implements ListCellRenderer<Peak> {
 
-        private double maxInt;
-        private Font textfont;
-        private Color massColor, intColor, selectedForeground, selectedBackground;
+        protected DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
 
-        private DecimalFormat numberFormat;
+        private DecimalFormat numberFormat = new DecimalFormat("#0.0%");
+        private DecimalFormat numberFormatMass = new DecimalFormat("#0.0000");
 
-        private Peak cp;
-        private Collection<Peak> peaks;
-
-        private int intPos;
-
-        private int idealWidth;
-
-        boolean isInit;
-        boolean isSelected;
-
-        MyListCellRenderer(Collection<Peak> peaks) {
-
-            initColorsAndFonts();
-
-            isInit = false;
-            this.peaks = peaks;
-            intPos = 0;
-            isSelected = false;
-
-            this.numberFormat = new DecimalFormat("#0.0%");
-            //		FontMetrics fm = Toolkit.getDefaultToolkit().getfo
-            //		 = this.getGraphics().getFontMetrics(textfont);this.getgr
-
-            maxInt = 0;
-            for (Peak peak : peaks) {
-                if (peak.getIntensity() > maxInt) maxInt = peak.getIntensity();
-            }
-
-            //		this.setMinimumSize(new Dimension(145,15));
-            //		this.setPreferredSize(new Dimension(145,15));
-            //		this.setSize(new Dimension(151,15));
-
-            cp = null;
-
-            computeSize();
-
-        }
-
-        public void computeSize() {
-            BufferedImage im = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR);
-
-            FontMetrics fm = im.getGraphics().getFontMetrics(this.textfont);
-
-            int maxMassWidth = 0;
-            int maxIntWidth = 0;
-            for (Peak peak : peaks) {
-                String massS = String.valueOf(peak.getMass());
-                String intS = numberFormat.format(peak.getIntensity() / maxInt);
-                int massWidth = fm.stringWidth(massS);
-                int intWidth = fm.stringWidth(intS);
-                if (massWidth > maxMassWidth) maxMassWidth = massWidth;
-                if (intWidth > maxIntWidth) maxIntWidth = intWidth;
-                //			int width = fm.stringWidth(massS)+fm.stringWidth(intS)+20;
-                //			if(width>maxWidth) maxWidth = width;
-            }
-
-            this.intPos = 15 + maxMassWidth;
-
-            this.idealWidth = maxMassWidth + maxIntWidth + 20;
-
-            this.setSize(new Dimension(idealWidth, 15));
-            this.setPreferredSize(new Dimension(idealWidth, 15));
-            this.setMinimumSize(new Dimension(idealWidth, 15));
-
-        }
-
-        public void initColorsAndFonts() {
+        MyListCellRenderer() {
             try {
                 InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans.ttf");
                 Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
-                textfont = tempFont.deriveFont(12f);
+                final Font textfont = tempFont.deriveFont(12f);
+                if (textfont != null)
+                    defaultRenderer.setFont(textfont);
             } catch (Exception e) {
                 LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             }
-
-            massColor = Color.BLACK;
-            intColor = new Color(83, 134, 139);
-
-
-            selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");
-            selectedForeground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
-            //		evenBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\".background");
-            //		disableBackground = UIManager.getColor("ComboBox.background");
-            //		System.out.println("Farbe: "+disableBackground);
-            //		unevenBackground = new Color(213,227,238);
-            //		activatedForeground = UIManager.getColor("List.foreground");
-            //		deactivatedForeground = Color.GRAY;
-
         }
 
         @Override
-        public Component getListCellRendererComponent(
-                JList<? extends Peak> list, Peak value, int index,
-                boolean isSelected, boolean cellHasFocus) {
-            this.setText(value.getMass() + " " + value.getIntensity());
-            this.cp = value;
+        public Component getListCellRendererComponent(JList<? extends Peak> list, Peak value, int index, boolean isSelected, boolean cellHasFocus) {
+            JLabel renderer = (JLabel) defaultRenderer.getListCellRendererComponent(list, value, index,
+                    isSelected, cellHasFocus);
 
-            this.isSelected = isSelected;
-            return this;
+            final String intS = numberFormat.format(value.getIntensity() / maxInt);
+            final String massS = numberFormatMass.format(value.getMass());
+
+            Color foreColor;
+            Color backColor;
+
+            if (isSelected) {
+                backColor = Colors.LIST_SELECTED_BACKGROUND;
+                foreColor = Colors.LIST_SELECTED_FOREGROUND;
+            } else {
+                if (index % 2 == 0) backColor = Colors.LIST_EVEN_BACKGROUND;
+                else backColor = Colors.LIST_UNEVEN_BACKGROUND;
+                foreColor = Colors.LIST_ACTIVATED_FOREGROUND;
+            }
+
+            renderer.setBackground(backColor);
+            renderer.setForeground(foreColor);
+            renderer.setText("<html>" + massS + " <font color=rgb(83,134,139)>(" + intS + ")</font>" + "</html>");
+
+            return renderer;
         }
-
-
-        @Override
-        public void paint(Graphics g) {
-
-            Graphics2D g2 = (Graphics2D) g;
-
-            FontMetrics fm = g2.getFontMetrics(this.textfont);
-
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            if (isSelected) {
-                g2.setColor(this.selectedBackground);
-            } else {
-                g2.setColor(Color.white);
-            }
-
-
-            g2.fillRect(0, 0, (int) this.getSize().getWidth(), (int) this.getSize().getWidth());
-
-            if (cp == null) return;
-
-            //		FontMetrics fm = g2.getFontMetrics(this.textfont);
-
-            String massS = String.valueOf(cp.getMass());
-            String intS = numberFormat.format(cp.getIntensity() / maxInt);
-
-            if (isSelected) {
-                g2.setColor(this.selectedForeground);
-            } else {
-                g2.setColor(massColor);
-            }
-
-            g2.drawString(massS, 5, 12);
-
-            if (isSelected) {
-                g2.setColor(this.selectedForeground);
-            } else {
-                g2.setColor(intColor);
-            }
-
-            g2.drawString(intS, intPos, 12);
-
-        }
-
     }
 }
