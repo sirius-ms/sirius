@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.GibbsSampling.ZodiacUtils;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.GibbsSampling.model.distributions.*;
@@ -18,10 +19,7 @@ import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.projectspace.DirectoryReader;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
-import de.unijena.bioinf.sirius.projectspace.SiriusFileReader;
-import de.unijena.bioinf.sirius.projectspace.SiriusWorkspaceReader;
+import de.unijena.bioinf.sirius.projectspace.*;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 
@@ -32,6 +30,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -80,6 +79,21 @@ public class Zodiac {
             PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(workerCount));
 
 
+            FilenameFormatter filenameFormatter = null;
+            if (options.getNamingConvention()!=null){
+                String formatString = options.getNamingConvention();
+                try {
+                    filenameFormatter = new StandardMSFilenameFormatter(formatString);
+                } catch (ParseException e) {
+                    LOG.error("Cannot parse naming convention:\n" + e.getMessage(), e);
+                    System.exit(1);
+                }
+            } else {
+                //default
+                filenameFormatter = new StandardMSFilenameFormatter();
+            }
+
+
             //create output dir
             if (Files.exists(outputPath)){
                 if (!Files.isDirectory(outputPath)){
@@ -96,7 +110,7 @@ public class Zodiac {
             experimentResults = updateQuality(experimentResults, originalSpectraPath);
 
 
-            List<LibraryHit> anchors = (libraryHitsFile==null)?null:ZodiacUtils.parseLibraryHits(libraryHitsFile, originalSpectraPath, LOG); //only specific GNPS format
+            List<LibraryHit> anchors = (libraryHitsFile==null)?null:ZodiacUtils.parseLibraryHits(libraryHitsFile, experimentResults, LOG); //only specific GNPS format
 
 
             NodeScorer[] nodeScorers;
@@ -155,7 +169,7 @@ public class Zodiac {
 
 
 
-            de.unijena.bioinf.GibbsSampling.Zodiac zodiac = new de.unijena.bioinf.GibbsSampling.Zodiac(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates);
+            de.unijena.bioinf.GibbsSampling.Zodiac zodiac = new de.unijena.bioinf.GibbsSampling.Zodiac(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, options.isClusterCompounds());
 
 
             ZodiacResultsWithClusters zodiacResult = zodiac.compute(options.getIterationSteps(), options.getBurnInSteps(), options.getSeparateRuns());
@@ -169,7 +183,7 @@ public class Zodiac {
             Scored<IdentificationResult>[] bestInitial = bestInitial(ids, experimentResultMap);
             writeZodiacOutput(ids, bestInitial, result, outputPath.resolve("zodiac_summary.csv"));
             writeClusters(representativeToCluster, outputPath.resolve("clusters.csv"));
-            writeSpectra(ids, result, experimentResultMap, outputPath);
+            writeSpectra(ids, result, experimentResultMap, outputPath, filenameFormatter);
 
         } catch (IOException e) {
             LOG.error("Error while running ZODIAC: " + e.getMessage(), e);
@@ -395,7 +409,7 @@ public class Zodiac {
     /*
     experimentMap necessary since FragmentsCandidate might be the cluster representative.
      */
-    private static void writeSpectra(String[] ids, CompoundResult<FragmentsCandidate>[] result, Map<String, ExperimentResult> experimentMap, Path outputPath) throws IOException {
+    private static void writeSpectra(String[] ids, CompoundResult<FragmentsCandidate>[] result, Map<String, ExperimentResult> experimentMap, Path outputPath, FilenameFormatter filenameFormatter) throws IOException {
         for (int i = 0; i < ids.length; i++) {
             final Scored<FragmentsCandidate>[] currentResults = result[i].getCandidates();
             final Scored<FragmentsCandidate> bestResult = currentResults[0];
@@ -403,10 +417,12 @@ public class Zodiac {
             if (DummyFragmentCandidate.isDummy(bestResult.getCandidate())) continue;
 
             final String id = ids[i];
-            MutableMs2Experiment experiment = new MutableMs2Experiment(experimentMap.get(id).getExperiment());
+            ExperimentResult expResult = experimentMap.get(id);
+            MutableMs2Experiment experiment = new MutableMs2Experiment(expResult.getExperiment());
             experiment.setMolecularFormula(bestResult.getCandidate().getFormula());
             experiment.setPrecursorIonType(bestResult.getCandidate().getIonType());
-            Path file = outputPath.resolve(Integer.toString(i + 1) + "_" + id + ".ms");
+            String filename = makeFileName(expResult, filenameFormatter, i+1);
+            Path file = outputPath.resolve(filename);
             final BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset());
             new JenaMsWriter().write(writer, experiment);
             writer.close();
@@ -415,7 +431,12 @@ public class Zodiac {
 
     }
 
-
+    protected static String makeFileName(ExperimentResult exp, FilenameFormatter filenameFormatter, int idx) {
+        final int index = exp.getExperiment().getAnnotation(Index.class,Index.NO_INDEX).index;
+        String name = filenameFormatter.formatName(exp, (index>=0 ? index : idx));
+        if (!name.endsWith(".ms")) name += ".ms";
+        return name;
+    }
 
 
 }

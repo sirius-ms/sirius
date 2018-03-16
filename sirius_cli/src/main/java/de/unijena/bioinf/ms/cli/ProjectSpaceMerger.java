@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.cli;
 
+import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
-import de.unijena.bioinf.sirius.projectspace.Index;
 import de.unijena.bioinf.sirius.projectspace.ProjectReader;
 import de.unijena.bioinf.sirius.projectspace.ProjectWriter;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,7 @@ public class ProjectSpaceMerger implements ProjectWriter {
         this.tempFile = File.createTempFile("sirius", ".sirius");
         tempFile.deleteOnExit();
         this.numberOfWrittenExperiments = 0;
-        try (final ProjectWriter pw = cli.getSiriusOutputWriter(tempFile.getAbsolutePath(), cli.getWorkspaceWritingEnvironmentForSirius(tempFile.getAbsolutePath()))) {
+        try (final ProjectWriter pw = cli.getSiriusOutputWriter(tempFile.getAbsolutePath(), cli.getWorkspaceWritingEnvironmentForSirius(tempFile.getAbsolutePath()), cli.filenameFormatter)) {
             while (reader.hasNext()) {
                 try {
                     final ExperimentResult er = reader.next();
@@ -64,7 +64,7 @@ public class ProjectSpaceMerger implements ProjectWriter {
         });
 
         // recreate file
-        this.underlyingWriter = zip ? cli.getSiriusOutputWriter(file, cli.getWorkspaceWritingEnvironmentForSirius(file)) : cli.getDirectoryOutputWriter(file, cli.getWorkspaceWritingEnvironmentForDirectoryOutput(file));
+        this.underlyingWriter = zip ? cli.getSiriusOutputWriter(file, cli.getWorkspaceWritingEnvironmentForSirius(file), cli.filenameFormatter) : cli.getDirectoryOutputWriter(file, cli.getWorkspaceWritingEnvironmentForDirectoryOutput(file), cli.filenameFormatter);
     }
 
     public int getNumberOfWrittenExperiments() {

@@ -140,6 +140,11 @@ public interface SiriusOptions {
     boolean isTrustGuessIonFromMS1();
 
 
+    //naming
+    @Option(longName = "naming-convention", description = "Specify a format for compounds' output directorys. Default %index_%filename_%compoundname",  defaultToNull = true)
+    String getNamingConvention();
+
+
 
     //technical stuff
     @Option(

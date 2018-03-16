@@ -69,7 +69,7 @@ public class WorkspaceIO {
             env = new SiriusWorkspaceWriter(file);
         }
         System.out.println("new io");
-        final FingerIdResultWriter w = new FingerIdResultWriter(env);
+        final FingerIdResultWriter w = new FingerIdResultWriter(env, new StandardMSFilenameFormatter());
         for (ExperimentContainer c : containers) {
             final Ms2Experiment exp = c.getMs2Experiment();
             w.writeExperiment(new ExperimentResult(exp, Lists.newArrayList(c.getRawResults())));

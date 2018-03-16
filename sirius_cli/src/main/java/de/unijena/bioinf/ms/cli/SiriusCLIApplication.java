@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 public class SiriusCLIApplication {
     public static void main(String[] args) {
-        if (false){
+        if (true){
             try {
                 final FingeridCLI<FingerIdOptions> cli = new FingeridCLI<>();
                 if (isZodiac(args)) {
