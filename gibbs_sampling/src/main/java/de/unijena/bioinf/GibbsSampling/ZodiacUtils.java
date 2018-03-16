@@ -702,7 +702,7 @@ public class ZodiacUtils {
             formula = new InChI(null, inchi).extractFormula();
         }
 
-        if (formula==null){
+        if (formula==null && smiles.length()>0){
             try {
                 final SmilesParser parser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
                 final IAtomContainer c = parser.parseSmiles(smiles);
