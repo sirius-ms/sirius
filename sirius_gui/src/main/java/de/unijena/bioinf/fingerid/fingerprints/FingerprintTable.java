@@ -48,7 +48,7 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Si
         this.trainingExamples = new int[fscores.length];
         int k = 0;
         for (int index : csi.getFingerprintVersion().allowedIndizes()) {
-            this.trainingExamples[index] = (int)performances[k].getCount();
+            this.trainingExamples[index] = (int)(performances[k].withRelabelingAllowed(false).getCount());
             this.fscores[index] = performances[k++].getF();
         }
     }
