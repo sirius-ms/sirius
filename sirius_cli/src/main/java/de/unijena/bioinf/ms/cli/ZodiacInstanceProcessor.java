@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.GibbsSampling.ZodiacUtils;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.GibbsSampling.model.distributions.*;
@@ -16,10 +17,7 @@ import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.projectspace.DirectoryReader;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
-import de.unijena.bioinf.sirius.projectspace.SiriusFileReader;
-import de.unijena.bioinf.sirius.projectspace.SiriusWorkspaceReader;
+import de.unijena.bioinf.sirius.projectspace.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
@@ -31,16 +29,34 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.*;
 
 public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResult> {
     protected static Logger LOG = LoggerFactory.getLogger(ZodiacInstanceProcessor.class);
     protected ZodiacOptions options;
+    protected FilenameFormatter filenameFormatter;
 
     private ScoreProbabilityDistribution probabilityDistribution;
     private List<LibraryHit> anchors;
     @Override
     public boolean setup() {
+
+        //todo duplicate from Sirius options?
+        filenameFormatter = null;
+        if (options.getNamingConvention()!=null){
+            String formatString = options.getNamingConvention();
+            try {
+                filenameFormatter = new StandardMSFilenameFormatter(formatString);
+            } catch (ParseException e) {
+                LOG.error("Cannot parse naming convention:\n" + e.getMessage(), e);
+                return false;
+            }
+        } else {
+            //default
+            filenameFormatter = new StandardMSFilenameFormatter();
+        }
+
         //create output dir
         Path outputPath = Paths.get(options.getOutput());
         if (Files.exists(outputPath)) {
@@ -66,16 +82,6 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             probabilityDistribution = new LogNormalDistribution(estimateByMedian);
         } else {
             LOG.error("probability distribution is unknown. Use 'lognormal' or 'exponential'.");
-            return false;
-        }
-
-
-        Path libraryHitsFile = (options.getLibraryHitsFile() == null ? null : Paths.get(options.getLibraryHitsFile()));
-        Path originalSpectraPath = Paths.get(options.getSpectraFile());
-        try {
-            anchors = (libraryHitsFile == null) ? null : ZodiacUtils.parseLibraryHits(libraryHitsFile, originalSpectraPath, LOG); //only specific GNPS format
-        } catch (IOException e) {
-            LOG.error("Cannot load library hits from file.", e);
             return false;
         }
 
@@ -221,6 +227,17 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(workerCount));
 
 
+
+        Path libraryHitsFile = (options.getLibraryHitsFile() == null ? null : Paths.get(options.getLibraryHitsFile()));
+        try {
+            anchors = (libraryHitsFile == null) ? null : ZodiacUtils.parseLibraryHits(libraryHitsFile, experimentResults, LOG); //only specific GNPS format
+        } catch (IOException e) {
+            LOG.error("Cannot load library hits from file.", e);
+            return null;
+        }
+
+
+
         //todo init here (not setup) and not in setup because it might store infos after one run!?
         NodeScorer[] nodeScorers;
         boolean useLibraryHits = (anchors != null);
@@ -265,7 +282,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
 
 
-        ZodiacJJob zodiacJJob = new ZodiacJJob(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, options.getIterationSteps(), options.getBurnInSteps(), options.getSeparateRuns());
+        ZodiacJJob zodiacJJob = new ZodiacJJob(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, options.getIterationSteps(), options.getBurnInSteps(), options.getSeparateRuns(), options.isClusterCompounds());
 
         return zodiacJJob;
 
@@ -289,7 +306,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         Scored<IdentificationResult>[] bestInitial = bestInitial(ids, experimentResultMap);
         writeZodiacOutput(ids, bestInitial, result, outputPath.resolve("zodiac_summary.csv"));
         writeClusters(representativeToCluster, outputPath.resolve("clusters.csv"));
-        writeSpectra(ids, result, experimentResultMap, outputPath);
+        writeSpectra(ids, result, experimentResultMap, outputPath, filenameFormatter);
     }
 
     private final static int NUMBER_OF_HITS = Integer.MAX_VALUE;
@@ -403,10 +420,11 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
     }
 
 
+
     /*
     experimentMap necessary since FragmentsCandidate might be the cluster representative.
      */
-    public static void writeSpectra(String[] ids, CompoundResult<FragmentsCandidate>[] result, Map<String, ExperimentResult> experimentMap, Path outputPath) throws IOException {
+    private static void writeSpectra(String[] ids, CompoundResult<FragmentsCandidate>[] result, Map<String, ExperimentResult> experimentMap, Path outputPath, FilenameFormatter filenameFormatter) throws IOException {
         for (int i = 0; i < ids.length; i++) {
             final Scored<FragmentsCandidate>[] currentResults = result[i].getCandidates();
             final Scored<FragmentsCandidate> bestResult = currentResults[0];
@@ -414,16 +432,25 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             if (DummyFragmentCandidate.isDummy(bestResult.getCandidate())) continue;
 
             final String id = ids[i];
-            MutableMs2Experiment experiment = new MutableMs2Experiment(experimentMap.get(id).getExperiment());
+            ExperimentResult expResult = experimentMap.get(id);
+            MutableMs2Experiment experiment = new MutableMs2Experiment(expResult.getExperiment());
             experiment.setMolecularFormula(bestResult.getCandidate().getFormula());
             experiment.setPrecursorIonType(bestResult.getCandidate().getIonType());
-            Path file = outputPath.resolve(Integer.toString(i + 1) + "_" + id + ".ms");
+            String filename = makeFileName(expResult, filenameFormatter, i+1);
+            Path file = outputPath.resolve(filename);
             final BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset());
             new JenaMsWriter().write(writer, experiment);
             writer.close();
 
         }
 
+    }
+
+    protected static String makeFileName(ExperimentResult exp, FilenameFormatter filenameFormatter, int idx) {
+        final int index = exp.getExperiment().getAnnotation(Index.class,Index.NO_INDEX).index;
+        String name = filenameFormatter.formatName(exp, (index>=0 ? index : idx));
+        if (!name.endsWith(".ms")) name += ".ms";
+        return name;
     }
 
 
