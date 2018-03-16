@@ -46,13 +46,17 @@ public class Zodiac {
         this.Log = masterJJob!=null?masterJJob.LOG():LoggerFactory.getLogger(Zodiac.class);
     }
 
-    public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, MasterJJob masterJJob) throws ExecutionException {
-        this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, true, masterJJob);
+    public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds) throws ExecutionException {
+        this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, clusterCompounds, null);
     }
 
-    public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates) throws ExecutionException {
-        this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, null);
-    }
+//    public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, MasterJJob masterJJob) throws ExecutionException {
+//        this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, false, masterJJob);
+//    }
+
+//    public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates) throws ExecutionException {
+//        this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, null);
+//    }
 
     public ZodiacResultsWithClusters compute(int iterationSteps, int burnIn, int repetitions) throws ExecutionException {
         init();
@@ -69,9 +73,19 @@ public class Zodiac {
 
         addZodiacScoreToIdentificationResult(result, experimentResults);
 
-        zodiacResult = includedAllClusterInstances(zodiacResult);
+        if (clusterCompounds) zodiacResult = includedAllClusterInstances(zodiacResult);
+        else zodiacResult = new ZodiacResultsWithClusters(ids, zodiacResult.getGraph(), zodiacResult.getResults(), getSelfMapping(ids));
 
         return (ZodiacResultsWithClusters)zodiacResult;
+    }
+
+    private Map<String, String[]> getSelfMapping(String[] strings){
+        Map<String, String[]> map = new HashMap<>();
+        for (int i = 0; i < strings.length; i++) {
+            String string = strings[i];
+            map.put(string, new String[]{string});
+        }
+        return map;
     }
 
     private ZodiacResultsWithClusters includedAllClusterInstances(ZodiacResult<FragmentsCandidate> zodiacResult){
@@ -93,7 +107,7 @@ public class Zodiac {
 
     private void addZodiacScoreToIdentificationResult(CompoundResult<FragmentsCandidate>[] result, List<ExperimentResult> experimentResults){
         //todo add score to FTree not IdentificationResult?!?!!?!?!
-        Map<String, CompoundResult<FragmentsCandidate>> idToCompoundResult = createInstanceMap(result);
+        Map<String, CompoundResult<FragmentsCandidate>> idToCompoundResult = createInstanceMap(result);//contains all compounds (even all clustered)
         for (ExperimentResult experimentResult : experimentResults) {
             List<IdentificationResult> identificationResults = experimentResult.getResults();
             if (identificationResults.size()==0) continue;
@@ -109,13 +123,22 @@ public class Zodiac {
             Scored<FragmentsCandidate>[] zodiacResults = compoundResult.getCandidates();
             Map<MolecularFormula, IdentificationResult> idResultMap = createIdentificationResultMap(identificationResults);
             for (Scored<FragmentsCandidate> zodiacResult : zodiacResults) {
+                if (zodiacResult.getCandidate() instanceof DummyFragmentCandidate) continue;
                 ZodiacScore zodiacScore = new ZodiacScore(zodiacResult.getScore());
                 MolecularFormula mf = zodiacResult.getCandidate().getFormula();
                 IdentificationResult identificationResult = idResultMap.get(mf);
                 if (identificationResult==null){
                     //formula not found: might happen for clustered compounds
-                    if (zodiacScore.getProbability()>0){
-                        Log.warn("could not match Zodiac result to Sirius results");
+//                    if (zodiacScore.getProbability()>0){
+//                        Log.warn("could not match Zodiac result to Sirius results");
+//                    }
+
+                    if (zodiacScore.getProbability()>0 && clusterCompounds && representativeToCluster.containsKey(id)){
+                        Log.error("Zodiac results and Sirius results contain different molecular formula candiates for compoumound "+id+".");
+                    } else if (zodiacScore.getProbability()>0.01){
+                        Log.warn("A high scoring ZODIAC molecular formula candidate is not contained in SIRIUS top hits.\n" +
+                                "This might occur if clustered commpounds possess different SIRIUS molecular formula candidates.\n" +
+                                "You might increase the number of SIRIUS output candidadates or disable clustering in ZODIAC. Compound id: "+id);
                     }
                 } else {
                     identificationResult.setAnnotation(ZodiacScore.class, zodiacScore);
@@ -126,6 +149,11 @@ public class Zodiac {
     }
 
     private Map<String, CompoundResult<FragmentsCandidate>> createInstanceMap(CompoundResult<FragmentsCandidate>[] result) {
+        if (clusterCompounds) return createInstanceMapClusters(result);
+        return createInstanceMapNoClusters(result);
+    }
+
+    private Map<String, CompoundResult<FragmentsCandidate>> createInstanceMapClusters(CompoundResult<FragmentsCandidate>[] result) {
         Map<String, CompoundResult<FragmentsCandidate>> idToCompoundResult = new HashMap<>();
         Map<String, CompoundResult<FragmentsCandidate>> repIdToCompoundResult = new HashMap<>();
         for (int i = 0; i < result.length; i++) {
@@ -141,6 +169,16 @@ public class Zodiac {
                 assert !idToCompoundResult.containsKey(compound);
                 idToCompoundResult.put(compound, repIdToCompoundResult.get(rep));
             }
+        }
+        return idToCompoundResult;
+    }
+
+    private Map<String, CompoundResult<FragmentsCandidate>> createInstanceMapNoClusters(CompoundResult<FragmentsCandidate>[] result) {
+        Map<String, CompoundResult<FragmentsCandidate>> idToCompoundResult = new HashMap<>();
+        for (int i = 0; i < result.length; i++) {
+            CompoundResult<FragmentsCandidate> compoundResult = result[i];
+            String id = compoundResult.getId();
+            idToCompoundResult.put(id, compoundResult);
         }
         return idToCompoundResult;
     }
@@ -166,6 +204,7 @@ public class Zodiac {
 
     private void init(){
         Map<String, List<FragmentsCandidate>> candidatesMap = new HashMap<>();
+        Set<String> experimentIDSet = new HashSet<>();
         for (ExperimentResult result : experimentResults) {
             List<FTree> trees = new ArrayList<>();
             for (IdentificationResult identificationResult : result.getResults()) {
@@ -178,18 +217,18 @@ public class Zodiac {
 
             Collections.sort(candidates);
             if (candidates.size() > 0) candidatesMap.put(experiment.getName(), candidates);
-
+            experimentIDSet.add(experiment.getName());
         }
 
         for (LibraryHit anchor : anchors) {
             String id = anchor.getQueryExperiment().getName();
             List<FragmentsCandidate> candidatesList = candidatesMap.get(id);
 
-            if (candidatesList == null) {
+            if (!experimentIDSet.contains(id)) {
                 //library hits found in mgf. But there are no candidates (ExperimentResult) available.
-                Log.error("No compound with molecular formula candidates found which corresponds to spectral library hit with id "+id+".");
-                continue;
+                Log.warn("No compound in SIRIUS workspace found which corresponds to spectral library hit with id "+id+".");
             }
+            if (candidatesList==null) continue;
 
             for (FragmentsCandidate candidate : candidatesList) {
                 candidate.setLibraryHit(anchor);
@@ -210,13 +249,16 @@ public class Zodiac {
 
 
         //add dummy
-        GibbsSamplerMain.addNotExplainableDummy(candidatesMap, maxCandidates);
+        ZodiacUtils.addNotExplainableDummy(candidatesMap, maxCandidates, Log);
 
 
         //cluster compounds
-        representativeToCluster = GibbsSamplerMain.clusterCompounds(candidatesMap);
-        candidatesMap = GibbsSamplerMain.mergeCluster(candidatesMap, representativeToCluster);
-        Log.info("Generated " + candidatesMap.size()+" compound clusters from "+experimentResults.size()+" compounds.");
+        if (clusterCompounds){
+            representativeToCluster = ZodiacUtils.clusterCompounds(candidatesMap,Log);
+            candidatesMap = ZodiacUtils.mergeCluster(candidatesMap, representativeToCluster);
+            Log.info("Generated " + candidatesMap.size()+" compound clusters from "+experimentResults.size()+" compounds.");
+        }
+
 
 
         ids = candidatesMap.keySet().toArray(new String[0]);
