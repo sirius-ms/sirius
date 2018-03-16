@@ -1,25 +1,48 @@
 package de.unijena.bioinf.myxo.gui.tree.render.color;
 
+import de.unijena.bioinf.myxo.gui.tree.structure.TreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 
 import java.awt.*;
+import java.util.ArrayDeque;
 
-public abstract class RWBNodeColorManager extends AbstractNodeColorManager {
+public abstract class NodeColorManager{
 
 	private double p0, p1, p2;
 	private double posM, negM;
 	private boolean switchBlueAndRed = false;
-	@SuppressWarnings("unused")
-	private double redN, green1N, green2N, blueN;
 
-	public RWBNodeColorManager(TreeNode root) {
-		super(root);
+    private double minValue;
+    private double maxValue;
+    private double range;
+
+	public NodeColorManager() {
+
+	}
+
+	public NodeColorManager(TreeNode root) {
+		minValue = Double.POSITIVE_INFINITY;
+		maxValue = Double.NEGATIVE_INFINITY;
+
+		ArrayDeque<TreeNode> nodeStorage = new ArrayDeque<>();
+		nodeStorage.addFirst(root);
+
+		while(!nodeStorage.isEmpty()){
+			TreeNode node = nodeStorage.removeLast();
+			if(getValue(node)<minValue) minValue = getValue(node);
+			if(getValue(node)>maxValue) maxValue = getValue(node);
+			if(node.getOutEdgeNumber()>0){
+				for(TreeEdge edge : node.getOutEdges()) nodeStorage.addFirst(edge.getTarget());
+			}
+		}
+
+		range = maxValue - minValue;
 
 		p0 = 0;
-		p1 = diff / 2;
-		p2 = diff;
+		p1 = range / 2;
+		p2 = range;
 
-		posM = 2 / diff;
+		posM = 2 / range;
 		negM = -posM;
 
 	}
@@ -50,7 +73,6 @@ public abstract class RWBNodeColorManager extends AbstractNodeColorManager {
 		}
 	}
 
-	@Override
 	public Color getColor(double value) {
 		value = value - minValue;
 		double rTemp = getRedValue(value);
@@ -77,5 +99,43 @@ public abstract class RWBNodeColorManager extends AbstractNodeColorManager {
 	public void setSwitchBlueAndRed(boolean switchBlueAndRed)
 	{
 		this.switchBlueAndRed = switchBlueAndRed;
+	}
+
+
+	public abstract double getValue(TreeNode node);
+
+	public String getLegendLowText() {
+		return "";
+	}
+
+	public String getLegendMiddelText() {
+		return "";
+	}
+
+	public String getLegendHighText() {
+		return "";
+	}
+
+	public String getLegendName() {
+		return "";
+	}
+
+	public double getMaximalValue()
+	{
+		return maxValue;
+	}
+
+	public double getMinimalValue()
+	{
+		return minValue;
+	}
+
+	public double getRange()
+    {
+        return range;
+    }
+
+	public Color getColor(TreeNode node) {
+		return getColor(getValue(node));
 	}
 }

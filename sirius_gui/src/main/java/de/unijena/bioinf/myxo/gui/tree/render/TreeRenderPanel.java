@@ -212,7 +212,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
         switch (this.nodeColor) {
             case rwbIntensity:
-                this.nodeColorManager = new RWBRelativeIntensityNodeColorManager(root);
+                this.nodeColorManager = new RelativeIntensityNodeColorManager(root);
                 break;
             case rwbMassDeviation:
                 this.nodeColorManager = new MassDeviationColorManager(root);
