@@ -457,7 +457,7 @@ public class GibbsSamplerMain {
         parseLibraryHits(libraryHitsPath, mgfFile, candidatesMap);
         Map<String, LibraryHit> correctHits = identifyCorrectLibraryHits(candidatesMap, netSingleReactionDiffs);
         System.out.println("adding dummy node");
-        addNotExplainableDummy(candidatesMap, maxCandidates);
+        ZodiacUtils.addNotExplainableDummy(candidatesMap, maxCandidates, LOG);
 
         double useFreq = 0.0D;
         this.extractEvaluationIds(candidatesMap, correctHits, useFreq, netSingleReactionDiffs);
@@ -699,7 +699,7 @@ public class GibbsSamplerMain {
 
 
         System.out.println("adding dummy node");
-        addNotExplainableDummy(candidatesMap, maxCandidates);
+        ZodiacUtils.addNotExplainableDummy(candidatesMap, maxCandidates, LOG);
 
 
 
@@ -848,7 +848,7 @@ public class GibbsSamplerMain {
 
 
         System.out.println("adding dummy node");
-        addNotExplainableDummy(candidatesMap, maxCandidates);
+        ZodiacUtils.addNotExplainableDummy(candidatesMap, maxCandidates, LOG);
 
 
 
@@ -1203,8 +1203,8 @@ public class GibbsSamplerMain {
 
 
         System.out.println("adding dummy node");
-        if (is3Phase) addNotExplainableDummy(candidatesMap, Integer.MAX_VALUE);
-        else addNotExplainableDummy(candidatesMap, maxCandidates);
+        if (is3Phase) ZodiacUtils.addNotExplainableDummy(candidatesMap, Integer.MAX_VALUE, LOG);
+        else ZodiacUtils.addNotExplainableDummy(candidatesMap, maxCandidates, LOG);
 
 
 
@@ -1323,7 +1323,7 @@ public class GibbsSamplerMain {
         Map<String, LibraryHit> correctHits = identifyCorrectLibraryHits(candidatesMap, netSingleReactionDiffs);
 
         System.out.println("adding dummy node");
-        addNotExplainableDummy(candidatesMap, maxCandidates);
+        ZodiacUtils.addNotExplainableDummy(candidatesMap, maxCandidates,LOG);
 
 
 
@@ -2081,151 +2081,7 @@ public class GibbsSamplerMain {
         }
     }
 
-    public static void addNotExplainableDummy(Map<String, List<FragmentsCandidate>> candidateMap, int maxCandidates){
-        List<String> idList = new ArrayList<>(candidateMap.keySet());
 
-        int missingCounter = 0;
-        for (String id : idList) {
-            List<FragmentsCandidate> candidates = candidateMap.get(id);
-            if (candidateMap.size()==0) continue;
-            Ms2Experiment experiment = candidates.get(0).getExperiment();
-
-            UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = candidates.get(0).getAnnotationOrNull(UnconsideredCandidatesUpperBound.class);
-
-            if (unconsideredCandidatesUpperBound ==null){
-                ++missingCounter;
-                continue;
-            }
-
-            double worstScore = unconsideredCandidatesUpperBound.getLowestConsideredCandidateScore();
-            int numberOfIgnored = unconsideredCandidatesUpperBound.getNumberOfUnconsideredCandidates();
-
-            if (candidates.size()>maxCandidates) {
-                numberOfIgnored += candidates.size()-maxCandidates;
-
-                candidates = candidates.subList(0,maxCandidates);
-                candidateMap.put(id, candidates);
-
-                worstScore = candidates.get(candidates.size()-1).getScore();
-            }
-
-            if (numberOfIgnored>0 && worstScore>0) {
-                FragmentsCandidate dummyCandidate = DummyFragmentCandidate.newDummy(worstScore, numberOfIgnored, experiment);
-                if (candidates.get(0).hasLibraryHit()) dummyCandidate.setLibraryHit(candidates.get(0).getLibraryHit());
-                candidates.add(dummyCandidate);
-            }
-
-        }
-
-        if (missingCounter>0){
-            LOG.warn("Cannot create dummy nodes for "+missingCounter+" compounds. Information missing.");
-        }
-    }
-
-
-    /**
-     *
-     * cluster spectra based on same MF and retention time information?!
-     * //todo removes compounds with no candidate
-     * //todo possibly also use library hits?
-     * //todo look ate topN identifications?! best hit is not restrictive enough for high mass compounds
-     * //todo does not look at {@link CompoundQuality}
-     * @param candidateMap
-     * @return mapping from cluster representative to cluster
-     */
-    public static Map<String, String[]> clusterCompounds(Map<String, List<FragmentsCandidate>> candidateMap){
-        List<String> idList = new ArrayList<>(candidateMap.keySet());
-
-        Map<MolecularFormula, List<String>> bestMFToId = new HashMap<>();
-        for (String id : idList) {
-            final List<FragmentsCandidate> candidates = candidateMap.get(id);
-            if (candidates.size()==0) continue;
-            MolecularFormula mf = candidates.get(0).getFormula();
-            List<String> ids = bestMFToId.get(mf);
-            if (ids==null){
-                ids = new ArrayList<>();
-                bestMFToId.put(mf, ids);
-            } else {
-                //todo resolve
-                Ms2Experiment experiment1 = candidateMap.get(ids.get(0)).get(0).getExperiment();
-                Ms2Experiment experiment2 = candidates.get(0).getExperiment();
-                if (experiment1.hasAnnotation(RetentionTime.class) && experiment2.hasAnnotation(RetentionTime.class)){
-                    double time1 = experiment1.getAnnotation(RetentionTime.class).getRetentionTimeInSeconds();
-                    double time2 = experiment2.getAnnotation(RetentionTime.class).getRetentionTimeInSeconds();
-                    if (Math.abs(time1-time2)>20) LOG.warn("merged compounds retention time differs by "+(Math.abs(time1-time2)));
-                }
-            }
-
-            ids.add(id);
-        }
-
-        Map<String, String[]> idToCluster = new HashMap<>();
-        for (List<String> ids : bestMFToId.values()) {
-            double maxScore = Double.NEGATIVE_INFINITY;
-            String bestId = null;
-            for (String id : ids) {
-                double score = candidateMap.get(id).get(0).getScore();
-                if (score>maxScore){
-                    maxScore = score;
-                    bestId = id;
-                }
-            }
-            assert bestId!=null;
-
-            idToCluster.put(bestId, ids.toArray(new String[0]));
-        }
-        return idToCluster;
-    }
-
-
-    public static Map<String, List<FragmentsCandidate>> mergeCluster(Map<String, List<FragmentsCandidate>> candidateMap, Map<String, String[]> representativeToCluster){
-        Map<String, List<FragmentsCandidate>> candidateMapNew = new HashMap<>();
-
-        for (String repId : representativeToCluster.keySet()) {
-            String[] clusterIds = representativeToCluster.get(repId);
-            LibraryHit bestHit = null;
-            MolecularFormula correct = null;
-            for (String id : clusterIds) {
-                List<FragmentsCandidate> candidates = candidateMap.get(id);
-                if (candidates.get(0).hasLibraryHit()){
-                    for (FragmentsCandidate candidate : candidates) {
-                        if (candidate.isCorrect()){
-                            LibraryHit hit = candidate.getLibraryHit();
-                            if (bestHit==null){
-                                bestHit = hit;
-                                correct = candidate.getFormula();
-                            } else {
-                                if (hit.getCosine()>bestHit.getCosine()){
-                                    bestHit = hit;
-                                    correct = candidate.getFormula();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-
-
-            List<FragmentsCandidate> repCandidates = candidateMap.get(repId);
-            final FragmentsCandidate repC  = repCandidates.get(0);
-            if (correct!=null && (!repC.hasLibraryHit() || !repC.getLibraryHit().getQueryExperiment().equals(bestHit.getQueryExperiment()))){
-                //update with 'better' library hit
-                for (FragmentsCandidate candidate : repCandidates) {
-                    candidate.setLibraryHit(bestHit);
-                    candidate.setInTrainingSet(true);
-                    if (DummyFragmentCandidate.isDummy(candidate)) continue;
-                    if (candidate.getFormula().equals(correct)){
-                        candidate.setCorrect(true);
-                    }
-                }
-            }
-
-            candidateMapNew.put(repId, repCandidates);
-        }
-
-        return candidateMapNew;
-    }
 
     private int[] statisticsOfKnownCompounds(Scored<FragmentsCandidate>[] result, String ids[], Set<String> evaluationIDs, Map<String, MolecularFormula> correctHitsMap){
         List<String> correctIds = new ArrayList<>();
