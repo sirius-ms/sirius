@@ -192,6 +192,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             }
         }
 
+        private String lastErrorFeatureId = null;
         private MgfSpec readNext() throws IOException {
             String line;
             boolean reading=false;
@@ -203,6 +204,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         spec =  new MgfSpec(prototype);
                         reading=true;
                     } else if (reading && line.startsWith("END IONS")) {
+                        lastErrorFeatureId = null;
                         return spec;
                     } else if (reading) {
                         if (Character.isDigit(line.charAt(0))) {
@@ -222,6 +224,14 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     } else {
                         LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                     }
+
+                    //increase index for not-parsed compounds.
+                    boolean increasedIndex = false;
+                    if (spec.featureId!=null && !spec.featureId.equals(lastErrorFeatureId)){
+                        ++specIndex;
+                        increasedIndex = true;
+                        lastErrorFeatureId = spec.featureId;
+                    }
                     if (reading) {
                         while ((line=reader.readLine())!=null) {
                             if (line.startsWith("END IONS")) {
@@ -231,6 +241,14 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                                 reading = true;
                                 spec =  new MgfSpec(prototype);
                                 break;
+                            } else if (!increasedIndex && line.toUpperCase().startsWith("FEATURE_ID")) {
+                                final int i = line.indexOf('=');
+                                String id = line.substring(i+1).trim();
+                                if (id.length()>0 && !id.equals(lastErrorFeatureId)){
+                                    ++specIndex;
+                                    increasedIndex = true;
+                                    lastErrorFeatureId = id;
+                                }
                             }
                         }
                     }
