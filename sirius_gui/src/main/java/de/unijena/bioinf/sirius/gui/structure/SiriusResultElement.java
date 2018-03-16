@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.Compound;
 import de.unijena.bioinf.fingerid.FingerIdData;
@@ -134,5 +135,34 @@ public class SiriusResultElement extends AbstractEDTBean implements Comparable<S
             JobStateEvent e = (JobStateEvent) evt;
             setFingerIdComputeState(Jobs.getComputingState(e.getNewValue()));
         }
+    }
+
+    public double getExplainedIntensityRatio() {
+        final TreeScoring treeScoring = getResult().getRawTree().getAnnotationOrNull(TreeScoring.class);
+        if (treeScoring != null)
+            return treeScoring.getExplainedIntensity();
+        else
+            return Double.NaN;
+
+    }
+
+    public double getExplainedPeaksRatio() {
+        final TreeScoring treeScoring = getResult().getRawTree().getAnnotationOrNull(TreeScoring.class);
+        if (treeScoring != null)
+            return treeScoring.getRatioOfExplainedPeaks();
+        else
+            return Double.NaN;
+    }
+
+    public double getNumOfExplainedPeaks() {
+        final FTree tree = getResult().getRawTree();
+        if (tree != null)
+            return tree.numberOfVertices();
+        else
+            return Double.NaN;
+    }
+
+    public double getNumberOfExplainablePeaks() {
+        return  getNumOfExplainedPeaks() / getExplainedPeaksRatio();
     }
 }
