@@ -264,7 +264,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 }
 
             } else {
-                warn("Unknown option '>" + optionName + "'");
+                warn("Unknown option "+ "'>" + optionName + "'" + " in .ms file. Option will be ignored");
                 if (fields == null) fields = new HashMap<>();
                 fields.put(optionName, value);
             }
@@ -308,7 +308,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         }
 
         private void warn(String msg) {
-            LoggerFactory.getLogger(this.getClass()).error(lineNumber + ": " + msg);
+            LoggerFactory.getLogger(this.getClass()).warn(lineNumber + ": " + msg);
         }
 
         private void parseComment(String line) {
