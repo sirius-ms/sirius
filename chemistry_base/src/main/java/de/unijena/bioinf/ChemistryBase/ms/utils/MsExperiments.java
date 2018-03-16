@@ -102,7 +102,9 @@ public class MsExperiments {
         Peak defaultIon = null;
         for (Peak p : massBuffer) {
             possiblePrecursors.add(p);
-            if (bestDataIon != null && dev.inErrorWindow(p.getMass(), bestDataIon.getMass())) {
+            if (ionMass>0 && dev.inErrorWindow(p.getMass(), ionMass))
+                defaultIon = p;
+            else if (bestDataIon != null && dev.inErrorWindow(p.getMass(), bestDataIon.getMass())) {
                 defaultIon = p;
             }
             if (bestDataIon == null && (defaultIon == null || p.getMass() > defaultIon.getMass())) {
@@ -113,7 +115,7 @@ public class MsExperiments {
         if (defaultIon == null)
             defaultIon = bestDataIon;
 
-        possiblePrecursors.defaultPrecursor = defaultIon;
+        possiblePrecursors.defaultPrecursor = new Peak(ionMass, defaultIon!=null ? defaultIon.getIntensity() : 0d);
 
         return possiblePrecursors;
     }
