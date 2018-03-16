@@ -9,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.SpectralParser;
@@ -467,8 +468,20 @@ public class CombinedCLI extends ApplicationCore {
                             }
                             if (options.isDisableElementDetection()) {
                                 sirius.enableAutomaticElementDetection(experiment, false);
+
                             }
-                            Instance instance = new Instance(experiment, currentFile, ++index);
+
+                            Index expIndex = experiment.getAnnotation(Index.class);
+                            int currentIndex;
+                            if (instanceIdOffset==0 && expIndex!=null && expIndex.index>=0){
+                                //if no workspaces are merged and parser provides real index, use if
+                                currentIndex = expIndex.index;
+                            } else {
+                                //normal fallback
+                                currentIndex = ++index;
+                            }
+
+                            Instance instance = new Instance(experiment, currentFile, currentIndex);
                             instances.add(instance);
                             return experimentIterator;
                         }

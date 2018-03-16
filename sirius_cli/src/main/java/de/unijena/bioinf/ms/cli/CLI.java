@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
@@ -858,7 +859,17 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                             if (options.isDisableElementDetection()) {
                                 sirius.enableAutomaticElementDetection(experiment, false);
                             }
-                            instances.add(new Instance(experiment, currentFile, ++index));
+
+                            Index expIndex = experiment.getAnnotation(Index.class);
+                            int currentIndex;
+                            if (instanceIdOffset==0 && expIndex!=null && expIndex.index>=0){
+                                //if no workspaces are merged and parser provides real index, use if
+                                currentIndex = expIndex.index;
+                            } else {
+                                //normal fallback
+                                currentIndex = ++index;
+                            }
+                            instances.add(new Instance(experiment, currentFile, currentIndex));
                             return experimentIterator;
                         }
                     }
