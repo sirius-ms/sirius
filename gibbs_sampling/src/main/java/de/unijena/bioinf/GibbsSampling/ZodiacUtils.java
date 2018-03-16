@@ -1,13 +1,15 @@
 package de.unijena.bioinf.GibbsSampling;
 
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
+import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TCharSet;
 import gnu.trove.set.hash.TCharHashSet;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -109,7 +111,170 @@ public class ZodiacUtils {
         }
     }
 
+    /**
+     *
+     * cluster spectra based on same MF and retention time information?!
+     * //todo removes compounds with no candidate
+     * //todo possibly also use library hits?
+     * //todo look ate topN identifications?! best hit is not restrictive enough for high mass compounds
+     * //todo does not look at {@link CompoundQuality}
+     * @param candidateMap
+     * @return mapping from cluster representative to cluster
+     */
+    public static Map<String, String[]> clusterCompounds(Map<String, List<FragmentsCandidate>> candidateMap, Logger logger){
+        List<String> idList = new ArrayList<>(candidateMap.keySet());
+
+        Map<MolecularFormula, List<String>> bestMFToId = new HashMap<>();
+        for (String id : idList) {
+            final List<FragmentsCandidate> candidates = candidateMap.get(id);
+            if (candidates.size()==0) continue;
+            MolecularFormula mf = candidates.get(0).getFormula();
+            List<String> ids = bestMFToId.get(mf);
+            if (ids==null){
+                ids = new ArrayList<>();
+                bestMFToId.put(mf, ids);
+            } else {
+                //todo resolve
+                Ms2Experiment experiment1 = candidateMap.get(ids.get(0)).get(0).getExperiment();
+                Ms2Experiment experiment2 = candidates.get(0).getExperiment();
+                if (experiment1.hasAnnotation(RetentionTime.class) && experiment2.hasAnnotation(RetentionTime.class)){
+                    double time1 = experiment1.getAnnotation(RetentionTime.class).getRetentionTimeInSeconds();
+                    double time2 = experiment2.getAnnotation(RetentionTime.class).getRetentionTimeInSeconds();
+                    if (Math.abs(time1-time2)>20) logger.warn("merged compounds retention time differs by "+(Math.abs(time1-time2)));
+                }
+            }
+
+            ids.add(id);
+        }
+
+        Map<String, String[]> idToCluster = new HashMap<>();
+        for (List<String> ids : bestMFToId.values()) {
+            double maxScore = Double.NEGATIVE_INFINITY;
+            String bestId = null;
+            for (String id : ids) {
+                double score = candidateMap.get(id).get(0).getScore();
+                if (score>maxScore){
+                    maxScore = score;
+                    bestId = id;
+                }
+            }
+            assert bestId!=null;
+
+            idToCluster.put(bestId, ids.toArray(new String[0]));
+        }
+        return idToCluster;
+    }
+
+    public static Map<String, List<FragmentsCandidate>> mergeCluster(Map<String, List<FragmentsCandidate>> candidateMap, Map<String, String[]> representativeToCluster){
+        Map<String, List<FragmentsCandidate>> candidateMapNew = new HashMap<>();
+
+        for (String repId : representativeToCluster.keySet()) {
+            String[] clusterIds = representativeToCluster.get(repId);
+            LibraryHit bestHit = null;
+            MolecularFormula correct = null;
+            for (String id : clusterIds) {
+                List<FragmentsCandidate> candidates = candidateMap.get(id);
+                if (candidates.get(0).hasLibraryHit()){
+                    for (FragmentsCandidate candidate : candidates) {
+                        if (candidate.isCorrect()){
+                            LibraryHit hit = candidate.getLibraryHit();
+                            if (bestHit==null){
+                                bestHit = hit;
+                                correct = candidate.getFormula();
+                            } else {
+                                if (hit.getCosine()>bestHit.getCosine()){
+                                    bestHit = hit;
+                                    correct = candidate.getFormula();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+
+
+            List<FragmentsCandidate> repCandidates = candidateMap.get(repId);
+            final FragmentsCandidate repC  = repCandidates.get(0);
+            if (correct!=null && (!repC.hasLibraryHit() || !repC.getLibraryHit().getQueryExperiment().equals(bestHit.getQueryExperiment()))){
+                //update with 'better' library hit
+                for (FragmentsCandidate candidate : repCandidates) {
+                    candidate.setLibraryHit(bestHit);
+                    candidate.setInTrainingSet(true);
+                    if (DummyFragmentCandidate.isDummy(candidate)) continue;
+                    if (candidate.getFormula().equals(correct)){
+                        candidate.setCorrect(true);
+                    }
+                }
+            }
+
+            candidateMapNew.put(repId, repCandidates);
+        }
+
+        return candidateMapNew;
+    }
+
+    public static void addNotExplainableDummy(Map<String, List<FragmentsCandidate>> candidateMap, int maxCandidates, Logger logger){
+        List<String> idList = new ArrayList<>(candidateMap.keySet());
+
+        int missingCounter = 0;
+        for (String id : idList) {
+            List<FragmentsCandidate> candidates = candidateMap.get(id);
+            if (candidateMap.size()==0) continue;
+            Ms2Experiment experiment = candidates.get(0).getExperiment();
+
+            UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = candidates.get(0).getAnnotationOrNull(UnconsideredCandidatesUpperBound.class);
+
+            if (unconsideredCandidatesUpperBound ==null){
+                ++missingCounter;
+                continue;
+            }
+
+            double worstScore = unconsideredCandidatesUpperBound.getLowestConsideredCandidateScore();
+            int numberOfIgnored = unconsideredCandidatesUpperBound.getNumberOfUnconsideredCandidates();
+
+            if (candidates.size()>maxCandidates) {
+                numberOfIgnored += candidates.size()-maxCandidates;
+
+                candidates = candidates.subList(0,maxCandidates);
+                candidateMap.put(id, candidates);
+
+                worstScore = candidates.get(candidates.size()-1).getScore();
+            }
+
+            if (numberOfIgnored>0 && worstScore>0) {
+                FragmentsCandidate dummyCandidate = DummyFragmentCandidate.newDummy(worstScore, numberOfIgnored, experiment);
+                if (candidates.get(0).hasLibraryHit()) dummyCandidate.setLibraryHit(candidates.get(0).getLibraryHit());
+                candidates.add(dummyCandidate);
+            }
+
+        }
+
+        if (missingCounter>0){
+            logger.warn("Cannot create dummy nodes for "+missingCounter+" compounds. Information missing.");
+        }
+    }
+
+
     private final static String IDX_HEADER = "FEATURE_ID";
+    public static List<LibraryHit> parseLibraryHits(Path libraryHitsPath, List<ExperimentResult> experimentResults, Logger logger) throws IOException {
+        BufferedReader reader = Files.newBufferedReader(libraryHitsPath);
+        String line = reader.readLine();
+        reader.close();
+        if (line==null) {
+            throw new IOException("Spectral library hits file is empty.");
+        }
+        String[] header = line.split("\t");
+        if (arrayFind(header, IDX_HEADER)>=0){
+            logger.info("Parsing spectral library hits file. Use "+IDX_HEADER+" column to match library hits to compounds in the spectrum file.");
+            return parseLibraryHitsByFeatureId(libraryHitsPath, experimentResults, logger);
+        } else {
+            logger.info("Parsing spectral library hits file. Use #Scan# column to match library hits to compounds by position in the spectrum file.");
+            return parseLibraryHitsByPosition(libraryHitsPath, experimentResults, logger);
+        }
+    }
+
+    @Deprecated
     public static List<LibraryHit> parseLibraryHits(Path libraryHitsPath, Path mgfFile, Logger logger) throws IOException {
         BufferedReader reader = Files.newBufferedReader(libraryHitsPath);
         String line = reader.readLine();
@@ -127,6 +292,94 @@ public class ZodiacUtils {
         }
     }
 
+    private static List<LibraryHit> parseLibraryHitsByFeatureId(Path libraryHitsPath, List<ExperimentResult> experimentResults, Logger logger) throws IOException {
+        try {
+            final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
+            for (ExperimentResult experimentResult : experimentResults) {
+                //todo removed clean string
+                //                String name = cleanString(experiment.getName());
+//               todo  String name = cleanString(experimentResult.getExperimentName()); vs
+                String name = cleanString(experimentResult.getExperiment().getName());
+                if (experimentMap.containsKey(name)) throw new IOException("compound id duplicate: "+name+". Ids must be unambiguous to map library hits");
+                experimentMap.put(name, experimentResult.getExperiment());
+            }
+
+
+            List<String> lines = Files.readAllLines(libraryHitsPath, Charset.defaultCharset());
+            String[] header = lines.remove(0).split("\t");
+//        String[] ofInterest = new String[]{"Feature_id", "Formula", "Structure", "Adduct", "Cosine", "SharedPeaks", "Quality"};
+            String[] ofInterest = new String[]{IDX_HEADER, "INCHI", "Smiles", "Adduct", "MQScore", "SharedPeaks", "Quality"};
+            int[] indices = new int[ofInterest.length];
+            for (int i = 0; i < ofInterest.length; i++) {
+                int idx = arrayFind(header, ofInterest[i]);
+                if (idx<0){
+                    int[] more = arrayFindSimilar(header, ofInterest[i]);
+                    if (more.length!=1) throw new IOException("Cannot parse spectral library hits file. Column "+ofInterest[i]+" not found.");
+                    else idx = more[0];
+                }
+                indices[i] = idx;
+            }
+
+
+            List<LibraryHit> libraryHits = new ArrayList<>();
+            for (String line : lines) {
+                try {
+                    String[] cols = line.split("\t",-1);
+                    final String featureId = cols[indices[0]];
+
+                    final Ms2Experiment experiment = experimentMap.get(featureId);
+
+                    if (experiment==null){
+                        logger.warn("No compound in SIRIUS workspace found that corresponds to spectral library hit " +
+                                "(this also happens with multiple charged compounds which are not supported by Sirius). " +
+                                IDX_HEADER+" "+featureId);
+                        continue;
+                    }
+
+                    final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
+
+                    if (formula==null){
+                        logger.warn("Cannot parse molecular formula of library hit. "+IDX_HEADER+" "+featureId);
+                        continue;
+                    }
+
+                    if (cols[indices[3]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: adduct information missing. "+IDX_HEADER+" "+featureId);
+                        continue;
+                    }
+                    if (cols[indices[4]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: cosine score information missing. "+IDX_HEADER+" "+featureId);
+                        continue;
+                    }
+                    if (cols[indices[5]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: number of shared peaks missing. "+IDX_HEADER+" "+featureId);
+                        continue;
+                    }
+                    if (cols[indices[6]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: quality information missing. "+IDX_HEADER+" "+featureId);
+                        continue;
+                    }
+
+                    final String structure = (isInchi(cols[indices[1]]) ? cols[indices[1]] : cols[indices[2]]);
+                    final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(cols[indices[3]]);
+                    final double cosine = Double.parseDouble(cols[indices[4]]);
+                    final int sharedPeaks = parseIntegerOrThrow(cols[indices[5]]);
+                    final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
+                    LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
+                    libraryHits.add(libraryHit);
+                } catch (Exception e) {
+                    logger.error("Cannot parse library hit. Reason: "+ e.getMessage(),e);
+                }
+
+            }
+
+            return libraryHits;
+        } catch (Exception e){
+            throw new IOException("cannot parse library hits. Reason "+e.getMessage());
+        }
+    }
+
+    @Deprecated
     private static List<LibraryHit> parseLibraryHitsByFeatureId(Path libraryHitsPath, Path mgfFile, Logger logger) throws IOException {
         try {
             List<String> featureIDs = new ArrayList<>();
@@ -179,13 +432,13 @@ public class ZodiacUtils {
             List<LibraryHit> libraryHits = new ArrayList<>();
             for (String line : lines) {
                 try {
-                    String[] cols = line.split("\t");
+                    String[] cols = line.split("\t",-1);
                     final String featureId = cols[indices[0]];
 
                     final Ms2Experiment experiment = experimentMap.get(featureId);
 
                     if (experiment==null){
-                        logger.error("No corresponding compound to spectral library hit found " +
+                        logger.warn("No compound in SIRIUS workspace found that corresponds to spectral library hit " +
                                 "(this also happens with multiple charged compounds which are not supported by Sirius). " +
                                 IDX_HEADER+" "+featureId);
                         continue;
@@ -194,19 +447,36 @@ public class ZodiacUtils {
                     final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
 
                     if (formula==null){
-                        logger.warn("Cannot parse molecular formula of library hit "+IDX_HEADER+" "+featureId);
+                        logger.warn("Cannot parse molecular formula of library hit. "+IDX_HEADER+" "+featureId);
+                        continue;
+                    }
+
+                    if (cols[indices[3]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: adduct information missing. "+IDX_HEADER+" "+featureId);
+                        continue;
+                    }
+                    if (cols[indices[4]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: cosine score information missing. "+IDX_HEADER+" "+featureId);
+                        continue;
+                    }
+                    if (cols[indices[5]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: number of shared peaks missing. "+IDX_HEADER+" "+featureId);
+                        continue;
+                    }
+                    if (cols[indices[6]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: quality information missing. "+IDX_HEADER+" "+featureId);
                         continue;
                     }
 
                     final String structure = (isInchi(cols[indices[1]]) ? cols[indices[1]] : cols[indices[2]]);
                     final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(cols[indices[3]]);
                     final double cosine = Double.parseDouble(cols[indices[4]]);
-                    final int sharedPeaks = Integer.parseInt(cols[indices[5]]);
+                    final int sharedPeaks = parseIntegerOrThrow(cols[indices[5]]);
                     final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
                     LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
                     libraryHits.add(libraryHit);
                 } catch (Exception e) {
-                    logger.warn("Cannot parse library hit. Reason: "+ e.getMessage());
+                    logger.error("Cannot parse library hit. Reason: "+ e.getMessage(),e);
                 }
 
             }
@@ -217,6 +487,95 @@ public class ZodiacUtils {
         }
     }
 
+    private static List<LibraryHit> parseLibraryHitsByPosition(Path libraryHitsPath, List<ExperimentResult> experimentResults, Logger logger) throws IOException {
+        try {
+            TIntObjectHashMap<Ms2Experiment> indexToExperimentMap = new TIntObjectHashMap<>();
+            for (ExperimentResult experimentResult : experimentResults) {
+                Index index = experimentResult.getExperiment().getAnnotationOrThrow(Index.class);
+                if (indexToExperimentMap.containsKey(index.index)){
+                    throw new IllegalArgumentException("Compounds share same index and cannot be matched properly to spectral library hits.\n" +
+                            "Was the workspace manipulated?");
+                }
+                indexToExperimentMap.put(index.index, experimentResult.getExperiment());
+            }
+
+
+            List<String> lines = Files.readAllLines(libraryHitsPath, Charset.defaultCharset());
+            String[] header = lines.remove(0).split("\t");
+//        String[] ofInterest = new String[]{"Feature_id", "Formula", "Structure", "Adduct", "Cosine", "SharedPeaks", "Quality"};
+            String[] ofInterest = new String[]{"#Scan#", "INCHI", "Smiles", "Adduct", "MQScore", "SharedPeaks", "Quality"};
+            int[] indices = new int[ofInterest.length];
+            for (int i = 0; i < ofInterest.length; i++) {
+                int idx = arrayFind(header, ofInterest[i]);
+                if (idx<0){
+                    int[] more = arrayFindSimilar(header, ofInterest[i]);
+                    if (more.length!=1) throw new IOException("Cannot parse spectral library hits file. Column "+ofInterest[i]+" not found.");
+                    else idx = more[0];
+                }
+                indices[i] = idx;
+            }
+
+
+            List<LibraryHit> libraryHits = new ArrayList<>();
+            for (String line : lines) {
+                try {
+                    String[] cols = line.split("\t",-1);
+                    final int scanNumber = Integer.parseInt(cols[indices[0]]); //starting with 1!
+                    final Ms2Experiment experiment = indexToExperimentMap.get(scanNumber);
+//                    final String featureId =
+                    if (experiment==null){
+                        logger.warn("No compound in SIRIUS workspace found that corresponds to spectral library hit " +
+                                "(this also happens with multiple charged compounds which are not supported by Sirius). " +
+                                "#Scan# "+scanNumber);
+                        continue;
+                    }
+
+                    final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
+
+                    if (formula==null){
+                        logger.warn("Cannot parse molecular formula of library hit #SCAN# "+scanNumber);
+                        continue;
+                    }
+
+                    if (cols[indices[3]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: adduct information missing. #SCAN# "+scanNumber);
+                        continue;
+                    }
+                    if (cols[indices[4]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: cosine score information missing. #SCAN# "+scanNumber);
+                        continue;
+                    }
+                    if (cols[indices[5]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: number of shared peaks missing. #SCAN# "+scanNumber);
+                        continue;
+                    }
+                    if (cols[indices[6]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: quality information missing. #SCAN# "+scanNumber);
+                        continue;
+                    }
+
+                    final String structure = (isInchi(cols[indices[1]]) ? cols[indices[1]] : cols[indices[2]]);
+                    final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(cols[indices[3]]);
+                    final double cosine = Double.parseDouble(cols[indices[4]]);
+                    final int sharedPeaks = parseIntegerOrThrow(cols[indices[5]]);
+                    final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
+                    LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
+                    libraryHits.add(libraryHit);
+                } catch (Exception e) {
+                    logger.error("Cannot parse library hit. Reason: "+ e.getMessage(),e);
+                }
+
+            }
+
+            return libraryHits;
+        } catch (Exception e){
+            throw new IOException("cannot parse library hits. Reason "+e.getMessage());
+        }
+
+    }
+
+
+    @Deprecated
     private static List<LibraryHit> parseLibraryHitsByPosition(Path libraryHitsPath, Path mgfFile, Logger logger) throws IOException {
         try {
             List<String> featureIDs = new ArrayList<>();
@@ -272,14 +631,14 @@ public class ZodiacUtils {
             List<LibraryHit> libraryHits = new ArrayList<>();
             for (String line : lines) {
                 try {
-                    String[] cols = line.split("\t");
+                    String[] cols = line.split("\t",-1);
                     final int scanNumber = Integer.parseInt(cols[indices[0]]);
                     final String featureId = featureIDs.get(scanNumber-1); //starting with 1!
 
                     final Ms2Experiment experiment = experimentMap.get(featureId);
 
                     if (experiment==null){
-                        logger.error("No corresponding compound to spectral library hit found " +
+                        logger.warn("No compound in SIRIUS workspace found that corresponds to spectral library hit " +
                                 "(this also happens with multiple charged compounds which are not supported by Sirius). " +
                                 "#Scan# "+scanNumber);
                         continue;
@@ -292,15 +651,32 @@ public class ZodiacUtils {
                         continue;
                     }
 
+                    if (cols[indices[3]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: adduct information missing. #SCAN# "+scanNumber);
+                        continue;
+                    }
+                    if (cols[indices[4]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: cosine score information missing. #SCAN# "+scanNumber);
+                        continue;
+                    }
+                    if (cols[indices[5]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: number of shared peaks missing. #SCAN# "+scanNumber);
+                        continue;
+                    }
+                    if (cols[indices[6]].replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: quality information missing. #SCAN# "+scanNumber);
+                        continue;
+                    }
+
                     final String structure = (isInchi(cols[indices[1]]) ? cols[indices[1]] : cols[indices[2]]);
                     final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(cols[indices[3]]);
                     final double cosine = Double.parseDouble(cols[indices[4]]);
-                    final int sharedPeaks = Integer.parseInt(cols[indices[5]]);
+                    final int sharedPeaks = parseIntegerOrThrow(cols[indices[5]]);
                     final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
                     LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
                     libraryHits.add(libraryHit);
                 } catch (Exception e) {
-                    logger.warn("Cannot parse library hit. Reason: "+ e.getMessage());
+                    logger.error("Cannot parse library hit. Reason: "+ e.getMessage(),e);
                 }
 
             }
@@ -310,6 +686,13 @@ public class ZodiacUtils {
             throw new IOException("cannot parse library hits. Reason "+e.getMessage());
         }
 
+    }
+    
+    private static int parseIntegerOrThrow(String value) {
+        double d = Double.parseDouble(value);
+        int i = (int)Math.round(d);
+        if (Math.abs(d-i)>0.01) throw new NumberFormatException(value+" in not an integer value");
+        return i;
     }
 
     private static MolecularFormula getFormulaFromStructure(String inchi, String smiles){
