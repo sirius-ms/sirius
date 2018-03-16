@@ -145,6 +145,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                         }
                     }
                 } catch (RuntimeException e) {
+                    e.printStackTrace();
                     error(e.toString());
                 }
             }
@@ -257,6 +258,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
             } else {
                 warn("Unknown option '>" + optionName + "'");
+                if (fields == null) fields = new HashMap<>();
                 fields.put(optionName, value);
             }
             return false;
