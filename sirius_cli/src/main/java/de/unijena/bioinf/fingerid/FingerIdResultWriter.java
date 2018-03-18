@@ -6,6 +6,7 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.projectspace.DirectoryWriter;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
+import de.unijena.bioinf.sirius.projectspace.FilenameFormatter;
 import gnu.trove.map.hash.TIntFloatHashMap;
 
 import java.io.IOException;
@@ -21,8 +22,8 @@ public class FingerIdResultWriter extends DirectoryWriter {
     protected FingerprintVersion canopusVersion = null;
     protected FingerprintVersion csiVersion = null;
 
-    public FingerIdResultWriter(WritingEnvironment w) {
-        super(w, ApplicationCore.VERSION_STRING);
+    public FingerIdResultWriter(WritingEnvironment w, FilenameFormatter filenameFormatter) {
+        super(w, ApplicationCore.VERSION_STRING, filenameFormatter);
     }
 
     @Override
