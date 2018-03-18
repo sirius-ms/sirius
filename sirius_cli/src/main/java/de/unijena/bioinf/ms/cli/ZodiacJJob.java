@@ -19,8 +19,9 @@ public class ZodiacJJob extends BasicMasterJJob<ZodiacResultsWithClusters> {
     private int burnInSteps;
     private int separateRuns;
     private ZodiacResultsWithClusters zodiacResult;
+    private boolean clusterCompounds;
 
-    public ZodiacJJob(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, int iterationSteps, int burnInSteps, int separateRuns) {
+    public ZodiacJJob(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, int iterationSteps, int burnInSteps, int separateRuns, boolean clusterCompounds) {
         super(JobType.CPU);
         this.experimentResults = experimentResults;
         this.anchors = anchors;
@@ -31,11 +32,12 @@ public class ZodiacJJob extends BasicMasterJJob<ZodiacResultsWithClusters> {
         this.iterationSteps = iterationSteps;
         this.burnInSteps = burnInSteps;
         this.separateRuns = separateRuns;
+        this.clusterCompounds = clusterCompounds;
     }
 
     @Override
     protected ZodiacResultsWithClusters compute() throws Exception {
-        Zodiac zodiac = new Zodiac(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, this);
+        Zodiac zodiac = new Zodiac(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, clusterCompounds,this);
         zodiacResult = zodiac.compute(iterationSteps, burnInSteps, separateRuns);
         return zodiacResult;
     }
