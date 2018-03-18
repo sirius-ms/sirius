@@ -6,15 +6,19 @@ import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import java.awt.*;
 import java.util.ArrayDeque;
 
+import static java.lang.Double.max;
+import static java.lang.Double.min;
+import static java.lang.StrictMath.abs;
+
 public abstract class NodeColorManager{
 
-	private double p0, p1, p2;
-	private double posM, negM;
+	protected double halfRange;
+	protected double posM, negM;
 	private boolean switchBlueAndRed = false;
 
-    private double minValue;
-    private double maxValue;
-    private double range;
+    protected double minValue;
+	protected double maxValue;
+	protected double range;
 
 	public NodeColorManager() {
 
@@ -27,20 +31,18 @@ public abstract class NodeColorManager{
 		ArrayDeque<TreeNode> nodeStorage = new ArrayDeque<>();
 		nodeStorage.addFirst(root);
 
-		while(!nodeStorage.isEmpty()){
-			TreeNode node = nodeStorage.removeLast();
-			if(getValue(node)<minValue) minValue = getValue(node);
-			if(getValue(node)>maxValue) maxValue = getValue(node);
-			if(node.getOutEdgeNumber()>0){
-				for(TreeEdge edge : node.getOutEdges()) nodeStorage.addFirst(edge.getTarget());
-			}
-		}
+		while(!nodeStorage.isEmpty()) {
+            TreeNode node = nodeStorage.removeLast();
+            if (getValue(node) < minValue) minValue = getValue(node);
+            if (getValue(node) > maxValue) maxValue = getValue(node);
+            if (node.getOutEdgeNumber() > 0) {
+                for (TreeEdge edge : node.getOutEdges()) nodeStorage.addFirst(edge.getTarget());
+            }
+        }
 
-		range = maxValue - minValue;
+		range = abs(maxValue - minValue);
 
-		p0 = 0;
-		p1 = range / 2;
-		p2 = range;
+		halfRange = range / 2;
 
 		posM = 2 / range;
 		negM = -posM;
@@ -48,7 +50,7 @@ public abstract class NodeColorManager{
 	}
 
 	private double getRedValue(double value) {
-		if (value <= p1) {
+		if (value <= halfRange) {
 			return 1;
 		} else {
 			return negM * value + 2;
@@ -56,9 +58,9 @@ public abstract class NodeColorManager{
 	}
 
 	private double getGreenValue(double value) {
-		if (value < p1) {
+		if (value < halfRange) {
 			return posM * value;
-		} else if (value == p1) {
+		} else if (value == halfRange) {
 			return 1;
 		} else {
 			return negM * value + 2;
@@ -66,7 +68,7 @@ public abstract class NodeColorManager{
 	}
 
 	private double getBlueValue(double value) {
-		if (value <= p1) {
+		if (value <= halfRange) {
 			return posM * value;
 		} else {
 			return 1;
@@ -74,13 +76,17 @@ public abstract class NodeColorManager{
 	}
 
 	public Color getColor(double value) {
+
 		value = value - minValue;
+		value = min(value, range);
+		value = max(value, 0d);
+
 		double rTemp = getRedValue(value);
 		double gTemp = getGreenValue(value);
 		double bTemp = getBlueValue(value);
 
 		if (rTemp > 1 || rTemp < 0 || gTemp > 1 || gTemp < 0 || bTemp > 1 || bTemp < 0)
-			throw new RuntimeException("v " + value + " p0 " + p0 + " p1 " + p1 + " p2 " + p2 + " rT " + rTemp + " gT " + gTemp + " bT " + bTemp);
+			throw new RuntimeException("v " + value + " p0 " + 0 + " halfRange " + halfRange + " p2 " + range + " rT " + rTemp + " gT " + gTemp + " bT " + bTemp);
 
 		double maxValue = 255;
 		double minValue = 175;
