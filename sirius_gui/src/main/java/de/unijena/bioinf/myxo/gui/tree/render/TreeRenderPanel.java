@@ -595,11 +595,6 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         String peakIntensity = massFormat.format(node.getPeakRelativeIntensity() * 100) + " %";
         String massDeviation = massFormat.format(node.getDeviationMass()) + " ppm";
 
-        buildSmallImage(node, mf, mass, peakIntensity, massDeviation);
-    }
-
-    protected void buildSmallImage(TreeNode node, String mf, String mass, String peakIntensity, String massDeviation) {
-
         int formulaLength = smallFormulaFM.stringWidth(mf);
         int massLength = smallValueFM.stringWidth(mass);
         int peakIntensityLength = smallValueFM.stringWidth(peakIntensity);
