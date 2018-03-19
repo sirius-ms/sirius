@@ -13,15 +13,14 @@ public class CandidateTableFormat extends SiriusTableFormat<CompoundCandidate> {
 
     protected static String[] columns = new String[]{
             "Rank",
-            "Molecular Formula",
-//            "Formula Score",
-            "Adduct",
-            "Similarity",
             "Name",
+            "SMILES",
+            "Molecular Formula",
+            "Adduct",
             "CSI:FingerID Score",
+            "Similarity",
             "XLogP",
             "InChIKey",
-            "SMILES",
             "Best"
     };
 
@@ -46,14 +45,14 @@ public class CandidateTableFormat extends SiriusTableFormat<CompoundCandidate> {
     public Object getColumnValue(CompoundCandidate result, int column) {
         int col = 0;
         if (column == col++) return result.rank;
+        if (column == col++) return result.compound.name != null ? result.compound.name : "";
+        if (column == col++) return result.compound.getSmiles();
         if (column == col++) return result.getMolecularFormula();
         if (column == col++) return result.adduct;
-        if (column == col++) return result.getTanimotoScore();
-        if (column == col++) return result.compound.name != null ? result.compound.name : "";
         if (column == col++) return result.getScore();
+        if (column == col++) return result.getTanimotoScore();
         if (column == col++) return result.compound.xlogP;
         if (column == col++) return result.compound.inchi.key;
-        if (column == col++) return result.compound.getSmiles();
         if (column == col) return isBest(result);
 
         throw new IllegalStateException();

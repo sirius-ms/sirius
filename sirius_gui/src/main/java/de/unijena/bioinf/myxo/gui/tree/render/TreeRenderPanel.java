@@ -212,7 +212,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
         switch (this.nodeColor) {
             case rwbIntensity:
-                this.nodeColorManager = new RWBRelativeIntensityNodeColorManager(root);
+                this.nodeColorManager = new RelativeIntensityNodeColorManager();
                 break;
             case rwbMassDeviation:
                 this.nodeColorManager = new MassDeviationColorManager(root);
@@ -594,11 +594,6 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         String mass = massFormat.format(node.getPeakMass()) + " Da";
         String peakIntensity = massFormat.format(node.getPeakRelativeIntensity() * 100) + " %";
         String massDeviation = massFormat.format(node.getDeviationMass()) + " ppm";
-
-        buildSmallImage(node, mf, mass, peakIntensity, massDeviation);
-    }
-
-    protected void buildSmallImage(TreeNode node, String mf, String mass, String peakIntensity, String massDeviation) {
 
         int formulaLength = smallFormulaFM.stringWidth(mf);
         int massLength = smallValueFM.stringWidth(mass);
