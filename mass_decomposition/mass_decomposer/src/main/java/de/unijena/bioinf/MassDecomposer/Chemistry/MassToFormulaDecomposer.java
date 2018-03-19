@@ -134,9 +134,11 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
         return formulas;
     }
     public List<MolecularFormula> decomposeToFormulas(double mass, double massTolerance, Map<Element, Interval> boundaries, final FormulaFilter filter) {
+        if (mass < 0d)
+            throw new IllegalArgumentException("Expect positive mass for decomposition: " + mass);
         final Map<Element, Interval> boundaryMap;
         boundaryMap = boundaries;
-        final List<int[]> decompositions = super.decompose(mass-massTolerance, mass+massTolerance, boundaryMap);
+        final List<int[]> decompositions = super.decompose(Math.max(0,mass-massTolerance), mass+massTolerance, boundaryMap);
         final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(decompositions.size());
         for (int[] ary : decompositions) {
             final MolecularFormula formula = alphabet.decompositionToFormula(ary);
