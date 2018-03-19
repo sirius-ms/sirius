@@ -24,31 +24,6 @@ public abstract class NodeColorManager{
 
 	}
 
-	public NodeColorManager(TreeNode root) {
-		minValue = Double.POSITIVE_INFINITY;
-		maxValue = Double.NEGATIVE_INFINITY;
-
-		ArrayDeque<TreeNode> nodeStorage = new ArrayDeque<>();
-		nodeStorage.addFirst(root);
-
-		while(!nodeStorage.isEmpty()) {
-            TreeNode node = nodeStorage.removeLast();
-            if (getValue(node) < minValue) minValue = getValue(node);
-            if (getValue(node) > maxValue) maxValue = getValue(node);
-            if (node.getOutEdgeNumber() > 0) {
-                for (TreeEdge edge : node.getOutEdges()) nodeStorage.addFirst(edge.getTarget());
-            }
-        }
-
-		range = abs(maxValue - minValue);
-
-		halfRange = range / 2;
-
-		posM = 2 / range;
-		negM = -posM;
-
-	}
-
 	private double getRedValue(double value) {
 		if (value <= halfRange) {
 			return 1;
