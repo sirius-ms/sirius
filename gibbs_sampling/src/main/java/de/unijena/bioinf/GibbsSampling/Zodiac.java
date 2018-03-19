@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
 import de.unijena.bioinf.ChemistryBase.ms.ft.ZodiacScore;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.jjobs.MasterJJob;
@@ -60,6 +61,14 @@ public class Zodiac {
 
     public ZodiacResultsWithClusters compute(int iterationSteps, int burnIn, int repetitions) throws ExecutionException {
         init();
+        if (ids.length==0){
+            Log.error("Cannot run ZODIAC. No/empty SIRIUS input provided.");
+            return null;
+        } else if (ids.length==1){
+            Log.error("Don't run ZODIAC. Only a single compound in SIRIUS input.");
+            return createOneCompoundOutput();
+        }
+
 
         TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, repetitions);
         twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnIn);
@@ -77,6 +86,46 @@ public class Zodiac {
         else zodiacResult = new ZodiacResultsWithClusters(ids, zodiacResult.getGraph(), zodiacResult.getResults(), getSelfMapping(ids));
 
         return (ZodiacResultsWithClusters)zodiacResult;
+    }
+
+    private ZodiacResultsWithClusters createOneCompoundOutput(){
+        if (ids.length!=1) throw new NoSuchMethodError("This method must only be used to output results of a single compound");
+
+        Graph<FragmentsCandidate> graph = GraphBuilder.createGraph(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, null);
+
+
+        Scored<FragmentsCandidate>[] possibleFormulasArray = graph.getPossibleFormulas(0);
+        double[] scores = new double[possibleFormulasArray.length];
+        double sum = 0;
+        double maxLog = Double.NEGATIVE_INFINITY;
+        for (int j = 0; j < possibleFormulasArray.length; j++) {
+            double score = possibleFormulasArray[j].getScore();
+            if (score>maxLog) maxLog = score;
+        }
+
+        for (int j = 0; j < possibleFormulasArray.length; j++) {
+            final double score = Math.exp(possibleFormulasArray[j].getScore()-maxLog);
+            scores[j] = score;
+            sum += score;
+        }
+
+        for (int j = 0; j < scores.length; j++) {
+            scores[j] = scores[j]/sum;
+        }
+
+
+        Scored<FragmentsCandidate>[] results = new Scored[possibleFormulasArray.length];
+        for (int i = 0; i < results.length; i++) {
+            FragmentsCandidate result = possibleFormulasArray[i].getCandidate();
+            results[i] = new Scored<>(result, scores[i]);
+        }
+        
+        
+        
+        CompoundResult<FragmentsCandidate> compoundResult = new CompoundResult<>(ids[0], results);
+        compoundResult.addAnnotation(Connectivity.class, new Connectivity(0));
+
+        return new ZodiacResultsWithClusters(ids, graph, new CompoundResult[]{compoundResult}, getSelfMapping(ids));
     }
 
     private Map<String, String[]> getSelfMapping(String[] strings){
