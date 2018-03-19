@@ -1335,7 +1335,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 pp.set(f, input.getMergedPeaks().get(f.getColor()));
             }
         }
-        for (Fragment f : tree.getFragmentsWithoutRoot()) treeIntensity += pp.get(f).getRelativeIntensity();
+        for (Fragment f : tree.getFragmentsWithoutRoot()) {
+            // just for the case that spectrum parent != tree root (e.g. in-source fragments)
+            if (pp.get(f)!=input.getParentPeak())
+                treeIntensity += pp.get(f).getRelativeIntensity();
+        }
         final PeakAnnotation<DecompositionList> decomp = input.getPeakAnnotationOrThrow(DecompositionList.class);
         final MolecularFormula parent = tree.getRoot().getFormula();
         eachPeak:
