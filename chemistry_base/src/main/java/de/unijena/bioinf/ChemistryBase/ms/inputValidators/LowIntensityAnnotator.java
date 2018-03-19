@@ -46,7 +46,7 @@ public class LowIntensityAnnotator implements QualityAnnotator{
      */
     public void annotate(Ms2Experiment experiment) {
         //too low MS1 peak intensity
-        double maxMs1Intensity = statistics.getMaxMs1Intensity();
+//        double maxMs1Intensity = statistics.getMaxMs1Intensity();
 //        if (CompoundQuality.hasProperty(experiment, SpectrumProperty.NoMS1Peak)) return;
 
         boolean isLowIntensity = true;
