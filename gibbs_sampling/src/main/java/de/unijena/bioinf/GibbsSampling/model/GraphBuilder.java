@@ -20,7 +20,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
 public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<C>> implements JobProgressEventListener{
-    protected static final boolean THIN_OUT_GRAPH = false;//never helped. is slow.
+    protected static final boolean THIN_OUT_GRAPH = false;//never improved somthing. is slow.
 
     Graph<C> graph;
     EdgeScorer<C>[] edgeScorers;
@@ -50,6 +50,11 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
     }
 
     public static <C extends Candidate<?>> GraphBuilder<C> createGraphBuilder(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds){
+        Graph<C> graph = createGraph(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, fixedCompounds);
+        return new GraphBuilder<C>(graph, edgeScorers, edgeFilter);
+    }
+
+    public static <C extends Candidate<?>> Graph<C> createGraph(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds){
         for (NodeScorer<C> nodeScorer : nodeScorers) {
             for (int i = 0; i < possibleFormulas.length; i++) {
                 if (isFixed(fixedCompounds, i)) continue;
@@ -78,8 +83,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
         String[] filteredIds = newIds.toArray(new String[0]);
         Scored<C>[][] scoredPossibleFormulas = newFormulas.toArray(new Scored[0][]);
-
-        return new GraphBuilder<C>(filteredIds, scoredPossibleFormulas, edgeScorers, edgeFilter);
+        return Graph.getGraph(filteredIds, scoredPossibleFormulas);
     }
 
     private static boolean isFixed(TIntHashSet fixedCompounds, int i) {
