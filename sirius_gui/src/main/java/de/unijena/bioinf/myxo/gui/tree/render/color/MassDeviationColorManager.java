@@ -8,7 +8,16 @@ import static java.lang.StrictMath.min;
 public class MassDeviationColorManager extends NodeColorManager {
 
 	public MassDeviationColorManager(TreeNode root) {
-		super(root);
+	    minValue = 0;
+        maxValue = 10;
+
+        range = maxValue - minValue;
+
+        halfRange = range / 2;
+
+        posM = 2 / range;
+        negM = -posM;
+
 		setSwitchBlueAndRed(true);
 	}
 
