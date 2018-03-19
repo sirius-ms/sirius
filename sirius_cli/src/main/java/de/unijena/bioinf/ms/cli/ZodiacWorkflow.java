@@ -66,6 +66,7 @@ public class ZodiacWorkflow implements Workflow<ExperimentResult> {
 
         try {
             ZodiacResultsWithClusters zodiacResults = SiriusJobs.getGlobalJobManager().submitJob(zodiacJJob).awaitResult();
+            if (zodiacResults==null) return; //no results. likely, empty input
             zodiacIP.writeResults(allExperimentResults, zodiacResults);
         } catch (ExecutionException e) {
             LOG.error("An error occurred while running ZODIAC.", e);

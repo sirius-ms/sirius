@@ -173,8 +173,9 @@ public class Zodiac {
 
 
             ZodiacResultsWithClusters zodiacResult = zodiac.compute(options.getIterationSteps(), options.getBurnInSteps(), options.getSeparateRuns());
-            CompoundResult<FragmentsCandidate>[] result = zodiacResult.getResults();
+            if (zodiacResult==null) return; //no results. likely, empty input
 
+            CompoundResult<FragmentsCandidate>[] result = zodiacResult.getResults();
             String[] ids = zodiacResult.getIds();
 
 
