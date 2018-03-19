@@ -7,7 +7,6 @@ package de.unijena.bioinf.sirius.gui.table;
  */
 
 import de.unijena.bioinf.sirius.gui.configs.Colors;
-import de.unijena.bioinf.sirius.gui.table.list_stats.ListStats;
 import org.jdesktop.beans.AbstractBean;
 
 import javax.swing.*;
@@ -20,7 +19,8 @@ import java.text.NumberFormat;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusResultTableCellRenderer<E extends AbstractBean, F extends SiriusTableFormat<E>> extends DefaultTableCellRenderer {
-    public final static NumberFormat NF = new DecimalFormat("#0.00");
+    //    public final static NumberFormat NF = new DecimalFormat("#0.00");
+    protected NumberFormat nf = new DecimalFormat("#0.00");
 
 
     protected Color foreColor = Colors.LIST_ACTIVATED_FOREGROUND;
@@ -30,7 +30,13 @@ public class SiriusResultTableCellRenderer<E extends AbstractBean, F extends Sir
 
 
     public SiriusResultTableCellRenderer(int highlightColumn) {
+        this(highlightColumn,null);
+    }
+
+    public SiriusResultTableCellRenderer(int highlightColumn, NumberFormat lableFormat) {
         this.highlightColumn = highlightColumn;
+        if (lableFormat != null)
+            this.nf = lableFormat;
     }
 
     /*public SiriusResultTableCellRenderer(ListStats stats) {
@@ -43,33 +49,33 @@ public class SiriusResultTableCellRenderer<E extends AbstractBean, F extends Sir
 
         final boolean best = highlightColumn >= 0 && ((boolean) table.getModel().getValueAt(row, highlightColumn));
 
-            if (isSelected) {
-                if (best) {
-                    backColor = Colors.LIST_SELECTED_GREEN;
-                } else {
-                    backColor = Colors.LIST_SELECTED_BACKGROUND;
-                }
-                foreColor = Colors.LIST_SELECTED_FOREGROUND;
+        if (isSelected) {
+            if (best) {
+                backColor = Colors.LIST_SELECTED_GREEN;
             } else {
-                if (best) {
-                    backColor = Colors.LIST_LIGHT_GREEN;
-                } else {
-                    if (row % 2 == 0) backColor = Colors.LIST_EVEN_BACKGROUND;
-                    else backColor = Colors.LIST_UNEVEN_BACKGROUND;
-                }
-                foreColor = Colors.LIST_ACTIVATED_FOREGROUND;
-
+                backColor = Colors.LIST_SELECTED_BACKGROUND;
             }
+            foreColor = Colors.LIST_SELECTED_FOREGROUND;
+        } else {
+            if (best) {
+                backColor = Colors.LIST_LIGHT_GREEN;
+            } else {
+                if (row % 2 == 0) backColor = Colors.LIST_EVEN_BACKGROUND;
+                else backColor = Colors.LIST_UNEVEN_BACKGROUND;
+            }
+            foreColor = Colors.LIST_ACTIVATED_FOREGROUND;
+
+        }
 
         setBackground(backColor);
         setForeground(foreColor);
 
-        this.value =  value == null ? "" : value.toString();
+        this.value = value == null ? "" : value.toString();
         setHorizontalAlignment(SwingConstants.LEFT);
 
         if (value instanceof Number) {
             if (value instanceof Double)
-                this.value = NF.format(value);
+                this.value = nf.format(value);
             setHorizontalAlignment(SwingConstants.RIGHT);
         }
 

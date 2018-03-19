@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.table;
 
 import javax.swing.*;
+import java.text.NumberFormat;
 
 /**
  * Created by fleisch on 24.05.17.
@@ -18,7 +19,11 @@ public class BarTableCellRenderer extends AbstractBarTableCellRenderer {
     }
 
     public BarTableCellRenderer(int highlightColumn, boolean percentage) {
-        super(highlightColumn, percentage);
+        this(highlightColumn, percentage, false,null);
+    }
+
+    public BarTableCellRenderer(int highlightColumn, boolean percentage, boolean printValue, NumberFormat lableFormat) {
+        super(highlightColumn, percentage, printValue, lableFormat);
     }
 
     public BarTableCellRenderer() {

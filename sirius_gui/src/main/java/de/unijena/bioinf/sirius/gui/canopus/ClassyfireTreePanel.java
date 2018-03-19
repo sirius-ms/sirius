@@ -114,10 +114,10 @@ public class ClassyfireTreePanel extends TreeRenderPanel {
 
     private void showTree(ProbabilityFingerprint canopusFingerprint) {
         if (canopusFingerprint==null) {
-            super.showTree(null, NodeType.preview, NodeColor.rgScore);
+            super.showTree(null, NodeType.preview, NodeColor.none);
         } else {
             final ClassyfireNode n = buildTreeFromClassifications(mask, canopusFingerprint, 0.33d);
-            showTree(n, NodeType.preview, NodeColor.rgScore);
+            showTree(n, NodeType.preview, NodeColor.none);
         }
     }
 
@@ -163,7 +163,7 @@ public class ClassyfireTreePanel extends TreeRenderPanel {
         int hh = formulaFont.getSize()+2;
         BufferedImage image = new BufferedImage(horSize, hh, BufferedImage.TYPE_INT_RGB);
 
-        if (previewNodesWidth < horSize) previewNodesWidth = horSize;
+        nodesWidth = horSize;
 
         Graphics2D g2 = (Graphics2D) image.getGraphics();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -178,7 +178,7 @@ public class ClassyfireTreePanel extends TreeRenderPanel {
 
         g2.setFont(formulaFont);
         g2.drawString(mf, (horSize - formulaLength) / 2, 12);
-        previewNodes.put(node, image);
+        nodes.put(node, image);
 
     }
 

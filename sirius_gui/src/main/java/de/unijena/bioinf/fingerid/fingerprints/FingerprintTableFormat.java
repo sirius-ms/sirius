@@ -15,7 +15,7 @@ public class FingerprintTableFormat implements TableFormat<MolecularPropertyTabl
     protected NumberFormat decimalFormat = DecimalFormat.getPercentInstance(Locale.US);
     protected FingerprintTable table;
     protected static String[] columns = new String[]{
-            "Index", "Type", "Description", "#Atoms", "F1-score", "Posterior Probability"
+            "Index", "SMARTS", "Posterior Probability", "#Atoms", "Type", "Positive training examples", "Predictor quality (F1)"
     };
 
     public FingerprintTableFormat(FingerprintTable table) {
@@ -36,11 +36,12 @@ public class FingerprintTableFormat implements TableFormat<MolecularPropertyTabl
     public Object getColumnValue(MolecularPropertyTableEntry m, int column) {
         switch (column) {
             case 0: return m.absoluteIndex;
-            case 1: return m.getFingerprintTypeName();
-            case 2: return m.getMolecularProperty().getDescription();
+            case 1: return m.getMolecularProperty().getDescription();
+            case 2: return m.getProbability();
             case 3: return m.getMatchSizeDescription();
-            case 4: return m.getFScore();
-            case 5: return m.getProbability();
+            case 4: return m.getFingerprintTypeName();
+            case 5: return m.numberOfTrainingExamples;
+            case 6: return m.getFScore();
             default:return null;
         }
     }

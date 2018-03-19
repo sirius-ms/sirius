@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.msviewer;
 
+import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.msviewer.data.MSViewerDataModel;
 import de.unijena.bioinf.sirius.gui.msviewer.data.MSViewerDataModelListener;
 import org.slf4j.Logger;
@@ -197,10 +198,10 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 		outerBlue = new Color(80,136,220);     //infoBox aeussere Farbe
 
 		plusZeroPeak = new Color(9,27,195);   //Farbe monoiso.Peak
-		isotopePeak = new Color(86,174,108);    //Farbe Isotopenpeak
+		isotopePeak = Colors.ICON_BLUE;//new Color(86,174,108);    //Farbe Isotopenpeak
 
 //		otherPeak = new Color(175,184,226);    //Farbe fuer unwichtige Peaks
-		importantPeak = new Color(240,59,32	);           //Peak der hervorgehoben werden soll
+		importantPeak = Colors.ICON_GREEN; //new Color(240,59,32	);           //Peak der hervorgehoben werden soll
 //		importantPeak = new Color(168,0,255);
 		markedPeak = new Color(254,178,76);       //Peak wurde mit der Maus markiert
 		unimportantPeak = new Color(175,184,226); //Peak soll mehr oder weniger ausgeblendet werden
