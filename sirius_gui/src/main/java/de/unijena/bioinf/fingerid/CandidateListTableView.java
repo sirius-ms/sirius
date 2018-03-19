@@ -19,11 +19,9 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
     private final ActionTable<CompoundCandidate> table;
     private SortedList<CompoundCandidate> sortedSource;
 
-
     public CandidateListTableView(final CandidateList list) {
         super(list);
 
-//        final DefaultEventSelectionModel<CompoundCandidate> model = new DefaultEventSelectionModel<>(sortedSource);
 
         final CandidateTableFormat tf = new CandidateTableFormat(source.scoreStats);
         this.table = new ActionTable<>(filteredSource, sortedSource, tf);
@@ -31,43 +29,9 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
         table.setSelectionModel(filteredSelectionModel);
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tf.highlightColumnIndex()));
 
-        table.getColumnModel().getColumn(3).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f,1f,true));
-//        table.getColumnModel().getColumn(3).setCellRenderer(new AbstractBarTableCellRenderer(false, false, source.isotopeScoreStats));
-//        table.getColumnModel().getColumn(4).setCellRenderer(new AbstractBarTableCellRenderer(false, false, source.treeScoreStats));
+        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer(tf.highlightColumnIndex(), source.scoreStats, false, false, null));
+        table.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
 
-        /*table.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    // Double-click detected
-                    int index = table.rowAtPoint(e.getPoint());
-                    table.setRowSelectionInterval(index, index);
-                    SiriusActions.COMPUTE_CSI_LOCAL.getInstance().actionPerformed(new ActionEvent(table, 112, SiriusActions.COMPUTE_CSI_LOCAL.name()));
-                }
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-
-            }
-        });*/
-
-        // todo decoration
 
         this.add(
                 new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
@@ -85,6 +49,6 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
 
     @Override
     public void resultsChanged(ExperimentContainer experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selections) {
-        //todo do something
+        //not used
     }
 }

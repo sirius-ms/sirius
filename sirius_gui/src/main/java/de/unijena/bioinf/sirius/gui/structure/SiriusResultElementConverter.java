@@ -5,11 +5,14 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeNode;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,16 +38,17 @@ public class SiriusResultElementConverter {
         FragmentAnnotation<Peak> peakAno = ft.getOrCreateFragmentAnnotation(Peak.class);
         LossAnnotation<Score> lscore = ft.getOrCreateLossAnnotation(Score.class);
         FragmentAnnotation<Score> fscore = ft.getOrCreateFragmentAnnotation(Score.class);
+        ProcessedInput processedInput = ft.getAnnotationOrNull(ProcessedInput.class);
         ArrayList<Double> massDeviations = new ArrayList<Double>() ;
 
         Fragment rootK = ft.getRoot();
         TreeNode rootM = new DefaultTreeNode();
         double maxIntensity = Double.NEGATIVE_INFINITY;
 
-        for (Fragment fragment : ft.getFragments()) {
-            if (peakAno.get(fragment) == null) continue;
-            double fragIntensity = peakAno.get(fragment).getIntensity();
-            if (fragIntensity > maxIntensity) maxIntensity = fragIntensity;
+        for (ProcessedPeak peak : processedInput.getMergedPeaks()) {
+            if (peak == null) continue;
+            double peakIntensity = peak.getIntensity();
+            if (peakIntensity > maxIntensity) maxIntensity = peakIntensity;
         }
 
         rootM.setMolecularFormula(rootK.getFormula().toString());
