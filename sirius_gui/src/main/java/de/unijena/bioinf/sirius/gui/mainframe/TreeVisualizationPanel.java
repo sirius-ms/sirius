@@ -38,7 +38,6 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
     }
 
     private JScrollPane pane;
-    private JComboBox<NodeType> nodeType;
     private JComboBox<NodeColor> colorType;
     private TreeRenderPanel renderPanel;
     private ScoreVisualizationPanel svp;
@@ -47,15 +46,6 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
 
 
     private SiriusResultElement sre;
-
-
-    private static final NodeType[] NODE_TYPES = {NodeType.small, NodeType.big, NodeType.score};
-
-//	private static final String[] COLOR_TYPES = {"RGB Score", "RGB Intensity", "RBG Score", "RBG Intensity", "RG Score", "RG Intensity", "BGR Score", "BGR Intensity", "none"};
-
-    private static final NodeColor[] COLOR_TYPES = {NodeColor.rgbScore, NodeColor.rgbIntensity, NodeColor.rgScore, NodeColor.rgIntensity,
-            NodeColor.rwbScore, NodeColor.rwbIntensity, NodeColor.none};
-
 
     public TreeVisualizationPanel() {
         this.sre = null;
@@ -66,15 +56,9 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
         northPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
         northPanel.setFloatable(false);
 
-        nodeType = new JComboBox<>(NODE_TYPES);
-        nodeType.addActionListener(this);
-        JLabel l = new JLabel("Nodes");
-        l.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-        northPanel.add(l);
-        northPanel.add(nodeType);
-        colorType = new JComboBox<>(COLOR_TYPES);
+        colorType = new JComboBox<>(NodeColor.values());
         colorType.addActionListener(this);
-        l = new JLabel("Colors");
+        JLabel l = new JLabel("Colors");
         l.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
         northPanel.add(l);
         northPanel.add(colorType);
@@ -86,7 +70,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
         northPanel.add(Box.createHorizontalGlue());
         northPanel.addSeparator(new Dimension(10, 10));
         svp = new ScoreVisualizationPanel();
-        legendText = new JLabel("Score ");
+        legendText = new JLabel("");
         legendText.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
         northPanel.add(legendText);
         northPanel.add(svp);
@@ -108,16 +92,11 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
         this.sre = sre;
         if (sre != null) {
             TreeNode root = sre.getTreeVisualization();
-            NodeType nt = this.nodeType.getItemAt(this.nodeType.getSelectedIndex());
-            NodeColor nc = COLOR_TYPES[colorType.getSelectedIndex()];
+            NodeType nt = NodeType.small;
+            NodeColor nc = (NodeColor)colorType.getSelectedItem();
             this.renderPanel.showTree(root, nt, nc);
-            if (nc == NodeColor.rgbScore || nc == NodeColor.rgbScore || nc == NodeColor.rwbScore) {
-                legendText.setText("score ");
-            } else if (nc == NodeColor.none) {
-                legendText.setText(" ");
-            } else {
-                legendText.setText("intensity");
-            }
+            legendText.setText(this.renderPanel.getNodeColorManager().getLegendName());
+
 //			pane.invalidate();
             this.svp.setNodeColorManager(this.renderPanel.getNodeColorManager());
             this.svp.repaint();
@@ -134,19 +113,16 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == this.nodeType) {
-            NodeType nt = this.nodeType.getItemAt(this.nodeType.getSelectedIndex());
-            this.renderPanel.changeNodeType(nt);
-        } else if (e.getSource() == this.colorType) {
-            NodeColor nc = COLOR_TYPES[colorType.getSelectedIndex()];
+       if (e.getSource() == this.colorType) {
+            NodeColor nc = (NodeColor)colorType.getSelectedItem();
             this.renderPanel.changeNodeColor(nc);
             this.svp.setNodeColorManager(this.renderPanel.getNodeColorManager());
-            if (nc == NodeColor.rgbScore || nc == NodeColor.rgbScore || nc == NodeColor.rwbScore) {
-                legendText.setText("score ");
+            if (nc == NodeColor.rwbMassDeviation) {
+                legendText.setText("mass deviation ");
             } else if (nc == NodeColor.none) {
                 legendText.setText(" ");
             } else {
-                legendText.setText("intensity");
+                legendText.setText("intensity ");
             }
             this.svp.repaint();
         } else if (e.getSource() == this.saveTreeB) {

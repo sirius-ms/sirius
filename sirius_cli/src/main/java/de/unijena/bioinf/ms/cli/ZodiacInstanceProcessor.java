@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.cli;
 
-import com.lexicalscope.jewel.cli.ArgumentValidationException;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -15,11 +14,11 @@ import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
-import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.projectspace.*;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 
@@ -32,168 +31,101 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
+
+public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResult> {
+    protected static Logger LOG = LoggerFactory.getLogger(ZodiacInstanceProcessor.class);
+    protected ZodiacOptions options;
+    protected FilenameFormatter filenameFormatter;
+
+    private ScoreProbabilityDistribution probabilityDistribution;
+    private List<LibraryHit> anchors;
+    @Override
+    public boolean setup() {
+
+        //todo duplicate from Sirius options?
+        filenameFormatter = null;
+        if (options.getNamingConvention()!=null){
+            String formatString = options.getNamingConvention();
+            try {
+                filenameFormatter = new StandardMSFilenameFormatter(formatString);
+            } catch (ParseException e) {
+                LOG.error("Cannot parse naming convention:\n" + e.getMessage(), e);
+                return false;
+            }
+        } else {
+            //default
+            filenameFormatter = new StandardMSFilenameFormatter();
+        }
+
+        //create output dir
+        Path outputPath = Paths.get(options.getOutput());
+        if (Files.exists(outputPath)) {
+            if (!Files.isDirectory(outputPath)) {
+                LOG.error("specified output path must be a directory.");
+                return false;
+            }
+        } else {
+            try {
+                Files.createDirectories(outputPath);
+            } catch (IOException e) {
+                LOG.error("Cannot create ZODIAC output directory: ", e);
+            }
+        }
 
 
-/**
- * Created by ge28quv on 18/05/17.
- */
-public class Zodiac {
-    private static final  org.slf4j.Logger LOG = LoggerFactory.getLogger(Zodiac.class);
-    private Path outputPath;
-    private Path libraryHitsFile;
-    private Path workSpacePath;
-    private ZodiacOptions options;
-    private int maxCandidates;
+
+        boolean estimateByMedian = true;
+        probabilityDistribution = null;
+        if (options.getProbabilityDistribution().equals(EdgeScorings.exponential)) {
+            probabilityDistribution = new ExponentialDistribution(estimateByMedian);
+        } else if (options.getProbabilityDistribution().equals(EdgeScorings.lognormal)) {
+            probabilityDistribution = new LogNormalDistribution(estimateByMedian);
+        } else {
+            LOG.error("probability distribution is unknown. Use 'lognormal' or 'exponential'.");
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean validate() {
+        return testOptions();
+    }
+
+    private boolean testOptions(){
+        if (options.getOutput()==null){
+            LOG.error("Option is mandatory: --output -o value : output directory");
+            return false;
+        }
+        if (options.getSirius()==null){
+            LOG.error("Option is mandatory: --sirius -s value : Sirius output directory or workspace. This is the input for Zodiac");
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public void output(ExperimentResult result) {
+
+    }
 
 
-    public Zodiac(ZodiacOptions options) {
-        testOptions(options);
-        this.workSpacePath = Paths.get(options.getSirius());
-        this.libraryHitsFile = (options.getLibraryHitsFile() == null ? null : Paths.get(options.getLibraryHitsFile()));
-        this.outputPath = Paths.get(options.getOutput());
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+
+    public ZodiacInstanceProcessor(ZodiacOptions options) {
         this.options = options;
     }
 
-    private void testOptions(ZodiacOptions options){
-        //this is for compatibility with new workflow
-        if (options.getOutput()==null){
-            throw new ArgumentValidationException("Option is mandatory: --output -o value : output directory");
-        }
-        if (options.getSirius()==null){
-            throw new ArgumentValidationException("Option is mandatory: --sirius -s value : Sirius output directory or workspace. This is the input for Zodiac");
-        }
-    }
-
-    public void run() {
-
-        //todo problem with name/id simplification
-        //todo force name = id
-        maxCandidates = (options.getNumberOfCandidates() == null ? Integer.MAX_VALUE : options.getNumberOfCandidates());
-        Path originalSpectraPath = Paths.get(options.getSpectraFile());
-        try {
-            //todo For the official release zodiac should become a job an create subjobs in the jobmanager for multithreading
-//            int workerCount = PropertyManager.getNumberOfCores();
-            int workerCount = options.getNumOfCores()>0 ? options.getNumOfCores() : (new SystemInfo()).getHardware().getProcessor().getPhysicalProcessorCount()-1;
-            PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(workerCount));
 
 
-            FilenameFormatter filenameFormatter = null;
-            if (options.getNamingConvention()!=null){
-                String formatString = options.getNamingConvention();
-                try {
-                    filenameFormatter = new StandardMSFilenameFormatter(formatString);
-                } catch (ParseException e) {
-                    LOG.error("Cannot parse naming convention:\n" + e.getMessage(), e);
-                    System.exit(1);
-                }
-            } else {
-                //default
-                filenameFormatter = new StandardMSFilenameFormatter();
-            }
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // compound quality //todo move somewhere else
+    //////////////////////////////////////////////////////////////////////////////////////////
 
 
-            //create output dir
-            if (Files.exists(outputPath)){
-                if (!Files.isDirectory(outputPath)){
-                    LOG.error("specified output path must be a directory.");
-                    return;
-                }
-            } else {
-                Files.createDirectories(outputPath);
-            }
-
-
-            List<ExperimentResult> experimentResults = newLoad(workSpacePath.toFile());
-            //todo reads original experiments twice!
-            experimentResults = updateQuality(experimentResults, originalSpectraPath);
-
-
-            List<LibraryHit> anchors = (libraryHitsFile==null)?null:ZodiacUtils.parseLibraryHits(libraryHitsFile, experimentResults, LOG); //only specific GNPS format
-
-
-            NodeScorer[] nodeScorers;
-            boolean useLibraryHits = (libraryHitsFile != null);
-            double libraryScore = 1d;//todo which lambda to use!?
-            if (useLibraryHits) {
-                Reaction[] reactions = ZodiacUtils.parseReactions(1);
-                Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
-                for (Reaction reaction : reactions) {
-                    netSingleReactionDiffs.add(reaction.netChange());
-                }
-                nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(libraryScore, 0.3, netSingleReactionDiffs)};
-            } else {
-                nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d)};
-            }
-
-
-            EdgeFilter edgeFilter = null;
-
-            if (options.getThresholdFilter() > 0.0D && (options.getLocalFilter() > 0.0D || options.getMinLocalConnections() > 0d)){
-                int numberOfCandidates = Math.max(options.getLocalFilter(),1);
-                int numberOfConnections = options.getMinLocalConnections()>0?options.getMinLocalConnections():10;
-                edgeFilter = new EdgeThresholdMinConnectionsFilter(options.getThresholdFilter(), numberOfCandidates, numberOfConnections);
-            } else if (options.getThresholdFilter() > 0.0D) {
-                edgeFilter = new EdgeThresholdFilter(options.getThresholdFilter());
-            } else if (options.getLocalFilter() > 0.0D) {
-                edgeFilter = new LocalEdgeFilter(options.getLocalFilter());
-            }
-            if (edgeFilter == null) {
-                edgeFilter = new EdgeThresholdFilter(0);
-            }
-
-
-            boolean estimateByMedian = true;
-            ScoreProbabilityDistribution probabilityDistribution = null;
-            if (options.getProbabilityDistribution().equals(EdgeScorings.exponential)) {
-                probabilityDistribution = new ExponentialDistribution(estimateByMedian);
-            } else if (options.getProbabilityDistribution().equals(EdgeScorings.lognormal)) {
-                probabilityDistribution = new LogNormalDistribution(estimateByMedian);
-            } else {
-                LOG.error("probability distribution is unknown. Use 'lognormal' or 'exponential'.");
-                return;
-            }
-
-
-
-            double minimumOverlap = 0.0D;
-            ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer;
-            if (options.isEstimateDistribution()){
-                commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
-            } else {
-                commonFragmentAndLossScorer = new ScoreProbabilityDistributionFix(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
-            }
-
-            EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
-
-
-
-            de.unijena.bioinf.GibbsSampling.Zodiac zodiac = new de.unijena.bioinf.GibbsSampling.Zodiac(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, options.isClusterCompounds());
-
-
-            ZodiacResultsWithClusters zodiacResult = zodiac.compute(options.getIterationSteps(), options.getBurnInSteps(), options.getSeparateRuns());
-            if (zodiacResult==null) return; //no results. likely, empty input
-
-            CompoundResult<FragmentsCandidate>[] result = zodiacResult.getResults();
-            String[] ids = zodiacResult.getIds();
-
-
-            Map<String, ExperimentResult> experimentResultMap = createMap(experimentResults);
-            Map<String, String[]> representativeToCluster = zodiacResult.getRepresentativeToCluster();
-            Scored<IdentificationResult>[] bestInitial = bestInitial(ids, experimentResultMap);
-            writeZodiacOutput(ids, bestInitial, result, outputPath.resolve("zodiac_summary.csv"));
-            writeClusters(representativeToCluster, outputPath.resolve("clusters.csv"));
-            writeSpectra(ids, result, experimentResultMap, outputPath, filenameFormatter);
-
-        } catch (IOException e) {
-            LOG.error("Error while running ZODIAC: " + e.getMessage(), e);
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private List<ExperimentResult> updateQuality(List<ExperimentResult> experimentResults, Path originalMsInformation) throws IOException {
+    public List<ExperimentResult> updateQuality(List<ExperimentResult> experimentResults, Path originalMsInformation) throws IOException {
         final MsExperimentParser parser = new MsExperimentParser();
         List<Ms2Experiment> rawExperiments = parser.getParser(originalMsInformation.toFile()).parseFromFile(originalMsInformation.toFile());
         Map<String, List<Ms2Experiment>> nameToExperiment = new HashMap<>();
@@ -279,6 +211,104 @@ public class Zodiac {
         return false;
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // create zodiac job
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    public ZodiacJJob makeZodiacJob(List<ExperimentResult> experimentResults){
+        //todo problem with name/id simplification
+        //todo force name = id
+        int maxCandidates = (options.getNumberOfCandidates() == null ? Integer.MAX_VALUE : options.getNumberOfCandidates());
+
+
+        //todo For the official release zodiac should become a job an create subjobs in the jobmanager for multithreading
+//      int workerCount = PropertyManager.getNumberOfCores();
+        int workerCount = options.getNumOfCores() > 0 ? options.getNumOfCores() : (new SystemInfo()).getHardware().getProcessor().getPhysicalProcessorCount() - 1;
+        PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(workerCount));
+
+
+
+        Path libraryHitsFile = (options.getLibraryHitsFile() == null ? null : Paths.get(options.getLibraryHitsFile()));
+        try {
+            anchors = (libraryHitsFile == null) ? null : ZodiacUtils.parseLibraryHits(libraryHitsFile, experimentResults, LOG); //only specific GNPS format
+        } catch (IOException e) {
+            LOG.error("Cannot load library hits from file.", e);
+            return null;
+        }
+
+
+
+        //todo init here (not setup) and not in setup because it might store infos after one run!?
+        NodeScorer[] nodeScorers;
+        boolean useLibraryHits = (anchors != null);
+        double libraryScore = 1d;//todo which lambda to use!?
+        if (useLibraryHits) {
+            Reaction[] reactions = ZodiacUtils.parseReactions(1);
+            Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
+            for (Reaction reaction : reactions) {
+                netSingleReactionDiffs.add(reaction.netChange());
+            }
+            nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(libraryScore, 0.3, netSingleReactionDiffs)};
+        } else {
+            nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d)};
+        }
+
+
+        EdgeFilter edgeFilter = null;
+
+        if (options.getThresholdFilter() > 0.0D && (options.getLocalFilter() > 0.0D || options.getMinLocalConnections() > 0d)) {
+            int numberOfCandidates = Math.max(options.getLocalFilter(), 1);
+            int numberOfConnections = options.getMinLocalConnections() > 0 ? options.getMinLocalConnections() : 10;
+            edgeFilter = new EdgeThresholdMinConnectionsFilter(options.getThresholdFilter(), numberOfCandidates, numberOfConnections);
+        } else if (options.getThresholdFilter() > 0.0D) {
+            edgeFilter = new EdgeThresholdFilter(options.getThresholdFilter());
+        } else if (options.getLocalFilter() > 0.0D) {
+            edgeFilter = new LocalEdgeFilter(options.getLocalFilter());
+        }
+        if (edgeFilter == null) {
+            edgeFilter = new EdgeThresholdFilter(0);
+        }
+
+
+
+        double minimumOverlap = 0.0D;
+        ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer;
+        if (options.isEstimateDistribution()) {
+            commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
+        } else {
+            commonFragmentAndLossScorer = new ScoreProbabilityDistributionFix(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
+        }
+
+        EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
+
+
+        ZodiacJJob zodiacJJob = new ZodiacJJob(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, options.getIterationSteps(), options.getBurnInSteps(), options.getSeparateRuns(), options.isClusterCompounds());
+
+        return zodiacJJob;
+
+
+    }
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // write results
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+
+    public void writeResults(List<ExperimentResult> input, ZodiacResultsWithClusters zodiacResult) throws IOException {
+        Path outputPath = Paths.get(options.getOutput());
+
+        CompoundResult<FragmentsCandidate>[] result = zodiacResult.getResults();
+        String[] ids = zodiacResult.getIds();
+
+        Map<String, ExperimentResult> experimentResultMap = createMap(input);
+        Map<String, String[]> representativeToCluster = zodiacResult.getRepresentativeToCluster();
+        Scored<IdentificationResult>[] bestInitial = bestInitial(ids, experimentResultMap);
+        writeZodiacOutput(ids, bestInitial, result, outputPath.resolve("zodiac_summary.csv"));
+        writeClusters(representativeToCluster, outputPath.resolve("clusters.csv"));
+        writeSpectra(ids, result, experimentResultMap, outputPath, filenameFormatter);
+    }
+
     private final static int NUMBER_OF_HITS = Integer.MAX_VALUE;
     private final static String SEP = "\t";
     public static void writeZodiacOutput(String[] ids, Scored<IdentificationResult>[] initial, CompoundResult<FragmentsCandidate>[] result, Path outputPath) throws IOException {
@@ -328,7 +358,7 @@ public class Zodiac {
         return builder.toString();
     }
 
-    private Scored<IdentificationResult>[] bestInitial(String[] ids, Map<String, ExperimentResult> experimentResultMap){
+    public Scored<IdentificationResult>[] bestInitial(String[] ids, Map<String, ExperimentResult> experimentResultMap){
         Scored<IdentificationResult>[] best = new Scored[ids.length];
         for (int i = 0; i < ids.length; i++) {
             String id = ids[i];
@@ -362,7 +392,7 @@ public class Zodiac {
         return best;
     }
 
-    private Map<String, ExperimentResult> createMap(List<ExperimentResult> experimentResults){
+    public Map<String, ExperimentResult> createMap(List<ExperimentResult> experimentResults){
         Map<String, ExperimentResult> map = new HashMap<>();
         for (ExperimentResult experimentResult : experimentResults) {
             map.put(experimentResult.getExperimentName(), experimentResult);
@@ -371,24 +401,7 @@ public class Zodiac {
     }
 
 
-    protected static List<ExperimentResult> newLoad(File file) throws IOException {
-        final List<ExperimentResult> results = new ArrayList<>();
-        final DirectoryReader.ReadingEnvironment env;
-        if (file.isDirectory()) {
-            env = new SiriusFileReader(file);
-        } else {
-            env = new SiriusWorkspaceReader(file);
-        }
-        final DirectoryReader reader = new DirectoryReader(env);
-
-        while (reader.hasNext()) {
-            final ExperimentResult result = reader.next();
-            results.add(result);
-        }
-        return results;
-    }
-
-    private static void writeClusters(Map<String, String[]> representativeToCluster, Path outputPath) throws IOException {
+    public static void writeClusters(Map<String, String[]> representativeToCluster, Path outputPath) throws IOException {
         final BufferedWriter writer = Files.newBufferedWriter(outputPath, Charset.defaultCharset());
         writer.write("representative\tcluster_ids");
         for (Map.Entry<String, String[]> stringEntry : representativeToCluster.entrySet()) {
@@ -405,6 +418,7 @@ public class Zodiac {
         }
         writer.close();
     }
+
 
 
     /*
@@ -438,6 +452,28 @@ public class Zodiac {
         if (!name.endsWith(".ms")) name += ".ms";
         return name;
     }
+
+
+
+
+
+    protected static List<ExperimentResult> newLoad(File file) throws IOException {
+        final List<ExperimentResult> results = new ArrayList<>();
+        final DirectoryReader.ReadingEnvironment env;
+        if (file.isDirectory()) {
+            env = new SiriusFileReader(file);
+        } else {
+            env = new SiriusWorkspaceReader(file);
+        }
+        final DirectoryReader reader = new DirectoryReader(env);
+
+        while (reader.hasNext()) {
+            final ExperimentResult result = reader.next();
+            results.add(result);
+        }
+        return results;
+    }
+
 
 
 }

@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.gui.mainframe.molecular_formular;
  * 25.01.17.
  */
 
+import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.SiriusTableFormat;
 import de.unijena.bioinf.sirius.gui.table.list_stats.ListStats;
@@ -15,7 +16,7 @@ import de.unijena.bioinf.sirius.gui.table.list_stats.ListStats;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusResultTableFormat extends SiriusTableFormat<SiriusResultElement> {
-    private static final int COL_COUNT = 5;
+    private static final int COL_COUNT = 8;
 
     protected SiriusResultTableFormat(ListStats stats) {
         super(stats);
@@ -38,28 +39,65 @@ public class SiriusResultTableFormat extends SiriusTableFormat<SiriusResultEleme
     }
 
     public String getColumnName(int column) {
-        if (column == 0) return "Rank";
-        else if (column == 1) return "Molecular Formula";
-        else if (column == 2) return "Score";
-        else if (column == 3) return "Isotope Score";
-        else if (column == 4) return "Tree Score";
-        else if (column == 5) return "Best";
-
-
-        throw new IllegalStateException();
+        switch (column) {
+            case 0:
+                return "Rank";
+            case 1:
+                return "Molecular Formula";
+            case 2:
+                return "Score";
+            case 3:
+                return "Isotope Score";
+            case 4:
+                return "Tree Score";
+            case 5:
+                return "Explained Peaks";
+            case 6:
+                return "Total Explained Intensity";
+            case 7:
+                return "Median Absolute Mass Deviation in ppm";
+            case 8:
+                return "Best";
+            default:
+                throw new IllegalStateException();
+        }
     }
 
     public Object getColumnValue(SiriusResultElement result, int column) {
-        if (column == 0) return result.getRank();
-        else if (column == 1) return result.getFormulaAndIonText();
-        else if (column == 2) return result.getScore();
-        else if (column == 3) return result.getResult().getIsotopeScore();
-        else if (column == 4) return result.getResult().getTreeScore();
-        else if (column == 5) return isBest(result);
-
-        throw new IllegalStateException();
+        switch (column) {
+            case 0:
+                return result.getRank();
+            case 1:
+                return result.getFormulaAndIonText();
+            case 2:
+                return result.getScore();
+            case 3:
+                return result.getResult().getIsotopeScore();
+            case 4:
+                return result.getResult().getTreeScore();
+            case 5:
+                final double expPeaks = result.getNumOfExplainedPeaks();
+                if (Double.isNaN(expPeaks))
+                    return "Value not found";
+                else
+                    return expPeaks;
+            case 6:
+                final double intensity = result.getExplainedIntensityRatio();
+                if (Double.isNaN(intensity))
+                    return "Value not found";
+                else
+                    return intensity;
+            case 7:
+                TreeNode visibleTreeRoot = result.getTreeVisualization();
+                if (visibleTreeRoot != null && visibleTreeRoot.getMedianMassDeviation() != null)
+                    return visibleTreeRoot.getMedianMassDeviation();
+                else
+                    return "Value not found";
+            case 8:
+                return isBest(result);
+            default:
+                throw new IllegalStateException();
+        }
     }
-
-
 }
 

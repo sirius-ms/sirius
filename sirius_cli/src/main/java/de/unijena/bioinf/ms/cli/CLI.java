@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
@@ -52,6 +53,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.text.ParseException;
 import java.util.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
@@ -63,6 +65,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     protected final boolean shellMode;
     protected ShellProgress progress;
 
+    protected FilenameFormatter filenameFormatter;
     protected ProjectWriter projectWriter;
     protected boolean shellOutputSurpressed = false;
 
@@ -414,6 +417,20 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             System.exit(1);
         }
 
+        if (options.getNamingConvention()!=null){
+            String formatString = options.getNamingConvention();
+            try {
+                filenameFormatter = new StandardMSFilenameFormatter(formatString);
+            } catch (ParseException e) {
+                logger.error("Cannot parse naming convention:\n" + e.getMessage(), e);
+                System.exit(1);
+            }
+        } else {
+            //default
+            filenameFormatter = new StandardMSFilenameFormatter();
+        }
+
+
         final List<ProjectWriter> writers = new ArrayList<>();
 
         if (options.getOutput() != null) {
@@ -432,7 +449,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                 }
             } else {
                 try {
-                    pw = getDirectoryOutputWriter(options.getOutput(), getWorkspaceWritingEnvironmentForDirectoryOutput(options.getOutput()));
+                    pw = getDirectoryOutputWriter(options.getOutput(), getWorkspaceWritingEnvironmentForDirectoryOutput(options.getOutput()), filenameFormatter);
                     writers.add(pw);
                 } catch (IOException e) {
                     logger.error("Cannot write into " + options.getOutput() + ":\n" + e.getMessage(), e);
@@ -443,7 +460,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         if (options.getSirius() != null) {
             final ProjectWriter pw;
             if (options.getSirius().equals("-")) {
-                pw = getSiriusOutputWriter(options.getSirius(), getWorkspaceWritingEnvironmentForSirius(options.getSirius()));
+                pw = getSiriusOutputWriter(options.getSirius(), getWorkspaceWritingEnvironmentForSirius(options.getSirius()), filenameFormatter);
                 shellOutputSurpressed = true;
             } else if (new File(options.getSirius()).exists()) {
                 try {
@@ -455,7 +472,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                     return;
                 }
             } else {
-                pw = getSiriusOutputWriter(options.getSirius(), getWorkspaceWritingEnvironmentForSirius(options.getSirius()));
+                pw = getSiriusOutputWriter(options.getSirius(), getWorkspaceWritingEnvironmentForSirius(options.getSirius()), filenameFormatter);
             }
 
             writers.add(pw);
@@ -540,12 +557,12 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         return new SiriusFileWriter(root);
     }
 
-    protected ProjectWriter getSiriusOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env) {
-        return new DirectoryWriter(env, ApplicationCore.VERSION_STRING);
+    protected ProjectWriter getSiriusOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env, FilenameFormatter filenameFormatter) {
+        return new DirectoryWriter(env, ApplicationCore.VERSION_STRING, filenameFormatter);
     }
 
-    protected ProjectWriter getDirectoryOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env) {
-        return new DirectoryWriter(env, ApplicationCore.VERSION_STRING);
+    protected ProjectWriter getDirectoryOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env, FilenameFormatter filenameFormatter) {
+        return new DirectoryWriter(env, ApplicationCore.VERSION_STRING, filenameFormatter);
     }
 
     protected DirectoryReader.ReadingEnvironment getWorkspaceReadingEnvironmentForSirius(String value) {
@@ -842,7 +859,17 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                             if (options.isDisableElementDetection()) {
                                 sirius.enableAutomaticElementDetection(experiment, false);
                             }
-                            instances.add(new Instance(experiment, currentFile, ++index));
+
+                            Index expIndex = experiment.getAnnotation(Index.class);
+                            int currentIndex;
+                            if (instanceIdOffset==0 && expIndex!=null && expIndex.index>=0){
+                                //if no workspaces are merged and parser provides real index, use if
+                                currentIndex = expIndex.index;
+                            } else {
+                                //normal fallback
+                                currentIndex = ++index;
+                            }
+                            instances.add(new Instance(experiment, currentFile, currentIndex));
                             return experimentIterator;
                         }
                     }

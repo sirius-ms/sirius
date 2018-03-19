@@ -1,30 +1,46 @@
 package de.unijena.bioinf.myxo.gui.tree.render.color;
 
-import de.unijena.bioinf.myxo.gui.tree.render.NodeColorManager;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 
 import java.awt.*;
 
-public class DummyNodeColorManager implements NodeColorManager {
+public class DummyNodeColorManager extends NodeColorManager {
 
-	@Override
 	public Color getColor(TreeNode node) {
 		return Color.WHITE;
 	}
 
-	@Override
 	public double getMinimalValue() {
 		return 0;
 	}
 
-	@Override
 	public double getMaximalValue() {
 		return 0;
 	}
 
-	@Override
+	public String getLegendLowText() {
+		return "";
+	}
+
+	public String getLegendMiddelText() {
+		return "";
+	}
+
+	public String getLegendHighText() {
+		return "";
+	}
+
+	public String getLegendName() {
+		return "";
+	}
+
 	public Color getColor(double value) {
-		return Color.WHITE;
+		return new Color(1f,1f,1f,0f);
+	}
+
+	@Override
+	public double getValue(TreeNode node) {
+		return 0;
 	}
 
 }

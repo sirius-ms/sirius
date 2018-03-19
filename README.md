@@ -8,7 +8,7 @@ publications.</span>*
 
 Contact: ![](https://raw.githubusercontent.com/boecker-lab/sirius_frontend/release/manual/source/siriusMailtrans.png)
 
-SIRIUS is new java-based software framework for discovering a
+SIRIUS is a new java-based software framework for discovering a
 landscape of de-novo identification of metabolites using single and
 tandem mass spectrometry. SIRIUS uses isotope pattern analysis for
 detecting the molecular formula and further analyses the fragmentation

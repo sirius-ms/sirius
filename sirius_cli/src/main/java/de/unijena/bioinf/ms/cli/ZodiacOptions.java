@@ -13,7 +13,8 @@ public interface ZodiacOptions {
     @Option(
             shortName = {"s"},
             longName = {"sirius"},
-            description = "Sirius output directory or workspace. This is the input for Zodiac"
+            description = "Sirius output directory or workspace. This is the input for Zodiac",
+            defaultToNull = true
     )
     String getSirius();
 
@@ -25,11 +26,18 @@ public interface ZodiacOptions {
     )
     String getSpectraFile();
 
+    //todo duplicate
+    //naming
+    @Option(longName = "naming-convention", description = "Specify a format for compounds' output directorys. Default %index_%filename_%compoundname",  defaultToNull = true)
+    String getNamingConvention();
 
+
+    //todo duplicate
     @Option(
             shortName = {"o"},
             longName = {"output"},
-            description = "output directory"
+            description = "output directory",
+            defaultToNull = true
     )
     String getOutput();
 
@@ -103,6 +111,11 @@ public interface ZodiacOptions {
     )
     Integer getNumberOfCandidates();
 
+    @Option(
+            longName = {"cluster"},
+            description = "cluster compounds with the same best molecular formula candidate before running ZODIAC."
+    )
+    boolean isClusterCompounds();
 
     @Option(
             longName = {"processors", "cores"},

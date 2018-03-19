@@ -1,8 +1,10 @@
 package de.unijena.bioinf.sirius.gui.table;
 
+import com.sun.org.apache.xpath.internal.operations.Number;
 import de.unijena.bioinf.sirius.gui.table.list_stats.ListStats;
 
 import javax.swing.*;
+import java.text.NumberFormat;
 
 /**
  * Created by fleisch on 24.05.17.
@@ -16,11 +18,15 @@ public class ListStatBarTableCellRenderer extends AbstractBarTableCellRenderer {
     }
 
     public ListStatBarTableCellRenderer(ListStats stats, boolean percentage) {
-        this(-1, stats, percentage);
+        this(-1, stats, percentage, false,null);
     }
 
     public ListStatBarTableCellRenderer(int highlightColumn, ListStats stats, boolean percentage) {
-        super(highlightColumn,percentage);
+        this(highlightColumn, stats, percentage, false,null);
+    }
+
+    public ListStatBarTableCellRenderer(int highlightColumn, ListStats stats, boolean percentage, boolean printMaxValue, NumberFormat lableFormat) {
+        super(highlightColumn, percentage, printMaxValue, lableFormat);
         this.stats = stats;
     }
 
@@ -36,7 +42,7 @@ public class ListStatBarTableCellRenderer extends AbstractBarTableCellRenderer {
 
 
     protected double getSum(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
-        return percentage ?  stats.getSum() : Double.NaN;
+        return percentage ? stats.getSum() : Double.NaN;
     }
 
     @Override

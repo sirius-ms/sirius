@@ -51,4 +51,16 @@ public class DoubleListStats implements ListStats {
         minScoreValue = Double.POSITIVE_INFINITY;
         maxScoreValue = Double.NEGATIVE_INFINITY;
     }
+
+    public void setMinScoreValue(double minScoreValue) {
+        this.minScoreValue = minScoreValue;
+    }
+
+    public void setMaxScoreValue(double maxScoreValue) {
+        this.maxScoreValue = maxScoreValue;
+    }
+
+    public void setScoreSum(double scoreSum) {
+        this.scoreSum = scoreSum;
+    }
 }

@@ -9,6 +9,7 @@ import de.unijena.bioinf.sirius.gui.configs.Colors;
 
 import javax.swing.*;
 import java.awt.*;
+import java.text.NumberFormat;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -16,24 +17,28 @@ import java.awt.*;
 public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCellRenderer {
     protected Color[] colors = {Colors.ICON_RED, Colors.ICON_YELLOW, Colors.ICON_GREEN};
     protected float[] fractions = {.1f, .5f, 1f};
-
+    protected float[] fractionsTwoWay = {.3f, 1f};
 
     private double percentageValue;
     protected final boolean percentage;
+    protected final boolean printValues;
 
     private boolean selected;
 
     private String max;
     private float thresh;
     private float toFill;
+    private boolean twoWayBar = false;
+    private float twoWayBarThresh = 0.5f;
 
     public AbstractBarTableCellRenderer() {
-        this(-1, false);
+        this(-1, false, false, null);
     }
 
-    public AbstractBarTableCellRenderer(int highlightColumn, boolean percentage) {
-        super(highlightColumn);
+    public AbstractBarTableCellRenderer(int highlightColumn, boolean percentage, boolean printMaxValue, NumberFormat lableFormat) {
+        super(highlightColumn, lableFormat);
         this.percentage = percentage;
+        this.printValues = printMaxValue;
     }
 
     protected abstract double getMax(JTable table, boolean isSelected, boolean hasFocus, int row, int column);
@@ -63,7 +68,7 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
         final double current = getValue(value);
         percentageValue = getPercentage(table, current, isSelected, hasFocus, row, column);
 
-        this.max = NF.format(max);
+        this.max = nf.format(max);
         toFill = (float) normalize(min, max, current);
         selected = isSelected;
         thresh = (float) Math.max(0f, normalize(min, max, getThresh(table, isSelected, hasFocus, row, column)));
@@ -77,16 +82,28 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
     @Override
     public void paint(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
-        int maxWord = g2d.getFontMetrics().stringWidth(max);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 
         g2d.setPaint(backColor);
         g2d.fillRect(0, 0, (getWidth()), getHeight());
 
-        LinearGradientPaint gp = new LinearGradientPaint(5, 0, getWidth() - 5, getHeight(), fractions, colors, MultipleGradientPaint.CycleMethod.NO_CYCLE);
-        g2d.setPaint(gp);
-        g2d.fillRect(5, 2, (int) (getWidth() * toFill) - 5, getHeight() - 4);
+        if (twoWayBar) {
+            if (toFill > 0.5) {
+                LinearGradientPaint gp = new LinearGradientPaint((int) ((double)getWidth() / 2d), 0, getWidth() - 5, getHeight(), new float[]{0f,1}, new Color[]{backColor,Colors.ICON_GREEN}, MultipleGradientPaint.CycleMethod.NO_CYCLE);
+                g2d.setPaint(gp);
+                g2d.fillRect(getWidth() / 2, 2, (int) (((double)getWidth() / 2d) * (toFill-0.5)/0.5) - 5, getHeight() - 4);
+            } else {
+                LinearGradientPaint gp = new LinearGradientPaint(5, 0, (int) ((double)getWidth() / 2d), getHeight(), new float[]{0f,1}, new Color[]{Colors.ICON_RED,backColor}, MultipleGradientPaint.CycleMethod.NO_CYCLE);
+                g2d.setPaint(gp);
+                double start = ((double)getWidth() / 2d * toFill/0.5);
+                g2d.fillRect(5 + (int)start, 2, (int) ((((double)getWidth() / 2d) - start)), getHeight() - 4);
+            }
+        } else {
+            LinearGradientPaint gp = new LinearGradientPaint(5, 0, getWidth() - 5, getHeight(), fractions, colors, MultipleGradientPaint.CycleMethod.NO_CYCLE);
+            g2d.setPaint(gp);
+            g2d.fillRect(5, 2, (int) (getWidth() * toFill) - 5, getHeight() - 4);
+        }
 
 
         if (!Float.isNaN(thresh)) {
@@ -103,11 +120,28 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
             g2d.setPaint(Color.BLACK);
         }
 
+        int maxWord = g2d.getFontMetrics().stringWidth(max);
         String v = value;
-        if (!Double.isNaN(percentageValue))
-            v = String.format("%.2f", percentageValue) + "%";
+        if (!Double.isNaN(percentageValue)) {
+            maxWord = g2d.getFontMetrics().stringWidth(nf.format(100) + "%");
+            v = nf.format(percentageValue) + "%";
+            if (printValues)
+                v = v + " (" + value + "/" + max + ")";
+        } else if (printValues) {
+            maxWord = g2d.getFontMetrics().stringWidth(max + "/" + max);
+            v = value + "/" + max;
+        }
+
 
         g2d.drawString(v, (getWidth() / 2) + (maxWord / 2) - (g2d.getFontMetrics().stringWidth(v)), (getHeight() - 4));
+    }
+
+    public void setTwoWayBar(boolean twoWayBar) {
+        this.twoWayBar = twoWayBar;
+    }
+
+    public void setTwoWayBarThresh(float twoWayBarThresh) {
+        this.twoWayBarThresh = twoWayBarThresh;
     }
 }
 

@@ -26,6 +26,7 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Si
     protected double[] fscores = null;
     protected CSIFingerIDComputation csi;
     protected PredictorType predictorType;
+    protected int[] trainingExamples;
 
     public FingerprintTable(final FormulaList source) throws IOException {
         this(source, FingerprintVisualization.read());
@@ -44,8 +45,10 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Si
         final CSIPredictor csi = MainFrame.MF.getCsiFingerId().getPredictor(predictorType);
         final PredictionPerformance[] performances = csi.getPerformances();
         this.fscores = new double[csi.getFingerprintVersion().getMaskedFingerprintVersion().size()];
+        this.trainingExamples = new int[fscores.length];
         int k = 0;
         for (int index : csi.getFingerprintVersion().allowedIndizes()) {
+            this.trainingExamples[index] = (int)(performances[k].withRelabelingAllowed(false).getCount());
             this.fscores[index] = performances[k++].getF();
         }
     }
@@ -59,7 +62,7 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Si
             final ProbabilityFingerprint fp = sre.getFingerIdData().getPlatts();
             List<MolecularPropertyTableEntry> tmp = new ArrayList<>();
             for (final FPIter iter : fp) {
-                tmp.add(new MolecularPropertyTableEntry(fp, visualizations[iter.getIndex()], fscores[iter.getIndex()], iter.getIndex()));
+                tmp.add(new MolecularPropertyTableEntry(fp, visualizations[iter.getIndex()], fscores[iter.getIndex()], iter.getIndex(), trainingExamples[iter.getIndex()]));
             }
             elementList.addAll(tmp);
         }

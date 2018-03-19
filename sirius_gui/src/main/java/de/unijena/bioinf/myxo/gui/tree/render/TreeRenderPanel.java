@@ -17,21 +17,21 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.List;
 
+import static java.lang.StrictMath.abs;
+
 public class TreeRenderPanel extends JPanel implements ComponentListener, MouseMotionListener {
 
     protected static int NORTH_BORDER = 5, EAST_BORDER = 5, SOUTH_BORDER = 5, WEST_BORDER = 5;
 
     protected TreeNode root;
 
-    protected HashMap<TreeNode, BufferedImage> thumbnailNodes, previewNodes, smallNodes, bigNodes, withScoresNodes, /*maximalNodes,*/
-            selectedNodeStyle;
+    protected HashMap<TreeNode, BufferedImage> nodes;
+
     protected HashMap<TreeNode, PositionContainer> positonsMap;
     protected TreeNode[][] nodePositionArray;
 
-    protected int thumbnailNodesWidth, previewNodesWidth, smallNodesWidth, bigNodesWidth, minimalNodesWidth, withScoresNodesWidth, /*maximalNodesWidth,*/
-            selectedWidth;
-    protected int thumbnailNodesHeight, previewNodesHeight, smallNodesHeight, bigNodesHeight, minimalNodesHeight, withScoresNodesHeight, /*maximalNodesHeight,*/
-            selectedHeight;
+    protected int nodesWidth;
+    protected int nodesHeight;
 
     protected int maxXPosition, maxYPosition;
     protected int firstXPixel, firstYPixel, pixelNumberX, pixelNumberY, horizontalPixelNumber, verticalPixelNumber;
@@ -60,19 +60,20 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
     protected NodeType nodeType;
 
     protected NodeColorManager nodeColorManager;
-    protected NodeColor nodeColor;
+    protected NodeColor nodeColor = NodeColor.none;
 
     protected TreeNode tooltipNode;
 
     protected JScrollPane scrollPane;
 
     protected Color backColor;
+    private boolean isInitializedTheFirstTime = true;
 
     public TreeRenderPanel(TreeNode root) {
 
         this.root = root;
         if (this.root != null) {
-            init(this.root, NodeType.small, NodeColor.rgScore);
+            init(this.root, NodeType.small, NodeColor.none);
         }
         this.treeInitNeeded = true;
         this.revalidate();
@@ -97,34 +98,18 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
     protected void init(TreeNode root, NodeType nodeType, NodeColor nodeColor) {
 
-//		if(root==null) return;
-//		
-//		this.root = root;
-
-        // @Marvin: init might be called several times, but it does not make
-        //			sense to add the same listener several times to this class
-        final boolean isInitializedTheFirstTime = thumbnailNodes == null;
-
         TreePositionCalculator calc = new MinimalWidthGreedyTreePositionCalculator();
-//		TreePositionCalculator calc = new WalkerTreePositionCalculator();
         calc.computeRelativePositions(root);
 
-        PositionEdgeRearrangement rearr = new PositionEdgeRearrangement();
-        rearr.rearrangeTreeNodes(root);
+        PositionEdgeRearrangement positionEdgeRearrangement = new PositionEdgeRearrangement();
+        positionEdgeRearrangement.rearrangeTreeNodes(root);
 
-//		nodeColorManager = new RBGNodeColorManager(root);
         if (nodeColorManager == null) {
-            this.nodeColor = NodeColor.rgbScore;
-            nodeColorManager = new RGBScoreNodeColorManager(root);
+            this.nodeColor = NodeColor.none;
+            nodeColorManager = new DummyNodeColorManager();
         }
 
-        thumbnailNodes = new HashMap<>();
-        previewNodes = new HashMap<>();
-        smallNodes = new HashMap<TreeNode, BufferedImage>();
-        bigNodes = new HashMap<TreeNode, BufferedImage>();
-        withScoresNodes = new HashMap<TreeNode, BufferedImage>();
-//		maximalNodes = new HashMap<TreeNode, BufferedImage>();
-
+        nodes = new HashMap<TreeNode, BufferedImage>();
         positonsMap = new HashMap<TreeNode, PositionContainer>();
 
         scoreFormat = new DecimalFormat("###.#####");
@@ -132,14 +117,9 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         intFormat = new DecimalFormat("##.######");
         snFormat = new DecimalFormat("####.####");
 
-//		selectedNodeStyle = nanoNodes;
-
         initalizeFonts();
-
         changeNodeColorStep1(nodeColor);
-
         initalizeTreeNodeImages(root);
-
         changeNodeTypeStep1(nodeType);
 
         tooltipNode = null;
@@ -150,14 +130,12 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         calculatePositionArray();
 
 
-//		System.err.println("minSize: "+this.getMinimumSize().getWidth()+" "+this.getMinimumSize().getHeight());
-
         if (isInitializedTheFirstTime) {
+            isInitializedTheFirstTime = false;
+
             this.addComponentListener(this);
             this.addMouseMotionListener(this);
         }
-
-//		System.out.println("fertig mit init");
 
 //		this.setPreferredSize(new Dimension(3000,2000));
     }
@@ -188,27 +166,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         this.backColor = backColor;
 
         this.nodeType = type;
-        if (type == NodeType.small) {
-            selectedNodeStyle = smallNodes;
-            selectedWidth = smallNodesWidth;
-            selectedHeight = smallNodesHeight;
-        } else if (type == NodeType.big) {
-            selectedNodeStyle = bigNodes;
-            selectedWidth = bigNodesWidth;
-            selectedHeight = bigNodesHeight;
-        } else if (type == NodeType.score) {
-            selectedNodeStyle = withScoresNodes;
-            selectedWidth = withScoresNodesWidth;
-            selectedHeight = withScoresNodesHeight;
-        } else if (type == NodeType.preview) {
-            selectedNodeStyle = previewNodes;
-            selectedWidth = previewNodesWidth;
-            selectedHeight = previewNodesHeight;
-        } else {
-            selectedNodeStyle = thumbnailNodes;
-            selectedWidth = thumbnailNodesWidth;
-            selectedHeight = thumbnailNodesHeight;
-        }
+
 
         this.nodeColorManager = colorManager;
 
@@ -226,27 +184,6 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
     protected void changeNodeTypeStep1(NodeType type) {
         this.nodeType = type;
-        if (type == NodeType.small) {
-            selectedNodeStyle = smallNodes;
-            selectedWidth = smallNodesWidth;
-            selectedHeight = smallNodesHeight;
-        } else if (type == NodeType.big) {
-            selectedNodeStyle = bigNodes;
-            selectedWidth = bigNodesWidth;
-            selectedHeight = bigNodesHeight;
-        } else if (type == NodeType.score) {
-            selectedNodeStyle = withScoresNodes;
-            selectedWidth = withScoresNodesWidth;
-            selectedHeight = withScoresNodesHeight;
-        } else if (type == NodeType.preview) {
-            selectedNodeStyle = previewNodes;
-            selectedWidth = previewNodesWidth;
-            selectedHeight = previewNodesHeight;
-        } else {
-            selectedNodeStyle = thumbnailNodes;
-            selectedWidth = thumbnailNodesWidth;
-            selectedHeight = thumbnailNodesHeight;
-        }
     }
 
     public void changeNodeType(NodeType type) {
@@ -269,33 +206,20 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
     }
 
     protected void changeNodeColorStep1(NodeColor nodeColor) {
-        this.nodeColor = nodeColor;
-        if (nodeColor == NodeColor.rgbScore) {
-            this.nodeColorManager = new RGBScoreNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rgbIntensity) {
-            this.nodeColorManager = new RGBRelativeIntensityNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rbgScore) {
-            this.nodeColorManager = new RBGScoreNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rbgIntensity) {
-            this.nodeColorManager = new RBGRelativeIntensityNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rgbScore) {
-            this.nodeColorManager = new RGBScoreNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rgbIntensity) {
-            this.nodeColorManager = new RGBRelativeIntensityNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rgScore) {
-            this.nodeColorManager = new RGScoreNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rgIntensity) {
-            this.nodeColorManager = new RGRelativeIntensityNodeColorManager(root);
-        } else if (nodeColor == NodeColor.bgrScore) {
-            this.nodeColorManager = new BGRScoreNodeColorManager(root);
-        } else if (nodeColor == NodeColor.bgrIntensity) {
-            this.nodeColorManager = new BGRScoreNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rwbScore) {
-            this.nodeColorManager = new RWBScoreNodeColorManager(root);
-        } else if (nodeColor == NodeColor.rwbIntensity) {
-            this.nodeColorManager = new RWBRelativeIntensityNodeColorManager(root);
-        } else if (nodeColor == NodeColor.none) {
-            this.nodeColorManager = new DummyNodeColorManager();
+        if(nodeColor != null ) {
+            this.nodeColor = nodeColor;
+        }
+
+        switch (this.nodeColor) {
+            case rwbIntensity:
+                this.nodeColorManager = new RelativeIntensityNodeColorManager();
+                break;
+            case rwbMassDeviation:
+                this.nodeColorManager = new MassDeviationColorManager(root);
+                break;
+            default:
+                this.nodeColorManager = new DummyNodeColorManager();
+                break;
         }
     }
 
@@ -345,11 +269,11 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
         final int offset_x;
         if (maxXPosition <= 1) {
-            offset_x = (int) Math.round(this.getWidth() / 2d - Math.ceil(selectedWidth / 2d));
+            offset_x = (int) Math.round(this.getWidth() / 2d - Math.ceil(nodesWidth / 2d));
         } else offset_x = 0;
 
-        firstXPixel = offset_x + WEST_BORDER + (int) Math.ceil(selectedWidth / 2.0);
-        firstYPixel = NORTH_BORDER + (int) Math.ceil(selectedHeight / 2.0);
+        firstXPixel = offset_x + WEST_BORDER + (int) Math.ceil(nodesWidth / 2.0);
+        firstYPixel = NORTH_BORDER + (int) Math.ceil(nodesHeight / 2.0);
 
         int eastBorder = firstXPixel;
         int southBorder = firstYPixel;
@@ -580,28 +504,24 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
     protected void initalizeTreeNodeImages(TreeNode root) {
 
-        thumbnailNodes.clear();
-        previewNodes.clear();
-        smallNodes.clear();
-        bigNodes.clear();
-        withScoresNodes.clear();
+        nodes.clear();
 //		maximalNodes.clear();
 
         if (root == null) return;
 
-        bigNodesWidth = 0;
+ /*       bigNodesWidth = 0;
         withScoresNodesWidth = 0;
 //		maximalNodesWidth = 0;
         bigNodesHeight = 25;
         withScoresNodesHeight = 41;
 //		maximalNodesHeight = 0;
-
-        smallNodesWidth = 0;
-        smallNodesHeight = 20;
-        previewNodesWidth = 10;
+*/
+        nodesWidth = 0;
+        nodesHeight = 20;
+      /*  previewNodesWidth = 10;
         previewNodesHeight = 10;
         thumbnailNodesWidth = 6;
-        thumbnailNodesHeight = 6;
+        thumbnailNodesHeight = 6;*/
 
         processImages(root);
 
@@ -632,8 +552,8 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         int xGridPoints = maxXPosition + 1;
         int yGridPoints = maxYPosition + 1;
 
-        int nodeXPixelNumber = xGridPoints * selectedWidth;
-        int nodeYPixelNumber = yGridPoints * selectedHeight;
+        int nodeXPixelNumber = xGridPoints * nodesWidth;
+        int nodeYPixelNumber = yGridPoints * nodesHeight;
 
         int minHorizontalDistance = this.nodeType == NodeType.preview || this.nodeType == NodeType.thumbnail ? 5 : 10;
         int minVerticalDistance = this.nodeType == NodeType.preview || this.nodeType == NodeType.thumbnail ? 10 : 50;
@@ -641,8 +561,8 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         int gapXPixelNumber = (xGridPoints - 1) * minHorizontalDistance;
         int gapYPixelNumber = (yGridPoints - 1) * minVerticalDistance;
 
-        minimalNodesWidth = nodeXPixelNumber + gapXPixelNumber + WEST_BORDER + EAST_BORDER;
-        minimalNodesHeight = nodeYPixelNumber + gapYPixelNumber + NORTH_BORDER + SOUTH_BORDER;
+        int minimalNodesWidth = nodeXPixelNumber + gapXPixelNumber + WEST_BORDER + EAST_BORDER;
+        int minimalNodesHeight = nodeYPixelNumber + gapYPixelNumber + NORTH_BORDER + SOUTH_BORDER;
 
         this.setPreferredSize(new Dimension(minimalNodesWidth, minimalNodesHeight));
         this.setMinimumSize(new Dimension(minimalNodesWidth, minimalNodesHeight));
@@ -671,158 +591,48 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
     protected void buildNodeImages(TreeNode node) {
         String mf = node.getMolecularFormula();
-//		String ce = node.getCollisionEnergy();
-        String score = scoreFormat.format(node.getScore());
-//		String relInt = intFormat.format(node.getPeakRelativeIntensity());
         String mass = massFormat.format(node.getPeakMass()) + " Da";
-
-        buildThumbnailImage(node);
-
-        buildPreviewImage(node);
-
-        buildSmallImage(node, mf, mass);
-
-        buildBigImage(node, mf, mass);
-
-        buildWithScoresImage(node, mf, mass, score);
-
-//		buildMaximalImage(node, mf, ce, mass, score, relInt);
-
-    }
-
-    protected void buildPreviewImage(TreeNode node) {
-        BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2 = (Graphics2D) image.getGraphics();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(nodeColorManager.getColor(node));
-        g2.fillRect(0, 0, 10, 10);
-        g2.setColor(Color.black);
-        g2.drawRect(0, 0, 9, 9);
-
-        previewNodes.put(node, image);
-    }
-
-    protected void buildThumbnailImage(TreeNode node) {
-        BufferedImage image = new BufferedImage(6, 6, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2 = (Graphics2D) image.getGraphics();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(nodeColorManager.getColor(node));
-        g2.fillRect(0, 0, 6, 6);
-        g2.setColor(Color.black);
-        g2.drawRect(0, 0, 5, 5);
-
-        thumbnailNodes.put(node, image);
-    }
-
-    protected void buildSmallImage(TreeNode node, String mf, String mass) {
+        String peakIntensity = massFormat.format(node.getPeakRelativeIntensity() * 100) + " %";
+        String massDeviation = massFormat.format(node.getDeviationMass()) + " ppm";
 
         int formulaLength = smallFormulaFM.stringWidth(mf);
         int massLength = smallValueFM.stringWidth(mass);
+        int peakIntensityLength = smallValueFM.stringWidth(peakIntensity);
+        int massDeviationLength = smallValueFM.stringWidth(massDeviation);
 
-        int horSize = Math.max(formulaLength, massLength) + 6;
+        final int vertSize = 36;
+        int horSize = Math.max( formulaLength,  massLength);
+        horSize = Math.max(horSize, peakIntensityLength);
+        horSize = Math.max(horSize, massDeviationLength);
+        horSize = horSize + 6;
 
-        BufferedImage image = new BufferedImage(horSize, 20, BufferedImage.TYPE_INT_RGB);
+        BufferedImage image = new BufferedImage(horSize, vertSize, BufferedImage.TYPE_INT_RGB);
 
-        if (smallNodesWidth < horSize) smallNodesWidth = horSize;
+        nodesWidth = horSize;
+        nodesHeight = vertSize;
 
         Graphics2D g2 = (Graphics2D) image.getGraphics();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-//		g2.setColor(nodeColorManager.getColor(node));
         g2.setColor(this.backColor);
-        g2.fillRect(0, 0, horSize, 20);
+        g2.fillRect(0, 0, horSize, vertSize);
         g2.setColor(nodeColorManager.getColor(node));
-//		g2.setColor(Color.black);
-        g2.fillRoundRect(0, 0, horSize, 20, 7, 7);
+
+        g2.fillRoundRect(0, 0, horSize, vertSize, 7, 7);
         g2.setColor(Color.black);
-        g2.drawRoundRect(0, 0, horSize - 1, 19, 7, 7);
-//		g2.setColor(Color.black);
+        g2.drawRoundRect(0, 0, horSize - 1, vertSize -1, 7, 7);
 
         g2.setFont(smallFormulaFont);
         g2.drawString(mf, (horSize - formulaLength) / 2, 9);
 
         g2.setFont(smallValueFont);
         g2.drawString(mass, (horSize - massLength) / 2, 17);
+        g2.drawString(massDeviation, (horSize - massDeviationLength) / 2, 25);
+        g2.drawString(peakIntensity, (horSize - peakIntensityLength) / 2, 33);
 
-        smallNodes.put(node, image);
-
-    }
-
-    protected void buildBigImage(TreeNode node, String mf, String mass) {
-
-        int formulaLength = formulaFM.stringWidth(mf);
-        int massLength = valueFM.stringWidth(mass);
-
-        int horSize = Math.max(formulaLength, massLength) + 10;
-
-        BufferedImage image = new BufferedImage(horSize, 25, BufferedImage.TYPE_INT_RGB);
-
-        if (bigNodesWidth < horSize) bigNodesWidth = horSize;
-
-        Graphics2D g2 = (Graphics2D) image.getGraphics();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(this.backColor);
-        g2.fillRect(0, 0, horSize, 25);
-
-        g2.setColor(nodeColorManager.getColor(node));
-        g2.fillRoundRect(0, 0, horSize, 25, 15, 15);
-
-        g2.setColor(Color.black);
-        g2.drawRoundRect(0, 0, horSize - 1, 24, 15, 15);
-
-        g2.setFont(formulaFont);
-        g2.drawString(mf, (horSize - formulaLength) / 2, 12);
-
-        g2.setFont(valueFont);
-        g2.drawString(mass, (horSize - massLength) / 2, 21);
-
-        bigNodes.put(node, image);
+        nodes.put(node, image);
 
     }
 
-    protected void buildWithScoresImage(TreeNode node, String mf, String mass, String score) {
-        int scoreValueWidth = valueFM.stringWidth(score);
-//		int ceValueWidth    = valueFM.stringWidth(ce);
-//		int propertyMax = Math.max(cePropertyWidth,scorePropertyWidth);
-        int propertyMax = scorePropertyWidth;
-//		int valueMax    = Math.max(scoreValueWidth, ceValueWidth);
-        int valueMax = scoreValueWidth;
-        int formulaMax = formulaFM.stringWidth(mf);
-        int max = Math.max(valueMax + 5 + propertyMax, formulaMax) + 10;
-
-        int massLength = valueFM.stringWidth(mass);
-
-        BufferedImage image = new BufferedImage(max, 31, BufferedImage.TYPE_INT_RGB);
-        if (max > withScoresNodesWidth) withScoresNodesWidth = max;
-
-        Graphics2D g2 = (Graphics2D) image.getGraphics();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(this.backColor);
-        g2.fillRect(0, 0, max, 31);
-
-        g2.setColor(nodeColorManager.getColor(node));
-        g2.fillRoundRect(0, 0, max, 31, 15, 15);
-
-        g2.setColor(Color.black);
-        g2.drawRoundRect(0, 0, max - 1, 30, 15, 15);
-
-        g2.setFont(formulaFont);
-        g2.drawString(mf, (max - formulaMax) / 2, 10);
-
-        g2.setFont(propertyFont);
-//		g2.drawString("ce: ",5,29);
-        g2.drawString("score: ", 5, 29);
-
-        g2.setFont(valueFont);
-//		g2.drawString(ce,10+propertyMax, 29);
-        g2.drawString(score, 10 + propertyMax, 29);
-        g2.drawString(mass, (max - massLength) / 2, 19);
-
-        withScoresNodes.put(node, image);
-    }
-
-//	protected void buildMaximalImage(TreeNode node, String mf, String ce, String mass, String score, String relInt){
-//		//TODO
-//	}
 
     protected void printNodes(Graphics2D g2, TreeNode node) {
         printNode(g2, node);
@@ -837,7 +647,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         int absX = getXPosition(relX);
         int absY = getYPosition(relY);
 
-        BufferedImage image = selectedNodeStyle.get(node);
+        BufferedImage image = nodes.get(node);
 
         int startPosX = absX - (image.getWidth() / 2);
         int startPosY = absY - (image.getHeight() / 2);
@@ -887,7 +697,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
                 PositionContainer parentContainer = positonsMap.get(node);
 
-                BufferedImage parentImage = selectedNodeStyle.get(node);
+                BufferedImage parentImage = nodes.get(node);
 
                 double stepSize = parentImage.getWidth() / (nodeNumber + 1.0);
 //				int index = 1;
@@ -897,7 +707,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
                     TreeEdge edge = edges.get(i);
 
                     PositionContainer childContainer = positonsMap.get(edge.getTarget());
-                    BufferedImage childImage = selectedNodeStyle.get(edge.getTarget());
+                    BufferedImage childImage = nodes.get(edge.getTarget());
 
                     int startX = (int) (parentContainer.getWestX() + (i + 1) * stepSize);
                     int startY = parentContainer.getSouthY();
@@ -1118,9 +928,9 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
                             int valY = labelHeight + corrVal + 2;
 
                             if (eastAncestorBorder >= westBorder) {
-                                if ((northAncestorBorder <= northBorder && southAncestorBorder >= northBorder) || (northAncestorBorder <= southBorder && southAncestorBorder >= southAncestorBorder) ||
-                                        (northAncestorBorder >= northBorder && southAncestorBorder <= southBorder)) {
-
+                                if ((northAncestorBorder <= northBorder && southAncestorBorder >= northBorder)
+                                || (northAncestorBorder <= southBorder && southAncestorBorder >= southAncestorBorder)
+                                || (northAncestorBorder >= northBorder && southAncestorBorder <= southBorder)) {
                                     int posY = southAncestorBorder + labelHeight + corrVal + 2;
                                     int posX = function.getXPosition(posY - (labelHeight + corrVal) / 2) - labelWidth / 2;
                                     g2.setColor(this.backColor);
@@ -1139,13 +949,9 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
                                 g2.fillRect(westBorder - 1, northBorder - 1, valX, valY);
                                 g2.setColor(Color.BLACK);
                                 printLabel(g2, label, westBorder, southBorder, labelWidth, labelHeight, function);
-
                             }
-
                         }
-
                     }
-
                 }
             }
         }

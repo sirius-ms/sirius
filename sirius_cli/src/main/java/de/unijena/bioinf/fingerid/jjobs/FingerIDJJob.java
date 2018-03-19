@@ -22,6 +22,8 @@ import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
+import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
 
 import java.util.*;
 
@@ -103,14 +105,26 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
 
             //collect input from dependent jobs
             for (JJob j : getRequiredJobs()) {
+                //todo just for compatibility with old version. remove afterwards!!!
                 if (j instanceof Sirius.SiriusIdentificationJob) {
                     Sirius.SiriusIdentificationJob job = (Sirius.SiriusIdentificationJob) j;
                     if (experiment == null) {
                         experiment = job.getExperiment();
                     } else if (experiment != job.getExperiment()) {
-                        throw new IllegalArgumentException("SiriusIdentificationJobs to collect are from different MS2Experments");
+                        throw new IllegalArgumentException("SiriusIdentificationJobs to collect are from different MS2Experiments");
                     }
                     input.addAll(job.awaitResult());
+                }
+                if (j instanceof ExperimentResultJJob) {
+                    ExperimentResultJJob job = (ExperimentResultJJob) j;
+                    ExperimentResult experimentResult = job.awaitResult();
+                    if (experiment == null) {
+                        experiment = experimentResult.getExperiment();
+                    } else if (experiment != experimentResult.getExperiment()) {
+                        throw new IllegalArgumentException("SiriusIdentificationJobs to collect are from different MS2Experiments");
+                    }
+                    List<IdentificationResult> results = experimentResult.getResults();
+                    if (results!=null) input.addAll(results);
                 }
             }
 
