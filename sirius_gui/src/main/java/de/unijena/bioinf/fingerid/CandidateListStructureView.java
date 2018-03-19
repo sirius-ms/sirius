@@ -36,7 +36,7 @@ public class CandidateListStructureView extends JPanel {
                 list.clear();
                 if (!selections.isSelectionEmpty()) {
                     list.addAll(selections.getSelected());
-                    revalidate(); //todo I really do not no why i have to call that. horizontal list seemms to be buggy
+                    revalidate(); //Fleisch really does not no why he has to call that. Horizontal list seemms to be buggy
                 }
             }
         });
