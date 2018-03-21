@@ -4,6 +4,16 @@
 
 -   **Negative ion mode data is now supported**
 
+-   **Polished and more informative GUI**
+    - **Sirius Overview:** Explained intensity, number of explained peaks, median mass deviation  
+    - **Fragmentation trees:** Color coding of nodes by intensity/mass deviation,
+      more informative Fragmentation tree nodes
+    - **CSI:FingerID Overview:** Number of Pubmed publication with pubmed linking for each Candidate,
+      Visualization of CSI:FingerID score.
+    - **Predicted Fingerprints:** Visualisation of prediction (posterior probability), predictor quality (F1)
+      and number of training examples.    
+    - Several small improvements
+    
 -   **CPLEX** ILP solver support
 
 -   Consider a specific list of **ionizations for Sirius**
