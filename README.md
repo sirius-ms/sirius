@@ -28,12 +28,12 @@ CSI:FingerID.</span>
 - [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-manual.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 4.1-SNAPSHOT (Build 0 from 2018-03-16)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 4.1-SNAPSHOT (Build 0 from 2018-03-21)
 - for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-win64.zip)
 - for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-linux64.zip)
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-osx64.zip)
 
-### SIRIUS+CSI:FingerID Commandline only - Version 4.1-SNAPSHOT (Build 0 from 2018-03-16)
+### SIRIUS+CSI:FingerID Commandline only - Version 4.1-SNAPSHOT (Build 0 from 2018-03-21)
 - for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-win64-headless.zip)
 - for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-linux64-headless.zip)
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.1-SNAPSHOT/sirius-4.1-SNAPSHOT-osx64-headless.zip)
