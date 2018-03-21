@@ -19,6 +19,7 @@ public class CandidateTableFormat extends SiriusTableFormat<CompoundCandidate> {
             "Adduct",
             "CSI:FingerID Score",
             "Similarity",
+            "#PubMed IDs",
             "XLogP",
             "InChIKey",
             "Best"
@@ -51,6 +52,7 @@ public class CandidateTableFormat extends SiriusTableFormat<CompoundCandidate> {
         if (column == col++) return result.adduct;
         if (column == col++) return result.getScore();
         if (column == col++) return result.getTanimotoScore();
+        if (column == col++) return result.getCompound().pubmedIds;
         if (column == col++) return result.compound.xlogP;
         if (column == col++) return result.compound.inchi.key;
         if (column == col) return isBest(result);
