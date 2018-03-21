@@ -18,9 +18,11 @@
 
 package de.unijena.bioinf.fingerid;
 
+// todo is this class really needed -> If yes it has to be cleaned up
+// todo why not use compund candidate instead???
+
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.*;
@@ -29,6 +31,7 @@ import de.unijena.bioinf.fingerid.db.CustomDataSourceService;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
 import net.sf.jniinchi.INCHI_RET;
+import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
@@ -84,6 +87,9 @@ public class Compound {
     protected Multimap<String, String> databases;
     protected int[] pubchemIds; // special case for the lots of pubchem ids a structure might have
 
+    @NotNull
+    protected PubmedLinks pubmedIds = PubmedLinks.EMPTY_LINKS;
+
     protected int pLayer;
     protected int qLayer;
 
@@ -107,22 +113,16 @@ public class Compound {
         this.pLayer = candidate.getpLayer();
         this.qLayer = candidate.getqLayer();
         this.xlogP = candidate.getXlogp();
-    }
-
-    public long getBitset() {
-        return bitset;
+        if (candidate.getPubmedIDs() != null)
+            this.pubmedIds = candidate.getPubmedIDs();
     }
 
     protected Compound() {
 
     }
 
-    public CompoundWithAbstractFP<ProbabilityFingerprint> asQuery(ProbabilityFingerprint probFp) {
-        return new CompoundWithAbstractFP<ProbabilityFingerprint>(inchi, probFp);
-    }
-
-    public CompoundWithAbstractFP<Fingerprint> asCandidate() {
-        return new CompoundWithAbstractFP<Fingerprint>(inchi, this.fingerprint);
+    public long getBitset() {
+        return bitset;
     }
 
     public FingerprintCandidate asFingerprintCandidate() {
@@ -399,26 +399,6 @@ public class Compound {
         }
     }
 
-    public static boolean[] stringToBoolean(String fingerprint, int[] fingerprintIndizes) {
-        final boolean[] values = new boolean[fingerprintIndizes.length];
-        for (int k = 0; k < fingerprintIndizes.length; ++k)
-            if (fingerprint.charAt(fingerprintIndizes[k]) == '1')
-                values[k] = true;
-        return values;
-    }
-
-    public static void merge(List<FingerprintCandidate> candidates, File file) throws IOException {
-        MaskedFingerprintVersion mv = null;
-        if (candidates.size() > 0) {
-            FingerprintVersion v = candidates.get(0).getFingerprint().getFingerprintVersion();
-            if (v instanceof MaskedFingerprintVersion) mv = (MaskedFingerprintVersion) v;
-            else {
-                mv = MaskedFingerprintVersion.buildMaskFor(v).enableAll().toMask();
-            }
-        }
-        merge(mv, candidates, file);
-    }
-
     /**
      * merges a given list of fingerprint candidates into the given file. Ignore duplicates
      *
@@ -474,25 +454,6 @@ public class Compound {
         return fingerprint;
     }
 
-    /*public void mergeMetaData(Compound meta) {
-        if (name==null) name = meta.name;
-        if (smiles==null) smiles = meta.smiles;
-        if (inchi==null) inchi = meta.inchi;
-        if (pubchemIds==null) pubchemIds = meta.pubchemIds;
-        else if (meta.pubchemIds!=null) {
-            final TIntHashSet ids = new TIntHashSet(pubchemIds);
-            ids.addAll(meta.pubchemIds);
-            pubchemIds = ids.toArray();
-            Arrays.sort(pubchemIds);
-        }
-        bitset = bitset|meta.bitset;
-        if (databases==null) databases=ArrayListMultimap.create(meta.databases);
-        else {
-            databases = HashMultimap.create(databases);
-            databases.putAll(meta.databases);
-            databases = ArrayListMultimap.create(databases);
-        }
-    }*/
 
     public void addDatabase(String name, String id) {
         CustomDataSourceService.Source c = CustomDataSourceService.getSourceFromName(name);

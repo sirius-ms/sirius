@@ -3,6 +3,7 @@ package de.unijena.bioinf.fingerid;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
+import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.*;
@@ -27,12 +28,13 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
         this.table = new ActionTable<>(filteredSource, sortedSource, tf);
 
         table.setSelectionModel(filteredSelectionModel);
-        table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tf.highlightColumnIndex()));
+        final SiriusResultTableCellRenderer defaultRenderer = new SiriusResultTableCellRenderer(tf.highlightColumnIndex());
+        table.setDefaultRenderer(Object.class, defaultRenderer);
 
         table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer(tf.highlightColumnIndex(), source.scoreStats, false, false, null));
         table.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
-
-
+        LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer, PubmedLinks::getPubmedLink);
+        linkRenderer.registerToTable(table, 7);
         this.add(
                 new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
                 BorderLayout.CENTER
