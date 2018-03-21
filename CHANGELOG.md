@@ -12,7 +12,7 @@
       Visualization of CSI:FingerID score.
     - **Predicted Fingerprints:** Visualisation of prediction (posterior probability), predictor quality (F1)
       and number of training examples.    
-    - Several small improvements
+    - Several small improvements            
     
 -   **CPLEX** ILP solver support
 
