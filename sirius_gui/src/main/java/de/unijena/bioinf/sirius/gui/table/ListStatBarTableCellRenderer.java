@@ -1,6 +1,5 @@
 package de.unijena.bioinf.sirius.gui.table;
 
-import com.sun.org.apache.xpath.internal.operations.Number;
 import de.unijena.bioinf.sirius.gui.table.list_stats.ListStats;
 
 import javax.swing.*;
@@ -18,11 +17,11 @@ public class ListStatBarTableCellRenderer extends AbstractBarTableCellRenderer {
     }
 
     public ListStatBarTableCellRenderer(ListStats stats, boolean percentage) {
-        this(-1, stats, percentage, false,null);
+        this(-1, stats, percentage, false, null);
     }
 
     public ListStatBarTableCellRenderer(int highlightColumn, ListStats stats, boolean percentage) {
-        this(highlightColumn, stats, percentage, false,null);
+        this(highlightColumn, stats, percentage, false, null);
     }
 
     public ListStatBarTableCellRenderer(int highlightColumn, ListStats stats, boolean percentage, boolean printMaxValue, NumberFormat lableFormat) {
