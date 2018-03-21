@@ -84,10 +84,6 @@ public class WebAPI implements Closeable {
     public static final DefaultArtifactVersion VERSION = new DefaultArtifactVersion(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.version"));
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
     public static final String FINGERID_WEB_API = FingerIDProperties.fingeridWebHost();
-//    public static final String FINGERID_WEBSITE = "http://www.csi-fingerid.org";
-
-//    public static PrecursorIonType[] positiveIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(1), PrecursorIonType.class);
-//    public static PrecursorIonType[] negativeIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(-1), PrecursorIonType.class);
 
 
     public static WebAPI newInstance() {
@@ -277,20 +273,6 @@ public class WebAPI implements Closeable {
         }
         return new RESTDatabase(cacheDir, bioFilter, host, client);
     }
-
-
-    /*
-    public List<Compound> getCompounds(List<String> inchikeys) {
-        final URIBuilder b = getFingerIdURI("/webapi/compounds.json");
-        try {
-            final HttpPost post = new HttpPost(b.build());
-            // TODO: implement
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-    */
 
 
     public boolean updateJobStatus(FingerIdJob job) throws URISyntaxException, IOException {
@@ -500,46 +482,6 @@ public class WebAPI implements Closeable {
             covarianceScoring = CovarianceScoring.readScoring(e.getContent(), ContentType.getOrDefault(e).getCharset(), fpVersion, alpha);
         }
         return covarianceScoring;
-    }
-
-    public List<Compound> getCompoundsFor(MolecularFormula formula, File output, MaskedFingerprintVersion version, boolean bio) throws IOException {
-        final HttpGet get;
-        try {
-            get = new HttpGet(getFingerIdURI("/webapi/compounds/" + (bio ? "bio/" : "not-bio/") + formula.toString() + ".json").build());
-            get.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-        final ArrayList<Compound> compounds = new ArrayList<>(100);
-        try (CloseableHttpResponse response = client.execute(get)) {
-            try (MultiplexerFileAndIO io = new MultiplexerFileAndIO(response.getEntity().getContent(), new GZIPOutputStream(new FileOutputStream(output)))) {
-                try (final JsonParser parser = Json.createParser(io)) {
-                    return Compound.parseCompounds(version, compounds, parser);
-                }
-            }
-        }
-    }
-
-    public QueryPredictor getConfidenceScore(boolean bio) {
-        final HttpGet get;
-        try {
-            get = new HttpGet(getFingerIdURI("/webapi/confidence.json").setParameter("bio", String.valueOf(bio)).build());
-            try (CloseableHttpResponse response = client.execute(get)) {
-                final BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), Charset.forName("UTF-8")));
-                final QueryPredictor qp = QueryPredictor.loadFromStream(br);
-                br.close();
-                return qp;
-            } catch (ClientProtocolException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-                return null;
-            } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-                return null;
-            }
-        } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
     }
 
     public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException, URISyntaxException {
