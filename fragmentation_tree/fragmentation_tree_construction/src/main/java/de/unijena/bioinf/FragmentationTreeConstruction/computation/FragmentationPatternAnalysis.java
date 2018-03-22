@@ -195,10 +195,18 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
 
         MeasurementProfile profile = input.getAnnotation(MeasurementProfile.class, null);
-        if (profile == null) profile = defaultProfile;
-        else profile = MutableMeasurementProfile.merge(defaultProfile, profile);
-
+        FormulaConstraints constraints = null;
+        if (profile == null) {
+            profile = defaultProfile;
+        }  else {
+            constraints = profile.getFormulaConstraints();
+            profile = MutableMeasurementProfile.merge(defaultProfile, profile);
+        }
         final ProcessedInput pinput =  new ProcessedInput(new MutableMs2Experiment(exp), originalExperiment, new MutableMeasurementProfile(profile));
+        if (constraints==null && (originalExperiment.getAnnotation(FormulaSettings.class,null)!=null)) {
+            constraints = originalExperiment.getAnnotation(FormulaSettings.class).getConstraints();
+            pinput.getMeasurementProfile().setFormulaConstraints(constraints);
+        }
 
         if (originalExperiment.getMolecularFormula()!=null) {
             pinput.getMeasurementProfile().setFormulaConstraints(pinput.getMeasurementProfile().getFormulaConstraints().getExtendedConstraints(FormulaConstraints.allSubsetsOf(originalExperiment.getMolecularFormula())));
