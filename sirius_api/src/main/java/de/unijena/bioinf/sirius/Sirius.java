@@ -72,16 +72,20 @@ public class Sirius {
 
 
     public static void main(String[] args) {
-        final Sirius sirius = new Sirius();
-
         try {
-            Ms2Experiment experiment = sirius.parseExperiment(new File("/home/kaidu/data/ms/demo-data/ms/bicculine_ms1only.ms")).next();
+            Sirius sirius = new Sirius();
+            // input file
+            Ms2Experiment experiment = sirius.parseExperiment(new File("someFile.ms")).next();
+            // intermediate object
+            ProcessedInput pinput = sirius.getMs2Analyzer().preprocessing(experiment);
+            Decomposition decomposition = pinput.getAnnotationOrThrow(DecompositionList.class).find(experiment.getMolecularFormula());
+            FGraph graph = sirius.getMs2Analyzer().buildGraphWithoutReduction(pinput, decomposition);
 
-            System.out.println(sirius.identify(experiment).getRawJSONTree());
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
 
