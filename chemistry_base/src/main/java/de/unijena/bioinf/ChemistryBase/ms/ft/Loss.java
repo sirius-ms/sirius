@@ -30,6 +30,7 @@ public class Loss {
     protected double weight;
     protected int sourceEdgeOffset, targetEdgeOffset;
     protected Object[] annotations;
+    protected double probability;
 
     public Loss(Fragment from, Fragment to, MolecularFormula loss, double weight) {
         this.source = from;
@@ -39,6 +40,7 @@ public class Loss {
         this.annotations = EMPTY_ARRAY;
         this.sourceEdgeOffset = 0;
         this.targetEdgeOffset = 0;
+        this.probability = 0;
     }
 
     protected Loss(Loss old, Fragment newFrom, Fragment newTo) {
@@ -49,6 +51,7 @@ public class Loss {
         this.annotations = old.annotations.clone();
         this.sourceEdgeOffset = old.sourceEdgeOffset;
         this.targetEdgeOffset = old.targetEdgeOffset;
+        this.probability = old.probability;
     }
 
     public Loss(Fragment from, Fragment to) {
@@ -81,6 +84,14 @@ public class Loss {
 
     public void setFormula(MolecularFormula formula) {
         this.formula = formula;
+    }
+
+    public double getProbability() {
+        return probability;
+    }
+
+    public void setProbability(double probability) {
+        this.probability = probability;
     }
 
     final Object getAnnotation(int id) {
