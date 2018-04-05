@@ -563,5 +563,14 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
 
     public abstract Loss getLoss(Fragment u, Fragment v);
 
+    public void sortFragments()
+    {
+        Collections.sort(fragments);
+        int id = 0;
+        for (Fragment f : fragments) {
+            f.setVertexId(id++);
+        }
+    }
+
 
 }
