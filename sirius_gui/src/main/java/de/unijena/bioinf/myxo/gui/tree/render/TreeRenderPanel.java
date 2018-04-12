@@ -373,7 +373,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         PositionContainer cont = positonsMap.get(node);
 
         String massProp = "peak mass:";
-        String absIntProp = "abolute intensity:";
+        String absIntProp = "absolute intensity:";
         String relIntProp = "relative intensity:";
 //		String signalNoiseProp = "signal noise:";
 //		String colEnergyProp   = "collision energy:";
