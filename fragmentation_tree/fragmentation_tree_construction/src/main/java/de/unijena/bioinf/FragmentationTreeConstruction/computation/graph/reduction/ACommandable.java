@@ -91,7 +91,7 @@ public abstract class ACommandable {
 	/**
 	 * - this might be overridden by commands that act on the graph and that might use things that can change over time
 	 * - do consider unexpected changed from different programmers, too!
-	 * @return: true, if the test is successful
+	 *  returns true, if the test is successful
 	 */
 	protected boolean isConsistent() {
 		return true;
@@ -111,7 +111,6 @@ public abstract class ACommandable {
 
 	/**
 	 * Message that will be printed when 'isConsistent' returned 'false'
-	 * @return
 	 */
 	protected String getInconsistencyErrorMessage() {
 		return " >|< Command consistency check failed! >|< ";
@@ -128,8 +127,8 @@ public abstract class ACommandable {
 	 * that is the actual execution that will be changed in sub-classes
 	 * @param arg: argument list; provided by command parser ( by default )
 	 * @param Ci: command index, 0 {@literal <=} Ci {@literal <} arg.length; provided by command parser ( by default )
-	 * @return: return Ci, if no additional command is used; else, increase Ci for every argument you take from 'arg'
-	 *          and return the result
+	 * return Ci, if no additional command is used; else, increase Ci for every argument you take from 'arg'
+	 * and return the result
 	 */
 	protected abstract int executeMethod( String[] arg, int Ci );
 
