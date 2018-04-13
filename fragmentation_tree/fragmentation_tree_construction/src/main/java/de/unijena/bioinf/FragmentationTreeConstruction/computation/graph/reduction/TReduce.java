@@ -137,7 +137,7 @@ public class TReduce {
     /**
      * CMD: reduce-colsubtree-adv
      *
-     * @return: TRUE, if at least 1 edge has been deleted within this call
+     * return: TRUE, if at least 1 edge has been deleted within this call
      * TODO: check for correctness
      */
     public boolean doReduceColorsubtreeAdvantage() {
@@ -403,7 +403,7 @@ public class TReduce {
     /**
      * CMD: reduce-negpend
      *
-     * @return: true, if at least 1 edge has been deleted
+     * return: true, if at least 1 edge has been deleted
      * TODO: check for correctness, rewritten
      */
     public boolean reduceNegativePendantEdges() {
