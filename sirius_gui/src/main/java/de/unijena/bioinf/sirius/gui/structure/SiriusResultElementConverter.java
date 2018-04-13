@@ -44,11 +44,19 @@ public class SiriusResultElementConverter {
         Fragment rootK = ft.getRoot();
         TreeNode rootM = new DefaultTreeNode();
         double maxIntensity = Double.NEGATIVE_INFINITY;
+        double maxRelIntensity = Double.NEGATIVE_INFINITY;
 
         for (Fragment fragment : ft.getFragments()) {
             if (peakAno.get(fragment) == null) continue;
             double fragIntensity = peakAno.get(fragment).getIntensity();
             if (fragIntensity > maxIntensity) maxIntensity = fragIntensity;
+        }
+        if (annoPeakAnno!=null){
+            for (Fragment fragment : ft.getFragments()) {
+                if (annoPeakAnno.get(fragment) == null) continue;
+                double fragIntensity = annoPeakAnno.get(fragment).getRelativeIntensity();
+                if (fragIntensity > maxRelIntensity) maxRelIntensity = fragIntensity;
+            }
         }
 
         rootM.setMolecularFormula(rootK.getFormula().toString());
@@ -62,7 +70,7 @@ public class SiriusResultElementConverter {
         } else {
             if (annoPeakAnno!=null){
                 rootM.setPeakMass(annoPeakAnno.get(rootK).getMass());
-                rootM.setPeakRelativeIntensity(annoPeakAnno.get(rootK).getRelativeIntensity());
+                rootM.setPeakRelativeIntensity(annoPeakAnno.get(rootK).getRelativeIntensity()/maxRelIntensity);
                 rootM.setPeakAbsoluteIntenstiy(annoPeakAnno.get(rootK).getSumedIntensity());
             } else {
                 rootM.setPeakMass(peakAno.get(rootK).getMass());
@@ -74,14 +82,14 @@ public class SiriusResultElementConverter {
 
         calculateDeviatonMassInPpm(rootM, ft, massDeviations);
 
-        convertNode(ft, rootK, rootM, peakAno, annoPeakAnno, lscore, fscore, maxIntensity, massDeviations);
+        convertNode(ft, rootK, rootM, peakAno, annoPeakAnno, lscore, fscore, maxIntensity, maxRelIntensity, massDeviations);
 
         Collections.sort(massDeviations);
         rootM.setMedianMassDeviation(massDeviations.get(massDeviations.size()/2));
         return rootM;
     }
 
-    private static void convertNode(FTree ft, Fragment sourceK, TreeNode sourceM, FragmentAnnotation<Peak> peakAno, FragmentAnnotation<AnnotatedPeak> annoPeakAnno, LossAnnotation<Score> lscore, FragmentAnnotation<Score> fscore, double maxIntensity, ArrayList<Double> massDeviations ) {
+    private static void convertNode(FTree ft, Fragment sourceK, TreeNode sourceM, FragmentAnnotation<Peak> peakAno, FragmentAnnotation<AnnotatedPeak> annoPeakAnno, LossAnnotation<Score> lscore, FragmentAnnotation<Score> fscore, double maxIntensity, double maxRelIntensityOfAnnoPeakAnno, ArrayList<Double> massDeviations ) {
         for (Loss edgeK : sourceK.getOutgoingEdges()) {
             Fragment targetK = edgeK.getTarget();
 
@@ -100,7 +108,7 @@ public class SiriusResultElementConverter {
 
                 if (annoPeakAnno!=null){
                     targetM.setPeakMass(annoPeakAnno.get(targetK).getMass());
-                    targetM.setPeakRelativeIntensity(annoPeakAnno.get(targetK).getRelativeIntensity());
+                    targetM.setPeakRelativeIntensity(annoPeakAnno.get(targetK).getRelativeIntensity()/maxRelIntensityOfAnnoPeakAnno);
                     targetM.setPeakAbsoluteIntenstiy(annoPeakAnno.get(targetK).getSumedIntensity());
                 } else {
                     targetM.setPeakMass(peakAno.get(targetK).getMass());
@@ -127,7 +135,7 @@ public class SiriusResultElementConverter {
             sourceM.addOutEdge(edgeM);
             targetM.setInEdge(edgeM);
 
-            convertNode(ft, targetK, targetM, peakAno, annoPeakAnno, lscore, fscore, maxIntensity, massDeviations );
+            convertNode(ft, targetK, targetM, peakAno, annoPeakAnno, lscore, fscore, maxIntensity, maxRelIntensityOfAnnoPeakAnno, massDeviations );
         }
     }
 
