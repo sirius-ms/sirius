@@ -43,6 +43,7 @@ import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.normalize;
 public class IsotopePatternAnalysis implements Parameterized {
 
     public static final String ANALYZER_NAME = "IsotopePatternAnalysis";
+    private static final boolean USE_ALWAYS_THE_COMPLETE_PATTERN = false;
 
     private List<IsotopePatternScorer> isotopePatternScorers;
     private double cutoff;
@@ -307,9 +308,14 @@ public class IsotopePatternAnalysis implements Parameterized {
             for (IsotopePatternScorer scorer : isotopePatternScorers) {
                 scorer.score(scoreBuffer, measuredOne, theoreticalSpectrum, Normalization.Max(1), experiment, profile);
             }
-            int optScoreIndex = 0;
-            for (int j = 0; j < scoreBuffer.length; ++j) {
-                if (scoreBuffer[j] > scoreBuffer[optScoreIndex]) optScoreIndex = j;
+            int optScoreIndex;
+            if (USE_ALWAYS_THE_COMPLETE_PATTERN) {
+                optScoreIndex = scoreBuffer.length-1;
+            } else {
+                optScoreIndex = 0;
+                for (int j = 0; j < scoreBuffer.length; ++j) {
+                    if (scoreBuffer[j] > scoreBuffer[optScoreIndex]) optScoreIndex = j;
+                }
             }
             patterns.add(new IsotopePattern(formula, scoreBuffer[optScoreIndex], allPatternVariants[optScoreIndex]));
         }

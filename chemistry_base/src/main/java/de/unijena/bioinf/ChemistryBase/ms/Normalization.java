@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
 import static de.unijena.bioinf.ChemistryBase.ms.NormalizationMode.MAX;
 import static de.unijena.bioinf.ChemistryBase.ms.NormalizationMode.SUM;
+import static de.unijena.bioinf.ChemistryBase.ms.NormalizationMode.FIRST;
 
 @HasParameters
 public class Normalization {
@@ -33,6 +34,7 @@ public class Normalization {
 	
 	public final static Normalization Sum = new Normalization(SUM, 1d);
 	public final static Normalization Max = new Normalization(MAX, 1d);
+    public final static Normalization First = new Normalization(FIRST, 1d);
 	
 	public static Normalization Sum(double norm) {
 		return new Normalization(SUM, norm);
