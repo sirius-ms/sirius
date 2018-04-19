@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>de.unijena.bioinf</groupId>
+    <artifactId>ClassicTreeAlign</artifactId>
+    <version>2.1</version>
+    
+    <parent>
+      <groupId>de.unijena.bioinf</groupId>
+      <artifactId>FastFragmentationTreeAlign</artifactId>
+      <version>2.1</version>
+    </parent>
+    <!--
+    <scm>
+      <url>https://bio.informatik.uni-jena.de/svnrep/trunk/software/FastFragmentationTreeAlign/</url>
+      <connection>scm:svn:https://bio.informatik.uni-jena.de/svnrep/trunk/software/FastFragmentationTreeAlign/</connection>
+      <tag>HEAD</tag>
+    </scm>
+    -->
+  
+   <repositories>
+        <repository>
+            <id>bioinf-jena</id>
+            <url>http://bio.informatik.uni-jena.de/artifactory/repo</url>
+            <name>Bioinf Jena</name>
+        </repository>
+        <repository>
+          <id>sourceforge</id>
+          <url>http://eulergui.sourceforge.net/maven2/</url>
+          <name>eulergui.sourceforge</name>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>de.unijena.bioinf</groupId>
+            <artifactId>FastTreeAlign</artifactId>
+            <version>2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.xml-cml</groupId>
+            <artifactId>cmlxom</artifactId>
+            <version>3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>att.grappa</groupId>
+            <artifactId>grappa</artifactId>
+            <version>1.2</version>
+        </dependency>
+    </dependencies>
+
+
+</project>
