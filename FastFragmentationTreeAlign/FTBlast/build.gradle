@@ -1,4 +1,0 @@
-dependencies() {
-    compile "com.lexicalscope.jewelcli:jewelcli:0.8+",
-            "net.sf.opencsv:opencsv:2.3+"
-}

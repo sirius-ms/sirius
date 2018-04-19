@@ -1,4 +1,0 @@
-dependencies() {
-    compile "de.unijena.bioinf:FragmentationTreeConstruction:1.21-SNAPSHOT",
-            "de.unijena.bioinf:BabelMs:1.0-SNAPSHOT"
-}

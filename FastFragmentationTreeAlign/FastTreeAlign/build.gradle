@@ -1,3 +1,0 @@
-dependencies() {
-    compile "de.unijena.bioinf:GraphUtils:1.0"
-}
