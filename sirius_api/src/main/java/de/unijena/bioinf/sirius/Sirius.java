@@ -1072,19 +1072,25 @@ public class Sirius {
         }
         int isoPeaks = 0;
         double maxScore = Double.NEGATIVE_INFINITY;
+        boolean doFilter = false; double scoreThresholdForFiltering = 0d;
         for (IsotopePattern pat : pattern.getExplanations().values()) {
             maxScore = Math.max(pat.getScore(), maxScore);
-            isoPeaks = Math.max(pat.getPattern().size(), isoPeaks);
+            if (pat.getScore()>=pat.getPattern().size()*3) {
+                isoPeaks = Math.max(pat.getPattern().size(), isoPeaks);
+                scoreThresholdForFiltering = isoPeaks*2;
+                doFilter=true;
+            }
         }
+        //doFilter = doFilter && pattern.getExplanations().size() > 100;
         // step 3: apply filtering and/or scoring
-        if (maxScore >= MINIMAL_SCORE_FOR_APPLY_FILTER) {
+        if (doFilter && maxScore >= scoreThresholdForFiltering) {
             if (handling.isFiltering()) {
                 //final Iterator<Map.Entry<MolecularFormula, IsotopePattern>> iter = pattern.getExplanations().entrySet().iterator();
                 final Iterator<Decomposition> iter = decompositions.getDecompositions().iterator();
                 while (iter.hasNext()) {
                     final Decomposition d = iter.next();
                     final IsotopePattern p = pattern.getExplanations().get(d.getCandidate());
-                    if (p==null || p.getScore() < ((isoPeaks * ISOTOPE_SCORE_FILTER_THRESHOLD))) {
+                    if (p==null || p.getScore() < scoreThresholdForFiltering) {
                         iter.remove();
                     }
                 }
