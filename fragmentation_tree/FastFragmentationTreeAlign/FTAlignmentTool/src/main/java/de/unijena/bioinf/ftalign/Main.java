@@ -391,14 +391,14 @@ public class Main {
             if (methodName.contains("align")) {
                 factory =
                         set.has("nonsparse") ?
-                                new TreeAlignmentAlgorithm.NonSparseFactory<Fragment>(FTree.treeAdapter(), scoring, numberOfJoins > 0)
+                                new TreeAlignmentAlgorithm.NonSparseFactory<Fragment>(FTree.treeAdapterStatic(), scoring, numberOfJoins > 0)
                                 :
-                                new TreeAlignmentAlgorithm.Factory<Fragment>(FTree.treeAdapter(),
+                                new TreeAlignmentAlgorithm.Factory<Fragment>(FTree.treeAdapterStatic(),
                                         scoring, numberOfJoins, useMultiJoins);
             } else if (methodName.contains("path")) {
-                factory = new CountingFactory(FTree.treeAdapter(), scoring, weighting, false);
+                factory = new CountingFactory(FTree.treeAdapterStatic(), scoring, weighting, false);
             } else if (methodName.contains("subtree")) {
-                factory = new CountingFactory(FTree.treeAdapter(), scoring, weighting, true);
+                factory = new CountingFactory(FTree.treeAdapterStatic(), scoring, weighting, true);
             } else {
                 factory = null;
                 System.err.println("Expect either <alignment>, <path> or <subtree> as method. Unknown method <" + methodName + ">");
@@ -462,7 +462,7 @@ public class Main {
             dataset.pushBeforeCallback(new FTDataset.BeforeCallback() {
                 @Override
                 public void run(FTDataElement left, FTDataElement right) {
-                    dataset.setTracer(new AlignmentTreeBacktrace<Fragment>(FTree.treeAdapter()));
+                    dataset.setTracer(new AlignmentTreeBacktrace<Fragment>(FTree.treeAdapterStatic()));
                 }
             });
             dataset.pushAfterCallback(new AfterCallback() {
