@@ -234,7 +234,7 @@ public class StandardScoring2 implements Scoring<Fragment>, SimpleEqualityScorin
 
     @Override
     public float selfAlignScore(Fragment root) {
-        return new PostOrderTraversal<Fragment>(root, FTree.treeAdapter()).<Float>call(new PostOrderTraversal.Call<Fragment, Float>() {
+        return new PostOrderTraversal<Fragment>(root, FTree.treeAdapterStatic()).<Float>call(new PostOrderTraversal.Call<Fragment, Float>() {
             @Override
             public Float call(Fragment vertex, List<Float> values, boolean isRoot) {
                 float sum = (isRoot ? scoreVertices(vertex, vertex) : match(vertex, vertex));
