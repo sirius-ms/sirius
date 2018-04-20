@@ -314,7 +314,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     public boolean isEmpty() {
         final short[] amounts = buffer();
         for (int i=0; i < amounts.length; ++i) {
-            if (amounts[i]>0) return false;
+            if (amounts[i]!=0) return false;
         }
         return true;
     }
