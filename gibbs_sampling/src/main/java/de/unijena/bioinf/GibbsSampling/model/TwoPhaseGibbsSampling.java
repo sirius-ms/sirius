@@ -44,7 +44,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
     private TIntArrayList firstRoundCompoundsIdx;
 
 
-    public TwoPhaseGibbsSampling(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int repetitions){
+    public TwoPhaseGibbsSampling(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int repetitions, Class<C> cClass){
         super(JobType.CPU);
         this.ids = ids;
         this.possibleFormulas = possibleFormulas;
@@ -52,6 +52,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
         this.edgeScorers = edgeScorers;
         this.edgeFilter = edgeFilter;
         this.repetitions = repetitions;
+        this.cClass = cClass;
     }
 
     private void init() throws ExecutionException {
@@ -82,7 +83,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 
 
         LOG().info("Running first round with "+firstRoundIds.length+" compounds.");
-        GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter);
+        GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, cClass);
         graph = submitSubJob(graphBuilder).awaitResult();
     }
 
@@ -138,7 +139,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
             //todo this stupid thing creates a complete new graph.
 
             TIntHashSet fixedIds = new TIntHashSet(firstRoundCompoundsIdx);
-            GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, fixedIds);
+            GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, fixedIds, cClass);
             graph = submitSubJob(graphBuilder).awaitResult();
             checkForInterruption();
             validate(graph);

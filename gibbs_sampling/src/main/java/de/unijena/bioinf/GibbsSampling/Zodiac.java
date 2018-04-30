@@ -70,7 +70,7 @@ public class Zodiac {
         }
 
 
-        TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, repetitions);
+        TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, repetitions, FragmentsCandidate.class);
         twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnIn);
         if (masterJJob!=null) masterJJob.submitSubJob(twoPhaseGibbsSampling);
         else SiriusJobs.getGlobalJobManager().submitJob(twoPhaseGibbsSampling);

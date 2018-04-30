@@ -738,7 +738,7 @@ public class GibbsSamplerMain {
         JobManager jobManager = new JobManager(workerCount);
         if (is2Phase){
             for (int i = 0; i < numberOfRuns; i++) {
-                TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, 1);
+                TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, 1, FragmentsCandidate.class);
                 System.out.println("start");
                 twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnInIterations);
                 jobManager.submitJob(twoPhaseGibbsSampling);
@@ -796,7 +796,7 @@ public class GibbsSamplerMain {
 
                 EdgeScorer[] currentEdgeScorers = new EdgeScorer[]{scoreProbabilityDistributionEstimator};
 
-                GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter);
+                GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, FragmentsCandidate.class);
                 jobManager.submitJob(graphBuilder);
                 Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
                 GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(graph, 1);
@@ -878,7 +878,7 @@ public class GibbsSamplerMain {
         JobManager jobManager = new JobManager(workerCount);
         //1. are their any changes after running gibbs?
         {
-            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter);
+            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, FragmentsCandidate.class);
             jobManager.submitJob(graphBuilder);
             Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
             GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(graph, 1);
@@ -901,7 +901,7 @@ public class GibbsSamplerMain {
         //2. differences for different EdgeFilter
         {
             edgeFilter = new EdgeThresholdFilter(0.9);
-            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter);
+            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, FragmentsCandidate.class);
             jobManager.submitJob(graphBuilder);
             Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
             GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(graph,  1);
@@ -954,7 +954,7 @@ public class GibbsSamplerMain {
 
 
             edgeFilter = new EdgeThresholdMinConnectionsFilter(0.9, 1, 10);
-            graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter);
+            graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, FragmentsCandidate.class);
             jobManager.submitJob(graphBuilder);
             Graph<FragmentsCandidate> graphComplexThres = graphBuilder.awaitResult();
             gibbsParallel = new GibbsParallel(graph, 1);
@@ -1245,7 +1245,7 @@ public class GibbsSamplerMain {
             if (outputFile!=null) writeBestFormulas(threePhaseGibbsSampling.getChosenFormulas(), threePhaseGibbsSampling.getGraph(), outputFile);
         }
         else if (is2Phase){
-            TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter,1);
+            TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter,1, FragmentsCandidate.class);
             System.out.println("start");
             twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnInIterations);
             jobManager.submitJob(twoPhaseGibbsSampling);
@@ -1259,7 +1259,7 @@ public class GibbsSamplerMain {
             //GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 20);
             //changed
 
-            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter);
+            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, FragmentsCandidate.class);
             jobManager.submitJob(graphBuilder);
             Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
             GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(graph, 1);
@@ -1386,7 +1386,7 @@ public class GibbsSamplerMain {
 
             int repetitions = workerCount;
             JobManager jobManager = new JobManager(workerCount);
-            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter);
+            GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, FragmentsCandidate.class);
             jobManager.submitJob(graphBuilder);
             Graph<FragmentsCandidate> graph = graphBuilder.awaitResult();
             GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel<FragmentsCandidate>(graph, repetitions);
