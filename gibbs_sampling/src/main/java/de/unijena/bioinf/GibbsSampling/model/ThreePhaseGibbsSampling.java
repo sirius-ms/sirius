@@ -113,7 +113,7 @@ public class ThreePhaseGibbsSampling {
 
 
         LOG.info("run Zodiac on good quality compounds only. Use "+firstRoundIds.length+" of "+ids.length+" compounds.");
-        GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter);
+        GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, FragmentsCandidate.class);
         jobManager.submitJob(graphBuilder); //todo might dead lock??
         graph = graphBuilder.awaitResult();
         gibbsParallel = new GibbsParallel<>(graph, repetitions);
@@ -252,7 +252,7 @@ public class ThreePhaseGibbsSampling {
         FragmentsCandidate[][] candidatesNewRound = combineNewAndOldAndSetFixedProbabilities(results1, firstRoundCompoundsIdx);
         //todo this stupid thing creates a complete new graph.
         TIntHashSet fixedIds = new TIntHashSet(firstRoundCompoundsIdx);
-        GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, fixedIds);
+        GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, fixedIds, FragmentsCandidate.class);
         jobManager.submitJob(graphBuilder); //todo might dead lock??
         graph = graphBuilder.awaitResult();
         gibbsParallel = new GibbsParallel<>(graph, repetitions, fixedIds);

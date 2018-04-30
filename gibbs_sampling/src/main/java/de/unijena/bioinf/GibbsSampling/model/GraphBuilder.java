@@ -25,33 +25,36 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
     Graph<C> graph;
     EdgeScorer<C>[] edgeScorers;
     EdgeFilter edgeFilter;
+    Class<C> cClass;
 
     private int numberOfFinishedComputations = 0;
     private double step;
     private int size;
 
-    public GraphBuilder(Graph<C> graph, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter) {
+    public GraphBuilder(Graph<C> graph, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, Class<C> cClass) {
         super(JobType.CPU);
         this.graph = graph;
         this.edgeScorers = edgeScorers;
         this.edgeFilter = edgeFilter;
+        this.cClass = cClass;
     }
 
-    public GraphBuilder(String[] ids, Scored<C>[][] possibleFormulas,  EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter) {
+    public GraphBuilder(String[] ids, Scored<C>[][] possibleFormulas,  EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, Class<C> cClass) {
         super(JobType.CPU);
         LOG().debug("initialize graph builder");
         this.graph = Graph.getGraph(ids, possibleFormulas);
         this.edgeScorers = edgeScorers;
         this.edgeFilter = edgeFilter;
+        this.cClass = cClass;
     }
 
-    public static <C extends Candidate<?>> GraphBuilder<C> createGraphBuilder(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter){
-        return createGraphBuilder(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, null);
+    public static <C extends Candidate<?>> GraphBuilder<C> createGraphBuilder(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, Class<C> cClass){
+        return createGraphBuilder(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, null, cClass);
     }
 
-    public static <C extends Candidate<?>> GraphBuilder<C> createGraphBuilder(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds){
+    public static <C extends Candidate<?>> GraphBuilder<C> createGraphBuilder(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds, Class<C> cClass){
         Graph<C> graph = createGraph(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, fixedCompounds);
-        return new GraphBuilder<C>(graph, edgeScorers, edgeFilter);
+        return new GraphBuilder<C>(graph, edgeScorers, edgeFilter, cClass);
     }
 
     public static <C extends Candidate<?>> Graph<C> createGraph(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds){
@@ -112,9 +115,6 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
 
     private void calculateWeight() throws ExecutionException {
-        Class<C> cClass = getCandidateClass();
-
-
         C[][] allCandidates = (C[][]) Array.newInstance(cClass, graph.getPossibleFormulas().length, 1);
 
         for(int minValue = 0; minValue < allCandidates.length; ++minValue) {
@@ -268,15 +268,6 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
             System.out.println(Arrays.toString(s2.toArray()));
         }
 
-    }
-
-    private Class<C> getCandidateClass(){
-        for (Scored<C>[] s : graph.getPossibleFormulas()) {
-            for (Scored<C> scored : s) {
-                return (Class<C>)scored.getCandidate().getClass();
-            }
-        }
-        throw new NoSuchElementException("no experiments with any molecular formula candidate given");
     }
 
 
