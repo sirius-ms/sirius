@@ -58,6 +58,10 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         }
 
         //create output dir
+        if (options.getOutput()==null){
+            LOG.error("Option is mandatory: --output -o value : output directory");
+            return false;
+        }
         Path outputPath = Paths.get(options.getOutput());
         if (Files.exists(outputPath)) {
             if (!Files.isDirectory(outputPath)) {

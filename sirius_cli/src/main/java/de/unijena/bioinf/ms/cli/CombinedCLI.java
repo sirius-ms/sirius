@@ -95,22 +95,26 @@ public class CombinedCLI extends ApplicationCore {
     }
 
     protected void parseArgsAndInit(String[] args) {
-        parseArgs(args, CombinedOptions.class);
+        parseArgs(args);
         if (!workflow.setup()) System.exit(1);
         if (!workflow.validate()) System.exit(1);
     }
 
-    protected void parseArgs(String[] args, Class<CombinedOptions> optionsClass) {
+    protected void parseArgs(String[] args) {
         if (args.length == 0) {
             System.out.println(ApplicationCore.VERSION_STRING);
-            System.out.println(CliFactory.createCli(optionsClass).getHelpMessage());
+            System.out.println(CliFactory.createCli(FingerIdOptions.class).getHelpMessage());
             System.exit(0);
         }
         try {
             args = fixBuggyJewelCliLibrary(args);
-            this.options = CliFactory.createCli(optionsClass).parseArguments(args);
+            this.options = CliFactory.createCli(CombinedOptions.class).parseArguments(args);
             if (options.isCite()) {
                 cite();
+                System.exit(0);
+            } else if (options.isZodiac() && args.length==1){
+                System.out.println("ZODIAC in "+ApplicationCore.VERSION_STRING);
+                System.out.println(CliFactory.createCli(ZodiacOptions.class).getHelpMessage());
                 System.exit(0);
             }
         } catch (HelpRequestedException e) {

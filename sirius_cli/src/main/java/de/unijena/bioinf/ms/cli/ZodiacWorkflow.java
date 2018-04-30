@@ -31,14 +31,12 @@ public class ZodiacWorkflow implements Workflow<ExperimentResult> {
 
     @Override
     public boolean setup() {
-        zodiacIP.setup();
-        return true;
+        return zodiacIP.setup();
     }
 
     @Override
     public boolean validate() {
-        zodiacIP.validate();
-        return true;
+        return zodiacIP.validate();
     }
 
 
