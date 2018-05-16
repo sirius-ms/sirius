@@ -517,12 +517,11 @@ public class CombinedCLI extends ApplicationCore {
         if (exp.getPrecursorIonType() == null || exp.getPrecursorIonType().isIonizationUnknown())
             exp.setPrecursorIonType(getIonFromOptions(options, exp.getPrecursorIonType() == null ? 0 : exp.getPrecursorIonType().getCharge()));
 
-        if (formulas != null && formulas.size() == 1)
-            exp.setMolecularFormula(MolecularFormula.parse(formulas.get(0)));
-        else {
-            Set<MolecularFormula> whiteSet = getFormulaWhiteset(exp, formulas);
-            if (whiteSet!=null) sirius.setFormulaSearchList(exp, whiteSet);
-        }
+        if (formulas != null && formulas.size() == 1) exp.setMolecularFormula(MolecularFormula.parse(formulas.get(0)));
+
+        Set<MolecularFormula> whiteSet = getFormulaWhiteset(exp, formulas);
+        if (whiteSet!=null) sirius.setFormulaSearchList(exp, whiteSet);
+
 
         if (options.getParentMz() != null) exp.setIonMass(options.getParentMz());
 
