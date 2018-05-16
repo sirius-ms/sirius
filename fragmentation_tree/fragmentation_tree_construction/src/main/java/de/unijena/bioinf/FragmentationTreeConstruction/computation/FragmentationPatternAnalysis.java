@@ -190,18 +190,22 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
         MutableMs2Experiment input = new MutableMs2Experiment(originalExperiment);
         Ms2Experiment exp = input;
-        for (Ms2ExperimentValidator validator : inputValidators) {
-            exp = validator.validate(exp, validatorWarning, repairInput);
-        }
 
         MeasurementProfile profile = input.getAnnotation(MeasurementProfile.class, null);
         FormulaConstraints constraints = null;
         if (profile == null) {
             profile = defaultProfile;
+            exp.setAnnotation(MeasurementProfile.class, defaultProfile);
         }  else {
             constraints = profile.getFormulaConstraints();
             profile = MutableMeasurementProfile.merge(defaultProfile, profile);
         }
+
+        for (Ms2ExperimentValidator validator : inputValidators) {
+            exp = validator.validate(exp, validatorWarning, repairInput);
+        }
+
+
         final ProcessedInput pinput =  new ProcessedInput(new MutableMs2Experiment(exp), originalExperiment, new MutableMeasurementProfile(profile));
         if (constraints==null && (originalExperiment.getAnnotation(FormulaSettings.class,null)!=null)) {
             constraints = originalExperiment.getAnnotation(FormulaSettings.class).getConstraints();
@@ -210,6 +214,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
         if (originalExperiment.getMolecularFormula()!=null) {
             pinput.getMeasurementProfile().setFormulaConstraints(pinput.getMeasurementProfile().getFormulaConstraints().getExtendedConstraints(FormulaConstraints.allSubsetsOf(originalExperiment.getMolecularFormula())));
+            //force usage of MF
+            pinput.setAnnotation(PredefinedMolecularFormula.class, new PredefinedMolecularFormula(originalExperiment.getMolecularFormula()));
         }
 
         // set precursor ion types
@@ -458,8 +464,21 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
         final List<MolecularFormula> pmds;
         final List<Decomposition> decomps = new ArrayList<>();
-        if (whiteset != null && !whiteset.getFormulas().isEmpty()) {
 
+        if (input.getOriginalInput().getMolecularFormula()!=null){
+            //always use formula. don't look at mass dev.
+            final MolecularFormula formula = input.getOriginalInput().getMolecularFormula();
+            final PrecursorIonType ionType = experiment.getPrecursorIonType();
+            Decomposition decomposition = new Decomposition(ionType.neutralMoleculeToMeasuredNeutralMolecule(formula), ionType.getIonization(), 0d);
+            decomps.add(decomposition);
+            pmds = new ArrayList<>();
+            pmds.add(decomposition.getCandidate());
+
+            if (!parentDeviation.inErrorWindow(parentPeak.getOriginalMz(), ionType.neutralMassToPrecursorMass(formula.getMass()))){
+                validatorWarning.warn("Specified precursor molecular formula does not fall into given m/z error window. "
+                        +formula.formatByHill()+" for m/z "+parentPeak.getOriginalMz()+" and ionization "+ionType);
+            }
+        } else if (whiteset != null && !whiteset.getFormulas().isEmpty()) {
             final Collection<PrecursorIonType> ionTypes;
             if (experiment.getPrecursorIonType().isIonizationUnknown())
                 ionTypes = experiment.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
