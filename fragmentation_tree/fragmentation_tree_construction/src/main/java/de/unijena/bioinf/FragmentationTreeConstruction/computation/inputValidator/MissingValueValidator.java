@@ -137,11 +137,19 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
             input.setAnnotation(PossibleIonModes.class, ionModes);
         }
 
+        double absError = 1e-2;
+        Deviation dev = new Deviation(20, absError);
+        if (input.hasAnnotation(MeasurementProfile.class)){
+            //take maximum of default and particular experiment's deviation.
+            Deviation dev2 = input.getAnnotation(MeasurementProfile.class).getAllowedMassDeviation();
+            dev = new Deviation(Math.max(dev.getPpm(), dev2.getPpm()), Math.max(dev.getAbsolute(), dev2.getAbsolute()));
+            absError = Math.max(absError, dev.absoluteFor(input.getIonMass()));
+        }
         final double neutralmass = input.getMoleculeNeutralMass();
         if ((input.getMolecularFormula()!=null || neutralmass>0) && input.getIonMass()>0 && input.getPrecursorIonType()!=null && !input.getPrecursorIonType().isIonizationUnknown()) {
             final double modification = input.getIonMass()-neutralmass;
-            if (Math.abs(input.getPrecursorIonType().neutralMassToPrecursorMass(neutralmass)-input.getIonMass()) > 1e-2) {
-                final PrecursorIonType iontype = PeriodicTable.getInstance().ionByMass(modification, 1e-2, input.getPrecursorIonType().getCharge());
+            if (Math.abs(input.getPrecursorIonType().neutralMassToPrecursorMass(neutralmass)-input.getIonMass()) > absError) {
+                final PrecursorIonType iontype = PeriodicTable.getInstance().ionByMass(modification, absError, input.getPrecursorIonType().getCharge());
                 if (iontype != null) {
                     throwOrWarn(warn, true, "PrecursorIonType is inconsistent with the data (" + input.getPrecursorIonType().toString() + " but " + iontype.toString() + " is estimated after looking at the data)");
                     input.setPrecursorIonType(iontype);
@@ -155,10 +163,10 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
             throwOrWarn(warn, repair, "No ionization is given");
             if (validDouble(input.getIonMass(), false) && validDouble(input.getMoleculeNeutralMass(), false)) {
                 double modificationMass = input.getIonMass() - input.getMoleculeNeutralMass();
-                PrecursorIonType ion = PeriodicTable.getInstance().ionByMass(modificationMass, 1e-2);
+                PrecursorIonType ion = PeriodicTable.getInstance().ionByMass(modificationMass, absError);
                 if (ion == null && input.getMolecularFormula() != null) {
                     modificationMass = input.getIonMass() - input.getMolecularFormula().getMass();
-                    ion = PeriodicTable.getInstance().ionByMass(modificationMass, 1e-2);
+                    ion = PeriodicTable.getInstance().ionByMass(modificationMass, absError);
                 }
                 if (ion == null) {
                     searchForIon(warn, input);
@@ -189,7 +197,6 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
                 }
                 for (PrecursorIonType ionType : ionTypes) {
                     // search in MS1
-                    final Deviation dev = new Deviation(10);
                     final double peak = ionType.neutralMassToPrecursorMass(input.getMolecularFormula().getMass());
                     for (SimpleSpectrum s : specs) {
                         int i = Spectrums.mostIntensivePeakWithin(s, peak, dev);
@@ -201,8 +208,6 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
                 if (scoredIonTypes.size()==0) {
                     // repeat with MS2 spectrum
                     for (PrecursorIonType ionType : ionTypes) {
-                        // search in MS1
-                        final Deviation dev = new Deviation(10);
                         final double peak = ionType.neutralMassToPrecursorMass(input.getMolecularFormula().getMass());
                         for (Spectrum s : input.getMs2Spectra()) {
                             int i = Spectrums.mostIntensivePeakWithin(s, peak, dev);
@@ -224,7 +229,7 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
 
 
             double modificationMass = input.getIonMass() - (input.getMolecularFormula() != null ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass());
-            PrecursorIonType ion = PeriodicTable.getInstance().ionByMass(modificationMass, 1e-2, input.getPrecursorIonType().getCharge());
+            PrecursorIonType ion = PeriodicTable.getInstance().ionByMass(modificationMass, absError, input.getPrecursorIonType().getCharge());
             if (ion != null) {
                 warn.warn("Set ion to " + ion.toString());
                 input.setPrecursorIonType(ion);
