@@ -62,6 +62,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         }
     }
 
+    private static enum SPECTRUM_TYPE {MERGED_MS1, MS1, MS2, UNKNOWN}
+
     private static class ParserInstance {
 
         private ParserInstance(URL source, BufferedReader reader) {
@@ -77,13 +79,14 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private String compoundName = null;
         private MolecularFormula formula;
         private int charge = 0;
-        private boolean isMs1 = false;
+        private SPECTRUM_TYPE spectrumType = SPECTRUM_TYPE.UNKNOWN;
         private PrecursorIonType ionization;
         private CollisionEnergy currentEnergy;
         private double tic = 0, parentMass = 0, retentionTime = 0;
         private SimpleMutableSpectrum currentSpectrum;
         private ArrayList<MutableMs2Spectrum> ms2spectra = new ArrayList<MutableMs2Spectrum>();
         private ArrayList<SimpleSpectrum> ms1spectra = new ArrayList<SimpleSpectrum>();
+        private SimpleSpectrum mergedMs1;
         private String inchi, inchikey, smiles, splash, spectrumQualityString;
         private MutableMs2Experiment experiment;
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
@@ -96,13 +99,14 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             smiles = null;
             splash = null;
             ms1spectra = new ArrayList<>();
+            mergedMs1 = null;
             ms2spectra = new ArrayList<>();
             tic = 0;
             parentMass = 0;
             retentionTime = 0;
             currentEnergy = null;
             ionization = null;
-            isMs1 = false;
+            spectrumType = SPECTRUM_TYPE.UNKNOWN;
             charge = 0;
             formula = null;
             compoundName = name;
@@ -224,6 +228,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 spectrumQualityString = value;
             } else if (optionName.contains("collision") || optionName.contains("energy") || optionName.contains("ms2")) {
                 if (currentSpectrum.size() > 0) newSpectrum();
+                this.spectrumType = SPECTRUM_TYPE.MS2;
                 if (currentEnergy != null) warn("Collision energy is set twice");
                 if (value.isEmpty()) this.currentEnergy = CollisionEnergy.none();
                 else {
@@ -250,9 +255,12 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 } else {
                     error("Cannot parse total ion count: '" + value + "'");
                 }
+            } else if (optionName.contains("ms1merged")) {
+                if (currentSpectrum.size() > 0) newSpectrum();
+                this.spectrumType = SPECTRUM_TYPE.MERGED_MS1;
             } else if (optionName.contains("ms1")) {
                 if (currentSpectrum.size() > 0) newSpectrum();
-                this.isMs1 = true;
+                this.spectrumType = SPECTRUM_TYPE.MS1;
             } else if (optionName.equals("retention")) {
                 parseRetention(value);
             } else if (optionName.contains("ion")) {
@@ -288,6 +296,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             }
             exp.setMs1Spectra(ms1spectra);
             exp.setMs2Spectra(ms2spectra);
+            if (mergedMs1!=null) exp.setMergedMs1Spectrum(mergedMs1);
             exp.setSource(source);
             if (index != null) exp.setAnnotation(Index.class, index);
             if (smiles != null) exp.setAnnotation(Smiles.class, new Smiles(smiles));
@@ -346,13 +355,19 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
         private void newSpectrum() {
             if (currentSpectrum.size() > 0) {
-                if (isMs1) {
+                if (spectrumType==SPECTRUM_TYPE.MERGED_MS1) {
+                    mergedMs1 = new SimpleSpectrum(currentSpectrum);
+                } else if (spectrumType==SPECTRUM_TYPE.MS1) {
                     ms1spectra.add(new SimpleSpectrum(currentSpectrum));
+                } else if (spectrumType==SPECTRUM_TYPE.MS2)  {
+                    ms2spectra.add(new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2));
                 } else {
+                    warn("Unknown spectrum type. Description must contain one of the following keywords '>[ms1|mergedms1|ms2|collision|energy]'. " +
+                            "Spectrum will be processed as MS2 spectrum.");
                     ms2spectra.add(new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2));
                 }
             } else return;
-            isMs1 = false;
+            spectrumType = SPECTRUM_TYPE.UNKNOWN;
             this.tic = 0;
             this.retentionTime = 0d;
             this.currentEnergy = null;
