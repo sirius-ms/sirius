@@ -214,8 +214,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
         if (originalExperiment.getMolecularFormula()!=null) {
             pinput.getMeasurementProfile().setFormulaConstraints(pinput.getMeasurementProfile().getFormulaConstraints().getExtendedConstraints(FormulaConstraints.allSubsetsOf(originalExperiment.getMolecularFormula())));
-            //force usage of MF
-            pinput.setAnnotation(PredefinedMolecularFormula.class, new PredefinedMolecularFormula(originalExperiment.getMolecularFormula()));
         }
 
         // set precursor ion types
