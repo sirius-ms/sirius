@@ -61,17 +61,19 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
             writer.newLine();
         }
         writer.newLine();
+        writeMs1(writer, data.getMergedMs1Spectrum(), true);
         for (Spectrum spec : data.getMs1Spectra()) {
-            writeMs1(writer, spec);
+            writeMs1(writer, spec, false);
         }
         for (Ms2Spectrum spec : data.getMs2Spectra()) {
             writeMs2(writer, spec);
         }
     }
 
-    private void writeMs1(BufferedWriter writer, Spectrum spec) throws IOException{
+    private void writeMs1(BufferedWriter writer, Spectrum spec, boolean isMergedSpectrum) throws IOException{
         if (spec != null && spec.size()>0) {
-            writer.write(">ms1peaks");
+            if (isMergedSpectrum) writer.write(">ms1merged");
+            else writer.write(">ms1peaks");
             writer.newLine();
             for (int k=0; k < spec.size(); ++k) {
                 writer.write(String.valueOf(spec.getMzAt(k)));
