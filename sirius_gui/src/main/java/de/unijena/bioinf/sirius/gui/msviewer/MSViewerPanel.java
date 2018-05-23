@@ -624,12 +624,14 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 		String massLabel   = "mass/charge:";
 //		String snLabel     = "signal/noise:";
 		String absIntLabel = "abs. intensity:";
+		String ionLabel   = "ionization:";
 
 		double mass = this.dataModel.getMass(this.peakIndex);
 		double absInt = this.dataModel.getAbsoluteIntensity(this.peakIndex);
 		double relInt = this.dataModel.getRelativeIntensity(this.peakIndex);
 		String mfVal = this.dataModel.getMolecularFormula(this.peakIndex);
 //		double sn = this.dataModel.getSignalNoise(this.peakIndex);
+		String ionVal = this.dataModel.getIonization(this.peakIndex);
 
 		String relIntVal  = String.valueOf(relInt);
 		String absIntVal  = absInt > 0 ? String.valueOf(absInt) : "unknown";
@@ -641,20 +643,23 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 		int massLabelLength   = fm.stringWidth(massLabel);
 //		int snLabelLength     = fm.stringWidth(snLabel);
 		int mfLabelLength     = mfVal==null ? 0 : fm.stringWidth(mfLabel);
+		int ionLabelLength	  = ionVal==null ? 0 : fm.stringWidth(ionLabel);
 
 		int relIntValLength = fm.stringWidth(relIntVal);
 		int absIntValLength = fm.stringWidth(absIntVal);
 		int massValLength   = fm.stringWidth(massVal);
 //		int snValLength     = fm.stringWidth(snVal);
 		int mfValLength     = mfVal==null ? 0 : fm.stringWidth(mfVal);
+		int ionValLength    = ionVal==null ? 0 : fm.stringWidth(ionVal);
 
-		int maxFirstLength  = Math.max(absIntLabelLength,Math.max(Math.max(relIntLabelLength,massLabelLength),mfLabelLength));
-		int maxSecondLength = Math.max(absIntValLength,Math.max(Math.max(relIntValLength,massValLength),mfValLength));
+		int maxFirstLength  = Math.max(ionLabelLength, Math.max(absIntLabelLength,Math.max(Math.max(relIntLabelLength,massLabelLength),mfLabelLength)));
+		int maxSecondLength = Math.max(ionValLength, Math.max(absIntValLength,Math.max(Math.max(relIntValLength,massValLength),mfValLength)));
 //		int maxFirstLength  = Math.max(absIntLabelLength,Math.max(Math.max(relIntLabelLength,massLabelLength),snLabelLength));
 //		int maxSecondLength = Math.max(absIntValLength,Math.max(Math.max(relIntValLength,massValLength),snValLength));
 
 		int totalHorizontalSize = maxFirstLength + maxSecondLength + 20;
-		int totalVerticalSize = mfVal==null ? 50 : 65;
+//		int totalVerticalSize = mfVal==null ? 50 : 65;
+		int totalVerticalSize = mfVal==null ? 50 : 80; //ion==null iff mfVal==null
 
 		int leftX = 0;
 		int leftY = 0;
@@ -699,11 +704,13 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 			g2.drawString(massLabel, firstColumnX, leftY+30);
 			g2.drawString(relIntLabel, firstColumnX, leftY+45);
 			g2.drawString(absIntLabel, firstColumnX, leftY+60);
+			g2.drawString(ionLabel, firstColumnX, leftY+75);
 
 			g2.drawString(mfVal,secondColumnX,leftY+15);
 			g2.drawString(massVal,secondColumnX,leftY+30);
 			g2.drawString(relIntVal,secondColumnX,leftY+45);
 			g2.drawString(absIntVal,secondColumnX,leftY+60);
+			g2.drawString(ionVal,secondColumnX,leftY+75);
 		}
 
 

@@ -111,4 +111,9 @@ public class SiriusSingleSpectrumModel implements MSViewerDataModel {
     public int findIndexOfPeak(double mass, double tolerance) {
         return Spectrums.mostIntensivePeakWithin(spectrum, mass, new Deviation(1, tolerance));
     }
+
+    @Override
+    public String getIonization(int index) {
+        return null;
+    }
 }

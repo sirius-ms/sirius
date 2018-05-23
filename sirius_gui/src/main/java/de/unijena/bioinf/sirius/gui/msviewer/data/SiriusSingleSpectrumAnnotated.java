@@ -61,6 +61,13 @@ public class SiriusSingleSpectrumAnnotated extends SiriusSingleSpectrumModel {
         return isIsotopicPeak.get(index);
     }
 
+    @Override
+    public String getIonization(int index) {
+        final Fragment f = annotatedFormulas[index];
+        if (f==null) return null;
+        else return f.getIonization().getName();
+    }
+
     private void annotate(FTree tree) {
         final FragmentAnnotation<AnnotatedPeak> annotatedPeak = tree.getFragmentAnnotationOrNull(AnnotatedPeak.class);
         if (annotatedPeak==null) return;
