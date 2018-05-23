@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
+import gnu.trove.map.hash.TCustomHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -206,8 +207,9 @@ abstract public class AbstractSolver {
 
     protected void setVariableStartValues(FTree presolvedTree) throws Exception {
         // map edges in presolved tree to edge ids
-        final HashMap<MolecularFormula, Fragment> fragmentMap = new HashMap<>(presolvedTree.numberOfVertices());
-        for (Fragment f : presolvedTree) fragmentMap.put(f.getFormula(), f);
+//        final HashMap<MolecularFormula, Fragment> fragmentMap = new HashMap<>(presolvedTree.numberOfVertices());
+        final TCustomHashMap<Fragment, Fragment> fragmentMap = Fragment.newFragmentWithIonMap();
+        for (Fragment f : presolvedTree) fragmentMap.put(f, f);
 
         int[] selectedEdges = new int[1 + presolvedTree.numberOfEdges()];
         int k = 0, offset = 0;
@@ -226,7 +228,8 @@ abstract public class AbstractSolver {
             final Fragment fragment = this.graph.getFragmentAt(i);
             if (fragment.getFormula().isEmpty())
                 continue;
-            final Fragment treeFragment = fragmentMap.get(fragment.getFormula());
+//            final Fragment treeFragment = fragmentMap.get(fragment.getFormula());
+            final Fragment treeFragment = fragmentMap.get(fragment);
             if (treeFragment != null && !treeFragment.isRoot()) {
                 final MolecularFormula lf = treeFragment.getIncomingEdge().getFormula();
                 // find corresponding loss
@@ -344,7 +347,7 @@ abstract public class AbstractSolver {
         assert graphRoot != null;
         if (graphRoot == null) return null;
 
-        final FTree tree = new FTree(graphRoot.getFormula());
+        final FTree tree = new FTree(graphRoot.getFormula(), graphRoot.getIonization());
         tree.setTreeWeight(rootScore);
         final ArrayDeque<Stackitem> stack = new ArrayDeque<Stackitem>();
         stack.push(new Stackitem(tree.getRoot(), graphRoot));
@@ -355,7 +358,7 @@ abstract public class AbstractSolver {
             for (int j = 0; j < item.graphNode.getOutDegree(); ++j) {
                 if (edesAreUsed[edgeIds[offset]]) {
                     final Loss l = losses.get(edgeIds[offset]);
-                    final Fragment child = tree.addFragment(item.treeNode, l.getTarget().getFormula());
+                    final Fragment child = tree.addFragment(item.treeNode, l.getTarget());
                     child.getIncomingEdge().setWeight(l.getWeight());
                     tree.setTreeWeight(tree.getTreeWeight() + l.getWeight());
                     stack.push(new Stackitem(child, l.getTarget()));
@@ -398,7 +401,8 @@ abstract public class AbstractSolver {
                 if (t.getFormula().isEmpty()) continue;
                 final Loss in = t.getIncomingEdge();
                 for (int k = 0; k < g.getInDegree(); ++k)
-                    if (in.getSource().getFormula().equals(g.getIncomingEdge(k).getSource().getFormula())) {
+//                    if (in.getSource().getFormula().equals(g.getIncomingEdge(k).getSource().getFormula())) {
+                    if (in.getSource().getFormula().equals(g.getIncomingEdge(k).getSource().getFormula()) && in.getSource().getIonization().equals(g.getIncomingEdge(k).getSource().getIonization())) {
                         score -= g.getIncomingEdge(k).getWeight();
                     }
             }

@@ -32,6 +32,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.AbstractTreeC
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeComputationInstance;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.AdductSwitchLossScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
@@ -149,6 +150,7 @@ public class Sirius {
 
     public Sirius(String profileName) throws IOException {
         profile = new Profile(profileName);
+        profile.fragmentationPatternAnalysis.getLossScorers().add(new AdductSwitchLossScorer());
         loadMeasurementProfile();
         this.progress = new Progress.Quiet();
     }
