@@ -144,7 +144,7 @@ class DP {
         double scoreSum = 0d;
         final int vertexId = vertex.getVertexId();
         final double optScore = tables[vertexId].bestScore();
-        final FTree tree = new FTree(vertex.getFormula());
+        final FTree tree = new FTree(vertex.getFormula(), vertex.getIonization());
         final TreeScoring treeScoring = new TreeScoring();
         tree.addAnnotation(TreeScoring.class, treeScoring);
 
@@ -209,7 +209,7 @@ class DP {
                 final double subtreeWeight = tables[v.getVertexId()].get(childBitset);
                 final double weight = l.getWeight();
                 if (isEqual(subtreeWeight + weight, node.accumulatedWeight)) {
-                    final Fragment childNode = tree.addFragment(node.treeNode, l.getTarget().getFormula());
+                    final Fragment childNode = tree.addFragment(node.treeNode, l.getTarget());
                     if (!isLeq(subtreeWeight, 0)) {
                         final TraceItem childItem = new TraceItem(v, childNode, childBitset,
                                 subtreeWeight);
@@ -292,7 +292,7 @@ class DP {
 
                 final double scoreBefore = scoreOfChildren(bestCandidate);
 
-                final Fragment v = tree.addFragment(bestCandidate, bestEdge.getTarget().getFormula());
+                final Fragment v = tree.addFragment(bestCandidate, bestEdge.getTarget());
                 v.getIncomingEdge().setWeight(bestEdge.getWeight());
                 tree2GraphMapping.put(v, bestEdge.getTarget());
                 final Iterator<Loss> iterator = bestCandidate.getOutgoingEdges().iterator();

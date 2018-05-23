@@ -110,8 +110,8 @@ public class FTJsonWriter {
         for (Loss l : tree.losses()) {
             final JsonObject loss = new JsonObject();
             lossList.add(loss);
-            loss.addProperty("source", l.getSource().getFormula().toString());
-            loss.addProperty("target", l.getTarget().getFormula().toString());
+            loss.addProperty("source", l.getSource().getVertexId());
+            loss.addProperty("target", l.getTarget().getVertexId());
             loss.addProperty("molecularFormula", l.getFormula().toString());
             for (LossAnnotation<Object> lano : lossAnnotations) {
                 if (lano.get(l)!=null) {
