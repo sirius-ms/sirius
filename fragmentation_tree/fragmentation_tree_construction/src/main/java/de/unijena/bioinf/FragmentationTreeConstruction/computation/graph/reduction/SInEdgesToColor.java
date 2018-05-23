@@ -1,6 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.reduction;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 
@@ -30,7 +31,7 @@ public class SInEdgesToColor {
 
     protected static Fragment createNullVertex() {
 
-        Fragment f = new Fragment(-1, MolecularFormula.emptyFormula()); // || creates vertex with no formula?
+        Fragment f = new Fragment(-1, MolecularFormula.emptyFormula(), PrecursorIonType.unknown().getIonization()); // || creates vertex with no formula?
         f.setColor(-1);
 
         return f;

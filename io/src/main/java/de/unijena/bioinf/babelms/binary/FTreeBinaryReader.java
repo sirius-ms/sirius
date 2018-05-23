@@ -1,6 +1,7 @@
 package de.unijena.bioinf.babelms.binary;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -18,6 +19,9 @@ import java.util.HashMap;
 /**
  * Created by kaidu on 20.06.2015.
  */
+
+
+@Deprecated //todo do we still use this? binary format does not save/read fragment ionization
 public class FTreeBinaryReader {
 
     public static void main(String[] args) {
@@ -79,14 +83,14 @@ public class FTreeBinaryReader {
             edgeTarget[i] = formulas[in.readInt()];
             edgeSource[i] = formulas[in.readInt()];
         }
-        final FTree tree = new FTree(root);
+        final FTree tree = new FTree(root, PrecursorIonType.unknown().getIonization());
         final HashMap<MolecularFormula, Fragment> treemap = new HashMap<MolecularFormula, Fragment>();
         treemap.put(root, tree.getRoot());
         while (tree.numberOfEdges() < numberOfEdges) {
             for (int i=0; i < numberOfEdges; ++i) {
                 final Fragment f = treemap.get(edgeSource[i]);
                 if (f!=null) {
-                    treemap.put(edgeTarget[i], tree.addFragment(f, edgeTarget[i]));
+                    treemap.put(edgeTarget[i], tree.addFragment(f, edgeTarget[i], PrecursorIonType.unknown().getIonization()));
                 }
             }
         }

@@ -19,8 +19,10 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.hash.TCustomHashMap;
 
 import java.util.*;
 
@@ -76,19 +78,19 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
      * molecular formula.
      */
     public static BiMap<Fragment, Fragment> createFragmentMapping(AbstractFragmentationGraph graph1, AbstractFragmentationGraph graph2) {
-
         if (graph1.numberOfVertices() > graph2.numberOfVertices())
             return createFragmentMapping(graph2, graph1).inverse();
-        final HashMap<MolecularFormula, Fragment> formulas = new HashMap<MolecularFormula, Fragment>(graph1.numberOfVertices());
+//        final HashMap<MolecularFormula, Fragment> formulas = new HashMap<MolecularFormula, Fragment>(graph1.numberOfVertices());
+        final TCustomHashMap<Fragment, Fragment> fragmentsGraph1Map = Fragment.newFragmentWithIonMap();
         final BiMap<Fragment, Fragment> bimap = HashBiMap.create(Math.min(graph1.numberOfVertices(), graph2.numberOfVertices()));
 
         for (Fragment f : graph1.getFragments()) {
-            formulas.put(f.getFormula(), f);
+            fragmentsGraph1Map.put(f, f);
         }
 
         for (Fragment f : graph2.getFragmentsWithoutRoot()) {
-            if (formulas.containsKey(f.getFormula())) {
-                bimap.put(formulas.get(f.getFormula()), f);
+            if (fragmentsGraph1Map.containsKey(f)) {
+                bimap.put(fragmentsGraph1Map.get(f), f);
             }
         }
         return bimap;
@@ -417,8 +419,8 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         }
     }
 
-    protected Fragment addFragment(MolecularFormula formula) {
-        final Fragment f = new Fragment(fragments.size(), formula);
+    protected Fragment addFragment(MolecularFormula formula, Ionization ionization) {
+        final Fragment f = new Fragment(fragments.size(), formula, ionization);
         fragments.add(f);
         return f;
     }

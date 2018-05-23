@@ -47,7 +47,7 @@ public class ExtendedCriticalPathHeuristic {
     }
 
     protected void invalidateColor(int color) {
-        final Fragment pseudoFragment = new Fragment(0,null);
+        final Fragment pseudoFragment = new Fragment(0,null,null);
         pseudoFragment.setColor(color);
         int searchKey = Collections.binarySearch(graph.getFragments(), pseudoFragment,new Comparator<Fragment>() {
             @Override
@@ -81,16 +81,16 @@ public class ExtendedCriticalPathHeuristic {
                     bestFrag = f;
                 }
             }
-            final FTree t = new FTree(bestFrag.getFormula());
+            final FTree t = new FTree(bestFrag.getFormula(), bestFrag.getIonization());
             t.setTreeWeight(bestFrag.getIncomingEdge().getWeight());
             return t;
         }
         Arrays.sort(usedEdges, 0, numberOfSelectedEdges, Comparator.comparingInt(a -> a.getTarget().getColor()));
-        final FTree tree = new FTree(usedEdges[0].getTarget().getFormula());
+        final FTree tree = new FTree(usedEdges[0].getTarget().getFormula(), usedEdges[0].getTarget().getIonization());
         final HashMap<MolecularFormula, Fragment> fragmentsByFormula = new HashMap<>();
         fragmentsByFormula.put(tree.getRoot().getFormula(), tree.getRoot());
         for (int i=1; i < numberOfSelectedEdges; ++i) {
-            final Fragment f = tree.addFragment(fragmentsByFormula.get(usedEdges[i].getSource().getFormula()), usedEdges[i].getTarget().getFormula());
+            final Fragment f = tree.addFragment(fragmentsByFormula.get(usedEdges[i].getSource().getFormula()), usedEdges[i].getTarget());
             f.getIncomingEdge().setWeight(usedEdges[i].getWeight());
             fragmentsByFormula.put(f.getFormula(), f);
         }

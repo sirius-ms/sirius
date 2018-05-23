@@ -17,6 +17,8 @@
  */
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
+import de.unijena.bioinf.ChemistryBase.chem.Charge;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import gnu.trove.list.array.TIntArrayList;
@@ -29,7 +31,7 @@ public class FGraph extends AbstractFragmentationGraph {
 
     public FGraph() {
         super();
-        this.pseudoRoot = addFragment(MolecularFormula.emptyFormula());
+        this.pseudoRoot = addFragment(MolecularFormula.emptyFormula(), new Charge(0));
     }
 
     public FGraph(FGraph copy) {
@@ -184,8 +186,8 @@ public class FGraph extends AbstractFragmentationGraph {
         return maxColor;
     }
 
-    public Fragment addFragment(MolecularFormula formula) {
-        return super.addFragment(formula);
+    public Fragment addFragment(MolecularFormula formula, Ionization ionization) {
+        return super.addFragment(formula, ionization);
     }
 
     public void deleteFragment(Fragment f) {
@@ -257,8 +259,9 @@ public class FGraph extends AbstractFragmentationGraph {
 
     }
 
-    public Fragment addRootVertex(MolecularFormula formula) {
-        final Fragment f = addFragment(formula);
+    public Fragment addRootVertex(MolecularFormula formula, Ionization ionization) {
+        final Fragment f = addFragment(formula, ionization);
+        pseudoRoot.setFormula(pseudoRoot.getFormula(), ionization);
         addLoss(pseudoRoot, f, MolecularFormula.emptyFormula());
         return f;
     }

@@ -19,6 +19,7 @@ import java.util.Map;
  * this format carries only the most necessary information for trees to perform
  * a tree alignment
  */
+@Deprecated //todo do we still use this? binary format does not save/read fragment ionization
 public class FTreeBinaryWriter {
 
     public static void writeTrees(OutputStream stream, FTree[] trees) throws IOException {
