@@ -115,14 +115,15 @@ public class Zodiac {
 
             NodeScorer[] nodeScorers;
             boolean useLibraryHits = (libraryHitsFile != null);
-            double libraryScore = 1d;//todo which lambda to use!?
+            double libraryLambda = options.getLibraryScoreLambda();//todo which lambda to use!?
+            double lowestCosine = options.getLowestCosine();
             if (useLibraryHits) {
                 Reaction[] reactions = ZodiacUtils.parseReactions(1);
                 Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
                 for (Reaction reaction : reactions) {
                     netSingleReactionDiffs.add(reaction.netChange());
                 }
-                nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(libraryScore, 0.3, netSingleReactionDiffs)};
+                nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(libraryLambda, lowestCosine, netSingleReactionDiffs)};
             } else {
                 nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d)};
             }
