@@ -8,6 +8,19 @@ import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
  */
 public interface ZodiacOptions {
 
+    @Option(
+            longName = {"lowest-cosine"},
+            description = "Below this cosine threshold a spectral library hit does not give any score bonus.",
+            defaultValue = "0.3"
+    )
+    double getLowestCosine();
+
+    @Option(
+            longName = {"lambda"},
+            description = "Lambda used in the scoring function of spectral library hits. The higher the more important are library hits. 1 is default.",
+            defaultValue = {"1"}
+    )
+    double getLibraryScoreLambda();
 
 
     @Option(
@@ -123,6 +136,7 @@ public interface ZodiacOptions {
             defaultValue = "-1"
     )
     int getNumOfCores();
+
 
     @Option(shortName = "h", longName = "help", helpRequest = true)
     boolean isHelp();
