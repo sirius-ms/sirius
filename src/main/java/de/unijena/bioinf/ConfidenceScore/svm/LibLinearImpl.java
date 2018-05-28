@@ -33,8 +33,8 @@ public class LibLinearImpl implements SVMInterface<LibLinearImpl.svm_nodeImpl, L
     @Override
     public LibLinearImpl.svm_model svm_train(LibLinearImpl.svm_problemImpl problem, svm_parameter parameter) {
         SolverType solver = SolverType.L2R_L2LOSS_SVC; // -s
-//        SolverType solver = SolverType.L1R_L2LOSS_SVC; // -s
-//        SolverType solver = SolverType.L2R_LR;
+       // SolverType solver = SolverType.L1R_L2LOSS_SVC; // -s
+       // SolverType solver = SolverType.L2R_LR;
         // 0
 //        double C = 1.0;    // cost of constraints violation
 //        double eps = 0.001;
@@ -71,6 +71,14 @@ public class LibLinearImpl implements SVMInterface<LibLinearImpl.svm_nodeImpl, L
         double b = model.getModel().getBias();
 
         return new LinearSVMPredictor(w, b, probA, probB);
+    }
+
+    public LibLinearImpl.svm_model convertModel(Model model){
+
+        LibLinearImpl.svm_model model_new  = new LibLinearImpl.svm_model(model);
+
+        return model_new;
+
     }
 
 
@@ -173,7 +181,7 @@ public class LibLinearImpl implements SVMInterface<LibLinearImpl.svm_nodeImpl, L
     }
 
     public class svm_model extends SVMInterface.svm_model<Model>{
-        private svm_parameter param;
+        public svm_parameter param;
         private Model libsvm_model;
         public svm_model(Model libsvm_model){
             this.libsvm_model = libsvm_model;
