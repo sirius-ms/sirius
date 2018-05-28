@@ -14,9 +14,12 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
     private final Ionization naIon = PrecursorIonType.getPrecursorIonType("[M+Na]+").getIonization();
     private final Ionization hIon = PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization();
 
-    private double naHSwitchScore = -1.658228;
+    private static final double DEFAULT_NA_H_SWITCH_SCORE = -1.7917594692280552;
+
+    private double naHSwitchScore;
 
     public AdductSwitchLossScorer() {
+        this(DEFAULT_NA_H_SWITCH_SCORE);
     }
 
     public AdductSwitchLossScorer(double naHSwitchScore) {
@@ -42,11 +45,11 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        throw new NoSuchMethodError("not implemented, yet");
+        this.naHSwitchScore = document.getDoubleFromDictionary(dictionary, "na-h-switch-score");
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        throw new NoSuchMethodError("not implemented, yet");
+        document.addToDictionary(dictionary, "na-h-switch-score", naHSwitchScore);
     }
 }
