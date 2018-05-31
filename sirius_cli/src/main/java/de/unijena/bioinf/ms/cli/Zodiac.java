@@ -115,14 +115,15 @@ public class Zodiac {
 
             NodeScorer[] nodeScorers;
             boolean useLibraryHits = (libraryHitsFile != null);
-            double libraryScore = 1d;//todo which lambda to use!?
+            double libraryLambda = options.getLibraryScoreLambda();//todo which lambda to use!?
+            double lowestCosine = options.getLowestCosine();
             if (useLibraryHits) {
                 Reaction[] reactions = ZodiacUtils.parseReactions(1);
                 Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
                 for (Reaction reaction : reactions) {
                     netSingleReactionDiffs.add(reaction.netChange());
                 }
-                nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(libraryScore, 0.3, netSingleReactionDiffs)};
+                nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(libraryLambda, lowestCosine, netSingleReactionDiffs)};
             } else {
                 nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d)};
             }
@@ -283,7 +284,7 @@ public class Zodiac {
     private final static String SEP = "\t";
     public static void writeZodiacOutput(String[] ids, Scored<IdentificationResult>[] initial, CompoundResult<FragmentsCandidate>[] result, Path outputPath) throws IOException {
         BufferedWriter writer = Files.newBufferedWriter(outputPath, Charset.defaultCharset());
-        writer.write("id" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "connectedCompounds" + SEP + "ZodiacMF" + SEP + "ZodiacScore");
+        writer.write("id" + SEP + "quality" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "connectedCompounds" + SEP + "ZodiacMF" + SEP + "ZodiacMFIon"+ SEP + "ZodiacScore");
         for (int i = 0; i < ids.length; i++) {
             final String id = ids[i];
             final String id2 = result[i].getId();
@@ -304,8 +305,16 @@ public class Zodiac {
     }
 
     private static String createSummaryLine(String id, String siriusMF, double siriusScore, int numberConnections, Scored<FragmentsCandidate>[] result){
+        String qualityString = "";
+        if (result.length>0){
+            CompoundQuality compoundQuality = result[0].getCandidate().getExperiment().getAnnotation(CompoundQuality.class, null);
+            if (compoundQuality!=null) qualityString = compoundQuality.toString();
+        }
+
         StringBuilder builder = new StringBuilder();
         builder.append(id);
+        builder.append(SEP);
+        builder.append(qualityString);
         builder.append(SEP);
         builder.append(siriusMF);
         builder.append(SEP);
@@ -316,12 +325,15 @@ public class Zodiac {
         for (int j = 0; j < Math.min(result.length, NUMBER_OF_HITS); j++) {
             Scored<FragmentsCandidate> currentResult = result[j];
             final String mf = currentResult.getCandidate().getFormula().formatByHill();
+            final String ion = currentResult.getCandidate().getIonType().toString();
             final double score = currentResult.getScore();
 
             if (score <= 0) break; //don't write MF with 0 probability
 
             builder.append(SEP);
             builder.append(mf);
+            builder.append(SEP);
+            builder.append(ion);
             builder.append(SEP);
             builder.append(Double.toString(score));
         }
