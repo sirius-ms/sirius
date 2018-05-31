@@ -362,7 +362,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             final String ion = currentResult.getCandidate().getIonType().toString();
             final double score = currentResult.getScore();
 
-            if (score <= 0) break; //don't write MF with 0 probability
+//            if (score <= 0) break; //don't write MF with 0 probability
 
             builder.append(SEP);
             builder.append(mf);
