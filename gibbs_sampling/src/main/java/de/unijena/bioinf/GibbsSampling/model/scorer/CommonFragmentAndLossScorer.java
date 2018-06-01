@@ -1,5 +1,6 @@
 package de.unijena.bioinf.GibbsSampling.model.scorer;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.GibbsSampling.model.*;
@@ -86,7 +87,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
      * @return
      */
     private PeakWithExplanation[] getPeaksWithExplanations(FragmentsCandidate[] currentCandidates, final boolean useFragments){
-        Set<PrecursorIonType> ions = collectIons(currentCandidates);
+        Set<Ionization> ions = collectIons(currentCandidates);
 
         int maxIdx = -1;
         for (FragmentsCandidate currentCandidate : currentCandidates) {
@@ -96,9 +97,9 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
             }
         }
 
-        TObjectIntHashMap<PrecursorIonType> ionToIdx = new TObjectIntHashMap<>(ions.size());
+        TObjectIntHashMap<Ionization> ionToIdx = new TObjectIntHashMap<>(ions.size());
         int pos = 0;
-        for (PrecursorIonType ion : ions) {
+        for (Ionization ion : ions) {
             ionToIdx.put(ion, pos++);
         }
 
@@ -121,7 +122,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
                 fragments = c.getFragments();
                 for (int i = 0; i < fragments.length; i++) {
                     final String formula = fragments[i].getFormula();
-                    final int idx = fragments[i].getIndex()+maxIdx*ionToIdx.get(currentIon);
+                    final int idx = fragments[i].getIndex()+maxIdx*ionToIdx.get(fragments[i].getIonization());
                     if (matchedFragments[idx]==null){
                         matchedFragments[idx] = new HashSet<>();
                     }
@@ -176,11 +177,14 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         return sum/formulas.length;
     }
 
-    private Set<PrecursorIonType> collectIons(FragmentsCandidate[] candidates) {
-        HashSet ions = new HashSet();
+    private Set<Ionization> collectIons(FragmentsCandidate[] candidates) {
+        HashSet<Ionization> ions = new HashSet();
         for(int i = 0; i < candidates.length; ++i) {
             FragmentsCandidate candidate = candidates[i];
-            ions.add(candidate.getIonType());
+            for (FragmentWithIndex fragmentWithIndex : candidate.getFragments()) {
+                ions.add(fragmentWithIndex.getIonization());
+            }
+
         }
 
         return ions;
@@ -331,12 +335,17 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
             int compare = fragments1[i].compareTo(fragments2[j]);
             if(compare < 0) {
                 ++i;
+                while (fragments1[i].equals(fragments1[i+1])) ++i;
             } else if(compare > 0) {
                 ++j;
+                while (fragments2[j].equals(fragments2[j+1])) ++j;
             } else {
                 commonCounter += scoreMatchedFragments(fragments1[i], fragments2[j]);
                 ++i;
                 ++j;
+                //todo current hack
+                while (fragments1[i].equals(fragments1[i+1])) ++i;
+                while (fragments2[j].equals(fragments2[j+1])) ++j;
             }
         }
 
