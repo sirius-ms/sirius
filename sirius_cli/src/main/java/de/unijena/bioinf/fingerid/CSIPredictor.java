@@ -10,7 +10,7 @@ import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.fingerid.db.CachedRESTDB;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
-import de.unijena.bioinf.fingeriddb.job.PredictorType;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.io.IOException;
