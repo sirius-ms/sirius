@@ -1,15 +1,7 @@
 dependencies {
 //project
     compile project(':sirius_cli')
-
-//internal
-    compile group: "de.unijena.bioinf.ms", name: "fingerblast", version: "$fingeridVersion"
-    compile group: "de.unijena.bioinf.ms", name: "confidence_score", version: "$fingeridVersion"
-    compile group: "de.unijena.bioinf.ms", name: "chemdb_rest", version: "$fingeridVersion"
-    compile group: "de.unijena.bioinf.ms", name: "chemdb_file", version: "$fingeridVersion"
-    compile group: "de.unijena.bioinf.ms", name: "chemical_db", version: "$fingeridVersion"
-
-    compile group: "de.unijena.bioinf.ms", name: "canopus_predict", version: "$fingeridVersion"
+// internal
     compile group: 'de.unijena.bioinf', name: 'jjobs-swing', version: "$jjobs_version"
 //external
     compile group: 'javax.json', name: 'javax.json-api', version: "$json_version"

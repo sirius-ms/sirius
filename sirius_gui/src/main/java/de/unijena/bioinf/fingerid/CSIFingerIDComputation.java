@@ -7,11 +7,10 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.jjobs.FormulaJob;
 import de.unijena.bioinf.fingerid.net.WebAPI;
-import de.unijena.bioinf.fingeriddb.job.PredictorType;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
@@ -105,7 +104,7 @@ public class CSIFingerIDComputation {
         @Override
         protected Boolean compute() throws Exception {
             //wait if no connection is there
-            while (!WebAPI.canConnect()){
+            while (!WebAPI.canConnect()) {
                 Thread.sleep(5000);
                 checkForInterruption();
             }

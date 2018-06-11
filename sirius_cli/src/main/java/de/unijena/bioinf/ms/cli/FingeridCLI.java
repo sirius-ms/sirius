@@ -19,7 +19,7 @@ import de.unijena.bioinf.fingerid.FingerIdResultWriter;
 import de.unijena.bioinf.fingerid.db.*;
 import de.unijena.bioinf.fingerid.jjobs.FingerIDJJob;
 import de.unijena.bioinf.fingerid.net.WebAPI;
-import de.unijena.bioinf.fingeriddb.job.PredictorType;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.sirius.IdentificationResult;
