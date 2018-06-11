@@ -1,8 +1,8 @@
 package de.unijena.bioinf.ms.cli;
 
 import com.lexicalscope.jewel.cli.Option;
-import de.unijena.bioinf.fingeriddb.job.PredictorType;
-import de.unijena.bioinf.fingeriddb.job.UserDefineablePredictorType;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 
 import java.io.File;
 import java.util.List;
