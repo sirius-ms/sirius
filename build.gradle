@@ -58,10 +58,6 @@ allprojects {
         mavenCentral()
         maven {
             url "https://bio.informatik.uni-jena.de/repository/local"
-            credentials {
-                username = System.properties['de.unijena.bioinf.build.artifactory.username']
-                password = System.properties['de.unijena.bioinf.build.artifactory.password']
-            }
         }
         maven {
             url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
