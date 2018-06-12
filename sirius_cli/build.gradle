@@ -8,6 +8,7 @@ dependencies {
     compile group: 'com.google.classpath-explorer', name: 'classpath-explorer', version: '1.0'
 
     //internal
+    compile group: "de.unijena.bioinf.ms", name: "fingerid_utils", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "fingerprinter", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "fingerblast", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "chemdb_rest", version: "$fingeridVersion"
