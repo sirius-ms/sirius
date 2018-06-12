@@ -12,7 +12,6 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import joptsimple.internal.Strings;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -73,8 +72,8 @@ public abstract class Workspace {
                     ec.getMs2Experiment().setMolecularFormula(MolecularFormula.parse(f));
             }
 
-            if (ec.getMs2Experiment().getPrecursorIonType()==null) {
-                LoggerFactory.getLogger(Workspace.class).warn("Input experiment with name '" + ec.getName() + "' does not have a charge nor an ion type annotation." );
+            if (ec.getMs2Experiment().getPrecursorIonType() == null) {
+                LoggerFactory.getLogger(Workspace.class).warn("Input experiment with name '" + ec.getName() + "' does not have a charge nor an ion type annotation.");
                 ec.getMs2Experiment().setPrecursorIonType(PeriodicTable.getInstance().getUnknownPrecursorIonType(1));
             }
             clearExperimentAnotations(ec);
@@ -162,10 +161,10 @@ public abstract class Workspace {
                     i.addCommonIonType(name);
                     if (ionization.getCharge() > 0)
                         ApplicationCore.SIRIUS_PROPERTIES_FILE.setProperty("de.unijena.bioinf.sirius.chem.adducts.positive",
-                                Strings.join(i.getPositiveAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.toList()), ","));
+                                String.join(",", i.getPositiveAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.toList())));
                     else if (ionization.getCharge() < 0)
                         ApplicationCore.SIRIUS_PROPERTIES_FILE.setProperty("de.unijena.bioinf.sirius.chem.adducts.negative",
-                                Strings.join(i.getNegativeAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.toList()), ","));
+                                String.join(",", i.getNegativeAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.toList())));
                     return true;
                 }
             }
