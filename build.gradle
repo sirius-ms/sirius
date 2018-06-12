@@ -9,12 +9,13 @@ import java.nio.file.StandardOpenOption
 buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
+
         maven {
-            url "http://bio.informatik.uni-jena.de/repository/local"
-            credentials {
+            url 'http://bio.informatik.uni-jena.de/repository/local'
+           /* credentials {
                 username = System.properties['de.unijena.bioinf.build.artifactory.username']
                 password = System.properties['de.unijena.bioinf.build.artifactory.password']
-            }
+            }*/
         }
     }
     dependencies {
@@ -103,10 +104,6 @@ allprojects {
         mavenCentral()
         maven {
             url "https://bio.informatik.uni-jena.de/repository/local"
-            credentials {
-                username = System.properties['de.unijena.bioinf.build.artifactory.username']
-                password = System.properties['de.unijena.bioinf.build.artifactory.password']
-            }
         }
         maven {
             url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
