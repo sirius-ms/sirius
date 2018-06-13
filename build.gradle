@@ -1,0 +1,3 @@
+dependencies {
+    compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
+}
