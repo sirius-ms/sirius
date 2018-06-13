@@ -1,0 +1,23 @@
+apply plugin: "application"
+
+mainClassName = "de.unijena.bioinf.fingerid.FingerprinterCLI"
+
+dependencies() {
+    //project
+    compile project(':chemical_db_oss')
+    compile project(':chemical_db_oss:chemdb_sql_oss')
+
+	//internal
+	compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
+
+	// external
+	compile group: "com.lexicalscope.jewelcli", name: "jewelcli", version: "$jewelcli_version"
+
+	// CDK
+	for (module in ["fingerprint", "qsarmolecular", "qsaratomic", "data", "inchi", "interfaces", "smiles", "core"]) {
+		compile group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
+	}
+
+	// TODO: remove
+	compile group: "org.json", name:"json", version: "1.0"
+}
