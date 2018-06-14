@@ -123,7 +123,9 @@ public class Graph<C extends Candidate<?>> {
             for(int var7 = 0; var7 < var6; ++var7) {
                 Scored candidate = var5[var7];
                 if(candidate.getScore() > 0.0D) {
-                    throw new RuntimeException("scores are supposed to be logarithmic");
+//                    throw new RuntimeException("scores are supposed to be logarithmic");
+                    LoggerFactory.getLogger(Graph.class).warn("scores are supposed to be logarithmic!");
+                    return;
                 }
             }
         }
