@@ -138,6 +138,19 @@ public interface ZodiacOptions {
     int getNumOfCores();
 
 
+    @Option(
+            longName = {"isolation-width"},
+            description = "width of the isolation window to measure MS2",
+            defaultToNull = true
+    )
+    Double getIsolationWindowWidth();
+
+    @Option(
+            longName = {"compute-statistics-only"},
+            description = "only compute the dataset statistics without running ZODIAC"
+    )
+    boolean isOnlyComputeStats();
+
     @Option(shortName = "h", longName = "help", helpRequest = true)
     boolean isHelp();
 
