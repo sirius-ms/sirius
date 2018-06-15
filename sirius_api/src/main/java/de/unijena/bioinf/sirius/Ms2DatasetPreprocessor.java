@@ -561,12 +561,12 @@ public class Ms2DatasetPreprocessor {
             double width = ms2Dataset.getIsolationWindowWidth();
             if (Double.isNaN(width) || width<=0){
                 width = 10;
-                ms2Dataset.setIsolationWindow(new SimpleIsolationWindow(width, 0, true, findMs1PeakDeviation));
+                ms2Dataset.setIsolationWindow(new EstimatedIsolationWindow(width, 0, true, findMs1PeakDeviation));
                 ms2Dataset.getIsolationWindow().estimate(ms2Dataset);
                 width = ms2Dataset.getIsolationWindow().getEstimatedWindowSize();
                 ms2Dataset.setIsolationWindowWidth(width);
             } else {
-                ms2Dataset.setIsolationWindow(new SimpleIsolationWindow(width, 0, false, findMs1PeakDeviation));
+                ms2Dataset.setIsolationWindow(new EstimatedIsolationWindow(width, 0, false, findMs1PeakDeviation));
                 ms2Dataset.getIsolationWindow().estimate(ms2Dataset);
                 //todo also set new isolationWindowWidth?
             }

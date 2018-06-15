@@ -3,7 +3,7 @@ package de.unijena.bioinf.ChemistryBase.ms;
 /**
  * Created by ge28quv on 11/07/17.
  */
-public class ImmutableIsolationWindow extends SimpleIsolationWindow{
+public class ImmutableIsolationWindow extends EstimatedIsolationWindow {
 
     public ImmutableIsolationWindow(double maxWindowSize, double massShift, double[] relMz, double[] filterRatio) {
         super(maxWindowSize, massShift, false, null);
@@ -17,7 +17,7 @@ public class ImmutableIsolationWindow extends SimpleIsolationWindow{
         this.filterRatio = filterRatio;
     }
 
-    public ImmutableIsolationWindow(SimpleIsolationWindow window){
+    public ImmutableIsolationWindow(EstimatedIsolationWindow window){
         super(window.getMaxWindowSize(), window.getMassShift(), false, null);
         this.relMz = window.getFilterMassValues();
         this.filterRatio = window.getFilterIntensityRatios();
