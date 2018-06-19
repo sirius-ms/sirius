@@ -72,13 +72,13 @@ public class IsotopePatternInMs2Scorer {
         final Deviation shiftDev = peakDev.divide(2);
         // 1. for each fragment compute Isotope Pattern and match them against raw spectra
         final FastIsotopePatternGenerator generator = new FastIsotopePatternGenerator(Normalization.Sum(1d));
-        final Ionization ion = input.getExperimentInformation().getPrecursorIonType().getIonization();
         final TIntArrayList ids = new TIntArrayList(5);
         final TDoubleArrayList scores = new TDoubleArrayList(5);
         final ArrayList<SimpleSpectrum> patterns = new ArrayList<SimpleSpectrum>(5);
         final FragmentAnnotation<ProcessedPeak> peakAno = graph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
         final FragmentAnnotation<Ms2IsotopePatternMatch> isoAno =  graph.addFragmentAnnotation(Ms2IsotopePatternMatch.class);
         final FragmentAnnotation<IsotopicMarker> pseudoAno = graph.getOrCreateFragmentAnnotation(IsotopicMarker.class);
+        final FragmentAnnotation<Ionization> ionizationAno = graph.getFragmentAnnotationOrThrow(Ionization.class);
         // find patterns and score
 
         //////////
@@ -98,9 +98,12 @@ public class IsotopePatternInMs2Scorer {
         final FragmentIsotopeGenerator fisogen = new FragmentIsotopeGenerator();
         IsolationWindow isolationWindow = input.getExperimentInformation().getAnnotation(IsolationWindow.class);
         final SimpleSpectrum ms1Pattern;
+        assert graph.getRoot().getChildren().size()==1;
         if (isolationWindow!=null){
+            Ionization ion = ionizationAno.get(graph.getRoot().getChildren(0));
             ms1Pattern = isolationWindow.transform(generator.simulatePattern(ms1Formula, ion), input.getExperimentInformation().getIonMass());
         } else {
+            Ionization ion = ionizationAno.get(graph.getRoot().getChildren(0));
             ms1Pattern = findMs1PatternInMs2(input, graph, generator, ms2Spectra, ion);
         }
 
@@ -111,7 +114,7 @@ public class IsotopePatternInMs2Scorer {
         for (Fragment f : graph) {
             if (f.getFormula()!=null && !f.getFormula().isEmpty()) {
                 final SimpleSpectrum simulated;
-
+                Ionization ion = ionizationAno.get(f);
                 if (ms1Pattern!=null) {
                     if (f.getFormula().equals(ms1Formula)) {
                         simulated = ms1Pattern;
