@@ -397,7 +397,6 @@ public class IsotopePatternInMs2Scorer {
     }
 
     public void scoreFromMs1(ProcessedInput input, FGraph graph) {
-        final PrecursorIonType ion = graph.getAnnotationOrThrow(PrecursorIonType.class);
         final Deviation dev = input.getMeasurementProfile().getAllowedMassDeviation();
         final SimpleSpectrum mergedMs1 = input.getExperimentInformation().getMergedMs1Spectrum();
         if (mergedMs1 == null) return;
@@ -433,6 +432,7 @@ public class IsotopePatternInMs2Scorer {
         }
         final IsotopePatternGenerator gen = new FastIsotopePatternGenerator(Normalization.Max(1d));
 
+        final FragmentAnnotation<Ionization> ionizationAno = graph.getFragmentAnnotationOrThrow(Ionization.class);
         final PeakAnnotation<IsotopePatternAssignment> ano = input.getOrCreatePeakAnnotation(IsotopePatternAssignment.class);
         final FragmentAnnotation<IsotopePattern> isoPat = graph.getOrCreateFragmentAnnotation(IsotopePattern.class);
         for (Fragment f : graph.getFragmentsWithoutRoot()) {
@@ -441,9 +441,12 @@ public class IsotopePatternInMs2Scorer {
             if (assignment != null) {
                 SimpleSpectrum spec = assignment.pattern;
                 gen.setMaximalNumberOfPeaks(spec.size());
-                final SimpleSpectrum simulated = Spectrums.subspectrum(gen.simulatePattern(f.getFormula(), ion.getIonization()), 0, assignment.pattern.size());
+                final SimpleSpectrum simulated = Spectrums.subspectrum(gen.simulatePattern(f.getFormula(), ionizationAno.get(f)), 0, assignment.pattern.size());
                 spec = Spectrums.subspectrum(spec, 0, simulated.size());
                 // shorten pattern
+
+
+                if (spec.size()==0) continue; //might happen for strange elements, since we set max number of peaks and a min intensity threshold
 
                 final double[] scores = new double[spec.size()];
                 scorer1.score(scores, spec, simulated, Normalization.Max(1d), input.getExperimentInformation(), input.getMeasurementProfile());
