@@ -49,6 +49,6 @@ public class SimpleRectangularIsolationWindow extends IsolationWindow {
 
     @Override
     public double getEstimatedMassShift() {
-        return (rightBorder-leftBorder)/2;
+        return (rightBorder-leftBorder)/2+leftBorder;
     }
 }
