@@ -58,7 +58,9 @@ public class FewPeaksAnnotator implements QualityAnnotator {
 //            Spectrum<Peak> ms2Spec = getMostIntenseMs2(experiment);
             if (Double.isNaN(dataset.getIsolationWindowWidth()) || dataset.getIsolationWindowWidth()>1){
                 SimpleMutableSpectrum mutableSpectrum = new SimpleMutableSpectrum(ms2Spec);
-                Spectrums.filterIsotpePeaks(mutableSpectrum, dataset.getMeasurementProfile().getAllowedMassDeviation());
+//                Spectrums.filterIsotpePeaks(mutableSpectrum, dataset.getMeasurementProfile().getAllowedMassDeviation());
+                //changed to mass difference deviation
+                Spectrums.filterIsotpePeaks(mutableSpectrum, dataset.getMeasurementProfile().getStandardMassDifferenceDeviation());
                 ms2Spec = mutableSpectrum;
             }
 
