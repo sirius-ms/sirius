@@ -18,6 +18,7 @@ public class CompoundQuality {
     }
 
     public void addProperty(SpectrumProperty property) {
+        if (properties.contains(property)) return;
         properties.add(property);
     }
 
