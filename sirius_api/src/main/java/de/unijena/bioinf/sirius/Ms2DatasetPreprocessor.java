@@ -389,15 +389,6 @@ public class Ms2DatasetPreprocessor {
     private final static String SEP = "\t";
     public void writeExperimentInfos(Ms2Dataset ms2Dataset, Path outputFile, SpectrumProperty[] properties) throws IOException {
         BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset());
-//        SpectrumProperty[] allProperties = SpectrumProperty.values();
-        //changed: only output subset of SpectrumProperties
-//        List<SpectrumProperty> propertyList = new ArrayList<>();
-//        propertyList.add(SpectrumProperty.Good);
-//        for (QualityAnnotator qualityAnnotator : qualityAnnotators) {
-//            propertyList.add(qualityAnnotator.getPropertyToAnnotate());
-//        }
-//
-//        SpectrumProperty[] allProperties = propertyList.toArray(new SpectrumProperty[0]);
 
         writer.write("name"+SEP+"mass");
         for (SpectrumProperty property : properties) {
