@@ -249,6 +249,15 @@ public class Graph<C extends Candidate<?>> {
         return new GraphValidationMessage("", false, false);
     }
 
+    public static void validateAndThrowError(Graph graph, Logger logger) throws Exception {
+        GraphValidationMessage validationMessage = graph.validate();
+        if (validationMessage.isError()) {
+            throw new Exception(validationMessage.getMessage());
+        } else if (validationMessage.isWarning()) {
+            logger.warn(validationMessage.getMessage());
+        }
+    }
+
 
     private static InitData setUp(Scored[][] possibleFormulas) {
         int length = 0;
