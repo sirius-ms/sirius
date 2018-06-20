@@ -139,17 +139,30 @@ public interface ZodiacOptions {
 
 
     @Option(
-            longName = {"isolation-width"},
+            longName = {"isolation-window-width"},
             description = "width of the isolation window to measure MS2",
             defaultToNull = true
     )
     Double getIsolationWindowWidth();
 
     @Option(
+            longName = {"isolation-window-shift"},
+            description = "The shift applied to the isolation window to measure MS2 in relation to the precursormass",
+            defaultValue = "0"
+    )
+    double getIsolationWindowShift();
+
+    @Option(
             longName = {"compute-statistics-only"},
             description = "only compute the dataset statistics without running ZODIAC"
     )
     boolean isOnlyComputeStats();
+
+    @Option(
+            longName = {"ignore-spectra-quality"},
+            description = "As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining."
+    )
+    boolean isOnlyOneStepZodiac();
 
     @Option(shortName = "h", longName = "help", helpRequest = true)
     boolean isHelp();
