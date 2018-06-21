@@ -1,25 +1,16 @@
 package de.unijena.bioinf.ms.cli;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.GibbsSampling.ZodiacUtils;
-import de.unijena.bioinf.GibbsSampling.model.*;
-import de.unijena.bioinf.GibbsSampling.model.distributions.*;
-import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
-import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.GibbsSampling.model.ZodiacResultsWithClusters;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
 import org.slf4j.LoggerFactory;
-import oshi.SystemInfo;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class ZodiacWorkflow implements Workflow<ExperimentResult> {
@@ -55,11 +46,24 @@ public class ZodiacWorkflow implements Workflow<ExperimentResult> {
         }
         //todo reads original experiments twice!
         try {
-            allExperimentResults = zodiacIP.updateQuality(allExperimentResults, originalSpectraPath);
+            Path outputPath = Paths.get(options.getOutput());
+            if (options.getIsolationWindowWidth()!=null){
+                double width = options.getIsolationWindowWidth();
+                double shift = options.getIsolationWindowShift();
+                allExperimentResults = zodiacIP.updateQuality(allExperimentResults, originalSpectraPath, width, shift, outputPath);
+            } else {
+                allExperimentResults = zodiacIP.updateQuality(allExperimentResults, originalSpectraPath, -1d, -1d, outputPath);
+            }
+
         } catch (IOException e) {
             LOG.error("IOException while estimating data quality.", e);
             return;
         }
+
+        if (options.isOnlyComputeStats()){
+            return;
+        }
+
         ZodiacJJob zodiacJJob = zodiacIP.makeZodiacJob(allExperimentResults);
 
         try {

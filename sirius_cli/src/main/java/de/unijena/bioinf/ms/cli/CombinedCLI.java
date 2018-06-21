@@ -4,6 +4,7 @@ import com.google.common.collect.Iterables;
 import com.lexicalscope.jewel.cli.ArgumentValidationException;
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
+import de.unijena.bioinf.ChemistryBase.SimpleRectangularIsolationWindow;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -524,6 +525,16 @@ public class CombinedCLI extends ApplicationCore {
 
 
         if (options.getParentMz() != null) exp.setIonMass(options.getParentMz());
+
+        if (options.getIsolationWindowWidth()!=null) {
+            final double width = options.getIsolationWindowWidth();
+            final double shift = options.getIsolationWindowShift();
+            final double right = width/2d+shift;
+            final double left = -width/2d+shift;
+            SimpleRectangularIsolationWindow isolationWindow = new SimpleRectangularIsolationWindow(left, right);
+            exp.setAnnotation(IsolationWindow.class, isolationWindow);
+        }
+
 
         //only keep most intense ms2 (hack used for bad data)
         if (options.isMostIntenseMs2()) {
