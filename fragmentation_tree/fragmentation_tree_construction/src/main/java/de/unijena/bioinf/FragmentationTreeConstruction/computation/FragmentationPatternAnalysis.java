@@ -121,6 +121,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         IGNORE,
 
         /**
+         * enable if estimated isolation window allows for isotope peaks in MS2
+         */
+        IF_NECESSARY,
+
+        /**
          * look for isotopes in MS2 if experiment is measured on a Bruker Maxis
          */
         BRUKER_ONLY,
@@ -1614,6 +1619,12 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final boolean isBrukerMaxis = input.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown).hasIsotopesInMs2();
         switch (isotopeInMs2Handling) {
             case IGNORE: return false;
+            case IF_NECESSARY:
+                IsolationWindow isolationWindow = input.getAnnotation(IsolationWindow.class, null);
+                if (isolationWindow!=null && isolationWindow.getRightBorder()>0.9){
+                    //isolation window includes the +1 peak
+                    return true;
+                }
             case BRUKER_IF_NECESSARY:
                 throw new UnsupportedOperationException("Not supported yet");
             case BRUKER_ONLY:
