@@ -6,11 +6,13 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.PeaklistSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNRegressionPredictor;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.NotMonoisotopicAnnotatorUsingIPA;
+import gnu.trove.list.array.TDoubleArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +22,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by ge28quv on 01/07/17.
@@ -55,10 +58,11 @@ public class Ms2DatasetPreprocessor {
     private static String[] STANDARD_IONIZATIONS_NEGATIVE = new String[]{"[M]-", "[M-H]-", "[M+Cl]-"};
 
     // intended precursor peak should be seen within this window.
-    private static Deviation findMs1PeakDeviation = new Deviation(100, 0.1);
+    public static final Deviation FIND_MS1_PEAK_DEVIATION = new Deviation(100, 0.1);
+    private static Deviation findMs1PeakDeviation = FIND_MS1_PEAK_DEVIATION;
 
     //minimum number of peaks for a good quality spectrum
-    private int MIN_NUMBER_OF_PEAKS = 5;
+    public static final int MIN_NUMBER_OF_PEAKS = 5;
 
     private Sirius sirius;
     private PrecursorIonType[] precursorIonTypes;
@@ -69,6 +73,8 @@ public class Ms2DatasetPreprocessor {
     List<Ms2ExperimentValidator> ms2ExperimentValidators;
     private Warning validatorWarning;
     private boolean repairInput;
+
+    private List<QualityAnnotator> qualityAnnotators;
 
     public Ms2DatasetPreprocessor() {
         this(true);
@@ -95,6 +101,25 @@ public class Ms2DatasetPreprocessor {
         ms2ExperimentValidators.add(new MissingMergedSpectrumValidator());
         //todo MissingValueValidator???
         this.validatorWarning = new WarningLog();
+
+        //todo add test to Annotator order
+        NoMs1PeakAnnotator noMs1PeakAnnotator = new NoMs1PeakAnnotator(findMs1PeakDeviation);
+        FewPeaksAnnotator fewPeaksAnnotator = new FewPeaksAnnotator(MIN_NUMBER_OF_PEAKS);
+        LowIntensityAnnotator lowIntensityAnnotator = new LowIntensityAnnotator(findMs1PeakDeviation, 0.01, 0d); //todo ... there is no abs intensity
+//        NotMonoisotopicAnnotator notMonoisotopicAnnotator = new NotMonoisotopicAnnotator(findMs1PeakDeviation);
+        //todo if you knew isolation window you could allways take teh most intense peak as precursor peak not just guessing the window with findMs1PeakDeviation;
+        NotMonoisotopicAnnotatorUsingIPA notMonoisotopicAnnotator = new NotMonoisotopicAnnotatorUsingIPA(findMs1PeakDeviation);
+
+        qualityAnnotators = new ArrayList<>();
+        qualityAnnotators.add(noMs1PeakAnnotator);
+        qualityAnnotators.add(fewPeaksAnnotator);
+        qualityAnnotators.add(lowIntensityAnnotator);
+        qualityAnnotators.add(notMonoisotopicAnnotator);
+
+    }
+
+    public void setQualityAnnotators(List<QualityAnnotator> qualityAnnotators){
+        this.qualityAnnotators = qualityAnnotators;
     }
 
     /**
@@ -123,11 +148,18 @@ public class Ms2DatasetPreprocessor {
         estimateIsolationWindow((MutableMs2Dataset) ms2Dataset);
 
         //todo as estimateIsolationWindow is in alpha version, chimeric annotation might also not perform perfect
-        double max2ndMostIntenseRatio = 0.33;
-        double maxSummedIntensitiesRatio = 1.0;
-        ChimericAnnotator chimericAnnotator = new ChimericAnnotator(findMs1PeakDeviation, max2ndMostIntenseRatio, maxSummedIntensitiesRatio);
-        chimericAnnotator.prepare(ms2Dataset.getDatasetStatistics());
-        chimericAnnotator.annotate(ms2Dataset);
+//        double max2ndMostIntenseRatio = 0.33;
+//        double maxSummedIntensitiesRatio = 1.0;
+//        ChimericAnnotator chimericAnnotator = new ChimericAnnotator(findMs1PeakDeviation, max2ndMostIntenseRatio, maxSummedIntensitiesRatio);
+//        chimericAnnotator.prepare(ms2Dataset.getDatasetStatistics());
+//        chimericAnnotator.annotate(ms2Dataset);
+
+        for (QualityAnnotator qualityAnnotator : qualityAnnotators) {
+            if (qualityAnnotator instanceof ChimericAnnotator){
+                qualityAnnotator.prepare(ms2Dataset.getDatasetStatistics());
+                qualityAnnotator.annotate(ms2Dataset);
+            }
+        }
 
         for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
             experiment.setAnnotation(IsolationWindow.class,  ms2Dataset.getIsolationWindow());
@@ -245,22 +277,11 @@ public class Ms2DatasetPreprocessor {
         //todo this assumes relative noise intensity. we learned absolute. adjust at some point?
 //        ((MutableMeasurementProfile)mutableMs2Dataset.getMeasurementProfile()).setMedianNoiseIntensity(datasetStatistics.getMedianMs2NoiseIntensity());
 
-        //todo add test to Annotator order
-        NoMs1PeakAnnotator noMs1PeakAnnotator = new NoMs1PeakAnnotator(findMs1PeakDeviation);
-        FewPeaksAnnotator fewPeaksAnnotator = new FewPeaksAnnotator(MIN_NUMBER_OF_PEAKS);
-        LowIntensityAnnotator lowIntensityAnnotator = new LowIntensityAnnotator(findMs1PeakDeviation, 0.01, 0d); //todo ... there is no abs intensity
-//        NotMonoisotopicAnnotator notMonoisotopicAnnotator = new NotMonoisotopicAnnotator(findMs1PeakDeviation);
-        //todo if you knew isolation window you could allways take teh most intense peak as precursor peak not just guessing the window with findMs1PeakDeviation;
-        NotMonoisotopicAnnotatorUsingIPA notMonoisotopicAnnotator = new NotMonoisotopicAnnotatorUsingIPA(findMs1PeakDeviation);
 
-        List<QualityAnnotator> qualityAnnotators = new ArrayList<>();
-        qualityAnnotators.add(noMs1PeakAnnotator);
-        qualityAnnotators.add(fewPeaksAnnotator);
-        qualityAnnotators.add(lowIntensityAnnotator);
-        qualityAnnotators.add(notMonoisotopicAnnotator);
 
 
         for (QualityAnnotator qualityAnnotator : qualityAnnotators) {
+            if (qualityAnnotator instanceof ChimericAnnotator) continue;
             qualityAnnotator.prepare(datasetStatistics);
             qualityAnnotator.annotate(mutableMs2Dataset);
         }
@@ -340,6 +361,8 @@ public class Ms2DatasetPreprocessor {
     private boolean isNotMonoisotopicPeak(Ms2Experiment experiment, MeasurementProfile profile) {
         final double precursorMass = experiment.getIonMass();
 
+
+        //todo what about experiment.getMergedMs1Spectrum()? probably already some cutoff applied by mzMine an co?
         MutableSpectrum<Peak> merged = new SimpleMutableSpectrum(getMergedMs2(experiment, profile.getAllowedMassDeviation()));
         int idx = Spectrums.mostIntensivePeakWithin(merged, precursorMass, profile.getAllowedMassDeviation());
         if (idx<0){
@@ -358,22 +381,99 @@ public class Ms2DatasetPreprocessor {
         }
     }
 
-    private final static String SEP = "\t";
     public void writeExperimentInfos(Ms2Dataset ms2Dataset, Path outputFile) throws IOException {
-        BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset());
         SpectrumProperty[] allProperties = SpectrumProperty.values();
+        writeExperimentInfos(ms2Dataset, outputFile, allProperties);
+    }
+
+    private final static String SEP = "\t";
+    public void writeExperimentInfos(Ms2Dataset ms2Dataset, Path outputFile, SpectrumProperty[] properties) throws IOException {
+        BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset());
+
         writer.write("name"+SEP+"mass");
-        for (SpectrumProperty property : allProperties) {
+        for (SpectrumProperty property : properties) {
             writer.write(SEP+property.toString());
         }
+        writer.write(SEP+"numberOfIsotopePeaks");
         for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
-            writer.write("\n"+experiment.getName()+SEP+experiment.getIonMass());
-            for (SpectrumProperty property : allProperties) {
+            writer.newLine();
+            writer.write(experiment.getName()+SEP+experiment.getIonMass());
+            for (SpectrumProperty property : properties) {
                 if (hasProperty(experiment, property)) writer.write(SEP+"1");
                 else writer.write(SEP+"0");
             }
 
+            SimpleSpectrum isotopePattern = extractIsotopePattern(experiment);
+            writer.write(SEP+String.valueOf(isotopePattern.size()));
         }
+        writer.close();
+    }
+
+    private SimpleSpectrum extractIsotopePattern(Ms2Experiment experiment) {
+
+        Ms2Experiment experiment2;
+        if (experiment.getMergedMs1Spectrum()!=null) experiment2 = experiment;
+        else {
+            experiment2 = new MutableMs2Experiment(experiment);
+            if (experiment2.getMs1Spectra().size() > 0) {
+                ((MutableMs2Experiment)experiment2).setMergedMs1Spectrum(Spectrums.mergeSpectra(experiment2.<Spectrum<Peak>>getMs1Spectra()));
+            } else {
+                return new SimpleSpectrum(new double[0], new double[0]);
+            }
+
+        }
+
+        //todo again the problem with the measurementprofile?!
+        return sirius.getMs1Analyzer().extractPattern(experiment2, experiment2.getIonMass());
+    }
+
+    public void writeDatasetSummary(Ms2Dataset ms2Dataset, Path outputFile) throws IOException {
+        BufferedWriter writer = Files.newBufferedWriter(outputFile);
+        DatasetStatistics ds = ms2Dataset.getDatasetStatistics();
+
+        double ms1MinInt = ds.getMinMs1Intensities().size()>0?ds.getMinMs1Intensity():Double.NaN;
+        double ms1MaxInt = ds.getMaxMs1Intensities().size()>0?ds.getMaxMs1Intensity():Double.NaN;
+        double ms2MinInt = ds.getMinMs2Intensities().size()>0?ds.getMinMs2Intensity():Double.NaN;
+        double ms2MaxInt = ds.getMaxMs2Intensities().size()>0?ds.getMaxMs2Intensity():Double.NaN;
+
+        writer.write("min intensity MS1\t"+ms1MinInt);
+        writer.newLine();
+        writer.write("max intensity MS1\t"+ms1MaxInt);
+        writer.newLine();
+        writer.write("min intensity MS2\t"+ms2MinInt);
+        writer.newLine();
+        writer.write("max intensity MS2\t"+ms2MaxInt);
+        writer.newLine();
+
+        double medianNoise = ds.getNoiseIntensities().size()>0?ds.getMedianMs2NoiseIntensity():Double.NaN;
+        writer.write("median noise intensity MS2\t"+medianNoise);
+        writer.newLine();
+
+        IsolationWindow isolationWindow = ms2Dataset.getIsolationWindow();
+
+        double width = isolationWindow.getEstimatedWindowSize();
+        writer.write("isolation window width\t"+width);
+        writer.newLine();
+        double shift = isolationWindow.getEstimatedMassShift();
+        writer.write("isolation window shift\t"+shift);
+        writer.newLine();
+        double left = shift-width/2d;
+        double right = shift+width/2d;
+
+        TDoubleArrayList masses = new TDoubleArrayList();
+        TDoubleArrayList intensities = new TDoubleArrayList();
+        for (double m = left; m <= right-0.5; m+=0.5) {
+            masses.add(m);
+            intensities.add(isolationWindow.getIntensityRatio(0d, m));
+        }
+        masses.add(right);
+        intensities.add(isolationWindow.getIntensityRatio(0d, right));
+
+        writer.write("isolation window relative masses example\t"+Arrays.stream(masses.toArray()).mapToObj(d->String.valueOf(d)).collect(Collectors.joining(" ")));
+        writer.newLine();
+        writer.write("isolation window relative intensities example\t"+Arrays.stream(intensities.toArray()).mapToObj(d->String.valueOf(d)).collect(Collectors.joining(" ")));
+        writer.newLine();
+
         writer.close();
     }
 
@@ -561,12 +661,12 @@ public class Ms2DatasetPreprocessor {
             double width = ms2Dataset.getIsolationWindowWidth();
             if (Double.isNaN(width) || width<=0){
                 width = 10;
-                ms2Dataset.setIsolationWindow(new SimpleIsolationWindow(width, 0, true, findMs1PeakDeviation));
+                ms2Dataset.setIsolationWindow(new EstimatedIsolationWindow(width, 0, true, findMs1PeakDeviation));
                 ms2Dataset.getIsolationWindow().estimate(ms2Dataset);
                 width = ms2Dataset.getIsolationWindow().getEstimatedWindowSize();
                 ms2Dataset.setIsolationWindowWidth(width);
             } else {
-                ms2Dataset.setIsolationWindow(new SimpleIsolationWindow(width, 0, false, findMs1PeakDeviation));
+                ms2Dataset.setIsolationWindow(new EstimatedIsolationWindow(width, 0, false, findMs1PeakDeviation));
                 ms2Dataset.getIsolationWindow().estimate(ms2Dataset);
                 //todo also set new isolationWindowWidth?
             }

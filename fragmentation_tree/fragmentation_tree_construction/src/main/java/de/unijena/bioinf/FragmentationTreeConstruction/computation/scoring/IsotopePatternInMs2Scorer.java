@@ -72,13 +72,13 @@ public class IsotopePatternInMs2Scorer {
         final Deviation shiftDev = peakDev.divide(2);
         // 1. for each fragment compute Isotope Pattern and match them against raw spectra
         final FastIsotopePatternGenerator generator = new FastIsotopePatternGenerator(Normalization.Sum(1d));
-        final Ionization ion = input.getExperimentInformation().getPrecursorIonType().getIonization();
         final TIntArrayList ids = new TIntArrayList(5);
         final TDoubleArrayList scores = new TDoubleArrayList(5);
         final ArrayList<SimpleSpectrum> patterns = new ArrayList<SimpleSpectrum>(5);
         final FragmentAnnotation<ProcessedPeak> peakAno = graph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
         final FragmentAnnotation<Ms2IsotopePatternMatch> isoAno =  graph.addFragmentAnnotation(Ms2IsotopePatternMatch.class);
         final FragmentAnnotation<IsotopicMarker> pseudoAno = graph.getOrCreateFragmentAnnotation(IsotopicMarker.class);
+        final FragmentAnnotation<Ionization> ionizationAno = graph.getFragmentAnnotationOrThrow(Ionization.class);
         // find patterns and score
 
         //////////
@@ -98,9 +98,12 @@ public class IsotopePatternInMs2Scorer {
         final FragmentIsotopeGenerator fisogen = new FragmentIsotopeGenerator();
         IsolationWindow isolationWindow = input.getExperimentInformation().getAnnotation(IsolationWindow.class);
         final SimpleSpectrum ms1Pattern;
+        assert graph.getRoot().getChildren().size()==1;
         if (isolationWindow!=null){
+            Ionization ion = ionizationAno.get(graph.getRoot().getChildren(0));
             ms1Pattern = isolationWindow.transform(generator.simulatePattern(ms1Formula, ion), input.getExperimentInformation().getIonMass());
         } else {
+            Ionization ion = ionizationAno.get(graph.getRoot().getChildren(0));
             ms1Pattern = findMs1PatternInMs2(input, graph, generator, ms2Spectra, ion);
         }
 
@@ -111,7 +114,7 @@ public class IsotopePatternInMs2Scorer {
         for (Fragment f : graph) {
             if (f.getFormula()!=null && !f.getFormula().isEmpty()) {
                 final SimpleSpectrum simulated;
-
+                Ionization ion = ionizationAno.get(f);
                 if (ms1Pattern!=null) {
                     if (f.getFormula().equals(ms1Formula)) {
                         simulated = ms1Pattern;
@@ -394,7 +397,6 @@ public class IsotopePatternInMs2Scorer {
     }
 
     public void scoreFromMs1(ProcessedInput input, FGraph graph) {
-        final PrecursorIonType ion = graph.getAnnotationOrThrow(PrecursorIonType.class);
         final Deviation dev = input.getMeasurementProfile().getAllowedMassDeviation();
         final SimpleSpectrum mergedMs1 = input.getExperimentInformation().getMergedMs1Spectrum();
         if (mergedMs1 == null) return;
@@ -430,6 +432,7 @@ public class IsotopePatternInMs2Scorer {
         }
         final IsotopePatternGenerator gen = new FastIsotopePatternGenerator(Normalization.Max(1d));
 
+        final FragmentAnnotation<Ionization> ionizationAno = graph.getFragmentAnnotationOrThrow(Ionization.class);
         final PeakAnnotation<IsotopePatternAssignment> ano = input.getOrCreatePeakAnnotation(IsotopePatternAssignment.class);
         final FragmentAnnotation<IsotopePattern> isoPat = graph.getOrCreateFragmentAnnotation(IsotopePattern.class);
         for (Fragment f : graph.getFragmentsWithoutRoot()) {
@@ -438,9 +441,12 @@ public class IsotopePatternInMs2Scorer {
             if (assignment != null) {
                 SimpleSpectrum spec = assignment.pattern;
                 gen.setMaximalNumberOfPeaks(spec.size());
-                final SimpleSpectrum simulated = Spectrums.subspectrum(gen.simulatePattern(f.getFormula(), ion.getIonization()), 0, assignment.pattern.size());
+                final SimpleSpectrum simulated = Spectrums.subspectrum(gen.simulatePattern(f.getFormula(), ionizationAno.get(f)), 0, assignment.pattern.size());
                 spec = Spectrums.subspectrum(spec, 0, simulated.size());
                 // shorten pattern
+
+
+                if (spec.size()==0) continue; //might happen for strange elements, since we set max number of peaks and a min intensity threshold
 
                 final double[] scores = new double[spec.size()];
                 scorer1.score(scores, spec, simulated, Normalization.Max(1d), input.getExperimentInformation(), input.getMeasurementProfile());

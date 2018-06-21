@@ -345,6 +345,9 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         final FTree finalTree;
         if (recal.getTreeWeight() >= tree.getTreeWeight()) {
             finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(recal).withMinimalScore(recal.getTreeWeight() - 1e-3).solve(pin, graph).tree;
+            if (finalTree==null){
+                throw new RuntimeException("Recalibrated tree is null for "+input.getExperimentInformation().getName()+". Error in ILP?");
+            }
             finalTree.setAnnotation(SpectralRecalibration.class, rec);
             finalTree.setAnnotation(ProcessedInput.class, pin);
             finalTree.setAnnotation(RecalibrationFunction.class, rec.toPolynomial());

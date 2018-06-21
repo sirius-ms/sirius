@@ -7,7 +7,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -15,18 +14,18 @@ import java.util.List;
  * //TODO test!!
  * this {@link IsolationWindow} tests how reasonable the patterns are using IPA while extracting them for estimation
  */
-public class BetterSimpleIsolationWindow extends SimpleIsolationWindow {
+public class BetterEstimatedIsolationWindow extends EstimatedIsolationWindow {
 
     private Sirius sirius;
     private PrecursorIonType[] precursorIonTypes;
 
-    public BetterSimpleIsolationWindow(double maxWindowSize, PrecursorIonType[] precursorIonTypes) {
+    public BetterEstimatedIsolationWindow(double maxWindowSize, PrecursorIonType[] precursorIonTypes) {
         super(maxWindowSize);
         sirius = new Sirius();
         this.precursorIonTypes = precursorIonTypes;
     }
 
-    public BetterSimpleIsolationWindow(double maxWindowSize, double massShift, boolean estimateSize, PrecursorIonType[] precursorIonTypes, Deviation findMs1PeakDeviation) {
+    public BetterEstimatedIsolationWindow(double maxWindowSize, double massShift, boolean estimateSize, PrecursorIonType[] precursorIonTypes, Deviation findMs1PeakDeviation) {
         super(maxWindowSize, massShift, estimateSize, findMs1PeakDeviation);
         sirius = new Sirius();
         this.precursorIonTypes = precursorIonTypes;

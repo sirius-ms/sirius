@@ -45,6 +45,22 @@ public class DatasetStatistics {
     }
 
 
+    public TDoubleArrayList getMinMs1Intensities() {
+        return minMs1Intensities;
+    }
+
+    public TDoubleArrayList getMaxMs1Intensities() {
+        return maxMs1Intensities;
+    }
+
+    public TDoubleArrayList getMinMs2Intensities() {
+        return minMs2Intensities;
+    }
+
+    public TDoubleArrayList getMaxMs2Intensities() {
+        return maxMs2Intensities;
+    }
+
     public double getMinMs1Intensity(){
         return minMs1Intensities.min();
     }
