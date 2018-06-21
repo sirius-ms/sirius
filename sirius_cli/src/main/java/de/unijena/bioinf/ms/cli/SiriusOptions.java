@@ -187,6 +187,12 @@ public interface SiriusOptions {
     )
     double getIsolationWindowShift();
 
+    @Option(
+            longName = {"assess-data-quality"},
+            description = "produce stats on quality of spectra and estimate isolation window. Needs to read all data at once.",
+            hidden = true
+    )
+    boolean isAssessDataQuality();
 
 
 
