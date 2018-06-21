@@ -332,11 +332,11 @@ public class Zodiac {
     private final static String SEP = "\t";
     public static void writeZodiacOutput(String[] ids, Scored<IdentificationResult>[] initial, CompoundResult<FragmentsCandidate>[] result, Path outputPath) throws IOException {
         BufferedWriter writer = Files.newBufferedWriter(outputPath, Charset.defaultCharset());
-        writer.write("id" + SEP + "quality" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "connectedCompounds" + SEP + "ZodiacMF" + SEP + "ZodiacMFIon"+ SEP + "ZodiacScore");
+        writer.write("id" + SEP + "quality" + SEP + "precursorMass" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "connectedCompounds" + SEP + "biggestTreeSize" + SEP + "maxExplainedIntensity" + SEP + "ZodiacMF" + SEP + "ZodiacMFIon"+ SEP + "ZodiacScore" + SEP + "treeSize");
 
         int maxCandidates = maxNumberOfCandidates(result);
         for (int i = 2; i <= maxCandidates; i++) {
-            writer.write(SEP + "ZodiacMF" + String.valueOf(i) + SEP + "ZodiacMFIon" + String.valueOf(i) + SEP + "ZodiacScore" + String.valueOf(i));
+            writer.write(SEP + "ZodiacMF" + String.valueOf(i) + SEP + "ZodiacMFIon" + String.valueOf(i) + SEP + "ZodiacScore" + String.valueOf(i) + SEP + "treeSize" + String.valueOf(i) );
         }
 
         for (int i = 0; i < ids.length; i++) {
@@ -368,9 +368,23 @@ public class Zodiac {
 
     private static String createSummaryLine(String id, String siriusMF, double siriusScore, int numberConnections, Scored<FragmentsCandidate>[] result){
         String qualityString = "";
+        double precursorMass = Double.NaN;
         if (result.length>0){
             CompoundQuality compoundQuality = result[0].getCandidate().getExperiment().getAnnotation(CompoundQuality.class, null);
+            precursorMass = result[0].getCandidate().getExperiment().getIonMass();
             if (compoundQuality!=null) qualityString = compoundQuality.toString();
+        }
+
+        int biggestTreeSize = -1;
+        double maxExplainedIntensity = 0;
+        for (Scored<FragmentsCandidate> scoredCandidate : result) {
+            FragmentsCandidate candidate = scoredCandidate.getCandidate();
+            if (DummyFragmentCandidate.isDummy(candidate)) continue;
+            final int treeSize = candidate.getFragments().length;
+            final FTree tree = candidate.getAnnotation(FTree.class);
+            final double intensity = tree.getAnnotationOrThrow(TreeScoring.class).getExplainedIntensity();
+            biggestTreeSize = Math.max(treeSize,biggestTreeSize);
+            maxExplainedIntensity = Math.max(maxExplainedIntensity, intensity);
         }
 
         StringBuilder builder = new StringBuilder();
@@ -378,17 +392,32 @@ public class Zodiac {
         builder.append(SEP);
         builder.append(qualityString);
         builder.append(SEP);
+        builder.append(String.valueOf(precursorMass));
+        builder.append(SEP);
         builder.append(siriusMF);
         builder.append(SEP);
         builder.append(Double.toString(siriusScore));
         builder.append(SEP);
         builder.append(numberConnections);
+        builder.append(SEP);
+        builder.append(biggestTreeSize);
+        builder.append(SEP);
+        builder.append(maxExplainedIntensity);
+
+
 
         for (int j = 0; j < Math.min(result.length, NUMBER_OF_HITS); j++) {
             Scored<FragmentsCandidate> currentResult = result[j];
-            final String mf = currentResult.getCandidate().getFormula().formatByHill();
-            final String ion = currentResult.getCandidate().getIonType().toString();
+            FragmentsCandidate candidate = currentResult.getCandidate();
+            final String mf = candidate.getFormula().formatByHill();
+            final String ion = candidate.getIonType().toString();
             final double score = currentResult.getScore();
+            final double treeSize;
+            if (DummyFragmentCandidate.isDummy(candidate)){
+                treeSize = -1;
+            } else {
+                treeSize = currentResult.getCandidate().getFragments().length;//number of fragments = treeSize
+            }
 
 //            if (score <= 0) break; //don't write MF with 0 probability
 
@@ -398,6 +427,8 @@ public class Zodiac {
             builder.append(ion);
             builder.append(SEP);
             builder.append(Double.toString(score));
+            builder.append(SEP);
+            builder.append(Double.toString(treeSize));
         }
         return builder.toString();
     }
