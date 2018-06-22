@@ -1,8 +1,12 @@
 package de.unijena.bioinf.ms.cli;
 
+import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.SimpleRectangularIsolationWindow;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
@@ -360,7 +364,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
     private final static String SEP = "\t";
     public static void writeZodiacOutput(String[] ids, Scored<IdentificationResult>[] initial, CompoundResult<FragmentsCandidate>[] result, Path outputPath) throws IOException {
         BufferedWriter writer = Files.newBufferedWriter(outputPath, Charset.defaultCharset());
-        writer.write("id" + SEP + "quality" + SEP + "precursorMass" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "connectedCompounds" + SEP + "biggestTreeSize" + SEP + "maxExplainedIntensity" + SEP + "ZodiacMF" + SEP + "ZodiacMFIon"+ SEP + "ZodiacScore" + SEP + "treeSize");
+        writer.write("id" + SEP + "quality" + SEP + "precursorMass"+ SEP + "ionsByMs1" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "connectedCompounds" + SEP + "biggestTreeSize" + SEP + "maxExplainedIntensity" + SEP + "ZodiacMF" + SEP + "ZodiacMFIon"+ SEP + "ZodiacScore" + SEP + "treeSize");
 
         int maxCandidates = maxNumberOfCandidates(result);
         for (int i = 2; i <= maxCandidates; i++) {
@@ -396,10 +400,23 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
 
     private static String createSummaryLine(String id, String siriusMF, double siriusScore, int numberConnections, Scored<FragmentsCandidate>[] result){
         String qualityString = "";
+        Sirius sirius = new Sirius();
         double precursorMass = Double.NaN;
+        String ionsByMs1 = "";
         if (result.length>0){
-            CompoundQuality compoundQuality = result[0].getCandidate().getExperiment().getAnnotation(CompoundQuality.class, null);
-            precursorMass = result[0].getCandidate().getExperiment().getIonMass();
+            Ms2Experiment experiment = result[0].getCandidate().getExperiment();
+            //TODO hack: this don't have to be the ions used for SIRIUS computation in the first place!
+            PrecursorIonType[] ms1IonModes = getIonsFromMs1Hack(experiment, sirius);
+            if (ms1IonModes!=null && ms1IonModes.length>=1){
+                ionsByMs1 = ms1IonModes[0].toString();
+                for (int i = 1; i < ms1IonModes.length; i++) {
+                    ionsByMs1 += ms1IonModes[i].toString();
+
+                }
+            }
+
+            CompoundQuality compoundQuality = experiment.getAnnotation(CompoundQuality.class, null);
+            precursorMass = experiment.getIonMass();
             if (compoundQuality!=null) qualityString = compoundQuality.toString();
         }
 
@@ -421,6 +438,8 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         builder.append(qualityString);
         builder.append(SEP);
         builder.append(String.valueOf(precursorMass));
+        builder.append(SEP);
+        builder.append(ionsByMs1);
         builder.append(SEP);
         builder.append(siriusMF);
         builder.append(SEP);
@@ -459,6 +478,19 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             builder.append(Double.toString(treeSize));
         }
         return builder.toString();
+    }
+
+    private static PrecursorIonType[] getIonsFromMs1Hack(Ms2Experiment experiment, Sirius sirius){
+        MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
+        PossibleAdducts pa =  new PossibleAdducts(Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(mutableMs2Experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class));
+
+        List<PrecursorIonType> allowedIonModes = new ArrayList<>();
+        final Set<Ionization> ionModes = new HashSet<>(pa.getIonModes());
+        for (Ionization ion : ionModes) {
+            allowedIonModes.add(PrecursorIonType.getPrecursorIonType(ion));
+        }
+        PrecursorIonType[] ms1IonModes = sirius.guessIonization(mutableMs2Experiment, allowedIonModes.toArray(new PrecursorIonType[0]));
+        return ms1IonModes;
     }
 
     public Scored<IdentificationResult>[] bestInitial(String[] ids, Map<String, ExperimentResult> experimentResultMap){
