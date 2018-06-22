@@ -18,7 +18,7 @@ public class SiriusJobs {
         globalJobManager = jobManager;
         if (oldManager != null) {
             try {
-                globalJobManager.shutdown();
+                oldManager.shutdown();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
