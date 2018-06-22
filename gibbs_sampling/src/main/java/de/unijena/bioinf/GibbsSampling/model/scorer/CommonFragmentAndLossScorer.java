@@ -336,18 +336,19 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
             if(compare < 0) {
                 ++i;
                 //todo don't change but leave as is? each fragment can be matched at most once. But if both have both fragments 2 times, you can get both matches
-//                while (i+1 < fragments1.length && fragments1[i].getFormula().equals(fragments1[i+1].getFormula())) ++i;
+                //changed skip again!!!!
+                while (i+1 < fragments1.length && fragments1[i].getFormula().equals(fragments1[i+1].getFormula())) ++i;
             } else if(compare > 0) {
                 ++j;
-//                while (j+1 < fragments2.length && fragments2[j].getFormula().equals(fragments2[j+1].getFormula())) ++j;
+                while (j+1 < fragments2.length && fragments2[j].getFormula().equals(fragments2[j+1].getFormula())) ++j;
             } else {
                 final double matchScore = scoreMatchedFragments(fragments1[i], fragments2[j]);
                 commonCounter += matchScore;
                 ++i;
                 ++j;
                 //todo current hack
-//                while (i+1 < fragments1.length && fragments1[i].getFormula().equals(fragments1[i+1].getFormula())) ++i;
-//                while (j+1 < fragments2.length && fragments2[j].getFormula().equals(fragments2[j+1].getFormula())) ++j;
+                while (i+1 < fragments1.length && fragments1[i].getFormula().equals(fragments1[i+1].getFormula())) ++i;
+                while (j+1 < fragments2.length && fragments2[j].getFormula().equals(fragments2[j+1].getFormula())) ++j;
             }
         }
 
