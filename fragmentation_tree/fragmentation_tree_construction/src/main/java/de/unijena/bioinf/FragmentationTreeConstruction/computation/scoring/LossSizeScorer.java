@@ -23,13 +23,14 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
 import de.unijena.bioinf.ChemistryBase.math.LogNormalDistribution;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.List;
 
-public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
+public class LossSizeScorer implements LossScorer, PeakPairScorer, MolecularFormulaScorer{
 
     public static final DensityFunction LEARNED_DISTRIBUTION = LogNormalDistribution.withMeanAndSd(4.057753844479435d, 0.6386804182255676d);
     public static final double LEARNED_NORMALIZATION = -5.860753214730718d;
@@ -125,5 +126,15 @@ public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
         document.addToDictionary(dictionary, "distribution", helper.wrap(document, distribution));
         document.addToDictionary(dictionary, "normalization", normalization);
         document.addToDictionary(dictionary, "adjustNormalizationBasedOnData", adjustNormalizationBasedOnData);
+    }
+
+    @Override
+    public Object prepare(ProcessedInput input) {
+        return null;
+    }
+
+    @Override
+    public double score(Loss loss, ProcessedInput input, Object precomputed) {
+        return score(loss.getFormula());
     }
 }
