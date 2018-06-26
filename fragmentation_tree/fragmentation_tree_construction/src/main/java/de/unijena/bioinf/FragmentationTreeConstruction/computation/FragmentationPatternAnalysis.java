@@ -241,7 +241,14 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         if (input.getAnnotation(PossibleAdductSwitches.class, null)!=null){
             pinput.setAnnotation(PossibleAdductSwitches.class, input.getAnnotation(PossibleAdductSwitches.class));
         } else{
-            pinput.setAnnotation(PossibleAdductSwitches.class, PossibleAdductSwitches.getDefault());
+            //todo hack, make nice
+            for (LossScorer lossScorer : lossScorers) {
+                if (lossScorer instanceof AdductSwitchLossScorer) {
+                    pinput.setAnnotation(PossibleAdductSwitches.class, PossibleAdductSwitches.getDefault());
+                    break;
+                }
+            }
+
         }
 
         return pinput;
@@ -523,17 +530,19 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         //add IonModes which are possible for fragments due to adduct switch
         PossibleAdductSwitches possibleAdductSwitches = input.getAnnotation(PossibleAdductSwitches.class, null);
         Set<Ionization> ionModeSet = new HashSet<>();
-        while (true) {
-            Set<Ionization> newIonModes = new HashSet<>();
-            for (Ionization ionMode : ionModes) {
-                newIonModes.addAll(possibleAdductSwitches.getPossibleIonizations(ionMode));
+        if (possibleAdductSwitches!=null) {
+            while (true) {
+                Set<Ionization> newIonModes = new HashSet<>();
+                for (Ionization ionMode : ionModes) {
+                    newIonModes.addAll(possibleAdductSwitches.getPossibleIonizations(ionMode));
+                }
+                if (ionModeSet.size()==newIonModes.size()){
+                    break;
+                }
+                ionModeSet = newIonModes;
             }
-            if (ionModeSet.size()==newIonModes.size()){
-                break;
-            }
-            ionModeSet = newIonModes;
+            ionModes.clear();
         }
-        ionModes.clear();
         for (Ionization ionization : ionModeSet) {
             ionModes.add(ionization);
         }
