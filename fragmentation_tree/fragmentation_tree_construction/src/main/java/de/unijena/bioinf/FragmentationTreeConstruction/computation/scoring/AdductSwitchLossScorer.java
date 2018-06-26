@@ -14,7 +14,7 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
     private final Ionization naIon = PrecursorIonType.getPrecursorIonType("[M+Na]+").getIonization();
     private final Ionization hIon = PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization();
 
-    private static final double DEFAULT_NA_H_SWITCH_SCORE = -1.7917594692280552;
+    private static final double DEFAULT_NA_H_SWITCH_SCORE = -3.7939086099967136;
 
     private double naHSwitchScore;
 
