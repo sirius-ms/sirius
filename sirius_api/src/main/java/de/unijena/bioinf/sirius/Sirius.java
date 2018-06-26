@@ -150,7 +150,6 @@ public class Sirius {
 
     public Sirius(String profileName) throws IOException {
         profile = new Profile(profileName);
-        profile.fragmentationPatternAnalysis.getLossScorers().add(new AdductSwitchLossScorer());
         loadMeasurementProfile();
         this.progress = new Progress.Quiet();
     }
