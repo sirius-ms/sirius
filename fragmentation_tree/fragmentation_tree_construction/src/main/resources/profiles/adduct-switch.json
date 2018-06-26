@@ -492,6 +492,11 @@
         }
       },
       {
+        "$name": "AdductSwitchLossScorer",
+        "na-h-switch-score": -3.7939086099967136
+
+      },
+      {
         "$name": "FreeRadicalEdgeScorer",
         "radicalPenalty": -2.3025850929940455,
         "normalization": -0.011626542158820332,
