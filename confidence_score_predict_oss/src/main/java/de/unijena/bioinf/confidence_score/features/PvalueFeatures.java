@@ -1,12 +1,15 @@
 package de.unijena.bioinf.confidence_score.features;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
+import de.unijena.bioinf.confidence_score.Utils;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
@@ -19,8 +22,18 @@ public class PvalueFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates, IdentificationResult idresult) {
-        return new double[0];
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, Scored<FingerprintCandidate>[] rankedCandidates, IdentificationResult idresult, long flags) {
+        double[] return_value =  new double[1];
+
+
+        PvalueScoreUtils utils= new PvalueScoreUtils();
+
+        Utils utils2 = new Utils();
+
+
+        return_value[0]  = utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,flags)[0]);
+
+        return return_value;
     }
 
     @Override

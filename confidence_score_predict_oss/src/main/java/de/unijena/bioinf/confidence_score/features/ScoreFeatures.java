@@ -1,12 +1,15 @@
 package de.unijena.bioinf.confidence_score.features;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
+import de.unijena.bioinf.confidence_score.Utils;
 import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
@@ -15,12 +18,13 @@ import de.unijena.bioinf.sirius.IdentificationResult;
  */
 public class ScoreFeatures implements FeatureCreator {
     private final String[] names;
-    private final FingerblastScoring[] scorers;
+    private FingerblastScoring scoring;
     private PredictionPerformance[] statistics;
+    private Utils utils;
 
-    public ScoreFeatures(){
-        names = new String[]{"CSIFingerIdScoring", "CovarianceScoring"};
-        scorers = new FingerblastScoring[2];
+    public ScoreFeatures(FingerblastScoring scoring){
+        names = new String[]{scoring.toString()};
+        this.scoring=scoring;
     }
 
     @Override
@@ -29,22 +33,23 @@ public class ScoreFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates, IdentificationResult idresult) {
-        scorers[0] = new CSIFingerIdScoring(statistics);
-     //   scorers[1] = CovarianceScoring.readScoringFromFile();//TODO: How to get this?
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, Scored<FingerprintCandidate>[] rankedCandidates, IdentificationResult idresult,long flags) {
 
-        final CompoundWithAbstractFP<Fingerprint> topHit = rankedCandidates[0];
-        final double[] scores = new double[scorers.length];
-        for (int i = 0; i < scorers.length; i++) {
-            scorers[i].prepare(query.getFingerprint());
-            scores[i] = scorers[i].score(query.getFingerprint(), topHit.getFingerprint());
-        }
+        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,flags);
+
+
+        final FingerprintCandidate topHit = rankedCandidates[0].getCandidate();
+        final double[] scores = new double[1];
+
+        scoring.prepare(query.getFingerprint());
+        scores[1] = scoring.score(query.getFingerprint(), topHit.getFingerprint());
+
         return scores;
     }
 
     @Override
     public int getFeatureSize() {
-        return scorers.length;
+        return 1;
     }
 
     @Override

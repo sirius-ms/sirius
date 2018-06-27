@@ -1,12 +1,15 @@
 package de.unijena.bioinf.confidence_score.features;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
+import de.unijena.bioinf.confidence_score.Utils;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -15,7 +18,7 @@ import de.unijena.bioinf.sirius.IdentificationResult;
  * Created by martin on 20.06.18.
  */
 public class LogDistanceFeatures implements FeatureCreator {
-
+    private Utils utils;
     private int[] distances;
     private FingerblastScoring[] scorers;
     private int feature_size;
@@ -36,22 +39,23 @@ public class LogDistanceFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates, IdentificationResult idresult) {
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, Scored<FingerprintCandidate>[] rankedCandidates, IdentificationResult idresult,long flags) {
         scorers[0] = new CSIFingerIdScoring(statistics);
 
+        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,flags);
 
 
         double[] scores =  new double[feature_size*scorers.length];
 
 
 
-        final CompoundWithAbstractFP<Fingerprint> topHit = rankedCandidates[0];
+        final FingerprintCandidate topHit = rankedCandidates[0].getCandidate();
         int pos = 0;
         for (int i = 0; i < scorers.length; i++) {
             scorers[i].prepare(query.getFingerprint());
             final double topScore = scorers[i].score(query.getFingerprint(), topHit.getFingerprint());
             for (int j = 0; j < distances.length; j++) {
-                scores[pos++] = Math.log(topScore - scorers[i].score(query.getFingerprint(), rankedCandidates[distances[j]].getFingerprint()));
+                scores[pos++] = Math.log(topScore - scorers[i].score(query.getFingerprint(), rankedCandidates[distances[j]].getCandidate().getFingerprint()));
             }
         }
         assert pos == scores.length;
