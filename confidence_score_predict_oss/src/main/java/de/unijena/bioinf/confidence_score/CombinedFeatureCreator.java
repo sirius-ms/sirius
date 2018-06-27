@@ -1,13 +1,21 @@
 package de.unijena.bioinf.confidence_score;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObjectBuilder;
+import javax.json.JsonWriter;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -18,6 +26,7 @@ import java.util.List;
 public class CombinedFeatureCreator implements FeatureCreator{
     FeatureCreator[] featureCreators;
     private int featureCount;
+    private double[] computed_features;
 
     public CombinedFeatureCreator(){}
 
@@ -39,14 +48,15 @@ public class CombinedFeatureCreator implements FeatureCreator{
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates, IdentificationResult idresult) {
-        double[] scores = new double[getFeatureSize()];
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, Scored<FingerprintCandidate>[] rankedCandidates, IdentificationResult idresult, long flags) {
+
+        computed_features= new double[getFeatureSize()];
         int pos = 0;
         for (FeatureCreator featureCreator : featureCreators) {
-            final double[] currentScores = featureCreator.computeFeatures(query, rankedCandidates,idresult);
-            for (int i = 0; i < currentScores.length; i++) scores[pos++] = currentScores[i];
+            final double[] currentScores = featureCreator.computeFeatures(query, rankedCandidates,idresult,flags);
+            for (int i = 0; i < currentScores.length; i++) computed_features[pos++] = currentScores[i];
         }
-        return scores;
+        return computed_features;
     }
 
     @Override
@@ -107,4 +117,6 @@ public class CombinedFeatureCreator implements FeatureCreator{
         for (FeatureCreator featureCreator : featureCreators) document.addToList(list, helper.wrap(document, featureCreator));
         document.addListToDictionary(dictionary, "featureCreators", list);
     }
+
+
 }

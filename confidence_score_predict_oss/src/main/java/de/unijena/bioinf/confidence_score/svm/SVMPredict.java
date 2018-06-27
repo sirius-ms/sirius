@@ -15,18 +15,16 @@ LibLinearImpl impl =  new LibLinearImpl();
 LibLinearImpl.svm_model model;
 
 
-    public void predict_confidence(double[] features,double frag_energy){//TODO: frag energies?
+    public void predict_confidence(double[][] features,double frag_energy){//TODO: frag energies?
 
 
         try {
 
-           SVMModel model =  utils.load_raw_model_from_json(new File(""));
-
-           impl.getPredictor(model,0,0);
 
 
-            utils.standardize_features(features);
-            utils.normalize_features(features);
+
+            utils.standardize_features(features,null);
+            utils.normalize_features(features,null);
 
         }catch (Exception e){
             e.printStackTrace();

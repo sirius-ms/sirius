@@ -1,15 +1,14 @@
 package de.unijena.bioinf.confidence_score.svm;
 
 
-import de.bwaldvogel.liblinear.Model;
-import de.bwaldvogel.liblinear.SolverType;
-import de.unijena.bioinf.chemdb.JSONReader;
-import jdk.nashorn.internal.parser.JSONParser;
-import org.json.JSONObject;
 
+
+import javax.json.Json;
+import javax.json.JsonObject;
 import javax.json.JsonReader;
 import java.io.File;
 import java.io.FileReader;
+
 
 /**
  * Created by martin on 21.06.18.
@@ -23,12 +22,18 @@ public class SVMUtils {
 
     public SVMScales loadScalesFromJson(File file){
 
-try {
-    JSONObject json = new JSONObject();
+    try {
+        JsonReader jreader = Json.createReader(new FileReader(file));
+
+        JsonObject obj = jreader.readObject();
+
+
+
+
     //TODO: Load the JSON stuff here
-}catch (Exception e){
-    e.printStackTrace();
-}
+    }catch (Exception e){
+      e.printStackTrace();
+    }
 
         return null;
     }

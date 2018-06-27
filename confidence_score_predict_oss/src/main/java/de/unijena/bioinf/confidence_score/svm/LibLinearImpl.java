@@ -70,7 +70,7 @@ public class LibLinearImpl implements SVMInterface<LibLinearImpl.svm_nodeImpl, L
         double[] w = model.getModel().getFeatureWeights();
         double b = model.getModel().getBias();
 
-        return new LinearSVMPredictor(w, b, probA, probB);
+        return new LinearSVMPredictor(w, b);
     }
 
     public LibLinearImpl.svm_model convertModel(Model model){
