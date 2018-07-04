@@ -26,7 +26,8 @@ public class Zodiac {
     EdgeScorer<FragmentsCandidate>[] edgeScorers;
     EdgeFilter edgeFilter;
     int maxCandidates; //todo always use all!?
-    boolean clusterCompounds;
+    private final boolean clusterCompounds;
+    private final boolean runTwoStep;
 
     MasterJJob masterJJob;
 
@@ -36,6 +37,10 @@ public class Zodiac {
     Map<String, String[]> representativeToCluster;
 
     public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds, MasterJJob masterJJob) throws ExecutionException {
+        this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, clusterCompounds, true, masterJJob);
+    }
+
+    public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds, boolean runTwoStep , MasterJJob masterJJob) throws ExecutionException {
         this.experimentResults = experimentResults;
         this.anchors = anchors==null?Collections.emptyList():anchors;
         this.nodeScorers = nodeScorers;
@@ -44,20 +49,17 @@ public class Zodiac {
         this.maxCandidates = maxCandidates;
         this.masterJJob = masterJJob;
         this.clusterCompounds = clusterCompounds;
+        this.runTwoStep = runTwoStep;
         this.Log = masterJJob!=null?masterJJob.LOG():LoggerFactory.getLogger(Zodiac.class);
     }
 
     public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds) throws ExecutionException {
-        this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, clusterCompounds, null);
+        this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, clusterCompounds, true, null);
     }
 
-//    public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, MasterJJob masterJJob) throws ExecutionException {
-//        this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, false, masterJJob);
-//    }
-
-//    public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates) throws ExecutionException {
-//        this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, null);
-//    }
+    public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds, boolean runTwoStep) throws ExecutionException {
+        this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, clusterCompounds, runTwoStep, null);
+    }
 
     public ZodiacResultsWithClusters compute(int iterationSteps, int burnIn, int repetitions) throws ExecutionException {
         init();
@@ -69,16 +71,19 @@ public class Zodiac {
             return createOneCompoundOutput();
         }
 
+        ZodiacResult<FragmentsCandidate> zodiacResult;
+        if (runTwoStep){
+            TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, repetitions, FragmentsCandidate.class);
+            twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnIn);
+            if (masterJJob!=null) masterJJob.submitSubJob(twoPhaseGibbsSampling);
+            else SiriusJobs.getGlobalJobManager().submitJob(twoPhaseGibbsSampling);
 
-        TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, repetitions, FragmentsCandidate.class);
-        twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnIn);
-        if (masterJJob!=null) masterJJob.submitSubJob(twoPhaseGibbsSampling);
-        else SiriusJobs.getGlobalJobManager().submitJob(twoPhaseGibbsSampling);
+            zodiacResult = twoPhaseGibbsSampling.awaitResult();
+        } else {
+            zodiacResult = runOneStepZodiacOnly(iterationSteps, burnIn, repetitions);
+        }
 
-        ZodiacResult<FragmentsCandidate> zodiacResult = twoPhaseGibbsSampling.awaitResult();
         CompoundResult<FragmentsCandidate>[] result = zodiacResult.getResults();
-
-
 
         addZodiacScoreToIdentificationResult(result, experimentResults);
 
@@ -86,6 +91,31 @@ public class Zodiac {
         else zodiacResult = new ZodiacResultsWithClusters(ids, zodiacResult.getGraph(), zodiacResult.getResults(), getSelfMapping(ids));
 
         return (ZodiacResultsWithClusters)zodiacResult;
+    }
+
+    private ZodiacResult<FragmentsCandidate> runOneStepZodiacOnly(int iterationSteps, int burnIn, int repetitions) throws ExecutionException {
+        GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, FragmentsCandidate.class);
+
+        Graph<FragmentsCandidate> graph;
+        if (masterJJob!=null) graph = (Graph<FragmentsCandidate>)masterJJob.submitSubJob(graphBuilder).awaitResult();
+        else graph = SiriusJobs.getGlobalJobManager().submitJob(graphBuilder).awaitResult();
+
+        try {
+            Graph.validateAndThrowError(graph, Log);
+        } catch (Exception e) {
+            throw new ExecutionException(e);
+        }
+
+
+        GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel<>(graph, repetitions);
+        gibbsParallel.setIterationSteps(iterationSteps, burnIn);
+
+        if (masterJJob!=null) masterJJob.submitSubJob(gibbsParallel);
+        else SiriusJobs.getGlobalJobManager().submitJob(gibbsParallel);
+
+        CompoundResult<FragmentsCandidate>[] results = gibbsParallel.awaitResult();
+
+        return new ZodiacResult<>(ids, graph, results);
     }
 
     private ZodiacResultsWithClusters createOneCompoundOutput(){

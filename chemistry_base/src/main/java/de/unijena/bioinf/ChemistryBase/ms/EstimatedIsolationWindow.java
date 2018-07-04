@@ -5,14 +5,14 @@ import java.util.Arrays;
 /**
  * Created by ge28quv on 07/07/17.
  */
-public class SimpleIsolationWindow extends IsolationWindow {
+public class EstimatedIsolationWindow extends IsolationWindow {
 
     protected double[] relMz;
     protected double[] filterRatio;
     protected double outerRimSize = 0.5;
     protected double minWindowSize = 1.0;
 
-    public SimpleIsolationWindow(double maxWindowSize) {
+    public EstimatedIsolationWindow(double maxWindowSize) {
         super(maxWindowSize);
     }
 
@@ -23,12 +23,13 @@ public class SimpleIsolationWindow extends IsolationWindow {
      * @param estimateSize
      * @param findMs1PeakDeviation
      */
-    public SimpleIsolationWindow(double maxWindowSize, double massShift, boolean estimateSize, Deviation findMs1PeakDeviation) {
+    public EstimatedIsolationWindow(double maxWindowSize, double massShift, boolean estimateSize, Deviation findMs1PeakDeviation) {
         super(maxWindowSize, massShift, estimateSize, findMs1PeakDeviation);
     }
 
     @Override
     public double getLeftBorder() {
+        //TODO -minWindowSize or rather -outerRimSize;???
         return getMassShift()-getEstimatedWindowSize()/2-minWindowSize;
     }
 

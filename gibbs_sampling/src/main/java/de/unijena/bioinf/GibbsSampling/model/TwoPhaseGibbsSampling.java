@@ -87,15 +87,6 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
         graph = submitSubJob(graphBuilder).awaitResult();
     }
 
-    private void validate(Graph graph) throws Exception {
-        GraphValidationMessage validationMessage = graph.validate();
-        if (validationMessage.isError()) {
-            throw new Exception(validationMessage.getMessage());
-        } else if (validationMessage.isWarning()) {
-            LOG().warn(validationMessage.getMessage());
-        }
-    }
-
     private int maxSteps = -1;
     private int burnIn = -1;
 
@@ -110,7 +101,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 
         checkForInterruption();
         init();
-        validate(graph);
+        Graph.validateAndThrowError(graph, LOG());
         gibbsParallel = new GibbsParallel<>(graph, repetitions);
         gibbsParallel.setIterationSteps(maxSteps, burnIn);
         submitSubJob(gibbsParallel);
@@ -142,7 +133,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
             GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, fixedIds, cClass);
             graph = submitSubJob(graphBuilder).awaitResult();
             checkForInterruption();
-            validate(graph);
+            Graph.validateAndThrowError(graph, LOG());
 
             gibbsParallel = new GibbsParallel<>(graph, repetitions, fixedIds);
             gibbsParallel.setIterationSteps(maxSteps, burnIn);
