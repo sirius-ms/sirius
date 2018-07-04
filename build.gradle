@@ -6,7 +6,7 @@ dependencies() {
     //project
     compile project(':chemical_db_oss')
     compile project(':chemical_db_oss:chemdb_sql_oss')
-    
+
 	//internal
 	compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
 
