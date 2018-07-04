@@ -1,7 +1,8 @@
 dependencies {
 //project
     compile project(':sirius_cli')
-// internal
+
+//internal
     compile group: 'de.unijena.bioinf', name: 'jjobs-swing', version: "$jjobs_version"
 //external
     compile group: 'javax.json', name: 'javax.json-api', version: "$json_version"
