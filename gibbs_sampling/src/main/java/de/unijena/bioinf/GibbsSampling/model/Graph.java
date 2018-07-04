@@ -123,7 +123,9 @@ public class Graph<C extends Candidate<?>> {
             for(int var7 = 0; var7 < var6; ++var7) {
                 Scored candidate = var5[var7];
                 if(candidate.getScore() > 0.0D) {
-                    throw new RuntimeException("scores are supposed to be logarithmic");
+//                    throw new RuntimeException("scores are supposed to be logarithmic");
+                    LoggerFactory.getLogger(Graph.class).warn("scores are supposed to be logarithmic!");
+                    return;
                 }
             }
         }
@@ -245,6 +247,15 @@ public class Graph<C extends Candidate<?>> {
             return new GraphValidationMessage("The graph seems to be badly connected. You might want to enforce more connections using local edge thresholds ", false, true);
         }
         return new GraphValidationMessage("", false, false);
+    }
+
+    public static void validateAndThrowError(Graph graph, Logger logger) throws Exception {
+        GraphValidationMessage validationMessage = graph.validate();
+        if (validationMessage.isError()) {
+            throw new Exception(validationMessage.getMessage());
+        } else if (validationMessage.isWarning()) {
+            logger.warn(validationMessage.getMessage());
+        }
     }
 
 
