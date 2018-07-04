@@ -47,8 +47,13 @@ public class ChimericAnnotator implements QualityAnnotator {
      */
     @Override
     public void annotate(Ms2Dataset dataset) {
-        Deviation maxDeviation = dataset.getMeasurementProfile().getAllowedMassDeviation();
+//        Deviation maxDeviation = dataset.getMeasurementProfile().getAllowedMassDeviation();
+        //changed
+        Deviation maxDeviation = dataset.getMeasurementProfile().getStandardMassDifferenceDeviation().multiply(2d);
         IsolationWindow isolationWindow = dataset.getIsolationWindow();
+
+        System.out.println("chimeric alphabet");
+        System.out.println(dataset.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet().toString());
 
         for (Ms2Experiment experiment : dataset.getExperiments()) {
             annotate(experiment, maxDeviation, isolationWindow, dataset.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet());
@@ -83,7 +88,9 @@ public class ChimericAnnotator implements QualityAnnotator {
             alphabet = defaultAlphabet;
         }
         //todo rather remove too much?! chances that it's in fact an isotope are high
-//        Spectrums.filterIsotpePeaks(ms1IsotopesRemoved, maxDeviation.multiply(2), 0.5, 1.2, 5, alphabet); //todo or add up isotope intensities
+        //changed
+//        Spectrums.filterIsotpePeaks(ms1IsotopesRemoved, maxDeviation, 0.5, 1.2, 5, alphabet); //todo or add up isotope intensities
+        Spectrums.filterIsotpePeaks(ms1IsotopesRemoved, maxDeviation, 2, 2, 5, alphabet); //todo or add up isotope intensities
 
         Spectrum<Peak> massSorted = Spectrums.getMassOrderedSpectrum(ms1IsotopesRemoved);
         int precursorIdx = Spectrums.binarySearch(massSorted, precursorPeak.getMass());
