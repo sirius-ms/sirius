@@ -9,14 +9,15 @@ import java.nio.file.StandardOpenOption
 buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
-
-        maven {
+        jcenter()
+        /*maven {
             url "http://bio.informatik.uni-jena.de/repository/libs-oss"
 
-        }
+        }*/
     }
     dependencies {
-        classpath group: 'de.unijena.bioinf.gradle', name: 'launch4jj', version: '1.6.2'
+//        classpath group: 'de.unijena.bioinf.gradle', name: 'launch4jj', version: '1.6.2'
+        classpath 'edu.sc.seis.gradle:launch4j:2.4.4'
         classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
     }
 
@@ -78,7 +79,7 @@ ext {
 project.ext.set("linSuffix", "linux")
 project.ext.set("winSuffix", "win")
 project.ext.set("macSuffix", "osx")
-project.ext.set("arch", "64,32")
+project.ext.set("arch", ['64','32'])
 project.ext.set("manualPath", file('manual').absolutePath)
 project.ext.set("distPath", file('dist').absolutePath)
 
@@ -302,7 +303,7 @@ buildDoku.dependsOn /*htmlDoku,*/ pdfDokuArtifact //todo solve problem and re en
 
 subprojects {
     apply plugin: 'application'
-    apply plugin: 'de.unijena.bioinf.launch4jj'
+    apply plugin: 'edu.sc.seis.launch4j'
 
     /*################### Windows release Stuff ################### */
     launch4j {
@@ -319,8 +320,9 @@ subprojects {
         dontWrapJar = true
         jdkPreference = "preferJre"
 
-
-        classPath = runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':')
+        classpath.add('./lib/*')
+        classpath.addAll(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':'))
+        println(classpath)
 
         sourceSets.main.resources {
             srcDir rootDir.toPath().resolve('src').resolve('main').resolve('resources').toString()
