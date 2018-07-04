@@ -3,25 +3,31 @@ package de.unijena.bioinf.ms.cli;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.ChimericAnnotator;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.LowIntensityAnnotator;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.NoMs1PeakAnnotator;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.QualityAnnotator;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.jjobs.FingerIDJJob;
-import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
 import de.unijena.bioinf.sirius.projectspace.ProjectWriter;
-import de.unijena.bioinf.sirius.projectspace.ProjectWriterJJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -67,6 +73,46 @@ public class FingerIdWorkflow implements Workflow<Instance> {
         if (initBuffer <= 0) {
             initBuffer = Integer.MAX_VALUE; //no buffering, submit all jobs at once
             maxBuffer = 0;
+        }
+
+        if (options.isAssessDataQuality()){
+            //todo put into job system
+            List<Instance> instanceList = new ArrayList<>();
+            while (allInstances.hasNext())
+                instanceList.add(allInstances.next());
+            List<Ms2Experiment> experiments = new ArrayList<>();
+            for (Instance instance : instanceList)
+                experiments.add(instance.experiment);
+            String profile = options.getProfile();
+            Ms2Dataset dataset = new MutableMs2Dataset(experiments, profile, Double.NaN, siriusInstanceProcessor.getSirius().getMs2Analyzer().getDefaultProfile());
+            Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
+
+            //for the moment, only use few QualityAnnotators
+            List<QualityAnnotator> qualityAnnotators = new ArrayList<>();
+            qualityAnnotators.add(new NoMs1PeakAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION));
+//        qualityAnnotators.add(new FewPeaksAnnotator(Ms2DatasetPreprocessor.MIN_NUMBER_OF_PEAKS));
+            qualityAnnotators.add(new LowIntensityAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, 0.01, Double.NaN));
+            double max2ndMostIntenseRatio = 0.33;
+            double maxSummedIntensitiesRatio = 1.0;
+            qualityAnnotators.add(new ChimericAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, max2ndMostIntenseRatio, maxSummedIntensitiesRatio));
+
+            preprocessor.setQualityAnnotators(qualityAnnotators);
+
+
+            dataset = preprocessor.preprocess(dataset);
+
+            //TODO do I have to copy properties????
+            int i = 0;
+            for (Ms2Experiment evaluatedExperiment : dataset) {
+                Ms2Experiment experiment = experiments.get(i++);
+                for (SpectrumProperty spectrumProperty : CompoundQuality.getProperties(evaluatedExperiment)) {
+                    CompoundQuality.setProperty(experiment, spectrumProperty);
+                }
+
+            }
+
+            allInstances = instanceList.iterator();
+
         }
 
         JobSubmitter submitter = new JobSubmitter(allInstances);

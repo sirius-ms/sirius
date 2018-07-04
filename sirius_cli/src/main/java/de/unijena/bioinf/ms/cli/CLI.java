@@ -21,6 +21,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
+import de.unijena.bioinf.ChemistryBase.SimpleRectangularIsolationWindow;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -620,6 +621,9 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                 ms2Prof.setAllowedMassDeviation(new Deviation(options.getPPMMax()));
                 ms1Prof.setAllowedMassDeviation(new Deviation(options.getPPMMax()));
             }
+            if (options.getPPMMaxMs2() != null) {
+                ms2Prof.setAllowedMassDeviation(new Deviation(options.getPPMMax()));
+            }
             final TreeBuilder builder = sirius.getMs2Analyzer().getTreeBuilder();
             if (builder == null) {
                 String noILPSolver = "Could not load a valid ILP solver (TreeBuilder) " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + ". Please read the installation instructions.";
@@ -671,6 +675,15 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             exp.setPrecursorIonType(getIonFromOptions(options, exp.getPrecursorIonType() == null ? 0 : exp.getPrecursorIonType().getCharge()));
         if (formulas != null && formulas.size() == 1) exp.setMolecularFormula(MolecularFormula.parse(formulas.get(0)));
         if (options.getParentMz() != null) exp.setIonMass(options.getParentMz());
+        if (options.getIsolationWindowWidth()!=null) {
+            final double width = options.getIsolationWindowWidth();
+            final double shift = options.getIsolationWindowShift();
+            final double right = width/2d+shift;
+            final double left = -width/2d+shift;
+            SimpleRectangularIsolationWindow isolationWindow = new SimpleRectangularIsolationWindow(left, right);
+            exp.setAnnotation(IsolationWindow.class, isolationWindow);
+        }
+
         return new Instance(exp, inst.file, inst.index);
     }
 
