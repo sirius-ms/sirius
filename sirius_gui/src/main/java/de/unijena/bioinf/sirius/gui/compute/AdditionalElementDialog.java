@@ -13,7 +13,6 @@ public class AdditionalElementDialog extends JDialog implements ActionListener{
 	PeriodicTable periodicTable;
 
 	private HashSet<String> elementMap;
-	private static final HashSet<String> dontEnable = new HashSet<>(Arrays.asList(new String[]{"C", "H", "N", "O", "P"}));
 	
 	private JButton ok, abort;
 	private JPanel rareElements;
@@ -72,7 +71,6 @@ public class AdditionalElementDialog extends JDialog implements ActionListener{
 			}else{
 				JToggleButton button = new JToggleButton(s);
 				button.setToolTipText(periodicTable.getByName(s).getName());
-				if(dontEnable.contains(s)||s.isEmpty()) button.setEnabled(false);
 				if(elementMap.contains(s)) button.setSelected(true);
 				button.addActionListener(this);
 				rareElements.add(button);
