@@ -5,15 +5,13 @@ package de.unijena.bioinf.ChemistryBase.properties;
  * 31.08.17.
  */
 
-import com.google.common.reflect.ClassPath;
-
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.LinkedList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Properties;
 
@@ -45,40 +43,39 @@ public class PropertyManager {
     }
 
     private static Properties loadDefaultProperties() {
+        String p = System.getProperties().getProperty("de.unijena.bioinf.ms.sirius.props");
+        LinkedHashSet<String> resources = new LinkedHashSet<>();
+        resources.add("sirius.build.properties");
+
+        if (p != null && !p.isEmpty())
+            resources.addAll(Arrays.asList(p.split(",")));
+
         Properties global = new Properties();
-        try {
-            List<URL> resources = new LinkedList<>();
-            for (ClassPath.ResourceInfo resourceInfo : ClassPath.from(PropertyManager.class.getClassLoader()).getResources()) {
-                if (resourceInfo.getResourceName().endsWith(".build.properties"))
-                    resources.add(resourceInfo.url());
+        for (String resource : resources) {
+            try (InputStream input = PropertyManager.class.getResourceAsStream("/" + resource)) {
+                Properties props = new Properties();
+                props.load(input);
+                global.putAll(props);
+            } catch (IOException e) {
+                System.err.println("Could not load properties from " + resource.toString());
+                e.printStackTrace();
             }
-
-
-            for (URL resource : resources) {
-                try (InputStream input = resource.openStream()) {
-                    Properties props = new Properties();
-                    props.load(input);
-                    global.putAll(props);
-                } catch (IOException e) {
-                    System.err.println("Could not load properties from " + resource.toString());
-                    e.printStackTrace();
-                }
-            }
-            return global;
-
-        } catch (IOException e) {
-            System.err.println("Error while searching for properties files to load!");
-            e.printStackTrace();
         }
         return global;
+
     }
 
-    public static int getNumberOfCores(){
-        return Integer.valueOf(PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores","1"));
+    public static int getNumberOfCores() {
+        return Integer.valueOf(PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1"));
     }
 
-    public static int getNumberOfThreads(){
-        return Integer.valueOf(PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.threads","2"));
+    public static int getNumberOfThreads() {
+        return Integer.valueOf(PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.threads", "2"));
+    }
+
+    public static void main(String[] args) {
+        PropertyManager.PROPERTIES.get("foo");
+        System.out.println(PropertyManager.PROPERTIES);
     }
 
 }
