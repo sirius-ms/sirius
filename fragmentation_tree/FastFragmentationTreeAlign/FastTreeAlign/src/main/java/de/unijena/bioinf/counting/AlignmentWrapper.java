@@ -19,7 +19,6 @@ package de.unijena.bioinf.counting;
 
 import de.unijena.bioinf.treealign.Backtrace;
 import de.unijena.bioinf.treealign.TreeAlignmentAlgorithm;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class AlignmentWrapper<T> implements TreeAlignmentAlgorithm<T> {
 
@@ -46,6 +45,6 @@ public class AlignmentWrapper<T> implements TreeAlignmentAlgorithm<T> {
 
     @Override
     public void backtrace(Backtrace<T> tracer) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 }

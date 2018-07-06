@@ -38,7 +38,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.MassDecomposer.Interval;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 
@@ -250,7 +249,7 @@ public class SpectralAligner {
                     final ProcessedPeak propeak = new ProcessedPeak(new MS2Peak(s, sortedByMass.getMzAt(i), sortedByMass.getIntensityAt(i)));
                     // propeak.setIon(ion.getIonization());
                     peaklist.add(propeak);
-                    throw new RuntimeException(new NotImplementedException());
+                    throw new UnsupportedOperationException();
                 }
             }
             // now normalize spectrum. Ignore peaks near to the parent peak
