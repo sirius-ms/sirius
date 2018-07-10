@@ -103,7 +103,6 @@ public class CombinedCLI extends ApplicationCore {
 
     protected void parseArgs(String[] args) {
         if (args.length == 0) {
-            System.out.println(ApplicationCore.VERSION_STRING);
             System.out.println(CliFactory.createCli(FingerIdOptions.class).getHelpMessage());
             System.exit(0);
         }
@@ -114,7 +113,6 @@ public class CombinedCLI extends ApplicationCore {
                 cite();
                 System.exit(0);
             } else if (options.isZodiac() && args.length==1){
-                System.out.println("ZODIAC in "+ApplicationCore.VERSION_STRING);
                 System.out.println(CliFactory.createCli(ZodiacOptions.class).getHelpMessage());
                 System.exit(0);
             }
@@ -125,7 +123,6 @@ public class CombinedCLI extends ApplicationCore {
             System.exit(0);
         }
         if (options.isVersion()) {
-            System.out.println(ApplicationCore.VERSION_STRING);
             cite();
             System.exit(0);
         }
