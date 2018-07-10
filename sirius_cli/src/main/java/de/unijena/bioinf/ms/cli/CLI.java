@@ -349,7 +349,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
     public void parseArgs(String[] args, Class<Options> optionsClass) {
         if (args.length == 0) {
-            println(ApplicationCore.VERSION_STRING);
             println(CliFactory.createCli(optionsClass).getHelpMessage());
             System.exit(0);
         }
@@ -367,7 +366,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             System.exit(0);
         }
         if (options.isVersion()) {
-            println(ApplicationCore.VERSION_STRING);
             cite();
             System.exit(0);
         }
