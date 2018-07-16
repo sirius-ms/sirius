@@ -10,10 +10,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.ChimericAnnotator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.LowIntensityAnnotator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.NoMs1PeakAnnotator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.QualityAnnotator;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.*;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.GibbsSampling.ZodiacUtils;
@@ -21,6 +18,7 @@ import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.GibbsSampling.model.distributions.*;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
+import de.unijena.bioinf.GibbsSampling.model.scorer.SameIonizationScorer;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -184,8 +182,9 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
 
         List<QualityAnnotator> qualityAnnotators = new ArrayList<>();
         qualityAnnotators.add(new NoMs1PeakAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION));
-//        qualityAnnotators.add(new FewPeaksAnnotator(Ms2DatasetPreprocessor.MIN_NUMBER_OF_PEAKS));
+        qualityAnnotators.add(new FewPeaksAnnotator(Ms2DatasetPreprocessor.MIN_NUMBER_OF_PEAKS));
         qualityAnnotators.add(new LowIntensityAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, 0.01, Double.NaN));
+//        qualityAnnotators.add(new NotMonoisotopicAnnotatorUsingIPA(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION));
         double max2ndMostIntenseRatio = 0.33;
         double maxSummedIntensitiesRatio = 1.0;
         qualityAnnotators.add(new ChimericAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, max2ndMostIntenseRatio, maxSummedIntensitiesRatio));
@@ -330,8 +329,10 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             commonFragmentAndLossScorer = new ScoreProbabilityDistributionFix(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
         }
 
-        EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
+//        SameIonizationScorer sameIonizationScorer = new SameIonizationScorer();
+//        EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer, sameIonizationScorer};
 
+        EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
 
         ZodiacJJob zodiacJJob = new ZodiacJJob(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, options.getIterationSteps(), options.getBurnInSteps(), options.getSeparateRuns(), options.isClusterCompounds(), !options.isOnlyOneStepZodiac());
 

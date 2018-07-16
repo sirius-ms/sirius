@@ -22,6 +22,7 @@ import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.GibbsSampling.model.distributions.*;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
+import de.unijena.bioinf.GibbsSampling.model.scorer.SameIonizationScorer;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -183,9 +184,10 @@ public class Zodiac {
                 commonFragmentAndLossScorer = new ScoreProbabilityDistributionFix(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
             }
 
+//            SameIonizationScorer sameIonizationScorer = new SameIonizationScorer();
+//            EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer, sameIonizationScorer};
+
             EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
-
-
 
             de.unijena.bioinf.GibbsSampling.Zodiac zodiac = new de.unijena.bioinf.GibbsSampling.Zodiac(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, options.isClusterCompounds(), !options.isOnlyOneStepZodiac());
 
