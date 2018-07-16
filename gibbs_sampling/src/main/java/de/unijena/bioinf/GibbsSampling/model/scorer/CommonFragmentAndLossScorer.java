@@ -14,7 +14,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
     protected BitSet[] maybeSimilar;
     protected TObjectDoubleHashMap<Ms2Experiment> normalizationMap;
     protected double threshold;
-    protected  double MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 5;//changed from 3
+    protected  double MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 3;//changed from 3 / 5
     public CommonFragmentAndLossScorer(double threshold) {
         this.threshold = threshold;
     }
