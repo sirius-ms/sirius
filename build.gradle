@@ -57,7 +57,7 @@ allprojects {
         mavenLocal()
         mavenCentral()
         maven {
-            url "https://bio.informatik.uni-jena.de/repository/local"
+            url "https://bio.informatik.uni-jena.de/repository/libs-oss"
         }
         maven {
             url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
