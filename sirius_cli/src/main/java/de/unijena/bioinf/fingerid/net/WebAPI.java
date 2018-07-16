@@ -74,7 +74,7 @@ public class WebAPI implements Closeable {
     private static final LinkedHashSet<WebAPI> INSTANCES = new LinkedHashSet<>();
     private static final BasicNameValuePair UID = new BasicNameValuePair("uid", SystemInformation.generateSystemKey());
 
-    public static final DefaultArtifactVersion VERSION = new DefaultArtifactVersion(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.version"));
+//    public static final DefaultArtifactVersion VERSION = new DefaultArtifactVersion(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.version"));
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
     public static final String FINGERID_WEB_API = FingerIDProperties.fingeridWebHost();
 
@@ -268,6 +268,17 @@ public class WebAPI implements Closeable {
     }
 
 
+    public boolean deleteJob(FingerIdJob job) throws URISyntaxException, IOException {
+        final HttpGet get = new HttpGet(getFingerIdURI("/webapi/delete-job").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
+        try (CloseableHttpResponse response = client.execute(get)) {
+            int code = response.getStatusLine().getStatusCode();
+            if (code == 0)
+                return true;
+            LoggerFactory.getLogger(this.getClass()).warn("Could not delete Job! Response Code: " + code + "Reason: " + response.getStatusLine().getReasonPhrase());
+            return false;
+        }
+    }
+
     public boolean updateJobStatus(FingerIdJob job) throws URISyntaxException, IOException {
         final HttpGet get = new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
         try (CloseableHttpResponse response = client.execute(get)) {
@@ -412,6 +423,7 @@ public class WebAPI implements Closeable {
                 Thread.sleep(3000 + 30 * k);
                 if (updateJobStatus(job)) {
                     return job.prediction;
+                    //todo delete job
                 } else if (Objects.equals(job.state, "CRASHED")) {
                     throw new RuntimeException("Job crashed: " + (job.errorMessage != null ? job.errorMessage : ""));
                 }
