@@ -52,8 +52,8 @@ public class ChimericAnnotator implements QualityAnnotator {
         Deviation maxDeviation = dataset.getMeasurementProfile().getStandardMassDifferenceDeviation().multiply(2d);
         IsolationWindow isolationWindow = dataset.getIsolationWindow();
 
-        System.out.println("chimeric alphabet");
-        System.out.println(dataset.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet().toString());
+//        System.out.println("chimeric alphabet");
+//        System.out.println(dataset.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet().toString());
 
         for (Ms2Experiment experiment : dataset.getExperiments()) {
             annotate(experiment, maxDeviation, isolationWindow, dataset.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet());
