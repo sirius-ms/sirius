@@ -5,10 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ConfidenceScore.confidenceScore.ScoredCandidate;
-import de.unijena.bioinf.chemdb.BioFilter;
-import de.unijena.bioinf.chemdb.ChemicalDatabase;
-import de.unijena.bioinf.chemdb.DatabaseException;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.Mask;
 import de.unijena.bioinf.fingerid.TrainedCSIFingerId;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
@@ -54,7 +51,7 @@ public class ConfidenceScorePrediction {
             return;
         }
 
-        ChemicalDatabase db = new ChemicalDatabase();
+        FilteredChemicalDB db = new FilteredChemicalDB();
         db.setBioFilter(BioFilter.ONLY_BIO);
 
 
@@ -224,7 +221,7 @@ public class ConfidenceScorePrediction {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static QueryPredictor train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
+    public static QueryPredictor train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, FilteredChemicalDB db) throws IOException, InterruptedException, DatabaseException {
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         QueryPredictor queryPredictor =  train(queries, statistics, maskedFingerprintVersion, db, executorService);
         executorService.shutdown();
@@ -241,7 +238,7 @@ public class ConfidenceScorePrediction {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static QueryPredictor train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, ChemicalDatabase db, ExecutorService executorService) throws IOException, InterruptedException, DatabaseException {
+    public static QueryPredictor train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, FilteredChemicalDB db, ExecutorService executorService) throws IOException, InterruptedException, DatabaseException {
         System.out.println("compute hitlist");
 
         List<CompoundWithAbstractFP<ProbabilityFingerprint>[]> candidatesList = new ArrayList<>();
@@ -299,7 +296,7 @@ public class ConfidenceScorePrediction {
      * @return
      * @throws PredictionException
      */
-    public double computeConfidenceScore(CompoundWithAbstractFP<ProbabilityFingerprint> query, ChemicalDatabase db) throws PredictionException, DatabaseException {
+    public double computeConfidenceScore(CompoundWithAbstractFP<ProbabilityFingerprint> query, FilteredChemicalDB db) throws PredictionException, DatabaseException {
         MolecularFormula mf = query.getInchi().extractFormula();
         CompoundWithAbstractFP<Fingerprint>[] candidates = searchByFingerBlast(db, this.maskedFingerprintVersion, mf).toArray(new CompoundWithAbstractFP[0]);
 
@@ -324,7 +321,7 @@ public class ConfidenceScorePrediction {
     }
 
 
-    protected static List<CompoundWithAbstractFP<Fingerprint>> searchByFingerBlast(final ChemicalDatabase db, MaskedFingerprintVersion maskedFingerprintVersion, final MolecularFormula formula) throws DatabaseException {
+    protected static List<CompoundWithAbstractFP<Fingerprint>> searchByFingerBlast(final FilteredChemicalDB db, MaskedFingerprintVersion maskedFingerprintVersion, final MolecularFormula formula) throws DatabaseException {
         final ConcurrentLinkedQueue<FingerprintCandidate> candidates = new ConcurrentLinkedQueue<>();
         db.lookupStructuresAndFingerprintsByFormula(formula, candidates);
 
