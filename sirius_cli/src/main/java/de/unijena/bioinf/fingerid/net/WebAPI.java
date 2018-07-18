@@ -21,15 +21,14 @@ package de.unijena.bioinf.fingerid.net;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
-import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -42,6 +41,7 @@ import net.iharder.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -51,11 +51,11 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
+import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import java.io.*;
@@ -74,7 +74,7 @@ public class WebAPI implements Closeable {
     private static final LinkedHashSet<WebAPI> INSTANCES = new LinkedHashSet<>();
     private static final BasicNameValuePair UID = new BasicNameValuePair("uid", SystemInformation.generateSystemKey());
 
-//    public static final DefaultArtifactVersion VERSION = new DefaultArtifactVersion(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.version"));
+    //    public static final DefaultArtifactVersion VERSION = new DefaultArtifactVersion(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.version"));
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
     public static final String FINGERID_WEB_API = FingerIDProperties.fingeridWebHost();
 
@@ -281,7 +281,11 @@ public class WebAPI implements Closeable {
 
     public boolean updateJobStatus(FingerIdJob job) throws URISyntaxException, IOException {
         final HttpGet get = new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
+        int reponsecode = Integer.MIN_VALUE;
+        String responseReason = null;
         try (CloseableHttpResponse response = client.execute(get)) {
+            reponsecode = response.getStatusLine().getStatusCode();
+            responseReason = response.getStatusLine().getReasonPhrase();
             try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
                 final JsonObject obj = json.readObject();
                 if (obj.containsKey("prediction")) {
@@ -303,7 +307,7 @@ public class WebAPI implements Closeable {
                 }
             }
         } catch (Throwable t) {
-            LoggerFactory.getLogger(this.getClass()).error("Error when updating job #" + job.jobId, t);
+            LoggerFactory.getLogger(this.getClass()).error("Error when updating job #" + job.jobId +  " Response error code: " + reponsecode + " - Reason: " + responseReason);
             throw (t);
         }
         return false;
@@ -350,7 +354,11 @@ public class WebAPI implements Closeable {
         final String securityToken;
         final long jobId;
         // SUBMIT JOB
+        int status = Integer.MIN_VALUE;
+        String reason = null;
         try (CloseableHttpResponse response = client.execute(post)) {
+            status = response.getStatusLine().getStatusCode();
+            reason = response.getStatusLine().getReasonPhrase();
             if (response.getStatusLine().getStatusCode() == 200) {
                 try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
                     final JsonObject obj = json.readObject();
@@ -358,11 +366,12 @@ public class WebAPI implements Closeable {
                     jobId = obj.getInt("jobId");
                     return new FingerIdJob(jobId, securityToken, version);
                 }
-            } else {
-                RuntimeException re = new RuntimeException(response.getStatusLine().getReasonPhrase());
-                LoggerFactory.getLogger(this.getClass()).debug("Submitting Job failed", re);
-                throw re;
             }
+            throw new HttpResponseException(status,"Response Status Code: " + status + " - Expected: 200");
+        }catch (Throwable t){
+            RuntimeException re = new RuntimeException("Error during job submission - Code: " + status + " Reason: " + reason, t);
+            LoggerFactory.getLogger(this.getClass()).debug("Submitting Job failed", re);
+            throw re;
         }
     }
 
