@@ -97,6 +97,7 @@ public class CandidateListView extends ActionListDetailView<CompoundCandidate, S
                 doExport();
             } //todo export action
         });
+
         tb.add(exportToCSV);
 
         return tb;

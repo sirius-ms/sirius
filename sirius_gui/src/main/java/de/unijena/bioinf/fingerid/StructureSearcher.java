@@ -28,7 +28,7 @@ public class StructureSearcher implements Runnable {
     private final Update updater;
     private ArrayBlockingQueue<CompoundCandidate> queue;
 
-    private int highlight;
+    public int highlight;
 
     private boolean shutdown = false;
 

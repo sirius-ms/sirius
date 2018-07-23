@@ -35,20 +35,21 @@ import java.util.Map;
 public class FormulaListDetailView extends ActionListDetailView<SiriusResultElement, ExperimentContainer, FormulaList> {
     //    private static final int[] BAR_COLS = {2, 3, 4};
     private final ActionTable<SiriusResultElement> table;
-    private final ConnectedSelection<SiriusResultElement> selectionConnection;
+    //private final ConnectedSelection<SiriusResultElement> selectionConnection;
 
-    private final SiriusResultTableFormat tableFormat = new SiriusResultTableFormat(source.scoreStats);
     private SortedList<SiriusResultElement> sortedSource;
+    private final SiriusResultTableFormat tableFormat;
 
     public FormulaListDetailView(final FormulaList source) {
         super(source);
 
+        tableFormat = new SiriusResultTableFormat(source.scoreStats);
 
         table = new ActionTable<>(filteredSource, sortedSource, tableFormat);
 
         table.setSelectionModel(filteredSelectionModel);
         filteredSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), filteredSelectionModel, source.getElementList(), sortedSource);
+        //selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), filteredSelectionModel, source.getElementList(), sortedSource);
 
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumnIndex()));
 
@@ -109,7 +110,8 @@ public class FormulaListDetailView extends ActionListDetailView<SiriusResultElem
     @Override
     protected EventList<MatcherEditor<SiriusResultElement>> getSearchFieldMatchers() {
 
-        final SiriusResultTableFormat tableFormatLocal = new SiriusResultTableFormat(source.scoreStats);
+        //TODO:dirty hack for ticket 11, fleisch must fix properly(maybe)
+        SiriusResultTableFormat tableFormatLocal = new SiriusResultTableFormat(source.scoreStats);
 
         return GlazedLists.eventListOf(
                 (MatcherEditor<SiriusResultElement>) new StringMatcherEditor<>(tableFormatLocal, searchField.textField)
