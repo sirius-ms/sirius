@@ -59,8 +59,6 @@ public class FormulaList extends ActionList<SiriusResultElement, ExperimentConta
                     setData(null);
             }
         });
-
-
     }
 
     private void setData(final ExperimentContainer ec) {

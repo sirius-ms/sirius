@@ -1,5 +1,6 @@
 package de.unijena.bioinf.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
@@ -8,6 +9,8 @@ import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.ActionList;
 import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.sirius.gui.table.list_stats.DoubleListStats;
+import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.smiles.smarts.SMARTSQueryTool;
 
 import javax.swing.*;
 import java.util.*;
@@ -16,7 +19,6 @@ import java.util.*;
  * Created by fleisch on 15.05.17.
  */
 public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdData>> implements ActiveElementChangedListener<SiriusResultElement, ExperimentContainer> {
-
 
     public final DoubleListStats scoreStats;
     public final DoubleListStats logPStats;
@@ -36,7 +38,6 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
         resultsChanged(null, null, source.getElementList(), source.getResultListSelectionModel());
     }
 
-
     @Override
     public void resultsChanged(ExperimentContainer experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selectionModel) {
         //call only from EDT
@@ -47,7 +48,6 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
 
         data = new HashSet<>();
         List<SiriusResultElement> formulasToShow = new LinkedList<>();
-
 
         switch (selectionType) {
             case ALL:
@@ -84,6 +84,6 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
         }
 
         elementList.addAll(emChache);
-        notifyListeners(data, null, getElementList(), getResultListSelectionModel());
+        notifyListeners(data, null, elementList, getResultListSelectionModel());
     }
 }
