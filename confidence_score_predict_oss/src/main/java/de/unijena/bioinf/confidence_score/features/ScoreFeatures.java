@@ -21,10 +21,19 @@ public class ScoreFeatures implements FeatureCreator {
     private FingerblastScoring scoring;
     private PredictionPerformance[] statistics;
     private Utils utils;
+    Scored<FingerprintCandidate>[] rankedCandidates;
+    long flags;
 
-    public ScoreFeatures(FingerblastScoring scoring){
+    public ScoreFeatures(FingerblastScoring scoring, Scored<FingerprintCandidate>[] rankedCandidates){
+        this.rankedCandidates=rankedCandidates;
         names = new String[]{scoring.toString()};
         this.scoring=scoring;
+    }
+    public ScoreFeatures(FingerblastScoring scoring, Scored<FingerprintCandidate>[] rankedCandidates, long flags){
+        this.rankedCandidates=rankedCandidates;
+        names = new String[]{scoring.toString()};
+        this.scoring=scoring;
+        this.flags=flags;
     }
 
     @Override
@@ -33,16 +42,20 @@ public class ScoreFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, Scored<FingerprintCandidate>[] rankedCandidates, IdentificationResult idresult,long flags) {
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult,long flags) {
 
-        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,flags);
+        utils= new Utils();
+        if(this.flags==-1)this.flags=flags;
+
+
+        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,this.flags);
 
 
         final FingerprintCandidate topHit = rankedCandidates[0].getCandidate();
         final double[] scores = new double[1];
 
         scoring.prepare(query.getFingerprint());
-        scores[1] = scoring.score(query.getFingerprint(), topHit.getFingerprint());
+        scores[0] = scoring.score(query.getFingerprint(), topHit.getFingerprint());
 
         return scores;
     }
@@ -64,6 +77,8 @@ public class ScoreFeatures implements FeatureCreator {
 
     @Override
     public String[] getFeatureNames() {
+
+
         return names;
     }
 

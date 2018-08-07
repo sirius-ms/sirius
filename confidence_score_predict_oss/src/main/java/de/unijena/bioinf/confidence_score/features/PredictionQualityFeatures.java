@@ -24,13 +24,33 @@ public class PredictionQualityFeatures implements FeatureCreator{
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, Scored<FingerprintCandidate>[] rankedCandidates, IdentificationResult idresult, long flags) {
-        return new double[0];
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
+
+        double[] qualityReturn = new double[1];
+
+        double quality=0;
+        double[] prob_fpt= query.getFingerprint().toProbabilityArray();
+
+        for(int i=0;i<prob_fpt.length;i++){
+            quality+=Math.max(1-prob_fpt[i],prob_fpt[i]);
+
+            //this penalizes predictions close to 0.5 stronger because they
+
+            if(prob_fpt[i]>0.4 && prob_fpt[i]<0.6){
+                quality-=1;
+            }
+        }
+
+        qualityReturn[0]=quality;
+
+
+
+        return qualityReturn;
     }
 
     @Override
     public int getFeatureSize() {
-        return 0;
+        return 1;
     }
 
     @Override
@@ -45,7 +65,11 @@ public class PredictionQualityFeatures implements FeatureCreator{
 
     @Override
     public String[] getFeatureNames() {
-        return new String[0];
+
+
+        String[] name = new String[1];
+        name[0] = "PredicitionQuality";
+        return name;
     }
 
     @Override

@@ -30,46 +30,62 @@ computes distance features, max distance is variable, so are scorers. Top scorin
 
 public class DistanceFeatures implements FeatureCreator {
     private int[] distances;
-    private FingerblastScoring[] scorers;
     private int feature_size;
     private PredictionPerformance[] statistics;
     private Utils utils;
+    Scored<FingerprintCandidate>[] rankedCandidates;
+    long flags=-1;
 
 
-    public DistanceFeatures(int... distances){
+    public DistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,int... distances){
 
         this.distances=distances;
         feature_size=distances.length;
+        this.rankedCandidates=rankedCandidates;
+
+    }
+
+    public DistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,long flags,int... distances){
+
+        this.distances=distances;
+        feature_size=distances.length;
+        this.rankedCandidates=rankedCandidates;
+        this.flags=flags;
 
     }
 
 
     @Override
-    public void prepare(PredictionPerformance[] statistics) {
+    public void prepare(PredictionPerformance[] statistics) {this.statistics=statistics;
 
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, Scored<FingerprintCandidate>[] rankedCandidates, IdentificationResult idresult, long flags) {
-
-        scorers[0] = new CSIFingerIdScoring(statistics);
-
-        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,flags);
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
 
 
-        double[] scores =  new double[feature_size*scorers.length];
+        utils= new Utils();
+
+        if(this.flags==-1)this.flags=flags;
+
+
+        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,this.flags);
 
 
 
-        final FingerprintCandidate topHit = rankedCandidates[0].getCandidate();
+        double[] scores =  new double[feature_size];
+
+
+
+        final double topHit = rankedCandidates[0].getScore();
         int pos = 0;
-        for (int i = 0; i < scorers.length; i++) {
-            scorers[i].prepare(query.getFingerprint());
-            final double topScore = scorers[i].score(query.getFingerprint(), topHit.getFingerprint());
+
+
             for (int j = 0; j < distances.length; j++) {
-                scores[pos++] = topScore - scorers[i].score(query.getFingerprint(), rankedCandidates[distances[j]].getCandidate().getFingerprint());
+
+                scores[pos++] = topHit - rankedCandidates[distances[j]].getScore();
             }
-        }
+
         assert pos == scores.length;
         return scores;
 
@@ -79,7 +95,7 @@ public class DistanceFeatures implements FeatureCreator {
 
     @Override
     public int getFeatureSize() {
-        return 0;
+        return distances.length;
     }
 
     @Override
@@ -89,12 +105,17 @@ public class DistanceFeatures implements FeatureCreator {
 
     @Override
     public int getRequiredCandidateSize() {
-        return 0;
+        return distances.length;
     }
 
     @Override
-    public String[] getFeatureNames() {
-        return new String[0];
+    public String[] getFeatureNames()
+    {
+        String[] name=  new String[distances.length];
+        for(int i=0;i<distances.length;i++){
+            name[i]="distance_"+distances[i];
+        }
+        return name;
     }
 
     @Override
