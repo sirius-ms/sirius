@@ -10,45 +10,82 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.confidence_score.Utils;
+import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
+import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
  * Created by martin on 20.06.18.
  */
-public class PvalueFeatures implements FeatureCreator {
+
+
+/**
+ *
+ *
+ computes distance features, max distance is variable, so are scorers. Top scoring hit is FIXED at this point!
+
+
+ */
+
+
+public class TanimotoToPredFeatures implements FeatureCreator {
+    private int feature_size;
+    private PredictionPerformance[] statistics;
+    private Utils utils;
     Scored<FingerprintCandidate>[] rankedCandidates;
     long flags=-1;
 
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {
 
-    }
+    public TanimotoToPredFeatures(Scored<FingerprintCandidate>[] rankedCandidates){
 
-    public PvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates){
+
+        feature_size=1;
         this.rankedCandidates=rankedCandidates;
+
     }
 
-    public PvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates, long flags){
+
+    public TanimotoToPredFeatures(Scored<FingerprintCandidate>[] rankedCandidates, long flags){
+
+
+        feature_size=1;
         this.rankedCandidates=rankedCandidates;
         this.flags=flags;
+
     }
 
+    @Override
+    public void prepare(PredictionPerformance[] statistics) {this.statistics=statistics;
 
+    }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query,  IdentificationResult idresult, long flags) {
-        double[] return_value =  new double[1];
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
 
+
+        utils= new Utils();
 
         if(this.flags==-1)this.flags=flags;
-        PvalueScoreUtils utils= new PvalueScoreUtils();
 
-        Utils utils2 = new Utils();
+        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,this.flags);
 
 
-        return_value[0]  = utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0]);
 
-        return return_value;
+        double[] scores =  new double[feature_size];
+
+
+
+        final double topHit = rankedCandidates[0].getScore();
+
+
+
+            scores[0] = rankedCandidates[0].getCandidate().getFingerprint().tanimoto(query.getFingerprint().asDeterministic());
+
+
+        return scores;
+
+
+
     }
 
     @Override
@@ -63,14 +100,16 @@ public class PvalueFeatures implements FeatureCreator {
 
     @Override
     public int getRequiredCandidateSize() {
-        return 0;
+        return 1;
     }
 
     @Override
-    public String[] getFeatureNames() {
-        String[] name = new String[1];
-        name[0]="pvalueScore";
-        return name;
+    public String[] getFeatureNames()
+    {
+
+        String[] names = new String[1];
+       names[0]= "tanimotodistanceprediction";
+    return names;
     }
 
     @Override

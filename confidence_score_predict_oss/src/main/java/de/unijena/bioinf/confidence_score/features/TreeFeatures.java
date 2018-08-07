@@ -23,10 +23,10 @@ public class TreeFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, Scored<FingerprintCandidate>[] rankedCandidates, IdentificationResult idresult,long flags) {
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query,  IdentificationResult idresult,long flags) {
 
         double[] scores= new double[4];
-        TreeScoring current_tree_scores =  idresult.getBeautifulTree().getAnnotationOrThrow(TreeScoring.class);
+        TreeScoring current_tree_scores =  idresult.getRawTree().getAnnotationOrThrow(TreeScoring.class);
 
         scores[0]=current_tree_scores.getExplainedIntensityOfExplainablePeaks();
         scores[1]= current_tree_scores.getExplainedIntensity();
@@ -39,7 +39,7 @@ public class TreeFeatures implements FeatureCreator {
 
     @Override
     public int getFeatureSize() {
-        return 0;
+        return 4;
     }
 
     @Override
@@ -54,7 +54,14 @@ public class TreeFeatures implements FeatureCreator {
 
     @Override
     public String[] getFeatureNames() {
-        return new String[0];
+        String[] names = new String[getFeatureSize()];
+        names[0] = "explIntExplPeaks";
+        names[1] = "explInt";
+        names[2] = "ratioExplPeaks";
+        names[3] = "score";
+
+        return names;
+
     }
 
     @Override

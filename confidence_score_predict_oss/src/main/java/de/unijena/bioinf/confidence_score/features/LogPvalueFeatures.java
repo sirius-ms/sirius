@@ -15,7 +15,7 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 /**
  * Created by martin on 20.06.18.
  */
-public class PvalueFeatures implements FeatureCreator {
+public class LogPvalueFeatures implements FeatureCreator {
     Scored<FingerprintCandidate>[] rankedCandidates;
     long flags=-1;
 
@@ -24,29 +24,31 @@ public class PvalueFeatures implements FeatureCreator {
 
     }
 
-    public PvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates){
+    public LogPvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates){
         this.rankedCandidates=rankedCandidates;
     }
 
-    public PvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates, long flags){
+    public LogPvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates,long flags){
         this.rankedCandidates=rankedCandidates;
         this.flags=flags;
     }
-
-
 
     @Override
     public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query,  IdentificationResult idresult, long flags) {
         double[] return_value =  new double[1];
 
 
-        if(this.flags==-1)this.flags=flags;
         PvalueScoreUtils utils= new PvalueScoreUtils();
 
         Utils utils2 = new Utils();
 
+        if(this.flags==-1)this.flags=flags;
 
-        return_value[0]  = utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0]);
+        if(utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0])==0){
+            System.out.println("0 pvalue?");
+        }
+
+        return_value[0]  = Math.log(utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0]));
 
         return return_value;
     }
@@ -69,7 +71,7 @@ public class PvalueFeatures implements FeatureCreator {
     @Override
     public String[] getFeatureNames() {
         String[] name = new String[1];
-        name[0]="pvalueScore";
+        name[0]="LogpvalueScore";
         return name;
     }
 

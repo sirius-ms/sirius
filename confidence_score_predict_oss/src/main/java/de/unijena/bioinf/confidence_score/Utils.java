@@ -18,6 +18,10 @@ public class Utils {
         Scored<FingerprintCandidate>[] condensed;
         ArrayList<Scored<FingerprintCandidate>> condensed_as_list= new ArrayList<>();
 
+        if(flags==0){
+            return candidates;
+        }
+
         for(Scored<FingerprintCandidate> cand : candidates){
             if ((cand.getCandidate().getBitset() & flags) !=0){
                 condensed_as_list.add(cand);

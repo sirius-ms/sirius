@@ -69,7 +69,7 @@ public class PvalueScoreUtils {
         //TODO: This is a whacky fix
         if (p_value_lognormal == 0) p_value_lognormal = 0.00000000000001;
 
-        double score = p_value_lognormal * utils.condense_candidates_by_flag(ranked_candidates,current_candidate.getCandidate().getBitset()).length;
+        double score = p_value_lognormal * ranked_candidates.length;//utils.condense_candidates_by_flag(ranked_candidates,flag).length;
 
         return score;
 

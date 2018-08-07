@@ -16,13 +16,8 @@ public interface FeatureCreator extends Parameterized {
 
     void prepare(PredictionPerformance[] statistics);
 
-    /**
-     *
-     * @param query
-     * @param rankedCandidates sorted best to worst hit!
-     * @return
-     */
-    double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, Scored<FingerprintCandidate>[] rankedCandidates, IdentificationResult idresult, long flags);
+
+    double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags);
 
     int getFeatureSize();
 

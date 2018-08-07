@@ -17,14 +17,15 @@ import java.util.Arrays;
  * Created by Marcus Ludwig on 07.03.16.
  */
 public class PlattFeatures implements FeatureCreator {
-    private double[] quantiles = new double[]{0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95};
-    private double[] quantilesAbs = new double[]{0.5, 0.10, 0.25, 0.45};
+    private double[] quantiles = new double[]{ 0.50, 0.75, 0.90, 0.95};
+    //private double[] quantilesAbs = new double[]{0.5, 0.10, 0.25, 0.45};
     private int featureSize;
 
 //    private int[] unbiasedPositions;
 
     public PlattFeatures() {
-        this.featureSize = quantiles.length+quantilesAbs.length+1;
+        this.featureSize= quantiles.length+1;
+        //this.featureSize = quantiles.length+quantilesAbs.length+1;
     }
 
     @Override
@@ -34,7 +35,7 @@ public class PlattFeatures implements FeatureCreator {
 
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, Scored<FingerprintCandidate>[] rankedCandidates, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
         final double[] scores = new double[featureSize];
         final double[] platt = query.getFingerprint().toProbabilityArray();
         Arrays.sort(platt);
@@ -48,10 +49,10 @@ public class PlattFeatures implements FeatureCreator {
         for (int i = 0; i < platt.length; i++) platt[i] = Math.abs(platt[i]-0.5);
         Arrays.sort(platt);
 
-        for (int i = 0; i < quantilesAbs.length; i++) {
+      /*  for (int i = 0; i < quantilesAbs.length; i++) {
             final double quantile = quantilesAbs[i];
             scores[quantiles.length+i] = quantile(platt, quantile);
-        }
+        }*/
 
         //deviation from middle as platt scores where transformed
         scores[scores.length-1] = getStdDev(platt);
@@ -81,9 +82,9 @@ public class PlattFeatures implements FeatureCreator {
             names[i] = "quantile"+quantiles[i];
         }
 
-        for (int i = 0; i < quantilesAbs.length; i++) {
+      /*  for (int i = 0; i < quantilesAbs.length; i++) {
             names[quantiles.length+i] = "quantileAbs"+quantilesAbs[i];
-        }
+        }*/
 
         names[names.length-1] = "devFromMiddle";
 
@@ -115,7 +116,7 @@ public class PlattFeatures implements FeatureCreator {
         size = document.sizeOfList(quantilesAbsList);
         double[] quantilesAbs = new double[size];
         for (int i = 0; i < size; i++) quantilesAbs[i] = document.getDoubleFromList(quantilesAbsList, i);
-        this.quantilesAbs = quantilesAbs;
+       //this.quantilesAbs = quantilesAbs;
         this.featureSize = quantiles.length+quantilesAbs.length+1;
     }
 
@@ -125,7 +126,7 @@ public class PlattFeatures implements FeatureCreator {
         for (double d : quantiles) document.addToList(list, d);
         document.addListToDictionary(dictionary, "quantiles", list);
         list = document.newList();
-        for (double d : quantilesAbs) document.addToList(list, d);
+       // for (double d : quantilesAbs) document.addToList(list, d);
         document.addListToDictionary(dictionary, "quantilesAbs", list);
     }
 }

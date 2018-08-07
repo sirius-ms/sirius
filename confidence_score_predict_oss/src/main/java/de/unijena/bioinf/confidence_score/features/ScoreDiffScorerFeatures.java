@@ -9,46 +9,50 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.confidence_score.Utils;
+import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
- * Created by martin on 20.06.18.
+ * Created by martin on 16.07.18.
  */
-public class PvalueFeatures implements FeatureCreator {
-    Scored<FingerprintCandidate>[] rankedCandidates;
-    long flags=-1;
+public class ScoreDiffScorerFeatures implements FeatureCreator {
+
+    Scored<FingerprintCandidate> best_hit_scorer1;
+
+    Scored<FingerprintCandidate> best_hit_scorer2;
+
+    FingerblastScoring scoring;
+
+
+    /**
+     *
+     */
+    public ScoreDiffScorerFeatures(Scored<FingerprintCandidate> hit1, Scored<FingerprintCandidate> hit2, FingerblastScoring scoring){
+        this.best_hit_scorer1=hit1;
+        this.best_hit_scorer2=hit2;
+
+        this.scoring=scoring;
+
+
+    }
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
 
     }
 
-    public PvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates){
-        this.rankedCandidates=rankedCandidates;
-    }
-
-    public PvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates, long flags){
-        this.rankedCandidates=rankedCandidates;
-        this.flags=flags;
-    }
-
-
-
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query,  IdentificationResult idresult, long flags) {
-        double[] return_value =  new double[1];
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
+        double[] distance = new double[1];
+
+        scoring.prepare(query.getFingerprint());
+
+        distance[0]=Math.abs(scoring.score(query.getFingerprint(),best_hit_scorer1.getCandidate().getFingerprint())-scoring.score(query.getFingerprint(),best_hit_scorer2.getCandidate().getFingerprint()));
 
 
-        if(this.flags==-1)this.flags=flags;
-        PvalueScoreUtils utils= new PvalueScoreUtils();
-
-        Utils utils2 = new Utils();
 
 
-        return_value[0]  = utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0]);
-
-        return return_value;
+        return distance;
     }
 
     @Override
@@ -68,8 +72,10 @@ public class PvalueFeatures implements FeatureCreator {
 
     @Override
     public String[] getFeatureNames() {
+
         String[] name = new String[1];
-        name[0]="pvalueScore";
+        name[0] = "scorediffscorer";
+
         return name;
     }
 

@@ -22,22 +22,22 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 /**
  *
  *
-computes distance features, max distance is variable, so are scorers. Top scoring hit is FIXED at this point!
+ computes distance features, max distance is variable, so are scorers. Top scoring hit is FIXED at this point!
 
 
  */
 
 
-public class DistanceFeatures implements FeatureCreator {
+public class PvalueDistanceFeatures implements FeatureCreator {
     private int[] distances;
     private int feature_size;
     private PredictionPerformance[] statistics;
     private Utils utils;
-    Scored<FingerprintCandidate>[] rankedCandidates;
     long flags=-1;
+    Scored<FingerprintCandidate>[] rankedCandidates;
 
 
-    public DistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,int... distances){
+    public PvalueDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,int... distances){
 
         this.distances=distances;
         feature_size=distances.length;
@@ -45,7 +45,7 @@ public class DistanceFeatures implements FeatureCreator {
 
     }
 
-    public DistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,long flags,int... distances){
+    public PvalueDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,long flags,int... distances){
 
         this.distances=distances;
         feature_size=distances.length;
@@ -65,9 +65,10 @@ public class DistanceFeatures implements FeatureCreator {
 
 
         utils= new Utils();
+        PvalueScoreUtils putils = new PvalueScoreUtils();
 
         if(this.flags==-1)this.flags=flags;
-
+        Scored<FingerprintCandidate>[] rankedCandidatesOrig =rankedCandidates.clone();
 
         rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,this.flags);
 
@@ -76,15 +77,13 @@ public class DistanceFeatures implements FeatureCreator {
         double[] scores =  new double[feature_size];
 
 
-
-        final double topHit = rankedCandidates[0].getScore();
         int pos = 0;
 
 
-            for (int j = 0; j < distances.length; j++) {
+        for (int j = 0; j < distances.length; j++) {
 
-                scores[pos++] = topHit - rankedCandidates[distances[j]].getScore();
-            }
+            scores[pos++] = putils.computePvalueScore(rankedCandidatesOrig, rankedCandidates[0]) - putils.computePvalueScore(rankedCandidatesOrig,rankedCandidates[distances[j]]);
+        }
 
         assert pos == scores.length;
         return scores;
@@ -113,7 +112,7 @@ public class DistanceFeatures implements FeatureCreator {
     {
         String[] name=  new String[distances.length];
         for(int i=0;i<distances.length;i++){
-            name[i]="distance_"+distances[i];
+            name[i]="pvaluedistance_"+distances[i];
         }
         return name;
     }

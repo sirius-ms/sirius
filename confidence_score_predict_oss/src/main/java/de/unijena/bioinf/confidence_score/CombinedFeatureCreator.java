@@ -48,12 +48,12 @@ public class CombinedFeatureCreator implements FeatureCreator{
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, Scored<FingerprintCandidate>[] rankedCandidates, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query,  IdentificationResult idresult, long flags) {
 
         computed_features= new double[getFeatureSize()];
         int pos = 0;
         for (FeatureCreator featureCreator : featureCreators) {
-            final double[] currentScores = featureCreator.computeFeatures(query, rankedCandidates,idresult,flags);
+            final double[] currentScores = featureCreator.computeFeatures(query,idresult,flags);
             for (int i = 0; i < currentScores.length; i++) computed_features[pos++] = currentScores[i];
         }
         return computed_features;
