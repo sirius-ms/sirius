@@ -134,9 +134,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
             @Override
             protected VersionsInfo doInBackground() {
                 VersionsInfo versionsNumber = null;
-                try (WebAPI api = WebAPI.newInstance()) {
-                    int errorState = api.checkConnection();
-                    versionsNumber = api.getVersionInfo();
+                try  {
+                    int errorState = WebAPI.INSTANCE.checkConnection();
+                    versionsNumber = WebAPI.INSTANCE.getVersionInfo();
                     publish(versionsNumber, errorState);
                     LoggerFactory.getLogger(getClass()).debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
                 } catch (Exception e) {

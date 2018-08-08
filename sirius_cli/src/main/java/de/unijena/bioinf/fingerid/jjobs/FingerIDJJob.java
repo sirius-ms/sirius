@@ -91,7 +91,7 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
 
     @Override
     protected Map<IdentificationResult, ProbabilityFingerprint> compute() throws Exception {
-        try (final WebAPI webAPI = WebAPI.newInstance()) {
+//        try {
 
             final SearchStructureByFormula searchStructureByFormula = database.getSearchEngine(queryDb);
 
@@ -208,7 +208,7 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
             List<FingerprintDependentJJob> annotationJobs = new ArrayList<>();
 
             for (IdentificationResult fingeridInput : filteredResults) {
-                WebAPI.PredictionJJob predictionJob = webAPI.makePredictionJob(experiment, fingeridInput, fingeridInput.getResolvedTree(), fingerprintVersion, predictors);
+                WebAPI.PredictionJJob predictionJob = WebAPI.INSTANCE.makePredictionJob(experiment, fingeridInput, fingeridInput.getResolvedTree(), fingerprintVersion, predictors);
                 submitSubJob(predictionJob);
                 predictionJobs.add(predictionJob);
 
@@ -259,6 +259,6 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
 
 
             return fps;
-        }
+//        }
     }
 }

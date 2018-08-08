@@ -514,8 +514,8 @@ public class CustomDatabase implements SearchableDatabase {
             }
             moleculeBuffer.clear();
             logger.info("Try downloading compounds");
-            try (final WebAPI webAPI = WebAPI.newInstance()) {
-                try (final RESTDatabase db = webAPI.getRESTDb(BioFilter.ALL, new File("."))) {
+            try  {
+                try (final RESTDatabase db = WebAPI.INSTANCE.getRESTDb(BioFilter.ALL, new File("."))) {
                     try {
                         for (FingerprintCandidate fc : db.lookupManyFingerprintsByInchis(dict.keySet())) {
                             logger.info(fc.getInchiKey2D() + " downloaded");

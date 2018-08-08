@@ -123,7 +123,7 @@ public class ProxySettingsPanel extends TwoCloumnPanel implements ActionListener
 
         PasswordCrypter.setEncryptetProp("de.unijena.bioinf.sirius.proxy.pw", String.valueOf(pw.getPassword()), props);
 
-        WebAPI.reconnectAllInstances();
+        WebAPI.INSTANCE.reconnect();
     }
 
     @Override

@@ -320,11 +320,11 @@ public class CSIFingerIDComputation {
         protected ProbabilityFingerprint compute() throws Exception {
             if (requireCandidates && formulaJob.awaitResult().isEmpty())
                 return null;
-            try (final WebAPI webAPI = WebAPI.newInstance()) {
-                final WebAPI.PredictionJJob job = webAPI.makePredictionJob(container.getMs2Experiment(), re.getResult(), re.getResult().getResolvedTree(), predictor.fpVersion, EnumSet.of(predictor.predictorType));
+
+                final WebAPI.PredictionJJob job = WebAPI.INSTANCE.makePredictionJob(container.getMs2Experiment(), re.getResult(), re.getResult().getResolvedTree(), predictor.fpVersion, EnumSet.of(predictor.predictorType));
                 submitSubJob(job);
                 return job.awaitResult();
-            }
+
 
         }
     }
