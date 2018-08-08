@@ -704,14 +704,14 @@ public class CombinedCLI extends ApplicationCore {
             else allowedAlphabet = new FormulaConstraints("CHNOPSBBrClIF");
 
             List<List<FormulaCandidate>> candidates = new ArrayList<>();
-            try (final WebAPI api = WebAPI.newInstance()) {
+            try {
                 if (searchableDatabase.searchInBio()) {
-                    try (final RESTDatabase db = api.getRESTDb(BioFilter.ONLY_BIO, fingerIdInstanceProcessor.bioDatabase.getDatabasePath())) {
+                    try (final RESTDatabase db = WebAPI.INSTANCE.getRESTDb(BioFilter.ONLY_BIO, fingerIdInstanceProcessor.bioDatabase.getDatabasePath())) {
                         candidates.addAll(db.lookupMolecularFormulas(experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
                     }
                 }
                 if (searchableDatabase.searchInPubchem()) {
-                    try (final RESTDatabase db = api.getRESTDb(BioFilter.ONLY_NONBIO, fingerIdInstanceProcessor.pubchemDatabase.getDatabasePath())) {
+                    try (final RESTDatabase db = WebAPI.INSTANCE.getRESTDb(BioFilter.ONLY_NONBIO, fingerIdInstanceProcessor.pubchemDatabase.getDatabasePath())) {
                         candidates.addAll(db.lookupMolecularFormulas(experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
                     }
                 }

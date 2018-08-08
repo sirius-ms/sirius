@@ -19,13 +19,15 @@ import java.net.HttpURLConnection;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class ProxyManager {
-    public final static boolean DEBUG = false;
+    public final static boolean DEBUG = true;
     public static final String HTTPS_SCHEME = "https";
     public static final String HTTP_SCHEME = "http";
     public static final int OK_STATE = 0;
     public static final ProxyStrategy DEFAULT_STRATEGY = ProxyStrategy.SYSTEM;
 
     public enum ProxyStrategy {SYSTEM, SIRIUS, NONE}
+
+    private ProxyManager() {} //prevent instantiation
 
     public static ProxyStrategy getStrategyByName(String vlaue) {
         try {

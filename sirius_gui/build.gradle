@@ -202,7 +202,6 @@ publishing {
 }
 
 //artifactoryPublish.dependsOn 'distribute'
-
 task runGUI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
     File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}-gui").toFile()
     commandLine([command.absolutePath])

@@ -52,9 +52,9 @@ public class CSIPredictor {
     }
 
     public void initialize() throws IOException {
-        try (final WebAPI webAPI = WebAPI.newInstance()) {
+//        try (final WebAPI webAPI = WebAPI.newInstance()) {
             final TIntArrayList list = new TIntArrayList(4096);
-            PredictionPerformance[] perf = webAPI.getStatistics(predictorType, list);
+            PredictionPerformance[] perf = WebAPI.INSTANCE.getStatistics(predictorType, list);
 
             final CdkFingerprintVersion version = (CdkFingerprintVersion) WebAPI.getFingerprintVersion();
 
@@ -69,7 +69,7 @@ public class CSIPredictor {
 
             MaskedFingerprintVersion fingerprintVersion = v.toMask();
 
-            FingerblastScoringMethod method = (predictorType == PredictorType.CSI_FINGERID_NEGATIVE) ? new ScoringMethodFactory.CSIFingerIdScoringMethod(perf) : webAPI.getCovarianceScoring(fingerprintVersion, 1d / perf[0].withPseudoCount(0.25).numberOfSamples());
+            FingerblastScoringMethod method = (predictorType == PredictorType.CSI_FINGERID_NEGATIVE) ? new ScoringMethodFactory.CSIFingerIdScoringMethod(perf) : WebAPI.INSTANCE.getCovarianceScoring(fingerprintVersion, 1d / perf[0].withPseudoCount(0.25).numberOfSamples());
             synchronized (this) {
                 performances = perf;
                 fpVersion = fingerprintVersion;
@@ -77,15 +77,15 @@ public class CSIPredictor {
                 initialized = true;
                 refreshCacheDir();
             }
-        }
+//        }
     }
 
 
     public void refreshCacheDir() throws IOException {
-        try (final WebAPI webAPI = WebAPI.newInstance()) {
-            VersionsInfo versionsInfo = webAPI.getVersionInfo();
+//        try (final WebAPI webAPI = WebAPI.newInstance()) {
+            VersionsInfo versionsInfo = WebAPI.INSTANCE.getVersionInfo();
             database = SearchableDatabases.makeCachedRestDB(versionsInfo, fpVersion);
             database.checkCache();
-        }
+//        }
     }
 }
