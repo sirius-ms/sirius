@@ -18,13 +18,21 @@
 
 package de.unijena.bioinf.fingerid;
 
+import ca.odell.glazedlists.EventList;
+import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventListModel;
 import de.unijena.bioinf.chemdb.DatasourceService;
+import de.unijena.bioinf.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
+import de.unijena.bioinf.fingerid.candidate_filters.SmartFilterMatcherEditor;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
+import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -61,6 +69,9 @@ public class CandidateListDetailView extends CandidateListView implements Active
     protected int highlightedCandidate = -1;
     protected int selectedCompoundId;
 
+    private ToolbarToggleButton filterByMolecularPropertyButton;
+    private JTextField smartFilterTextField;
+    private MolecularPropertyMatcherEditor molecularPropertyMatcherEditor;
 
     public CandidateListDetailView(final CSIFingerIDComputation computation, CandidateList sourceList) {
         super(sourceList);
@@ -78,6 +89,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
         this.structureSearcherThread = new Thread(structureSearcher);
         structureSearcherThread.start();
         this.structureSearcher.reloadList(sourceList);
+        this.molecularPropertyMatcherEditor.setStructureSearcher(structureSearcher);
 
         ///// add popup menu
         popupMenu = new JPopupMenu();
@@ -97,7 +109,35 @@ public class CandidateListDetailView extends CandidateListView implements Active
         popupMenu.add(OpenInBrowser2);
         popupMenu.add(highlight);
         setVisible(true);
+    }
 
+
+    @Override
+    protected JToolBar getToolBar() {
+        JToolBar tb = super.getToolBar();
+
+        filterByMolecularPropertyButton = new ToolbarToggleButton(null, Icons.MolecularProperty_24, "filter by highlighted molecular property");
+
+        smartFilterTextField = new JTextField();
+        TwoCloumnPanel panel2 = new TwoCloumnPanel();
+        panel2.setBorder(new EmptyBorder(0, 0, 0, 0));
+        smartFilterTextField.setPreferredSize(new Dimension(100, smartFilterTextField.getPreferredSize().height));
+        panel2.add(new JLabel("SMART Filter"), smartFilterTextField);
+
+        tb.add(filterByMolecularPropertyButton);
+        tb.add(panel2);
+
+        return tb;
+    }
+
+    @Override
+    protected EventList<MatcherEditor<CompoundCandidate>> getSearchFieldMatchers() {
+        EventList<MatcherEditor<CompoundCandidate>> list = super.getSearchFieldMatchers();
+        list.add(new SmartFilterMatcherEditor(smartFilterTextField));
+
+        molecularPropertyMatcherEditor = new MolecularPropertyMatcherEditor(filterByMolecularPropertyButton);
+        list.add(molecularPropertyMatcherEditor);
+        return list;
     }
 
     @Override
@@ -160,7 +200,6 @@ public class CandidateListDetailView extends CandidateListView implements Active
         }
     }
 
-
     public void dispose() {
         structureSearcher.stop();
     }
@@ -186,10 +225,12 @@ public class CandidateListDetailView extends CandidateListView implements Active
         if (rowcol != null) {
             highlightAgree = candidate.substructures.indexAt(rowcol[0], rowcol[1]);
             structureSearcher.reloadList(source, highlightAgree, highlightedCandidate);
+            molecularPropertyMatcherEditor.highlightChanged(filterByMolecularPropertyButton.isSelected());
         } else {
             if (highlightAgree >= 0) {
                 highlightAgree = -1;
                 structureSearcher.reloadList(source, highlightAgree, highlightedCandidate);
+                molecularPropertyMatcherEditor.highlightChanged(filterByMolecularPropertyButton.isSelected());
             }
 
             for (DatabaseLabel l : candidate.labels) {
@@ -257,6 +298,10 @@ public class CandidateListDetailView extends CandidateListView implements Active
     public void resultsChanged(ExperimentContainer experiment, CompoundCandidate sre, List<CompoundCandidate> resultElements, ListSelectionModel selections) {
         if (sre != null)
             this.structureSearcher.reloadList(source);
+    }
+
+    public void resultsChanged() {
+        filterByMolecularPropertyButton.setSelected(false);
     }
 
     private int[] calculateAgreementIndex(FingerprintAgreement ag, Rectangle relativeRect, Point clickPoint) {

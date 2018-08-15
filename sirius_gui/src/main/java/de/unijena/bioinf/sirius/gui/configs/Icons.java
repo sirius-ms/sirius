@@ -82,4 +82,6 @@ public abstract class Icons {
 
     public static final Icon SIRIUS_SPLASH = new ImageIcon(AboutDialog.class.getResource("/icons/sirius.jpg"));
 
+    public static final Icon MolecularProperty_24 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-molecularPropertyWhite-24px.png"));
+
 }

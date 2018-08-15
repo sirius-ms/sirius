@@ -114,7 +114,7 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
             searchCSIButton.setEnabled(true);
             searchCSIButton.setToolTipText("Start CSI:FingerId online search to identify the molecular structure of the measured compound");
         }
-
+        list.resultsChanged();
     }
 
     public class ComputeElement extends TwoCloumnPanel {
