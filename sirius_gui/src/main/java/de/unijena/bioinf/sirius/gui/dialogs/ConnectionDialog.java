@@ -20,12 +20,12 @@ public class ConnectionDialog extends JDialog implements ActionListener {
 
     public ConnectionDialog(Dialog owner) {
         super(owner, name, ModalityType.APPLICATION_MODAL);
-        initDialog(WebAPI.checkFingerIDConnectionStatic());
+        initDialog(WebAPI.INSTANCE.checkConnection());
     }
 
     public ConnectionDialog(Frame owner) {
         super(owner, name, ModalityType.APPLICATION_MODAL);
-        initDialog(WebAPI.checkFingerIDConnectionStatic());
+        initDialog(WebAPI.INSTANCE.checkConnection());
     }
 
     public ConnectionDialog(Frame owner, int state) {

@@ -24,7 +24,7 @@ public class CheckConnectionAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        int state = WebAPI.checkFingerIDConnectionStatic();
+        int state = WebAPI.INSTANCE.checkConnection();
         setState(state == ProxyManager.OK_STATE);
         if (!isActive.get()) {
             new ConnectionDialog(MainFrame.MF, state);
