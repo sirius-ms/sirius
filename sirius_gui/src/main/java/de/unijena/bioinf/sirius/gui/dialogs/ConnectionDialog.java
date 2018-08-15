@@ -78,7 +78,7 @@ public class ConnectionDialog extends JDialog implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         this.dispose();
         if (e.getSource().equals(proxy)){
-            new SettingsDialog(MainFrame.MF,1);
+            new SettingsDialog(MainFrame.MF,2);
         }
     }
 }
