@@ -16,6 +16,7 @@ import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.CachedRESTDB;
+import de.unijena.bioinf.fingerid.net.PredictionJJob;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
@@ -204,11 +205,11 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
             addedIdentificationResults.addAll(ionTypes);
 
             //submit jobs
-            List<WebAPI.PredictionJJob> predictionJobs = new ArrayList<>();
+            List<PredictionJJob> predictionJobs = new ArrayList<>();
             List<FingerprintDependentJJob> annotationJobs = new ArrayList<>();
 
             for (IdentificationResult fingeridInput : filteredResults) {
-                WebAPI.PredictionJJob predictionJob = WebAPI.INSTANCE.makePredictionJob(experiment, fingeridInput, fingeridInput.getResolvedTree(), fingerprintVersion, predictors);
+                PredictionJJob predictionJob = WebAPI.INSTANCE.makePredictionJob(experiment, fingeridInput, fingeridInput.getResolvedTree(), fingerprintVersion, predictors);
                 submitSubJob(predictionJob);
                 predictionJobs.add(predictionJob);
 
@@ -235,7 +236,7 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
 
             //collect results
             Map<IdentificationResult, ProbabilityFingerprint> fps = new HashMap<>(input.size());
-            for (WebAPI.PredictionJJob predictionJob : predictionJobs) {
+            for (PredictionJJob predictionJob : predictionJobs) {
                 ProbabilityFingerprint r = predictionJob.awaitResult();
                 if (r != null)
                     fps.put(predictionJob.result, r);

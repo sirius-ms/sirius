@@ -9,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.jjobs.FormulaJob;
+import de.unijena.bioinf.fingerid.net.PredictionJJob;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.*;
@@ -321,7 +322,7 @@ public class CSIFingerIDComputation {
             if (requireCandidates && formulaJob.awaitResult().isEmpty())
                 return null;
 
-                final WebAPI.PredictionJJob job = WebAPI.INSTANCE.makePredictionJob(container.getMs2Experiment(), re.getResult(), re.getResult().getResolvedTree(), predictor.fpVersion, EnumSet.of(predictor.predictorType));
+                final PredictionJJob job = WebAPI.INSTANCE.makePredictionJob(container.getMs2Experiment(), re.getResult(), re.getResult().getResolvedTree(), predictor.fpVersion, EnumSet.of(predictor.predictorType));
                 submitSubJob(job);
                 return job.awaitResult();
 

@@ -29,7 +29,6 @@ import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.net.ProxyManager;
@@ -53,6 +52,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
@@ -68,12 +68,11 @@ import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
 
 @ThreadSafe
 public class WebAPI implements Closeable {
-    //    private static final LinkedHashSet<WebAPI> INSTANCES = new LinkedHashSet<>();
     private static final BasicNameValuePair UID = new BasicNameValuePair("uid", SystemInformation.generateSystemKey());
+    private static final Logger LOG = LoggerFactory.getLogger(WebAPI.class);
 
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
     public static final String FINGERID_WEB_API = FingerIDProperties.fingeridWebHost();
@@ -90,13 +89,13 @@ public class WebAPI implements Closeable {
 
     @Override
     public void close() throws IOException {
-        LoggerFactory.getLogger(this.getClass()).info("Closing Web Connection");
+        LOG.info("Closing Web Connection");
         client.close();
     }
 
     public boolean isConnected() {
         if (client == null || checkConnection() == 0) {
-            LoggerFactory.getLogger(this.getClass()).warn("No Connection, try to reconnect");
+            LOG.warn("No Connection, try to reconnect");
             reconnect();
             return checkConnection() == 0;
         }
@@ -108,7 +107,7 @@ public class WebAPI implements Closeable {
             try {
                 client.close();
             } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error("Could not close Existing connection!", e);
+                LOG.error("Could not close Existing connection!", e);
             }
         }
         client = ProxyManager.getSirirusHttpClient();
@@ -143,14 +142,9 @@ public class WebAPI implements Closeable {
         }
     }
 
-    public static int checkFingerIDConnectionStatic() {
-        int errorcode = 1;
-        errorcode = WebAPI.INSTANCE.checkConnection();
-        return errorcode;
-    }
 
     public static boolean canConnect() {
-        return checkFingerIDConnectionStatic() == ProxyManager.OK_STATE;
+        return WebAPI.INSTANCE.checkConnection() == ProxyManager.OK_STATE;
     }
 
     public VersionsInfo getVersionInfo() {
@@ -158,14 +152,14 @@ public class WebAPI implements Closeable {
         try {
             v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdBaseURI()).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build()));
             if (v == null) {
-                LoggerFactory.getLogger(this.getClass()).warn("Could not reach fingerid root url for version verification. Try to reach version specific url");
+                LOG.warn("Could not reach fingerid root url for version verification. Try to reach version specific url");
                 v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdURI(null)).build()));
             }
         } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+            LOG.error(e.getMessage(), e);
         }
         if (v != null)
-            LoggerFactory.getLogger(this.getClass()).debug(v.toString());
+            LOG.debug(v.toString());
         return v;
     }
 
@@ -202,12 +196,12 @@ public class WebAPI implements Closeable {
                 return new VersionsInfo(version, database, expired, accept, finish, newsList);
             }
         } catch (IOException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+            LOG.error(e.getMessage(), e);
         }
         return null;
     }
 
-    public static URIBuilder getFingerIdURI(String path) {
+    static URIBuilder getFingerIdURI(String path) {
         if (path == null)
             path = "";
         URIBuilder b = null;
@@ -249,7 +243,7 @@ public class WebAPI implements Closeable {
         try {
             host = getFingerIdURI(null).build();
         } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Illegal fingerid URI -> Fallback to RestDB Default URI", e);
+            LOG.warn("Illegal fingerid URI -> Fallback to RestDB Default URI", e);
         }
         return new RESTDatabase(cacheDir, bioFilter, host, client);
     }
@@ -264,9 +258,9 @@ public class WebAPI implements Closeable {
             if (reponsecode == 200) {
                 return true;
             }
-            LoggerFactory.getLogger(this.getClass()).error("Could not delete Job! Response Code: " + reponsecode + "Reason: " + response.getStatusLine().getReasonPhrase());
+            LOG.error("Could not delete Job! Response Code: " + reponsecode + "Reason: " + response.getStatusLine().getReasonPhrase());
         } catch (Throwable t) {
-            LoggerFactory.getLogger(this.getClass()).error("Error when doing job deletion request " + job.jobId + " Response error code: " + reponsecode + " - Reason: " + responseReason, t);
+            LOG.error("Error when doing job deletion request " + job.jobId + " Response error code: " + reponsecode + " - Reason: " + responseReason, t);
         }
         return false;
     }
@@ -299,7 +293,7 @@ public class WebAPI implements Closeable {
                 }
             }
         } catch (Throwable t) {
-            LoggerFactory.getLogger(this.getClass()).error("Error when updating job #" + job.jobId + " Response error code: " + reponsecode + " - Reason: " + responseReason, t);
+            LOG.error("Error when updating job #" + job.jobId + " Response error code: " + reponsecode + " - Reason: " + responseReason, t);
         }
         return false;
     }
@@ -361,7 +355,7 @@ public class WebAPI implements Closeable {
             throw new HttpResponseException(status, "Response Status Code: " + status + " - Expected: 200");
         } catch (Throwable t) {
             RuntimeException re = new RuntimeException("Error during job submission - Code: " + status + " Reason: " + reason, t);
-            LoggerFactory.getLogger(this.getClass()).debug("Submitting Job failed", re);
+            LOG.debug("Submitting Job failed", re);
             throw re;
         }
     }
@@ -398,59 +392,6 @@ public class WebAPI implements Closeable {
         return CdkFingerprintVersion.withECFP();
     }
 
-    public static class PredictionJJob extends BasicJJob<ProbabilityFingerprint> {
-        public final Ms2Experiment experiment;
-        public final FTree ftree;
-        public final IdentificationResult result;
-        public final MaskedFingerprintVersion version;
-        private final EnumSet<PredictorType> predicors;
-
-        public PredictionJJob(final Ms2Experiment experiment, final IdentificationResult result, final FTree ftree, MaskedFingerprintVersion version, EnumSet<PredictorType> predicors) {
-            super(JobType.WEBSERVICE);
-            this.experiment = experiment;
-            this.ftree = ftree;
-            this.result = result;
-            this.version = version;
-            this.predicors = predicors;
-        }
-
-        private FingerIdJob job;
-
-        @Override
-        public ProbabilityFingerprint compute() throws Exception {
-            job = WebAPI.INSTANCE.submitJob(experiment, ftree, version, predicors);
-            // RECEIVE RESULTS
-            new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
-            for (int k = 0; k < 600; ++k) {
-                Thread.sleep(3000 + 30 * k);
-                if (WebAPI.INSTANCE.updateJobStatus(job)) {
-                    return job.prediction;
-                } else if (Objects.equals(job.state, "CRASHED")) {
-                    throw new RuntimeException("Job crashed: " + (job.errorMessage != null ? job.errorMessage : ""));
-                }
-            }
-            throw new TimeoutException("Reached timeout");
-        }
-
-        @Override
-        protected void cleanup() {
-            super.cleanup();
-            //cleanup server
-            if (job != null) {
-                try {
-                    WebAPI.INSTANCE.deleteJobOnServer(job);
-                } catch (URISyntaxException e) {
-                    LOG().error("Error when setting up job deletion request for job: " + job.jobId, e);
-                } finally {
-                    job = null;
-                }
-
-            } else {
-                LOG().warn("Job was null before deletion request job: " + job.jobId);
-            }
-        }
-    }
-
 
     /**
      * make statistics of fingerprints and write the used indizes of fingerprints into the
@@ -466,7 +407,7 @@ public class WebAPI implements Closeable {
         try {
             get = new HttpGet(getFingerIdURI("/webapi/statistics.csv").setParameter("predictor", predictorType.toBitsAsString()).build());
         } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+            LOG.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
         ArrayList<PredictionPerformance> performances = new ArrayList<>();
@@ -495,7 +436,7 @@ public class WebAPI implements Closeable {
         try {
             get = new HttpGet(getFingerIdURI("/webapi/covariancetree.csv").build());
         } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+            LOG.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
         CovarianceScoring covarianceScoring;
@@ -525,14 +466,14 @@ public class WebAPI implements Closeable {
                 String m = o.get("message").getAsString();
 
                 if (suc) {
-                    LoggerFactory.getLogger(this.getClass()).info(m);
+                    LOG.info(m);
                 } else {
-                    LoggerFactory.getLogger(this.getClass()).error(m);
+                    LOG.error(m);
                 }
                 return m;
             } else {
                 RuntimeException e = new RuntimeException(response.getStatusLine().getReasonPhrase());
-                LoggerFactory.getLogger(this.getClass()).error("Could not send error report! Bad http return Value: " + response.getStatusLine().getStatusCode(), e);
+                LOG.error("Could not send error report! Bad http return Value: " + response.getStatusLine().getStatusCode(), e);
                 throw e;
             }
         }
