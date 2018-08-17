@@ -18,77 +18,68 @@
 
 package de.unijena.bioinf.sirius.gui.dialogs;
 
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
-import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
+public class CloseDialogNoSaveReturnValue extends JDialog implements ActionListener {
 
-public class CloseDialogNoSaveReturnValue extends JDialog implements ActionListener, ItemListener {
+    private CloseDialogReturnValue rv;
 
-	private CloseDialogReturnValue rv;
+    private JButton delete, abort;
+    private JCheckBox dontaskagain;
+    private final String dontaskagainKey;
 
-	private JButton delete,abort;
-	private JCheckBox dontaskagain;
+    public CloseDialogNoSaveReturnValue(Frame owner, String question, String dontaskagainKey) {
+        super(owner, true);
+        rv = CloseDialogReturnValue.abort;
+        this.dontaskagainKey = dontaskagainKey;
 
-	public CloseDialogNoSaveReturnValue(Frame owner, String question) {
-		super(owner,true);
-		rv = CloseDialogReturnValue.abort;
+        this.setLayout(new BorderLayout());
+        JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        Icon icon = UIManager.getIcon("OptionPane.questionIcon");
+        northPanel.add(new JLabel(icon));
+        northPanel.add(new JLabel(question));
+        this.add(northPanel, BorderLayout.CENTER);
 
-		this.setLayout(new BorderLayout());
-		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,20,10));
-		Icon icon = UIManager.getIcon("OptionPane.questionIcon");
-		northPanel.add(new JLabel(icon));
-		northPanel.add(new JLabel(question));
-		this.add(northPanel,BorderLayout.CENTER);
-
-		JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		dontaskagain = new JCheckBox();
-		dontaskagain.setSelected(false);
-		dontaskagain.addItemListener(this);
-		south.add(dontaskagain);
-		south.add(new JLabel("Do not ask again"));
+        JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+        dontaskagain = new JCheckBox();
+        dontaskagain.setSelected(false);
+        south.add(dontaskagain);
+        south.add(new JLabel("Do not ask again"));
 
 
-		delete = new JButton("Delete experiment");
-		delete.addActionListener(this);
-		abort = new JButton("Abort");
-		abort.addActionListener(this);
-		south.add(delete);
-		south.add(abort);
-		this.add(south,BorderLayout.SOUTH);
-		this.pack();
-		setLocationRelativeTo(getParent());
-		this.setVisible(true);
-	}
+        delete = new JButton("Delete experiment");
+        delete.addActionListener(this);
+        abort = new JButton("Abort");
+        abort.addActionListener(this);
+        south.add(delete);
+        south.add(abort);
+        this.add(south, BorderLayout.SOUTH);
+        this.pack();
+        setLocationRelativeTo(getParent());
+        this.setVisible(true);
+    }
 
-	public CloseDialogReturnValue getReturnValue(){
-		return rv;
-	}
+    public CloseDialogReturnValue getReturnValue() {
+        return rv;
+    }
 
 
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == delete) {
+            rv = CloseDialogReturnValue.delete;
+        } else if (e.getSource() == abort) {
+            rv = CloseDialogReturnValue.abort;
+        } else return;
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		if(e.getSource()== delete){
-			rv = CloseDialogReturnValue.delete;
-		}else if (e.getSource()==abort) {
-			rv = CloseDialogReturnValue.abort;
-		} else return;
-		this.dispose();
-	}
-
-	@Override
-	public void itemStateChanged(ItemEvent e) {
-		if (e.getStateChange() == ItemEvent.SELECTED) {
-			CONFIG_STORAGE.setCloseNeverAskAgain(true);
-		} else if (e.getStateChange() == ItemEvent.DESELECTED) {
-			CONFIG_STORAGE.setCloseNeverAskAgain(false);
-		}
-	}
+        Jobs.runInBackround(() -> ApplicationCore.SIRIUS_PROPERTIES_FILE.setAndStoreProperty(dontaskagainKey, String.valueOf(dontaskagain.isSelected())));
+        this.dispose();
+    }
 }

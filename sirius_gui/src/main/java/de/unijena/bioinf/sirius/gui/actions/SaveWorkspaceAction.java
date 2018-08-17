@@ -7,6 +7,10 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.fingerid.storage.DefaultFileLocations;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
@@ -19,7 +23,6 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.AbstractList;
 
-import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.COMPOUNT_LIST;
 
@@ -46,7 +49,8 @@ public class SaveWorkspaceAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         JFileChooser jfc = new JFileChooser();
-        jfc.setCurrentDirectory(CONFIG_STORAGE.getDefaultSaveFilePath());
+
+        jfc.setCurrentDirectory(PropertyManager.getFile(DefaultFileLocations.DEFAULT_SAVE_FILE_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
         jfc.addChoosableFileFilter(WorkspaceIO.SAVE_FILE_FILTER);
@@ -57,7 +61,14 @@ public class SaveWorkspaceAction extends AbstractAction {
             int returnval = jfc.showSaveDialog(MF);
             if (returnval == JFileChooser.APPROVE_OPTION) {
                 File selFile = jfc.getSelectedFile();
-                CONFIG_STORAGE.setDefaultSaveFilePath(selFile.getParentFile());
+
+                {
+                    final String path = selFile.getParentFile().getAbsolutePath();
+                    Jobs.runInBackround(() ->
+                            ApplicationCore.SIRIUS_PROPERTIES_FILE.
+                                    setAndStoreProperty(DefaultFileLocations.DEFAULT_SAVE_FILE_PATH, path)
+                    );
+                }
 
                 String name = selFile.getName();
                 if (!selFile.getAbsolutePath().endsWith(".sirius")) {

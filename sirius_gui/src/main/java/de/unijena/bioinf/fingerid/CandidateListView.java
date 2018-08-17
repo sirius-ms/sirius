@@ -4,8 +4,12 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.Filterator;
 import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.matchers.MatcherEditor;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.candidate_filters.CandidateStringMatcherEditor;
 import de.unijena.bioinf.fingerid.candidate_filters.DatabaseFilterMatcherEditor;
+import de.unijena.bioinf.fingerid.storage.DefaultFileLocations;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
@@ -30,7 +34,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
 /**
@@ -105,7 +108,7 @@ public class CandidateListView extends ActionListDetailView<CompoundCandidate, S
 
     private void doExport() {
         JFileChooser jfc = new JFileChooser();
-        jfc.setCurrentDirectory(CONFIG_STORAGE.getDefaultTreeExportPath());
+        jfc.setCurrentDirectory(PropertyManager.getFile(DefaultFileLocations.DEFAULT_TREE_EXPORT_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
         FileFilter csvFileFilter = new SupportedExportCSVFormatsFilter();
@@ -116,7 +119,10 @@ public class CandidateListView extends ActionListDetailView<CompoundCandidate, S
             if (returnval == JFileChooser.APPROVE_OPTION) {
                 File selFile = jfc.getSelectedFile();
 
-                CONFIG_STORAGE.setDefaultCompoundsExportPath(selFile.getParentFile());
+                Jobs.runInBackround(() ->
+                        ApplicationCore.SIRIUS_PROPERTIES_FILE.
+                                setAndStoreProperty(DefaultFileLocations.DEFAULT_TREE_EXPORT_PATH, selFile.getParentFile().getAbsolutePath())
+                );
 
                 if (selFile.exists()) {
                     FilePresentDialog fpd = new FilePresentDialog(MF, selFile.getName());

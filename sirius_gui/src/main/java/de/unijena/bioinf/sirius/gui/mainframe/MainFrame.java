@@ -29,8 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
-
 public class MainFrame extends JFrame implements DropTargetListener {
     public static final MainFrame MF = new MainFrame();
 
@@ -285,7 +283,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
     private void openImporterWindow(List<File> csvFiles, List<File> msFiles, List<File> mgfFiles) {
-        LoadController lc = new LoadController(this, CONFIG_STORAGE);
+        LoadController lc = new LoadController(this);
         lc.addSpectra(csvFiles, msFiles, mgfFiles);
         lc.showDialog();
 

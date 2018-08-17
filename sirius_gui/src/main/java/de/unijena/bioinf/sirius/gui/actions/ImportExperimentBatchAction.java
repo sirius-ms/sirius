@@ -5,6 +5,10 @@ package de.unijena.bioinf.sirius.gui.actions;
  * 29.01.17.
  */
 
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.fingerid.storage.DefaultFileLocations;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedBatchDataFormatFilter;
 import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
@@ -13,7 +17,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
-import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
 /**
@@ -30,7 +33,7 @@ public class ImportExperimentBatchAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        JFileChooser chooser = new JFileChooser(CONFIG_STORAGE.getDefaultLoadDialogPath());
+        JFileChooser chooser = new JFileChooser(PropertyManager.getFile(DefaultFileLocations.DEFAULT_LOAD_DIALOG_PATH));
         chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         chooser.setMultiSelectionEnabled(true);
         chooser.addChoosableFileFilter(new SupportedBatchDataFormatFilter());
@@ -39,7 +42,10 @@ public class ImportExperimentBatchAction extends AbstractAction {
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] files = chooser.getSelectedFiles();
-            CONFIG_STORAGE.setDefaultLoadDialogPath(files[0].getParentFile());
+            Jobs.runInBackround(() ->
+                    ApplicationCore.SIRIUS_PROPERTIES_FILE.
+                            setAndStoreProperty(DefaultFileLocations.DEFAULT_LOAD_DIALOG_PATH, files[0].getParentFile().getAbsolutePath())
+            );
             WorkspaceIO.importOneExperimentPerFile(files);
         }
     }
