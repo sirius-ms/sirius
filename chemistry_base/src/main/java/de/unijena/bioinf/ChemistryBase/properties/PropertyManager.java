@@ -5,20 +5,22 @@ package de.unijena.bioinf.ChemistryBase.properties;
  * 31.08.17.
  */
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Properties;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class PropertyManager {
+    public static final String PROPERTY_BASE = "de.unijena.bioinf";
     public static final Properties PROPERTIES;
 
     static {
@@ -72,6 +74,65 @@ public class PropertyManager {
     public static int getNumberOfThreads() {
         return Integer.valueOf(PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.threads", "2"));
     }
+
+    public static String getProperty(String key, String defaultValue) {
+        return PROPERTIES.getProperty(key, defaultValue);
+    }
+
+    public static String getProperty(String key) {
+        return PROPERTIES.getProperty(key);
+    }
+
+    public static String getStringProperty(String key, String backupKey, String defaultValue) {
+        return getProperty(key, getProperty(backupKey, defaultValue));
+    }
+
+
+    public static String getStringProperty(String key, String backupKey) {
+        return getStringProperty(key, backupKey, null);
+    }
+
+    public static int getIntProperty(String key, String backupKey) {
+        return Integer.valueOf(getStringProperty(key, backupKey));
+    }
+
+    public static double getDoubleProperty(String key, String backupKey) {
+        return Double.valueOf(getStringProperty(key, backupKey));
+    }
+
+    public static boolean getBooleanProperty(String key, String backupKey) {
+        return Boolean.valueOf(getStringProperty(key, backupKey));
+    }
+
+    public static int getIntProperty(String key, int defaultValue) {
+        String v = getProperty(key);
+        return v == null ? defaultValue : Integer.valueOf(v);
+    }
+
+    public static double getDoubleProperty(String key, double defaultValue) {
+        String v = getProperty(key);
+        return v == null ? defaultValue : Double.valueOf(v);
+    }
+
+    public static boolean getBooleanProperty(String key, boolean defaultValue) {
+        String v = getProperty(key);
+        return v == null ? defaultValue : Boolean.valueOf(v);
+    }
+
+    public static boolean getBooleanProperty(String key) {
+        return getBooleanProperty(key, false);
+    }
+
+    public static Path getPath(String key) {
+        String v = getProperty(key);
+        return (v == null) ? null : Paths.get(v);
+    }
+
+    public static File getFile(String key) {
+        String v = getProperty(key);
+        return (v == null) ? null : new File(key);
+    }
+
 
     public static void main(String[] args) {
         PropertyManager.PROPERTIES.get("foo");
