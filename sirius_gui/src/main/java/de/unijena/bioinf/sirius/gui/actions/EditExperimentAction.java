@@ -16,7 +16,6 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
 /**
@@ -48,7 +47,7 @@ public class EditExperimentAction extends AbstractAction {
         ExperimentContainer ec = MF.getCompoundListSelectionModel().getSelected().get(0);
         if (ec == null) return;
         String guiname = ec.getGUIName();
-        LoadController lc = new LoadController(MF, ec, CONFIG_STORAGE);
+        LoadController lc = new LoadController(MF, ec);
         lc.showDialog();
         if (!ec.getGUIName().equals(guiname)) {
             Workspace.resolveCompundNameConflict(ec);
