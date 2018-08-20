@@ -32,10 +32,11 @@ public class ConfidenceScoreComputor {
 
 
     ArrayList<TrainedSVM> trainedSVMs;
+    PredictionPerformance[] performances;
 
     //TODO: IdentificationResult is onyl for SIRIUS, not FingerID, so cant use it as tophit (needed at all?)
 
-    public ConfidenceScoreComputor(ArrayList<TrainedSVM> trainedsvms){
+    public ConfidenceScoreComputor(ArrayList<TrainedSVM> trainedsvms,PredictionPerformance[] performances){
 
         this.trainedSVMs=trainedsvms;
 
@@ -44,9 +45,14 @@ public class ConfidenceScoreComputor {
 
     }
 
+    public ConfidenceScoreComputor(){
 
 
-    public double compute_confidence(Ms2Experiment exp, Scored<FingerprintCandidate>[] ranked_candidates, PredictionPerformance[] performance, CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, CSIFingerIdScoring csiscoring, CovarianceScoring covscore, long flags){
+    }
+
+
+
+    public double compute_confidence(Ms2Experiment exp, Scored<FingerprintCandidate>[] ranked_candidates,  CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, CSIFingerIdScoring csiscoring, CovarianceScoring covscore, long flags){
 
 
         String ce = "nothing";
@@ -108,7 +114,7 @@ public class ConfidenceScoreComputor {
 
         if(flags==0){
 
-           comb= new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore,ranked_candidates_covscore,performance,covscore);
+           comb= new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore,ranked_candidates_covscore,performances,covscore);
 
 
 
@@ -119,17 +125,17 @@ public class ConfidenceScoreComputor {
             if(ranked_candidates_covscore.length>1) {
 
 
-                comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore,ranked_candidates_covscore,performance,covscore);
+                comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore,ranked_candidates_covscore,performances,covscore);
 
             }else {
-                comb =  new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore,ranked_candidates_covscore,performance,covscore);
+                comb =  new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore,ranked_candidates_covscore,performances,covscore);
 
             }
         }
 
 
 
-        comb.prepare(performance);
+        comb.prepare(performances);
 
 
 
