@@ -5,7 +5,7 @@ dependencies {
     compile project(':fingerblast')
     compile project(':fingerprinter')
     compile project(':chemical_db')
-    compile project(':confidence_score')
+    compile project(':confidence_score:confidence_score_predict_oss')
 
 	//internal
 	compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"

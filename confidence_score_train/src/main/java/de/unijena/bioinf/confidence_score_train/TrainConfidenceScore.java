@@ -142,6 +142,7 @@ LibLinearImpl imp;
           double[] scores = predict.predict_confidence(featuresFinalTest,svm);
 
 
+
           ArrayList<Double> testscorearray = new ArrayList<>();
 
           for(int n=0;n<scores.length;n++){
@@ -182,6 +183,8 @@ LibLinearImpl imp;
         }
 
         writeScores(scores_all_final,label_all_final);
+
+
 
       Stats stats = new Stats(scores_all_final,label_all_final);
 
