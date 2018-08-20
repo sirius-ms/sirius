@@ -33,7 +33,7 @@ LibLinearImpl.svm_model model;
                     scores[i] = 1 - (svm.bogusDist.cumulativeProbability(predictor.score(features[i]) + svm.score_shift));
                 }else{
                     scores[i] = predictor.score(features[i]);
-                    System.out.println("no bogus hit distribution found");
+
 
                 }
             }

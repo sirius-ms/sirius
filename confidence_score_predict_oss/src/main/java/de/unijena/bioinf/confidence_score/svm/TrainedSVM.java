@@ -160,4 +160,66 @@ public class TrainedSVM {
 
 
     }
+
+    public void import_parameters(JsonObject jsonObject){
+        names= new String[jsonObject.keySet().size()];
+        weights= new double[names.length];
+        double scale=-9;
+        double shape=-9;
+
+
+        double[] medians = new double[names.length];
+        double[] devs =  new double[names.length];
+        double[] mins = new double[names.length];
+        double[] maxs =  new double[names.length];
+
+        int counter=0;
+
+        for (String key : jsonObject.keySet()){
+
+            JsonArray curr =  jsonObject.getJsonArray(key);
+
+            if(key.contains("feature")) {
+
+
+                System.out.println(key);
+                names[counter] = curr.get(0).toString();
+                weights[counter] = Double.parseDouble(curr.get(1).toString());
+                medians[counter] = Double.parseDouble(curr.get(2).toString());
+                devs[counter] = Double.parseDouble(curr.get(3).toString());
+                mins[counter] = Double.parseDouble(curr.get(4).toString());
+                maxs[counter] = Double.parseDouble(curr.get(5).toString());
+
+                counter++;
+
+            }
+
+            if(key.contains("Dist")){
+
+                scale= Double.parseDouble(curr.get(0).toString());
+                shape=Double.parseDouble(curr.get(1).toString());
+                score_shift=Integer.parseInt(curr.get(2).toString());
+                System.out.println(scale+" "+shape);
+
+
+            }
+
+
+
+
+
+
+
+        }
+
+        scales= new SVMScales(medians,devs,mins,maxs);
+        bogusDist = new LogNormalDistribution(scale,shape);
+
+
+
+
+
+}
+
+
 }
