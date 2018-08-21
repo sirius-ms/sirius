@@ -9,7 +9,7 @@ import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -160,10 +160,10 @@ public abstract class Workspace {
                     final PeriodicTable i = PeriodicTable.getInstance();
                     i.addCommonIonType(name);
                     if (ionization.getCharge() > 0)
-                        ApplicationCore.SIRIUS_PROPERTIES_FILE.setProperty("de.unijena.bioinf.sirius.chem.adducts.positive",
+                        SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty("de.unijena.bioinf.sirius.chem.adducts.positive",
                                 String.join(",", i.getPositiveAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.toList())));
                     else if (ionization.getCharge() < 0)
-                        ApplicationCore.SIRIUS_PROPERTIES_FILE.setProperty("de.unijena.bioinf.sirius.chem.adducts.negative",
+                        SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty("de.unijena.bioinf.sirius.chem.adducts.negative",
                                 String.join(",", i.getNegativeAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.toList())));
                     return true;
                 }

@@ -7,7 +7,7 @@ import ca.odell.glazedlists.matchers.MatcherEditor;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.candidate_filters.CandidateStringMatcherEditor;
 import de.unijena.bioinf.fingerid.candidate_filters.DatabaseFilterMatcherEditor;
-import de.unijena.bioinf.fingerid.storage.DefaultFileLocations;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
@@ -108,7 +108,7 @@ public class CandidateListView extends ActionListDetailView<CompoundCandidate, S
 
     private void doExport() {
         JFileChooser jfc = new JFileChooser();
-        jfc.setCurrentDirectory(PropertyManager.getFile(DefaultFileLocations.DEFAULT_TREE_EXPORT_PATH));
+        jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_TREE_EXPORT_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
         FileFilter csvFileFilter = new SupportedExportCSVFormatsFilter();
@@ -120,8 +120,8 @@ public class CandidateListView extends ActionListDetailView<CompoundCandidate, S
                 File selFile = jfc.getSelectedFile();
 
                 Jobs.runInBackround(() ->
-                        ApplicationCore.SIRIUS_PROPERTIES_FILE.
-                                setAndStoreProperty(DefaultFileLocations.DEFAULT_TREE_EXPORT_PATH, selFile.getParentFile().getAbsolutePath())
+                        SiriusProperties.SIRIUS_PROPERTIES_FILE().
+                                setAndStoreProperty(SiriusProperties.DEFAULT_TREE_EXPORT_PATH, selFile.getParentFile().getAbsolutePath())
                 );
 
                 if (selFile.exists()) {

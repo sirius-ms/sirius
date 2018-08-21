@@ -33,7 +33,7 @@ import de.unijena.bioinf.fingerid.FingerIdData;
 import de.unijena.bioinf.fingerid.FingerIdDataCSVExporter;
 import de.unijena.bioinf.fingerid.FingerIdResultReader;
 import de.unijena.bioinf.fingerid.FingerIdResultWriter;
-import de.unijena.bioinf.fingerid.storage.DefaultFileLocations;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
@@ -226,7 +226,7 @@ public class WorkspaceIO {
 
     public static void exportResults() {
         JFileChooser jfc = new JFileChooser();
-        jfc.setCurrentDirectory(PropertyManager.getFile(DefaultFileLocations.CSV_EXPORT_PATH));
+        jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.CSV_EXPORT_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
         jfc.addChoosableFileFilter(new SupportedExportCSVFormatsFilter());
@@ -245,8 +245,8 @@ public class WorkspaceIO {
                 {
                     final String path = (selFile.exists() && selFile.isDirectory()) ? selFile.getAbsolutePath() : selFile.getParentFile().getAbsolutePath();
                     Jobs.runInBackround(() ->
-                            ApplicationCore.SIRIUS_PROPERTIES_FILE.
-                                    setAndStoreProperty(DefaultFileLocations.DEFAULT_TREE_EXPORT_PATH, path)
+                            SiriusProperties.SIRIUS_PROPERTIES_FILE().
+                                    setAndStoreProperty(SiriusProperties.DEFAULT_TREE_EXPORT_PATH, path)
                     );
                 }
 
