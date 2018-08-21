@@ -7,7 +7,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.fingerid.storage.DefaultFileLocations;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
@@ -90,7 +90,7 @@ public class LoadController implements LoadDialogListener {
 
     @Override
     public void addSpectra() {
-        JFileChooser chooser = new JFileChooser(PropertyManager.getFile(DefaultFileLocations.DEFAULT_LOAD_DIALOG_PATH));
+        JFileChooser chooser = new JFileChooser(PropertyManager.getFile(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH));
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         chooser.setMultiSelectionEnabled(true);
         chooser.addChoosableFileFilter(new SupportedDataFormatsFilter());
@@ -100,8 +100,8 @@ public class LoadController implements LoadDialogListener {
             File[] files = chooser.getSelectedFiles();
             //setzt Pfad as default
             Jobs.runInBackround(()->
-                    ApplicationCore.SIRIUS_PROPERTIES_FILE.
-                            setAndStoreProperty(DefaultFileLocations.DEFAULT_LOAD_DIALOG_PATH,files[0].getParentFile().getAbsolutePath())
+                    SiriusProperties.SIRIUS_PROPERTIES_FILE().
+                            setAndStoreProperty(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH,files[0].getParentFile().getAbsolutePath())
             );
 
             //untersuche die Dateitypen und schaue ob CSV vorhanden, wenn vorhanden behandelte alle CSVs auf

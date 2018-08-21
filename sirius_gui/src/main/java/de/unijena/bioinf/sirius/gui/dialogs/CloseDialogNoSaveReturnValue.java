@@ -18,14 +18,13 @@
 
 package de.unijena.bioinf.sirius.gui.dialogs;
 
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
 
 public class CloseDialogNoSaveReturnValue extends JDialog implements ActionListener {
 
@@ -79,7 +78,7 @@ public class CloseDialogNoSaveReturnValue extends JDialog implements ActionListe
             rv = CloseDialogReturnValue.abort;
         } else return;
 
-        Jobs.runInBackround(() -> ApplicationCore.SIRIUS_PROPERTIES_FILE.setAndStoreProperty(dontaskagainKey, String.valueOf(dontaskagain.isSelected())));
+        Jobs.runInBackround(() -> SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(dontaskagainKey, String.valueOf(dontaskagain.isSelected())));
         this.dispose();
     }
 }

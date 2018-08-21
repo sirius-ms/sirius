@@ -2,8 +2,8 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
-import de.unijena.bioinf.fingerid.storage.DefaultFileLocations;
-import de.unijena.bioinf.fingerid.storage.FileFormat;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
+import de.unijena.bioinf.sirius.storage.FileFormat;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeColor;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
 import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
@@ -130,7 +130,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             this.svp.repaint();
         } else if (e.getSource() == this.saveTreeB) {
             JFileChooser jfc = new JFileChooser();
-            jfc.setCurrentDirectory(PropertyManager.getFile(DefaultFileLocations.DEFAULT_TREE_EXPORT_PATH));
+            jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_TREE_EXPORT_PATH));
             jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
             jfc.setAcceptAllFileFilterUsed(false);
 
@@ -148,7 +148,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             jfc.addChoosableFileFilter(jsonFilter);
 //			jfc.addChoosableFileFilter(new FTreeJsonFilter());
 
-            FileFormat defaultFF = FileFormat.valueOf(PropertyManager.getProperty(DefaultFileLocations.DEFAULT_TREE_FILE_FORMAT, FileFormat.png.name()));
+            FileFormat defaultFF = FileFormat.valueOf(PropertyManager.getProperty(SiriusProperties.DEFAULT_TREE_FILE_FORMAT, FileFormat.png.name()));
 
             if (defaultFF == FileFormat.dot) {
                 jfc.setFileFilter(dotFilter);
@@ -174,8 +174,8 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
                     {
                         final String path = selFile.getParentFile().getAbsolutePath();
                         Jobs.runInBackround(() ->
-                                ApplicationCore.SIRIUS_PROPERTIES_FILE.
-                                        setAndStoreProperty(DefaultFileLocations.DEFAULT_TREE_EXPORT_PATH, path)
+                                SiriusProperties.SIRIUS_PROPERTIES_FILE().
+                                        setAndStoreProperty(SiriusProperties.DEFAULT_TREE_EXPORT_PATH, path)
                         );
                     }
 
@@ -226,8 +226,8 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             if (ff != FileFormat.none) {
                 final String name = ff.name();
                 Jobs.runInBackround(() ->
-                        ApplicationCore.SIRIUS_PROPERTIES_FILE.
-                                setAndStoreProperty(DefaultFileLocations.DEFAULT_TREE_FILE_FORMAT, name)
+                        SiriusProperties.SIRIUS_PROPERTIES_FILE().
+                                setAndStoreProperty(SiriusProperties.DEFAULT_TREE_FILE_FORMAT, name)
                 );
             }
 

@@ -8,7 +8,7 @@ package de.unijena.bioinf.sirius.gui.actions;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.fingerid.storage.DefaultFileLocations;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
@@ -50,7 +50,7 @@ public class SaveWorkspaceAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         JFileChooser jfc = new JFileChooser();
 
-        jfc.setCurrentDirectory(PropertyManager.getFile(DefaultFileLocations.DEFAULT_SAVE_FILE_PATH));
+        jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_SAVE_FILE_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
         jfc.addChoosableFileFilter(WorkspaceIO.SAVE_FILE_FILTER);
@@ -65,8 +65,8 @@ public class SaveWorkspaceAction extends AbstractAction {
                 {
                     final String path = selFile.getParentFile().getAbsolutePath();
                     Jobs.runInBackround(() ->
-                            ApplicationCore.SIRIUS_PROPERTIES_FILE.
-                                    setAndStoreProperty(DefaultFileLocations.DEFAULT_SAVE_FILE_PATH, path)
+                            SiriusProperties.SIRIUS_PROPERTIES_FILE().
+                                    setAndStoreProperty(SiriusProperties.DEFAULT_SAVE_FILE_PATH, path)
                     );
                 }
 
