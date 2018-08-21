@@ -67,6 +67,14 @@ public class PropertyManager {
 
     }
 
+    public static Object setProperty(String key, String value) {
+        return PROPERTIES.setProperty(key, value);
+    }
+
+    public static Object put(String key, String value) {
+        return PROPERTIES.put(key, value);
+    }
+
     public static int getNumberOfCores() {
         return Integer.valueOf(PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1"));
     }
@@ -130,7 +138,7 @@ public class PropertyManager {
 
     public static File getFile(String key) {
         String v = getProperty(key);
-        return (v == null) ? null : new File(key);
+        return (v == null) ? null : new File(v);
     }
 
 
