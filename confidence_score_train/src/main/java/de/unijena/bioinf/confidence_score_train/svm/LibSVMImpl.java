@@ -1,27 +1,26 @@
-package de.unijena.bioinf.ConfidenceScore.svm;
+package de.unijena.bioinf.confidence_score_train.svm;
 
-import de.unijena.bioinf.ConfidenceScore.Predictor;
-import libsvm.*;
+import de.unijena.bioinf.confidence_score.svm.LinearSVMPredictor;
+import de.unijena.bioinf.confidence_score.svm.Predictor;
+import de.unijena.bioinf.confidence_score.svm.SVMInterface;
+import libsvm.svm;
+import libsvm.svm_model;
 
 import java.util.List;
 
 /**
  * Created by Marcus Ludwig on 09.03.16.
  */
-public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMImpl.svm_problemImpl, libsvm.svm_model> {
+public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMImpl.svm_problemImpl, svm_model> {
 
-    public LibSVMImpl(){
-        svm.svm_set_print_string_function(new svm_print_interface() {
-            @Override
-            public void print(String s) {
-
-            }
+    public LibSVMImpl() {
+        svm.svm_set_print_string_function(s -> {
         });
     }
 
     @Override
     public LibSVMImpl.svm_nodeImpl createSVM_Node(int index, double value) {
-        if (Double.isNaN(value)){
+        if (Double.isNaN(value)) {
             throw new IllegalArgumentException("value for node cannot be NaN");
         }
         return new LibSVMImpl.svm_nodeImpl(index, value);
@@ -31,7 +30,6 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
     public LibSVMImpl.svm_problemImpl createSVM_Problem() {
         return new LibSVMImpl.svm_problemImpl();
     }
-
 
 
     @Override
@@ -45,9 +43,9 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
         libsSvm_parameter.eps = parameter.eps;
         libsSvm_parameter.gamma = parameter.gamma;
         libsSvm_parameter.kernel_type = parameter.kernel_type;
-        if (parameter.kernel_type==svm_parameter.RBF) System.out.println("RBF");
-        else if (parameter.kernel_type==svm_parameter.POLY) System.out.println("poly");
-        System.out.println("xx d "+libsSvm_parameter.degree+" | g "+libsSvm_parameter.gamma+" | c "+libsSvm_parameter.C);
+        if (parameter.kernel_type == svm_parameter.RBF) System.out.println("RBF");
+        else if (parameter.kernel_type == svm_parameter.POLY) System.out.println("poly");
+        System.out.println("xx d " + libsSvm_parameter.degree + " | g " + libsSvm_parameter.gamma + " | c " + libsSvm_parameter.C);
         libsSvm_parameter.nr_weight = parameter.nr_weight;
 //        libsSvm_parameter.nu = parameter.nu;
         libsSvm_parameter.p = parameter.p;
@@ -58,12 +56,12 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
         libsSvm_parameter.weight_label = parameter.weight_label;
         libsvm.svm_model libsvm_model = svm.svm_train(problem.svm_problem, libsSvm_parameter);
 
-        LibSVMImpl.svm_model model  = new LibSVMImpl.svm_model(libsvm_model);
+        LibSVMImpl.svm_model model = new LibSVMImpl.svm_model(libsvm_model);
         return model;
     }
 
-    private LibSVMImpl.svm_nodeImpl[][] convert(libsvm.svm_node[][] nodes){
-        LibSVMImpl.svm_nodeImpl[][] nodesImpl =new LibSVMImpl.svm_nodeImpl[nodes.length][];
+    private LibSVMImpl.svm_nodeImpl[][] convert(libsvm.svm_node[][] nodes) {
+        LibSVMImpl.svm_nodeImpl[][] nodesImpl = new LibSVMImpl.svm_nodeImpl[nodes.length][];
         for (int i = 0; i < nodes.length; i++) {
             nodesImpl[i] = new LibSVMImpl.svm_nodeImpl[nodes[i].length];
             for (int j = 0; j < nodes[i].length; j++) {
@@ -84,26 +82,22 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
     }
 
     @Override
-    public Predictor getPredictor(SVMInterface.svm_model<libsvm.svm_model> model, double probA, double probB) {
-        if (model.getModel().param.kernel_type==svm_parameter.LINEAR){
+    public Predictor getPredictor(SVMInterface.svm_model<libsvm.svm_model> model) {
+        if (model.getModel().param.kernel_type == svm_parameter.LINEAR) {
             double[][] d = convertDualToPrimal(model);
             double[] w = d[0];
             double b = d[1][0];
 
 
-            return new LinearSVMPredictor(w, b, probA, probB);
+            return new LinearSVMPredictor(w, b);
         } else {
-            System.out.println("KernelSVMPredictor");
-            model.getModel().probA = new double[]{probA};
-            model.getModel().probB = new double[]{probB};
-            return new KernelSVMPredictor(model.getModel());
+            throw new IllegalArgumentException("There is no non linear implementation yet!");
         }
-
 
 
     }
 
-    private double[][] convertDualToPrimal(SVMInterface.svm_model<libsvm.svm_model> svm_model){
+    private double[][] convertDualToPrimal(SVMInterface.svm_model<libsvm.svm_model> svm_model) {
 //        w = model.SVs' * model.sv_coef;
 //        b = -model.rho;
 //
@@ -114,17 +108,17 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
 //
 //        SVMInterface.svm_node[][] SVs = svm_model.SV;
         libsvm.svm_node[][] SVs = svm_model.getModel().SV;
-        assert svm_model.getModel().sv_coef.length==1;
+        assert svm_model.getModel().sv_coef.length == 1;
         double[] coef = svm_model.getModel().sv_coef[0];
 
-        assert coef.length==SVs.length;
+        assert coef.length == SVs.length;
 
         int featureSize = 0;
         for (int i = 0; i < SVs.length; i++) {
             libsvm.svm_node[] sv = SVs[i];
             for (int j = 0; j < sv.length; j++) {
                 final int idx = sv[j].index;
-                if (idx>featureSize) featureSize = idx; //idx starts with 1
+                if (idx > featureSize) featureSize = idx; //idx starts with 1
 
             }
         }
@@ -136,15 +130,15 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
             for (int i = 0; i < sv.length; i++) {
                 final libsvm.svm_node svm_node = sv[i];
                 final int index = svm_node.index;
-                w[index-1] += coef[s]*svm_node.value;
+                w[index - 1] += coef[s] * svm_node.value;
             }
         }
 
 
-        assert svm_model.getModel().rho.length==1;
+        assert svm_model.getModel().rho.length == 1;
         double b = -svm_model.getModel().rho[0];
 
-        if (svm_model.getModel().label[0]==-1){
+        if (svm_model.getModel().label[0] == -1) {
             for (int i = 0; i < w.length; i++) {
                 w[i] = -w[i];
             }
@@ -154,17 +148,15 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
         return new double[][]{w, new double[]{b}};
     }
 
-
-
-    public class svm_nodeImpl extends SVMInterface.svm_node{
+    public class svm_nodeImpl extends SVMInterface.svm_node {
         private final libsvm.svm_node svm_node;
 
-        public svm_nodeImpl(libsvm.svm_node node){
+        public svm_nodeImpl(libsvm.svm_node node) {
             super(node.index, node.value);
             this.svm_node = node;
         }
 
-        public svm_nodeImpl(int index, double value){
+        public svm_nodeImpl(int index, double value) {
             super(index, value);
             this.svm_node = new libsvm.svm_node();
             this.svm_node.index = index;
@@ -191,11 +183,11 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
         }
     }
 
-    public class svm_problemImpl extends SVMInterface.svm_problem<svm_nodeImpl>{
+    public class svm_problemImpl extends SVMInterface.svm_problem<svm_nodeImpl> {
         public final libsvm.svm_problem svm_problem;
         private List<List<svm_nodeImpl>> svm_nodes;
 
-        public svm_problemImpl(){
+        public svm_problemImpl() {
             this.svm_problem = new libsvm.svm_problem();
         }
 
@@ -239,9 +231,10 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
         }
     }
 
-    public class svm_model extends SVMInterface.svm_model<libsvm.svm_model>{
+    public class svm_model extends SVMInterface.svm_model<libsvm.svm_model> {
         private libsvm.svm_model libsvm_model;
-        public svm_model(libsvm.svm_model libsvm_model){
+
+        public svm_model(libsvm.svm_model libsvm_model) {
             this.libsvm_model = libsvm_model;
         }
 

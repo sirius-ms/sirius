@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ConfidenceScore;
+package de.unijena.bioinf.confidence_score_train;
 
 import java.util.Arrays;
 

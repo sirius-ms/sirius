@@ -1,17 +1,15 @@
 package de.unijena.bioinf.confidence_score_train;
 
-import de.unijena.bioinf.ConfidenceScore.Stats;
-import de.unijena.bioinf.ConfidenceScore.svm.LibLinearImpl;
-import de.unijena.bioinf.ConfidenceScore.svm.LibSVMImpl;
 import de.unijena.bioinf.confidence_score.CombinedFeatureCreator;
-import de.unijena.bioinf.confidence_score.Utils;
 import de.unijena.bioinf.confidence_score.features.PvalueScoreUtils;
 import de.unijena.bioinf.confidence_score.svm.*;
-import org.apache.commons.math3.distribution.LogNormalDistribution;
+import de.unijena.bioinf.confidence_score_train.svm.LibSVMImpl;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
