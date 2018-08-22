@@ -14,7 +14,7 @@ dependencies {
     compile group: "de.unijena.bioinf.ms", name: "chemdb_rest_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "chemdb_file_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "chemical_db_oss", version: "$fingeridVersion"
-
+    compile group: "de.unijena.bioinf.ms", name: "confidence_score_predict_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "canopus_predict_oss", version: "$fingeridVersion"
     compile group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
     compile group: "net.iharder", name: "base64", version: "2.3.8"
