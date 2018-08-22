@@ -23,6 +23,7 @@ import java.io.File;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -31,12 +32,12 @@ import java.util.List;
 public class ConfidenceScoreComputor {
 
 
-    ArrayList<TrainedSVM> trainedSVMs;
+    HashMap<String,TrainedSVM> trainedSVMs;
     PredictionPerformance[] performances;
 
     //TODO: IdentificationResult is onyl for SIRIUS, not FingerID, so cant use it as tophit (needed at all?)
 
-    public ConfidenceScoreComputor(ArrayList<TrainedSVM> trainedsvms,PredictionPerformance[] performances){
+    public ConfidenceScoreComputor(HashMap<String,TrainedSVM> trainedsvms, PredictionPerformance[] performances){
 
         this.trainedSVMs=trainedsvms;
 
@@ -45,10 +46,9 @@ public class ConfidenceScoreComputor {
 
     }
 
-    public ConfidenceScoreComputor(){
-
-
-    }
+   public PredictionPerformance[] getPerformances(){
+        return performances;
+   }
 
 
 
@@ -105,18 +105,17 @@ public class ConfidenceScoreComputor {
         CombinedFeatureCreator comb = new CombinedFeatureCreator();
 
         //TODO load this
-        TrainedSVM svm = new TrainedSVM(null,null,null);
 
 
-        int max_distance=1; //
+        String distanceType="distance";
+        String dbType="bio";
 
 
 
         if(flags==0){
 
-           comb= new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore,ranked_candidates_covscore,performances,covscore);
-
-
+           comb= new CombinedFeatureCreatorALL(ranked_candidates_csiscore,ranked_candidates_covscore,performances,covscore);
+            dbType="all";
 
         }
 
@@ -129,9 +128,11 @@ public class ConfidenceScoreComputor {
 
             }else {
                 comb =  new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore,ranked_candidates_covscore,performances,covscore);
-
+                distanceType="noDistance";
             }
         }
+
+        TrainedSVM svm = trainedSVMs.get(dbType+""+distanceType+""+ce);
 
 
 
