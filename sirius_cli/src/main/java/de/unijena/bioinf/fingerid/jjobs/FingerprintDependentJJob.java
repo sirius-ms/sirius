@@ -22,7 +22,9 @@ public abstract class FingerprintDependentJJob<R> extends BasicDependentJJob<R> 
         super(type);
         this.identificationResult = result;
         this.fp = fp;
+
     }
+
 
     protected void initInput() throws ExecutionException {
         if (identificationResult == null || fp == null) {
