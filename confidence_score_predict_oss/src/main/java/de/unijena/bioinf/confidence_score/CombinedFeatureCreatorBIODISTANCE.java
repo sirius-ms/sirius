@@ -95,6 +95,7 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
     }
 
 
+
     @Override
     public void prepare(PredictionPerformance[] statistics) {
 
@@ -145,7 +146,6 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
         }
         return names;
     }
-
 
 
 }
