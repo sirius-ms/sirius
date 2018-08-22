@@ -23,6 +23,8 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
     private final long flag;//todo is there a new an nicer solution?
     private final CompoundCandidateChargeState chargeState;
     protected List<FingerprintCandidate> searchList;
+    private List<FingerprintCandidate> unfilteredSearchList;
+    private List<Scored<FingerprintCandidate>> unfilteredScored;
 
     public FingerblastJJob(Fingerblast fingerblast, BioFilter bioFilter, long flag, CompoundCandidateChargeState chargeState) {
         this(fingerblast, bioFilter, flag, null, null, null, chargeState);
@@ -39,6 +41,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
         this.flag = flag;
         this.formula = formula;
         this.chargeState = chargeState;
+
     }
 
     @Override
@@ -50,9 +53,24 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
                 if (j instanceof FormulaJob) {
                     FormulaJob job = ((FormulaJob) j);
                     searchList = job.awaitResult();
+
                 }
             }
         }
+    }
+
+
+    private void computeUnfiltered() throws Exception{
+
+        unfilteredScored = fingerblast.score(unfilteredSearchList,fp);
+        Collections.sort(unfilteredScored,Scored.desc());
+
+
+    }
+
+    public List<Scored<FingerprintCandidate>> getUnfilteredList(){
+
+        return unfilteredScored;
     }
 
     @Override
@@ -60,14 +78,23 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
         initInput();
         final ArrayList<FingerprintCandidate> searchList = new ArrayList<>(this.searchList.size());
         for (FingerprintCandidate c : this.searchList) {
+            unfilteredSearchList.add(c);
             if ((!filter || flag == 0 || (c.getBitset() & flag) != 0))
                 searchList.add(c);
         }
+
+
         // filter by charge state
         // this is somehow the wrong place for it. But I don't know where to put it...
         final List<Scored<FingerprintCandidate>> cds = fingerblast.score(searchList, fp);
 
         Collections.sort(cds, Scored.desc());
+
+        if(unfilteredSearchList.size()!=searchList.size()){
+            computeUnfiltered();
+        }else {
+            unfilteredScored=cds;
+        }
 
         return new FingerIdResult(cds, 0d, fp, this.resolvedTree);
     }
