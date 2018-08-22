@@ -66,7 +66,7 @@ public class LibLinearImpl implements SVMInterface<LibLinearImpl.svm_nodeImpl, L
     }
 
     @Override
-    public LinearSVMPredictor getPredictor(SVMInterface.svm_model<Model> model, double probA, double probB) {
+    public LinearSVMPredictor getPredictor(SVMInterface.svm_model<Model> model) {
         double[] w = model.getModel().getFeatureWeights();
         double b = model.getModel().getBias();
 

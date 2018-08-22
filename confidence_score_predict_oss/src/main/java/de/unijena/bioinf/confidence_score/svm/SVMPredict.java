@@ -1,11 +1,6 @@
 package de.unijena.bioinf.confidence_score.svm;
 
 
-import de.bwaldvogel.liblinear.Model;
-import de.unijena.bioinf.fingerid.Train;
-
-import java.io.File;
-
 /**
  * Created by martin on 21.06.18.
  */

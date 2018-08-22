@@ -19,8 +19,8 @@ public interface SVMInterface<node extends SVMInterface.svm_node, problem extend
     SVMInterface.svm_model<M> svm_train(problem problem, svm_parameter parameter);
 
     double svm_predict(SVMInterface.svm_model<M> model, List<node> nodes);
-//
-Predictor getPredictor(SVMInterface.svm_model<M> model, double probA, double probB);
+
+    Predictor getPredictor(SVMInterface.svm_model<M> model);
 
 
     abstract class svm_node{
