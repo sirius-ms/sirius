@@ -13,7 +13,6 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
 /**
@@ -29,7 +28,7 @@ public class ImportExperimentAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        LoadController lc = new LoadController(MF, CONFIG_STORAGE);
+        LoadController lc = new LoadController(MF);
         lc.showDialog();
         ExperimentContainer ec = lc.getExperiment();
         if (ec != null) {

@@ -6,9 +6,11 @@ import ca.odell.glazedlists.swing.GlazedListsSwing;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.fingerid.storage.ConfigStorage;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
@@ -28,7 +30,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class LoadController implements LoadDialogListener {
-    private final ConfigStorage config;
     private final JFrame owner;
     private DefaultLoadDialog loadDialog;
 
@@ -37,9 +38,8 @@ public class LoadController implements LoadDialogListener {
     private final EventList<SpectrumContainer> spectra;
 
 
-    public LoadController(JFrame owner, ExperimentContainer exp, ConfigStorage config) {
+    public LoadController(JFrame owner, ExperimentContainer exp) {
         this.owner = owner;
-        this.config = config;
 
 
         if (exp != null) {
@@ -70,8 +70,8 @@ public class LoadController implements LoadDialogListener {
         loadDialog.addLoadDialogListener(this);
     }
 
-    public LoadController(JFrame owner, ConfigStorage config) {
-        this(owner, null, config);
+    public LoadController(JFrame owner) {
+        this(owner, null);
     }
 
     public void showDialog() {
@@ -90,16 +90,19 @@ public class LoadController implements LoadDialogListener {
 
     @Override
     public void addSpectra() {
-        JFileChooser chooser = new JFileChooser(config.getDefaultLoadDialogPath());
+        JFileChooser chooser = new JFileChooser(PropertyManager.getFile(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH));
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         chooser.setMultiSelectionEnabled(true);
         chooser.addChoosableFileFilter(new SupportedDataFormatsFilter());
         chooser.setAcceptAllFileFilterUsed(false);
-        int returnVal = chooser.showOpenDialog((JDialog) loadDialog);
+        int returnVal = chooser.showOpenDialog(loadDialog);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] files = chooser.getSelectedFiles();
-            //setzt Pfad
-            config.setDefaultLoadDialogPath(files[0].getParentFile());
+            //setzt Pfad as default
+            Jobs.runInBackround(()->
+                    SiriusProperties.SIRIUS_PROPERTIES_FILE().
+                            setAndStoreProperty(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH,files[0].getParentFile().getAbsolutePath())
+            );
 
             //untersuche die Dateitypen und schaue ob CSV vorhanden, wenn vorhanden behandelte alle CSVs auf
             //gleiche Weise

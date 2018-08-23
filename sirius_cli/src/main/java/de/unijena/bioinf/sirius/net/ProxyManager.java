@@ -27,7 +27,8 @@ public class ProxyManager {
 
     public enum ProxyStrategy {SYSTEM, SIRIUS, NONE}
 
-    private ProxyManager() {} //prevent instantiation
+    private ProxyManager() {
+    } //prevent instantiation
 
     public static ProxyStrategy getStrategyByName(String vlaue) {
         try {
@@ -112,15 +113,12 @@ public class ProxyManager {
             if (!checkJena(client)) {
                 if (!checkExternal(client)) {
                     return 1;
-                } else {
-                    return 2;
                 }
-            } else {
-                return 3;
+                return 2;
             }
-        } else {
-            return 0;
+            return 3;
         }
+        return 0;
     }
 
     public static int checkInternetConnection() {
