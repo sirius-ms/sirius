@@ -1,6 +1,6 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 
 import javax.swing.*;
@@ -85,7 +85,7 @@ public class QuestionDialog extends JDialog implements ActionListener {
             rv = ReturnValue.Success;
 
             if (dontAsk != null && dontAsk.isSelected()) {
-                ApplicationCore.SIRIUS_PROPERTIES_FILE.setAndStoreProperty(property, String.valueOf(true));
+                SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(property, String.valueOf(true));
             }
         } else if (e.getSource() == abort) {
             rv = ReturnValue.Abort;

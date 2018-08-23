@@ -2,7 +2,7 @@ package de.unijena.bioinf.sirius.gui.dialogs;
 
 
 import de.unijena.bioinf.fingerid.net.News;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,12 +59,12 @@ public class NewsDialog extends JDialog implements ActionListener {
         if (e.getSource()==ok){
             //remember displayed news
             final String property = News.PROPERTY_KEY;
-            Properties properties = ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties();
+            Properties properties = SiriusProperties.SIRIUS_PROPERTIES_FILE().getCopyOfPersistentProperties();
             StringBuilder knownNews = new StringBuilder(properties.getProperty(property, ""));
             for (News news : newsList) {
                 knownNews.append(","+news.getId());
             }
-            ApplicationCore.SIRIUS_PROPERTIES_FILE.setAndStoreProperty(property, knownNews.toString());
+            SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(property, knownNews.toString());
 
             this.dispose();
         }

@@ -1,6 +1,7 @@
 package de.unijena.bioinf.fingerid.net;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.sql.Timestamp;
@@ -48,7 +49,7 @@ public class VersionsInfo {
     private List<News> filterNews(List<News> newsList) {
         List<News> filteredNews = new ArrayList<>();
         final String property = News.PROPERTY_KEY;
-        Properties properties = ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties();
+        Properties properties = SiriusProperties.SIRIUS_PROPERTIES_FILE().getCopyOfPersistentProperties();
         final String propertyValue = properties.getProperty(property, "");
         Set<String> knownNews = new HashSet<>(Arrays.asList(propertyValue.split(",")));
         for (News news : newsList) {
