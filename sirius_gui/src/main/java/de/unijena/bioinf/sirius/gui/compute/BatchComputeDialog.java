@@ -267,7 +267,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
 
         //collect job parameter from view
-        final String instrument = searchProfilePanel.getInstrument().profile;
+        final SearchProfilePanel.Instruments instrument = searchProfilePanel.getInstrument();
         final SearchableDatabase searchableDatabase = searchProfilePanel.getFormulaSource();
         final FormulaConstraints constraints = elementPanel.getElementConstraints();
         final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.EMPTY_LIST;
@@ -316,7 +316,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
                         SiriusIdentificationGuiJob identificationJob = null;
                         if (!ec.isComputed()) {
-                            identificationJob = new SiriusIdentificationGuiJob(instrument, candidates, ec);
+                            identificationJob = new SiriusIdentificationGuiJob(instrument.profile, candidates, ec);
                             identificationJob.addRequiredJob(prepareJob);
                             Jobs.submit(identificationJob);
                         }

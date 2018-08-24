@@ -4,10 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Whiteset;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
@@ -17,6 +14,7 @@ import de.unijena.bioinf.jjobs.SwingJJobContainer;
 import de.unijena.bioinf.sirius.IsotopePatternHandling;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.FormulaWhiteListJob;
+import de.unijena.bioinf.sirius.gui.compute.SearchProfilePanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.logging.TextAreaJJobContainer;
 
@@ -35,10 +33,11 @@ public class PrepareSiriusIdentificationInputJob extends BasicJJob<MutableMs2Exp
     final Deviation massDev;
     final boolean onlyOrganic;
     final SearchableDatabase searchableDatabase;
+    final SearchProfilePanel.Instruments instrument; // TODO: just a workaround
 
-    public PrepareSiriusIdentificationInputJob(ExperimentContainer ec, String profile, double ppm, boolean onlyOrganic, SearchableDatabase db, final FormulaConstraints constraints, final List<Element> elementsToAutoDetect, PossibleIonModes possibleIonModes, PossibleAdducts possibleAdducts) {
+    public PrepareSiriusIdentificationInputJob(ExperimentContainer ec, SearchProfilePanel.Instruments instrument, double ppm, boolean onlyOrganic, SearchableDatabase db, final FormulaConstraints constraints, final List<Element> elementsToAutoDetect, PossibleIonModes possibleIonModes, PossibleAdducts possibleAdducts) {
         super(JobType.CPU);
-        this.sirius = Jobs.getSiriusByProfile(profile);
+        this.sirius = Jobs.getSiriusByProfile(instrument.profile);
         this.name = ec.getGUIName();
         this.exp = ec.getMs2Experiment();
         this.constraints = constraints;
@@ -48,6 +47,7 @@ public class PrepareSiriusIdentificationInputJob extends BasicJJob<MutableMs2Exp
         this.massDev = new Deviation(ppm);
         this.onlyOrganic = onlyOrganic;
         this.searchableDatabase = db;
+        this.instrument = instrument;
 
     }
 
@@ -75,7 +75,7 @@ public class PrepareSiriusIdentificationInputJob extends BasicJJob<MutableMs2Exp
     private void setAnnotations() throws Exception {
         PrecursorIonType i = exp.getPrecursorIonType();
         List<PrecursorIonType> ions;
-
+        exp.setAnnotation(MsInstrumentation.class, instrument.instrument);
         if (i.isUnknownPositive()) {
             exp.setAnnotation(PossibleIonModes.class, PossibleIonModes.reduceTo(possibleIonModes, PeriodicTable.getInstance().getPositiveIonizationsAsString()));
             ions = exp.getAnnotation(PossibleIonModes.class).getIonModesAsPrecursorIonType();

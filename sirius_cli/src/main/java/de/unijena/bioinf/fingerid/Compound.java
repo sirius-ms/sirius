@@ -408,7 +408,12 @@ public class Compound {
         int sizeDiff = 0;
         final MaskedFingerprintVersion mv = (version instanceof MaskedFingerprintVersion) ? (MaskedFingerprintVersion) version : MaskedFingerprintVersion.buildMaskFor(version).enableAll().toMask();
         final HashMap<String, FingerprintCandidate> compoundPerInchiKey = new HashMap<>();
-        for (FingerprintCandidate fc : candidates) compoundPerInchiKey.put(fc.getInchiKey2D(), fc);
+        for (FingerprintCandidate fc : candidates) {
+            final FingerprintCandidate duplicate = compoundPerInchiKey.put(fc.getInchiKey2D(), fc);
+            if (duplicate!=null) {
+                mergeInto(fc, duplicate);
+            }
+        }
         sizeDiff = compoundPerInchiKey.size();
         if (file.exists()) {
             final List<Compound> compounds = new ArrayList<>();
@@ -416,10 +421,12 @@ public class Compound {
                 parseCompounds(mv, compounds, parser);
             }
             for (Compound c : compounds) {
-                if (compoundPerInchiKey.containsKey(c.inchi.key2D()))
+                if (compoundPerInchiKey.containsKey(c.inchi.key2D())) {
                     --sizeDiff;
-                else
+                    mergeInto(compoundPerInchiKey.get(c.inchi.key2D()), c);
+                } else {
                     compoundPerInchiKey.put(c.inchi.key2D(), c.asFingerprintCandidate());
+                }
             }
         }
         try (final JsonGenerator writer = Json.createGenerator(new GZIPOutputStream(new FileOutputStream(file)))) {
@@ -432,6 +439,17 @@ public class Compound {
             writer.writeEnd();
         }
         return sizeDiff;
+    }
+
+    private static void mergeInto(FingerprintCandidate a, Compound b) {
+        a.setpLayer(a.getpLayer() | b.pLayer);
+        a.setqLayer(a.getqLayer() | b.qLayer);
+        // TODO: links...?
+    }
+    private static void mergeInto(FingerprintCandidate a, CompoundCandidate b) {
+        a.setpLayer(a.getpLayer() | b.getpLayer());
+        a.setqLayer(a.getqLayer() | b.getqLayer());
+        // TODO: links...?
     }
 
     public InChI getInchi() {

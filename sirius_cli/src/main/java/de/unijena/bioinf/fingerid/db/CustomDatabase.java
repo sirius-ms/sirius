@@ -28,6 +28,7 @@ import org.openscience.cdk.qsar.result.DoubleResult;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -576,6 +577,7 @@ public class CustomDatabase implements SearchableDatabase {
                 fc.setLinks(ls);
             }
             fc.setBitset(fc.getBitset() | CustomDataSourceService.getSourceFromName(database.name).flag());
+
             synchronized (buffer) {
                 buffer.add(fc);
                 if (buffer.size() > 10000)
@@ -606,12 +608,33 @@ public class CustomDatabase implements SearchableDatabase {
                 fc.setLinks(new DBLink[0]);
             }
             fc.setBitset(CustomDataSourceService.getSourceFromName(database.name).flag());
+
+            // COMPUTE CHARGE STATE
+            if (inchi.in3D.contains("/p+")) {
+                fc.setpLayer(CompoundCandidateChargeState.POSITIVE_CHARGE.getValue());
+            } else if (inchi.in3D.contains("/p-")) {
+                fc.setpLayer(CompoundCandidateChargeState.NEGATIVE_CHARGE.getValue());
+            } else {
+                fc.setpLayer(CompoundCandidateChargeState.NEUTRAL_CHARGE.getValue());
+            }
+            if (inchi.in3D.contains("/q+")) {
+                fc.setqLayer(CompoundCandidateChargeState.POSITIVE_CHARGE.getValue());
+            }
+            if (inchi.in3D.contains("/q-")) {
+                fc.setqLayer(CompoundCandidateChargeState.NEGATIVE_CHARGE.getValue());
+            } else {
+                fc.setqLayer(CompoundCandidateChargeState.NEUTRAL_CHARGE.getValue());
+            }
+
             {
                 // compute XLOGP
                 final XLogPDescriptor descriptor = new XLogPDescriptor();
+                AtomContainerManipulator.convertImplicitToExplicitHydrogens(molecule);
                 descriptor.setParameters(new Object[]{true, true});
                 fc.setXlogp(((DoubleResult) descriptor.calculate(molecule).getValue()).doubleValue());
             }
+
+
             synchronized (buffer) {
                 buffer.add(fc);
                 if (buffer.size() > 10000)
