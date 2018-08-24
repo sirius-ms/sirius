@@ -16,12 +16,6 @@ public abstract class Fingerprint extends AbstractFingerprint {
     public abstract boolean[] toBooleanArray();
     public abstract short[] toIndizesArray();
 
-    protected final void enforceCompatibility(AbstractFingerprint other) {
-        if (!isCompatible(other)) {
-            throw new IllegalArgumentException("fingerprint versions differ: " + fingerprintVersion.toString() + " vs. " + other.fingerprintVersion.toString());
-        }
-    }
-
     public static ArrayFingerprint fromOneZeroString(FingerprintVersion version, String fp) {
         if (fp.length() != version.size()) throw new RuntimeException("Fingerprint version does not match given string: " + version.size() + " bits vs. " + fp.length());
         TShortArrayList indizes = new TShortArrayList(400);

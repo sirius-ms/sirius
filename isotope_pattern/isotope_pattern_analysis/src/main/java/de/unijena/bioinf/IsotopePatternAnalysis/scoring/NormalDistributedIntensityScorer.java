@@ -29,6 +29,22 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
  */
 public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
 
+
+    public static void main(String[] args) {
+        final double sigmaA = 0.02, sigmaR = 0.08;
+        final double theoreticalIntensity = 0.4;
+        for (double measuredIntensity : new double[]{0.01, 0.1, 0.2, 0.3, 0.35, 0.4, 0.45, 0.5, 0.6,0.7,0.9}) {
+            final double delta = measuredIntensity-theoreticalIntensity;
+
+            final double peakPropbability = Math.exp(-(delta*delta)/(2*(sigmaA*sigmaA + theoreticalIntensity*theoreticalIntensity*sigmaR*sigmaR)))/(2*Math.PI*theoreticalIntensity*sigmaR*sigmaA);
+            final double sigma = theoreticalIntensity+ theoreticalIntensity*sigmaR + sigmaA;
+            final double sigmaDelta = sigma-theoreticalIntensity;
+            final double score = Math.log(peakPropbability);
+            final double normscore = Math.log(Math.exp(-(sigmaDelta*sigmaDelta)/(2*(sigmaA*sigmaA + theoreticalIntensity*theoreticalIntensity*sigmaR*sigmaR)))/(2*Math.PI*theoreticalIntensity*sigmaR*sigmaA));
+            System.out.println("y = " + measuredIntensity  + ", delta = " + delta + ", density = " + peakPropbability + ", score = " + score + ", normscore = " + (score-normscore));
+        }
+    }
+
     private static final double SQRT2PI = Math.sqrt(2 * Math.PI);
 
 
@@ -90,8 +106,15 @@ public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
             final double theoreticalIntensity = theoreticalSpectrum.getIntensityAt(i);
             final double delta = measuredIntensity-theoreticalIntensity;
 
-            final double peakPropbability = Math.exp(-(delta*delta)/(2*(sigmaA*sigmaA + measuredIntensity*measuredIntensity*sigmaR*sigmaR)))/(2*Math.PI*measuredIntensity*sigmaR*sigmaA);
+            final double peakPropbability = Math.exp(-(delta*delta)/(2*(sigmaA*sigmaA + theoreticalIntensity*theoreticalIntensity*sigmaR*sigmaR)))/(2*Math.PI*theoreticalIntensity*sigmaR*sigmaR);
+
             score += Math.log(peakPropbability);
+
+            {
+                final double sigma = theoreticalIntensity*2*sigmaR + 2*sigmaA;
+                score -= Math.log(Math.exp(-(sigma*sigma)/(2*(sigmaA*sigmaA + theoreticalIntensity*theoreticalIntensity*sigmaR*sigmaR)))/(2*Math.PI*theoreticalIntensity*sigmaR*sigmaR));
+            }
+
             scores[i] += score;
         }
     }

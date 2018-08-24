@@ -129,7 +129,6 @@ public enum BioTransformation {
         this.symmetric = symmetric;
     }
 
-
     BioTransformation(String chemName, String[] source, String formula, String condition, boolean symmetric) {
         this.source = source;
         this.chemName = chemName;
