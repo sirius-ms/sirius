@@ -44,8 +44,17 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
     }
 
     public <T extends AbstractFingerprint> T mask(T fingerprint) {
-        if (!innerVersion.compatible(fingerprint.getFingerprintVersion()))
+        if (fingerprint.fingerprintVersion instanceof MaskedFingerprintVersion) {
+            if (!compatible(fingerprint.fingerprintVersion)) {
+                throw new RuntimeException("Fingerprint is already masked by a fingerprint mask which is not compatible to this mask: " + toString() +  " vs " + fingerprint.fingerprintVersion.toString());
+            }
+
+            fingerprint = ((MaskedFingerprintVersion) fingerprint.fingerprintVersion).unmask(fingerprint);
+
+
+        } else if (!innerVersion.compatible(fingerprint.getFingerprintVersion())) {
             throw new RuntimeException("Fingerprint is not compatible to mask. Given fingerprint is version " + fingerprint.getFingerprintVersion().toString() + ", mask is version " + innerVersion.toString());
+        }
         if (fingerprint instanceof ProbabilityFingerprint) {
             final double[] ys =((ProbabilityFingerprint) fingerprint).fingerprint;
             final double[] xs = new double[allowedIndizes.length];
@@ -74,6 +83,33 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
                 throw new RuntimeException("Cannot mask " + fingerprint.getClass());
             }
         } else throw new RuntimeException("Cannot mask " + fingerprint.getClass());
+    }
+
+    /**
+     * returns a new fingerprint without masking. All masked bits are set to false. In other words: the fingerprint
+     * has the same set of molecular properties, just without the masking.
+     */
+    protected Fingerprint unmask(Fingerprint fp) {
+        if (fp instanceof ArrayFingerprint) {
+            return new ArrayFingerprint(getMaskedFingerprintVersion(), ((ArrayFingerprint) fp).indizes);
+        } else {
+            return new ArrayFingerprint(getMaskedFingerprintVersion(), fp.toIndizesArray());
+        }
+    }
+    protected <T extends AbstractFingerprint> T unmask(T fp) {
+        if (fp instanceof ProbabilityFingerprint) return (T)unmask((ProbabilityFingerprint)fp);
+        else return (T)unmask((Fingerprint)fp);
+    }
+    /**
+     * returns a new fingerprint without masking. All masked bits are set to 0%. In other words: the fingerprint
+     * has the same set of molecular properties, just without the masking.
+     */
+    protected ProbabilityFingerprint unmask(ProbabilityFingerprint fp) {
+        final double[] complete = new double[getMaskedFingerprintVersion().size()];
+        for (FPIter f : fp) {
+            complete[f.getIndex()] = f.getProbability();
+        }
+        return new ProbabilityFingerprint(getMaskedFingerprintVersion(), complete);
     }
 
     public MaskedFingerprintVersion getIntersection(MaskedFingerprintVersion other) {
@@ -145,7 +181,7 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
         if (this == fingerprintVersion) return true;
         else if (fingerprintVersion.getClass().equals(MaskedFingerprintVersion.class)){
             MaskedFingerprintVersion other = (MaskedFingerprintVersion)fingerprintVersion;
-            return innerVersion.compatible(other.innerVersion) && mask.equals(other.mask);
+            return innerVersion.compatible(other.innerVersion) && mask.intersects(other.mask);
         } else if (isNotFiltering()) {
             return innerVersion.compatible(fingerprintVersion);
         } else return false;

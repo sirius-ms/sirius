@@ -19,31 +19,10 @@ import java.util.regex.Pattern;
  */
 public class CdkFingerprintVersion extends FingerprintVersion {
 
+
     private final long fastCompareFlag;
     private final MolecularProperty[] properties;
     private final USED_FINGERPRINTS[] usedFingerprints;
-
-    /**
-     * Returns the fingerprint version that is default in our database
-     */
-    public static CdkFingerprintVersion getDefault() {
-        return DEFAULT_INSTANCE;
-    }
-
-    /**
-     * Returns the fingerprint version that contains all (future) fingerprints
-     */
-    public static CdkFingerprintVersion getComplete() {
-        return DEFAULT_INSTANCE;
-    }
-
-    public static CdkFingerprintVersion withECFP() {
-        return DEFAULT_INSTANCE;
-    }
-
-    public static CdkFingerprintVersion getWithoutEcfp() {
-        return WITHOUT_ECFP;
-    }
 
     public CdkFingerprintVersion(USED_FINGERPRINTS... fingerprints) {
         final ArrayList<MolecularProperty> properties = new ArrayList<>();
@@ -56,22 +35,6 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         this.fastCompareFlag = fastCompareFlag;
         this.usedFingerprints = fingerprints;
         this.properties = properties.toArray(new MolecularProperty[properties.size()]);
-    }
-
-    public static CdkFingerprintVersion getFromBitsetIdentifier(long identifier) {
-        final ArrayList<USED_FINGERPRINTS> list = new ArrayList<>();
-        final USED_FINGERPRINTS[] all = USED_FINGERPRINTS.values();
-        for (int k=0; k < all.length; ++k) {
-            if ((identifier & (1L<<all[k].defaultPosition))!=0) {
-                list.add(all[k]);
-                identifier &= ~(1L<<all[k].defaultPosition);
-            }
-        }
-        if (identifier==0L) {
-            return new CdkFingerprintVersion(list.toArray(new USED_FINGERPRINTS[list.size()]));
-        } else {
-            throw new IllegalArgumentException("Unknown fingerprint types with bit set " + Long.toBinaryString(identifier));
-        }
     }
 
     public MaskedFingerprintVersion getMaskFor(USED_FINGERPRINTS... fingerprints) {
@@ -134,14 +97,39 @@ public class CdkFingerprintVersion extends FingerprintVersion {
             USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH
     };
 
+    /**
+     * will be replaced by complete setup as soon as fingerprints are imported into the database.
+     */
+    private static final USED_FINGERPRINTS[] EXTENDED_SETUP = new USED_FINGERPRINTS[]{
+            USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP, USED_FINGERPRINTS.BIOSMARTS, USED_FINGERPRINTS.RINGSYSTEMS, USED_FINGERPRINTS.SHORTEST_PATH, USED_FINGERPRINTS.CLASSYFIRE_SMARTS};
+
     public enum USED_FINGERPRINTS {
-        OPENBABEL(0, 55), SUBSTRUCTURE(1, 307), MACCS(2, 166), PUBCHEM(3, 881), KLEKOTA_ROTH(4, 4860), ECFP(5, ExtendedConnectivityProperty.getFingerprintLength());
+        OPENBABEL(0, 55,true,false), SUBSTRUCTURE(1, 307,false,false), MACCS(2, 166,false,true), PUBCHEM(3, 881,true,true), KLEKOTA_ROTH(4, 4860,false,false),
+        ECFP(5, ExtendedConnectivityProperty.getFingerprintLength(),false,false),
+
+        BIOSMARTS(6, 228, false, true),
+        RINGSYSTEMS(7, 505, false, true),
+        SHORTEST_PATH(8, 2718, false, true),
+        CLASSYFIRE_SMARTS(9, 84, true, true);
 
         public final int defaultPosition, length;
+        /*
+        if true, the fingerprint type expects that all hydrogens in the molecule are explicit. If false, the fingerprint
+        either expects implicit hydrogens or is invariant.
+         */
+        public final boolean requiresExplicitHydrogens;
 
-        USED_FINGERPRINTS(int defaultPosition, int length) {
+        /*
+        If true, the fingerprint expects that Aromaticity.cdkLegacy() is performed before computing the fingerprint. If false,
+        the fingerprint ensures itself that the correct aromaticity model is performed.
+         */
+        public final boolean requiresAromaticityPerception;
+
+        USED_FINGERPRINTS(int defaultPosition, int length, boolean requiresExplicitHydrogens, boolean requiresAromaticityPerception) {
             this.defaultPosition = defaultPosition;
             this.length = length;
+            this.requiresExplicitHydrogens = requiresExplicitHydrogens;
+            this.requiresAromaticityPerception = requiresAromaticityPerception;
         }
     }
 
@@ -158,32 +146,23 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         return usedFingerprints[index];
     }
 
-    public USED_FINGERPRINTS getFingerprintTypeFor(int fingerprintIndex) {
+    public USED_FINGERPRINTS getFingerprintTypeFor(final int fingerprintIndex_) {
+        int fingerprintIndex = fingerprintIndex_;
         for (int i=0; i < usedFingerprints.length; ++i) {
 
             if (fingerprintIndex < usedFingerprints[i].length)
                 return usedFingerprints[i];
             fingerprintIndex -= usedFingerprints[i].length;
         }
-        throw new IndexOutOfBoundsException(fingerprintIndex + " is not the index of a molecular property for " + this);
+        throw new IndexOutOfBoundsException(fingerprintIndex_ + " is not the index of a molecular property for " + this + " with size " + size());
     }
 
     private static Pattern COUNT_PATTERN = Pattern.compile(" at least (\\d+) times");
     private static Pattern ELEMENT_PATTERN = Pattern.compile(" >= (\\d+) ([A-Z][a-z]?)");
     private static Pattern SINGLE_ELEMENT_PATTERN = Pattern.compile("^\\[#(\\d+)\\]$");
 
-
-    private static final MolecularProperty[][] DEFAULT_PROPERTIES = new MolecularProperty[DEFAULT_SETUP.length][];
+    private static final MolecularProperty[][] DEFAULT_PROPERTIES = new MolecularProperty[EXTENDED_SETUP.length][];
     private static final ExtendedConnectivityProperty[] ECFP_PROPS = new ExtendedConnectivityProperty[ExtendedConnectivityProperty.getFingerprintLength()];
-
-    public static MolecularProperty[] getDefaultPropertiesFor(USED_FINGERPRINTS uf) {
-        switch (uf) {
-            case ECFP:
-                return ECFP_PROPS;
-            default:
-                return DEFAULT_PROPERTIES[uf.defaultPosition];
-        }
-    }
 
     static {
         try {
@@ -192,10 +171,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
             LoggerFactory.getLogger(CdkFingerprintVersion.class).error(e.getMessage(),e);
         }
     }
-
-    private static final CdkFingerprintVersion WITHOUT_ECFP = new CdkFingerprintVersion(WITHOUT_ECFP_SETUP);
-    private final static CdkFingerprintVersion DEFAULT_INSTANCE = new CdkFingerprintVersion(DEFAULT_SETUP);
-
+/*
     private static void loadFingerprintDescriptors() throws IOException {
         final PeriodicTable T = PeriodicTable.getInstance();
         final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/index_fingerprints.txt")));
@@ -242,5 +218,141 @@ public class CdkFingerprintVersion extends FingerprintVersion {
             ECFP_PROPS[k] = new ExtendedConnectivityProperty(ExtendedConnectivityProperty.getHashValue(k));
         }
     }
+    */
+
+    private static void loadFingerprintDescriptors() throws IOException {
+        final PeriodicTable T = PeriodicTable.getInstance();
+        final ArrayList<MolecularProperty> properties = new ArrayList<>();
+        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/index_fingerprints.txt")))) {
+            String line = null;
+            while ((line = r.readLine()) != null) {
+                final String[] parts = line.split("\t#");
+                final String smartsPattern = parts[0];
+                final String comment = (parts.length > 1) ? parts[1] : "";
+                final Matcher SINGLE_ELEM = SINGLE_ELEMENT_PATTERN.matcher(smartsPattern);
+                final Matcher M = comment.length() > 0 ? COUNT_PATTERN.matcher(comment) : null;
+                if (SINGLE_ELEM.find()) {
+                    final Element elem = T.get(Integer.parseInt(SINGLE_ELEM.group(1)));
+                    final int count;
+                    if (M != null && M.find()) {
+                        count = Integer.parseInt(M.group(1));
+                    } else count = 1;
+                    properties.add(new FormulaProperty(elem, count));
+                } else {
+                    if (M != null && M.find()) {
+                        final int count = Integer.parseInt(M.group(1));
+                        properties.add(new SubstructureCountProperty(parts[0], count));
+                    } else if (smartsPattern.length() > 0 && !smartsPattern.equals("?")) {
+                        properties.add(new SubstructureProperty(smartsPattern, comment.isEmpty() ? null : parts[1]));
+                    } else {
+                        final Matcher M2 = ELEMENT_PATTERN.matcher(comment);
+                        if (M2.find()) {
+                            properties.add(new FormulaProperty(T.getByName(M2.group(2)), Integer.parseInt(M2.group(1))));
+                        } else {
+                            properties.add(new SpecialMolecularProperty(comment));
+                        }
+
+                    }
+                }
+            }
+        }
+
+        // ECFP
+
+        for (int k = 0; k < ECFP_PROPS.length; ++k) {
+            properties.add(new ExtendedConnectivityProperty(ExtendedConnectivityProperty.getHashValue(k)));
+        }
+
+        // MINED FINGERPRINTS
+        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/biosmarts.txt")))) {
+            String line = null;
+            while ((line = r.readLine()) != null) {
+                properties.add(new SubstructureProperty(line));
+            }
+        }
+        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/ringsystems.txt")))) {
+            String line = null;
+            while ((line = r.readLine()) != null) {
+                properties.add(new SubstructureProperty(line));
+            }
+        }
+
+        // SHORTEST PATH FINGERPRINTS
+        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/shortest_paths.txt")))) {
+            String line = null;
+            while ((line = r.readLine()) != null) {
+                properties.add(new ShortestPathProperty(line));
+            }
+        }
+
+        // CLASSYFIRE PROPERTIES
+        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/classyfire_smarts.txt")))) {
+            String line = null;
+            while ((line = r.readLine()) != null) {
+                String[] pts = line.split("\t#");
+                properties.add(new SubstructureProperty(pts[0], pts[1]));
+            }
+        }
+
+        int offset=0;
+        for (int k=0; k < DEFAULT_PROPERTIES.length; ++k) {
+            int length = EXTENDED_SETUP[k].length;
+            DEFAULT_PROPERTIES[k] = properties.subList(offset, offset+length).toArray(new MolecularProperty[length]);
+            offset += length;
+        }
+    }
+
+    public static MolecularProperty[] getDefaultPropertiesFor(USED_FINGERPRINTS uf) {
+        return DEFAULT_PROPERTIES[uf.defaultPosition];
+    }
+
+
+    /**
+     * Returns the fingerprint version that is default in our database
+     */
+    public static CdkFingerprintVersion getDefault() {
+        return DEFAULT_INSTANCE;
+    }
+
+    /**
+     * Returns the fingerprint version that contains all (future) fingerprints
+     */
+    public static CdkFingerprintVersion getComplete() {
+        return DEFAULT_INSTANCE;
+    }
+
+    public static CdkFingerprintVersion withECFP() {
+        return DEFAULT_INSTANCE;
+    }
+
+    public static CdkFingerprintVersion getWithoutEcfp() {
+        return WITHOUT_ECFP;
+    }
+
+    public static CdkFingerprintVersion getExtended() {
+        return EXTENDED_INSTANCE;
+    }
+
+
+    public static CdkFingerprintVersion getFromBitsetIdentifier(long identifier) {
+        final ArrayList<USED_FINGERPRINTS> list = new ArrayList<>();
+        final USED_FINGERPRINTS[] all = USED_FINGERPRINTS.values();
+        for (int k=0; k < all.length; ++k) {
+            if ((identifier & (1L<<all[k].defaultPosition))!=0) {
+                list.add(all[k]);
+                identifier &= ~(1L<<all[k].defaultPosition);
+            }
+        }
+        if (identifier==0L) {
+            return new CdkFingerprintVersion(list.toArray(new USED_FINGERPRINTS[list.size()]));
+        } else {
+            throw new IllegalArgumentException("Unknown fingerprint types with bit set " + Long.toBinaryString(identifier));
+        }
+    }
+
+    private static final CdkFingerprintVersion WITHOUT_ECFP = new CdkFingerprintVersion(WITHOUT_ECFP_SETUP);
+    private final static CdkFingerprintVersion DEFAULT_INSTANCE = new CdkFingerprintVersion(DEFAULT_SETUP);
+
+    private static final CdkFingerprintVersion EXTENDED_INSTANCE = new CdkFingerprintVersion(EXTENDED_SETUP);
 
 }
