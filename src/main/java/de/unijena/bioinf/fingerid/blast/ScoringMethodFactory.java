@@ -179,7 +179,7 @@ public class ScoringMethodFactory {
             return new LegacyScorer(performances) {
                 @Override
                 public double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry) {
-                    return Tanimoto.nonProbabilisticTanimoto(fingerprint,databaseEntry);
+                    return Tanimoto.tanimoto(fingerprint,databaseEntry);
                 }
             };
         }

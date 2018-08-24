@@ -68,7 +68,9 @@ public class CSIFingerIdScoring implements FingerblastScoring {
     public double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry) {
         double score=0d;
         int k=-1;
+        System.err.println(fingerprint.toProbabilityArray().length + " bits vs. " + databaseEntry.toBooleanArray().length+ " bits");
         if (!fingerprint.isCompatible(databaseEntry)) throw new RuntimeException("Fingerprints are not compatible");
+        int X = 0;
         for (FPIter2 iter : fingerprint.foreachPair(databaseEntry)) {
             ++k;
             if (performances[k].getF() < threshold  || performances[k].getSmallerClassSize() < minSamples) continue;
@@ -85,7 +87,9 @@ public class CSIFingerIdScoring implements FingerblastScoring {
                     score += tn[k];
                 }
             }
+            ++X;
         }
+        System.err.println(X + " bits are used");
         return score;
     }
 }
