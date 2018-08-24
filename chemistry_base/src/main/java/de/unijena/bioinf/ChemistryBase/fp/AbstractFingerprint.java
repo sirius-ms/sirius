@@ -18,6 +18,12 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
         return fingerprintVersion;
     }
 
+    protected final void enforceCompatibility(AbstractFingerprint other) {
+        if (!isCompatible(other)) {
+            throw new IllegalArgumentException("fingerprint versions differ: " + fingerprintVersion.toString() + " vs. " + other.fingerprintVersion.toString());
+        }
+    }
+
     public boolean isCompatible(AbstractFingerprint other) {
         return other.fingerprintVersion.compatible(fingerprintVersion);
     }
