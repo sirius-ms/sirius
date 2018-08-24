@@ -354,7 +354,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
     public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws DatabaseException {
         final ArrayList<InChI> candidates = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi FROM structures WHERE s.inchi_key_1 = ?")) {
+            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi FROM structures WHERE inchi_key_1 = ?")) {
                 for (String inchikey : inchi_keys) {
                     statement.setString(1, inchikey);
                     try (final ResultSet set = statement.executeQuery()) {
