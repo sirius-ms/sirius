@@ -50,38 +50,6 @@ public class FingerprinterCLI {
            unmask(rest);
        } else if (command.equals("rmpubchem")) {
            rmpubchem(rest);
-       } else if (command.equals("find")) {
-           try {
-               new NeighbourhoodFingerprintUtils().run(rest[0], rest[1]);
-           } catch (IOException e) {
-               e.printStackTrace();
-           } catch (CDKException e) {
-               e.printStackTrace();
-           }
-       } else if (command.equals("freq")) {
-           try {
-               new NeighbourhoodFingerprintUtils().freq(rest[0], rest[1], rest.length==3 ? rest[2] : null);
-           } catch (IOException e) {
-               e.printStackTrace();
-           } catch (CDKException e) {
-               e.printStackTrace();
-           }
-       } else if (command.equals("count")) {
-           try {
-               new NeighbourhoodFingerprintUtils().count(rest[0], rest[1]);
-           } catch (IOException e) {
-               e.printStackTrace();
-           } catch (CDKException e) {
-               e.printStackTrace();
-           }
-       } else if (command.equals("comp")) {
-           try {
-               new NeighbourhoodFingerprintUtils().compute(rest[0], rest[1]);
-           } catch (IOException e) {
-               e.printStackTrace();
-           } catch (CDKException e) {
-               e.printStackTrace();
-           }
        }
    }
 

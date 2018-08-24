@@ -20,6 +20,7 @@ package de.unijena.bioinf.fingerid;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.fingerid.fingerprints.*;
+import de.unijena.bioinf.fingerid.fingerprints.ShortestPathFingerprinter;
 import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
@@ -27,6 +28,7 @@ import org.openscience.cdk.fingerprint.*;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.inchi.InChIToStructure;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -61,6 +63,10 @@ public class Fingerprinter {
             case PUBCHEM: return new PubchemFingerprinter(DefaultChemObjectBuilder.getInstance());
             case KLEKOTA_ROTH: return new KlekotaRothFingerprinter();
             case ECFP: return new ECFPFingerprinter();
+            case CLASSYFIRE_SMARTS: return new ClassyFireSmartsFingerprint();
+            case SHORTEST_PATH: return new ShortestPathFingerprinter();
+            case BIOSMARTS: return new BiosmartsFingerprinter();
+            case RINGSYSTEMS: return new RingsystemFingerprinter();
             default: throw new IllegalArgumentException();
         }
     }
@@ -192,12 +198,15 @@ public class Fingerprinter {
     }
 
     public IAtomContainer convertInchi2Mol(String inchi) throws CDKException {
-        if (inchi==null) throw new NullPointerException("Given InChI is null");
+        if (inchi == null) throw new NullPointerException("Given InChI is null");
         if (inchi.isEmpty()) throw new IllegalArgumentException("Empty string given as InChI");
         final InChIToStructure converter = factory.getInChIToStructure(inchi, DefaultChemObjectBuilder.getInstance());
-        if (converter.getReturnStatus() == INCHI_RET.OKAY) return converter.getAtomContainer();
+        if (converter.getReturnStatus() == INCHI_RET.OKAY) return converter.getAtomContainer();       else if (converter.getReturnStatus()==INCHI_RET.WARNING) {
+            LoggerFactory.getLogger(Fingerprinter.class).warn(converter.getMessage());
+            return converter.getAtomContainer();
+        }
         else {
-            System.err.println("Error while parsing InChI:\n'" + inchi +"'\n-> " + converter.getMessage());
+            LoggerFactory.getLogger(Fingerprinter.class).error("Error while parsing InChI:\n'" + inchi +"'\n-> " + converter.getMessage());
             final IAtomContainer a = converter.getAtomContainer();
             if (a!=null) return a;
             else throw new CDKException(converter.getMessage());
