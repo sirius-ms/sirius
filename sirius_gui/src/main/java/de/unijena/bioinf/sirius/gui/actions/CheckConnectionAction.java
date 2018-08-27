@@ -1,10 +1,12 @@
 package de.unijena.bioinf.sirius.gui.actions;
 
+import de.unijena.bioinf.fingeriddb.WorkerList;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.ConnectionDialog;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.net.ProxyManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -17,17 +19,21 @@ public class CheckConnectionAction extends AbstractAction {
     public final AtomicBoolean isActive = new AtomicBoolean(true);
 
     public CheckConnectionAction() {
-        super("Refresh");
-        putValue(Action.SHORT_DESCRIPTION, "Check and refresh internet connection");
+        super("Webservice");
+        putValue(Action.SHORT_DESCRIPTION, "Check and refresh webservice connection");
         setState(WebAPI.canConnect());
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         int state = WebAPI.INSTANCE.checkConnection();
+
         setState(state == ProxyManager.OK_STATE);
         if (!isActive.get()) {
-            new ConnectionDialog(MainFrame.MF, state);
+            new ConnectionDialog(MainFrame.MF, state,null);
+        }else{
+            @Nullable WorkerList info = WebAPI.INSTANCE.getWorkerInfo();
+            new ConnectionDialog(MainFrame.MF, state, info);
         }
     }
 

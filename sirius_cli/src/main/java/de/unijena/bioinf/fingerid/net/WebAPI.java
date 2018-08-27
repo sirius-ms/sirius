@@ -18,6 +18,7 @@
 
 package de.unijena.bioinf.fingerid.net;
 
+import com.google.gson.Gson;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -29,6 +30,7 @@ import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import de.unijena.bioinf.fingeriddb.WorkerList;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.net.ProxyManager;
@@ -52,6 +54,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +71,12 @@ import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+
+/*
+ * Frontend WebAPI class, corresponding to backend class
+ * de.unijena.bioinf.fingerid.WebAPIServlet in csi_fingerid/frontend
+ */
 
 @ThreadSafe
 public class WebAPI implements Closeable {
@@ -147,6 +156,7 @@ public class WebAPI implements Closeable {
         return WebAPI.INSTANCE.checkConnection() == ProxyManager.OK_STATE;
     }
 
+    @Nullable
     public VersionsInfo getVersionInfo() {
         VersionsInfo v = null;
         try {
@@ -163,6 +173,7 @@ public class WebAPI implements Closeable {
         return v;
     }
 
+    @Nullable
     private VersionsInfo getVersionInfo(final HttpGet get) {
         final int timeoutInSeconds = 8000;
         get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
@@ -201,6 +212,25 @@ public class WebAPI implements Closeable {
         return null;
     }
 
+    @Nullable
+    public WorkerList getWorkerInfo() {
+        WorkerList wl = null;
+        try {
+            HttpGet get = new HttpGet(getWorInfoURI(getFingerIdBaseURI()).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
+            final int timeoutInSeconds = 8000;
+            get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+            try (CloseableHttpResponse response = client.execute(get)) {
+                wl = new Gson().fromJson(new InputStreamReader(response.getEntity().getContent()), WorkerList.class);
+            } catch (IOException e) {
+                LOG.error(e.getMessage(), e);
+            }
+        } catch (URISyntaxException e) {
+            LOG.error(e.getMessage(), e);
+        }
+
+        return wl;
+    }
+
     static URIBuilder getFingerIdURI(String path) {
         if (path == null)
             path = "";
@@ -216,6 +246,16 @@ public class WebAPI implements Closeable {
             LoggerFactory.getLogger(WebAPI.class).error("Unacceptable URI for CSI:FingerID", e);
         }
         return b;
+    }
+
+
+    private static URIBuilder getWorInfoURI(URIBuilder baseBuilder) {
+        if (ProxyManager.DEBUG) {
+            baseBuilder = baseBuilder.setPath("/frontend/webapi/workers.json");
+        } else {
+            baseBuilder = baseBuilder.setPath("/webapi/workers.json");
+        }
+        return baseBuilder;
     }
 
     private static URIBuilder getFingerIdVersionURI(URIBuilder baseBuilder) {

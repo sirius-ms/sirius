@@ -1,6 +1,5 @@
 package de.unijena.bioinf.fingerid.net;
 
-import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.SiriusProperties;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 

@@ -17,6 +17,9 @@ public interface FingerIdOptions extends SiriusOptions {
     @Option(shortName = "F", description = "search structure with CSI:FingerID")
     boolean isFingerid();
 
+    @Option(longName = "webservice-info", shortName = "W", description = "information about connection of CSI:FingerID Webservice")
+    boolean isFingeridInfo();
+
     @Option(longName = {"fingerid-predictors"}, shortName = "P", description = "Predictors used to search structure with CSI:FingerID", defaultValue = "CSI_FINGERID")
     List<UserDefineablePredictorType> getPredictors();
 
