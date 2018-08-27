@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
 import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
@@ -30,25 +31,27 @@ public class SearchProfilePanel extends JPanel {
     protected Logger logger = LoggerFactory.getLogger(SearchProfilePanel.class);
 
     public enum Instruments {
-        QTOF("Q-TOF", "qtof", 10),
-        ORBI("Orbitrap", "orbitrap", 5),
-        FTICR("FT-ICR", "fticr", 2)
+        QTOF("Q-TOF", MsInstrumentation.Instrument.QTOF, "qtof", 10),
+        ORBI("Orbitrap",MsInstrumentation.Instrument.ORBI, "orbitrap", 5),
+        FTICR("FT-ICR",MsInstrumentation.Instrument.FTICR, "orbitrap", 2)
 
         //,QTOF_FIXED("Q-TOF (fixed)", "qtof_fixed", 10)
 
         ////
-        , BRUKER("Q-TOF (isotopes)", "bruker_tof", 10)
+        , BRUKER("Q-TOF (isotopes)", MsInstrumentation.Instrument.BRUKER_MAXIS, "qtof", 10)
         //,EXP1("Exp1", "exp", 10),
         //EXP2("Exp2", "exp2", 10)
         ;
 
-        final String name, profile;
-        final int ppm;
+        public final String name, profile;
+        public final MsInstrumentation instrument;
+        public final int ppm;
 
-        Instruments(String name, String profile, int ppm) {
+        Instruments(String name, MsInstrumentation instrument, String profile, int ppm) {
             this.name = name;
             this.profile = profile;
             this.ppm = ppm;
+            this.instrument = instrument;
         }
 
         @Override

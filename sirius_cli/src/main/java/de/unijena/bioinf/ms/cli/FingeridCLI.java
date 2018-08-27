@@ -12,10 +12,7 @@ import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.*;
-import de.unijena.bioinf.fingerid.CSIPredictor;
-import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.fingerid.FingerIdResultReader;
-import de.unijena.bioinf.fingerid.FingerIdResultWriter;
+import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.db.*;
 import de.unijena.bioinf.fingerid.jjobs.FingerIDJJob;
 import de.unijena.bioinf.fingerid.net.WebAPI;
@@ -87,6 +84,8 @@ public class FingeridCLI<Options extends FingerIdOptions> extends CLI<Options> {
             negativePredictor = new CSIPredictor(PredictorType.CSI_FINGERID_NEGATIVE);
             positivePredictor.initialize();
             negativePredictor.initialize();
+            //download training structures
+            TrainingStructuresPerPredictor.getInstance().addAvailablePredictorTypes(PredictorType.CSI_FINGERID_POSITIVE, PredictorType.CSI_FINGERID_NEGATIVE);
         } catch (IOException e) {
             System.err.println("Cannot connect to CSI:FingerID webserver and online chemical database. You can still use SIRIUS in offline mode: just do not use any chemical database and omit the --fingerid option.");
             LoggerFactory.getLogger(FingeridCLI.class).error(e.getMessage(), e);
