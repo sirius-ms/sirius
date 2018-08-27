@@ -82,7 +82,7 @@ public enum PredictorType {
         for (int i = (int) Long.highestOneBit(bits); i >= 0; i--) {
             if (((bits >> i) & 1) == 1) predictors.add(val[i]);
         }
-        return predictors.toString();
+        return predictors.toString().substring(1, predictors.size() - 1);
     }
 
     public static void main(String[] args) {
