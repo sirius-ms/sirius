@@ -18,9 +18,11 @@ public class MzMineScorer implements IsotopePatternScorer {
         for (int i=0; i < left.size(); ++i) {
             intensityDifference += Math.abs(left.getIntensityAt(i)-right.getIntensityAt(i));
         }
-        for (int i=0; i < scoreUptoKPeaks.length; ++i) {
-            scoreUptoKPeaks[i] += 10*Math.log(1d-intensityDifference);
-        }
+        Arrays.fill(scoreUptoKPeaks, 0d);
+        scoreUptoKPeaks[scoreUptoKPeaks.length-1] = 1d-intensityDifference;
+        //for (int i=0; i < scoreUptoKPeaks.length; ++i) {
+        //    scoreUptoKPeaks[i] += 1d - intensityDifference;//10*Math.log(1d-intensityDifference);
+        //}
     }
 
     @Override
