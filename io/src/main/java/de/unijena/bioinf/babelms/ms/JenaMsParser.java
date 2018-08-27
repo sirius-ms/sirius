@@ -216,10 +216,10 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 }
             } else if (optionName.equalsIgnoreCase("inchi")) {
                 if (value.startsWith("InChI=")) {
-                    inchi = value;
+                    inchi = value.trim();
                 }
             } else if (optionName.equalsIgnoreCase("inchikey")) {
-                inchikey = value;
+                inchikey = value.trim();
             } else if (optionName.equalsIgnoreCase("smarts") || optionName.equalsIgnoreCase("smiles")) {
                 smiles = value;
             } else if (optionName.equalsIgnoreCase("splash")) {
