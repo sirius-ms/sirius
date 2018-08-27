@@ -1,7 +1,9 @@
 package de.unijena.bioinf.sirius.gui.net;
 
+import de.unijena.bioinf.fingeriddb.WorkerList;
 import de.unijena.bioinf.sirius.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,6 +12,9 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 /**
  * Created by fleisch on 06.06.17.
@@ -20,53 +25,70 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
     final BooleanJlabel bioinf = new BooleanJlabel();
     final BooleanJlabel fingerID = new BooleanJlabel();
     final BooleanJlabel fingerID_WebAPI = new BooleanJlabel();
+    final BooleanJlabel fingerID_Worker = new BooleanJlabel();
 
     JPanel resultPanel = null;
 
-    public ConnectionCheckPanel(int state) {
+    public ConnectionCheckPanel(int state, @Nullable WorkerList workerInfoList) {
         super(GridBagConstraints.WEST, GridBagConstraints.EAST);
-        setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),"Internet connection test:"));
+        setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), "Connection check:"));
 
         add(new JLabel("Connection to the internet (google.com)"), internet, 15, false);
         add(new JLabel("Connection to uni-jena.de"), jena, 5, false);
         add(new JLabel("Connection to bio.informatics.uni-jena.de"), bioinf, 5, false);
-        add(new JLabel("Connection to www.csi-fingerid.uni-jena.de"),fingerID, 5, false);
-        add(new JLabel("Check CSI:FingerID REST API"),fingerID_WebAPI, 5, false);
+        add(new JLabel("Connection to www.csi-fingerid.uni-jena.de"), fingerID, 5, false);
+        add(new JLabel("Check CSI:FingerID REST API"), fingerID_WebAPI, 5, false);
+        add(new JLabel("Check CSI:FingerID worker availability"), fingerID_Worker, 5, false);
 
 
         addVerticalGlue();
 
 
-        refreshPanel(state);
+        refreshPanel(state, workerInfoList);
     }
 
-    public void refreshPanel(final int state) {
+    public void refreshPanel(final int state, @Nullable WorkerList workerInfoList) {
         internet.setState(state > 1 || state == 0);
         jena.setState(state > 2 || state == 0);
         bioinf.setState(state > 3 || state == 0);
         fingerID.setState(state > 4 || state == 0);
         fingerID_WebAPI.setState(state == 0);
 
+        fingerID_Worker.setState(workerInfoList != null && workerInfoList.size() > 0);
 
         if (resultPanel != null)
             remove(resultPanel);
-        resultPanel = createResultPanel(state);
+        resultPanel = createResultPanel(state, workerInfoList);
 
-        add(resultPanel,15,true);
+        add(resultPanel, 15, true);
 
         revalidate();
         repaint();
     }
 
-    private JPanel createResultPanel(int state) {
+    private JPanel createResultPanel(final int state, final @Nullable WorkerList workerInfoList) {
         JPanel resultPanel = new JPanel();
-        resultPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),"Description:"));
+        resultPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), "Description:"));
 
         final JLabel label;
         switch (state) {
             case 0:
-                label = new JLabel("<html>Connection to CSI:FingerID Server successfully established!<br>" +
-                        "</html>");
+                StringBuilder text = new StringBuilder();
+                text.append("<html>Connection to CSI:FingerID Server successfully established!<br><br>");
+                if (workerInfoList != null && fingerID_Worker.isTrue()) {
+                    text.append("Worker instances are available for:<br><b>")
+                            .append(Arrays.toString(
+                                    workerInfoList.stream().map((w)-> w.predictor.split(",")).flatMap(Arrays::stream).distinct().toArray()
+                            )).append("</b>.<br><br>");
+                    text.append("Pending jobs on Server: <b>").append(workerInfoList.getPendingJobs()).append("</b>");
+                } else {
+                    text.append("Warning: There are currently no worker instances available! <br>")
+                            .append("Therefore your job execution may take a while.<br>")
+                            .append("Please send an error report if this message occurs for a longer time!");
+                }
+
+                text.append("</html>");
+                label = new JLabel(text.toString());
                 break;
             case 6:
                 label = new JLabel("<html>" + " ErrorCode " + state + ": " +

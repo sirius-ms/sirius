@@ -160,8 +160,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
                         new NewsDialog(MainFrame.this, versionsNumber.getNews());
                     }
                 }
+
                 if (errorState != 0)
-                    new ConnectionDialog(MainFrame.this, errorState);
+                    new ConnectionDialog(MainFrame.this, errorState,null);
             }
 
             @Override

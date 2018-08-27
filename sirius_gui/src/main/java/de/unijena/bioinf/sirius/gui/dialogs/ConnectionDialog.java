@@ -1,9 +1,11 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
-import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.fingerid.net.WebAPI;
+import de.unijena.bioinf.fingeriddb.WorkerList;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.net.ConnectionCheckPanel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,34 +16,25 @@ import java.awt.event.ActionListener;
  * Created by Marcus Ludwig on 17.11.16.
  */
 public class ConnectionDialog extends JDialog implements ActionListener {
-    private final static String name = "Internet Connection checkConnectionToUrl";
+    private final static String name = "Webservice Connection";
     private JButton proxy;
     private ConnectionCheckPanel connectionCheck;
 
-    public ConnectionDialog(Dialog owner) {
+
+    public ConnectionDialog(Frame owner, int state, @Nullable WorkerList workerList) {
         super(owner, name, ModalityType.APPLICATION_MODAL);
-        initDialog(WebAPI.INSTANCE.checkConnection());
+        initDialog(state, workerList);
     }
 
-    public ConnectionDialog(Frame owner) {
-        super(owner, name, ModalityType.APPLICATION_MODAL);
-        initDialog(WebAPI.INSTANCE.checkConnection());
-    }
-
-    public ConnectionDialog(Frame owner, int state) {
-        super(owner, name, ModalityType.APPLICATION_MODAL);
-        initDialog(state);
-    }
-
-    private void initDialog(int state){
+    private void initDialog(int state, @Nullable WorkerList workerList) {
         setLayout(new BorderLayout());
 
         //header
         JPanel header = new DialogHaeder(Icons.NET_64);
         add(header, BorderLayout.NORTH);
 
-        connectionCheck = new ConnectionCheckPanel(state);
-        add(connectionCheck,BorderLayout.CENTER);
+        connectionCheck = new ConnectionCheckPanel(state, workerList);
+        add(connectionCheck, BorderLayout.CENTER);
 
 
         //south
@@ -55,7 +48,7 @@ public class ConnectionDialog extends JDialog implements ActionListener {
         buttons.add(proxy);
         buttons.add(ok);
 
-        add(buttons,BorderLayout.SOUTH);
+        add(buttons, BorderLayout.SOUTH);
 
 
         setMinimumSize(new Dimension(350, getPreferredSize().height));
@@ -67,18 +60,17 @@ public class ConnectionDialog extends JDialog implements ActionListener {
         if (state > WebAPI.MAX_STATE)
             if (getParent() instanceof Dialog) {
                 new ErrorReportDialog((Dialog) getParent(), "An unknown Network Error occurred!");
-            }else{
+            } else {
                 new ErrorReportDialog((Frame) getParent(), "An unknown Network Error occurred!");
             }
     }
 
 
-
     @Override
     public void actionPerformed(ActionEvent e) {
         this.dispose();
-        if (e.getSource().equals(proxy)){
-            new SettingsDialog(MainFrame.MF,2);
+        if (e.getSource().equals(proxy)) {
+            new SettingsDialog(MainFrame.MF, 2);
         }
     }
 }
