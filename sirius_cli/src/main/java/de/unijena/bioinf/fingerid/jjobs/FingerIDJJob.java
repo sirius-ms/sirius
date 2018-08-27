@@ -13,11 +13,14 @@ import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
 import de.unijena.bioinf.chemdb.SearchStructureByFormula;
 import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.fingerid.TrainingStructuresPerPredictor;
+import de.unijena.bioinf.fingerid.TrainingStructuresSet;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.CachedRESTDB;
 import de.unijena.bioinf.fingerid.net.PredictionJJob;
 import de.unijena.bioinf.fingerid.net.WebAPI;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -213,12 +216,14 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
                 submitSubJob(predictionJob);
                 predictionJobs.add(predictionJob);
 
-                // formula jobs
+                // formula jobs: retrieve fingerprint candidates for specific MF
                 FormulaJob formulaJob = new FormulaJob(fingeridInput.getMolecularFormula(), searchStructureByFormula, fingeridInput.getPrecursorIonType());
 
                 //fingerblast jobs
                 final PrecursorIonType ionType = fingeridInput.getResolvedTree().getAnnotationOrThrow(PrecursorIonType.class);
-                FingerblastJJob blastJob = new FingerblastJJob(fingerblast, bioFilter, dbFlag, CompoundCandidateChargeState.getFromPrecursorIonType(ionType));
+                final PredictorType predictorType = getUnambiguousUserDefineablePredictorTypeOrThrow(predictors).toPredictorType(fingeridInput.getPrecursorIonType());
+                final TrainingStructuresSet trainingStructuresSet = TrainingStructuresPerPredictor.getInstance().getTrainingStructuresSet(predictorType);
+                FingerblastJJob blastJob = new FingerblastJJob(fingerblast, bioFilter, dbFlag, CompoundCandidateChargeState.getFromPrecursorIonType(ionType), trainingStructuresSet);
                 blastJob.addRequiredJob(formulaJob);
                 blastJob.addRequiredJob(predictionJob);
                 submitSubJob(formulaJob);
@@ -261,5 +266,15 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
 
             return fps;
 //        }
+    }
+
+    private UserDefineablePredictorType getUnambiguousUserDefineablePredictorTypeOrThrow(Collection<UserDefineablePredictorType> predictors) {
+        //currently we only support results of a single predictor
+        if (predictors.size()==0){
+            throw new IllegalArgumentException("No UserDefineablePredictorType given.");
+        } else if (predictors.size()>1){
+            throw new NoSuchMethodError("Multiple predictors per result are not supported.");
+        }
+        return predictors.iterator().next();
     }
 }

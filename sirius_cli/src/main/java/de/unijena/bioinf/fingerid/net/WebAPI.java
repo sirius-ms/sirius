@@ -19,6 +19,7 @@
 package de.unijena.bioinf.fingerid.net;
 
 import com.google.gson.Gson;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -39,6 +40,10 @@ import de.unijena.bioinf.utils.systemInfo.SystemInformation;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import net.iharder.Base64;
+import net.sf.jniinchi.INCHI_KEY;
+import net.sf.jniinchi.JniInchiException;
+import net.sf.jniinchi.JniInchiOutputKey;
+import net.sf.jniinchi.JniInchiWrapper;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -487,6 +492,82 @@ public class WebAPI implements Closeable {
         }
         return covarianceScoring;
     }
+
+
+    public InChI[] getTrainingStructures(PredictorType predictorType) throws IOException {
+        final HttpGet get;
+        try {
+            get = new HttpGet(getFingerIdURI("/webapi/trainingstructures.csv").setParameter("predictor", predictorType.toBitsAsString()).build());
+        } catch (URISyntaxException e) {
+            LOG.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+        ArrayList<InChI> inchis = new ArrayList<>();
+//        try (CloseableHttpResponse response = client.execute(get)) {
+        CloseableHttpResponse response = client.execute(get);
+        HttpEntity e = response.getEntity();
+        if (response.getStatusLine().getStatusCode() == 404) {
+            //todo remove hack if not necessary anymore
+            response.close();
+            response = getResponseHack(client, predictorType);
+            e = response.getEntity();
+            if (response.getStatusLine().getStatusCode() == 404) {
+                throw new RuntimeException("Error retrieving training structures: "+response.getStatusLine().getReasonPhrase());
+            }
+//            throw new RuntimeException("Error retrieving training structures: "+response.getStatusLine().getReasonPhrase());
+        }
+        final BufferedReader br = new BufferedReader(new InputStreamReader(e.getContent(), ContentType.getOrDefault(e).getCharset()));
+        String line;
+        while ((line = br.readLine()) != null) {
+            String[] tabs = line.split("\t");
+            InChI inChI;
+            if (tabs.length==1){
+                //no InChiKeys contained. Compute them.
+                String inchi = tabs[0];
+                String key = inchi2inchiKey(inchi);
+                inChI = new InChI(key, inchi);
+            } else {
+                inChI = new InChI(tabs[0], tabs[1]);
+            }
+            inchis.add(inChI);
+        }
+        response.close();
+//        }
+        return inchis.toArray(new InChI[inchis.size()]);
+    }
+
+
+    ////////////////////////////////////////
+    //todo Helper methods, remove if not necessary anymore
+    public static CloseableHttpResponse getResponseHack(CloseableHttpClient client, PredictorType predictorType) throws IOException {
+        final HttpGet get;
+        try {
+            get = new HttpGet(getFingerIdURI("/webapi/trainingstructures.txt").setParameter("predictor", predictorType.toBitsAsString()).build());
+        } catch (URISyntaxException e) {
+            LOG.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+        return client.execute(get);
+    }
+
+    public static String inchi2inchiKey(String inchi) {
+        try {
+            if (inchi==null) throw new NullPointerException("Given InChI is null");
+            if (inchi.isEmpty()) throw new IllegalArgumentException("Empty string given as InChI");
+            JniInchiOutputKey key = JniInchiWrapper.getInchiKey(inchi);
+            if(key.getReturnStatus() == INCHI_KEY.OK) {
+                return key.getKey();
+            } else {
+                throw new RuntimeException("Error while creating InChIKey: " + key.getReturnStatus());
+            }
+        } catch (JniInchiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    ////////////////////////////////////////
+
 
     public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException, URISyntaxException {
         final HttpPost request = new HttpPost(getFingerIdURI("/webapi/report.json").build());
