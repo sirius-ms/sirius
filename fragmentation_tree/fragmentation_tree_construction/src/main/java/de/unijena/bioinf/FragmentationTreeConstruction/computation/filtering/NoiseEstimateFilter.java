@@ -32,9 +32,8 @@ public class NoiseEstimateFilter implements Preprocessor, Initializable {
 
     protected DecomposerCache cache;
 
-    protected double percentile;
-    protected int minNumberOfNoisePeaks;
-    protected boolean checkOnlyNonRadicals;
+    protected int minNumberOfNoisePeaks=40;
+    protected boolean checkOnlyNonRadicals=false;
 
     public DecomposerCache getCache() {
         if (cache == null) cache = new DecomposerCache(10);
@@ -47,13 +46,11 @@ public class NoiseEstimateFilter implements Preprocessor, Initializable {
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        this.percentile = document.getDoubleFromDictionary(dictionary, "percentile");
         this.minNumberOfNoisePeaks = (int)document.getIntFromDictionary(dictionary, "minNumberOfNoisePeaks");
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        document.addToDictionary(dictionary, "percentile", percentile);
         document.addToDictionary(dictionary, "minNumberOfNoisePeaks", minNumberOfNoisePeaks);
     }
 

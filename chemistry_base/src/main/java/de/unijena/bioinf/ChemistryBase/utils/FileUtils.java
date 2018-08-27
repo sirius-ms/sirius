@@ -83,9 +83,19 @@ public class FileUtils {
             return readTable(br, sep);
         }
     }
+    public static String[][] readTable(File file, String sep,boolean skipHeader) throws IOException {
+        try (final BufferedReader br = getReader(file)) {
+            return readTable(br, sep,skipHeader);
+        }
+    }
     public static String[][] readTable(File file) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             return readTable(br);
+        }
+    }
+    public static String[][] readTable(File file, boolean skipHeader) throws IOException {
+        try (final BufferedReader br = getReader(file)) {
+            return readTable(br,"\t",skipHeader);
         }
     }
 
@@ -112,13 +122,18 @@ public class FileUtils {
         return readTable(reader, "\t");
     }
 
+    public static String[][] readTable(BufferedReader reader, String colSeparator, boolean skipHeader) throws IOException {
+        String line;
+        ArrayList<String[]> table = new ArrayList<>();
+        if (skipHeader) reader.readLine();
+        while ((line=reader.readLine())!=null) {
+            table.add(line.split(colSeparator));
+        }
+        return table.toArray(new String[table.size()][]);
+    }
+
     public static String[][] readTable(BufferedReader reader, String colSeparator) throws IOException {
-       String line;
-       ArrayList<String[]> table = new ArrayList<>();
-       while ((line=reader.readLine())!=null) {
-           table.add(line.split(colSeparator));
-       }
-       return table.toArray(new String[table.size()][]);
+       return readTable(reader,colSeparator,false);
     }
 
     public static String[] readLines(BufferedReader reader) throws IOException {
