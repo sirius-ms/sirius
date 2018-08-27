@@ -5,8 +5,10 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
+import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.fingerid.TrainingStructuresSet;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -22,23 +24,25 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
     private final boolean filter; //todo is there a new an nicer solution?
     private final long flag;//todo is there a new an nicer solution?
     private final CompoundCandidateChargeState chargeState;
+    private final TrainingStructuresSet trainingStructuresSet;
     protected List<FingerprintCandidate> searchList;
 
-    public FingerblastJJob(Fingerblast fingerblast, BioFilter bioFilter, long flag, CompoundCandidateChargeState chargeState) {
-        this(fingerblast, bioFilter, flag, null, null, null, chargeState);
+    public FingerblastJJob(Fingerblast fingerblast, BioFilter bioFilter, long flag, CompoundCandidateChargeState chargeState, TrainingStructuresSet trainingStructuresSet) {
+        this(fingerblast, bioFilter, flag, null, null, null, chargeState, trainingStructuresSet);
     }
 
-    public FingerblastJJob(Fingerblast fingerblast, BioFilter bioFilter, long flag, IdentificationResult result, ProbabilityFingerprint fp, MolecularFormula formula, CompoundCandidateChargeState chargeState) {
-        this(fingerblast, bioFilter != BioFilter.ALL, flag, result, fp, formula, chargeState);
+    public FingerblastJJob(Fingerblast fingerblast, BioFilter bioFilter, long flag, IdentificationResult result, ProbabilityFingerprint fp, MolecularFormula formula, CompoundCandidateChargeState chargeState, TrainingStructuresSet trainingStructuresSet) {
+        this(fingerblast, bioFilter != BioFilter.ALL, flag, result, fp, formula, chargeState, trainingStructuresSet);
     }
 
-    public FingerblastJJob(Fingerblast fingerblast, boolean bioFilter, long flag, IdentificationResult result, ProbabilityFingerprint fp, MolecularFormula formula, CompoundCandidateChargeState chargeState) {
+    public FingerblastJJob(Fingerblast fingerblast, boolean bioFilter, long flag, IdentificationResult result, ProbabilityFingerprint fp, MolecularFormula formula, CompoundCandidateChargeState chargeState, TrainingStructuresSet trainingStructuresSet) {
         super(JobType.CPU, result, fp); //todo what do we need here??
         this.fingerblast = fingerblast;
         this.filter = bioFilter;
         this.flag = flag;
         this.formula = formula;
         this.chargeState = chargeState;
+        this.trainingStructuresSet = trainingStructuresSet;
     }
 
     @Override
@@ -60,6 +64,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
         initInput();
         final ArrayList<FingerprintCandidate> searchList = new ArrayList<>(this.searchList.size());
         for (FingerprintCandidate c : this.searchList) {
+            postprocessCandidate(c);
             if ((!filter || flag == 0 || (c.getBitset() & flag) != 0))
                 searchList.add(c);
         }
@@ -70,5 +75,14 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
         Collections.sort(cds, Scored.desc());
 
         return new FingerIdResult(cds, 0d, fp, this.resolvedTree);
+    }
+
+
+    protected void postprocessCandidate(FingerprintCandidate candidate) {
+        //annotate training compounds;
+        if (trainingStructuresSet.isInTrainingData(candidate.getInchi())){
+            long flags = candidate.getBitset();
+            candidate.setBitset(flags | DatasourceService.Sources.TRAIN.flag);
+        }
     }
 }
