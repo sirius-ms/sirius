@@ -94,6 +94,16 @@ public class SiriusSingleSpectrumAnnotated extends SiriusSingleSpectrumModel {
                     } else break;
                 }
             }
+            // due to the recalibration we might be far away from the "original" mass
+            final double recalibratedMz = peak.getRecalibratedMass();
+            {
+                int i = Spectrums.getFirstPeakGreaterOrEqualThan(spectrum, recalibratedMz-1e-4);
+                for (int j=i; j < spectrum.size(); ++j) {
+                    if (dev.inErrorWindow(recalibratedMz, spectrum.getMzAt(j))) {
+                        annotatedFormulas[j] = f;
+                    } else break;
+                }
+            }
         }
     }
 }

@@ -10,6 +10,9 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 
 import java.util.List;
 
+/**
+ * retrieves {@FingerprintCandidate}s for a given {@MolecularFormula}
+ */
 public class FormulaJob extends BasicJJob<List<FingerprintCandidate>> {
 
     protected final MolecularFormula formula;

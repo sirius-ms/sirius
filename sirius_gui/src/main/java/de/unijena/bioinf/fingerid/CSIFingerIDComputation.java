@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
+import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.jjobs.FormulaJob;
@@ -111,6 +112,8 @@ public class CSIFingerIDComputation {
             }
             positiveMode.initialize();
             negativeMode.initialize();
+            //download training structures
+            TrainingStructuresPerPredictor.getInstance().addAvailablePredictorTypes(PredictorType.CSI_FINGERID_POSITIVE, PredictorType.CSI_FINGERID_NEGATIVE);
             return true;
         }
 
@@ -188,7 +191,9 @@ public class CSIFingerIDComputation {
                 predictionJobs.add(pj);
                 submitSubJob(fj);
                 submitSubJob(pj);
-                final FingerblastJob bj = new FingerblastJob(csi, fj, pj, db);
+                final PredictorType predictorType = elem.getResult().getPrecursorIonType().getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE;
+                final TrainingStructuresSet trainingStructuresSet = TrainingStructuresPerPredictor.getInstance().getTrainingStructuresSet(predictorType);
+                final FingerblastJob bj = new FingerblastJob(csi, fj, pj, db, trainingStructuresSet);
                 searchJobs.add(bj);
                 submitSubJob(bj);
             }
@@ -336,13 +341,15 @@ public class CSIFingerIDComputation {
         protected final PredictFingerprintJob predictJob;
         protected final SearchableDatabase db;
         protected final CSIPredictor predictor;
+        private final TrainingStructuresSet trainingStructuresSet;
 
-        public FingerblastJob(CSIPredictor csi, FormulaJob formulaJob, PredictFingerprintJob predictJob, SearchableDatabase db) {
+        public FingerblastJob(CSIPredictor csi, FormulaJob formulaJob, PredictFingerprintJob predictJob, SearchableDatabase db, TrainingStructuresSet trainingStructuresSet) {
             super(JobType.CPU);
             this.predictor = csi;
             this.formulaJob = formulaJob;
             this.predictJob = predictJob;
             this.db = db;
+            this.trainingStructuresSet = trainingStructuresSet;
             addRequiredJob(formulaJob);
             addRequiredJob(predictJob);
         }
@@ -355,10 +362,21 @@ public class CSIFingerIDComputation {
             if (fp == null) {
                 return null;
             }
+            for (FingerprintCandidate candidate : candidates) {
+                postprocessCandidate(candidate);
+            }
             final List<Scored<FingerprintCandidate>> scored = predictor.blaster.score(candidates, fp);
             final FingerIdResult result = new FingerIdResult(scored, 0d, fp, predictJob.re.getResult().getResolvedTree());
             result.setAnnotation(SearchableDatabase.class, db);
             return result;
+        }
+
+        protected void postprocessCandidate(FingerprintCandidate candidate) {
+            //annotate training compounds;
+            if (trainingStructuresSet.isInTrainingData(candidate.getInchi())){
+                long flags = candidate.getBitset();
+                candidate.setBitset(flags | DatasourceService.Sources.TRAIN.flag);
+            }
         }
     }
 
