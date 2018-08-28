@@ -7,6 +7,11 @@ import java.util.Properties;
 
 import static de.unijena.bioinf.ChemistryBase.properties.PropertyManager.PROPERTY_BASE;
 
+/* *
+ * This class can be used to manage persistent properties of the sirius_frontend
+ * The Properties are globally managed by the @PropertyManager class
+ * The properties are stored in the user accessible Sirius.properties file
+ * */
 public class SiriusProperties extends PersistentProperties {
     private static final String USER_PROPERTIES_FILE_HAEDER = "This is the default Sirius properties file containing default values for all sirius properties that can be set";
     private static SiriusProperties SIRIUS_PROPERTIES_FILE;

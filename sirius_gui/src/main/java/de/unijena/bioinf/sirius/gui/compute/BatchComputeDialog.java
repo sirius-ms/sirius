@@ -30,6 +30,8 @@ import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.fingerid.FingerIDComputationPanel;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
+import de.unijena.bioinf.fingerid.net.WebAPI;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.FingerIDSearchGuiJob;
@@ -54,6 +56,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.time.Instant;
 import java.util.*;
 import java.util.List;
 
@@ -197,6 +200,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         if (e.getSource() == abort) {
             this.dispose();
         } else if (e.getSource() == this.compute) {
+
             if (editPanel != null && compoundsToProcess.size() == 1)
                 saveEdits(compoundsToProcess.get(0));
             startComputing();

@@ -20,7 +20,7 @@ import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.fingerid.FingeridProjectSpaceFactory;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.net.WebAPI;
-import de.unijena.bioinf.fingeriddb.WorkerList;
+import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.ms.cli.utils.FormatedTableBuilder;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
@@ -103,9 +103,10 @@ public class CombinedCLI extends ApplicationCore {
             final FormatedTableBuilder align = new FormatedTableBuilder();
             // header
             align.addLine("ID", "Type", "Predictors", "Version", "Host", "Pulse");
+
             info.forEach((workerInfo) ->
                     // data
-                    align.addLine(String.valueOf(workerInfo.id), workerInfo.workerType, workerInfo.predictor, workerInfo.version, workerInfo.hostname, String.valueOf(workerInfo.getPulse()))
+                    align.addLine(String.valueOf(workerInfo.id), workerInfo.workerType.name(), workerInfo.predictors.toString(), workerInfo.version, workerInfo.hostname, String.valueOf(workerInfo.getPulse()))
             );
 
 

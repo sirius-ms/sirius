@@ -31,7 +31,7 @@ import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.fingeriddb.WorkerList;
+import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.net.ProxyManager;
@@ -76,7 +76,6 @@ import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 /*
  * Frontend WebAPI class, corresponding to backend class
@@ -168,7 +167,7 @@ public class WebAPI implements Closeable {
             v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdBaseURI()).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build()));
             if (v == null) {
                 LOG.warn("Could not reach fingerid root url for version verification. Try to reach version specific url");
-                v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdURI(null)).build()));
+                v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdURI(null)).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build()));
             }
         } catch (URISyntaxException e) {
             LOG.error(e.getMessage(), e);
@@ -211,7 +210,7 @@ public class WebAPI implements Closeable {
                 }
                 return new VersionsInfo(version, database, expired, accept, finish, newsList);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }
         return null;
@@ -512,7 +511,7 @@ public class WebAPI implements Closeable {
             response = getResponseHack(client, predictorType);
             e = response.getEntity();
             if (response.getStatusLine().getStatusCode() == 404) {
-                throw new RuntimeException("Error retrieving training structures: "+response.getStatusLine().getReasonPhrase());
+                throw new RuntimeException("Error retrieving training structures: " + response.getStatusLine().getReasonPhrase());
             }
 //            throw new RuntimeException("Error retrieving training structures: "+response.getStatusLine().getReasonPhrase());
         }
@@ -521,7 +520,7 @@ public class WebAPI implements Closeable {
         while ((line = br.readLine()) != null) {
             String[] tabs = line.split("\t");
             InChI inChI;
-            if (tabs.length==1){
+            if (tabs.length == 1) {
                 //no InChiKeys contained. Compute them.
                 String inchi = tabs[0];
                 String key = inchi2inchiKey(inchi);
@@ -552,10 +551,10 @@ public class WebAPI implements Closeable {
 
     public static String inchi2inchiKey(String inchi) {
         try {
-            if (inchi==null) throw new NullPointerException("Given InChI is null");
+            if (inchi == null) throw new NullPointerException("Given InChI is null");
             if (inchi.isEmpty()) throw new IllegalArgumentException("Empty string given as InChI");
             JniInchiOutputKey key = JniInchiWrapper.getInchiKey(inchi);
-            if(key.getReturnStatus() == INCHI_KEY.OK) {
+            if (key.getReturnStatus() == INCHI_KEY.OK) {
                 return key.getKey();
             } else {
                 throw new RuntimeException("Error while creating InChIKey: " + key.getReturnStatus());
