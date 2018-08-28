@@ -1,6 +1,8 @@
 package de.unijena.bioinf.sirius.gui.net;
 
-import de.unijena.bioinf.fingeriddb.WorkerList;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.sirius.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import org.jetbrains.annotations.Nullable;
@@ -12,9 +14,8 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.stream.Collectors;
+import java.time.Instant;
+import java.util.EnumSet;
 
 /**
  * Created by fleisch on 06.06.17.
@@ -38,27 +39,35 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
         add(new JLabel("Connection to bio.informatics.uni-jena.de"), bioinf, 5, false);
         add(new JLabel("Connection to www.csi-fingerid.uni-jena.de"), fingerID, 5, false);
         add(new JLabel("Check CSI:FingerID REST API"), fingerID_WebAPI, 5, false);
-        add(new JLabel("Check CSI:FingerID worker availability"), fingerID_Worker, 5, false);
-
+        add(new JLabel("All necessary workers available?"), fingerID_Worker, 5, false);
 
         addVerticalGlue();
 
-
-        refreshPanel(state, workerInfoList);
+        if (workerInfoList != null) {
+            refreshPanel(
+                    state,
+                    workerInfoList.getActiveSupportedTypes(Instant.ofEpochSecond(600)),
+                    workerInfoList.getPendingJobs()
+            );
+        } else {
+            refreshPanel(state, EnumSet.noneOf(PredictorType.class), Integer.MIN_VALUE);
+        }
     }
 
-    public void refreshPanel(final int state, @Nullable WorkerList workerInfoList) {
+    public void refreshPanel(final int state, final EnumSet<PredictorType> availableTypes, final int pendingJobs) {
         internet.setState(state > 1 || state == 0);
         jena.setState(state > 2 || state == 0);
         bioinf.setState(state > 3 || state == 0);
         fingerID.setState(state > 4 || state == 0);
         fingerID_WebAPI.setState(state == 0);
 
-        fingerID_Worker.setState(workerInfoList != null && workerInfoList.size() > 0);
+        final EnumSet<PredictorType> neededTypes = PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors"));
+        fingerID_Worker.setState(availableTypes.containsAll(neededTypes));
 
         if (resultPanel != null)
             remove(resultPanel);
-        resultPanel = createResultPanel(state, workerInfoList);
+
+        resultPanel = createResultPanel(state, neededTypes, availableTypes, pendingJobs);
 
         add(resultPanel, 15, true);
 
@@ -66,7 +75,7 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
         repaint();
     }
 
-    private JPanel createResultPanel(final int state, final @Nullable WorkerList workerInfoList) {
+    private JPanel createResultPanel(final int state, final EnumSet<PredictorType> neededTypes, final EnumSet<PredictorType> availableTypes, final int pendingJobs) {
         JPanel resultPanel = new JPanel();
         resultPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), "Description:"));
 
@@ -75,17 +84,28 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
             case 0:
                 StringBuilder text = new StringBuilder();
                 text.append("<html>Connection to CSI:FingerID Server successfully established!<br><br>");
-                if (workerInfoList != null && fingerID_Worker.isTrue()) {
-                    text.append("Worker instances are available for:<br><b>")
-                            .append(Arrays.toString(
-                                    workerInfoList.stream().map((w)-> w.predictor.split(",")).flatMap(Arrays::stream).distinct().toArray()
-                            )).append("</b>.<br><br>");
-                    text.append("Pending jobs on Server: <b>").append(workerInfoList.getPendingJobs()).append("</b>");
+
+
+                neededTypes.removeAll(availableTypes);
+
+                String on = availableTypes.toString();
+                on = on.substring(1, on.length() - 1);
+
+                String off;
+                if (neededTypes.isEmpty()) {
+                    off = "<font color='green'>none</font>";
                 } else {
-                    text.append("Warning: There are currently no worker instances available! <br>")
-                            .append("Therefore your job execution may take a while.<br>")
-                            .append("Please send an error report if this message occurs for a longer time!");
+                    off = neededTypes.toString();
+                    off = off.substring(1, off.length() - 1);
                 }
+
+                text.append("<font color='green'>Worker instances available for:<br>")
+                        .append("<b>").append(on).append("</font></b><br><br>");
+                text.append("<font color='red'>Worker instances unavailable for:<br>")
+                        .append("<b>").append(off).append("</font></b><br><br>");
+
+                text.append("<font color='black'>Pending jobs on Server: <b>").append(pendingJobs < 0 ? "Unknown" : pendingJobs).append("</font></b>");
+//                text.append("<br><br>");
 
                 text.append("</html>");
                 label = new JLabel(text.toString());

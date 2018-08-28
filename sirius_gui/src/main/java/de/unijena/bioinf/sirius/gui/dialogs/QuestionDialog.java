@@ -5,64 +5,48 @@ import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
-public class QuestionDialog extends JDialog implements ActionListener {
+public class QuestionDialog extends DoNotShowAgainDialog {
 
-    private ReturnValue rv;
-
-    private JButton ok, abort;
-    private JCheckBox dontAsk;
-
-    private String property;
+    private ReturnValue rv = ReturnValue.Abort;
 
     public QuestionDialog(Window owner, String question) {
         this(owner, question, null);
     }
 
     /**
-     * @param owner
-     * @param question
+     * @param owner see JDialog
+     * @param question Question that is asked with this dialog
      * @param propertyKey name of the property with which the 'don't ask' flag is saved persistently
      */
     public QuestionDialog(Window owner, String question, String propertyKey) {
-        super(owner, JDialog.DEFAULT_MODALITY_TYPE);
+        super(owner, question, propertyKey);
+    }
 
-        this.property = propertyKey;
+    @Override
+    protected void decorateButtonPanel(JPanel boxedButtonPanel) {
+        final JButton ok = new JButton("Yes");
+        ok.addActionListener(e -> {
+            rv = ReturnValue.Success;
+            saveDoNotAskMeAgain();
+            dispose();
+        });
 
-        rv = ReturnValue.Abort;
 
-        this.setLayout(new BorderLayout());
-        JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
-        Icon icon = UIManager.getIcon("OptionPane.questionIcon");
-        northPanel.add(new JLabel(icon));
-        northPanel.add(new JLabel(question));
-        this.add(northPanel, BorderLayout.CENTER);
-        JPanel south = new JPanel();
-        south.setLayout(new BoxLayout(south, BoxLayout.X_AXIS));
-        south.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        final JButton abort = new JButton("No");
+        abort.addActionListener(e -> {
+            rv = ReturnValue.Abort;
+            dispose();
+        });
 
-        if (propertyKey != null) {
-            dontAsk = new JCheckBox();
-            dontAsk.addActionListener(this);
-            dontAsk.setText("Do not ask me again.");
-            south.add(dontAsk);
+        boxedButtonPanel.add(Box.createHorizontalGlue());
+        boxedButtonPanel.add(ok);
+        boxedButtonPanel.add(abort);
+    }
 
-        }
-
-        south.add(Box.createHorizontalGlue());
-        ok = new JButton("Yes");
-        ok.addActionListener(this);
-        abort = new JButton("No");
-        abort.addActionListener(this);
-        south.add(ok);
-        south.add(abort);
-        this.add(south, BorderLayout.SOUTH);
-        this.pack();
-        this.setResizable(false);
-        setLocationRelativeTo(getParent());
-        this.setVisible(true);
+    @Override
+    protected Icon makeDialogIcon() {
+        return UIManager.getIcon("OptionPane.questionIcon");
     }
 
     public ReturnValue getReturnValue() {
@@ -76,22 +60,4 @@ public class QuestionDialog extends JDialog implements ActionListener {
     public boolean isAbort() {
         return rv.equals(ReturnValue.Abort);
     }
-
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == dontAsk) return;
-        if (e.getSource() == ok) {
-            rv = ReturnValue.Success;
-
-            if (dontAsk != null && dontAsk.isSelected()) {
-                SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(property, String.valueOf(true));
-            }
-        } else if (e.getSource() == abort) {
-            rv = ReturnValue.Abort;
-        }
-        this.dispose();
-    }
-
-
 }
