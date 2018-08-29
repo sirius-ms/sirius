@@ -2,7 +2,6 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingerworker.WorkerList;
-import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.ConnectionDialog;
@@ -32,7 +31,7 @@ public class CheckConnectionAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        final AtomicInteger state = new AtomicInteger(ProxyManager.MAX_STATE);
+        final AtomicInteger state = new AtomicInteger(WebAPI.MAX_STATE);
 
         Jobs.runInBackroundAndLoad(MF, "Checking Webservice Connection", new Runnable() {
             @Override

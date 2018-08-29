@@ -36,7 +36,6 @@ public class PredictionJJob extends BasicJJob<ProbabilityFingerprint> {
     public ProbabilityFingerprint compute() throws Exception {
         job = WebAPI.INSTANCE.submitJob(experiment, ftree, version, predicors);
         // RECEIVE RESULTS
-        new HttpGet(WebAPI.getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
         for (int k = 0; k < 600; ++k) {
             Thread.sleep(3000 + 30 * k);
             if (WebAPI.INSTANCE.updateJobStatus(job)) {
