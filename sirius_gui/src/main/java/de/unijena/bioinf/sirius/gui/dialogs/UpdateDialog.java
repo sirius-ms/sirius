@@ -1,8 +1,8 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
-import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;
-import de.unijena.bioinf.fingerid.net.WebAPI;
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -61,7 +61,7 @@ public class UpdateDialog extends JDialog implements ActionListener {
         if (e.getSource() == ignore) {
         } else if (e.getSource() == download) {
             try {
-                Desktop.getDesktop().browse(new URI(WebAPI.SIRIUS_DOWNLOAD));
+                Desktop.getDesktop().browse(new URI(PropertyManager.getProperty("de.unijena.bioinf.sirius.download")));
             } catch (IOException | URISyntaxException e1) {
                 LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
             }

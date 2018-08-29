@@ -30,7 +30,7 @@ public class ComputeCSIAction extends AbstractAction implements PropertyChangeLi
         putValue(Action.SMALL_ICON, Icons.FINGER_32);
         putValue(Action.SHORT_DESCRIPTION, "Search computed compounds with CSI:FingerID");
 
-        proofCSI(((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).isActive.get());
+        proofCSI(((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).checkConnection().isConnected());
 
         MF.getExperimentList().addChangeListener(new ExperimentListChangeListener() {
             @Override
@@ -53,7 +53,7 @@ public class ComputeCSIAction extends AbstractAction implements PropertyChangeLi
             }
         });
 
-        MF.getCsiFingerId().addPropertyChangeListener("enabled", evt -> setEnabled(proofCSI(((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).isActive.get())));
+        MF.getCsiFingerId().addPropertyChangeListener("enabled", evt -> setEnabled(proofCSI(((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).checkConnection().isConnected())));
 
         SiriusActions.CHECK_CONNECTION.getInstance().addPropertyChangeListener(this);
     }
@@ -62,7 +62,8 @@ public class ComputeCSIAction extends AbstractAction implements PropertyChangeLi
     public void actionPerformed(ActionEvent e) {
         CheckConnectionAction checker = (CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance();
         checker.actionPerformed(null);
-        if (!checker.isActive.get()) return;
+        if (!((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).checkConnection().isConnected())
+            return;
 
 
         final FingerIdDialog dialog = new FingerIdDialog(MF, MF.getCsiFingerId(), true, false);
@@ -97,7 +98,7 @@ public class ComputeCSIAction extends AbstractAction implements PropertyChangeLi
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals("net")) {
-            boolean value = (boolean) evt.getNewValue();
+            boolean value = ((CheckConnectionAction.ConnectionState) evt.getNewValue()).isConnected();
             setEnabled(proofCSI(value));
         }
     }

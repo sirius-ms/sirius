@@ -59,7 +59,6 @@ public class PredictionJJob extends BasicJJob<ProbabilityFingerprint> {
             } finally {
                 job = null;
             }
-
         } else {
             LOG().warn("Job was null before deletion request job: " + job.jobId);
         }

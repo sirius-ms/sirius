@@ -32,6 +32,7 @@ import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.FingerIDSearchGuiJob;
@@ -41,11 +42,13 @@ import de.unijena.bioinf.sirius.gui.compute.jjobs.SiriusIdentificationGuiJob;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.WorkerWarningDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.utils.ExperimentEditPanel;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -56,11 +59,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.time.Instant;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
 public class BatchComputeDialog extends JDialog implements ActionListener {
+    public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.recompute.dontAskAgain";
 
     private JButton compute;
     private JButton abort;
@@ -248,13 +254,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     private void startComputing() {
         if (recompute.isSelected()) {
-            final String dontAskProperty = "de.unijena.bioinf.sirius.dontAsk.recompute";
-
             ReturnValue value;
-            if (Boolean.parseBoolean(PropertyManager.PROPERTIES.getProperty(dontAskProperty, "false")) || this.compoundsToProcess.size() == 1) {
+            if (Boolean.parseBoolean(PropertyManager.PROPERTIES.getProperty(DONT_ASK_RECOMPUTE_KEY, "false")) || this.compoundsToProcess.size() == 1) {
                 value = ReturnValue.Success;
             } else {
-                QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", dontAskProperty);
+                QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY);
                 value = questionDialog.getReturnValue();
             }
 
@@ -290,6 +294,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
         LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder);
 
+        if (csiOptions.isCSISelected())
+            checkWorkerAvailability();
+
         Jobs.runInBackroundAndLoad(owner, "Submitting Identification Jobs", new TinyBackgroundJJob() {
             @Override
             protected Object compute() throws InterruptedException {
@@ -297,6 +304,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 final Iterator<ExperimentContainer> compounds = compoundsToProcess.iterator();
                 final int max = compoundsToProcess.size();
                 int progress = 0;
+
                 while (compounds.hasNext()) {
                     final ExperimentContainer ec = compounds.next();
                     checkForInterruption();
@@ -337,9 +345,22 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 return true;
             }
         });
-
         dispose();
+    }
 
+    private void checkWorkerAvailability() {
+        //CHECK worker availability
+        final AtomicBoolean workerAvailable = new AtomicBoolean(false);
+
+        Jobs.runInBackroundAndLoad(MF, () -> {
+            EnumSet<PredictorType> neended = PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors"));
+            @Nullable WorkerList wi = WebAPI.INSTANCE.getWorkerInfo();
+            workerAvailable.set(wi != null && wi.supportsAllPredictorTypes(neended));
+        });
+
+        if (!workerAvailable.get())
+            new WorkerWarningDialog(MF);
+        //CHECK worker availability DONE
     }
 
     public boolean isSuccessful() {
@@ -348,7 +369,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     public void initSingleExperimentDialog(List<Element> detectableElements) {
         JPanel north = new JPanel(new BorderLayout());
-
 
         ExperimentContainer ec = compoundsToProcess.get(0);
         editPanel = new ExperimentEditPanel();

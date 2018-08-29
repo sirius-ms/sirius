@@ -87,10 +87,7 @@ public class WebAPI implements Closeable {
     private static final BasicNameValuePair UID = new BasicNameValuePair("uid", SystemInformation.generateSystemKey());
     private static final Logger LOG = LoggerFactory.getLogger(WebAPI.class);
 
-    //todo move to props
-    public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
-
-    // Singelton instance for the Frontend
+    // Singelton instance for the sirius_frontend
     public static final WebAPI INSTANCE = new WebAPI();
 
     private CloseableHttpClient client;
