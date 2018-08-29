@@ -1,9 +1,4 @@
 package de.unijena.bioinf.fingerid;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 23.01.17.
- */
 
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
@@ -74,7 +69,7 @@ public class FingerIDComputationPanel extends JPanel {
             adductOptions = new JCheckboxListPanel<>(new AdductSelectionList(sourceIonization), "Possible Adducts");
             target.add(adductOptions);
         } else adductOptions = null;
-        
+
         setComponentsEnabled(csiButton == null);
     }
 
@@ -87,7 +82,7 @@ public class FingerIDComputationPanel extends JPanel {
 
     private ToolbarToggleButton csiButton() {
         ToolbarToggleButton b = new ToolbarToggleButton("CSI:FingerID", Icons.FINGER_32);
-        if (MainFrame.MF.getCsiFingerId().isEnabled() && ((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).isActive.get()) {
+        if (MainFrame.MF.getCsiFingerId().isEnabled() && ((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).getState().isConnected()) {
             b.setToolTipText("Enable CSI:FingerID search");
             b.setEnabled(true);
         } else {
@@ -113,7 +108,6 @@ public class FingerIDComputationPanel extends JPanel {
         public JComboBox<SearchableDatabase> db;
         protected final List<SearchableDatabase> databases;
         protected int bioIndex, pubchemIndex;
-//        private Border b = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         public DBSelectionPanel(final List<SearchableDatabase> databases) {
             super("Search in");

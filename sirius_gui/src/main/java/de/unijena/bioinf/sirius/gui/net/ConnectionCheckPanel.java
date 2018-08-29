@@ -3,8 +3,10 @@ package de.unijena.bioinf.sirius.gui.net;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerworker.WorkerList;
+import de.unijena.bioinf.sirius.gui.dialogs.WorkerWarningDialog;
 import de.unijena.bioinf.sirius.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
+import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -32,9 +34,9 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
 
     public ConnectionCheckPanel(int state, @Nullable WorkerList workerInfoList) {
         super(GridBagConstraints.WEST, GridBagConstraints.EAST);
-        setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), "Connection check:"));
 
-        add(new JLabel("Connection to the internet (google.com)"), internet, 15, false);
+        add(new JXTitledSeparator("Connection check:"), 15, false);
+        add(new JLabel("Connection to the internet (google.com)"), internet, 5, false);
         add(new JLabel("Connection to uni-jena.de"), jena, 5, false);
         add(new JLabel("Connection to bio.informatics.uni-jena.de"), bioinf, 5, false);
         add(new JLabel("Connection to www.csi-fingerid.uni-jena.de"), fingerID, 5, false);
@@ -76,16 +78,17 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
     }
 
     private JPanel createResultPanel(final int state, final EnumSet<PredictorType> neededTypes, final EnumSet<PredictorType> availableTypes, final int pendingJobs) {
-        JPanel resultPanel = new JPanel();
-        resultPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), "Description:"));
+        TwoCloumnPanel resultPanel = new TwoCloumnPanel();
+        resultPanel.setBorder(BorderFactory.createEmptyBorder());
+        resultPanel.add(new JXTitledSeparator("Description"), 15, false);
 
-        final JLabel label;
         switch (state) {
             case 0:
-                StringBuilder text = new StringBuilder();
-                text.append("<html>Connection to CSI:FingerID Server successfully established!<br><br>");
+                resultPanel.add(new JLabel("<html>Connection to CSI:FingerID Server successfully established!</html>"), 5, false);
 
+                resultPanel.add(new JXTitledSeparator("Worker Information"), 15, false);
 
+                StringBuilder text = new StringBuilder("<html>");
                 neededTypes.removeAll(availableTypes);
 
                 String on = availableTypes.toString();
@@ -105,61 +108,64 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
                         .append("<b>").append(off).append("</font></b><br><br>");
 
                 text.append("<font color='black'>Pending jobs on Server: <b>").append(pendingJobs < 0 ? "Unknown" : pendingJobs).append("</font></b>");
-//                text.append("<br><br>");
+
+                if (!fingerID_Worker.isTrue()) {
+                    text.append("<br><br>");
+                    text.append(WorkerWarningDialog.MESSAGE);
+                }
 
                 text.append("</html>");
-                label = new JLabel(text.toString());
+
+                resultPanel.add(new JLabel(text.toString()), 5, false);
                 break;
             case 6:
-                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                resultPanel.add(new JLabel("<html>" + " ErrorCode " + state + ": " +
                         " Could not reach the CSI:FingerID WebAPI. <br>" +
                         "Our Service is no longer available for your current Sirius version. <br>" +
                         "Please <a href=https://bio.informatik.uni-jena.de/software/sirius/>download</a> the current version of Sirius<br>" +
-                        "</html>");
+                        "</html>"));
                 break;
             case 5:
-                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                resultPanel.add(new JLabel("<html>" + " ErrorCode " + state + ": " +
                         " Could not reach the CSI:FingerID WebAPI. <br>" +
                         "Your Sirius version is still supported but the Service <br>" +
                         "is unfortunately not available.<br>" +
                         "Please <a href=mailto:sirius@uni-jena.de>contact</a> the developer for help.<br>" +
-                        "</html>");
+                        "</html>"));
                 break;
             case 4:
-                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                resultPanel.add(new JLabel("<html>" + " ErrorCode " + state + ": " +
                         " Could not connect to the CSI:FingerID Server. <br>" +
                         " Either the CSI:FingerID server is temporary not available<br>" +
                         " or its URL cannot be reached because of your network configuration.<br>" +
-                        "</html>");
+                        "</html>"));
                 break;
             case 3:
-                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                resultPanel.add(new JLabel("<html>" + " ErrorCode " + state + ": " +
                         " Could not reach https://bio.informatik.uni-jena.de. <br>" +
                         "Either our web server is temporary not available<br>" +
                         " or it cannot be reached because of your network configuration.<br>" +
-                        "</html>");
+                        "</html>"));
                 break;
             case 2:
-                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                resultPanel.add(new JLabel("<html>" + " ErrorCode " + state + ": " +
                         " Could not reach uni-jena.de. <br>" +
                         "Either the whole uni-jena.de domain is temporary not available<br>" +
                         " or it cannot be reached because of your network configuration. <br>" +
-                        "</html>");
+                        "</html>"));
                 break;
             case 1:
-                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                resultPanel.add(new JLabel("<html>" + " ErrorCode " + state + ": " +
                         " Could not establish an internet connection.<br>" +
                         "Please check if your computer is connected to the internet.<br>" +
                         "All features depending on the database won't work without internet connection.<br>" +
                         "If you use a proxy, please check the proxy settings.<br>" +
-                        "Note: You have to restart Sirius if you change system wide proxy settings.<br></html>");
-
+                        "Note: You have to restart Sirius if you change system wide proxy settings.<br></html>"));
                 break;
             default:
-                label = new JLabel("<html> An unknown Network Error occurred!." +
-                        "</html>");
+                resultPanel.add(new JLabel("<html> An unknown Network Error occurred!." +
+                        "</html>"));
         }
-        resultPanel.add(label);
         return resultPanel;
     }
 
