@@ -577,6 +577,7 @@ public class WebAPI implements Closeable {
         if (ProxyManager.DEBUG) {
             b = new URIBuilder().setScheme(ProxyManager.HTTP_SCHEME).setHost("localhost");
             b = b.setPort(8080);
+            path = FINGERID_DEBUG_FRONTEND_PATH + path;
         } else {
             b = new URIBuilder(FINGERID_URL);
             if (versionSpecificPath)
@@ -591,13 +592,7 @@ public class WebAPI implements Closeable {
 
     // WebAPI paths
     private static StringBuilder getWebAPIBasePath() {
-        final StringBuilder path;
-        if (ProxyManager.DEBUG) {
-            path = new StringBuilder(FINGERID_DEBUG_FRONTEND_PATH + FINGERID_WEBAPI_PATH);
-        } else {
-            path = new StringBuilder(FINGERID_WEBAPI_PATH);
-        }
-        return path;
+        return new StringBuilder(FINGERID_WEBAPI_PATH);
     }
 
     private static URIBuilder buildFingerIdWebapiURI(@Nullable final String path, final boolean versionSpecific) throws URISyntaxException {

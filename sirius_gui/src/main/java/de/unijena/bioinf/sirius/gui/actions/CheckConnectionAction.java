@@ -8,9 +8,9 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.ConnectionDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.WorkerWarningDialog;
 import de.unijena.bioinf.sirius.net.ProxyManager;
 import org.apache.http.annotation.ThreadSafe;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -30,7 +30,7 @@ public class CheckConnectionAction extends AbstractAction {
         }
     }
 
-    private ConnectionState state;
+    private ConnectionState state = ConnectionState.YES;
 
     public CheckConnectionAction() {
         this(true);
@@ -68,32 +68,32 @@ public class CheckConnectionAction extends AbstractAction {
         if (connectionState == ProxyManager.OK_STATE)
             conState = ConnectionState.YES;
 
-
+        @Nullable WorkerList wl = null;
         if (conState != ConnectionState.YES) {
             setState(ConnectionState.NO);
-            new ConnectionDialog(MF, connectionState, null);
         } else {
-            TinyBackgroundJJob<WorkerList> workerChecker = new TinyBackgroundJJob<WorkerList>() {
-                @Override
-                protected WorkerList compute() throws Exception {
-                    return WebAPI.INSTANCE.getWorkerInfo();
-                }
-            };
-
-            Jobs.runInBackroundAndLoad(MF, "Checking Available Workers", workerChecker);
-
-            final WorkerList wl = workerChecker.getResult();
-            if (wl.supportsAllPredictorTypes(PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors")))) {
+            wl = checkWorkerAvailability();
+            if (wl != null && wl.supportsAllPredictorTypes(PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors")))) {
                 setState(ConnectionState.YES);
-            }else {
+            } else {
                 setState(ConnectionState.WARN);
             }
-
-            if (alwaysShowDialog)
-                new ConnectionDialog(MF, connectionState, wl);
-//            else
-//                new WorkerWarningDialog(MF);
         }
+
+        if (alwaysShowDialog || !conState.equals(state))
+            new ConnectionDialog(MF, connectionState, wl);
+    }
+
+    public static @Nullable WorkerList checkWorkerAvailability() {
+        TinyBackgroundJJob<WorkerList> workerChecker = new TinyBackgroundJJob<WorkerList>() {
+            @Override
+            protected WorkerList compute() throws Exception {
+                return WebAPI.INSTANCE.getWorkerInfo();
+            }
+        };
+
+        Jobs.runInBackroundAndLoad(MF, "Checking Available Workers", true, workerChecker);
+        return workerChecker.getResult();
     }
 
     public ConnectionState checkConnection() {
@@ -105,7 +105,7 @@ public class CheckConnectionAction extends AbstractAction {
         ConnectionState old = this.state;
         this.state = state;
 
-        switch (state) {
+        switch (this.state) {
             case YES:
                 putValue(Action.LARGE_ICON_KEY, Icons.NET_YES_32);
                 break;

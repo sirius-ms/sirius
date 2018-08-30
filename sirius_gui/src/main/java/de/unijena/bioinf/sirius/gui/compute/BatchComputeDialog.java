@@ -30,11 +30,11 @@ import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.fingerid.FingerIDComputationPanel;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
-import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.FingerIDSearchGuiJob;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.PrepareSiriusIdentificationInputJob;
@@ -61,7 +61,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
@@ -294,6 +293,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
         LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder);
 
+        //CHECK worker availability
         if (csiOptions.isCSISelected())
             checkWorkerAvailability();
 
@@ -349,18 +349,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     }
 
     private void checkWorkerAvailability() {
-        //CHECK worker availability
-        final AtomicBoolean workerAvailable = new AtomicBoolean(false);
-
-        Jobs.runInBackroundAndLoad(MF, () -> {
-            EnumSet<PredictorType> neended = PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors"));
-            @Nullable WorkerList wi = WebAPI.INSTANCE.getWorkerInfo();
-            workerAvailable.set(wi != null && wi.supportsAllPredictorTypes(neended));
-        });
-
-        if (!workerAvailable.get())
-            new WorkerWarningDialog(MF);
-        //CHECK worker availability DONE
+        @Nullable WorkerList wl = CheckConnectionAction.checkWorkerAvailability();
+        if (wl == null || !wl.supportsAllPredictorTypes(
+                PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors"))))
+            new WorkerWarningDialog(MF, wl == null);
     }
 
     public boolean isSuccessful() {

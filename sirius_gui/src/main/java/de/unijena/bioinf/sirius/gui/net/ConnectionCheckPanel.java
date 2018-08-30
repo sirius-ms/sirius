@@ -3,7 +3,6 @@ package de.unijena.bioinf.sirius.gui.net;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerworker.WorkerList;
-import de.unijena.bioinf.sirius.gui.dialogs.WorkerWarningDialog;
 import de.unijena.bioinf.sirius.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -23,6 +22,22 @@ import java.util.EnumSet;
  * Created by fleisch on 06.06.17.
  */
 public class ConnectionCheckPanel extends TwoCloumnPanel {
+    public static final String WORKER_WARNING_MESSAGE =
+            "<b>Warning:</b> For some predictors there is currently no worker <br>" +
+                    "instance available! Corresponding jobs will need to wait until<br> " +
+                    "a new worker instance is started. Please send an error report<br>" +
+                    "if a specific predictor stays unavailable for a longer time.";
+
+    public static final String WORKER_INFO_MISSING_MESSAGE =
+            "<font color='red'>" +
+                    "<b>Error:</b> Could not fetch worker information from Server. This is <br>" +
+                    "an unexpected behaviour! </font> <br><br>" +
+                    "<b>Warning:</b> It might be the case that there is no worker instance <br> " +
+                    "available for some predictors! Corresponding jobs will need to <br> " +
+                    "wait until a new worker instance is started. Please send an error <br>" +
+                    "report if this message occurs for a longer time.";
+
+
     final BooleanJlabel internet = new BooleanJlabel();
     final BooleanJlabel jena = new BooleanJlabel();
     final BooleanJlabel bioinf = new BooleanJlabel();
@@ -89,29 +104,33 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
                 resultPanel.add(new JXTitledSeparator("Worker Information"), 15, false);
 
                 StringBuilder text = new StringBuilder("<html>");
-                neededTypes.removeAll(availableTypes);
+                if (pendingJobs >= 0) {
+                    neededTypes.removeAll(availableTypes);
 
-                String on = availableTypes.toString();
-                on = on.substring(1, on.length() - 1);
+                    String on = availableTypes.toString();
+                    on = on.substring(1, on.length() - 1);
 
-                String off;
-                if (neededTypes.isEmpty()) {
-                    off = "<font color='green'>none</font>";
+                    String off;
+                    if (neededTypes.isEmpty()) {
+                        off = "<font color='green'>none</font>";
+                    } else {
+                        off = neededTypes.toString();
+                        off = off.substring(1, off.length() - 1);
+                    }
+
+                    text.append("<font color='green'>Worker instances available for:<br>")
+                            .append("<b>").append(on).append("</font></b><br><br>");
+                    text.append("<font color='red'>Worker instances unavailable for:<br>")
+                            .append("<b>").append(off).append("</font></b><br><br>");
+
+                    text.append("<font color='black'>Pending jobs on Server: <b>").append(pendingJobs < 0 ? "Unknown" : pendingJobs).append("</font></b>");
+
+                    if (!fingerID_Worker.isTrue()) {
+                        text.append("<br><br>");
+                        text.append(WORKER_WARNING_MESSAGE);
+                    }
                 } else {
-                    off = neededTypes.toString();
-                    off = off.substring(1, off.length() - 1);
-                }
-
-                text.append("<font color='green'>Worker instances available for:<br>")
-                        .append("<b>").append(on).append("</font></b><br><br>");
-                text.append("<font color='red'>Worker instances unavailable for:<br>")
-                        .append("<b>").append(off).append("</font></b><br><br>");
-
-                text.append("<font color='black'>Pending jobs on Server: <b>").append(pendingJobs < 0 ? "Unknown" : pendingJobs).append("</font></b>");
-
-                if (!fingerID_Worker.isTrue()) {
-                    text.append("<br><br>");
-                    text.append(WorkerWarningDialog.MESSAGE);
+                    text.append(WORKER_INFO_MISSING_MESSAGE);
                 }
 
                 text.append("</html>");
