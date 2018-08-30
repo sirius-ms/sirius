@@ -110,6 +110,10 @@ public class Jobs {
         return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
     }
 
+    public static LoadingBackroundTask runInBackroundAndLoad(JFrame owner, String title, boolean indeterminateProgress, TinyBackgroundJJob task) {
+        return LoadingBackroundTask.runInBackground(owner, title, indeterminateProgress, MANAGER, task);
+    }
+
     private static void checkProfile(String profile) {
         if (siriusPerProfile.containsKey(profile)) return;
         else try {
