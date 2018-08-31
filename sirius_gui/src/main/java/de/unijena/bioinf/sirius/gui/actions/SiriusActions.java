@@ -38,8 +38,7 @@ public enum SiriusActions {
     SHOW_JOBS(ShowJobsDialogAction.class),
     SHOW_DB(ShowDBDialogAction.class),
 
-    CHECK_CONNECTION(CheckConnectionAction.class),
-    CHECK_CONNECTION_ALWAYS_SHOW(CheckConnectionActionAlwaysShow.class);
+    CHECK_CONNECTION(CheckConnectionAction.class);
 
     public static final ActionMap ROOT_MANAGER = new ActionMap();
     public final Class<? extends Action> actionClass;

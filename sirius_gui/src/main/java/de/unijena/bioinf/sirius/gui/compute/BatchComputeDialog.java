@@ -30,8 +30,6 @@ import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.fingerid.FingerIDComputationPanel;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
@@ -39,11 +37,9 @@ import de.unijena.bioinf.sirius.gui.compute.jjobs.FingerIDSearchGuiJob;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.PrepareSiriusIdentificationInputJob;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.SiriusIdentificationGuiJob;
-import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.WorkerWarningDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
@@ -205,7 +201,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         if (e.getSource() == abort) {
             this.dispose();
         } else if (e.getSource() == this.compute) {
-
             if (editPanel != null && compoundsToProcess.size() == 1)
                 saveEdits(compoundsToProcess.get(0));
             startComputing();
@@ -273,6 +268,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
         }
 
+        //CHECK worker availability
+        checkConnection();
+
         //collect job parameter from view
         final SearchProfilePanel.Instruments instrument = searchProfilePanel.getInstrument();
         final SearchableDatabase searchableDatabase = searchProfilePanel.getFormulaSource();
@@ -293,9 +291,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
         LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder);
 
-        //CHECK worker availability
-        if (csiOptions.isCSISelected())
-            checkWorkerAvailability();
 
         Jobs.runInBackroundAndLoad(owner, "Submitting Identification Jobs", new TinyBackgroundJJob() {
             @Override
@@ -348,11 +343,26 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         dispose();
     }
 
-    private void checkWorkerAvailability() {
-        @Nullable WorkerList wl = CheckConnectionAction.checkWorkerAvailability();
-        if (wl == null || !wl.supportsAllPredictorTypes(
-                PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors"))))
-            new WorkerWarningDialog(MF, wl == null);
+    private void checkConnection() {
+        final @Nullable ConnectionMonitor.ConnetionCheck cc = CheckConnectionAction.checkConnectionAndLoad();
+
+        if (cc != null) {
+            if (cc.isConnected()) {
+                if (csiOptions.isCSISelected() && cc.hasWorkerWarning()) {
+                    new WorkerWarningDialog(MF, cc.workerInfo == null);
+                }
+            } else {
+                if (searchProfilePanel.getFormulaSource() != null) {
+                    new WarnFormulaSourceDialog(MF);
+                    searchProfilePanel.formulaCombobox.setSelectedIndex(0);
+                }
+            }
+        } else {
+            if (searchProfilePanel.getFormulaSource() != null) {
+                new WarnFormulaSourceDialog(MF);
+                searchProfilePanel.formulaCombobox.setSelectedIndex(0);
+            }
+        }
     }
 
     public boolean isSuccessful() {
@@ -429,5 +439,16 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         add(north, BorderLayout.NORTH);
     }
 
+    private class WarnFormulaSourceDialog extends WarningDialog {
+        private final static String DONT_ASK_KEY = PropertyManager.PROPERTY_BASE + ".sirius.computeDialog.formulaSourceWarning.dontAskAgain";
+        public static final String FORMULA_SOURCE_WARNING_MESSAGE =
+                "<b>Warning:</b> No connection to webservice available! <br>" +
+                        "Online databases cannot be used for formula identification.<br> " +
+                        "If online databases are selected, the default option <br>" +
+                        "(all molecular formulas) will be used instead.";
 
+        public WarnFormulaSourceDialog(Frame owner) {
+            super(owner, "<html>" + FORMULA_SOURCE_WARNING_MESSAGE, DONT_ASK_KEY + "</html>" );
+        }
+    }
 }

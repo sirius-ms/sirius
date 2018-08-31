@@ -32,8 +32,8 @@ public class SearchProfilePanel extends JPanel {
 
     public enum Instruments {
         QTOF("Q-TOF", MsInstrumentation.Instrument.QTOF, "qtof", 10),
-        ORBI("Orbitrap",MsInstrumentation.Instrument.ORBI, "orbitrap", 5),
-        FTICR("FT-ICR",MsInstrumentation.Instrument.FTICR, "orbitrap", 2)
+        ORBI("Orbitrap", MsInstrumentation.Instrument.ORBI, "orbitrap", 5),
+        FTICR("FT-ICR", MsInstrumentation.Instrument.FTICR, "orbitrap", 2)
 
         //,QTOF_FIXED("Q-TOF (fixed)", "qtof_fixed", 10)
 
@@ -101,14 +101,11 @@ public class SearchProfilePanel extends JPanel {
         candidatesSpinner.setPreferredSize(new Dimension(70, 26));
         add(new TwoCloumnPanel(new JLabel("candidates"), candidatesSpinner));
 
-        instrumentCB.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                final Instruments i = (Instruments) e.getItem();
-                final double recommendedPPM = i.ppm;
+        instrumentCB.addItemListener(e -> {
+            final Instruments i = (Instruments) e.getItem();
+            final double recommendedPPM = i.ppm;
 
-                ppmSpinner.setValue(new Double(recommendedPPM)); // TODO: test
-            }
+            ppmSpinner.setValue(new Double(recommendedPPM)); // TODO: test
         });
 
 
@@ -118,11 +115,9 @@ public class SearchProfilePanel extends JPanel {
             final Vector<String> values = new Vector<>();
             values.add("all molecular formulas");
 
-            if (WebAPI.canConnect()) { //to prevent database error when running sirius without network connection
-                values.add("all PubChem formulas");
-                values.add("organic PubChem formulas");
-                values.add("formulas from Bio databases");
-            }
+            values.add("all PubChem formulas");
+            values.add("organic PubChem formulas");
+            values.add("formulas from Bio databases");
 
             for (CustomDatabase customDatabase : SearchableDatabases.getCustomDatabases()) {
                 values.add(customDatabase.name());

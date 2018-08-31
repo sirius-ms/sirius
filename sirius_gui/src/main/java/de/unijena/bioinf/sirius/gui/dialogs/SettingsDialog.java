@@ -5,7 +5,6 @@ package de.unijena.bioinf.sirius.gui.dialogs;
  * 06.10.16.
  */
 
-import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
@@ -121,7 +120,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
                 protected Integer doInBackground() throws Exception {
                     LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
                     SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
-                    new CheckConnectionAction().actionPerformed(null); //todo maybe some run check function for the settings panels
+                    CheckConnectionAction.isConnectedAndLoad();
                     return 1;
 
                 }
