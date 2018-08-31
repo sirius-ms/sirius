@@ -5,6 +5,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -13,6 +14,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 
 /**
@@ -24,6 +26,11 @@ public class ProxyManager {
     public static final String HTTP_SCHEME = "http";
     public static final int OK_STATE = 0;
     public static final ProxyStrategy DEFAULT_STRATEGY = ProxyStrategy.SYSTEM;
+
+    private static RequestConfig DEFAULT_CONFIG = RequestConfig.custom()
+            .setConnectTimeout(5000)
+//                .setConnectionRequestTimeout(30000)
+            .setSocketTimeout(5000).build();
 
     public enum ProxyStrategy {SYSTEM, SIRIUS, NONE}
 
@@ -79,15 +86,16 @@ public class ProxyManager {
                 client = getJavaDefaultProxyClient();
                 LoggerFactory.getLogger(ProxyStrategy.class).debug("Using FALLBACK Proxy Type " + ProxyStrategy.SYSTEM);
         }
+
         return client;
     }
 
-    public static CloseableHttpClient getTestedHttpClient() {
+    /*public static CloseableHttpClient getTestedHttpClient() {
         return getTestedHttpClient(true);
-    }
+    }*/
 
 
-    public static CloseableHttpClient getTestedHttpClient(final boolean failover) {
+    /*public static CloseableHttpClient getTestedHttpClient(final boolean failover) {
         CloseableHttpClient client = getSirirusHttpClient();
         if (hasInternetConnection(client)) {
             return client;
@@ -102,7 +110,7 @@ public class ProxyManager {
             }
         }
         return client;
-    }
+    }*/
 
     //0 everything is fine
     //1 no connection to bioinf web site
@@ -122,26 +130,29 @@ public class ProxyManager {
     }
 
     public static int checkInternetConnection() {
-        CloseableHttpClient client = getSirirusHttpClient();
-        int val = checkInternetConnection(client);
-        return val;
+        try (CloseableHttpClient client = getSirirusHttpClient()) {
+            return checkInternetConnection(client);
+        } catch (IOException e) {
+            LoggerFactory.getLogger(ProxyManager.class).error("Cant not create Http client", e);
+        }
+        return 3;
     }
 
-    public static boolean hasInternetConnection(final CloseableHttpClient client) {
+    /*public static boolean hasInternetConnection(final CloseableHttpClient client) {
         return checkInternetConnection(client) == OK_STATE;
     }
 
     public static boolean hasInternetConnection() {
         return checkInternetConnection() == OK_STATE;
-    }
+    }*/
 
 
     private static CloseableHttpClient getJavaDefaultProxyClient() {
-        return HttpClients.createSystem();
+        return HttpClientBuilder.create().useSystemProperties().setDefaultRequestConfig(DEFAULT_CONFIG).build();
     }
 
     private static CloseableHttpClient getNoProxyClient() {
-        return HttpClients.createDefault();
+        return HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).build();
     }
 
     private static CloseableHttpClient getSiriusProxyClient() {
@@ -166,13 +177,15 @@ public class ProxyManager {
         }
     }
 
+
+
     private static HttpClientBuilder getClientBuilderWithProxySettings(final String hostname, final int port, final String scheme) {
         return getClientBuilderWithProxySettings(hostname, port, scheme, null, null);
 
     }
 
     private static HttpClientBuilder getClientBuilderWithProxySettings(final String hostname, final int port, final String scheme, final String username, final String password) {
-        HttpClientBuilder clientBuilder = HttpClients.custom();
+        HttpClientBuilder clientBuilder = HttpClients.custom().setDefaultRequestConfig(DEFAULT_CONFIG);
         BasicCredentialsProvider clientCredentials = new BasicCredentialsProvider();
         clientBuilder.setDefaultCredentialsProvider(clientCredentials);
 

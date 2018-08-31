@@ -15,6 +15,7 @@ import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentList;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListView;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.FilterableExperimentListPanel;
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaList;
+import de.unijena.bioinf.sirius.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import org.slf4j.LoggerFactory;
@@ -79,6 +80,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     private DropTarget dropTarget;
 
+    public static final ConnectionMonitor CONECTION_MONITOR = new ConnectionMonitor();
+
 
     private MainFrame() {
         super(ApplicationCore.VERSION_STRING);
@@ -103,10 +106,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         toolbar = new SiriusToolbar();
 
-
-        //Init actions
-//        SiriusActionManager.initRootManager();
-
         final JPanel mainPanel = new JPanel(new BorderLayout());
 
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 1, 5, 1));
@@ -125,62 +124,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         mainPanel.add(resultsPanel, BorderLayout.CENTER);
         add(toolbar, BorderLayout.NORTH);
         setSize(new Dimension(1368, 1024));
-
-
-        //finger id observer
-        final SwingWorker w = new SwingWorker<VersionsInfo, Object>() {
-            @Override
-            protected VersionsInfo doInBackground() {
-                VersionsInfo versionsNumber = null;
-                try  {
-                    int errorState = WebAPI.INSTANCE.checkConnection();
-                    versionsNumber = WebAPI.INSTANCE.getVersionInfo();
-                    publish(versionsNumber, errorState);
-                    LoggerFactory.getLogger(getClass()).debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
-                } catch (Exception e) {
-                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-                }
-                return versionsNumber;
-            }
-
-            @Override
-            protected void process(List<Object> chunks) {
-                super.process(chunks);
-                final VersionsInfo versionsNumber = (VersionsInfo) chunks.get(0);
-                final int errorState = (int) chunks.get(1);
-
-                if (versionsNumber != null) {
-                    if (versionsNumber.expired()) {
-                        new UpdateDialog(MainFrame.this, versionsNumber);
-                    }
-                    if (!versionsNumber.outdated()) {
-                        csiFingerId.setEnabled(true);
-                    }
-                    if (versionsNumber.hasNews()) {
-                        new NewsDialog(MainFrame.this, versionsNumber.getNews());
-                    }
-                }
-
-                if (errorState != 0)
-                    new ConnectionDialog(MainFrame.this, errorState,null);
-            }
-
-            @Override
-            protected void done() {
-                super.done();
-            }
-        };
-
-        w.execute();
-
-
-        //this is just to not lost the exceptions
-        try {
-            w.get();
-        } catch (Exception e) {
-            LoggerFactory.getLogger(getClass()).error("Error during connection test", e);
-        }
-
 
         setVisible(true);
     }

@@ -2,11 +2,10 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
-import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.compute.AdductSelectionList;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.sirius.gui.utils.RelativeLayout;
 import de.unijena.bioinf.sirius.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
@@ -43,7 +42,11 @@ public class FingerIDComputationPanel extends JPanel {
             if (button) {
                 setLayout(new FlowLayout(FlowLayout.LEFT));
                 target = new JPanel();
-                csiButton = csiButton();
+                csiButton = new ToolbarToggleButton("CSI:FingerID", Icons.FINGER_32);
+                ;
+                MainFrame.CONECTION_MONITOR.addConectionStateListener(evt -> setCsiButtonEnabled(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck().isConnected()));
+                setCsiButtonEnabled(MainFrame.MF.getCsiFingerId().isEnabled());
+
                 csiButton.addActionListener(e -> {
                     setComponentsEnabled(csiButton.isSelected());
                     csiButton.setToolTipText((csiButton.isSelected() ? "Disable CSI:FingerID search" : "Enable CSI:FingerID search"));
@@ -79,17 +82,15 @@ public class FingerIDComputationPanel extends JPanel {
 
     }
 
-
-    private ToolbarToggleButton csiButton() {
-        ToolbarToggleButton b = new ToolbarToggleButton("CSI:FingerID", Icons.FINGER_32);
-        if (MainFrame.MF.getCsiFingerId().isEnabled() && ((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).getState().isConnected()) {
-            b.setToolTipText("Enable CSI:FingerID search");
-            b.setEnabled(true);
+    private void setCsiButtonEnabled(final boolean enabled) {
+        if (enabled) {
+            csiButton.setToolTipText("Enable CSI:FingerID search");
+            csiButton.setEnabled(true);
         } else {
-            b.setToolTipText("Can't connect to CSI:FingerID server!");
-            b.setEnabled(false);
+            csiButton.setToolTipText("Can't connect to CSI:FingerID server!");
+            csiButton.setEnabled(false);
+            csiButton.setSelected(false);
         }
-        return b;
     }
 
     public boolean isCSISelected() {

@@ -63,7 +63,7 @@ class SiriusToolbar extends JToolBar {
         settings = new ToolbarButton(SiriusActions.SHOW_SETTINGS.getInstance());
         add(settings);
 
-        connect = new ToolbarButton(SiriusActions.CHECK_CONNECTION_ALWAYS_SHOW.getInstance());
+        connect = new ToolbarButton(SiriusActions.CHECK_CONNECTION.getInstance());
         add(connect);
 
         bug = new ToolbarButton(SiriusActions.SHOW_BUGS.getInstance());

@@ -1,19 +1,19 @@
 package de.unijena.bioinf.sirius.gui.actions;
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.fingerid.net.WebAPI;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.ConnectionDialog;
-import de.unijena.bioinf.sirius.net.ProxyManager;
+import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.net.ConnectionMonitor;
 import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
@@ -22,105 +22,93 @@ import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
  */
 @ThreadSafe
 public class CheckConnectionAction extends AbstractAction {
-    public enum ConnectionState {
-        YES, WARN, NO;
 
-        public boolean isConnected() {
-            return ordinal() < ConnectionState.NO.ordinal();
-        }
-    }
 
-    private ConnectionState state = ConnectionState.YES;
+    private final AtomicBoolean execAction = new AtomicBoolean(false);
 
-    public CheckConnectionAction() {
-        this(true);
-    }
-
-    protected CheckConnectionAction(final boolean executeOnInit) {
+    protected CheckConnectionAction() {
         super("Webservice");
         putValue(Action.SHORT_DESCRIPTION, "Check and refresh webservice connection");
-        if (executeOnInit)
-            doAction(false);
+
+        MainFrame.CONECTION_MONITOR.addConectionStateListener(evt -> {
+            if (!execAction.get()) {
+                ConnectionMonitor.ConnetionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
+                setIcon(check);
+                new ConnectionDialog(MainFrame.MF, check.errorCode, check.workerInfo);
+            }
+        });
+
+        Jobs.runInBackround(() -> setIcon(MainFrame.CONECTION_MONITOR.checkConnection()));
     }
 
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        doAction(false);
-    }
+        execAction.set(true);
+        try {
+            ConnectionMonitor.ConnetionCheck r = checkConnectionAndLoad();
+            if (r != null) {
+                setIcon(r);
 
+                new ConnectionDialog(MainFrame.MF, r.errorCode, r.workerInfo);
 
-    protected void doAction(final boolean alwaysShowDialog) {
-        TinyBackgroundJJob<Integer> connectionChecker = new TinyBackgroundJJob<Integer>() {
-            @Override
-            protected Integer compute() throws Exception {
-                return WebAPI.INSTANCE.checkConnection();
             }
-        };
-        Jobs.runInBackroundAndLoad(MF, "Checking Connection to Webservice ", connectionChecker);
-
-        Integer connectionState = connectionChecker.getResult();
-        if (connectionState == null)
-            connectionState = WebAPI.MAX_STATE;
-
-
-        ConnectionState conState = ConnectionState.NO;
-        if (connectionState == ProxyManager.OK_STATE)
-            conState = ConnectionState.YES;
-
-        @Nullable WorkerList wl = null;
-        if (conState != ConnectionState.YES) {
-            setState(ConnectionState.NO);
-        } else {
-            wl = checkWorkerAvailability();
-            if (wl != null && wl.supportsAllPredictorTypes(PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors")))) {
-                setState(ConnectionState.YES);
-            } else {
-                setState(ConnectionState.WARN);
-            }
+        } catch (Exception e1) {
+            LoggerFactory.getLogger(getClass()).error("Error when checking connection by action");
+        } finally {
+            execAction.set(false);
         }
-
-        if (alwaysShowDialog || !conState.equals(state))
-            new ConnectionDialog(MF, connectionState, wl);
     }
 
-    public static @Nullable WorkerList checkWorkerAvailability() {
-        TinyBackgroundJJob<WorkerList> workerChecker = new TinyBackgroundJJob<WorkerList>() {
+
+    public static @Nullable ConnectionMonitor.ConnetionCheck checkConnectionAndLoad() {
+        TinyBackgroundJJob<ConnectionMonitor.ConnetionCheck> connectionChecker = new TinyBackgroundJJob<ConnectionMonitor.ConnetionCheck>() {
             @Override
-            protected WorkerList compute() throws Exception {
-                return WebAPI.INSTANCE.getWorkerInfo();
+            protected ConnectionMonitor.ConnetionCheck compute() throws Exception {
+                return MainFrame.CONECTION_MONITOR.checkConnection();
             }
         };
 
-        Jobs.runInBackroundAndLoad(MF, "Checking Available Workers", true, workerChecker);
-        return workerChecker.getResult();
+        Jobs.runInBackroundAndLoad(MF, "Checking Connection", true, connectionChecker);
+        return connectionChecker.getResult();
     }
 
-    public ConnectionState checkConnection() {
-        actionPerformed(null);
-        return getState();
+    public static boolean isConnectedAndLoad() {
+        ConnectionMonitor.ConnetionCheck r = checkConnectionAndLoad();
+        return r != null && r.isConnected();
     }
 
-    protected synchronized void setState(final ConnectionState state) {
-        ConnectionState old = this.state;
-        this.state = state;
+    public static boolean isNotConnectedAndLoad() {
+        return !isConnectedAndLoad();
+    }
 
-        switch (this.state) {
-            case YES:
-                putValue(Action.LARGE_ICON_KEY, Icons.NET_YES_32);
-                break;
-            case WARN:
-                putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN_32);
-                break;
-            case NO:
-                putValue(Action.LARGE_ICON_KEY, Icons.NET_NO_32);
-                break;
+    public static boolean hasWorkerWarningAndLoad() {
+        ConnectionMonitor.ConnetionCheck r = checkConnectionAndLoad();
+        return r == null || r.hasWorkerWarning();
+    }
+
+
+    public static @Nullable WorkerList checkWorkerAvailabilityLoad() {
+        ConnectionMonitor.ConnetionCheck r = checkConnectionAndLoad();
+        if (r == null)
+            return null;
+        return r.workerInfo;
+    }
+
+    protected synchronized void setIcon(final @Nullable ConnectionMonitor.ConnetionCheck check) {
+
+        if (check != null) {
+            switch (check.state) {
+                case YES:
+                    putValue(Action.LARGE_ICON_KEY, Icons.NET_YES_32);
+                    break;
+                case WARN:
+                    putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN_32);
+                    break;
+                case NO:
+                    putValue(Action.LARGE_ICON_KEY, Icons.NET_NO_32);
+                    break;
+            }
         }
-
-        firePropertyChange("net", old, state);
-    }
-
-    public ConnectionState getState() {
-        return state;
     }
 }

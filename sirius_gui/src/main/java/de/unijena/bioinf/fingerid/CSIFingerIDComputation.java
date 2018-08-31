@@ -16,6 +16,8 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
@@ -36,6 +38,12 @@ public class CSIFingerIDComputation {
     public CSIFingerIDComputation() {
         this.positiveMode = new CSIPredictor(PredictorType.CSI_FINGERID_POSITIVE);
         this.negativeMode = new CSIPredictor(PredictorType.CSI_FINGERID_NEGATIVE);
+        //listen to connection check
+        MainFrame.CONECTION_MONITOR.addConectionStateListener(evt -> {
+            ConnectionMonitor.ConnectionState value = (ConnectionMonitor.ConnectionState) evt.getNewValue();
+            setEnabled(value.equals(ConnectionMonitor.ConnectionState.YES));
+        });
+
         initialize();
     }
 
@@ -106,7 +114,7 @@ public class CSIFingerIDComputation {
         @Override
         protected Boolean compute() throws Exception {
             //wait if no connection is there
-            while (!WebAPI.canConnect()) {
+            while (MainFrame.CONECTION_MONITOR.checkConnection().isNotConnected()) {
                 Thread.sleep(5000);
                 checkForInterruption();
             }
@@ -382,7 +390,7 @@ public class CSIFingerIDComputation {
 
 
     /////////////////////////////////// API /////////////////////////////////
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    /*private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         pcs.addPropertyChangeListener(listener);
@@ -398,7 +406,7 @@ public class CSIFingerIDComputation {
 
     public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
         pcs.removePropertyChangeListener(propertyName, listener);
-    }
+    }*/
 
     private boolean enabled;
 
@@ -407,9 +415,9 @@ public class CSIFingerIDComputation {
     }
 
     public void setEnabled(boolean enabled) {
-        boolean old = this.enabled;
+//        boolean old = this.enabled;
         this.enabled = enabled;
-        pcs.firePropertyChange("enabled", old, this.enabled);
+//        pcs.firePropertyChange("enabled", old, this.enabled);
     }
 
     public CSIPredictor getPredictor(PrecursorIonType type) {

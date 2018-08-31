@@ -111,6 +111,8 @@ public class WebAPI implements Closeable {
         return true;
     }
 
+    //todo this function can cause a bug....
+    //maybe warn in settings
     public void reconnect() {
         if (client != null) {
             try {
@@ -137,23 +139,23 @@ public class WebAPI implements Closeable {
     public static final int MAX_STATE = 6;
 
     public int checkConnection() {
-        VersionsInfo v = getVersionInfo();
-        if (v == null) {
-            int error = ProxyManager.checkInternetConnection(client);
-            if (error > 0) return error;
-            else return 4;
-        } else if (v.outdated()) {
+        try {
+            VersionsInfo v = getVersionInfo();
+            if (v == null) {
+                int error = ProxyManager.checkInternetConnection(client);
+                if (error > 0) return error;
+                else return 4;
+            } else if (v.outdated()) {
+                return MAX_STATE;
+            } else if (checkFingerIDConnection()) {
+                return 0;
+            } else {
+                return 5;
+            }
+        } catch (Exception e) {
+            LOG.error("Error during connection check", e);
             return MAX_STATE;
-        } else if (checkFingerIDConnection()) {
-            return 0;
-        } else {
-            return 5;
         }
-    }
-
-
-    public static boolean canConnect() {
-        return WebAPI.INSTANCE.checkConnection() == ProxyManager.OK_STATE;
     }
 
     @Nullable
@@ -230,7 +232,6 @@ public class WebAPI implements Closeable {
         } catch (Exception e) {
             LOG.error("Unknown error when fetching WORKER information from webservice!", e);
         }
-
         return null;
     }
 
