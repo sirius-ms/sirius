@@ -369,7 +369,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } else return;
             spectrumType = SPECTRUM_TYPE.UNKNOWN;
             this.tic = 0;
-            this.retentionTime = 0d;
+//            this.retentionTime = 0d; //todo currently the retention time is a MsExperiment attribute, not a spectrum property
             this.currentEnergy = null;
             this.currentSpectrum = new SimpleMutableSpectrum();
         }
