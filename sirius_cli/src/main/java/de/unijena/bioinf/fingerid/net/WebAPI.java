@@ -93,43 +93,6 @@ public class WebAPI {
 
     private WebAPI() {/*prevent instantiation*/}
 
-    /*@Override
-    public void close() throws IOException {
-        LOG.info("Closing Web Connection");
-        client.close();
-    }*/
-
-    /*public boolean isConnected() {
-        if (client == null || checkConnection() == 0) {
-            LOG.warn("No Connection, try to reconnect");
-            reconnect();
-            return checkConnection() == 0;
-        }
-        return true;
-    }*/
-
-    //todo this function can cause a bug....
-    //maybe warn in settings
-    /*public void reconnect() {
-        if (client != null) {
-            try {
-                client.close();
-            } catch (IOException e) {
-                LOG.error("Could not close Existing connection!", e);
-            }
-        }
-        client = ProxyManager.getSirirusHttpClient();
-    }*/
-
-
-//    private boolean checkFingerIDConnection() {
-//        try(final RESTDatabase rdb = ){
-//            return rdb;
-//        } catch (IOException e) {
-//            LOG.error("Error when Checking rest DB connection");
-//        }
-//        return false;
-//    }
 
     //6 csi web api for this version is not reachable because it is outdated
     //5 csi web api for this version is not reachable
@@ -321,7 +284,7 @@ public class WebAPI {
         return false;
     }
 
-    double[] parseBinaryToDoubles(byte[] bytes) {
+    private double[] parseBinaryToDoubles(byte[] bytes) {
         final TDoubleArrayList data = new TDoubleArrayList(2000);
         final ByteBuffer buf = ByteBuffer.wrap(bytes);
         buf.order(ByteOrder.LITTLE_ENDIAN);
@@ -518,13 +481,13 @@ public class WebAPI {
             }
             response.close();
         }
-        return inchis.toArray(new InChI[inchis.size()]);
+        return inchis.toArray(new InChI[0]);
     }
 
 
     ////////////////////////////////////////
     //todo Helper methods, remove if not necessary anymore
-    public static CloseableHttpResponse getResponseHack(CloseableHttpClient client, PredictorType predictorType) throws IOException {
+    private static CloseableHttpResponse getResponseHack(CloseableHttpClient client, PredictorType predictorType) throws IOException {
         final HttpGet get;
         try {
             get = new HttpGet(buildVersionSpecificFingerIdWebapiURI("/trainingstructures.txt").setParameter("predictor", predictorType.toBitsAsString()).build());
@@ -535,7 +498,7 @@ public class WebAPI {
         return client.execute(get);
     }
 
-    public static String inchi2inchiKey(String inchi) {
+    private static String inchi2inchiKey(String inchi) {
         try {
             if (inchi == null) throw new NullPointerException("Given InChI is null");
             if (inchi.isEmpty()) throw new IllegalArgumentException("Empty string given as InChI");
@@ -549,7 +512,6 @@ public class WebAPI {
             throw new RuntimeException(e);
         }
     }
-
 
     ////////////////////////////////////////
 
