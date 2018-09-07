@@ -82,10 +82,8 @@ public class CSIPredictor {
 
 
     public void refreshCacheDir() throws IOException {
-//        try (final WebAPI webAPI = WebAPI.newInstance()) {
             VersionsInfo versionsInfo = WebAPI.INSTANCE.getVersionInfo();
             database = SearchableDatabases.makeCachedRestDB(versionsInfo, fpVersion);
             database.checkCache();
-//        }
     }
 }

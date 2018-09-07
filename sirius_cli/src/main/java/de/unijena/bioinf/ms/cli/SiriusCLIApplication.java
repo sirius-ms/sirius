@@ -4,6 +4,7 @@ import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.sirius.net.ProxyManager;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -11,7 +12,7 @@ import java.util.Arrays;
 
 public class SiriusCLIApplication {
     public static void main(String[] args) {
-        if (false){
+        if (false) {
             try {
                 final FingeridCLI<FingerIdOptions> cli = new FingeridCLI<>();
                 if (isZodiac(args)) {
@@ -37,11 +38,7 @@ public class SiriusCLIApplication {
             } catch (Exception e) {
                 LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unkown Error!", e);
             } finally {
-                try {
-                    WebAPI.INSTANCE.close();
-                } catch (IOException e) {
-                    FingeridCLI.DEFAULT_LOGGER.error("Error when closing Web connection from main Method",e);
-                }
+                ProxyManager.disconnect();
                 try {
                     JobManager.shutDownAllInstances();
                 } catch (InterruptedException e) {
@@ -51,17 +48,13 @@ public class SiriusCLIApplication {
             }
         } else {
             try {
-            CombinedCLI combinedCLI = new CombinedCLI();
-            combinedCLI.parseArgsAndInit(args);
-            combinedCLI.compute();
+                CombinedCLI combinedCLI = new CombinedCLI();
+                combinedCLI.parseArgsAndInit(args);
+                combinedCLI.compute();
             } catch (Exception e) {
                 LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unkown Error!", e);
             } finally {
-                try {
-                    WebAPI.INSTANCE.close();
-                } catch (IOException e) {
-                    FingeridCLI.DEFAULT_LOGGER.error("Error when closing Web connection from main Method",e);
-                }
+                ProxyManager.disconnect();
                 try {
                     JobManager.shutDownAllInstances();
                 } catch (InterruptedException e) {

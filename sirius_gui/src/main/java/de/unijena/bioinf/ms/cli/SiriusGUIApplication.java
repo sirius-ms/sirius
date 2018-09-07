@@ -11,10 +11,8 @@ import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.SwingJobManager;
-import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.sirius.gui.dialogs.ConnectionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.NewsDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.UpdateDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
@@ -22,11 +20,9 @@ import de.unijena.bioinf.sirius.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
 import de.unijena.bioinf.sirius.net.ProxyManager;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -59,11 +55,7 @@ public class SiriusGUIApplication {
                         FingeridCLI.DEFAULT_LOGGER.info("Saving properties file before termination.");
                         SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
                     } finally {
-                        try {
-                            WebAPI.INSTANCE.close();
-                        } catch (IOException e) {
-                            FingeridCLI.DEFAULT_LOGGER.error("Error when closing Web connection from main Method", e);
-                        }
+                        ProxyManager.disconnect();
                         try {
                             MainFrame.CONECTION_MONITOR.close();
                             Jobs.cancelALL();//cancel all instances to quit
