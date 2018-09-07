@@ -16,8 +16,8 @@ import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.TrainingStructuresPerPredictor;
 import de.unijena.bioinf.fingerid.TrainingStructuresSet;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.CachedRESTDB;
+import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.net.PredictionJJob;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
@@ -28,6 +28,7 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -168,7 +169,8 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
                 while (iter.hasNext()) {
                     final IdentificationResult ir = iter.next();
                     if (ir.getBeautifulTree().numberOfVertices() < 3) {
-                        progressInfo("Ignore " + ir.getMolecularFormula() + " because the tree contains less than 3 vertices");
+                        LoggerFactory.getLogger(FingerIDJJob.class).warn("Ignore fragmentation tree for " + ir.getMolecularFormula() + " because it contains less than 3 vertices.");
+                        //progressInfo("Ignore " + ir.getMolecularFormula() + " because the tree contains less than 3 vertices");
                         iter.remove();
                     }
                 }
