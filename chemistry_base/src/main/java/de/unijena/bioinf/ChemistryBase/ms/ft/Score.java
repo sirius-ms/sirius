@@ -52,6 +52,7 @@ public class Score extends AbstractMap<String, Double> {
                 values[i] = value; return;
             }
         }
+        throw new IndexOutOfBoundsException("No key '" + key + "' in scorer.");
     }
 
     @Override

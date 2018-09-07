@@ -116,6 +116,15 @@ public class ProcessedInput implements Cloneable {
         return p;
     }
 
+
+    // we have to do this smarter -_-
+    public ProcessedInput cloneForBeautification() {
+        final ProcessedInput p = clone();
+        p.annotations = (HashMap<Class, Object>) annotations.clone();
+        p.setAnnotation(Scoring.class,getAnnotation(Scoring.class, new Scoring()).clone());
+        return p;
+    }
+
     @Override
     public ProcessedInput clone() {
         try {

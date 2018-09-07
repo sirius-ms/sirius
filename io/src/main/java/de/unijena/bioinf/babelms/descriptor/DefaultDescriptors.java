@@ -23,7 +23,8 @@ class DefaultDescriptors {
         registry.put(FTree.class, RecalibrationFunction.class, new RecalibrationFunctionDescriptor());
         registry.put(FTree.class, Smiles.class, new SmilesDescriptor());
         registry.put(FTree.class, TreeScoring.class, new TreeScoringDescriptor());
-        registry.put(Fragment.class, Ms2IsotopePattern.class, new IsotopePatternDescriptor());
+        registry.put(Fragment.class, Ms2IsotopePattern.class, new Ms2IsotopePatternDescriptor());
+        registry.put(Fragment.class, Ms1IsotopePattern.class, new Ms1IsotopePatternDescriptor());
         registry.put(Fragment.class, Peak.class, new PeakDescriptor());
         registry.put(Fragment.class, AnnotatedPeak.class, new AnnotatedPeakDescriptor());
         registry.put(Fragment.class, Score.class, new ScoreDescriptor());
@@ -178,11 +179,11 @@ class DefaultDescriptors {
         }
     }
 
-    private static class IsotopePatternDescriptor implements Descriptor<Ms2IsotopePattern> {
+    private static class Ms2IsotopePatternDescriptor implements Descriptor<Ms2IsotopePattern> {
 
         @Override
         public String[] getKeywords() {
-            return new String[]{"isotopes"};
+            return new String[]{"fragmentIsotopes"};
         }
 
         @Override
@@ -193,7 +194,7 @@ class DefaultDescriptors {
         @Override
         public <G, D, L> Ms2IsotopePattern read(DataDocument<G, D, L> document, D dictionary) {
             final List<Peak> peaks = new ArrayList<>();
-            final D isotopes = document.getDictionaryFromDictionary(dictionary, "isotopes");
+            final D isotopes = document.getDictionaryFromDictionary(dictionary, "fragmentIsotopes");
             final L mzs = document.getListFromDictionary(isotopes, "mz"), ints = document.getListFromDictionary(isotopes, "relInt");
             if (mzs==null || ints==null) return null;
             for (int k=0, n=Math.min(document.sizeOfList(mzs), document.sizeOfList(ints)); k < n; ++k) {
@@ -206,6 +207,48 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, Ms2IsotopePattern annotation) {
+            final D isotopes = document.newDictionary();
+            final L mzs = document.newList(), ints = document.newList();
+            final Peak[] peaks = annotation.getPeaks();
+            for (Peak p : peaks) {
+                document.addToList(mzs, p.getMass());
+                document.addToList(ints, p.getIntensity());
+            }
+            document.addDictionaryToDictionary(dictionary, "fragmentIsotopes", isotopes);
+            document.addToDictionary(isotopes, "score", annotation.getScore());
+            document.addListToDictionary(isotopes, "mz", mzs);
+            document.addListToDictionary(isotopes, "relInt", ints);
+        }
+    }
+
+    private static class Ms1IsotopePatternDescriptor implements Descriptor<Ms1IsotopePattern> {
+
+        @Override
+        public String[] getKeywords() {
+            return new String[]{"isotopes"};
+        }
+
+        @Override
+        public Class<Ms1IsotopePattern> getAnnotationClass() {
+            return Ms1IsotopePattern.class;
+        }
+
+        @Override
+        public <G, D, L> Ms1IsotopePattern read(DataDocument<G, D, L> document, D dictionary) {
+            final List<Peak> peaks = new ArrayList<>();
+            final D isotopes = document.getDictionaryFromDictionary(dictionary, "isotopes");
+            final L mzs = document.getListFromDictionary(isotopes, "mz"), ints = document.getListFromDictionary(isotopes, "relInt");
+            if (mzs==null || ints==null) return null;
+            for (int k=0, n=Math.min(document.sizeOfList(mzs), document.sizeOfList(ints)); k < n; ++k) {
+                peaks.add(new Peak(document.getDoubleFromList(mzs, k), document.getDoubleFromList(ints, k)));
+            }
+
+            double score = document.hasKeyInDictionary(isotopes, "score") ? document.getDoubleFromDictionary(isotopes, "score") : 0d;
+            return new Ms1IsotopePattern(peaks.toArray(new Peak[peaks.size()]), score);
+        }
+
+        @Override
+        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, Ms1IsotopePattern annotation) {
             final D isotopes = document.newDictionary();
             final L mzs = document.newList(), ints = document.newList();
             final Peak[] peaks = annotation.getPeaks();

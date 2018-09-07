@@ -29,6 +29,9 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
  */
 public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
 
+    public boolean LOGODDS = true;
+
+
 
     public static void main(String[] args) {
         final double sigmaA = 0.02, sigmaR = 0.08;
@@ -82,23 +85,31 @@ public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
             measuredSpectrum = Spectrums.getNormalizedSpectrum(measuredSpectrum, Normalization.Max(1));
             theoreticalSpectrum = Spectrums.getNormalizedSpectrum(theoreticalSpectrum, Normalization.Max(1));
         }
-        /*
+
         double score = 0d;
         for (int i = 1; i < Math.min(measuredSpectrum.size(), theoreticalSpectrum.size()); ++i) {
             final double measuredIntensity = measuredSpectrum.getIntensityAt(i);
             final double theoreticalIntensity = theoreticalSpectrum.getIntensityAt(i);
-            final double delta = measuredIntensity - theoreticalIntensity;
-            final double deltaZero = (sigmaR * sigmaR * delta * theoreticalIntensity) / (sigmaA * sigmaA +
-                    sigmaR * sigmaR * theoreticalIntensity * theoreticalIntensity);
-            final double epsilon = delta - deltaZero * theoreticalIntensity;
-            final double probDelta = (1 / (SQRT2PI * sigmaR)) * (Math.pow(Math.E, ((deltaZero) * (deltaZero) / (-2 * sigmaR *
-                    sigmaR))));
-            final double probEpsilon = (1 / (SQRT2PI * sigmaA)) * (Math.pow(Math.E, (epsilon * epsilon / (-2 * sigmaA * sigmaA))));
-            final double probability = probDelta * probEpsilon;
-            score += Math.log(probability);
+            final double delta = measuredIntensity-theoreticalIntensity;
+
+            final double peakPropbability = Math.exp(-(delta*delta)/(2*(sigmaA*sigmaA + measuredIntensity*measuredIntensity*sigmaR*sigmaR)))/(2*Math.PI*measuredIntensity*sigmaR*sigmaR);
+
+            score += Math.log(peakPropbability);
+
+            if (LOGODDS) {
+                final double sigma = measuredIntensity*2*sigmaR + 2*sigmaA;
+                score -= Math.log(Math.exp(-(sigma*sigma)/(2*(sigmaA*sigmaA + measuredIntensity*measuredIntensity*sigmaR*sigmaR)))/(2*Math.PI*measuredIntensity*sigmaR*sigmaR));
+            }
+
             scores[i] += score;
         }
-        */
+    }
+
+    public void score2(double[] scores, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment, MeasurementProfile profile) {
+        if (usedNormalization.getBase() != 1 || usedNormalization.getMode() != NormalizationMode.MAX) {
+            measuredSpectrum = Spectrums.getNormalizedSpectrum(measuredSpectrum, Normalization.Max(1));
+            theoreticalSpectrum = Spectrums.getNormalizedSpectrum(theoreticalSpectrum, Normalization.Max(1));
+        }
 
         double score = 0d;
         for (int i = 1; i < Math.min(measuredSpectrum.size(), theoreticalSpectrum.size()); ++i) {
@@ -110,7 +121,7 @@ public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
 
             score += Math.log(peakPropbability);
 
-            {
+            if (LOGODDS) {
                 final double sigma = theoreticalIntensity*2*sigmaR + 2*sigmaA;
                 score -= Math.log(Math.exp(-(sigma*sigma)/(2*(sigmaA*sigmaA + theoreticalIntensity*theoreticalIntensity*sigmaR*sigmaR)))/(2*Math.PI*theoreticalIntensity*sigmaR*sigmaR));
             }
