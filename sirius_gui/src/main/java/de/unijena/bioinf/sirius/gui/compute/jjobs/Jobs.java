@@ -18,9 +18,7 @@ public class Jobs {
 
     private static final HashMap<String, Sirius> siriusPerProfile = new HashMap<>();
 
-    private Jobs() {
-
-    }
+    private Jobs() {/*prevent instantiation*/}
 
     public static <JJ extends GuiObservableJJob> JJ submit(final JJ j) {
         submit(j.asSwingJob());
@@ -32,50 +30,17 @@ public class Jobs {
         return j;
     }
 
-
-   /* public static PrepareSiriusIdentificationInputJob runPrepareSiriusIdentification(ExperimentContainer ec, String profile, double ppm, boolean onlyOrganic, SearchableDatabase db, final FormulaConstraints constraints, final List<Element> elementsToAutoDetect, PossibleIonModes possibleIonModes, PossibleAdducts possibleAdducts) {
-        PrepareSiriusIdentificationInputJob j = new PrepareSiriusIdentificationInputJob(ec, profile, ppm, onlyOrganic, db, constraints, elementsToAutoDetect, possibleIonModes, possibleAdducts);
-        submit(j);
-        return j;
-    }
-
-    public static SiriusIdentificationGuiJob runSiriusIdentification(String profile, double ppm, int numberOfCandidates, FormulaConstraints constraints, boolean onlyOrganic, SearchableDatabase db, ExperimentContainer ec) {
-        SiriusIdentificationGuiJob j = new SiriusIdentificationGuiJob(profile, ppm, numberOfCandidates, constraints, onlyOrganic, db, ec);
-        submit(j);
-        return j;
-    }
-
-    public static FingerIDSearchGuiJob runFingerIDSearch(SearchableDatabase fingerIDDB, ExperimentContainer ec) {
-        FingerIDSearchGuiJob j = new FingerIDSearchGuiJob(fingerIDDB, ec);
-        return submit(j);
-    }
-
-    public static FingerIDSearchGuiJob runFingerIDSearch(SearchableDatabase fingerIDDB, SiriusIdentificationGuiJob required) {
-        FingerIDSearchGuiJob j = new FingerIDSearchGuiJob(fingerIDDB, required);
-        return submit(j);
-    }*/
-
-
     public static Sirius getSiriusByProfile(String profile) {
         checkProfile(profile);
         return siriusPerProfile.get(profile);
     }
 
     public static TinyBackgroundJJob runInBackround(final Runnable task) {
-        final TinyBackgroundJJob t = new TinyBackgroundJJob() {
-            @Override
-            protected Object compute() {
-                task.run();
-                return true;
-            }
-        };
-        MANAGER.submitJob(t);
-        return t;
+        return SiriusJobs.runInBackround(task);
     }
 
     public static TinyBackgroundJJob runInBackround(TinyBackgroundJJob task) {
-        MANAGER.submitJob(task);
-        return task;
+        return SiriusJobs.runInBackround(task);
     }
 
     public static LoadingBackroundTask runInBackroundAndLoad(final Dialog owner, final Runnable task) {

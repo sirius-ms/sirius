@@ -2,20 +2,35 @@ package de.unijena.bioinf.sirius.net;
 
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
+import org.apache.http.params.HttpParams;
+import org.apache.http.protocol.HttpContext;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -116,7 +131,7 @@ public class ProxyManager {
     //1 no connection to bioinf web site
     //2 no connection to uni jena
     //3 no connection to internet (google/microft/ubuntu????)
-    public static int checkInternetConnection(final CloseableHttpClient client) {
+    public static int checkInternetConnection(final HttpClient client) {
         if (!checkBioinf(client)) {
             if (!checkJena(client)) {
                 if (!checkExternal(client)) {
@@ -178,7 +193,6 @@ public class ProxyManager {
     }
 
 
-
     private static HttpClientBuilder getClientBuilderWithProxySettings(final String hostname, final int port, final String scheme) {
         return getClientBuilderWithProxySettings(hostname, port, scheme, null, null);
 
@@ -204,6 +218,39 @@ public class ProxyManager {
         return clientBuilder;
     }
 
+    public static boolean checkExternal(HttpClient proxy) {
+        return checkConnectionToUrl(proxy, "http://www.google.de");
+    }
+
+    public static boolean checkJena(HttpClient proxy) {
+        return checkConnectionToUrl(proxy, "http://www.uni-jena.de");
+    }
+
+    public static boolean checkBioinf(HttpClient proxy) {
+        return checkConnectionToUrl(proxy, "https://bio.informatik.uni-jena.de");
+    }
+
+    public static boolean checkConnectionToUrl(final HttpClient proxy, String url) {
+        try {
+            HttpResponse response = proxy.execute(new HttpHead(url));
+            int code = response.getStatusLine().getStatusCode();
+            LoggerFactory.getLogger(ProxyManager.class).debug("Testing internet connection");
+            LoggerFactory.getLogger(ProxyManager.class).debug("Try to connect to: " + url);
+
+            LoggerFactory.getLogger(ProxyManager.class).debug("Response Code: " + code);
+
+            LoggerFactory.getLogger(ProxyManager.class).debug("Response Message: " + response.getStatusLine().getReasonPhrase());
+            LoggerFactory.getLogger(ProxyManager.class).debug("Protocol Version: " + response.getStatusLine().getProtocolVersion());
+            if (code != HttpURLConnection.HTTP_OK) {
+                LoggerFactory.getLogger(ProxyManager.class).warn("Error Response code: " + response.getStatusLine().getReasonPhrase() + " " + code);
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            LoggerFactory.getLogger(ProxyManager.class).warn("Connection error", e);
+        }
+        return false;
+    }
 
     /*public static void main(String[] args) {
         String versionString = ApplicationCore.VERSION_STRING;
@@ -228,38 +275,141 @@ public class ProxyManager {
         }
     }*/
 
-    public static boolean checkExternal(CloseableHttpClient proxy) {
-        return checkConnectionToUrl(proxy, "http://www.google.de");
-    }
-
-    public static boolean checkJena(CloseableHttpClient proxy) {
-        return checkConnectionToUrl(proxy, "http://www.uni-jena.de");
-    }
-
-    public static boolean checkBioinf(CloseableHttpClient proxy) {
-        return checkConnectionToUrl(proxy, "https://bio.informatik.uni-jena.de");
-    }
-
-    public static boolean checkConnectionToUrl(final CloseableHttpClient proxy, String url) {
-        try {
-            HttpResponse response = proxy.execute(new HttpHead(url));
-            int code = response.getStatusLine().getStatusCode();
-            LoggerFactory.getLogger(ProxyManager.class).debug("Testing internet connection");
-            LoggerFactory.getLogger(ProxyManager.class).debug("Try to connect to: " + url);
-
-            LoggerFactory.getLogger(ProxyManager.class).debug("Response Code: " + code);
-
-            LoggerFactory.getLogger(ProxyManager.class).debug("Response Message: " + response.getStatusLine().getReasonPhrase());
-            LoggerFactory.getLogger(ProxyManager.class).debug("Protocol Version: " + response.getStatusLine().getProtocolVersion());
-            if (code != HttpURLConnection.HTTP_OK) {
-                LoggerFactory.getLogger(ProxyManager.class).warn("Error Response code: " + response.getStatusLine().getReasonPhrase() + " " + code);
-                return false;
+    //region HTTPClientManagement
+    public static void disconnect() {
+        closingContainers.add(clientContainer);
+        Iterator<GentlyHttpClientCloser> iterator = closingContainers.iterator();
+        while (iterator.hasNext()) {
+            try {
+                LoggerFactory.getLogger(ProxyManager.class).info("Closing open http connection before shutdown");
+                iterator.next().client.close();
+            } catch (IOException e) {
+                LoggerFactory.getLogger(PropertyManager.class).error("Error when closing HTTP connection", e);
             }
-            return true;
-        } catch (Exception e) {
-            LoggerFactory.getLogger(ProxyManager.class).warn("Connection error", e);
+
         }
-        return false;
     }
 
+    public static void reconnect() {
+        final GentlyHttpClientCloser old = clientContainer;
+        synchronized (old.clientUsers) {
+            clientContainer = new GentlyHttpClientCloser(getSirirusHttpClient());
+            old.closeMe.set(true);
+            closingContainers.add(old);
+        }
+    }
+
+    public static LockedClosableHttpClient client() {
+        return new LockedClosableHttpClient(clientContainer);
+    }
+
+    private static final Set<GentlyHttpClientCloser> closingContainers = Collections.newSetFromMap(new ConcurrentHashMap());
+    private static GentlyHttpClientCloser clientContainer = new GentlyHttpClientCloser(getSirirusHttpClient());
+
+    private static class GentlyHttpClientCloser {
+        private final AtomicBoolean closeMe = new AtomicBoolean(false);
+        private final AtomicInteger clientUsers = new AtomicInteger(0);
+        private final CloseableHttpClient client;
+
+        private GentlyHttpClientCloser(final CloseableHttpClient client) {
+            this.client = client;
+        }
+
+
+        private void close() throws IOException {
+            synchronized (clientUsers) {
+                if (closeMe.get() && clientUsers.get() == 0) {
+                    client.close();
+                    closingContainers.remove(this);
+                }
+            }
+        }
+    }
+
+    public static class LockedClosableHttpClient extends CloseableHttpClient implements/* HttpClient, Closeable,*/ AutoCloseable {
+        private final GentlyHttpClientCloser clientContainer;
+        private final AtomicBoolean closed = new AtomicBoolean(false);
+
+        private LockedClosableHttpClient(final GentlyHttpClientCloser clientCon) {
+            this.clientContainer = clientCon;
+            synchronized (clientContainer.clientUsers) {
+                if (clientContainer.closeMe.get()) {
+                    throw new RuntimeException("Client has been already stated for closing");
+                }
+                clientContainer.clientUsers.incrementAndGet();
+            }
+        }
+
+        @Override
+        protected CloseableHttpResponse doExecute(HttpHost target, HttpRequest request, HttpContext context) throws IOException, ClientProtocolException {
+            throw new RuntimeException("Method not Implemented because of delegation from wrapped http client");
+        }
+
+        @Override
+        public CloseableHttpResponse execute(HttpHost target, HttpRequest request, HttpContext context) throws IOException, ClientProtocolException {
+            return clientContainer.client.execute(target, request, context);
+        }
+
+        @Override
+        public CloseableHttpResponse execute(HttpUriRequest request, HttpContext context) throws IOException, ClientProtocolException {
+            return clientContainer.client.execute(request, context);
+        }
+
+        @Override
+        public CloseableHttpResponse execute(HttpUriRequest request) throws IOException, ClientProtocolException {
+            return clientContainer.client.execute(request);
+        }
+
+        @Override
+        public CloseableHttpResponse execute(HttpHost target, HttpRequest request) throws IOException, ClientProtocolException {
+            return clientContainer.client.execute(target, request);
+        }
+
+        @Override
+        public <T> T execute(HttpUriRequest request, ResponseHandler<? extends T> responseHandler) throws IOException, ClientProtocolException {
+            return clientContainer.client.execute(request, responseHandler);
+        }
+
+        @Override
+        public <T> T execute(HttpUriRequest request, ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException, ClientProtocolException {
+            return clientContainer.client.execute(request, responseHandler, context);
+        }
+
+        @Override
+        public <T> T execute(HttpHost target, HttpRequest request, ResponseHandler<? extends T> responseHandler) throws IOException, ClientProtocolException {
+            return clientContainer.client.execute(target, request, responseHandler);
+        }
+
+        @Override
+        public <T> T execute(HttpHost target, HttpRequest request, ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException, ClientProtocolException {
+            return clientContainer.client.execute(target, request, responseHandler, context);
+        }
+
+        @Override
+        @Deprecated
+        public HttpParams getParams() {
+            return clientContainer.client.getParams();
+        }
+
+        @Override
+        @Deprecated
+        public ClientConnectionManager getConnectionManager() {
+            return clientContainer.client.getConnectionManager();
+        }
+
+        @Override
+        public void close() {
+            if (!closed.getAndSet(true)) {
+                synchronized (clientContainer.clientUsers) {
+                    clientContainer.clientUsers.decrementAndGet();
+                    try {
+                        clientContainer.close();
+                    } catch (IOException e) {
+                        LoggerFactory.getLogger(PropertyManager.class).error("Error while HTTP container closing attempt!", e);
+                    }
+                }
+            }
+        }
+    }
+    //endregion
 }

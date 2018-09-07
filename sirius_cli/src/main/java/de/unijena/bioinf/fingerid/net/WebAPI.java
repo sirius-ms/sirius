@@ -83,37 +83,34 @@ import java.util.concurrent.Future;
  */
 
 @ThreadSafe
-public class WebAPI implements Closeable {
+public class WebAPI {
     private static final BasicNameValuePair UID = new BasicNameValuePair("uid", SystemInformation.generateSystemKey());
     private static final Logger LOG = LoggerFactory.getLogger(WebAPI.class);
 
     // Singelton instance for the sirius_frontend
     public static final WebAPI INSTANCE = new WebAPI();
 
-    private CloseableHttpClient client;
 
-    private WebAPI() {
-        client = ProxyManager.getSirirusHttpClient();
-    }
+    private WebAPI() {/*prevent instantiation*/}
 
-    @Override
+    /*@Override
     public void close() throws IOException {
         LOG.info("Closing Web Connection");
         client.close();
-    }
+    }*/
 
-    public boolean isConnected() {
+    /*public boolean isConnected() {
         if (client == null || checkConnection() == 0) {
             LOG.warn("No Connection, try to reconnect");
             reconnect();
             return checkConnection() == 0;
         }
         return true;
-    }
+    }*/
 
     //todo this function can cause a bug....
     //maybe warn in settings
-    public void reconnect() {
+    /*public void reconnect() {
         if (client != null) {
             try {
                 client.close();
@@ -122,12 +119,17 @@ public class WebAPI implements Closeable {
             }
         }
         client = ProxyManager.getSirirusHttpClient();
-    }
+    }*/
 
 
-    private boolean checkFingerIDConnection() {
-        return getRESTDb(BioFilter.ALL, null).testConnection();
-    }
+//    private boolean checkFingerIDConnection() {
+//        try(final RESTDatabase rdb = ){
+//            return rdb;
+//        } catch (IOException e) {
+//            LOG.error("Error when Checking rest DB connection");
+//        }
+//        return false;
+//    }
 
     //6 csi web api for this version is not reachable because it is outdated
     //5 csi web api for this version is not reachable
@@ -139,15 +141,15 @@ public class WebAPI implements Closeable {
     public static final int MAX_STATE = 6;
 
     public int checkConnection() {
-        try {
-            VersionsInfo v = getVersionInfo();
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            VersionsInfo v = getVersionInfo(client);
             if (v == null) {
                 int error = ProxyManager.checkInternetConnection(client);
                 if (error > 0) return error;
                 else return 4;
             } else if (v.outdated()) {
                 return MAX_STATE;
-            } else if (checkFingerIDConnection()) {
+            } else if (getRESTDb(BioFilter.ALL, null, client).testConnection()) {
                 return 0;
             } else {
                 return 5;
@@ -160,12 +162,24 @@ public class WebAPI implements Closeable {
 
     @Nullable
     public VersionsInfo getVersionInfo() {
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            return getVersionInfo(client);
+        }
+    }
+
+    @Nullable
+    private VersionsInfo getVersionInfo(final ProxyManager.LockedClosableHttpClient client) {
         VersionsInfo v = null;
+
         try {
-            v = getVersionInfo(new HttpGet(buildVersionLessFingerIdWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build()));
+            v = getVersionInfo(new HttpGet(buildVersionLessFingerIdWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build())
+                    , client
+            );
             if (v == null) {
                 LOG.warn("Could not reach fingerid root url for version verification. Try to reach version specific url");
-                v = getVersionInfo(new HttpGet(buildVersionSpecificFingerIdWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build()));
+                v = getVersionInfo(new HttpGet(buildVersionSpecificFingerIdWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build())
+                        , client
+                );
             }
         } catch (URISyntaxException e) {
             LOG.error(e.getMessage(), e);
@@ -176,16 +190,17 @@ public class WebAPI implements Closeable {
     }
 
     @Nullable
-    private VersionsInfo getVersionInfo(final HttpGet get) {
+    private VersionsInfo getVersionInfo(final HttpGet get, final ProxyManager.LockedClosableHttpClient client) {
         final int timeoutInSeconds = 8000;
         get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+//        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
         try (CloseableHttpResponse response = client.execute(get)) {
             try (final JsonReader r = Json.createReader(new InputStreamReader(response.getEntity().getContent()))) {
                 JsonObject o = r.readObject();
                 JsonObject gui = o.getJsonObject("SIRIUS GUI");
 
                 final String version = gui.getString("version");
-//                    final String date = gui.getString("date");
+                //                    final String date = gui.getString("date");
                 String database = o.getJsonObject("database").getString("version");
 
                 boolean expired = true;
@@ -213,6 +228,7 @@ public class WebAPI implements Closeable {
         } catch (Exception e) {
             LOG.error("Unknown error when fetching VERSION information from webservice!", e);
         }
+//        }
         return null;
     }
 
@@ -222,10 +238,12 @@ public class WebAPI implements Closeable {
             HttpGet get = new HttpGet(buildVersionSpecificFingerIdWebapiURI(WEBAPI_WORKER_JSON).build());
             final int timeoutInSeconds = 8000;
             get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
-            try (CloseableHttpResponse response = client.execute(get)) {
-                return new Gson().fromJson(new InputStreamReader(response.getEntity().getContent()), WorkerList.class);
-            } catch (IOException e) {
-                LOG.error(e.getMessage(), e);
+            try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+                try (CloseableHttpResponse response = client.execute(get)) {
+                    return new Gson().fromJson(new InputStreamReader(response.getEntity().getContent()), WorkerList.class);
+                } catch (IOException e) {
+                    LOG.error(e.getMessage(), e);
+                }
             }
         } catch (URISyntaxException e) {
             LOG.error(e.getMessage(), e);
@@ -235,8 +253,7 @@ public class WebAPI implements Closeable {
         return null;
     }
 
-
-    public RESTDatabase getRESTDb(BioFilter bioFilter, File cacheDir) {
+    private RESTDatabase getRESTDb(BioFilter bioFilter, File cacheDir, final ProxyManager.LockedClosableHttpClient client) {
         URI host = null;
         try {
             host = getFingerIdBaseURI(null, true).build();
@@ -246,19 +263,25 @@ public class WebAPI implements Closeable {
         return new RESTDatabase(cacheDir, bioFilter, host, client);
     }
 
+    public RESTDatabase getRESTDb(BioFilter bioFilter, File cacheDir) {
+        return getRESTDb(bioFilter, cacheDir, ProxyManager.client());
+    }
+
     public boolean deleteJobOnServer(FingerIdJob job) throws URISyntaxException {
         final HttpGet get = new HttpGet(buildVersionSpecificFingerIdWebapiURI("/delete-job").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
         int reponsecode = Integer.MIN_VALUE;
         String responseReason = null;
-        try (CloseableHttpResponse response = client.execute(get)) {
-            reponsecode = response.getStatusLine().getStatusCode();
-            responseReason = response.getStatusLine().getReasonPhrase();
-            if (reponsecode == 200) {
-                return true;
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            try (CloseableHttpResponse response = client.execute(get)) {
+                reponsecode = response.getStatusLine().getStatusCode();
+                responseReason = response.getStatusLine().getReasonPhrase();
+                if (reponsecode == 200) {
+                    return true;
+                }
+                LOG.error("Could not delete Job! Response Code: " + reponsecode + "Reason: " + response.getStatusLine().getReasonPhrase());
+            } catch (Throwable t) {
+                LOG.error("Error when doing job deletion request " + job.jobId + " Response error code: " + reponsecode + " - Reason: " + responseReason, t);
             }
-            LOG.error("Could not delete Job! Response Code: " + reponsecode + "Reason: " + response.getStatusLine().getReasonPhrase());
-        } catch (Throwable t) {
-            LOG.error("Error when doing job deletion request " + job.jobId + " Response error code: " + reponsecode + " - Reason: " + responseReason, t);
         }
         return false;
     }
@@ -267,31 +290,33 @@ public class WebAPI implements Closeable {
         final HttpGet get = new HttpGet(buildVersionSpecificFingerIdWebapiURI("/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
         int reponsecode = Integer.MIN_VALUE;
         String responseReason = null;
-        try (CloseableHttpResponse response = client.execute(get)) {
-            reponsecode = response.getStatusLine().getStatusCode();
-            responseReason = response.getStatusLine().getReasonPhrase();
-            try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
-                final JsonObject obj = json.readObject();
-                if (obj.containsKey("prediction")) {
-                    final byte[] plattBytes = Base64.decode(obj.getString("prediction"));
-                    final double[] platts = parseBinaryToDoubles(plattBytes);
-                    job.prediction = new ProbabilityFingerprint(job.version, platts);
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            try (CloseableHttpResponse response = client.execute(get)) {
+                reponsecode = response.getStatusLine().getStatusCode();
+                responseReason = response.getStatusLine().getReasonPhrase();
+                try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
+                    final JsonObject obj = json.readObject();
+                    if (obj.containsKey("prediction")) {
+                        final byte[] plattBytes = Base64.decode(obj.getString("prediction"));
+                        final double[] platts = parseBinaryToDoubles(plattBytes);
+                        job.prediction = new ProbabilityFingerprint(job.version, platts);
 
-                    if (obj.containsKey("iokrVector")) {
-                        final byte[] iokrBytes = Base64.decode(obj.getString("iokrVector"));
-                        job.iokrVerctor = parseBinaryToDoubles(iokrBytes);
+                        if (obj.containsKey("iokrVector")) {
+                            final byte[] iokrBytes = Base64.decode(obj.getString("iokrVector"));
+                            job.iokrVerctor = parseBinaryToDoubles(iokrBytes);
+                        }
+
+                        return true;
+                    } else {
+                        job.state = obj.containsKey("state") ? obj.getString("state") : "SUBMITTED";
                     }
-
-                    return true;
-                } else {
-                    job.state = obj.containsKey("state") ? obj.getString("state") : "SUBMITTED";
+                    if (obj.containsKey("errors")) {
+                        job.errorMessage = obj.getString("errors");
+                    }
                 }
-                if (obj.containsKey("errors")) {
-                    job.errorMessage = obj.getString("errors");
-                }
+            } catch (Throwable t) {
+                LOG.error("Error when updating job #" + job.jobId + " Response error code: " + reponsecode + " - Reason: " + responseReason, t);
             }
-        } catch (Throwable t) {
-            LOG.error("Error when updating job #" + job.jobId + " Response error code: " + reponsecode + " - Reason: " + responseReason, t);
         }
         return false;
     }
@@ -339,22 +364,24 @@ public class WebAPI implements Closeable {
         // SUBMIT JOB
         int status = Integer.MIN_VALUE;
         String reason = null;
-        try (CloseableHttpResponse response = client.execute(post)) {
-            status = response.getStatusLine().getStatusCode();
-            reason = response.getStatusLine().getReasonPhrase();
-            if (response.getStatusLine().getStatusCode() == 200) {
-                try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
-                    final JsonObject obj = json.readObject();
-                    securityToken = obj.getString("securityToken");
-                    jobId = obj.getInt("jobId");
-                    return new FingerIdJob(jobId, securityToken, version);
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            try (CloseableHttpResponse response = client.execute(post)) {
+                status = response.getStatusLine().getStatusCode();
+                reason = response.getStatusLine().getReasonPhrase();
+                if (response.getStatusLine().getStatusCode() == 200) {
+                    try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
+                        final JsonObject obj = json.readObject();
+                        securityToken = obj.getString("securityToken");
+                        jobId = obj.getInt("jobId");
+                        return new FingerIdJob(jobId, securityToken, version);
+                    }
                 }
+                throw new HttpResponseException(status, "Response Status Code: " + status + " - Expected: 200");
+            } catch (Throwable t) {
+                RuntimeException re = new RuntimeException("Error during job submission - Code: " + status + " Reason: " + reason, t);
+                LOG.debug("Submitting Job failed", re);
+                throw re;
             }
-            throw new HttpResponseException(status, "Response Status Code: " + status + " - Expected: 200");
-        } catch (Throwable t) {
-            RuntimeException re = new RuntimeException("Error during job submission - Code: " + status + " Reason: " + reason, t);
-            LOG.debug("Submitting Job failed", re);
-            throw re;
         }
     }
 
@@ -409,21 +436,23 @@ public class WebAPI implements Closeable {
             throw new RuntimeException(e);
         }
         ArrayList<PredictionPerformance> performances = new ArrayList<>();
-        try (CloseableHttpResponse response = client.execute(get)) {
-            HttpEntity e = response.getEntity();
-            final BufferedReader br = new BufferedReader(new InputStreamReader(e.getContent(), ContentType.getOrDefault(e).getCharset()));
-            String line; //br.readLine();
-            while ((line = br.readLine()) != null) {
-                String[] tabs = line.split("\t");
-                final int index = Integer.parseInt(tabs[0]);
-                PredictionPerformance p = new PredictionPerformance(
-                        Double.parseDouble(tabs[1]),
-                        Double.parseDouble(tabs[2]),
-                        Double.parseDouble(tabs[3]),
-                        Double.parseDouble(tabs[4])
-                );
-                performances.add(p);
-                fingerprintIndizes.add(index);
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            try (CloseableHttpResponse response = client.execute(get)) {
+                HttpEntity e = response.getEntity();
+                final BufferedReader br = new BufferedReader(new InputStreamReader(e.getContent(), ContentType.getOrDefault(e).getCharset()));
+                String line; //br.readLine();
+                while ((line = br.readLine()) != null) {
+                    String[] tabs = line.split("\t");
+                    final int index = Integer.parseInt(tabs[0]);
+                    PredictionPerformance p = new PredictionPerformance(
+                            Double.parseDouble(tabs[1]),
+                            Double.parseDouble(tabs[2]),
+                            Double.parseDouble(tabs[3]),
+                            Double.parseDouble(tabs[4])
+                    );
+                    performances.add(p);
+                    fingerprintIndizes.add(index);
+                }
             }
         }
         return performances.toArray(new PredictionPerformance[performances.size()]);
@@ -438,10 +467,12 @@ public class WebAPI implements Closeable {
             throw new RuntimeException(e);
         }
         CovarianceScoring covarianceScoring;
-        try (CloseableHttpResponse response = client.execute(get)) {
-            if (!isSuccessful(response)) throw new IOException("Cannot get covariance scoring tree information.");
-            HttpEntity e = response.getEntity();
-            covarianceScoring = CovarianceScoring.readScoring(e.getContent(), ContentType.getOrDefault(e).getCharset(), fpVersion, alpha);
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            try (CloseableHttpResponse response = client.execute(get)) {
+                if (!isSuccessful(response)) throw new IOException("Cannot get covariance scoring tree information.");
+                HttpEntity e = response.getEntity();
+                covarianceScoring = CovarianceScoring.readScoring(e.getContent(), ContentType.getOrDefault(e).getCharset(), fpVersion, alpha);
+            }
         }
         return covarianceScoring;
     }
@@ -456,36 +487,37 @@ public class WebAPI implements Closeable {
             throw new RuntimeException(e);
         }
         ArrayList<InChI> inchis = new ArrayList<>();
-//        try (CloseableHttpResponse response = client.execute(get)) {
-        CloseableHttpResponse response = client.execute(get);
-        HttpEntity e = response.getEntity();
-        if (response.getStatusLine().getStatusCode() == 404) {
-            //todo remove hack if not necessary anymore
-            response.close();
-            response = getResponseHack(client, predictorType);
-            e = response.getEntity();
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            CloseableHttpResponse response = client.execute(get);
+            HttpEntity e = response.getEntity();
             if (response.getStatusLine().getStatusCode() == 404) {
-                throw new RuntimeException("Error retrieving training structures: " + response.getStatusLine().getReasonPhrase());
-            }
+                //todo remove hack if not necessary anymore
+                response.close();
+                response = getResponseHack(client, predictorType);
+                e = response.getEntity();
+                if (response.getStatusLine().getStatusCode() == 404) {
+                    throw new RuntimeException("Error retrieving training structures: " + response.getStatusLine().getReasonPhrase());
+                }
 //            throw new RuntimeException("Error retrieving training structures: "+response.getStatusLine().getReasonPhrase());
-        }
-        final BufferedReader br = new BufferedReader(new InputStreamReader(e.getContent(), ContentType.getOrDefault(e).getCharset()));
-        String line;
-        while ((line = br.readLine()) != null) {
-            String[] tabs = line.split("\t");
-            InChI inChI;
-            if (tabs.length == 1) {
-                //no InChiKeys contained. Compute them.
-                String inchi = tabs[0];
-                String key = inchi2inchiKey(inchi);
-                inChI = new InChI(key, inchi);
-            } else {
-                inChI = new InChI(tabs[0], tabs[1]);
             }
-            inchis.add(inChI);
+
+            final BufferedReader br = new BufferedReader(new InputStreamReader(e.getContent(), ContentType.getOrDefault(e).getCharset()));
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] tabs = line.split("\t");
+                InChI inChI;
+                if (tabs.length == 1) {
+                    //no InChiKeys contained. Compute them.
+                    String inchi = tabs[0];
+                    String key = inchi2inchiKey(inchi);
+                    inChI = new InChI(key, inchi);
+                } else {
+                    inChI = new InChI(tabs[0], tabs[1]);
+                }
+                inchis.add(inChI);
+            }
+            response.close();
         }
-        response.close();
-//        }
         return inchis.toArray(new InChI[inchis.size()]);
     }
 
@@ -531,24 +563,26 @@ public class WebAPI implements Closeable {
         final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(reportValue, softwareName));
         request.setEntity(params);
 
-        try (CloseableHttpResponse response = client.execute(request)) {
-            if (response.getStatusLine().getStatusCode() == 200) {
-                final BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), Charset.forName("UTF-8")));
-                com.google.gson.JsonObject o = new com.google.gson.JsonParser().parse(br.readLine()).getAsJsonObject();
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            try (CloseableHttpResponse response = client.execute(request)) {
+                if (response.getStatusLine().getStatusCode() == 200) {
+                    final BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), Charset.forName("UTF-8")));
+                    com.google.gson.JsonObject o = new com.google.gson.JsonParser().parse(br.readLine()).getAsJsonObject();
 
-                boolean suc = o.get("success").getAsBoolean();
-                String m = o.get("message").getAsString();
+                    boolean suc = o.get("success").getAsBoolean();
+                    String m = o.get("message").getAsString();
 
-                if (suc) {
-                    LOG.info(m);
+                    if (suc) {
+                        LOG.info(m);
+                    } else {
+                        LOG.error(m);
+                    }
+                    return m;
                 } else {
-                    LOG.error(m);
+                    RuntimeException e = new RuntimeException(response.getStatusLine().getReasonPhrase());
+                    LOG.error("Could not send error report! Bad http return Value: " + response.getStatusLine().getStatusCode(), e);
+                    throw e;
                 }
-                return m;
-            } else {
-                RuntimeException e = new RuntimeException(response.getStatusLine().getReasonPhrase());
-                LOG.error("Could not send error report! Bad http return Value: " + response.getStatusLine().getStatusCode(), e);
-                throw e;
             }
         }
     }
@@ -619,4 +653,6 @@ public class WebAPI implements Closeable {
     }
     //endregion
     //#################################################################################################################
+
+
 }
