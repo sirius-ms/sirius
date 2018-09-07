@@ -1075,7 +1075,8 @@ public class Sirius {
         boolean doFilter = false; double scoreThresholdForFiltering = 0d;
         for (IsotopePattern pat : pattern.getExplanations().values()) {
             maxScore = Math.max(pat.getScore(), maxScore);
-            if (pat.getScore()>=2*pat.getPattern().size()) {
+            final int numberOfIsoPeaks = pat.getPattern().size()-1;
+            if (pat.getScore()>=2*numberOfIsoPeaks) {
                 isoPeaks = Math.max(pat.getPattern().size(), isoPeaks);
                 scoreThresholdForFiltering = isoPeaks*1d;
                 doFilter=true;
