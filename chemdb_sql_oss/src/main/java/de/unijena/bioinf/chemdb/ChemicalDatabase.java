@@ -32,7 +32,6 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
 
     protected ConnectionPool<Connection> connection;
     protected String host, username, password;
-//    protected BioFilter bioFilter = BioFilter.ALL;
 
 
     /**
@@ -42,7 +41,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
      * local network. Otherwise, releasing password and usernames together with the bytecode
      * would be a security problem.
      */
-    public ChemicalDatabase() throws DatabaseException {
+    public ChemicalDatabase() {
         setup();
         connection = new ConnectionPool<>(new SqlConnector(host, username, password), DEFAULT_SQL_CAPACITY);
     }
