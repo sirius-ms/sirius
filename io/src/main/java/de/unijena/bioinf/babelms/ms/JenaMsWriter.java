@@ -18,6 +18,7 @@
 package de.unijena.bioinf.babelms.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
@@ -51,10 +52,13 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         writeIfAvailable(writer, ">source", data.getSource());
         Index index = data.getAnnotation(Index.class);
         if (index!=null){
-            writer.write(">index " + String.valueOf(index.index));
-            writer.newLine();
+            write(writer, ">index", String.valueOf(index.index));
         }
         writeIfAvailable(writer, ">quality", data.getAnnotation(CompoundQuality.class));
+        final RetentionTime retentionTime = data.getAnnotation(RetentionTime.class);
+        if (retentionTime!=null){
+            write(writer, ">retention", String.valueOf(retentionTime.getMiddleTime())+"s");
+        }
         final Map<String,String> arbitraryKeys = data.getAnnotation(Map.class, new HashMap<String,String>());
         for (Map.Entry<String,String> e : arbitraryKeys.entrySet()) {
             writer.write("#" + e.getKey() + " " + e.getValue());
@@ -101,6 +105,13 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
             }
             writer.newLine();
         }
+    }
+
+    private void write(BufferedWriter writer, String key, String value) throws IOException {
+        writer.write(key);
+        writer.write(' ');
+        writer.write(value);
+        writer.newLine();
     }
 
     private void writeIf(BufferedWriter writer, String s, String txt, boolean condition) throws IOException {
