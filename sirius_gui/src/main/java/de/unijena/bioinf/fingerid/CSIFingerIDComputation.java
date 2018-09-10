@@ -25,8 +25,6 @@ import de.unijena.bioinf.sirius.gui.structure.SiriusResultElementConverter;
 import de.unijena.bioinf.sirius.logging.TextAreaJJobContainer;
 import org.slf4j.LoggerFactory;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.util.*;
 
@@ -54,33 +52,40 @@ public class CSIFingerIDComputation {
 
     //compute for a single experiment
     public void compute(ExperimentContainer c, SearchableDatabase db) {
-        final ArrayList<FingerIdTask> tasks = new ArrayList<>();
-        for (SiriusResultElement e : getTopSiriusCandidates(c)) {
-            tasks.add(new FingerIdTask(db, c, e));
-        }
-        computeAll(tasks);
+        computeAll(Collections.singletonList(c), db);
     }
 
     //csi fingerid compute all button in main panel
     public void computeAll(List<ExperimentContainer> compounds, SearchableDatabase db) {
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
         for (ExperimentContainer c : compounds) {
-            for (SiriusResultElement e : getTopSiriusCandidates(c)) {
+            final List<SiriusResultElement> candidates = getTopSiriusCandidates(c);
+            LoggerFactory.getLogger(getClass()).warn("No molecular formula candidates available vor compound: " + c.getGUIName());
+            for (SiriusResultElement e : candidates) {
                 tasks.add(new FingerIdTask(db, c, e));
             }
         }
         computeAll(tasks);
     }
 
+    public void computeAll(Collection<FingerIdTask> compounds) {
+        for (FingerIdTask task : compounds) {
+            SwingJJobContainer<Boolean> container = new TextAreaJJobContainer<>(new FingerIDGUITask(task.experiment, task.result, task.db), task.result.getMolecularFormula().toString(), "Structure Prediction");
+            Jobs.MANAGER.submitSwingJob(container);
+        }
+    }
+
     protected static List<SiriusResultElement> getTopSiriusCandidates(ExperimentContainer container) {
         final ArrayList<SiriusResultElement> elements = new ArrayList<>();
-        if (container == null || !container.isComputed() || container.getResults() == null) return elements;
-        final SiriusResultElement top = container.getResults().get(0);
+        if (container == null || !container.isComputed()) return elements;
+        final List<SiriusResultElement> results = container.getResults();
+        if (results == null || results.isEmpty()) return elements;
+        final SiriusResultElement top = results.get(0);
         if (top.getResult().getResolvedTree().numberOfEdges() > 0)
             elements.add(top);
         final double threshold = calculateThreshold(top.getScore());
-        for (int k = 1; k < container.getResults().size(); ++k) {
-            SiriusResultElement e = container.getResults().get(k);
+        for (int k = 1; k < results.size(); ++k) {
+            SiriusResultElement e = results.get(k);
             if (e.getScore() < threshold) break;
             if (e.getResult().getResolvedTree().numberOfEdges() > 0)
                 elements.add(e);
@@ -90,13 +95,6 @@ public class CSIFingerIDComputation {
 
     public static double calculateThreshold(double topScore) {
         return Math.max(topScore, 0) - Math.max(5, topScore * 0.25);
-    }
-
-    public void computeAll(Collection<FingerIdTask> compounds) {
-        for (FingerIdTask task : compounds) {
-            SwingJJobContainer<Boolean> container = new TextAreaJJobContainer<>(new FingerIDGUITask(task.experiment, task.result, task.db), task.result.getMolecularFormula().toString(), "Structure Prediction");
-            Jobs.MANAGER.submitSwingJob(container);
-        }
     }
 
     public void refreshDatabaseCacheDir() throws IOException {
@@ -335,9 +333,9 @@ public class CSIFingerIDComputation {
             if (requireCandidates && formulaJob.awaitResult().isEmpty())
                 return null;
 
-                final PredictionJJob job = WebAPI.INSTANCE.makePredictionJob(container.getMs2Experiment(), re.getResult(), re.getResult().getResolvedTree(), predictor.fpVersion, EnumSet.of(predictor.predictorType));
-                submitSubJob(job);
-                return job.awaitResult();
+            final PredictionJJob job = WebAPI.INSTANCE.makePredictionJob(container.getMs2Experiment(), re.getResult(), re.getResult().getResolvedTree(), predictor.fpVersion, EnumSet.of(predictor.predictorType));
+            submitSubJob(job);
+            return job.awaitResult();
 
 
         }
@@ -381,7 +379,7 @@ public class CSIFingerIDComputation {
 
         protected void postprocessCandidate(FingerprintCandidate candidate) {
             //annotate training compounds;
-            if (trainingStructuresSet.isInTrainingData(candidate.getInchi())){
+            if (trainingStructuresSet.isInTrainingData(candidate.getInchi())) {
                 long flags = candidate.getBitset();
                 candidate.setBitset(flags | DatasourceService.Sources.TRAIN.flag);
             }
