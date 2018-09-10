@@ -60,10 +60,14 @@ public class CSIFingerIDComputation {
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
         for (ExperimentContainer c : compounds) {
             final List<SiriusResultElement> candidates = getTopSiriusCandidates(c);
-            LoggerFactory.getLogger(getClass()).warn("No molecular formula candidates available vor compound: " + c.getGUIName());
-            for (SiriusResultElement e : candidates) {
-                tasks.add(new FingerIdTask(db, c, e));
+            if (candidates.isEmpty()) {
+                LoggerFactory.getLogger(getClass()).warn("No molecular formula candidates available for compound: " + c.getGUIName() + " with " + c.getIonization());
+            } else {
+                for (SiriusResultElement e : candidates) {
+                    tasks.add(new FingerIdTask(db, c, e));
+                }
             }
+
         }
         computeAll(tasks);
     }
