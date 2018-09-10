@@ -33,7 +33,6 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
 
     protected ConnectionPool<Connection> connection;
     protected String host, username, password;
-//    protected BioFilter bioFilter = BioFilter.ALL;
 
 
     /**
@@ -43,7 +42,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
      * local network. Otherwise, releasing password and usernames together with the bytecode
      * would be a security problem.
      */
-    public ChemicalDatabase() throws DatabaseException {
+    public ChemicalDatabase() {
         setup();
         connection = new ConnectionPool<>(new SqlConnector(host, username, password), DEFAULT_SQL_CAPACITY);
     }
@@ -355,7 +354,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
     public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws DatabaseException {
         final ArrayList<InChI> candidates = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi FROM structures as s WHERE s.inchi_key_1 = ?")) {
+            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi FROM structures WHERE inchi_key_1 = ?")) {
                 for (String inchikey : inchi_keys) {
                     statement.setString(1, inchikey);
                     try (final ResultSet set = statement.executeQuery()) {
