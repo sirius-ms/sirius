@@ -241,7 +241,7 @@ public class WebAPI {
                 if (reponsecode == 200) {
                     return true;
                 }
-                LOG.error("Could not delete Job! Response Code: " + reponsecode + " Reason: " + response.getStatusLine().getReasonPhrase());
+                LOG.error("Could not delete Job " + job.jobId + "! Response Code: " + reponsecode + " Reason: " + responseReason);
             } catch (Throwable t) {
                 LOG.error("Error when doing job deletion request " + job.jobId + " Response error code: " + reponsecode + " - Reason: " + responseReason, t);
             }
