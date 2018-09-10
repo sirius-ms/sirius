@@ -51,6 +51,13 @@ a CSI:FingerID web service (without the need to access the CSI:FingerID
 website). Results are retrieved from the web service and can be
 displayed in the SIRIUS graphical user interface. This functionality is
 also available for the SIRIUS command-line tool.
+The training Structures of CSI:FingerID predictors are available through 
+the CSI:FingerID WebAPI.
+
+##### Training structures for positive ion mode:
+https://www.csi-fingerid.uni-jena.de/webapi/trainingstructures.csv?predictor=pos 
+##### Training structures for negative ion mode:
+https://www.csi-fingerid.uni-jena.de/webapi/trainingstructures.csv?predictor=neg
 
 ### Fragmentation Tree Computation
 
