@@ -40,6 +40,7 @@ public class ConfidenceScoreComputor {
     public ConfidenceScoreComputor(HashMap<String,TrainedSVM> trainedsvms, PredictionPerformance[] performances){
 
         this.trainedSVMs=trainedsvms;
+        this.performances=performances;
 
 
 
