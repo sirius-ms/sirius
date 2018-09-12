@@ -33,9 +33,8 @@ import de.unijena.bioinf.fingerid.FingerIdData;
 import de.unijena.bioinf.fingerid.FingerIdDataCSVExporter;
 import de.unijena.bioinf.fingerid.FingerIdResultReader;
 import de.unijena.bioinf.fingerid.FingerIdResultWriter;
-import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
@@ -71,7 +70,6 @@ public class WorkspaceIO {
         } else {
             env = new SiriusWorkspaceWriter(file);
         }
-        System.out.println("new io");
         final FingerIdResultWriter w = new FingerIdResultWriter(env, new StandardMSFilenameFormatter());
         for (ExperimentContainer c : containers) {
             final Ms2Experiment exp = c.getMs2Experiment();
