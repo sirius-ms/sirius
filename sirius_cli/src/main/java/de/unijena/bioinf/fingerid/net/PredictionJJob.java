@@ -7,7 +7,6 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import org.apache.http.client.methods.HttpGet;
 
 import java.net.URISyntaxException;
 import java.util.EnumSet;
@@ -36,14 +35,28 @@ public class PredictionJJob extends BasicJJob<ProbabilityFingerprint> {
     public ProbabilityFingerprint compute() throws Exception {
         job = WebAPI.INSTANCE.submitJob(experiment, ftree, version, predicors);
         // RECEIVE RESULTS
-        for (int k = 0; k < 600; ++k) {
-            Thread.sleep(3000 + 30 * k);
-            if (WebAPI.INSTANCE.updateJobStatus(job)) {
-                return job.prediction;
-            } else if (Objects.equals(job.state, "CRASHED")) {
-                throw new RuntimeException("Job crashed: " + (job.errorMessage != null ? job.errorMessage : ""));
+        final int time = 2000;
+        int k = 0;
+        int it = k;
+        for (int i = 0; i < 3600; i++) {
+            checkForInterruption();
+            if (it >= k) {
+                if (WebAPI.INSTANCE.updateJobStatus(job)) {
+                    return job.prediction;
+                } else if (Objects.equals(job.state, "CRASHED")) {
+                    throw new RuntimeException("Job crashed: " + (job.errorMessage != null ? job.errorMessage : ""));
+                }
+
+                it = 0;
+                k = Math.min(k + 1, 10);
+            } else {
+                it++;
             }
+            Thread.sleep(2000);
         }
+
+        if (WebAPI.INSTANCE.updateJobStatus(job))
+            return job.prediction;
         throw new TimeoutException("Reached timeout");
     }
 

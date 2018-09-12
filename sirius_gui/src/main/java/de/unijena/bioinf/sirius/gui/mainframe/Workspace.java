@@ -88,14 +88,14 @@ public abstract class Workspace {
         while (true) {
             if (ec.getGUIName() != null && !ec.getGUIName().isEmpty()) {
                 if (NAMES.contains(ec.getGUIName())) {
-                    ec.setSuffix(ec.getSuffix() + 1);
+                    ec.setIndex(ec.getIndex() + 1);
                 } else {
                     NAMES.add(ec.getGUIName());
                     break;
                 }
             } else {
                 ec.setName("Unknown");
-                ec.setSuffix(1);
+                ec.setIndex(1);
             }
         }
     }
