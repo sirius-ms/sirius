@@ -205,11 +205,11 @@ public class WebAPI {
                 try (CloseableHttpResponse response = client.execute(get)) {
                     return new Gson().fromJson(new InputStreamReader(response.getEntity().getContent()), WorkerList.class);
                 } catch (IOException e) {
-                    LOG.error(e.getMessage(), e);
+                    LOG.error("Error when executing get request for WORKER information", e);
                 }
             }
         } catch (URISyntaxException e) {
-            LOG.error(e.getMessage(), e);
+            LOG.error("Wrong request Syntax!", e);
         } catch (Exception e) {
             LOG.error("Unknown error when fetching WORKER information from webservice!", e);
         }
