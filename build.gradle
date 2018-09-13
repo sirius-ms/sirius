@@ -35,6 +35,7 @@ ext {
     cplex_version = System.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
     graphUtils_version = '1.1'
     cdk_version = "2.1.1"
+    mztabm_version = '1.0.1'
 
     jewelcli_version = '0.8.9'
     //todo wenn wir die inhouse clis auch ind das frontend moven haben wir keinerlei distribution zeug mehr in sirius
