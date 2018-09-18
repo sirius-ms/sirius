@@ -12,6 +12,18 @@ import java.util.Arrays;
 
 public class SiriusCLIApplication {
     public static void main(String[] args) {
+        //shut down hook to clean up when sirius is shutting down
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            FingeridCLI.DEFAULT_LOGGER.info("CLI shut down hook: SIRIUS is cleaning up threads and shuts down...");
+            try {
+                JobManager.shutDownNowAllInstances();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }finally {
+                ProxyManager.disconnect();
+            }
+        }));
+
         if (false) {
             try {
                 final FingeridCLI<FingerIdOptions> cli = new FingeridCLI<>();
@@ -38,13 +50,7 @@ public class SiriusCLIApplication {
             } catch (Exception e) {
                 LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unkown Error!", e);
             } finally {
-                ProxyManager.disconnect();
-                try {
-                    JobManager.shutDownAllInstances();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    System.exit(0);
-                }
+                System.exit(0);
             }
         } else {
             try {
@@ -54,13 +60,7 @@ public class SiriusCLIApplication {
             } catch (Exception e) {
                 LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unkown Error!", e);
             } finally {
-                ProxyManager.disconnect();
-                try {
-                    JobManager.shutDownAllInstances();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    System.exit(0);
-                }
+                System.exit(0);
             }
         }
 

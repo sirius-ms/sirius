@@ -286,7 +286,6 @@ public class ProxyManager {
             } catch (IOException e) {
                 LoggerFactory.getLogger(PropertyManager.class).error("Error when closing HTTP connection", e);
             }
-
         }
     }
 
