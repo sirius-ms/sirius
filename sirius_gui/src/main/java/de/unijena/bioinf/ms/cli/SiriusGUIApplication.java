@@ -36,6 +36,20 @@ public class SiriusGUIApplication {
                 isGui = true;
         }
         if (isGui) {
+            //shut down hook to clean up when sirius is shutting down
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                FingeridCLI.DEFAULT_LOGGER.info("GUI shut down hook: SIRIUS is cleaning up threads and shuts down...");
+                MainFrame.CONECTION_MONITOR.close();
+                Jobs.cancelALL();//cancel all instances to quit
+                try {
+                    JobManager.shutDownNowAllInstances();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    ProxyManager.disconnect();
+                }
+            }));
+
             FingeridCLI.DEFAULT_LOGGER.info("Application Core started");
             final int cpuThreads = Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1"));
             SiriusJobs.setGlobalJobManager(new SwingJobManager(PropertyManager.getNumberOfThreads(), Math.min(cpuThreads, 3)));
@@ -55,15 +69,7 @@ public class SiriusGUIApplication {
                         FingeridCLI.DEFAULT_LOGGER.info("Saving properties file before termination.");
                         SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
                     } finally {
-                        ProxyManager.disconnect();
-                        try {
-                            MainFrame.CONECTION_MONITOR.close();
-                            Jobs.cancelALL();//cancel all instances to quit
-                            JobManager.shutDownAllInstances();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                            System.exit(0);
-                        }
+                        System.exit(0);
                     }
 
                 }

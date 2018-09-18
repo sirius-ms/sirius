@@ -7,6 +7,8 @@ package de.unijena.bioinf.sirius.core;
 
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
+import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.sirius.net.ProxyManager;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +50,6 @@ public abstract class ApplicationCore {
 
         final String version = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.version");
         final String build = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build");
-
 
         //#################### start init workspace ################################
         final String home = System.getProperty("user.home");

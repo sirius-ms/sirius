@@ -1,4 +1,4 @@
-#### 4.1
+#### 4.0.1
 
 -   **Java 9 and higher are now supported**
 
@@ -10,13 +10,13 @@
 
 -   **Molecular Property filter for candidate list (GUI)**    
 
--   **Running prediction workers of the CSI:FingerID webservice can be queried from SIRIUS**
+-   **Available prediction workers of the CSI:FingerID webservice can be listed from SIRIUS**
 
 -   Improved connection handling and auto reconnect to Webservice
 
 -   Improved error messaged    
 
--   Improved stability and load balancing of the CSI:FingerID webservice
+-   ImprovSed stability and load balancing of the CSI:FingerID webservice
 
 -   Several bug fixes
     
