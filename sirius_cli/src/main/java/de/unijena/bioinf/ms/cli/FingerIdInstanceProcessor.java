@@ -26,10 +26,12 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static de.unijena.bioinf.ms.cli.FingerIdOptions.CONSIDER_ALL_FORMULAS;
+
 
 public class FingerIdInstanceProcessor implements InstanceProcessor<Map<IdentificationResult, ProbabilityFingerprint>> {
 
-    protected Logger logger = LoggerFactory.getLogger(CLI.class);
+    protected Logger logger = LoggerFactory.getLogger(getClass());
 
     FingerIdOptions options;
 
@@ -220,7 +222,7 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
             TrainingStructuresPerPredictor.getInstance().addAvailablePredictorTypes(PredictorType.CSI_FINGERID_POSITIVE, PredictorType.CSI_FINGERID_NEGATIVE);
         } catch (IOException e) {
             System.err.println("Cannot connect to CSI:FingerID webserver and online chemical database. You can still use SIRIUS in offline mode: just do not use any chemical database and omit the --fingerid option.");
-            LoggerFactory.getLogger(FingeridCLI.class).error(e.getMessage(), e);
+            logger.error(e.getMessage(), e);
             System.exit(1);
         }
 
@@ -317,7 +319,6 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
         return !options.isFingerid() && options.getDatabase().equals(CONSIDER_ALL_FORMULAS);
     }
 
-    protected static final String CONSIDER_ALL_FORMULAS = "all";
 
     protected HashMap<String, Long> getDatabaseAliasMap() {
         final HashMap<String, Long> aliasMap = new HashMap<>();

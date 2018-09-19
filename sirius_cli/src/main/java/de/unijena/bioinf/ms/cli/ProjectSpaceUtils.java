@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class ProjectSpaceUtils {
-    protected static Logger logger = LoggerFactory.getLogger(CLI.class);
+    protected static Logger logger = LoggerFactory.getLogger(ProjectSpaceUtils.class);
 
     // TODO: implement merge?
     public static DirectoryWriter.WritingEnvironment getWorkspaceWritingEnvironmentForSirius(String value) throws IOException {
@@ -58,7 +58,7 @@ public class ProjectSpaceUtils {
         if ((new File(directoryOutputPath)).exists()) {
             try {
                 checkForValidProjectDirectory(directoryOutputPath);
-                pw = new ProjectSpaceMerger2(readerWriterFactory, directoryOutputPath.toString(), false);
+                pw = new ProjectSpaceMerger(readerWriterFactory, directoryOutputPath.toString(), false);
             } catch (IOException e) {
                 throw new IOException("Cannot merge project " + directoryOutputPath + ". Maybe the specified directory is not a valid SIRIUS workspace. You can still specify a new not existing filename to create a new workspace.\n" + e.getMessage(), e);
             }
@@ -78,7 +78,7 @@ public class ProjectSpaceUtils {
             pw = readerWriterFactory.getSiriusOutputWriter(sirius, ProjectSpaceUtils.getWorkspaceWritingEnvironmentForSirius(sirius));
         } else if (new File(sirius).exists()) {
             try {
-                pw = new ProjectSpaceMerger2(readerWriterFactory, sirius, true);
+                pw = new ProjectSpaceMerger(readerWriterFactory, sirius, true);
             } catch (IOException e) {
                 throw new IOException("Cannot merge " + sirius + ". The specified file might be no valid SIRIUS workspace. You can still specify a new not existing filename to create a new workspace.");
             }
@@ -95,14 +95,14 @@ public class ProjectSpaceUtils {
         if (directoryOutputPath!=null){
             ProjectWriter pw = getDirectoryOutputWriter(directoryOutputPath, readerWriterFactory);
             writers.add(pw);
-            if (pw instanceof ProjectSpaceMerger2)
-                numberOfWrittenExperiments = Math.max(numberOfWrittenExperiments,((ProjectSpaceMerger2)pw).getNumberOfWrittenExperiments());
+            if (pw instanceof ProjectSpaceMerger)
+                numberOfWrittenExperiments = Math.max(numberOfWrittenExperiments,((ProjectSpaceMerger)pw).getNumberOfWrittenExperiments());
         }
         if (siriusOutputPath!=null){
             ProjectWriter pw = getSiriusOutputWriter(siriusOutputPath, readerWriterFactory);
             writers.add(pw);
-            if (pw instanceof ProjectSpaceMerger2)
-                 numberOfWrittenExperiments = Math.max(numberOfWrittenExperiments,((ProjectSpaceMerger2)pw).getNumberOfWrittenExperiments());
+            if (pw instanceof ProjectSpaceMerger)
+                 numberOfWrittenExperiments = Math.max(numberOfWrittenExperiments,((ProjectSpaceMerger)pw).getNumberOfWrittenExperiments());
         }
 
         final ProjectWriter projectWriter;
