@@ -32,6 +32,7 @@ import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.FingerIDSearchGuiJob;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
@@ -248,16 +249,14 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     private void startComputing() {
         if (recompute.isSelected()) {
-            ReturnValue value;
-            if (Boolean.parseBoolean(PropertyManager.PROPERTIES.getProperty(DONT_ASK_RECOMPUTE_KEY, "false")) || this.compoundsToProcess.size() == 1) {
-                value = ReturnValue.Success;
-            } else {
+            boolean isSuccsess = true;
+            if (!PropertyManager.getBooleanProperty(DONT_ASK_RECOMPUTE_KEY,false) && this.compoundsToProcess.size() > 1) {
                 QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY);
-                value = questionDialog.getReturnValue();
+                isSuccsess = questionDialog.isSuccess();
             }
 
             //reset status of already computed values to uncomputed if needed
-            if (value == ReturnValue.Success) {
+            if (isSuccsess) {
                 final Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
                 while (compounds.hasNext()) {
                     final ExperimentContainer ec = compounds.next();

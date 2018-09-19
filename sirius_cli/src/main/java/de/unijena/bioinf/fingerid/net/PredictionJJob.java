@@ -64,7 +64,6 @@ public class PredictionJJob extends BasicJJob<ProbabilityFingerprint> {
     protected void cleanup() {
         super.cleanup();
         //cleanup server
-        System.out.println("Cleaning up");
         if (job != null) {
             try {
                 WebAPI.INSTANCE.deleteJobOnServer(job);

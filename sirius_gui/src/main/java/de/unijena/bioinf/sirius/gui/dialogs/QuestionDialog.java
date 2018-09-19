@@ -1,6 +1,5 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
-import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 
 import javax.swing.*;
@@ -8,19 +7,21 @@ import java.awt.*;
 
 public class QuestionDialog extends DoNotShowAgainDialog {
 
-    private ReturnValue rv = ReturnValue.Abort;
+    private ReturnValue rv;
 
     public QuestionDialog(Window owner, String question) {
         this(owner, question, null);
     }
 
     /**
-     * @param owner see JDialog
-     * @param question Question that is asked with this dialog
+     * @param owner       see JDialog
+     * @param question    Question that is asked with this dialog
      * @param propertyKey name of the property with which the 'don't ask' flag is saved persistently
      */
     public QuestionDialog(Window owner, String question, String propertyKey) {
         super(owner, question, propertyKey);
+        rv = ReturnValue.Abort;
+        this.setVisible(true);
     }
 
     @Override
