@@ -46,7 +46,6 @@ public abstract class DoNotShowAgainDialog extends JDialog {
         this.pack();
         this.setResizable(false);
         setLocationRelativeTo(getParent());
-        this.setVisible(true);
     }
 
 
