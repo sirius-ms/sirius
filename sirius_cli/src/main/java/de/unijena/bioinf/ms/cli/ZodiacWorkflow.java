@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutionException;
 
 public class ZodiacWorkflow implements Workflow<ExperimentResult> {
 
-    private static final  org.slf4j.Logger LOG = LoggerFactory.getLogger(Zodiac.class);
+    private static final  org.slf4j.Logger LOG = LoggerFactory.getLogger(ZodiacWorkflow.class);
     private ZodiacOptions options;
 
     private ZodiacInstanceProcessor zodiacIP;
