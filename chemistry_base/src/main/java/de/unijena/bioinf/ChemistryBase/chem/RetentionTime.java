@@ -1,6 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
-public final class RetentionTime {
+import de.unijena.bioinf.ChemistryBase.ms.Ms2ExperimentAnnotation;
+
+public final class RetentionTime implements Ms2ExperimentAnnotation {
 
     private final double start, middle, end;
 

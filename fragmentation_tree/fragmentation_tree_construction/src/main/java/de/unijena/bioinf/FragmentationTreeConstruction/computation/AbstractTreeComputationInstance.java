@@ -3,7 +3,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Beautified;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Decomposition;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;

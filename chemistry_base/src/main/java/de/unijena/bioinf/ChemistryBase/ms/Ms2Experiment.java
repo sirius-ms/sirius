@@ -112,42 +112,42 @@ public interface Ms2Experiment extends Cloneable {
     /**
      * @return an iterator over all annotations
      */
-    Iterator<Map.Entry<Class<Object>, Object>> forEachAnnotation();
+    Iterator<Map.Entry<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation>> forEachAnnotation();
 
     /**
      * @return annotation value for the given class/key
      * @throws NullPointerException if there is no entry for this key
      */
-    <T> T getAnnotationOrThrow(Class<T> klass);
+    <T extends Ms2ExperimentAnnotation> T getAnnotationOrThrow(Class<T> klass);
 
     /**
      * @return annotation value for the given class/key or null
      */
-    <T> T getAnnotation(Class<T> klass);
+    <T extends Ms2ExperimentAnnotation> T getAnnotation(Class<T> klass);
 
     /**
      * @return annotation value for the given class/key or the given default value
      */
-    <T> T getAnnotation(Class<T> klass, T defaultValue);
+    <T extends Ms2ExperimentAnnotation> T getAnnotation(Class<T> klass, T defaultValue);
 
     /**
      * @return true if the given annotation is present
      */
-    <T> boolean hasAnnotation(Class<T> klass);
+    <T extends Ms2ExperimentAnnotation> boolean hasAnnotation(Class<T> klass);
 
     /**
      * Set the annotation with the given key
      *
      * @return true if there was no previous value for this annotation
      */
-    <T> boolean setAnnotation(Class<T> klass, T value);
+    <T extends Ms2ExperimentAnnotation> boolean setAnnotation(Class<T> klass, T value);
 
     /**
      * Remove the annotation with the given key
      *
      * @return the value associated with this key or null if there is no value for this key
      */
-    <T> Object clearAnnotation(Class<T> klass);
+    <T extends Ms2ExperimentAnnotation> Object clearAnnotation(Class<T> klass);
 
     /**
      * Remove all annotations from this experiment
