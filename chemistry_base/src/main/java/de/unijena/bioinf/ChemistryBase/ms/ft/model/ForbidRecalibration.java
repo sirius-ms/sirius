@@ -1,9 +1,11 @@
-package de.unijena.bioinf.FragmentationTreeConstruction.model;
+package de.unijena.bioinf.ChemistryBase.ms.ft.model;
+
+import de.unijena.bioinf.ChemistryBase.ms.Ms2ExperimentAnnotation;
 
 /**
  * if this annotation is set, recalibration is ommited
  */
-public class ForbidRecalibration {
+public class ForbidRecalibration implements Ms2ExperimentAnnotation {
 
     public final static ForbidRecalibration ALLOWED = new ForbidRecalibration(false);
     public final static ForbidRecalibration FORBIDDEN = new ForbidRecalibration(true);
