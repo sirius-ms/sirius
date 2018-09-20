@@ -26,7 +26,10 @@ public final class RetentionTime {
     }
 
     public RetentionTime merge(RetentionTime other) {
-        return new RetentionTime(Math.min(start, other.start), Math.max(end, other.end));
+        if (isInterval() && other.isInterval())
+            return new RetentionTime(Math.min(start, other.start), Math.max(end, other.end));
+        else
+            return new RetentionTime(Math.min(start, other.start), Math.max(end, other.end), (middle+other.middle)/2);
     }
 
     public boolean isInterval() {
