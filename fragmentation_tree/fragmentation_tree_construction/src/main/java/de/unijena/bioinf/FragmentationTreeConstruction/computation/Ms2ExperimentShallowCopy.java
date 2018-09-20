@@ -2,10 +2,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 
 import java.net.URL;
 import java.util.Iterator;
@@ -70,37 +67,37 @@ class Ms2ExperimentShallowCopy implements Ms2Experiment {
     }
 
     @Override
-    public Iterator<Map.Entry<Class<Object>, Object>> forEachAnnotation() {
+    public Iterator<Map.Entry<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation>> forEachAnnotation() {
         return experiment.forEachAnnotation();
     }
 
     @Override
-    public <T> T getAnnotationOrThrow(Class<T> klass) {
+    public <T extends Ms2ExperimentAnnotation> T getAnnotationOrThrow(Class<T> klass) {
         return experiment.getAnnotationOrThrow(klass);
     }
 
     @Override
-    public <T> T getAnnotation(Class<T> klass) {
+    public <T extends Ms2ExperimentAnnotation> T getAnnotation(Class<T> klass) {
         return experiment.getAnnotation(klass);
     }
 
     @Override
-    public <T> T getAnnotation(Class<T> klass, T defaultValue) {
+    public <T extends Ms2ExperimentAnnotation> T getAnnotation(Class<T> klass, T defaultValue) {
         return experiment.getAnnotation(klass, defaultValue);
     }
 
     @Override
-    public <T> boolean hasAnnotation(Class<T> klass) {
+    public <T extends Ms2ExperimentAnnotation> boolean hasAnnotation(Class<T> klass) {
         return experiment.hasAnnotation(klass);
     }
 
     @Override
-    public <T> boolean setAnnotation(Class<T> klass, T value) {
+    public <T extends Ms2ExperimentAnnotation> boolean setAnnotation(Class<T> klass, T value) {
         return experiment.setAnnotation(klass, value);
     }
 
     @Override
-    public <T> Object clearAnnotation(Class<T> klass) {
+    public <T extends Ms2ExperimentAnnotation> Object clearAnnotation(Class<T> klass) {
         return experiment.clearAnnotation(klass);
     }
 
