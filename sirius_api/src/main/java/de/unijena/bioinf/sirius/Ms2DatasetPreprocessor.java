@@ -3,6 +3,7 @@ package de.unijena.bioinf.sirius;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.PeaklistSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -301,7 +302,7 @@ public class Ms2DatasetPreprocessor {
         //guess elements
         for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
             FormulaConstraints constraints = predictElements(experiment, ms2Dataset);
-            experiment.setAnnotation(FormulaConstraints.class, constraints);
+            sirius.setFormulaConstraints(experiment, constraints);
         }
 
         DatasetStatistics datasetStatistics = new DatasetStatistics();
@@ -537,8 +538,8 @@ public class Ms2DatasetPreprocessor {
 //        FormulaConstraints constraints = sirius.predictElementsFromMs1(experiment);
 
         FormulaConstraints constraints;
-        if (experiment.hasAnnotation(FormulaConstraints.class)){
-            constraints = experiment.getAnnotation(FormulaConstraints.class);
+        if (experiment.hasAnnotation(FormulaSettings.class)){
+            constraints = experiment.getAnnotation(FormulaSettings.class).getConstraints();
         } else {
             constraints = new FormulaConstraints(ChemicalAlphabet.getExtendedAlphabet());
         }
