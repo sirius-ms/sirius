@@ -2,7 +2,6 @@ dependencies() {
     //project
 	compile project(':fingerprint_pvalues_oss')
 	compile project(':chemical_db_oss')
-	compile project(':chemical_db_oss:chemdb_rest_oss')
 
 	//internal
 	compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
