@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -32,8 +33,9 @@ import de.unijena.bioinf.fingerid.FingerIdData;
 import de.unijena.bioinf.fingerid.FingerIdDataCSVExporter;
 import de.unijena.bioinf.fingerid.FingerIdResultReader;
 import de.unijena.bioinf.fingerid.FingerIdResultWriter;
-import de.unijena.bioinf.fingerid.storage.ConfigStorage;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
 import de.unijena.bioinf.sirius.gui.mainframe.BatchImportDialog;
@@ -68,7 +70,6 @@ public class WorkspaceIO {
         } else {
             env = new SiriusWorkspaceWriter(file);
         }
-        System.out.println("new io");
         final FingerIdResultWriter w = new FingerIdResultWriter(env, new StandardMSFilenameFormatter());
         for (ExperimentContainer c : containers) {
             final Ms2Experiment exp = c.getMs2Experiment();
@@ -223,7 +224,7 @@ public class WorkspaceIO {
 
     public static void exportResults() {
         JFileChooser jfc = new JFileChooser();
-        jfc.setCurrentDirectory(ConfigStorage.CONFIG_STORAGE.getCsvExportPath());
+        jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.CSV_EXPORT_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
         jfc.addChoosableFileFilter(new SupportedExportCSVFormatsFilter());
@@ -238,7 +239,14 @@ public class WorkspaceIO {
             if (returnval == JFileChooser.APPROVE_OPTION) {
                 File selFile = jfc.getSelectedFile();
                 if (selFile == null) continue;
-                ConfigStorage.CONFIG_STORAGE.setCsvExportPath((selFile.exists() && selFile.isDirectory()) ? selFile : selFile.getParentFile());
+
+                {
+                    final String path = (selFile.exists() && selFile.isDirectory()) ? selFile.getAbsolutePath() : selFile.getParentFile().getAbsolutePath();
+                    Jobs.runInBackround(() ->
+                            SiriusProperties.SIRIUS_PROPERTIES_FILE().
+                                    setAndStoreProperty(SiriusProperties.DEFAULT_TREE_EXPORT_PATH, path)
+                    );
+                }
 
                 if (accessory.isSingleFile()) {
                     String name = selFile.getName();
@@ -401,7 +409,7 @@ public class WorkspaceIO {
         if (!fv.exists()) return false;
         try (final BufferedReader br = new BufferedReader(new FileReader(fv), 512)) {
             String line = br.readLine();
-            if (line==null) return false;
+            if (line == null) return false;
             line = line.toUpperCase();
             if (line.startsWith("SIRIUS")) return true;
             else return false;

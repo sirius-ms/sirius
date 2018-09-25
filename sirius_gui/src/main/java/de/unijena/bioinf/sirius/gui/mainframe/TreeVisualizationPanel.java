@@ -1,11 +1,15 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
-import de.unijena.bioinf.fingerid.storage.FileFormat;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
+import de.unijena.bioinf.sirius.storage.FileFormat;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeColor;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
 import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
@@ -28,7 +32,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
 
-import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
 public class TreeVisualizationPanel extends JPanel implements ActionListener, ActiveElementChangedListener<SiriusResultElement, ExperimentContainer>, PanelDescription {
@@ -93,7 +96,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
         if (sre != null) {
             TreeNode root = sre.getTreeVisualization();
             NodeType nt = NodeType.small;
-            NodeColor nc = (NodeColor)colorType.getSelectedItem();
+            NodeColor nc = (NodeColor) colorType.getSelectedItem();
             this.renderPanel.showTree(root, nt, nc);
             legendText.setText(this.renderPanel.getNodeColorManager().getLegendName());
 
@@ -113,8 +116,8 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
 
     @Override
     public void actionPerformed(ActionEvent e) {
-       if (e.getSource() == this.colorType) {
-            NodeColor nc = (NodeColor)colorType.getSelectedItem();
+        if (e.getSource() == this.colorType) {
+            NodeColor nc = (NodeColor) colorType.getSelectedItem();
             this.renderPanel.changeNodeColor(nc);
             this.svp.setNodeColorManager(this.renderPanel.getNodeColorManager());
             if (nc == NodeColor.rwbMassDeviation) {
@@ -127,7 +130,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             this.svp.repaint();
         } else if (e.getSource() == this.saveTreeB) {
             JFileChooser jfc = new JFileChooser();
-            jfc.setCurrentDirectory(CONFIG_STORAGE.getDefaultTreeExportPath());
+            jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_TREE_EXPORT_PATH));
             jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
             jfc.setAcceptAllFileFilterUsed(false);
 
@@ -145,7 +148,8 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             jfc.addChoosableFileFilter(jsonFilter);
 //			jfc.addChoosableFileFilter(new FTreeJsonFilter());
 
-            FileFormat defaultFF = CONFIG_STORAGE.getDefaultTreeFileFormat();
+            FileFormat defaultFF = FileFormat.valueOf(PropertyManager.getProperty(SiriusProperties.DEFAULT_TREE_FILE_FORMAT, FileFormat.png.name()));
+
             if (defaultFF == FileFormat.dot) {
                 jfc.setFileFilter(dotFilter);
             } else if (defaultFF == FileFormat.gif) {
@@ -167,9 +171,14 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
                 if (returnval == JFileChooser.APPROVE_OPTION) {
                     File selFile = jfc.getSelectedFile();
 
-                    CONFIG_STORAGE.setDefaultTreeExportPath(selFile.getParentFile());
+                    {
+                        final String path = selFile.getParentFile().getAbsolutePath();
+                        Jobs.runInBackround(() ->
+                                SiriusProperties.SIRIUS_PROPERTIES_FILE().
+                                        setAndStoreProperty(SiriusProperties.DEFAULT_TREE_EXPORT_PATH, path)
+                        );
+                    }
 
-                    String name = selFile.getName();
                     if (jfc.getFileFilter() == dotFilter) {
                         ff = FileFormat.dot;
                         if (!selFile.getAbsolutePath().endsWith(".dot")) {
@@ -215,7 +224,11 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             }
 
             if (ff != FileFormat.none) {
-                CONFIG_STORAGE.setDefaultTreeFileFormat(ff);
+                final String name = ff.name();
+                Jobs.runInBackround(() ->
+                        SiriusProperties.SIRIUS_PROPERTIES_FILE().
+                                setAndStoreProperty(SiriusProperties.DEFAULT_TREE_FILE_FORMAT, name)
+                );
             }
 
             if (selectedFile != null && ff != FileFormat.none) {

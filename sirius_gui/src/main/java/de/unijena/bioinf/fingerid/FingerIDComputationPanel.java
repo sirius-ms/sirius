@@ -1,17 +1,11 @@
 package de.unijena.bioinf.fingerid;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 23.01.17.
- */
 
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
-import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.compute.AdductSelectionList;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.sirius.gui.utils.RelativeLayout;
 import de.unijena.bioinf.sirius.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
@@ -48,7 +42,11 @@ public class FingerIDComputationPanel extends JPanel {
             if (button) {
                 setLayout(new FlowLayout(FlowLayout.LEFT));
                 target = new JPanel();
-                csiButton = csiButton();
+                csiButton = new ToolbarToggleButton("CSI:FingerID", Icons.FINGER_32);
+                ;
+                MainFrame.CONECTION_MONITOR.addConectionStateListener(evt -> setCsiButtonEnabled(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck().isConnected()));
+                setCsiButtonEnabled(MainFrame.MF.getCsiFingerId().isEnabled());
+
                 csiButton.addActionListener(e -> {
                     setComponentsEnabled(csiButton.isSelected());
                     csiButton.setToolTipText((csiButton.isSelected() ? "Disable CSI:FingerID search" : "Enable CSI:FingerID search"));
@@ -74,7 +72,7 @@ public class FingerIDComputationPanel extends JPanel {
             adductOptions = new JCheckboxListPanel<>(new AdductSelectionList(sourceIonization), "Possible Adducts");
             target.add(adductOptions);
         } else adductOptions = null;
-        
+
         setComponentsEnabled(csiButton == null);
     }
 
@@ -84,17 +82,15 @@ public class FingerIDComputationPanel extends JPanel {
 
     }
 
-
-    private ToolbarToggleButton csiButton() {
-        ToolbarToggleButton b = new ToolbarToggleButton("CSI:FingerID", Icons.FINGER_32);
-        if (MainFrame.MF.getCsiFingerId().isEnabled() && ((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).isActive.get()) {
-            b.setToolTipText("Enable CSI:FingerID search");
-            b.setEnabled(true);
+    private void setCsiButtonEnabled(final boolean enabled) {
+        if (enabled) {
+            csiButton.setToolTipText("Enable CSI:FingerID search");
+            csiButton.setEnabled(true);
         } else {
-            b.setToolTipText("Can't connect to CSI:FingerID server!");
-            b.setEnabled(false);
+            csiButton.setToolTipText("Can't connect to CSI:FingerID server!");
+            csiButton.setEnabled(false);
+            csiButton.setSelected(false);
         }
-        return b;
     }
 
     public boolean isCSISelected() {
@@ -113,7 +109,6 @@ public class FingerIDComputationPanel extends JPanel {
         public JComboBox<SearchableDatabase> db;
         protected final List<SearchableDatabase> databases;
         protected int bioIndex, pubchemIndex;
-//        private Border b = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         public DBSelectionPanel(final List<SearchableDatabase> databases) {
             super("Search in");

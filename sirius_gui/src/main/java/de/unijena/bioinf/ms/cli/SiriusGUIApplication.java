@@ -7,13 +7,19 @@ package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.fingerid.net.VersionsInfo;
+import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.SwingJobManager;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.sirius.gui.dialogs.NewsDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.UpdateDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
 import de.unijena.bioinf.sirius.net.ProxyManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -24,23 +30,35 @@ import java.awt.event.WindowEvent;
 public class SiriusGUIApplication {
 
     public static void main(String[] args) {
-        /*
-        final ZodiacCLI<SiriusGUIOptions> cli = new ZodiacCLI<>();
-        cli.parseArgs(args, SiriusGUIOptions.class);
-           */
         boolean isGui = false;
         for (String arg : args) {
             if (arg.equalsIgnoreCase("--gui") || arg.equals("-u"))
                 isGui = true;
         }
         if (isGui) {
+            //shut down hook to clean up when sirius is shutting down
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                FingeridCLI.DEFAULT_LOGGER.info("GUI shut down hook: SIRIUS is cleaning up threads and shuts down...");
+                MainFrame.CONECTION_MONITOR.close();
+                Jobs.cancelALL();//cancel all instances to quit
+                try {
+                    JobManager.shutDownNowAllInstances();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    ProxyManager.disconnect();
+                }
+            }));
+
+            FingeridCLI.DEFAULT_LOGGER.info("Application Core started");
             final int cpuThreads = Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1"));
             SiriusJobs.setGlobalJobManager(new SwingJobManager(PropertyManager.getNumberOfThreads(), Math.min(cpuThreads, 3)));
             FingeridCLI.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
 
             if (ProxyManager.getProxyStrategy() == null) {
-                ApplicationCore.SIRIUS_PROPERTIES_FILE.setAndStoreProperty("de.unijena.bioinf.sirius.proxy", ProxyManager.DEFAULT_STRATEGY.name());
+                SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty("de.unijena.bioinf.sirius.proxy", ProxyManager.DEFAULT_STRATEGY.name());
             }
+
 
             GuiUtils.initUI();
             FingeridCLI.DEFAULT_LOGGER.info("Swing parameters for GUI initialized");
@@ -49,15 +67,9 @@ public class SiriusGUIApplication {
                 public void windowClosing(WindowEvent event) {
                     try {
                         FingeridCLI.DEFAULT_LOGGER.info("Saving properties file before termination.");
-                        ApplicationCore.SIRIUS_PROPERTIES_FILE.store();
+                        SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
                     } finally {
-                        try {
-                            Jobs.cancelALL();//cancel all instances to quit
-                            JobManager.shutDownAllInstances();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                            System.exit(0);
-                        }
+                        System.exit(0);
                     }
 
                 }
@@ -65,9 +77,30 @@ public class SiriusGUIApplication {
             MainFrame.MF.setLocationRelativeTo(null);//init mainframe
             FingeridCLI.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
             MainFrame.MF.decoradeMainFrameInstance();
+
+            FingeridCLI.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
+            Jobs.runInBackround(() -> {
+                ConnectionMonitor.ConnetionCheck cc = MainFrame.CONECTION_MONITOR.checkConnection();
+                if (cc.isConnected()) {
+                    @Nullable VersionsInfo versionsNumber = WebAPI.INSTANCE.getVersionInfo();
+                    FingeridCLI.DEFAULT_LOGGER.debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
+                    if (versionsNumber != null) {
+                        if (versionsNumber.expired()) {
+                            new UpdateDialog(MainFrame.MF, versionsNumber);
+                        }
+                        if (!versionsNumber.outdated()) {
+                            MainFrame.MF.getCsiFingerId().setEnabled(true);
+                        }
+                        if (versionsNumber.hasNews()) {
+                            new NewsDialog(MainFrame.MF, versionsNumber.getNews());
+                        }
+                    }
+                }
+            });
         } else {
             //this os save because the only difference between cli and gui parameters is the --gui param
             SiriusCLIApplication.main(args);
         }
+
     }
 }

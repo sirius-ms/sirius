@@ -21,11 +21,10 @@ public class ElementsPanel extends JPanel implements ActionListener {
     private Window owner;
 
     private static final int maxNumberOfOneElements = 20;
-    private static final String[] defaultElementSymbols = new String[]{"C", "H", "N", "O", "P"};
-    private static final String[] additionalElementSymbols = new String[]{"S", "B", "Br", "Cl", "F", "I", "Se"};
-    private static final int[] additionalElementStartCounts = new int[]{maxNumberOfOneElements, 0, 0, 0, 0, 0, 0};
+    private static final String[] additionalElementSymbols = new String[]{"C", "H", "N", "O", "P", "S", "B", "Br", "Cl", "F", "I", "Se"};
+    private static final int[] additionalElementStartCounts = new int[]{maxNumberOfOneElements, maxNumberOfOneElements, maxNumberOfOneElements, maxNumberOfOneElements,
+            maxNumberOfOneElements, maxNumberOfOneElements, 0, 0, 0, 0, 0, 0};
 
-    private final Element[] defaultElements;
     public final boolean individualAutoDetect;
     private JButton elementButton;
     private HashMap<String, ElementSlider> element2Slider;
@@ -50,12 +49,8 @@ public class ElementsPanel extends JPanel implements ActionListener {
         }
 
         periodicTable = PeriodicTable.getInstance();
-        defaultElements = new Element[defaultElementSymbols.length];
-        for (int i = 0; i < defaultElementSymbols.length; i++) {
-            defaultElements[i] = periodicTable.getByName(defaultElementSymbols[i]);
-        }
 
-        this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Elements beside CHNOP"));
+        this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Elements allowd in Molecular Formula"));
         this.setLayout(new BoxLayout(this,BoxLayout.LINE_AXIS));
 
         mainP = new JPanel();
@@ -106,14 +101,14 @@ public class ElementsPanel extends JPanel implements ActionListener {
     }
 
     public FormulaConstraints getElementConstraints(){
-        Element[] elems = Arrays.copyOf(defaultElements, defaultElements.length+element2Slider.size());
+        Element[] elems = new Element[element2Slider.size()];
         int k = 0;
         for (String s : element2Slider.keySet()) {
             final Element elem = periodicTable.getByName(s);
             if (elem != null)
-                elems[defaultElementSymbols.length+k++] = elem;
+                elems[k++] = elem;
         }
-        if (k+defaultElements.length < elems.length) elems = Arrays.copyOf(elems, k+defaultElements.length);
+        if (k < elems.length) elems = Arrays.copyOf(elems, k);
 
         FormulaConstraints formulaConstraints =  new FormulaConstraints(new ChemicalAlphabet(elems));
         for (String s : element2Slider.keySet()) {
@@ -144,7 +139,6 @@ public class ElementsPanel extends JPanel implements ActionListener {
     
     public void setSelectedElements(Set<String> selected){
         Set<String> selectedNoDefaults = new HashSet<>(selected);
-        for (String symbol : defaultElementSymbols) selectedNoDefaults.remove(symbol);
 
         Set<String> current = new HashSet<>(element2Slider.keySet());
         for (String symbol : current) {
@@ -167,7 +161,6 @@ public class ElementsPanel extends JPanel implements ActionListener {
 
     public void setSelectedElements(FormulaConstraints constraints){
         Set<Element> selectedNoDefaults = new HashSet<>(constraints.getChemicalAlphabet().getElements());
-        for (Element element : defaultElements) selectedNoDefaults.remove(element);
         for (Element element : constraints.getChemicalAlphabet().getElements())
             if (constraints.getUpperbound(element)==0) selectedNoDefaults.remove(element);
 

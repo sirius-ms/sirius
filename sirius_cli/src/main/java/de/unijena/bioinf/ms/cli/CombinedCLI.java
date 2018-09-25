@@ -1,9 +1,9 @@
 package de.unijena.bioinf.ms.cli;
 
 import com.google.common.collect.Iterables;
-import com.lexicalscope.jewel.cli.ArgumentValidationException;
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
+import de.unijena.bioinf.ChemistryBase.SimpleRectangularIsolationWindow;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -20,9 +20,10 @@ import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.fingerid.FingeridProjectSpaceFactory;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.net.WebAPI;
+import de.unijena.bioinf.fingerworker.WorkerList;
+import de.unijena.bioinf.ms.cli.utils.FormatedTableBuilder;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.logging.ResultOutputHandler;
 import de.unijena.bioinf.sirius.projectspace.*;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +50,6 @@ public class CombinedCLI extends ApplicationCore {
     protected Sirius sirius;
 
 
-
     public CombinedCLI() {
     }
 
@@ -60,7 +60,7 @@ public class CombinedCLI extends ApplicationCore {
     public void compute() {
         final long time = System.currentTimeMillis();
         try {
-            if (workflow instanceof ZodiacWorkflow){
+            if (workflow instanceof ZodiacWorkflow) {
 //                if (!(new ZodiacInstanceProcessor(options)).validate()){
 //                    System.exit(1);
 //                }
@@ -84,7 +84,6 @@ public class CombinedCLI extends ApplicationCore {
     }
 
 
-
     //////////////////////////////////////////////////
     // init
     ////////////////////////////////////////////////////
@@ -92,6 +91,31 @@ public class CombinedCLI extends ApplicationCore {
     protected void cite() {
         System.out.println("Please cite the following paper when using our method:");
         System.out.println(ApplicationCore.CITATION);
+    }
+
+    private void fingerIDInfo() {
+        System.out.println();
+
+        WorkerList info = WebAPI.INSTANCE.getWorkerInfo();
+        if (info != null) {
+            System.out.println("Active worker instances: ");
+            System.out.println();
+            final FormatedTableBuilder align = new FormatedTableBuilder();
+            // header
+            align.addLine("ID", "Type", "Predictors", "Version", "Host", "Pulse");
+
+            info.forEach((workerInfo) ->
+                    // data
+                    align.addLine(String.valueOf(workerInfo.id), workerInfo.workerType.name(), workerInfo.predictors.toString(), workerInfo.version, workerInfo.hostname, String.valueOf(workerInfo.getPulse()))
+            );
+
+
+            // output
+            align.output(System.out::println);
+
+//            System.out.println();
+            System.out.println("Number of pending jobs: " + info.getPendingJobs());
+        }
     }
 
     protected void parseArgsAndInit(String[] args) {
@@ -102,7 +126,6 @@ public class CombinedCLI extends ApplicationCore {
 
     protected void parseArgs(String[] args) {
         if (args.length == 0) {
-            System.out.println(ApplicationCore.VERSION_STRING);
             System.out.println(CliFactory.createCli(FingerIdOptions.class).getHelpMessage());
             System.exit(0);
         }
@@ -112,8 +135,7 @@ public class CombinedCLI extends ApplicationCore {
             if (options.isCite()) {
                 cite();
                 System.exit(0);
-            } else if (options.isZodiac() && args.length==1){
-                System.out.println("ZODIAC in "+ApplicationCore.VERSION_STRING);
+            } else if (options.isZodiac() && args.length == 1) {
                 System.out.println(CliFactory.createCli(ZodiacOptions.class).getHelpMessage());
                 System.exit(0);
             }
@@ -124,13 +146,16 @@ public class CombinedCLI extends ApplicationCore {
             System.exit(0);
         }
         if (options.isVersion()) {
-            System.out.println(ApplicationCore.VERSION_STRING);
             cite();
+            System.exit(0);
+        }
+        if (options.isFingeridInfo()) {
+            fingerIDInfo();
             System.exit(0);
         }
 
         FilenameFormatter filenameFormatter = null;
-        if (options.getNamingConvention()!=null){
+        if (options.getNamingConvention() != null) {
             String formatString = options.getNamingConvention();
             try {
                 filenameFormatter = new StandardMSFilenameFormatter(formatString);
@@ -150,12 +175,12 @@ public class CombinedCLI extends ApplicationCore {
         sirius = siriusInstanceProcessor.getSirius();
 
         //decide for workflow
-        if (options.isZodiac() && options.isFingerid()){
+        if (options.isZodiac() && options.isFingerid()) {
             logger.error("ZODIAC + CSI:FingerID is currently not supported");
             System.exit(1);
-        } else if (options.isZodiac()){
+        } else if (options.isZodiac()) {
             //todo better differentiate between reading from workspace and additionally running SIRIUS
-            if (options.getInput()==null || options.getInput().size()==0){
+            if (options.getInput() == null || options.getInput().size() == 0) {
                 //todo tis might fail due to jewelCLI bug: see handleInput
                 workflow = new ZodiacWorkflow(options);
             } else {
@@ -173,6 +198,7 @@ public class CombinedCLI extends ApplicationCore {
 
 
     }
+
 
     private String[] fixBuggyJewelCliLibrary(String[] args) {
         final List<String> argsCopy = new ArrayList<>();
@@ -230,7 +256,7 @@ public class CombinedCLI extends ApplicationCore {
         }
 
         //todo ZODIAC hack
-        if (!options.isZodiac()){
+        if (!options.isZodiac()) {
             try {
                 ProjectSpaceUtils.ProjectWriterInfo projectWriterInfo = ProjectSpaceUtils.getProjectWriter(options.getOutput(), options.getSirius(), readerWriterFactory);
                 this.projectWriter = projectWriterInfo.getProjectWriter();
@@ -477,7 +503,7 @@ public class CombinedCLI extends ApplicationCore {
 
                             Index expIndex = experiment.getAnnotation(Index.class);
                             int currentIndex;
-                            if (instanceIdOffset==0 && expIndex!=null && expIndex.index>=0){
+                            if (instanceIdOffset == 0 && expIndex != null && expIndex.index >= 0) {
                                 //if no workspaces are merged and parser provides real index, use if
                                 currentIndex = expIndex.index;
                             } else {
@@ -509,6 +535,7 @@ public class CombinedCLI extends ApplicationCore {
 
     /**
      * add here (instance specific) parameters
+     *
      * @param inst
      * @return
      */
@@ -520,10 +547,20 @@ public class CombinedCLI extends ApplicationCore {
         if (formulas != null && formulas.size() == 1) exp.setMolecularFormula(MolecularFormula.parse(formulas.get(0)));
 
         Set<MolecularFormula> whiteSet = getFormulaWhiteset(exp, formulas);
-        if (whiteSet!=null) sirius.setFormulaSearchList(exp, whiteSet);
+        if (whiteSet != null) sirius.setFormulaSearchList(exp, whiteSet);
 
 
         if (options.getParentMz() != null) exp.setIonMass(options.getParentMz());
+
+        if (options.getIsolationWindowWidth() != null) {
+            final double width = options.getIsolationWindowWidth();
+            final double shift = options.getIsolationWindowShift();
+            final double right = width / 2d + shift;
+            final double left = -width / 2d + shift;
+            SimpleRectangularIsolationWindow isolationWindow = new SimpleRectangularIsolationWindow(left, right);
+            exp.setAnnotation(IsolationWindow.class, isolationWindow);
+        }
+
 
         //only keep most intense ms2 (hack used for bad data)
         if (options.isMostIntenseMs2()) {
@@ -541,8 +578,8 @@ public class CombinedCLI extends ApplicationCore {
         return new Instance(exp, inst.file, inst.index);
     }
 
-    private void setIonModeStuff(MutableMs2Experiment exp){
-        PossibleIonModes.GuessingMode enabledGuessingMode = options.isTrustGuessIonFromMS1()? PossibleIonModes.GuessingMode.SELECT : PossibleIonModes.GuessingMode.ADD_IONS;
+    private void setIonModeStuff(MutableMs2Experiment exp) {
+        PossibleIonModes.GuessingMode enabledGuessingMode = options.isTrustGuessIonFromMS1() ? PossibleIonModes.GuessingMode.SELECT : PossibleIonModes.GuessingMode.ADD_IONS;
         if (options.isAutoCharge()) { //TODO: add optiosn.getIon into this case
             if (exp.getPrecursorIonType().isIonizationUnknown()) {
                 exp.setAnnotation(PossibleAdducts.class, null);
@@ -574,13 +611,14 @@ public class CombinedCLI extends ApplicationCore {
         im.setGuessFromMs1(guessingMode);
 
 
-        if (preferProtonation){
-            if (guessingMode.isEnabled()) im.enableGuessFromMs1WithCommonIonModes(exp.getPrecursorIonType().getCharge());
+        if (preferProtonation) {
+            if (guessingMode.isEnabled())
+                im.enableGuessFromMs1WithCommonIonModes(exp.getPrecursorIonType().getCharge());
             final Set<Ionization> ionModes = new HashSet<>(pa.getIonModes());
             for (Ionization ion : ionModes) {
                 im.add(ion, 0.02);
             }
-            if (exp.getPrecursorIonType().getCharge()>0){
+            if (exp.getPrecursorIonType().getCharge() > 0) {
                 im.add(PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization(), 1d);
             } else {
                 im.add(PrecursorIonType.getPrecursorIonType("[M-H]-").getIonization(), 1d);
@@ -598,7 +636,7 @@ public class CombinedCLI extends ApplicationCore {
 
 
     protected Set<MolecularFormula> getFormulaWhiteset(Ms2Experiment experiment, List<String> whitelist) {
-        if ((new FingerIdInstanceProcessor(options)).isOffline()){
+        if ((new FingerIdInstanceProcessor(options)).isOffline()) {
             return getFormulaWhitesetNoDB(experiment, whitelist);
         } else {
             return getFormulaWhitesetWithDB(experiment, whitelist);
@@ -684,9 +722,10 @@ public class CombinedCLI extends ApplicationCore {
             }
             final Deviation dev;
             if (options.getPPMMax() != null) dev = new Deviation(options.getPPMMax());
-            else dev = siriusInstanceProcessor.getSirius().getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation();
+            else
+                dev = siriusInstanceProcessor.getSirius().getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation();
             final Set<PrecursorIonType> allowedIonTypes = new HashSet<>();
-            if (experiment.getPrecursorIonType()==null||experiment.getPrecursorIonType().isIonizationUnknown()) {
+            if (experiment.getPrecursorIonType() == null || experiment.getPrecursorIonType().isIonizationUnknown()) {
                 allowedIonTypes.addAll(experiment.getAnnotation(PossibleAdducts.class).getAdducts());
             } else {
                 allowedIonTypes.add(experiment.getPrecursorIonType());
@@ -696,14 +735,14 @@ public class CombinedCLI extends ApplicationCore {
             else allowedAlphabet = new FormulaConstraints("CHNOPSBBrClIF");
 
             List<List<FormulaCandidate>> candidates = new ArrayList<>();
-            try (final WebAPI api = WebAPI.newInstance()) {
+            try {
                 if (searchableDatabase.searchInBio()) {
-                    try (final RESTDatabase db = api.getRESTDb(BioFilter.ONLY_BIO, fingerIdInstanceProcessor.bioDatabase.getDatabasePath())) {
+                    try (final RESTDatabase db = WebAPI.INSTANCE.getRESTDb(BioFilter.ONLY_BIO, fingerIdInstanceProcessor.bioDatabase.getDatabasePath())) {
                         candidates.addAll(db.lookupMolecularFormulas(experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
                     }
                 }
                 if (searchableDatabase.searchInPubchem()) {
-                    try (final RESTDatabase db = api.getRESTDb(BioFilter.ONLY_NONBIO, fingerIdInstanceProcessor.pubchemDatabase.getDatabasePath())) {
+                    try (final RESTDatabase db = WebAPI.INSTANCE.getRESTDb(BioFilter.ONLY_NONBIO, fingerIdInstanceProcessor.pubchemDatabase.getDatabasePath())) {
                         candidates.addAll(db.lookupMolecularFormulas(experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
                     }
                 }
@@ -728,7 +767,6 @@ public class CombinedCLI extends ApplicationCore {
             return allowedSet;
         }
     }
-
 
 
     private List<File> foreachIn(List<File> ms2) {

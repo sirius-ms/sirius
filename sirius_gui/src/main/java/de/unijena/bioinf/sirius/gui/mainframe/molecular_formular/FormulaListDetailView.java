@@ -11,17 +11,16 @@ import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.*;
-import de.unijena.bioinf.sirius.gui.table.list_stats.DoubleListStats;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
@@ -36,20 +35,21 @@ import java.util.Map;
 public class FormulaListDetailView extends ActionListDetailView<SiriusResultElement, ExperimentContainer, FormulaList> {
     //    private static final int[] BAR_COLS = {2, 3, 4};
     private final ActionTable<SiriusResultElement> table;
-    private final ConnectedSelection<SiriusResultElement> selectionConnection;
+    //private final ConnectedSelection<SiriusResultElement> selectionConnection;
 
-    private final SiriusResultTableFormat tableFormat = new SiriusResultTableFormat(source.scoreStats);
     private SortedList<SiriusResultElement> sortedSource;
+    private final SiriusResultTableFormat tableFormat;
 
     public FormulaListDetailView(final FormulaList source) {
         super(source);
 
+        tableFormat = new SiriusResultTableFormat(source.scoreStats);
 
         table = new ActionTable<>(filteredSource, sortedSource, tableFormat);
 
         table.setSelectionModel(filteredSelectionModel);
         filteredSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), filteredSelectionModel, source.getElementList(), sortedSource);
+        //selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), filteredSelectionModel, source.getElementList(), sortedSource);
 
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumnIndex()));
 
@@ -59,17 +59,6 @@ public class FormulaListDetailView extends ActionListDetailView<SiriusResultElem
         table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.explainedPeaks,false,true,new DecimalFormat("#0")));
         table.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(),0,1,true));
 
-
-        TableColumnModel v1 = table.getColumnModel();
-        TableColumn v2 = v1.getColumn(5);
-        //v2.setCellRenderer(new ListStatBarTableCellRenderer(8, source.treeScoreStats,false));
-
-        /*
-        TableColumn hui = table.getColumnModel().getColumn(5);
-        DoubleListStats hui2 = source.treeScoreStats;
-
-        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.treeScoreStats,false));
-*/
         table.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -103,7 +92,6 @@ public class FormulaListDetailView extends ActionListDetailView<SiriusResultElem
         });
 
         //decorate this guy
-        //decorate this guy
         KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
         table.getInputMap().put(enterKey, SiriusActions.COMPUTE_CSI_LOCAL.name());
         table.getActionMap().put(SiriusActions.COMPUTE_CSI_LOCAL.name(), SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
@@ -121,8 +109,12 @@ public class FormulaListDetailView extends ActionListDetailView<SiriusResultElem
 
     @Override
     protected EventList<MatcherEditor<SiriusResultElement>> getSearchFieldMatchers() {
+
+        //TODO:dirty hack for ticket 11, fleisch must fix properly(maybe)
+        SiriusResultTableFormat tableFormatLocal = new SiriusResultTableFormat(source.scoreStats);
+
         return GlazedLists.eventListOf(
-                (MatcherEditor<SiriusResultElement>) new StringMatcherEditor<>(tableFormat, searchField.textField)
+                (MatcherEditor<SiriusResultElement>) new StringMatcherEditor<>(tableFormatLocal, searchField.textField)
         );
     }
 

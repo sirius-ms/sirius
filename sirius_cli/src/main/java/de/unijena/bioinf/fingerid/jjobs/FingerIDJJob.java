@@ -13,10 +13,14 @@ import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
 import de.unijena.bioinf.chemdb.SearchStructureByFormula;
 import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.fingerid.TrainingStructuresPerPredictor;
+import de.unijena.bioinf.fingerid.TrainingStructuresSet;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.CachedRESTDB;
+import de.unijena.bioinf.fingerid.db.SearchableDatabase;
+import de.unijena.bioinf.fingerid.net.PredictionJJob;
 import de.unijena.bioinf.fingerid.net.WebAPI;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -24,6 +28,7 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -91,7 +96,7 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
 
     @Override
     protected Map<IdentificationResult, ProbabilityFingerprint> compute() throws Exception {
-        try (final WebAPI webAPI = WebAPI.newInstance()) {
+//        try {
 
             final SearchStructureByFormula searchStructureByFormula = database.getSearchEngine(queryDb);
 
@@ -164,7 +169,8 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
                 while (iter.hasNext()) {
                     final IdentificationResult ir = iter.next();
                     if (ir.getBeautifulTree().numberOfVertices() < 3) {
-                        progressInfo("Ignore " + ir.getMolecularFormula() + " because the tree contains less than 3 vertices");
+                        LoggerFactory.getLogger(FingerIDJJob.class).warn("Ignore fragmentation tree for " + ir.getMolecularFormula() + " because it contains less than 3 vertices.");
+                        //progressInfo("Ignore " + ir.getMolecularFormula() + " because the tree contains less than 3 vertices");
                         iter.remove();
                     }
                 }
@@ -204,20 +210,22 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
             addedIdentificationResults.addAll(ionTypes);
 
             //submit jobs
-            List<WebAPI.PredictionJJob> predictionJobs = new ArrayList<>();
+            List<PredictionJJob> predictionJobs = new ArrayList<>();
             List<FingerprintDependentJJob> annotationJobs = new ArrayList<>();
 
             for (IdentificationResult fingeridInput : filteredResults) {
-                WebAPI.PredictionJJob predictionJob = webAPI.makePredictionJob(experiment, fingeridInput, fingeridInput.getResolvedTree(), fingerprintVersion, predictors);
+                PredictionJJob predictionJob = WebAPI.INSTANCE.makePredictionJob(experiment, fingeridInput, fingeridInput.getResolvedTree(), fingerprintVersion, predictors);
                 submitSubJob(predictionJob);
                 predictionJobs.add(predictionJob);
 
-                // formula jobs
+                // formula jobs: retrieve fingerprint candidates for specific MF
                 FormulaJob formulaJob = new FormulaJob(fingeridInput.getMolecularFormula(), searchStructureByFormula, fingeridInput.getPrecursorIonType());
 
                 //fingerblast jobs
                 final PrecursorIonType ionType = fingeridInput.getResolvedTree().getAnnotationOrThrow(PrecursorIonType.class);
-                FingerblastJJob blastJob = new FingerblastJJob(fingerblast, bioFilter, dbFlag, CompoundCandidateChargeState.getFromPrecursorIonType(ionType));
+                final PredictorType predictorType = getUnambiguousUserDefineablePredictorTypeOrThrow(predictors).toPredictorType(fingeridInput.getPrecursorIonType());
+                final TrainingStructuresSet trainingStructuresSet = TrainingStructuresPerPredictor.getInstance().getTrainingStructuresSet(predictorType);
+                FingerblastJJob blastJob = new FingerblastJJob(fingerblast, bioFilter, dbFlag, CompoundCandidateChargeState.getFromPrecursorIonType(ionType), trainingStructuresSet);
                 blastJob.addRequiredJob(formulaJob);
                 blastJob.addRequiredJob(predictionJob);
                 submitSubJob(formulaJob);
@@ -235,7 +243,7 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
 
             //collect results
             Map<IdentificationResult, ProbabilityFingerprint> fps = new HashMap<>(input.size());
-            for (WebAPI.PredictionJJob predictionJob : predictionJobs) {
+            for (PredictionJJob predictionJob : predictionJobs) {
                 ProbabilityFingerprint r = predictionJob.awaitResult();
                 if (r != null)
                     fps.put(predictionJob.result, r);
@@ -259,6 +267,16 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
 
 
             return fps;
+//        }
+    }
+
+    private UserDefineablePredictorType getUnambiguousUserDefineablePredictorTypeOrThrow(Collection<UserDefineablePredictorType> predictors) {
+        //currently we only support results of a single predictor
+        if (predictors.size()==0){
+            throw new IllegalArgumentException("No UserDefineablePredictorType given.");
+        } else if (predictors.size()>1){
+            throw new NoSuchMethodError("Multiple predictors per result are not supported.");
         }
+        return predictors.iterator().next();
     }
 }

@@ -94,14 +94,14 @@ public class CachedRESTDB {
         }
     }
 
-    public List<FingerprintCandidate> loadCompoundsByFormula(WebAPI webAPI, MolecularFormula formula, SearchableDatabase db) throws IOException {
+    public List<FingerprintCandidate> loadCompoundsByFormula(MolecularFormula formula, SearchableDatabase db) throws IOException {
         final List<FingerprintCandidate> candidates = new ArrayList<>();
         try {
             if (db.searchInPubchem()) {
-                search(webAPI, formula, candidates, true);
-                search(webAPI, formula, candidates, false);
+                search(WebAPI.INSTANCE, formula, candidates, true);
+                search(WebAPI.INSTANCE, formula, candidates, false);
             } else if (db.searchInBio()) {
-                search(webAPI, formula, candidates, true);
+                search(WebAPI.INSTANCE, formula, candidates, true);
             }
             if (db.isCustomDb())
                 search(formula, candidates, getCustomDb(db));

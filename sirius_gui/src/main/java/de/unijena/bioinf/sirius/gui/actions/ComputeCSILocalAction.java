@@ -31,9 +31,8 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        CheckConnectionAction checker = (CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance();
-        checker.actionPerformed(null);
-        if (!checker.isActive.get()) return;
+        if (CheckConnectionAction.isNotConnectedAndLoad())
+            return;
         
         //calculate csi
         final FingerIdDialog dialog = new FingerIdDialog(MF, MF.getCsiFingerId(), true, true);

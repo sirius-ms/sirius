@@ -65,13 +65,13 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
         }
 
         if (searchableDatabase.searchInBio()) {
-            try (final RESTDatabase db = WebAPI.newInstance().getRESTDb(BioFilter.ONLY_BIO, null)) {
+            try (final RESTDatabase db = WebAPI.INSTANCE.getRESTDb(BioFilter.ONLY_BIO, null)) {
                 formulas.addAll(searchInOnlineDB(db, allowedIons));
             }
         }
 
         if (searchableDatabase.searchInPubchem()) {
-            try (final RESTDatabase db = WebAPI.newInstance().getRESTDb(searchableDatabase.searchInBio() ? BioFilter.ONLY_NONBIO : BioFilter.ALL, null)) {
+            try (final RESTDatabase db = WebAPI.INSTANCE.getRESTDb(searchableDatabase.searchInBio() ? BioFilter.ONLY_NONBIO : BioFilter.ALL, null)) {
                 formulas.addAll(searchInOnlineDB(db, allowedIons));
             }
         }

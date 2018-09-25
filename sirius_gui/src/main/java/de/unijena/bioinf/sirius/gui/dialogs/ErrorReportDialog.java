@@ -7,6 +7,7 @@ package de.unijena.bioinf.sirius.gui.dialogs;
 
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.core.errorReport.FinngerIDWebErrorReporter;
 import de.unijena.bioinf.sirius.core.errorReport.SiriusDefaultErrorReport;
 import de.unijena.bioinf.sirius.gui.settings.ErrorReportSettingsPanel;
@@ -39,7 +40,7 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
     private JButton close, send;
 
     private ErrorReportSettingsPanel expandPanel;
-    private final Properties props = ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties();
+    private final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().getCopyOfPersistentProperties();
 
     public ErrorReportDialog(Frame owner, String errorMessage) {
         super(owner, true, ExtentionPos.SOUTH);
@@ -121,7 +122,7 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
                 @Override
                 protected String doInBackground() throws Exception {
                     expandPanel.saveProperties();
-                    ApplicationCore.SIRIUS_PROPERTIES_FILE.setAndStoreProperties(props);
+                    SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperties(props);
 
                     boolean senMail = Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail"));
                     String mail = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");

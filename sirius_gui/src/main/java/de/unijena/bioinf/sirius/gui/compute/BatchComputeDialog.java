@@ -32,18 +32,20 @@ import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
+import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.FingerIDSearchGuiJob;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.PrepareSiriusIdentificationInputJob;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.SiriusIdentificationGuiJob;
-import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.utils.ExperimentEditPanel;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -57,7 +59,10 @@ import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 
+import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
+
 public class BatchComputeDialog extends JDialog implements ActionListener {
+    public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.recompute.dontAskAgain";
 
     private JButton compute;
     private JButton abort;
@@ -244,18 +249,14 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     private void startComputing() {
         if (recompute.isSelected()) {
-            final String dontAskProperty = "de.unijena.bioinf.sirius.dontAsk.recompute";
-
-            ReturnValue value;
-            if (Boolean.parseBoolean(PropertyManager.PROPERTIES.getProperty(dontAskProperty, "false")) || this.compoundsToProcess.size() == 1) {
-                value = ReturnValue.Success;
-            } else {
-                QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", dontAskProperty);
-                value = questionDialog.getReturnValue();
+            boolean isSuccsess = true;
+            if (!PropertyManager.getBooleanProperty(DONT_ASK_RECOMPUTE_KEY,false) && this.compoundsToProcess.size() > 1) {
+                QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY);
+                isSuccsess = questionDialog.isSuccess();
             }
 
             //reset status of already computed values to uncomputed if needed
-            if (value == ReturnValue.Success) {
+            if (isSuccsess) {
                 final Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
                 while (compounds.hasNext()) {
                     final ExperimentContainer ec = compounds.next();
@@ -266,8 +267,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
         }
 
+        //CHECK worker availability
+        checkConnection();
+
         //collect job parameter from view
-        final String instrument = searchProfilePanel.getInstrument().profile;
+        final SearchProfilePanel.Instruments instrument = searchProfilePanel.getInstrument();
         final SearchableDatabase searchableDatabase = searchProfilePanel.getFormulaSource();
         final FormulaConstraints constraints = elementPanel.getElementConstraints();
         final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.EMPTY_LIST;
@@ -286,6 +290,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
         LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder);
 
+
         Jobs.runInBackroundAndLoad(owner, "Submitting Identification Jobs", new TinyBackgroundJJob() {
             @Override
             protected Object compute() throws InterruptedException {
@@ -293,6 +298,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 final Iterator<ExperimentContainer> compounds = compoundsToProcess.iterator();
                 final int max = compoundsToProcess.size();
                 int progress = 0;
+
                 while (compounds.hasNext()) {
                     final ExperimentContainer ec = compounds.next();
                     checkForInterruption();
@@ -316,7 +322,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
                         SiriusIdentificationGuiJob identificationJob = null;
                         if (!ec.isComputed()) {
-                            identificationJob = new SiriusIdentificationGuiJob(instrument, candidates, ec);
+                            identificationJob = new SiriusIdentificationGuiJob(instrument.profile, candidates, ec);
                             identificationJob.addRequiredJob(prepareJob);
                             Jobs.submit(identificationJob);
                         }
@@ -333,9 +339,29 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 return true;
             }
         });
-
         dispose();
+    }
 
+    private void checkConnection() {
+        final @Nullable ConnectionMonitor.ConnetionCheck cc = CheckConnectionAction.checkConnectionAndLoad();
+
+        if (cc != null) {
+            if (cc.isConnected()) {
+                if (csiOptions.isCSISelected() && cc.hasWorkerWarning()) {
+                    new WorkerWarningDialog(MF, cc.workerInfo == null);
+                }
+            } else {
+                if (searchProfilePanel.getFormulaSource() != null) {
+                    new WarnFormulaSourceDialog(MF);
+                    searchProfilePanel.formulaCombobox.setSelectedIndex(0);
+                }
+            }
+        } else {
+            if (searchProfilePanel.getFormulaSource() != null) {
+                new WarnFormulaSourceDialog(MF);
+                searchProfilePanel.formulaCombobox.setSelectedIndex(0);
+            }
+        }
     }
 
     public boolean isSuccessful() {
@@ -344,7 +370,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     public void initSingleExperimentDialog(List<Element> detectableElements) {
         JPanel north = new JPanel(new BorderLayout());
-
 
         ExperimentContainer ec = compoundsToProcess.get(0);
         editPanel = new ExperimentEditPanel();
@@ -413,5 +438,16 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         add(north, BorderLayout.NORTH);
     }
 
+    private class WarnFormulaSourceDialog extends WarningDialog {
+        private final static String DONT_ASK_KEY = PropertyManager.PROPERTY_BASE + ".sirius.computeDialog.formulaSourceWarning.dontAskAgain";
+        public static final String FORMULA_SOURCE_WARNING_MESSAGE =
+                "<b>Warning:</b> No connection to webservice available! <br>" +
+                        "Online databases cannot be used for formula identification.<br> " +
+                        "If online databases are selected, the default option <br>" +
+                        "(all molecular formulas) will be used instead.";
 
+        public WarnFormulaSourceDialog(Frame owner) {
+            super(owner, "<html>" + FORMULA_SOURCE_WARNING_MESSAGE, DONT_ASK_KEY + "</html>" );
+        }
+    }
 }

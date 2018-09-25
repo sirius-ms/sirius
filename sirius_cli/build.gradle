@@ -9,6 +9,7 @@ dependencies {
 
     //internal
     //compile group: "de.unijena.bioinf.ms", name: "fingerid_utils", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "fingerid_db_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "fingerprinter_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "fingerblast_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "chemdb_rest_oss", version: "$fingeridVersion"
@@ -25,7 +26,7 @@ dependencies {
 }
 
 mainClassName = 'de.unijena.bioinf.ms.cli.SiriusCLIApplication'
-project.ext.set("type", "console")
+project.ext.set("type", ['console'])
 
 
 jar {
@@ -35,20 +36,26 @@ jar {
 }
 
 /*################### Windows release Stuff ################### */
-launch4j {
-    mainClassName = project.mainClassName
-    headerType = "$project.type"
-    jreRuntimeBits = "$project.arch"
-
-    outfile = "${project.appName}.exe"
+project.type.each{t ->
+    project.arch.each { a ->
+        tasks.create("launch4j-$t-$a", edu.sc.seis.launch4j.tasks.Launch4jLibraryTask) {
+            group = 'launch4j'
+            mainClassName = project.mainClassName
+            headerType = t
+            jreRuntimeBits = a
+            outfile = "${project.appName}-${t}-${a}.exe"
+        }
+    }
 }
+
+
 
 /*################### Build distributions ################### */
 task distribute { group = 'distribution' }
 distribute.dependsOn ':buildDoku'
 
 distributions {
-    project.arch.split(',').each { ar ->
+    project.arch.each { ar ->
         def n = "${project.linSuffix}${ar}"
         create(n, {
             baseName = "${project.appName}-$n-headless"
@@ -86,7 +93,7 @@ distributions {
     }
 
     //crete win32And64 zip tasks
-    project.arch.split(',').each { ar ->
+    project.arch.each { ar ->
         def n = "${project.winSuffix}${ar}"
         create(n, {
 
@@ -115,6 +122,7 @@ distributions {
         })
         distribute.dependsOn "${n}DistZip"
         getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+        getTasks().findByPath("${n}DistZip").dependsOn 'createAllExecutables'
         getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
     }
 

@@ -18,10 +18,11 @@
 
 package de.unijena.bioinf.fingerid.net;
 
+import com.google.gson.Gson;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.chemdb.BioFilter;
@@ -30,7 +31,7 @@ import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.net.ProxyManager;
@@ -39,9 +40,15 @@ import de.unijena.bioinf.utils.systemInfo.SystemInformation;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import net.iharder.Base64;
+import net.sf.jniinchi.INCHI_KEY;
+import net.sf.jniinchi.JniInchiException;
+import net.sf.jniinchi.JniInchiOutputKey;
+import net.sf.jniinchi.JniInchiWrapper;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.annotation.ThreadSafe;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -51,8 +58,9 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
@@ -68,65 +76,23 @@ import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
 
-public class WebAPI implements Closeable {
-    private static final LinkedHashSet<WebAPI> INSTANCES = new LinkedHashSet<>();
+/*
+ * Frontend WebAPI class, corresponding to backend class
+ * de.unijena.bioinf.fingerid.WebAPIServlet in csi_fingerid/frontend
+ */
+
+@ThreadSafe
+public class WebAPI {
     private static final BasicNameValuePair UID = new BasicNameValuePair("uid", SystemInformation.generateSystemKey());
+    private static final Logger LOG = LoggerFactory.getLogger(WebAPI.class);
 
-    public static final DefaultArtifactVersion VERSION = new DefaultArtifactVersion(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.version"));
-    public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
-    public static final String FINGERID_WEB_API = FingerIDProperties.fingeridWebHost();
-
-
-    public static WebAPI newInstance() {
-        WebAPI i = new WebAPI();
-        INSTANCES.add(i);
-        return i;
-    }
-
-    public static void reconnectAllInstances() {
-        for (WebAPI api : INSTANCES) {
-            api.reconnect();
-        }
-    }
-
-    private CloseableHttpClient client;
-
-    private WebAPI() {
-        client = ProxyManager.getSirirusHttpClient();
-    }
-
-    @Override
-    public void close() throws IOException {
-        client.close();
-        INSTANCES.remove(this);
-    }
-
-    public boolean isConnected() {
-        if (client == null || checkConnection() == 0) {
-            LoggerFactory.getLogger(this.getClass()).warn("No Connection, try to reconnect");
-            reconnect();
-            return checkConnection() == 0;
-        }
-        return true;
-    }
-
-    public void reconnect() {
-        if (client != null) {
-            try {
-                client.close();
-            } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error("Could not close Existing connection!", e);
-            }
-        }
-        client = ProxyManager.getSirirusHttpClient();
-    }
+    // Singelton instance for the sirius_frontend
+    public static final WebAPI INSTANCE = new WebAPI();
 
 
-    private boolean checkFingerIDConnection() {
-        return getRESTDb(BioFilter.ALL, null).testConnection();
-    }
+    private WebAPI() {/*prevent instantiation*/}
+
 
     //6 csi web api for this version is not reachable because it is outdated
     //5 csi web api for this version is not reachable
@@ -138,60 +104,66 @@ public class WebAPI implements Closeable {
     public static final int MAX_STATE = 6;
 
     public int checkConnection() {
-        VersionsInfo v = getVersionInfo();
-        if (v == null) {
-            int error = ProxyManager.checkInternetConnection(client);
-            if (error > 0) return error;
-            else return 4;
-        } else if (v.outdated()) {
-            return MAX_STATE;
-        } else if (checkFingerIDConnection()) {
-            return 0;
-        } else {
-            return 5;
-        }
-    }
-
-    public static int checkFingerIDConnectionStatic() {
-        int errorcode = 1;
-        try (final WebAPI web = WebAPI.newInstance()) {
-            errorcode = web.checkConnection();
-        } catch (IOException e) {
-            LoggerFactory.getLogger(WebAPI.class).error("Unexpected WebAPI error during connection check", e);
-        }
-        return errorcode;
-    }
-
-    public static boolean canConnect() {
-        return checkFingerIDConnectionStatic() == ProxyManager.OK_STATE;
-    }
-
-    public VersionsInfo getVersionInfo() {
-        VersionsInfo v = null;
-        try {
-            v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdBaseURI()).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build()));
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            VersionsInfo v = getVersionInfo(client);
             if (v == null) {
-                LoggerFactory.getLogger(this.getClass()).warn("Could not reach fingerid root url for version verification. Try to reach version specific url");
-                v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdURI(null)).build()));
+                int error = ProxyManager.checkInternetConnection(client);
+                if (error > 0) return error;
+                else return 4;
+            } else if (v.outdated()) {
+                return MAX_STATE;
+            } else if (getRESTDb(BioFilter.ALL, null, client).testConnection()) {
+                return 0;
+            } else {
+                return 5;
+            }
+        } catch (Exception e) {
+            LOG.error("Error during connection check", e);
+            return MAX_STATE;
+        }
+    }
+
+    @Nullable
+    public VersionsInfo getVersionInfo() {
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            return getVersionInfo(client);
+        }
+    }
+
+    @Nullable
+    private VersionsInfo getVersionInfo(final ProxyManager.LockedClosableHttpClient client) {
+        VersionsInfo v = null;
+
+        try {
+            v = getVersionInfo(new HttpGet(buildVersionLessFingerIdWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build())
+                    , client
+            );
+            if (v == null) {
+                LOG.warn("Could not reach fingerid root url for version verification. Try to reach version specific url");
+                v = getVersionInfo(new HttpGet(buildVersionSpecificFingerIdWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build())
+                        , client
+                );
             }
         } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+            LOG.error(e.getMessage(), e);
         }
         if (v != null)
-            LoggerFactory.getLogger(this.getClass()).debug(v.toString());
+            LOG.debug(v.toString());
         return v;
     }
 
-    private VersionsInfo getVersionInfo(final HttpGet get) {
+    @Nullable
+    private VersionsInfo getVersionInfo(final HttpGet get, final ProxyManager.LockedClosableHttpClient client) {
         final int timeoutInSeconds = 8000;
         get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+//        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
         try (CloseableHttpResponse response = client.execute(get)) {
             try (final JsonReader r = Json.createReader(new InputStreamReader(response.getEntity().getContent()))) {
                 JsonObject o = r.readObject();
                 JsonObject gui = o.getJsonObject("SIRIUS GUI");
 
                 final String version = gui.getString("version");
-//                    final String date = gui.getString("date");
+                //                    final String date = gui.getString("date");
                 String database = o.getJsonObject("database").getString("version");
 
                 boolean expired = true;
@@ -215,90 +187,104 @@ public class WebAPI implements Closeable {
                 return new VersionsInfo(version, database, expired, accept, finish, newsList);
             }
         } catch (IOException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+            LOG.error(e.getMessage(), e);
+        } catch (Exception e) {
+            LOG.error("Unknown error when fetching VERSION information from webservice!", e);
+        }
+//        }
+        return null;
+    }
+
+    @Nullable
+    public WorkerList getWorkerInfo() {
+        try {
+            HttpGet get = new HttpGet(buildVersionSpecificFingerIdWebapiURI(WEBAPI_WORKER_JSON).build());
+            final int timeoutInSeconds = 8000;
+            get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+            try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+                try (CloseableHttpResponse response = client.execute(get)) {
+                    return new Gson().fromJson(new InputStreamReader(response.getEntity().getContent()), WorkerList.class);
+                } catch (IOException e) {
+                    LOG.error("Error when executing get request for WORKER information", e);
+                }
+            }
+        } catch (URISyntaxException e) {
+            LOG.error("Wrong request Syntax!", e);
+        } catch (Exception e) {
+            LOG.error("Unknown error when fetching WORKER information from webservice!", e);
         }
         return null;
     }
 
-    public static URIBuilder getFingerIdURI(String path) {
-        if (path == null)
-            path = "";
-        URIBuilder b = null;
-        try {
-            b = getFingerIdBaseURI();
-            if (ProxyManager.DEBUG) {
-                b = b.setPath("/frontend" + path);
-            } else {
-                b = b.setPath("/csi-fingerid-" + FingerIDProperties.fingeridVersion() + path);
-            }
-        } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(WebAPI.class).error("Unacceptable URI for CSI:FingerID", e);
-        }
-        return b;
-    }
-
-    private static URIBuilder getFingerIdVersionURI(URIBuilder baseBuilder) {
-        if (ProxyManager.DEBUG) {
-            baseBuilder = baseBuilder.setPath("/frontend/webapi/version.json");
-        } else {
-            baseBuilder = baseBuilder.setPath("/webapi/version.json");
-        }
-        return baseBuilder;
-    }
-
-    private static URIBuilder getFingerIdBaseURI() throws URISyntaxException {
-        URIBuilder b;
-        if (ProxyManager.DEBUG) {
-            b = new URIBuilder().setScheme(ProxyManager.HTTP_SCHEME).setHost("localhost");
-            b = b.setPort(8080);
-        } else {
-            b = new URIBuilder(FINGERID_WEB_API);
-        }
-        return b;
-    }
-
-    public RESTDatabase getRESTDb(BioFilter bioFilter, File cacheDir) {
+    private RESTDatabase getRESTDb(BioFilter bioFilter, File cacheDir, final ProxyManager.LockedClosableHttpClient client) {
         URI host = null;
         try {
-            host = getFingerIdURI(null).build();
+            host = getFingerIdBaseURI(null, true).build();
         } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Illegal fingerid URI -> Fallback to RestDB Default URI", e);
+            LOG.warn("Illegal fingerid URI -> Fallback to RestDB Default URI", e);
         }
         return new RESTDatabase(cacheDir, bioFilter, host, client);
     }
 
+    public RESTDatabase getRESTDb(BioFilter bioFilter, File cacheDir) {
+        return getRESTDb(bioFilter, cacheDir, ProxyManager.client());
+    }
 
-    public boolean updateJobStatus(FingerIdJob job) throws URISyntaxException, IOException {
-        final HttpGet get = new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
-        try (CloseableHttpResponse response = client.execute(get)) {
-            try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
-                final JsonObject obj = json.readObject();
-                if (obj.containsKey("prediction")) {
-                    final byte[] plattBytes = Base64.decode(obj.getString("prediction"));
-                    final double[] platts = parseBinaryToDoubles(plattBytes);
-                    job.prediction = new ProbabilityFingerprint(job.version, platts);
-
-                    if (obj.containsKey("iokrVector")) {
-                        final byte[] iokrBytes = Base64.decode(obj.getString("iokrVector"));
-                        job.iokrVerctor = parseBinaryToDoubles(iokrBytes);
-                    }
-
+    public boolean deleteJobOnServer(FingerIdJob job) throws URISyntaxException {
+        final HttpGet get = new HttpGet(buildVersionSpecificFingerIdWebapiURI("/delete-job").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
+        int reponsecode = Integer.MIN_VALUE;
+        String responseReason = null;
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            try (CloseableHttpResponse response = client.execute(get)) {
+                reponsecode = response.getStatusLine().getStatusCode();
+                responseReason = response.getStatusLine().getReasonPhrase();
+                if (reponsecode == 200) {
                     return true;
-                } else {
-                    job.state = obj.containsKey("state") ? obj.getString("state") : "SUBMITTED";
                 }
-                if (obj.containsKey("errors")) {
-                    job.errorMessage = obj.getString("errors");
-                }
+                LOG.error("Could not delete Job " + job.jobId + "! Response Code: " + reponsecode + " Reason: " + responseReason);
+            } catch (Exception t) {
+                LOG.error("Error when doing job deletion request " + job.jobId + " Response error code: " + reponsecode + " - Reason: " + responseReason, t);
             }
-        } catch (Throwable t) {
-            LoggerFactory.getLogger(this.getClass()).error("Error when updating job #" + job.jobId, t);
-            throw (t);
         }
         return false;
     }
 
-    double[] parseBinaryToDoubles(byte[] bytes) {
+    public boolean updateJobStatus(FingerIdJob job) throws URISyntaxException {
+        final HttpGet get = new HttpGet(buildVersionSpecificFingerIdWebapiURI("/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
+        int reponsecode = Integer.MIN_VALUE;
+        String responseReason = null;
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            try (CloseableHttpResponse response = client.execute(get)) {
+                reponsecode = response.getStatusLine().getStatusCode();
+                responseReason = response.getStatusLine().getReasonPhrase();
+                try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
+                    final JsonObject obj = json.readObject();
+                    if (obj.containsKey("prediction")) {
+                        final byte[] plattBytes = Base64.decode(obj.getString("prediction"));
+                        final double[] platts = parseBinaryToDoubles(plattBytes);
+                        job.prediction = new ProbabilityFingerprint(job.version, platts);
+
+                        if (obj.containsKey("iokrVector")) {
+                            final byte[] iokrBytes = Base64.decode(obj.getString("iokrVector"));
+                            job.iokrVerctor = parseBinaryToDoubles(iokrBytes);
+                        }
+
+                        return true;
+                    } else {
+                        job.state = obj.containsKey("state") ? obj.getString("state") : "SUBMITTED";
+                    }
+                    if (obj.containsKey("errors")) {
+                        job.errorMessage = obj.getString("errors");
+                    }
+                }
+            } catch (Exception t) {
+                LOG.error("Error when updating job #" + job.jobId + " (" +  job.name + ")  Response error code: " + reponsecode + " - Reason: " + responseReason, t);
+            }
+        }
+        return false;
+    }
+
+    private double[] parseBinaryToDoubles(byte[] bytes) {
         final TDoubleArrayList data = new TDoubleArrayList(2000);
         final ByteBuffer buf = ByteBuffer.wrap(bytes);
         buf.order(ByteOrder.LITTLE_ENDIAN);
@@ -309,7 +295,7 @@ public class WebAPI implements Closeable {
     }
 
     public FingerIdJob submitJob(final Ms2Experiment experiment, final FTree ftree, MaskedFingerprintVersion version, @NotNull EnumSet<PredictorType> types) throws IOException, URISyntaxException {
-        final HttpPost post = new HttpPost(getFingerIdURI("/webapi/predict.json").build());
+        final HttpPost post = new HttpPost(buildVersionSpecificFingerIdWebapiURI("/predict.json").build());
         final String stringMs, jsonTree;
         {
             final JenaMsWriter writer = new JenaMsWriter();
@@ -339,17 +325,24 @@ public class WebAPI implements Closeable {
         final String securityToken;
         final long jobId;
         // SUBMIT JOB
-        try (CloseableHttpResponse response = client.execute(post)) {
-            if (response.getStatusLine().getStatusCode() == 200) {
-                try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
-                    final JsonObject obj = json.readObject();
-                    securityToken = obj.getString("securityToken");
-                    jobId = obj.getInt("jobId");
-                    return new FingerIdJob(jobId, securityToken, version);
+        int status = Integer.MIN_VALUE;
+        String reason = null;
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            try (CloseableHttpResponse response = client.execute(post)) {
+                status = response.getStatusLine().getStatusCode();
+                reason = response.getStatusLine().getReasonPhrase();
+                if (response.getStatusLine().getStatusCode() == 200) {
+                    try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
+                        final JsonObject obj = json.readObject();
+                        securityToken = obj.getString("securityToken");
+                        jobId = obj.getInt("jobId");
+                        return new FingerIdJob(jobId, securityToken, version, experiment.getName());
+                    }
                 }
-            } else {
-                RuntimeException re = new RuntimeException(response.getStatusLine().getReasonPhrase());
-                LoggerFactory.getLogger(this.getClass()).debug("Submitting Job failed", re);
+                throw new HttpResponseException(status, "Response Status Code: " + status + " - Expected: 200");
+            } catch (Exception t) {
+                RuntimeException re = new RuntimeException("Error during job submission - Code: " + status + " Reason: " + reason, t);
+                LOG.debug("Submitting Job failed", re);
                 throw re;
             }
         }
@@ -387,39 +380,6 @@ public class WebAPI implements Closeable {
         return CdkFingerprintVersion.withECFP();
     }
 
-    public class PredictionJJob extends BasicJJob<ProbabilityFingerprint> {
-        public final Ms2Experiment experiment;
-        public final FTree ftree;
-        public final IdentificationResult result;
-        public final MaskedFingerprintVersion version;
-        private final EnumSet<PredictorType> predicors;
-
-        public PredictionJJob(final Ms2Experiment experiment, final IdentificationResult result, final FTree ftree, MaskedFingerprintVersion version, EnumSet<PredictorType> predicors) {
-            super(JobType.WEBSERVICE);
-            this.experiment = experiment;
-            this.ftree = ftree;
-            this.result = result;
-            this.version = version;
-            this.predicors = predicors;
-        }
-
-        @Override
-        public ProbabilityFingerprint compute() throws Exception {
-            final FingerIdJob job = submitJob(experiment, ftree, version, predicors);
-            // RECEIVE RESULTS
-            new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
-            for (int k = 0; k < 600; ++k) {
-                Thread.sleep(3000 + 30 * k);
-                if (updateJobStatus(job)) {
-                    return job.prediction;
-                } else if (Objects.equals(job.state, "CRASHED")) {
-                    throw new RuntimeException("Job crashed: " + (job.errorMessage != null ? job.errorMessage : ""));
-                }
-            }
-            throw new TimeoutException("Reached timeout");
-        }
-    }
-
 
     /**
      * make statistics of fingerprints and write the used indizes of fingerprints into the
@@ -433,28 +393,29 @@ public class WebAPI implements Closeable {
         fingerprintIndizes.clear();
         final HttpGet get;
         try {
-            get = new HttpGet(getFingerIdURI("/webapi/statistics.csv").setParameter("predictor", predictorType.toBitsAsString()).build());
+            get = new HttpGet(buildVersionSpecificFingerIdWebapiURI("/statistics.csv").setParameter("predictor", predictorType.toBitsAsString()).build());
         } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+            LOG.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
-        final TIntArrayList[] lists = new TIntArrayList[5];
         ArrayList<PredictionPerformance> performances = new ArrayList<>();
-        try (CloseableHttpResponse response = client.execute(get)) {
-            HttpEntity e = response.getEntity();
-            final BufferedReader br = new BufferedReader(new InputStreamReader(e.getContent(), ContentType.getOrDefault(e).getCharset()));
-            String line; //br.readLine();
-            while ((line = br.readLine()) != null) {
-                String[] tabs = line.split("\t");
-                final int index = Integer.parseInt(tabs[0]);
-                PredictionPerformance p = new PredictionPerformance(
-                        Double.parseDouble(tabs[1]),
-                        Double.parseDouble(tabs[2]),
-                        Double.parseDouble(tabs[3]),
-                        Double.parseDouble(tabs[4])
-                );
-                performances.add(p);
-                fingerprintIndizes.add(index);
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            try (CloseableHttpResponse response = client.execute(get)) {
+                HttpEntity e = response.getEntity();
+                final BufferedReader br = new BufferedReader(new InputStreamReader(e.getContent(), ContentType.getOrDefault(e).getCharset()));
+                String line; //br.readLine();
+                while ((line = br.readLine()) != null) {
+                    String[] tabs = line.split("\t");
+                    final int index = Integer.parseInt(tabs[0]);
+                    PredictionPerformance p = new PredictionPerformance(
+                            Double.parseDouble(tabs[1]),
+                            Double.parseDouble(tabs[2]),
+                            Double.parseDouble(tabs[3]),
+                            Double.parseDouble(tabs[4])
+                    );
+                    performances.add(p);
+                    fingerprintIndizes.add(index);
+                }
             }
         }
         return performances.toArray(new PredictionPerformance[performances.size()]);
@@ -463,22 +424,100 @@ public class WebAPI implements Closeable {
     public CovarianceScoring getCovarianceScoring(FingerprintVersion fpVersion, double alpha) throws IOException {
         final HttpGet get;
         try {
-            get = new HttpGet(getFingerIdURI("/webapi/covariancetree.csv").build());
+            get = new HttpGet(buildVersionSpecificFingerIdWebapiURI("/covariancetree.csv").build());
         } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+            LOG.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
         CovarianceScoring covarianceScoring;
-        try (CloseableHttpResponse response = client.execute(get)) {
-            if (!isSuccessful(response)) throw new IOException("Cannot get covariance scoring tree information.");
-            HttpEntity e = response.getEntity();
-            covarianceScoring = CovarianceScoring.readScoring(e.getContent(), ContentType.getOrDefault(e).getCharset(), fpVersion, alpha);
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            try (CloseableHttpResponse response = client.execute(get)) {
+                if (!isSuccessful(response)) throw new IOException("Cannot get covariance scoring tree information.");
+                HttpEntity e = response.getEntity();
+                covarianceScoring = CovarianceScoring.readScoring(e.getContent(), ContentType.getOrDefault(e).getCharset(), fpVersion, alpha);
+            }
         }
         return covarianceScoring;
     }
 
+
+    public InChI[] getTrainingStructures(PredictorType predictorType) throws IOException {
+        final HttpGet get;
+        try {
+            get = new HttpGet(buildVersionSpecificFingerIdWebapiURI("/trainingstructures.csv").setParameter("predictor", predictorType.toBitsAsString()).build());
+        } catch (URISyntaxException e) {
+            LOG.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+        ArrayList<InChI> inchis = new ArrayList<>();
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            CloseableHttpResponse response = client.execute(get);
+            HttpEntity e = response.getEntity();
+            if (response.getStatusLine().getStatusCode() == 404) {
+                //todo remove hack if not necessary anymore
+                response.close();
+                response = getResponseHack(client, predictorType);
+                e = response.getEntity();
+                if (response.getStatusLine().getStatusCode() == 404) {
+                    throw new RuntimeException("Error retrieving training structures: " + response.getStatusLine().getReasonPhrase());
+                }
+//            throw new RuntimeException("Error retrieving training structures: "+response.getStatusLine().getReasonPhrase());
+            }
+
+            final BufferedReader br = new BufferedReader(new InputStreamReader(e.getContent(), ContentType.getOrDefault(e).getCharset()));
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] tabs = line.split("\t");
+                InChI inChI;
+                if (tabs.length == 1) {
+                    //no InChiKeys contained. Compute them.
+                    String inchi = tabs[0];
+                    String key = inchi2inchiKey(inchi);
+                    inChI = new InChI(key, inchi);
+                } else {
+                    inChI = new InChI(tabs[0], tabs[1]);
+                }
+                inchis.add(inChI);
+            }
+            response.close();
+        }
+        return inchis.toArray(new InChI[0]);
+    }
+
+
+    ////////////////////////////////////////
+    //todo Helper methods, remove if not necessary anymore
+    private static CloseableHttpResponse getResponseHack(CloseableHttpClient client, PredictorType predictorType) throws IOException {
+        final HttpGet get;
+        try {
+            get = new HttpGet(buildVersionSpecificFingerIdWebapiURI("/trainingstructures.txt").setParameter("predictor", predictorType.toBitsAsString()).build());
+        } catch (URISyntaxException e) {
+            LOG.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+        return client.execute(get);
+    }
+
+    private static String inchi2inchiKey(String inchi) {
+        try {
+            if (inchi == null) throw new NullPointerException("Given InChI is null");
+            if (inchi.isEmpty()) throw new IllegalArgumentException("Empty string given as InChI");
+            JniInchiOutputKey key = JniInchiWrapper.getInchiKey(inchi);
+            if (key.getReturnStatus() == INCHI_KEY.OK) {
+                return key.getKey();
+            } else {
+                throw new RuntimeException("Error while creating InChIKey: " + key.getReturnStatus());
+            }
+        } catch (JniInchiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    ////////////////////////////////////////
+
+
     public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException, URISyntaxException {
-        final HttpPost request = new HttpPost(getFingerIdURI("/webapi/report.json").build());
+        final HttpPost request = new HttpPost(buildVersionSpecificFingerIdWebapiURI("/report.json").build());
         final String json = ErrorReport.toJson(report);
 
         final NameValuePair reportValue = new BasicNameValuePair("report", json);
@@ -486,24 +525,26 @@ public class WebAPI implements Closeable {
         final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(reportValue, softwareName));
         request.setEntity(params);
 
-        try (CloseableHttpResponse response = client.execute(request)) {
-            if (response.getStatusLine().getStatusCode() == 200) {
-                final BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), Charset.forName("UTF-8")));
-                com.google.gson.JsonObject o = new com.google.gson.JsonParser().parse(br.readLine()).getAsJsonObject();
+        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
+            try (CloseableHttpResponse response = client.execute(request)) {
+                if (response.getStatusLine().getStatusCode() == 200) {
+                    final BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), Charset.forName("UTF-8")));
+                    com.google.gson.JsonObject o = new com.google.gson.JsonParser().parse(br.readLine()).getAsJsonObject();
 
-                boolean suc = o.get("success").getAsBoolean();
-                String m = o.get("message").getAsString();
+                    boolean suc = o.get("success").getAsBoolean();
+                    String m = o.get("message").getAsString();
 
-                if (suc) {
-                    LoggerFactory.getLogger(this.getClass()).info(m);
+                    if (suc) {
+                        LOG.info(m);
+                    } else {
+                        LOG.error(m);
+                    }
+                    return m;
                 } else {
-                    LoggerFactory.getLogger(this.getClass()).error(m);
+                    RuntimeException e = new RuntimeException(response.getStatusLine().getReasonPhrase());
+                    LOG.error("Could not send error report! Bad http return Value: " + response.getStatusLine().getStatusCode(), e);
+                    throw e;
                 }
-                return m;
-            } else {
-                RuntimeException e = new RuntimeException(response.getStatusLine().getReasonPhrase());
-                LoggerFactory.getLogger(this.getClass()).error("Could not send error report! Bad http return Value: " + response.getStatusLine().getStatusCode(), e);
-                throw e;
             }
         }
     }
@@ -512,73 +553,68 @@ public class WebAPI implements Closeable {
         return response.getStatusLine().getStatusCode() < 400;
     }
 
-    private static class MultiplexerFileAndIO extends InputStream implements Closeable {
+    //#################################################################################################################
+    //region StaticPathBuilderMethods
 
-        private final byte[] buffer;
-        private final InputStream stream;
-        private final OutputStream writer;
-        private int offset, limit;
-        private boolean closed = false;
+    //Path constants
+    private static final String FINGERID_URL = FingerIDProperties.fingeridWebHost();
+    private static final String FINGERID_DEBUG_FRONTEND_PATH = "/frontend";
+    private static final String FINGERID_WEBAPI_PATH = "/webapi";
 
-        private MultiplexerFileAndIO(InputStream stream, OutputStream writer) throws IOException {
-            this.buffer = new byte[1024 * 512];
-            this.stream = stream;
-            this.writer = writer;
-            this.offset = 0;
-            this.limit = 0;
-            fillCache();
+    private static final String WEBAPI_VERSION_JSON = "/version.json";
+    private static final String WEBAPI_WORKER_JSON = "/workers.json";
+
+    //path builder methods
+
+    private static URIBuilder getFingerIdBaseURI(@Nullable String path, final boolean versionSpecificPath) throws URISyntaxException {
+        if (path == null)
+            path = "";
+
+        URIBuilder b;
+        if (ProxyManager.DEBUG) {
+            b = new URIBuilder().setScheme(ProxyManager.HTTP_SCHEME).setHost("localhost");
+            b = b.setPort(8080);
+            path = FINGERID_DEBUG_FRONTEND_PATH + path;
+        } else {
+            b = new URIBuilder(FINGERID_URL);
+            if (versionSpecificPath)
+                path = "/csi-fingerid-" + FingerIDProperties.fingeridVersion() + path;
         }
 
-        private boolean fillCache() throws IOException {
-            this.limit = stream.read(buffer, 0, buffer.length);
-            this.offset = 0;
-            if (limit <= 0) return false;
-            writer.write(buffer, offset, limit);
-            return true;
-        }
+        if (!path.isEmpty())
+            b = b.setPath(path);
 
-        @Override
-        public int read() throws IOException {
-            if (offset >= limit) {
-                if (!fillCache()) return -1;
-            }
-            return buffer[offset++];
-        }
-
-        @Override
-        public int read(byte[] b, int off, int len) throws IOException {
-            int written = 0;
-            while (true) {
-                final int bytesAvailable = limit - offset;
-                if (bytesAvailable <= 0) {
-                    if (!fillCache()) return written;
-                }
-                final int bytesToRead = len - off;
-                if (bytesToRead == 0) return written;
-                final int bytesToWrite = Math.min(bytesAvailable, bytesToRead);
-                System.arraycopy(buffer, offset, b, off, bytesToWrite);
-                written += bytesToWrite;
-                off += bytesToWrite;
-                offset += bytesToWrite;
-            }
-        }
-
-        @Override
-        public int read(byte[] b) throws IOException {
-            return read(b, 0, b.length);
-        }
-
-        @Override
-        public void close() throws IOException {
-            if (closed) return;
-            boolean finished;
-            do {
-                finished = fillCache();
-            } while (finished);
-            stream.close();
-            writer.close();
-            closed = true;
-        }
+        return b;
     }
+
+    // WebAPI paths
+    private static StringBuilder getWebAPIBasePath() {
+        return new StringBuilder(FINGERID_WEBAPI_PATH);
+    }
+
+    private static URIBuilder buildFingerIdWebapiURI(@Nullable final String path, final boolean versionSpecific) throws URISyntaxException {
+        StringBuilder pathBuilder = getWebAPIBasePath();
+
+        if (path != null && !path.isEmpty()) {
+            if (!path.startsWith("/"))
+                pathBuilder.append("/");
+
+            pathBuilder.append(path);
+        }
+
+        return getFingerIdBaseURI(pathBuilder.toString(), versionSpecific);
+    }
+
+    private static URIBuilder buildVersionLessFingerIdWebapiURI(@Nullable String path) throws URISyntaxException {
+        return buildFingerIdWebapiURI(path, false);
+    }
+
+
+    private static URIBuilder buildVersionSpecificFingerIdWebapiURI(@Nullable String path) throws URISyntaxException {
+        return buildFingerIdWebapiURI(path, true);
+    }
+    //endregion
+    //#################################################################################################################
+
 
 }

@@ -6,14 +6,18 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
+import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.jjobs.FormulaJob;
+import de.unijena.bioinf.fingerid.net.PredictionJJob;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
@@ -21,8 +25,6 @@ import de.unijena.bioinf.sirius.gui.structure.SiriusResultElementConverter;
 import de.unijena.bioinf.sirius.logging.TextAreaJJobContainer;
 import org.slf4j.LoggerFactory;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.util.*;
 
@@ -34,6 +36,12 @@ public class CSIFingerIDComputation {
     public CSIFingerIDComputation() {
         this.positiveMode = new CSIPredictor(PredictorType.CSI_FINGERID_POSITIVE);
         this.negativeMode = new CSIPredictor(PredictorType.CSI_FINGERID_NEGATIVE);
+        //listen to connection check
+        MainFrame.CONECTION_MONITOR.addConectionStateListener(evt -> {
+            ConnectionMonitor.ConnectionState value = (ConnectionMonitor.ConnectionState) evt.getNewValue();
+            setEnabled(value.equals(ConnectionMonitor.ConnectionState.YES));
+        });
+
         initialize();
     }
 
@@ -44,33 +52,44 @@ public class CSIFingerIDComputation {
 
     //compute for a single experiment
     public void compute(ExperimentContainer c, SearchableDatabase db) {
-        final ArrayList<FingerIdTask> tasks = new ArrayList<>();
-        for (SiriusResultElement e : getTopSiriusCandidates(c)) {
-            tasks.add(new FingerIdTask(db, c, e));
-        }
-        computeAll(tasks);
+        computeAll(Collections.singletonList(c), db);
     }
 
     //csi fingerid compute all button in main panel
     public void computeAll(List<ExperimentContainer> compounds, SearchableDatabase db) {
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
         for (ExperimentContainer c : compounds) {
-            for (SiriusResultElement e : getTopSiriusCandidates(c)) {
-                tasks.add(new FingerIdTask(db, c, e));
+            final List<SiriusResultElement> candidates = getTopSiriusCandidates(c);
+            if (candidates.isEmpty()) {
+                LoggerFactory.getLogger(getClass()).warn("No molecular formula candidates available for compound: " + c.getGUIName() + " with " + c.getIonization());
+            } else {
+                for (SiriusResultElement e : candidates) {
+                    tasks.add(new FingerIdTask(db, c, e));
+                }
             }
+
         }
         computeAll(tasks);
     }
 
+    public void computeAll(Collection<FingerIdTask> compounds) {
+        for (FingerIdTask task : compounds) {
+            SwingJJobContainer<Boolean> container = new TextAreaJJobContainer<>(new FingerIDGUITask(task.experiment, task.result, task.db), task.result.getMolecularFormula().toString(), "Structure Prediction");
+            Jobs.MANAGER.submitSwingJob(container);
+        }
+    }
+
     protected static List<SiriusResultElement> getTopSiriusCandidates(ExperimentContainer container) {
         final ArrayList<SiriusResultElement> elements = new ArrayList<>();
-        if (container == null || !container.isComputed() || container.getResults() == null) return elements;
-        final SiriusResultElement top = container.getResults().get(0);
+        if (container == null || !container.isComputed()) return elements;
+        final List<SiriusResultElement> results = container.getResults();
+        if (results == null || results.isEmpty()) return elements;
+        final SiriusResultElement top = results.get(0);
         if (top.getResult().getResolvedTree().numberOfEdges() > 0)
             elements.add(top);
         final double threshold = calculateThreshold(top.getScore());
-        for (int k = 1; k < container.getResults().size(); ++k) {
-            SiriusResultElement e = container.getResults().get(k);
+        for (int k = 1; k < results.size(); ++k) {
+            SiriusResultElement e = results.get(k);
             if (e.getScore() < threshold) break;
             if (e.getResult().getResolvedTree().numberOfEdges() > 0)
                 elements.add(e);
@@ -80,13 +99,6 @@ public class CSIFingerIDComputation {
 
     public static double calculateThreshold(double topScore) {
         return Math.max(topScore, 0) - Math.max(5, topScore * 0.25);
-    }
-
-    public void computeAll(Collection<FingerIdTask> compounds) {
-        for (FingerIdTask task : compounds) {
-            SwingJJobContainer<Boolean> container = new TextAreaJJobContainer<>(new FingerIDGUITask(task.experiment, task.result, task.db), task.result.getMolecularFormula().toString(), "Structure Prediction");
-            Jobs.MANAGER.submitSwingJob(container);
-        }
     }
 
     public void refreshDatabaseCacheDir() throws IOException {
@@ -104,12 +116,14 @@ public class CSIFingerIDComputation {
         @Override
         protected Boolean compute() throws Exception {
             //wait if no connection is there
-            while (!WebAPI.canConnect()){
+            while (MainFrame.CONECTION_MONITOR.checkConnection().isNotConnected()) {
                 Thread.sleep(5000);
                 checkForInterruption();
             }
             positiveMode.initialize();
             negativeMode.initialize();
+            //download training structures
+            TrainingStructuresPerPredictor.getInstance().addAvailablePredictorTypes(PredictorType.CSI_FINGERID_POSITIVE, PredictorType.CSI_FINGERID_NEGATIVE);
             return true;
         }
 
@@ -187,7 +201,9 @@ public class CSIFingerIDComputation {
                 predictionJobs.add(pj);
                 submitSubJob(fj);
                 submitSubJob(pj);
-                final FingerblastJob bj = new FingerblastJob(csi, fj, pj, db);
+                final PredictorType predictorType = elem.getResult().getPrecursorIonType().getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE;
+                final TrainingStructuresSet trainingStructuresSet = TrainingStructuresPerPredictor.getInstance().getTrainingStructuresSet(predictorType);
+                final FingerblastJob bj = new FingerblastJob(csi, fj, pj, db, trainingStructuresSet);
                 searchJobs.add(bj);
                 submitSubJob(bj);
             }
@@ -320,11 +336,11 @@ public class CSIFingerIDComputation {
         protected ProbabilityFingerprint compute() throws Exception {
             if (requireCandidates && formulaJob.awaitResult().isEmpty())
                 return null;
-            try (final WebAPI webAPI = WebAPI.newInstance()) {
-                final WebAPI.PredictionJJob job = webAPI.makePredictionJob(container.getMs2Experiment(), re.getResult(), re.getResult().getResolvedTree(), predictor.fpVersion, EnumSet.of(predictor.predictorType));
-                submitSubJob(job);
-                return job.awaitResult();
-            }
+
+            final PredictionJJob job = WebAPI.INSTANCE.makePredictionJob(container.getMs2Experiment(), re.getResult(), re.getResult().getResolvedTree(), predictor.fpVersion, EnumSet.of(predictor.predictorType));
+            submitSubJob(job);
+            return job.awaitResult();
+
 
         }
     }
@@ -335,13 +351,15 @@ public class CSIFingerIDComputation {
         protected final PredictFingerprintJob predictJob;
         protected final SearchableDatabase db;
         protected final CSIPredictor predictor;
+        private final TrainingStructuresSet trainingStructuresSet;
 
-        public FingerblastJob(CSIPredictor csi, FormulaJob formulaJob, PredictFingerprintJob predictJob, SearchableDatabase db) {
+        public FingerblastJob(CSIPredictor csi, FormulaJob formulaJob, PredictFingerprintJob predictJob, SearchableDatabase db, TrainingStructuresSet trainingStructuresSet) {
             super(JobType.CPU);
             this.predictor = csi;
             this.formulaJob = formulaJob;
             this.predictJob = predictJob;
             this.db = db;
+            this.trainingStructuresSet = trainingStructuresSet;
             addRequiredJob(formulaJob);
             addRequiredJob(predictJob);
         }
@@ -354,16 +372,27 @@ public class CSIFingerIDComputation {
             if (fp == null) {
                 return null;
             }
+            for (FingerprintCandidate candidate : candidates) {
+                postprocessCandidate(candidate);
+            }
             final List<Scored<FingerprintCandidate>> scored = predictor.blaster.score(candidates, fp);
             final FingerIdResult result = new FingerIdResult(scored, 0d, fp, predictJob.re.getResult().getResolvedTree());
             result.setAnnotation(SearchableDatabase.class, db);
             return result;
         }
+
+        protected void postprocessCandidate(FingerprintCandidate candidate) {
+            //annotate training compounds;
+            if (trainingStructuresSet.isInTrainingData(candidate.getInchi())) {
+                long flags = candidate.getBitset();
+                candidate.setBitset(flags | DatasourceService.Sources.TRAIN.flag);
+            }
+        }
     }
 
 
     /////////////////////////////////// API /////////////////////////////////
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    /*private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         pcs.addPropertyChangeListener(listener);
@@ -379,7 +408,7 @@ public class CSIFingerIDComputation {
 
     public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
         pcs.removePropertyChangeListener(propertyName, listener);
-    }
+    }*/
 
     private boolean enabled;
 
@@ -388,9 +417,9 @@ public class CSIFingerIDComputation {
     }
 
     public void setEnabled(boolean enabled) {
-        boolean old = this.enabled;
+//        boolean old = this.enabled;
         this.enabled = enabled;
-        pcs.firePropertyChange("enabled", old, this.enabled);
+//        pcs.firePropertyChange("enabled", old, this.enabled);
     }
 
     public CSIPredictor getPredictor(PrecursorIonType type) {

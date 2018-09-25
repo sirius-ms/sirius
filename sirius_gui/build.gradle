@@ -30,7 +30,7 @@ dependencies {
 
 /*################### Environment variables ################### */
 mainClassName = "de.unijena.bioinf.ms.cli.SiriusGUIApplication"
-project.ext.set("type", "gui,console")
+project.ext.set("type", ['gui','console'])
 
 /*################### Jar build Stuff ################### */
 jar {
@@ -40,13 +40,19 @@ jar {
 }
 
 /*################### Windows release Stuff ################### */
-launch4j {
-    mainClassName = project.mainClassName
-    headerType = "$project.type"
-    jreRuntimeBits = "$project.arch"
+project.type.each{t ->
+    project.arch.each { a ->
+        tasks.create("launch4j-$t-$a", edu.sc.seis.launch4j.tasks.Launch4jLibraryTask) {
+            group = 'launch4j'
+            mainClassName = project.mainClassName
+            headerType = t
+            jreRuntimeBits = a
+            outfile = "${project.appName}-${t}-${a}.exe"
+            if(t.equals('gui'))
+                cmdLine = '--gui'
 
-    guiCLIArgument = '--gui'
-    outfile = "${project.appName}.exe"
+        }
+    }
 }
 
 /*################### Build distributions ################### */
@@ -54,7 +60,7 @@ task distribute { group = 'distribution' }
 distribute.dependsOn ':buildDoku'
 
 distributions {
-    project.arch.split(',').each { ar ->
+    project.arch.each { ar ->
         def n = "${project.linSuffix}${ar}"
 
         create(n, {
@@ -92,7 +98,7 @@ distributions {
     }
 
     //crete win32And64 zip tasks
-    project.arch.split(',').each { ar ->
+    project.arch.each { ar ->
         def n = "${project.winSuffix}${ar}"
         create(n, {
 
@@ -122,6 +128,7 @@ distributions {
         })
         distribute.dependsOn "${n}DistZip"
         getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+        getTasks().findByPath("${n}DistZip").dependsOn 'createAllExecutables'
         getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
     }
 
@@ -195,7 +202,6 @@ publishing {
 }
 
 //artifactoryPublish.dependsOn 'distribute'
-
 task runGUI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
     File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}-gui").toFile()
     commandLine([command.absolutePath])

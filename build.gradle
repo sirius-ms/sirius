@@ -5,18 +5,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
-
 buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
-
-        maven {
-            url "http://bio.informatik.uni-jena.de/repository/libs-oss"
-
-        }
+        jcenter()
     }
     dependencies {
-        classpath group: 'de.unijena.bioinf.gradle', name: 'launch4jj', version: '1.6.2'
+        classpath 'edu.sc.seis.gradle:launch4j:2.4.4'
         classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
     }
 
@@ -30,14 +25,14 @@ plugins {
 ext {
     //version for external libraries
     slf4j_version = '1.7.25'
-    jjobs_version = '0.9.5'
+    jjobs_version = '0.9.6'
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
 
     glpk_lib_version = '4.60'
-    cdk_version = "2.0"
+    cdk_version = "2.1.1"
 
-    jewelcli_version = '0.8.+'
+    jewelcli_version = '0.8.9'
 
     //locations of runtime libraries
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
@@ -78,7 +73,7 @@ ext {
 project.ext.set("linSuffix", "linux")
 project.ext.set("winSuffix", "win")
 project.ext.set("macSuffix", "osx")
-project.ext.set("arch", "64,32")
+project.ext.set("arch", ['64','32'])
 project.ext.set("manualPath", file('manual').absolutePath)
 project.ext.set("distPath", file('dist').absolutePath)
 
@@ -102,14 +97,6 @@ allprojects {
         maven {//public libs only so anybody can build the frontend without login
             url "https://bio.informatik.uni-jena.de/repository/libs-oss"
         }
-
-        /*maven {
-            url "https://bio.informatik.uni-jena.de/repository/local"
-            credentials {
-                username = System.properties['de.unijena.bioinf.build.artifactory.username']
-                password = System.properties['de.unijena.bioinf.build.artifactory.password']
-            }
-        }*/
         maven {
             url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
         }
@@ -302,7 +289,7 @@ buildDoku.dependsOn /*htmlDoku,*/ pdfDokuArtifact //todo solve problem and re en
 
 subprojects {
     apply plugin: 'application'
-    apply plugin: 'de.unijena.bioinf.launch4jj'
+    apply plugin: 'edu.sc.seis.launch4j'
 
     /*################### Windows release Stuff ################### */
     launch4j {
@@ -319,8 +306,9 @@ subprojects {
         dontWrapJar = true
         jdkPreference = "preferJre"
 
-
-        classPath = runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':')
+        classpath.add('./lib/*')
+        classpath.addAll(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':'))
+        println(classpath)
 
         sourceSets.main.resources {
             srcDir rootDir.toPath().resolve('src').resolve('main').resolve('resources').toString()
