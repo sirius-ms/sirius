@@ -27,7 +27,7 @@ public class CheckConnectionAction extends AbstractAction {
     private final AtomicBoolean execAction = new AtomicBoolean(false);
 
     protected CheckConnectionAction() {
-        super("Webservice");
+        super("Refresh");
         putValue(Action.SHORT_DESCRIPTION, "Check and refresh webservice connection");
 
         MainFrame.CONECTION_MONITOR.addConectionStateListener(evt -> {
