@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 
 public class FingerIdJob {
 
+    protected final String name;
     protected final String securityToken;
     protected final long jobId;
 
@@ -33,7 +34,8 @@ public class FingerIdJob {
     protected String errorMessage;
 
 
-    public FingerIdJob(long jobId, String securityToken, MaskedFingerprintVersion version) {
+    public FingerIdJob(long jobId, String securityToken, MaskedFingerprintVersion version, String name) {
+        this.name = name;
         this.securityToken = securityToken;
         this.jobId = jobId;
         this.version = version;
