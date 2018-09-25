@@ -14,7 +14,7 @@ dependencies() {
 	compile group: "com.lexicalscope.jewelcli", name: "jewelcli", version: "$jewelcli_version"
 
 	// CDK
-	for (module in ["fingerprint", "qsarmolecular", "qsaratomic", "data", "inchi", "interfaces", "smiles", "core"]) {
+	for (module in ["fingerprint", "qsarmolecular", "qsaratomic", "data", "inchi", "interfaces", "smiles", "core", "silent"]) {
 		compile group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
 	}
 
