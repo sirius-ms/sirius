@@ -1,9 +1,12 @@
 package de.unijena.bioinf.fingerid.predictor_types;
 
-import java.util.ArrayList;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public enum PredictorType {
     CSI_FINGERID_POSITIVE,//CSI for negative ionization
@@ -76,13 +79,33 @@ public enum PredictorType {
     }
 
     public static String bitsToNames(long bits) {
-        List<PredictorType> predictors = new ArrayList<>();
+        return bitsToTypes(bits).stream()
+                .map(PredictorType::name)
+                .collect(Collectors.joining(","));
+    }
+
+    public static EnumSet<PredictorType> bitsToTypes(long bits) {
+        EnumSet<PredictorType> predictors = EnumSet.noneOf(PredictorType.class);
         PredictorType[] val = PredictorType.values();
 
         for (int i = (int) Long.highestOneBit(bits); i >= 0; i--) {
             if (((bits >> i) & 1) == 1) predictors.add(val[i]);
         }
-        return predictors.toString();
+        return predictors;
+    }
+
+    //todo can we do this generic for all type enums
+    public static EnumSet<PredictorType> parse(@NotNull String workerTypes, String regexDelimiter) {
+        return Arrays.stream(workerTypes.split(regexDelimiter))
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter((s) -> !s.isEmpty())
+                .map(PredictorType::valueOf)
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(PredictorType.class)));
+    }
+
+    public static EnumSet<PredictorType> parse(@NotNull String workerTypes) {
+        return parse(workerTypes, ",");
     }
 
     public static void main(String[] args) {
