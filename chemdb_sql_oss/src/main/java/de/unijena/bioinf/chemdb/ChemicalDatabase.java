@@ -32,7 +32,6 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
 
     protected ConnectionPool<Connection> connection;
     protected String host, username, password;
-    protected BioFilter bioFilter = BioFilter.ALL;
 
 
     /**
@@ -42,7 +41,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
      * local network. Otherwise, releasing password and usernames together with the bytecode
      * would be a security problem.
      */
-    public ChemicalDatabase() throws DatabaseException {
+    public ChemicalDatabase() {
         setup();
         connection = new ConnectionPool<>(new SqlConnector(host, username, password), DEFAULT_SQL_CAPACITY);
     }
@@ -86,13 +85,13 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
         this.connection = new ConnectionPool<>(new SqlConnector(this.host, this.username, this.password), DEFAULT_SQL_CAPACITY);
     }
 
-    public BioFilter getBioFilter() {
-        return bioFilter;
-    }
+//    public BioFilter getBioFilter() {
+//        return bioFilter;
+//    }
 
-    public void setBioFilter(BioFilter bioFilter) {
+   /* public void setBioFilter(BioFilter bioFilter) {
         this.bioFilter = bioFilter;
-    }
+    }*/
 
     /**
      * Search for molecular formulas in the database
@@ -103,12 +102,15 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
      * @return list of formula candidates which theoretical mass (+ adduct mass) is within the given mass window
      */
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException {
+        return lookupMolecularFormulas(BioFilter.ALL,mass,deviation,ionType);
+    }
+    public List<FormulaCandidate> lookupMolecularFormulas(BioFilter bioFilter, double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException {
         final ArrayList<FormulaCandidate> xs = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             try (final PreparedStatement statement = c.connection.prepareStatement(
                     "SELECT formula, flags FROM formulas WHERE exactmass >= ? AND exactmass <= ?"
             )) {
-                xs.addAll(lookupFormulaWithIon(statement, mass, deviation, ionType));
+                xs.addAll(lookupFormulaWithIon(bioFilter, statement, mass, deviation, ionType));
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -147,7 +149,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
      * @param ionTypes  allowed adducts of the ion
      * @return list of formula candidates which theoretical mass (+ adduct mass) is within the given mass window
      */
-    public List<List<FormulaCandidate>> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType[] ionTypes) throws DatabaseException {
+    public List<List<FormulaCandidate>> lookupMolecularFormulas(BioFilter bioFilter, double mass, Deviation deviation, PrecursorIonType[] ionTypes) throws DatabaseException {
         final ArrayList<List<FormulaCandidate>> xs = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             final PreparedStatement statement = c.connection.prepareStatement(
@@ -155,7 +157,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
             );
             for (PrecursorIonType ionType : ionTypes) {
                 try {
-                    xs.add(lookupFormulaWithIon(statement, mass, deviation, ionType));
+                    xs.add(lookupFormulaWithIon(bioFilter, statement, mass, deviation, ionType));
                 } catch (DatabaseException e) {
                     throw new DatabaseException(e);
                 }
@@ -171,10 +173,10 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
         return xs;
     }
 
-    private List<FormulaCandidate> lookupFormulaWithIon(PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException, SQLException {
+    private List<FormulaCandidate> lookupFormulaWithIon(BioFilter bioFilter, PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException, SQLException {
         if (ionType.isIntrinsicalCharged()) {
-            final List<FormulaCandidate> protonated = lookupFormulaWithIonIntrinsicalChargedAreConsidered(statement, mass, deviation, ionType.getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-"));
-            final List<FormulaCandidate> intrinsical = lookupFormulaWithIonIntrinsicalChargedAreConsidered(statement, mass, deviation, ionType);
+            final List<FormulaCandidate> protonated = lookupFormulaWithIonIntrinsicalChargedAreConsidered(bioFilter, statement, mass, deviation, ionType.getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-"));
+            final List<FormulaCandidate> intrinsical = lookupFormulaWithIonIntrinsicalChargedAreConsidered(bioFilter, statement, mass, deviation, ionType);
             // merge both together
             final HashMap<MolecularFormula, FormulaCandidate> map = new HashMap<>();
             for (FormulaCandidate fc : intrinsical) {
@@ -187,11 +189,11 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
             }
             return new ArrayList<>(map.values());
         } else {
-            return lookupFormulaWithIonIntrinsicalChargedAreConsidered(statement, mass, deviation, ionType);
+            return lookupFormulaWithIonIntrinsicalChargedAreConsidered(bioFilter, statement, mass, deviation, ionType);
         }
     }
 
-    private List<FormulaCandidate> lookupFormulaWithIonIntrinsicalChargedAreConsidered(PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException, SQLException {
+    private List<FormulaCandidate> lookupFormulaWithIonIntrinsicalChargedAreConsidered(BioFilter bioFilter, PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException, SQLException {
         final double delta = deviation.absoluteFor(mass);
         final double neutralMass = ionType.precursorMassToNeutralMass(mass);
         final double minmz = neutralMass - delta;
@@ -216,8 +218,12 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
 
     @Override
     public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws DatabaseException {
+            return lookupStructuresByFormula(BioFilter.ALL,formula);
+    }
+
+    public List<CompoundCandidate> lookupStructuresByFormula(BioFilter bioFilter, MolecularFormula formula) throws DatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            return lookupStructuresByFormula(formula, c);
+            return lookupStructuresByFormula(bioFilter, formula, c);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return new ArrayList<>();
@@ -226,7 +232,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
         }
     }
 
-    private List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula, PooledConnection<Connection> c) throws SQLException {
+    private List<CompoundCandidate> lookupStructuresByFormula(BioFilter bioFilter, MolecularFormula formula, PooledConnection<Connection> c) throws SQLException {
         final boolean enforceBio = bioFilter == BioFilter.ONLY_BIO;
         final PreparedStatement statement;
         if (enforceBio) {
@@ -252,11 +258,20 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
         return candidates;
     }
 
+
+    public List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(BioFilter bioFilter, MolecularFormula formula) throws DatabaseException {
+        return lookupStructuresAndFingerprintsByFormula(bioFilter, formula, new ArrayList<>());
+    }
+
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws DatabaseException {
+        return lookupStructuresAndFingerprintsByFormula(BioFilter.ALL,formula,fingerprintCandidates);
+    }
+
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(BioFilter bioFilter, MolecularFormula formula, T fingerprintCandidates) throws DatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             // first lookup structures
-            final List<CompoundCandidate> candidates = lookupStructuresByFormula(formula, c);
+            final List<CompoundCandidate> candidates = lookupStructuresByFormula(bioFilter, formula, c);
             final HashMap<String, CompoundCandidate> hashMap = new HashMap<>(candidates.size());
             for (CompoundCandidate candidate : candidates)
                 hashMap.put(candidate.getInchiKey2D(), candidate);
@@ -338,7 +353,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
     public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws DatabaseException {
         final ArrayList<InChI> candidates = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi FROM structures WHERE s.inchi_key_1 = ?")) {
+            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi FROM structures WHERE inchi_key_1 = ?")) {
                 for (String inchikey : inchi_keys) {
                     statement.setString(1, inchikey);
                     try (final ResultSet set = statement.executeQuery()) {

@@ -19,6 +19,7 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
     AbstractChemicalDatabase[] databases;
     AtomicBoolean[] isRunning;
     Executor executor;
+    private volatile BioFilter bioFilter = BioFilter.ALL;
     public AbstractChemicalDatabaseSynchronousExecutor(AbstractChemicalDatabase... chemicalDatabases) {
         this.databases = chemicalDatabases;
         this.isRunning = new AtomicBoolean[this.databases.length];
@@ -30,20 +31,29 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
         t.start();
     }
 
+    public BioFilter getBioFilter() {
+        return bioFilter;
+    }
+
+    public synchronized void setBioFilter(BioFilter bioFilter) {
+        this.bioFilter = bioFilter;
+    }
+
     @Override
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException {
-        ChemicalDatabaseFuture<List<FormulaCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupMolecularFormulas", new Class<?>[]{double.class, Deviation .class, PrecursorIonType.class}, new Object[]{mass, deviation, ionType});
+        ChemicalDatabaseFuture<List<FormulaCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupMolecularFormulas", new Class<?>[]{BioFilter.class, double.class, Deviation.class, PrecursorIonType.class}, new Object[]{bioFilter, mass, deviation, ionType});
         return future.get();
     }
+
     @Override
     public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws DatabaseException {
-        ChemicalDatabaseFuture<List<CompoundCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupStructuresByFormula", new Class<?>[]{MolecularFormula.class}, new Object[]{formula});
+        ChemicalDatabaseFuture<List<CompoundCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupStructuresByFormula", new Class<?>[]{BioFilter.class, MolecularFormula.class}, new Object[]{bioFilter, formula});
         return future.get();
     }
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws DatabaseException {
-        ChemicalDatabaseFuture<T> future = new ChemicalDatabaseFuture<>(executor, "lookupStructuresAndFingerprintsByFormula", new Class<?>[]{MolecularFormula.class, Collection.class}, new Object[]{formula, fingerprintCandidates});
+        ChemicalDatabaseFuture<T> future = new ChemicalDatabaseFuture<>(executor, "lookupStructuresAndFingerprintsByFormula", new Class<?>[]{BioFilter.class, MolecularFormula.class, Collection.class}, new Object[]{bioFilter, formula, fingerprintCandidates});
         return future.get();
     }
 
@@ -90,14 +100,14 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
     }
 
 
-    class Executor implements Runnable, Closeable{
+    class Executor implements Runnable, Closeable {
         private Set<ChemicalDatabaseFuture> finished;
         private Set<ChemicalDatabaseFuture> runningFutures;
 
         private boolean running;
         private Queue<ChemicalDatabaseFuture> queue;
 
-        private Executor(){
+        private Executor() {
             finished = Collections.synchronizedSet(new HashSet<ChemicalDatabaseFuture>());
             runningFutures = Collections.synchronizedSet(new HashSet<ChemicalDatabaseFuture>());
             queue = new LinkedList<>();
@@ -105,22 +115,23 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
 
         /**
          * don't execute if your Task of interest is not still running!!!
+         *
          * @return
          * @throws InterruptedException
          */
         public void waitForExit(ChemicalDatabaseFuture future) {
-            if (finished.contains(future)){
+            if (finished.contains(future)) {
                 finished.remove(future);
                 return;
             }
             synchronized (this) {
-                while (true){
+                while (true) {
                     try {
                         wait();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    if (finished.contains(future)){
+                    if (finished.contains(future)) {
                         finished.remove(future);
                         return;
                     }
@@ -129,7 +140,7 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
         }
 
         public void addToQueue(ChemicalDatabaseFuture future) throws DatabaseException {
-            synchronized (this){
+            synchronized (this) {
                 if (!running) throw new DatabaseException("cannot add to queue. Executor is already stopped");
                 queue.add(future);
                 notifyAll();
@@ -139,7 +150,7 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
         @Override
         public void close() {
             running = false;
-            synchronized (this){
+            synchronized (this) {
                 notifyAll();
             }
         }
@@ -147,15 +158,15 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
         @Override
         public void run() {
             running = true;
-            while (running){
-                synchronized (this){
+            while (running) {
+                synchronized (this) {
                     try {
-                        while (!queue.isEmpty()){
+                        while (!queue.isEmpty()) {
                             for (int i = 0; i < isRunning.length; i++) {
-                                synchronized (isRunning[i]){
-                                    if (!isRunning[i].get()){
+                                synchronized (isRunning[i]) {
+                                    if (!isRunning[i].get()) {
                                         ChemicalDatabaseFuture future = queue.poll();
-                                        if (future==null) continue;
+                                        if (future == null) continue;
                                         future.setDB(databases[i]);
                                         Thread t = new Thread(future);
                                         t.start();
@@ -170,8 +181,8 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
                     }
                 }
             }
-            synchronized (this){
-                while (true){
+            synchronized (this) {
+                while (true) {
                     if (runningFutures.isEmpty()) break;
                     try {
                         wait();
@@ -224,22 +235,22 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
         }
 
 
-        void setDB(AbstractChemicalDatabase db){
+        void setDB(AbstractChemicalDatabase db) {
             this.db = db;
         }
 
 
         public R get() throws DatabaseException {
-            if (result!=null) return result;
+            if (result != null) return result;
             executor.waitForExit(this);
-            if (exception!=null) throw exception;
+            if (exception != null) throw exception;
             return result;
         }
 
         @Override
         public void run() {
             try {
-                result = (R)db.getClass().getDeclaredMethod(name, paramTypes).invoke(db, paramValues);
+                result = (R) db.getClass().getDeclaredMethod(name, paramTypes).invoke(db, paramValues);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
                 this.exception = new DatabaseException(e.getCause());

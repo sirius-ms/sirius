@@ -303,7 +303,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
 
     @Override
     public void close() throws IOException {
-        //client.close();
+        client.close();
     }
 
 
