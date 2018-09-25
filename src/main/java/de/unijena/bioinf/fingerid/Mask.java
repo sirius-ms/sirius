@@ -63,7 +63,7 @@ public class Mask {
     }
 
     /**
-     * @return a map (a->b) where a is an index of a duplicated MP and b is the index of the used MP
+     * @return a map (a to b) where a is an index of a duplicated MP and b is the index of the used MP
      */
     public TIntIntHashMap getDuplicates() {
         final TIntIntHashMap map = new TIntIntHashMap();
