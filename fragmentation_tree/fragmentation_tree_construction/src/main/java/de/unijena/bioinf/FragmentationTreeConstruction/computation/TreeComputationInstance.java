@@ -369,7 +369,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
         final long time = System.currentTimeMillis();
         final int elapsedTime = (int) ((time - startTime) / 1000);
         restTime = Math.min(restTime, secondsPerInstance - elapsedTime);
-        if (restTime <= 0) throw new TimeoutException();
+        if (restTime <= 0) throw new TimeoutException("TreeComputationInstance canceled by timeout!");
     }
 
     private class RecalibrationJob extends BasicJJob<ExactResult> {
