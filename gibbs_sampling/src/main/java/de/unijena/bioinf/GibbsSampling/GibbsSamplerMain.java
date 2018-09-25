@@ -9,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Decomposition;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.GibbsSampling.model.distributions.*;
 import de.unijena.bioinf.GibbsSampling.model.scorer.*;
@@ -308,7 +309,7 @@ public class GibbsSamplerMain {
         System.out.println("Reading from Sirius workspace");
         candidatesMap = parseMFCandidatesFromWorkspace(workspace, mgfFile);
 
-        Map<String, List<Scored<MolecularFormula>>> zodiacResults = parseZodiacCliResults(zodiacSummary);
+        Map<String, ResultInformation> zodiacResults = parseZodiacCliResults(zodiacSummary);
 
         Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(ZodiacUtils.parseReactions(reactionStepSize)).map(r -> r.netChange()).collect(Collectors.toSet());
 
@@ -330,7 +331,7 @@ public class GibbsSamplerMain {
         Scored<FragmentsCandidate>[][] result = mergeCandidatesWithZodiacResults(ids, candidatesMap, zodiacResults, instanceToClusterRep);
 
 
-        int[] numberOfIds = statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits, null);
+        int[] numberOfIds = statisticsOfKnownCompounds(result, ids, zodiacResults, evaluationIds, correctHits, null, true);
         System.out.println(numberOfIds[0]+" correct out of "+(numberOfIds[0]+numberOfIds[1]));
 //
 //
@@ -356,7 +357,7 @@ public class GibbsSamplerMain {
 
     }
 
-    private Scored<FragmentsCandidate>[][] mergeCandidatesWithZodiacResults(String[] ids, Map<String, List<FragmentsCandidate>> candidatesMap, Map<String, List<Scored<MolecularFormula>>> zodiacResults, Map<String, String> instanceToClusterRepresentative) {
+    private Scored<FragmentsCandidate>[][] mergeCandidatesWithZodiacResults(String[] ids, Map<String, List<FragmentsCandidate>> candidatesMap, Map<String, ResultInformation> zodiacResults, Map<String, String> instanceToClusterRepresentative) {
         Scored<FragmentsCandidate>[][] scored = new Scored[ids.length][];
         for (int i = 0; i < ids.length; i++) {
             String id = ids[i];
@@ -366,18 +367,18 @@ public class GibbsSamplerMain {
             List<FragmentsCandidate> candidates = candidatesMap.get(repId);
 
             List<Scored<FragmentsCandidate>> scoredCandidates = new ArrayList<>();
-            List<Scored<MolecularFormula>> results = zodiacResults.get(id);
+            List<ScoredIonizedMolecularFormula> results = zodiacResults.get(id).candidates;
 //            if (candidates.size()<results.size()) throw new RuntimeException("results are missing from candidates set for id "+id); //ignores dummy
             //map candidates and results
-            for (Scored<MolecularFormula> result : results) {
-                MolecularFormula mf = result.getCandidate();
+            for (ScoredIonizedMolecularFormula result : results) {
+                MolecularFormula mf = result.formula;
                 FragmentsCandidate fragmentsCandidate;
                 if (DummyFragmentCandidate.dummy.equals(mf)){
                     fragmentsCandidate = DummyFragmentCandidate.newDummy(-1, -1, null);
                 } else {
                     fragmentsCandidate = findCandidate(candidates, mf, id);
                 }
-                scoredCandidates.add(new Scored<>(fragmentsCandidate, result.getScore()));
+                scoredCandidates.add(new Scored<>(fragmentsCandidate, result.score));
             }
             scored[i] = scoredCandidates.toArray(new Scored[0]);
         }
@@ -391,19 +392,21 @@ public class GibbsSamplerMain {
         throw new RuntimeException("cannot find candidate for "+mf+" for id "+id);
     }
 
-    private Map<String, List<Scored<MolecularFormula>>> parseZodiacCliResults(Path zodiacSummary) throws IOException {
+    private Map<String, ResultInformation> parseZodiacCliResults(Path zodiacSummary) throws IOException {
         BufferedReader reader = Files.newBufferedReader(zodiacSummary, Charset.defaultCharset());
         //header
         reader.readLine();
         //todo this currently ignores number of connections !!!!
         String dummy = DummyFragmentCandidate.dummy.toString();
-        Map<String, List<Scored<MolecularFormula>>> map = new HashMap<>();
+        Map<String,ResultInformation> map = new HashMap<>();
         String line;
         while ((line=reader.readLine())!=null) {
             String[] cols = line.split(SEP);
             String id = cols[0];
-            List<Scored<MolecularFormula>> scoredList = new ArrayList<>();
-            for (int i = 4; i < cols.length; i+=2) {
+            String qualityString = cols[1];
+            CompoundQuality compoundQuality = CompoundQuality.fromString(qualityString);
+            List<ScoredIonizedMolecularFormula> scoredList = new ArrayList<>();
+            for (int i = 5; i < cols.length; i+=3) {
                 String formula = cols[i];
                 MolecularFormula mf;
                 if (formula.equals(dummy)){
@@ -411,15 +414,40 @@ public class GibbsSamplerMain {
                 } else {
                     mf = MolecularFormula.parse(formula);
                 }
-                double score = Double.parseDouble(cols[i+1]);
+                PrecursorIonType ionization = PrecursorIonType.getPrecursorIonType(cols[i+1]);
+                double score = Double.parseDouble(cols[i+2]);
 
-                scoredList.add(new Scored<>(mf, score));
+
+                scoredList.add(new ScoredIonizedMolecularFormula(mf, score, ionization));
             }
-            map.put(id, scoredList);
+            ResultInformation resultInformation = new ResultInformation(compoundQuality, scoredList);
+            map.put(id, resultInformation);
         }
         return map;
     }
 
+
+    private class ResultInformation {
+        CompoundQuality compoundQuality;
+        List<ScoredIonizedMolecularFormula> candidates;
+
+        public ResultInformation(CompoundQuality compoundQuality, List<ScoredIonizedMolecularFormula> candidates) {
+            this.compoundQuality = compoundQuality;
+            this.candidates = candidates;
+        }
+    }
+
+    private class ScoredIonizedMolecularFormula {
+        MolecularFormula formula;
+        double score;
+        PrecursorIonType ionType;
+
+        public ScoredIonizedMolecularFormula(MolecularFormula formula, double score, PrecursorIonType ionType) {
+            this.formula = formula;
+            this.score = score;
+            this.ionType = ionType;
+        }
+    }
 
     private static ScoreProbabilityDistribution readPCP(String pathString) throws IOException {
         Path path = Paths.get(pathString, new String[0]);
@@ -2148,6 +2176,10 @@ public class GibbsSamplerMain {
     }
 
 
+    private int[] statisticsOfKnownCompounds(Scored<FragmentsCandidate>[][] result, String ids[], Set<String> evaluationIDs, Map<String, LibraryHit> correctHitsMap, Graph<FragmentsCandidate> graph){
+        return statisticsOfKnownCompounds(result, ids, null, evaluationIDs, correctHitsMap, graph, false);
+    }
+
     /**
      * print ranks of compounds
      * @param result sorted!
@@ -2155,12 +2187,21 @@ public class GibbsSamplerMain {
      * @param correctHitsMap
      * @return
      */
-    private int[] statisticsOfKnownCompounds(Scored<FragmentsCandidate>[][] result, String ids[], Set<String> evaluationIDs, Map<String, LibraryHit> correctHitsMap, Graph<FragmentsCandidate> graph){
+    private int[] statisticsOfKnownCompounds(Scored<FragmentsCandidate>[][] result, String ids[], Map<String, ResultInformation> zodiacResults, Set<String> evaluationIDs, Map<String, LibraryHit> correctHitsMap, Graph<FragmentsCandidate> graph, boolean onlyGoodQuality){
         int bestIsDummyCount = 0;
         int total = 0;
+        int badQualityCounter = 0;
         for (int i = 0; i < result.length; i++) {
             Scored<FragmentsCandidate>[] candidatesScored = result[i];
             if (candidatesScored.length==0) continue;
+            if (onlyGoodQuality) {
+                //todo problem: this is only the ones with candidates
+                CompoundQuality quality = zodiacResults.get(ids[i]).compoundQuality;
+                if (!quality.isGoodQuality()){
+                    ++badQualityCounter;
+                    continue;
+                }
+            }
             ++total;
             if (DummyFragmentCandidate.isDummy(candidatesScored[0].getCandidate())){
                 ++bestIsDummyCount;
@@ -2169,12 +2210,15 @@ public class GibbsSamplerMain {
 
         }
         System.out.println("used dummies: "+bestIsDummyCount + " of " + total);
+        if (onlyGoodQuality) System.out.println("not-good-quality: "+badQualityCounter);
 
         int correctId = 0;
         int wrongId = 0;
         for (int i = 0; i < result.length; i++) {
             Scored<FragmentsCandidate>[] candidatesScored = result[i];
             String id = ids[i];
+
+            if (onlyGoodQuality && !zodiacResults.get(ids[i]).compoundQuality.isGoodQuality()) continue;
 
             if (correctHitsMap.containsKey(id) && evaluationIDs.contains(id)){
                 MolecularFormula correct = null;

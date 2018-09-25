@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.fp;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -476,20 +478,57 @@ public class ArrayFingerprint extends Fingerprint {
         }
     }
 
-    private static class PairwiseIntersectionIterator extends PairwiseIterator {
-        int nl,nr;
+    private static class PairwiseIntersectionIterator implements FPIter2 {
+        protected int nl,nr;
+        protected final ArrayFingerprint left,right;
+        protected final FingerprintVersion fingerprintVersion;
+        protected int absolute;
         public PairwiseIntersectionIterator(ArrayFingerprint left, ArrayFingerprint right, int c, int l, int r) {
-            super(left, right, c, l, r);
-            nl=l; nr=l;
+            this.left = left;
+            this.right = right;
+            this.fingerprintVersion = left.fingerprintVersion;
+            nl=l; nr=r;
+            absolute = c;
             if (c<0) findNext();
         }
 
         @Override
         public PairwiseIntersectionIterator clone() {
-            return new PairwiseIntersectionIterator(left,right,relative,l,r);
+            return new PairwiseIntersectionIterator(left,right,absolute,nl,nr);
+        }
+
+        @Override
+        public double getLeftProbability() {
+            return 1d;
+        }
+
+        @Override
+        public double getRightProbability() {
+            return 1d;
+        }
+
+        @Override
+        public boolean isLeftSet() {
+            return true;
+        }
+
+        @Override
+        public boolean isRightSet() {
+            return true;
+        }
+
+        @Override
+        public int getIndex() {
+            return absolute;
+        }
+
+        @Override
+        public MolecularProperty getMolecularProperty() {
+            return fingerprintVersion.getMolecularProperty(absolute);
         }
 
         private boolean findNext() {
+            if (nl >= left.indizes.length || nr >= right.indizes.length) return false;
             while (true){
                 if (left.indizes[nl] < right.indizes[nr]) ++nl;
                 if (nl >= left.indizes.length) break;
@@ -502,7 +541,7 @@ public class ArrayFingerprint extends Fingerprint {
 
         @Override
         public FPIter2 next() {
-            l=nl; r=nr;relative=left.indizes[nl];
+            absolute=left.indizes[nl];
             ++nl; ++nr;
             findNext();
             return this;
@@ -511,6 +550,12 @@ public class ArrayFingerprint extends Fingerprint {
         @Override
         public boolean hasNext() {
             return nl < left.indizes.length && nr < right.indizes.length;
+        }
+
+        @NotNull
+        @Override
+        public Iterator<FPIter2> iterator() {
+            return clone();
         }
     }
 }

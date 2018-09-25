@@ -1523,7 +1523,7 @@ public class TReductionController implements GraphReduction {
 	 * - get the String array representing the commands between two braces
 	 * @param arg: global String array
 	 * @param Ci: command index to start and iterate on
-	 * @return: command part between two braces without the braces
+	 * return: command part between two braces without the braces
 	 */
 	protected String[] parseParenthesesCommand( String[] arg, int Ci ) {
 
@@ -1621,7 +1621,7 @@ public class TReductionController implements GraphReduction {
 	 * - default command console input ( commands with arguments, if necessary )
 	 * - executes the commands given in 'str'
 	 * @param cmds: valid command line input
-	 * @return: TRUE, if there has been no TERMINATION command: "exit"
+	 * return: TRUE, if there has been no TERMINATION command: "exit"
 	 */
 	protected int executeCommands( String[] cmds ) {
 
