@@ -5,7 +5,7 @@ package de.unijena.bioinf.sirius.gui.dialogs;
  * 06.10.16.
  */
 
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.settings.*;
@@ -38,7 +38,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
         super(owner, true);
         setTitle("Settings");
         setLayout(new BorderLayout());
-        nuProps = ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties();
+        nuProps = SiriusProperties.SIRIUS_PROPERTIES_FILE().getCopyOfPersistentProperties();
 
 //=============NORTH =================
         JPanel header = new DialogHaeder(Icons.GEAR_64);
@@ -97,7 +97,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
             }
         }
 
-        ApplicationCore.SIRIUS_PROPERTIES_FILE.setProperties(nuProps);
+        SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperties(nuProps);
 
         for (Component c : settingsPane.getComponents()) {
             if (c instanceof SettingsPanel) {
@@ -119,8 +119,8 @@ public class SettingsDialog extends JDialog implements ActionListener {
                 @Override
                 protected Integer doInBackground() throws Exception {
                     LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
-                    ApplicationCore.SIRIUS_PROPERTIES_FILE.store();
-                    new CheckConnectionAction().actionPerformed(null); //todo maybe some run check function for the settings panels
+                    SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
+                    CheckConnectionAction.isConnectedAndLoad();
                     return 1;
 
                 }

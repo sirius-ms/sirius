@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.jjobs.JobStateEvent;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
@@ -37,7 +38,7 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
 
     //here are fields to view the ExperimentContainer
     private String guiName;
-    private int suffix;
+//    private int suffix;
 
 
     public ExperimentContainer(Ms2Experiment source) {
@@ -52,7 +53,6 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
     public ExperimentContainer(MutableMs2Experiment source) {
         this.experiment = source;
         guiName = null;
-        suffix = 1;
         bestHit = null;
         results = Collections.emptyList();
     }
@@ -75,8 +75,8 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
         return guiName;
     }
 
-    public int getSuffix() {
-        return this.suffix;
+    public int getIndex() {
+        return experiment.getAnnotation(Index.class, Index.NO_INDEX).index;
     }
 
     public List<SimpleSpectrum> getMs1Spectra() {
@@ -147,13 +147,14 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
         setGuiName(createGuiName());
     }
 
-    public void setSuffix(int value) {
-        this.suffix = value;
+    public void setIndex(int value) {
+        experiment.setAnnotation(Index.class, new Index(value));
         setGuiName(createGuiName());
     }
 
     private String createGuiName() {
-        return this.suffix >= 2 ? experiment.getName() + " (" + suffix + ")" : experiment.getName();
+        final int i = getIndex();
+        return i >= 2 ? experiment.getName() + " (" + i + ")" : experiment.getName();
     }
 
     // with change event

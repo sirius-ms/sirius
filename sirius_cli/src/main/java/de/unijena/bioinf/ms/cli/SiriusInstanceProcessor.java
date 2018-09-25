@@ -75,6 +75,10 @@ public class SiriusInstanceProcessor implements  InstanceProcessor<ExperimentRes
                 ms2Prof.setAllowedMassDeviation(new Deviation(options.getPPMMax()));
                 ms1Prof.setAllowedMassDeviation(new Deviation(options.getPPMMax()));
             }
+            if (options.getPPMMaxMs2() != null) {
+                ms2Prof.setAllowedMassDeviation(new Deviation(options.getPPMMax()));
+            }
+
             final TreeBuilder builder = sirius.getMs2Analyzer().getTreeBuilder();
             if (builder == null) {
                 String noILPSolver = "Could not load a valid ILP solver (TreeBuilder) " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + ". Please read the installation instructions.";

@@ -1,3 +1,25 @@
+#### 4.0.1
+
+-   **Java 9 and higher are now supported**
+
+-   **CSI:FingerID trainings structures available**
+    - Trainings structures available via WebAPI.
+    - Trainings structures are flagged in CSI:FingerID candidate list.
+
+-   **SMARTS filter for candidate list (GUI)**
+
+-   **Molecular Property filter for candidate list (GUI)**    
+
+-   **Available prediction workers of the CSI:FingerID webservice can be listed from SIRIUS**
+
+-   Improved connection handling and auto reconnect to Webservice
+
+-   Improved error messaged    
+
+-   ImprovSed stability and load balancing of the CSI:FingerID webservice
+
+-   Several bug fixes
+    
 #### 4.0
 
 -   **Fragmentation tree heuristics**

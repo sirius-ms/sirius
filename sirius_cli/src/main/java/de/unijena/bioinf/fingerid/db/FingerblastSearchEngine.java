@@ -25,8 +25,8 @@ public class FingerblastSearchEngine implements SearchStructureByFormula, Annota
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula molecularFormula, T fingerprintCandidates) throws DatabaseException {
-        try (final WebAPI webAPI = WebAPI.newInstance()) {
-            fingerprintCandidates.addAll(underlyingDatabase.loadCompoundsByFormula(webAPI, molecularFormula, queryDB));
+        try  {
+            fingerprintCandidates.addAll(underlyingDatabase.loadCompoundsByFormula(molecularFormula, queryDB));
             return fingerprintCandidates;
         } catch (IOException e) {
             throw new DatabaseException(e);

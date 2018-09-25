@@ -67,6 +67,9 @@ public interface SiriusOptions {
     @Option(longName = "ppm-max", description = "allowed ppm for decomposing masses", defaultToNull = true)
     Double getPPMMax();
 
+    @Option(longName = "ppm-max-ms2", description = "allowed ppm for decomposing masses in MS2. If not specified, the same value as for the MS1", defaultToNull = true)
+    Double getPPMMaxMs2();
+
     @Option(longName = "noise", description = "median intensity of noise peaks", defaultToNull = true)
     Double getMedianNoise();
 
@@ -167,6 +170,30 @@ public interface SiriusOptions {
 
     @Option(longName = "enable-silicon-detection", hidden = true)
     public boolean isEnableSiliconDetection();
+
+    @Option(
+            longName = {"isolation-window-width"},
+            description = "width of the isolation window to measure MS2",
+            defaultToNull = true,
+            hidden = true
+    )
+    Double getIsolationWindowWidth();
+
+    @Option(
+            longName = {"isolation-window-shift"},
+            description = "The shift applied to the isolation window to measure MS2 in relation to the precursormass",
+            defaultValue = "0",
+            hidden = true
+    )
+    double getIsolationWindowShift();
+
+    @Option(
+            longName = {"assess-data-quality"},
+            description = "produce stats on quality of spectra and estimate isolation window. Needs to read all data at once.",
+            hidden = true
+    )
+    boolean isAssessDataQuality();
+
 
 
     /**

@@ -6,11 +6,11 @@ package de.unijena.bioinf.sirius.gui.dialogs;
  */
 
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.core.errorReport.FinngerIDWebErrorReporter;
 import de.unijena.bioinf.sirius.core.errorReport.SiriusDefaultErrorReport;
-import de.unijena.bioinf.sirius.gui.settings.ErrorReportSettingsPanel;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
+import de.unijena.bioinf.sirius.gui.settings.ErrorReportSettingsPanel;
 import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
@@ -35,7 +35,7 @@ public class BugReportDialog extends JDialog {
     private final JComboBox<String> report;
     private static String[] reportTypes = {ErrorReport.TYPES[1], ErrorReport.TYPES[2]};
 
-    private final Properties props = ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties();
+    private final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().getCopyOfPersistentProperties();
 
     public BugReportDialog(Frame owner) {
         super(owner, true);
@@ -59,8 +59,8 @@ public class BugReportDialog extends JDialog {
 
 
         JPanel sub = new JPanel(new BorderLayout());
-        sub.add(new JLabel("Subject:  "),BorderLayout.WEST);
-        sub.add(subjectField,BorderLayout.CENTER);
+        sub.add(new JLabel("Subject:  "), BorderLayout.WEST);
+        sub.add(subjectField, BorderLayout.CENTER);
         reportSettings.add(sub);
 
         textarea = new JTextArea();
@@ -91,7 +91,7 @@ public class BugReportDialog extends JDialog {
                     @Override
                     protected String doInBackground() throws Exception {
                         reportSettings.saveProperties();
-                        ApplicationCore.SIRIUS_PROPERTIES_FILE.setAndStoreProperties(props);
+                        SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperties(props);
 
                         boolean senMail = Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail"));
                         String mail = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");

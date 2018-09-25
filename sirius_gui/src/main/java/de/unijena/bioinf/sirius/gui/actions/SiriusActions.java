@@ -43,7 +43,7 @@ public enum SiriusActions {
     public static final ActionMap ROOT_MANAGER = new ActionMap();
     public final Class<? extends Action> actionClass;
 
-    public Action getInstance(final boolean createIfNull, final ActionMap map) {
+    public synchronized Action getInstance(final boolean createIfNull, final ActionMap map) {
         Action a = map.get(name());
         if (a == null && createIfNull) {
             try {
@@ -68,7 +68,7 @@ public enum SiriusActions {
         return getInstance(true, ROOT_MANAGER);
     }
 
-    public static void initRootManager() {
+    /*public static void initRootManager() {
         for (SiriusActions action : values()) {
             try {
                 if (ROOT_MANAGER.get(action.name()) == null) {
@@ -80,7 +80,7 @@ public enum SiriusActions {
             }
         }
     }
-
+*/
 
     SiriusActions(Class<? extends Action> action) {
         this.actionClass = action;

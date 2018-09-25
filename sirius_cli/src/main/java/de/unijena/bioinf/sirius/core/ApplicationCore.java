@@ -5,7 +5,6 @@ package de.unijena.bioinf.sirius.core;
  * 19.09.16.
  */
 
-import de.unijena.bioinf.ChemistryBase.properties.PersistentProperties;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
@@ -32,30 +31,30 @@ import java.util.logging.LogManager;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public abstract class ApplicationCore {
-    public static final Logger DEFAULT_LOGGER;
+    public static Logger DEFAULT_LOGGER;
 
-    private static final String USER_PROPERTIES_FILE_HAEDER = "This is the default Sirius properties file containing default values for all sirius properties that can be set";
+    public static Path WORKSPACE;
 
-    public final static Path WORKSPACE;
+    public static String VERSION_STRING;
+    public static String CITATION;
+    public static String CITATION_BIBTEX;
 
-    public final static String VERSION_STRING;
-    public final static String CITATION;
-    public final static String CITATION_BIBTEX;
-
-    public static final PersistentProperties SIRIUS_PROPERTIES_FILE;
 
     //creating
     static {
+        System.setProperty("de.unijena.bioinf.ms.sirius.props",
+                "csi_fingerid.build.properties,sirius_frontend.build.properties"
+        );
+
         final String version = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.version");
         final String build = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build");
 
         //#################### start init workspace ################################
         final String home = System.getProperty("user.home");
-        final String path = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.ws", ".sirius");
-        final Path DEFAULT_WORKSPACE = Paths.get(home).resolve(path);
+        final String defaultFolderName = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.ws.default.name", ".sirius");
+        final Path DEFAULT_WORKSPACE = Paths.get(home).resolve(defaultFolderName);
         final Map<String, String> env = System.getenv();
         final String ws = env.get("SIRIUS_WORKSPACE");
-
         if (ws != null) {
             Path wsDir = Paths.get(ws);
             if (Files.isDirectory(wsDir)) {
@@ -103,6 +102,7 @@ public abstract class ApplicationCore {
                 deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile);
                 Files.write(versionFile, version.getBytes(), StandardOpenOption.CREATE);
             }
+
         } catch (IOException e) {
             System.err.println("Error while reading/writing workspace version file!");
             e.printStackTrace();
@@ -177,8 +177,8 @@ public abstract class ApplicationCore {
         DEFAULT_LOGGER.info("Sirius Workspace Successfull initialized at: " + WORKSPACE.toAbsolutePath().toString());
 
 
-        VERSION_STRING = (version != null && build != null) ? "Sirius " + version + " (build " + build + ")" : "Sirius";
-        DEFAULT_LOGGER.debug(VERSION_STRING);
+        VERSION_STRING = (version != null && build != null) ? "SIRIUS " + version + " (build " + build + ")" : "SIRIUS <Version Unknown>";
+        DEFAULT_LOGGER.info("You run " + VERSION_STRING);
 
         String prop = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cite");
         CITATION = prop != null ? prop : "";
@@ -197,8 +197,7 @@ public abstract class ApplicationCore {
         }
 
 
-        SIRIUS_PROPERTIES_FILE = new PersistentProperties(siriusPropsFile, defaultProps, USER_PROPERTIES_FILE_HAEDER);
-        SIRIUS_PROPERTIES_FILE.store();
+        SiriusProperties.initSiriusPropertyFile(siriusPropsFile, defaultProps);
         PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.workspace", WORKSPACE.toAbsolutePath().toString());
         DEFAULT_LOGGER.debug("application properties initialized!");
 
@@ -216,6 +215,7 @@ public abstract class ApplicationCore {
         //bug reporting
         ErrorReporter.INIT_PROPS(PropertyManager.PROPERTIES);
         DEFAULT_LOGGER.info("Bug reporter initialized!");
+
     }
 
     private static void deleteFromWorkspace(final Path... files) {
@@ -228,7 +228,5 @@ public abstract class ApplicationCore {
             }
         }
     }
-
-
 }
 
