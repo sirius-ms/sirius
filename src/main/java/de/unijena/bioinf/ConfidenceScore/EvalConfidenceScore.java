@@ -8,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ConfidenceScore.confidenceScore.ScoredCandidate;
 import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import de.unijena.bioinf.chemdb.DatabaseException;
+import de.unijena.bioinf.chemdb.FilteredChemicalDB;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
@@ -41,23 +42,23 @@ public class EvalConfidenceScore {
     private static final Comparator<ScoredCandidate> SCORED_CANDIDATE_COMPARATOR = new ScoredCandidate.MaxBestComparator();
 
     private MaskedFingerprintVersion maskedFingerprintVersion;
-    private ChemicalDatabase db;
+    private FilteredChemicalDB db;
 
 
-    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
+    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, FilteredChemicalDB db) throws IOException, InterruptedException, DatabaseException {
         TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.NoLogScoresNoMFRobust(useLinearSVM);
         train(correctQueries, null, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
     }
 
-    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
+    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, FilteredChemicalDB db) throws IOException, InterruptedException, DatabaseException {
         TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.NoLogScoresNoMFRobust(useLinearSVM);
         train(predictedQueries, correctInchis, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
     }
 
-    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
+    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, FilteredChemicalDB db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
         train(queries, null, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
     }
-    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
+    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, FilteredChemicalDB db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
         if (correctInchis==null){
             correctInchis = new ArrayList<>();
             for (CompoundWithAbstractFP<ProbabilityFingerprint> query : predictedQueries) {
@@ -113,7 +114,7 @@ public class EvalConfidenceScore {
      * @param db
      * @throws IOException
      */
-    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, Path modelFile, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
+    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, Path modelFile, Path outputFile, FilteredChemicalDB db) throws IOException, DatabaseException {
         QueryPredictor queryPredictor = QueryPredictor.loadFromFile(modelFile);
         MaskedFingerprintVersion.Builder builder = MaskedFingerprintVersion.buildMaskFor(CdkFingerprintVersion.getDefault()).disableAll();
         for (int i : queryPredictor.getAbsFPIndices()) {
@@ -122,21 +123,21 @@ public class EvalConfidenceScore {
         predict(queries, builder.toMask(), queryPredictor, outputFile, db);
     }
 
-    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, MaskedFingerprintVersion maskedFingerprintVersion, Path modelFile, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
+    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, MaskedFingerprintVersion maskedFingerprintVersion, Path modelFile, Path outputFile, FilteredChemicalDB db) throws IOException, DatabaseException {
         QueryPredictor queryPredictor = QueryPredictor.loadFromFile(modelFile);
         predict(queries, maskedFingerprintVersion, queryPredictor, outputFile, db);
     }
 
-    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, MaskedFingerprintVersion maskedFingerprintVersion, QueryPredictor queryPredictor, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
+    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, MaskedFingerprintVersion maskedFingerprintVersion, QueryPredictor queryPredictor, Path outputFile, FilteredChemicalDB db) throws IOException, DatabaseException {
         predict(queries, null, maskedFingerprintVersion, queryPredictor, outputFile, db);
     }
 
-    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis, MaskedFingerprintVersion maskedFingerprintVersion, Path modelFile, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
+    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis, MaskedFingerprintVersion maskedFingerprintVersion, Path modelFile, Path outputFile, FilteredChemicalDB db) throws IOException, DatabaseException {
         QueryPredictor queryPredictor = QueryPredictor.loadFromFile(modelFile);
         predict(predictedQueries, correctInchis, maskedFingerprintVersion, queryPredictor, outputFile, db);
     }
 
-    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis, MaskedFingerprintVersion maskedFingerprintVersion, QueryPredictor queryPredictor, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
+    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis, MaskedFingerprintVersion maskedFingerprintVersion, QueryPredictor queryPredictor, Path outputFile, FilteredChemicalDB db) throws IOException, DatabaseException {
         if (correctInchis==null){
             correctInchis = new ArrayList<>();
             for (CompoundWithAbstractFP<ProbabilityFingerprint> query : predictedQueries) {
@@ -168,12 +169,12 @@ public class EvalConfidenceScore {
     }
 
 
-    public static void overfit(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
+    public static void overfit(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, FilteredChemicalDB db) throws IOException, InterruptedException, DatabaseException {
         TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
         overfit(queries, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
     }
 
-    public static void overfit(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
+    public static void overfit(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, FilteredChemicalDB db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
         List<InChI> correctInchis = new ArrayList<>();
         for (CompoundWithAbstractFP<ProbabilityFingerprint> query : queries) {
             correctInchis.add(query.getInchi());
@@ -250,21 +251,21 @@ public class EvalConfidenceScore {
     }
 
 
-    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
+    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, FilteredChemicalDB db) throws IOException, InterruptedException, DatabaseException {
         TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
         crossvalidation(queries, null, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
     }
 
-    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
+    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, FilteredChemicalDB db) throws IOException, InterruptedException, DatabaseException {
         TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
         crossvalidation(predictedQueries, correctInchis, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
     }
 
-    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
+    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, FilteredChemicalDB db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
         crossvalidation(correctQueries, null, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
     }
 
-    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
+    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, FilteredChemicalDB db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
         final int FOLD = 10;
         if (correctInchis==null){
             correctInchis = new ArrayList<>();
@@ -497,7 +498,7 @@ private static void pickupTrainAndEvalStructureDependent(List<Instance> compound
     }
 
 
-    public EvalConfidenceScore(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis,  PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, ChemicalDatabase db) {
+    public EvalConfidenceScore(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis,  PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, FilteredChemicalDB db) {
         if (correctInchis.size()!=predictedQueries.size()) throw new RuntimeException("correctInchis and predictedQueries size differ");
         marvinsScoring = new CSIFingerIdScoring(statistics);
         this.statistics = statistics;
@@ -526,16 +527,19 @@ private static void pickupTrainAndEvalStructureDependent(List<Instance> compound
         List<MolecularFormula> queriesPerFormulaList = new ArrayList<>(queriesPerFormula.keySet());
 
         ExecutorService executorService = Executors.newFixedThreadPool(NUM_OF_THREADS);
-        List<ChemicalDatabase> databases = new ArrayList<>();
+        List<FilteredChemicalDB> databases = new ArrayList<>();
         for (int i = 0; i < NUM_OF_THREADS; i++) {
             databases.add(db.clone());
         }
         System.out.println(databases.size()+" chemicalDBs");
+        System.out.println("Warning this is outdated code that may cause too many connections error on our db");
+        System.err.println("Warning this is outdated code that may cause too many connections error on our db");
+
 
 
         List<Future<List<Instance>>> futures = new ArrayList<>();
         final ConcurrentLinkedQueue<MolecularFormula> queue = new ConcurrentLinkedQueue<>(queriesPerFormulaList);
-        for (final ChemicalDatabase database : databases) {
+        for (final FilteredChemicalDB database : databases) {
             futures.add(executorService.submit(new Callable<List<Instance>>() {
                 @Override
                 public List<Instance> call() throws Exception {
@@ -584,7 +588,7 @@ private static void pickupTrainAndEvalStructureDependent(List<Instance> compound
     }
 
 
-    private static List<CompoundWithAbstractFP<Fingerprint>> searchByFingerBlast(final ChemicalDatabase db, MaskedFingerprintVersion maskedFingerprintVersion, final MolecularFormula formula) throws DatabaseException {
+    private static List<CompoundWithAbstractFP<Fingerprint>> searchByFingerBlast(final FilteredChemicalDB db, MaskedFingerprintVersion maskedFingerprintVersion, final MolecularFormula formula) throws DatabaseException {
         final ConcurrentLinkedQueue<FingerprintCandidate> candidates = new ConcurrentLinkedQueue<>();
         db.lookupStructuresAndFingerprintsByFormula(formula, candidates);
 
