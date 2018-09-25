@@ -142,7 +142,7 @@ public class FormulaBits {
         System.arraycopy(pubchem, 0, completeFp, i, PUBCHEM_FSIZE);
     }
 
-    private static boolean[] getPubchem(MolecularFormula formula) {
+    public static boolean[] getPubchem(MolecularFormula formula) {
         boolean[] fp = new boolean[115];
         int b = 0;
         if (formula.numberOf("H") >= 4) fp[b] = true;

@@ -17,6 +17,8 @@
  */
 package de.unijena.bioinf.fingerid;
 
+import gnu.trove.map.hash.TIntIntHashMap;
+
 import java.util.Arrays;
 
 public class Mask {
@@ -58,6 +60,19 @@ public class Mask {
 
     public void removeDuplicates(boolean[][] fingerprints, int threshold) {
         removeDuplicates(fingerprints, threshold, fingerprints.length-threshold);
+    }
+
+    /**
+     * @return a map (a to b) where a is an index of a duplicated MP and b is the index of the used MP
+     */
+    public TIntIntHashMap getDuplicates() {
+        final TIntIntHashMap map = new TIntIntHashMap();
+        for (int i=0; i < bits.length; ++i) {
+            if (bits[i] >= 0) {
+                map.put(i, bits[i]);
+            }
+        }
+        return map;
     }
 
     public void removeDuplicates(boolean[][] fingerprints, int minNumber, int maxNumber) {
