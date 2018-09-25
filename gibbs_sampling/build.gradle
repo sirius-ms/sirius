@@ -18,9 +18,9 @@ dependencies() {
 
     compile 'com.lexicalscope.jewelcli:jewelcli:0.8.1'
 
-    compile group: "org.openscience.cdk", name: "cdk-smiles", version: "1.5.14"
-    compile group: "org.openscience.cdk", name: "cdk-data", version: "1.5.14"
-    compile group: "org.openscience.cdk", name: "cdk-formula", version: "1.5.14"
+    compile group: "org.openscience.cdk", name: "cdk-smiles", version: "$cdk_version"
+    compile group: "org.openscience.cdk", name: "cdk-data", version: "$cdk_version"
+    compile group: "org.openscience.cdk", name: "cdk-formula", version: "$cdk_version"
 }
 
 

@@ -795,6 +795,7 @@ public class Spectrums {
 
 
     public static <P extends Peak, S extends MutableSpectrum<P>> void normalize(S spectrum, Normalization norm) {
+        if (spectrum.size()==0) return;
         switch (norm.getMode()) {
             case MAX:
                 normalizeToMax(spectrum, norm.getBase());
@@ -802,6 +803,15 @@ public class Spectrums {
             case SUM:
                 normalizeToSum(spectrum, norm.getBase());
                 return;
+            case FIRST:
+                normalizeByFirstPeak(spectrum, norm.getBase());
+        }
+    }
+
+    private static <P extends Peak, S extends MutableSpectrum<P>> void normalizeByFirstPeak(S spectrum, double base) {
+        final double firstPeak = base/spectrum.getIntensityAt(0);
+        for (int i=0; i < spectrum.size(); ++i) {
+            spectrum.setIntensityAt(i, spectrum.getIntensityAt(i)*firstPeak);
         }
     }
 

@@ -10,7 +10,7 @@ public class InChI {
     public final String key;
 
     public InChI(String inchikey, String inchi) {
-        if (inchi.endsWith("/")) inchi = inchi.substring(0, inchi.length()-1);
+        if (inchi != null && inchi.endsWith("/")) inchi = inchi.substring(0, inchi.length()-1);
         this.in3D = inchi;
         this.key = inchikey;
         this.in2D = inchi==null ? null : inchi2d(inchi);
@@ -35,6 +35,7 @@ public class InChI {
 
     private static Pattern inchi2dPattern = Pattern.compile("/[btmrsfi]");
     public static String inchi2d(String inchi) {
+        if (inchi.endsWith("/")) inchi = inchi.substring(0, inchi.length()-1);
         final Matcher m = inchi2dPattern.matcher(inchi);
         if (m.find()) {
             return inchi.substring(0, m.start());

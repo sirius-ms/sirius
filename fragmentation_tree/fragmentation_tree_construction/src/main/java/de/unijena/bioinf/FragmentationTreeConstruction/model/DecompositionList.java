@@ -128,6 +128,11 @@ public class DecompositionList {
         return map;
     }
 
+    @Override
+    public String toString() {
+        return decompositions.toString();
+    }
+
     public List<Decomposition> getDecompositions() {
         return decompositions;
     }

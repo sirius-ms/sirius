@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
     private static enum SpecType {
-        UNKNOWN,MS1, MSMS, CORRELATED;
+        UNKNOWN, MS1, MSMS, CORRELATED;
     }
 
     private static class MgfSpec {
@@ -51,11 +51,11 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         private SpecType type;
 
         public MgfSpec(MgfSpec s) {
-            this.spectrum=new MutableMs2Spectrum(s.spectrum);
-            this.ionType=s.ionType;
-            this.fields=new HashMap<String, String>(s.fields);
+            this.spectrum = new MutableMs2Spectrum(s.spectrum);
+            this.ionType = s.ionType;
+            this.fields = new HashMap<String, String>(s.fields);
             this.inchi = s.inchi;
-            this.smiles=s.smiles;
+            this.smiles = s.smiles;
             this.name = s.name;
             this.featureId = s.featureId;
             this.retentionTime = s.retentionTime;
@@ -74,11 +74,12 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         private final ArrayDeque<MgfSpec> buffer;
         private final BufferedReader reader;
         private int specIndex = 0;
-        protected boolean ignoreUnsupportedIonTypes ;
+        protected boolean ignoreUnsupportedIonTypes;
 
         public MgfParserInstance(BufferedReader reader) {
             this.reader = reader;
-            this.prototype = new MgfSpec(); this.prototype.spectrum=new MutableMs2Spectrum();
+            this.prototype = new MgfSpec();
+            this.prototype.spectrum = new MutableMs2Spectrum();
             this.buffer = new ArrayDeque<MgfSpec>();
             this.ignoreUnsupportedIonTypes = true;
         }
@@ -101,7 +102,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         private void addNextEntry() throws IOException {
             if (!buffer.isEmpty()) return;
             MgfSpec s = readNext();
-            if (s!=null)
+            if (s != null)
                 buffer.addLast(s);
         }
 
@@ -112,7 +113,8 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             keyword = keyword.toUpperCase();
             value = value.trim();
             if (value.isEmpty()) return;
-            if (value.charAt(0)=='"' && value.charAt(value.length()-1)=='"') value = value.substring(1,value.length()-1);
+            if (value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"')
+                value = value.substring(1, value.length() - 1);
             if (keyword.equals("PEPMASS")) {
                 spec.spectrum.setPrecursorMz(Double.parseDouble(value.split("\\s+")[0]));
             } else if (keyword.startsWith("FEATURE_ID")) {
@@ -120,7 +122,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             } else if (keyword.contains("RTINSECONDS")) {
                 final String[] parts = value.split("-");
                 if (parts.length == 1 || parts[0].isEmpty()) {
-                    spec.retentionTime = new RetentionTime(Double.parseDouble(parts[parts.length-1]));
+                    spec.retentionTime = new RetentionTime(Double.parseDouble(parts[parts.length - 1]));
                 } else {
                     double a = Double.parseDouble(parts[0]), b = Double.parseDouble(parts[1]);
                     spec.retentionTime = new RetentionTime(a, b, a + (b - a) / 2d);
@@ -136,10 +138,10 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 final Matcher m = CHARGE_PATTERN.matcher(value);
                 m.find();
                 int charge = ("-".equals(m.group(2))) ? -Integer.parseInt(m.group(1)) : Integer.parseInt(m.group(1));
-                if (charge==0) charge=1;
-                if (spec.spectrum.getIonization()==null || spec.spectrum.getIonization().getCharge() != charge)
+                if (charge == 0) charge = 1;
+                if (spec.spectrum.getIonization() == null || spec.spectrum.getIonization().getCharge() != charge)
                     spec.spectrum.setIonization(new Charge(charge));
-                if (spec.ionType==null) spec.ionType = PrecursorIonType.unknown(charge);
+                if (spec.ionType == null) spec.ionType = PrecursorIonType.unknown(charge);
             } else if (keyword.startsWith("ION") || keyword.contains("ADDUCT")) {
                 final PrecursorIonType ion;
                 final Matcher cm = CHARGE_PATTERN.matcher(value);
@@ -193,16 +195,17 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         }
 
         private String lastErrorFeatureId = null;
+
         private MgfSpec readNext() throws IOException {
             String line;
-            boolean reading=false;
+            boolean reading = false;
             MgfSpec spec = null;
-            while ((line=reader.readLine())!=null) {
+            while ((line = reader.readLine()) != null) {
                 try {
                     if (line.isEmpty()) continue;
                     if (!reading && line.startsWith("BEGIN IONS")) {
-                        spec =  new MgfSpec(prototype);
-                        reading=true;
+                        spec = new MgfSpec(prototype);
+                        reading = true;
                     } else if (reading && line.startsWith("END IONS")) {
                         lastErrorFeatureId = null;
                         return spec;
@@ -212,39 +215,40 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                             spec.spectrum.addPeak(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
                         } else {
                             final int i = line.indexOf('=');
-                            if (i>=0) handleKeyword(spec, line.substring(0, i), line.substring(i+1));
+                            if (i >= 0) handleKeyword(spec, line.substring(0, i), line.substring(i + 1));
                         }
                     } else {
                         final int i = line.indexOf('=');
-                        if (i>=0) handleKeyword(prototype, line.substring(0, i), line.substring(i+1));
+                        if (i >= 0) handleKeyword(prototype, line.substring(0, i), line.substring(i + 1));
                     }
                 } catch (RuntimeException e) {
-                    if (e instanceof MultipleChargeException){
-                        LoggerFactory.getLogger(this.getClass()).warn("Compound ignored. SIRIUS does not support multiple charged compounds.");
-                    } else {
-                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
-                    }
-
                     //increase index for not-parsed compounds.
                     boolean increasedIndex = false;
-                    if (spec.featureId!=null && !spec.featureId.equals(lastErrorFeatureId)){
+                    if (spec.featureId != null && !spec.featureId.equals(lastErrorFeatureId)) {
                         ++specIndex;
                         increasedIndex = true;
                         lastErrorFeatureId = spec.featureId;
                     }
+
+                    if (e instanceof MultipleChargeException) {
+                        LoggerFactory.getLogger(this.getClass()).warn("Compound " + lastErrorFeatureId + " ignored. SIRIUS does not support multiple charged compounds.");
+                    } else {
+                        LoggerFactory.getLogger(this.getClass()).error("Compund " + lastErrorFeatureId + " ignored because of unexpected parsing error.", e);
+                    }
+
                     if (reading) {
-                        while ((line=reader.readLine())!=null) {
+                        while ((line = reader.readLine()) != null) {
                             if (line.startsWith("END IONS")) {
                                 reading = false;
                                 break;
                             } else if (line.startsWith("BEGIN IONS")) {
                                 reading = true;
-                                spec =  new MgfSpec(prototype);
+                                spec = new MgfSpec(prototype);
                                 break;
                             } else if (!increasedIndex && line.toUpperCase().startsWith("FEATURE_ID")) {
                                 final int i = line.indexOf('=');
-                                String id = line.substring(i+1).trim();
-                                if (id.length()>0 && !id.equals(lastErrorFeatureId)){
+                                String id = line.substring(i + 1).trim();
+                                if (id.length() > 0 && !id.equals(lastErrorFeatureId)) {
                                     ++specIndex;
                                     increasedIndex = true;
                                     lastErrorFeatureId = id;
@@ -294,7 +298,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
     @Override
     public synchronized Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
-        if (inst==null || inst.reader!=reader) inst = new MgfParserInstance(reader);
+        if (inst == null || inst.reader != reader) inst = new MgfParserInstance(reader);
         if (!inst.hasNext()) return null;
         ++inst.specIndex;
         final MutableMs2Experiment exp = new MutableMs2Experiment();
@@ -302,17 +306,17 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         exp.setMs1Spectra(new ArrayList<SimpleSpectrum>());
         exp.setIonMass(inst.peekNext().spectrum.getPrecursorMz());
         exp.setName(inst.peekNext().name);
-        if (exp.getName()==null) exp.setName(inst.peekNext().featureId);
-        if (exp.getName()==null) {
+        if (exp.getName() == null) exp.setName(inst.peekNext().featureId);
+        if (exp.getName() == null) {
             exp.setName("FEATURE_" + inst.specIndex);
         }
         exp.setAnnotation(Index.class, new Index(inst.specIndex));
-        final HashMap<String,String> additionalFields = new HashMap<String, String>();
+        final HashMap<String, String> additionalFields = new HashMap<String, String>();
 
         while (true) {
             final MgfSpec spec = inst.pollNext();
-            if (spec.spectrum.getMsLevel()==1) {
-                if (spec.type==SpecType.CORRELATED) {
+            if (spec.spectrum.getMsLevel() == 1) {
+                if (spec.type == SpecType.CORRELATED) {
                     exp.setMergedMs1Spectrum(new SimpleSpectrum(spec.spectrum));
                 } else {
                     exp.getMs1Spectra().add(new SimpleSpectrum(spec.spectrum));
@@ -320,13 +324,13 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             } else {
                 exp.getMs2Spectra().add(new MutableMs2Spectrum(spec.spectrum));
             }
-            if (exp.getPrecursorIonType()==null || exp.getPrecursorIonType().isUnknownNoCharge()) {
+            if (exp.getPrecursorIonType() == null || exp.getPrecursorIonType().isUnknownNoCharge()) {
                 exp.setPrecursorIonType(spec.ionType);
             }
-            if (spec.inchi!=null && spec.inchi.startsWith("InChI=")) {
+            if (spec.inchi != null && spec.inchi.startsWith("InChI=")) {
                 exp.setAnnotation(InChI.class, new InChI(null, spec.inchi));
             }
-            if (spec.smiles!=null) {
+            if (spec.smiles != null) {
                 exp.setAnnotation(Smiles.class, new Smiles(spec.smiles));
             }
             if (spec.retentionTime != null) {
@@ -338,7 +342,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             }
             if (spec.instrumentation != null) {
                 if (exp.hasAnnotation(MsInstrumentation.class)) {
-                    if (spec.instrumentation!=MsInstrumentation.Unknown)
+                    if (spec.instrumentation != MsInstrumentation.Unknown)
                         exp.setAnnotation(MsInstrumentation.class, spec.instrumentation);
                 } else {
                     exp.setAnnotation(MsInstrumentation.class, spec.instrumentation);
@@ -348,13 +352,14 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
             if (inst.hasNext()) {
                 final MgfSpec nextOne = inst.peekNext();
-                if (spec.featureId!=null && !spec.featureId.equals(nextOne.featureId)) break;
-                if (spec.name != null && spec.featureId==null && !spec.name.equals(nextOne.name)) break;
-                if (exp.getPrecursorIonType()!=null && !exp.getPrecursorIonType().isIonizationUnknown() && nextOne.ionType!=null && !nextOne.ionType.isIonizationUnknown() && !exp.getPrecursorIonType().equals(nextOne.ionType)) break;
+                if (spec.featureId != null && !spec.featureId.equals(nextOne.featureId)) break;
+                if (spec.name != null && spec.featureId == null && !spec.name.equals(nextOne.name)) break;
+                if (exp.getPrecursorIonType() != null && !exp.getPrecursorIonType().isIonizationUnknown() && nextOne.ionType != null && !nextOne.ionType.isIonizationUnknown() && !exp.getPrecursorIonType().equals(nextOne.ionType))
+                    break;
                 if (nextOne.spectrum.getPrecursorMz() != 0) {
-                    if ((spec.featureId!=null || spec.name!=null)) {
+                    if ((spec.featureId != null || spec.name != null)) {
                         if (Math.abs(nextOne.spectrum.getPrecursorMz() - exp.getIonMass()) > 0.005) break;
-                    } else if (nextOne.spectrum.getPrecursorMz()!=exp.getIonMass()) break;
+                    } else if (nextOne.spectrum.getPrecursorMz() != exp.getIonMass()) break;
                 }
             } else break;
         }

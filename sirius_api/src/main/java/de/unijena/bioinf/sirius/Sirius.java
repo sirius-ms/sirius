@@ -72,16 +72,20 @@ public class Sirius {
 
 
     public static void main(String[] args) {
-        final Sirius sirius = new Sirius();
-
         try {
-            Ms2Experiment experiment = sirius.parseExperiment(new File("/home/kaidu/data/ms/demo-data/ms/bicculine_ms1only.ms")).next();
+            Sirius sirius = new Sirius();
+            // input file
+            Ms2Experiment experiment = sirius.parseExperiment(new File("someFile.ms")).next();
+            // intermediate object
+            ProcessedInput pinput = sirius.getMs2Analyzer().preprocessing(experiment);
+            Decomposition decomposition = pinput.getAnnotationOrThrow(DecompositionList.class).find(experiment.getMolecularFormula());
+            FGraph graph = sirius.getMs2Analyzer().buildGraphWithoutReduction(pinput, decomposition);
 
-            System.out.println(sirius.identify(experiment).getRawJSONTree());
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
 
@@ -1071,9 +1075,10 @@ public class Sirius {
         boolean doFilter = false; double scoreThresholdForFiltering = 0d;
         for (IsotopePattern pat : pattern.getExplanations().values()) {
             maxScore = Math.max(pat.getScore(), maxScore);
-            if (pat.getScore()>=pat.getPattern().size()*3) {
+            final int numberOfIsoPeaks = pat.getPattern().size()-1;
+            if (pat.getScore()>=2*numberOfIsoPeaks) {
                 isoPeaks = Math.max(pat.getPattern().size(), isoPeaks);
-                scoreThresholdForFiltering = isoPeaks*2;
+                scoreThresholdForFiltering = isoPeaks*1d;
                 doFilter=true;
             }
         }

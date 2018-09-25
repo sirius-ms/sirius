@@ -45,7 +45,7 @@ public class PreprocessingTest {
         final MutableMs2Experiment experiment = new MutableMs2Experiment();
         experiment.setPrecursorIonType(PeriodicTable.getInstance().ionByName("[M]+"));
         experiment.setIonMass(180.0633881184 + new Charge(1).getMass());
-        experiment.setMoleculeNeutralMass(180.0633881184);
+//        experiment.setMolecule(180.0633881184);
         experiment.setMolecularFormula(MolecularFormula.parse("C6H12O6"));
         final SimpleMutableSpectrum sp = new SimpleMutableSpectrum();
         final double c = new Charge(1).getMass();

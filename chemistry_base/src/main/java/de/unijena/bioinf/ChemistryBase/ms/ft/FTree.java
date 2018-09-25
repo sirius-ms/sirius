@@ -98,6 +98,11 @@ public class FTree extends AbstractFragmentationGraph {
     */
 
     public TreeAdapter<Fragment> treeAdapter() {
+        return treeAdapterStatic();
+    }
+
+    // todo proof if static is a problem
+    public static TreeAdapter<Fragment> treeAdapterStatic() {
         return new BackrefTreeAdapter<Fragment>() {
             @Override
             public Fragment getParent(Fragment node) {

@@ -33,6 +33,12 @@ public class GraphOutput {
 
     }
 
+    public void printToFile(FGraph graph, File file) throws IOException {
+        final FileWriter fw = new FileWriter(file);
+        print(graph, Double.NaN, fw);
+        fw.close();
+    }
+
     public void printToFile(FGraph graph, double score, File file) throws IOException {
         final FileWriter fw = new FileWriter(file);
         print(graph, score, fw);
@@ -53,10 +59,12 @@ public class GraphOutput {
         writer.write('\n');
         writer.write(String.valueOf(graph.maxColor() + 1));
         writer.write('\n');
-        writer.write(String.valueOf(score));
-        writer.write(" + ");
-        writer.write(String.valueOf(rootScore));
-        writer.write("\n");
+        if (!Double.isNaN(score)) {
+            writer.write(String.valueOf(score));
+            writer.write(" + ");
+            writer.write(String.valueOf(rootScore));
+            writer.write("\n");
+        }
         for (Fragment u : graph.getFragments()) {
             writer.write(String.valueOf(u.getVertexId()));
             writer.write(' ');

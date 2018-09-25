@@ -12,10 +12,10 @@ public class CSVOutputWriter {
     public static void writeHits(Writer w, List<IdentificationResult> results) throws IOException {
         w.write("formula\tadduct\trank\tscore\ttreeScore\tisoScore\texplainedPeaks\texplainedIntensity\n");
         for (IdentificationResult r : results) {
-            PrecursorIonType ion = r.getStandardTree().getAnnotationOrNull(PrecursorIonType.class);
+            PrecursorIonType ion = r.getPrecursorIonType();
             w.write(r.getMolecularFormula().toString());
             w.write('\t');
-            w.write(ion!=null ? ion.toString() : "?");
+            w.write(ion != null ? ion.toString() : "?");
             w.write('\t');
             w.write(String.valueOf(r.getRank()));
             w.write('\t');
@@ -25,7 +25,7 @@ public class CSVOutputWriter {
             w.write('\t');
             w.write(String.valueOf(r.getIsotopeScore()));
             w.write('\t');
-            final TreeScoring scoring = r.getRawTree()==null ? null : r.getRawTree().getAnnotationOrNull(TreeScoring.class);
+            final TreeScoring scoring = r.getRawTree() == null ? null : r.getRawTree().getAnnotationOrNull(TreeScoring.class);
             w.write(r.getRawTree() == null ? "" : String.valueOf(r.getRawTree().numberOfVertices()));
             w.write('\t');
             w.write(scoring == null ? "" : String.valueOf(scoring.getExplainedIntensity()));

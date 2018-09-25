@@ -1,8 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by ge28quv on 04/07/17.
@@ -20,6 +18,7 @@ public class CompoundQuality {
     }
 
     public void addProperty(SpectrumProperty property) {
+        if (properties.contains(property)) return;
         properties.add(property);
     }
 
@@ -100,6 +99,24 @@ public class CompoundQuality {
             quality.addProperty(SpectrumProperty.valueOf(property));
         }
         return quality;
+    }
+
+    public static List<SpectrumProperty> getProperties(Ms2Experiment experiment){
+        CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
+        if (quality==null) return Collections.emptyList();
+        return Collections.unmodifiableList(quality.getProperties());
+    }
+
+    public static SpectrumProperty[] getUsedProperties(Ms2Dataset dataset){
+        return getUsedProperties(dataset.getExperiments());
+    }
+
+    public static SpectrumProperty[] getUsedProperties(List<Ms2Experiment> experiments){
+        Set<SpectrumProperty> properties = new HashSet<>();
+        for (Ms2Experiment experiment : experiments) {
+            properties.addAll(CompoundQuality.getProperties(experiment));
+        }
+        return properties.toArray(new SpectrumProperty[0]);
     }
 
     @Override

@@ -120,6 +120,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         IGNORE,
 
         /**
+         * enable if estimated isolation window allows for isotope peaks in MS2
+         */
+        IF_NECESSARY,
+
+        /**
          * look for isotopes in MS2 if experiment is measured on a Bruker Maxis
          */
         BRUKER_ONLY,
@@ -1037,7 +1042,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.lossScorers = new ArrayList<LossScorer>();
         this.defaultProfile = new MutableMeasurementProfile();
         isoInMs2Scorer = new IsotopePatternInMs2Scorer();
-        isotopeInMs2Handling = IsotopeInMs2Handling.IGNORE;
+        isotopeInMs2Handling = IsotopeInMs2Handling.BRUKER_ONLY;
         this.reduction = new SimpleReduction();
 
         //final TreeBuilder solver = TreeBuilderFactory.getInstance().getTreeBuilder();
@@ -1220,6 +1225,12 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
 
         final FragmentAnnotation<ProcessedPeak> graphPeakAno = originalGraph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+
+        // TODO: we need a more general way to transfer annotations from graph nodes to tree nodes!
+
+        final FragmentAnnotation<Ms1IsotopePattern> ms1IsoAno = originalGraph.getFragmentAnnotationOrNull(Ms1IsotopePattern.class);
+        final FragmentAnnotation<Ms1IsotopePattern> treeMs1IsoAno = (ms1IsoAno == null && pinput.getAnnotation(ExtractedIsotopePattern.class,null)==null) ? null : tree.addFragmentAnnotation(Ms1IsotopePattern.class);
+
         // check for MS1 isotope scores
         treeScoring.setIsotopeMs1Score(0d);
         for (Fragment treeFragment : tree) {
@@ -1230,24 +1241,27 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             if (graphPeak==null)
                 throw new NullPointerException("graph node has no associated peak");
             peakAno.set(treeFragment, graphPeak);
+
             simplePeakAnnotation.set(treeFragment, graphPeak);
             peakAnnotation.set(treeFragment, graphPeak.toAnnotatedPeak(treeFragment.getFormula(), ionType));
+
+            if (ms1IsoAno!=null && ms1IsoAno.get(graphFragment) != null) {
+                treeMs1IsoAno.set(treeFragment, ms1IsoAno.get(graphFragment));
+            }
         }
 
+        // TODO: HIER STIMMT WAS NICHT!!!!!!!!!!!!!!!!!!!
         // add isotopes
         ExtractedIsotopePattern extr = pinput.getAnnotation(ExtractedIsotopePattern.class, null);
         double rootIso = 0d;
         if (extr!=null) {
-            for (Fragment f : tree) {
-                final IsotopePattern p = extr.getExplanations().get(f.getFormula());
-                if (p!=null) {
-                    msIsoAno.set(f, new Ms2IsotopePattern(Spectrums.extractPeakList(p.getPattern()).toArray(new Peak[0]), p.getScore()));
-                    treeScoring.setIsotopeMs1Score(treeScoring.getIsotopeMs1Score() + p.getScore());
-                    if (f.isRoot()) {
-                        rootIso = p.getScore();
-                        tree.setAnnotation(IsotopePattern.class, p);
-                    }
-                }
+            final Fragment f = tree.getRoot();
+            final IsotopePattern p = extr.getExplanations().get(f.getFormula());
+            if (p!=null) {
+                treeMs1IsoAno.set(f, new Ms1IsotopePattern(p.getPattern(), p.getScore()));
+                treeScoring.setIsotopeMs1Score(treeScoring.getIsotopeMs1Score() + p.getScore());
+                rootIso = p.getScore();
+                tree.setAnnotation(IsotopePattern.class, p);
             }
         }
 
@@ -1425,7 +1439,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final Object[] preparedFrag = new Object[decompositionScorers.size()];
         final PrecursorIonType ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
         final FragmentAnnotation<Ms2IsotopePattern> msIso = tree.getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
-        final FragmentAnnotation<IsotopePattern> msIso1 = tree.getFragmentAnnotationOrNull(IsotopePattern.class);
+        final FragmentAnnotation<Ms1IsotopePattern> msIso1 = tree.getFragmentAnnotationOrNull(Ms1IsotopePattern.class);
         final String[] fragmentScores;
         final String[] lossScores;
         final String[] rootScores;
@@ -1508,6 +1522,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 fscore.set("isotopes", isoScore);
 
             fAno.set(v, fscore);
+            if (Math.abs(v.getIncomingEdge().getWeight()-(lscore.sum() + fscore.sum()))>0.1) {
+                System.err.println("Discrepanz in " + u.getFormula() + " -> " + v.getFormula() + " with score is " + (lscore.sum() + fscore.sum()) + " vs " + loss.getWeight());
+            }
         }
         // set root
         Fragment root = tree.getRoot();
@@ -1585,6 +1602,12 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final boolean isBrukerMaxis = input.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown).hasIsotopesInMs2();
         switch (isotopeInMs2Handling) {
             case IGNORE: return false;
+            case IF_NECESSARY:
+                IsolationWindow isolationWindow = input.getAnnotation(IsolationWindow.class, null);
+                if (isolationWindow!=null && isolationWindow.getRightBorder()>0.9){
+                    //isolation window includes the +1 peak
+                    return true;
+                }
             case BRUKER_IF_NECESSARY:
                 throw new UnsupportedOperationException("Not supported yet");
             case BRUKER_ONLY:
@@ -1596,9 +1619,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     private void scoreIsotopesInMs2(ProcessedInput input, FGraph graph) {
+
         isoInMs2Scorer.scoreFromMs1(input, graph);
         if (isScoringIsotopes(input))
             isoInMs2Scorer.score(input, graph);
+
     }
 
     private void addSyntheticParent(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks, double parentmass) {
