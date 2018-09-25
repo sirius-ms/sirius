@@ -655,6 +655,44 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         return addCommonIonType(ionByName(name));
     }
 
+    public boolean addCommonIonMode(IonMode ionMode) {
+//        name = canonicalizeIonName(name);
+
+        int charge = ionMode.getCharge();
+
+        if (Math.abs(charge)!=1){
+            throw new IllegalArgumentException("Currently, only ion modes with single positive/netagive charge are supported");
+        }
+
+        IonMode[] knownModes = charge>0?POSITIVE_ION_MODES:NEGATIVE_ION_MODES;
+
+        if (arrayContains(knownModes, ionMode)){
+            return false;
+        }
+
+        knownModes = Arrays.copyOf(knownModes, knownModes.length+1);
+
+        knownModes[knownModes.length-1] = ionMode;
+
+        if (charge>0) POSITIVE_ION_MODES = knownModes;
+        else NEGATIVE_ION_MODES = knownModes;
+
+        return true;
+    }
+
+    private boolean arrayContains(Object[] array, Object element){
+        for (Object o : array) {
+            if (o==null){
+                if (element==null) return true;
+                continue;
+            }
+            if (o.equals(element)){
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * @return the regular expression pattern that is used to parse molecular formulas
      */

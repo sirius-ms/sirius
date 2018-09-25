@@ -216,10 +216,10 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 }
             } else if (optionName.equalsIgnoreCase("inchi")) {
                 if (value.startsWith("InChI=")) {
-                    inchi = value;
+                    inchi = value.trim();
                 }
             } else if (optionName.equalsIgnoreCase("inchikey")) {
-                inchikey = value;
+                inchikey = value.trim();
             } else if (optionName.equalsIgnoreCase("smarts") || optionName.equalsIgnoreCase("smiles")) {
                 smiles = value;
             } else if (optionName.equalsIgnoreCase("splash")) {
@@ -369,7 +369,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } else return;
             spectrumType = SPECTRUM_TYPE.UNKNOWN;
             this.tic = 0;
-            this.retentionTime = 0d;
+//            this.retentionTime = 0d; //todo currently the retention time is a MsExperiment attribute, not a spectrum property
             this.currentEnergy = null;
             this.currentSpectrum = new SimpleMutableSpectrum();
         }

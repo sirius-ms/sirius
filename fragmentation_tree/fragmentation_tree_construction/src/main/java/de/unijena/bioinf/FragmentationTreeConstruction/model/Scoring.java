@@ -39,4 +39,12 @@ public class Scoring {
         return peakPairScores;
     }
 
+    @Override
+    public Scoring clone() {
+        final Scoring copy = new Scoring();
+        copy.peakPairScores = peakPairScores.clone();
+        copy.peakScores = peakScores.clone();
+        return copy;
+    }
+
 }

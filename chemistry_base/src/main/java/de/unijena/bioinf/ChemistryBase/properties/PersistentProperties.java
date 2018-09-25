@@ -40,37 +40,37 @@ public class PersistentProperties extends Properties {
 
 
     @Override
-    public synchronized void putAll(Map<?, ?> properties) {
+    public void putAll(Map<?, ?> properties) {
         PropertyManager.PROPERTIES.putAll(properties);
         super.putAll(properties);
     }
 
     @Override
-    public synchronized Object put(Object key, Object value) {
+    public Object put(Object key, Object value) {
         PropertyManager.PROPERTIES.put(key, value);
         return super.put(key, value);
     }
 
     @Override
-    public synchronized Object setProperty(String key, String value) {
+    public Object setProperty(String key, String value) {
         return put(key, value);
     }
 
 
-    public synchronized void setAndStoreProperty(String propertyName, String propertyValue) {
+    public void setAndStoreProperty(String propertyName, String propertyValue) {
         setProperty(propertyName, propertyValue);
         store();
     }
 
-    public synchronized void setProperties(Properties properties) {
+    public void setProperties(Properties properties) {
         putAll(properties);
     }
 
-    public synchronized void setProperties(File properties) throws IOException {
+    public void setProperties(File properties) throws IOException {
         setProperties(properties.toPath());
     }
 
-    public synchronized void setProperties(Path properties) throws IOException {
+    public void setProperties(Path properties) throws IOException {
         Properties p = new Properties();
         p.load(Files.newInputStream(properties));
         putAll(p);

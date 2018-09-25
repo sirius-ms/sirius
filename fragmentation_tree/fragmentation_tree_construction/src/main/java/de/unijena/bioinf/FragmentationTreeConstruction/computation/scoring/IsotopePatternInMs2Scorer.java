@@ -4,7 +4,6 @@ import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -424,7 +423,7 @@ public class IsotopePatternInMs2Scorer {
                     final SimpleSpectrum spec = Spectrums.getNormalizedSpectrum(analyzer.extractPattern(mergedMs1, input.getMeasurementProfile(), ionMass), Normalization.Max(1d));
                     if (spec.size() > 1) {
                         // use pattern!
-                        peak.setMz(spec.getMzAt(0));
+                        //peak.setMz(spec.getMzAt(0));
                         ano.set(peak, new IsotopePatternAssignment(spec));
                     }
                 }
@@ -434,7 +433,7 @@ public class IsotopePatternInMs2Scorer {
 
         final FragmentAnnotation<Ionization> ionizationAno = graph.getFragmentAnnotationOrThrow(Ionization.class);
         final PeakAnnotation<IsotopePatternAssignment> ano = input.getOrCreatePeakAnnotation(IsotopePatternAssignment.class);
-        final FragmentAnnotation<IsotopePattern> isoPat = graph.getOrCreateFragmentAnnotation(IsotopePattern.class);
+        final FragmentAnnotation<Ms1IsotopePattern> isoPat = graph.getOrCreateFragmentAnnotation(Ms1IsotopePattern.class);
         for (Fragment f : graph.getFragmentsWithoutRoot()) {
             final ProcessedPeak peak = input.getMergedPeaks().get(f.getColor());
             final IsotopePatternAssignment assignment = ano.get(peak);
@@ -458,7 +457,7 @@ public class IsotopePatternInMs2Scorer {
                     maxScore = Math.max(scores[i], maxScore);
                 }
                 if (maxScore>0) {
-                    isoPat.set(f, new IsotopePattern(f.getFormula(), maxScore, spec));
+                    isoPat.set(f, new Ms1IsotopePattern(spec, maxScore));
                     for (int i=0, n=f.getInDegree(); i < n; ++i) {
                         final Loss l = f.getIncomingEdge(i);
                         l.setWeight(l.getWeight() + maxScore);
