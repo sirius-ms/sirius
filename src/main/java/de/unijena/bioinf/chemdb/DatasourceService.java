@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 public class DatasourceService {
 
 
-    public final static long BIOFLAG;
+    public final static long BIOFLAG; // 4294967292
 
     static {
         long bioflag = 0L;
