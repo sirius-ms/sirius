@@ -25,7 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @HasParameters
-public class Deviation implements Cloneable{
+public class Deviation implements Cloneable, Ms2ExperimentAnnotation{
 
     private final double ppm;
     private final double absolute;

@@ -15,7 +15,7 @@ public class MutableMs2Experiment implements Ms2Experiment {
     private List<SimpleSpectrum> ms1Spectra;
     private SimpleSpectrum mergedMs1Spectrum;
     private List<MutableMs2Spectrum> ms2Spectra;
-    private HashMap<Class<Object>, Object> annotations;
+    private HashMap<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> annotations;
     private double ionMass;
     private MolecularFormula molecularFormula;
     private URL source;
@@ -44,9 +44,9 @@ public class MutableMs2Experiment implements Ms2Experiment {
 
         }
         this.annotations = new HashMap<>();
-        final Iterator<Map.Entry<Class<Object>, Object>> iter = experiment.forEachAnnotation();
+        final Iterator<Map.Entry<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation>> iter = experiment.forEachAnnotation();
         while (iter.hasNext()) {
-            final Map.Entry<Class<Object>, Object> v = iter.next();
+            final Map.Entry<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> v = iter.next();
             this.annotations.put(v.getKey(), v.getValue());
         }
         this.ionMass = experiment.getIonMass();
@@ -113,7 +113,7 @@ public class MutableMs2Experiment implements Ms2Experiment {
     }
 
     @Override
-    public Iterator<Map.Entry<Class<Object>, Object>> forEachAnnotation() {
+    public Iterator<Map.Entry<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation>> forEachAnnotation() {
         return annotations.entrySet().iterator();
     }
 
@@ -142,37 +142,37 @@ public class MutableMs2Experiment implements Ms2Experiment {
     }
 
     @Override
-    public <T> T getAnnotationOrThrow(Class<T> klass) {
+    public <T extends Ms2ExperimentAnnotation> T getAnnotationOrThrow(Class<T> klass) {
         final T val = getAnnotation(klass);
         if (val == null) throw new NullPointerException("No annotation for key: " + klass.getName());
         else return val;
     }
 
     @Override
-    public <T> T getAnnotation(Class<T> klass) {
+    public <T extends Ms2ExperimentAnnotation> T getAnnotation(Class<T> klass) {
         return (T) annotations.get(klass);
     }
 
     @Override
-    public <T> T getAnnotation(Class<T> klass, T defaultValue) {
+    public <T extends Ms2ExperimentAnnotation> T getAnnotation(Class<T> klass, T defaultValue) {
         final T val = getAnnotation(klass);
         if (val == null) return defaultValue;
         else return val;
     }
 
     @Override
-    public <T> boolean hasAnnotation(Class<T> klass) {
+    public <T extends Ms2ExperimentAnnotation> boolean hasAnnotation(Class<T> klass) {
         return annotations.containsKey(klass);
     }
 
     @Override
-    public <T> boolean setAnnotation(Class<T> klass, T value) {
-        final T val = (T) annotations.put((Class<Object>) klass, value);
+    public <T extends Ms2ExperimentAnnotation> boolean setAnnotation(Class<T> klass, T value) {
+        final T val = (T) annotations.put((Class<Ms2ExperimentAnnotation>) klass, value);
         return val != null;
     }
 
     @Override
-    public <T> Object clearAnnotation(Class<T> klass) {
+    public <T extends Ms2ExperimentAnnotation> Object clearAnnotation(Class<T> klass) {
         return annotations.remove(klass);
     }
 
@@ -184,18 +184,18 @@ public class MutableMs2Experiment implements Ms2Experiment {
 
     //overrides existing
     public void setAnnotationsFrom(Ms2Experiment experiment) {
-        final Iterator<Map.Entry<Class<Object>, Object>> iter = experiment.forEachAnnotation();
+        final Iterator<Map.Entry<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation>> iter = experiment.forEachAnnotation();
         while (iter.hasNext()) {
-            final Map.Entry<Class<Object>, Object> v = iter.next();
+            final Map.Entry<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> v = iter.next();
             this.annotations.put(v.getKey(), v.getValue());
         }
     }
 
     //doe not override existing
     public void addAnnotationsFrom(Ms2Experiment experiment) {
-        final Iterator<Map.Entry<Class<Object>, Object>> iter = experiment.forEachAnnotation();
+        final Iterator<Map.Entry<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation>> iter = experiment.forEachAnnotation();
         while (iter.hasNext()) {
-            final Map.Entry<Class<Object>, Object> v = iter.next();
+            final Map.Entry<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> v = iter.next();
             this.annotations.putIfAbsent(v.getKey(), v.getValue());
         }
     }

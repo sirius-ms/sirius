@@ -328,6 +328,11 @@ public class IsotopePatternAnalysis implements Parameterized {
     }
 
     public MutableMeasurementProfile getDefaultProfile(Ms2Experiment exp) {
+        MutableMeasurementProfile measurementProfile = null;
+        if (exp.hasAnnotation(Ms2MutableMeasurementProfileDummy.class)) measurementProfile = exp.getAnnotation(Ms2MutableMeasurementProfileDummy.class);
+        else if (exp.hasAnnotation(MutableMeasurementProfile.class)) measurementProfile = exp.getAnnotation(MutableMeasurementProfile.class);
+
+        if (measurementProfile!=null) measurementProfile = new MutableMeasurementProfile(MutableMeasurementProfile.merge(defaultProfile, measurementProfile));
         if (exp.getMolecularFormula() != null) {
             final MutableMeasurementProfile prof = new MutableMeasurementProfile(defaultProfile);
             prof.setFormulaConstraints(prof.getFormulaConstraints().getExtendedConstraints(FormulaConstraints.allSubsetsOf(exp.getMolecularFormula())));

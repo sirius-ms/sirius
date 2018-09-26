@@ -1,6 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
-public final class RetentionTime {
+import de.unijena.bioinf.ChemistryBase.ms.Ms2ExperimentAnnotation;
+
+public final class RetentionTime implements Ms2ExperimentAnnotation {
 
     private final double start, middle, end;
 
@@ -26,7 +28,10 @@ public final class RetentionTime {
     }
 
     public RetentionTime merge(RetentionTime other) {
-        return new RetentionTime(Math.min(start, other.start), Math.max(end, other.end));
+        if (isInterval() && other.isInterval())
+            return new RetentionTime(Math.min(start, other.start), Math.max(end, other.end));
+        else
+            return new RetentionTime(Math.min(start, other.start), Math.max(end, other.end), (middle+other.middle)/2);
     }
 
     public boolean isInterval() {

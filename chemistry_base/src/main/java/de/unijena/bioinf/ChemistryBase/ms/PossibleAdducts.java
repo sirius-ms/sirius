@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
  * Can be attached to a Ms2Experiment or ProcessedInput. If PrecursorIonType is unknown, CSI:FingerID will use this
  * object and for all different adducts.
  */
-public final class PossibleAdducts implements Iterable<PrecursorIonType> {
+public final class PossibleAdducts implements Iterable<PrecursorIonType>, Ms2ExperimentAnnotation {
 
     protected final LinkedHashSet<PrecursorIonType> adducts;
 

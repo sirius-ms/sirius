@@ -4,6 +4,10 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration2;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
@@ -369,7 +373,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
         final long time = System.currentTimeMillis();
         final int elapsedTime = (int) ((time - startTime) / 1000);
         restTime = Math.min(restTime, secondsPerInstance - elapsedTime);
-        if (restTime <= 0) throw new TimeoutException();
+        if (restTime <= 0) throw new TimeoutException("TreeComputationInstance canceled by timeout!");
     }
 
     private class RecalibrationJob extends BasicJJob<ExactResult> {
