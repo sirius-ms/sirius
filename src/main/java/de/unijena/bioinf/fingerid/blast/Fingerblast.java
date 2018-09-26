@@ -56,4 +56,6 @@ public class Fingerblast {
         Collections.sort(results, Scored.<FingerprintCandidate>desc());
         return results;
     }
+
+
 }
