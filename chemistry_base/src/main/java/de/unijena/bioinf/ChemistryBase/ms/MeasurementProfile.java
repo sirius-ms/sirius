@@ -27,7 +27,7 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
  * In practice, instances of this class could be provided by a factory. e.g. ProfileFactory.create(MsInstrumentation.TOF, Quality.HIGH);
  * or modified by the user (e.g. myProfile.setExpectedFragmentMassDeviation(20) to consider a unexpected low quality of MS2 spectra).
  */
-public interface MeasurementProfile {
+public interface MeasurementProfile extends Ms2ExperimentAnnotation{
 
     Deviation getAllowedMassDeviation();
 

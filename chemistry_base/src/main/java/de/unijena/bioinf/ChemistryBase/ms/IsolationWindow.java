@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * Created by ge28quv on 01/07/17.
  */
-public abstract class IsolationWindow {
+public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
     private final static Logger LOG = LoggerFactory.getLogger(IsolationWindow.class);
     private static final boolean DEBUG = false;
 

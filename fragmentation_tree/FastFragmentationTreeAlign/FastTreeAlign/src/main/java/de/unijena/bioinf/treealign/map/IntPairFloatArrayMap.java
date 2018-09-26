@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 /**
- * Implementation of a map (int, int) => float.
+ * Implementation of a map (int, int) to float.
  * Provides fast get and put operations.
  * Remark that iterating this map is VERY slow, because it doesn't save the keys. So
  * don't use an iterator of this map in time critical situations
