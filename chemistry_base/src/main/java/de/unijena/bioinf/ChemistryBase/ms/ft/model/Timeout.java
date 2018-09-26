@@ -1,9 +1,11 @@
-package de.unijena.bioinf.FragmentationTreeConstruction.model;
+package de.unijena.bioinf.ChemistryBase.ms.ft.model;
+
+import de.unijena.bioinf.ChemistryBase.ms.Ms2ExperimentAnnotation;
 
 /**
  * If this annotation is set, Tree Builder will stop after reaching the given number of seconds
  */
-public class Timeout {
+public class Timeout implements Ms2ExperimentAnnotation {
 
     public final static Timeout NO_TIMEOUT = new Timeout(Integer.MAX_VALUE, Integer.MAX_VALUE);
 

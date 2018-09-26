@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
-public final class Splash {
+public final class Splash implements Ms2ExperimentAnnotation {
 
     private final String splash;
 

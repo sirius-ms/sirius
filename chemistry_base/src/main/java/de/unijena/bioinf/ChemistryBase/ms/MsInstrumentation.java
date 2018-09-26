@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
  * MsInstrumentation can be attached to input files to decide on certain options of the algorithm.
  * It describes not only the choice of the instrument but also the experimental setup.
  */
-public interface MsInstrumentation {
+public interface MsInstrumentation extends Ms2ExperimentAnnotation {
 
     boolean hasIsotopesInMs2();
     String description();

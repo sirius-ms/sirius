@@ -22,6 +22,7 @@ import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 
 import java.util.*;
 
@@ -75,7 +76,7 @@ public class DecompositionList {
         final HashMap<Ionization, HashSet<MolecularFormula>> ownMap = new HashMap<>(), otherMap = new HashMap<>();
 
         for (Decomposition d : decompositions) {
-            Ionization i = d.ion;
+            Ionization i = d.getIon();
             if (!ownMap.containsKey(i)) {
                 ownMap.put(i, new HashSet<MolecularFormula>());
                 otherMap.put(i, new HashSet<MolecularFormula>());
@@ -83,7 +84,7 @@ public class DecompositionList {
             ownMap.get(i).add(d.getCandidate());
         }
         for (Decomposition d : other.decompositions) {
-            Ionization i = d.ion;
+            Ionization i = d.getIon();
             if (otherMap.containsKey(i))
                 otherMap.get(i).add(d.getCandidate());
         }
@@ -102,7 +103,7 @@ public class DecompositionList {
                 Iterator<Decomposition> i = decompositions.iterator();
                 while (i.hasNext()) {
                     final Decomposition d = i.next();
-                    if (d.ion.equals(ion) && deleteLeft.contains(d.getCandidate()))
+                    if (d.getIon().equals(ion) && deleteLeft.contains(d.getCandidate()))
                         i.remove();
                 }
             }
@@ -110,7 +111,7 @@ public class DecompositionList {
                 Iterator<Decomposition> i = other.decompositions.iterator();
                 while (i.hasNext()) {
                     final Decomposition d = i.next();
-                    if (d.ion.equals(ion) && deleteRight.contains(d.getCandidate()))
+                    if (d.getIon().equals(ion) && deleteRight.contains(d.getCandidate()))
                         i.remove();
                 }
             }

@@ -1,9 +1,11 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import de.unijena.bioinf.ChemistryBase.ms.Ms2ExperimentAnnotation;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class InChI {
+public class InChI implements Ms2ExperimentAnnotation {
 
     public final String in3D;
     public final String in2D;
