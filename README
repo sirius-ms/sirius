@@ -2,8 +2,8 @@ this module lets you predict confidence scores for structure assignments of csi:
 
 ##### Train the classifier #####
 ExecutorService executorService = Executors.newFixedThreadPool(1);
-- create object of class TrainConfidenceScore, e.g.
-    TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.DefaultMultipleSVMs(useLinearSVM);
+- create object of class de.unijena.bioinf.confidence_score_train.TrainConfidenceScore, e.g.
+    de.unijena.bioinf.confidence_score_train.TrainConfidenceScore trainConfidenceScore = de.unijena.bioinf.confidence_score_train.TrainConfidenceScore.DefaultMultipleSVMs(useLinearSVM);
 
 - train
     trainConfidenceScore.train(ExecutorService executorService, Query[] queries, Candidate[][] rankedCandidates, FingerprintStatistics statistics);
