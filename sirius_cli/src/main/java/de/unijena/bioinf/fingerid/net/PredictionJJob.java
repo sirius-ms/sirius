@@ -6,12 +6,12 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.Objects;
-import java.util.concurrent.TimeoutException;
 
 public class PredictionJJob extends BasicJJob<ProbabilityFingerprint> {
     public final Ms2Experiment experiment;
@@ -21,7 +21,8 @@ public class PredictionJJob extends BasicJJob<ProbabilityFingerprint> {
     private final EnumSet<PredictorType> predicors;
 
     public PredictionJJob(final Ms2Experiment experiment, final IdentificationResult result, final FTree ftree, MaskedFingerprintVersion version, EnumSet<PredictorType> predicors) {
-        super(JobType.WEBSERVICE);
+        super(JobType.WEBSERVICE, PredictionJJob.class.getSimpleName());
+
         this.experiment = experiment;
         this.ftree = ftree;
         this.result = result;
@@ -57,7 +58,7 @@ public class PredictionJJob extends BasicJJob<ProbabilityFingerprint> {
 
         if (WebAPI.INSTANCE.updateJobStatus(job))
             return job.prediction;
-        throw new TimeoutException("Reached timeout");
+        throw new TimeoutException("Reached maximum waiting time for PredictionJob");
     }
 
     @Override
