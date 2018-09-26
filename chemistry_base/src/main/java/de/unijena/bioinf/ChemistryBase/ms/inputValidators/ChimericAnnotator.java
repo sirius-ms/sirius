@@ -3,6 +3,7 @@ package de.unijena.bioinf.ChemistryBase.ms.inputValidators;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
@@ -82,9 +83,10 @@ public class ChimericAnnotator implements QualityAnnotator {
         SimpleMutableSpectrum ms1IsotopesRemoved = new SimpleMutableSpectrum(ms1);
         //todo which deviation to use? rather remove too much other peaks?
         ChemicalAlphabet alphabet;
-        if (experiment.hasAnnotation(FormulaConstraints.class)){
-            alphabet = experiment.getAnnotation(FormulaConstraints.class).getChemicalAlphabet();
-        }else {
+        if (experiment.hasAnnotation(FormulaSettings.class)){
+            alphabet = experiment.getAnnotation(FormulaSettings.class).getConstraints().getChemicalAlphabet();
+        }
+        else {
             alphabet = defaultAlphabet;
         }
         //todo rather remove too much?! chances that it's in fact an isotope are high

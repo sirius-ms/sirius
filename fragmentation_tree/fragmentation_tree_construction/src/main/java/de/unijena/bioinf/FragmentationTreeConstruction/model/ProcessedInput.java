@@ -77,9 +77,9 @@ public class ProcessedInput implements Cloneable {
         this.annotations = new HashMap<Class, Object>();
         this.annotations.put(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown));
         this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
-        final Iterator<Map.Entry<Class<Object>,Object>> anos = experiment.forEachAnnotation();
+        final Iterator<Map.Entry<Class<Ms2ExperimentAnnotation>,Ms2ExperimentAnnotation>> anos = experiment.forEachAnnotation();
         while (anos.hasNext()) {
-            final Map.Entry<Class<Object>,Object> entry = anos.next();
+            final Map.Entry<Class<Ms2ExperimentAnnotation>,Ms2ExperimentAnnotation> entry = anos.next();
             annotations.put(entry.getKey(), entry.getValue());
         }
         this.measurementProfile = new MutableMeasurementProfile(measurementProfile);    }

@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 
 import java.util.ArrayList;

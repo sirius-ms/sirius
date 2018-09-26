@@ -26,7 +26,6 @@ import de.unijena.bioinf.babelms.DataWriter;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 public class JenaMsWriter implements DataWriter<Ms2Experiment> {
@@ -59,7 +58,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         if (retentionTime!=null){
             write(writer, ">retention", String.valueOf(retentionTime.getMiddleTime())+"s");
         }
-        final Map<String,String> arbitraryKeys = data.getAnnotation(Map.class, new HashMap<String,String>());
+        final Map<String,String> arbitraryKeys = data.getAnnotation(Ms2ExperimentAdditionalFields.class, new Ms2ExperimentAdditionalFields());
         for (Map.Entry<String,String> e : arbitraryKeys.entrySet()) {
             writer.write("#" + e.getKey() + " " + e.getValue());
             writer.newLine();
