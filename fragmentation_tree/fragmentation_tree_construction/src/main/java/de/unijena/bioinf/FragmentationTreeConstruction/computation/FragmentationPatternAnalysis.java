@@ -30,6 +30,10 @@ import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
 import de.unijena.bioinf.ChemistryBase.math.LogNormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Ms2ExperimentValidator;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -154,7 +158,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * Step 1-9: Preprocessing
      */
     public ProcessedInput preprocessing(Ms2Experiment experiment, FormulaConstraints constraints) {
-        final MutableMeasurementProfile p = new MutableMeasurementProfile(getDefaultProfile());
+        final MutableMeasurementProfile p = new MutableMeasurementProfile(getProfile(experiment));
         p.setFormulaConstraints(constraints);
         return preprocessing(experiment, p);
     }
@@ -264,7 +268,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final Ms2Experiment experiment = input.getExperimentInformation();
         final double parentMass = experiment.getIonMass();
         final ArrayList<ProcessedPeak> peaklist = new ArrayList<ProcessedPeak>(100);
-        final Deviation mergeWindow = getDefaultProfile().getAllowedMassDeviation().divide(2d);
+        final Deviation mergeWindow = getProfile(experiment).getAllowedMassDeviation().divide(2d);
         double globalMaxIntensity = 0d;
         for (Ms2Spectrum s : experiment.getMs2Spectra()) {
             // merge peaks: iterate them from highest to lowest intensity and remove peaks which
@@ -333,7 +337,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         Ms2Experiment experiment = input.getExperimentInformation();
         List<ProcessedPeak> peaklists = input.getMergedPeaks();
         final ArrayList<ProcessedPeak> mergedPeaks = new ArrayList<ProcessedPeak>(peaklists.size());
-        peakMerger.mergePeaks(peaklists, experiment, getDefaultProfile().getAllowedMassDeviation().multiply(2), new Merger() {
+        peakMerger.mergePeaks(peaklists, experiment, getProfile(experiment).getAllowedMassDeviation().multiply(2), new Merger() {
             @Override
             public ProcessedPeak merge(List<ProcessedPeak> peaks, int index, double newMz) {
                 final ProcessedPeak newPeak = peaks.get(index);
@@ -385,7 +389,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         if (!experiment.getMs1Spectra().isEmpty()) {
             Spectrum<Peak> spec = experiment.getMergedMs1Spectrum();
             if (spec == null) spec = experiment.getMs1Spectra().get(0);
-            final Deviation parentDeviation = getDefaultProfile().getAllowedMassDeviation();
+            final Deviation parentDeviation = getProfile(experiment).getAllowedMassDeviation();
             final int i = Spectrums.mostIntensivePeakWithin(Spectrums.getMassOrderedSpectrum(spec), parentmass, parentDeviation);
             if (i >= 0) {
                 ms1parent = spec.getPeakAt(i);
@@ -399,7 +403,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // now search the parent peak. If it is not contained in the spectrum: create one!
         // delete all peaks behind the parent, such that the parent is the heaviest peak in the spectrum
         // Now we can access the parent peak by peaklist[peaklist.size-1]
-        final Deviation parentDeviation = getDefaultProfile().getAllowedMassDeviation().divide(2d);
+        final Deviation parentDeviation = getProfile(experiment).getAllowedMassDeviation().divide(2d);
         for (int i = processedPeaks.size() - 1; i >= 0; --i) {
             if (processedPeaks.get(i).getRelativeIntensity() < 0.05 || !parentDeviation.inErrorWindow(parentmass, processedPeaks.get(i).getMz())) {
                 if (processedPeaks.get(i).getMz() < parentmass) {
@@ -422,7 +426,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         assert parentDeviation.inErrorWindow(parentmass, processedPeaks.get(processedPeaks.size() - 1).getMz()) : "heaviest peak is parent peak";
         // the heaviest fragment that is possible is M - H
         // everything which is heavier is noise
-        final double threshold = parentmass + getDefaultProfile().getAllowedMassDeviation().absoluteFor(parentmass) - PeriodicTable.getInstance().getByName("H").getMass();
+        final double threshold = parentmass + getProfile(experiment).getAllowedMassDeviation().absoluteFor(parentmass) - PeriodicTable.getInstance().getByName("H").getMass();
         final ProcessedPeak parentPeak = processedPeaks.get(processedPeaks.size() - 1);
 
         // if ms1 peak present, use his mass and intensity as parent peak
@@ -1771,6 +1775,12 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     public MutableMeasurementProfile getDefaultProfile() {
+        return defaultProfile;
+    }
+
+    public MutableMeasurementProfile getProfile(Ms2Experiment experiment) {
+        if (experiment.hasAnnotation(Ms2MutableMeasurementProfileDummy.class)) return experiment.getAnnotation(Ms2MutableMeasurementProfileDummy.class);
+        if (experiment.hasAnnotation(MutableMeasurementProfile.class)) return experiment.getAnnotation(MutableMeasurementProfile.class);
         return defaultProfile;
     }
 

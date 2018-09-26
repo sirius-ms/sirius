@@ -11,7 +11,7 @@ import java.util.*;
  * object and compute trees for all ion types with probability &gt; 0.
  * If probability is unknown, you can assign a constant to each ion type.
  */
-public class PossibleIonModes {
+public class PossibleIonModes implements Ms2ExperimentAnnotation {
 
     public static PossibleIonModes deterministic(PrecursorIonType precursorIonType) {
         final PossibleIonModes a = new PossibleIonModes();
