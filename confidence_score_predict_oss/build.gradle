@@ -1,0 +1,17 @@
+dependencies {
+
+	//project
+    compile project(':fingerid_utils_oss')
+    compile project(':fingerblast_oss')
+    compile project(':fingerprinter_oss')
+    compile project(':chemical_db_oss')
+
+    testCompile project(':fingerid')
+
+	//internal
+	compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
+
+	// external
+	compile group: "de.bwaldvogel", name: "liblinear", version: "$liblinear_version"
+	compile group: "tw.edu.ntu.csie", name: "libsvm", version: "$libsvm_version"
+}	
