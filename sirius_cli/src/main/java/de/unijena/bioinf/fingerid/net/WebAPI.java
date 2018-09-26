@@ -242,7 +242,7 @@ public class WebAPI {
                     return true;
                 }
                 LOG.error("Could not delete Job " + job.jobId + "! Response Code: " + reponsecode + " Reason: " + responseReason);
-            } catch (Throwable t) {
+            } catch (Exception t) {
                 LOG.error("Error when doing job deletion request " + job.jobId + " Response error code: " + reponsecode + " - Reason: " + responseReason, t);
             }
         }
@@ -277,8 +277,8 @@ public class WebAPI {
                         job.errorMessage = obj.getString("errors");
                     }
                 }
-            } catch (Throwable t) {
-                LOG.error("Error when updating job #" + job.jobId + " Response error code: " + reponsecode + " - Reason: " + responseReason, t);
+            } catch (Exception t) {
+                LOG.error("Error when updating job #" + job.jobId + " (" +  job.name + ")  Response error code: " + reponsecode + " - Reason: " + responseReason, t);
             }
         }
         return false;
@@ -336,11 +336,11 @@ public class WebAPI {
                         final JsonObject obj = json.readObject();
                         securityToken = obj.getString("securityToken");
                         jobId = obj.getInt("jobId");
-                        return new FingerIdJob(jobId, securityToken, version);
+                        return new FingerIdJob(jobId, securityToken, version, experiment.getName());
                     }
                 }
                 throw new HttpResponseException(status, "Response Status Code: " + status + " - Expected: 200");
-            } catch (Throwable t) {
+            } catch (Exception t) {
                 RuntimeException re = new RuntimeException("Error during job submission - Code: " + status + " Reason: " + reason, t);
                 LOG.debug("Submitting Job failed", re);
                 throw re;
