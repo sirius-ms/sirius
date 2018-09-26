@@ -12,13 +12,18 @@ import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
 import de.unijena.bioinf.chemdb.SearchStructureByFormula;
+import de.unijena.bioinf.confidence_score.ConfidenceScoreComputor;
+import de.unijena.bioinf.fingerid.ConfidenceResult;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.TrainingStructuresPerPredictor;
 import de.unijena.bioinf.fingerid.TrainingStructuresSet;
+import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
+import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.db.CachedRESTDB;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.net.PredictionJJob;
+import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
@@ -54,6 +59,10 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
     //canopus options
     private Canopus canopus = null;
 
+    //confidence options
+
+    private ConfidenceScoreComputor confidenceScoreComputor = null;
+
     protected List<IdentificationResult> addedIdentificationResults = new ArrayList<>();
 
     public FingerIDJJob(Fingerblast fingerblast, MaskedFingerprintVersion fingerprintVersion, CachedRESTDB database, SearchableDatabase queryDb, Collection<UserDefineablePredictorType> predictors) {
@@ -74,8 +83,16 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
         this.dbFlag = dbFlag;
     }
 
+    public long getDbFlag() {
+        return this.dbFlag;
+    }
+
     public void setCanopus(Canopus canopus) {
         this.canopus = canopus;
+    }
+
+    public void setConfidenceScoreComputor(ConfidenceScoreComputor conf) {
+        this.confidenceScoreComputor = conf;
     }
 
     public void setBioFilter(BioFilter bioFilter) {
@@ -92,6 +109,10 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
 
     public List<IdentificationResult> getAddedIdentificationResults() {
         return addedIdentificationResults;
+    }
+
+    public Ms2Experiment getExperiment() {
+        return experiment;
     }
 
     @Override
@@ -129,7 +150,7 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
                         throw new IllegalArgumentException("SiriusIdentificationJobs to collect are from different MS2Experiments");
                     }
                     List<IdentificationResult> results = experimentResult.getResults();
-                    if (results!=null) input.addAll(results);
+                    if (results != null) input.addAll(results);
                 }
             }
 
@@ -212,6 +233,7 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
             //submit jobs
             List<PredictionJJob> predictionJobs = new ArrayList<>();
             List<FingerprintDependentJJob> annotationJobs = new ArrayList<>();
+            ConfidenceJJob confidenceJJob = null;
 
             for (IdentificationResult fingeridInput : filteredResults) {
                 PredictionJJob predictionJob = WebAPI.INSTANCE.makePredictionJob(experiment, fingeridInput, fingeridInput.getResolvedTree(), fingerprintVersion, predictors);
@@ -239,6 +261,17 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
                     submitSubJob(canopusJob);
                     annotationJobs.add(canopusJob);
                 }
+
+                //submit confidence job
+
+                if (confidenceScoreComputor != null) {
+
+                    confidenceJJob = new ConfidenceJJob(confidenceScoreComputor, (CovarianceScoring) fingerblast.getScoringMethod(), new CSIFingerIdScoring(confidenceScoreComputor.getPerformances()), experiment, dbFlag);
+                    confidenceJJob.addRequiredJob(blastJob);
+                    submitSubJob(confidenceJJob);
+
+
+                }
             }
 
             //collect results
@@ -249,10 +282,14 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
                     fps.put(predictionJob.result, r);
             }
 
+
             //annotate results -> annotation are not thread save and should not be.
             for (FingerprintDependentJJob job : annotationJobs) {
                 job.takeAndAnnotateResult();
             }
+
+
+            ConfidenceResult confidenceResult = confidenceJJob.awaitResult();
 
             // delete added IR without database hit
             final List<IdentificationResult> toDelete = new ArrayList<>();
