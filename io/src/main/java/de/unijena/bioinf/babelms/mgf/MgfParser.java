@@ -311,7 +311,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             exp.setName("FEATURE_" + inst.specIndex);
         }
         exp.setAnnotation(Index.class, new Index(inst.specIndex));
-        final HashMap<String, String> additionalFields = new HashMap<String, String>();
+        final Ms2ExperimentAdditionalFields additionalFields = new Ms2ExperimentAdditionalFields();
 
         while (true) {
             final MgfSpec spec = inst.pollNext();
@@ -365,7 +365,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         }
 
         if (!additionalFields.isEmpty()) {
-            exp.setAnnotation(Map.class, additionalFields);
+            exp.setAnnotation(Ms2ExperimentAdditionalFields.class, additionalFields);
         }
         exp.setSource(source);
         return exp;

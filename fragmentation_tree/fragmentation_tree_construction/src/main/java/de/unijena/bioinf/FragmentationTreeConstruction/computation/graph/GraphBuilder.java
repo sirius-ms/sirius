@@ -18,7 +18,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.graph;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Decomposition;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 

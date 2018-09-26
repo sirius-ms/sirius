@@ -5,7 +5,7 @@ import java.util.*;
 /**
  * Created by ge28quv on 04/07/17.
  */
-public class CompoundQuality {
+public class CompoundQuality implements Ms2ExperimentAnnotation {
     List<SpectrumProperty> properties;
 
     public CompoundQuality() {
