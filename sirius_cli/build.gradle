@@ -23,6 +23,9 @@ dependencies {
     //cdk
     compile "org.openscience.cdk:cdk-silent:$cdk_version"
 
+    compile group: 'de.isas.mztab', name: 'jmztabm-api', version: "$mztabm_version"
+    compile group: 'de.isas.mztab', name: 'jmztabm-io', version: "$mztabm_version"
+
 }
 
 mainClassName = 'de.unijena.bioinf.ms.cli.SiriusCLIApplication'
