@@ -17,7 +17,7 @@ import java.util.Arrays;
  * Created by Marcus Ludwig on 07.03.16.
  */
 public class PlattFeatures implements FeatureCreator {
-    private double[] quantiles = new double[]{ 0.50, 0.75, 0.90, 0.95};
+    private double[] quantiles = new double[]{0.50, 0.75, 0.90};
     //private double[] quantilesAbs = new double[]{0.5, 0.10, 0.25, 0.45};
     private int featureSize;
 

@@ -18,5 +18,19 @@ public class SVMScales{
     }
 
 
+    public double[] getMedians() {
+        return medians;
+    }
 
+    public double[] getDeviations() {
+        return deviations;
+    }
+
+    public double[] getMin_feature_values() {
+        return min_feature_values;
+    }
+
+    public double[] getMax_feature_values() {
+        return max_feature_values;
+    }
 }

@@ -17,7 +17,7 @@ public class TrainedSVM {
     double[] weights;
     String[] names;
     public SVMScales scales;
-    public LogNormalDistribution bogusDist;
+    public double[] probAB;
     public int score_shift;
 
 
@@ -63,16 +63,15 @@ public class TrainedSVM {
         }
 
 
-        JsonArrayBuilder bogus_dist_array =  Json.createArrayBuilder();
-
-        System.out.println(bogusDist.getScale());
+        JsonArrayBuilder sigmoid_array =  Json.createArrayBuilder();
 
 
-        bogus_dist_array.add(bogusDist.getScale());
-        bogus_dist_array.add(bogusDist.getShape());
-        bogus_dist_array.add(score_shift);
 
-        json.add("bogusDist",bogus_dist_array.build());
+        sigmoid_array.add(probAB[0]);
+        sigmoid_array.add(probAB[1]);
+
+
+        json.add("sigmoid",sigmoid_array.build());
 
         javax.json.JsonObject json_obj = json.build();
 
@@ -103,8 +102,7 @@ public class TrainedSVM {
 
             names= new String[object_marvin.keySet().size()];
             weights= new double[names.length];
-            double scale=-9;
-            double shape=-9;
+
 
 
             double[] medians = new double[names.length];
@@ -121,7 +119,6 @@ public class TrainedSVM {
                 if(key.contains("feature")) {
 
 
-                    System.out.println(key);
                     names[counter] = curr.get(0).toString();
                     weights[counter] = Double.parseDouble(curr.get(1).toString());
                     medians[counter] = Double.parseDouble(curr.get(2).toString());
@@ -133,12 +130,12 @@ public class TrainedSVM {
 
                 }
 
-                if(key.contains("Dist")){
+                if(key.contains("sigmoid")){
+                    probAB = new double[2];
 
-                    scale= Double.parseDouble(curr.get(0).toString());
-                    shape=Double.parseDouble(curr.get(1).toString());
-                    score_shift=Integer.parseInt(curr.get(2).toString());
-                    System.out.println(scale+" "+shape);
+                    probAB[0]= Double.parseDouble(curr.get(0).toString());
+                    probAB[1]=Double.parseDouble(curr.get(1).toString());
+
 
 
                 }
@@ -152,7 +149,7 @@ public class TrainedSVM {
             }
 
             scales= new SVMScales(medians,devs,mins,maxs);
-            bogusDist = new LogNormalDistribution(scale,shape);
+
 
         }catch (IOException e){
             e.printStackTrace();
@@ -164,8 +161,7 @@ public class TrainedSVM {
     public void import_parameters(JsonObject jsonObject){
         names= new String[jsonObject.keySet().size()];
         weights= new double[names.length];
-        double scale=-9;
-        double shape=-9;
+        probAB = new double[2];
 
 
         double[] medians = new double[names.length];
@@ -182,7 +178,6 @@ public class TrainedSVM {
             if(key.contains("feature")) {
 
 
-                System.out.println(key);
                 names[counter] = curr.get(0).toString();
                 weights[counter] = Double.parseDouble(curr.get(1).toString());
                 medians[counter] = Double.parseDouble(curr.get(2).toString());
@@ -196,10 +191,9 @@ public class TrainedSVM {
 
             if(key.contains("Dist")){
 
-                scale= Double.parseDouble(curr.get(0).toString());
-                shape=Double.parseDouble(curr.get(1).toString());
-                score_shift=Integer.parseInt(curr.get(2).toString());
-                System.out.println(scale+" "+shape);
+                probAB[0]= Double.parseDouble(curr.get(0).toString());
+                probAB[1]=Double.parseDouble(curr.get(1).toString());
+
 
 
             }
@@ -213,7 +207,7 @@ public class TrainedSVM {
         }
 
         scales= new SVMScales(medians,devs,mins,maxs);
-        bogusDist = new LogNormalDistribution(scale,shape);
+
 
 
 
