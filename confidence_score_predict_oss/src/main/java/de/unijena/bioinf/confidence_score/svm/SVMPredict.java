@@ -24,8 +24,8 @@ LibLinearImpl.svm_model model;
 
             for(int i=0;i<features.length;i++) {
 
-                if(svm.score_shift!=0 && svm.bogusDist!=null) {
-                    scores[i] = 1 - (svm.bogusDist.cumulativeProbability(predictor.score(features[i]) + svm.score_shift));
+                if(svm.probAB!=null) {
+                    scores[i] =1.0/(1+Math.exp(svm.probAB[0]*predictor.score(features[i])+svm.probAB[1]));
                 }else{
                     scores[i] = predictor.score(features[i]);
 

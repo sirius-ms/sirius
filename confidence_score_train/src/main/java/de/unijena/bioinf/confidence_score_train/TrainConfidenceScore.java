@@ -4,12 +4,18 @@ import de.unijena.bioinf.confidence_score.CombinedFeatureCreator;
 import de.unijena.bioinf.confidence_score.features.PvalueScoreUtils;
 import de.unijena.bioinf.confidence_score.svm.*;
 import de.unijena.bioinf.confidence_score_train.svm.LibSVMImpl;
+import de.unijena.bioinf.fingerid.LogisticRegression;
+import libsvm.svm_node;
+import libsvm.svm_parameter;
+import libsvm.svm_problem;
+import org.libsvm.SVM;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -43,7 +49,7 @@ LibLinearImpl imp;
 
         SVMScales scales =  utils.calculateScales(featureMatrix);
 
-        utils.standardize_features(featureMatrix,scales);
+        //utils.standardize_features(featureMatrix,scales);
 
         utils.normalize_features(featureMatrix,scales);
 
@@ -151,8 +157,7 @@ LibLinearImpl imp;
 
 
 
-          svm.bogusDist = utils2.estimate_lognormal_parameters(testscorearray);
-          svm.score_shift=10000;
+
 
 
           for(int z=0;z<scores.length;z++){
@@ -342,13 +347,13 @@ LibLinearImpl imp;
 
     public void writeBogusScores(double[] scores, boolean[] label){
         try {
-            FileWriter writeBogus = new FileWriter(new File("/vol/clusterdata/fingerid_martin/fingerid-112_noldn/bogus_dist.txt"),true);
+            FileWriter writeBogus = new FileWriter(new File("/vol/clusterdata/fingerid_martin/exp2/bogus_dist.txt"));
 
             for(int i=0;i<scores.length;i++){
 
-                if(label[i]==false){
+              //  if(label[i]==false){
                     writeBogus.write(scores[i]+"\n");
-                }
+              //  }
             }
 
 
@@ -390,7 +395,8 @@ LibLinearImpl imp;
         List<Integer> range = IntStream.rangeClosed(0, featureMatrix.length-1)
                 .boxed().collect(Collectors.toList());
 
-        Collections.shuffle(range);
+
+        Collections.shuffle(range,new Random(1));
 
         for(int i=0;i<range.size()*0.9;i++){
 
@@ -475,9 +481,12 @@ LibLinearImpl imp;
         double[] c_values = new double[]{0.0001,0.001,0.01,0.1,1,10,100,1000};
 
         double best_AUC=-1;
+        double[] best_probAB = new double[2];
         LibLinearImpl.svm_model best_model=null;
 
         for(int i=0;i<c_values.length;i++) {
+
+
 
 
             LibLinearImpl.svm_problemImpl prob = imp.createSVM_Problem();
@@ -513,26 +522,38 @@ LibLinearImpl imp;
             boolean[] testLabelToBool = new boolean[testlabels.size()];
 
 
-
+            double[] testlabelsdouble = new double[testlabels.size()];
 
             for(int j=0;j<testlabels.size();j++){
                 if(testlabels.get(j)==1){
                     testLabelToBool[j]=true;
+                    testlabelsdouble[j]=1;
                 }else {
                     testLabelToBool[j]=false;
+                    testlabelsdouble[j]=-1;
                 }
 
 
             }
 
-
+            double[] probAB = new double[2];
 
             Stats stats = new Stats(scores,testLabelToBool);
+
+
+
+            SVM.sigmoid_train(featureMatrix.length,predict.predict_confidence(featureMatrix,trained),labels,probAB);
+
 
             if(stats.getAUC()>best_AUC){
                 best_AUC=stats.getAUC();
                 best_model=model;
+                best_probAB=probAB;
             }
+
+
+
+
 
 
 
@@ -542,28 +563,53 @@ LibLinearImpl imp;
 
         TrainedSVM trained = new TrainedSVM(scales,best_model.getModel().getFeatureWeights(),feature_names);
 
-        int score_shift=10000;
-        /**
-         * this saves the bogus score dist for this svm
-         */
+
+
+
+
+
+
 
         SVMPredict predict = new SVMPredict();
-        double[] testscores = predict.predict_confidence(testfeatureMatrix,trained);
+        double[] testscores = predict.predict_confidence(featureMatrix,trained);
         ArrayList<Double> testscoresarray = new ArrayList<>();
-        for(int i=0;i<testscores.length;i++){
-            testscoresarray.add(testscores[i]+score_shift);
+        for(int i=0;i<featureMatrix.length;i++){
+
+                testscoresarray.add(testscores[i]);
         }
 
-        PvalueScoreUtils utils2 =  new PvalueScoreUtils();
+
+        boolean[] testLabelToBool = new boolean[labels.length];
+
+
+        for(int j=0;j<labels.length;j++){
+            if(labels[j]==1){
+                testLabelToBool[j]=true;
+            }else {
+                testLabelToBool[j]=false;
+            }
+
+
+        }
 
 
 
-       trained.bogusDist = utils2.estimate_lognormal_parameters(testscoresarray);
-       trained.score_shift=score_shift;
 
+
+        writeScores(testscores,testLabelToBool);
+
+        writeBogusScores(testscores,testLabelToBool);
+
+
+
+        System.out.println("proba; "+best_probAB[0]+" - "+best_probAB[1]);
 
 
         System.out.println(best_AUC);
+
+        trained.probAB=best_probAB;
+
+
 
         return trained;
 
@@ -576,8 +622,8 @@ LibLinearImpl imp;
     public void writeScores(double[] scores, boolean[] labels){
 
 try {
-    FileWriter write_true = new FileWriter("/vol/clusterdata/fingerid_martin/fingerid-112_noldn/scores_true.txt");
-    FileWriter write_bogus = new FileWriter("/vol/clusterdata/fingerid_martin/fingerid-112_noldn/scores_bogus.txt");
+    FileWriter write_true = new FileWriter("/vol/clusterdata/fingerid_martin/exp2/scores_true.txt");
+    FileWriter write_bogus = new FileWriter("/vol/clusterdata/fingerid_martin/exp2/scores_bogus.txt");
 
 
     for(int i=0;i<scores.length;i++){
@@ -629,34 +675,7 @@ try {
 
     }
 
-  /*  public double evalTrainedPredictorAUC(TrainedSVM svm,double[][] features, double[] label){
 
-
-
-        SVMPredict predict = new SVMPredict();
-
-        double[] scores= predict.predict_confidence(features,svm);
-
-        boolean[] label_as_boolean = new boolean[label.length];
-
-        for(int i=0;i<label.length;i++){
-            if(label[i]==1){
-                label_as_boolean[i]=true;
-            }else {
-                label_as_boolean[i]=false;
-            }
-
-        }
-
-
-        Stats stats = new Stats(scores,label_as_boolean);
-
-        return(stats.getAUC());
-
-
-
-
-    }*/
 
 
 

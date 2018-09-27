@@ -94,7 +94,7 @@ public class ConfidenceScoreComputor {
 
         }
 
-        Collections.sort(candlist);
+        Collections.sort(candlist,Collections.reverseOrder());
 
         for(int i=0;i<candlist.size();i++){
             ranked_candidates_csiscore[i]=candlist.get(i);
@@ -112,6 +112,8 @@ public class ConfidenceScoreComputor {
         String dbType="bio";
 
 
+
+        //TODO: output both bio and pubchem confidence?
 
         if(flags==0){
 
@@ -133,7 +135,11 @@ public class ConfidenceScoreComputor {
             }
         }
 
-        TrainedSVM svm = trainedSVMs.get(dbType+""+distanceType+""+ce);
+        //TrainedSVM svm = trainedSVMs.get(dbType+""+distanceType+""+ce);
+        //TODO: testing only
+
+        TrainedSVM svm = trainedSVMs.get("f30_bio_distance");
+
 
 
 
@@ -142,6 +148,12 @@ public class ConfidenceScoreComputor {
 
 
         double[] feature = comb.computeFeatures(query,idresult,flags);
+
+        String featurestring="";
+        for(int i=0;i<feature.length;i++){
+            featurestring+=feature[i]+" ";
+        }
+        System.out.println(featurestring);
 
 
         double[][]featureMatrix= new double[1][feature.length];

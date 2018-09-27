@@ -5,6 +5,7 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.Utils;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
+import org.apache.commons.math3.distribution.NormalDistribution;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -154,6 +155,29 @@ public class PvalueScoreUtils {
 
         //TODO: Median results are slightly worse, maybe check MAD coefficient?
 
+        return dist;
+
+    }
+
+    public NormalDistribution estimate_normal_parameters(ArrayList<Double> scores) {
+
+        double score_sums = 0;
+
+        for (int i = 0; i < scores.size(); i++) {
+            score_sums += scores.get(i);
+        }
+
+        double mean = score_sums / scores.size();
+
+        score_sums = 0;
+
+        for (int i = 0; i < scores.size(); i++) {
+            score_sums += (scores.get(i) - mean) * (scores.get(i) - mean);
+        }
+
+        double sigma = Math.sqrt(score_sums / scores.size());
+
+        NormalDistribution dist = new NormalDistribution(mean, sigma);
         return dist;
 
     }

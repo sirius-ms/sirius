@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Created by martin on 06.08.18.
  */
-public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
+public class CombinedFeatureCreatorBIOCONDENSED extends CombinedFeatureCreator {
 
 
 
@@ -29,16 +29,17 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
     private int featureCount;
     private double[] computed_features;
 
-    public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, CovarianceScoring covscore){
+    public CombinedFeatureCreatorBIOCONDENSED(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, CovarianceScoring covscore){
         long all=0;
         long bio=4294967292L;
 
         ArrayList<FeatureCreator> creators = new ArrayList<>(Arrays.asList(new PlattFeatures(), new LogPvalueDistanceFeatures(scored_array,all,1),
                 new LogDistanceFeatures(scored_array,all,1),
                 new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,all),
-                 new LogPvalueFeatures(scored_array,all),
-                 new LogPvalueFeatures(scored_array_covscore,all),
+                new PvalueFeatures(scored_array,all), new LogPvalueFeatures(scored_array,all),
+                new PvalueFeatures(scored_array_covscore,all), new LogPvalueFeatures(scored_array_covscore,all),
                 new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array[0],covscore.getScoring(),all),
+                new FptLengthFeature(),
                 new TreeFeatures(), new PredictionQualityFeatures(),
                 new TanimotoDistanceFeatures(scored_array,all,1), new TanimotoToPredFeatures(scored_array,all),
                 new FptLengthDiffFeatures(scored_array),
@@ -49,8 +50,8 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
 
                 new LogDistanceFeatures(scored_array,bio,1),
                 new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,bio),
-                 new LogPvalueFeatures(scored_array,bio),
-                 new LogPvalueFeatures(scored_array_covscore,bio),
+                new PvalueFeatures(scored_array,bio), new LogPvalueFeatures(scored_array,bio),
+                new PvalueFeatures(scored_array_covscore,bio), new LogPvalueFeatures(scored_array_covscore,bio),
                 new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array[0],covscore.getScoring(),bio),
                 new TanimotoDistanceFeatures(scored_array,bio,1), new TanimotoToPredFeatures(scored_array,bio),
                 new ScoreFeatures(covscore.getScoring(),scored_array,bio),
@@ -66,7 +67,7 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
 
 
 
-                ));
+        ));
 
 
         int count=0;
