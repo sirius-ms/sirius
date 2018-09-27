@@ -67,6 +67,8 @@ ext {
     println(buildNumber)
     siriusVersion = System.properties.getProperty('de.unijena.bioinf.sirius.version')
     fingeridVersion = System.properties.getProperty('de.unijena.bioinf.fingerid.version')
+    mztabm_version = System.properties.getProperty('de.unijena.bioinf.mztabm.version')
+
 }
 
 /*################### DISTRIBUTION STUFF ################### */
