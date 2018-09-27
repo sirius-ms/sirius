@@ -6,7 +6,6 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.ChemistryBase.utils.ConnectionPool;
@@ -373,26 +372,6 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
         }
     }
 
-    public long lookupFlagByInchiKey(String inchi_key) throws DatabaseException {
-        long flag=-99;
-        try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT s.inchi_key_1, s.flags FROM structures as s WHERE s.inchi_key_1 = ?")) {
-                statement.setString(1, inchi_key);
-                try (final ResultSet set = statement.executeQuery()) {
-                    if (set.next()) {
-                        flag = set.getLong(2);
-                    }
-
-                }
-            }
-            return flag;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return -99;
-    }
-
     @Override
     public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
         return lookupFingerprintsByInchis(inchi_keys);
@@ -478,33 +457,6 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
         } catch (IOException | SQLException e) {
             throw new DatabaseException(e);
         }
-    }
-
-    public ArrayList<short[]> getRandomEntries(int amount, MaskedFingerprintVersion mask) throws DatabaseException{
- //TODO: enforce bio
-        final ArrayList<short[]> candidates = new ArrayList<>();
-        try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT fingerprint FROM fingerprints TABLESAMPLE SYSTEM(5)")) {
-
-                    try (final ResultSet set = statement.executeQuery()) {
-                        while (set.next()) {
-                            Fingerprint fpt = parseFingerprint(set, 1);
-                            FingerprintCandidate temp_cand = new FingerprintCandidate(new InChI(null,null), mask.mask(fpt));
-
-                            candidates.add(temp_cand.getFingerprint().toIndizesArray());
-
-                        }
-                    }
-                }
-
-            return candidates;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return candidates;
-        } catch (IOException | SQLException e) {
-            throw new DatabaseException(e);
-        }
-
     }
 
     @Override
