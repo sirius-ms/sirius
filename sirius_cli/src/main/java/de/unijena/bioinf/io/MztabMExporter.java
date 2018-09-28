@@ -9,6 +9,7 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -18,13 +19,27 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class MztabMExporter {
+    private int sflID = 0;
+    private final MzTab mztab;
 
-    public void writeWorkspaceSummary(final Writer writer, List<IdentificationResult> results) throws IOException {
-        writeWorkspaceSummary(writer, results, false);
+    public MztabMExporter() {
+        mztab = new MzTab();
+        mztab.setMetadata(
+                buildMTDBlock()
+        );
     }
 
-    public void writeWorkspaceSummary(final Writer writer, List<IdentificationResult> results, boolean validate) throws IOException {
-        MzTab mztab = new MzTab();
+    public MzTab getMztab() {
+        return mztab;
+    }
+
+
+    /*public static void write(final Writer writer, List<IdentificationResult> results) throws IOException {
+        write(writer, results, false);
+    }
+
+    public static void write(final Writer writer, List<IdentificationResult> results, boolean validate) throws IOException {
+        final MzTab mztab = new MzTab();
         //do the meta information
         mztab.setMetadata(
                 buildMTDBlock()
@@ -44,46 +59,75 @@ public class MztabMExporter {
 //            buildSMEBlock();
         }
 
+        write(writer, mztab, validate);
+    }*/
+
+    public static void write(final Writer writer, final MzTab mztab) throws IOException {
+        write(writer, mztab, false);
+    }
+
+    public static void write(final Writer writer, final MzTab mztab, final boolean validate) throws IOException {
         if (validate)
             new SiriusWorkspaceMzTabValidatingWriter().write(writer, mztab);
         else
             new SiriusWorkspaceMzTabNonValidatingWriter().write(writer, mztab);
     }
 
-    private SmallMoleculeEvidence buildSMEBlock() {
+    public void write(final Writer writer) throws IOException {
+        write(writer, false);
+    }
+
+    public void write(final Writer writer, final boolean validate) throws IOException {
+        write(writer, mztab, validate);
+    }
+
+    public void addExperiment(final ExperimentResult er, final List<IdentificationResult> results, final List<FingerIdResult> frs) {
+        final SmallMoleculeSummary smlItem = buildSMLItem(results);
+        smlItem.setSmlId(sflID++);
+
+        mztab.addSmallMoleculeSummaryItem(smlItem);
+    }
+
+
+    private static SmallMoleculeEvidence buildSMEBlock() {
         return null;
     }
 
-    private SmallMoleculeFeature buildSMFBlock() {
+    private static SmallMoleculeFeature buildSMFBlock() {
         return null;
 
     }
 
-    private SmallMoleculeSummary buildSMLItem(IdentificationResult result) {
+    private static SmallMoleculeSummary buildSMLItem(List<IdentificationResult> results) {
         final SmallMoleculeSummary smlItem = new SmallMoleculeSummary();
-//        SmallMoleculeFeature smfItem =  new SmallMoleculeFeature();
-//        SmallMoleculeEvidence smeItem = new SmallMoleculeEvidence();
-        FingerIdResult r = result.getAnnotationOrNull(FingerIdResult.class);
-        if (r != null) {
-            final ArrayList<Scored<FingerprintCandidate>> candidates = r.getCandidates().stream().sorted(Scored.desc()).collect(Collectors.toCollection(ArrayList::new));
-            final Scored<FingerprintCandidate> bestHit = candidates.get(0);
+        Scored<FingerprintCandidate> bestHit = null;
+        IdentificationResult bestHitSource = null;
 
+        for (IdentificationResult result : results) {
+            final FingerIdResult r = result.getAnnotationOrNull(FingerIdResult.class);
+            if (r == null || r.getCandidates().size() < 1)
+                continue;
+            final Scored<FingerprintCandidate> localBest = r.getCandidates().stream().sorted(Scored.desc())
+                    .collect(Collectors.toCollection(ArrayList::new)).get(0);
 
-            smlItem.addChemicalNameItem(bestHit.getCandidate().getName());
-            smlItem.adductIons(Collections.singletonList(result.getPrecursorIonType().toString()));
-            smlItem.addChemicalFormulaItem(result.getMolecularFormula().toString());
-            smlItem.addTheoreticalNeutralMassItem(result.getMolecularFormula().getMass());
-            smlItem.addInchiItem(bestHit.getCandidate().getInchi().in2D);
-            smlItem.addSmilesItem(bestHit.getCandidate().getSmiles());
-        } else {
-            //todo empty identification or skip???
+            if (bestHit == null || localBest.getScore() > bestHit.getScore()) {
+                bestHit = localBest;
+                bestHitSource = result;
+            }
+
         }
 
-        return smlItem;
+        smlItem.addChemicalNameItem(bestHit.getCandidate().getName());
+        smlItem.adductIons(Collections.singletonList(bestHitSource.getPrecursorIonType().toString()));
+        smlItem.addChemicalFormulaItem(bestHitSource.getMolecularFormula().toString());
+        smlItem.addTheoreticalNeutralMassItem(bestHitSource.getMolecularFormula().getMass());
+        smlItem.addInchiItem(bestHit.getCandidate().getInchi().in2D);
+        smlItem.addSmilesItem(bestHit.getCandidate().getSmiles());
 
+        return smlItem;
     }
 
-    private Metadata buildMTDBlock() {
+    private static Metadata buildMTDBlock() {
         Metadata mtd = new Metadata();
         mtd.mzTabVersion("2.0.0-M"); //this is the format not the library version
         mtd.mzTabID("sirius-"); //todo add workspace file name here
@@ -91,7 +135,8 @@ public class MztabMExporter {
         mtd.addSoftwareItem(new Software().id(1).
                 parameter(new Parameter().id(1).
                         name(PropertyManager.getProperty("de.unijena.bioinf.utils.errorReport.softwareName", "SIRIUS")).
-                        value(ApplicationCore.VERSION_STRING))
+                        value(PropertyManager.getProperty("de.unijena.bioinf.ms.sirius.version", "SIRIUS"))
+                )
         );
 
         return mtd;
