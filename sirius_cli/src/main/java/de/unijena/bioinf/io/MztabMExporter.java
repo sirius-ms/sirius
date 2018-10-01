@@ -4,23 +4,38 @@ import de.isas.mztab2.io.SiriusWorkspaceMzTabNonValidatingWriter;
 import de.isas.mztab2.io.SiriusWorkspaceMzTabValidatingWriter;
 import de.isas.mztab2.model.*;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
+import gnu.trove.map.TObjectIntMap;
 
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MztabMExporter {
-    private int sflID = 0;
+    private int smlID = 0;
+    private int smfID = 0;
+    private int smeID = 0;
     private final MzTab mztab;
+
+
+//    List<SmallMoleculeSummary> summaries = new ArrayList<>();
+
+//    List<Set<SmallMoleculeSummary>> adductIons = new ArrayList<>();
+//    List<Set<Integer>> smfIDMapping = new ArrayList<>();
+
+//    TObjectIntMap<MolecularFormula> formulaToSummary;
+//    TObjectIntMap<String> inchiToSummary;
+
+
 
     public MztabMExporter() {
         mztab = new MzTab();
@@ -83,7 +98,7 @@ public class MztabMExporter {
 
     public void addExperiment(final ExperimentResult er, final List<IdentificationResult> results, final List<FingerIdResult> frs) {
         final SmallMoleculeSummary smlItem = buildSMLItem(results);
-        smlItem.setSmlId(sflID++);
+        smlItem.setSmlId(smlID++);
 
         mztab.addSmallMoleculeSummaryItem(smlItem);
     }
@@ -105,7 +120,7 @@ public class MztabMExporter {
 
         for (IdentificationResult result : results) {
             final FingerIdResult r = result.getAnnotationOrNull(FingerIdResult.class);
-            if (r == null || r.getCandidates().size() < 1)
+            if (r == null || r.getCandidates().isEmpty())
                 continue;
             final Scored<FingerprintCandidate> localBest = r.getCandidates().stream().sorted(Scored.desc())
                     .collect(Collectors.toCollection(ArrayList::new)).get(0);
