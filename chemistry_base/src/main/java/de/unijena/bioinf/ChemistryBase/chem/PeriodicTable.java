@@ -17,6 +17,7 @@
  */
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.utils.*;
 import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
@@ -266,7 +267,6 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         //create positives
         final String[] adductsPositive = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.chem.adducts.positive").split(",");
         for (String pos : adductsPositive) {
-//            String posName = canonicalizeIonName(pos);
             PrecursorIonType type = ionByName(pos);
             assert type.getIonization().getCharge() > 0;
             addCommonIonType(type);
@@ -276,7 +276,6 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         //create negatives
         final String[] adductsNegative = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.chem.adducts.negative").split(",");
         for (String neg : adductsNegative) {
-//            final String negName = canonicalizeIonName(neg);
             PrecursorIonType type = ionByName(neg);
             assert type.getIonization().getCharge() < 0;
             addCommonIonType(type);
@@ -326,10 +325,10 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             tokens.add(m.group());
             lastPos = m.end();
         }
-        if (lastPos < name.length()) tokens.add(name.substring(lastPos, name.length()));
+        if (lastPos < name.length()) tokens.add(name.substring(lastPos));
 
-        int state = 0;
-        final ArrayList<MolecularFormula> adducts = new ArrayList<MolecularFormula>();
+        final ArrayList<MolecularFormula> possibleNewIonTypes = new ArrayList<MolecularFormula>();
+        final ArrayList<MolecularFormula> adducts = new ArrayList<>();
         final ArrayList<MolecularFormula> insourceFrags = new ArrayList<MolecularFormula>();
 
         boolean isAdd = true;
@@ -397,6 +396,9 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
                         if (number != 1) {
                             f = f.multiply(number);
                         }
+
+                        possibleNewIonTypes.add(f);
+
                         if (isAdd) {
                             adducts.add(f);
                         } else {
@@ -404,87 +406,110 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
                         }
                         isAdd = true;
                         number = 1;
+
                     }
                 }
             }
         }
+
         final int charge = (isAdd ? 1 : -1);
 
         // find ionization mode
         Ionization usedIonMode = null;
-        final IonMode[] ionModes = (charge > 0) ? POSITIVE_ION_MODES : NEGATIVE_ION_MODES;
-        for (IonMode ion : ionModes) {
-            if (ion.getAtoms().atomCount() > 0) {
+        final IonMode[] addModes = Arrays.stream((charge > 0) ? POSITIVE_ION_MODES : NEGATIVE_ION_MODES)
+                .filter((ion) -> ion.getAtoms().atomCount() > 0).toArray(IonMode[]::new);
+        final IonMode[] insourceFragModes = Arrays.stream((charge > 0) ? POSITIVE_ION_MODES : NEGATIVE_ION_MODES)
+                .filter((ion) -> ion.getAtoms().atomCount() < 0).toArray(IonMode[]::new);
+
+
+        for (MolecularFormula possibleNewIonType : Lists.reverse(possibleNewIonTypes)) {
+
+            if (adducts.contains(possibleNewIonType)) {
                 // search for adduct containing this ion
-                int found = -1;
-                for (int i = 0; i < adducts.size(); ++i) {
-                    if (ion.getAtoms().equals(adducts.get(i))) {
-                        found = i;
+                for (IonMode ion : addModes) {
+                    if (ion.getAtoms().equals(possibleNewIonType)) {
+                        usedIonMode = ion;
+                        adducts.remove(possibleNewIonType);
                         break;
                     }
                 }
-                if (found >= 0) {
-                    adducts.remove(found);
-                    usedIonMode = ion;
-                } else {
-                    for (int i = 0; i < adducts.size(); ++i) {
-                        if (adducts.get(i).isSubtractable(ion.getAtoms())) {
-                            found = i;
-                            break;
-                        }
-                    }
-                    if (found >= 0) {
+
+                if (usedIonMode != null) break;
+
+                for (IonMode ion : addModes) {
+                    if (possibleNewIonType.isSubtractable(ion.getAtoms())) {//check for subset
                         usedIonMode = ion;
-                        adducts.set(found, adducts.get(found).subtract(ion.getAtoms()));
+                        adducts.replaceAll(elements -> elements == possibleNewIonType ? possibleNewIonType.subtract(ion.getAtoms()) : elements);
+                        break;
                     }
                 }
-            } else if (ion.getAtoms().atomCount() < 0) {
+
+                if (usedIonMode != null) break;
+
+                if (possibleNewIonType.getNumberOfElements() == 1) {
+                    //search for possible new ionmode
+                    String ionModeName = "[M + " + possibleNewIonType.toString() + "]" + ((charge < 0) ? "-" : "+");
+                    IonMode im = new IonMode(charge, ionModeName, possibleNewIonType);
+                    addCommonIonMode(im);
+                    usedIonMode = im;
+                    adducts.remove(possibleNewIonType);
+                    break;
+                }
+
+            } else if (insourceFrags.contains(possibleNewIonType)) {
                 // search for loss containing this ion
-                int found = -1;
-                MolecularFormula neg = ion.getAtoms().negate();
-                for (int i = 0; i < insourceFrags.size(); ++i) {
-                    if (neg.equals(insourceFrags.get(i))) {
-                        found = i;
+                for (IonMode ion : insourceFragModes) {
+                    final MolecularFormula neg = ion.getAtoms().negate();
+                    if (neg.equals(possibleNewIonType)) {
+                        insourceFrags.remove(possibleNewIonType);
+                        usedIonMode = ion;
                         break;
                     }
                 }
-                if (found >= 0) {
-                    insourceFrags.remove(found);
-                    usedIonMode = ion;
-                } else {
-                    for (int i = 0; i < insourceFrags.size(); ++i) {
-                        if (insourceFrags.get(i).isSubtractable(neg)) {
-                            found = i;
-                            break;
-                        }
-                    }
-                    if (found >= 0) {
+
+                if (usedIonMode != null) break;
+
+                for (IonMode ion : insourceFragModes) {
+                    final MolecularFormula neg = ion.getAtoms().negate();
+                    if (possibleNewIonType.isSubtractable(neg)) {
                         usedIonMode = ion;
-                        insourceFrags.set(found, insourceFrags.get(found).subtract(neg));
+                        insourceFrags.replaceAll(elements -> elements == possibleNewIonType ? possibleNewIonType.subtract(neg) : elements);
+                        break;
                     }
                 }
+
+                if (usedIonMode != null) break;
             }
-            if (usedIonMode != null) break;
         }
-        if (usedIonMode == null && adducts.size() > 0 && charge < 0) {
-            adducts.add(MolecularFormula.getHydrogen());
-            usedIonMode = DEPROTONATION;
-        } else if (usedIonMode == null && !insourceFrags.isEmpty() && charge > 0) {
-            insourceFrags.add(MolecularFormula.getHydrogen());
-            usedIonMode = PROTONATION;
+
+        //possible ionModes was empty or a negative we could not add as a new one
+        if (usedIonMode == null) {
+            if (charge < 0 && adducts.size() > 0) {
+                adducts.add(MolecularFormula.getHydrogen());
+                usedIonMode = DEPROTONATION;
+            } else if (charge > 0 && !insourceFrags.isEmpty()) {
+                insourceFrags.add(MolecularFormula.getHydrogen());
+                usedIonMode = PROTONATION;
+            }
         }
 
 
         MolecularFormula adduct = MolecularFormula.emptyFormula();
-        for (MolecularFormula f : adducts) adduct = adduct.add(f);
+        for (
+                MolecularFormula f : adducts)
+            adduct = adduct.add(f);
         MolecularFormula insource = MolecularFormula.emptyFormula();
-        for (MolecularFormula f : insourceFrags) insource = insource.add(f);
+        for (
+                MolecularFormula f : insourceFrags)
+            insource = insource.add(f);
 
         if (usedIonMode == null && adduct.isEmpty() && insource.isEmpty()) {
             return charge > 0 ? INTRINSICALLY_CHARGED_POSITIVE : INTRINSICALLY_CHARGED_NEGATIVE;
         } else if (usedIonMode == null) {
             throw new RuntimeException("Cannot parse " + name);
-        } else return new PrecursorIonType(usedIonMode, insource, adduct, PrecursorIonType.SPECIAL_TYPES.REGULAR);
+        } else return new
+
+                PrecursorIonType(usedIonMode, insource, adduct, PrecursorIonType.SPECIAL_TYPES.REGULAR);
     }
 
 
@@ -553,6 +578,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             }
             this.amount = (short) amount;
         }
+
     }
 
 
@@ -660,33 +686,34 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
         int charge = ionMode.getCharge();
 
-        if (Math.abs(charge)!=1){
+        if (Math.abs(charge) != 1) {
             throw new IllegalArgumentException("Currently, only ion modes with single positive/netagive charge are supported");
         }
 
-        IonMode[] knownModes = charge>0?POSITIVE_ION_MODES:NEGATIVE_ION_MODES;
+        IonMode[] knownModes = charge > 0 ? POSITIVE_ION_MODES : NEGATIVE_ION_MODES;
 
-        if (arrayContains(knownModes, ionMode)){
+        if (arrayContains(knownModes, ionMode)) {
             return false;
         }
 
-        knownModes = Arrays.copyOf(knownModes, knownModes.length+1);
+        knownModes = Arrays.copyOf(knownModes, knownModes.length + 1);
 
-        knownModes[knownModes.length-1] = ionMode;
+        knownModes[knownModes.length - 1] = knownModes[knownModes.length - 2];
+        knownModes[knownModes.length - 2] = ionMode;
 
-        if (charge>0) POSITIVE_ION_MODES = knownModes;
+        if (charge > 0) POSITIVE_ION_MODES = knownModes;
         else NEGATIVE_ION_MODES = knownModes;
 
         return true;
     }
 
-    private boolean arrayContains(Object[] array, Object element){
+    private boolean arrayContains(Object[] array, Object element) {
         for (Object o : array) {
-            if (o==null){
-                if (element==null) return true;
+            if (o == null) {
+                if (element == null) return true;
                 continue;
             }
-            if (o.equals(element)){
+            if (o.equals(element)) {
                 return true;
             }
         }
@@ -970,11 +997,12 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         if (name == null || name.isEmpty()) return PrecursorIonType.unknown();
 
         name = canonicalizeIonName(name);
-        if (name.equals(canonicalizeIonName(Charge.POSITIVE_CHARGE)) || name.equals("M+?+")) return PrecursorIonType.unknownPositive();
-        if (name.equals(canonicalizeIonName(Charge.NEGATIVE_CHARGE)) || name.equals("M+?-")) return PrecursorIonType.unknownNegative();
+        if (name.equals(canonicalizeIonName(Charge.POSITIVE_CHARGE)) || name.equals("M+?+"))
+            return PrecursorIonType.unknownPositive();
+        if (name.equals(canonicalizeIonName(Charge.NEGATIVE_CHARGE)) || name.equals("M+?-"))
+            return PrecursorIonType.unknownNegative();
 
-        if (knownIonTypes.containsKey(name)) return knownIonTypes.get(name);
-        return null;
+        return knownIonTypes.get(name);
     }
 
 
