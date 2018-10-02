@@ -16,7 +16,7 @@ import de.unijena.bioinf.sirius.gui.table.list_stats.ListStats;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusResultTableFormat extends SiriusTableFormat<SiriusResultElement> {
-    private static final int COL_COUNT = 8;
+    private static final int COL_COUNT = 9;
 
     protected SiriusResultTableFormat(ListStats stats) {
         super(stats);
@@ -45,18 +45,20 @@ public class SiriusResultTableFormat extends SiriusTableFormat<SiriusResultEleme
             case 1:
                 return "Molecular Formula";
             case 2:
-                return "Score";
+                return "Adduct";
             case 3:
-                return "Isotope Score";
+                return "Score";
             case 4:
-                return "Tree Score";
+                return "Isotope Score";
             case 5:
-                return "Explained Peaks";
+                return "Tree Score";
             case 6:
-                return "Total Explained Intensity";
+                return "Explained Peaks";
             case 7:
-                return "Median Absolute Mass Deviation in ppm";
+                return "Total Explained Intensity";
             case 8:
+                return "Median Absolute Mass Deviation in ppm";
+            case 9:
                 return "Best";
             default:
                 throw new IllegalStateException();
@@ -68,32 +70,34 @@ public class SiriusResultTableFormat extends SiriusTableFormat<SiriusResultEleme
             case 0:
                 return result.getRank();
             case 1:
-                return result.getFormulaAndIonText();
+                return result.getMolecularFormula().toString();
             case 2:
-                return result.getScore();
+                return result.getPrecursorIonType().toString();
             case 3:
-                return result.getResult().getIsotopeScore();
+                return result.getScore();
             case 4:
-                return result.getResult().getTreeScore();
+                return result.getResult().getIsotopeScore();
             case 5:
+                return result.getResult().getTreeScore();
+            case 6:
                 final double expPeaks = result.getNumOfExplainedPeaks();
                 if (Double.isNaN(expPeaks))
                     return "Value not found";
                 else
                     return expPeaks;
-            case 6:
+            case 7:
                 final double intensity = result.getExplainedIntensityRatio();
                 if (Double.isNaN(intensity))
                     return "Value not found";
                 else
                     return intensity;
-            case 7:
+            case 8:
                 TreeNode visibleTreeRoot = result.getTreeVisualization();
                 if (visibleTreeRoot != null && visibleTreeRoot.getMedianMassDeviation() != null)
                     return visibleTreeRoot.getMedianMassDeviation();
                 else
                     return "Value not found";
-            case 8:
+            case 9:
                 return isBest(result);
             default:
                 throw new IllegalStateException();
