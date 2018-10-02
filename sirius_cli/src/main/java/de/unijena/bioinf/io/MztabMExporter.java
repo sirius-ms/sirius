@@ -4,20 +4,17 @@ import de.isas.mztab2.io.SiriusWorkspaceMzTabNonValidatingWriter;
 import de.isas.mztab2.io.SiriusWorkspaceMzTabValidatingWriter;
 import de.isas.mztab2.model.*;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
-import gnu.trove.map.TObjectIntMap;
 
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MztabMExporter {
@@ -34,7 +31,6 @@ public class MztabMExporter {
 
 //    TObjectIntMap<MolecularFormula> formulaToSummary;
 //    TObjectIntMap<String> inchiToSummary;
-
 
 
     public MztabMExporter() {
@@ -69,7 +65,7 @@ public class MztabMExporter {
             mztab.addSmallMoleculeSummaryItem(smlItem);
 
             //build best hits or each CSI:FingerID search list
-//            buildSMFBlock(smlItem,result);
+//            buildSMFItem(smlItem,result);
             //collect best k hits for each SME
 //            buildSMEBlock();
         }
@@ -97,24 +93,6 @@ public class MztabMExporter {
     }
 
     public void addExperiment(final ExperimentResult er, final List<IdentificationResult> results, final List<FingerIdResult> frs) {
-        final SmallMoleculeSummary smlItem = buildSMLItem(results);
-        smlItem.setSmlId(smlID++);
-
-        mztab.addSmallMoleculeSummaryItem(smlItem);
-    }
-
-
-    private static SmallMoleculeEvidence buildSMEBlock() {
-        return null;
-    }
-
-    private static SmallMoleculeFeature buildSMFBlock() {
-        return null;
-
-    }
-
-    private static SmallMoleculeSummary buildSMLItem(List<IdentificationResult> results) {
-        final SmallMoleculeSummary smlItem = new SmallMoleculeSummary();
         Scored<FingerprintCandidate> bestHit = null;
         IdentificationResult bestHitSource = null;
 
@@ -132,6 +110,90 @@ public class MztabMExporter {
 
         }
 
+
+        final SmallMoleculeSummary smlItem = buildSMLItem(bestHitSource, bestHit);
+
+        final SmallMoleculeFeature smfItem = buildSMFItem(bestHitSource, bestHit, smlItem);
+
+        final SmallMoleculeEvidence smeSiriusItem = buildSiriusSMEItem(bestHitSource, bestHit, smfItem);
+        final SmallMoleculeEvidence smeFingerIDItem = buildFingerIDSMEItem(bestHitSource, bestHit, smfItem);
+//        final SmallMoleculeEvidence smeSpectralHitItem = buildSpectralLibSMEItem(bestHitSource, bestHit, smfItem);
+
+
+        mztab.addSmallMoleculeSummaryItem(smlItem);
+        mztab.addSmallMoleculeFeatureItem(smfItem);
+        mztab.addSmallMoleculeEvidenceItem(smeSiriusItem);
+        mztab.addSmallMoleculeEvidenceItem(smeFingerIDItem);
+//        mztab.addSmallMoleculeEvidenceItem(smeSpectralHitItem);
+    }
+
+
+    private SmallMoleculeEvidence buildSiriusSMEItem(final IdentificationResult bestHitSource, final Scored<FingerprintCandidate> bestHit, final SmallMoleculeFeature smfItem) {
+        SmallMoleculeEvidence smeItem = buildSMEItem(smfItem);
+        smeItem.setIdentificationMethod(new Parameter().id(0).name("name").value("SIRIUS - Molecular formula identification"));
+        smeItem.setCharge(bestHitSource.getPrecursorIonType().getCharge());
+        smeItem.setRank(bestHitSource.getRank());
+        smeItem.setAdductIon(bestHitSource.getPrecursorIonType().toString());
+        smeItem.setChemicalFormula(bestHitSource.getMolecularFormula().toString());
+
+//        smeItem.setMsLevel();
+//        smeItem.setEvidenceInputId();
+//        smeItem.setIdConfidenceMeasure();
+
+
+        return smeItem;
+    }
+
+    private SmallMoleculeEvidence buildFingerIDSMEItem(final IdentificationResult bestHitSource, final Scored<FingerprintCandidate> bestHit, final SmallMoleculeFeature smfItem) {
+        SmallMoleculeEvidence smeItem = buildSMEItem(smfItem);
+        smeItem.setIdentificationMethod(new Parameter().id(0).name("name").value("CSI:FingerID - Structure elucidation"));
+
+        smeItem.setCharge(bestHitSource.getPrecursorIonType().getCharge());
+        smeItem.setAdductIon(bestHitSource.getPrecursorIonType().toString());
+        smeItem.setChemicalFormula(bestHitSource.getMolecularFormula().toString());
+        smeItem.setChemicalName(bestHit.getCandidate().getName());
+//        smeItem.setTheoreticalMassToCharge(bestHitSource.getMolecularFormula().getMass());
+        smeItem.setInchi(bestHit.getCandidate().getInchi().in2D);
+        smeItem.setSmiles(bestHit.getCandidate().getSmiles());
+        smeItem.setRank(1); //todo make exported result user definable in gui
+        return smeItem;
+    }
+
+    private SmallMoleculeEvidence buildSpectralLibSMEItem(final IdentificationResult bestHitSource, final Scored<FingerprintCandidate> bestHit, final SmallMoleculeFeature smfItem) {
+        SmallMoleculeEvidence smeItem = buildSMEItem(smfItem);
+        //todo implement if available through zodiac
+        return smeItem;
+    }
+
+    private SmallMoleculeEvidence buildSMEItem(final SmallMoleculeFeature smfItem) {
+        SmallMoleculeEvidence smeItem = new SmallMoleculeEvidence();
+        smeItem.setSmeId(smeID++);
+        smfItem.addSmeIdRefsItem(smeItem.getSmeId());
+        return smeItem;
+    }
+
+    private SmallMoleculeFeature buildSMFItem(final IdentificationResult bestHitSource, final Scored<FingerprintCandidate> bestHit, final SmallMoleculeSummary smlItem) {
+        final SmallMoleculeFeature smfItem = new SmallMoleculeFeature();
+        smfItem.setSmfId(smfID++);
+        smlItem.addSmfIdRefsItem(smfItem.getSmfId());
+
+        smfItem.setAdductIon(bestHitSource.getPrecursorIonType().toString());
+        smfItem.setCharge(bestHitSource.getPrecursorIonType().getCharge());
+
+//        smfItem.setRetentionTimeInSeconds();
+//        smfItem.setRetentionTimeInSecondsStart();
+//        smfItem.setRetentionTimeInSecondsEnd();
+
+        // custom Sirius fields?
+
+
+        return smfItem;
+
+    }
+
+    private SmallMoleculeSummary buildSMLItem(IdentificationResult bestHitSource, Scored<FingerprintCandidate> bestHit) {
+        final SmallMoleculeSummary smlItem = new SmallMoleculeSummary();
+        smlItem.setSmlId(smlID++);
         smlItem.addChemicalNameItem(bestHit.getCandidate().getName());
         smlItem.adductIons(Collections.singletonList(bestHitSource.getPrecursorIonType().toString()));
         smlItem.addChemicalFormulaItem(bestHitSource.getMolecularFormula().toString());
