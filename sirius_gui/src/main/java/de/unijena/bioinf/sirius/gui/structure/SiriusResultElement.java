@@ -78,6 +78,10 @@ public class SiriusResultElement extends AbstractEDTBean implements Comparable<S
         return resultElement.getScore();
     }
 
+    public PrecursorIonType getPrecursorIonType() {
+        return resultElement.getPrecursorIonType();
+    }
+
     public MolecularFormula getMolecularFormula() {
         return resultElement.getMolecularFormula();
     }
