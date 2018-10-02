@@ -17,6 +17,8 @@
  */
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Ionization mode in which a small ion (adduct) is attached to the molecule ([M+ion]), an ion is removed from the
  * molecule ([M-ion]) or the molecule itself is an ion ([M]).
@@ -34,22 +36,20 @@ public class IonMode extends Ionization {
      * @param name the name has usually the format [M+'name']'charge'
      * @param formula the molecular name of the adduct. May be negative, if it is subtracted from the neutral molecule
      */
-	public IonMode(int charge, String name, MolecularFormula formula) {
+	public IonMode(int charge, String name, @NotNull MolecularFormula formula) {
 		this(formula.getMass() - charge*Charge.ELECTRON_MASS, charge, name, formula);
 	}
 	
-	public IonMode(double mass, int charge, String name, MolecularFormula formula) {
+	public IonMode(double mass, int charge, String name, @NotNull MolecularFormula formula) {
 		this.mass = mass;
 		this.charge = charge;
-		if (formula == null) throw new NullPointerException("Expect non-null name");
 		this.name = name;
 		this.molecularFormula = formula;
 	}
 	
-	public IonMode(double mass, int charge, String formula) {
+	public IonMode(double mass, int charge, @NotNull String formula) {
 		this.mass = mass;
 		this.charge = charge;
-		if (formula == null) throw new NullPointerException("Expect non-null name");
 		this.name = formula;
 		this.molecularFormula = MolecularFormula.emptyFormula();
 	}
