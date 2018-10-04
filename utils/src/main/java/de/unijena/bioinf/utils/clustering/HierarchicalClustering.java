@@ -32,7 +32,9 @@ public class HierarchicalClustering<T> {
         this.distances = new ClusteringMatrixImplementation(pairwiseDistances);
         this.clusters = new ArrayList<>();
         for (T element : elements) {
-            clusters.add(Collections.singletonList(element));
+            List<T> list = new ArrayList<>();
+            list.add(element);
+            clusters.add(list);
         }
         while (clusters.size()>1){
             IndexPair minimum = distances.getMinimum();
@@ -49,7 +51,7 @@ public class HierarchicalClustering<T> {
             for (int i = 0; i < distances.numberOfClusters()-1; i++) {
                 int idx = i<minimum.j?i:i+1;
                 Distance d;
-                if (idx==i){
+                if (idx==minimum.i){
                     d = new Distance(0d);
                 } else {
                     Distance d1 = distances.getDistance(idx, minimum.i);
@@ -95,6 +97,13 @@ public class HierarchicalClustering<T> {
         /*
         updated elements will be indexed with minimum index of indexPair
          */
+
+        /**
+         * updated elements will be indexed with minimum index of indexPair
+         * @param indexPair
+         * @param newDistancesRow updated distances. i-th position is 0.
+         *                        Assumes that the j-th element of last step is already removed.
+         */
         public void update(IndexPair indexPair, Distance[] newDistancesRow);
     }
 
@@ -110,7 +119,7 @@ public class HierarchicalClustering<T> {
                 double[] pairwiseDistance = pairwiseDistances[i];
                 distances[i] = new Distance[pairwiseDistances.length-i];
                 for (int j = i; j < pairwiseDistance.length; j++) {
-                    distances[i][j] = new Distance(pairwiseDistance[j]);
+                    distances[i][j-i] = new Distance(pairwiseDistance[j]);
                 }
             }
         }
@@ -122,7 +131,7 @@ public class HierarchicalClustering<T> {
 
         @Override
         public Distance getDistance(int clusterIdx1, int clusterIdx2) {
-            if (clusterIdx1<=clusterIdx1){
+            if (clusterIdx1<=clusterIdx2){
                 return distances[clusterIdx1][clusterIdx2-clusterIdx1];
             }
             return distances[clusterIdx2][clusterIdx1-clusterIdx2];
@@ -166,6 +175,7 @@ public class HierarchicalClustering<T> {
 
         @Override
         public void update(IndexPair indexPair, Distance[] newDistancesRow) {
+            // i-th entry will be updated to the new distance, j-th entry will be removed;
             int iPos = Math.min(indexPair.i, indexPair.j);
             int jPos = Math.max(indexPair.i, indexPair.j);
             Distance[][] newDistances = new Distance[distances.length-1][];
@@ -186,9 +196,12 @@ public class HierarchicalClustering<T> {
             }
             for (int pos = jPos+1; pos < distances.length; pos++) {
                 Distance[] newDistance = distances[pos];
-                newDistance[iPos-pos] = newDistancesRow[pos];
+//                newDistance[iPos-pos] = newDistancesRow[pos];
                 newDistances[pos-1] = newDistance;
             }
+
+            distances = newDistances;
+            assert isDiagonalMatrix(distances);
         }
 
         private Distance[] removeElement(Distance[] array, int idx){
@@ -200,6 +213,13 @@ public class HierarchicalClustering<T> {
                 n[i-1] = array[i];
             }
             return n;
+        }
+
+        private boolean isDiagonalMatrix(Distance[][] matrix){
+            for (int i = 0; i < matrix.length-1; i++) {
+                if (matrix[i].length-matrix[i+1].length!=1) return false;
+            }
+            return true;
         }
     }
 }

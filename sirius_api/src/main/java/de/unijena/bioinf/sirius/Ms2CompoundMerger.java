@@ -13,10 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -24,7 +21,7 @@ import java.util.stream.Collectors;
  */
 public class Ms2CompoundMerger {
 
-    protected final static boolean SIMPLY_SUM_INTENSITIES = true;
+    protected final static boolean SIMPLY_SUM_INTENSITIES = false;
 
     private final Deviation maxMzDeviation;
     private final double maxRetentionTimeShift;
@@ -43,25 +40,30 @@ public class Ms2CompoundMerger {
 
     public List<Ms2Experiment> mergeRuns(Deviation deviation, List<Ms2Experiment>... runs){
         //todo same deviation to merge and to score?
-        List<Ms2Experiment> allExperiments = new ArrayList<>();
+        List<Ms2Experiment> allExperimentsWithMs2 = new ArrayList<>();
+        List<Ms2Experiment> allExperimentsWithoutMs2 = new ArrayList<>();
         for (List<Ms2Experiment> run : runs) {
-            allExperiments.addAll(run);
+            for (Ms2Experiment experiment : run) {
+                boolean hasMs2 = hasMs2(experiment);
+                if (hasMs2) allExperimentsWithMs2.add(experiment);
+                else allExperimentsWithoutMs2.add(experiment);
+            }
         }
 
         //create merged Ms2 to compare compounds
-        int numberOfMergedMs2 = numberOfMergedMs2(allExperiments);
-        if (numberOfMergedMs2>0 && numberOfMergedMs2<allExperiments.size()){
+        int numberOfMergedMs2 = numberOfMergedMs2(allExperimentsWithMs2);
+        if (numberOfMergedMs2>0 && numberOfMergedMs2<allExperimentsWithMs2.size()){
             LoggerFactory.getLogger(Ms2CompoundMerger.class).warn("Not all but some compounds already contain a merged Ms2 spectrum. Recomputing all.");
         }
-        if (numberOfMergedMs2==0){
-            for (Ms2Experiment experiment : allExperiments) {
+        if (numberOfMergedMs2==allExperimentsWithMs2.size()){
+            for (Ms2Experiment experiment : allExperimentsWithMs2) {
                 MergedMs2Spectrum mergedMs2Spectrum = experiment.getAnnotation(MergedMs2Spectrum.class);
                 experimentToMergedMs2.put(experiment, mergedMs2Spectrum);
             }
 
         } else {
             //compute merged
-            for (Ms2Experiment experiment : allExperiments) {
+            for (Ms2Experiment experiment : allExperimentsWithMs2) {
                 MergedMs2Spectrum mergedMs2Spectrum = mergeMs2Spectra(experiment, deviation);
                 experimentToMergedMs2.put(experiment, mergedMs2Spectrum);
             }
@@ -70,32 +72,32 @@ public class Ms2CompoundMerger {
         //now cluster similar compounds together
         //1. create Distance Matrix
         //todo stupid, since it stores all Infinity values
-        double[][] distances = new double[allExperiments.size()][allExperiments.size()];
-        for (int i = 0; i < allExperiments.size(); i++) {
+        double[][] distances = new double[allExperimentsWithMs2.size()][allExperimentsWithMs2.size()];
+        for (int i = 0; i < allExperimentsWithMs2.size(); i++) {
             distances[i][i] = 0d;
-            Ms2Experiment exp1 = allExperiments.get(i);
+            Ms2Experiment exp1 = allExperimentsWithMs2.get(i);
             MergedMs2Spectrum mergedMs2Spectrum1 = experimentToMergedMs2.get(exp1);
-            for (int j = i+1; j < allExperiments.size(); j++) {
-                Ms2Experiment exp2 = allExperiments.get(j);
+            for (int j = i+1; j < allExperimentsWithMs2.size(); j++) {
+                Ms2Experiment exp2 = allExperimentsWithMs2.get(j);
                 MergedMs2Spectrum mergedMs2Spectrum2 = experimentToMergedMs2.get(exp2);
                 if (!maxMzDeviation.inErrorWindow(exp1.getIonMass(), exp2.getIonMass())){
-                    distances[i][j] = Double.POSITIVE_INFINITY;
+                    distances[j][i] = distances[i][j] = Double.POSITIVE_INFINITY;
                     continue;
                 }
                 if (exp1.hasAnnotation(RetentionTime.class) && exp2.hasAnnotation(RetentionTime.class)){
                     RetentionTime time1 = exp1.getAnnotation(RetentionTime.class);
                     RetentionTime time2 = exp2.getAnnotation(RetentionTime.class);
                     if (Math.abs(time1.getMiddleTime()-time2.getMiddleTime())>maxRetentionTimeShift){
-                        distances[i][j] = Double.POSITIVE_INFINITY;
+                        distances[j][i] = distances[i][j] = Double.POSITIVE_INFINITY;
                         continue;
                     }
                 }
-                double cosine = Spectrums.dotProductPeaks(mergedMs2Spectrum1, mergedMs2Spectrum2, deviation);
+                double cosine = Spectrums.cosineProduct(mergedMs2Spectrum1, mergedMs2Spectrum2, deviation);
                 assert cosine<=1d;
                 if (cosine<cosineSimilarity){
-                    distances[i][j] = Double.POSITIVE_INFINITY;
+                    distances[j][i] = distances[i][j] = Double.POSITIVE_INFINITY;
                 } else {
-                    distances[i][j] = 1d-cosine;
+                    distances[j][i] = distances[i][j] = 1d-cosine;
                 }
 
             }
@@ -104,7 +106,7 @@ public class Ms2CompoundMerger {
 
         //2. cluster
         HierarchicalClustering<Ms2Experiment> clustering = new HierarchicalClustering<>(new CompleteLinkage());
-        clustering.cluster(allExperiments.toArray(new Ms2Experiment[0]), distances);
+        clustering.cluster(allExperimentsWithMs2.toArray(new Ms2Experiment[0]), distances, 1d-cosineSimilarity);
 
         List<List<Ms2Experiment>> clusters = clustering.getClusters();
 
@@ -115,7 +117,20 @@ public class Ms2CompoundMerger {
             mergedExperiments.add(mergeExperiments(cluster, deviation));
         }
 
+        //4. all all experiments without ms2 information without merging them
+        mergedExperiments.addAll(allExperimentsWithoutMs2);
+
         return mergedExperiments;
+    }
+
+    private boolean hasMs2(Ms2Experiment experiment) {
+        if (experiment.getMs2Spectra()==null) return false;
+        for (Ms2Spectrum<Peak> spectrum : experiment.getMs2Spectra()) {
+            if (spectrum.size()>0){
+                return true;
+            }
+        }
+        return false;
     }
 
     private int numberOfMergedMs2(List<Ms2Experiment> allExperiments) {
