@@ -3,4 +3,5 @@ dependencies {
     compile project(':io')
     compile project(':isotope_pattern:isotope_pattern_analysis')
     compile project(':fragmentation_tree:fragmentation_tree_construction')
+    compile project(':utils')
 }
