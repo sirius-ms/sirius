@@ -809,7 +809,11 @@ public class Spectrums {
     }
 
     private static <P extends Peak, S extends MutableSpectrum<P>> void normalizeByFirstPeak(S spectrum, double base) {
-        final double firstPeak = base/spectrum.getIntensityAt(0);
+        normalizeByPeak(spectrum, 0, base);
+    }
+
+    public static <P extends Peak, S extends MutableSpectrum<P>> void normalizeByPeak(S spectrum, int peakIdx, double base) {
+        final double firstPeak = base/spectrum.getIntensityAt(peakIdx);
         for (int i=0; i < spectrum.size(); ++i) {
             spectrum.setIntensityAt(i, spectrum.getIntensityAt(i)*firstPeak);
         }
