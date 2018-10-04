@@ -31,6 +31,10 @@ public class FingerIdResultWriter extends DirectoryWriter {
     @Override
     protected void startWritingIdentificationResults(ExperimentResult er, List<IdentificationResult> results) throws IOException {
         super.startWritingIdentificationResults(er, results);
+
+        System.out.println("Adding result to report mztab");
+        mztabMExporter.addExperiment(er, results);
+
         if (isAllowed(FingerIdResult.CANDIDATE_LISTS) && hasFingerId(results)) {
             // now write CSI:FingerID results
             W.enterDirectory("fingerprints");
@@ -135,7 +139,12 @@ public class FingerIdResultWriter extends DirectoryWriter {
             });
 
             System.out.println("Writing mztab");
-            write("summary_csi_fingerid.mztab", w -> mztabMExporter.write(w));
+            final String mzfileName = "sirius_report";
+            write(mzfileName + ".mztab", w -> {
+                mztabMExporter.setTitle(mzfileName); //todo allow user to set parameterName
+                mztabMExporter.setID(mzfileName);//todo allow user to set parameterName
+                mztabMExporter.write(w);
+            });
 
 
         }
@@ -241,9 +250,6 @@ public class FingerIdResultWriter extends DirectoryWriter {
         if (lines.length >= 2) {
             topHits.add(new Scored<String>(er.getExperimentSource() + "\t" + er.getExperimentName() + "\t" + confidence + "\t" + lines[1] + "\n", confidence));
         }
-
-        System.out.println("Adding result to mztab");
-        mztabMExporter.addExperiment(er,results,frs);
 
         write("summary_csi_fingerid.csv", new Do() {
             @Override
