@@ -1,27 +1,31 @@
 package de.unijena.bioinf.io;
 
+import de.isas.mztab2.io.MZTabParameter;
+import de.isas.mztab2.io.SiriusMZTabParameter;
 import de.isas.mztab2.io.SiriusWorkspaceMzTabNonValidatingWriter;
 import de.isas.mztab2.io.SiriusWorkspaceMzTabValidatingWriter;
 import de.isas.mztab2.model.*;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import uk.ac.ebi.pride.jmztab2.model.MZTabConstants;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MztabMExporter {
     private int smlID = 0;
     private int smfID = 0;
     private int smeID = 0;
     private final MzTab mztab;
+
+    private boolean fingerID = false;
 
 
 //    List<SmallMoleculeSummary> summaries = new ArrayList<>();
@@ -38,6 +42,12 @@ public class MztabMExporter {
         mztab.setMetadata(
                 buildMTDBlock()
         );
+    }
+
+    public MztabMExporter(String title, String id) {
+        this();
+        setTitle(title);
+        setID(id);
     }
 
     public MzTab getMztab() {
@@ -92,74 +102,111 @@ public class MztabMExporter {
         write(writer, mztab, validate);
     }
 
-    public void addExperiment(final ExperimentResult er, final List<IdentificationResult> results, final List<FingerIdResult> frs) {
+    public void addExperiment(@NotNull final ExperimentResult er, @NotNull final List<IdentificationResult> results) {
         Scored<FingerprintCandidate> bestHit = null;
         IdentificationResult bestHitSource = null;
 
+
         for (IdentificationResult result : results) {
             final FingerIdResult r = result.getAnnotationOrNull(FingerIdResult.class);
-            if (r == null || r.getCandidates().isEmpty())
-                continue;
-            final Scored<FingerprintCandidate> localBest = r.getCandidates().stream().sorted(Scored.desc())
-                    .collect(Collectors.toCollection(ArrayList::new)).get(0);
 
-            if (bestHit == null || localBest.getScore() > bestHit.getScore()) {
-                bestHit = localBest;
-                bestHitSource = result;
+            if (r != null && r.getCandidates() != null) {
+                final Scored<FingerprintCandidate> localBest = r.getCandidates().stream().min(Scored.desc()).orElse(null);
+
+                if (localBest != null) {
+                    if (bestHit == null || localBest.getScore() > bestHit.getScore()) {
+                        bestHit = localBest;
+                        bestHitSource = result;
+                    }
+                }
+
             }
-
         }
 
+        if (bestHitSource == null)
+            bestHitSource = results.stream().min(IdentificationResult::compareTo).orElse(null);
 
-        final SmallMoleculeSummary smlItem = buildSMLItem(bestHitSource, bestHit);
 
-        final SmallMoleculeFeature smfItem = buildSMFItem(bestHitSource, bestHit, smlItem);
+        if (bestHitSource != null) {
+            final SmallMoleculeSummary smlItem = buildSMLItem(er, bestHitSource, bestHit);
+            mztab.addSmallMoleculeSummaryItem(smlItem);
 
-        final SmallMoleculeEvidence smeSiriusItem = buildSiriusSMEItem(bestHitSource, bestHit, smfItem);
-        final SmallMoleculeEvidence smeFingerIDItem = buildFingerIDSMEItem(bestHitSource, bestHit, smfItem);
+
+            final SmallMoleculeFeature smfItem = buildSMFItem(er, bestHitSource, smlItem);
+            mztab.addSmallMoleculeFeatureItem(smfItem);
+
+
+            final SmallMoleculeEvidence smeSiriusItem = buildSiriusSMEItem(er, bestHitSource, smfItem);
+            mztab.addSmallMoleculeEvidenceItem(smeSiriusItem);
+
+            if (bestHit != null) {
+                final SmallMoleculeEvidence smeFingerIDItem = buildFingerIDSMEItem(er, bestHitSource, bestHit, smfItem);
+                mztab.addSmallMoleculeEvidenceItem(smeFingerIDItem);
+                smlItem.setReliability("2");
+                if (!fingerID) {
+                    fingerID = true;
+                    mztab.getMetadata().addSoftwareItem(new Software().id(2)
+                            .parameter(SiriusMZTabParameter.SOFTWARE_FINGER_ID)
+                    );
+                }
+            } else {
+                smlItem.setReliability("4");
+            }
+            //todo add zodiac spectral library hits at some time
 //        final SmallMoleculeEvidence smeSpectralHitItem = buildSpectralLibSMEItem(bestHitSource, bestHit, smfItem);
-
-
-        mztab.addSmallMoleculeSummaryItem(smlItem);
-        mztab.addSmallMoleculeFeatureItem(smfItem);
-        mztab.addSmallMoleculeEvidenceItem(smeSiriusItem);
-        mztab.addSmallMoleculeEvidenceItem(smeFingerIDItem);
 //        mztab.addSmallMoleculeEvidenceItem(smeSpectralHitItem);
+        }
     }
 
 
-    private SmallMoleculeEvidence buildSiriusSMEItem(final IdentificationResult bestHitSource, final Scored<FingerprintCandidate> bestHit, final SmallMoleculeFeature smfItem) {
+    private SmallMoleculeEvidence buildSiriusSMEItem(@NotNull final ExperimentResult er, @NotNull final IdentificationResult bestHitSource, @NotNull final SmallMoleculeFeature smfItem) {
         SmallMoleculeEvidence smeItem = buildSMEItem(smfItem);
-        smeItem.setIdentificationMethod(new Parameter().id(0).name("name").value("SIRIUS - Molecular formula identification"));
+
+        smeItem.setMsLevel(MZTabParameter.newInstance(MZTabParameter.MS_LEVEL).value("2"));
         smeItem.setCharge(bestHitSource.getPrecursorIonType().getCharge());
-        smeItem.setRank(bestHitSource.getRank());
         smeItem.setAdductIon(bestHitSource.getPrecursorIonType().toString());
         smeItem.setChemicalFormula(bestHitSource.getMolecularFormula().toString());
-
-//        smeItem.setMsLevel();
-//        smeItem.setEvidenceInputId();
-//        smeItem.setIdConfidenceMeasure();
-
+        smeItem.setTheoreticalMassToCharge(bestHitSource.getPrecursorIonType().addIonAndAdduct(bestHitSource.getMolecularFormula().getMass()));
+        smeItem.setExpMassToCharge(er.getExperiment().getIonMass());
 
         return smeItem;
     }
 
-    private SmallMoleculeEvidence buildFingerIDSMEItem(final IdentificationResult bestHitSource, final Scored<FingerprintCandidate> bestHit, final SmallMoleculeFeature smfItem) {
-        SmallMoleculeEvidence smeItem = buildSMEItem(smfItem);
-        smeItem.setIdentificationMethod(new Parameter().id(0).name("name").value("CSI:FingerID - Structure elucidation"));
+    private SmallMoleculeEvidence buildSiriusFormulaIDSMEItem(@NotNull final ExperimentResult er, @NotNull final IdentificationResult bestHitSource, @NotNull final SmallMoleculeFeature smfItem) {
+        SmallMoleculeEvidence smeItem = buildSiriusSMEItem(er, bestHitSource, smfItem);
 
-        smeItem.setCharge(bestHitSource.getPrecursorIonType().getCharge());
-        smeItem.setAdductIon(bestHitSource.getPrecursorIonType().toString());
-        smeItem.setChemicalFormula(bestHitSource.getMolecularFormula().toString());
+        smeItem.setIdentificationMethod(SiriusMZTabParameter.SOFTWARE_SIRIUS);
+        smeItem.setRank(bestHitSource.getRank());
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.SIRIUS_SCORE,""));
+//        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.S,""));
+//        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.,""));
+//        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.,""));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.SIRIUS_CANDIDATE_LIST,""));
+
+        return smeItem;
+    }
+
+    private SmallMoleculeEvidence buildFingerIDSMEItem(@NotNull final ExperimentResult er, @NotNull final IdentificationResult bestHitSource, @NotNull final Scored<FingerprintCandidate> bestHit, @NotNull final SmallMoleculeFeature smfItem) {
+        SmallMoleculeEvidence smeItem = buildSiriusSMEItem(er, bestHitSource, smfItem);
+        smeItem.setIdentificationMethod(SiriusMZTabParameter.SOFTWARE_FINGER_ID);
+        smeItem.setRank(1); //todo make exported result user definable in gui
+
         smeItem.setChemicalName(bestHit.getCandidate().getName());
-//        smeItem.setTheoreticalMassToCharge(bestHitSource.getMolecularFormula().getMass());
         smeItem.setInchi(bestHit.getCandidate().getInchi().in2D);
         smeItem.setSmiles(bestHit.getCandidate().getSmiles());
-        smeItem.setRank(1); //todo make exported result user definable in gui
+
+
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.FINGERID_SCORE,""));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.FINGERID_CONFIDENCE,""));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.FINGERID_TANIMOTO_SIMILARITY,""));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.FINGERID_FINGERPRINT_SOURCE,""));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.FINGERID_CANDIDATE_LIST,""));
+
+
         return smeItem;
     }
 
-    private SmallMoleculeEvidence buildSpectralLibSMEItem(final IdentificationResult bestHitSource, final Scored<FingerprintCandidate> bestHit, final SmallMoleculeFeature smfItem) {
+    private SmallMoleculeEvidence buildSpectralLibSMEItem(@NotNull ExperimentResult er, final IdentificationResult bestHitSource, final Scored<FingerprintCandidate> bestHit, final SmallMoleculeFeature smfItem) {
         SmallMoleculeEvidence smeItem = buildSMEItem(smfItem);
         //todo implement if available through zodiac
         return smeItem;
@@ -167,18 +214,21 @@ public class MztabMExporter {
 
     private SmallMoleculeEvidence buildSMEItem(final SmallMoleculeFeature smfItem) {
         SmallMoleculeEvidence smeItem = new SmallMoleculeEvidence();
-        smeItem.setSmeId(smeID++);
+        smeItem.setSmeId(++smeID);
         smfItem.addSmeIdRefsItem(smeItem.getSmeId());
+//        smeItem.setEvidenceInputId(); //todo maybe we can use this for openms mapping stuff
         return smeItem;
     }
 
-    private SmallMoleculeFeature buildSMFItem(final IdentificationResult bestHitSource, final Scored<FingerprintCandidate> bestHit, final SmallMoleculeSummary smlItem) {
+    private SmallMoleculeFeature buildSMFItem(@NotNull ExperimentResult er, @NotNull final IdentificationResult bestHitSource, @NotNull final SmallMoleculeSummary smlItem) {
         final SmallMoleculeFeature smfItem = new SmallMoleculeFeature();
-        smfItem.setSmfId(smfID++);
+        smfItem.setSmfId(++smfID);
+        smfItem.smeIdRefAmbiguityCode(2); //todo 3 is needed if we also want to add multiple candidates
         smlItem.addSmfIdRefsItem(smfItem.getSmfId());
 
         smfItem.setAdductIon(bestHitSource.getPrecursorIonType().toString());
         smfItem.setCharge(bestHitSource.getPrecursorIonType().getCharge());
+        smfItem.setExpMassToCharge(er.getExperiment().getIonMass());
 
 //        smfItem.setRetentionTimeInSeconds();
 //        smfItem.setRetentionTimeInSecondsStart();
@@ -191,29 +241,38 @@ public class MztabMExporter {
 
     }
 
-    private SmallMoleculeSummary buildSMLItem(IdentificationResult bestHitSource, Scored<FingerprintCandidate> bestHit) {
+    public void setTitle(String title) {
+        mztab.getMetadata().title("SIRIUS Workspace Summary: " + title);
+
+    }
+
+    public void setID(String ID) {
+        mztab.getMetadata().mzTabID(ID); //todo add workspace file parameterName here
+    }
+
+    private SmallMoleculeSummary buildSMLItem(@NotNull ExperimentResult er, @NotNull IdentificationResult bestHitSource, @Nullable Scored<FingerprintCandidate> bestHit) {
         final SmallMoleculeSummary smlItem = new SmallMoleculeSummary();
-        smlItem.setSmlId(smlID++);
-        smlItem.addChemicalNameItem(bestHit.getCandidate().getName());
+        smlItem.setSmlId(++smlID);
         smlItem.adductIons(Collections.singletonList(bestHitSource.getPrecursorIonType().toString()));
         smlItem.addChemicalFormulaItem(bestHitSource.getMolecularFormula().toString());
         smlItem.addTheoreticalNeutralMassItem(bestHitSource.getMolecularFormula().getMass());
-        smlItem.addInchiItem(bestHit.getCandidate().getInchi().in2D);
-        smlItem.addSmilesItem(bestHit.getCandidate().getSmiles());
+
+        if (bestHit != null) {
+            smlItem.addChemicalNameItem(bestHit.getCandidate().getName());
+            smlItem.addInchiItem(bestHit.getCandidate().getInchi().in2D);
+            smlItem.addSmilesItem(bestHit.getCandidate().getSmiles());
+        }
 
         return smlItem;
     }
 
     private static Metadata buildMTDBlock() {
         Metadata mtd = new Metadata();
-        mtd.mzTabVersion("2.0.0-M"); //this is the format not the library version
-        mtd.mzTabID("sirius-"); //todo add workspace file name here
+        mtd.mzTabVersion(MZTabConstants.VERSION_MZTAB_M); //this is the format not the library version
 
-        mtd.addSoftwareItem(new Software().id(1).
-                parameter(new Parameter().id(1).
-                        name(PropertyManager.getProperty("de.unijena.bioinf.utils.errorReport.softwareName", "SIRIUS")).
-                        value(PropertyManager.getProperty("de.unijena.bioinf.ms.sirius.version", "SIRIUS"))
-                )
+
+        mtd.addSoftwareItem(new Software().id(1)
+                .parameter(SiriusMZTabParameter.SOFTWARE_SIRIUS)
         );
 
         return mtd;
