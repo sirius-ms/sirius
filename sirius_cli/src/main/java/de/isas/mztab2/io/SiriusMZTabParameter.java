@@ -3,27 +3,31 @@ package de.isas.mztab2.io;
 import de.isas.mztab2.model.OptColumnMapping;
 import de.isas.mztab2.model.Parameter;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import uk.ac.ebi.pride.jmztab2.model.OptColumnMappingBuilder;
 
 public enum SiriusMZTabParameter {
-
     //SIRIUS
-    SIRIUS_SCORE("SIRIUS:isotope_score"),
+    SIRIUS_SCORE("SIRIUS:score"),
     SIRIUS_ISOTOPE_SCORE("SIRIUS:isotope_score"),
     SIRIUS_TREE_SCORE("SIRIUS:tree_score"),
-    SIRIUS_EXPL_INTENSITY("SIRIUS:explained_intensity"),
-    SIRIUS_EXPL_PEAKS("SIRIUS:explained_peaks"),
+    SIRIUS_EXPL_INTENSITY_RATIO("SIRIUS:explained_intensity_ratio"),
+    SIRIUS_EXPL_PEAKS("SIRIUS:num_explained_peaks"),
+    SIRIUS_EXPL_PEAKS_RATIO("SIRIUS:explained_peaks_ratio"),
     SIRIUS_MED_ABS_MASS_DEVIATION("SIRIUS:med_abs_mass_deviation"),
-    SIRIUS_CANDIDATE_LIST("SIRIUS:candidates"),
+
+    SIRIUS_ANNOTATED_SPECTRA_LOCATION("SIRIUS:annotated_spectra_location"),
+    SIRIUS_TREE_LOCATION("SIRIUS:tree_location"),
+    SIRIUS_CANDIDATE_LOCATION("SIRIUS:candidate_location"),
 
     //FingerID
     FINGERID_SCORE("CSI:FingerID:score"),
     FINGERID_CONFIDENCE("CSI:FingerID:confidence"),
     FINGERID_TANIMOTO_SIMILARITY("CSI:FingerID:confidence"),
-    FINGERID_CANDIDATE_LIST("CSI:FingerID:candidates"),
-    FINGERID_FINGERPRINT_SOURCE("CSI:FingerID:fingerprints");
+
+    FINGERID_CANDIDATE_LOCATION("CSI:FingerID:candidate_location"),
+    FINGERID_FINGERPRINT_LOCATION("CSI:FingerID:fingerprint_location");
 
     //CANOPUS
-
 
     public final String cvLabel;
     public final String cvAccession;
@@ -47,8 +51,12 @@ public enum SiriusMZTabParameter {
         return new Parameter().cvLabel(p.cvLabel).cvAccession(p.cvAccession).name(p.parameterName).value(value);
     }
 
-    public static OptColumnMapping newOptColumnParameter(SiriusMZTabParameter p, String value) {
-        return new OptColumnMapping().identifier(p.parameterName).param(new Parameter().cvLabel(p.cvLabel).cvAccession(p.cvAccession).name(p.parameterName).value(value));
+    /*public static OptColumnMapping newOptColumnParameter(SiriusMZTabParameter p, String value) {
+
+    }*/
+
+    public static OptColumnMapping newOptColumn(SiriusMZTabParameter p, String value) {
+        return new OptColumnMappingBuilder().forGlobal().withName(p.parameterName).build(value);
     }
 
 

@@ -8,6 +8,7 @@ import de.isas.mztab2.model.*;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.fingerid.FingerIdResultWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,7 @@ public class MztabMExporter {
 
     private boolean fingerID = false;
 
+    private final FingerIdResultWriter.Locations locations;
 
 //    List<SmallMoleculeSummary> summaries = new ArrayList<>();
 
@@ -37,15 +39,16 @@ public class MztabMExporter {
 //    TObjectIntMap<String> inchiToSummary;
 
 
-    public MztabMExporter() {
+    public MztabMExporter(@NotNull FingerIdResultWriter.Locations locations) {
+        this.locations = locations;
         mztab = new MzTab();
         mztab.setMetadata(
                 buildMTDBlock()
         );
     }
 
-    public MztabMExporter(String title, String id) {
-        this();
+    public MztabMExporter(@NotNull FingerIdResultWriter.Locations locations, String title, String id) {
+        this(locations);
         setTitle(title);
         setID(id);
     }
@@ -136,7 +139,7 @@ public class MztabMExporter {
             mztab.addSmallMoleculeFeatureItem(smfItem);
 
 
-            final SmallMoleculeEvidence smeSiriusItem = buildSiriusSMEItem(er, bestHitSource, smfItem);
+            final SmallMoleculeEvidence smeSiriusItem = buildSiriusFormulaIDSMEItem(er, bestHitSource, smfItem);
             mztab.addSmallMoleculeEvidenceItem(smeSiriusItem);
 
             if (bestHit != null) {
@@ -177,11 +180,17 @@ public class MztabMExporter {
 
         smeItem.setIdentificationMethod(SiriusMZTabParameter.SOFTWARE_SIRIUS);
         smeItem.setRank(bestHitSource.getRank());
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.SIRIUS_SCORE,""));
-//        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.S,""));
-//        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.,""));
-//        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.,""));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.SIRIUS_CANDIDATE_LIST,""));
+
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_SCORE, String.valueOf(bestHitSource.getScore())));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_ISOTOPE_SCORE, String.valueOf(bestHitSource.getIsotopeScore())));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_TREE_SCORE, String.valueOf(bestHitSource.getTreeScore())));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_EXPL_INTENSITY_RATIO, String.valueOf(bestHitSource.getExplainedIntensityRatio())));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_EXPL_PEAKS, String.valueOf(bestHitSource.getNumOfExplainedPeaks())));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_EXPL_PEAKS, String.valueOf(bestHitSource.getExplainedIntensityRatio())));
+//        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.SIRIUS_MED_ABS_MASS_DEVIATION,));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_ANNOTATED_SPECTRA_LOCATION, locations.SIRIUS_ANNOTATED_SPECTRA.path(er, bestHitSource)));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_TREE_LOCATION, locations.SIRIUS_TREES_JSON.path(er, bestHitSource)));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_CANDIDATE_LOCATION, locations.SIRIUS_SUMMARY.path(er, bestHitSource)));
 
         return smeItem;
     }
@@ -196,11 +205,11 @@ public class MztabMExporter {
         smeItem.setSmiles(bestHit.getCandidate().getSmiles());
 
 
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.FINGERID_SCORE,""));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.FINGERID_CONFIDENCE,""));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.FINGERID_TANIMOTO_SIMILARITY,""));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.FINGERID_FINGERPRINT_SOURCE,""));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.FINGERID_CANDIDATE_LIST,""));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_SCORE, String.valueOf(bestHit.getScore())));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_CONFIDENCE, null));
+//        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.FINGERID_TANIMOTO_SIMILARITY, bestHit.getCandidate()));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_FINGERPRINT_LOCATION, locations.FINGERID_FINGERPRINT.path(er, bestHitSource)));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_CANDIDATE_LOCATION, locations.FINGERID_SUMMARY.path(er, bestHitSource)));
 
 
         return smeItem;
