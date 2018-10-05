@@ -17,6 +17,65 @@ import java.util.List;
 
 public class DirectoryWriter extends AbstractProjectWriter {
 
+    public class Location {
+        public final String directory;
+        private final String fileName;
+        public final String fileExtension;
+
+        public Location(String folder, String fileName, String fileExtension) {
+            this.directory = folder;
+            this.fileExtension = fileExtension;
+            this.fileName = fileName;
+        }
+
+        public String fileName() {
+            if (fileName == null)
+                throw new UnsupportedOperationException("This location name ist IdentificationResult  dependent");
+
+            return fileName + fileExtension;
+        }
+
+        public String fileName(IdentificationResult result) {
+            if (fileName != null || result == null)
+                return fileName();
+
+            return makeFileName(result) + fileExtension;
+        }
+
+        public String path(ExperimentResult ex, IdentificationResult result) {
+            StringBuilder location = new StringBuilder();
+            if (ex != null)
+                location.append(makeFileName(ex)).append("/");
+
+            if (directory != null && !directory.isEmpty())
+                location.append(directory).append("/");
+
+            location.append(fileName(result));
+
+            return location.toString();
+        }
+    }
+
+    public class Locations {
+        public final Location SIRIUS_TREES_JSON = new Location("trees", null, ".json");
+        public final Location SIRIUS_TREES_DOT = new Location("trees", null, ".dot");
+        public final Location SIRIUS_ANNOTATED_SPECTRA = new Location("spectra", null, ".ms");
+        public final Location SIRIUS_SPECTRA = new Location(null, "spectrum", ".ms");
+        public final Location SIRIUS_SUMMARY = new Location(null, "summary_sirius", ".csv");
+        public final Location SIRIUS_VERSION_FILE = new Location(null, "version", ".txt");
+    }
+
+
+    private final Locations locations = createLocations();
+
+    protected Locations createLocations() {
+        return new Locations();
+    }
+
+    protected Locations locations() {
+        return locations;
+    }
+
     protected static Logger logger = LoggerFactory.getLogger(DirectoryWriter.class);
     protected int counter = 0;
     protected String currentExperimentName;
@@ -24,7 +83,7 @@ public class DirectoryWriter extends AbstractProjectWriter {
     private String versionString;
     private FilenameFormatter filenameFormatter;
 
-    public DirectoryWriter(WritingEnvironment w, String versionString, FilenameFormatter filenameFormatter) {
+    protected DirectoryWriter(WritingEnvironment w, String versionString, FilenameFormatter filenameFormatter) {
         W = w;
         this.versionString = versionString;
         this.filenameFormatter = filenameFormatter;
@@ -51,7 +110,7 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     protected void writeVersionsInfo() throws IOException {
-        write("version.txt", new Do() {
+        write(locations().SIRIUS_VERSION_FILE.fileName(), new Do() {
             @Override
             public void run(Writer w) throws IOException {
                 addVersionStrings(w);
@@ -67,6 +126,7 @@ public class DirectoryWriter extends AbstractProjectWriter {
             throw new RuntimeException(e);
         }
     }
+
     private void addCitationStrings(Writer w) {
         try {
             w.write(versionString);
@@ -150,9 +210,8 @@ public class DirectoryWriter extends AbstractProjectWriter {
 
     }
 
-    protected void write(String name, Do f)throws IOException  {
-        final
-        OutputStream stream = W.openFile(name);
+    protected void write(String name, Do f) throws IOException {
+        final OutputStream stream = W.openFile(name);
         try {
             final BufferedWriter outWriter = new BufferedWriter(new OutputStreamWriter(stream));
             try {
@@ -183,16 +242,16 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     @Override
-    protected void startWritingIdentificationResults(ExperimentResult er, List<IdentificationResult> results)throws IOException  {
+    protected void startWritingIdentificationResults(ExperimentResult er, List<IdentificationResult> results) throws IOException {
         // JSON and DOT
         if (isAllowed(OutputOptions.TREES_DOT) || isAllowed(OutputOptions.TREES_JSON)) {
-            W.enterDirectory("trees");
+            W.enterDirectory(locations().SIRIUS_TREES_DOT.directory);
             writeTrees(results);
             W.leaveDirectory();
         }
         // CSV
         if (isAllowed(OutputOptions.ANNOTATED_SPECTRA)) {
-            W.enterDirectory("spectra");
+            W.enterDirectory(locations().SIRIUS_ANNOTATED_SPECTRA.directory);
             writeRecalibratedSpectra(results);
             W.leaveDirectory();
         }
@@ -203,13 +262,13 @@ public class DirectoryWriter extends AbstractProjectWriter {
     private void writeMsFile(ExperimentResult er, List<IdentificationResult> results) throws IOException {
         // if experiment is stored in results we favour it, as it might be already cleaned and annotated
         final Ms2Experiment experiment;
-        if (results.size()>0 && results.get(0).getAnnotationOrNull(Ms2Experiment.class)!=null) {
+        if (results.size() > 0 && results.get(0).getAnnotationOrNull(Ms2Experiment.class) != null) {
             experiment = results.get(0).getAnnotationOrNull(Ms2Experiment.class);
         } else {
             experiment = er.getExperiment();
         }
-        if (experiment!=null) {
-            write("spectrum.ms", new Do() {
+        if (experiment != null) {
+            write(locations().SIRIUS_SPECTRA.fileName(), new Do() {
                 @Override
                 public void run(Writer w) throws IOException {
                     final BufferedWriter bw = new BufferedWriter(w);
@@ -221,41 +280,32 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     private void writeFormulaSummary(final List<IdentificationResult> results) throws IOException {
-        write("summary_sirius.csv", new Do() {
-            @Override
-            public void run(Writer w) throws IOException {
-                CSVOutputWriter.writeHits(w, results);
-            }
-        });
+        write(locations().SIRIUS_SUMMARY.fileName(),
+                w -> CSVOutputWriter.writeHits(w, results)
+        );
     }
 
-    protected void writeRecalibratedSpectra(List<IdentificationResult> results) throws IOException  {
+    protected void writeRecalibratedSpectra(List<IdentificationResult> results) throws IOException {
         for (IdentificationResult result : results) {
             writeRecalibratedSpectrum(result);
         }
     }
 
     protected void writeRecalibratedSpectrum(final IdentificationResult result) throws IOException {
-        write(makeFileName(result) + ".ms", new Do() {
-            @Override
-            public void run(Writer w) throws IOException {
-                new AnnotatedSpectrumWriter().write(w, result.getRawTree());
-            }
-        });
+        write(locations().SIRIUS_ANNOTATED_SPECTRA.fileName(result),
+                w -> new AnnotatedSpectrumWriter().write(w, result.getRawTree())
+        );
     }
 
 
     private void writeMsFile(ExperimentResult er) throws IOException {
         // if experiment is stored in results we favour it, as it might be already cleaned and annotated
         final Ms2Experiment experiment = er.getExperiment();
-        if (experiment!=null) {
-            write("spectrum.ms", new Do() {
-                @Override
-                public void run(Writer w) throws IOException {
-                    final BufferedWriter bw = new BufferedWriter(w);
-                    new JenaMsWriter().write(bw, experiment);
-                    bw.flush();
-                }
+        if (experiment != null) {
+            write(locations().SIRIUS_SPECTRA.fileName(), w -> {
+                final BufferedWriter bw = new BufferedWriter(w);
+                new JenaMsWriter().write(bw, experiment);
+                bw.flush();
             });
         }
     }
@@ -269,22 +319,16 @@ public class DirectoryWriter extends AbstractProjectWriter {
 
     }
 
-    private void writeDOTTree(final IdentificationResult result)throws IOException  {
-        write(makeFileName(result) + ".dot", new Do() {
-            @Override
-            public void run(Writer w) throws IOException {
-                new FTDotWriter(true, true).writeTree(w, result.getRawTree());
-            }
-        });
+    private void writeDOTTree(final IdentificationResult result) throws IOException {
+        write(locations().SIRIUS_TREES_DOT.fileName(result), w
+                -> new FTDotWriter(true, true).writeTree(w, result.getRawTree())
+        );
     }
 
-    private void writeJSONTree(final IdentificationResult result)throws IOException  {
-        write(makeFileName(result) + ".json", new Do() {
-            @Override
-            public void run(Writer w) throws IOException {
-                new FTJsonWriter().writeTree(w, result.getResolvedTree());
-            }
-        });
+    private void writeJSONTree(final IdentificationResult result) throws IOException {
+        write(locations().SIRIUS_TREES_JSON.fileName(result), w ->
+                new FTJsonWriter().writeTree(w, result.getResolvedTree())
+        );
     }
 
     @Override
@@ -308,7 +352,7 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     @Override
-    protected void endWritingExperiment(ExperimentResult experiment)throws IOException  {
+    protected void endWritingExperiment(ExperimentResult experiment) throws IOException {
         W.leaveDirectory();
         W.updateProgress(currentExperimentName + "\t" + errorCode(experiment) + "\n");
     }
@@ -324,16 +368,17 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     private static String simplify(PrecursorIonType precursorIonType) {
-        return precursorIonType.toString().replaceAll("[\\[\\] _]","");
+        return precursorIonType.toString().replaceAll("[\\[\\] _]", "");
     }
 
     protected String makeFileName(ExperimentResult exp) {
-        final int index = exp.getExperiment().getAnnotation(Index.class,Index.NO_INDEX).index;
-        return filenameFormatter.formatName(exp, (index>=0 ? index : counter));
+        final int index = exp.getExperiment().getAnnotation(Index.class, Index.NO_INDEX).index;
+        return filenameFormatter.formatName(exp, (index >= 0 ? index : counter));
     }
 
     protected interface Do {
         void run(Writer w) throws IOException;
     }
+
 
 }
