@@ -289,6 +289,35 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
         return formula + " with score " + getScore() + " at rank " + rank;
     }
 
+    public double getExplainedPeaksRatio() {
+        final TreeScoring treeScoring = getRawTree().getAnnotationOrNull(TreeScoring.class);
+        if (treeScoring != null)
+            return treeScoring.getRatioOfExplainedPeaks();
+        else
+            return Double.NaN;
+    }
+
+    public double getNumOfExplainedPeaks() {
+        final FTree tree = getRawTree();
+        if (tree != null)
+            return tree.numberOfVertices();
+        else
+            return Double.NaN;
+    }
+
+    public double getExplainedIntensityRatio() {
+        final TreeScoring treeScoring = getRawTree().getAnnotationOrNull(TreeScoring.class);
+        if (treeScoring != null)
+            return treeScoring.getExplainedIntensity();
+        else
+            return Double.NaN;
+
+    }
+
+    public double getNumberOfExplainablePeaks() {
+        return getNumOfExplainedPeaks() / getExplainedPeaksRatio();
+    }
+
     @Override
     public int compareTo(IdentificationResult o) {
         if (rank == o.rank) return Double.compare(o.score, score);
