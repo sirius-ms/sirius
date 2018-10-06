@@ -6,6 +6,7 @@ import de.isas.mztab2.io.SiriusWorkspaceMzTabNonValidatingWriter;
 import de.isas.mztab2.io.SiriusWorkspaceMzTabValidatingWriter;
 import de.isas.mztab2.model.*;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.FingerIdResultWriter;
@@ -17,8 +18,10 @@ import uk.ac.ebi.pride.jmztab2.model.MZTabConstants;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MztabMExporter {
     private int smlID = 0;
@@ -203,6 +206,9 @@ public class MztabMExporter {
         smeItem.setChemicalName(bestHit.getCandidate().getName());
         smeItem.setInchi(bestHit.getCandidate().getInchi().in2D);
         smeItem.setSmiles(bestHit.getCandidate().getSmiles());
+        smeItem.setDatabaseIdentifier(
+                "CID:" + Arrays.stream(bestHit.getCandidate().getLinks()).filter(dbLink -> dbLink.name.equals(DatasourceService.Sources.PUBCHEM.name)).map(dbLink -> dbLink.id).collect(Collectors.joining("|"))
+        );
 
 
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_SCORE, String.valueOf(bestHit.getScore())));
