@@ -1,8 +1,13 @@
 package de.isas.mztab2.io;
 
+import de.isas.mztab2.model.CV;
+import de.isas.mztab2.model.Database;
 import de.isas.mztab2.model.OptColumnMapping;
 import de.isas.mztab2.model.Parameter;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.chemdb.ChemicalDatabase;
+import de.unijena.bioinf.chemdb.DatasourceService;
+import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import uk.ac.ebi.pride.jmztab2.model.OptColumnMappingBuilder;
 
 public enum SiriusMZTabParameter {
@@ -51,10 +56,6 @@ public enum SiriusMZTabParameter {
         return new Parameter().cvLabel(p.cvLabel).cvAccession(p.cvAccession).name(p.parameterName).value(value);
     }
 
-    /*public static OptColumnMapping newOptColumnParameter(SiriusMZTabParameter p, String value) {
-
-    }*/
-
     public static OptColumnMapping newOptColumn(SiriusMZTabParameter p, String value) {
         return new OptColumnMappingBuilder().forGlobal().withName(p.parameterName).build(value);
     }
@@ -68,5 +69,18 @@ public enum SiriusMZTabParameter {
             .name("CSI:FingerID")
             .value(PropertyManager.getProperty("de.unijena.bioinf.fingerid.version"));
 
+    //todo should we integrade this service in DataSourceService.java
+    public final static Database NO_DATABASE = new Database().id(1).param(new Parameter().name("no database").value("null"));
+    public final static Database DE_NOVO = new Database().id(2).param(new Parameter().name("de novo"));
+    public final static Database PUBCHEM = new Database().id(3)
+            .prefix("CID")
+            .uri("https://pubchem.ncbi.nlm.nih.gov/compound/")
+            .version(PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.date"))
+            .param(new Parameter().name("SIRIUS PubChem Copy").value("CID"));
+
+    public final static Parameter SCAN_POLARITY_ITEM_POSITIVE = new Parameter().cvLabel("MS").cvAccession("MS:1000130").name("positive scan");
+    public final static Parameter SCAN_POLARITY_ITEM_NEGATIVE = new Parameter().cvLabel("MS").cvAccession("MS:1000129").name("negative scan");
+
+    public final static CV DEFAULT_CV = new CV().id(1).label("MS").fullName("PSI-MS controlled vocabulary").version("4.1.16").uri("URL:https://raw.githubusercontent.com/HUPO-PSI/psi-ms-CV/master/psi-ms.obo");
 
 }
