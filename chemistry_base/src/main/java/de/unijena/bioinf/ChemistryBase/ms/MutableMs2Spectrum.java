@@ -32,7 +32,10 @@ public class MutableMs2Spectrum extends SimpleMutableSpectrum implements Ms2Spec
     private int msLevel = 0;
     private int scanNumber; // an arbitrary ID that is unique within the experiment object
 
+
+
     public MutableMs2Spectrum() {
+
     }
 
     public <T extends Peak, S extends Spectrum<T>> MutableMs2Spectrum(S spec, double parentmass, CollisionEnergy energy, int mslevel) {

@@ -28,6 +28,8 @@ import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.Parser;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -43,7 +45,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
     public static void main(String... args) throws IOException {
 
-        Path p = Paths.get("/home/ge28quv/Software/Sirius/demo-data/ms/test.ms");
+        Path p = Paths.get("/home/fleisch/Downloads/demo-data/ms/Kaempferol_openms.ms");
         GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParser(p.toFile());
         Ms2Experiment experiment = parser.parseFromFile(p.toFile()).get(0);
         System.out.println(experiment.getMolecularFormula());
@@ -53,9 +55,10 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             Ms2ExperimentAnnotation annotation = next.getValue();
             System.out.println(annotation);
         }
+        System.out.println("end");
     }
 
-    // quickn dirty hack
+    // todo quickn dirty hack
     BufferedReader lastReader = null;
     String lastCompundName = null;
 
@@ -101,7 +104,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private SPECTRUM_TYPE spectrumType = SPECTRUM_TYPE.UNKNOWN;
         private PrecursorIonType ionization;
         private CollisionEnergy currentEnergy;
-        private double tic = 0, parentMass = 0, retentionTime = 0;
+        private double tic = 0, parentMass = 0, retentionTime = 0, retentionTimeStart = Double.NaN, retentionTimeEnd = Double.NaN;
         private SimpleMutableSpectrum currentSpectrum;
         private ArrayList<MutableMs2Spectrum> ms2spectra = new ArrayList<MutableMs2Spectrum>();
         private ArrayList<SimpleSpectrum> ms1spectra = new ArrayList<SimpleSpectrum>();
@@ -109,12 +112,14 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private String inchi, inchikey, smiles, splash, spectrumQualityString;
         private MutableMs2Experiment experiment;
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
-        private Ms2ExperimentAdditionalFields fields;
+        private AdditionalFields fields;
         private Index index;
         private HashMap<Class<? extends Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> annotations;
         private double treeTimeout;
         private double compoundTimeout;
         private double ppmMax = 0d, ppmMaxMs2 = 0d, noiseMs2 = 0d;
+
+        private TIntObjectMap<AdditionalFields> additionalFields = new TIntObjectHashMap<>();
 
         private void newCompound(String name) {
             inchi = null;
@@ -231,7 +236,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } else if (optionName.equals("formula")) {
                 if (formula != null || annotations.containsKey(Whiteset.class)) warn("Molecular formula is set twice");
                 MolecularFormula[] formulas = parseFormulas(value);
-                if (formulas.length==1) this.formula = formulas[0];
+                if (formulas.length == 1) this.formula = formulas[0];
                 else {
                     Whiteset whiteset = Whiteset.of(formulas);
                     annotations.put(Whiteset.class, whiteset);
@@ -297,33 +302,37 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } else if (optionName.contains("ms1")) {
                 if (currentSpectrum.size() > 0) newSpectrum();
                 this.spectrumType = SPECTRUM_TYPE.MS1;
-            } else if (optionName.equals("retention")) {
-                parseRetention(value);
-            } else if (optionName.contains("ion")) {
+            } else if (optionName.equalsIgnoreCase("rt") || optionName.equalsIgnoreCase("retention")) {
+                retentionTime = parseRetentionTimeMiddle(value);
+            } else if (optionName.equalsIgnoreCase("rt_start")) {
+                retentionTimeStart = parseRetentionTime(value);
+            } else if (optionName.equalsIgnoreCase("rt_end")) {
+                retentionTimeEnd = parseRetentionTime(value);
+            } else if (optionName.contains("ion") || optionName.equalsIgnoreCase("adduct")) {
                 parseIonizations(value);
-            } else if(optionName.equals("elements")){
+            } else if (optionName.equals("elements")) {
 //                annotations.put(FormulaConstraints.class, new FormulaConstraints(value));
-            } else if(optionName.equals("ppm-max")){
+            } else if (optionName.equals("ppm-max")) {
                 ppmMax = Double.parseDouble(value);
-            } else if(optionName.equals("ppm-max-ms2")){
+            } else if (optionName.equals("ppm-max-ms2")) {
                 ppmMaxMs2 = Double.parseDouble(value);
-            } else if(optionName.equals("noise")){
-                noiseMs2  = Double.parseDouble(value);
-            } else if(optionName.equals("profile")){
+            } else if (optionName.equals("noise")) {
+                noiseMs2 = Double.parseDouble(value);
+            } else if (optionName.equals("profile")) {
                 warn("option '>profile' is currently not parsed from .ms file"); //TODO include somehow
-            } else if(optionName.equals("compound-timeout")){
+            } else if (optionName.equals("compound-timeout")) {
                 double t = parseTime(value);
                 if (Double.isNaN(t)) warn("Cannot parse compound-timeout.");
                 else compoundTimeout = t;
-            } else if(optionName.equals("tree-timeout")){
+            } else if (optionName.equals("tree-timeout")) {
                 double t = parseTime(value);
                 if (Double.isNaN(t)) warn("Cannot parse tree-timeout.");
                 else treeTimeout = t;
-            } else if(optionName.equals("no-recalibration")){
+            } else if (optionName.equals("no-recalibration")) {
                 experiment.setAnnotation(ForbidRecalibration.class, ForbidRecalibration.FORBIDDEN);
             } else {
-                warn("Unknown option "+ "'>" + optionName + "'" + " in .ms file. Option will be ignored");
-                if (fields == null) fields = new Ms2ExperimentAdditionalFields();
+                warn("Unknown option " + "'>" + optionName + "'" + " in .ms file. Option will be ignored");
+                if (fields == null) fields = new AdditionalFields();
                 fields.put(optionName, value);
             }
             return false;
@@ -347,7 +356,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             }
             exp.setMs1Spectra(ms1spectra);
             exp.setMs2Spectra(ms2spectra);
-            if (mergedMs1!=null) exp.setMergedMs1Spectrum(mergedMs1);
+            if (mergedMs1 != null) exp.setMergedMs1Spectrum(mergedMs1);
             exp.setSource(source);
             if (index != null) exp.setAnnotation(Index.class, index);
             if (smiles != null) exp.setAnnotation(Smiles.class, new Smiles(smiles));
@@ -356,13 +365,14 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 exp.setAnnotation(CompoundQuality.class, CompoundQuality.fromString(spectrumQualityString));
             if (inchi != null || inchikey != null) exp.setAnnotation(InChI.class, new InChI(inchikey, inchi));
             if (instrumentation != null) exp.setAnnotation(MsInstrumentation.class, instrumentation);
-            if (retentionTime != 0) exp.setAnnotation(RetentionTime.class, new RetentionTime(retentionTime));
-            if (fields != null) exp.setAnnotation(Ms2ExperimentAdditionalFields.class, fields);
+            if (retentionTime != 0)
+                exp.setAnnotation(RetentionTime.class, new RetentionTime(retentionTimeStart, retentionTimeEnd, retentionTime));
+            if (fields != null) exp.setAnnotation(AdditionalFields.class, fields);
             for (Map.Entry<Class<? extends Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> entry : annotations.entrySet()) {
-                exp.setAnnotation((Class<Ms2ExperimentAnnotation>)entry.getKey(), entry.getValue());
+                exp.setAnnotation((Class<Ms2ExperimentAnnotation>) entry.getKey(), entry.getValue());
             }
-            if (compoundTimeout!=0 || treeTimeout!=0){
-                Timeout timeout = Timeout.newTimeout((int)compoundTimeout, (int)treeTimeout);
+            if (compoundTimeout != 0 || treeTimeout != 0) {
+                Timeout timeout = Timeout.newTimeout((int) compoundTimeout, (int) treeTimeout);
                 exp.setAnnotation(Timeout.class, timeout);
             }
             this.experiment = exp;
@@ -379,26 +389,35 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         }
 
         private void parseComment(String line) {
-            // legacy mode
-            if (line.startsWith("#retention")) {
-                parseRetention(line.substring(line.indexOf("#retention") + "#retention".length()));
-            }
-            if (line.charAt(0) == '#') {
-                final String[] options = line.substring(line.indexOf('#') + 1).split("\\s+", 2);
-                final String optionName = options[0].toLowerCase();
-                final String value = options.length == 2 ? options[1] : "";
-                if (fields == null) fields = new Ms2ExperimentAdditionalFields();
+            int depth = 0;
+            while (line.charAt(depth) == '#') depth++;
+
+            final String[] options = line.substring(depth).split("\\s+", 2);
+            final String optionName = options[0].toLowerCase();
+            final String value = options.length == 2 ? options[1] : "";
+
+
+            if (depth == 1) {
+                if (fields == null) fields = new AdditionalFields();
                 fields.put(optionName, value);
+            } else if (depth == 2) {
+                currentSpectrum.computeAnnotationIfAbsent(AdditionalFields.class, (it) -> new AdditionalFields()).put(optionName, value);
             }
         }
 
-        private void parseRetention(String value) {
+        private double parseRetentionTimeMiddle(String value) {
             if (currentSpectrum.size() > 0) newSpectrum();
+            final double p = parseRetentionTime(value);
+            return Double.isNaN(p) ? 0 : p;
+        }
+
+        private double parseRetentionTime(String value) {
             final Matcher m = RETENTION_PATTER.matcher(value);
             if (m.find()) {
-                this.retentionTime = Double.parseDouble(m.group(1));
+                return Double.parseDouble(m.group(1));
             } else {
                 warn("Cannot parse retention time: '" + value + "'");
+                return Double.NaN;
             }
         }
 
@@ -420,13 +439,14 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             }
         }
 
+        //todo ms1 annotations lost through copy cascade
         private void newSpectrum() {
             if (currentSpectrum.size() > 0) {
-                if (spectrumType==SPECTRUM_TYPE.MERGED_MS1) {
+                if (spectrumType == SPECTRUM_TYPE.MERGED_MS1) {
                     mergedMs1 = new SimpleSpectrum(currentSpectrum);
-                } else if (spectrumType==SPECTRUM_TYPE.MS1) {
+                } else if (spectrumType == SPECTRUM_TYPE.MS1) {
                     ms1spectra.add(new SimpleSpectrum(currentSpectrum));
-                } else if (spectrumType==SPECTRUM_TYPE.MS2)  {
+                } else if (spectrumType == SPECTRUM_TYPE.MS2) {
                     ms2spectra.add(new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2));
                 } else {
                     warn("Unknown spectrum type. Description must contain one of the following keywords '>[ms1|mergedms1|ms2|collision|energy]'. " +
@@ -447,15 +467,15 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
 
         private MolecularFormula[] parseFormulas(String formulas) {
-            if (formulas.contains(",")){
-                return Arrays.stream(formulas.split(",")).map(s->MolecularFormula.parse(s)).toArray(MolecularFormula[]::new);
-            } else{
+            if (formulas.contains(",")) {
+                return Arrays.stream(formulas.split(",")).map(s -> MolecularFormula.parse(s)).toArray(MolecularFormula[]::new);
+            } else {
                 return new MolecularFormula[]{MolecularFormula.parse(formulas)};
             }
         }
 
         private void parseIonizations(String ions) {
-            if (ions.contains(",")){
+            if (ions.contains(",")) {
                 //todo support ionizations with modifications as PossibleAdducts?
                 String[] arr = ions.split(",");
                 PrecursorIonType[] ionTypes = new PrecursorIonType[arr.length];
@@ -469,11 +489,11 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                             warn("Unknown ionization in: '" + s + "'");
                             return;
                         }
-                        if (!ion.hasNeitherAdductNorInsource()){
+                        if (!ion.hasNeitherAdductNorInsource()) {
                             warn("Currently only simple ionization (e.g. [M+Na]+) without additional modifications or insource fragments are supported.");
                         }
                         ionTypes[i] = ion;
-                        if (m.group(3)!=null && m.group(3).length()>0){
+                        if (m.group(3) != null && m.group(3).length() > 0) {
                             probabilities[i] = Double.parseDouble(m.group(3));
                         } else probabilities[i] = 1d;
                     } else {
@@ -488,7 +508,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                     ionModes.add(ionType, p);
                 }
                 annotations.put(PossibleIonModes.class, ionModes);
-            } else{
+            } else {
                 final PrecursorIonType ion = PeriodicTable.getInstance().ionByName(ions.trim());
                 if (ion == null) {
                     warn("Unknown ionization: '" + ions + "'");
@@ -498,41 +518,41 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             }
         }
 
-        private Ms2MutableMeasurementProfileDummy getMs2Profile(){
+        private Ms2MutableMeasurementProfileDummy getMs2Profile() {
             Ms2MutableMeasurementProfileDummy ms2Profile = (Ms2MutableMeasurementProfileDummy) annotations.get(Ms2MutableMeasurementProfileDummy.class);
-            if (ms2Profile==null){
+            if (ms2Profile == null) {
                 ms2Profile = new Ms2MutableMeasurementProfileDummy();
                 annotations.put(Ms2MutableMeasurementProfileDummy.class, ms2Profile);
             }
             return ms2Profile;
         }
 
-        private Ms1MutableMeasurementProfileDummy getMs1Profile(){
+        private Ms1MutableMeasurementProfileDummy getMs1Profile() {
             Ms1MutableMeasurementProfileDummy ms1Profile = (Ms1MutableMeasurementProfileDummy) annotations.get(Ms1MutableMeasurementProfileDummy.class);
-            if (ms1Profile==null){
+            if (ms1Profile == null) {
                 ms1Profile = new Ms1MutableMeasurementProfileDummy();
                 annotations.put(Ms1MutableMeasurementProfileDummy.class, ms1Profile);
             }
             return ms1Profile;
         }
 
-        private void postprocess(){
+        private void postprocess() {
             setMeasurementProfiles();
         }
 
-        private void setMeasurementProfiles(){
-            if (ppmMax==0 && ppmMaxMs2==0 && noiseMs2==0) return;
-            if (ppmMaxMs2==0) ppmMaxMs2 = ppmMax;
-            if (ppmMax!=0){
+        private void setMeasurementProfiles() {
+            if (ppmMax == 0 && ppmMaxMs2 == 0 && noiseMs2 == 0) return;
+            if (ppmMaxMs2 == 0) ppmMaxMs2 = ppmMax;
+            if (ppmMax != 0) {
                 Ms1MutableMeasurementProfileDummy ms1Profile = getMs1Profile();
                 ms1Profile.setAllowedMassDeviation(new Deviation(ppmMax));
             }
             Ms2MutableMeasurementProfileDummy ms2Profile = null;
-            if (ppmMaxMs2!=0){
+            if (ppmMaxMs2 != 0) {
                 ms2Profile = getMs2Profile();
                 ms2Profile.setAllowedMassDeviation(new Deviation(ppmMaxMs2));
             }
-            if (noiseMs2!=0){
+            if (noiseMs2 != 0) {
                 ms2Profile = getMs2Profile();
                 ms2Profile.setMedianNoiseIntensity(noiseMs2);
             }
