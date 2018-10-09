@@ -18,7 +18,7 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 
-public interface Spectrum<T extends Peak> extends Iterable<T>, Cloneable {
+public interface Spectrum<T extends Peak> extends Iterable<T>, Cloneable{
 
     double getMzAt(int index);
 
