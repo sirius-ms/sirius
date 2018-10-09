@@ -4,6 +4,7 @@ import de.isas.mztab2.io.MZTabParameter;
 import de.isas.mztab2.io.SiriusMZTabParameter;
 import de.isas.mztab2.io.SiriusWorkspaceMzTabNonValidatingWriter;
 import de.isas.mztab2.io.SiriusWorkspaceMzTabValidatingWriter;
+import de.isas.mztab2.io.formats.StudyVariableFormat;
 import de.isas.mztab2.model.*;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.chemdb.DatasourceService;
@@ -21,6 +22,7 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class MztabMExporter {
@@ -155,6 +157,12 @@ public class MztabMExporter {
                             .parameter(SiriusMZTabParameter.SOFTWARE_FINGER_ID)
                     );
                 }
+                smlItem.setDatabaseIdentifier(
+                        Arrays.stream(bestHit.getCandidate().getLinks())
+                                .filter(dbLink -> dbLink.name.equals(DatasourceService.Sources.PUBCHEM.name))
+                                .map(dbLink -> "CID:" + dbLink.id)
+                                .collect(Collectors.toList())
+                );
             } else {
                 smlItem.setReliability("4");
             }
@@ -206,10 +214,6 @@ public class MztabMExporter {
         smeItem.setChemicalName(bestHit.getCandidate().getName());
         smeItem.setInchi(bestHit.getCandidate().getInchi().in2D);
         smeItem.setSmiles(bestHit.getCandidate().getSmiles());
-        smeItem.setDatabaseIdentifier(
-                "CID:" + Arrays.stream(bestHit.getCandidate().getLinks()).filter(dbLink -> dbLink.name.equals(DatasourceService.Sources.PUBCHEM.name)).map(dbLink -> dbLink.id).collect(Collectors.joining("|"))
-        );
-
 
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_SCORE, String.valueOf(bestHit.getScore())));
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_CONFIDENCE, null));
@@ -284,12 +288,21 @@ public class MztabMExporter {
     private static Metadata buildMTDBlock() {
         Metadata mtd = new Metadata();
         mtd.mzTabVersion(MZTabConstants.VERSION_MZTAB_M); //this is the format not the library version
+        mtd.addCvItem(SiriusMZTabParameter.DEFAULT_CV);
 
 
         mtd.addSoftwareItem(new Software().id(1)
                 .parameter(SiriusMZTabParameter.SOFTWARE_SIRIUS)
         );
 
+        mtd.addDatabaseItem(SiriusMZTabParameter.NO_DATABASE.id(1));
+//        mtd.addDatabaseItem(SiriusMZTabParameter.DE_NOVO);
+        mtd.addDatabaseItem(SiriusMZTabParameter.PUBCHEM.id(2));
+
+//        mtd.addMsRunItem(new MsRun().addScanPolarityItem())
+//        MsRun r = new MsRun();
+//        Assay a = new Assay();
+//        StudyVariable s = new StudyVariable();
         return mtd;
     }
 }
