@@ -20,38 +20,27 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import gnu.trove.list.array.TDoubleArrayList;
 
-public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpectrum<P> implements MutableSpectrum<P>, Annotated<SpectrumAnnotation> {
+public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpectrum<P> implements MutableSpectrum<P> {
 
     protected TDoubleArrayList masses;
     protected TDoubleArrayList intensities;
 
-    protected Annotations<SpectrumAnnotation> annotations;
-
-    @Override
-    public Annotations<SpectrumAnnotation> annotations() {
-        return annotations;
-    }
-
     public <T extends Peak, S extends Spectrum<T>> BasicMutableSpectrum(S immutable) {
+        super(immutable);
         this.masses = new TDoubleArrayList(Spectrums.copyMasses(immutable));
         this.intensities = new TDoubleArrayList(Spectrums.copyIntensities(immutable));
-
-        try {//add annotations if available
-            final Annotated<SpectrumAnnotation> a = (Annotated<SpectrumAnnotation>) immutable;
-            annotations = a.annotations().clone();
-        } catch (ClassCastException ignored) {/*ignored*/}
     }
 
     public BasicMutableSpectrum() {
+        super();
         this.masses = new TDoubleArrayList();
         this.intensities = new TDoubleArrayList();
-        this.annotations = new Annotations<>();
     }
 
     public BasicMutableSpectrum(int size) {
+        super();
         this.masses = new TDoubleArrayList(size);
         this.intensities = new TDoubleArrayList(size);
-        this.annotations = new Annotations<>();
     }
 
     @Override
