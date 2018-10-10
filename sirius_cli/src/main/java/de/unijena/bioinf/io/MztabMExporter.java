@@ -4,9 +4,12 @@ import de.isas.mztab2.io.MZTabParameter;
 import de.isas.mztab2.io.SiriusMZTabParameter;
 import de.isas.mztab2.io.SiriusWorkspaceMzTabNonValidatingWriter;
 import de.isas.mztab2.io.SiriusWorkspaceMzTabValidatingWriter;
-import de.isas.mztab2.io.formats.StudyVariableFormat;
 import de.isas.mztab2.model.*;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
@@ -16,14 +19,14 @@ import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import uk.ac.ebi.pride.jmztab2.model.MZTabConstants;
+import uk.ac.ebi.pride.jmztab2.model.MZTabUtils;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static de.unijena.bioinf.io.JenaMSAdditionalKeys.*;
 
 public class MztabMExporter {
     private int smlID = 0;
@@ -34,14 +37,8 @@ public class MztabMExporter {
     private boolean fingerID = false;
 
     private final FingerIdResultWriter.Locations locations;
-
-//    List<SmallMoleculeSummary> summaries = new ArrayList<>();
-
-//    List<Set<SmallMoleculeSummary>> adductIons = new ArrayList<>();
-//    List<Set<Integer>> smfIDMapping = new ArrayList<>();
-
-//    TObjectIntMap<MolecularFormula> formulaToSummary;
-//    TObjectIntMap<String> inchiToSummary;
+    private final Map<String, MsRun> pathToRun = new HashMap<>();
+    private final List<Parameter> confidenceMeasures = new ArrayList<>();
 
 
     public MztabMExporter(@NotNull FingerIdResultWriter.Locations locations) {
@@ -58,38 +55,10 @@ public class MztabMExporter {
         setID(id);
     }
 
-    public MzTab getMztab() {
-        return mztab;
-    }
+//    public MzTab getMztab() {
+//        return mztab;
+//    }
 
-
-    /*public static void write(final Writer writer, List<IdentificationResult> results) throws IOException {
-        write(writer, results, false);
-    }
-
-    public static void write(final Writer writer, List<IdentificationResult> results, boolean validate) throws IOException {
-        final MzTab mztab = new MzTab();
-        //do the meta information
-        mztab.setMetadata(
-                buildMTDBlock()
-        );
-
-        int sflID = 0;
-        for (IdentificationResult result : results) {
-            //build identification list
-            final SmallMoleculeSummary smlItem = buildSMLItem(result);
-            smlItem.setSmlId(sflID++);
-
-            mztab.addSmallMoleculeSummaryItem(smlItem);
-
-            //build best hits or each CSI:FingerID search list
-//            buildSMFItem(smlItem,result);
-            //collect best k hits for each SME
-//            buildSMEBlock();
-        }
-
-        write(writer, mztab, validate);
-    }*/
 
     public static void write(final Writer writer, final MzTab mztab) throws IOException {
         write(writer, mztab, false);
@@ -144,31 +113,51 @@ public class MztabMExporter {
             mztab.addSmallMoleculeFeatureItem(smfItem);
 
 
+            final List<SpectraRef> spectraRefs = extractReferencesAnRuns(er);
+
             final SmallMoleculeEvidence smeSiriusItem = buildSiriusFormulaIDSMEItem(er, bestHitSource, smfItem);
+            smeSiriusItem.setSpectraRef(spectraRefs);
             mztab.addSmallMoleculeEvidenceItem(smeSiriusItem);
+
 
             if (bestHit != null) {
                 final SmallMoleculeEvidence smeFingerIDItem = buildFingerIDSMEItem(er, bestHitSource, bestHit, smfItem);
+                smeFingerIDItem.setSpectraRef(spectraRefs);
                 mztab.addSmallMoleculeEvidenceItem(smeFingerIDItem);
                 smlItem.setReliability("2");
+
+                smlItem.setBestIdConfidenceMeasure(SiriusMZTabParameter.CSI_FINGERID_CONFIDENCE_SCORE);
+                smlItem.setBestIdConfidenceValue(smeFingerIDItem.getIdConfidenceMeasure().get(0));
+
+
+                List<String> ids = Arrays.stream(bestHit.getCandidate().getLinks())
+                        .filter(dbLink -> dbLink.name.equals(DatasourceService.Sources.PUBCHEM.name)).map(dbLink -> dbLink.id).collect(Collectors.toList());
+
+                smlItem.setDatabaseIdentifier(
+                        ids.stream().map(dbLink -> "CID:" + dbLink)
+                                .collect(Collectors.toList())
+                );
+
+                smlItem.setUri(
+                        ids.stream().map(DatasourceService.Sources.PUBCHEM::getLink)
+                                .collect(Collectors.toList())
+                );
+
                 if (!fingerID) {
                     fingerID = true;
                     mztab.getMetadata().addSoftwareItem(new Software().id(2)
                             .parameter(SiriusMZTabParameter.SOFTWARE_FINGER_ID)
                     );
+
+                    mztab.getMetadata().addIdConfidenceMeasureItem(SiriusMZTabParameter.CSI_FINGERID_CONFIDENCE_SCORE);
                 }
-                smlItem.setDatabaseIdentifier(
-                        Arrays.stream(bestHit.getCandidate().getLinks())
-                                .filter(dbLink -> dbLink.name.equals(DatasourceService.Sources.PUBCHEM.name))
-                                .map(dbLink -> "CID:" + dbLink.id)
-                                .collect(Collectors.toList())
-                );
             } else {
                 smlItem.setReliability("4");
             }
             //todo add zodiac spectral library hits at some time
 //        final SmallMoleculeEvidence smeSpectralHitItem = buildSpectralLibSMEItem(bestHitSource, bestHit, smfItem);
 //        mztab.addSmallMoleculeEvidenceItem(smeSpectralHitItem);
+            mztab.getMetadata().setMsRun(new ArrayList<>(pathToRun.values()));
         }
     }
 
@@ -191,6 +180,7 @@ public class MztabMExporter {
 
         smeItem.setIdentificationMethod(SiriusMZTabParameter.SOFTWARE_SIRIUS);
         smeItem.setRank(bestHitSource.getRank());
+        smeItem.setEvidenceInputId(locations.makeMassIdentifier(er, bestHitSource));
 
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_SCORE, String.valueOf(bestHitSource.getScore())));
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_ISOTOPE_SCORE, String.valueOf(bestHitSource.getIsotopeScore())));
@@ -210,13 +200,18 @@ public class MztabMExporter {
         SmallMoleculeEvidence smeItem = buildSiriusSMEItem(er, bestHitSource, smfItem);
         smeItem.setIdentificationMethod(SiriusMZTabParameter.SOFTWARE_FINGER_ID);
         smeItem.setRank(1); //todo make exported result user definable in gui
+        smeItem.setEvidenceInputId(locations.makeFormulaIdentifier(er, bestHitSource));
 
         smeItem.setChemicalName(bestHit.getCandidate().getName());
         smeItem.setInchi(bestHit.getCandidate().getInchi().in2D);
         smeItem.setSmiles(bestHit.getCandidate().getSmiles());
 
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_SCORE, String.valueOf(bestHit.getScore())));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_CONFIDENCE, null));
+//        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_CONFIDENCE, null));
+
+        smeItem.addIdConfidenceMeasureItem(null);//todo add configdence score
+
+
 //        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.FINGERID_TANIMOTO_SIMILARITY, bestHit.getCandidate()));
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_FINGERPRINT_LOCATION, locations.FINGERID_FINGERPRINT.path(er, bestHitSource)));
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_CANDIDATE_LOCATION, locations.FINGERID_SUMMARY.path(er, bestHitSource)));
@@ -249,15 +244,17 @@ public class MztabMExporter {
         smfItem.setCharge(bestHitSource.getPrecursorIonType().getCharge());
         smfItem.setExpMassToCharge(er.getExperiment().getIonMass());
 
-//        smfItem.setRetentionTimeInSeconds();
-//        smfItem.setRetentionTimeInSecondsStart();
-//        smfItem.setRetentionTimeInSecondsEnd();
-
-        // custom Sirius fields?
-
+        //add retention time if available
+        RetentionTime rt = er.getExperiment().getAnnotation(RetentionTime.class);
+        if (rt != null) {
+            smfItem.setRetentionTimeInSeconds(rt.getRetentionTimeInSeconds());
+            if (!Double.isNaN(rt.getStartTime()))
+                smfItem.setRetentionTimeInSecondsStart(rt.getStartTime());
+            if (!Double.isNaN(rt.getEndTime()))
+                smfItem.setRetentionTimeInSecondsEnd(rt.getEndTime());
+        }
 
         return smfItem;
-
     }
 
     public void setTitle(String title) {
@@ -282,6 +279,16 @@ public class MztabMExporter {
             smlItem.addSmilesItem(bestHit.getCandidate().getSmiles());
         }
 
+        AdditionalFields fields = er.getExperiment().getAnnotation(AdditionalFields.class);
+        if (fields != null) {
+            if (fields.containsKey(FEATURE_ID)) {
+                smlItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.OPENMS_FEATURE_ID, fields.get(FEATURE_ID)));
+            }
+            if (fields.containsKey(CONSENSUS_ID)) {
+                smlItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.OPENMS_CONSENSUS_ID, fields.get(CONSENSUS_ID)));
+            }
+        }
+
         return smlItem;
     }
 
@@ -289,6 +296,7 @@ public class MztabMExporter {
         Metadata mtd = new Metadata();
         mtd.mzTabVersion(MZTabConstants.VERSION_MZTAB_M); //this is the format not the library version
         mtd.addCvItem(SiriusMZTabParameter.DEFAULT_CV);
+        mtd.setSmallMoleculeIdentificationReliability(SiriusMZTabParameter.SMALL_MOLECULE_IDENTIFICATION_RELIABILITY);
 
 
         mtd.addSoftwareItem(new Software().id(1)
@@ -299,10 +307,46 @@ public class MztabMExporter {
 //        mtd.addDatabaseItem(SiriusMZTabParameter.DE_NOVO);
         mtd.addDatabaseItem(SiriusMZTabParameter.PUBCHEM.id(2));
 
-//        mtd.addMsRunItem(new MsRun().addScanPolarityItem())
-//        MsRun r = new MsRun();
-//        Assay a = new Assay();
-//        StudyVariable s = new StudyVariable();
         return mtd;
+    }
+
+    public List<SpectraRef> extractReferencesAnRuns(@NotNull ExperimentResult re) {
+        List<Spectrum> specs = new ArrayList<>(re.getExperiment().getMs2Spectra().size() + re.getExperiment().getMs1Spectra().size());
+        specs.addAll(re.getExperiment().getMs1Spectra());
+        specs.addAll(re.getExperiment().getMs2Spectra());
+
+
+        return specs.stream().map((it) -> {
+            if (it instanceof AnnotatedSpectrum)
+                return (AdditionalFields) ((AnnotatedSpectrum) it).getAnnotation(AdditionalFields.class);
+
+            return null;
+        }).filter(Objects::nonNull).map((it) -> {
+            SpectraRef ref = new SpectraRef();
+            String specref = it.get(SPECTRUM_ID);
+            if (specref != null) {
+                if (specref.startsWith("ms_run[") && specref.contains("]:")) //todo pattern matcher
+                    specref = specref.split(":", 2)[1];
+                ref.setReference(specref);
+            }
+
+            String source = it.get(SOURCE_FILE);
+            if (source != null) {
+                MsRun run = pathToRun.get(source);
+                if (run == null) {
+                    run = new MsRun().id(pathToRun.size() + 1).location(source);
+                    pathToRun.put(source, run);
+                }
+
+                if (run.getFormat() == null && it.containsKey(SOURCE_FILE_FORMAT))
+                    run.setFormat(MZTabUtils.parseParam(it.get(SOURCE_FILE_FORMAT)));
+                if (run.getIdFormat() == null && it.containsKey(SPECTRUM_ID_FORMAT))
+                    run.setIdFormat(MZTabUtils.parseParam(it.get(SPECTRUM_ID_FORMAT)));
+
+                ref.setMsRun(run);
+            }
+
+            return ref;
+        }).collect(Collectors.toCollection(ArrayList::new));
     }
 }
