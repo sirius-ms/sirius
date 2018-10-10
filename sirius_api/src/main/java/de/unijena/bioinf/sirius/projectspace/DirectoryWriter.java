@@ -63,6 +63,14 @@ public class DirectoryWriter extends AbstractProjectWriter {
         public final Location SIRIUS_SPECTRA = new Location(null, "spectrum", ".ms");
         public final Location SIRIUS_SUMMARY = new Location(null, "summary_sirius", ".csv");
         public final Location SIRIUS_VERSION_FILE = new Location(null, "version", ".txt");
+
+        public String makeFormulaIdentifier(ExperimentResult ex, IdentificationResult result) {
+            return makeFileName(ex) + ":" + result.getMolecularFormula() + ":" + simplify(result.getPrecursorIonType());
+        }
+
+        public String makeMassIdentifier(ExperimentResult ex, IdentificationResult result) {
+            return makeFileName(ex) + ":" + ex.getExperiment().getIonMass() + ":" + simplify(result.getPrecursorIonType().withoutAdduct());
+        }
     }
 
 
