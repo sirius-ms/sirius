@@ -38,7 +38,6 @@ public class MztabMExporter {
 
     private final FingerIdResultWriter.Locations locations;
     private final Map<String, MsRun> pathToRun = new HashMap<>();
-    private final List<Parameter> confidenceMeasures = new ArrayList<>();
 
 
     public MztabMExporter(@NotNull FingerIdResultWriter.Locations locations) {
@@ -47,6 +46,10 @@ public class MztabMExporter {
         mztab.setMetadata(
                 buildMTDBlock()
         );
+
+        UUID id = UUID.randomUUID();
+        setID("SIRIUS-" + id.toString());
+        setTitle("SIRIUS Analysis Report: " + id.toString());
     }
 
     public MztabMExporter(@NotNull FingerIdResultWriter.Locations locations, String title, String id) {
@@ -54,10 +57,6 @@ public class MztabMExporter {
         setTitle(title);
         setID(id);
     }
-
-//    public MzTab getMztab() {
-//        return mztab;
-//    }
 
 
     public static void write(final Writer writer, final MzTab mztab) throws IOException {
@@ -258,12 +257,12 @@ public class MztabMExporter {
     }
 
     public void setTitle(String title) {
-        mztab.getMetadata().title("SIRIUS Workspace Summary: " + title);
+        mztab.getMetadata().setTitle(title);
 
     }
 
     public void setID(String ID) {
-        mztab.getMetadata().mzTabID(ID); //todo add workspace file parameterName here
+        mztab.getMetadata().setMzTabID(ID); //todo add workspace file parameterName here
     }
 
     private SmallMoleculeSummary buildSMLItem(@NotNull ExperimentResult er, @NotNull IdentificationResult bestHitSource, @Nullable Scored<FingerprintCandidate> bestHit) {
@@ -307,6 +306,7 @@ public class MztabMExporter {
 //        mtd.addDatabaseItem(SiriusMZTabParameter.DE_NOVO);
         mtd.addDatabaseItem(SiriusMZTabParameter.PUBCHEM.id(2));
 
+
         return mtd;
     }
 
@@ -324,9 +324,17 @@ public class MztabMExporter {
         }).filter(Objects::nonNull).map((it) -> {
             SpectraRef ref = new SpectraRef();
             String specref = it.get(SPECTRUM_ID);
+            Integer runID = null;
             if (specref != null) {
-                if (specref.startsWith("ms_run[") && specref.contains("]:")) //todo pattern matcher
-                    specref = specref.split(":", 2)[1];
+                if (specref.startsWith("ms_run[") && specref.contains("]:")) { //todo pattern matcher
+                    final String[] s = specref.split(":", 2);
+                    specref = s[1];
+                    try {
+                        runID = Integer.parseInt(s[0].substring(s[0].indexOf('[') + 1, s[0].indexOf(']')));
+                    } catch (NumberFormatException e) {
+                        runID = null;
+                    }
+                }
                 ref.setReference(specref);
             }
 
@@ -334,7 +342,9 @@ public class MztabMExporter {
             if (source != null) {
                 MsRun run = pathToRun.get(source);
                 if (run == null) {
-                    run = new MsRun().id(pathToRun.size() + 1).location(source);
+                    run = new MsRun()
+                            .id(runID != null ? runID : pathToRun.size() + 1)
+                            .location(source);
                     pathToRun.put(source, run);
                 }
 
@@ -342,6 +352,10 @@ public class MztabMExporter {
                     run.setFormat(MZTabUtils.parseParam(it.get(SOURCE_FILE_FORMAT)));
                 if (run.getIdFormat() == null && it.containsKey(SPECTRUM_ID_FORMAT))
                     run.setIdFormat(MZTabUtils.parseParam(it.get(SPECTRUM_ID_FORMAT)));
+
+                final Parameter polarity = SiriusMZTabParameter.getScanPolarity(re.getExperiment().getPrecursorIonType());
+                if (polarity != null && (run.getScanPolarity() == null || !run.getScanPolarity().contains(polarity)))
+                    run.addScanPolarityItem(polarity);
 
                 ref.setMsRun(run);
             }

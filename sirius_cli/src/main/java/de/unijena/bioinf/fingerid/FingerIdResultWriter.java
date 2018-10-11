@@ -166,8 +166,6 @@ public class FingerIdResultWriter extends DirectoryWriter {
             writeSummaryCSV();
             System.out.println("Writing Summary mztab");
             write(locations().WORKSPACE_SUMMARY.fileName(), w -> {
-                mztabMExporter.setTitle("report"); //todo allow user to set parameterName
-                mztabMExporter.setID("report");//todo allow user to set parameterName
                 mztabMExporter.write(w);
             });
         }
