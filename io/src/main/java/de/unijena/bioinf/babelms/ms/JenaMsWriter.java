@@ -21,6 +21,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.babelms.DataWriter;
 
@@ -70,6 +71,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         }
         writer.newLine();
         writeMs1(writer, data.getMergedMs1Spectrum(), true);
+
         for (Spectrum spec : data.getMs1Spectra()) {
             writeMs1(writer, spec, false);
         }
@@ -83,12 +85,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
             if (isMergedSpectrum) writer.write(">ms1merged");
             else writer.write(">ms1peaks");
             writer.newLine();
-            for (int k = 0; k < spec.size(); ++k) {
-                writer.write(String.valueOf(spec.getMzAt(k)));
-                writer.write(" ");
-                writer.write(String.valueOf(spec.getIntensityAt(k)));
-                writer.newLine();
-            }
+            Spectrums.writePeaks(writer,spec);
             writer.newLine();
         }
     }
@@ -102,13 +99,22 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
                 writer.write(spec.getCollisionEnergy().toString());
             }
             writer.newLine();
-            for (int k = 0; k < spec.size(); ++k) {
-                writer.write(String.valueOf(spec.getMzAt(k)));
-                writer.write(" ");
-                writer.write(String.valueOf(spec.getIntensityAt(k)));
-                writer.newLine();
-            }
+            writeSpectraLevelComments(writer,spec);
+            Spectrums.writePeaks(writer,spec);
             writer.newLine();
+        }
+    }
+
+
+    private void writeSpectraLevelComments(BufferedWriter writer, Spectrum spec) throws IOException{
+        if (spec instanceof AnnotatedSpectrum){
+            final AdditionalFields fields = (AdditionalFields) ((AnnotatedSpectrum) spec).getAnnotation(AdditionalFields.class);
+            if (fields != null) {
+                for (Map.Entry<String, String> e : fields.entrySet()) {
+                    writer.write("##" + e.getKey() + " " + e.getValue());
+                    writer.newLine();
+                }
+            }
         }
     }
 
