@@ -85,6 +85,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
             if (isMergedSpectrum) writer.write(">ms1merged");
             else writer.write(">ms1peaks");
             writer.newLine();
+            writeSpectraLevelComments(writer,spec);
             Spectrums.writePeaks(writer,spec);
             writer.newLine();
         }
