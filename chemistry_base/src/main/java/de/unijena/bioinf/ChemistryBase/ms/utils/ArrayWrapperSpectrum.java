@@ -34,7 +34,11 @@ public class ArrayWrapperSpectrum extends AbstractSpectrum<Peak> implements Muta
     private final double[] mzs, ints;
 
     public <P extends Peak, S extends Spectrum<P>> ArrayWrapperSpectrum(S s) {
-        this(new double[s.size()], new double[s.size()]);
+        super(s);
+
+        this.mzs = new double[s.size()];
+        this.ints = new double[s.size()];
+
         for (int i = 0; i < s.size(); ++i) {
             mzs[i] = s.getMzAt(i);
             ints[i] = s.getIntensityAt(i);
@@ -42,6 +46,7 @@ public class ArrayWrapperSpectrum extends AbstractSpectrum<Peak> implements Muta
     }
 
     public ArrayWrapperSpectrum(double[] mzs, double[] ints) {
+        super();
         if (mzs.length != ints.length) throw new IllegalArgumentException("Size of masses and intensities differs");
         this.mzs = mzs;
         this.ints = ints;

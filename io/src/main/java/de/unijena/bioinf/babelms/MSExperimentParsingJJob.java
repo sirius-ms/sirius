@@ -41,7 +41,7 @@ public class MSExperimentParsingJJob extends BasicMasterJJob<List<Ms2Experiment>
                 } else {
                     results.addAll(r);
                 }
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 LOG().error("Error parsing file (" + inputFiles.get(fileindex.get()).getName() + "). No spectra resurned", e);
             }
             fileindex.incrementAndGet();

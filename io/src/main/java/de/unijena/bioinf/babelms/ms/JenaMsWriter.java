@@ -21,6 +21,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.babelms.DataWriter;
 
@@ -30,41 +31,47 @@ import java.util.Map;
 
 public class JenaMsWriter implements DataWriter<Ms2Experiment> {
     @Override
-    public void write(BufferedWriter writer, Ms2Experiment data) throws IOException{
+    public void write(BufferedWriter writer, Ms2Experiment data) throws IOException {
         writer.write(">compound ");
-        writer.write(data.getName() == null ? "unknown" : data.getName()); writer.newLine();
+        writer.write(data.getName() == null ? "unknown" : data.getName());
+        writer.newLine();
         writeIfAvailable(writer, ">formula", data.getMolecularFormula());
-        writeIf(writer, ">parentmass", String.valueOf(data.getIonMass()), data.getIonMass()!=0d);
+        writeIf(writer, ">parentmass", String.valueOf(data.getIonMass()), data.getIonMass() != 0d);
         writeIfAvailable(writer, ">ionization", data.getPrecursorIonType().toString());
         final InChI i = data.getAnnotation(InChI.class);
-        if (i!=null) {
+        if (i != null) {
             writeIfAvailable(writer, ">InChI", i.in2D);
             writeIfAvailable(writer, ">InChIKey", i.key);
         }
         final Smiles sm = data.getAnnotation(Smiles.class);
-        writeIfAvailable(writer, ">smarts", sm==null ? null : sm.smiles);
+        writeIfAvailable(writer, ">smarts", sm == null ? null : sm.smiles);
         final Splash splash = data.getAnnotation(Splash.class);
-        writeIfAvailable(writer, ">splash", splash==null ? null : splash.getSplash());
+        writeIfAvailable(writer, ">splash", splash == null ? null : splash.getSplash());
         final MsInstrumentation instrumentation = data.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown);
         writer.write(">instrumentation " + instrumentation.description());
         writer.newLine();
         writeIfAvailable(writer, ">source", data.getSource());
         Index index = data.getAnnotation(Index.class);
-        if (index!=null){
+        if (index != null) {
             write(writer, ">index", String.valueOf(index.index));
         }
         writeIfAvailable(writer, ">quality", data.getAnnotation(CompoundQuality.class));
         final RetentionTime retentionTime = data.getAnnotation(RetentionTime.class);
-        if (retentionTime!=null){
-            write(writer, ">retention", String.valueOf(retentionTime.getMiddleTime())+"s");
+        if (retentionTime != null) {
+            write(writer, ">rt", String.valueOf(retentionTime.getMiddleTime()) + "s");
+            if (!Double.isNaN(retentionTime.getStartTime()) && !Double.isNaN(retentionTime.getEndTime())) {
+                write(writer, ">rt_start", String.valueOf(retentionTime.getStartTime()) + "s");
+                write(writer, ">rt_end", String.valueOf(retentionTime.getEndTime()) + "s");
+            }
         }
-        final Map<String,String> arbitraryKeys = data.getAnnotation(Ms2ExperimentAdditionalFields.class, new Ms2ExperimentAdditionalFields());
-        for (Map.Entry<String,String> e : arbitraryKeys.entrySet()) {
+        final Map<String, String> arbitraryKeys = data.getAnnotation(AdditionalFields.class, new AdditionalFields());
+        for (Map.Entry<String, String> e : arbitraryKeys.entrySet()) {
             writer.write("#" + e.getKey() + " " + e.getValue());
             writer.newLine();
         }
         writer.newLine();
         writeMs1(writer, data.getMergedMs1Spectrum(), true);
+
         for (Spectrum spec : data.getMs1Spectra()) {
             writeMs1(writer, spec, false);
         }
@@ -73,36 +80,42 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         }
     }
 
-    private void writeMs1(BufferedWriter writer, Spectrum spec, boolean isMergedSpectrum) throws IOException{
-        if (spec != null && spec.size()>0) {
+    private void writeMs1(BufferedWriter writer, Spectrum spec, boolean isMergedSpectrum) throws IOException {
+        if (spec != null && spec.size() > 0) {
             if (isMergedSpectrum) writer.write(">ms1merged");
             else writer.write(">ms1peaks");
             writer.newLine();
-            for (int k=0; k < spec.size(); ++k) {
-                writer.write(String.valueOf(spec.getMzAt(k)));
-                writer.write(" ");
-                writer.write(String.valueOf(spec.getIntensityAt(k)));
-                writer.newLine();
-            }
+            writeSpectraLevelComments(writer,spec);
+            Spectrums.writePeaks(writer,spec);
             writer.newLine();
         }
     }
-    private void writeMs2(BufferedWriter writer, Ms2Spectrum spec) throws IOException{
-        if (spec != null && spec.size()>0) {
-            if (spec.getCollisionEnergy()==null || spec.getCollisionEnergy().equals(CollisionEnergy.none())) {
+
+    private void writeMs2(BufferedWriter writer, Ms2Spectrum spec) throws IOException {
+        if (spec != null && spec.size() > 0) {
+            if (spec.getCollisionEnergy() == null || spec.getCollisionEnergy().equals(CollisionEnergy.none())) {
                 writer.write(">ms2peaks");
             } else {
                 writer.write(">collision ");
                 writer.write(spec.getCollisionEnergy().toString());
             }
             writer.newLine();
-            for (int k=0; k < spec.size(); ++k) {
-                writer.write(String.valueOf(spec.getMzAt(k)));
-                writer.write(" ");
-                writer.write(String.valueOf(spec.getIntensityAt(k)));
-                writer.newLine();
-            }
+            writeSpectraLevelComments(writer,spec);
+            Spectrums.writePeaks(writer,spec);
             writer.newLine();
+        }
+    }
+
+
+    private void writeSpectraLevelComments(BufferedWriter writer, Spectrum spec) throws IOException{
+        if (spec instanceof AnnotatedSpectrum){
+            final AdditionalFields fields = (AdditionalFields) ((AnnotatedSpectrum) spec).getAnnotation(AdditionalFields.class);
+            if (fields != null) {
+                for (Map.Entry<String, String> e : fields.entrySet()) {
+                    writer.write("##" + e.getKey() + " " + e.getValue());
+                    writer.newLine();
+                }
+            }
         }
     }
 
@@ -122,7 +135,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         }
     }
 
-    private void writeIfAvailable(BufferedWriter writer, String s, Object o) throws IOException{
+    private void writeIfAvailable(BufferedWriter writer, String s, Object o) throws IOException {
         if (o != null) {
             writer.write(s);
             writer.write(' ');
