@@ -17,13 +17,40 @@
  */
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public abstract class AbstractSpectrum<T extends Peak> implements Spectrum<T> {
+public abstract class AbstractSpectrum<T extends Peak> implements AnnotatedSpectrum<T> {
+
+    protected final Annotations<SpectrumAnnotation> annotations;
+
+    @Override
+    public Annotations<SpectrumAnnotation> annotations() {
+        return annotations;
+    }
+
+    protected AbstractSpectrum() {
+        this(new Annotations<>());
+    }
+
+    protected AbstractSpectrum(Annotations<SpectrumAnnotation> annotations) {
+        this.annotations = annotations;
+    }
+
+    protected  <T extends Peak, S extends Spectrum<T>> AbstractSpectrum(S immutable) {
+        Annotations<SpectrumAnnotation> anno = new Annotations<>();
+        try {//add annotations if available
+            final Annotated<SpectrumAnnotation> a = (Annotated<SpectrumAnnotation>) immutable;
+            anno = a.annotations().clone();
+        } catch (ClassCastException ignored) {
+            //ignored
+        } finally {
+            annotations = anno;
+        }
+    }
+
 
     @Override
     public Iterator<T> iterator() {

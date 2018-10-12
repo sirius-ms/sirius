@@ -314,7 +314,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         final long time = System.currentTimeMillis();
         final int elapsedTime = (int) ((time - startTime) / 1000);
         restTime = Math.min(restTime, secondsPerInstance - elapsedTime);
-        if (restTime <= 0) throw new TimeoutException();
+        if (restTime <= 0) throw new TimeoutException("FasterTreeComputationInstance canceled by timeout!");
     }
 
     private class RecalibrationJob extends BasicJJob<ExactResult> {
