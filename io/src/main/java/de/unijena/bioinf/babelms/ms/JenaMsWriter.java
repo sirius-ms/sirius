@@ -59,7 +59,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         final RetentionTime retentionTime = data.getAnnotation(RetentionTime.class);
         if (retentionTime != null) {
             write(writer, ">rt", String.valueOf(retentionTime.getMiddleTime()) + "s");
-            if (!Double.isNaN(retentionTime.getStartTime()) && !Double.isNaN(retentionTime.getEndTime())) {
+            if (retentionTime.isInterval()) {
                 write(writer, ">rt_start", String.valueOf(retentionTime.getStartTime()) + "s");
                 write(writer, ">rt_end", String.valueOf(retentionTime.getEndTime()) + "s");
             }
