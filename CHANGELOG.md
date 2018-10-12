@@ -16,7 +16,7 @@
 
 -   Improved error messaged    
 
--   ImprovSed stability and load balancing of the CSI:FingerID webservice
+-   Improved stability and load balancing of the CSI:FingerID webservice
 
 -   Several bug fixes
     

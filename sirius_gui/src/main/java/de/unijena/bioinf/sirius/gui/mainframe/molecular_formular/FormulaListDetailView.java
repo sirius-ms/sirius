@@ -11,16 +11,13 @@ import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.*;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
@@ -35,13 +32,15 @@ import java.util.Map;
 public class FormulaListDetailView extends ActionListDetailView<SiriusResultElement, ExperimentContainer, FormulaList> {
     //    private static final int[] BAR_COLS = {2, 3, 4};
     private final ActionTable<SiriusResultElement> table;
-    //private final ConnectedSelection<SiriusResultElement> selectionConnection;
+    private final ConnectedSelection<SiriusResultElement> selectionConnection; //this object synchronizes selection models and is not obsolete
 
     private SortedList<SiriusResultElement> sortedSource;
     private final SiriusResultTableFormat tableFormat;
 
     public FormulaListDetailView(final FormulaList source) {
         super(source);
+        //todo dirty hack until search fied bug is fixed
+        getNorth().remove(searchField);
 
         tableFormat = new SiriusResultTableFormat(source.scoreStats);
 
@@ -49,15 +48,17 @@ public class FormulaListDetailView extends ActionListDetailView<SiriusResultElem
 
         table.setSelectionModel(filteredSelectionModel);
         filteredSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        //selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), filteredSelectionModel, source.getElementList(), sortedSource);
+
+        //sync selections models
+        selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), filteredSelectionModel, source.getElementList(), sortedSource);
 
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumnIndex()));
 
-        table.getColumnModel().getColumn(2).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.scoreStats,true));
-        table.getColumnModel().getColumn(3).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.isotopeScoreStats,false));
-        table.getColumnModel().getColumn(4).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.treeScoreStats,false));
-        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.explainedPeaks,false,true,new DecimalFormat("#0")));
-        table.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(),0,1,true));
+        table.getColumnModel().getColumn(3).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.scoreStats, true));
+        table.getColumnModel().getColumn(4).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.isotopeScoreStats, false));
+        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.treeScoreStats, false));
+        table.getColumnModel().getColumn(6).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.explainedPeaks, false, true, new DecimalFormat("#0")));
+        table.getColumnModel().getColumn(7).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(), 0, 1, true));
 
         table.addMouseListener(new MouseListener() {
             @Override
@@ -109,12 +110,8 @@ public class FormulaListDetailView extends ActionListDetailView<SiriusResultElem
 
     @Override
     protected EventList<MatcherEditor<SiriusResultElement>> getSearchFieldMatchers() {
-
-        //TODO:dirty hack for ticket 11, fleisch must fix properly(maybe)
-        SiriusResultTableFormat tableFormatLocal = new SiriusResultTableFormat(source.scoreStats);
-
         return GlazedLists.eventListOf(
-                (MatcherEditor<SiriusResultElement>) new StringMatcherEditor<>(tableFormatLocal, searchField.textField)
+                (MatcherEditor<SiriusResultElement>) new StringMatcherEditor<>(tableFormat, searchField.textField)
         );
     }
 
@@ -154,28 +151,25 @@ public class FormulaListDetailView extends ActionListDetailView<SiriusResultElem
         }
 
         private ListSelectionListener createAndAddListener(final DefaultEventSelectionModel<T> notifier, final DefaultEventSelectionModel<T> listener, final EventList<T> listenerList) {
-            ListSelectionListener l = new ListSelectionListener() {
-                @Override
-                public void valueChanged(ListSelectionEvent e) {
-                    if (notifier.isSelectionEmpty()) {
-                        if (!listener.isSelectionEmpty())
-                            listener.clearSelection();
-                        return;
-                    } else {
-                        EventList<T> s1 = notifier.getSelected();
-                        T s = s1.get(0);
-                        if (!listener.isSelectionEmpty()) {
-                            EventList<T> s2 = listener.getSelected();
-                            if ((s1.size() == 1 || s2.size() == 1) && (s == s2.get(0))) {
-                                return;
-                            }
+            ListSelectionListener l = e -> {
+                if (notifier.isSelectionEmpty()) {
+                    if (!listener.isSelectionEmpty())
+                        listener.clearSelection();
+                    return;
+                } else {
+                    EventList<T> s1 = notifier.getSelected();
+                    T s = s1.get(0);
+                    if (!listener.isSelectionEmpty()) {
+                        EventList<T> s2 = listener.getSelected();
+                        if ((s1.size() == 1 || s2.size() == 1) && (s == s2.get(0))) {
+                            return;
                         }
-
-                        listener.removeListSelectionListener(modelTListener.get(listener));
-                        int i = listenerList.indexOf(s);
-                        listener.setSelectionInterval(i, i);
-                        listener.addListSelectionListener(modelTListener.get(listener));
                     }
+
+                    listener.removeListSelectionListener(modelTListener.get(listener));
+                    int i = listenerList.indexOf(s);
+                    listener.setSelectionInterval(i, i);
+                    listener.addListSelectionListener(modelTListener.get(listener));
                 }
             };
             notifier.addListSelectionListener(l);

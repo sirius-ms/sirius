@@ -78,6 +78,10 @@ public class SiriusResultElement extends AbstractEDTBean implements Comparable<S
         return resultElement.getScore();
     }
 
+    public PrecursorIonType getPrecursorIonType() {
+        return resultElement.getPrecursorIonType();
+    }
+
     public MolecularFormula getMolecularFormula() {
         return resultElement.getMolecularFormula();
     }
@@ -137,32 +141,19 @@ public class SiriusResultElement extends AbstractEDTBean implements Comparable<S
         }
     }
 
-    public double getExplainedIntensityRatio() {
-        final TreeScoring treeScoring = getResult().getRawTree().getAnnotationOrNull(TreeScoring.class);
-        if (treeScoring != null)
-            return treeScoring.getExplainedIntensity();
-        else
-            return Double.NaN;
-
-    }
-
     public double getExplainedPeaksRatio() {
-        final TreeScoring treeScoring = getResult().getRawTree().getAnnotationOrNull(TreeScoring.class);
-        if (treeScoring != null)
-            return treeScoring.getRatioOfExplainedPeaks();
-        else
-            return Double.NaN;
+        return resultElement.getExplainedPeaksRatio();
     }
 
     public double getNumOfExplainedPeaks() {
-        final FTree tree = getResult().getRawTree();
-        if (tree != null)
-            return tree.numberOfVertices();
-        else
-            return Double.NaN;
+        return resultElement.getNumOfExplainedPeaks();
+    }
+
+    public double getExplainedIntensityRatio() {
+        return resultElement.getExplainedIntensityRatio();
     }
 
     public double getNumberOfExplainablePeaks() {
-        return  getNumOfExplainedPeaks() / getExplainedPeaksRatio();
+        return resultElement.getNumberOfExplainablePeaks();
     }
 }
