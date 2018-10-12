@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
  */
 public enum BioTransformation {
 
+    //MyCompoundID and Rogers
     C6H12N4O ("Arginine",new String[]{"Rogers"}),
     C4H6N2O2 ("Asparagine",new String[]{"Rogers"}),
     C4H5NO3 ("Aspartic Acid",new String[]{"Rogers"}),

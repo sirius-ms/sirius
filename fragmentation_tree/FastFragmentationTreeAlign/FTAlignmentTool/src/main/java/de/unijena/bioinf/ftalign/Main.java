@@ -164,7 +164,7 @@ public class Main {
     /**
      * usage:
      * ftaligntool [options] [--align]=dataset1 [--with=dataset2]
-     * <p/>
+     *
      * options:
      * -m[atrix][=file] : prints results as matrix
      * -c[sv][=file] : prints results as csv
