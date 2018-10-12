@@ -7,8 +7,6 @@ package de.unijena.bioinf.sirius.core;
 
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
-import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.sirius.net.ProxyManager;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

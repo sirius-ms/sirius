@@ -165,8 +165,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
     public void constructSpectraListPopupMenu() {
         spPopMenu = new JPopupMenu();
-        addMI = new JMenuItem("Add experiment(s)", Icons.LIST_ADD_16);
-        removeMI = new JMenuItem("Remove experiment(s)", Icons.LIST_REMOVE_16);
+        addMI = new JMenuItem("Add compound(s)", Icons.LIST_ADD_16);
+        removeMI = new JMenuItem("Remove compound(s)", Icons.LIST_REMOVE_16);
 
         addMI.addActionListener(this);
         removeMI.addActionListener(this);

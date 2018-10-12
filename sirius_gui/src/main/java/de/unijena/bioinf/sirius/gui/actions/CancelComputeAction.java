@@ -25,7 +25,7 @@ public class CancelComputeAction extends AbstractAction {
         super("Cancel Computation");
         putValue(Action.SMALL_ICON, Icons.CANCEL_16);
         putValue(Action.LARGE_ICON_KEY, Icons.CANCEL_32);
-        putValue(Action.SHORT_DESCRIPTION, "Cancel the running Computation(s) of the selected Experiment(s)");
+        putValue(Action.SHORT_DESCRIPTION, "Cancel the running Computation(s) of the selected compound(s)");
 
         setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty() && MF.getCompoundListSelectionModel().getSelected().get(0).isComputing());
 

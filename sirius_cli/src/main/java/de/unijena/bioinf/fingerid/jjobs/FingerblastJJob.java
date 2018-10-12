@@ -26,6 +26,8 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
     private final CompoundCandidateChargeState chargeState;
     private final TrainingStructuresSet trainingStructuresSet;
     protected List<FingerprintCandidate> searchList;
+    private List<FingerprintCandidate> unfilteredSearchList;
+    private List<Scored<FingerprintCandidate>> unfilteredScored;
 
     public FingerblastJJob(Fingerblast fingerblast, BioFilter bioFilter, long flag, CompoundCandidateChargeState chargeState, TrainingStructuresSet trainingStructuresSet) {
         this(fingerblast, bioFilter, flag, null, null, null, chargeState, trainingStructuresSet);
@@ -59,12 +61,27 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
         }
     }
 
+
+    private void computeUnfiltered() throws Exception{
+
+        unfilteredScored = fingerblast.score(unfilteredSearchList,fp);
+        Collections.sort(unfilteredScored,Scored.desc());
+
+
+    }
+
+    public List<Scored<FingerprintCandidate>> getUnfilteredList(){
+
+        return unfilteredScored;
+    }
+
     @Override
     protected FingerIdResult compute() throws Exception {
         initInput();
         final ArrayList<FingerprintCandidate> searchList = new ArrayList<>(this.searchList.size());
         for (FingerprintCandidate c : this.searchList) {
             postprocessCandidate(c);
+            unfilteredSearchList.add(c);
             if ((!filter || flag == 0 || (c.getBitset() & flag) != 0))
                 searchList.add(c);
         }
@@ -73,6 +90,12 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
         final List<Scored<FingerprintCandidate>> cds = fingerblast.score(searchList, fp);
 
         Collections.sort(cds, Scored.desc());
+
+        if(unfilteredSearchList.size()!=searchList.size()){
+            computeUnfiltered();
+        }else {
+            unfilteredScored=cds;
+        }
 
         return new FingerIdResult(cds, 0d, fp, this.resolvedTree);
     }

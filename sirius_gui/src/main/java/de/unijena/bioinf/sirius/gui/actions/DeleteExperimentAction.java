@@ -51,7 +51,7 @@ public class DeleteExperimentAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!PropertyManager.getBooleanProperty(NEVER_ASK_AGAIN_KEY)) {
-            CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(MF, "When removing the selected experiment(s) you will loose all computed identification results?", NEVER_ASK_AGAIN_KEY);
+            CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(MF, "When removing the selected compound(s) you will loose all computed identification results?", NEVER_ASK_AGAIN_KEY);
             CloseDialogReturnValue val = diag.getReturnValue();
             if (val == CloseDialogReturnValue.abort) return;
         }
