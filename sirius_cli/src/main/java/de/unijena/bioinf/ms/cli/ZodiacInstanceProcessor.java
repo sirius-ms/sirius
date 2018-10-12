@@ -530,7 +530,8 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
     public Map<String, ExperimentResult> createMap(List<ExperimentResult> experimentResults){
         Map<String, ExperimentResult> map = new HashMap<>();
         for (ExperimentResult experimentResult : experimentResults) {
-            map.put(experimentResult.getExperimentName(), experimentResult);
+            //todo use something else as id since name does not have to be unique
+            map.put(experimentResult.getExperiment().getName(), experimentResult);
         }
         return map;
     }
