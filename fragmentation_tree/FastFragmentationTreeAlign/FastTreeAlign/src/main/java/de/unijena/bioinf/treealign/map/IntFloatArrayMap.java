@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 /**
- * implements a map int => float as array.
+ * implements a map int to float as array.
  * The memory usage for values depends on the maximum number of possible entries.
  */
 public class IntFloatArrayMap implements IntFloatMap {

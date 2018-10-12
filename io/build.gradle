@@ -3,13 +3,5 @@ dependencies {
 
     compile group: 'com.google.code.gson', name: 'gson', version: "$gson_version"
     compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
-/*
-    compile group: "uk.ac.ebi.jmzml", name: "jmzml", version: "1.7.7"
-
-
-    compile "uk.ac.ebi.pride:jmztab-modular-model:3.0.6"
-    compile "uk.ac.ebi.pride:jmztab-modular-util:3.0.6"
-    compile "uk.ac.ebi.pride:jmztab-modular-converters:3.0.6"
-*/
     compile project(':chemistry_base')
 }
