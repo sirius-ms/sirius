@@ -88,21 +88,6 @@ public class UtilsCLI {
             System.exit(0);
         }
 
-//
-//
-//        if (options.getPPMMax()==null){
-//            System.out.println("Please, set ppm-max");
-//            System.exit(0);
-//        }
-//        if (options.getRTMax()==null){
-//            System.out.println("Please, set rt-max");
-//            System.exit(0);
-//        }
-//        if (options.getMinCosine()==null){
-//            System.out.println("Please, set min-cosine");
-//            System.exit(0);
-//        }
-
         List<String> input = options.getInput();
         List<File> inputFiles = input.stream().map(File::new).collect(Collectors.toList());
 
