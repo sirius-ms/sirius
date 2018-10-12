@@ -165,9 +165,7 @@ public class FingerIdResultWriter extends DirectoryWriter {
         if (isAllowed(FingerIdResult.CANDIDATE_LISTS) && topHits.size() > 0) {
             writeSummaryCSV();
             System.out.println("Writing Summary mztab");
-            write(locations().WORKSPACE_SUMMARY.fileName(), w -> {
-                mztabMExporter.write(w);
-            });
+            write(locations().WORKSPACE_SUMMARY.fileName(), w -> mztabMExporter.write(w));
         }
 
         /*
