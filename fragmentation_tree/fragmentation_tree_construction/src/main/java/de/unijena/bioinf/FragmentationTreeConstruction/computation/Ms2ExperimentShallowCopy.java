@@ -67,6 +67,11 @@ class Ms2ExperimentShallowCopy implements Ms2Experiment {
     }
 
     @Override
+    public Annotations<Ms2ExperimentAnnotation> annotations() {
+        return experiment.annotations();
+    }
+
+    @Override
     public Iterator<Map.Entry<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation>> forEachAnnotation() {
         return experiment.forEachAnnotation();
     }

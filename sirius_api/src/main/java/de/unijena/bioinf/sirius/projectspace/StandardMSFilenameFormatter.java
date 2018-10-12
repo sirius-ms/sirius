@@ -1,7 +1,7 @@
 package de.unijena.bioinf.sirius.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2ExperimentAdditionalFields;
+import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
@@ -141,7 +141,7 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
         @Override
         public String format(ExperimentResult experimentResult, int index) {
             Ms2Experiment experiment = experimentResult.getExperiment();
-            Map<String, String> map = experiment.getAnnotation(Ms2ExperimentAdditionalFields.class);
+            Map<String, String> map = experiment.getAnnotation(AdditionalFields.class);
             if (map==null){
                 throw new RuntimeException("Cannot format compound file name for "+experiment.getName()+": no annotations given.");
             }

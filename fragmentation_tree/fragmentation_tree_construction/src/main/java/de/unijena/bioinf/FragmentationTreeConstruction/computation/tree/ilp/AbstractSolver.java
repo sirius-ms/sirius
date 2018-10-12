@@ -178,7 +178,7 @@ abstract public class AbstractSolver {
                     throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
                 return new TreeBuilder.Result(tree, true, c);
             } else if (c == TreeBuilder.AbortReason.TIMEOUT) {
-                throw new TimeoutException();
+                throw new TimeoutException("ILP Solver canceled by Timeout!");
             } else return new TreeBuilder.Result(null, false, c);
         } catch (Exception e) {
             if (e instanceof TimeoutException) throw (TimeoutException) e;

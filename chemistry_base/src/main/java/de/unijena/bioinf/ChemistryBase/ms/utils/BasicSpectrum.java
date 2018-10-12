@@ -26,6 +26,7 @@ public abstract class BasicSpectrum<P extends Peak> extends AbstractSpectrum<P> 
 	protected final double[] intensities;
 	
 	public BasicSpectrum(double[] masses, double[] intensities) {
+		super();
 		if (masses.length != intensities.length)
 			throw new IllegalArgumentException("size of masses and intensities differ");
 		this.masses = masses.clone();
@@ -33,7 +34,9 @@ public abstract class BasicSpectrum<P extends Peak> extends AbstractSpectrum<P> 
 	}
 	
 	public <T extends Peak, S extends Spectrum<T>> BasicSpectrum(S s) {
-		this(Spectrums.copyMasses(s), Spectrums.copyIntensities(s));
+		super(s);
+		this.masses = Spectrums.copyMasses(s);
+		this.intensities = Spectrums.copyIntensities(s);
 	}
 
 	@Override

@@ -12,7 +12,7 @@ public final class RetentionTime implements Ms2ExperimentAnnotation {
 
     public RetentionTime(double start, double end, double maximum) {
         if (!Double.isNaN(start)) {
-            if (start < end)
+            if (start >= end)
                 throw new IllegalArgumentException("No proper interval given: [" + start + ", " + end + "]" );
             if (maximum < start || maximum > end) {
                 throw new IllegalArgumentException("Given retention time middle is not in range: " + maximum + " is not in [" + start + ", " + end + "]" );
@@ -55,5 +55,8 @@ public final class RetentionTime implements Ms2ExperimentAnnotation {
     public double getMiddleTime() {
         return middle;
     }
-
+    @Override
+    public String toString() {
+        return middle + " in [" + start + ", " + end + "]";
+    }
 }

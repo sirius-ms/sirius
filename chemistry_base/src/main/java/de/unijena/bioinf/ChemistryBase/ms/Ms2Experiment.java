@@ -29,7 +29,7 @@ import java.util.Map;
  * A Ms2Experiment is a MS/MS measurement of a *single* compound. If there are multiple compounds measured in your
  * spectrum, clean up and separate them into multiple Ms2Experiment instances, too!
  */
-public interface Ms2Experiment extends Cloneable {
+public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotation> {
 
 
     URL getSource();
@@ -108,51 +108,6 @@ public interface Ms2Experiment extends Cloneable {
         of an annotation. The reason for this is that cloning an experiment will only do a shallow copy of the annotations
      */
 
-
-    /**
-     * @return an iterator over all annotations
-     */
-    Iterator<Map.Entry<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation>> forEachAnnotation();
-
-    /**
-     * @return annotation value for the given class/key
-     * @throws NullPointerException if there is no entry for this key
-     */
-    <T extends Ms2ExperimentAnnotation> T getAnnotationOrThrow(Class<T> klass);
-
-    /**
-     * @return annotation value for the given class/key or null
-     */
-    <T extends Ms2ExperimentAnnotation> T getAnnotation(Class<T> klass);
-
-    /**
-     * @return annotation value for the given class/key or the given default value
-     */
-    <T extends Ms2ExperimentAnnotation> T getAnnotation(Class<T> klass, T defaultValue);
-
-    /**
-     * @return true if the given annotation is present
-     */
-    <T extends Ms2ExperimentAnnotation> boolean hasAnnotation(Class<T> klass);
-
-    /**
-     * Set the annotation with the given key
-     *
-     * @return true if there was no previous value for this annotation
-     */
-    <T extends Ms2ExperimentAnnotation> boolean setAnnotation(Class<T> klass, T value);
-
-    /**
-     * Remove the annotation with the given key
-     *
-     * @return the value associated with this key or null if there is no value for this key
-     */
-    <T extends Ms2ExperimentAnnotation> Object clearAnnotation(Class<T> klass);
-
-    /**
-     * Remove all annotations from this experiment
-     */
-    void clearAllAnnotations();
 
     /**
      * Allow cloning/copying of Ms2Experiments
