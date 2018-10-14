@@ -112,7 +112,7 @@ public class TreeAnnotation {
         final ScoreReportMap rootAnnotation = new ScoreReportMap(rootClasses);
         final Fragment root = pathway.getRoot();
         for (DecompositionScorer s : analysis.getRootScorers()) {
-            rootAnnotation.put(s.getClass(), s.score(root.getFormula(), ionType.getIonization(), peakAno.get(root), input, s.prepare(input)));
+            rootAnnotation.put(s.getClass(), s.score(root.getFormula(), root.getIonization(), peakAno.get(root), input, s.prepare(input)));
         }
         vertexAnnotations.put(root, rootAnnotation);
         annotateFragmentsAndEdges(pathway, analysis, decompositionInits, lossInits, peakScores, peakPairScores, vertexClasses, lossClasses, input);
@@ -146,7 +146,7 @@ public class TreeAnnotation {
         // Formula Scorer
         int j = 0;
         for (DecompositionScorer scorer : analysis.getDecompositionScorers()) {
-            final double score = scorer.score(vertex.getFormula(),ionType.getIonization(), peak, input, decompositionInits[j++]);
+            final double score = scorer.score(vertex.getFormula(),vertex.getIonization(), peak, input, decompositionInits[j++]);
             vertexAnnotation.put(scorer.getClass(), score);
         }
         // Peak Scorer
@@ -166,6 +166,7 @@ public class TreeAnnotation {
             for (LossScorer s : analysis.getLossScorers()) {
                 edgeAnnotation.put(s.getClass(), s.score(loss, input, lossInits[j++]));
             }
+            // peak pair Scorers
             // peak pair Scorers
             j = 0;
             for (PeakPairScorer s : analysis.getPeakPairScorers()) {
