@@ -239,7 +239,7 @@ public class Ms2CompoundMerger {
 //            if (spectra.size()<=1) return null; //nothing to merge
 //        }
 
-        if (spectra.size()<=1){
+        if (spectra.size()<1){
             return null;
         }
         if (spectra.size()==1) return new SimpleSpectrum(spectra.get(0));
