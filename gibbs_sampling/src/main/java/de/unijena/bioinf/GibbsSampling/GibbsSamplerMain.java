@@ -2063,7 +2063,7 @@ public class GibbsSamplerMain {
         for (String id : idList) {
             List<C> candidates = candidateMap.get(id);
             Ms2Experiment experiment = candidates.get(0).getExperiment();
-            PrecursorIonType[] guessed = sirius.guessIonization(experiment, ionTypes);
+            PrecursorIonType[] guessed = sirius.guessIonization(experiment, ionTypes).getGuessedIonTypes();
 
             if (guessed.length==0) continue;
 
