@@ -17,7 +17,10 @@
  */
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import gnu.trove.map.hash.TCustomHashMap;
+import gnu.trove.strategy.HashingStrategy;
 
 import java.util.AbstractList;
 import java.util.Arrays;
@@ -29,6 +32,7 @@ public class Fragment implements Comparable<Fragment> {
     private final static Object[] EMPTY_ANNO = new Object[0];
 
     protected MolecularFormula formula;
+    protected Ionization ionization;
     protected int color;
     protected Loss[] outgoingEdges;
     protected Object[] annotations;
@@ -38,11 +42,12 @@ public class Fragment implements Comparable<Fragment> {
     protected int inDegree;
 
     public Fragment(int vertexId) {
-        this(vertexId, null);
+        this(vertexId, null, null);
     }
 
-    public Fragment(int vertexId, MolecularFormula formula) {
+    public Fragment(int vertexId, MolecularFormula formula, Ionization ionization) {
         this.formula = formula;
+        this.ionization = ionization;
         this.color = 0;
         this.outDegree = 0;
         this.outgoingEdges = EMPTY_EDGES;
@@ -54,6 +59,7 @@ public class Fragment implements Comparable<Fragment> {
 
     protected Fragment(Fragment other) {
         this.formula = other.formula;
+        this.ionization = other.ionization;
         this.color = other.color;
         this.outDegree = other.outDegree;
         this.outgoingEdges = other.outgoingEdges.clone();
@@ -100,8 +106,13 @@ public class Fragment implements Comparable<Fragment> {
         return formula;
     }
 
-    public void setFormula(MolecularFormula formula) {
+    public Ionization getIonization() {
+        return ionization;
+    }
+
+    public void setFormula(MolecularFormula formula, Ionization ionization) {
         this.formula = formula;
+        this.ionization = ionization;
     }
 
     public Loss getOutgoingEdge(int k) {
@@ -226,5 +237,22 @@ public class Fragment implements Comparable<Fragment> {
     @Override
     public int compareTo(Fragment o) {
         return getFormula().compareTo(o.getFormula());
+    }
+
+    public static TCustomHashMap<Fragment, Fragment> newFragmentWithIonMap() {
+        return new TCustomHashMap<>(new HashFormulaWithIon());
+    }
+
+    protected static class HashFormulaWithIon implements HashingStrategy<Fragment> {
+
+        @Override
+        public int computeHashCode(Fragment object) {
+            return object.getFormula().hashCode() ^ 17*object.getIonization().hashCode();
+        }
+
+        @Override
+        public boolean equals(Fragment o1, Fragment o2) {
+            return o1.getFormula().equals(o2.getFormula()) && o1.getIonization().equals(o2.getIonization());
+        }
     }
 }

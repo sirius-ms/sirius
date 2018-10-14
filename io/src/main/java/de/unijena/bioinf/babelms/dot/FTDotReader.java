@@ -18,6 +18,7 @@
 package de.unijena.bioinf.babelms.dot;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Deprecated //todo do we still use this? binary format does not save/read fragment ionization
 public class FTDotReader implements Parser<FTree> {
 
     private static final Pattern PEAK_PATTERN = Pattern.compile("(\\d+(?:\\.\\d*)?) Da, (\\d+(?:\\.\\d*)?) %");
@@ -45,7 +47,7 @@ public class FTDotReader implements Parser<FTree> {
     public FTree parse(BufferedReader reader, URL source) throws IOException {
         final Graph g = DotParser.parseGraph(reader);
         final FragmentPropertySet rootSet = new FragmentPropertySet(g.getRoot().getProperties());
-        final FTree tree = new FTree(rootSet.formula);
+        final FTree tree = new FTree(rootSet.formula, PrecursorIonType.unknown().getIonization());
         final FragmentAnnotation<Peak> peakAno = tree.addFragmentAnnotation(Peak.class);
         final FragmentAnnotation<CollisionEnergy[]> cesAno = tree.addFragmentAnnotation(CollisionEnergy[].class);
         final FragmentAnnotation<CollisionEnergy> ceAno = tree.addFragmentAnnotation(CollisionEnergy.class);
@@ -57,7 +59,7 @@ public class FTDotReader implements Parser<FTree> {
             public Fragment call(Fragment parentResult, Vertex node) {
                 if (parentResult == null) return tree.getRoot();
                 final FragmentPropertySet set = new FragmentPropertySet(node.getProperties());
-                final Fragment f = tree.addFragment(parentResult, set.formula);
+                final Fragment f = tree.addFragment(parentResult, set.formula, PrecursorIonType.unknown().getIonization());
                 peakAno.set(f, set.peak);
                 cesAno.set(f, set.collisionEnergies);
                 ceAno.set(f, CollisionEnergy.mergeAll(set.collisionEnergies));
