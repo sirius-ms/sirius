@@ -147,7 +147,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                 }
                 else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
                 final double score = fscore.get(f).sum()+lscore.get(f.getIncomingEdge()).sum();
-                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), (short)idx, score);
+                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), f.getIonization(), (short)idx, score);
 
             }
         }
@@ -163,7 +163,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
             //todo is root??
             final double score = fscore.get(f).sum()+(f.isRoot()?0:lscore.get(f.getIncomingEdge()).sum());
-            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), (short)idx, score);
+            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, score);
 
         }
 
@@ -251,7 +251,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                     throw new RuntimeException("index < 0");
                 }
                 else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
-                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), (short)idx, f.getIncomingEdge().getWeight());
+                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), f.getIonization(), (short)idx, f.getIncomingEdge().getWeight());
 
             }
         }
@@ -278,7 +278,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                 throw new RuntimeException("index < 0");
             }
             else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
-            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), (short)idx, f.getIncomingEdge().getWeight());
+            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, f.getIncomingEdge().getWeight());
 
 //            fStrings[i++] = f.getFormula().formatByHill();
 //            fIdx[i] = (short)f.getColor();

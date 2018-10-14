@@ -170,10 +170,10 @@ public class GreedySolver extends HeuristicSolver {
 		if (this.treeVertexID[sourceID] == -1
 				&& this.treeVertexID[targetID] == -1) {
 			Fragment scr = new Fragment(source.getVertexId(),
-					source.getFormula());
+					source.getFormula(), source.getIonization());
 			scr.setColor(source.getColor());
 			Fragment newFragment = this.tree.addFragment(scr,
-					target.getFormula());
+					target);
 
 			newFragment.getIncomingEdge().setWeight(loss.getWeight());
 			newFragment.setColor(target.getColor());
@@ -192,7 +192,7 @@ public class GreedySolver extends HeuristicSolver {
 				&& this.treeVertexID[targetID] == -1) {
 			Fragment scr = this.tree.getFragmentAt(this.treeVertexID[sourceID]);
 			Fragment newFragment = this.tree.addFragment(scr,
-					target.getFormula());
+					target);
 
 			newFragment.getIncomingEdge().setWeight(loss.getWeight());
 			newFragment.setColor(target.getColor());

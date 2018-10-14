@@ -57,6 +57,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
+import gnu.trove.map.hash.TCustomHashMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.map.hash.TObjectLongHashMap;
 import gnu.trove.procedure.TLongProcedure;
@@ -239,6 +240,19 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // set whiteset
         if (input.getAnnotation(Whiteset.class, null)!=null) {
             pinput.setAnnotation(Whiteset.class, input.getAnnotation(Whiteset.class));
+        }
+
+        if (input.getAnnotation(PossibleAdductSwitches.class, null)!=null){
+            pinput.setAnnotation(PossibleAdductSwitches.class, input.getAnnotation(PossibleAdductSwitches.class));
+        } else{
+            //todo hack, make nice
+            for (LossScorer lossScorer : lossScorers) {
+                if (lossScorer instanceof AdductSwitchLossScorer) {
+                    pinput.setAnnotation(PossibleAdductSwitches.class, PossibleAdductSwitches.getDefault());
+                    break;
+                }
+            }
+
         }
 
         return pinput;
@@ -515,6 +529,27 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             }
         }
 
+
+        //todo ? always allow M+H+ for fragments
+        //add IonModes which are possible for fragments due to adduct switch
+        PossibleAdductSwitches possibleAdductSwitches = input.getAnnotation(PossibleAdductSwitches.class, null);
+        Set<Ionization> ionModeSet = new HashSet<>();
+        if (possibleAdductSwitches!=null) {
+            while (true) {
+                Set<Ionization> newIonModes = new HashSet<>();
+                for (Ionization ionMode : ionModes) {
+                    newIonModes.addAll(possibleAdductSwitches.getPossibleIonizations(ionMode));
+                }
+                if (ionModeSet.size()==newIonModes.size()){
+                    break;
+                }
+                ionModeSet = newIonModes;
+            }
+            ionModes.clear();
+        }
+        for (Ionization ionization : ionModeSet) {
+            ionModes.add(ionization);
+        }
 
         // may split pmds if multiple alphabets are present
         final List<MassToFormulaDecomposer> decomposers = new ArrayList<>();
@@ -1180,14 +1215,16 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // non-persistent fragment annotation
         final FragmentAnnotation<ProcessedPeak> peakAno = tree.getOrCreateFragmentAnnotation(ProcessedPeak.class);
 
-        final HashMap<MolecularFormula, Fragment> formula2graphFragment = new HashMap<MolecularFormula, Fragment>();
+//        final HashMap<MolecularFormula, Fragment> formula2graphFragment = new HashMap<MolecularFormula, Fragment>();
+        final TCustomHashMap<Fragment, Fragment> graphFragmentMap = Fragment.newFragmentWithIonMap();
         for (Fragment f : tree) {
-            formula2graphFragment.put(f.getFormula(), f);
+            graphFragmentMap.put(f, f);
         }
         for (Fragment f : originalGraph) {
             final MolecularFormula form = f.getFormula();
-            if (form != null && formula2graphFragment.containsKey(form))
-                formula2graphFragment.put(form, f);
+            //todo still test for null formula or use all?!
+            if (form != null && graphFragmentMap.containsKey(f))
+                graphFragmentMap.put(f, f);
         }
 
         // remove pseudo nodes
@@ -1197,7 +1234,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             final FragmentAnnotation<Ms2IsotopePattern> msIsoAnoG = originalGraph.getOrCreateFragmentAnnotation(Ms2IsotopePattern.class);
             final ArrayList<Fragment> subtreesToDelete = new ArrayList<Fragment>();
             for (Fragment f : tree) {
-                if (msIsoAnoG.get(formula2graphFragment.get(f.getFormula()))!=null) {
+                if (msIsoAnoG.get(graphFragmentMap.get(f))!=null) {
                     // find isotope chain
                     double score = 0d;
                     int count = 1;
@@ -1216,7 +1253,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                         }
                     }
                     if (count > 1) {
-                        final Ms2IsotopePattern origPattern = msIsoAnoG.get(formula2graphFragment.get(f.getFormula()));
+                        final Ms2IsotopePattern origPattern = msIsoAnoG.get(graphFragmentMap.get(f));
                         final Peak[] shortened = Arrays.copyOf(origPattern.getPeaks(), count);
                         // TODO: what happens if second peak is below threshold but third peak not?
                         msIsoAno.set(f, new Ms2IsotopePattern(shortened, score));
@@ -1238,7 +1275,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // check for MS1 isotope scores
         treeScoring.setIsotopeMs1Score(0d);
         for (Fragment treeFragment : tree) {
-            final Fragment graphFragment = formula2graphFragment.get(treeFragment.getFormula());
+            final Fragment graphFragment = graphFragmentMap.get(treeFragment);
             if (graphFragment==null)
                 throw new NullPointerException("do not find graph fragment with formula " + treeFragment.getFormula());
             final ProcessedPeak graphPeak = graphPeakAno.get(graphFragment);
@@ -1247,11 +1284,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             peakAno.set(treeFragment, graphPeak);
 
             simplePeakAnnotation.set(treeFragment, graphPeak);
-            peakAnnotation.set(treeFragment, graphPeak.toAnnotatedPeak(treeFragment.getFormula(), ionType));
+            //todo do I have to change everything to PrecursorIonType?
+            peakAnnotation.set(treeFragment, graphPeak.toAnnotatedPeak(treeFragment.getFormula(), PrecursorIonType.getPrecursorIonType(treeFragment.getIonization())));
 
             if (ms1IsoAno!=null && ms1IsoAno.get(graphFragment) != null) {
                 treeMs1IsoAno.set(treeFragment, ms1IsoAno.get(graphFragment));
             }
+
         }
 
         // TODO: HIER STIMMT WAS NICHT!!!!!!!!!!!!!!!!!!!
@@ -1512,7 +1551,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 fscore.set(k++, pseudoMatrix[0][0]);
             }
             for (int i=0; i < decompositionScorers.size(); ++i) {
-                fscore.set(k++, ((DecompositionScorer<Object>) decompositionScorers.get(i)).score(v.getFormula(),ionType.getIonization(), peakAno.get(v), input, preparedFrag[i]));
+                fscore.set(k++, ((DecompositionScorer<Object>) decompositionScorers.get(i)).score(v.getFormula(),v.getIonization(), peakAno.get(v), input, preparedFrag[i]));
             }
 
             double isoScore = 0d;
@@ -1538,7 +1577,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final Score rootScore = new Score(rootScores);
         for (int k=0; k < rootScorers.size(); ++k) {
             final Object prepared = rootScorers.get(k).prepare(input);
-            final double score = ((DecompositionScorer<Object>)rootScorers.get(k)).score(root.getFormula(),ionType.getIonization(), peakAno.get(root), input, prepared);
+            final double score = ((DecompositionScorer<Object>)rootScorers.get(k)).score(root.getFormula(),root.getIonization(), peakAno.get(root), input, prepared);
             rootScore.set(k, score);
         }
         fAno.set(root, rootScore);

@@ -17,6 +17,7 @@
  */
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.graphUtils.tree.*;
 
@@ -34,8 +35,16 @@ public class FTree extends AbstractFragmentationGraph {
      */
     protected double treeWeight;
 
-    public FTree(MolecularFormula rootFormula) {
-        this.root = addFragment(rootFormula);
+    public FTree(MolecularFormula rootFormula, Ionization ionization) {
+        this.root = addFragment(rootFormula, ionization);
+    }
+
+    /**
+     * Creates a new FTree, using information from rootFragment but not the object itself
+     * @param rootFragment
+     */
+    public FTree(Fragment rootFragment) {
+        this.root = addFragment(rootFragment.getFormula(), rootFragment.getIonization());
     }
 
     public FTree(FTree copy) {
@@ -48,12 +57,12 @@ public class FTree extends AbstractFragmentationGraph {
      * Add a new root to the tree and connecting it with the previous root
      * @param newRoot
      */
-    public Fragment addRoot(MolecularFormula newRoot) {
+    public Fragment addRoot(MolecularFormula newRoot, Ionization newRootIon) {
         final MolecularFormula loss = newRoot.subtract(root.getFormula());
         if (!loss.isAllPositiveOrZero()) {
             throw new IllegalArgumentException(root.getFormula().toString() + " cannot be child formula of " + newRoot.toString());
         }
-        final Fragment f = addFragment(newRoot);
+        final Fragment f = addFragment(newRoot, newRootIon);
         addLoss(f, root);
         fragments.set(0, f);
         fragments.set(f.vertexId, root);
@@ -136,12 +145,35 @@ public class FTree extends AbstractFragmentationGraph {
         };
     }
 
-    public Fragment addFragment(Fragment parent, MolecularFormula child) {
+    /**
+     * it is recommended to rather use addFragment(Fragment parent, Fragment child), if possible
+     * @param parent
+     * @param child
+     * @param childIon
+     * @return
+     */
+    public Fragment addFragment(Fragment parent, MolecularFormula child, Ionization childIon) {
         final MolecularFormula loss = parent.formula.subtract(child);
         if (!loss.isAllPositiveOrZero()) {
             throw new IllegalArgumentException(child.toString() + " cannot be child formula of " + parent.formula.toString());
         }
-        final Fragment f = addFragment(child);
+        final Fragment f = addFragment(child, childIon);
+        addLoss(parent, f);
+        return f;
+    }
+
+    /**
+     * Adds a new fragment to the tree and using information from child Fragment but not the object itself
+     * @param parent
+     * @param child
+     * @return
+     */
+    public Fragment addFragment(Fragment parent, Fragment child) {
+        final MolecularFormula loss = parent.formula.subtract(child.getFormula());
+        if (!loss.isAllPositiveOrZero()) {
+            throw new IllegalArgumentException(child.toString() + " cannot be child formula of " + parent.formula.toString());
+        }
+        final Fragment f = addFragment(child.getFormula(), child.getIonization());
         addLoss(parent, f);
         return f;
     }
