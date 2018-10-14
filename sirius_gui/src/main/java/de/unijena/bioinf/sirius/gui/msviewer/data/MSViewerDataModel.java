@@ -36,4 +36,6 @@ public interface MSViewerDataModel {
     int getIndexWithMass(double mass);
 
     int findIndexOfPeak(double mass, double tolerance);
+
+    String getIonization(int index);
 }

@@ -61,6 +61,7 @@ public class SiriusResultElementConverter {
 
         rootM.setMolecularFormula(rootK.getFormula().toString());
         rootM.setMolecularFormulaMass(rootK.getFormula().getMass());
+        rootM.setIonization(rootK.getIonization().getName());
 
         if (peakAno.get(rootK) == null) {
             rootM.setPeakMass(ft.getAnnotationOrThrow(PrecursorIonType.class).getIonization().addToMass(rootK.getFormula().getMass()));
@@ -80,7 +81,7 @@ public class SiriusResultElementConverter {
             rootM.setScore(fscore.get(rootK).sum());
         }
 
-        calculateDeviatonMassInPpm(rootM, ft, massDeviations);
+        calculateDeviatonMassInPpm(rootM, rootK.getIonization(), massDeviations);
 
         convertNode(ft, rootK, rootM, peakAno, annoPeakAnno, lscore, fscore, maxIntensity, maxRelIntensity, massDeviations);
 
@@ -96,6 +97,7 @@ public class SiriusResultElementConverter {
             DefaultTreeNode targetM = new DefaultTreeNode();
             targetM.setMolecularFormula(targetK.getFormula().toString());
             targetM.setMolecularFormulaMass(targetK.getFormula().getMass());
+            targetM.setIonization(targetK.getIonization().getName());
 
             if (peakAno.get(targetK) == null) {
                 targetM.setPeakMass(ft.getAnnotationOrThrow(PrecursorIonType.class).getIonization().addToMass(targetK.getFormula().getMass()));
@@ -116,7 +118,7 @@ public class SiriusResultElementConverter {
                     targetM.setPeakAbsoluteIntenstiy(peakAno.get(targetK).getIntensity());
                 }
             }
-            calculateDeviatonMassInPpm(targetM, ft, massDeviations );
+            calculateDeviatonMassInPpm(targetM, targetK.getIonization(), massDeviations );
 
             double tempScore = fscore.get(targetK) == null ? 0d : fscore.get(targetK).sum();
             tempScore += lscore.get(edgeK) == null ? edgeK.getWeight() : lscore.get(edgeK).sum();
@@ -139,9 +141,8 @@ public class SiriusResultElementConverter {
         }
     }
 
-    private static void calculateDeviatonMassInPpm(TreeNode treeNode, FTree fragTree, ArrayList<Double> massDeviations ) {
+    private static void calculateDeviatonMassInPpm(TreeNode treeNode, Ionization ionization, ArrayList<Double> massDeviations ) {
         final double relativToPpm = 1000 * 1000;
-        Ionization ionization = (Ionization) fragTree.getAnnotationOrNull(Ionization.class);
 
         if (ionization != null && treeNode != null) {
             Double massDeviation = ((treeNode.getMolecularFormulaMass() - treeNode.getPeakMass() + ionization.getMass()) / treeNode.getMolecularFormulaMass()) * relativToPpm;

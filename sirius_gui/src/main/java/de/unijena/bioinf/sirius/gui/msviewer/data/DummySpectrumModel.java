@@ -85,4 +85,9 @@ public class DummySpectrumModel implements MSViewerDataModel{
     public int findIndexOfPeak(double mass, double tolerance) {
         return 0;
     }
+
+    @Override
+    public String getIonization(int index) {
+        return null;
+    }
 }
