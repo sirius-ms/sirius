@@ -1,10 +1,17 @@
 package de.unijena.bioinf.ms.utils;
 
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MzRTPeak;
+import com.google.common.collect.Iterables;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
+import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.IsotopePatternHandling;
+import de.unijena.bioinf.sirius.Sirius;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -12,12 +19,58 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class TestUtils {
 
     public static void main(String... args) throws IOException {
-        testMs2CompoundMerger(args);
+//        testMs2CompoundMerger2(args);
+        testGuessIon(args);
+    }
+
+    public static void testGuessIon(String... args) throws IOException {
+        Path path1 = Paths.get("/home/ge28quv/Data/gibbsSample/with_openMS/dendroides/1.ms");
+        List<Ms2Experiment> experiments = (new MsExperimentParser()).getParser(path1.toFile()).parseFromFile(path1.toFile());
+        Sirius sirius = new Sirius();
+        for (Ms2Experiment exp : experiments) {
+            PrecursorIonType[] ionTypes = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(exp.getPrecursorIonType().getCharge()), PrecursorIonType.class);
+            List<Ionization> ionizations = new ArrayList<>();
+            for (PrecursorIonType ionType : ionTypes) {
+                ionizations.add(ionType.getIonization());
+            }
+            PossibleIonModes im = exp.getAnnotation(PossibleIonModes.class, new PossibleIonModes());
+            im.setGuessFromMs1(PossibleIonModes.GuessingMode.SELECT);
+
+            im.enableGuessFromMs1WithCommonIonModes(exp.getPrecursorIonType().getCharge());
+            final Set<Ionization> ionModes = new HashSet<>(ionizations);
+            for (Ionization ion : ionModes) {
+                im.add(ion, 0.02);
+            }
+            if (exp.getPrecursorIonType().getCharge() > 0) {
+                im.add(PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization(), 1d);
+            } else {
+                im.add(PrecursorIonType.getPrecursorIonType("[M-H]-").getIonization(), 1d);
+
+            }
+            exp.setAnnotation(PossibleIonModes.class, im);
+
+            ProcessedInput input = new ProcessedInput(new MutableMs2Experiment(exp), exp, sirius.getMs2Analyzer().getProfile(exp));
+            sirius.detectPossibleIonModesFromMs1(input);
+
+            if (exp.getIonMass()>400) continue;
+
+            FormulaConstraints constraints = new FormulaConstraints("CHNOPS");
+            List<IdentificationResult> results = sirius.identify(exp, 20, 10 , true, IsotopePatternHandling.both, constraints);
+            System.out.println("..................");
+            for (IdentificationResult result : results) {
+                System.out.println(result.getPrecursorIonType()+" "+result.getMolecularFormula());
+            }
+            System.out.println("......");
+
+            //            System.out.println(exp.getAnnotation(PossibleIonModes.class));
+        }
     }
 
     //Ms2CompoundMerger
@@ -72,7 +125,7 @@ public class TestUtils {
 
     public static void testMs2CompoundMerger2(String... args) throws IOException {
         String loc = "/home/ge28quv/Data/gibbsSample/with_openMS/dendroides/processing/";
-        String glob = "glob:**/*ME*.ms";
+        String glob = "glob:**/sirius_blanksremoved*ME*.ms";
         List<Path> paths = match(glob, loc);
         System.out.println(paths.size());
         List<Ms2Experiment>[] experiments = new List[paths.size()];
@@ -85,9 +138,9 @@ public class TestUtils {
             ++i;
         }
         Deviation maxMzDeviation = new Deviation(20);
-        Deviation deviation = new Deviation(10);
+        Deviation deviation = new Deviation(15);
         double maxRTShift = 20;
-        double cosineSimilarity = 0.8;
+        double cosineSimilarity = 0.95;
         Ms2CompoundMerger ms2CompoundMerger = new Ms2CompoundMerger(maxMzDeviation, maxRTShift, cosineSimilarity, false);
 
         //todo diff deviation, maxMzDeviation;
@@ -95,6 +148,15 @@ public class TestUtils {
 //        List<Ms2Experiment> mergedExperiments = ms2CompoundMerger.mergeRuns(deviation, experiments, experiments2, experiments3);
         List<Ms2Experiment> mergedExperiments = ms2CompoundMerger.mergeRuns(deviation, experiments);
         System.out.println("after: "+mergedExperiments.size());
+
+        String output = "/home/ge28quv/Data/gibbsSample/with_openMS/dendroides/out.ms";
+        JenaMsWriter spectrumWriter = new JenaMsWriter();
+
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(output))) {
+            for (Ms2Experiment experiment : mergedExperiments) {
+                spectrumWriter.write(writer, experiment);
+            }
+        }
 
     }
 
