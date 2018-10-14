@@ -40,7 +40,7 @@ public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<Si
         //I think we have to copy the experiment for computation. Otherwise
         // it might be possible to change the experiment in GUI while computing it.
         // its a bit nasty, though, as internally, SIRIUS will make another copy =/
-        final Sirius.SiriusIdentificationJob identificationJob = sirius.makeIdentificationJob(new MutableMs2Experiment(experiment), numberOfCandidates);
+        final Sirius.SiriusIdentificationJob identificationJob = sirius.makeIdentificationJob(new MutableMs2Experiment(experiment), numberOfCandidates, -1);
         identificationJob.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> {
             JobProgressEvent e = (JobProgressEvent) evt;
             updateProgress(e.getMinValue(), e.getMaxValue(), e.getNewValue());

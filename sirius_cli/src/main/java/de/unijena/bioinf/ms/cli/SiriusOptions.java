@@ -58,6 +58,9 @@ public interface SiriusOptions {
     @Option(shortName = "c", longName = "candidates", description = "Number of candidates in the output", defaultToNull = true)
     Integer getNumberOfCandidates();
 
+    @Option(longName = "candidates-per-ion", description = "Minimum number of candidates in the output for each ionization. Set to force output of results for each possible ionization, even if not part of highest ranked results.", defaultToNull = true)
+    Integer getNumberOfCandidatesPerIonization();
+
     @Option(shortName = "f", longName = {"formula", "formulas"}, description = "specify the neutral molecular formula of the measured compound to compute its tree or a list of candidate formulas the method should discriminate. Omit this option if you want to consider all possible molecular formulas", defaultToNull = true)
     List<String> getFormula();
 

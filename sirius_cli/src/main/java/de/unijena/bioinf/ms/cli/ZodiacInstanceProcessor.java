@@ -406,14 +406,18 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         if (result.length>0){
             Ms2Experiment experiment = result[0].getCandidate().getExperiment();
             //TODO hack: this don't have to be the ions used for SIRIUS computation in the first place!
-            PrecursorIonType[] ms1IonModes = getIonsFromMs1Hack(experiment, sirius);
+            Sirius.GuessIonizationFromMs1Result guessIonization = getIonsFromMs1Hack(experiment, sirius);
+            PrecursorIonType[] ms1IonModes = guessIonization.getGuessedIonTypes();
             if (ms1IonModes!=null && ms1IonModes.length>=1){
                 ionsByMs1 = ms1IonModes[0].toString();
                 for (int i = 1; i < ms1IonModes.length; i++) {
-                    ionsByMs1 += ms1IonModes[i].toString();
-
+                    ionsByMs1 += ","+ms1IonModes[i].toString();
                 }
+            } else {
+                ionsByMs1 = "None";
             }
+
+            ionsByMs1 += ":"+guessIonization.getGuessingSource();
 
             CompoundQuality compoundQuality = experiment.getAnnotation(CompoundQuality.class, null);
             precursorMass = experiment.getIonMass();
@@ -480,7 +484,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         return builder.toString();
     }
 
-    private static PrecursorIonType[] getIonsFromMs1Hack(Ms2Experiment experiment, Sirius sirius){
+    private static Sirius.GuessIonizationFromMs1Result getIonsFromMs1Hack(Ms2Experiment experiment, Sirius sirius){
         MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
         PossibleAdducts pa =  new PossibleAdducts(Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(mutableMs2Experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class));
 
@@ -489,8 +493,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         for (Ionization ion : ionModes) {
             allowedIonModes.add(PrecursorIonType.getPrecursorIonType(ion));
         }
-        PrecursorIonType[] ms1IonModes = sirius.guessIonization(mutableMs2Experiment, allowedIonModes.toArray(new PrecursorIonType[0]));
-        return ms1IonModes;
+        return sirius.guessIonization(mutableMs2Experiment, allowedIonModes.toArray(new PrecursorIonType[0]));
     }
 
     public Scored<IdentificationResult>[] bestInitial(String[] ids, Map<String, ExperimentResult> experimentResultMap){
