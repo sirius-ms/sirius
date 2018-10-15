@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 
 import java.util.*;
 
-public abstract class PossibleAdductSwitches {
+public abstract class PossibleAdductSwitches implements Ms2ExperimentAnnotation {
 
     public abstract List<Ionization> getPossibleIonizations(Ionization precursorIonization);
     
