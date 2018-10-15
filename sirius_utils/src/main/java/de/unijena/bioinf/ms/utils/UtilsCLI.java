@@ -17,6 +17,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,6 +60,9 @@ public class UtilsCLI {
                 break;
             case "filter":
                 filter(rest);
+                break;
+            case "map":
+                map(rest);
                 break;
             default:
                 System.out.println("Please, specify your intended command as first parameter.");
@@ -223,6 +227,48 @@ public class UtilsCLI {
         JenaMsWriter jenaMsWriter = new JenaMsWriter();
 
         writeToFile(jenaMsWriter, options.getOutput(), experiments);
+    }
+
+
+    private void map(String... args) {
+        MapOptions options = null;
+        try {
+            options = CliFactory.createCli(MapOptions.class).parseArguments(args);
+        } catch (HelpRequestedException e) {
+            System.out.println(e.getMessage());
+            System.out.println(CliFactory.createCli(MapOptions.class).getHelpMessage());
+            System.exit(0);
+        }
+        if (options.isHelp()){
+            System.out.println(CliFactory.createCli(MapOptions.class).getHelpMessage());
+            System.exit(0);
+        }
+
+        Deviation mzDeviation = new Deviation(options.getPPMMax());
+        double rtDeviation = options.getRTMax();
+
+        String input1 = options.getDataset1();
+        String input2 = options.getDataset2();
+
+        List<Ms2Experiment> experiments1 = readData(Collections.singletonList(new File(input1)))[0];
+        List<Ms2Experiment> experiments2 = readData(Collections.singletonList(new File(input2)))[0];
+
+
+        String[][] mapping = CompoundFilterUtil.mapCompoundIds(experiments1, experiments2, mzDeviation, rtDeviation);
+
+        final String sep = "\t";
+        Path output = Paths.get(options.getOutput());
+        try(BufferedWriter writer = Files.newBufferedWriter(output)){
+            for (String[] strings : mapping) {
+                writer.write(strings[0]+sep+strings[1]);
+                writer.newLine();
+            }
+        } catch (IOException e){
+            Log.error("Error writing output: "+output);
+            Log.error(e.getMessage());
+            System.exit(0);
+        }
+
     }
 
 }

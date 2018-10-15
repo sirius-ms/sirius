@@ -13,6 +13,8 @@ public interface UtilsOptions {
     @Option(longName = "filter", description = "Filter compounds.")
     boolean isFilter();
 
+    @Option(longName = "map", description = "Map compound ids between different datasets by mz and rt.")
+    boolean isMap();
 
     @Option(shortName = "h", longName = "help", helpRequest = true)
     boolean isHelp();
