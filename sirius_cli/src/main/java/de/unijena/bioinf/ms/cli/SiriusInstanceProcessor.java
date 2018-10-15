@@ -187,7 +187,8 @@ public class SiriusInstanceProcessor implements  InstanceProcessor<ExperimentRes
         @Override
         protected ExperimentResult compute() throws Exception {
             try {
-                final List<IdentificationResult> results = submitSubJob(siriusIdentificationJob).takeResult();
+//                 = submitSubJob(siriusIdentificationJob).takeResult();
+                final List<IdentificationResult> results = siriusIdentificationJob.call();
                 if (!results.isEmpty()) {
 
                     return new ExperimentResult(siriusIdentificationJob.getExperiment(), results);

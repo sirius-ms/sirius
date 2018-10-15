@@ -20,7 +20,7 @@ public class FormulaJob extends BasicJJob<List<FingerprintCandidate>> {
     protected final PrecursorIonType ionType;
 
     public FormulaJob(MolecularFormula formula, SearchStructureByFormula searchDatabase, PrecursorIonType precursorIonType) {
-        super(JobType.REMOTE);
+        super(JobType.WEBSERVICE);
         this.formula = formula;
         this.searchDatabase = searchDatabase;
         this.ionType = precursorIonType;
