@@ -98,7 +98,6 @@ public class BlankRemoval {
         double intensity = CompoundFilterUtil.getFeatureIntensity(experiment, findParentPeakInMs1Deviation);
         double rt = experiment.hasAnnotation(RetentionTime.class)?experiment.getAnnotation(RetentionTime.class).getRetentionTimeInSeconds():Double.NaN;
 
-        //todo test Nan
         MzRTPeak peak = new MzRTPeak(rt, mz, intensity);
         int idx = Arrays.binarySearch(blankFeatures, peak);
         if (idx<0){

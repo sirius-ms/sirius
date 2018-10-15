@@ -1,11 +1,11 @@
 package de.unijena.bioinf.ms.utils;
 
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class CompoundFilterUtil {
 
@@ -87,5 +87,125 @@ public class CompoundFilterUtil {
                     +"Assume intensity 0 for blank removal.");
         }
         return intensity;
+    }
+
+
+    /**
+     * map compounds between 2 datasets by mz and rt. Ignores MS2.
+     * @param experiments1
+     * @param experiments2
+     * @param maxPrecursorDeviation
+     * @param maxRTDifference
+     * @return
+     */
+    public static String[][] mapCompoundIds(List<Ms2Experiment> experiments1, List<Ms2Experiment> experiments2, Deviation maxPrecursorDeviation, double maxRTDifference){
+        MzRTPeakWithID[] peaks1 = experimentsToPeaks(experiments1);
+        MzRTPeakWithID[] peaks2 = experimentsToPeaks(experiments2);
+        Arrays.sort(peaks1);
+        Arrays.sort(peaks2);
+
+        List<String[]> mapping = new ArrayList<>();
+
+        for (int i = 0; i < peaks1.length; i++) {
+            MzRTPeakWithID feature = peaks1[i];
+            MzRTPeakWithID matchedFeature = findBestMatchingCompounds(feature, peaks2, maxPrecursorDeviation, maxRTDifference);
+            if (matchedFeature!=null){
+                mapping.add(new String[]{feature.id, matchedFeature.id});
+            }
+        }
+
+        return mapping.toArray(new String[0][]);
+
+    }
+
+    private static MzRTPeakWithID[] experimentsToPeaks(List<Ms2Experiment> experiments){
+        boolean allHaveRT = true;
+        MzRTPeakWithID[] peaks = new MzRTPeakWithID[experiments.size()];
+        int i = 0;
+        for (Ms2Experiment experiment : experiments) {
+            final String id = experiment.getName();
+            final double mz = experiment.getIonMass();
+            double rt = 0d;
+            if (experiment.hasAnnotation(RetentionTime.class)){
+                rt = experiment.getAnnotation(RetentionTime.class).getMiddleTime();
+            } else {
+                allHaveRT = false;
+            }
+            peaks[i] = new MzRTPeakWithID(rt, mz, id);
+            ++i;
+        }
+
+        if (!allHaveRT){
+            LoggerFactory.getLogger(CompoundFilterUtil.class).warn("Not all compounds provide a retention time. This might lead to errors when mapping compounds.");
+        }
+        return peaks;
+    }
+
+    /**
+     *
+     * @param compound
+     * @param dataset must be sorted
+     * @return
+     */
+    private static MzRTPeakWithID findBestMatchingCompounds(MzRTPeakWithID compound, MzRTPeakWithID[] dataset, Deviation maxMzDeviation, double maxRetentionTimeShift){
+        final double mz = compound.getMass();
+        final double rt = compound.getRetentionTime();
+        List<MzRTPeakWithID> matchedFeatures = new ArrayList<>();
+        int idx = Arrays.binarySearch(dataset, compound);
+        if (idx<0){
+            idx = -idx-1;
+        }
+        for (int i = idx; i < dataset.length; i++) {
+            MzRTPeakWithID feature = dataset[i];
+            if (!maxMzDeviation.inErrorWindow(feature.getMass(),mz)){
+                break;
+            }
+            if (Double.isNaN(rt) || Math.abs(rt-feature.getRetentionTime())<maxRetentionTimeShift){
+                matchedFeatures.add(feature);
+            }
+        }
+        for (int i = idx - 1; i >= 0; i--) {
+            MzRTPeakWithID feature = dataset[i];
+            if (!maxMzDeviation.inErrorWindow(feature.getMass(),mz)){
+                break;
+            }
+            if (Double.isNaN(rt) || Math.abs(rt-feature.getRetentionTime())<maxRetentionTimeShift){
+                matchedFeatures.add(feature);
+            }
+        }
+
+        if (matchedFeatures.size()==0) return null;
+        if (matchedFeatures.size()==1) return matchedFeatures.get(0);
+
+        MzRTPeakWithID best = matchedFeatures.get(0);
+        for (int i = 1; i < matchedFeatures.size(); i++) {
+            MzRTPeakWithID feature = matchedFeatures.get(i);
+            if (Math.abs(compound.getMass()-feature.getMass())<Math.abs(compound.getMass()-best.getMass())){
+                if (Double.isNaN(feature.getRetentionTime()) || Double.isNaN(best.getRetentionTime()) || Double.isNaN(compound.getRetentionTime())){
+                    best = feature;
+                }else {
+                    if (Math.abs(compound.getRetentionTime()-feature.getRetentionTime())<= Math.abs(compound.getRetentionTime()-best.getRetentionTime())){
+                        best = feature;
+                    } else {
+                        LoggerFactory.getLogger(CompoundFilterUtil.class).warn("Mapping of compound '"+compound.id+"' is ambiguous.");
+                        return null;
+                    }
+                }
+            }
+        }
+        LoggerFactory.getLogger(CompoundFilterUtil.class).warn("Multiple mappings for '"+compound.id+"'. Using best one.");
+        return best;
+
+    }
+
+
+
+    private static class MzRTPeakWithID extends MzRTPeak {
+        private final String id;
+
+        public MzRTPeakWithID(double rt, double mass, String id) {
+            super(rt, mass, Double.NaN);
+            this.id = id;
+        }
     }
 }
