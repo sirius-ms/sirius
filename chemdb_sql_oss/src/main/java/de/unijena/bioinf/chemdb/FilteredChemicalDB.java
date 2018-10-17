@@ -18,7 +18,7 @@ public class FilteredChemicalDB extends AbstractChemicalDatabase implements Clon
     private BioFilter biofilter = BioFilter.ALL;
     private final ChemicalDatabase wrappedDB;
 
-    public FilteredChemicalDB() throws DatabaseException {
+    public FilteredChemicalDB() throws ChemicalDatabaseException {
         super();
         wrappedDB = new ChemicalDatabase();
     }
@@ -36,48 +36,48 @@ public class FilteredChemicalDB extends AbstractChemicalDatabase implements Clon
     }
 
     @Override
-    public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException {
+    public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
         return wrappedDB.lookupMolecularFormulas(biofilter, mass, deviation, ionType);
     }
 
     @Override
-    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws DatabaseException {
+    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         return wrappedDB.lookupStructuresByFormula(biofilter, formula);
     }
 
 
     @Override
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws DatabaseException {
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         return wrappedDB.lookupStructuresAndFingerprintsByFormula(biofilter, formula, fingerprintCandidates);
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         return wrappedDB.lookupFingerprintsByInchis(inchi_keys);
     }
 
     @Override
-    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         return wrappedDB.lookupManyInchisByInchiKeys(inchi_keys);
     }
 
     @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         return wrappedDB.lookupManyFingerprintsByInchis(inchi_keys);
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws DatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         return wrappedDB.lookupFingerprintsByInchi(compounds);
     }
 
     @Override
-    public List<InChI> findInchiByNames(List<String> names) throws DatabaseException {
+    public List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException {
         return wrappedDB.findInchiByNames(names);
     }
 
     @Override
-    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws DatabaseException {
+    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
         wrappedDB.annotateCompounds(sublist);
     }
 

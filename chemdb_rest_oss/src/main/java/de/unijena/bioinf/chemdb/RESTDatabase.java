@@ -137,7 +137,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException {
+    public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
         final HttpGet get;
         try {
             URIBuilder builder = getFingerIdURI("/webapi/formulasdb.json/");
@@ -161,7 +161,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
                 }
             }
         } catch (IOException e) {
-            throw new DatabaseException(e);
+            throw new ChemicalDatabaseException(e);
         }
         return candidates;
     }
@@ -171,7 +171,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws DatabaseException {
+    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         final ArrayList<CompoundCandidate> candidates = new ArrayList<>();
         for (CompoundCandidate c : lookupStructuresAndFingerprintsByFormula(formula))
             candidates.add(new CompoundCandidate(c));
@@ -201,7 +201,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws DatabaseException {
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         if (bioFilter != BioFilter.ALL)
             return lookupStructuresAndFingerprintsByFormula(formula, fingerprintCandidates, bioFilter);
         else {
@@ -210,7 +210,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         }
     }
 
-    protected <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates, BioFilter bioFilter) throws DatabaseException {
+    protected <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates, BioFilter bioFilter) throws ChemicalDatabaseException {
 
         final File stfile = new File(cacheDir, (bioFilter == BioFilter.ONLY_BIO ? "bio/" : (bioFilter == BioFilter.ONLY_NONBIO) ? "not-bio/" : "") + formula.toString() + ".json.gz");
         if (stfile.exists()) {
@@ -221,7 +221,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
                 }
             } catch (IOException | JsonException e) {
                 LoggerFactory.getLogger(RESTDatabase.class).error("Error when searching for " + formula.toString() + " in " + bioFilter.name() + "file database.");
-                throw new DatabaseException(e);
+                throw new ChemicalDatabaseException(e);
             }
         } else {
             try {
@@ -229,14 +229,14 @@ public class RESTDatabase extends AbstractChemicalDatabase {
                     fingerprintCandidates.add(wrap(fc));
                 }
             } catch (IOException e) {
-                throw new DatabaseException(e);
+                throw new ChemicalDatabaseException(e);
             }
         }
         return fingerprintCandidates;
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         final int n = Iterables.size(inchi_keys);
         final ArrayList<FingerprintCandidate> compounds = new ArrayList<>(Iterables.size(inchi_keys));
         final Iterator<String> keyIter = inchi_keys.iterator();
@@ -262,7 +262,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
                     }
 
                 } catch (IOException e) {
-                    throw new DatabaseException(e);
+                    throw new ChemicalDatabaseException(e);
                 }
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
@@ -277,27 +277,27 @@ public class RESTDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         return lookupFingerprintsByInchis(inchi_keys);
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws DatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws DatabaseException {
+    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
         // already annotated
     }
 
     @Override
-    public List<InChI> findInchiByNames(List<String> names) throws DatabaseException {
+    public List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 
