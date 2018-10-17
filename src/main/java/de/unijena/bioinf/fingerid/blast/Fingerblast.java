@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.chemdb.DatabaseException;
+import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.SearchStructureByFormula;
 
@@ -39,11 +39,11 @@ public class Fingerblast {
         this.scoringMethod = scoringMethod;
     }
 
-    public List<Scored<FingerprintCandidate>> search(MolecularFormula formula, ProbabilityFingerprint fingerprint) throws DatabaseException {
+    public List<Scored<FingerprintCandidate>> search(MolecularFormula formula, ProbabilityFingerprint fingerprint) throws ChemicalDatabaseException {
         List<FingerprintCandidate> candidates = searchEngine.lookupStructuresAndFingerprintsByFormula(formula);
         return score(candidates, fingerprint);
     }
-    public List<Scored<FingerprintCandidate>> score(List<FingerprintCandidate> candidates, ProbabilityFingerprint fingerprint) throws DatabaseException {
+    public List<Scored<FingerprintCandidate>> score(List<FingerprintCandidate> candidates, ProbabilityFingerprint fingerprint) throws ChemicalDatabaseException {
         final ArrayList<Scored<FingerprintCandidate>> results = new ArrayList<>();
         MaskedFingerprintVersion mask = null;
         if (fingerprint.getFingerprintVersion() instanceof MaskedFingerprintVersion) mask = (MaskedFingerprintVersion)fingerprint.getFingerprintVersion();
