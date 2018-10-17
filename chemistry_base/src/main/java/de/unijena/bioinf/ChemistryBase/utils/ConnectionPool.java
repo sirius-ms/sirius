@@ -13,10 +13,10 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * This class implements any kind of connection pool that manages some external resources (e.g. remote IO connections,
  * HTTP clients, SQL databases, ...).
- *
+ * <p>
  * The connection pool starts with a capacity that controls how many open connection are allowed to stay in the pool.
  * When first time a connection is requested, the connection pool will open a new connection and increase its size. When the connection is "closed", the connection pool will (instead of closing it) put the open connection into a list. When the next time a connection is requested, the connection pool will first empty its list before open a new connection. When the capacity of the pool is reached, the connection pool will block at every request until a free connection is available again.
- *
+ * <p>
  * Important note: The connection pool still requires that every requested connection is closed properly. The "real" closing of a connection is done when the connection pool itself is closed. For connections, that have a limited lifetime (e.g. SQL or HTTP connections), you might want to keep the connection pool in life only for a limited time, too, to avoid dying connection objects.
  *
  * <blockquote><pre>
@@ -37,13 +37,13 @@ import java.util.concurrent.locks.ReentrantLock;
  * }
  * </pre></blockquote>
  *
- *
  * @param <T>
  */
 public class ConnectionPool<T> implements Closeable, AutoCloseable {
 
     public interface Connection<T> {
         public T open() throws IOException;
+
         public void close(T connection) throws IOException;
     }
 
@@ -88,10 +88,10 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
             if (freeConnections.isEmpty()) {
                 // try to open a new connection
                 if (size.intValue() < capacity) {
-                    if ( size.incrementAndGet() >= capacity) {
+                    if (size.incrementAndGet() >= capacity) {
                         // ooops, we have a problem
                         size.decrementAndGet();
-                        return  waitForNewConnectionComesIn();
+                        return waitForNewConnectionComesIn();
                     } else {
                         return new PooledConnection<T>(this, connector.open());
                     }
@@ -100,7 +100,7 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
                 }
             } else {
                 final T connection = freeConnections.poll();
-                if (connection!=null) return new PooledConnection<T>(this, connection);
+                if (connection != null) return new PooledConnection<T>(this, connection);
             }
         }
     }
@@ -112,7 +112,7 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
     public void closeAllIdlingConnections() throws IOException {
         while (!freeConnections.isEmpty()) {
             final T c = freeConnections.poll();
-            if (c!=null) {
+            if (c != null) {
                 connector.close(c);
                 size.decrementAndGet();
             }
@@ -133,7 +133,7 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
         final ArrayList<T> refreshedConnections = new ArrayList<>();
         while (!freeConnections.isEmpty()) {
             final T c = freeConnections.poll();
-            if (c!=null) {
+            if (c != null) {
                 refreshOperation.execute(c);
                 refreshedConnections.add(c);
             }
@@ -156,7 +156,7 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
                     throw new InterruptedException("Interrupted by shutdown of connection pool");
                 }
                 final T c = freeConnections.poll();
-                if (c!=null) {
+                if (c != null) {
                     return new PooledConnection<T>(this, c);
                 }
             } finally {
@@ -169,7 +169,7 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
     }
 
     void freeConnection(final PooledConnection<T> connection) throws IOException {
-        if (connection==null) throw new NullPointerException();
+        if (connection == null) throw new NullPointerException();
         if (connection.closed) return; // already freed
         synchronized (connection) {
             if (connection.closed) return;
@@ -192,11 +192,11 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
     }
 
     public void shutdown() throws InterruptedException, IOException {
-        if (sharedCounter.decrementAndGet()>0) return;
+        if (sharedCounter.decrementAndGet() > 0) return;
         shutdown = true;
         while (true) {
             connectionLock.lock();
-            if (waitingThreads.get()<=0) {
+            if (waitingThreads.get() <= 0) {
                 connectionLock.unlock();
                 break;
             }
@@ -224,7 +224,7 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
      * guarantee that all open connections are properly closed.
      */
     public void enforceShutdown() throws IOException {
-        if (sharedCounter.decrementAndGet()>0) return;
+        if (sharedCounter.decrementAndGet() > 0) return;
         shutdown = true;
         forcedShutdown = true;
         while (!freeConnections.isEmpty()) {
@@ -241,5 +241,12 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
     public ConnectionPool<T> newSharedConnectionPool() {
         sharedCounter.incrementAndGet();
         return this;
+    }
+
+    public int getCapacity() {
+        return capacity;
+    }
+    public int getNumberOfIdlingConnections() {
+        return freeConnections.size();
     }
 }
