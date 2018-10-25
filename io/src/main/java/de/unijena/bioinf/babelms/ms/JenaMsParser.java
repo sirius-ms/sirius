@@ -444,13 +444,14 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
         //todo ms1 annotations lost through copy cascade
         private void newSpectrum() {
-            if (currentSpectrum.size() > 0) {
+            //always parse empty MS1/MS2. else this might create issues with MS1/MS2 mapping
+            if (spectrumType == SPECTRUM_TYPE.MS1) {
+                ms1spectra.add(new SimpleSpectrum(currentSpectrum));
+            } else if (spectrumType == SPECTRUM_TYPE.MS2) {
+                ms2spectra.add(new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2));
+            } else if (currentSpectrum.size() > 0) {
                 if (spectrumType == SPECTRUM_TYPE.MERGED_MS1) {
                     mergedMs1 = new SimpleSpectrum(currentSpectrum);
-                } else if (spectrumType == SPECTRUM_TYPE.MS1) {
-                    ms1spectra.add(new SimpleSpectrum(currentSpectrum));
-                } else if (spectrumType == SPECTRUM_TYPE.MS2) {
-                    ms2spectra.add(new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2));
                 } else {
                     warn("Unknown spectrum type. Description must contain one of the following keywords '>[ms1|mergedms1|ms2|collision|energy]'. " +
                             "Spectrum will be processed as MS2 spectrum.");
