@@ -19,17 +19,17 @@ public class FingerblastSearchEngine implements SearchStructureByFormula, Annota
     }
 
     @Override
-    public void annotateCompounds(List<? extends CompoundCandidate> list) throws DatabaseException {
+    public void annotateCompounds(List<? extends CompoundCandidate> list) throws ChemicalDatabaseException {
         // compounds from this database are already annotated
     }
 
     @Override
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula molecularFormula, T fingerprintCandidates) throws DatabaseException {
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula molecularFormula, T fingerprintCandidates) throws ChemicalDatabaseException {
         try  {
             fingerprintCandidates.addAll(underlyingDatabase.loadCompoundsByFormula(molecularFormula, queryDB));
             return fingerprintCandidates;
         } catch (IOException e) {
-            throw new DatabaseException(e);
+            throw new ChemicalDatabaseException(e);
         }
     }
 }

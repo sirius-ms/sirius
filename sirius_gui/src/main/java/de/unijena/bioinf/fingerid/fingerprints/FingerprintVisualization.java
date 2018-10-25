@@ -3,7 +3,7 @@ package de.unijena.bioinf.fingerid.fingerprints;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.chemdb.ChemicalDatabase;
-import de.unijena.bioinf.chemdb.DatabaseException;
+import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.fingerid.Fingerprinter;
 import gnu.trove.list.array.TIntArrayList;
 import org.openscience.cdk.exception.CDKException;
@@ -160,7 +160,7 @@ class FingerprintVisualization {
             e.printStackTrace();
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();
-        } catch (DatabaseException e) {
+        } catch (ChemicalDatabaseException e) {
             e.printStackTrace();
         }
         stream.close();
