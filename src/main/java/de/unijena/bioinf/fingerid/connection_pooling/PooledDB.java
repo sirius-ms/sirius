@@ -4,8 +4,10 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.sql.SQLException;
 
-public interface PooledDB extends Closeable {
+public interface PooledDB<T> extends Closeable {
     void refresh() throws IOException;
+
+    <R> R useConnection(PoolFunction<T, R> runWithConnection) throws SQLException, IOException, InterruptedException;
 
     /*
      * This method should catch all connection related exceptions.
