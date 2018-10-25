@@ -1,7 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.ms.inputValidators;
 
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -11,7 +10,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class ChimericAnnotator implements QualityAnnotator {
-    private DatasetStatistics statistics;
     private List<SpectrumProperty> prerequisites = Collections.singletonList(SpectrumProperty.NoMS1Peak);
     private Deviation findMs1PeakDeviation;
 
@@ -61,27 +59,12 @@ public class ChimericAnnotator implements QualityAnnotator {
         }
     }
 
+
     protected void  annotate(Ms2Experiment experiment, Deviation maxDeviation, IsolationWindow isolationWindow, ChemicalAlphabet defaultAlphabet){
         Spectrum<Peak> ms1 = getMostIntenseSpectrumContainingPrecursorPeak(experiment);
         if (ms1==null) return;
 
-        int ms1PrecursorIdx = Spectrums.mostIntensivePeakWithin(ms1, experiment.getIonMass(), findMs1PeakDeviation);
-        if (ms1PrecursorIdx<0){
-//                if (!hasProperty(experiment, SpectrumProperty.NoMS1Peak)){
-//                    setSpectrumProperty(experiment, SpectrumProperty.NoMS1Peak);
-//                }
-            return;
-        }
-        Peak precursorPeak = ms1.getPeakAt(ms1PrecursorIdx);
-        double precursorMz = precursorPeak.getMass();
-        double filteredPrecursorIntensity = isolationWindow.getIntensity(precursorPeak.getIntensity(), precursorMz, precursorMz);
 
-        double center = isolationWindow.getMassShift()+precursorPeak.getMass();
-        double left = center-isolationWindow.getMaxWindowSize()/2;
-        double right = center+isolationWindow.getMaxWindowSize()/2;
-
-        SimpleMutableSpectrum ms1IsotopesRemoved = new SimpleMutableSpectrum(ms1);
-        //todo which deviation to use? rather remove too much other peaks?
         ChemicalAlphabet alphabet;
         if (experiment.hasAnnotation(FormulaSettings.class)){
             alphabet = experiment.getAnnotation(FormulaSettings.class).getConstraints().getChemicalAlphabet();
@@ -89,26 +72,53 @@ public class ChimericAnnotator implements QualityAnnotator {
         else {
             alphabet = defaultAlphabet;
         }
+        boolean isChimeric =  isChimeric(ms1, experiment.getIonMass(), maxDeviation, isolationWindow, alphabet);
+
+        //todo best would be to look how much is fragmented in MS2. If nothing, it's not a problem
+        if (isChimeric){
+            CompoundQuality.setProperty(experiment, SpectrumProperty.Chimeric);
+        }
+
+    }
+
+    /**
+     * might return false for several reasons (e.g. precursor peak not found)
+     * @param ms1Spectrum
+     * @param ionMass
+     * @param deviationIsotopeDifferences
+     * @param isolationWindow
+     * @param alphabet only to remove isotopes. You might as well you a default alphabet and increase deviation to allow for rare elements.
+     * @return
+     */
+    public boolean isChimeric(Spectrum<Peak> ms1Spectrum, double ionMass, Deviation deviationIsotopeDifferences, IsolationWindow isolationWindow, ChemicalAlphabet alphabet){
+        int ms1PrecursorIdx = Spectrums.mostIntensivePeakWithin(ms1Spectrum, ionMass, findMs1PeakDeviation);
+        if (ms1PrecursorIdx<0){
+//                }
+            return false;
+        }
+        Peak precursorPeak = ms1Spectrum.getPeakAt(ms1PrecursorIdx);
+        double precursorMz = precursorPeak.getMass();
+        double filteredPrecursorIntensity = isolationWindow.getIntensity(precursorPeak.getIntensity(), precursorMz, precursorMz);
+
+        double center = isolationWindow.getMassShift()+precursorPeak.getMass();
+        double left = center-isolationWindow.getMaxWindowSize()/2;
+        double right = center+isolationWindow.getMaxWindowSize()/2;
+
+        SimpleMutableSpectrum ms1IsotopesRemoved = new SimpleMutableSpectrum(ms1Spectrum);
+
         //todo rather remove too much?! chances that it's in fact an isotope are high
         //changed
-//        Spectrums.filterIsotpePeaks(ms1IsotopesRemoved, maxDeviation, 0.5, 1.2, 5, alphabet); //todo or add up isotope intensities
-        Spectrums.filterIsotpePeaks(ms1IsotopesRemoved, maxDeviation, 2, 2, 5, alphabet); //todo or add up isotope intensities
+//        Spectrums.filterIsotpePeaks(ms1IsotopesRemoved, deviationIsotopeDifferences, 0.5, 1.2, 5, alphabet); //todo or add up isotope intensities
+        Spectrums.filterIsotpePeaks(ms1IsotopesRemoved, deviationIsotopeDifferences, 2, 2, 5, alphabet); //todo or add up isotope intensities
 
         Spectrum<Peak> massSorted = Spectrums.getMassOrderedSpectrum(ms1IsotopesRemoved);
         int precursorIdx = Spectrums.binarySearch(massSorted, precursorPeak.getMass());
 
         if (precursorIdx<0) {
-            if (CompoundQuality.hasProperty(experiment, SpectrumProperty.NotMonoisotopicPeak)){
-                //todo go on anyways?
-//                    continue;
-                ms1IsotopesRemoved.addPeak(precursorPeak);
-                massSorted = Spectrums.getMassOrderedSpectrum(ms1IsotopesRemoved);
-                precursorIdx = Spectrums.binarySearch(massSorted, precursorPeak.getMass());
-            } else {
-                ms1IsotopesRemoved.addPeak(precursorPeak);
-                massSorted = Spectrums.getMassOrderedSpectrum(ms1IsotopesRemoved);
-                precursorIdx = Spectrums.binarySearch(massSorted, precursorPeak.getMass());
-            }
+            //might be because it is SpectrumProperty.NotMonoisotopicPeak
+            ms1IsotopesRemoved.addPeak(precursorPeak);
+            massSorted = Spectrums.getMassOrderedSpectrum(ms1IsotopesRemoved);
+            precursorIdx = Spectrums.binarySearch(massSorted, precursorPeak.getMass());
         }
 
         int idx = precursorIdx;
@@ -131,8 +141,9 @@ public class ChimericAnnotator implements QualityAnnotator {
 
         //todo best would be to look how much is fragmented in MS2. If nothing, it's not a problem
         if (maxIntensity>=max2ndMostIntenseRatio*filteredPrecursorIntensity || summedIntensity>=maxSummedIntensitiesRatio*filteredPrecursorIntensity){
-            CompoundQuality.setProperty(experiment, SpectrumProperty.Chimeric);
+            return true;
         }
+        return false;
     }
 
     protected Spectrum<Peak> getMostIntenseSpectrumContainingPrecursorPeak(Ms2Experiment experiment){
