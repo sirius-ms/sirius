@@ -180,6 +180,21 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
         Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
 
+        if (options.getMedianNoiseIntensity()!=null) {
+            double medianNoiseInt = options.getMedianNoiseIntensity();
+            DatasetStatistics datasetStatistics= preprocessor.makeStatistics(dataset);
+            double minMs1Intensity = datasetStatistics.getMinMs1Intensity();
+            double maxMs1Intensity = datasetStatistics.getMaxMs1Intensity();
+            double minMs2Intensity = datasetStatistics.getMinMs2Intensity();
+            double maxMs2Intensity = datasetStatistics.getMaxMs2Intensity();
+            double minMs2NoiseIntensity = medianNoiseInt;
+            double maxMs2NoiseIntensity = medianNoiseInt;
+            double meanMs2NoiseIntensity = medianNoiseInt;
+            double medianMs2NoiseIntensity = medianNoiseInt;
+            FixedDatasetStatistics fixedDatasetStatistics = new FixedDatasetStatistics(minMs1Intensity, maxMs1Intensity, minMs2Intensity, maxMs2Intensity, minMs2NoiseIntensity, maxMs2NoiseIntensity, meanMs2NoiseIntensity, medianMs2NoiseIntensity);
+            ((MutableMs2Dataset) dataset).setDatasetStatistics(fixedDatasetStatistics);
+        }
+        
         List<QualityAnnotator> qualityAnnotators = new ArrayList<>();
         qualityAnnotators.add(new NoMs1PeakAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION));
         qualityAnnotators.add(new FewPeaksAnnotator(Ms2DatasetPreprocessor.MIN_NUMBER_OF_PEAKS));
@@ -215,7 +230,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             if (!atLeastOneTreeExplainsSomeIntensity(trees, 0.5)){
                 CompoundQuality.setProperty(experiment, SpectrumProperty.PoorlyExplained);
             }
-            if (!atLeastOneTreeExplainsSomePeaks(trees, 3)){
+            if (!atLeastOneTreeExplainsSomePeaks(trees, 5)){ //changed from 3
                 CompoundQuality.setProperty(experiment, SpectrumProperty.PoorlyExplained);
             }
 
