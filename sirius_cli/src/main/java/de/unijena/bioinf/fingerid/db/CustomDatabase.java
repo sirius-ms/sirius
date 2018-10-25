@@ -522,7 +522,7 @@ public class CustomDatabase implements SearchableDatabase {
                             logger.info(fc.getInchiKey2D() + " downloaded");
                             dict.get(fc.getInchiKey2D()).candidate = fc;
                         }
-                    } catch (DatabaseException e) {
+                    } catch (ChemicalDatabaseException e) {
                         logger.error(e.getMessage(), e);
                     }
                 }
