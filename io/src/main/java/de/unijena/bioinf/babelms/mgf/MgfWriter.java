@@ -85,7 +85,7 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
 
 
     private void writeMs1(BufferedWriter writer, Spectrum<Peak> spec, String name, double precursorMass, int charge, String adduct, boolean isMergedSpectrum, List<String> additionalInfos) throws IOException {
-        if (spec != null && spec.size() > 0) {
+        if (spec != null) {
             writer.write("BEGIN IONS");
             writer.newLine();
             writer.write("FEATURE_ID=" + name);
@@ -118,7 +118,7 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
     }
 
     private void writeMs2(BufferedWriter writer, Ms2Spectrum spec, String name, double precursorMass, int charge, String adduct, List<String> additionalInfos) throws IOException {
-        if (spec != null && spec.size() > 0) {
+        if (spec != null) { //don't filter empty spectra. this might destroy mapping
             writer.write("BEGIN IONS");
             writer.newLine();
             writer.write("FEATURE_ID=" + name);
