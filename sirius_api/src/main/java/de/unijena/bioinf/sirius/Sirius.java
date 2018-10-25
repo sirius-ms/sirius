@@ -17,7 +17,6 @@
  */
 package de.unijena.bioinf.sirius;
 
-import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformation;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformer;
@@ -33,8 +32,9 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.AbstractTreeC
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeComputationInstance;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.AdductSwitchLossScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ExtractedIsotopePattern;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.IsotopePatternGenerator;
@@ -339,7 +339,7 @@ public class Sirius {
         if (spec != null) {
             guessedFromMergedMs1 = true;
             mutableMerged = new MutableMs2Spectrum(spec);
-            Spectrums.filterIsotpePeaks(mutableMerged, new Deviation(100), 0.3, 0.75, 5, new ChemicalAlphabet());
+            Spectrums.filterIsotpePeaks(mutableMerged, new Deviation(100), 1, 2, 5, new ChemicalAlphabet());
         }
         //todo hack: if the merged spectrum only contains a single monoisotopic peak: use most intense MS1 (problem if only M+H+ and M+ in merged MS1?)
         if ((mutableMerged == null || mutableMerged.size() == 1) && experiment.getMs1Spectra().size() > 0) {
@@ -400,17 +400,25 @@ public class Sirius {
     }
 
     public void detectPossibleIonModesFromMs1(ProcessedInput processedInput, PrecursorIonType... allowedIonModes) {
-//        final PrecursorIonType[] ionModes = guessIonization(processedInput.getExperimentInformation(), allowedIonModes);
-        final GuessIonizationFromMs1Result guessIonization = guessIonization(processedInput.getExperimentInformation(), allowedIonModes);
         final PossibleIonModes pim = processedInput.getAnnotation(PossibleIonModes.class, new PossibleIonModes());
+        //if disabled, do not guess ionization
+        if (!pim.isGuessFromMs1Enabled()) return;
+
+
+        final GuessIonizationFromMs1Result guessIonization = guessIonization(processedInput.getExperimentInformation(), allowedIonModes);
+
         if (guessIonization.guessedIonTypes.length>0){
             if (pim.getGuessingMode().equals(PossibleIonModes.GuessingMode.SELECT)){
-                if (guessIonization.getGuessingSource()==GuessIonizationSource.NormalMs1
-                        || guessIonization.getGuessingSource()==GuessIonizationSource.NoSource //not possible at this stage?
+                //fully trust any ionization prediction
+                pim.updateGuessedIons(guessIonization.guessedIonTypes);
+
+            } else {
+
+                if (guessIonization.getGuessingSource()==GuessIonizationSource.MergedMs1Spectrum
                 ){
-                    //don't fully trust guessing from sipmle MS1 spectrum.
+                    //don't fully trust guessing from simple (non-merged) MS1 spectrum.
                     double[] probabilities = new double[allowedIonModes.length];
-                    Arrays.fill(probabilities, 0.02);
+                    Arrays.fill(probabilities, 0.01);
                     PrecursorIonType[] guessedIonizations = guessIonization.guessedIonTypes;
                     for (int i = 0; i < allowedIonModes.length; i++) {
                         PrecursorIonType allowedIonMode = allowedIonModes[i];
@@ -427,9 +435,6 @@ public class Sirius {
                     //merged MS1 should be more reliable (probably openMS features or something like that), so we trust more
                     pim.updateGuessedIons(guessIonization.guessedIonTypes);
                 }
-
-
-            } else {
                 pim.updateGuessedIons(guessIonization.guessedIonTypes);
             }
         }
