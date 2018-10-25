@@ -86,17 +86,16 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
     }
 
     public PooledConnection<T> orderConnection() throws InterruptedException, IOException {
-        try {
-            if (shutdown)
-                throw new IllegalStateException("Connection pool is closed and does not accept new requests.");
-            if (threads.contains(Thread.currentThread()))
-                LoggerFactory.getLogger(getClass()).warn(Thread.currentThread().getName() + " has already a connection of. " + toString() + " Ordering multiple connections with the same thread might cause a deadlock. See Stacktrace:" + System.lineSeparator() + Arrays.toString(Thread.currentThread().getStackTrace()));
-            waitingThreads.incrementAndGet();
-            return orderConnectionDontIncreaseWaitingCount();
-        } finally {
-            threads.add(Thread.currentThread());
-            //            System.out.println("+++> " + Thread.currentThread().getName() + " gets " + o.connection.toString() + " (size: " + size.get() + "/" + capacity + ")");
-        }
+
+        if (shutdown)
+            throw new IllegalStateException("Connection pool is closed and does not accept new requests.");
+        if (threads.contains(Thread.currentThread()))
+            LoggerFactory.getLogger(getClass()).warn(Thread.currentThread().getName() + " has already a connection of. " + toString() + " Ordering multiple connections with the same thread might cause a deadlock. See Stacktrace:" + System.lineSeparator() + Arrays.toString(Thread.currentThread().getStackTrace()));
+        waitingThreads.incrementAndGet();
+        final PooledConnection<T> c = orderConnectionDontIncreaseWaitingCount();
+        threads.add(Thread.currentThread());
+        return c;
+
     }
 
     private PooledConnection<T> orderConnectionDontIncreaseWaitingCount() throws InterruptedException, IOException {
