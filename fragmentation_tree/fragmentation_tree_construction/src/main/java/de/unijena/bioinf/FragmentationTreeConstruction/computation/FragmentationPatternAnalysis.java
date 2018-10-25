@@ -1432,11 +1432,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         if (maxIntensity==0) return 0;
         return treeIntensity / maxIntensity;
     }
-    public double getIntensityRatioOfExplainedPeaksFromUnanotatedTree(ProcessedInput input, FTree tree, Ionization ionMode) {
+    public double getIntensityRatioOfExplainedPeaksFromUnanotatedTree(ProcessedInput input, FTree tree) {
         final double[] fragmentMasses = new double[tree.numberOfVertices()];
         int k=0;
         for (Fragment f : tree) {
-            fragmentMasses[k++] = ionMode.addToMass(f.getFormula().getMass());
+            fragmentMasses[k++] = f.getIonization().addToMass(f.getFormula().getMass());
         }
         Arrays.sort(fragmentMasses);
         double explainedIntensity = 0d, totalIntensity = 0d;
@@ -1663,7 +1663,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
     private void scoreIsotopesInMs2(ProcessedInput input, FGraph graph) {
 
-        isoInMs2Scorer.scoreFromMs1(input, graph);
+//        isoInMs2Scorer.scoreFromMs1(input, graph);
         if (isScoringIsotopes(input))
             isoInMs2Scorer.score(input, graph);
 
