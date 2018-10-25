@@ -8,9 +8,9 @@ import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.ChemistryBase.utils.ConnectionPool;
-import de.unijena.bioinf.ChemistryBase.utils.PooledConnection;
-import de.unijena.bioinf.ChemistryBase.utils.PooledDB;
+import de.unijena.bioinf.fingerid.connection_pooling.ConnectionPool;
+import de.unijena.bioinf.fingerid.connection_pooling.PooledConnection;
+import de.unijena.bioinf.fingerid.connection_pooling.PooledDB;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import gnu.trove.list.array.TShortArrayList;
 import gnu.trove.set.TIntSet;
@@ -42,10 +42,15 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
      * local network. Otherwise, releasing password and usernames together with the bytecode
      * would be a security problem.
      */
-    public ChemicalDatabase() {
+    public ChemicalDatabase(final int numOfConnections) {
         setup();
-        connection = new ConnectionPool<>(new SqlConnector(host, username, password), DEFAULT_SQL_CAPACITY);
+        connection = new ConnectionPool<>(new SqlConnector(host, username, password), numOfConnections);
     }
+
+    public ChemicalDatabase() {
+        this(DEFAULT_SQL_CAPACITY);
+    }
+
 
     protected ChemicalDatabase(ChemicalDatabase db) {
         this.connection = db.connection.newSharedConnectionPool();
@@ -461,9 +466,8 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         }
     }
 
-    @Override
-    public void close() throws IOException {
-        connection.close();
+    public PooledConnection<Connection> getConnection() throws IOException, InterruptedException {
+        return connection.orderConnection();
     }
 
     /**
@@ -472,11 +476,24 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
      *
      * @throws ChemicalDatabaseException
      */
-    public void refresh() throws ChemicalDatabaseException {
-        try {
-            this.connection.closeAllIdlingConnections();
+    public final void refresh() throws IOException {
+        if (connection != null)
+            connection.closeAllIdlingConnections();
+        else throw new IOException("ConnectionPool of " + getClass().getName() + " is not initialized!");
+    }
+
+    @Override
+    public boolean hasConnection(int timeout) throws IOException, InterruptedException, SQLException {
+        if (timeout < 0) {
+            log.warn("Timeout has to be greater than 0. Value=" + timeout + ". Falling back to a default of 30s!");
+            timeout = 30;
+        }
+
+        try (final PooledConnection<Connection> c = connection.orderConnection()) {
+            return c.connection.isValid(timeout);
         } catch (IOException e) {
-            throw new ChemicalDatabaseException("Error when refreshing ChemDB", e);
+            if (e.getCause() instanceof SQLException) throw (SQLException) e.getCause();
+            throw e;
         }
     }
 
@@ -490,10 +507,10 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         return connection.getNumberOfIdlingConnections();
     }
 
-    public PooledConnection<Connection> getConnection() throws IOException, InterruptedException {
-        return connection.orderConnection();
+    @Override
+    public void close() throws IOException {
+        connection.close();
     }
-
 
     protected static class SqlConnector implements ConnectionPool.Connection<Connection> {
         static {
@@ -517,7 +534,9 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         @Override
         public Connection open() throws IOException {
             try {
-                return DriverManager.getConnection("jdbc:postgresql://" + host + "/pubchem", username, password);
+                final Connection c = DriverManager.getConnection("jdbc:postgresql://" + host + "/pubchem", username, password);
+                c.setNetworkTimeout(Runnable::run, 30000);
+                return c;
             } catch (SQLException e) {
                 throw new IOException(e);
             }
