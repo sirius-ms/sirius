@@ -9,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.connection_pooling.ConnectionPool;
+import de.unijena.bioinf.fingerid.connection_pooling.PoolFunction;
 import de.unijena.bioinf.fingerid.connection_pooling.PooledConnection;
 import de.unijena.bioinf.fingerid.connection_pooling.PooledDB;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
@@ -22,7 +23,7 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 
-public class ChemicalDatabase extends AbstractChemicalDatabase implements PooledDB {
+public class ChemicalDatabase extends AbstractChemicalDatabase implements PooledDB<Connection> {
 
     private static final int DEFAULT_SQL_CAPACITY = 5;
     protected static final Logger log = LoggerFactory.getLogger(ChemicalDatabase.class);
@@ -239,7 +240,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         }
     }
 
-    private List<CompoundCandidate> lookupStructuresByFormula(BioFilter bioFilter, MolecularFormula formula, PooledConnection<Connection> c) throws SQLException {
+    private List<CompoundCandidate> lookupStructuresByFormula(BioFilter bioFilter, MolecularFormula formula, final PooledConnection<Connection> c) throws SQLException {
         final boolean enforceBio = bioFilter == BioFilter.ONLY_BIO;
         final PreparedStatement statement;
         if (enforceBio) {
@@ -466,8 +467,10 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         }
     }
 
-    public PooledConnection<Connection> getConnection() throws IOException, InterruptedException {
-        return connection.orderConnection();
+    public <R> R useConnection(PoolFunction<Connection, R> runWithConnection) throws IOException, SQLException, InterruptedException {
+        try (final PooledConnection<Connection> c = connection.orderConnection()) {
+            return runWithConnection.apply(c);
+        }
     }
 
     /**
