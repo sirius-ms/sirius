@@ -1,21 +1,17 @@
 package de.unijena.bioinf.confidence_score_train;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.confidence_score.CombinedFeatureCreator;
 import de.unijena.bioinf.confidence_score.features.PvalueScoreUtils;
 import de.unijena.bioinf.confidence_score.svm.*;
 import de.unijena.bioinf.confidence_score_train.svm.LibSVMImpl;
-import de.unijena.bioinf.fingerid.LogisticRegression;
-import libsvm.svm_node;
-import libsvm.svm_parameter;
-import libsvm.svm_problem;
+
+import de.unijena.bioinf.fingerid.svm.Svm;
 import org.libsvm.SVM;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -398,6 +394,7 @@ LibLinearImpl imp;
 
         Collections.shuffle(range,new Random(1));
 
+
         for(int i=0;i<range.size()*0.9;i++){
 
             trainfeatures.add(featureMatrix[range.get(i)]);
@@ -405,6 +402,7 @@ LibLinearImpl imp;
 
 
         }
+
 
         for(int i=(int) Math.round(range.size()*0.9);i<range.size();i++){
 
@@ -538,11 +536,15 @@ LibLinearImpl imp;
 
             double[] probAB = new double[2];
 
+            trainSigmoid(featureMatrix,labels,trained,probAB);
+
             Stats stats = new Stats(scores,testLabelToBool);
 
+            //getUpperFeatures(featureMatrix,0.6,trained);
 
 
-            SVM.sigmoid_train(featureMatrix.length,predict.predict_confidence(featureMatrix,trained),labels,probAB);
+
+           // SVM.sigmoid_train(featureMatrix.length,predict.predict_confidence(featureMatrix,trained),labels,probAB);
 
 
             if(stats.getAUC()>best_AUC){
@@ -618,6 +620,67 @@ LibLinearImpl imp;
 
     }
 
+
+    public void trainSigmoid(double[][] featureMatrix, double[] labels,TrainedSVM svm ,double[] probAB){
+
+        HashMap<double[], Double> feature_to_label = new HashMap<>();
+
+        for(int i=0;i<featureMatrix.length;i++){
+            feature_to_label.put(featureMatrix[i],labels[i]);
+        }
+
+        double[][] cutFeatures = getUpperFeatures(featureMatrix,1,svm);
+
+        double[] cutlabel = new double[cutFeatures.length];
+
+        for(int i=0;i<cutFeatures.length;i++){
+            cutlabel[i]=feature_to_label.get(cutFeatures[i]);
+
+
+        }
+        SVMPredict pred = new SVMPredict();
+
+        SVM.sigmoid_train(cutFeatures.length,pred.predict_confidence(cutFeatures,svm),cutlabel,probAB);
+
+
+
+
+
+    }
+
+
+    public double[][] getUpperFeatures(double[][] matrix, double perc, TrainedSVM trained){
+
+        SVMPredict pred = new SVMPredict();
+
+        double[][] outputMatrix = new double[(int) Math.round(matrix.length*perc)][matrix[0].length];
+
+        double[] scores = pred.predict_confidence(matrix,trained);
+
+        ArrayList<Scored<double[]>> scoredlist = new ArrayList<>();
+
+
+
+
+        for(int i=0;i<scores.length;i++){
+            Scored<double[]> scored = new Scored<>(matrix[i],scores[i]);
+            scoredlist.add(scored);
+        }
+
+        Collections.sort(scoredlist);
+        Collections.reverse(scoredlist);
+        
+        for(int i=0;i<(int) Math.round(matrix.length*perc);i++){
+            outputMatrix[i]=scoredlist.get(i).getCandidate();
+
+        }
+
+        return outputMatrix;
+
+
+
+
+    }
 
     public void writeScores(double[] scores, boolean[] labels){
 
