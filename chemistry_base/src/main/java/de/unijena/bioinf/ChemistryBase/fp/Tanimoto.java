@@ -66,6 +66,7 @@ public class Tanimoto {
 
         // |A n B| = (|A| + |B|) - 2|A u B|
         final int union = as.length + bs.length - intersection;
+        if (union==0) return 0;
         return ((double)intersection)/(union);
     }
     public static double tanimoto(short[] as, short[] bs) {
@@ -83,6 +84,7 @@ public class Tanimoto {
 
         // |A n B| = (|A| + |B|) - 2|A u B|
         final int union = as.length + bs.length - intersection;
+        if (union==0) return 0;
         return ((double)intersection)/(union);
     }
 
@@ -116,6 +118,7 @@ public class Tanimoto {
             if (a || b) ++union;
             if (a && b) ++intersection;
         }
+        if (union==0) return 0d;
         return ((double)intersection)/union;
     }
 
@@ -130,6 +133,7 @@ public class Tanimoto {
                 R += 1d;
             } else R += probFp.getProbability();
         }
+        if (Q==0) return 0d;
         return Q / R;
     }
 
