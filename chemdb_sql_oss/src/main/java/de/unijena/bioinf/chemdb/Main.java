@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class Main {
 
-    public static void main(String... args) throws DatabaseException, IOException{
+    public static void main(String... args) throws ChemicalDatabaseException, IOException{
         ChemicalDatabase chemicalDatabase = new ChemicalDatabase();
 
 

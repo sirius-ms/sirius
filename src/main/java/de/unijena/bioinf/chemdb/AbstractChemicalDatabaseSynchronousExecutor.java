@@ -40,55 +40,55 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
     }
 
     @Override
-    public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException {
+    public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
         ChemicalDatabaseFuture<List<FormulaCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupMolecularFormulas", new Class<?>[]{BioFilter.class, double.class, Deviation.class, PrecursorIonType.class}, new Object[]{bioFilter, mass, deviation, ionType});
         return future.get();
     }
 
     @Override
-    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws DatabaseException {
+    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         ChemicalDatabaseFuture<List<CompoundCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupStructuresByFormula", new Class<?>[]{BioFilter.class, MolecularFormula.class}, new Object[]{bioFilter, formula});
         return future.get();
     }
 
     @Override
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws DatabaseException {
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         ChemicalDatabaseFuture<T> future = new ChemicalDatabaseFuture<>(executor, "lookupStructuresAndFingerprintsByFormula", new Class<?>[]{BioFilter.class, MolecularFormula.class, Collection.class}, new Object[]{bioFilter, formula, fingerprintCandidates});
         return future.get();
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         ChemicalDatabaseFuture<List<FingerprintCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupFingerprintsByInchis", new Class<?>[]{Iterable.class}, new Object[]{inchi_keys});
         return future.get();
     }
 
     @Override
-    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         ChemicalDatabaseFuture<List<InChI>> future = new ChemicalDatabaseFuture<>(executor, "lookupManyInchisByInchiKeys", new Class<?>[]{Iterable.class}, new Object[]{inchi_keys});
         return future.get();
     }
 
     @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         ChemicalDatabaseFuture<List<FingerprintCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupManyFingerprintsByInchis", new Class<?>[]{Iterable.class}, new Object[]{inchi_keys});
         return future.get();
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws DatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         ChemicalDatabaseFuture<List<FingerprintCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupFingerprintsByInchi", new Class<?>[]{Iterable.class}, new Object[]{compounds});
         return future.get();
     }
 
     @Override
-    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws DatabaseException {
+    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
         ChemicalDatabaseFuture future = new ChemicalDatabaseFuture<>(executor, "annotateCompounds", new Class<?>[]{List.class}, new Object[]{sublist});
         future.get();
     }
 
     @Override
-    public List<InChI> findInchiByNames(List<String> names) throws DatabaseException {
+    public List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException {
         ChemicalDatabaseFuture<List<InChI>> future = new ChemicalDatabaseFuture<>(executor, "findInchiByNames", new Class<?>[]{List.class}, new Object[]{names});
         return future.get();
     }
@@ -139,9 +139,9 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
             }
         }
 
-        public void addToQueue(ChemicalDatabaseFuture future) throws DatabaseException {
+        public void addToQueue(ChemicalDatabaseFuture future) throws ChemicalDatabaseException {
             synchronized (this) {
-                if (!running) throw new DatabaseException("cannot add to queue. Executor is already stopped");
+                if (!running) throw new ChemicalDatabaseException("cannot add to queue. Executor is already stopped");
                 queue.add(future);
                 notifyAll();
             }
@@ -217,7 +217,7 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
     protected class ChemicalDatabaseFuture<R> implements Runnable {
 
         private R result;
-        private DatabaseException exception;
+        private ChemicalDatabaseException exception;
 
         private String name;
         private Class<?>[] paramTypes;
@@ -226,7 +226,7 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
 
         private AbstractChemicalDatabase db;
 
-        ChemicalDatabaseFuture(AbstractChemicalDatabaseSynchronousExecutor.Executor executor, String name, Class<?>[] paramTypes, Object[] paramValues) throws DatabaseException {
+        ChemicalDatabaseFuture(AbstractChemicalDatabaseSynchronousExecutor.Executor executor, String name, Class<?>[] paramTypes, Object[] paramValues) throws ChemicalDatabaseException {
             this.name = name;
             this.paramValues = paramValues;
             this.paramTypes = paramTypes;
@@ -240,7 +240,7 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
         }
 
 
-        public R get() throws DatabaseException {
+        public R get() throws ChemicalDatabaseException {
             if (result != null) return result;
             executor.waitForExit(this);
             if (exception != null) throw exception;
@@ -253,16 +253,16 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
                 result = (R) db.getClass().getDeclaredMethod(name, paramTypes).invoke(db, paramValues);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
-                this.exception = new DatabaseException(e.getCause());
+                this.exception = new ChemicalDatabaseException(e.getCause());
             } catch (InvocationTargetException e) {
                 e.getCause().printStackTrace();
-                this.exception = new DatabaseException(e.getCause());
+                this.exception = new ChemicalDatabaseException(e.getCause());
             } catch (NoSuchMethodException e) {
                 e.printStackTrace();
-                this.exception = new DatabaseException(e.getCause());
+                this.exception = new ChemicalDatabaseException(e.getCause());
             } catch (Exception e) {
                 e.printStackTrace();
-                this.exception = new DatabaseException(e.getCause());
+                this.exception = new ChemicalDatabaseException(e.getCause());
             }
             executor.finished(this, db);
         }

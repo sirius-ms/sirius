@@ -71,7 +71,7 @@ public class FileDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException {
+    public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
 
         final double exactmass = ionType.precursorMassToNeutralMass(mass);
         final double lowermass = exactmass - deviation.absoluteFor(mass);
@@ -101,7 +101,7 @@ public class FileDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws DatabaseException {
+    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         final List<CompoundCandidate> cc = new ArrayList<>();
         for (FingerprintCandidate fc : lookupStructuresAndFingerprintsByFormula(formula)) {
             cc.add(fc);
@@ -110,7 +110,7 @@ public class FileDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws DatabaseException {
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         if (!formulas.containsKey(formula)) {
             return fingerprintCandidates;
         }
@@ -119,38 +119,38 @@ public class FileDatabase extends AbstractChemicalDatabase {
                 while (fciter.hasNext()) fingerprintCandidates.add(fciter.next());
             }
         } catch (IOException e) {
-            throw new DatabaseException(e);
+            throw new ChemicalDatabaseException(e);
         }
         return fingerprintCandidates;
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws DatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws DatabaseException {
+    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<InChI> findInchiByNames(List<String> names) throws DatabaseException {
+    public List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 

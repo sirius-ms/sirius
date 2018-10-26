@@ -8,8 +8,10 @@ import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.ChemistryBase.utils.ConnectionPool;
-import de.unijena.bioinf.ChemistryBase.utils.PooledConnection;
+import de.unijena.bioinf.fingerid.connection_pooling.ConnectionPool;
+import de.unijena.bioinf.fingerid.connection_pooling.PoolFunction;
+import de.unijena.bioinf.fingerid.connection_pooling.PooledConnection;
+import de.unijena.bioinf.fingerid.connection_pooling.PooledDB;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import gnu.trove.list.array.TShortArrayList;
 import gnu.trove.set.TIntSet;
@@ -21,7 +23,7 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 
-public class ChemicalDatabase extends AbstractChemicalDatabase implements Cloneable {
+public class ChemicalDatabase extends AbstractChemicalDatabase implements PooledDB<Connection> {
 
     private static final int DEFAULT_SQL_CAPACITY = 5;
     protected static final Logger log = LoggerFactory.getLogger(ChemicalDatabase.class);
@@ -30,7 +32,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
         FingerIDProperties.fingeridVersion();//just to load the props
     }
 
-    protected ConnectionPool<Connection> connection;
+    protected final ConnectionPool<Connection> connection;
     protected String host, username, password;
 
 
@@ -41,10 +43,15 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
      * local network. Otherwise, releasing password and usernames together with the bytecode
      * would be a security problem.
      */
-    public ChemicalDatabase() {
+    public ChemicalDatabase(final int numOfConnections) {
         setup();
-        connection = new ConnectionPool<>(new SqlConnector(host, username, password), DEFAULT_SQL_CAPACITY);
+        connection = new ConnectionPool<>(new SqlConnector(host, username, password), numOfConnections);
     }
+
+    public ChemicalDatabase() {
+        this(DEFAULT_SQL_CAPACITY);
+    }
+
 
     protected ChemicalDatabase(ChemicalDatabase db) {
         this.connection = db.connection.newSharedConnectionPool();
@@ -77,7 +84,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
      * @param username
      * @param password
      */
-    public ChemicalDatabase(String host, String username, String password) throws DatabaseException {
+    public ChemicalDatabase(String host, String username, String password) {
         this.host = host;
         this.username = username;
         this.password = password;
@@ -101,10 +108,11 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
      * @param ionType   adduct of the ion
      * @return list of formula candidates which theoretical mass (+ adduct mass) is within the given mass window
      */
-    public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException {
-        return lookupMolecularFormulas(BioFilter.ALL,mass,deviation,ionType);
+    public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
+        return lookupMolecularFormulas(BioFilter.ALL, mass, deviation, ionType);
     }
-    public List<FormulaCandidate> lookupMolecularFormulas(BioFilter bioFilter, double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException {
+
+    public List<FormulaCandidate> lookupMolecularFormulas(BioFilter bioFilter, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
         final ArrayList<FormulaCandidate> xs = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             try (final PreparedStatement statement = c.connection.prepareStatement(
@@ -116,13 +124,13 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
             Thread.currentThread().interrupt();
             return new ArrayList<>();
         } catch (IOException | SQLException e) {
-            throw new DatabaseException(e);
+            throw new ChemicalDatabaseException(e);
         }
         return xs;
     }
 
 
-    public long getFlagsByFormula(MolecularFormula formula) throws DatabaseException {
+    public long getFlagsByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             try (final PreparedStatement statement = c.connection.prepareStatement(
                     "SELECT flags FROM formulas WHERE formula = ?"
@@ -136,7 +144,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (IOException | SQLException e) {
-            throw new DatabaseException(e);
+            throw new ChemicalDatabaseException(e);
         }
         return 0;
     }
@@ -149,7 +157,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
      * @param ionTypes  allowed adducts of the ion
      * @return list of formula candidates which theoretical mass (+ adduct mass) is within the given mass window
      */
-    public List<List<FormulaCandidate>> lookupMolecularFormulas(BioFilter bioFilter, double mass, Deviation deviation, PrecursorIonType[] ionTypes) throws DatabaseException {
+    public List<List<FormulaCandidate>> lookupMolecularFormulas(BioFilter bioFilter, double mass, Deviation deviation, PrecursorIonType[] ionTypes) throws ChemicalDatabaseException {
         final ArrayList<List<FormulaCandidate>> xs = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             final PreparedStatement statement = c.connection.prepareStatement(
@@ -158,8 +166,8 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
             for (PrecursorIonType ionType : ionTypes) {
                 try {
                     xs.add(lookupFormulaWithIon(bioFilter, statement, mass, deviation, ionType));
-                } catch (DatabaseException e) {
-                    throw new DatabaseException(e);
+                } catch (ChemicalDatabaseException e) {
+                    throw new ChemicalDatabaseException(e);
                 }
             }
         } catch (InterruptedException e) {
@@ -168,12 +176,12 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
             return new ArrayList<>();
         } catch (IOException | SQLException e) {
             log.error(e.getMessage(), e);
-            throw new DatabaseException(e);
+            throw new ChemicalDatabaseException(e);
         }
         return xs;
     }
 
-    private List<FormulaCandidate> lookupFormulaWithIon(BioFilter bioFilter, PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException, SQLException {
+    private List<FormulaCandidate> lookupFormulaWithIon(BioFilter bioFilter, PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException, SQLException {
         if (ionType.isIntrinsicalCharged()) {
             final List<FormulaCandidate> protonated = lookupFormulaWithIonIntrinsicalChargedAreConsidered(bioFilter, statement, mass, deviation, ionType.getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-"));
             final List<FormulaCandidate> intrinsical = lookupFormulaWithIonIntrinsicalChargedAreConsidered(bioFilter, statement, mass, deviation, ionType);
@@ -193,7 +201,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
         }
     }
 
-    private List<FormulaCandidate> lookupFormulaWithIonIntrinsicalChargedAreConsidered(BioFilter bioFilter, PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException, SQLException {
+    private List<FormulaCandidate> lookupFormulaWithIonIntrinsicalChargedAreConsidered(BioFilter bioFilter, PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException, SQLException {
         final double delta = deviation.absoluteFor(mass);
         final double neutralMass = ionType.precursorMassToNeutralMass(mass);
         final double minmz = neutralMass - delta;
@@ -211,28 +219,28 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
                 list.add(fc);
             }
         } catch (SQLException e) {
-            throw new DatabaseException(e);
+            throw new ChemicalDatabaseException(e);
         }
         return list;
     }
 
     @Override
-    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws DatabaseException {
-            return lookupStructuresByFormula(BioFilter.ALL,formula);
+    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
+        return lookupStructuresByFormula(BioFilter.ALL, formula);
     }
 
-    public List<CompoundCandidate> lookupStructuresByFormula(BioFilter bioFilter, MolecularFormula formula) throws DatabaseException {
+    public List<CompoundCandidate> lookupStructuresByFormula(BioFilter bioFilter, MolecularFormula formula) throws ChemicalDatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             return lookupStructuresByFormula(bioFilter, formula, c);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return new ArrayList<>();
         } catch (IOException | SQLException e) {
-            throw new DatabaseException(e);
+            throw new ChemicalDatabaseException(e);
         }
     }
 
-    private List<CompoundCandidate> lookupStructuresByFormula(BioFilter bioFilter, MolecularFormula formula, PooledConnection<Connection> c) throws SQLException {
+    private List<CompoundCandidate> lookupStructuresByFormula(BioFilter bioFilter, MolecularFormula formula, final PooledConnection<Connection> c) throws SQLException {
         final boolean enforceBio = bioFilter == BioFilter.ONLY_BIO;
         final PreparedStatement statement;
         if (enforceBio) {
@@ -259,16 +267,16 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
     }
 
 
-    public List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(BioFilter bioFilter, MolecularFormula formula) throws DatabaseException {
+    public List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(BioFilter bioFilter, MolecularFormula formula) throws ChemicalDatabaseException {
         return lookupStructuresAndFingerprintsByFormula(bioFilter, formula, new ArrayList<>());
     }
 
     @Override
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws DatabaseException {
-        return lookupStructuresAndFingerprintsByFormula(BioFilter.ALL,formula,fingerprintCandidates);
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
+        return lookupStructuresAndFingerprintsByFormula(BioFilter.ALL, formula, fingerprintCandidates);
     }
 
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(BioFilter bioFilter, MolecularFormula formula, T fingerprintCandidates) throws DatabaseException {
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(BioFilter bioFilter, MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             // first lookup structures
             final List<CompoundCandidate> candidates = lookupStructuresByFormula(bioFilter, formula, c);
@@ -315,12 +323,12 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
             Thread.currentThread().interrupt();
             return fingerprintCandidates;
         } catch (IOException | SQLException e) {
-            throw new DatabaseException(e);
+            throw new ChemicalDatabaseException(e);
         }
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             try (final PreparedStatement statement = c.connection.prepareStatement("SELECT s.inchi_key_1, s.inchi, s.name, s.smiles, s.flags, s.p_layer, s.q_layer, s.xlogp, f.fingerprint FROM structures as s, fingerprints as f WHERE f.fp_id = 1 AND s.inchi_key_1 = ? AND f.inchi_key_1 = s.inchi_key_1")) {
@@ -345,12 +353,12 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
             Thread.currentThread().interrupt();
             return candidates;
         } catch (IOException | SQLException e) {
-            throw new DatabaseException(e);
+            throw new ChemicalDatabaseException(e);
         }
     }
 
     @Override
-    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         final ArrayList<InChI> candidates = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             try (final PreparedStatement statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi FROM structures WHERE inchi_key_1 = ?")) {
@@ -368,17 +376,17 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
             Thread.currentThread().interrupt();
             return candidates;
         } catch (IOException | SQLException e) {
-            throw new DatabaseException(e);
+            throw new ChemicalDatabaseException(e);
         }
     }
 
     @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         return lookupFingerprintsByInchis(inchi_keys);
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws DatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             try (final PreparedStatement statement = c.connection.prepareStatement("SELECT fingerprint FROM fingerprints WHERE fp_id = 1 AND inchi_key_1 = ?")) {
@@ -396,12 +404,12 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
             Thread.currentThread().interrupt();
             return candidates;
         } catch (IOException | SQLException e) {
-            throw new DatabaseException(e);
+            throw new ChemicalDatabaseException(e);
         }
     }
 
     @Override
-    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws DatabaseException {
+    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             final DatasourceService.Sources[] sources = DatasourceService.Sources.values();
             final PreparedStatement[] statements = new PreparedStatement[sources.length];
@@ -432,12 +440,12 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (IOException | SQLException e) {
-            throw new DatabaseException(e);
+            throw new ChemicalDatabaseException(e);
         }
     }
 
     @Override
-    public List<InChI> findInchiByNames(List<String> names) throws DatabaseException {
+    public List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             try (final PreparedStatement statement = c.connection.prepareStatement("SELECT distinct r.inchi_key_1, r.inchi FROM pubchem.synonyms as syn, ref.pubchem as r WHERE lower(syn.name) = lower(?) AND r.compound_id = syn.compound_id")) {
                 final HashSet<InChI> inchis = new HashSet<>();
@@ -455,33 +463,57 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
             Thread.currentThread().interrupt();
             return new ArrayList<>();
         } catch (IOException | SQLException e) {
-            throw new DatabaseException(e);
+            throw new ChemicalDatabaseException(e);
         }
     }
 
-    @Override
-    public void close() throws IOException {
-        connection.close();
+    public <R> R useConnection(PoolFunction<Connection, R> runWithConnection) throws IOException, SQLException, InterruptedException {
+        try (final PooledConnection<Connection> c = connection.orderConnection()) {
+            return runWithConnection.apply(c);
+        }
     }
 
     /**
      * closes all connections and restart them again if necessary
      * Should be called after long times of idling as the database server might shut down the connection
      *
-     * @throws DatabaseException
+     * @throws ChemicalDatabaseException
      */
-    public void refresh() throws DatabaseException {
-        try {
-            this.connection.closeAllIdlingConnections();
+    public final void refresh() throws IOException {
+        if (connection != null)
+            connection.closeAllIdlingConnections();
+        else throw new IOException("ConnectionPool of " + getClass().getName() + " is not initialized!");
+    }
+
+    @Override
+    public boolean hasConnection(int timeout) throws IOException, InterruptedException, SQLException {
+        if (timeout < 0) {
+            log.warn("Timeout has to be greater than 0. Value=" + timeout + ". Falling back to a default of 30s!");
+            timeout = 30;
+        }
+
+        try (final PooledConnection<Connection> c = connection.orderConnection()) {
+            return c.connection.isValid(timeout);
         } catch (IOException e) {
-            throw new DatabaseException(e);
+            if (e.getCause() instanceof SQLException) throw (SQLException) e.getCause();
+            throw e;
         }
     }
 
-    public PooledConnection<Connection> getConnection() throws IOException, InterruptedException {
-        return connection.orderConnection();
+    @Override
+    public int getMaxConnections() {
+        return connection.getCapacity();
     }
 
+    @Override
+    public int getNumberOfIdlingConnections() {
+        return connection.getNumberOfIdlingConnections();
+    }
+
+    @Override
+    public void close() throws IOException {
+        connection.close();
+    }
 
     protected static class SqlConnector implements ConnectionPool.Connection<Connection> {
         static {
@@ -505,7 +537,9 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Clonea
         @Override
         public Connection open() throws IOException {
             try {
-                return DriverManager.getConnection("jdbc:postgresql://" + host + "/pubchem", username, password);
+                final Connection c = DriverManager.getConnection("jdbc:postgresql://" + host + "/pubchem", username, password);
+                c.setNetworkTimeout(Runnable::run, 30000);
+                return c;
             } catch (SQLException e) {
                 throw new IOException(e);
             }

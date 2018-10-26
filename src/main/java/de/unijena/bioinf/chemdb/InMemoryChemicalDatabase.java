@@ -59,7 +59,7 @@ public class InMemoryChemicalDatabase extends AbstractChemicalDatabase {
 
 
     @Override
-    public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException {
+    public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
         final double exactMass = ionType.precursorMassToNeutralMass(mass);
         int index = Arrays.binarySearch(formulas, exactMass, new Comparator() {
             @Override
@@ -92,7 +92,7 @@ public class InMemoryChemicalDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws DatabaseException {
+    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         final List<FingerprintCandidate> fps = candidatesPerFormula.get(formula);
         if (fps==null) return Collections.emptyList();
         return new AbstractList<CompoundCandidate>() {
@@ -108,7 +108,7 @@ public class InMemoryChemicalDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws DatabaseException {
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         if (!candidatesPerFormula.containsKey(formula)) return fingerprintCandidates;
         for (FingerprintCandidate fc : candidatesPerFormula.get(formula))
             fingerprintCandidates.add(fc);
@@ -116,7 +116,7 @@ public class InMemoryChemicalDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
         for (String key : inchi_keys)
             if (candidatePerKey.containsKey(key))
@@ -125,7 +125,7 @@ public class InMemoryChemicalDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         final ArrayList<InChI> candidates = new ArrayList<>();
         for (String key : inchi_keys)
             if (candidatePerKey.containsKey(key))
@@ -134,14 +134,14 @@ public class InMemoryChemicalDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         return lookupManyFingerprintsByInchis(inchi_keys);
 
 
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws DatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
         for (CompoundCandidate key : compounds)
             if (candidatePerKey.containsKey(key))
@@ -150,12 +150,12 @@ public class InMemoryChemicalDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws DatabaseException {
+    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
 
     }
 
     @Override
-    public List<InChI> findInchiByNames(List<String> names) throws DatabaseException {
+    public List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 

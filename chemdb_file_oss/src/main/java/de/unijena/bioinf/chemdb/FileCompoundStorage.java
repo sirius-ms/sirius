@@ -25,12 +25,12 @@ public class FileCompoundStorage implements SearchStructureByFormula, AnnotateSt
     }
 
     @Override
-    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws DatabaseException {
+    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
         // serialized structures are always annotated
     }
 
     @Override
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws DatabaseException {
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
 
         final File name = new File(databasePath, formula.toString() + ".json.gz");
         if (name.exists()) {
@@ -39,7 +39,7 @@ public class FileCompoundStorage implements SearchStructureByFormula, AnnotateSt
                     while (fciter.hasNext()) fingerprintCandidates.add(fciter.next());
                 }
             } catch (IOException e) {
-                throw new DatabaseException(e);
+                throw new ChemicalDatabaseException(e);
             }
             return fingerprintCandidates;
         } else {

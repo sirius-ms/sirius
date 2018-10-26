@@ -86,7 +86,7 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public List<FormulaCandidate> lookupMolecularFormulas(final double ionMass, Deviation deviation, PrecursorIonType ionType) throws DatabaseException {
+    public List<FormulaCandidate> lookupMolecularFormulas(final double ionMass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
 
         final double mass = ionType.precursorMassToNeutralMass(ionMass);
 
@@ -114,7 +114,7 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
 
 
     @Override
-    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws DatabaseException {
+    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         final ArrayList<CompoundCandidate> candidates = new ArrayList<>();
         final File structureFile = getFileFor(formula);
         if (structureFile.exists()) {
@@ -123,7 +123,7 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
                     candidates.add(iter.next());
                 }
             } catch (IOException e) {
-                throw new DatabaseException(e);
+                throw new ChemicalDatabaseException(e);
             }
             return candidates;
         } else return candidates;
@@ -138,13 +138,13 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(MolecularFormula formula) throws DatabaseException {
+    public List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
         return lookupStructuresAndFingerprintsByFormula(formula, candidates);
     }
 
     @Override
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws DatabaseException {
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         final File structureFile = getFileFor(formula);
         if (structureFile.exists()) {
             try (final CloseableIterator<FingerprintCandidate> iter = reader.readFingerprints(version, getReaderFor(structureFile))){
@@ -152,29 +152,29 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
                     fingerprintCandidates.add(iter.next());
                 }
             } catch (IOException e) {
-                throw new DatabaseException(e);
+                throw new ChemicalDatabaseException(e);
             }
             return fingerprintCandidates;
         } else return fingerprintCandidates;
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws DatabaseException {
+    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws DatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
         final HashMap<String, CompoundCandidate> innerMap = new HashMap<>();
         final Multimap<MolecularFormula, CompoundCandidate> formulas2Candidates = ArrayListMultimap.create();
@@ -213,13 +213,13 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
-    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws DatabaseException {
+    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
         // compounds are already annotated
         return;
     }
 
     @Override
-    public List<InChI> findInchiByNames(List<String> names) throws DatabaseException {
+    public List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 
