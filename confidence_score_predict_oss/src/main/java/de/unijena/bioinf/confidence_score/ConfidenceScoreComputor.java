@@ -108,38 +108,48 @@ public class ConfidenceScoreComputor {
         //TODO load this
 
 
-        String distanceType="distance";
-        String dbType="bio";
+        String distanceType;
+        String dbType;
 
 
 
         //TODO: output both bio and pubchem confidence?
 
+        TrainedSVM svm = trainedSVMs.get("fe30_bio_distance.svm");
+        Utils utils = new Utils();
+
+
         if(flags==0){
 
            comb= new CombinedFeatureCreatorALL(ranked_candidates_csiscore,ranked_candidates_covscore,performances,covscore);
             dbType="all";
+            distanceType="distance";
+            svm= trainedSVMs.get("fe"+ce+"_"+dbType+"_"+distanceType+".svm");
 
         }
 
         if((flags&4294967292L)!=0 && flags!=2){
+            dbType="bio";
 
-            if(ranked_candidates_covscore.length>1) {
 
-
+            if(utils.condense_candidates_by_flag(ranked_candidates_covscore,flags).length>1) {
+                distanceType="distance";
                 comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore,ranked_candidates_covscore,performances,covscore);
+                svm= trainedSVMs.get("fe"+ce+"_"+dbType+"_"+distanceType+".svm");
+
 
             }else {
-                comb =  new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore,ranked_candidates_covscore,performances,covscore);
-                distanceType="noDistance";
+                if(utils.condense_candidates_by_flag(ranked_candidates_covscore,flags).length>0) {
+                    comb = new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, performances, covscore);
+                    distanceType = "noDistance";
+
+                    svm= trainedSVMs.get("fe"+ce+"_"+dbType+"_"+distanceType+".svm");
+                }else {
+                    return 0;
+                }
             }
         }
-
-        //TrainedSVM svm = trainedSVMs.get(dbType+""+distanceType+""+ce);
         //TODO: testing only
-
-        TrainedSVM svm = trainedSVMs.get("f30_bio_distance");
-
 
 
 
@@ -164,11 +174,11 @@ public class ConfidenceScoreComputor {
 
 
 
-        SVMUtils utils = new SVMUtils();
+        SVMUtils svmutils = new SVMUtils();
 
-        utils.standardize_features(featureMatrix,svm.scales);
+        svmutils.standardize_features(featureMatrix,svm.scales);
 
-        utils.normalize_features(featureMatrix,svm.scales);
+        svmutils.normalize_features(featureMatrix,svm.scales);
 
         return predict.predict_confidence(featureMatrix,svm)[0];
 

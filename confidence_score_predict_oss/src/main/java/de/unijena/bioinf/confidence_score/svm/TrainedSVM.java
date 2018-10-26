@@ -189,7 +189,7 @@ public class TrainedSVM {
 
             }
 
-            if(key.contains("Dist")){
+            if(key.contains("sigmoid")){
 
                 probAB[0]= Double.parseDouble(curr.get(0).toString());
                 probAB[1]=Double.parseDouble(curr.get(1).toString());
