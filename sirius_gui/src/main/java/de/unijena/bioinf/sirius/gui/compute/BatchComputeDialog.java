@@ -32,7 +32,6 @@ import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.FingerIDSearchGuiJob;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
@@ -43,7 +42,6 @@ import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.utils.ExperimentEditPanel;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -214,12 +212,14 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 ElementPredictor predictor = sirius.getElementPrediction();
                 final FormulaConstraints c = sirius.predictElementsFromMs1(exp);
                 if (c != null) {
+                    FormulaConstraints ep = elementPanel.getElementConstraints();
                     for (Element element : c.getChemicalAlphabet()) {
                         if (!predictor.isPredictable(element)) {
-                            c.setLowerbound(element, 0);
-                            c.setUpperbound(element, 0);
+                            c.setLowerbound(element, ep.getLowerbound(element));
+                            c.setUpperbound(element, ep.getUpperbound(element));
                         }
                     }
+
                     elementPanel.setSelectedElements(c);
                 } else {
                     new ExceptionDialog(this, notWorkingMessage);
