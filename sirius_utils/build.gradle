@@ -7,9 +7,16 @@ dependencies {
 
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+
+    compile group: 'uk.ac.ebi.jmzml', name: 'jmzml', version: "1.7.4"
 }
 
+repositories {
+    maven {
+        url "http://repo.spring.io/plugins-release/" //org.antlr:com.springsource.antlr
+    }
 
+}
 
 
 
@@ -31,4 +38,5 @@ shadowJar {
     classifier = null
     version = null
 }
+
 

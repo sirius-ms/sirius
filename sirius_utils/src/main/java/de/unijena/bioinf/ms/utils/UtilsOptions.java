@@ -16,6 +16,9 @@ public interface UtilsOptions {
     @Option(longName = "map", description = "Map compound ids between different datasets by mz and rt.")
     boolean isMap();
 
+    @Option(longName = "quality-stats", description = "Compute spectrum quality and isotolation window shape.")
+    boolean isQualityStats();
+
     @Option(shortName = "h", longName = "help", helpRequest = true)
     boolean isHelp();
 

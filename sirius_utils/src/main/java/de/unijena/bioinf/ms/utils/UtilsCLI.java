@@ -2,13 +2,16 @@ package de.unijena.bioinf.ms.utils;
 
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MzRTPeak;
+import de.unijena.bioinf.ChemistryBase.SimpleRectangularIsolationWindow;
+import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
+import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.babelms.DataWriter;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.mgf.MgfWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
+import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
+import de.unijena.bioinf.sirius.Sirius;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,10 +39,9 @@ public class UtilsCLI {
     }
 
 
-
-
     private static final Pattern LEADING_DASHES = Pattern.compile("-*(.*)");
-    protected void parseArgsAndRun(String[] args){
+
+    protected void parseArgsAndRun(String[] args) {
         if (args.length == 0 ||
                 args.length == 1 && (containsIgnoreCase(args, "-h") || containsIgnoreCase(args, "--help"))) {
             System.out.println(CliFactory.createCli(UtilsOptions.class).getHelpMessage());
@@ -51,7 +54,7 @@ public class UtilsCLI {
         }
         String arg = matcher.group(1);
         String[] rest = Arrays.copyOfRange(args, 1, args.length);
-        switch (arg){
+        switch (arg) {
             case "merge":
                 mergeCompounds(rest);
                 break;
@@ -64,6 +67,12 @@ public class UtilsCLI {
             case "map":
                 map(rest);
                 break;
+            case "quality-stats":
+                qualityStatistics(rest);
+                break;
+            case "chemical-noise-detection":
+                extractChemicalNoise(rest);
+                break;
             default:
                 System.out.println("Please, specify your intended command as first parameter.");
                 System.exit(0);
@@ -71,14 +80,14 @@ public class UtilsCLI {
 
     }
 
-    private boolean containsIgnoreCase(String[] array, String string){
+    private boolean containsIgnoreCase(String[] array, String string) {
         for (String s : array) {
             if (s.equalsIgnoreCase(string)) return true;
         }
         return false;
     }
 
-    private void mergeCompounds(String... args){
+    private void mergeCompounds(String... args) {
         MergingOptions options = null;
         try {
             options = CliFactory.createCli(MergingOptions.class).parseArguments(args);
@@ -87,7 +96,7 @@ public class UtilsCLI {
             System.out.println(CliFactory.createCli(MergingOptions.class).getHelpMessage());
             System.exit(0);
         }
-        if (options.isHelp()){
+        if (options.isHelp()) {
             System.out.println(CliFactory.createCli(MergingOptions.class).getHelpMessage());
             System.exit(0);
         }
@@ -121,7 +130,7 @@ public class UtilsCLI {
                 List<Ms2Experiment> experiments = (new MsExperimentParser()).getParser(inputFile).parseFromFile(inputFile);
                 allExperiments[i++] = experiments;
             } catch (IOException e) {
-                Log.error("Error parsing input file: "+inputFile);
+                Log.error("Error parsing input file: " + inputFile);
                 Log.error(e.getMessage());
                 System.exit(0);
             }
@@ -138,7 +147,7 @@ public class UtilsCLI {
             System.out.println(CliFactory.createCli(ConvertToMgfOptions.class).getHelpMessage());
             System.exit(0);
         }
-        if (options.isHelp()){
+        if (options.isHelp()) {
             System.out.println(CliFactory.createCli(ConvertToMgfOptions.class).getHelpMessage());
             System.exit(0);
         }
@@ -162,10 +171,10 @@ public class UtilsCLI {
                     spectrumWriter.write(writer, experiment);
                 }
             }
-        } catch (IOException e){
-            Log.error("Error writing output: "+output);
+        } catch (IOException e) {
+            Log.error("Error writing output: " + output);
             Log.error(e.getMessage());
-            System.exit(0);
+            System.exit(-1);
         }
     }
 
@@ -178,7 +187,7 @@ public class UtilsCLI {
             System.out.println(CliFactory.createCli(FilterOptions.class).getHelpMessage());
             System.exit(0);
         }
-        if (options.isHelp()){
+        if (options.isHelp()) {
             System.out.println(CliFactory.createCli(FilterOptions.class).getHelpMessage());
             System.exit(0);
         }
@@ -187,46 +196,95 @@ public class UtilsCLI {
 
         List<Ms2Experiment> experiments = readData(Collections.singletonList(new File(input)))[0];
         int numberOfExperimentsBefore = experiments.size();
+        int numberOfMs2Before = getNumberOfMs2(experiments);
 
-        if (options.getBlankFeaturesFile()!=null){
-            if (options.getMinFoldDifference()==null){
+        if (options.getBlankFeaturesFile() != null) {
+            Log.info("blank feature removal.");
+            if (options.getMinFoldDifference() == null) {
                 Log.error("minimum fold change not provided.");
-                System.exit(0);
+                System.exit(-1);
             }
             MzRTPeak[] blankFeatures = null;
-            try(BufferedReader reader = Files.newBufferedReader(Paths.get(options.getBlankFeaturesFile()))){
-                blankFeatures = BlankRemoval.readFeatureTable(reader);
-            } catch (IOException e){
-                Log.error("Error reading file of filtered features: "+options.getBlankFeaturesFile());
+            try (BufferedReader reader = Files.newBufferedReader(Paths.get(options.getBlankFeaturesFile()))) {
+                blankFeatures = ChemicalNoiseRemoval.readFeatureTable(reader);
+            } catch (IOException e) {
+                Log.error("Error reading file of filtered features: " + options.getBlankFeaturesFile());
                 Log.error(e.getMessage());
-                System.exit(0);
+                System.exit(-1);
             }
             Deviation maxDeviation = new Deviation(options.getPPMMax());
             double maxRtDifference = options.getRTMax();
             double minFoldDifference = options.getMinFoldDifference();
-            BlankRemoval blankRemoval = new BlankRemoval(blankFeatures, maxDeviation, maxRtDifference, minFoldDifference);
-            experiments = blankRemoval.removeBlanks(experiments);
+            ChemicalNoiseRemoval blankRemoval = new ChemicalNoiseRemoval(blankFeatures, maxDeviation, maxRtDifference, minFoldDifference);
+            experiments = blankRemoval.removeNoiseFeatures(experiments);
         }
 
-        if (options.getMinNumberOfIsotopes()>0){
+        CompoundFilterUtil compoundFilterUtil = new CompoundFilterUtil();
+        if (options.getMinNumberOfIsotopes() > 0) {
+            Log.info("filtering by number of isotopes.");
             int minNumIso = options.getMinNumberOfIsotopes();
             Deviation findPrecursorInMs1Deviation = new Deviation(options.getPPMMax());
             Deviation isoDifferenceDeviation = new Deviation(options.getPPMDiff());
-            CompoundFilterUtil compoundFilterUtil = new CompoundFilterUtil();
             experiments = compoundFilterUtil.filterByNumberOfIsotopePeaks(experiments, minNumIso, findPrecursorInMs1Deviation, isoDifferenceDeviation);
         }
 
-        if (options.isFilterZeroIntensity()){
+        if (options.isFilterZeroIntensity()) {
+            Log.info("remove zero intensity features");
             Deviation findPrecursorInMs1Deviation = new Deviation(options.getPPMMax());
-            CompoundFilterUtil compoundFilterUtil = new CompoundFilterUtil();
             experiments = compoundFilterUtil.filterZeroIntensityFeatures(experiments, findPrecursorInMs1Deviation);
         }
 
+        if (options.getMs1Baseline() != null || options.getMs2Baseline() != null) {
+            Log.info("apply baseline");
+            double ms1Baseline = options.getMs1Baseline() == null ? -1 : options.getMs1Baseline();
+            double ms2Baseline = options.getMs2Baseline() == null ? -1 : options.getMs2Baseline();
+            experiments = compoundFilterUtil.applyBaseline(experiments, ms1Baseline, ms2Baseline);
+        }
+
+        if (options.isFilterChimeric()) {
+            Log.info("remove chimeric compounds");
+            double max2ndMostIntenseRatio = 0.33;
+            double maxSummedIntensitiesRatio = 1.0;
+            Deviation isoDifferenceDeviation = new Deviation(options.getPPMDiff());
+
+
+            Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(false);
+            MutableMs2Dataset dataset = new MutableMs2Dataset(experiments, "default", Double.NaN, (new Sirius()).getMs2Analyzer().getDefaultProfile());
+            preprocessor.estimateIsolationWindow(dataset);
+            IsolationWindow isolationWindow = dataset.getIsolationWindow();
+            if (isolationWindow.getEstimatedWindowSize() <= 1) {
+                Log.info("could not estimated isolation window. Setting simple 1 Da window");
+                isolationWindow = new SimpleRectangularIsolationWindow(-0.5, 0.5);
+            }
+
+            ChemicalAlphabet alphabet = ChemicalAlphabet.getExtendedAlphabet();
+            try {
+                experiments = compoundFilterUtil.removeChimericSpectra(experiments, max2ndMostIntenseRatio, maxSummedIntensitiesRatio, isoDifferenceDeviation, isolationWindow, alphabet);
+            } catch (InvalidInputData invalidInputData) {
+                Log.error(invalidInputData.getMessage());
+                System.exit(-1);
+            }
+        }
+
+        if (options.isFilterCompoundsWithoutMs2()) {
+            Log.info("remove compounds without MS2");
+            experiments = compoundFilterUtil.filterCompoundsWithoutMs2(experiments);
+        }
         int numberOfExperimentsAfter = experiments.size();
-        Log.info("number of compounds before filtering: "+numberOfExperimentsBefore+", after: "+numberOfExperimentsAfter);
+        int numberOfMs2After = getNumberOfMs2(experiments);
+        Log.info("number of compounds before filtering: " + numberOfExperimentsBefore + ", after: " + numberOfExperimentsAfter);
+        Log.info("number of MS2 spectra before filtering: " + numberOfMs2Before + ", after: " + numberOfMs2After);
         JenaMsWriter jenaMsWriter = new JenaMsWriter();
 
         writeToFile(jenaMsWriter, options.getOutput(), experiments);
+    }
+
+    private int getNumberOfMs2(List<Ms2Experiment> experiments) {
+        int count = 0;
+        for (Ms2Experiment experiment : experiments) {
+            count += experiment.getMs2Spectra().size();
+        }
+        return count;
     }
 
 
@@ -239,7 +297,7 @@ public class UtilsCLI {
             System.out.println(CliFactory.createCli(MapOptions.class).getHelpMessage());
             System.exit(0);
         }
-        if (options.isHelp()){
+        if (options.isHelp()) {
             System.out.println(CliFactory.createCli(MapOptions.class).getHelpMessage());
             System.exit(0);
         }
@@ -258,17 +316,115 @@ public class UtilsCLI {
 
         final String sep = "\t";
         Path output = Paths.get(options.getOutput());
-        try(BufferedWriter writer = Files.newBufferedWriter(output)){
+        try (BufferedWriter writer = Files.newBufferedWriter(output)) {
             for (String[] strings : mapping) {
-                writer.write(strings[0]+sep+strings[1]);
+                writer.write(strings[0] + sep + strings[1]);
                 writer.newLine();
             }
-        } catch (IOException e){
-            Log.error("Error writing output: "+output);
+        } catch (IOException e) {
+            Log.error("Error writing output: " + output);
             Log.error(e.getMessage());
-            System.exit(0);
+            System.exit(-1);
         }
 
     }
+
+    private void qualityStatistics(String... args) {
+        CompoundQualityOptions options = null;
+        try {
+            options = CliFactory.createCli(CompoundQualityOptions.class).parseArguments(args);
+        } catch (HelpRequestedException e) {
+            System.out.println(e.getMessage());
+            System.out.println(CliFactory.createCli(CompoundQualityOptions.class).getHelpMessage());
+            System.exit(0);
+        }
+        if (options.isHelp()) {
+            System.out.println(CliFactory.createCli(CompoundQualityOptions.class).getHelpMessage());
+            System.exit(0);
+        }
+
+
+        Path outPath = Paths.get(options.getOutput()).toAbsolutePath();
+        try {
+
+            if (!Files.exists(outPath)) {
+                Log.info("create directory: " + outPath);
+                Files.createDirectory(outPath);
+            }
+        } catch (IOException e) {
+            Log.error("Error creating output directory: " + options.getOutput());
+            Log.error(e.getMessage());
+            Log.error("Note: This tool does not create multiple levels of directories.");
+            System.exit(-1);
+        }
+
+
+//        List<String> input = options.getInput();
+//        List<File> inputFiles = input.stream().map(File::new).collect(Collectors.toList());
+        String input = options.getInput();
+        List<Ms2Experiment> experiments = readData(Collections.singletonList(new File(input)))[0];
+
+        CompoundQualityUtils compoundQualityUtils = new CompoundQualityUtils();
+
+
+        double medianMs2Noise = options.getMedianNoiseIntensity() == null ? -1 : options.getMedianNoiseIntensity();
+        double isoWindowWidth = options.getIsolationWindowWidth() == null ? -1 : options.getIsolationWindowWidth();
+        double isoWindowShift = options.getIsolationWindowWidth() == null ? -1 : options.getIsolationWindowShift();
+        try {
+            compoundQualityUtils.updateQualityAndWrite(experiments, medianMs2Noise, isoWindowWidth, isoWindowShift, outPath);
+        } catch (IOException e) {
+            Log.error("Error writing summary: " + options.getOutput());
+            Log.error(e.getMessage());
+            System.exit(-1);
+        }
+
+    }
+
+
+    private void extractChemicalNoise(String[] args) {
+        ExtractChemicalNoiseOptions options = null;
+        try {
+            options = CliFactory.createCli(ExtractChemicalNoiseOptions.class).parseArguments(args);
+        } catch (HelpRequestedException e) {
+            System.out.println(e.getMessage());
+            System.out.println(CliFactory.createCli(ExtractChemicalNoiseOptions.class).getHelpMessage());
+            System.exit(0);
+        }
+        if (options.isHelp()) {
+            System.out.println(CliFactory.createCli(ExtractChemicalNoiseOptions.class).getHelpMessage());
+            System.exit(0);
+        }
+
+
+        Path output = Paths.get(options.getOutput());
+        Path input = Paths.get(options.getInput());
+
+        double[] frequentMasses = null;
+        try {
+            MzMLUtils mzMLUtils = MzMLUtils.getInstance(input);
+            double binSize = new Deviation(options.getBinSizePPM()).absoluteFor(200);
+            frequentMasses = mzMLUtils.getTooFrequentMasses(binSize, 0.01, 0.2);
+
+        } catch (MalformedURLException | InvalidInputData e) {
+            Log.error("Error reading input mzML: " + options.getInput());
+            Log.error(e.getMessage());
+            System.exit(-1);
+        }
+
+        try (BufferedWriter writer = Files.newBufferedWriter(output)) {
+            writer.write("mz");
+            writer.newLine();
+            for (double frequentMass : frequentMasses) {
+                writer.write(String.valueOf(frequentMass));
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            Log.error("Error writing output: " + options.getOutput());
+            Log.error(e.getMessage());
+            System.exit(-1);
+        }
+
+    }
+
 
 }
