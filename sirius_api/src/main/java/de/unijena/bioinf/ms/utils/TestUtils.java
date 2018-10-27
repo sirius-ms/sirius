@@ -26,8 +26,8 @@ import java.util.Set;
 public class TestUtils {
 
     public static void main(String... args) throws IOException {
-//        testMs2CompoundMerger2(args);
-        testGuessIon(args);
+        testMs2CompoundMerger2(args);
+//        testGuessIon(args);
     }
 
     public static void testGuessIon(String... args) throws IOException {
@@ -125,7 +125,7 @@ public class TestUtils {
 
     public static void testMs2CompoundMerger2(String... args) throws IOException {
         String loc = "/home/ge28quv/Data/gibbsSample/with_openMS/dendroides/processing/";
-        String glob = "glob:**/sirius_blanksremoved*ME*.ms";
+        String glob = "glob:**/sirius_chemicalNoiseAndChimericsRemoved_140221*ME*.ms";
         List<Path> paths = match(glob, loc);
         System.out.println(paths.size());
         List<Ms2Experiment>[] experiments = new List[paths.size()];
@@ -137,10 +137,10 @@ public class TestUtils {
             before += exp.size();
             ++i;
         }
-        Deviation maxMzDeviation = new Deviation(20);
+        Deviation maxMzDeviation = new Deviation(15);//20);
         Deviation deviation = new Deviation(15);
-        double maxRTShift = 20;
-        double cosineSimilarity = 0.95;
+        double maxRTShift = 100;//20;
+        double cosineSimilarity = 0.3;
         Ms2CompoundMerger ms2CompoundMerger = new Ms2CompoundMerger(maxMzDeviation, maxRTShift, cosineSimilarity, false);
 
         //todo diff deviation, maxMzDeviation;
@@ -273,14 +273,14 @@ public class TestUtils {
         double maxRTShift = 20;
         double minFoldChange = 2d;
         BufferedReader reader = Files.newBufferedReader(Paths.get("/home/ge28quv/Data/gibbsSample/with_openMS/dendroides/processing/blank_features.csv"));
-        MzRTPeak[] blankFeatures = BlankRemoval.readFeatureTable(reader);
+        MzRTPeak[] blankFeatures = ChemicalNoiseRemoval.readFeatureTable(reader);
         reader.close();
-        BlankRemoval blankRemoval = new BlankRemoval(blankFeatures, maxMzDeviation, maxRTShift, minFoldChange);
+        ChemicalNoiseRemoval chemicalNoiseRemoval = new ChemicalNoiseRemoval(blankFeatures, maxMzDeviation, maxRTShift, minFoldChange);
 
         //todo diff deviation, maxMzDeviation;
         System.out.println("before: "+(experiments.size()));
 //        List<Ms2Experiment> mergedExperiments = ms2CompoundMerger.mergeRuns(deviation, experiments, experiments2, experiments3);
-        List<Ms2Experiment> withoutBlank = blankRemoval.removeBlanks(experiments);
+        List<Ms2Experiment> withoutBlank = chemicalNoiseRemoval.removeNoiseFeatures(experiments);
         System.out.println("after: "+withoutBlank.size());
 
     }
