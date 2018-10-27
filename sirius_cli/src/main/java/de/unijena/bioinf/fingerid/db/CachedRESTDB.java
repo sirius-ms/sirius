@@ -105,7 +105,7 @@ public class CachedRESTDB {
             }
             if (db.isCustomDb())
                 search(formula, candidates, getCustomDb(db));
-        } catch (DatabaseException e) {
+        } catch (ChemicalDatabaseException e) {
             throw new IOException(e);
         }
         return mergeCompounds(candidates);
@@ -121,7 +121,7 @@ public class CachedRESTDB {
         }
     }
 
-    private void search(WebAPI webAPI, MolecularFormula formula, List<FingerprintCandidate> candidates, boolean isBio) throws IOException, DatabaseException {
+    private void search(WebAPI webAPI, MolecularFormula formula, List<FingerprintCandidate> candidates, boolean isBio) throws IOException, ChemicalDatabaseException {
         final File f = new File(isBio ? getBioDirectory(directory) : getNonBioDirectory(directory), formula.toString() + ".json.gz");
         if (f.exists()) {
             try {
@@ -137,7 +137,7 @@ public class CachedRESTDB {
         }
     }
 
-    private void search(MolecularFormula formula, List<FingerprintCandidate> candidates, FileCompoundStorage db) throws IOException, DatabaseException {
+    private void search(MolecularFormula formula, List<FingerprintCandidate> candidates, FileCompoundStorage db) throws IOException, ChemicalDatabaseException {
         candidates.addAll(db.lookupStructuresAndFingerprintsByFormula(formula));
     }
 
