@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class BlankRemoval {
+public class ChemicalNoiseRemoval {
 
     public static MzRTPeak[] readFeatureTable(BufferedReader reader) throws IOException {
         String header = reader.readLine();
@@ -43,47 +43,47 @@ public class BlankRemoval {
         return features.toArray(new MzRTPeak[0]);
     }
 
-    private final MzRTPeak[] blankFeatures;
+    private final MzRTPeak[] noiseFeatures;
     private final Deviation maxMzDeviation;
     private final double maxRetentionTimeShift;
     private final double minFoldChange;
     private final Deviation findParentPeakInMs1Deviation;
     /**
      *
-     * @param blankFeatures
+     * @param noiseFeatures for example blank
      * @param maxMzDeviation
-     * @param maxRetentionTimeShift
+     * @param maxRetentionTimeShift if < 0, ignore retention time and only compare mz and intensity
      * @param minFoldChange minimum intensity fold change to except compound as real feature
      */
-    public BlankRemoval(MzRTPeak[] blankFeatures, Deviation maxMzDeviation, double maxRetentionTimeShift, double minFoldChange, Deviation findParentPeakInMs1Deviation) {
-        this.blankFeatures = Arrays.copyOf(blankFeatures, blankFeatures.length);
+    public ChemicalNoiseRemoval(MzRTPeak[] noiseFeatures, Deviation maxMzDeviation, double maxRetentionTimeShift, double minFoldChange, Deviation findParentPeakInMs1Deviation) {
+        this.noiseFeatures = Arrays.copyOf(noiseFeatures, noiseFeatures.length);
         this.maxMzDeviation = maxMzDeviation;
         this.maxRetentionTimeShift = maxRetentionTimeShift;
         this.minFoldChange = minFoldChange;
         this.findParentPeakInMs1Deviation = findParentPeakInMs1Deviation;
 
-        Arrays.sort(this.blankFeatures);
+        Arrays.sort(this.noiseFeatures);
 
         assertSorted();
     }
 
-    public BlankRemoval(MzRTPeak[] blankFeatures, Deviation maxMzDeviation, double maxRetentionTimeShift, double minFoldChange) {
-        this(blankFeatures, maxMzDeviation, maxRetentionTimeShift, minFoldChange, new Deviation(100, 0.1));
+    public ChemicalNoiseRemoval(MzRTPeak[] noiseFeatures, Deviation maxMzDeviation, double maxRetentionTimeShift, double minFoldChange) {
+        this(noiseFeatures, maxMzDeviation, maxRetentionTimeShift, minFoldChange, new Deviation(100, 0.1));
     }
 
     private boolean assertSorted(){
         double mz = Double.NEGATIVE_INFINITY;
-        for (MzRTPeak blankFeature : blankFeatures) {
-            if (blankFeature.getMass()<mz){
-                LoggerFactory.getLogger(BlankRemoval.class).error("features not sorted");
+        for (MzRTPeak noiseFeature : noiseFeatures) {
+            if (noiseFeature.getMass()<mz){
+                LoggerFactory.getLogger(ChemicalNoiseRemoval.class).error("features not sorted");
                 return false;
             }
-            mz = blankFeature.getMass();
+            mz = noiseFeature.getMass();
         }
         return true;
     }
 
-    public List<Ms2Experiment> removeBlanks(List<Ms2Experiment> experiments) {
+    public List<Ms2Experiment> removeNoiseFeatures(List<Ms2Experiment> experiments) {
         List<Ms2Experiment> realFeatures = new ArrayList<>();
         for (Ms2Experiment experiment : experiments) {
             boolean isFeature = isRealFeature(experiment);
@@ -99,30 +99,30 @@ public class BlankRemoval {
         double rt = experiment.hasAnnotation(RetentionTime.class)?experiment.getAnnotation(RetentionTime.class).getRetentionTimeInSeconds():Double.NaN;
 
         MzRTPeak peak = new MzRTPeak(rt, mz, intensity);
-        int idx = Arrays.binarySearch(blankFeatures, peak);
+        int idx = Arrays.binarySearch(noiseFeatures, peak);
         if (idx<0){
             idx = -idx-1;
         }
-        for (int i = idx; i < blankFeatures.length; i++) {
-            MzRTPeak blankFeature = blankFeatures[i];
-            if (!maxMzDeviation.inErrorWindow(blankFeature.getMass(),mz)){
+        for (int i = idx; i < noiseFeatures.length; i++) {
+            MzRTPeak noiseFeature = noiseFeatures[i];
+            if (!maxMzDeviation.inErrorWindow(noiseFeature.getMass(),mz)){
                 break;
             }
-            if (Double.isNaN(rt) || Math.abs(rt-blankFeature.getRetentionTime())<maxRetentionTimeShift){
-                if (intensity==0 || intensity<blankFeature.getIntensity()*minFoldChange){
-                    //blank has higher intensity -> no feature
+            if (maxRetentionTimeShift<0 || Double.isNaN(rt) || Math.abs(rt-noiseFeature.getRetentionTime())<maxRetentionTimeShift){
+                if (intensity==0 || intensity<noiseFeature.getIntensity()*minFoldChange){
+                    //noise/blank feature has higher intensity -> no feature
                     return false;
                 }
             }
         }
         for (int i = idx - 1; i >= 0; i--) {
-            MzRTPeak blankFeature = blankFeatures[i];
-            if (!maxMzDeviation.inErrorWindow(blankFeature.getMass(),mz)){
+            MzRTPeak noiseFeature = noiseFeatures[i];
+            if (!maxMzDeviation.inErrorWindow(noiseFeature.getMass(),mz)){
                 break;
             }
-            if (Double.isNaN(rt) || Math.abs(rt-blankFeature.getRetentionTime())<maxRetentionTimeShift){
-                if (intensity==0 || intensity<blankFeature.getIntensity()*minFoldChange){
-                    //blank has higher intensity -> no feature
+            if (maxRetentionTimeShift<0 || Double.isNaN(rt) || Math.abs(rt-noiseFeature.getRetentionTime())<maxRetentionTimeShift){
+                if (intensity==0 || intensity<noiseFeature.getIntensity()*minFoldChange){
+                    //noise/blank feature has higher intensity -> no feature
                     return false;
                 }
             }

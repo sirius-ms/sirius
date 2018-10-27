@@ -19,10 +19,13 @@ import java.util.stream.Collectors;
 
 /**
  * merge compounds ({@link de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment}s) between different (LC/MS/MS) runs.
+ * //todo transform intensities for cosine computation or don't?
+ * //todo how to merge isotope patterns
  */
 public class Ms2CompoundMerger {
 
     protected final static boolean SIMPLY_SUM_INTENSITIES = true;
+    protected final static boolean TAKE_MOST_INTENSE_ISOTOPE_PATTERN = true;
 
     private final Deviation maxMzDeviation;
     private final double maxRetentionTimeShift;
@@ -65,7 +68,8 @@ public class Ms2CompoundMerger {
             ++idx;
         }
 
-        //create merged Ms2 to compare compounds
+        //create merged Ms2 to compare compounds (sqrt of intensity fo improve cosine comparison)
+        SqrtIntensityTransformation sqrtIntensityTransformation = new SqrtIntensityTransformation();
         int numberOfMergedMs2 = numberOfMergedMs2(allExperimentsWithMs2);
         if (numberOfMergedMs2>0 && numberOfMergedMs2<allExperimentsWithMs2.size()){
             LoggerFactory.getLogger(Ms2CompoundMerger.class).warn("Not all but some compounds already contain a merged Ms2 spectrum. Recomputing all.");
@@ -73,6 +77,7 @@ public class Ms2CompoundMerger {
         if (numberOfMergedMs2==allExperimentsWithMs2.size()){
             for (Ms2Experiment experiment : allExperimentsWithMs2) {
                 MergedMs2Spectrum mergedMs2Spectrum = experiment.getAnnotation(MergedMs2Spectrum.class);
+//                mergedMs2Spectrum = Spectrums.transform(mergedMs2Spectrum, sqrtIntensityTransformation);
                 experimentToMergedMs2.put(experiment, mergedMs2Spectrum);
             }
 
@@ -80,6 +85,7 @@ public class Ms2CompoundMerger {
             //compute merged
             for (Ms2Experiment experiment : allExperimentsWithMs2) {
                 MergedMs2Spectrum mergedMs2Spectrum = mergeMs2Spectra(experiment, deviation);
+//                mergedMs2Spectrum = Spectrums.transform(mergedMs2Spectrum, sqrtIntensityTransformation);
                 experimentToMergedMs2.put(experiment, mergedMs2Spectrum);
             }
         }
@@ -131,6 +137,30 @@ public class Ms2CompoundMerger {
             }
 
         }
+
+//        {
+//            //temp
+//            for (int i = 0; i < distances.length; i++) {
+//                double[] distance = distances[i];
+//                for (int j = 0; j < distance.length; j++) {
+//                    double d = distance[j];
+//                    if (d>0.5 && d<2){
+//                        if (experimentToMergedMs2.get(allExperimentsWithMs2.get(i)).size()>2 &&
+//                                experimentToMergedMs2.get(allExperimentsWithMs2.get(j)).size()>2
+//                        ) {
+//                            System.out.println(expWithMs2RunIndices.get(i));
+//                            System.out.println(allExperimentsWithMs2.get(i).getName());
+//                            System.out.println(expWithMs2RunIndices.get(j));
+//                            System.out.println(allExperimentsWithMs2.get(j).getName());
+//                            System.out.println("........");
+//                        }
+//
+//                    }
+//                }
+//            }
+//
+//
+//        }
 
         //2. cluster
         HierarchicalClustering<Ms2Experiment> clustering = new HierarchicalClustering<>(new CompleteLinkage());
@@ -251,6 +281,24 @@ public class Ms2CompoundMerger {
 
         if (spectra.size()==1) return new SimpleSpectrum(spectra.get(0));
 
+
+        if (TAKE_MOST_INTENSE_ISOTOPE_PATTERN){
+            double highestIntensity = 0d;
+            SimpleMutableSpectrum bestSpec = null;
+            for (SimpleMutableSpectrum spectrum : spectra) {
+                int peakIdx = Spectrums.mostIntensivePeakWithin(spectrum, precursorMass, deviation);
+
+                if (peakIdx<0 || spectrum.getIntensityAt(peakIdx)<=0) continue;
+                double intensity = spectrum.getIntensityAt(peakIdx);
+                if (intensity>highestIntensity){
+                    highestIntensity = intensity;
+                    bestSpec = spectrum;
+                }
+            }
+            return new SimpleSpectrum(bestSpec);
+        }
+
+
         //todo first extract spectra with longest isotope patterns
         if (SIMPLY_SUM_INTENSITIES){
             //don't normalize intensities. Idea: high intensities are reliable
@@ -368,4 +416,12 @@ public class Ms2CompoundMerger {
         return bestSpectra;
     }
 
+
+    protected class SqrtIntensityTransformation implements Spectrums.Transformation<Peak, Peak> {
+        @Override
+        public Peak transform(Peak input) {
+            final double intensity = input.getIntensity()<=0?0:Math.sqrt(input.getIntensity());
+            return new Peak(input.getMass(), intensity);
+        }
+    }
 }
