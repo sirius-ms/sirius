@@ -710,6 +710,7 @@ public class CombinedCLI extends ApplicationCore {
         if (dbOptName.equals("all")) return getFormulaWhitesetNoDB(experiment, whitelist);
         else {
             FingerIdInstanceProcessor fingerIdInstanceProcessor = new FingerIdInstanceProcessor(options);
+            fingerIdInstanceProcessor.initializeDatabaseCache();
             //todo may create extra DB class
             final HashMap<String, Long> aliasMap = fingerIdInstanceProcessor.getDatabaseAliasMap();
             final SearchableDatabase searchableDatabase = fingerIdInstanceProcessor.getDatabase();
