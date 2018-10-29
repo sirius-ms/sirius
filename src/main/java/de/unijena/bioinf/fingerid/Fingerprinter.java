@@ -83,7 +83,15 @@ public class Fingerprinter {
             case "neighbours": return new NeighbourhoodFingerprinter();
             case "spheres": return new SphericalFingerprint();
             case "ecfp": return new ECFPFingerprinter();
-            default: throw new IllegalArgumentException("Unknown fingerprinter: " + name);
+            case "biosmarts": return new BiosmartsFingerprinter();
+            case "shortest_paths": return new ShortestPathFingerprinter();
+            case "classyfire_smarts": return new ClassyFireSmartsFingerprint();
+            case "ringsystems": return new RingsystemFingerprinter();
+            default: try {
+                return getFingerprinter(CdkFingerprintVersion.USED_FINGERPRINTS.valueOf(name.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Unknown fingerprinter: " + name);
+            }
         }
     }
 
