@@ -84,7 +84,7 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
         return whiteset;
     }
 
-    private List<MolecularFormula> searchInOnlineDB(final RESTDatabase db, PrecursorIonType[] allowedIons) throws DatabaseException {
+    private List<MolecularFormula> searchInOnlineDB(final RESTDatabase db, PrecursorIonType[] allowedIons) throws ChemicalDatabaseException {
         final List<MolecularFormula> formulas = new ArrayList<>();
         for (List<FormulaCandidate> fc : db.lookupMolecularFormulas(experiment.getIonMass(), massDev, allowedIons)) {
             formulas.addAll(getFromCandidates(fc));
