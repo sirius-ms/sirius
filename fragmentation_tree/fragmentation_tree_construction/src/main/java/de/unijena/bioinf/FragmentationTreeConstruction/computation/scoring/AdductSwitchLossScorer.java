@@ -14,10 +14,10 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
     private final Ionization naIon = PrecursorIonType.getPrecursorIonType("[M+Na]+").getIonization();
     private final Ionization hIon = PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization();
 
-    private static final double DEFAULT_NA_H_SWITCH_SCORE = -3.7939086099967136;
-    private static final double DEFAULT_NA_H_SWITCH_CHILD_PENALTY_SCORE = -3.7939086099967136;
+    private static final double DEFAULT_NA_H_SWITCH_SCORE = -3.6109179126442243;
+//    private static final double DEFAULT_NA_H_SWITCH_CHILD_PENALTY_SCORE = -3.6109179126442243;
 
-//    private static final double DEFAULT_NA_H_SWITCH_SCORE = -3.9889840465642745; //only oxygen+ losses
+//    private static final double DEFAULT_NA_H_SWITCH_SCORE = -3.8066624897703196; //only oxygen+ losses
 
     private double naHSwitchScore;
 
@@ -42,15 +42,15 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
         if (sourceIon.equals(targetIon)) return 0;
 
 
-        if (sourceIon.equals(naIon) && targetIon.equals(hIon)){
-            return naHSwitchScore;
-        }
-
-//        //changed to only allow in combination with O loss
-//        if (sourceIon.equals(naIon) && targetIon.equals(hIon)
-//                && loss.getFormula().numberOfOxygens()>0){
+//        if (sourceIon.equals(naIon) && targetIon.equals(hIon)){
 //            return naHSwitchScore;
 //        }
+
+//        //changed to only allow in combination with O loss
+        if (sourceIon.equals(naIon) && targetIon.equals(hIon)
+                && loss.getFormula().numberOfOxygens()>0){
+            return naHSwitchScore;
+        }
         return Double.NEGATIVE_INFINITY;
     }
 
