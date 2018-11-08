@@ -1620,7 +1620,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             final Fragment u = loss.getSource();
             final Fragment v = loss.getTarget();
             // take score of molecular formula
-            double score = map.get(v.getFormula());
+            double score = map.get(new IonizedMolecularFormula(v.getFormula(), v.getIonization()));
             assert !Double.isInfinite(score);
             // add it to score of the peak
             score += peakScores[peakAno.get(v).getIndex()];
