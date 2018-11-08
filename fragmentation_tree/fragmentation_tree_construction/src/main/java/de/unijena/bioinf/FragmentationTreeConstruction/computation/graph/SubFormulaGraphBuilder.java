@@ -18,6 +18,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.graph;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.IonizedMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdductSwitches;
@@ -56,7 +57,7 @@ public class SubFormulaGraphBuilder implements GraphBuilder {
             peakAno.set(f, peak);
             f.setColor(peak.getIndex());
             ion.set(f, m.getIon());
-            scoring.put(f.getFormula(), m.getScore());
+            scoring.put(new IonizedMolecularFormula(f.getFormula(), f.getIonization()), m.getScore());
         }
         return graph;
     }
@@ -121,7 +122,7 @@ public class SubFormulaGraphBuilder implements GraphBuilder {
                                 ion.set(newFragment, decomposition.getIon());
                                 peakAno.set(newFragment, peak);
                                 newFragment.setColor(peak.getIndex());
-                                scoring.put(decomposition.getCandidate(), decomposition.getScore());
+                                scoring.put(new IonizedMolecularFormula(decomposition.getCandidate(), decomposition.getIon()), decomposition.getScore());
                             }
                             graph.addLoss(f, newFragment);
                         }

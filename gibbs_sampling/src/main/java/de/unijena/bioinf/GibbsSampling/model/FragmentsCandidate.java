@@ -217,7 +217,8 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
 
                 //adding root mass if necessary
 //        double precursorIon = experiment.getIonMass();
-        double theoPrecursorMass = ionType.addIonAndAdduct(root.getMass());
+//        double theoPrecursorMass = ionType.addIonAndAdduct(root.getMass());
+        double theoPrecursorMass = tree.getRoot().getIonization().addToMass(root.getMass());
         boolean hasPrecursor = false;
         for (Peak peak : sortedSpec) {
             if (deviation.inErrorWindow(theoPrecursorMass, peak.getMass())){
@@ -236,7 +237,8 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                 final AnnotatedPeak annotatedPeak = annotation.get(f);
                 double mass;
                 if (annotatedPeak.getOriginalPeaks().length==0){
-                    mass = ionType.addIonAndAdduct(f.getFormula().getMass());
+//                    mass = ionType.addIonAndAdduct(f.getFormula().getMass());
+                    mass = f.getIonization().addToMass(f.getFormula().getMass());
                 } else {
                     mass = annotatedPeak.getOriginalPeaks()[0].getMass();
                 }

@@ -30,6 +30,8 @@ import gnu.trove.list.array.TIntArrayList;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Spectrums {
 
@@ -513,15 +515,15 @@ public class Spectrums {
      * @param targetMz
      * @return
      */
-    public static SimpleMutableSpectrum extractIsotopePattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz) {
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePattern(S ms1Spec, MeasurementProfile profile, double targetMz) {
         return extractIsotopePattern(ms1Spec, profile, targetMz, 1);
     }
 
-    public static SimpleMutableSpectrum extractIsotopePattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz, int absCharge) {
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePattern(S ms1Spec, MeasurementProfile profile, double targetMz, int absCharge) {
         return extractIsotopePattern(ms1Spec, profile, targetMz, absCharge, true);
     }
 
-    public static SimpleMutableSpectrum extractIsotopePattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz, int absCharge, boolean mergePeaks) {
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePattern(S ms1Spec, MeasurementProfile profile, double targetMz, int absCharge, boolean mergePeaks) {
         // extract all isotope peaks starting from the given target mz
         final ChemicalAlphabet stdalphabet = ChemicalAlphabet.getExtendedAlphabet();
         final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(ms1Spec);
@@ -562,7 +564,82 @@ public class Spectrums {
             spec.addPeak(mzBuffer, intensityBuffer);
 
         }
-        return spec;
+        return new SimpleSpectrum(spec);
+    }
+
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePatternFromMultipleSpectra(List<S> ms1Spectra, MeasurementProfile profile, double targetMz, int absCharge, boolean mergePeaks, double minIsoPeakFreq) {
+        List<SimpleSpectrum> isotopePatterns = ms1Spectra.stream().map(s->extractIsotopePattern(s, profile, targetMz, absCharge, mergePeaks)).collect(Collectors.toList());
+        int maxLength = 0;
+        Iterator<SimpleSpectrum> patternIterator = isotopePatterns.iterator();
+        while (patternIterator.hasNext()) {
+            SimpleSpectrum isotopePattern = patternIterator.next();
+            if (isotopePattern==null){
+                patternIterator.remove();
+            } else {
+                maxLength = Math.max(maxLength, isotopePattern.size());
+            }
+        }
+        if (isotopePatterns.size()==0) return null;
+        if (isotopePatterns.size()==1) return new SimpleSpectrum(isotopePatterns.get(0));
+
+        double minNumberOfOccurrence = isotopePatterns.size()*minIsoPeakFreq;
+        final SimpleMutableSpectrum mergedIsotopePattern = new SimpleMutableSpectrum();
+        for (int i = 0; i < maxLength; i++) {
+            int numberOfPeaks = 0;
+            double mzBuffer = 0d;
+            double intensityBuffer = 0d;
+            for (SimpleSpectrum isotopePattern : isotopePatterns) {
+                //todo rather use more robust way of merging? median? but higher intese peas might be more trustworthy
+                if (isotopePattern.size()>i){
+                    ++numberOfPeaks;
+                    final double intensity = isotopePattern.getIntensityAt(i);
+                    final double mz = isotopePattern.getMzAt(i);
+                    assert (Math.abs((mz-targetMz)*absCharge-i)<0.2);//should be at very most 0.5
+                    intensityBuffer += intensity;
+                    mzBuffer += intensity * mz;
+                }
+            }
+            if (numberOfPeaks<minNumberOfOccurrence) break;
+
+            mzBuffer /= intensityBuffer;
+            intensityBuffer /= numberOfPeaks;
+            mergedIsotopePattern.addPeak(mzBuffer, intensityBuffer);
+        }
+        if (mergedIsotopePattern.size()==0) return null; //same behaviour as normal extractPatternMethod
+        return new SimpleSpectrum(mergedIsotopePattern);
+    }
+
+
+    /**
+     *
+     * @param mainPattern high quality pattern, e.g. retrieved by MS1 feature finding, which might missed some isotope peaks
+     * @param longerPattern pattern retrieved from normal input MS1, which might be of worse quality but contains more potential isotope peaks
+     * @return
+     */
+    public static SimpleSpectrum extendPattern(Spectrum<Peak> mainPattern, Spectrum<Peak> longerPattern, double minIntensityCutoff) {
+        if (mainPattern.size()>=longerPattern.size()) return new SimpleSpectrum(mainPattern);
+        assert IntStream.range(0, mainPattern.size()).mapToDouble(i-> Math.abs(mainPattern.getMzAt(i)-longerPattern.getMzAt(i))).max().getAsDouble()<0.1;  //same targetMz, do patterns agree?
+
+        SimpleMutableSpectrum pattern = new SimpleMutableSpectrum(mainPattern);
+        SimpleMutableSpectrum longerPatternNormalized = new SimpleMutableSpectrum(longerPattern);
+        double monoIntensity = pattern.getIntensityAt(0);
+        Spectrums.normalizeByFirstPeak(longerPatternNormalized, monoIntensity);
+
+        final double monoMass1 = mainPattern.getMzAt(0);
+        final double monoMass2 = longerPatternNormalized.getMzAt(0);
+
+        for (int i = mainPattern.size(); i < longerPatternNormalized.size(); i++) {
+            final double mz = longerPatternNormalized.getMzAt(i);
+            final double intensity = longerPatternNormalized.getIntensityAt(i);
+            if (intensity/monoIntensity<minIntensityCutoff){
+                break;
+            }
+            final double newMz = mz-monoMass2+monoMass1; //use mz differences
+            pattern.addPeak(newMz, intensity);
+
+        }
+
+        return new SimpleSpectrum(pattern);
     }
 
 
