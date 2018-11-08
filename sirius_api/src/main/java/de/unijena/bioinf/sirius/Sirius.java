@@ -353,6 +353,8 @@ public class Sirius {
         SimpleMutableSpectrum mutableSpectrum = new SimpleMutableSpectrum(spec);
         Spectrums.normalizeToMax(mutableSpectrum, 100d);
         Spectrums.applyBaseline(mutableSpectrum, 1d);
+//        //changed
+//        Spectrums.filterIsotpePeaks(mutableSpectrum, getMs1Analyzer().getDefaultProfile(experiment).getStandardMassDifferenceDeviation(), 0.3, 1, 5, new ChemicalAlphabet());
 
         PrecursorIonType[] ionType = Spectrums.guessIonization(mutableSpectrum, experiment.getIonMass(), profile.fragmentationPatternAnalysis.getDefaultProfile().getAllowedMassDeviation(), candidateIonizations);
         return new GuessIonizationFromMs1Result(ionType, candidateIonizations, guessedFromMergedMs1?GuessIonizationSource.MergedMs1Spectrum:GuessIonizationSource.NormalMs1);
@@ -1086,10 +1088,32 @@ public class Sirius {
     private ExtractedIsotopePattern extractedIsotopePattern(ProcessedInput pinput) {
         ExtractedIsotopePattern pat = pinput.getAnnotation(ExtractedIsotopePattern.class, null);
         if (pat == null) {
-            final SimpleSpectrum spectrum = getMs1Analyzer().extractPattern(mergeMs1Spec(pinput), pinput.getMeasurementProfile(), pinput.getExperimentInformation().getIonMass());
-            pat = new ExtractedIsotopePattern(spectrum);
+            final MutableMs2Experiment experiment = pinput.getExperimentInformation();
+            SimpleSpectrum mergedMS1Pattern = null;
+            if (experiment.getMergedMs1Spectrum()!=null){
+                mergedMS1Pattern = Spectrums.extractIsotopePattern(experiment.getMergedMs1Spectrum(), pinput.getMeasurementProfile(), experiment.getIonMass(), experiment.getPrecursorIonType().getCharge(), true);
+            }
+
+            SimpleSpectrum ms1SpectraPattern = null;
+            if (experiment.getMs1Spectra().size()>0){
+                ms1SpectraPattern  = Spectrums.extractIsotopePatternFromMultipleSpectra(experiment.getMs1Spectra(), pinput.getMeasurementProfile(), experiment.getIonMass(), experiment.getPrecursorIonType().getCharge(), true, 0.66);
+            }
+
+
+            if (mergedMS1Pattern!= null){
+                if (ms1SpectraPattern != null) {
+                    final SimpleSpectrum extendedPattern = Spectrums.extendPattern(mergedMS1Pattern, ms1SpectraPattern, 0.02);
+                    pat = new ExtractedIsotopePattern(extendedPattern);
+                } else {
+                    pat = new ExtractedIsotopePattern(mergedMS1Pattern);
+                }
+            } else if (ms1SpectraPattern != null) {
+                pat = new ExtractedIsotopePattern(ms1SpectraPattern);
+            }
+
             pinput.setAnnotation(ExtractedIsotopePattern.class, pat);
         }
+
         return pat;
     }
 
@@ -1121,7 +1145,7 @@ public class Sirius {
         if (handling == IsotopePatternHandling.omit) return false;
         final ProcessedInput input = instance.validateInput();
         final ExtractedIsotopePattern pattern = extractedIsotopePattern(input);
-        if (!pattern.hasPatternWithAtLeastTwoPeaks())
+        if (pattern==null || !pattern.hasPatternWithAtLeastTwoPeaks())
             return false; // we cannot do any analysis without isotope information
         // step 1: automatic element detection
         performAutomaticElementDetection(input, pattern.getPattern());
