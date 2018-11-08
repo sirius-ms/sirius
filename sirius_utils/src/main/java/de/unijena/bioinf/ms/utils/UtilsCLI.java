@@ -10,8 +10,11 @@ import de.unijena.bioinf.babelms.DataWriter;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.mgf.MgfWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
+import de.unijena.bioinf.fingerid.FingeridProjectSpaceFactory;
+import de.unijena.bioinf.ms.cli.ProjectSpaceUtils;
 import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.projectspace.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +26,8 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -72,6 +77,12 @@ public class UtilsCLI {
                 break;
             case "chemical-noise-detection":
                 extractChemicalNoise(rest);
+                break;
+            case "split":
+                splitInputData(rest);
+                break;
+            case "collect":
+                collectWorkspaces(rest);
                 break;
             default:
                 System.out.println("Please, specify your intended command as first parameter.");
@@ -425,6 +436,164 @@ public class UtilsCLI {
         }
 
     }
+
+
+    private void splitInputData(String[] args){
+        SplitInputDataOptions options = null;
+        try {
+            options = CliFactory.createCli(SplitInputDataOptions.class).parseArguments(args);
+        } catch (HelpRequestedException e) {
+            System.out.println(e.getMessage());
+            System.out.println(CliFactory.createCli(SplitInputDataOptions.class).getHelpMessage());
+            System.exit(0);
+        }
+        if (options.isHelp()) {
+            System.out.println("This tool splits the input data into n separate files and shuffles compounds (hence, that a single output file does not contains all high mass compounds).");
+            System.out.println(CliFactory.createCli(SplitInputDataOptions.class).getHelpMessage());
+            System.exit(0);
+        }
+
+
+        Path output = Paths.get(options.getOutputPrefix()).toAbsolutePath();
+        Path input = Paths.get(options.getInput());
+
+
+        List<Ms2Experiment> experiments = readData(Collections.singletonList(input.toFile()))[0];
+
+        //sort by mass
+        Collections.sort(experiments, (o1, o2) -> Double.compare(o1.getIonMass(),o2.getIonMass()));
+
+        int n = options.getNumberOfFiles();
+        List<Ms2Experiment>[] parts = new List[n];
+        for (int i = 0; i < parts.length; i++) {
+            parts[i] = new ArrayList();
+        }
+
+        int i = 0;
+        for (Ms2Experiment experiment : experiments) {
+            parts[i++%n].add(experiment);
+        }
+
+        //now shuffle so masses are not ordered
+        for (List<Ms2Experiment> part : parts) {
+            Collections.shuffle(part);
+        }
+
+
+        //output
+        Path folder = output.getParent();
+        String prefix = output.getFileName().toString();
+        if (prefix.endsWith(".ms")) prefix = prefix.substring(0, prefix.length()-3);
+
+        JenaMsWriter writer = new JenaMsWriter();
+        i = 1;
+        for (List<Ms2Experiment> part : parts) {
+            writeToFile(writer, folder.resolve(prefix+"_"+String.valueOf(i++)+".ms").toString(), part);
+        }
+
+    }
+
+    private void collectWorkspaces(String[] args){
+        CollectWorkspacesOptions options = null;
+        try {
+            options = CliFactory.createCli(CollectWorkspacesOptions.class).parseArguments(args);
+        } catch (HelpRequestedException e) {
+            System.out.println(e.getMessage());
+            System.out.println(CliFactory.createCli(CollectWorkspacesOptions.class).getHelpMessage());
+            System.exit(0);
+        }
+        if (options.isHelp()) {
+            System.out.println(CliFactory.createCli(CollectWorkspacesOptions.class).getHelpMessage());
+            System.exit(0);
+        }
+
+
+        Path output = Paths.get(options.getOutput()).toAbsolutePath();
+        File[] inputFiles = options.getInput().stream().map(File::new).toArray(l->new File[l]);
+
+        List<ExperimentResult> experimentResults = new ArrayList<>();
+        for (File inputFile : inputFiles) {
+            try {
+                experimentResults.addAll(loadWorkspace(inputFile));
+            } catch (IOException e) {
+                Log.error("Error reading workspace: " + inputFile);
+                Log.error(e.getMessage());
+                System.exit(-1);
+            }
+        }
+
+
+        boolean isZip = false;
+        String lowercaseName = output.getFileName().toString().toLowerCase();
+        if (lowercaseName.endsWith(".workspace") || lowercaseName.endsWith(".zip") || lowercaseName.endsWith(".sirius")) isZip = true;
+
+
+        FilenameFormatter filenameFormatter = null;
+        if (options.getNamingConvention() != null) {
+            String formatString = options.getNamingConvention();
+            try {
+                filenameFormatter = new StandardMSFilenameFormatter(formatString);
+            } catch (ParseException e) {
+                Log.error("Cannot parse naming convention:\n" + e.getMessage(), e);
+                System.exit(-1);
+            }
+        } else {
+            //default
+            filenameFormatter = new StandardMSFilenameFormatter();
+        }
+
+        String dirOutput = isZip?null:output.toString();
+        String siriusOutput = isZip?output.toString():null;
+
+        ProjectWriter projectWriter = null;
+        try {
+            ProjectSpaceUtils.ProjectWriterInfo projectWriterInfo = ProjectSpaceUtils.getProjectWriter(dirOutput, siriusOutput, new FingeridProjectSpaceFactory(filenameFormatter));
+            projectWriter = projectWriterInfo.getProjectWriter();
+            for (ExperimentResult experimentResult : experimentResults) {
+                projectWriter.writeExperiment(experimentResult);
+            }
+
+        } catch (IOException e) {
+            Log.error("Error writing workspace: " + output);
+            Log.error(e.getMessage());
+            System.exit(-1);
+        } finally {
+            if (projectWriter!=null){
+                try {
+                    projectWriter.close();
+
+                } catch (IOException e){
+                    Log.error("Error writing workspace: " + output);
+                    Log.error(e.getMessage());
+                    System.exit(-1);
+                };
+            }
+
+        }
+
+
+
+    }
+
+
+    protected List<ExperimentResult> loadWorkspace(File file) throws IOException {
+        final List<ExperimentResult> results = new ArrayList<>();
+        final DirectoryReader.ReadingEnvironment env;
+        if (file.isDirectory()) {
+            env = new SiriusFileReader(file);
+        } else {
+            env = new SiriusWorkspaceReader(file);
+        }
+        final DirectoryReader reader = new DirectoryReader(env);
+
+        while (reader.hasNext()) {
+            final ExperimentResult result = reader.next();
+            results.add(result);
+        }
+        return results;
+    }
+
+
 
 
 }

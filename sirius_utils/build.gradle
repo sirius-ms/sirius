@@ -1,9 +1,10 @@
-//plugins {
-//    id 'com.github.johnrengelman.shadow' version '1.2.3'
-//}
 
 dependencies {
-    compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
+    //project
+    compile project(':sirius_cli')
+
+//    compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
+
 
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
