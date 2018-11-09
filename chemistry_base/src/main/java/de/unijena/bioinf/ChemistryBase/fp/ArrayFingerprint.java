@@ -131,7 +131,7 @@ public class ArrayFingerprint extends Fingerprint {
 
         // |A n B| = (|A| + |B|) - |A u B|
         final int union = as.length + bs.length - intersection;
-
+        if (union==0) return 0d;
         // Jaccard := |(A n B)| / (A u B)
         return ((double)intersection)/union;
     }
