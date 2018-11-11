@@ -53,7 +53,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         super(analyzer);
         this.experiment = input;
         this.numberOfResultsToKeep = numberOfResultsToKeep;
-        this.numberOfResultsToKeepPerIonization = numberOfResultsToKeepPerIonization;
+        this.numberOfResultsToKeepPerIonization = numberOfResultsToKeepPerIonization<=0?Integer.MIN_VALUE:numberOfResultsToKeepPerIonization;
         this.ticks = new AtomicInteger(0);
     }
 
