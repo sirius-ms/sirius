@@ -354,7 +354,7 @@ public class Sirius {
         Spectrums.normalizeToMax(mutableSpectrum, 100d);
         Spectrums.applyBaseline(mutableSpectrum, 1d);
 //        //changed
-//        Spectrums.filterIsotpePeaks(mutableSpectrum, getMs1Analyzer().getDefaultProfile(experiment).getStandardMassDifferenceDeviation(), 0.3, 1, 5, new ChemicalAlphabet());
+        Spectrums.filterIsotpePeaks(mutableSpectrum, getMs1Analyzer().getDefaultProfile(experiment).getStandardMassDifferenceDeviation(), 0.3, 1, 5, new ChemicalAlphabet());
 
         PrecursorIonType[] ionType = Spectrums.guessIonization(mutableSpectrum, experiment.getIonMass(), profile.fragmentationPatternAnalysis.getDefaultProfile().getAllowedMassDeviation(), candidateIonizations);
         return new GuessIonizationFromMs1Result(ionType, candidateIonizations, guessedFromMergedMs1?GuessIonizationSource.MergedMs1Spectrum:GuessIonizationSource.NormalMs1);
