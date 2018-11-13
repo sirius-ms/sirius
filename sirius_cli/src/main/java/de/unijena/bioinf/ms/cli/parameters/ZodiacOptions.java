@@ -5,11 +5,11 @@ import picocli.CommandLine.Option;
 
 /**
  * This is for Zodiac specific parameters.
- *
+ * <p>
  * It will be annotated to the MS2 Experiment
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
- * */
+ */
 public class ZodiacOptions implements Options {
     @Option(names = {"-Z", "--zodiac"}, description = "run zodiac on a given sirius workspace.", hidden = true)
     public boolean zodiac;
@@ -104,4 +104,10 @@ public class ZodiacOptions implements Options {
             description = "As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining."
     )
     public boolean onlyOneStepZodiac;
+
+    @Option(
+            names = {"--ms2-median-noise"},
+            description = "Set MS2 median noise intensity - else it is estimated. This is used to count the number of MS2 peaks to gauge spectrum quality."
+    )
+    public Double medianNoiseIntensity;
 }
