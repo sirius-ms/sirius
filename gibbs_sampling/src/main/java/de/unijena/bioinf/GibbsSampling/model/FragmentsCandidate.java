@@ -147,7 +147,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                 }
                 else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
                 final double score = fscore.get(f).sum()+lscore.get(f.getIncomingEdge()).sum();
-                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), (short)idx, score);
+                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), f.getIonization(), (short)idx, score);
 
             }
         }
@@ -163,7 +163,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
             //todo is root??
             final double score = fscore.get(f).sum()+(f.isRoot()?0:lscore.get(f.getIncomingEdge()).sum());
-            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), (short)idx, score);
+            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, score);
 
         }
 
@@ -217,7 +217,8 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
 
                 //adding root mass if necessary
 //        double precursorIon = experiment.getIonMass();
-        double theoPrecursorMass = ionType.addIonAndAdduct(root.getMass());
+//        double theoPrecursorMass = ionType.addIonAndAdduct(root.getMass());
+        double theoPrecursorMass = tree.getRoot().getIonization().addToMass(root.getMass());
         boolean hasPrecursor = false;
         for (Peak peak : sortedSpec) {
             if (deviation.inErrorWindow(theoPrecursorMass, peak.getMass())){
@@ -236,7 +237,8 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                 final AnnotatedPeak annotatedPeak = annotation.get(f);
                 double mass;
                 if (annotatedPeak.getOriginalPeaks().length==0){
-                    mass = ionType.addIonAndAdduct(f.getFormula().getMass());
+//                    mass = ionType.addIonAndAdduct(f.getFormula().getMass());
+                    mass = f.getIonization().addToMass(f.getFormula().getMass());
                 } else {
                     mass = annotatedPeak.getOriginalPeaks()[0].getMass();
                 }
@@ -251,7 +253,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                     throw new RuntimeException("index < 0");
                 }
                 else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
-                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), (short)idx, f.getIncomingEdge().getWeight());
+                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), f.getIonization(), (short)idx, f.getIncomingEdge().getWeight());
 
             }
         }
@@ -278,7 +280,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                 throw new RuntimeException("index < 0");
             }
             else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
-            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), (short)idx, f.getIncomingEdge().getWeight());
+            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, f.getIncomingEdge().getWeight());
 
 //            fStrings[i++] = f.getFormula().formatByHill();
 //            fIdx[i] = (short)f.getColor();

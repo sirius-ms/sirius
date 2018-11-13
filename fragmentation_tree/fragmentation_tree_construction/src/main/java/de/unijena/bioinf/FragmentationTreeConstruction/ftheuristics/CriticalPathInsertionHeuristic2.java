@@ -132,19 +132,19 @@ public class CriticalPathInsertionHeuristic2 extends AbstractHeuristic {
                     bestFrag = f;
                 }
             }
-            final FTree t = new FTree(bestFrag.getFormula());
+            final FTree t = new FTree(bestFrag.getFormula(), bestFrag.getIonization());
             t.setTreeWeight(bestFrag.getIncomingEdge().getWeight());
             return t;
         }
         selectedEdges.addAll(color2Edge.valueCollection());
         selectedEdges.sort(Comparator.comparingInt(a -> a.getTarget().getColor()));
-        final FTree tree = new FTree(selectedEdges.get(0).getTarget().getFormula());
+        final FTree tree = new FTree(selectedEdges.get(0).getTarget().getFormula(), selectedEdges.get(0).getTarget().getIonization());
         final HashMap<MolecularFormula, Fragment> fragmentsByFormula = new HashMap<>();
         fragmentsByFormula.put(tree.getRoot().getFormula(), tree.getRoot());
         double score = selectedEdges.get(0).getWeight();
         for (int i=1; i < selectedEdges.size(); ++i) {
             final Loss L = selectedEdges.get(i);
-            final Fragment f = tree.addFragment(fragmentsByFormula.get(L.getSource().getFormula()), L.getTarget().getFormula());
+            final Fragment f = tree.addFragment(fragmentsByFormula.get(L.getSource().getFormula()), L.getTarget());
             f.getIncomingEdge().setWeight(L.getWeight());
             fragmentsByFormula.put(f.getFormula(), f);
             score += L.getWeight();

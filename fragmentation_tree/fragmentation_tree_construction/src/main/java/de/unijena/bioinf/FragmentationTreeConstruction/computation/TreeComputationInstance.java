@@ -548,11 +548,11 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
         final FGraph graph = analyzer.buildGraph(pinput, pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().get(0));
 
         final FTree exact = analyzer.computeTree(graph);
-        final double p1 = analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput, exact, experiment.getPrecursorIonType().getIonization());
+        final double p1 = analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput, exact);
         final FTree heuristic = new ExtendedCriticalPathHeuristic(graph).solve();
 
         // how many peaks are explained?
-        final double p2 = analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput, heuristic, experiment.getPrecursorIonType().getIonization());
+        final double p2 = analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput, heuristic);
         final int n1 = exact.numberOfVertices(), n2 = heuristic.numberOfVertices();
         final double[] stats1 = sharedFragments(exact, heuristic);
 

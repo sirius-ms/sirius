@@ -118,6 +118,14 @@ public class PrecursorIonType {
         return new PrecursorIonType(getIonization(), MolecularFormula.emptyFormula(), adduct, special);
     }
 
+    public PrecursorIonType substituteAdduct(MolecularFormula newAdduct) {
+        return new PrecursorIonType(getIonization(), inSourceFragmentation, newAdduct, special);
+    }
+
+    public PrecursorIonType substituteInsource(MolecularFormula newInsource) {
+        return new PrecursorIonType(getIonization(), newInsource, adduct, special);
+    }
+
     @Override
     public int hashCode() {
         return 31 * ionization.hashCode() + modification.hashCode() + 17 * special.hashCode();

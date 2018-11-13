@@ -30,6 +30,8 @@ import gnu.trove.list.array.TIntArrayList;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Spectrums {
 
@@ -114,13 +116,12 @@ public class Spectrums {
      * Merges the given mass spectra such that all the resulting spectra contains all
      * peaks from all mass spectra but all peaks within the given mass window are merged
      * into one peak
-     *
-     * @param massWindow      determines the mass window in which peaks should be merged
+     * @param massWindow determines the mass window in which peaks should be merged
      * @param sumIntenstities if true, the intensity is the sum of merged peak intensities. Otherwise, it is the maximum of peak intensities.
-     * @param mergeMasses     if true, the mass is the weighted averaged mass over merged peaks. Otherwise it is the mass of the most intensive peak.
-     * @param spectra         the list of spectra to merge
-     * @param <P>             class of the input peak
-     * @param <S>             class of the input spectrum
+     * @param mergeMasses if true, the mass is the weighted averaged mass over merged peaks. Otherwise it is the mass of the most intensive peak.
+     * @param spectra the list of spectra to merge
+     * @param <P> class of the input peak
+     * @param <S> class of the input spectrum
      * @return
      */
     public static <P extends Peak, S extends Spectrum<P>>
@@ -135,24 +136,24 @@ public class Spectrums {
         final Spectrum<Peak> intensityOrdered = getIntensityOrderedSpectrum(merged);
         final BitSet alreadyMerged = new BitSet(merged.size());
         final SimpleMutableSpectrum mergedSpectrum = new SimpleMutableSpectrum();
-        for (int k = 0; k < intensityOrdered.size(); ++k) {
+        for (int k=0; k < intensityOrdered.size(); ++k) {
             final double mz = intensityOrdered.getMzAt(k);
             final int index = binarySearch(merged, mz);
 
             if (alreadyMerged.get(index)) continue;
             // merge all surrounding peaks
             final double dev = massWindow.absoluteFor(mz);
-            final double min = mz - dev, max = mz + dev;
-            int a = index, b = index + 1;
+            final double min=mz-dev, max=mz+dev;
+            int a=index,b=index+1;
             while (a >= 0 && merged.getMzAt(a) >= min) --a;
             ++a;
             while (b < merged.size() && merged.getMzAt(b) <= max) ++b;
 
-            double mzSum = 0d, intensitySum = 0d;
-            for (int j = a; j < b; ++j) {
+            double mzSum=0d,intensitySum=0d;
+            for (int j=a; j < b; ++j) {
                 if (!alreadyMerged.get(j)) {
                     alreadyMerged.set(j);
-                    mzSum += merged.getMzAt(j) * merged.getIntensityAt(j);
+                    mzSum += merged.getMzAt(j)*merged.getIntensityAt(j);
                     intensitySum += merged.getIntensityAt(j);
                 }
             }
@@ -173,15 +174,15 @@ public class Spectrums {
         if (spec instanceof OrderedSpectrum) {
             final int k = binarySearch(spec, mass);
             if (k < 0) {
-                return -(k + 1);
+                return -(k+1);
             } else {
                 return k;
             }
         } else {
             double smallestDist = Double.MAX_VALUE;
             int bestIndex = spec.size();
-            for (int k = 0; k < spec.size(); ++k) {
-                double dist = spec.getMzAt(k) - mass;
+            for (int k=0; k < spec.size(); ++k) {
+                double dist = spec.getMzAt(k)-mass;
                 if (dist >= 1e-12 && dist < smallestDist) {
                     smallestDist = dist;
                     bestIndex = k;
@@ -193,12 +194,12 @@ public class Spectrums {
 
     public static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
     double cosineProduct(S left, S2 right, Deviation deviation) {
-        return dotProductPeaks(left, right, deviation) / Math.sqrt(dotProductPeaks(left, left, deviation) * dotProductPeaks(right, right, deviation));
+        return dotProductPeaks(left, right, deviation) / Math.sqrt(dotProductPeaks(left,left,deviation)*dotProductPeaks(right,right,deviation));
     }
 
     public static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
     double cosineProductWithLosses(S left, S2 right, Deviation deviation, double precursorLeft, double precursorRight) {
-        return (cosineProduct(left, right, deviation) + cosineProduct(getInversedSpectrum(left, precursorLeft), getInversedSpectrum(right, precursorRight), deviation)) / 2d;
+        return (cosineProduct(left,right,deviation) + cosineProduct(getInversedSpectrum(left, precursorLeft), getInversedSpectrum(right, precursorRight), deviation))/2d;
     }
 
     public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum getInversedSpectrum(S spec, double precursor) {
@@ -212,8 +213,8 @@ public class Spectrums {
             return new SimpleSpectrum(getAlreadyOrderedSpectrum(mut));
         } else {
             final SimpleMutableSpectrum mut = new SimpleMutableSpectrum(spec.size());
-            for (int k = 0; k < spec.size(); ++k) {
-                final double loss = precursor - spec.getMzAt(k);
+            for (int k=0; k < spec.size(); ++k) {
+                final double loss = precursor-spec.getMzAt(k);
                 if (loss > 0) mut.addPeak(loss, spec.getIntensityAt(k));
             }
             return new SimpleSpectrum(mut);
@@ -222,30 +223,29 @@ public class Spectrums {
 
     public static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
     double dotProductPeaks(S left, S2 right, Deviation deviation) {
-        int i = 0, j = 0;
-        final int nl = left.size(), nr = right.size();
-        double score = 0d;
+        int i=0, j=0;
+        final int nl=left.size(), nr=right.size();
+        double score=0d;
         while (i < nl && left.getMzAt(i) < 0.5d) ++i;
         while (j < nr && right.getMzAt(j) < 0.5d) ++j;
         while (i < nl && j < nr) {
-            final double difference = left.getMzAt(i) - right.getMzAt(j);
+            final double difference = left.getMzAt(i)- right.getMzAt(j);
             final double allowedDifference = deviation.absoluteFor(Math.min(left.getMzAt(i), right.getMzAt(j)));
             if (Math.abs(difference) <= allowedDifference) {
-                score += left.getIntensityAt(i) * right.getIntensityAt(j);
-                for (int k = i + 1; k < nl; ++k) {
-                    final double difference2 = left.getMzAt(k) - right.getMzAt(j);
+                score += left.getIntensityAt(i)*right.getIntensityAt(j);
+                for (int k=i+1; k < nl; ++k) {
+                    final double difference2 = left.getMzAt(k)- right.getMzAt(j);
                     if (Math.abs(difference2) <= allowedDifference) {
-                        score += left.getIntensityAt(k) * right.getIntensityAt(j);
+                        score += left.getIntensityAt(k)*right.getIntensityAt(j);
                     } else break;
                 }
-                for (int l = j + 1; l < nr; ++l) {
-                    final double difference2 = left.getMzAt(i) - right.getMzAt(l);
+                for (int l=j+1; l < nr; ++l) {
+                    final double difference2 = left.getMzAt(i)- right.getMzAt(l);
                     if (Math.abs(difference2) <= allowedDifference) {
-                        score += left.getIntensityAt(i) * right.getIntensityAt(l);
+                        score += left.getIntensityAt(i)*right.getIntensityAt(l);
                     } else break;
                 }
-                ++i;
-                ++j;
+                ++i; ++j;
             } else if (difference > 0) {
                 ++j;
             } else {
@@ -340,10 +340,10 @@ public class Spectrums {
         for (int i = 0; i < n; ++i) {
             if (predicate.apply(spectrum.getPeakAt(i))) keep.add(i);
         }
-        for (int i = 0; i < keep.size(); ++i) {
+        for (int i=0; i < keep.size(); ++i) {
             if (i != keep.get(i)) spectrum.swap(keep.get(i), i);
         }
-        for (int i = spectrum.size() - 1; i >= keep.size(); --i) {
+        for (int i=spectrum.size()-1; i >= keep.size() ; --i) {
             spectrum.removePeakAt(i);
         }
         return spectrum;
@@ -515,15 +515,15 @@ public class Spectrums {
      * @param targetMz
      * @return
      */
-    public static SimpleMutableSpectrum extractIsotopePattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz) {
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePattern(S ms1Spec, MeasurementProfile profile, double targetMz) {
         return extractIsotopePattern(ms1Spec, profile, targetMz, 1);
     }
 
-    public static SimpleMutableSpectrum extractIsotopePattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz, int absCharge) {
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePattern(S ms1Spec, MeasurementProfile profile, double targetMz, int absCharge) {
         return extractIsotopePattern(ms1Spec, profile, targetMz, absCharge, true);
     }
 
-    public static SimpleMutableSpectrum extractIsotopePattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz, int absCharge, boolean mergePeaks) {
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePattern(S ms1Spec, MeasurementProfile profile, double targetMz, int absCharge, boolean mergePeaks) {
         // extract all isotope peaks starting from the given target mz
         final ChemicalAlphabet stdalphabet = ChemicalAlphabet.getExtendedAlphabet();
         final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(ms1Spec);
@@ -564,7 +564,82 @@ public class Spectrums {
             spec.addPeak(mzBuffer, intensityBuffer);
 
         }
-        return spec;
+        return new SimpleSpectrum(spec);
+    }
+
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePatternFromMultipleSpectra(List<S> ms1Spectra, MeasurementProfile profile, double targetMz, int absCharge, boolean mergePeaks, double minIsoPeakFreq) {
+        List<SimpleSpectrum> isotopePatterns = ms1Spectra.stream().map(s->extractIsotopePattern(s, profile, targetMz, absCharge, mergePeaks)).collect(Collectors.toList());
+        int maxLength = 0;
+        Iterator<SimpleSpectrum> patternIterator = isotopePatterns.iterator();
+        while (patternIterator.hasNext()) {
+            SimpleSpectrum isotopePattern = patternIterator.next();
+            if (isotopePattern==null){
+                patternIterator.remove();
+            } else {
+                maxLength = Math.max(maxLength, isotopePattern.size());
+            }
+        }
+        if (isotopePatterns.size()==0) return null;
+        if (isotopePatterns.size()==1) return new SimpleSpectrum(isotopePatterns.get(0));
+
+        double minNumberOfOccurrence = isotopePatterns.size()*minIsoPeakFreq;
+        final SimpleMutableSpectrum mergedIsotopePattern = new SimpleMutableSpectrum();
+        for (int i = 0; i < maxLength; i++) {
+            int numberOfPeaks = 0;
+            double mzBuffer = 0d;
+            double intensityBuffer = 0d;
+            for (SimpleSpectrum isotopePattern : isotopePatterns) {
+                //todo rather use more robust way of merging? median? but higher intese peas might be more trustworthy
+                if (isotopePattern.size()>i){
+                    ++numberOfPeaks;
+                    final double intensity = isotopePattern.getIntensityAt(i);
+                    final double mz = isotopePattern.getMzAt(i);
+                    assert (Math.abs((mz-targetMz)*absCharge-i)<0.2);//should be at very most 0.5
+                    intensityBuffer += intensity;
+                    mzBuffer += intensity * mz;
+                }
+            }
+            if (numberOfPeaks<minNumberOfOccurrence) break;
+
+            mzBuffer /= intensityBuffer;
+            intensityBuffer /= numberOfPeaks;
+            mergedIsotopePattern.addPeak(mzBuffer, intensityBuffer);
+        }
+        if (mergedIsotopePattern.size()==0) return null; //same behaviour as normal extractPatternMethod
+        return new SimpleSpectrum(mergedIsotopePattern);
+    }
+
+
+    /**
+     *
+     * @param mainPattern high quality pattern, e.g. retrieved by MS1 feature finding, which might missed some isotope peaks
+     * @param longerPattern pattern retrieved from normal input MS1, which might be of worse quality but contains more potential isotope peaks
+     * @return
+     */
+    public static SimpleSpectrum extendPattern(Spectrum<Peak> mainPattern, Spectrum<Peak> longerPattern, double minIntensityCutoff) {
+        if (mainPattern.size()>=longerPattern.size()) return new SimpleSpectrum(mainPattern);
+        assert IntStream.range(0, mainPattern.size()).mapToDouble(i-> Math.abs(mainPattern.getMzAt(i)-longerPattern.getMzAt(i))).max().getAsDouble()<0.1;  //same targetMz, do patterns agree?
+
+        SimpleMutableSpectrum pattern = new SimpleMutableSpectrum(mainPattern);
+        SimpleMutableSpectrum longerPatternNormalized = new SimpleMutableSpectrum(longerPattern);
+        double monoIntensity = pattern.getIntensityAt(0);
+        Spectrums.normalizeByFirstPeak(longerPatternNormalized, monoIntensity);
+
+        final double monoMass1 = mainPattern.getMzAt(0);
+        final double monoMass2 = longerPatternNormalized.getMzAt(0);
+
+        for (int i = mainPattern.size(); i < longerPatternNormalized.size(); i++) {
+            final double mz = longerPatternNormalized.getMzAt(i);
+            final double intensity = longerPatternNormalized.getIntensityAt(i);
+            if (intensity/monoIntensity<minIntensityCutoff){
+                break;
+            }
+            final double newMz = mz-monoMass2+monoMass1; //use mz differences
+            pattern.addPeak(newMz, intensity);
+
+        }
+
+        return new SimpleSpectrum(pattern);
     }
 
 
@@ -819,9 +894,13 @@ public class Spectrums {
     }
 
     private static <P extends Peak, S extends MutableSpectrum<P>> void normalizeByFirstPeak(S spectrum, double base) {
-        final double firstPeak = base / spectrum.getIntensityAt(0);
-        for (int i = 0; i < spectrum.size(); ++i) {
-            spectrum.setIntensityAt(i, spectrum.getIntensityAt(i) * firstPeak);
+        normalizeByPeak(spectrum, 0, base);
+    }
+
+    public static <P extends Peak, S extends MutableSpectrum<P>> void normalizeByPeak(S spectrum, int peakIdx, double base) {
+        final double firstPeak = base/spectrum.getIntensityAt(peakIdx);
+        for (int i=0; i < spectrum.size(); ++i) {
+            spectrum.setIntensityAt(i, spectrum.getIntensityAt(i)*firstPeak);
         }
     }
 

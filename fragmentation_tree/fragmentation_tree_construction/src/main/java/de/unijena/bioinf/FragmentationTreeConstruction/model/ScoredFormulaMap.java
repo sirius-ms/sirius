@@ -17,10 +17,10 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.IonizedMolecularFormula;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
-public class ScoredFormulaMap extends TObjectDoubleHashMap<MolecularFormula> {
+public class ScoredFormulaMap extends TObjectDoubleHashMap<IonizedMolecularFormula> {
 
     public ScoredFormulaMap() {
         super();

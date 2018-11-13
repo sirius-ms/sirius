@@ -49,11 +49,10 @@ public class HypothesenDrivenRecalibration2 {
             ++k;
         }
         final FragmentAnnotation<ProcessedPeak> ano = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
-        final Ionization ionMode = tree.getAnnotationOrThrow(PrecursorIonType.class).getIonization();
         final SimpleMutableSpectrum mergedRef = new SimpleMutableSpectrum(), merged = new SimpleMutableSpectrum();
         for (Fragment f : tree) {
             final ProcessedPeak peak = ano.get(f);
-            final double mz = ionMode.addToMass(f.getFormula().getMass());
+            final double mz = f.getIonization().addToMass(f.getFormula().getMass());
             for (MS2Peak pk : peak.getOriginalPeaks()) {
                 final int sc = ((MutableMs2Spectrum)pk.getSpectrum()).getScanNumber();
                 collected[sc].addPeak(pk.getMz(), pk.getIntensity());

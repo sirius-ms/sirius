@@ -27,7 +27,8 @@ import java.util.stream.Collectors;
 
 /**
  * Created by ge28quv on 01/07/17.
- * Do statistics and validation on Ms2Datasets
+ * Do statistics and validation on Ms2Datasets.
+ * Not everything is threadsafe
  */
 public class Ms2DatasetPreprocessor {
     /*
@@ -67,8 +68,6 @@ public class Ms2DatasetPreprocessor {
 
     private Sirius sirius;
     private PrecursorIonType[] precursorIonTypes;
-    private DatasetStatistics datasetStatistics;
-
 
 
     List<Ms2ExperimentValidator> ms2ExperimentValidators;
@@ -273,8 +272,14 @@ public class Ms2DatasetPreprocessor {
     public MutableMs2Dataset flagBadQualitySpectra(Ms2Dataset ms2Dataset){
         MutableMs2Dataset mutableMs2Dataset = new MutableMs2Dataset(ms2Dataset);
         init(ms2Dataset);
-        datasetStatistics = makeStatistics(mutableMs2Dataset); //mainly noise, min max intensities
-        mutableMs2Dataset.setDatasetStatistics(datasetStatistics);
+        DatasetStatistics datasetStatistics;
+        if (mutableMs2Dataset.getDatasetStatistics()==null){
+            datasetStatistics = makeStatistics(mutableMs2Dataset); //mainly noise, min max intensities
+            mutableMs2Dataset.setDatasetStatistics(datasetStatistics);
+        } else {
+            datasetStatistics = mutableMs2Dataset.getDatasetStatistics();
+        }
+
         //todo this assumes relative noise intensity. we learned absolute. adjust at some point?
 //        ((MutableMeasurementProfile)mutableMs2Dataset.getMeasurementProfile()).setMedianNoiseIntensity(datasetStatistics.getMedianMs2NoiseIntensity());
 
@@ -298,14 +303,16 @@ public class Ms2DatasetPreprocessor {
      * @param ms2Dataset
      * @return
      */
-    private DatasetStatistics makeStatistics(Ms2Dataset ms2Dataset){
+    public MutableDatasetStatistics makeStatistics(Ms2Dataset ms2Dataset){
+        init(ms2Dataset);
+
         //guess elements
         for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
             FormulaConstraints constraints = predictElements(experiment, ms2Dataset);
             sirius.setFormulaConstraints(experiment, constraints);
         }
 
-        DatasetStatistics datasetStatistics = new DatasetStatistics();
+        MutableDatasetStatistics mutableDatasetStatistics = new MutableDatasetStatistics();
 
 
         //in these experiments, noise peaks can be annotated
@@ -314,12 +321,12 @@ public class Ms2DatasetPreprocessor {
         //get min and max intensities
         for (ExperimentWithAnnotatedSpectra experiment : experiments) {
             for (Spectrum<PeakWithAnnotation> spectrum : experiment.getMs1spectra()) {
-                datasetStatistics.addMaxMs1Intensity(Spectrums.getMaximalIntensity(spectrum));
-                datasetStatistics.addMinMs1Intensity(Spectrums.getMinimalIntensity(spectrum));
+                mutableDatasetStatistics.addMaxMs1Intensity(Spectrums.getMaximalIntensity(spectrum));
+                mutableDatasetStatistics.addMinMs1Intensity(Spectrums.getMinimalIntensity(spectrum));
             }
             for (Spectrum<PeakWithAnnotation> spectrum : experiment.getMs2spectra()) {
-                datasetStatistics.addMaxMs2Intensity(Spectrums.getMaximalIntensity(spectrum));
-                datasetStatistics.addMinMs2Intensity(Spectrums.getMinimalIntensity(spectrum));
+                mutableDatasetStatistics.addMaxMs2Intensity(Spectrums.getMaximalIntensity(spectrum));
+                mutableDatasetStatistics.addMinMs2Intensity(Spectrums.getMinimalIntensity(spectrum));
             }
 
 
@@ -331,7 +338,7 @@ public class Ms2DatasetPreprocessor {
             for (Spectrum<PeakWithAnnotation> spectrum : experiment.getMs2spectra()) {
                 for (PeakWithAnnotation peakWithAnnotation : spectrum) {
                     if (peakWithAnnotation.isNoise()){
-                        datasetStatistics.addMs2NoiseIntensity(peakWithAnnotation.getIntensity());
+                        mutableDatasetStatistics.addMs2NoiseIntensity(peakWithAnnotation.getIntensity());
 //                        System.out.println("noise "+peakWithAnnotation.getMass());
                     }
                 }
@@ -339,23 +346,23 @@ public class Ms2DatasetPreprocessor {
         }
 
         if (DEBUG) {
-            System.out.println("number of noise peaks "+datasetStatistics.getNoiseIntensities().size());
-            System.out.println("mean noise intensity "+datasetStatistics.getMeanMs2NoiseIntensity());
-            System.out.println("median noise intensity "+datasetStatistics.getMedianMs2NoiseIntensity());
-            System.out.println("80% quantile noise intensity "+datasetStatistics.getQuantileMs2NoiseIntensity(80));
+            System.out.println("number of noise peaks "+ mutableDatasetStatistics.getNoiseIntensities().size());
+            System.out.println("mean noise intensity "+ mutableDatasetStatistics.getMeanMs2NoiseIntensity());
+            System.out.println("median noise intensity "+ mutableDatasetStatistics.getMedianMs2NoiseIntensity());
+            System.out.println("80% quantile noise intensity "+ mutableDatasetStatistics.getQuantileMs2NoiseIntensity(80));
 
-            System.out.println("min intensity ms1 "+datasetStatistics.getMinMs1Intensity());
-            System.out.println("max intensity ms1 "+datasetStatistics.getMaxMs1Intensity());
+            System.out.println("min intensity ms1 "+ mutableDatasetStatistics.getMinMs1Intensity());
+            System.out.println("max intensity ms1 "+ mutableDatasetStatistics.getMaxMs1Intensity());
 
-            System.out.println("min intensity ms2 "+datasetStatistics.getMinMs2Intensity());
-            System.out.println("max intensity ms2 "+datasetStatistics.getMaxMs2Intensity());
+            System.out.println("min intensity ms2 "+ mutableDatasetStatistics.getMinMs2Intensity());
+            System.out.println("max intensity ms2 "+ mutableDatasetStatistics.getMaxMs2Intensity());
 
-            System.out.println(Arrays.toString(datasetStatistics.getNoiseIntensities().toArray()));
+            System.out.println(Arrays.toString(mutableDatasetStatistics.getNoiseIntensities().toArray()));
         }
 
 
 
-        return datasetStatistics;
+        return mutableDatasetStatistics;
     }
 
 
@@ -389,6 +396,7 @@ public class Ms2DatasetPreprocessor {
 
     private final static String SEP = "\t";
     public void writeExperimentInfos(Ms2Dataset ms2Dataset, Path outputFile, SpectrumProperty[] properties) throws IOException {
+        init(ms2Dataset);
         BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset());
 
         writer.write("name"+SEP+"mass");
@@ -432,10 +440,21 @@ public class Ms2DatasetPreprocessor {
         BufferedWriter writer = Files.newBufferedWriter(outputFile);
         DatasetStatistics ds = ms2Dataset.getDatasetStatistics();
 
-        double ms1MinInt = ds.getMinMs1Intensities().size()>0?ds.getMinMs1Intensity():Double.NaN;
-        double ms1MaxInt = ds.getMaxMs1Intensities().size()>0?ds.getMaxMs1Intensity():Double.NaN;
-        double ms2MinInt = ds.getMinMs2Intensities().size()>0?ds.getMinMs2Intensity():Double.NaN;
-        double ms2MaxInt = ds.getMaxMs2Intensities().size()>0?ds.getMaxMs2Intensity():Double.NaN;
+        double ms1MinInt, ms1MaxInt, ms2MinInt, ms2MaxInt, medianNoise;
+        if (ds instanceof MutableDatasetStatistics){
+            MutableDatasetStatistics mds = (MutableDatasetStatistics)ds;
+            ms1MinInt = mds.getMinMs1Intensities().size()>0?mds.getMinMs1Intensity():Double.NaN;
+            ms1MaxInt = mds.getMaxMs1Intensities().size()>0?mds.getMaxMs1Intensity():Double.NaN;
+            ms2MinInt = mds.getMinMs2Intensities().size()>0?mds.getMinMs2Intensity():Double.NaN;
+            ms2MaxInt = mds.getMaxMs2Intensities().size()>0?mds.getMaxMs2Intensity():Double.NaN;
+            medianNoise = mds.getNoiseIntensities().size()>0?mds.getMedianMs2NoiseIntensity():Double.NaN;
+        } else {
+            ms1MinInt = ds.getMinMs1Intensity();
+            ms1MaxInt = ds.getMaxMs1Intensity();
+            ms2MinInt = ds.getMinMs2Intensity();
+            ms2MaxInt = ds.getMaxMs2Intensity();
+            medianNoise = ds.getMedianMs2NoiseIntensity();
+        }
 
         writer.write("min intensity MS1\t"+ms1MinInt);
         writer.newLine();
@@ -446,7 +465,7 @@ public class Ms2DatasetPreprocessor {
         writer.write("max intensity MS2\t"+ms2MaxInt);
         writer.newLine();
 
-        double medianNoise = ds.getNoiseIntensities().size()>0?ds.getMedianMs2NoiseIntensity():Double.NaN;
+
         writer.write("median noise intensity MS2\t"+medianNoise);
         writer.newLine();
 

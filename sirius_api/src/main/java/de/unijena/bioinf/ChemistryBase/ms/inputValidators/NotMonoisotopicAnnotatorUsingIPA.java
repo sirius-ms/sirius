@@ -5,7 +5,6 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.QualityAnnotator;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -183,7 +182,7 @@ public class NotMonoisotopicAnnotatorUsingIPA implements QualityAnnotator {
     private List<IsotopePattern> computeIsotopePatterns(double mass, MutableSpectrum<Peak> spectrum, MeasurementProfile profile, double precursorMass, int charge) {
         int absCharge = Math.abs(charge);
         boolean mergeMasses = false;
-        SimpleMutableSpectrum isotopeSpec = Spectrums.extractIsotopePattern(spectrum, profile, mass, absCharge, mergeMasses);
+        Spectrum<Peak> isotopeSpec = Spectrums.extractIsotopePattern(spectrum, profile, mass, absCharge, mergeMasses);
 
         isotopeSpec = trimToPossiblePattern(isotopeSpec);
 
@@ -209,7 +208,7 @@ public class NotMonoisotopicAnnotatorUsingIPA implements QualityAnnotator {
     trim pattern so it does not contain a large peak after a very small one
     //TODO necessary?!?! TEST!!!!
      */
-    private SimpleMutableSpectrum trimToPossiblePattern(SimpleMutableSpectrum isotopeSpec){
+    private SimpleMutableSpectrum trimToPossiblePattern(Spectrum<Peak> isotopeSpec){
         double monoInt = isotopeSpec.getIntensityAt(0);
         SimpleMutableSpectrum s = new SimpleMutableSpectrum();
         double lastIntRatio = 1;

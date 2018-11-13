@@ -115,7 +115,7 @@ public abstract class HeuristicSolver {
 		/*
 		 * create a new tree with the child of the graph's pseudo-root
 		 */
-		this.tree = new FTree(this.graph.getRoot().getChildren(0).getFormula());
+		this.tree = new FTree(this.graph.getRoot().getChildren(0).getFormula(), this.graph.getRoot().getChildren(0).getIonization());
 		int treeNewRootColor = graph.getRoot().getChildren(0).getColor();
 		int treeRootID = this.graph.getRoot().getChildren(0).getVertexId();
 
@@ -173,7 +173,7 @@ public abstract class HeuristicSolver {
 
 		Fragment scr = this.tree.getFragmentAt(this.treeVertexID[sourceID]);
 		Fragment newFragment = this.tree.addFragment(scr,
-				target.getFormula());
+				target);
 
 		newFragment.getIncomingEdge().setWeight(loss.getWeight());
 		newFragment.setColor(target.getColor());
