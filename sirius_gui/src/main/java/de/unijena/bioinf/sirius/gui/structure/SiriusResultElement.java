@@ -5,7 +5,6 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.Compound;
 import de.unijena.bioinf.fingerid.FingerIdData;
@@ -13,6 +12,7 @@ import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.jjobs.JobStateEvent;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.core.AbstractEDTBean;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 
 import java.beans.PropertyChangeEvent;

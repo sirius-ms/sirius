@@ -1,6 +1,6 @@
 package de.unijena.bioinf.sirius.gui.table;
 
-import de.unijena.bioinf.sirius.gui.structure.AbstractEDTBean;
+import de.unijena.bioinf.sirius.core.AbstractEDTBean;
 import de.unijena.bioinf.sirius.gui.table.list_stats.DoubleListStats;
 import eu.hansolo.rangeslider.RangeSlider;
 

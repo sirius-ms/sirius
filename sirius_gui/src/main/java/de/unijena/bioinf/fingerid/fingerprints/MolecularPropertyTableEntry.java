@@ -1,7 +1,7 @@
 package de.unijena.bioinf.fingerid.fingerprints;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.sirius.gui.structure.AbstractEDTBean;
+import de.unijena.bioinf.sirius.core.AbstractEDTBean;
 
 /**
  * TODO: this class is immutable. Does it make sense to have it extend AbstractBean?

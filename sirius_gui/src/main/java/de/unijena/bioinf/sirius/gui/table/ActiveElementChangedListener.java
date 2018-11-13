@@ -1,7 +1,6 @@
 package de.unijena.bioinf.sirius.gui.table;
 
-import de.unijena.bioinf.sirius.gui.structure.AbstractEDTBean;
-import org.jdesktop.beans.AbstractBean;
+import de.unijena.bioinf.sirius.core.AbstractEDTBean;
 
 import javax.swing.*;
 import java.util.List;
