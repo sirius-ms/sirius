@@ -50,6 +50,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
     @Override
     protected void initInput() throws ExecutionException {
         super.initInput();
+        unfilteredSearchList= new ArrayList<>();
         if (searchList == null) {
             final List<JJob<?>> requireJobs = getRequiredJobs();
             for (JJob<?> j : requireJobs) {
