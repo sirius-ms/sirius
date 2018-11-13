@@ -6,7 +6,7 @@ import ca.odell.glazedlists.ObservableElementList;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.sirius.gui.structure.AbstractEDTBean;
+import de.unijena.bioinf.sirius.core.AbstractEDTBean;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;

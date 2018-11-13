@@ -31,7 +31,7 @@ public class Instance {
     final File file;
     final int index;
 
-    //todo don't need them!?
+    //todo don't need them!? we should delegate from experiment???
     protected final HashMap<Class<Object>, Object> annotations;
 
     private Instance() {

@@ -1,6 +1,4 @@
-package de.unijena.bioinf.sirius.gui.structure;
-
-import org.jdesktop.beans.AbstractSerializableBean;
+package de.unijena.bioinf.sirius.core;
 
 import javax.swing.event.SwingPropertyChangeSupport;
 import java.beans.PropertyChangeEvent;
@@ -104,8 +102,7 @@ import java.beans.PropertyChangeSupport;
  * {@code AbstractBean} is not {@link java.io.Serializable}. Special care must
  * be taken when creating {@code Serializable} subclasses, as the
  * {@code Serializable} listeners will not be saved.  Subclasses will need to
- * manually save the serializable listeners.  The {@link AbstractSerializableBean}
- * is {@code Serializable} and already handles the listeners correctly.  If
+ * manually save the serializable listeners.   If
  * possible, it is recommended that {@code Serializable} beans should extend
  * {@code AbstractSerializableBean}.  If it is not possible, the
  * {@code AbstractSerializableBean} bean implementation provides details on
@@ -113,8 +110,6 @@ import java.beans.PropertyChangeSupport;
  * </p>
  *
  * @author rbair
- * @status REVIEWED
- * @see AbstractSerializableBean
  */
 @SuppressWarnings("nls")
 public abstract class AbstractEDTBean {

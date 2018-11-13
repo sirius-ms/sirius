@@ -14,8 +14,7 @@ import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventTableModel;
 import ca.odell.glazedlists.swing.TableComparatorChooser;
-import de.unijena.bioinf.sirius.gui.structure.AbstractEDTBean;
-import org.jdesktop.swingx.JXTable;
+import de.unijena.bioinf.sirius.core.AbstractEDTBean;
 
 import javax.swing.*;
 
