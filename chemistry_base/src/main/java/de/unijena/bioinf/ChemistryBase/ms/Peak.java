@@ -27,7 +27,7 @@ package de.unijena.bioinf.ChemistryBase.ms;
  */
 public class Peak implements Comparable<Peak>, Cloneable {
 	
-	private static final double DELTA = 1e-8;
+	protected static final double DELTA = 1e-8;
 	
 	protected double mass;
 	protected double intensity;

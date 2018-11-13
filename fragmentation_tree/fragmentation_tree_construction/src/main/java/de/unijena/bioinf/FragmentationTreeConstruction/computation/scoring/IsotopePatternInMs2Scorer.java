@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -191,7 +192,7 @@ public class IsotopePatternInMs2Scorer {
                 // TODO: check if there could be multiple peaks
                 final int color = index < 0 ? (++maxColor) : peaklist.get(index).getIndex();
                 // introduce new isotope node
-                final Fragment pseudoFragment = graph.addFragment(MolecularFormula.emptyFormula());
+                final Fragment pseudoFragment = graph.addFragment(MolecularFormula.emptyFormula(), PrecursorIonType.unknown().getIonization());
                 pseudoAno.set(pseudoFragment, new IsotopicMarker());
                 pseudoFragment.setColor(color);
                 if (index >= 0) {

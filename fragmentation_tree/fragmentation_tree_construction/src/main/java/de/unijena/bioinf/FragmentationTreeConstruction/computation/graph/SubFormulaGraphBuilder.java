@@ -18,18 +18,17 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.graph;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.IonizedMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdductSwitches;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * @author Kai Dührkop
@@ -54,26 +53,37 @@ public class SubFormulaGraphBuilder implements GraphBuilder {
         final FragmentAnnotation<ProcessedPeak> peakAno = graph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
 
         for (Decomposition m : pmds) {
-            final Fragment f = graph.addRootVertex(m.getCandidate());
+            final Fragment f = graph.addRootVertex(m.getCandidate(), m.getIon());
             peakAno.set(f, peak);
             f.setColor(peak.getIndex());
             ion.set(f, m.getIon());
-            scoring.put(f.getFormula(), m.getScore());
+            scoring.put(new IonizedMolecularFormula(f.getFormula(), f.getIonization()), m.getScore());
         }
         return graph;
     }
 
     @Override
     public FGraph fillGraph(FGraph graph) {
+        //todo adduct-switch: what about this Ionization annotation, here? Useless, since we now can have multiple?
         final FragmentAnnotation<Ionization> ion = graph.getFragmentAnnotationOrThrow(Ionization.class);
         final HashSet<Ionization> allIons = new HashSet<>();
-        for (Fragment f : graph.getRoot().getChildren())
-            allIons.add(ion.get(f));
+
+        final PossibleAdductSwitches possibleAdductSwitches = graph.getAnnotationOrThrow(ProcessedInput.class).getAnnotation(PossibleAdductSwitches.class, null);
+        if (possibleAdductSwitches==null){
+            for (Fragment f : graph.getRoot().getChildren())
+                allIons.add(ion.get(f));
+        } else {
+            for (Fragment f: graph.getFragments()) {
+                allIons.addAll(possibleAdductSwitches.getPossibleIonizations(ion.get(f)));
+            }
+        }
+
         final FragmentAnnotation<ProcessedPeak> peakAno = graph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
         final ScoredFormulaMap scoring = graph.getAnnotationOrThrow(ScoredFormulaMap.class);
 
         final PeakAnnotation<DecompositionList> decompList =
                 graph.getAnnotationOrThrow(ProcessedInput.class).getPeakAnnotationOrThrow(DecompositionList.class);
+
 
         MolecularFormula pmd;
         {
@@ -96,16 +106,23 @@ public class SubFormulaGraphBuilder implements GraphBuilder {
                 if (hasEdge) {
                     Fragment newFragment = null;
                     for (Fragment f : graph) {
-                        if (f.isRoot() || peakAno.get(f).getIndex() == pi || !ion.get(f).equals(decomposition.getIon())) continue;
+//                        if (f.isRoot() || peakAno.get(f).getIndex() == pi || !ion.get(f).equals(decomposition.getIon())) continue;
+                        if (f.isRoot() || peakAno.get(f).getIndex() == pi) continue;
+                        if (possibleAdductSwitches==null){
+                            if (!ion.get(f).equals(decomposition.getIon())) continue;
+                        } else {
+                            List<Ionization> allowedSwitches = possibleAdductSwitches.getPossibleIonizations(f.getIonization());
+                            if (!allowedSwitches.contains(decomposition.getIon())) continue;
+                        }
                         final MolecularFormula fragmentFormula = f.getFormula();
                         assert (peakAno.get(f).getMz() > peak.getMz());
                         if (fragmentFormula.getMass() > formula.getMass() && fragmentFormula.isSubtractable(formula)) {
                             if (newFragment == null) {
-                                newFragment = graph.addFragment(decomposition.getCandidate());
+                                newFragment = graph.addFragment(decomposition.getCandidate(), decomposition.getIon());
                                 ion.set(newFragment, decomposition.getIon());
                                 peakAno.set(newFragment, peak);
                                 newFragment.setColor(peak.getIndex());
-                                scoring.put(decomposition.getCandidate(), decomposition.getScore());
+                                scoring.put(new IonizedMolecularFormula(decomposition.getCandidate(), decomposition.getIon()), decomposition.getScore());
                             }
                             graph.addLoss(f, newFragment);
                         }

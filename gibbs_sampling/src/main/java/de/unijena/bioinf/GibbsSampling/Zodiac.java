@@ -217,7 +217,7 @@ public class Zodiac {
                     } else if (zodiacScore.getProbability()>0.01){
                         Log.warn("A high scoring ZODIAC molecular formula candidate is not contained in SIRIUS top hits.\n" +
                                 "This might occur if clustered commpounds possess different SIRIUS molecular formula candidates.\n" +
-                                "You might increase the number of SIRIUS output candidadates or disable clustering in ZODIAC. Compound id: "+id);
+                                "You might increase the number of SIRIUS output candidates or disable clustering in ZODIAC. Compound id: "+id);
                     }
                 } else {
                     identificationResult.setAnnotation(ZodiacScore.class, zodiacScore);
