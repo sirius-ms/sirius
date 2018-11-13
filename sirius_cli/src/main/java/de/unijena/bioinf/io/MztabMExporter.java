@@ -247,10 +247,12 @@ public class MztabMExporter {
         RetentionTime rt = er.getExperiment().getAnnotation(RetentionTime.class);
         if (rt != null) {
             smfItem.setRetentionTimeInSeconds(rt.getRetentionTimeInSeconds());
-            if (!Double.isNaN(rt.getStartTime()))
-                smfItem.setRetentionTimeInSecondsStart(rt.getStartTime());
-            if (!Double.isNaN(rt.getEndTime()))
-                smfItem.setRetentionTimeInSecondsEnd(rt.getEndTime());
+            if (rt.isInterval()){
+                if (!Double.isNaN(rt.getStartTime()))
+                    smfItem.setRetentionTimeInSecondsStart(rt.getStartTime());
+                if (!Double.isNaN(rt.getEndTime()))
+                    smfItem.setRetentionTimeInSecondsEnd(rt.getEndTime());
+            }
         }
 
         return smfItem;

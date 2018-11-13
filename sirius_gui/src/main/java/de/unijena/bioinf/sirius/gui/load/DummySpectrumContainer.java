@@ -15,6 +15,11 @@ public class DummySpectrumContainer implements MSViewerDataModel {
 	}
 
 	@Override
+	public String getIonization(int index) {
+		return null;
+	}
+
+	@Override
 	public double getAbsoluteIntensity(int arg0) {
 		return 0;
 	}
