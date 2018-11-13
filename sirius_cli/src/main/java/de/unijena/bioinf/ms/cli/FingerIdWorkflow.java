@@ -4,10 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.ChimericAnnotator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.LowIntensityAnnotator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.NoMs1PeakAnnotator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.QualityAnnotator;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.*;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
@@ -90,8 +87,9 @@ public class FingerIdWorkflow implements Workflow<Instance> {
             //for the moment, only use few QualityAnnotators
             List<QualityAnnotator> qualityAnnotators = new ArrayList<>();
             qualityAnnotators.add(new NoMs1PeakAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION));
-//        qualityAnnotators.add(new FewPeaksAnnotator(Ms2DatasetPreprocessor.MIN_NUMBER_OF_PEAKS));
+            qualityAnnotators.add(new FewPeaksAnnotator(Ms2DatasetPreprocessor.MIN_NUMBER_OF_PEAKS));
             qualityAnnotators.add(new LowIntensityAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, 0.01, Double.NaN));
+//            qualityAnnotators.add(new NotMonoisotopicAnnotatorUsingIPA(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION));
             double max2ndMostIntenseRatio = 0.33;
             double maxSummedIntensitiesRatio = 1.0;
             qualityAnnotators.add(new ChimericAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, max2ndMostIntenseRatio, maxSummedIntensitiesRatio));

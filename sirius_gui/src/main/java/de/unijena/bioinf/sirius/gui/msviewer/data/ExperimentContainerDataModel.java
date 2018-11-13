@@ -312,4 +312,9 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
     public int findIndexOfPeak(double mass, double tolerance) {
         return underlyingModel.findIndexOfPeak(mass, tolerance);
     }
+
+    @Override
+    public String getIonization(int index) {
+        return underlyingModel.getIonization(index);
+    }
 }

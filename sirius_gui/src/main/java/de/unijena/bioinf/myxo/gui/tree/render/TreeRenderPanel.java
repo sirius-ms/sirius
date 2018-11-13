@@ -378,6 +378,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 //		String signalNoiseProp = "signal noise:";
 //		String colEnergyProp   = "collision energy:";
         String scoreProp = "score:";
+        String ionProp = "ionization:";
 
         int massPropWidth = propertyFM.stringWidth(massProp);
         int absIntPropWidth = propertyFM.stringWidth(absIntProp);
@@ -385,6 +386,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 //		int signalNoisePropWidth = propertyFM.stringWidth(signalNoiseProp);
 //		int colEnergyPropWidth = propertyFM.stringWidth(colEnergyProp);
         int scorePropWidth = propertyFM.stringWidth(scoreProp);
+        int ionPropWidth = propertyFM.stringWidth(ionProp);
 
 //		int leftSideMax = Math.max(massPropWidth,Math.max(absIntPropWidth, Math.max(relIntPropWidth, signalNoisePropWidth)));
 //		leftSideMax = Math.max(leftSideMax,Math.max(colEnergyPropWidth, scorePropWidth));
@@ -397,6 +399,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 //		String snVal        = snFormat.format(node.getPeakSignalToNoise());
 //		String colEnergyVal = node.getCollisionEnergy();
         String scoreVal = scoreFormat.format(node.getScore());
+        String ionVal = node.getIonization();
 
         int massValWidth = valueFM.stringWidth(massVal);
         int absIntValWidth = valueFM.stringWidth(absIntVal);
@@ -417,7 +420,8 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         int mfWidth = formulaFM.stringWidth(mf);
 
         int horSize = 10 + Math.max(southSize, mfWidth);
-        int vertSize = 75;
+//        int vertSize = 75;
+        int vertSize = 90;
 
         Composite org = g2.getComposite();
 
@@ -470,6 +474,9 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 //		counter += propertyFM.getHeight();	
         g2.drawString(scoreProp, startX + 5, counter);
         counter += propertyFM.getHeight();
+        g2.drawString(ionProp, startX + 5, counter);
+        counter += propertyFM.getHeight();
+
 
         counter = southStartY + propertyFM.getHeight();
         g2.setFont(valueFont);
@@ -485,6 +492,8 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 //		g2.drawString(colEnergyVal, startX + 10 + leftSideMax, counter);
 //		counter += propertyFM.getHeight();	
         g2.drawString(scoreVal, startX + 10 + leftSideMax, counter);
+        counter += propertyFM.getHeight();
+        g2.drawString(ionVal, startX + 10 + leftSideMax, counter);
         counter += propertyFM.getHeight();
 
     }
@@ -523,10 +532,24 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         thumbnailNodesWidth = 6;
         thumbnailNodesHeight = 6;*/
 
-        processImages(root);
+        processImages(root, hasDifferentIonizations(root));
 
         this.treeInitNeeded = true;
 
+    }
+
+    private boolean hasDifferentIonizations(TreeNode root){
+        String rootIon = root.getIonization();
+        final ArrayDeque<TreeNode> stack = new ArrayDeque<TreeNode>();
+        stack.push(root);
+        while (!stack.isEmpty()) {
+            final TreeNode node = stack.pollFirst();
+            if (node.getIonization()!=null && !node.getIonization().equals(rootIon)) return true;
+            for (TreeEdge edge : node.getOutEdges()) {
+                stack.push(edge.getTarget());
+            }
+        }
+        return false;
     }
 
     protected void calculateMinimalSize(TreeNode root) {
@@ -582,28 +605,31 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         }
     }
 
-    protected void processImages(TreeNode node) {
-        buildNodeImages(node);
+    protected void processImages(TreeNode node, boolean displayIonization) {
+        buildNodeImages(node, displayIonization);
         for (TreeEdge edge : node.getOutEdges()) {
-            processImages(edge.getTarget());
+            processImages(edge.getTarget(), displayIonization);
         }
     }
 
-    protected void buildNodeImages(TreeNode node) {
+    protected void buildNodeImages(TreeNode node, boolean displayIonization) {
         String mf = node.getMolecularFormula();
         String mass = massFormat.format(node.getPeakMass()) + " Da";
         String peakIntensity = massFormat.format(node.getPeakRelativeIntensity() * 100) + " %";
         String massDeviation = massFormat.format(node.getDeviationMass()) + " ppm";
+        String ionString = node.getIonization();
 
         int formulaLength = smallFormulaFM.stringWidth(mf);
         int massLength = smallValueFM.stringWidth(mass);
         int peakIntensityLength = smallValueFM.stringWidth(peakIntensity);
         int massDeviationLength = smallValueFM.stringWidth(massDeviation);
+        int ionStringLength = smallValueFM.stringWidth(ionString);
 
-        final int vertSize = 36;
+        final int vertSize = displayIonization ? 45: 36;
         int horSize = Math.max( formulaLength,  massLength);
         horSize = Math.max(horSize, peakIntensityLength);
         horSize = Math.max(horSize, massDeviationLength);
+        if (displayIonization) horSize = Math.max(horSize, ionStringLength);
         horSize = horSize + 6;
 
         BufferedImage image = new BufferedImage(horSize, vertSize, BufferedImage.TYPE_INT_RGB);
@@ -628,6 +654,8 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         g2.drawString(mass, (horSize - massLength) / 2, 17);
         g2.drawString(massDeviation, (horSize - massDeviationLength) / 2, 25);
         g2.drawString(peakIntensity, (horSize - peakIntensityLength) / 2, 33);
+
+        if (displayIonization) g2.drawString(ionString, (horSize - ionStringLength) / 2, 41);
 
         nodes.put(node, image);
 

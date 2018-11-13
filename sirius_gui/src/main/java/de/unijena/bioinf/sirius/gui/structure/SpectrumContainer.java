@@ -93,6 +93,11 @@ public class SpectrumContainer implements MSViewerDataModel {
     }
 
     @Override
+    public String getIonization(int index) {
+        return null;
+    }
+
+    @Override
     public double getAbsoluteIntensity(int index) {
         return peaks[index].getAbsoluteIntensity();
     }

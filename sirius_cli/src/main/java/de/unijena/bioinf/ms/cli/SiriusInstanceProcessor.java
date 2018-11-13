@@ -164,12 +164,16 @@ public class SiriusInstanceProcessor implements  InstanceProcessor<ExperimentRes
 
 
     protected ExperimentResultForSiriusJJob makeSiriusJob(final Instance i) {
-        Sirius.SiriusIdentificationJob job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
+        Sirius.SiriusIdentificationJob job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates(), getNumberOfCandidatesPerIonization()));
         return new ExperimentResultForSiriusJJob(job);
     }
 
     private Integer getNumberOfCandidates() {
         return options.getNumberOfCandidates() != null ? options.getNumberOfCandidates() : 5;
+    }
+
+    private Integer getNumberOfCandidatesPerIonization() {
+        return options.getNumberOfCandidatesPerIonization() != null ? options.getNumberOfCandidatesPerIonization() : -1;
     }
 
 
