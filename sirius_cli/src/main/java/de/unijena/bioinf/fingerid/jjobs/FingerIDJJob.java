@@ -289,7 +289,9 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
             }
 
 
-            ConfidenceResult confidenceResult = confidenceJJob.awaitResult();
+            if (confidenceScoreComputor != null) {
+                ConfidenceResult confidenceResult = confidenceJJob.awaitResult();
+            }
 
             // delete added IR without database hit
             final List<IdentificationResult> toDelete = new ArrayList<>();
