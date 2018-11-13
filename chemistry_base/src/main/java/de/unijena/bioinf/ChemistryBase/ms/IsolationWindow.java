@@ -5,7 +5,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.map.hash.TDoubleDoubleHashMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.set.hash.TDoubleHashSet;
 import org.slf4j.Logger;
@@ -17,7 +16,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -158,6 +156,8 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
 //        mutableMeasurementProfile.setAllowedMassDeviation(new Deviation(5));
 
 
+        boolean foundIonPeakInMs2AtLeastOnce = false;
+
         int expCounter = 0;
         int expCounter2 = 0;
         int expCounter3 = 0;
@@ -239,6 +239,8 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
                 }
 
 
+                foundIonPeakInMs2AtLeastOnce = true;
+
                 //match peaks
                 //todo match based on relative diff -> allow just smaller mass diff?
 
@@ -315,7 +317,9 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
 
         }
 
-        if (normalizedPatterns.size()==0){
+        if (!foundIonPeakInMs2AtLeastOnce) {
+            LOG.warn("Cannot estimate isolation window. Were ion peaks removed from MS2?");
+        } else if (normalizedPatterns.size()==0){
             LOG.warn("Cannot estimate isolation window no isotope patterns (in MS1 or MS2) found.");
         }
 

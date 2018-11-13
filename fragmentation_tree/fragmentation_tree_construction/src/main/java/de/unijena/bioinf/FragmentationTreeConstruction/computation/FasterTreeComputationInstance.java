@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
@@ -16,17 +17,17 @@ import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class FasterTreeComputationInstance extends AbstractTreeComputationInstance {
 
     protected final Ms2Experiment experiment;
     protected final int numberOfResultsToKeep;
+    protected final int numberOfResultsToKeepPerIonization;
+
     // yet another workaround =/
     // 0 = unprocessed, 1 = validated, 2 =  preprocessed, 3 = scored
     protected int state = 0;
@@ -38,10 +39,21 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
     protected volatile int restTime;
     protected int secondsPerInstance, secondsPerTree;
 
-    public FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep) {
+    /**
+     *
+     * @param analyzer
+     * @param input
+     * @param numberOfResultsToKeep
+     * @param numberOfResultsToKeepPerIonization use this parameter if you want to force to report at least
+     *                                           numberOfResultsToKeepPerIonization results per ionization.
+     *                                           if <=0, this parameter will have no effect and just the top
+     *                                           numberOfResultsToKeep results will be reported.
+     */
+    public FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
         super(analyzer);
         this.experiment = input;
         this.numberOfResultsToKeep = numberOfResultsToKeep;
+        this.numberOfResultsToKeepPerIonization = numberOfResultsToKeepPerIonization<=0?Integer.MIN_VALUE:numberOfResultsToKeepPerIonization;
         this.ticks = new AtomicInteger(0);
     }
 
@@ -51,7 +63,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
     }
 
     private FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree) {
-        this(analyzer, input.getOriginalInput(), 1);
+        this(analyzer, input.getOriginalInput(), 1, -1);
         this.pinput = input;
         final Decomposition decomp = pinput.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula());
         if (decomp==null) {
@@ -159,7 +171,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         final int NCPUS = jobManager.getCPUThreads();
         final int BATCH_SIZE = Math.min(4 * NCPUS, Math.max(30, NCPUS));
         final int MAX_GRAPH_CACHE_SIZE = Math.max(30, BATCH_SIZE);
-        final int n = Math.min(decompositions.size(), numberOfResultsToKeep);
+//        final int n = Math.min(decompositions.size(), numberOfResultsToKeep);
 
         TreeSizeScorer.TreeSizeBonus treeSizeBonus;
         final TreeSizeScorer tss = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
@@ -200,7 +212,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             inc += TREE_SIZE_INCREASE;
             treeSize += TREE_SIZE_INCREASE;
         }
-        final List<ExactResult> topResults = results.subList(0, Math.min(results.size(), n + 10));
+        final List<ExactResult> topResults = extractExactResults(results, numberOfResultsToKeep+10, numberOfResultsToKeepPerIonization+5);
         configureProgress(100, topResults.size());
         if (pinput.getAnnotation(ForbidRecalibration.class, ForbidRecalibration.ALLOWED).isForbidden()) {
             final List<BasicJJob<ExactResult>> jobs = new ArrayList<>();
@@ -219,7 +231,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             submitSubJob(recalibrationJob);
             recalibrationJobs.add(recalibrationJob);
         }
-        final ExactResult[] exact = recalibrationJobs.stream().map(this::takeResultAndCheckTime).sorted(Collections.reverseOrder()).limit(numberOfResultsToKeep).toArray(ExactResult[]::new);
+        final ExactResult[] exact = extractExactResults(recalibrationJobs.stream().map(this::takeResultAndCheckTime).sorted(Collections.reverseOrder()).collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization).toArray(new ExactResult[0]);
 
         if (inc >= MAX_TREESIZE_INCREASE) {
             for (ExactResult t : exact) t.tree.setAnnotation(Beautified.class, Beautified.IS_BEAUTIFUL);
@@ -227,6 +239,36 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             checkForTreeQuality(Arrays.asList(exact), true);
         }
         return exact;
+    }
+
+    private List<ExactResult> extractExactResults(List<ExactResult> results, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
+        if (numberOfResultsToKeepPerIonization<=0 || results.size()<=numberOfResultsToKeep){
+            return results.subList(0, Math.min(results.size(), numberOfResultsToKeep));
+        } else {
+            Map<Ionization, List<ExactResult>> ionToResults = new HashMap<>();
+            int i = 0;
+            for (ExactResult result : results) {
+                final Ionization ion = result.decomposition.getIon();
+                List<ExactResult> ionResults = ionToResults.get(ion);
+                if (ionResults==null){
+                    ionResults = new ArrayList<>();
+                    ionResults.add(result);
+                    ionToResults.put(ion, ionResults);
+                } else if (ionResults.size()<numberOfResultsToKeepPerIonization){
+                    ionResults.add(result);
+                }
+                ++i;
+            }
+            Set<ExactResult> exractedResults = new HashSet<>();
+            exractedResults.addAll(results.subList(0, numberOfResultsToKeep));
+            for (List<ExactResult> ionResults : ionToResults.values()) {
+                exractedResults.addAll(ionResults);
+            }
+            List<ExactResult> list = new ArrayList<>();
+            list.addAll(exractedResults);
+            Collections.sort(list, Collections.reverseOrder());
+            return list;
+        }
     }
 
     @NotNull

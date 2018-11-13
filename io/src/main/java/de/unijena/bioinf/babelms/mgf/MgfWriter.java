@@ -16,11 +16,19 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
 
     private final boolean writeMs1;
     private final boolean mergedMs2;
+    private final Deviation mergeMs2Deviation;
 
     public MgfWriter(boolean writeMs1, boolean mergedMs2) {
+        this(writeMs1, mergedMs2, new Deviation(10, 0.01));
+    }
+
+    public MgfWriter(boolean writeMs1, boolean mergedMs2, Deviation mergeMs2Deviation) {
         this.writeMs1 = writeMs1;
         this.mergedMs2 = mergedMs2;
+        this.mergeMs2Deviation = mergeMs2Deviation;
     }
+
+
 
     @Override
     public void write(BufferedWriter writer, Ms2Experiment data) throws IOException {
@@ -55,7 +63,7 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
 
     private Ms2Spectrum mergeMs2Spectra(Ms2Experiment experiment) {
         if (experiment.hasAnnotation(MergedMs2Spectrum.class)) return experiment.getAnnotation(MergedMs2Spectrum.class);
-        return new MutableMs2Spectrum(Spectrums.mergeSpectra(new Deviation(10, 0.1), true, true, experiment.getMs2Spectra()));
+        return new MutableMs2Spectrum(Spectrums.mergeSpectra(mergeMs2Deviation, true, true, experiment.getMs2Spectra()));
     }
 
     private List<String> createAdditionalInfo(Ms2Experiment experiment) {
@@ -77,7 +85,7 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
 
 
     private void writeMs1(BufferedWriter writer, Spectrum<Peak> spec, String name, double precursorMass, int charge, String adduct, boolean isMergedSpectrum, List<String> additionalInfos) throws IOException {
-        if (spec != null && spec.size() > 0) {
+        if (spec != null) {
             writer.write("BEGIN IONS");
             writer.newLine();
             writer.write("FEATURE_ID=" + name);
@@ -110,7 +118,7 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
     }
 
     private void writeMs2(BufferedWriter writer, Ms2Spectrum spec, String name, double precursorMass, int charge, String adduct, List<String> additionalInfos) throws IOException {
-        if (spec != null && spec.size() > 0) {
+        if (spec != null) { //don't filter empty spectra. this might destroy mapping
             writer.write("BEGIN IONS");
             writer.newLine();
             writer.write("FEATURE_ID=" + name);

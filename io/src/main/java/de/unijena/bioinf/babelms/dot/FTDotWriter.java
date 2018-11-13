@@ -93,7 +93,7 @@ public class FTDotWriter {
             final MolecularFormula formula = f.getFormula();
             final MolecularFormula exactIonFormula;
             if (ftion!=null) exactIonFormula = ftion.neutralMoleculeToPrecursorIon(formula);
-            else exactIonFormula = ion.getAtoms().add(formula);
+            else exactIonFormula = f.getIonization().getAtoms().add(formula);
             writer.write("\t");
             writer.write(exactIonFormula.toString());
             writer.write(" [");
@@ -105,7 +105,7 @@ public class FTDotWriter {
             if (ftion!=null)
                 writer.write(htmlFormula(formula,ftion));
             else
-                writer.write(htmlFormula(formula,ion));
+                writer.write(htmlFormula(formula,f.getIonization()));
             final Peak p = peakAno.get(f);
             if (p != null) {
                 writer.write(htmlSmall());
@@ -281,7 +281,7 @@ public class FTDotWriter {
             if (ftion != null) {
                 buf.write(htmlFormula(f.getFormula(), ftion));
             } else {
-                buf.write(htmlFormula(f.getFormula(), ion));
+                buf.write(htmlFormula(f.getFormula(), f.getIonization()));
             }
             buf.write(htmlNewline());
             buf.write(String.format(locale, "%.4f Da, %.2f %%", peakAno.get(f).getMass(), peakAno.get(f).getIntensity() / normalization * 100));

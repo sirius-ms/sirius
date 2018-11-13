@@ -81,7 +81,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
     }
 
     private void writeMs1(BufferedWriter writer, Spectrum spec, boolean isMergedSpectrum) throws IOException {
-        if (spec != null && spec.size() > 0) {
+        if (spec != null) { // && spec.size() > 0 : don't remove empty ones. this creates problems with MS1/MS2 mapping.
             if (isMergedSpectrum) writer.write(">ms1merged");
             else writer.write(">ms1peaks");
             writer.newLine();
@@ -92,7 +92,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
     }
 
     private void writeMs2(BufferedWriter writer, Ms2Spectrum spec) throws IOException {
-        if (spec != null && spec.size() > 0) {
+        if (spec != null) { // && spec.size() > 0 : don't remove empty ones. this creates problems with MS1/MS2 mapping.
             if (spec.getCollisionEnergy() == null || spec.getCollisionEnergy().equals(CollisionEnergy.none())) {
                 writer.write(">ms2peaks");
             } else {

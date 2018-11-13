@@ -33,18 +33,18 @@ public abstract class AbstractHeuristic {
                     bestFrag = f;
                 }
             }
-            final FTree t = new FTree(bestFrag.getFormula());
+            final FTree t = new FTree(bestFrag.getFormula(), bestFrag.getIonization());
             t.setTreeWeight(bestFrag.getIncomingEdge().getWeight());
             return t;
         }
         selectedEdges.sort(Comparator.comparingInt((l)->l.getSource().getColor()));
-        final FTree tree = new FTree(selectedEdges.get(0).getTarget().getFormula());
+        final FTree tree = new FTree(selectedEdges.get(0).getTarget().getFormula(), selectedEdges.get(0).getTarget().getIonization());
         final HashMap<MolecularFormula, Fragment> fragmentsByFormula = new HashMap<>(selectedEdges.size());
         fragmentsByFormula.put(tree.getRoot().getFormula(), tree.getRoot());
         for (int i=1; i < selectedEdges.size(); ++i) {
             final Loss l = selectedEdges.get(i);
             Fragment parent = fragmentsByFormula.get(l.getSource().getFormula());
-            final Fragment f = tree.addFragment(parent, l.getTarget().getFormula());
+            final Fragment f = tree.addFragment(parent, l.getTarget());
             f.getIncomingEdge().setWeight(l.getWeight());
             fragmentsByFormula.put(f.getFormula(), f);
         }
