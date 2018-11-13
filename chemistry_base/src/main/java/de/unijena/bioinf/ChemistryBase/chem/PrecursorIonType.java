@@ -120,7 +120,7 @@ public class PrecursorIonType {
 
     @Override
     public int hashCode() {
-        return 31 * ionization.hashCode() + modification.hashCode() + 17*special.hashCode();
+        return 31 * ionization.hashCode() + modification.hashCode() + 17 * special.hashCode();
     }
 
     @Override

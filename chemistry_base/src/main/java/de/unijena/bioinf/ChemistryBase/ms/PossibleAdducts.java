@@ -40,7 +40,7 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Ms2Exp
     }
 
     public Set<PrecursorIonType> getAdducts(Ionization ionMode) {
-        return adducts.stream().filter((a)->a.getIonization().equals(ionMode)).collect(Collectors.toSet());
+        return adducts.stream().filter((a) -> a.getIonization().equals(ionMode)).collect(Collectors.toSet());
     }
 
     public boolean hasPositiveCharge() {
@@ -85,6 +85,18 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Ms2Exp
         adducts.add(adduct);
     }
 
+    public void addAdducts(Collection<PrecursorIonType> adductsToAdd) {
+        adducts.addAll(adductsToAdd);
+    }
+
+    public void addAdducts(PrecursorIonType... adductsToAdd) {
+        adducts.addAll(Arrays.asList(adductsToAdd));
+    }
+
+    public void addAdducts(PossibleAdducts adductsToAdd) {
+        adducts.addAll(adductsToAdd.adducts);
+    }
+
     @Override
     public Iterator<PrecursorIonType> iterator() {
         return adducts.iterator();
@@ -111,5 +123,26 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Ms2Exp
         return new PossibleAdducts(Sets.intersection(p1.adducts, p2.adducts));
     }
 
+    public int size() {
+        return adducts.size();
+    }
 
+    public boolean isEmpty() {
+        return adducts.isEmpty();
+    }
+
+    public boolean contains(PrecursorIonType o) {
+        return adducts.contains(o);
+    }
+
+
+    //if the list are a single precursoriotyp we can convert it into one
+    public boolean isPrecursorIonType() {
+        return size() == 1;
+    }
+
+    public PrecursorIonType asPrecursorIonType() {
+        if (isPrecursorIonType()) return adducts.iterator().next();
+        return null;
+    }
 }
