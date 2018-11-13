@@ -45,6 +45,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
         this.formula = formula;
         this.chargeState = chargeState;
         this.trainingStructuresSet = trainingStructuresSet;
+        this.unfilteredSearchList = new ArrayList<>();
     }
 
     @Override
