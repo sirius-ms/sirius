@@ -1,5 +1,7 @@
 package de.unijena.bioinf.myxo.gui.tree.structure;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,13 +18,15 @@ public class DefaultTreeNode implements TreeNode {
 	private double score;
 	private double deviationMass;
 	private Double medianMassDeviation;
-	
+
+	private String ionization;
+
 	private int horSize, vertSize;
 	private int horPos, vertPos;
 	private int depth;
 	private int id;
 	private int nodeNumber;
-	
+
 	public DefaultTreeNode(){
 		peakMass = 0;
 		peakAbsInt = 0;
@@ -256,4 +260,13 @@ public class DefaultTreeNode implements TreeNode {
 	}
 
 
+	@Override
+	public void setIonization(String ionization) {
+		this.ionization = ionization;
+	}
+
+	@Override
+	public String getIonization() {
+		return ionization;
+	}
 }

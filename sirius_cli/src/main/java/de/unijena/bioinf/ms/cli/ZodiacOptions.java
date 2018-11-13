@@ -159,6 +159,13 @@ public interface ZodiacOptions {
     boolean isOnlyComputeStats();
 
     @Option(
+            longName = {"ms2-median-noise"},
+            description = "Set MS2 median noise intensity - else it is estimated. This is used to count the number of MS2 peaks to gauge spectrum quality.",
+            defaultToNull = true
+    )
+    Double getMedianNoiseIntensity();
+
+    @Option(
             longName = {"ignore-spectra-quality"},
             description = "As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining."
     )

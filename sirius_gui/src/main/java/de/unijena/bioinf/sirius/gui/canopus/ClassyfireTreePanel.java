@@ -154,7 +154,7 @@ public class ClassyfireTreePanel extends TreeRenderPanel {
     }
 
     @Override
-    protected void buildNodeImages(TreeNode node) {
+    protected void buildNodeImages(TreeNode node, boolean displayIonization) {
         ClassyfireNode cn = (ClassyfireNode)node;
         String mf = cn.underlyingProperty.getName();
         int formulaLength = formulaFM.stringWidth(mf);
