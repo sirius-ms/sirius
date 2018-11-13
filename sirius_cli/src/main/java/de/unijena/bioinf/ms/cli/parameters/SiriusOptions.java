@@ -77,6 +77,9 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
     @Option(names = {"--mostintense-ms2"}, description = "Only use the fragmentation spectrum with the most intense precursor peak (for each compound).")
     public boolean mostIntenseMs2;
 
+    @Option(names = "candidates-per-ion", description = "Minimum number of candidates in the output for each ionization. Set to force output of results for each possible ionization, even if not part of highest ranked results.", defaultToNull = true)
+    public Integer numberOfCandidatesPerIonization;
+
     @Option(names = {"-z", "--parentmass", "precursor", "mz"}, description = "the mass of the parent ion")
     public Double parentMz;
 
