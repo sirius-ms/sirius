@@ -217,6 +217,7 @@ public class Sirius {
                 throw new RuntimeException("TreeComputationInstance does not support parameter 'numberOfResultsToKeepPerIonization'");
             return new TreeComputationInstance(analyzer, input, numberOfResultsToKeep);
         }
+    }
 
         /**
          * try to guess ionization from MS1. multiple  suggestions possible. In doubt [M]+ is ignored (cannot distinguish from isotope pattern)!
@@ -225,8 +226,7 @@ public class Sirius {
          * @param candidateIonizations array of possible ionizations (lots of different adducts very likely make no sense!)
          * @return
          */
-        public GuessIonizationFromMs1Result guessIonization (@NotNull Ms2Experiment experiment, PrecursorIonType[]
-        candidateIonizations){
+        public GuessIonizationFromMs1Result guessIonization (@NotNull Ms2Experiment experiment, PrecursorIonType[] candidateIonizations){
             boolean guessedFromMergedMs1 = false;
             Spectrum<Peak> spec = experiment.getMergedMs1Spectrum();
             SimpleMutableSpectrum mutableMerged = null;
@@ -261,8 +261,7 @@ public class Sirius {
          * MergedMs1Spectrum: used merged MS1 spectrum
          * NormalMs1: merged MS1 was not available or only contained precursor peak (+ isotope peaks)
          */
-        public enum GuessIonizationSource {NoSource, MergedMs1Spectrum, NormalMs1}
-        ;
+        public enum GuessIonizationSource {NoSource, MergedMs1Spectrum, NormalMs1};
 
         public class GuessIonizationFromMs1Result {
             private final PrecursorIonType[] guessedIonTypes;
@@ -1231,28 +1230,7 @@ public class Sirius {
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////CLASSES/////////////////////////////////////////////////////
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //    protected JobManager jobManager;
-
-
-        public static void main (String[]args){
-            try {
-                Sirius sirius = new Sirius();
-                // input file
-                Ms2Experiment experiment = sirius.parseExperiment(new File("someFile.ms")).next();
-                // intermediate object
-                ProcessedInput pinput = sirius.getMs2Analyzer().preprocessing(experiment);
-                Decomposition decomposition = pinput.getAnnotationOrThrow(DecompositionList.class).find(experiment.getMolecularFormula());
-                FGraph graph = sirius.getMs2Analyzer().buildGraphWithoutReduction(pinput, decomposition);
-
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
-
-
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         public class SiriusIdentificationJob extends BasicMasterJJob<List<IdentificationResult>> {
             private final Ms2Experiment experiment;
             private final int numberOfResultsToKeep;
