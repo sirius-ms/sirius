@@ -1,5 +1,7 @@
 package de.unijena.bioinf.myxo.gui.tree.structure;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+
 import java.util.List;
 
 public interface TreeNode {
@@ -102,4 +104,7 @@ public interface TreeNode {
 	void setMedianMassDeviation(Double medianMassDeviation);
 	Double getMedianMassDeviation();
 
+	void setIonization(String ionization);
+
+	String getIonization();
 }

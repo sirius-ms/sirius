@@ -10,10 +10,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.ChimericAnnotator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.LowIntensityAnnotator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.NoMs1PeakAnnotator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.QualityAnnotator;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.*;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.GibbsSampling.ZodiacUtils;
@@ -21,6 +18,7 @@ import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.GibbsSampling.model.distributions.*;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
+import de.unijena.bioinf.GibbsSampling.model.scorer.SameIonizationScorer;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -182,10 +180,26 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
         Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
 
+        if (options.getMedianNoiseIntensity()!=null) {
+            double medianNoiseInt = options.getMedianNoiseIntensity();
+            DatasetStatistics datasetStatistics= preprocessor.makeStatistics(dataset);
+            double minMs1Intensity = datasetStatistics.getMinMs1Intensity();
+            double maxMs1Intensity = datasetStatistics.getMaxMs1Intensity();
+            double minMs2Intensity = datasetStatistics.getMinMs2Intensity();
+            double maxMs2Intensity = datasetStatistics.getMaxMs2Intensity();
+            double minMs2NoiseIntensity = medianNoiseInt;
+            double maxMs2NoiseIntensity = medianNoiseInt;
+            double meanMs2NoiseIntensity = medianNoiseInt;
+            double medianMs2NoiseIntensity = medianNoiseInt;
+            FixedDatasetStatistics fixedDatasetStatistics = new FixedDatasetStatistics(minMs1Intensity, maxMs1Intensity, minMs2Intensity, maxMs2Intensity, minMs2NoiseIntensity, maxMs2NoiseIntensity, meanMs2NoiseIntensity, medianMs2NoiseIntensity);
+            ((MutableMs2Dataset) dataset).setDatasetStatistics(fixedDatasetStatistics);
+        }
+        
         List<QualityAnnotator> qualityAnnotators = new ArrayList<>();
         qualityAnnotators.add(new NoMs1PeakAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION));
-//        qualityAnnotators.add(new FewPeaksAnnotator(Ms2DatasetPreprocessor.MIN_NUMBER_OF_PEAKS));
+        qualityAnnotators.add(new FewPeaksAnnotator(Ms2DatasetPreprocessor.MIN_NUMBER_OF_PEAKS));
         qualityAnnotators.add(new LowIntensityAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, 0.01, Double.NaN));
+//        qualityAnnotators.add(new NotMonoisotopicAnnotatorUsingIPA(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION));
         double max2ndMostIntenseRatio = 0.33;
         double maxSummedIntensitiesRatio = 1.0;
         qualityAnnotators.add(new ChimericAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, max2ndMostIntenseRatio, maxSummedIntensitiesRatio));
@@ -216,7 +230,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             if (!atLeastOneTreeExplainsSomeIntensity(trees, 0.5)){
                 CompoundQuality.setProperty(experiment, SpectrumProperty.PoorlyExplained);
             }
-            if (!atLeastOneTreeExplainsSomePeaks(trees, 3)){
+            if (!atLeastOneTreeExplainsSomePeaks(trees, 5)){ //changed from 3
                 CompoundQuality.setProperty(experiment, SpectrumProperty.PoorlyExplained);
             }
 
@@ -330,8 +344,10 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             commonFragmentAndLossScorer = new ScoreProbabilityDistributionFix(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
         }
 
-        EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
+//        SameIonizationScorer sameIonizationScorer = new SameIonizationScorer();
+//        EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer, sameIonizationScorer};
 
+        EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
 
         ZodiacJJob zodiacJJob = new ZodiacJJob(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, options.getIterationSteps(), options.getBurnInSteps(), options.getSeparateRuns(), options.isClusterCompounds(), !options.isOnlyOneStepZodiac());
 
@@ -406,14 +422,18 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         if (result.length>0){
             Ms2Experiment experiment = result[0].getCandidate().getExperiment();
             //TODO hack: this don't have to be the ions used for SIRIUS computation in the first place!
-            PrecursorIonType[] ms1IonModes = getIonsFromMs1Hack(experiment, sirius);
+            Sirius.GuessIonizationFromMs1Result guessIonization = getIonsFromMs1Hack(experiment, sirius);
+            PrecursorIonType[] ms1IonModes = guessIonization.getGuessedIonTypes();
             if (ms1IonModes!=null && ms1IonModes.length>=1){
                 ionsByMs1 = ms1IonModes[0].toString();
                 for (int i = 1; i < ms1IonModes.length; i++) {
-                    ionsByMs1 += ms1IonModes[i].toString();
-
+                    ionsByMs1 += ","+ms1IonModes[i].toString();
                 }
+            } else {
+                ionsByMs1 = "None";
             }
+
+            ionsByMs1 += ":"+guessIonization.getGuessingSource();
 
             CompoundQuality compoundQuality = experiment.getAnnotation(CompoundQuality.class, null);
             precursorMass = experiment.getIonMass();
@@ -480,7 +500,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         return builder.toString();
     }
 
-    private static PrecursorIonType[] getIonsFromMs1Hack(Ms2Experiment experiment, Sirius sirius){
+    private static Sirius.GuessIonizationFromMs1Result getIonsFromMs1Hack(Ms2Experiment experiment, Sirius sirius){
         MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
         PossibleAdducts pa =  new PossibleAdducts(Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(mutableMs2Experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class));
 
@@ -489,8 +509,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         for (Ionization ion : ionModes) {
             allowedIonModes.add(PrecursorIonType.getPrecursorIonType(ion));
         }
-        PrecursorIonType[] ms1IonModes = sirius.guessIonization(mutableMs2Experiment, allowedIonModes.toArray(new PrecursorIonType[0]));
-        return ms1IonModes;
+        return sirius.guessIonization(mutableMs2Experiment, allowedIonModes.toArray(new PrecursorIonType[0]));
     }
 
     public Scored<IdentificationResult>[] bestInitial(String[] ids, Map<String, ExperimentResult> experimentResultMap){
