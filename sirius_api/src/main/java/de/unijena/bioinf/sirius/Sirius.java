@@ -60,7 +60,6 @@ public class Sirius {
     protected ElementPredictor elementPrediction;
     protected Progress progress;
     protected PeriodicTable table;
-    protected boolean autoIonMode;
     /**
      * for internal use to easily switch and experiment with implementation details
      */
@@ -178,7 +177,6 @@ public class Sirius {
         profile.fragmentationPatternAnalysis.setDefaultProfile(new MutableMeasurementProfile(profile.fragmentationPatternAnalysis.getDefaultProfile()));
         profile.isotopePatternAnalysis.setDefaultProfile(new MutableMeasurementProfile(profile.isotopePatternAnalysis.getDefaultProfile()));
         this.elementPrediction = null;
-        this.autoIonMode = false;
     }
 
     public ElementPredictor getElementPrediction() {
@@ -202,17 +200,6 @@ public class Sirius {
             disableElementDetection(experiment, current);
         }
     }
-
-    @Deprecated
-    public boolean isAutoIonMode() {
-        return autoIonMode;
-    }
-
-    @Deprecated
-    public void setAutoIonMode(boolean autoIonMode) {
-        this.autoIonMode = autoIonMode;
-    }
-
 
     protected AbstractTreeComputationInstance getTreeComputationImplementation(FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
         if (useFastMode)
@@ -352,24 +339,24 @@ public class Sirius {
     /**
      * Identify the molecular formula of the measured compound using the provided MS and MSMS data
      *
-     * @param uexperiment input data
+     * @param experiment input data
      * @return the top tree
      */
     @Deprecated
-    public IdentificationResult identify(Ms2Experiment uexperiment) {
-        return identify(uexperiment, 1).get(0);
+    public IdentificationResult identify(Ms2Experiment experiment) {
+        return identify(experiment, 1).get(0);
     }
 
     /**
      * Identify the molecular formula of the measured compound using the provided MS and MSMS data
      *
-     * @param uexperiment        input data
+     * @param experiment        input data
      * @param numberOfCandidates number of top candidates to return
      * @return a list of identified molecular formulas together with their tree
      */
     @Deprecated
-    public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates) {
-        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), uexperiment, numberOfCandidates, -1);
+    public List<IdentificationResult> identify(Ms2Experiment experiment, int numberOfCandidates) {
+        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, numberOfCandidates, -1);
         final ProcessedInput pinput = instance.validateInput();
         performMs1Analysis(instance);
         SiriusJobs.getGlobalJobManager().submitJob(instance);
@@ -379,17 +366,17 @@ public class Sirius {
     }
 
     @Deprecated
-    public List<IdentificationResult> identifyPrecursorAndIonization(Ms2Experiment uexperiment,
+    public List<IdentificationResult> identifyPrecursorAndIonization(Ms2Experiment experiment,
                                                                      int numberOfCandidates, IsotopePatternHandling iso) {
-        final MutableMs2Experiment exp = new MutableMs2Experiment(uexperiment);
-        exp.setAnnotation(PossibleIonModes.class, PossibleIonModes.defaultFor(uexperiment.getPrecursorIonType().getCharge()));
+        final MutableMs2Experiment exp = new MutableMs2Experiment(experiment);
+        exp.setAnnotation(PossibleIonModes.class, PossibleIonModes.defaultFor(experiment.getPrecursorIonType().getCharge()));
         return identify(exp, numberOfCandidates, true, iso);
     }
 
     /**
      * Identify the molecular formula of the measured compound by combining an isotope pattern analysis on MS data with a fragmentation pattern analysis on MS/MS data
      *
-     * @param uexperiment        input data
+     * @param experiment        input data
      * @param numberOfCandidates number of candidates to output
      * @param recalibrating      true if spectra should be recalibrated during tree computation
      * @param deisotope          set this to 'omit' to ignore isotope pattern, 'filter' to use it for selecting molecular formula candidates or 'score' to rerank the candidates according to their isotope pattern
@@ -397,9 +384,9 @@ public class Sirius {
      * @return a list of identified molecular formulas together with their tree
      */
     @Deprecated
-    public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates,
+    public List<IdentificationResult> identify(Ms2Experiment experiment, int numberOfCandidates,
                                                boolean recalibrating, IsotopePatternHandling deisotope, Set<MolecularFormula> whiteList) {
-        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), uexperiment, numberOfCandidates, -1);
+        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, numberOfCandidates, -1);
         final ProcessedInput pinput = instance.validateInput();
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
         if (whiteList != null) pinput.setAnnotation(Whiteset.class, new Whiteset(whiteList));
@@ -439,30 +426,30 @@ public class Sirius {
         }
     }
 
-    public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates,
+    public List<IdentificationResult> identify(Ms2Experiment experiment, int numberOfCandidates,
                                                boolean recalibrating, IsotopePatternHandling deisotope) {
-        return identify(uexperiment, numberOfCandidates, recalibrating, deisotope, (FormulaConstraints) null);
+        return identify(experiment, numberOfCandidates, recalibrating, deisotope, (FormulaConstraints) null);
     }
 
     /**
      * Identify the molecular formula of the measured compound by combining an isotope pattern analysis on MS data with a fragmentation pattern analysis on MS/MS data
      *
-     * @param uexperiment        input data
+     * @param experiment        input data
      * @param numberOfCandidates number of candidates to output
      * @param recalibrating      true if spectra should be recalibrated during tree computation
      * @param deisotope          set this to 'omit' to ignore isotope pattern, 'filter' to use it for selecting molecular formula candidates or 'score' to rerank the candidates according to their isotope pattern
      * @param formulaConstraints use if specific constraints on the molecular formulas shall be imposed (may be null)
      * @return a list of identified molecular formulas together with their tree
      */
-    public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates,
+    public List<IdentificationResult> identify(Ms2Experiment experiment, int numberOfCandidates,
                                                boolean recalibrating, IsotopePatternHandling deisotope, FormulaConstraints formulaConstraints) {
-        return identify(uexperiment, numberOfCandidates, -1, recalibrating, deisotope, formulaConstraints);
+        return identify(experiment, numberOfCandidates, -1, recalibrating, deisotope, formulaConstraints);
     }
 
     /**
      * Identify the molecular formula of the measured compound by combining an isotope pattern analysis on MS data with a fragmentation pattern analysis on MS/MS data
      *
-     * @param uexperiment                     input data
+     * @param experiment                     input data
      * @param numberOfCandidates              number of candidates to output
      * @param numberOfCandidatesPerIonization minimum number of candidates to output per ionization
      * @param recalibrating                   true if spectra should be recalibrated during tree computation
@@ -470,10 +457,10 @@ public class Sirius {
      * @param formulaConstraints              use if specific constraints on the molecular formulas shall be imposed (may be null)
      * @return a list of identified molecular formulas together with their tree
      */
-    public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates,
+    public List<IdentificationResult> identify(Ms2Experiment experiment, int numberOfCandidates,
                                                int numberOfCandidatesPerIonization, boolean recalibrating, IsotopePatternHandling deisotope, FormulaConstraints
                                                        formulaConstraints) {
-        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), uexperiment, numberOfCandidates, numberOfCandidatesPerIonization);
+        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, numberOfCandidates, numberOfCandidatesPerIonization);
         final ProcessedInput pinput = instance.validateInput();
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
         if (formulaConstraints != null) pinput.getMeasurementProfile().setFormulaConstraints(formulaConstraints);
