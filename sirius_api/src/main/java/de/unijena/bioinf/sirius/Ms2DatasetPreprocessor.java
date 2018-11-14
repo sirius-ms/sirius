@@ -514,7 +514,7 @@ public class Ms2DatasetPreprocessor {
     }
 
     private boolean isNotBadQuality(Ms2Experiment experiment) {
-        return experiment.getAnnotation(CompoundQuality.class, new CompoundQuality(SpectrumProperty.Good)).isGoodQuality();
+        return experiment.getAnnotation(CompoundQuality.class, () ->  new CompoundQuality(SpectrumProperty.Good)).isGoodQuality();
     }
 
     private FormulaConstraints predictElements(Ms2Experiment experiment, Ms2Dataset ms2Dataset) {
