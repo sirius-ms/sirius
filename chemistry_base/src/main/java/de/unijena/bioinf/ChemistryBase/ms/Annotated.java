@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public interface Annotated<Annotation> {
 
@@ -37,9 +38,18 @@ public interface Annotated<Annotation> {
     /**
      * @return annotation value for the given class/key or the given default value
      */
-    default <T extends Annotation> T getAnnotation(Class<T> klass, T defaultValue) {
+    /*default <T extends Annotation> T getAnnotation(Class<T> klass, T defaultValue) {
         final T val = getAnnotation(klass);
         if (val == null) return defaultValue;
+        else return val;
+    }
+*/
+    /**
+     * @return annotation value for the given class/key or the given default value
+     */
+    default <T extends Annotation> T getAnnotation(Class<T> klass, Supplier<T> defaultValueSupplier) {
+        final T val = getAnnotation(klass);
+        if (val == null) return defaultValueSupplier.get();
         else return val;
     }
 
