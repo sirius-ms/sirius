@@ -34,7 +34,6 @@ import java.util.Locale;
  * based on this parameters
  */
 public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResult> {
-
     Sirius sirius;
     SiriusOptions options;
     protected Logger logger = LoggerFactory.getLogger(SiriusInstanceProcessor.class);
@@ -42,6 +41,8 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
     public Sirius getSirius() {
         return sirius;
     }
+
+
 
     @Override
     public boolean setup() {
@@ -59,15 +60,16 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
             ms2.setValidatorWarning(message -> LoggerFactory.getLogger(outerClassName).warn(message));
 
             //setting up the profile (not Instance but Sirius dependent)
-            if (options.getMedianNoise() != null) {
-                ms2Prof.setMedianNoiseIntensity(options.getMedianNoise());
+            //todo usually we want to get rid of this profile stuff
+            if (options.medianNoise != null) {
+                ms2Prof.setMedianNoiseIntensity(options.medianNoise);
             }
-            if (options.getPPMMax() != null) {
-                ms2Prof.setAllowedMassDeviation(new Deviation(options.getPPMMax()));
-                ms1Prof.setAllowedMassDeviation(new Deviation(options.getPPMMax()));
+            if (options.ppmMax != null) {
+                ms2Prof.setAllowedMassDeviation(new Deviation(options.ppmMax));
+                ms1Prof.setAllowedMassDeviation(new Deviation(options.ppmMax));
             }
-            if (options.getPPMMaxMs2() != null) {
-                ms2Prof.setAllowedMassDeviation(new Deviation(options.getPPMMax()));
+            if (options.ppmMaxMs2 != null) {
+                ms2Prof.setAllowedMassDeviation(new Deviation(options.ppmMaxMs2));
             }
 
             final TreeBuilder builder = sirius.getMs2Analyzer().getTreeBuilder();
@@ -82,7 +84,7 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
             sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
             sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
 
-            if (options.isEnableSiliconDetection()) {
+            if (options.enableSiliconDetection) {
                 ElementPredictor elementPredictor = sirius.getElementPrediction();
                 if (elementPredictor instanceof DNNRegressionPredictor) {
                     ((DNNRegressionPredictor) elementPredictor).enableSilicon();
@@ -90,7 +92,7 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
             }
 
         } catch (IOException e) {
-            logger.error("Cannot load profile '" + options.getProfile() + "':\n", e);
+            logger.error("Cannot load profile '" + options.profile + "':\n", e);
             return false;
         }
         return true;
