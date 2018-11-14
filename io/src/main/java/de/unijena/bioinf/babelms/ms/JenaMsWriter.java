@@ -47,7 +47,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         writeIfAvailable(writer, ">smarts", sm == null ? null : sm.smiles);
         final Splash splash = data.getAnnotation(Splash.class);
         writeIfAvailable(writer, ">splash", splash == null ? null : splash.getSplash());
-        final MsInstrumentation instrumentation = data.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown);
+        final MsInstrumentation instrumentation = data.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown);
         writer.write(">instrumentation " + instrumentation.description());
         writer.newLine();
         writeIfAvailable(writer, ">source", data.getSource());
@@ -64,7 +64,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
                 write(writer, ">rt_end", String.valueOf(retentionTime.getEndTime()) + "s");
             }
         }
-        final Map<String, String> arbitraryKeys = data.getAnnotation(AdditionalFields.class, new AdditionalFields());
+        final Map<String, String> arbitraryKeys = data.getAnnotation(AdditionalFields.class, AdditionalFields::new);
         for (Map.Entry<String, String> e : arbitraryKeys.entrySet()) {
             writer.write("#" + e.getKey() + " " + e.getValue());
             writer.newLine();

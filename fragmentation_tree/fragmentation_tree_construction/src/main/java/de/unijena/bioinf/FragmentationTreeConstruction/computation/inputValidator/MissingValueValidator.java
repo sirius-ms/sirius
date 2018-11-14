@@ -132,7 +132,7 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
 
         if (input.getAnnotation(PossibleAdducts.class,null)!=null) {
             final PossibleAdducts ad = input.getAnnotation(PossibleAdducts.class);
-            final PossibleIonModes ionModes = input.getAnnotation(PossibleIonModes.class, new PossibleIonModes());
+            final PossibleIonModes ionModes = input.getAnnotation(PossibleIonModes.class, PossibleIonModes::new);
             for (Ionization ion : ad.getIonModes()) if (ionModes.getProbabilityFor(ion)<=0) ionModes.add(ion);
             input.setAnnotation(PossibleIonModes.class, ionModes);
         }

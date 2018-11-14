@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 class Ms2ExperimentShallowCopy implements Ms2Experiment {
     private final Ms2Experiment experiment;
@@ -87,8 +88,8 @@ class Ms2ExperimentShallowCopy implements Ms2Experiment {
     }
 
     @Override
-    public <T extends Ms2ExperimentAnnotation> T getAnnotation(Class<T> klass, T defaultValue) {
-        return experiment.getAnnotation(klass, defaultValue);
+    public <T extends Ms2ExperimentAnnotation> T getAnnotation(Class<T> klass, Supplier<T> supplier) {
+        return experiment.getAnnotation(klass, supplier);
     }
 
     @Override

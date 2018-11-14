@@ -60,7 +60,7 @@ public class CompoundQuality implements Ms2ExperimentAnnotation {
         return false;
     }
     public static boolean isNotBadQuality(Ms2Experiment experiment){
-        return experiment.getAnnotation(CompoundQuality.class, new CompoundQuality(SpectrumProperty.Good)).isGoodQuality();
+        return experiment.getAnnotation(CompoundQuality.class, () -> new CompoundQuality(SpectrumProperty.Good)).isGoodQuality();
     }
 
     public static boolean hasProperty(Ms2Experiment experiment, SpectrumProperty property) {

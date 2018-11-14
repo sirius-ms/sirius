@@ -380,7 +380,7 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     protected String makeFileName(ExperimentResult exp) {
-        final int index = exp.getExperiment().getAnnotation(Index.class, Index.NO_INDEX).index;
+        final int index = exp.getExperiment().getAnnotation(Index.class, () -> Index.NO_INDEX).index;
         return filenameFormatter.formatName(exp, (index >= 0 ? index : counter));
     }
 

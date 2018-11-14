@@ -75,7 +75,7 @@ public class ProcessedInput implements Cloneable {
         this.originalExperiment = originalExperiment;
         this.mergedPeaks = new ArrayList<ProcessedPeak>();
         this.annotations = new HashMap<Class, Object>();
-        this.annotations.put(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown));
+        this.annotations.put(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown));
         this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
         final Iterator<Map.Entry<Class<Ms2ExperimentAnnotation>,Ms2ExperimentAnnotation>> anos = experiment.forEachAnnotation();
         while (anos.hasNext()) {
@@ -91,7 +91,7 @@ public class ProcessedInput implements Cloneable {
         this.mergedPeaks = mergedPeaks;
         this.parentPeak = parentPeak;
         this.annotations = new HashMap<Class, Object>();
-        this.annotations.put(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown));
+        this.annotations.put(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown));
         this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
         this.measurementProfile = new MutableMeasurementProfile(measurementProfile);
     }
