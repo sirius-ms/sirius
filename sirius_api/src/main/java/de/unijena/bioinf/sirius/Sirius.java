@@ -61,6 +61,15 @@ public class Sirius {
     protected Progress progress;
     protected PeriodicTable table;
     protected boolean autoIonMode;
+    /**
+     * for internal use to easily switch and experiment with implementation details
+     */
+    protected boolean useFastMode = true;
+
+    public void setFastMode(boolean useFastMode) {
+        this.useFastMode = useFastMode;
+    }
+
 
     public Sirius(String profileName) throws IOException {
         profile = new Profile(profileName);
@@ -204,13 +213,9 @@ public class Sirius {
         this.autoIonMode = autoIonMode;
     }
 
-    /**
-     * for internal use to easily switch and experiment with implementation details
-     */
-    public static boolean USE_FAST_MODE = true;
 
     protected AbstractTreeComputationInstance getTreeComputationImplementation(FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
-        if (USE_FAST_MODE)
+        if (useFastMode)
             return new FasterTreeComputationInstance(analyzer, input, numberOfResultsToKeep, numberOfResultsToKeepPerIonization);
         else {
             if (numberOfResultsToKeepPerIonization > 0)
