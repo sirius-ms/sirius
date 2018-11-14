@@ -1231,8 +1231,7 @@ public class Sirius {
         }
     }
 
-    public Sirius.SiriusIdentificationJob makeIdentificationJob(final Ms2Experiment experiment,
-                                                                final int numberOfResultsToReport, final int numberOfResultsToReportPerIonization) {
+    public Sirius.SiriusIdentificationJob makeIdentificationJob(final Ms2Experiment experiment) {
         return makeIdentificationJob(experiment, true);
     }
 
