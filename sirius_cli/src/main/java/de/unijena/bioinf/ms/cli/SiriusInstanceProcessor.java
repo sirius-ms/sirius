@@ -1,8 +1,9 @@
 package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
@@ -10,29 +11,33 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNRegressionPredictor;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
-import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
-import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
+import de.unijena.bioinf.ms.cli.parameters.SiriusOptions;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.projectspace.*;
+import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
+import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
-public class SiriusInstanceProcessor implements  InstanceProcessor<ExperimentResult> {
+/**
+ * Class to process Instances with Sirius algorithms
+ * <p>
+ * The Instances should be already configured (all parameters set)
+ * the InstanceProcessor should now start and configure computation (j)jobs
+ * based on this parameters
+ */
+public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResult> {
 
     Sirius sirius;
     SiriusOptions options;
     protected Logger logger = LoggerFactory.getLogger(SiriusInstanceProcessor.class);
-
-    public SiriusInstanceProcessor(SiriusOptions options) {
-        this.options = options;
-    }
 
     public Sirius getSirius() {
         return sirius;
@@ -41,33 +46,19 @@ public class SiriusInstanceProcessor implements  InstanceProcessor<ExperimentRes
     @Override
     public boolean setup() {
         try {
-            this.sirius = new Sirius(options.getProfile());
-            Sirius.USE_FAST_MODE = !options.isDisableFastMode();
-//            if (options.isDisableFastMode()) LoggerFactory.getLogger(CLI.class).info("Use experimental fast mode. Results might differ from default mode.");
+            //todo combing profile with argument default values
+            sirius = new Sirius(options.profile);
+            sirius.setFastMode(!options.disableFastMode);
             final FragmentationPatternAnalysis ms2 = sirius.getMs2Analyzer();
             final IsotopePatternAnalysis ms1 = sirius.getMs1Analyzer();
             final MutableMeasurementProfile ms1Prof = new MutableMeasurementProfile(ms1.getDefaultProfile());
             final MutableMeasurementProfile ms2Prof = new MutableMeasurementProfile(ms2.getDefaultProfile());
             final String outerClassName = getClass().getName();
-            ms2.setValidatorWarning(new Warning() {
-                @Override
-                public void warn(String message) {
-                    //todo changed from java util Logger
-                    LoggerFactory.getLogger(outerClassName).warn(message);
-                }
-//                public void warn(String message) {
-//                    LoggerFactory.getLogger(outerClassName).warn(message);
-//                }
-            });
-//            if (options.getElements() == null) {
-//                // autodetect and use default set
-//                ms1Prof.setFormulaConstraints(getDefaultElementSet(options));
-//                ms2Prof.setFormulaConstraints(getDefaultElementSet(options));
-//            } else {
-//                ms2Prof.setFormulaConstraints(options.getElements());
-//                ms1Prof.setFormulaConstraints(options.getElements());
-//            }
 
+            //Validator warning
+            ms2.setValidatorWarning(message -> LoggerFactory.getLogger(outerClassName).warn(message));
+
+            //setting up the profile (not Instance but Sirius dependent)
             if (options.getMedianNoise() != null) {
                 ms2Prof.setMedianNoiseIntensity(options.getMedianNoise());
             }
@@ -98,26 +89,6 @@ public class SiriusInstanceProcessor implements  InstanceProcessor<ExperimentRes
                 }
             }
 
-            /*
-            if (options.getPossibleIonizations() != null) {
-                List<String> ionList = options.getPossibleIonizations();
-                if (ionList.size() == 1) {
-                    ionList = Arrays.asList(ionList.get(0).split(","));
-                }
-                if (ionList.size() == 1) {
-                    logger.error("Cannot guess ionization when only one ionization/adduct is provided");
-                }
-                ionTypes = new PrecursorIonType[ionList.size()];
-                Set<PrecursorIonType> set = new HashSet<>();
-                for (int i = 0; i < ionTypes.length; i++) {
-                    String ion = ionList.get(i);
-                    ionTypes[i] = PrecursorIonType.getPrecursorIonType(ion);
-                    set.add(ionTypes[i].withoutAdduct());
-                }
-                ionTypesWithoutAdducts = set.toArray(new PrecursorIonType[0]);
-
-            }
-            */
         } catch (IOException e) {
             logger.error("Cannot load profile '" + options.getProfile() + "':\n", e);
             return false;
@@ -134,7 +105,7 @@ public class SiriusInstanceProcessor implements  InstanceProcessor<ExperimentRes
     public void output(ExperimentResult experimentResult) {
         //sirius output
         List<IdentificationResult> results = experimentResult.getResults();
-        if (results!=null){
+        if (results != null) {
             int rank = 1;
             int n = Math.max(1, (int) Math.ceil(Math.log10(results.size())));
             for (IdentificationResult result : results) {
@@ -144,15 +115,12 @@ public class SiriusInstanceProcessor implements  InstanceProcessor<ExperimentRes
             }
 
 
-
         } else {
             ExperimentResult.ErrorCause error = experimentResult.getError();
-            if (error.equals(ExperimentResult.ErrorCause.NORESULTS)){
+            if (error.equals(ExperimentResult.ErrorCause.NORESULTS)) {
                 logger.warn("Cannot find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
             } else if (error.equals(ExperimentResult.ErrorCause.TIMEOUT)) {
                 println("Ignore " + experimentResult.getExperiment().getName() + " due to timeout!");
-
-//            } else if (errorString.equals("ERROR")){
             } else {
                 //todo save and output error
 //                e.printStackTrace();
@@ -164,18 +132,9 @@ public class SiriusInstanceProcessor implements  InstanceProcessor<ExperimentRes
 
 
     protected ExperimentResultForSiriusJJob makeSiriusJob(final Instance i) {
-        Sirius.SiriusIdentificationJob job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates(), getNumberOfCandidatesPerIonization()));
+        Sirius.SiriusIdentificationJob job = (sirius.makeIdentificationJob(i.experiment, options.getNumberOfCandidates(5), options.getNumberOfCandidatesPerIon(-1)));
         return new ExperimentResultForSiriusJJob(job);
     }
-
-    private Integer getNumberOfCandidates() {
-        return options.getNumberOfCandidates() != null ? options.getNumberOfCandidates() : 5;
-    }
-
-    private Integer getNumberOfCandidatesPerIonization() {
-        return options.getNumberOfCandidatesPerIonization() != null ? options.getNumberOfCandidatesPerIonization() : -1;
-    }
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -191,7 +150,6 @@ public class SiriusInstanceProcessor implements  InstanceProcessor<ExperimentRes
         @Override
         protected ExperimentResult compute() throws Exception {
             try {
-//                 = submitSubJob(siriusIdentificationJob).takeResult();
                 final List<IdentificationResult> results = siriusIdentificationJob.call();
                 if (!results.isEmpty()) {
 

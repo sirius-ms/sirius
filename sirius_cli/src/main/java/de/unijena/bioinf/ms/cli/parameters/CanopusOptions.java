@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.cli.parameters;
 
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import picocli.CommandLine.Option;
 
 import java.io.File;
@@ -10,11 +11,16 @@ import java.io.File;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  * */
-public class CanopusOptions implements Options {
+public class CanopusOptions extends AbstractMs2ExperimentOptions {
     @Option(names = {"-C","--canopus"})
     public boolean canopus;
 
 
     @Option(names = {"--experimental-canopus"}, hidden = true) //experimental/temporary/internal
     public File experimentalCanopus;
+
+    @Override
+    public void setParamatersToExperiment(MutableMs2Experiment experiment) {
+        //todo fill me
+    }
 }

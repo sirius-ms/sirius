@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.cli.parameters;
 
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
 import picocli.CommandLine.Option;
 
@@ -10,7 +11,7 @@ import picocli.CommandLine.Option;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ZodiacOptions implements Options {
+public class ZodiacOptions extends AbstractMs2ExperimentOptions {
     @Option(names = {"-Z", "--zodiac"}, description = "run zodiac on a given sirius workspace.", hidden = true)
     public boolean zodiac;
 
@@ -110,4 +111,9 @@ public class ZodiacOptions implements Options {
             description = "Set MS2 median noise intensity - else it is estimated. This is used to count the number of MS2 peaks to gauge spectrum quality."
     )
     public Double medianNoiseIntensity;
+
+    @Override
+    public void setParamatersToExperiment(MutableMs2Experiment experiment) {
+        //todo fill me
+    }
 }
