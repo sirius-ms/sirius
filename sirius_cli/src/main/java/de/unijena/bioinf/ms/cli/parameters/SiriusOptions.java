@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.sirius.IsotopePatternHandling;
 import de.unijena.bioinf.sirius.Sirius;
+import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine.Option;
 
 import java.util.ArrayList;
@@ -45,7 +46,32 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
     public IsotopePatternHandling isotopeHandling;
 
     @Option(names = {"-c", "--candidates"}, description = "Number of formula candidates in the output.")
-    public Integer numberOfCandidates;
+    public void setNumberOfCandidates(int value) {
+        numberOfCandidates = new NumberOfCandidates(value);
+    }
+
+    private NumberOfCandidates numberOfCandidates;
+
+    public NumberOfCandidates getNumberOfCandidates(final NumberOfCandidates defaultValue) {
+        if (numberOfCandidates == null)
+            return defaultValue;
+        return numberOfCandidates;
+    }
+
+
+    @Option(names = "--candidates-per-ion", description = "Minimum number of candidates in the output for each ionization. Set to force output of results for each possible ionization, even if not part of highest ranked results.")
+    public void setNumberOfCandidatesPerIon(int value) {
+        numberOfCandidatesPerIon = new NumberOfCandidatesPerIon(value);
+    }
+
+    private NumberOfCandidatesPerIon numberOfCandidatesPerIon;
+
+    public NumberOfCandidatesPerIon getNumberOfCandidatesPerIon(final NumberOfCandidatesPerIon defaultValue) {
+        if (numberOfCandidatesPerIon == null)
+            return defaultValue;
+        return numberOfCandidatesPerIon;
+    }
+
 
     @Option(names = {"-f", "--formula", "--formulas"}, description = "specify the neutral molecular formula of the measured compound to compute its tree or a list of candidate formulas the method should discriminate. Omit this option if you want to consider all possible molecular formulas")
     public List<String> formula;
@@ -77,16 +103,11 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
     @Option(names = {"--mostintense-ms2"}, description = "Only use the fragmentation spectrum with the most intense precursor peak (for each compound).")
     public boolean mostIntenseMs2;
 
-    @Option(names = "candidates-per-ion", description = "Minimum number of candidates in the output for each ionization. Set to force output of results for each possible ionization, even if not part of highest ranked results.", defaultToNull = true)
-    public Integer numberOfCandidatesPerIonization;
-
     @Option(names = {"-z", "--parentmass", "precursor", "mz"}, description = "the mass of the parent ion")
     public Double parentMz;
 
-
     @Option(names = "--trust-ion-prediction", description = "By default we use MS1 information to select additional ionizations ([M+Na]+,[M+K]+,[M+Cl]-,[M+Br]-) for considerations. With this parameter we trust the MS1 prediction and only consider these found ionizations.")
     public boolean trustGuessIonFromMS1;
-
 
     @Option(names = {"-Z", "--auto-charge"}, description = "Use this option if the adduct type and/or ion mode of your compounds is unknown and you do not want to assume [M+H]+/[M-H]- as default. With the option enabled, SIRIUS will also search for other adduct types (e.g. [M+NH3+H]+ or even other ion modes (e.g. [M+Na]+) if no ion mode is specified.")
     public boolean autoCharge;
@@ -106,7 +127,17 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
         }
     }
 
-    protected PossibleAdducts possibleIonAdducts;
+    private PossibleAdducts possibleIonAdducts;
+
+    public @Nullable PossibleAdducts getPossibleIonAdducts() {
+        return possibleIonAdducts;
+    }
+
+    public PrecursorIonType getPrecursorIonType() {
+        if (possibleIonAdducts.isPrecursorIonType())
+            return possibleIonAdducts.asPrecursorIonType();
+        return PrecursorIonType.unknown();
+    }
 
 
     @Option(names = "-p", description = "name of the configuration profile. Some of the default profiles are: 'qtof', 'orbitrap', 'fticr'.")
@@ -128,6 +159,7 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
         this.isolationWindowWidth = isolationWindowWidth;
         isolationWindow = null;
     }
+
     private Double isolationWindowWidth;
 
     @Option(names = {"--isolation-window-shift"}, description = "The shift applied to the isolation window to measure MS2 in relation to the precursormass", hidden = true)
@@ -135,9 +167,11 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
         this.isolationWindowShift = isolationWindowShift;
         isolationWindow = null;
     }
+
     private double isolationWindowShift;
 
     private IsolationWindow isolationWindow = null;
+
     public IsolationWindow getIsolationWindow() {
         if (isolationWindow != null || isolationWindowWidth == null) return isolationWindow;
         final double right = Math.abs(isolationWindowWidth) / 2d + isolationWindowShift;
@@ -239,6 +273,4 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
             Sirius.onlyKeepMostIntenseMS2(exp);
         }
     }
-
-
 }

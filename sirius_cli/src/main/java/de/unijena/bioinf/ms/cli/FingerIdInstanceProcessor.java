@@ -385,30 +385,4 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
         if (!CombinedCLI.shellOutputSurpressed)
             System.out.printf(Locale.US, msg, args);
     }
-
-
-    ///////////////////////////////////////////////////////
-    // /todo never used
-    //////////////////////////////////////////////////////
-
-    //    private <T extends Collection<FingerprintCandidate>> T filterByFlag(T fingerprintCandidates, String fingerIdDatabaseOption) {
-//        final HashMap<String, Long> aliasMap = getDatabaseAliasMap();
-//        final long flag;
-//        final String dbOptName = fingerIdDatabaseOption.toLowerCase();
-//        if (aliasMap.containsKey(dbOptName)) {
-//            flag = aliasMap.get(dbOptName).longValue() == DatasourceService.Sources.BIO.flag ? 0 : aliasMap.get(dbOptName);
-//        } else {
-//            flag = 0L;
-//        }
-//        if (flag == 0) return fingerprintCandidates;
-//        final List<FingerprintCandidate> filtered = new ArrayList<>();
-//        for (FingerprintCandidate fc : fingerprintCandidates) {
-//            if ((flag & fc.getBitset()) != 0) {
-//                filtered.add(fc);
-//            }
-//        }
-//        fingerprintCandidates.clear();
-//        fingerprintCandidates.addAll(filtered);
-//        return fingerprintCandidates;
-//    }
 }

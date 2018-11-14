@@ -1,9 +1,9 @@
 package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.babelms.GenericParser;
@@ -215,36 +215,6 @@ public class CLI extends ApplicationCore {
 
     }
 
-
-    /*private String[] fixBuggyJewelCliLibrary(String[] args) {
-        final List<String> argsCopy = new ArrayList<>();
-        final List<String> ionModeStrings = new ArrayList<>();
-        boolean ionIn = false;
-        for (int i = 0; i < args.length; ++i) {
-            String arg = args[i];
-            if (arg.equals("--ion") || arg.equals("-i")) {
-                if (!ionIn) {
-                    ionModeStrings.add(arg);
-                    ionIn = true;
-                }
-                final Pattern ionPattern = Pattern.compile("^\\s*\\[?\\s*M\\s*[+-\\]]");
-                // if a list parameter is last parameter, we have to distinguish it from the rest parameter
-                for (i = i + 1; i < args.length; ++i) {
-                    arg = args[i];
-                    if (ionPattern.matcher(arg).find()) {
-                        ionModeStrings.add(arg);
-                    } else {
-                        break;
-                    }
-                }
-            }
-            argsCopy.add(arg);
-        }
-        if (ionModeStrings.size() > 0) ionModeStrings.add("--placeholder");
-        ionModeStrings.addAll(argsCopy);
-        return ionModeStrings.toArray(new String[ionModeStrings.size()]);
-    }*/
-
     protected void handleOutputOptions(ReaderWriterFactory readerWriterFactory) {
 
         //output and logging
@@ -353,7 +323,7 @@ public class CLI extends ApplicationCore {
         if (basicOptions.ms2 != null && !basicOptions.ms2.isEmpty()) {
             final MutableMs2Experiment exp = new MutableMs2Experiment();
             exp.setSource(basicOptions.ms2.get(0));
-            exp.setPrecursorIonType(siriusOptions.getIonFromOption(0));
+            final PrecursorIonType precursor = siriusOptions.getPrecursorIonType();
 
             exp.setMs2Spectra(new ArrayList<MutableMs2Spectrum>());
             for (File f : foreachIn(basicOptions.ms2)) {
@@ -364,7 +334,7 @@ public class CLI extends ApplicationCore {
                         final MutableMs2Spectrum ms;
                         if (spec instanceof MutableMs2Spectrum) ms = (MutableMs2Spectrum) spec;
                         else ms = new MutableMs2Spectrum(spec);
-                        if (ms.getIonization() == null) ms.setIonization(exp.getPrecursorIonType().getIonization());
+                        if (ms.getIonization() == null) ms.setIonization(precursor.getIonization());
                         if (ms.getMsLevel() == 0) ms.setMsLevel(2);
                         if (ms.getPrecursorMz() == 0) {
                             if (siriusOptions.parentMz == null) {
@@ -408,7 +378,7 @@ public class CLI extends ApplicationCore {
             if (siriusOptions.parentMz != null) {
                 expPrecursor = siriusOptions.parentMz;
             } else if (exp.getMolecularFormula() != null) {
-                expPrecursor = exp.getPrecursorIonType().neutralMassToPrecursorMass(exp.getMolecularFormula().getMass());
+                expPrecursor = precursor.neutralMassToPrecursorMass(exp.getMolecularFormula().getMass());
             } else {
                 double prec = 0d;
                 for (int k = 1; k < exp.getMs2Spectra().size(); ++k) {
@@ -530,21 +500,17 @@ public class CLI extends ApplicationCore {
         }
     }
 
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    /// set data and Sirius dependent parameters
-    ////////////////////////////////////////////////////////////////////////////////////////////
-
     /**
      * add here (instance specific) parameters
      *
-     * @param inst
-     * @return
+     * @param inst instance to modify
+     * @return new modified instance
      */
     protected Instance setupInstance(Instance inst) {
-        final MutableMs2Experiment exp = inst.experiment instanceof MutableMs2Experiment ? (MutableMs2Experiment) inst.experiment : new MutableMs2Experiment(inst.experiment);
+        final MutableMs2Experiment exp = inst.experiment instanceof MutableMs2Experiment ? inst.experiment : new MutableMs2Experiment(inst.experiment);
         siriusOptions.setParamatersToExperiment(exp);
-
+        fingeridOptions.setParamatersToExperiment(exp);
+        zodiacOptions.setParamatersToExperiment(exp);
         return new Instance(exp, inst.file, inst.index);
     }
 
@@ -559,10 +525,4 @@ public class CLI extends ApplicationCore {
         }
         return queue;
     }
-
-
-//    private static final Pattern CHARGE_PATTERN = Pattern.compile("(\\d+)[+-]?");
-//    private static final Pattern CHARGE_PATTERN2 = Pattern.compile("[+-]?(\\d+)");
-
-
 }
