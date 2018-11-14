@@ -45,11 +45,13 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
         this.formula = formula;
         this.chargeState = chargeState;
         this.trainingStructuresSet = trainingStructuresSet;
+        this.unfilteredSearchList = new ArrayList<>();
     }
 
     @Override
     protected void initInput() throws ExecutionException {
         super.initInput();
+        unfilteredSearchList= new ArrayList<>();
         if (searchList == null) {
             final List<JJob<?>> requireJobs = getRequiredJobs();
             for (JJob<?> j : requireJobs) {
