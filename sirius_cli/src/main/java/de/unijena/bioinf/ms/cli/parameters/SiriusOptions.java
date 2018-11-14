@@ -211,7 +211,7 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
     }
 
     private void annotateIonMode(MutableMs2Experiment exp, PossibleAdducts pa, PossibleIonModes.GuessingMode guessingMode, boolean preferProtonation) {
-        PossibleIonModes im = exp.getAnnotation(PossibleIonModes.class, new PossibleIonModes());
+        PossibleIonModes im = exp.getAnnotation(PossibleIonModes.class, PossibleIonModes::new);
         im.setGuessFromMs1(guessingMode);
 
         if (preferProtonation) {
@@ -246,20 +246,27 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
     public void setParamatersToExperiment(MutableMs2Experiment exp) {
         configureAndAnnotateIonMode(exp);
 
-        if (elements != null) {
+        if (numberOfCandidates != null)
+            Sirius.setNumberOfCandidates(exp, numberOfCandidates);
+
+        if (numberOfCandidatesPerIon != null)
+            Sirius.setNumberOfCandidatesPerIon(exp, numberOfCandidatesPerIon);
+
+        if (elements != null)
             Sirius.setFormulaConstraints(exp, elements);
-        }
-        if (disableElementDetection) {
+
+        if (disableElementDetection)
             Sirius.disableElementDetection(exp);
-        }
 
         if (formula != null && formula.size() == 1)
             exp.setMolecularFormula(MolecularFormula.parse(formula.get(0)));
 
-        Set<MolecularFormula> whiteSet = getFormulaWhitesetNoDB(exp);
-        if (whiteSet != null) Sirius.setFormulaSearchList(exp, whiteSet);
+        if (parentMz != null)
+            exp.setIonMass(parentMz);
 
-        if (parentMz != null) exp.setIonMass(parentMz);
+        Set<MolecularFormula> whiteSet = getFormulaWhitesetNoDB(exp);
+        if (whiteSet != null)
+            Sirius.setFormulaSearchList(exp, whiteSet);
 
         final IsolationWindow window = getIsolationWindow();
         if (window != null) Sirius.setIsolationWindow(exp, window);
