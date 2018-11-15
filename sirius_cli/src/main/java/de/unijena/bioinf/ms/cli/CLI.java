@@ -182,7 +182,6 @@ public class CLI extends ApplicationCore {
 
 
         //configure output
-
         handleOutputOptions(new FingeridProjectSpaceFactory(filenameFormatter));
 
         siriusInstanceProcessor = new SiriusInstanceProcessor(options);
@@ -263,10 +262,8 @@ public class CLI extends ApplicationCore {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // parse input, setup each instance
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
     //load workspace for Zodiac //todo integrate better
     protected List<ExperimentResult> loadWorkspace(File file) throws IOException {
@@ -287,34 +284,6 @@ public class CLI extends ApplicationCore {
     }
 
     protected Iterator<Instance> handleInput() throws IOException {
-
-
-        //todo users should use delimiter (--) instead
-        /*formulas = options.getFormula();
-        // WARNING: if you run sirius --formula C6H12O6 C2H2 bla.ms
-        // JewelCli will put the bla.ms into the formulas list
-        // however, we can simply check if the entries in the formula list
-        // are filenames and, if so, move them back into the input list
-        if (formulas != null) {
-            formulas = new ArrayList<>(formulas);
-            final ListIterator<String> iter = formulas.listIterator(formulas.size());
-            while (iter.hasPrevious()) {
-                final String s = iter.previous();
-                if (new File(s).exists()) {
-                    inputs.add(s);
-                    iter.remove();
-                } else {
-                    break;
-                }
-            }
-        }*/
-
-
-        // two different input modes:
-        // general information that should be used if this fields are missing in the file
-//        final Double defaultParentMass = options.getParentMz(); todo not needed becaus part of options class
-//        final FormulaConstraints constraints = options.getElements() == null ? null/*getDefaultElementSet(options, ion)*/ : options.getElements();todo not needed becaus part of options class
-
         final ArrayDeque<Instance> instances = new ArrayDeque<Instance>();
 
         ///////////////////////////////////////////////////////////////////
