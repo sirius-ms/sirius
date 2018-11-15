@@ -19,11 +19,11 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.net.URL;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A Ms2Experiment is a MS/MS measurement of a *single* compound. If there are multiple compounds measured in your

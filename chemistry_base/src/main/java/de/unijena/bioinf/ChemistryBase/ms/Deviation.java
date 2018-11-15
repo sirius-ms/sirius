@@ -20,12 +20,13 @@ package de.unijena.bioinf.ChemistryBase.ms;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @HasParameters
-public class Deviation implements Cloneable, Ms2ExperimentAnnotation{
+public class Deviation implements Cloneable, Ms2ExperimentAnnotation {
 
     private final double ppm;
     private final double absolute;

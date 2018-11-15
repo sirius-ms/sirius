@@ -18,6 +18,7 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 /**
  * The information in this profile should represent properties of the instrument, the measurement and the quality
@@ -27,15 +28,15 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
  * In practice, instances of this class could be provided by a factory. e.g. ProfileFactory.create(MsInstrumentation.TOF, Quality.HIGH);
  * or modified by the user (e.g. myProfile.setExpectedFragmentMassDeviation(20) to consider a unexpected low quality of MS2 spectra).
  */
-public interface MeasurementProfile extends Ms2ExperimentAnnotation{
+public interface MeasurementProfile extends Ms2ExperimentAnnotation {
 
-    Deviation getAllowedMassDeviation();
+    Deviation getAllowedMassDeviation(); //to deviation class Annotation
 
     Deviation getStandardMassDifferenceDeviation();
 
-    Deviation getStandardMs1MassDeviation();
+    Deviation getStandardMs1MassDeviation(); //to ms1deviation Annotation
 
-    Deviation getStandardMs2MassDeviation();
+    Deviation getStandardMs2MassDeviation(); //to ms2deviation Annotation
 
     FormulaConstraints getFormulaConstraints();
 

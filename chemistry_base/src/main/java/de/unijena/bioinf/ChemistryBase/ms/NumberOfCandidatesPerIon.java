@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+
 /*
  * use this parameter if you want to force to report at least
  * numberOfResultsToKeepPerIonization results per ionization.
