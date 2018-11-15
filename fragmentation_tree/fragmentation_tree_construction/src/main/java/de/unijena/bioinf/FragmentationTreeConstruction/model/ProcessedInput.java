@@ -19,6 +19,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.util.*;
 

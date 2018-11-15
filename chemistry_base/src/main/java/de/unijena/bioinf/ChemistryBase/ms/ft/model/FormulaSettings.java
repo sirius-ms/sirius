@@ -3,7 +3,7 @@ package de.unijena.bioinf.ChemistryBase.ms.ft.model;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.util.Arrays;
 import java.util.HashSet;

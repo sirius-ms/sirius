@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.sirius.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 /**
  * Is used to order experiments

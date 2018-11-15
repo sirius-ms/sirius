@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft.model;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 /**
  * if this annotation is set, recalibration is ommited
