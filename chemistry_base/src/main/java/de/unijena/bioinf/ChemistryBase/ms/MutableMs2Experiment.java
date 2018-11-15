@@ -3,6 +3,8 @@ package de.unijena.bioinf.ChemistryBase.ms;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.io.File;
 import java.net.MalformedURLException;

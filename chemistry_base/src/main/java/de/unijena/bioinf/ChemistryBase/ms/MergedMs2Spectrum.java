@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+
 public class MergedMs2Spectrum extends MutableMs2Spectrum implements Ms2ExperimentAnnotation {
 
     public MergedMs2Spectrum() {

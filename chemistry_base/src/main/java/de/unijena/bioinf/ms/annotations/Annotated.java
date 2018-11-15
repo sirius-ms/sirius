@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ChemistryBase.ms;
+package de.unijena.bioinf.ms.annotations;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -6,14 +6,14 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public interface Annotated<Annotation> {
+public interface Annotated<A extends Annotaion> {
 
-    Annotations<Annotation> annotations();
+    Annotations<A> annotations();
 
     /**
      * @return an iterator over all map
      */
-    default Iterator<Map.Entry<Class<Annotation>, Annotation>> forEachAnnotation() {
+    default Iterator<Map.Entry<Class<A>, A>> forEachAnnotation() {
         return annotations().map.entrySet().iterator();
     }
 
@@ -22,7 +22,7 @@ public interface Annotated<Annotation> {
      * @return annotation value for the given class/key
      * @throws NullPointerException if there is no entry for this key
      */
-    default <T extends Annotation> T getAnnotationOrThrow(Class<T> klass) {
+    default <T extends A> T getAnnotationOrThrow(Class<T> klass) {
         final T val = getAnnotation(klass);
         if (val == null) throw new NullPointerException("No annotation for key: " + klass.getName());
         else return val;
@@ -31,7 +31,7 @@ public interface Annotated<Annotation> {
     /**
      * @return annotation value for the given class/key or null
      */
-    default <T extends Annotation> T getAnnotation(Class<T> klass) {
+    default <T extends A> T getAnnotation(Class<T> klass) {
         return (T) annotations().map.get(klass);
     }
 
@@ -47,7 +47,7 @@ public interface Annotated<Annotation> {
     /**
      * @return annotation value for the given class/key or the given default value
      */
-    default <T extends Annotation> T getAnnotation(Class<T> klass, Supplier<T> defaultValueSupplier) {
+    default <T extends A> T getAnnotation(Class<T> klass, Supplier<T> defaultValueSupplier) {
         final T val = getAnnotation(klass);
         if (val == null) return defaultValueSupplier.get();
         else return val;
@@ -56,7 +56,7 @@ public interface Annotated<Annotation> {
     /**
      * @return true if the given annotation is present
      */
-    default <T extends Annotation> boolean hasAnnotation(Class<T> klass) {
+    default <T extends A> boolean hasAnnotation(Class<T> klass) {
         return annotations().map.containsKey(klass);
     }
 
@@ -65,8 +65,8 @@ public interface Annotated<Annotation> {
      *
      * @return true if there was no previous value for this annotation
      */
-    default <T extends Annotation> boolean setAnnotation(Class<T> klass, T value) {
-        final T val = (T) annotations().map.put((Class<Annotation>) klass, value);
+    default <T extends A> boolean setAnnotation(Class<T> klass, T value) {
+        final T val = (T) annotations().map.put((Class<A>) klass, value);
         return val != null;
     }
 
@@ -75,8 +75,8 @@ public interface Annotated<Annotation> {
      *
      * @return true if there was no previous value for this annotation
      */
-    default <T extends Annotation> T computeAnnotationIfAbsent(Class<T> klass, Function<Class<Annotation>, Annotation> mappingFunction) {
-        return (T) annotations().map.computeIfAbsent((Class<Annotation>) klass, mappingFunction);
+    default <T extends A> T computeAnnotationIfAbsent(Class<T> klass, Function<Class<A>, A> mappingFunction) {
+        return (T) annotations().map.computeIfAbsent((Class<A>) klass, mappingFunction);
     }
 
 
@@ -86,7 +86,7 @@ public interface Annotated<Annotation> {
      * @return the value associated with this key or null if there is no value for this key
      */
 
-    default <T extends Annotation> Object clearAnnotation(Class<T> klass) {
+    default <T extends A> Object clearAnnotation(Class<T> klass) {
         return annotations().map.remove(klass);
     }
 
@@ -98,19 +98,19 @@ public interface Annotated<Annotation> {
     }
 
     //overrides existing
-    default void setAnnotationsFrom(Annotated<Annotation> annotated) {
-        final Iterator<Map.Entry<Class<Annotation>, Annotation>> iter = annotated.forEachAnnotation();
+    default void setAnnotationsFrom(Annotated<A> annotated) {
+        final Iterator<Map.Entry<Class<A>, A>> iter = annotated.forEachAnnotation();
         while (iter.hasNext()) {
-            final Map.Entry<Class<Annotation>, Annotation> v = iter.next();
+            final Map.Entry<Class<A>, A> v = iter.next();
             this.annotations().map.put(v.getKey(), v.getValue());
         }
     }
 
     //doe not override existing
-    default void addAnnotationsFrom(Annotated<Annotation> annotated) {
-        final Iterator<Map.Entry<Class<Annotation>, Annotation>> iter = annotated.forEachAnnotation();
+    default void addAnnotationsFrom(Annotated<A> annotated) {
+        final Iterator<Map.Entry<Class<A>, A>> iter = annotated.forEachAnnotation();
         while (iter.hasNext()) {
-            final Map.Entry<Class<Annotation>, Annotation> v = iter.next();
+            final Map.Entry<Class<A>, A> v = iter.next();
             this.annotations().map.putIfAbsent(v.getKey(), v.getValue());
         }
     }

@@ -3,6 +3,7 @@ package de.unijena.bioinf.ChemistryBase.ms;
 import com.google.common.collect.Sets;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -19,7 +19,6 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.SpectrumAnnotation;
 
 public class SimpleMutableSpectrum extends BasicMutableSpectrum<Peak> {
 

@@ -3,6 +3,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.net.URL;
 import java.util.Iterator;
