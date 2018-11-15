@@ -46,6 +46,7 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
 
     @Override
     public boolean setup() {
+
         try {
             //todo combing profile with argument default values
             sirius = new Sirius(options.profile);
