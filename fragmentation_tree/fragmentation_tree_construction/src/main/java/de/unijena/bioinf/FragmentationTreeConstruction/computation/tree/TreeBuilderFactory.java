@@ -5,7 +5,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
  * 28.09.16.
  */
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;

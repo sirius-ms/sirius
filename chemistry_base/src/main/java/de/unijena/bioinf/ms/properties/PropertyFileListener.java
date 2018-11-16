@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ChemistryBase.properties;
+package de.unijena.bioinf.ms.properties;
 
 import java.util.Properties;
 

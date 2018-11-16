@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ChemistryBase.properties;
+package de.unijena.bioinf.ms.properties;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius

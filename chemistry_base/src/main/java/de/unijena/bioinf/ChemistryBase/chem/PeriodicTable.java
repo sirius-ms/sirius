@@ -22,7 +22,7 @@ import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.utils.*;
 import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;

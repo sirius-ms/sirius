@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.properties;
 
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
