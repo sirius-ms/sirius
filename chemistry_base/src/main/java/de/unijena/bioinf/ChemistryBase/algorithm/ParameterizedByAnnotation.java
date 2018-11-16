@@ -58,7 +58,7 @@ public class ParameterizedByAnnotation<T> {
                 } else if (m.getName().startsWith("is")) {
                     fieldName = m.getName().substring(m.getName().indexOf("is")+2);
                 } else {
-                    throw new RuntimeException("Parameterized methods should start with get<FieldName> or is<FieldName>.");
+                    throw new RuntimeException("Parameterized methods should start with get<FieldValue> or is<FieldValue>.");
                 }
                 fieldName = Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
                 properties.add(new Property(m, p.value().isEmpty() ? fieldName : p.value(), fieldName, m.getReturnType()));
