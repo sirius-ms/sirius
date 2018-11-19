@@ -8,18 +8,26 @@ import java.beans.PropertyEditorManager;
 import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class DefaultPropertyLoader {
-    public static String propRoot = PropertyManager.PROPERTY_BASE + ".ms";
+    //PropertyManager.PROPERTY_BASE + ".ms"
+    private String propertyRoot;
+    private Properties properties;
 
-    public static <C> C createInstanceWithDefaults(Class<C> klass) {
-        return createInstanceWithDefaults(klass, propRoot);
+
+    public DefaultPropertyLoader(Properties properties, String propertyRoot) {
+        this.propertyRoot = propertyRoot;
+        this.properties = properties;
     }
 
-    public static <C> C createInstanceWithDefaults(Class<C> klass, @NotNull String parent) {
+    public <C> C createInstanceWithDefaults(Class<C> klass) {
+        return createInstanceWithDefaults(klass, propertyRoot);
+    }
+
+    public <C> C createInstanceWithDefaults(Class<C> klass, @NotNull String parent) {
         if (parent == null || parent.isEmpty())
             throw new IllegalArgumentException("Some parent path is needed!");
         //search class annotation
@@ -57,28 +65,29 @@ public class DefaultPropertyLoader {
                 }
             }
             return instance;
-        } catch (IllegalAccessException | InstantiationException e) {
+        } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
             throw new IllegalArgumentException("Could not instantiate input class by empty Constructor", e);
         }
     }
 
-    private static <C> C setDefaults(final C instance, final Method method, String parent) {
-        Arrays.stream(method.getParameters()).filter(parameter -> parameter.isAnnotationPresent(DefaultProperty.class));
-        for (Parameter parameter : method.getParameters()) {
-            final String fieldName = parameter.isAnnotationPresent() != null && !klassAnnotation.propertyParent().isEmpty()
-                    ? klass.getAnnotation(DefaultProperty.class).propertyParent()
-                    : klass.getSimpleName());
 
+    private <C> C setDefaults(final C instance, final Method method, String parent) throws InvocationTargetException, IllegalAccessException, InstantiationException {
+        final Parameter[] parameters = method.getParameters();
+        final Object[] args = new Object[parameters.length];
+
+        for (int i = 0; i < parameters.length; i++) {
+            final Parameter parameter = parameters[i];
+            final String fieldName = !parameter.isAnnotationPresent(DefaultProperty.class) && !parameter.getAnnotation(DefaultProperty.class).propertyParent().isEmpty()
+                    ? parameter.getAnnotation(DefaultProperty.class).propertyParent()
+                    : parameter.getName();
+            args[i] = parseProperty(parameter.getType(), parent + "." + fieldName);
         }
 
+        method.invoke(instance, args);
         return instance;
     }
 
-    private static <C> C setDefaults(final C instance, final Field field, String parent) throws IllegalAccessException {
-        return setDefaults(instance, Collections.singletonList(field), parent);
-    }
-
-    private static <C> C setDefaults(final C instance, final List<Field> fields, String parent) throws IllegalAccessException {
+    private <C> C setDefaults(final C instance, final List<Field> fields, String parent) throws IllegalAccessException, InvocationTargetException, InstantiationException {
         for (Field field : fields) {
             final DefaultProperty fieldAnnotation = field.getAnnotation(DefaultProperty.class);
             final String fieldName = (fieldAnnotation.propertyKey().isEmpty() ? field.getName() : fieldAnnotation.propertyKey());
@@ -87,34 +96,19 @@ public class DefaultPropertyLoader {
         return instance;
     }
 
-    private static <C> C setDefaultValue(C instance, Field field, String propertyName) throws IllegalAccessException, InvocationTargetException {
-        String stringValue = PropertyManager.PROPERTIES.getProperty(propertyName);
-        Class<?> fType = field.getType();
-        Type fGenericType = field.getGenericType();
-        Object objectValue = null;
-        if (fType.isAnnotation() || fType.isAnonymousClass() || fType.isArray() || fType.isInterface() || fType.isSynthetic() || fType.isInstance(Collection.class))
-            throw new IllegalArgumentException("Only primitives, Enums or Simple Objects are allowed in Annotations");
-
-        final Method fromString = getFromStringMethod(fType);
-        if (fromString != null) {
-            objectValue = fromString.invoke(null, stringValue);
-        } else {
-            if (fType.isPrimitive() || fType.isAssignableFrom(Boolean.class) || fType.isAssignableFrom(Byte.class) || fType.isAssignableFrom(Short.class) || fType.isAssignableFrom(Integer.class) || fType.isAssignableFrom(Long.class) || fType.isAssignableFrom(Float.class) || fType.isAssignableFrom(Double.class) || fType.isAssignableFrom(String.class) || fType.isAssignableFrom(Color.class)) {
-                objectValue = convertDefaultType(fType, stringValue);
-            } else if (fType.isArray()){
-                Class<?> elementType = fType.getComponentType();
-            } else if (fGenericType instanceof ParameterizedType && Collection.class.isAssignableFrom(fType)){
-                Class<?> elementType = (Class<?>) ((ParameterizedType)fGenericType).getActualTypeArguments()[0];
-            }
-        }
-
-
-        if (objectValue != null)
-            field.set(instance, objectValue);
-
+    private <C> C setDefaultValue(C instance, Field field, String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+        final Object objectValue = parseProperty(field.getType(), propertyName);
+        field.set(instance, objectValue);
         return instance;
     }
 
+    private Object parseProperty(Class<?> type, String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+        final String stringValue = properties.getProperty(propertyName);
+        return convertStringToType(type, stringValue);
+    }
+
+
+    //// static util methods
     private static Method getFromStringMethod(Class<?> fType) {
         try {
             return fType.getMethod("fromString", String.class);
@@ -123,49 +117,48 @@ public class DefaultPropertyLoader {
         }
     }
 
-    /*private static <C> C loadObjectFieldFromPropery(Class<C> klass, final String annotationName) {
-        try {
-            C instance = klass.newInstance();
-            Field[] fields = klass.getDeclaredFields();
-            if (fields.length > 1) {
-                for (Field field : klass.getDeclaredFields()) {
-                    String propertyName = annotationName + "." + field.getName();
-                    loadPrimitiveFieldFromPropery(instance, field, propertyName);
-                }
-            } else if (fields.length == 1) {
-
+    public static <T> T convertStringToType(@NotNull Class<T> fType, @NotNull String stringValue) throws InvocationTargetException, IllegalAccessException, InstantiationException {
+        T objectValue = null;
+        final Method fromString = getFromStringMethod(fType);
+        if (fromString != null) {
+            if (fType.isAssignableFrom(fromString.getReturnType()))
+                objectValue = (T) fromString.invoke(null, stringValue);
+            else
+                throw new IllegalArgumentException("fromString method has wrong return type! Expected: " + fType + "Found: " + fromString.getReturnType());
+        } else {
+            if (fType.isPrimitive() || fType.isAssignableFrom(Boolean.class) || fType.isAssignableFrom(Byte.class) || fType.isAssignableFrom(Short.class) || fType.isAssignableFrom(Integer.class) || fType.isAssignableFrom(Long.class) || fType.isAssignableFrom(Float.class) || fType.isAssignableFrom(Double.class) || fType.isAssignableFrom(String.class) || fType.isAssignableFrom(Color.class)) {
+                objectValue = convertToDefaultType(fType, stringValue);
+            } else if (fType.isArray()) {
+                Class<?> elementType = fType.getComponentType();
+                objectValue = (T) convertToCollection(elementType, stringValue);
+            } else if (Collection.class.isAssignableFrom(fType)) {
+                Class<?> elementType = fType.getTypeParameters()[0].getGenericDeclaration();
+                Object[] objectValueAsArray = convertToCollection(elementType, stringValue);
+                objectValue = fType.newInstance();
+                ((Collection) objectValue).addAll(Arrays.asList(objectValueAsArray));
+            } else {
+                throw new IllegalArgumentException("Class of type " + fType.toString() + "cannot be instantiated from String values. For non standard classes you need to define an \"fromString\" Method.");
             }
-            return instance;
-        } catch (InstantiationException | IllegalAccessException e) {
-            throw new RuntimeException(e);
         }
+        return objectValue;
     }
-*/
-   /* private static <C> void loadPrimitiveFieldFromPropery(final C instance, final Field field, final String propertyName) throws IllegalAccessException {
-        String value = PropertyManager.PROPERTIES.getProperty(propertyName);
-        if (value != null)
-            field.set(instance, convert(field.getType(), value));
-    }*/
+
     /*
      * Default PropertyEditors will be provided for the Java primitive types
      * "boolean", "byte", "short", "int", "long", "float", and "double"; and
      * for the classes java.lang.String. java.awt.Color, and java.awt.Font.
      */
-    private static Object convertDefaultType(Class<?> targetType, String value) {
+    public static <T> T convertToDefaultType(@NotNull Class<T> targetType, @NotNull String stringValue) {
         PropertyEditor editor = PropertyEditorManager.findEditor(targetType);
-        editor.setAsText(value);
-        return editor.getValue();
+        editor.setAsText(stringValue);
+        return (T) editor.getValue();
     }
 
-    private static Object[] convertCollection(Class<?> targetElementType, String value){
-        final String[] values = Arrays.stream(value.split(",")).map(String::trim).toArray(String[]::new);
-
+    public static <T> T[] convertToCollection(@NotNull Class<T> targetElementType, @NotNull String values) throws InvocationTargetException, IllegalAccessException, InstantiationException {
+        final String[] stringValues = Arrays.stream(values.split(",")).map(String::trim).toArray(String[]::new);
+        final T[] objectValues = (T[]) Array.newInstance(targetElementType, stringValues.length);
+        for (int i = 0; i < stringValues.length; i++)
+            objectValues[i] = convertStringToType(targetElementType, stringValues[i]);
+        return objectValues;
     }
-
-    private String makePropertyString(@NotNull String parent, Field field) {
-
-    }
-
-    //implement fromstring
-    //implement tostring
 }
