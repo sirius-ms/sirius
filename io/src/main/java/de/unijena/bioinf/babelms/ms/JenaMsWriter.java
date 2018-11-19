@@ -78,6 +78,8 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         for (Ms2Spectrum spec : data.getMs2Spectra()) {
             writeMs2(writer, spec);
         }
+
+        writer.close();
     }
 
     private void writeMs1(BufferedWriter writer, Spectrum spec, boolean isMergedSpectrum) throws IOException {
