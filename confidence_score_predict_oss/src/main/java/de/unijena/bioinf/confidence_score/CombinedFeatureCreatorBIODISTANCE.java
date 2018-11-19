@@ -60,12 +60,6 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
 
 
 
-
-
-
-
-
-
                 ));
 
 

@@ -45,7 +45,7 @@ LibLinearImpl imp;
 
         SVMScales scales =  utils.calculateScales(featureMatrix);
 
-        //utils.standardize_features(featureMatrix,scales);
+        utils.standardize_features(featureMatrix,scales);
 
         utils.normalize_features(featureMatrix,scales);
 
