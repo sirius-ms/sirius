@@ -22,9 +22,11 @@ import java.util.Properties;
 public class PropertyManager {
     public static final String PROPERTY_BASE = "de.unijena.bioinf";
     public static final Properties PROPERTIES;
+    public static final DefaultPropertyLoader DEFAULTS;
 
     static {
         PROPERTIES = loadDefaultProperties();
+        DEFAULTS = new DefaultPropertyLoader(PROPERTIES, PROPERTY_BASE + ".ms");
     }
 
     public static void addPropertiesFromStream(InputStream stream) throws IOException {
