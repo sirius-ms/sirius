@@ -5,6 +5,9 @@ package de.unijena.bioinf.ms.properties;
  * 31.08.17.
  */
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,16 +32,28 @@ public class PropertyManager {
         DEFAULTS = new DefaultPropertyLoader(PROPERTIES, PROPERTY_BASE + ".ms");
     }
 
-    public static void addPropertiesFromStream(InputStream stream) throws IOException {
+    public static void addPropertiesFromStream(@NotNull InputStream stream, @Nullable String prefixToAdd) throws IOException {
         Properties props = new Properties();
         props.load(stream);
-        PropertyManager.PROPERTIES.putAll(props);
+
+        if (prefixToAdd != null && !prefixToAdd.isEmpty())
+            props.forEach((key, value) -> PropertyManager.PROPERTIES.put(prefixToAdd + "." + key, value));
+        else
+            PropertyManager.PROPERTIES.putAll(props);
     }
 
-    public static void addPropertiesFromFile(Path files) {
+    public static void addPropertiesFromStream(@NotNull InputStream stream) throws IOException {
+        addPropertiesFromStream(stream, null);
+    }
+
+    public static void addPropertiesFromFile(@NotNull Path files) {
+        addPropertiesFromFile(files, null);
+    }
+
+    public static void addPropertiesFromFile(@NotNull Path files, @Nullable String prefixToAdd) {
         try {
             if (Files.exists(files)) {
-                addPropertiesFromStream(Files.newInputStream(files, StandardOpenOption.READ));
+                addPropertiesFromStream(Files.newInputStream(files, StandardOpenOption.READ), prefixToAdd);
             }
         } catch (IOException e) {
             System.err.println("WARNING: could not load Properties from: " + files.toString());
@@ -144,8 +159,9 @@ public class PropertyManager {
     }
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         PropertyManager.PROPERTIES.get("foo");
+        PropertyManager.addPropertiesFromStream(DefaultPropertyLoader.class.getResourceAsStream("/default.annotation.properties"),PROPERTY_BASE + ".ms");
         System.out.println(PropertyManager.PROPERTIES);
     }
 
