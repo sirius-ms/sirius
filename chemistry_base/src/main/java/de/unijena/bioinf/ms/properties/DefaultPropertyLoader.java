@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ms.properties;
 
+import com.google.gson.internal.Primitives;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -11,8 +13,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.stream.Collectors;
 
-//todo fix primitive arrays
-//todo integrate Enums
 
 public class DefaultPropertyLoader {
     private String propertyRoot;
@@ -52,9 +52,6 @@ public class DefaultPropertyLoader {
                     ? klass.getAnnotation(DefaultProperty.class).propertyParent()
                     : klass.getSimpleName());
 
-        System.out.println(parent);
-
-
         try {
             //search if an custom instance provider exists
             final C instance = klass.newInstance();
@@ -68,7 +65,7 @@ public class DefaultPropertyLoader {
                     if (klassAnnotation != null) {
                         final String fieldName = (klassAnnotation.propertyKey().isEmpty() ? "value" : klassAnnotation.propertyKey());
                         try {
-                            return setDefaultValue(klass.newInstance(), klass.getField(fieldName), parent);
+                            return setDefaultValue(klass.newInstance(), klass.getDeclaredField(fieldName), parent);
                         } catch (NoSuchFieldException e) {
                             throw new IllegalArgumentException("Input class contains no valid Field. Please Specify a valid Field name in the class annotation (@DefaultProperty), use the default name (value) por directly annotate the field as @DefaultProperty.", e);
                         }
@@ -165,12 +162,18 @@ public class DefaultPropertyLoader {
                 objectValue = convertToDefaultType(fType, stringValue);
             } else if (fType.isArray()) {
                 Class<?> elementType = fType.getComponentType();
-                objectValue = (T) convertToCollection(elementType, stringValue);
+                if (elementType.isPrimitive()) {
+                    objectValue = (T) ArrayUtils.toPrimitive(convertToCollection(Primitives.wrap(elementType), stringValue));
+                } else {
+                    objectValue = (T) convertToCollection(elementType, stringValue);
+                }
             } else if (Collection.class.isAssignableFrom(fType)) {
                 Class<?> elementType = (Class<?>) ((ParameterizedType) generic).getActualTypeArguments()[0];
                 Object[] objectValueAsArray = convertToCollection(elementType, stringValue);
                 objectValue = createCollectionInstance(fType, elementType);
                 ((Collection) objectValue).addAll(Arrays.asList(objectValueAsArray));
+            } else if (fType.isEnum()) {
+                objectValue = (T) Enum.valueOf((Class<Enum>) fType, stringValue.toUpperCase());
             } else {
                 throw new IllegalArgumentException("Class of type " + fType.toString() + "cannot be instantiated from String values. For non standard classes you need to define an \"fromString\" Method.");
             }
