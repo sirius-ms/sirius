@@ -3,14 +3,15 @@ package de.unijena.bioinf.ms.properties;
 import com.google.gson.internal.Primitives;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.beans.PropertyEditor;
 import java.beans.PropertyEditorManager;
 import java.lang.reflect.*;
-import java.util.*;
 import java.util.List;
 import java.util.Queue;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -53,6 +54,9 @@ public class DefaultPropertyLoader {
                     : klass.getSimpleName());
 
         try {
+            if (getFromStringMethod(klass) != null)
+                return (C) parseProperty(klass, null, null, parent);
+
             //search if an custom instance provider exists
             final C instance = klass.newInstance();
             final Method method = Arrays.stream(klass.getDeclaredMethods()).filter(m -> m.isAnnotationPresent(DefaultInstanceProvider.class)).findFirst().orElse(null);
@@ -128,9 +132,9 @@ public class DefaultPropertyLoader {
         }
     }
 
-    private Object parseProperty(@NotNull Class<?> type, Type generic, @NotNull String fieldName, @NotNull String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+    private Object parseProperty(@NotNull Class<?> type, @Nullable Type generic, @Nullable String fieldName, @NotNull String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException {
         String stringValue = properties.getProperty(propertyName);
-        if (stringValue == null && !propertyName.endsWith(fieldName))
+        if (stringValue == null && fieldName != null && !propertyName.endsWith(fieldName))
             stringValue = properties.getProperty(propertyName + "." + fieldName);
         if (stringValue == null)
             return null;
