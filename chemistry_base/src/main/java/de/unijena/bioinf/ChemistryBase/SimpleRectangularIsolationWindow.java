@@ -1,17 +1,28 @@
 package de.unijena.bioinf.ChemistryBase;
 
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
+import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
+import de.unijena.bioinf.ms.properties.DefaultProperty;
 
+@DefaultProperty(propertyParent = "IsolationWindow")
 public class SimpleRectangularIsolationWindow extends IsolationWindow {
-
     private double leftBorder;
     private double rightBorder;
+
 
     public SimpleRectangularIsolationWindow(double leftBorder, double rightBorder) {
         super(rightBorder-leftBorder);
         this.leftBorder = leftBorder;
         this.rightBorder = rightBorder;
     }
+
+    @DefaultInstanceProvider
+    public static SimpleRectangularIsolationWindow newInstance(@DefaultProperty double width, @DefaultProperty double shift) {
+        final double right = Math.abs(width) / 2d + shift;
+        final double left = -Math.abs(width) / 2d + shift;
+        return new SimpleRectangularIsolationWindow(left, right);
+    }
+
 
     @Override
     public double getIntensityRatio(double precursorMz, double targetMz) {
