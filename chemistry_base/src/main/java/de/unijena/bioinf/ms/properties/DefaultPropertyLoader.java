@@ -54,15 +54,18 @@ public class DefaultPropertyLoader {
                     : klass.getSimpleName());
 
         try {
-            if (getFromStringMethod(klass) != null)
-                return (C) parseProperty(klass, null, null, parent);
+            Method method = getFromStringMethod(klass);
+            if (method != null) {
+                return parseProperty(klass, null, null, parent);
+            }
 
             //search if an custom instance provider exists
-            final C instance = klass.newInstance();
-            final Method method = Arrays.stream(klass.getDeclaredMethods()).filter(m -> m.isAnnotationPresent(DefaultInstanceProvider.class)).findFirst().orElse(null);
+            method = getDefaultInstaceProviderMethod(klass);
             if (method != null) {
-                setDefaults(instance, method, parent, sourceParent);
-            } else {
+                return getDefaultInstanceFromProvider(method, parent, sourceParent);
+            }
+
+            final C instance = klass.newInstance();
                 // find all fields with @DefaultProperty annotation
                 final List<Field> fields = Arrays.stream(klass.getDeclaredFields()).filter(field -> field.isAnnotationPresent(DefaultProperty.class)).collect(Collectors.toList());
                 if (fields.isEmpty()) { //no field annotation -> check if it is a single field wrapper class
@@ -84,7 +87,6 @@ public class DefaultPropertyLoader {
                         setDefaultValue(instance, field, fieldParent + "." + fieldName);
                     }
                 }
-            }
             return instance;
         } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
             throw new IllegalArgumentException("Could not instantiate input class by empty Constructor", e);
@@ -92,8 +94,8 @@ public class DefaultPropertyLoader {
     }
 
 
-    private <C> C setDefaults(final C instance, final Method method, String parent, String sourceParent) throws InvocationTargetException, IllegalAccessException, InstantiationException {
-        final Parameter[] parameters = method.getParameters();
+    private <C> C getDefaultInstanceFromProvider(final Method providerMethod, String parent, String sourceParent) throws InvocationTargetException, IllegalAccessException, InstantiationException {
+        final Parameter[] parameters = providerMethod.getParameters();
         final Object[] args = new Object[parameters.length];
 
         for (int i = 0; i < parameters.length; i++) {
@@ -108,9 +110,11 @@ public class DefaultPropertyLoader {
                 throw new IllegalArgumentException("Parameter need to be annotated With @DefaultProperty and the property key is mandatory!");
             }
         }
+        return (C) providerMethod.invoke(null, args);
+    }
 
-        method.invoke(instance, args);
-        return instance;
+    private <C> C getDefaultInstanceFromString(final Method providerMethod, String stringValue) throws InvocationTargetException, IllegalAccessException, InstantiationException {
+        return (C) providerMethod.invoke(null, stringValue);
     }
 
 
@@ -132,7 +136,7 @@ public class DefaultPropertyLoader {
         }
     }
 
-    private Object parseProperty(@NotNull Class<?> type, @Nullable Type generic, @Nullable String fieldName, @NotNull String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+    private <T> T parseProperty(@NotNull Class<T> type, @Nullable Type generic, @Nullable String fieldName, @NotNull String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException {
         String stringValue = properties.getProperty(propertyName);
         if (stringValue == null && fieldName != null && !propertyName.endsWith(fieldName))
             stringValue = properties.getProperty(propertyName + "." + fieldName);
@@ -141,26 +145,31 @@ public class DefaultPropertyLoader {
         return convertStringToType(type, generic, stringValue);
     }
 
-
     //// static util methods
-    private static Method getFromStringMethod(Class<?> fType) {
+    private static Method getFromStringMethod(@NotNull final Class<?> fType) {
         try {
             Method m = fType.getDeclaredMethod("fromString", String.class);
-            if (m != null && Modifier.isStatic(m.getModifiers()))
+            if (m != null && Modifier.isStatic(m.getModifiers()) && fType.isAssignableFrom(m.getReturnType()))
                 return m;
         } catch (NoSuchMethodException ignored) {
         }
         return null;
     }
 
+    private static Method getDefaultInstaceProviderMethod(@NotNull final Class<?> klass) {
+        return Arrays.stream(klass.getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(DefaultInstanceProvider.class)
+                        && Modifier.isStatic(m.getModifiers())
+                        && klass.isAssignableFrom(m.getReturnType())
+                )
+                .findFirst().orElse(null);
+    }
+
     public static <T> T convertStringToType(@NotNull Class<T> fType, Type generic, @NotNull String stringValue) throws InvocationTargetException, IllegalAccessException, InstantiationException {
         T objectValue = null;
         final Method fromString = getFromStringMethod(fType);
         if (fromString != null) {
-            if (fType.isAssignableFrom(fromString.getReturnType()))
-                objectValue = (T) fromString.invoke(null, stringValue);
-            else
-                throw new IllegalArgumentException("fromString method has wrong return type! Expected: " + fType + "Found: " + fromString.getReturnType());
+            objectValue = (T) fromString.invoke(null, stringValue);
         } else {
             if (fType.isPrimitive() || fType.isAssignableFrom(Boolean.class) || fType.isAssignableFrom(Byte.class) || fType.isAssignableFrom(Short.class) || fType.isAssignableFrom(Integer.class) || fType.isAssignableFrom(Long.class) || fType.isAssignableFrom(Float.class) || fType.isAssignableFrom(Double.class) || fType.isAssignableFrom(String.class) || fType.isAssignableFrom(Color.class)) {
                 objectValue = convertToDefaultType(fType, stringValue);

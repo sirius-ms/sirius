@@ -146,9 +146,11 @@ public class DefaultPropertyLoaderTest {
 
 
         @DefaultInstanceProvider
-        public void setDefaults(@DefaultProperty(propertyKey = "list") List<Double> list, @DefaultProperty(propertyKey = "integer") Integer value) {
-            this.list = list;
-            this.integer = value;
+        public static FromInstanceProviderClass setDefaults(@DefaultProperty(propertyKey = "list") List<Double> list, @DefaultProperty(propertyKey = "integer") Integer value) {
+            FromInstanceProviderClass c = new FromInstanceProviderClass();
+            c.list = list;
+            c.integer = value;
+            return c;
         }
     }
 
@@ -207,9 +209,8 @@ public class DefaultPropertyLoaderTest {
 
     }
 
-    @DefaultProperty()
+    @DefaultProperty
     public static class EnumClass {
-        @DefaultProperty
         private JJob.JobState value;
     }
 }
