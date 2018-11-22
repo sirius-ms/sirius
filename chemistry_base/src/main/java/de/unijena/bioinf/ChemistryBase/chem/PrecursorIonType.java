@@ -33,6 +33,11 @@ public class PrecursorIonType {
 
     private final SPECIAL_TYPES special; // flag used to annotate unknown ion types
 
+
+    public static PrecursorIonType fromString(String name) {
+        return getPrecursorIonType(name);
+    }
+
     public static PrecursorIonType getPrecursorIonType(String name) {
         return PeriodicTable.getInstance().ionByName(name);
     }

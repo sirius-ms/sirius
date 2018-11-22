@@ -1,6 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft.model;
 
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
+import de.unijena.bioinf.ms.properties.DefaultProperty;
 
 /**
  * If this annotation is set, Tree Builder will stop after reaching the given number of seconds
@@ -9,7 +11,15 @@ public class Timeout implements Ms2ExperimentAnnotation {
 
     public final static Timeout NO_TIMEOUT = new Timeout(Integer.MAX_VALUE, Integer.MAX_VALUE);
 
-    private final int numberOfSecondsPerInstance, numberOfSecondsPerDecomposition;
+    private final int numberOfSecondsPerDecomposition, numberOfSecondsPerInstance;
+
+    @DefaultInstanceProvider
+    public static Timeout newInstance(
+            @DefaultProperty int secondsPerInstance,
+            @DefaultProperty int secondsPerTree
+    ) {
+        return new Timeout(secondsPerInstance, secondsPerTree);
+    }
 
     public static Timeout newTimeout(int numberOfSecondsPerInstance, int numberOfSecondsPerDecomposition) {
         if (numberOfSecondsPerDecomposition <= 0) numberOfSecondsPerDecomposition = Integer.MAX_VALUE;
