@@ -85,6 +85,13 @@ public class DefaultPropertyLoaderTest {
                         , new String[]{"de.unijena.bioinf.ms.AllInOne.list1", "de.unijena.bioinf.ms.AllInOne.listTwo", "de.unijena.bioinf.ms.AllInOne.intField", "de.unijena.bioinf.ms.AllInOne.defaultPropField.list", "de.unijena.bioinf.ms.AllInOne.defaultPropField.integer", "de.unijena.bioinf.ms.AllInOne.fromStringField"}
                         , new String[]{"1, 2.3,  3.22,4,   5", "2d , 4, 6,   8, 10d", "25", "1, 2.3,  3.22,4,   5", "25", "1:SuperValue"}},
                 //
+                {FromStringObject.class, (Consumer<FromStringObject>) c -> {
+                    assertEquals(c.key, 1);
+                    assertEquals(c.value, "SuperValue");
+                }
+                        , new String[]{"de.unijena.bioinf.ms.FromStringObject"}
+                        , new String[]{"1:SuperValue"}},
+                //
                 {EnumClass.class, (Consumer<EnumClass>) c -> assertEquals(c.value, JJob.JobState.DONE), new String[]{"de.unijena.bioinf.ms.EnumClass"}, new String[]{"dOnE"}},
                 {NumberOfCandidatesPerIon.class, (Consumer<NumberOfCandidatesPerIon>) c -> assertEquals(c.value, -1), new String[]{"de.unijena.bioinf.ms.NumberOfCandidatesPerIon"}, new String[]{"-1"}},
                 {NumberOfCandidates.class, (Consumer<NumberOfCandidates>) c -> assertEquals(c.value, 666), new String[]{"de.unijena.bioinf.ms.NumberOfCandidates"}, new String[]{"666"}}
@@ -183,7 +190,7 @@ public class DefaultPropertyLoaderTest {
         private FromStringObject fromStringField;
     }
 
-
+    @DefaultProperty
     public static class FromStringObject {
         int key;
         String value;
@@ -200,8 +207,9 @@ public class DefaultPropertyLoaderTest {
 
     }
 
-    @DefaultProperty
+    @DefaultProperty()
     public static class EnumClass {
+        @DefaultProperty
         private JJob.JobState value;
     }
 }
