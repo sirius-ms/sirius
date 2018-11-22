@@ -18,10 +18,7 @@ public class NumberOfCandidatesPerIon implements Ms2ExperimentAnnotation {
 
     public int value;
 
-    public NumberOfCandidatesPerIon() {
-
-    }
-
+    public NumberOfCandidatesPerIon() {}
     public NumberOfCandidatesPerIon(int value) {
         this.value = value;
     }

@@ -18,14 +18,11 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import com.google.common.collect.Range;
-import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
-import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@HasParameters
 public class Deviation implements Cloneable, Ms2ExperimentAnnotation {
 
     private final double ppm;
@@ -42,7 +39,7 @@ public class Deviation implements Cloneable, Ms2ExperimentAnnotation {
         this.absolute = 200e-6*ppm; // set absolute to 200 Da with given ppm
     }
 
-    public Deviation(@Parameter("ppm") double ppm, @Parameter("absolute") double absolute) {
+    public Deviation(double ppm, double absolute) {
         this.ppm = ppm;
         this.absolute = absolute;
     }
