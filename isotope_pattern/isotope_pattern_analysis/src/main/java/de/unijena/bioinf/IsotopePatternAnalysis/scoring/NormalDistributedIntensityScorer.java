@@ -80,7 +80,7 @@ public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
     }
 
     @Override
-    public void score(double[] scores, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment, MeasurementProfile profile) {
+    public void score(double[] scores, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment) {
         if (usedNormalization.getBase() != 1 || usedNormalization.getMode() != NormalizationMode.MAX) {
             measuredSpectrum = Spectrums.getNormalizedSpectrum(measuredSpectrum, Normalization.Max(1));
             theoreticalSpectrum = Spectrums.getNormalizedSpectrum(theoreticalSpectrum, Normalization.Max(1));

@@ -2,15 +2,19 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.jetbrains.annotations.NotNull;
 
-public class MS1MassDeviation extends MassDeviation {
+public final class MS1MassDeviation extends MassDeviation {
+    public static final MS1MassDeviation DEFAULT =
+            PropertyManager.DEFAULTS.createInstanceWithDefaults(MS1MassDeviation.class);
 
-    public MS1MassDeviation(Deviation allowedMassDeviation, Deviation standardMassDeviation) {
-        super(allowedMassDeviation, standardMassDeviation);
+    public MS1MassDeviation(@NotNull Deviation allowedMassDeviation, @NotNull Deviation standardMassDeviation, @NotNull Deviation massDifferenceDeviation) {
+        super(allowedMassDeviation, standardMassDeviation, massDifferenceDeviation);
     }
 
     @DefaultInstanceProvider
-    public static MS1MassDeviation newInstance(@DefaultProperty Deviation allowedMassDeviation, @DefaultProperty Deviation standardMassDeviation) {
-        return new MS1MassDeviation(allowedMassDeviation, standardMassDeviation);
+    public static MS1MassDeviation newInstance(@DefaultProperty Deviation allowedMassDeviation, @DefaultProperty Deviation standardMassDeviation, @DefaultProperty Deviation massDifferenceDeviation) {
+        return new MS1MassDeviation(allowedMassDeviation, standardMassDeviation, massDifferenceDeviation);
     }
 }

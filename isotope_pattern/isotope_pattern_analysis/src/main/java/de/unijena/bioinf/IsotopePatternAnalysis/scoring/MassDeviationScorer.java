@@ -48,13 +48,13 @@ public class MassDeviationScorer implements IsotopePatternScorer {
     }
 
     @Override
-    public void score(double[] scores, Spectrum<Peak> measured, Spectrum<Peak> theoretical, Normalization norm, Ms2Experiment experiment, MeasurementProfile profile) {
+    public void score(double[] scores, Spectrum<Peak> measured, Spectrum<Peak> theoretical, Normalization norm, Ms2Experiment experiment) {
         double score = 0d;
         for (int i=0; i < measured.size(); ++i) {
             final double mz = measured.getMzAt(i);
             final double thMz = theoretical.getMzAt(i);
             final double intensity = measured.getIntensityAt(i);
-            final double sd = profile.getStandardMs1MassDeviation().absoluteFor(mz) * dependency.getValueAt(intensity);
+            final double sd = experiment.getAnnotationOrDefault(MS1MassDeviation.class).standardMassDeviation.absoluteFor(mz) * dependency.getValueAt(intensity);
             score += Math.log(Erf.erfc(Math.abs(thMz - mz)/(root2*sd)));
             scores[i] += score;
         }

@@ -112,7 +112,15 @@ public class DefaultPropertyLoaderTest {
 
     @DefaultProperty(propertyParent = "SimpleClassAnnotationBool")
     public static class SimpleClassAnnotationParent {
-        public boolean value;
+        public final boolean value;
+
+        public SimpleClassAnnotationParent(boolean value) {
+            this.value = value;
+        }
+
+        private SimpleClassAnnotationParent() {
+            this(false);
+        }
     }
 
     @DefaultProperty(propertyParent = "SimpleClassAnnotationString", propertyKey = "customName")

@@ -23,7 +23,11 @@ import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
@@ -47,7 +51,7 @@ public class IsotopePeakFilter implements Preprocessor {
     }
 
     @Override
-    public MutableMs2Experiment process(MutableMs2Experiment experiment, MeasurementProfile profile) {
+    public MutableMs2Experiment process(MutableMs2Experiment experiment) {
         final PeriodicTable p = PeriodicTable.getInstance();
         final IsotopicDistribution dist = p.getDistribution();
         final Isotopes HIso = dist.getIsotopesFor(p.getByName("H"));
@@ -56,7 +60,8 @@ public class IsotopePeakFilter implements Preprocessor {
         final double Hdiff = HIso.getMass(1)-HIso.getMass(0);
         for (int k=0; k < maxNumberOfIsotopePeaks; ++k) minDists[k] = maxDists[k] = Hdiff*(k+1);
 
-        for (Element e : profile.getFormulaConstraints().getChemicalAlphabet().getElements()) {
+
+        for (Element e : experiment.getAnnotation(FormulaSettings.class).getConstraints().getChemicalAlphabet().getElements()) {
             final Isotopes isotope = dist.getIsotopesFor(e);
             if (isotope != null && isotope.getNumberOfIsotopes()>1) {
                 for (int k=1; k < Math.min(maxNumberOfIsotopePeaks+1, isotope.getNumberOfIsotopes()); ++k) {

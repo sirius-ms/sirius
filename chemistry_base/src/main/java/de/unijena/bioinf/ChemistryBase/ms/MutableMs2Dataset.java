@@ -11,32 +11,25 @@ import java.util.NoSuchElementException;
 public class MutableMs2Dataset implements Ms2Dataset {
 
     private List<MutableMs2Experiment> experiments;
-    String profile; //todo enum
     double isolationWindowWidth;
     private IsolationWindow isolationWindow;
-    private MeasurementProfile measurementProfile;
     private DatasetStatistics statistics;
 
     public MutableMs2Dataset() {
         experiments = new ArrayList<>();
-        profile = "default";
     }
 
     /**
      *
      * @param experiments
-     * @param profile profile which is used for Sirius. MUST EXIST! But cannot be tested at this moment //todo find better solution to set profile. e.g. move MutableMs2Dataset
      * @param isolationWindowWidth maximum isolation window width. will be used to bound isolation window estimation.
-     * @param measurementProfile
      */
-    public MutableMs2Dataset(List<Ms2Experiment> experiments, String profile, double isolationWindowWidth, MeasurementProfile measurementProfile) {
+    public MutableMs2Dataset(List<Ms2Experiment> experiments, double isolationWindowWidth) {
         this.experiments = new ArrayList<>();
         for (Ms2Experiment experiment : experiments) {
             this.experiments.add(new MutableMs2Experiment(experiment));
         }
-        this.profile = profile;
         this.isolationWindowWidth = isolationWindowWidth;
-        this.measurementProfile = measurementProfile; //todo do we need profile and Measurement profile!?
     }
 
     public MutableMs2Dataset(Ms2Dataset dataset) {
@@ -44,9 +37,7 @@ public class MutableMs2Dataset implements Ms2Dataset {
         for (Ms2Experiment experiment : dataset.getExperiments()) {
             this.experiments.add(new MutableMs2Experiment(experiment));
         }
-        this.profile = dataset.getProfile();
         this.isolationWindowWidth = dataset.getIsolationWindowWidth();
-        this.measurementProfile = new MutableMeasurementProfile(dataset.getMeasurementProfile());
         this.isolationWindow = dataset.getIsolationWindow();
         this.setDatasetStatistics(dataset.getDatasetStatistics());
     }
@@ -71,25 +62,6 @@ public class MutableMs2Dataset implements Ms2Dataset {
             this.experiments.add(new MutableMs2Experiment(experiment));
         }
     }
-
-
-    public MeasurementProfile getMeasurementProfile() {
-        return measurementProfile;
-    }
-
-    public void setMeasurementProfile(MeasurementProfile measurementProfile) {
-        this.measurementProfile = measurementProfile;
-    }
-
-
-    public String getProfile() {
-        return profile;
-    }
-
-    public void setProfile(String profile) {
-        this.profile = profile;
-    }
-
 
     public double getIsolationWindowWidth() {
         return isolationWindowWidth;

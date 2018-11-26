@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ms.annotations;
 
+import de.unijena.bioinf.ms.properties.PropertyManager;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -38,18 +40,20 @@ public interface Annotated<A extends Annotaion> {
     /**
      * @return annotation value for the given class/key or the given default value
      */
-    /*default <T extends Annotation> T getAnnotation(Class<T> klass, T defaultValue) {
-        final T val = getAnnotation(klass);
-        if (val == null) return defaultValue;
-        else return val;
-    }
-*/
-    /**
-     * @return annotation value for the given class/key or the given default value
-     */
     default <T extends A> T getAnnotation(Class<T> klass, Supplier<T> defaultValueSupplier) {
         final T val = getAnnotation(klass);
         if (val == null) return defaultValueSupplier.get();
+        else return val;
+    }
+
+    /**
+     * @return annotation value for the given class/key or the  default value given {@link PropertyManager}.DEFAULTS
+     * The method will fail to provide a default value may fail if the given klass is not instantiatable via
+     * {@link de.unijena.bioinf.ms.properties.DefaultPropertyLoader}
+     */
+    default <T extends A> T getAnnotationOrDefault(Class<T> klass) {
+        final T val = getAnnotation(klass);
+        if (val == null) return PropertyManager.DEFAULTS.createInstanceWithDefaults(klass);
         else return val;
     }
 

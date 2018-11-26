@@ -20,7 +20,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
+import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -78,10 +78,10 @@ public class NoiseThresholdFilter implements PostProcessor, Preprocessor {
     }
 
     @Override
-    public MutableMs2Experiment process(final MutableMs2Experiment experiment, MeasurementProfile profile) {
+    public MutableMs2Experiment process(final MutableMs2Experiment experiment) {
         List<MutableMs2Spectrum> specs = experiment.getMs2Spectra();
         final ArrayList<MutableMs2Spectrum> newList = new ArrayList<MutableMs2Spectrum>();
-        final Deviation allowedDev = profile.getAllowedMassDeviation();
+        final Deviation allowedDev = experiment.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
         final Deviation parentWindow = new Deviation(allowedDev.getPpm(), Math.min(allowedDev.getAbsolute(), 0.1d));
         for (MutableMs2Spectrum spec : specs) {
             Spectrums.filter(spec, new Spectrums.PeakPredicate() {

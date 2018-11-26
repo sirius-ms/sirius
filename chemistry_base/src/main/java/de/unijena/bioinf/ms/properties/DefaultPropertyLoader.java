@@ -43,6 +43,7 @@ public class DefaultPropertyLoader {
         String parent = sourceParent;
         if (parent.isEmpty())
             throw new IllegalArgumentException("Some parent path is needed!");
+
         //search class annotation
         DefaultProperty klassAnnotation = null;
         if (klass.isAnnotationPresent(DefaultProperty.class))
@@ -65,38 +66,46 @@ public class DefaultPropertyLoader {
                 return getDefaultInstanceFromProvider(method, parent, sourceParent);
             }
 
-            final C instance = klass.newInstance();
                 // find all fields with @DefaultProperty annotation
                 final List<Field> fields = Arrays.stream(klass.getDeclaredFields()).filter(field -> field.isAnnotationPresent(DefaultProperty.class)).collect(Collectors.toList());
                 if (fields.isEmpty()) { //no field annotation -> check if it is a single field wrapper class
                     if (klassAnnotation != null) {
-                        final String fieldName = (klassAnnotation.propertyKey().isEmpty() ? "value" : klassAnnotation.propertyKey());
-                        try {
-                            return setDefaultValue(klass.newInstance(), klass.getDeclaredField(fieldName), parent);
-                        } catch (NoSuchFieldException e) {
-                            throw new IllegalArgumentException("Input class contains no valid Field. Please Specify a valid Field name in the class annotation (@DefaultProperty), use the default name (value) por directly annotate the field as @DefaultProperty.", e);
+                        if (klass.isEnum()) {
+                            return parseProperty(klass, null, null, parent);
+                        } else {
+                            try {
+                                final String fieldName = (klassAnnotation.propertyKey().isEmpty() ? "value" : klassAnnotation.propertyKey());
+                                return setDefaultValue(klass.getConstructor().newInstance(), klass.getDeclaredField(fieldName), parent);
+                            } catch (NoSuchFieldException e) {
+                                throw new IllegalArgumentException("Input class contains no valid Field. Please Specify a valid Field name in the class annotation (@DefaultProperty), use the default name (value) por directly annotate the field as @DefaultProperty.", e);
+                            }
                         }
                     } else {
                         throw new IllegalArgumentException("This class contains no @DefaultProperty annotation!");
                     }
                 } else {
+                    final C instance = klass.getConstructor().newInstance();
                     for (Field field : fields) {
                         final DefaultProperty fieldAnnotation = field.getAnnotation(DefaultProperty.class);
                         final String fieldParent = (fieldAnnotation.propertyParent().isEmpty() ? parent : sourceParent + "." + fieldAnnotation.propertyParent());
                         final String fieldName = (fieldAnnotation.propertyKey().isEmpty() ? field.getName() : fieldAnnotation.propertyKey());
                         setDefaultValue(instance, field, fieldParent + "." + fieldName);
                     }
+                    return instance;
                 }
-            return instance;
         } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
             throw new IllegalArgumentException("Could not instantiate input class by empty Constructor", e);
+        } catch (NoSuchMethodException e) {
+            throw new IllegalArgumentException("Method does not contain a non parameter Constructor", e);
+
         }
     }
 
 
-    private <C> C getDefaultInstanceFromProvider(final Method providerMethod, String parent, String sourceParent) throws InvocationTargetException, IllegalAccessException, InstantiationException {
+    private <C> C getDefaultInstanceFromProvider(final Method providerMethod, String parent, String sourceParent) throws InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
         final Parameter[] parameters = providerMethod.getParameters();
         final Object[] args = new Object[parameters.length];
+
 
         for (int i = 0; i < parameters.length; i++) {
             final Parameter parameter = parameters[i];
@@ -105,7 +114,12 @@ public class DefaultPropertyLoader {
                         ? sourceParent + "." + parameter.getAnnotation(DefaultProperty.class).propertyParent()
                         : parent;
                 final String fieldName = parameter.getAnnotation(DefaultProperty.class).propertyKey();
-                args[i] = parseProperty(parameter.getType(), parameter.getParameterizedType(), fieldName, fieldParent + "." + fieldName);
+//                if (parameters.length == 1)
+                args[i] = parseProperty(parameter.getType(), parameter.getParameterizedType(), fieldName, fieldParent);
+//                else
+//                    args[i] = parseProperty(parameter.getType(), parameter.getParameterizedType(), fieldName, fieldParent + "." + fieldName);
+            } else if (parameters.length == 1) {
+                args[0] = parseProperty(parameter.getType(), parameter.getParameterizedType(), "arg0", parent);
             } else {
                 throw new IllegalArgumentException("Parameter need to be annotated With @DefaultProperty and the property key is mandatory!");
             }
@@ -113,12 +127,12 @@ public class DefaultPropertyLoader {
         return (C) providerMethod.invoke(null, args);
     }
 
-    private <C> C getDefaultInstanceFromString(final Method providerMethod, String stringValue) throws InvocationTargetException, IllegalAccessException, InstantiationException {
+    private <C> C getDefaultInstanceFromString(final Method providerMethod, String stringValue) throws InvocationTargetException, IllegalAccessException {
         return (C) providerMethod.invoke(null, stringValue);
     }
 
 
-    private <C> C setDefaultValue(C instance, Field field, String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+    private <C> C setDefaultValue(C instance, Field field, String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
         final boolean accessible = field.isAccessible();
         try {
             final Object objectValue;
@@ -136,7 +150,7 @@ public class DefaultPropertyLoader {
         }
     }
 
-    private <T> T parseProperty(@NotNull Class<T> type, @Nullable Type generic, @Nullable String fieldName, @NotNull String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+    private <T> T parseProperty(@NotNull Class<T> type, @Nullable Type generic, @Nullable String fieldName, @NotNull String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
         String stringValue = properties.getProperty(propertyName);
         if (stringValue == null && fieldName != null && !propertyName.endsWith(fieldName))
             stringValue = properties.getProperty(propertyName + "." + fieldName);
@@ -165,7 +179,7 @@ public class DefaultPropertyLoader {
                 .findFirst().orElse(null);
     }
 
-    public static <T> T convertStringToType(@NotNull Class<T> fType, Type generic, @NotNull String stringValue) throws InvocationTargetException, IllegalAccessException, InstantiationException {
+    public static <T> T convertStringToType(@NotNull Class<T> fType, Type generic, @NotNull String stringValue) throws InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
         T objectValue = null;
         final Method fromString = getFromStringMethod(fType);
         if (fromString != null) {
@@ -194,7 +208,7 @@ public class DefaultPropertyLoader {
         return objectValue;
     }
 
-    public static <T, E> T createCollectionInstance(final @NotNull Class<T> fType, final @NotNull Class<E> emementType) throws IllegalAccessException, InstantiationException {
+    public static <T, E> T createCollectionInstance(final @NotNull Class<T> fType, final @NotNull Class<E> emementType) throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
         if (fType.isInterface() || Modifier.isAbstract(fType.getModifiers())) {
             if (Queue.class.isAssignableFrom(fType)) {
                 return (T) new LinkedList<E>();
@@ -204,7 +218,7 @@ public class DefaultPropertyLoader {
                 return (T) new ArrayList<E>();
             }
         } else {
-            return fType.newInstance();
+            return fType.getDeclaredConstructor().newInstance();
         }
     }
 
@@ -219,7 +233,7 @@ public class DefaultPropertyLoader {
         return (T) editor.getValue();
     }
 
-    public static <T> T[] convertToCollection(@NotNull Class<T> targetElementType, @NotNull String values) throws InvocationTargetException, IllegalAccessException, InstantiationException {
+    public static <T> T[] convertToCollection(@NotNull Class<T> targetElementType, @NotNull String values) throws InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
         TypeVariable<Class<T>> generic = targetElementType.getTypeParameters() != null && targetElementType.getTypeParameters().length > 0
                 ? targetElementType.getTypeParameters()[0]
                 : null;
@@ -228,6 +242,12 @@ public class DefaultPropertyLoader {
         for (int i = 0; i < stringValues.length; i++)
             objectValues[i] = convertStringToType(targetElementType, generic, stringValues[i]);
         return objectValues;
+    }
+
+    public static <T> Constructor<T> getConstructor(Class<T> klass) throws NoSuchMethodException {
+        Constructor<T> c = klass.getDeclaredConstructor();
+        c.setAccessible(true);
+        return c;
     }
 
     private static Class<?> findSubClassParameterType(Class<?> inputClass, Class<?> classOfInterest, int parameterIndex) {

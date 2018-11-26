@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Deviation implements Cloneable, Ms2ExperimentAnnotation {
+    public static final Deviation NULL_DEVIATION = new Deviation(Double.NaN,Double.NaN);
 
     private final double ppm;
     private final double absolute;

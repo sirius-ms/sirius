@@ -48,14 +48,15 @@ public class ChimericAnnotator implements QualityAnnotator {
     public void annotate(Ms2Dataset dataset) {
 //        Deviation maxDeviation = dataset.getMeasurementProfile().getAllowedMassDeviation();
         //changed
-        Deviation maxDeviation = dataset.getMeasurementProfile().getStandardMassDifferenceDeviation().multiply(2d);
         IsolationWindow isolationWindow = dataset.getIsolationWindow();
 
 //        System.out.println("chimeric alphabet");
 //        System.out.println(dataset.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet().toString());
 
         for (Ms2Experiment experiment : dataset.getExperiments()) {
-            annotate(experiment, maxDeviation, isolationWindow, dataset.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet());
+            Deviation maxDeviation = experiment.getAnnotationOrDefault(MS1MassDeviation.class).massDifferenceDeviation.multiply(2d);
+            annotate(experiment, maxDeviation, isolationWindow,
+                    experiment.getAnnotationOrDefault(FormulaSettings.class).getConstraints().getChemicalAlphabet());
         }
     }
 
@@ -78,7 +79,6 @@ public class ChimericAnnotator implements QualityAnnotator {
         if (isChimeric){
             CompoundQuality.setProperty(experiment, SpectrumProperty.Chimeric);
         }
-
     }
 
     /**

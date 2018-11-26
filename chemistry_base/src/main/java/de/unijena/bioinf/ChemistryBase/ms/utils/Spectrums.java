@@ -511,36 +511,35 @@ public class Spectrums {
      * extract hypothetical isotope pattern for a given mass
      *
      * @param ms1Spec
-     * @param profile
      * @param targetMz
      * @return
      */
-    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePattern(S ms1Spec, MeasurementProfile profile, double targetMz) {
-        return extractIsotopePattern(ms1Spec, profile, targetMz, 1);
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePattern(S ms1Spec, MassDeviation deviation, double targetMz) {
+        return extractIsotopePattern(ms1Spec, deviation, targetMz, 1);
     }
 
-    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePattern(S ms1Spec, MeasurementProfile profile, double targetMz, int absCharge) {
-        return extractIsotopePattern(ms1Spec, profile, targetMz, absCharge, true);
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePattern(S ms1Spec, MassDeviation deviation, double targetMz, int absCharge) {
+        return extractIsotopePattern(ms1Spec, deviation, targetMz, absCharge, true);
     }
 
-    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePattern(S ms1Spec, MeasurementProfile profile, double targetMz, int absCharge, boolean mergePeaks) {
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePattern(S ms1Spec, MassDeviation deviation, double targetMz, int absCharge, boolean mergePeaks) {
         // extract all isotope peaks starting from the given target mz
         final ChemicalAlphabet stdalphabet = ChemicalAlphabet.getExtendedAlphabet();
         final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(ms1Spec);
-        final int index = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, targetMz, profile.getAllowedMassDeviation());
+        final int index = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, targetMz, deviation.allowedMassDeviation);
         if (index < 0) return null;
         final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
         spec.addPeak(massOrderedSpectrum.getPeakAt(index));
         // add additional peaks
         final double monoMass = spec.getMzAt(0);
         for (int k = 1; k <= 5; ++k) {
-            final Range<Double> nextMz = PeriodicTable.getInstance().getIsotopicMassWindow(stdalphabet, profile.getAllowedMassDeviation(), monoMass, k);
+            final Range<Double> nextMz = PeriodicTable.getInstance().getIsotopicMassWindow(stdalphabet, deviation.allowedMassDeviation, monoMass, k);
 
             final double a = (nextMz.lowerEndpoint() - monoMass) / absCharge + monoMass;
             final double b = (nextMz.upperEndpoint() - monoMass) / absCharge + monoMass;
             final double m = a + (b - a) / 2d;
-            final double startPoint = a - profile.getStandardMassDifferenceDeviation().absoluteFor(a);
-            final double endPoint = b + profile.getStandardMassDifferenceDeviation().absoluteFor(b);
+            final double startPoint = a - deviation.massDifferenceDeviation.absoluteFor(a);
+            final double endPoint = b + deviation.massDifferenceDeviation.absoluteFor(b);
             final int nextIndex = Spectrums.indexOfFirstPeakWithin(massOrderedSpectrum, startPoint, endPoint);
             if (nextIndex < 0) break;
             double mzBuffer = 0d;
@@ -567,8 +566,8 @@ public class Spectrums {
         return new SimpleSpectrum(spec);
     }
 
-    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePatternFromMultipleSpectra(List<S> ms1Spectra, MeasurementProfile profile, double targetMz, int absCharge, boolean mergePeaks, double minIsoPeakFreq) {
-        List<SimpleSpectrum> isotopePatterns = ms1Spectra.stream().map(s->extractIsotopePattern(s, profile, targetMz, absCharge, mergePeaks)).collect(Collectors.toList());
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePatternFromMultipleSpectra(List<S> ms1Spectra, MS1MassDeviation deviation, double targetMz, int absCharge, boolean mergePeaks, double minIsoPeakFreq) {
+        List<SimpleSpectrum> isotopePatterns = ms1Spectra.stream().map(s -> extractIsotopePattern(s, deviation, targetMz, absCharge, mergePeaks)).collect(Collectors.toList());
         int maxLength = 0;
         Iterator<SimpleSpectrum> patternIterator = isotopePatterns.iterator();
         while (patternIterator.hasNext()) {
@@ -1074,7 +1073,7 @@ public class Spectrums {
     /**
      * Search for an exact mz value.
      *
-     * @see Spectrums#binarySearch(Spectrum, double, Deviation)
+     * @see Spectrums#binarySearch(Spectrum, double)
      */
     public static <S extends Spectrum<P>, P extends Peak> int binarySearch(S spectrum, double mz) {
         if (spectrum.size() > 0) {
@@ -1098,7 +1097,7 @@ public class Spectrums {
     /**
      * Search for an exact mz and intensity value. spectrum sorted by mz.
      *
-     * @see Spectrums#binarySearch(Spectrum, double, Deviation)
+     * @see Spectrums#binarySearch(Spectrum, double)
      */
     public static <S extends Spectrum<P>, P extends Peak> int binarySearch(S spectrum, double mz, double intensity) {
         if (spectrum.size() > 0) {
