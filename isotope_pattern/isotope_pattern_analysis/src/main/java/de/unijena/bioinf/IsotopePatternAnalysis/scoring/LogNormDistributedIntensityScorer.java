@@ -37,7 +37,7 @@ public class LogNormDistributedIntensityScorer implements IsotopePatternScorer {
 
 
     @Override
-    public void score(double[] scoreUptoKPeaks, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment, MeasurementProfile profile) {
+    public void score(double[] scoreUptoKPeaks, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment) {
         // score
         double score = 0d;
         for (int i=0; i < measuredSpectrum.size(); ++i) {

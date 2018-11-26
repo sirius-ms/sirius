@@ -18,11 +18,10 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
-import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 
 public interface Preprocessor extends Parameterized {
 
-    MutableMs2Experiment process(MutableMs2Experiment experiment, MeasurementProfile profile);
+    MutableMs2Experiment process(MutableMs2Experiment experiment);
 
 }

@@ -34,14 +34,14 @@ public class NotMonoisotopicAnnotator implements QualityAnnotator {
     public void annotate(Ms2Dataset dataset) {
         for (Ms2Experiment ms2Experiment : dataset) {
             if (CompoundQuality.hasProperty(ms2Experiment, SpectrumProperty.NoMS1Peak)) continue;
-            if (isNotMonoisotopicPeak(ms2Experiment, dataset.getMeasurementProfile())){
+            if (isNotMonoisotopicPeak(ms2Experiment)) {
                 CompoundQuality.setProperty(ms2Experiment, SpectrumProperty.NotMonoisotopicPeak);
                 continue;
             }
         }
     }
 
-    private boolean isNotMonoisotopicPeak(Ms2Experiment experiment, MeasurementProfile profile) {
+    private boolean isNotMonoisotopicPeak(Ms2Experiment experiment) {
         double precursorMass = experiment.getIonMass();
         int mostIntensiveIdx = -1;
         double maxIntensity = -1d;
@@ -58,11 +58,11 @@ public class NotMonoisotopicAnnotator implements QualityAnnotator {
         }
         if (mostIntensiveIdx<0) throw new RuntimeException("no MS1 precursor peak found.");
 
-        return isNotMonoisotopicPeak(precursorMass, experiment.getMs1Spectra().get(mostIntensiveIdx), profile, experiment.getPrecursorIonType().getCharge());
+        return isNotMonoisotopicPeak(precursorMass, experiment.getMs1Spectra().get(mostIntensiveIdx), experiment.getAnnotationOrDefault(MS1MassDeviation.class), experiment.getPrecursorIonType().getCharge());
 
     }
-    
-    private boolean isNotMonoisotopicPeak(double precursorMass, Spectrum<Peak> ms1, MeasurementProfile profile, int charge) {
+
+    private boolean isNotMonoisotopicPeak(double precursorMass, Spectrum<Peak> ms1, MS1MassDeviation deviation, int charge) {
         //todo which devation to find peak?
         SimpleMutableSpectrum spectrum = new SimpleMutableSpectrum(ms1);
         int idx = Spectrums.mostIntensivePeakWithin(spectrum, precursorMass, findMs1PeakDeviation);
@@ -71,7 +71,7 @@ public class NotMonoisotopicAnnotator implements QualityAnnotator {
 //            ms1.addPeak(precursorMass, experiment.getIonMass());
             throw new RuntimeException("could not find precursor peak");
         }
-        Spectrums.filterIsotpePeaks(spectrum, profile.getAllowedMassDeviation());
+        Spectrums.filterIsotpePeaks(spectrum, deviation.allowedMassDeviation);
         int idx2 = Spectrums.mostIntensivePeakWithin(spectrum, precursorMass, findMs1PeakDeviation);
         return (idx2 <0 || realMass!=spectrum.getMzAt(idx2));
 //        return (Spectrums.search(ms1, precursorMass, profile.getAllowedMassDeviation())<0); //not contained after filtering

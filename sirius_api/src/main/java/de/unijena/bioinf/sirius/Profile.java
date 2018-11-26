@@ -22,10 +22,13 @@ import com.google.gson.JsonObject;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.babelms.json.JSONDocumentType;
+import de.unijena.bioinf.ms.properties.DefaultProperty;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+@DefaultProperty(propertyKey = "AlgorithmProfile")
 public class Profile {
 
     public final FragmentationPatternAnalysis fragmentationPatternAnalysis;
@@ -43,6 +46,15 @@ public class Profile {
         if (document.hasKeyInDictionary(json, "IsotopePatternAnalysis")) this.isotopePatternAnalysis = IsotopePatternAnalysis.loadFromProfile(document, json);
         else isotopePatternAnalysis=null;
     }
+
+    public static Profile fromString(String fileName) {
+        try {
+            return new Profile(fileName);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not find profile JSON", e);
+        }
+    }
+
 
     public Profile(IsotopePatternAnalysis ms1, FragmentationPatternAnalysis ms2) {
         this.fragmentationPatternAnalysis = ms2;

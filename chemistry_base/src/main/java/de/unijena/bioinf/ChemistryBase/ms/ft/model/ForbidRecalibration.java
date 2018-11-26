@@ -1,18 +1,19 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft.model;
 
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.DefaultProperty;
 
 /**
  * if this annotation is set, recalibration is ommited
  */
-public class ForbidRecalibration implements Ms2ExperimentAnnotation {
-
-    public final static ForbidRecalibration ALLOWED = new ForbidRecalibration(false);
-    public final static ForbidRecalibration FORBIDDEN = new ForbidRecalibration(true);
+@DefaultProperty
+public enum ForbidRecalibration implements Ms2ExperimentAnnotation {
+    ALLOWED(false),
+    FORBIDDEN(true);
 
     private final boolean recalibrationForbidden;
 
-    private ForbidRecalibration(boolean recalibrationForbidden) {
+    ForbidRecalibration(boolean recalibrationForbidden) {
         this.recalibrationForbidden = recalibrationForbidden;
     }
 

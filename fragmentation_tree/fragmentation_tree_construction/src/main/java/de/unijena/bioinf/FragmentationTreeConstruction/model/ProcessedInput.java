@@ -17,7 +17,9 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
@@ -65,13 +67,12 @@ public class ProcessedInput implements Cloneable {
 
     private final Ms2Experiment originalExperiment;
     private MutableMs2Experiment experiment;
-    private MutableMeasurementProfile measurementProfile;
     private List<ProcessedPeak> mergedPeaks;
     private ProcessedPeak parentPeak;
     private HashMap<Class, PeakAnnotation> peakAnnotations;
     private HashMap<Class, Object> annotations;
 
-    public ProcessedInput(MutableMs2Experiment experiment, Ms2Experiment originalExperiment, MeasurementProfile measurementProfile) {
+    public ProcessedInput(MutableMs2Experiment experiment, Ms2Experiment originalExperiment) {
         this.experiment = experiment;
         this.originalExperiment = originalExperiment;
         this.mergedPeaks = new ArrayList<ProcessedPeak>();
@@ -83,9 +84,9 @@ public class ProcessedInput implements Cloneable {
             final Map.Entry<Class<Ms2ExperimentAnnotation>,Ms2ExperimentAnnotation> entry = anos.next();
             annotations.put(entry.getKey(), entry.getValue());
         }
-        this.measurementProfile = new MutableMeasurementProfile(measurementProfile);    }
+    }
 
-    public ProcessedInput(MutableMs2Experiment experiment, Ms2Experiment originalExperiment, MeasurementProfile measurementProfile,
+    public ProcessedInput(MutableMs2Experiment experiment, Ms2Experiment originalExperiment,
                           List<ProcessedPeak> mergedPeaks, ProcessedPeak parentPeak) {
         this.experiment = experiment;
         this.originalExperiment = originalExperiment;
@@ -94,7 +95,6 @@ public class ProcessedInput implements Cloneable {
         this.annotations = new HashMap<Class, Object>();
         this.annotations.put(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown));
         this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
-        this.measurementProfile = new MutableMeasurementProfile(measurementProfile);
     }
 
     public ProcessedInput getRecalibratedVersion(SpectralRecalibration rec) {
@@ -135,14 +135,6 @@ public class ProcessedInput implements Cloneable {
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public MutableMeasurementProfile getMeasurementProfile() {
-        return measurementProfile;
-    }
-
-    public void setMeasurementProfile(MeasurementProfile measurementProfile) {
-        this.measurementProfile = (measurementProfile instanceof MutableMeasurementProfile) ? (MutableMeasurementProfile) measurementProfile : new MutableMeasurementProfile(measurementProfile);
     }
 
     public Ms2Experiment getOriginalInput() {
