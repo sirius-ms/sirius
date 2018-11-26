@@ -27,7 +27,7 @@ import java.util.Arrays;
  * Simple implementation of an immutable Mass Spectrum.
  * Peaks are stored ordered by mass in arrays.
  */
-public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectrum{
+public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectrum<Peak>{
 
 	protected final int hash;
 	

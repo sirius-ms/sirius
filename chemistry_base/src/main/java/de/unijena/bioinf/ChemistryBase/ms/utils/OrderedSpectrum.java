@@ -17,9 +17,13 @@
  */
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+
 /**
  * Interface to identify implementations of spectra which are ordered by their mz values
  */
-public interface OrderedSpectrum {
+public interface OrderedSpectrum<P extends Peak> extends Spectrum<P> {
 
 }
+

@@ -194,12 +194,22 @@ public class Spectrums {
 
     public static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
     double cosineProduct(S left, S2 right, Deviation deviation) {
-        return dotProductPeaks(left, right, deviation) / Math.sqrt(dotProductPeaks(left,left,deviation)*dotProductPeaks(right,right,deviation));
+        OrderedSpectrum<Peak> left_, right_;
+        if (left instanceof OrderedSpectrum) left_ = (OrderedSpectrum)left;
+        else left_ = new SimpleSpectrum(left);
+        if (left instanceof OrderedSpectrum) right_ = (OrderedSpectrum)right;
+        else right_ = new SimpleSpectrum(right);
+        return dotProductPeaks(left_, right_, deviation) / Math.sqrt(dotProductPeaks(left_,left_,deviation)*dotProductPeaks(right_,right_,deviation));
     }
 
     public static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
     double cosineProductWithLosses(S left, S2 right, Deviation deviation, double precursorLeft, double precursorRight) {
-        return (cosineProduct(left,right,deviation) + cosineProduct(getInversedSpectrum(left, precursorLeft), getInversedSpectrum(right, precursorRight), deviation))/2d;
+        OrderedSpectrum<Peak> left_, right_;
+        if (left instanceof OrderedSpectrum) left_ = (OrderedSpectrum)left;
+        else left_ = new SimpleSpectrum(left);
+        if (left instanceof OrderedSpectrum) right_ = (OrderedSpectrum)right;
+        else right_ = new SimpleSpectrum(right);
+        return (cosineProduct(left_,right_,deviation) + cosineProduct(getInversedSpectrum(left_, precursorLeft), getInversedSpectrum(right_, precursorRight), deviation))/2d;
     }
 
     public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum getInversedSpectrum(S spec, double precursor) {
@@ -223,26 +233,32 @@ public class Spectrums {
 
     public static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
     double dotProductPeaks(S left, S2 right, Deviation deviation) {
+        OrderedSpectrum<Peak> left_, right_;
+        if (left instanceof OrderedSpectrum) left_ = (OrderedSpectrum)left;
+        else left_ = new SimpleSpectrum(left);
+        if (left instanceof OrderedSpectrum) right_ = (OrderedSpectrum)right;
+        else right_ = new SimpleSpectrum(right);
+
         int i=0, j=0;
-        final int nl=left.size(), nr=right.size();
+        final int nl=left_.size(), nr=right_.size();
         double score=0d;
-        while (i < nl && left.getMzAt(i) < 0.5d) ++i;
-        while (j < nr && right.getMzAt(j) < 0.5d) ++j;
+        while (i < nl && left_.getMzAt(i) < 0.5d) ++i;
+        while (j < nr && right_.getMzAt(j) < 0.5d) ++j;
         while (i < nl && j < nr) {
-            final double difference = left.getMzAt(i)- right.getMzAt(j);
-            final double allowedDifference = deviation.absoluteFor(Math.min(left.getMzAt(i), right.getMzAt(j)));
+            final double difference = left_.getMzAt(i)- right_.getMzAt(j);
+            final double allowedDifference = deviation.absoluteFor(Math.min(left_.getMzAt(i), right_.getMzAt(j)));
             if (Math.abs(difference) <= allowedDifference) {
-                score += left.getIntensityAt(i)*right.getIntensityAt(j);
+                score += left_.getIntensityAt(i)*right_.getIntensityAt(j);
                 for (int k=i+1; k < nl; ++k) {
-                    final double difference2 = left.getMzAt(k)- right.getMzAt(j);
+                    final double difference2 = left_.getMzAt(k)- right_.getMzAt(j);
                     if (Math.abs(difference2) <= allowedDifference) {
-                        score += left.getIntensityAt(k)*right.getIntensityAt(j);
+                        score += left_.getIntensityAt(k)*right_.getIntensityAt(j);
                     } else break;
                 }
                 for (int l=j+1; l < nr; ++l) {
-                    final double difference2 = left.getMzAt(i)- right.getMzAt(l);
+                    final double difference2 = left_.getMzAt(i)- right_.getMzAt(l);
                     if (Math.abs(difference2) <= allowedDifference) {
-                        score += left.getIntensityAt(i)*right.getIntensityAt(l);
+                        score += left_.getIntensityAt(i)*right_.getIntensityAt(l);
                     } else break;
                 }
                 ++i; ++j;
@@ -1424,7 +1440,7 @@ public class Spectrums {
         list[b] = z;
     }
 
-    private static class AlreadyOrderedSpectrum<T extends Peak> implements OrderedSpectrum, Spectrum<T> {
+    private static class AlreadyOrderedSpectrum<T extends Peak> implements OrderedSpectrum<T> {
 
         private final Spectrum<T> delegate;
 
@@ -1458,7 +1474,7 @@ public class Spectrums {
         }
     }
 
-    private static <T extends Peak, S extends Spectrum<T>> AlreadyOrderedSpectrum<T> getAlreadyOrderedSpectrum(S spec) {
+    public static <T extends Peak, S extends Spectrum<T>> AlreadyOrderedSpectrum<T> getAlreadyOrderedSpectrum(S spec) {
         return new AlreadyOrderedSpectrum<>(spec);
     }
 
