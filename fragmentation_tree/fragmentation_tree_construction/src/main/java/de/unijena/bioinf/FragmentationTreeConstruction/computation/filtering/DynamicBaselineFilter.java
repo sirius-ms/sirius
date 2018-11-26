@@ -20,7 +20,6 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
-import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 
@@ -36,7 +35,7 @@ public class DynamicBaselineFilter implements Preprocessor {
 
 
     @Override
-    public MutableMs2Experiment process(MutableMs2Experiment experiment, MeasurementProfile profile) {
+    public MutableMs2Experiment process(MutableMs2Experiment experiment) {
         final ArrayList<MutableMs2Spectrum> newList = new ArrayList<MutableMs2Spectrum>();
         final NormalDistribution dist = new NormalDistribution(0d, standardDeviation*standardDeviation);
         final double max = dist.getDensity(0d);

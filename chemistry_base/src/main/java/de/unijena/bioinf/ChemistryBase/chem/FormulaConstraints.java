@@ -22,6 +22,8 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
+import de.unijena.bioinf.ms.properties.DefaultProperty;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.*;
@@ -49,6 +51,18 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
     private final List<FormulaFilter> filters;
 
     private final static Pattern INTERVAL = Pattern.compile("\\[(?:(\\d*)\\s*-\\s*)?(\\d*)?\\]");
+
+
+    @DefaultInstanceProvider
+    public static FormulaConstraints fromString(@DefaultProperty String alphabet,
+                                                @DefaultProperty(propertyKey = "valenceFilter") double rdbeToPass) {
+        final FormulaConstraints fc = new FormulaConstraints(alphabet);
+        if (Double.compare(rdbeToPass, -0.5d) != 0) {
+            fc.filters.clear();
+            fc.addFilter(new ValenceFilter(rdbeToPass));
+        }
+        return fc;
+    }
 
     public FormulaConstraints(String string) {
         final PeriodicTable PT = PeriodicTable.getInstance();
@@ -114,6 +128,7 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         this.filters = new ArrayList<FormulaFilter>();
         addFilter(new ValenceFilter());
     }
+
 
     /**
      * A factory method which provides a nice way to instantiate formula constraints, but which is not type-safe. So
@@ -213,11 +228,8 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
 
     public static FormulaConstraints allSubsetsOf(MolecularFormula f) {
         final FormulaConstraints c = new FormulaConstraints(new ChemicalAlphabet(f.elementArray()));
-        f.visit(new FormulaVisitor<Object>() {
-            @Override
-            public Object visit(Element element, int amount) {
-                c.setUpperbound(element, amount); return null;
-            }
+        f.visit((element, amount) -> {
+            c.setUpperbound(element, amount); return null;
         });
         return c;
     }

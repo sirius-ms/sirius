@@ -7,7 +7,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
-import gnu.trove.set.hash.TDoubleHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +50,7 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
     public abstract double getIntensity(double targetIntensity, double precursorMz, double targetMz);
 
     /**
-     * estimate the isolation filter from a list of {@link de.unijena.bioinf.ChemistryBase.ms.IsolationWindow.IntensityRatio}
+     * estimate the isolation filter from a list of
      * @param intensityRatios
      */
     protected abstract void estimateDistribution(IsotopeRatioInformation intensityRatios);
@@ -94,7 +93,6 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
     protected double maxWindowSize;
     protected double massShift = 0;
     protected boolean estimateSize;
-    protected Deviation findMs1PeakDeviation;
 
     private NormalDistribution normalDistribution;
 
@@ -141,21 +139,8 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
     }
 
 
-
-
-    public IsotopeRatioInformation extractIntensityRatios(Ms2Dataset ms2Dataset) {
-        Deviation findMs1PeakDeviation = this.findMs1PeakDeviation;
-        if (findMs1PeakDeviation==null) findMs1PeakDeviation = ms2Dataset.getMeasurementProfile().getAllowedMassDeviation();
-        return extractIntensityRatios(ms2Dataset, findMs1PeakDeviation);
-    }
-
-
-    protected IsotopeRatioInformation extractIntensityRatios(Ms2Dataset ms2Dataset, Deviation findMs1PeakDeviation) {
+    protected IsotopeRatioInformation extractIntensityRatios(Ms2Dataset ms2Dataset) {
         List<NormalizedPattern> normalizedPatterns = new ArrayList<>();
-        MutableMeasurementProfile mutableMeasurementProfile = new MutableMeasurementProfile(ms2Dataset.getMeasurementProfile());
-//        mutableMeasurementProfile.setAllowedMassDeviation(new Deviation(100, 0.01));
-//        mutableMeasurementProfile.setAllowedMassDeviation(new Deviation(5));
-
 
         boolean foundIonPeakInMs2AtLeastOnce = false;
 
@@ -223,10 +208,13 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
                 Spectrums.filter(ms1, filter);
                 Spectrums.filter(ms2, filter);
 
+                final MS1MassDeviation ms1Deviation = experiment.getAnnotationOrDefault(MS1MassDeviation.class);
+                final MS2MassDeviation ms2Deviation = experiment.getAnnotationOrDefault(MS2MassDeviation.class);
+
 
                 //find precursor/parent peak
-                int monoMs1Idx = Spectrums.mostIntensivePeakWithin(ms1, ionMass, findMs1PeakDeviation);
-                int monoMs2Idx = Spectrums.mostIntensivePeakWithin(ms2, ionMass, findMs1PeakDeviation);
+                int monoMs1Idx = Spectrums.mostIntensivePeakWithin(ms1, ionMass, ms1Deviation.allowedMassDeviation);
+                int monoMs2Idx = Spectrums.mostIntensivePeakWithin(ms2, ionMass, ms2Deviation.allowedMassDeviation);
 
 
                 //todo exclude low intensity ms1 and ms2 peaks !!!
@@ -244,17 +232,9 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
 
                 //match peaks
                 //todo match based on relative diff -> allow just smaller mass diff?
-
-                final double ms2MonoMass = ms2.getMzAt(monoMs2Idx);
-
-
-
-
                 double monoIntensityRatio = ms1.getIntensityAt(monoMs1Idx)/ms2.getIntensityAt(monoMs2Idx);
-                Deviation deviation = ms2Dataset.getMeasurementProfile().getAllowedMassDeviation().divide(2); //todo or smaller?
                 double maxMs1Intensity = Spectrums.getMaximalIntensity(spectrum1);
                 double maxMs2Intensity = Spectrums.getMaximalIntensity(spectrum2);
-//            double medianNoiseIntensity = mutableMeasurementProfile.getMedianNoiseIntensity();
                 DatasetStatistics datasetStatistics = ms2Dataset.getDatasetStatistics();
                 double medianNoiseIntensity;
                 try {
@@ -264,24 +244,17 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
                     LOG.warn("Unknown median noise intensity: No noise peaks found. Setting to 0.");
                 }
 
-                int ms1Idx = monoMs1Idx;
-                int ms2Idx;
-                double ms1Mass;
-
                 if (monoIntensityRatio<1d){
                     if (DEBUG){
                         System.out.println(monoIntensityRatio);
                     }
-
-//                continue;
                 }
                 expCounter++;
 
-                TDoubleHashSet usedPeaks = new TDoubleHashSet();
                 for (Peak peak : intensityMs1) {
                     //todo may use peaks multiple times!
-                    ChargedSpectrum isotopePatternMs1 = extractPatternMs1(ms1, mutableMeasurementProfile, peak.getMass());
-                    ChargedSpectrum isotopePatternMs2 = extractPattern(ms2, mutableMeasurementProfile, peak.getMass(), isotopePatternMs1.getAbsCharge());
+                    ChargedSpectrum isotopePatternMs1 = extractPatternMs1(ms1, ms1Deviation, peak.getMass());
+                    ChargedSpectrum isotopePatternMs2 = extractPattern(ms2, ms2Deviation, peak.getMass(), isotopePatternMs1.getAbsCharge());
 
                     expCounter2++;
 
@@ -623,11 +596,12 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
     }
 
     protected final static int[] charges = new int[]{1,2};
-    public ChargedSpectrum extractPatternMs1(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz) {
+
+    public ChargedSpectrum extractPatternMs1(Spectrum<Peak> ms1Spec, MS1MassDeviation deviation, double targetMz) {
         //test charge
         ChargedSpectrum bestSpec = null;
         for (int charge : charges) {
-            ChargedSpectrum current = extractPattern(ms1Spec, profile, targetMz, charge);
+            ChargedSpectrum current = extractPattern(ms1Spec, deviation, targetMz, charge);
             //filter unlikely peaks
             filterUnlikelyIsoPeaks(current);
             if (bestSpec==null) bestSpec = current;
@@ -653,8 +627,9 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
     }
 
     final static boolean mergeIsotopePeaks = false; //TODO test with true
-    public ChargedSpectrum extractPattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz, int absCharge) {
-        Spectrum<Peak> spectrum = Spectrums.extractIsotopePattern(ms1Spec, profile, targetMz, absCharge, mergeIsotopePeaks);
+
+    public ChargedSpectrum extractPattern(Spectrum<Peak> ms1Spec, MassDeviation deviation, double targetMz, int absCharge) {
+        Spectrum<Peak> spectrum = Spectrums.extractIsotopePattern(ms1Spec, deviation, targetMz, absCharge, mergeIsotopePeaks);
         if (spectrum==null) return null;
         return new ChargedSpectrum(spectrum, absCharge);
     }

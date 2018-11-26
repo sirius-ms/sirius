@@ -53,7 +53,7 @@ public class IsotopePeakWithKnownParentFilter implements Preprocessor {
     }
 
     @Override
-    public MutableMs2Experiment process(MutableMs2Experiment experiment, MeasurementProfile profile) {
+    public MutableMs2Experiment process(MutableMs2Experiment experiment) {
         final PeriodicTable p = PeriodicTable.getInstance();
         final IsotopicDistribution dist = p.getDistribution();
         final Isotopes HIso = dist.getIsotopesFor(p.getByName("H"));
@@ -81,7 +81,7 @@ public class IsotopePeakWithKnownParentFilter implements Preprocessor {
 
         final ChemicalAlphabet alphabet = new ChemicalAlphabet(experiment.getMolecularFormula().elementArray());
         final MassToFormulaDecomposer decomposer = new MassToFormulaDecomposer(alphabet);
-        final Deviation dev = profile.getAllowedMassDeviation();
+        final Deviation dev = experiment.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
         final Deviation shiftDev = dev.divide(2d);
         final FormulaConstraints fc = new FormulaConstraints(alphabet);
         final IsotopePatternGenerator generator = new FastIsotopePatternGenerator(Normalization.Sum(1d));

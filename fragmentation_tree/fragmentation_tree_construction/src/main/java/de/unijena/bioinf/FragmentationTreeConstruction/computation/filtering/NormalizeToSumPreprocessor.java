@@ -37,7 +37,7 @@ public class NormalizeToSumPreprocessor implements Preprocessor {
     }
 
     @Override
-    public MutableMs2Experiment process(MutableMs2Experiment experiment, MeasurementProfile prof) {
+    public MutableMs2Experiment process(MutableMs2Experiment experiment) {
         if (onlyForRelativeIntensities && !hasRelativeIntensities(experiment)) return experiment;
         for (MutableMs2Spectrum spec : experiment.getMs2Spectra()) {
             Spectrums.normalize(spec, Normalization.Sum(100d));

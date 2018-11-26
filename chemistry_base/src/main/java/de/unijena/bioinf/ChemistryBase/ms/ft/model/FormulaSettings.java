@@ -7,12 +7,18 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.util.Arrays;
 import java.util.HashSet;
-
+/**
+ * This class holds the formula constraints and detected elements
+ * Note: during Validation this is compared to the molecular formular an may be changed
+ *
+ *
+ * */
 public class FormulaSettings implements Ms2ExperimentAnnotation {
 
     private final FormulaConstraints constraints;
     private final HashSet<Element> automaticDetectionEnabled;
     private final boolean allowIsotopeElementFiltering;
+
 
     public static FormulaSettings defaultWithMs1() {
         return create(new FormulaConstraints("CHNOP[5]SFI[5]BrCl"), true, "S", "Br", "Cl", "B", "Se");
@@ -59,9 +65,11 @@ public class FormulaSettings implements Ms2ExperimentAnnotation {
     public FormulaSettings withAdditionalConstraints(FormulaConstraints constraints) {
         return new FormulaSettings(this.constraints.getExtendedConstraints(constraints), automaticDetectionEnabled, allowIsotopeElementFiltering);
     }
+
     public FormulaSettings withConstraints(FormulaConstraints constraints) {
         return new FormulaSettings(constraints, automaticDetectionEnabled, allowIsotopeElementFiltering);
     }
+
     public FormulaSettings autoDetect(Element... elems) {
         final HashSet<Element> set = (HashSet<Element>) automaticDetectionEnabled.clone();
         set.addAll(Arrays.asList(elems));

@@ -15,10 +15,6 @@ public interface Ms2Dataset extends Iterable<Ms2Experiment>{
      * todo currently uses absolute median noise intensity!!!
      * @return
      */
-    public MeasurementProfile getMeasurementProfile();
-
-    public String getProfile();
-
     public double getIsolationWindowWidth();
 
     public DatasetStatistics getDatasetStatistics();

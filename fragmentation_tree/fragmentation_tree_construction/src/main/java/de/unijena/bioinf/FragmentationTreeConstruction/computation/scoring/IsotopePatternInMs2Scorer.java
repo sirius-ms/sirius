@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -39,7 +40,6 @@ import java.util.List;
 public class IsotopePatternInMs2Scorer {
 
 
-    private static final String LABEL = "ms2Isotope";
     private static final double MULTIPLIER = 1d/10d;
 
     private static final boolean USE_FRAGMENT_ISOGEN = false;
@@ -63,12 +63,13 @@ public class IsotopePatternInMs2Scorer {
      */
     public void score(ProcessedInput input, FGraph graph) {
         final SpectralRecalibration recalibration = graph.getAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
-        final List<MutableMs2Spectrum> ms2Spectra = new ArrayList<>(input.getExperimentInformation().getMs2Spectra());
+        final Ms2Experiment experiment = input.getExperimentInformation();
+        final List<MutableMs2Spectrum> ms2Spectra = new ArrayList<>(experiment.getMs2Spectra());
         for (int k=0; k < ms2Spectra.size(); ++k) {
             ms2Spectra.set(k, new MutableMs2Spectrum(ms2Spectra.get(k)));
             Spectrums.sortSpectrumByMass(ms2Spectra.get(k));
         }
-        final Deviation peakDev = input.getMeasurementProfile().getAllowedMassDeviation();
+        final Deviation peakDev = experiment.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
         final Deviation shiftDev = peakDev.divide(2);
         // 1. for each fragment compute Isotope Pattern and match them against raw spectra
         final FastIsotopePatternGenerator generator = new FastIsotopePatternGenerator(Normalization.Sum(1d));
@@ -252,7 +253,7 @@ public class IsotopePatternInMs2Scorer {
         SimpleSpectrum ms1Pattern;// find MS1 spectrum
         if (USE_FRAGMENT_ISOGEN && input.getExperimentInformation().getMergedMs1Spectrum()!=null) {
             // search for isotope pattern in MS1
-            final List<IsotopePattern> patterns = new IsotopePatternAnalysis().deisotope(input.getExperimentInformation(), input.getMeasurementProfile());
+            final List<IsotopePattern> patterns = new IsotopePatternAnalysis().deisotope(input.getExperimentInformation());
             return patterns.get(0).getPattern();
 
         } else {
@@ -264,7 +265,7 @@ public class IsotopePatternInMs2Scorer {
 
     private SimpleSpectrum findMs1PatternInMs2(ProcessedInput input, FGraph graph, FastIsotopePatternGenerator generator, List<MutableMs2Spectrum> ms2Spectra, Ionization ion) {
         SimpleSpectrum ms1Pattern;// find MS1 spectrum
-        final Deviation dev = input.getMeasurementProfile().getAllowedMassDeviation();
+        final Deviation dev = input.getExperimentInformation().getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
         if (USE_FRAGMENT_ISOGEN) {
             final SimpleSpectrum simulated = new FastIsotopePatternGenerator().simulatePattern(graph.getRoot().getChildren(0).getFormula(),ion);
             int mostIntens = -1;
@@ -397,7 +398,8 @@ public class IsotopePatternInMs2Scorer {
     }
 
     public void scoreFromMs1(ProcessedInput input, FGraph graph) {
-        final Deviation dev = input.getMeasurementProfile().getAllowedMassDeviation();
+        final Ms2Experiment exp = input.getExperimentInformation();
+        final MS1MassDeviation dev = exp.getAnnotationOrDefault(MS1MassDeviation.class);
         final SimpleSpectrum mergedMs1 = input.getExperimentInformation().getMergedMs1Spectrum();
         if (mergedMs1 == null) return;
         final IsotopePatternAnalysis analyzer = new IsotopePatternAnalysis();
@@ -419,9 +421,9 @@ public class IsotopePatternInMs2Scorer {
                     continue;
 
                 final double ionMass = peak.getMz();
-                final int index = Spectrums.mostIntensivePeakWithin(mergedMs1, ionMass, dev);
+                final int index = Spectrums.mostIntensivePeakWithin(mergedMs1, ionMass, dev.allowedMassDeviation);
                 if (index >= 0) {
-                    final SimpleSpectrum spec = Spectrums.getNormalizedSpectrum(analyzer.extractPattern(mergedMs1, input.getMeasurementProfile(), ionMass), Normalization.Max(1d));
+                    final SimpleSpectrum spec = Spectrums.getNormalizedSpectrum(analyzer.extractPattern(mergedMs1, dev, exp.getAnnotationOrDefault(FormulaSettings.class).getConstraints().getChemicalAlphabet(), ionMass), Normalization.Max(1d));
                     if (spec.size() > 1) {
                         // use pattern!
                         //peak.setMz(spec.getMzAt(0));
@@ -449,10 +451,10 @@ public class IsotopePatternInMs2Scorer {
                 if (spec.size()==0) continue; //might happen for strange elements, since we set max number of peaks and a min intensity threshold
 
                 final double[] scores = new double[spec.size()];
-                scorer1.score(scores, spec, simulated, Normalization.Max(1d), input.getExperimentInformation(), input.getMeasurementProfile());
-                scorer2.score(scores, spec, simulated, Normalization.Max(1d), input.getExperimentInformation(), input.getMeasurementProfile());
-                scorer3.score(scores, spec, simulated, Normalization.Max(1d), input.getExperimentInformation(), input.getMeasurementProfile());
-                scorer4.score(scores, spec, simulated, Normalization.Max(1d), input.getExperimentInformation(), input.getMeasurementProfile());
+                scorer1.score(scores, spec, simulated, Normalization.Max(1d), input.getExperimentInformation());
+                scorer2.score(scores, spec, simulated, Normalization.Max(1d), input.getExperimentInformation());
+                scorer3.score(scores, spec, simulated, Normalization.Max(1d), input.getExperimentInformation());
+                scorer4.score(scores, spec, simulated, Normalization.Max(1d), input.getExperimentInformation());
                 double maxScore = 0d;
                 for (int i=0; i < scores.length; ++i) {
                     maxScore = Math.max(scores[i], maxScore);
