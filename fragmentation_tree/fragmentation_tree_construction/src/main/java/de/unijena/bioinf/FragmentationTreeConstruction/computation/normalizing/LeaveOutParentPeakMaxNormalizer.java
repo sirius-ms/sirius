@@ -31,10 +31,9 @@ import java.util.List;
  */
 public class LeaveOutParentPeakMaxNormalizer implements Normalizer {
     @Override
-    public List<List<ProcessedPeak>> normalize(Ms2Experiment experiment, MeasurementProfile profile, NormalizationType type) {
+    public List<List<ProcessedPeak>> normalize(Ms2Experiment experiment, NormalizationType type) {
         final double parentMass  = experiment.getIonMass();
         final ArrayList<List<ProcessedPeak>> peaklist = new ArrayList<List<ProcessedPeak>>(100);
-        final Deviation mergeWindow = profile.getAllowedMassDeviation().divide(2d);
         double globalMaxIntensity = 0d;
         for (Ms2Spectrum<? extends Peak> s : experiment.getMs2Spectra()) {
             final ArrayList<ProcessedPeak> peaks = new ArrayList<ProcessedPeak>(s.size());

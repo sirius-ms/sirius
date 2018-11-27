@@ -31,7 +31,7 @@ public class Ms2CompoundMerger {
     private final double maxRetentionTimeShift;
     private final double cosineSimilarity;
     private final boolean mergeWithinRuns;
-    private final MeasurementProfile findIsotopesMeasurementProfile;
+    private final MS2MassDeviation findIsotopesMeasurementProfile;
 
     private Map<Ms2Experiment, MergedMs2Spectrum> experimentToMergedMs2;
 
@@ -43,10 +43,9 @@ public class Ms2CompoundMerger {
         //todo is hashmap necessary? or just array?
         experimentToMergedMs2 = new HashMap<>();
 
-        MutableMeasurementProfile mmp = new MutableMeasurementProfile();
-        mmp.setAllowedMassDeviation(maxMzDeviation);
-        mmp.setStandardMassDifferenceDeviation(maxMzDeviation.divide(2));//todo add hoc solution works with ms1merged from openMs features
-        this.findIsotopesMeasurementProfile = mmp;
+        this.findIsotopesMeasurementProfile = MS2MassDeviation.DEFAULT
+                .withAllowedMassDeviation(maxMzDeviation)
+                .withMassDifferenceDeviation(maxMzDeviation.divide(2));
     }
 
 
@@ -211,17 +210,17 @@ public class Ms2CompoundMerger {
         PrecursorIonType ionType = null;
         String filePaths = "";
         for (int i = 0; i < experiments.size(); i++) {
-             Ms2Experiment experiment = experiments.get(i);
-             merged.addAnnotationsFrom(experiment); //todo merge annotations in a better way
-             merged.getMs2Spectra().addAll(experiment.getMs2Spectra());
-             merged.getMs1Spectra().addAll(experiment.getMs1Spectra());
-             if (ionType==null || ionType.isIonizationUnknown()){
-                 ionType = experiment.getPrecursorIonType();
-             } else if (!experiment.getPrecursorIonType().isIonizationUnknown() && !ionType.equals(experiment.getPrecursorIonType())){
-                 throw new RuntimeException("Cannot merge compounds: PrecursorIonTypes differ.");
-             }
-             filePaths += experiment.getSource().toString();
-             if (i==experiments.size()) filePaths += ";";
+            Ms2Experiment experiment = experiments.get(i);
+            merged.addAnnotationsFrom(experiment); //todo merge annotations in a better way
+            merged.getMs2Spectra().addAll(experiment.getMs2Spectra());
+            merged.getMs1Spectra().addAll(experiment.getMs1Spectra());
+            if (ionType == null || ionType.isIonizationUnknown()) {
+                ionType = experiment.getPrecursorIonType();
+            } else if (!experiment.getPrecursorIonType().isIonizationUnknown() && !ionType.equals(experiment.getPrecursorIonType())) {
+                throw new RuntimeException("Cannot merge compounds: PrecursorIonTypes differ.");
+            }
+            filePaths += experiment.getSource().toString();
+            if (i == experiments.size()) filePaths += ";";
         }
         merged.setMergedMs1Spectrum(mergeMergedMs1(experiments, meanMz, ionType.getCharge(), deviation));
         merged.setPrecursorIonType(ionType);
@@ -240,16 +239,12 @@ public class Ms2CompoundMerger {
 
     private SimpleSpectrum mergeMergedMs1(List<Ms2Experiment> experiments, double precursorMass, int charge, Deviation deviation){
         List<SimpleMutableSpectrum> spectra = new ArrayList<>();
-        List<MS1MassDeviation> devs = new ArrayList<>();
-
         for (Ms2Experiment experiment : experiments) {
-            MS1MassDeviation dev = experiment.getAnnotationOrDefault(MS1MassDeviation.class);
             SimpleSpectrum mergedMs1 = experiment.getMergedMs1Spectrum();
             if (mergedMs1!=null && mergedMs1.size()>0){
                 SimpleMutableSpectrum zerosRemoved = removeZeroIntensityPeaks(mergedMs1);
                 if (zerosRemoved.size()>0){
                     spectra.add(zerosRemoved);
-                    devs.add(dev);
                 }
             }
         }
@@ -280,7 +275,8 @@ public class Ms2CompoundMerger {
 
 
         //get spectra which have the longest isotope patterns
-        spectra = extractMS1sWithMaxNumberOfIsotopePeaks(spectra, devs, precursorMass, charge);
+
+        spectra = extractMS1sWithMaxNumberOfIsotopePeaks(spectra, precursorMass, charge, findIsotopesMeasurementProfile);
 
         if (spectra.size()==1) return new SimpleSpectrum(spectra.get(0));
 
@@ -399,16 +395,13 @@ public class Ms2CompoundMerger {
         return mutableSpectrum;
     }
 
-    private <S extends Spectrum<Peak>> List<S> extractMS1sWithMaxNumberOfIsotopePeaks(List<S> spectra, List<? extends MassDeviation> devs, double ionMass, int charge) {
+    private <S extends Spectrum<Peak>> List<S> extractMS1sWithMaxNumberOfIsotopePeaks(List<S> spectra, double ionMass, int charge, MS2MassDeviation measurementProfile) {
         int absCharge = Math.abs(charge);
 
         int maxNumberIsotopes = 0;
         List<S> bestSpectra = null;
-        for (int i = 0; i < spectra.size(); i++) {
-            final S spectrum = spectra.get(i);
-            final MassDeviation dev = devs.get(i);
-
-            Spectrum<Peak> iso = Spectrums.extractIsotopePattern(spectrum, dev, ionMass, absCharge, true);
+        for (S spectrum : spectra) {
+            Spectrum<Peak> iso = Spectrums.extractIsotopePattern(spectrum, measurementProfile, ionMass, absCharge, true);
             if (iso.size()>maxNumberIsotopes){
                 maxNumberIsotopes = iso.size();
                 bestSpectra = new ArrayList<>();
@@ -417,6 +410,8 @@ public class Ms2CompoundMerger {
                 bestSpectra.add(spectrum);
             }
         }
+
+
         return bestSpectra;
     }
 

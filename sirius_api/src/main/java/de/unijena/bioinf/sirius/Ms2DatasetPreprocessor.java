@@ -351,20 +351,21 @@ public class Ms2DatasetPreprocessor {
     }
 
 
-    private boolean isNotMonoisotopicPeak(Ms2Experiment experiment, MeasurementProfile profile) {
+    private boolean isNotMonoisotopicPeak(Ms2Experiment experiment) {
         final double precursorMass = experiment.getIonMass();
 
 
         //todo what about experiment.getMergedMs1Spectrum()? probably already some cutoff applied by mzMine an co?
-        MutableSpectrum<Peak> merged = new SimpleMutableSpectrum(getMergedMs2(experiment, profile.getAllowedMassDeviation()));
-        int idx = Spectrums.mostIntensivePeakWithin(merged, precursorMass, profile.getAllowedMassDeviation());
+        final MS2MassDeviation dev = experiment.getAnnotationOrDefault(MS2MassDeviation.class);
+        MutableSpectrum<Peak> merged = new SimpleMutableSpectrum(getMergedMs2(experiment,dev.allowedMassDeviation));
+        int idx = Spectrums.mostIntensivePeakWithin(merged, precursorMass,dev.allowedMassDeviation);
         if (idx<0){
             merged.addPeak(precursorMass, experiment.getIonMass());
 //            idx = -(idx+1);
         }
-        Spectrums.filterIsotpePeaks(merged, profile.getAllowedMassDeviation());
+        Spectrums.filterIsotpePeaks(merged, dev.allowedMassDeviation);
 
-        return (Spectrums.search(merged, precursorMass, profile.getAllowedMassDeviation())<0); //not contained after filtering
+        return (Spectrums.search(merged, precursorMass, dev.allowedMassDeviation)<0); //not contained after filtering
     }
 
     private Spectrum<Peak> getMergedMs2(Ms2Experiment experiment, Deviation deviation){

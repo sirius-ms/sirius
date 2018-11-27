@@ -22,7 +22,6 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
@@ -524,43 +523,24 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             }
         }
 
-        private Ms2MutableMeasurementProfileDummy getMs2Profile() {
-            Ms2MutableMeasurementProfileDummy ms2Profile = (Ms2MutableMeasurementProfileDummy) annotations.get(Ms2MutableMeasurementProfileDummy.class);
-            if (ms2Profile == null) {
-                ms2Profile = new Ms2MutableMeasurementProfileDummy();
-                annotations.put(Ms2MutableMeasurementProfileDummy.class, ms2Profile);
-            }
-            return ms2Profile;
-        }
-
-        private Ms1MutableMeasurementProfileDummy getMs1Profile() {
-            Ms1MutableMeasurementProfileDummy ms1Profile = (Ms1MutableMeasurementProfileDummy) annotations.get(Ms1MutableMeasurementProfileDummy.class);
-            if (ms1Profile == null) {
-                ms1Profile = new Ms1MutableMeasurementProfileDummy();
-                annotations.put(Ms1MutableMeasurementProfileDummy.class, ms1Profile);
-            }
-            return ms1Profile;
-        }
 
         private void postprocess() {
-            setMeasurementProfiles();
+            setMassDeviations();
         }
 
-        private void setMeasurementProfiles() {
+        private void setMassDeviations() {
             if (ppmMax == 0 && ppmMaxMs2 == 0 && noiseMs2 == 0) return;
             if (ppmMaxMs2 == 0) ppmMaxMs2 = ppmMax;
             if (ppmMax != 0) {
-                Ms1MutableMeasurementProfileDummy ms1Profile = getMs1Profile();
-                ms1Profile.setAllowedMassDeviation(new Deviation(ppmMax));
+                annotations.put(MS1MassDeviation.class, MS1MassDeviation.DEFAULT.withAllowedMassDeviation(new Deviation(ppmMax)));
             }
-            Ms2MutableMeasurementProfileDummy ms2Profile = null;
+
             if (ppmMaxMs2 != 0) {
-                ms2Profile = getMs2Profile();
-                ms2Profile.setAllowedMassDeviation(new Deviation(ppmMaxMs2));
+                annotations.put(MS2MassDeviation.class, MS2MassDeviation.DEFAULT.withAllowedMassDeviation(new Deviation(ppmMaxMs2)));
             }
+
             if (noiseMs2 != 0) {
-                ms2Profile = getMs2Profile();
-                ms2Profile.setMedianNoiseIntensity(noiseMs2);
+                annotations.put(MedianNoiseIntensity.class, new MedianNoiseIntensity(noiseMs2));
             }
         }
 

@@ -769,20 +769,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.getPostProcessors().add(new NoiseThresholdFilter(0.005d));
         analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
 
-
-        //final TreeBuilder solver = TreeBuilderFactory.getInstance().getTreeBuilder();
-        //analysis.setTreeBuilder(solver);
-
-        final MutableMeasurementProfile profile = new MutableMeasurementProfile();
-        profile.setAllowedMassDeviation(new Deviation(10));
-        profile.setStandardMassDifferenceDeviation(new Deviation(7));
-        profile.setStandardMs2MassDeviation(new Deviation(10));
-        profile.setStandardMassDifferenceDeviation(new Deviation(5));
-        profile.setFormulaConstraints(new FormulaConstraints());
-        profile.setMedianNoiseIntensity(0.02);
-        profile.setIntensityDeviation(0.02);
-
-
         analysis.initialize();
 
         return analysis;

@@ -17,7 +17,6 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.parentpeak;
 
-import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
@@ -30,6 +29,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
  */
 public interface ParentPeakDetector {
 
-    ProcessedPeak detectParentPeak(Ms2Experiment experiment, MeasurementProfile profile);
+    ProcessedPeak detectParentPeak(Ms2Experiment experiment);
 
 }

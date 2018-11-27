@@ -459,26 +459,18 @@ public class Sirius {
         else return new MutableMs2Experiment(experiment);
     }
 
-    public static void setAllowedMassDeviation(@NotNull MutableMs2Experiment experiment, Deviation
-            fragmentMassDeviation) {
-        MutableMeasurementProfile prof = makeProfile(experiment);
-        prof.setAllowedMassDeviation(fragmentMassDeviation);
+    public static void setAllowedMassDeviationMs1(@NotNull MutableMs2Experiment experiment, Deviation fragmentMassDeviation) {
+        setAllowedMassDeviation(experiment, fragmentMassDeviation, MS1MassDeviation.class);
     }
 
-    private static MutableMeasurementProfile makeProfile(MutableMs2Experiment experiment) {
-        MeasurementProfile prof = experiment.getAnnotation(MeasurementProfile.class, null);
-        if (prof == null) {
-            MutableMeasurementProfile prof2 = new MutableMeasurementProfile();
-            experiment.setAnnotation(MeasurementProfile.class, prof2);
-            return prof2;
-        } else if (prof instanceof MutableMeasurementProfile) {
-            return (MutableMeasurementProfile) prof;
-        } else {
-            MutableMeasurementProfile prof2 = new MutableMeasurementProfile(prof);
-            experiment.setAnnotation(MeasurementProfile.class, prof2);
-            return prof2;
-        }
+    public static void setAllowedMassDeviationMs2(@NotNull MutableMs2Experiment experiment, Deviation fragmentMassDeviation) {
+        setAllowedMassDeviation(experiment, fragmentMassDeviation, MS2MassDeviation.class);
     }
+
+    public static <T extends MassDeviation> void setAllowedMassDeviation(@NotNull MutableMs2Experiment experiment, Deviation fragmentMassDeviation, Class<T> deviationType) {
+        experiment.setAnnotation(deviationType, experiment.getAnnotationOrDefault(deviationType).withAllowedMassDeviation(fragmentMassDeviation));
+    }
+
 
     public static void setAllowedIonModes(@NotNull Ms2Experiment experiment, Ionization... ionModes) {
         final PossibleIonModes pa = new PossibleIonModes();
