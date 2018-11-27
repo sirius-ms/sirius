@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
@@ -55,14 +56,15 @@ public class NoiseEstimateFilter implements Preprocessor, Initializable {
     }
 
     @Override
-    public MutableMs2Experiment process(MutableMs2Experiment experiment, MeasurementProfile profile) {
+    public MutableMs2Experiment process(MutableMs2Experiment experiment) {
         int npeaks = 0;
-        for (Ms2Spectrum spec : experiment.getMs2Spectra()) npeaks += spec.size();
+        for (Ms2Spectrum spec : experiment.getMs2Spectra())
+            npeaks += spec.size();
         if (npeaks <= minNumberOfNoisePeaks) return experiment;
 
-        final MassToFormulaDecomposer decomposer = getCache().getDecomposer(profile.getFormulaConstraints().getChemicalAlphabet());
-        final Deviation dev = profile.getAllowedMassDeviation();
-        final FormulaConstraints constraints = profile.getFormulaConstraints();
+        final FormulaConstraints constraints = experiment.getAnnotationOrDefault(FormulaSettings.class).getConstraints();
+        final MassToFormulaDecomposer decomposer = getCache().getDecomposer(constraints.getChemicalAlphabet());
+        final Deviation dev = experiment.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
         final boolean intrinsicalCharged = experiment.getPrecursorIonType().isIntrinsicalCharged();
         final PrecursorIonType ion = experiment.getPrecursorIonType();
         final boolean ionIsKnown = !ion.isIonizationUnknown();

@@ -46,7 +46,7 @@ public class ElementPrediction {
 
         final TObjectIntHashMap<Element> voter = new TObjectIntHashMap<Element>(5, 0.75f, 0);
         for (Judge j : judges) {
-            j.vote(voter, experiment, profile);
+            j.vote(voter, experiment);
         }
 
 
