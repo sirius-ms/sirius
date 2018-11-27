@@ -21,7 +21,6 @@ import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import gnu.trove.map.hash.TObjectIntHashMap;
@@ -42,7 +41,7 @@ public class ElementPrediction {
         this.judges = new Judge[]{new PredictFromMs1(isoAnalyzer), new PredictFromMs2()};
     }
 
-    public FormulaConstraints extendConstraints(FormulaConstraints input, Ms2Experiment experiment, MeasurementProfile profile) {
+    public FormulaConstraints extendConstraints(FormulaConstraints input, Ms2Experiment experiment) {
 
         final TObjectIntHashMap<Element> voter = new TObjectIntHashMap<Element>(5, 0.75f, 0);
         for (Judge j : judges) {
