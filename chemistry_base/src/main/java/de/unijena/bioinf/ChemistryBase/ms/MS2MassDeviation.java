@@ -17,4 +17,19 @@ public class MS2MassDeviation extends MassDeviation {
     public static MS2MassDeviation newInstance(@DefaultProperty Deviation allowedMassDeviation, @DefaultProperty Deviation standardMassDeviation) {
         return new MS2MassDeviation(allowedMassDeviation, standardMassDeviation, Deviation.NULL_DEVIATION);
     }
+
+    @Override
+    public MS2MassDeviation withAllowedMassDeviation(Deviation allowedMassDeviation) {
+        return new MS2MassDeviation(allowedMassDeviation, standardMassDeviation, massDifferenceDeviation);
+    }
+
+    @Override
+    public MS2MassDeviation withStandardMassDeviation(Deviation standardMassDeviation) {
+        return new MS2MassDeviation(allowedMassDeviation, standardMassDeviation, massDifferenceDeviation);
+    }
+
+    @Override
+    public MS2MassDeviation withMassDifferenceDeviation(Deviation massDifferenceDeviation) {
+        return new MS2MassDeviation(allowedMassDeviation, standardMassDeviation, massDifferenceDeviation);
+    }
 }

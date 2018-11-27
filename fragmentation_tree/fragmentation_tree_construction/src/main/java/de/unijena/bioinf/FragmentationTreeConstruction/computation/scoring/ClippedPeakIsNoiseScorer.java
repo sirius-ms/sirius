@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.ByMedianEstimatable;
 import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.math.RealDistribution;
+import de.unijena.bioinf.ChemistryBase.ms.MedianNoiseIntensity;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
@@ -33,7 +34,8 @@ public class ClippedPeakIsNoiseScorer implements PeakScorer {
 
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
-        final RealDistribution estimatedDistribution = distribution.extimateByMedian(input.getMeasurementProfile().getMedianNoiseIntensity());
+        final RealDistribution estimatedDistribution = distribution.extimateByMedian(
+                        input.getExperimentInformation().getAnnotationOrDefault(MedianNoiseIntensity.class).value);
 
         double maxIntensity = 0d;
         for (ProcessedPeak p : input.getMergedPeaks()) maxIntensity = Math.max(p.getRelativeIntensity(), maxIntensity);

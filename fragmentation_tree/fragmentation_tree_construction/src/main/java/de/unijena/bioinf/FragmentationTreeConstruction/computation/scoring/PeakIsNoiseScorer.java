@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.ByMedianEstimatable;
 import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.math.RealDistribution;
+import de.unijena.bioinf.ChemistryBase.ms.MedianNoiseIntensity;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
@@ -51,7 +52,8 @@ public class PeakIsNoiseScorer implements PeakScorer {
 
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
-        final RealDistribution estimatedDistribution = distribution.extimateByMedian(input.getMeasurementProfile().getMedianNoiseIntensity());
+        final RealDistribution estimatedDistribution = distribution.extimateByMedian(
+                input.getExperimentInformation().getAnnotationOrDefault(MedianNoiseIntensity.class).value);
         for (int i=0; i < peaks.size(); ++i) {
             scores[i] -= estimatedDistribution.getInverseLogCumulativeProbability(peaks.get(i).getRelativeIntensity());
         }

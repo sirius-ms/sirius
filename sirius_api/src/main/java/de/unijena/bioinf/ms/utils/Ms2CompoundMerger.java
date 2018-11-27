@@ -240,12 +240,16 @@ public class Ms2CompoundMerger {
 
     private SimpleSpectrum mergeMergedMs1(List<Ms2Experiment> experiments, double precursorMass, int charge, Deviation deviation){
         List<SimpleMutableSpectrum> spectra = new ArrayList<>();
+        List<MS1MassDeviation> devs = new ArrayList<>();
+
         for (Ms2Experiment experiment : experiments) {
+            MS1MassDeviation dev = experiment.getAnnotationOrDefault(MS1MassDeviation.class);
             SimpleSpectrum mergedMs1 = experiment.getMergedMs1Spectrum();
             if (mergedMs1!=null && mergedMs1.size()>0){
                 SimpleMutableSpectrum zerosRemoved = removeZeroIntensityPeaks(mergedMs1);
                 if (zerosRemoved.size()>0){
                     spectra.add(zerosRemoved);
+                    devs.add(dev);
                 }
             }
         }
@@ -276,8 +280,7 @@ public class Ms2CompoundMerger {
 
 
         //get spectra which have the longest isotope patterns
-
-        spectra = extractMS1sWithMaxNumberOfIsotopePeaks(spectra, precursorMass, charge, findIsotopesMeasurementProfile);
+        spectra = extractMS1sWithMaxNumberOfIsotopePeaks(spectra, devs, precursorMass, charge);
 
         if (spectra.size()==1) return new SimpleSpectrum(spectra.get(0));
 
@@ -396,13 +399,16 @@ public class Ms2CompoundMerger {
         return mutableSpectrum;
     }
 
-    private <S extends Spectrum<Peak>> List<S> extractMS1sWithMaxNumberOfIsotopePeaks(List<S> spectra, double ionMass, int charge, MeasurementProfile measurementProfile) {
+    private <S extends Spectrum<Peak>> List<S> extractMS1sWithMaxNumberOfIsotopePeaks(List<S> spectra, List<? extends MassDeviation> devs, double ionMass, int charge) {
         int absCharge = Math.abs(charge);
 
         int maxNumberIsotopes = 0;
         List<S> bestSpectra = null;
-        for (S spectrum : spectra) {
-            Spectrum<Peak> iso = Spectrums.extractIsotopePattern(spectrum, measurementProfile, ionMass, absCharge, true);
+        for (int i = 0; i < spectra.size(); i++) {
+            final S spectrum = spectra.get(i);
+            final MassDeviation dev = devs.get(i);
+
+            Spectrum<Peak> iso = Spectrums.extractIsotopePattern(spectrum, dev, ionMass, absCharge, true);
             if (iso.size()>maxNumberIsotopes){
                 maxNumberIsotopes = iso.size();
                 bestSpectra = new ArrayList<>();
@@ -411,8 +417,6 @@ public class Ms2CompoundMerger {
                 bestSpectra.add(spectrum);
             }
         }
-
-
         return bestSpectra;
     }
 

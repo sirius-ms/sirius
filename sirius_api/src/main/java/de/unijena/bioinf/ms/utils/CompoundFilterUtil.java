@@ -11,12 +11,12 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 public class CompoundFilterUtil {
-
-    private MutableMeasurementProfile measurementProfile;
-
     ///////// filter spectra //////////
 
     /**
@@ -131,31 +131,24 @@ public class CompoundFilterUtil {
     }
 
     public List<Ms2Experiment> filterByNumberOfIsotopePeaks(List<Ms2Experiment> experiments, int minNumberOfIsotopes, Deviation findPrecursorInMs1Deviation, Deviation isotopeDifferencesDeviation) {
-        MutableMeasurementProfile measurementProfile = new MutableMeasurementProfile();
-        measurementProfile.setAllowedMassDeviation(findPrecursorInMs1Deviation);
-        measurementProfile.setStandardMassDifferenceDeviation(isotopeDifferencesDeviation);
-        this.measurementProfile = measurementProfile;
         List<Ms2Experiment> filtered = new ArrayList<>();
         for (Ms2Experiment experiment : experiments) {
-            if (getNumberOfIsotopePeaks(experiment)>=minNumberOfIsotopes) filtered.add(experiment);
+            if (getNumberOfIsotopePeaks(experiment) >= minNumberOfIsotopes) filtered.add(experiment);
         }
         return filtered;
     }
 
-    private int getNumberOfIsotopePeaks(Ms2Experiment experiment) {
-        return getNumberOfIsotopePeaks(experiment, measurementProfile);
-    }
-
-    protected static int getNumberOfIsotopePeaks(Ms2Experiment experiment, MeasurementProfile measurementProfile) {
+    protected static int getNumberOfIsotopePeaks(Ms2Experiment experiment) {
+        final MS1MassDeviation dev = experiment.getAnnotationOrDefault(MS1MassDeviation.class);
         int absCharge = Math.abs(experiment.getPrecursorIonType().getCharge());
         if (experiment.getMergedMs1Spectrum()!=null){
-            Spectrum<Peak> iso = Spectrums.extractIsotopePattern(experiment.getMergedMs1Spectrum(), measurementProfile, experiment.getIonMass(), absCharge, true);
+            Spectrum<Peak> iso = Spectrums.extractIsotopePattern(experiment.getMergedMs1Spectrum(), dev, experiment.getIonMass(), absCharge, true);
             return iso.size();
         }
 
         int maxNumberIsotopes = 0;
         for (Spectrum<Peak> spectrum : experiment.getMs1Spectra()) {
-            Spectrum<Peak> iso = Spectrums.extractIsotopePattern(spectrum, measurementProfile, experiment.getIonMass(), absCharge, true);
+            Spectrum<Peak> iso = Spectrums.extractIsotopePattern(spectrum, dev, experiment.getIonMass(), absCharge, true);
             if (iso==null) continue;
             if (iso.size()>maxNumberIsotopes) maxNumberIsotopes = iso.size();
         }
