@@ -24,7 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
+import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import org.apache.commons.math3.special.Erf;
@@ -61,15 +61,16 @@ public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
             return 0d; // don't score synthetic peaks
         final double theoreticalMass = ion.addToMass(formula.getMass());
         final double realMass = useOriginalMz ? peak.getOriginalMz() : peak.getMz();
-        final MeasurementProfile profile = input.getMeasurementProfile();
-        final Deviation dev = standardDeviation != null ? standardDeviation : profile.getStandardMs2MassDeviation();
+        final Deviation dev = standardDeviation != null
+                ? standardDeviation
+                : input.getExperimentInformation().getAnnotationOrDefault(MS2MassDeviation.class).standardMassDeviation;
         final double sd = dev.absoluteFor(realMass);
         return Math.log(Erf.erfc(Math.abs(realMass-theoreticalMass)/(sd * sqrt2)));
     }
 
     public NormalDistribution getDistribution(double peakMz, double peakIntensity, ProcessedInput input) {
-        final double sd = input.getMeasurementProfile().getStandardMs2MassDeviation().absoluteFor(peakMz);
-        return new NormalDistribution(0d, sd*sd);
+        final double sd = input.getExperimentInformation().getAnnotationOrDefault(MS2MassDeviation.class).standardMassDeviation.absoluteFor(peakMz);
+        return new NormalDistribution(0d, sd * sd);
     }
 
     @Override

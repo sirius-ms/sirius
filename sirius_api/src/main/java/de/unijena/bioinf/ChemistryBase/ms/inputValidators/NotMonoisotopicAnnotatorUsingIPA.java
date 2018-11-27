@@ -12,7 +12,6 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.sirius.Sirius;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,17 +49,12 @@ public class NotMonoisotopicAnnotatorUsingIPA implements QualityAnnotator {
      */
     @Override
     public void annotate(Ms2Dataset dataset) {
-        if (sirius==null){
-            try {
-                sirius = new Sirius(dataset.getProfile());
-            } catch (IOException e) {
-                e.printStackTrace();
-                sirius = new Sirius();
-            }
-        }
+        if (sirius == null)
+            sirius = new Sirius();
+
         for (Ms2Experiment ms2Experiment : dataset) {
             if (CompoundQuality.hasProperty(ms2Experiment, SpectrumProperty.NoMS1Peak)) continue;
-            if (isNotMonoisotopicPeak(ms2Experiment, dataset.getMeasurementProfile())){
+            if (isNotMonoisotopicPeak(ms2Experiment)) {
                 CompoundQuality.setProperty(ms2Experiment, SpectrumProperty.NotMonoisotopicPeak);
                 continue;
             }
@@ -70,10 +64,9 @@ public class NotMonoisotopicAnnotatorUsingIPA implements QualityAnnotator {
     /**
      * uses the most intense of all MS1 precursor peaks. USES ABSOLUTE VALUES, not relative. Fails if different instrument types are merged.
      * @param experiment
-     * @param profile
      * @return
      */
-    private boolean isNotMonoisotopicPeak(Ms2Experiment experiment, MeasurementProfile profile) {
+    private boolean isNotMonoisotopicPeak(Ms2Experiment experiment) {
         double precursorMass = experiment.getIonMass();
         int mostIntensiveIdx = -1;
         double maxIntensity = -1d;
@@ -90,11 +83,12 @@ public class NotMonoisotopicAnnotatorUsingIPA implements QualityAnnotator {
         }
         if (mostIntensiveIdx<0) throw new RuntimeException("no MS1 precursor peak found.");
 
-        return isNotMonoisotopicPeak(precursorMass, experiment.getMs1Spectra().get(mostIntensiveIdx), profile, experiment.getPrecursorIonType().getCharge());
+        final MS1MassDeviation massDev = experiment.getAnnotationOrDefault(MS1MassDeviation.class);
+        return isNotMonoisotopicPeak(precursorMass, experiment.getMs1Spectra().get(mostIntensiveIdx), massDev, experiment.getPrecursorIonType().getCharge());
 
     }
 
-    private boolean isNotMonoisotopicPeak(double precursorMass, Spectrum<Peak> ms1, MeasurementProfile profile, int charge) {
+    private boolean isNotMonoisotopicPeak(double precursorMass, Spectrum<Peak> ms1, MS1MassDeviation massDev, int charge) {
         MutableSpectrum<Peak> massSortedMs1 = new SimpleMutableSpectrum(ms1);
         Spectrums.sortSpectrumByMass(massSortedMs1);
 
@@ -107,7 +101,7 @@ public class NotMonoisotopicAnnotatorUsingIPA implements QualityAnnotator {
 
         if (!containsAnyAlternativeMonoisotopicPeak(realPrecursorMass, precursorIntensity, idx, massSortedMs1)) return false;
 
-        List<IsotopePattern> patterns = computeIsotopePatterns(realPrecursorMass, massSortedMs1, profile, realPrecursorMass, charge);
+        List<IsotopePattern> patterns = computeIsotopePatterns(realPrecursorMass, massSortedMs1, massDev, realPrecursorMass, charge);
 //        if (patterns.size()>0){
 //            System.out.println("mono best "+patterns.get(0).getCandidate()+" with "+patterns.get(0).getScore()+" at "+patterns.get(0).getMonoisotopicMass());
 //
@@ -126,7 +120,7 @@ public class NotMonoisotopicAnnotatorUsingIPA implements QualityAnnotator {
             if (skipPeak(peak, precursorMass, precursorIntensity)) continue;
 
 
-            List<IsotopePattern> isotopePatterns = computeIsotopePatterns(mass, massSortedMs1, profile, realPrecursorMass, charge);
+            List<IsotopePattern> isotopePatterns = computeIsotopePatterns(mass, massSortedMs1, massDev, realPrecursorMass, charge);
             for (IsotopePattern isotopePattern : isotopePatterns) {
                 if (containsMass(realPrecursorMass, isotopePattern)){
                     if (isotopePattern.getScore()>bestMonoScore+betterThanMonoisotopicThreshold){
@@ -174,15 +168,15 @@ public class NotMonoisotopicAnnotatorUsingIPA implements QualityAnnotator {
      * compute {@link IsotopePattern}s. Only use if possible pattern contains precursor peak(mass)
      * @param mass
      * @param spectrum
-     * @param profile
+     * @param massDeviation
      * @param precursorMass
      * @param charge
      * @return
      */
-    private List<IsotopePattern> computeIsotopePatterns(double mass, MutableSpectrum<Peak> spectrum, MeasurementProfile profile, double precursorMass, int charge) {
+    private List<IsotopePattern> computeIsotopePatterns(double mass, MutableSpectrum<Peak> spectrum, MassDeviation massDeviation, double precursorMass, int charge) {
         int absCharge = Math.abs(charge);
         boolean mergeMasses = false;
-        Spectrum<Peak> isotopeSpec = Spectrums.extractIsotopePattern(spectrum, profile, mass, absCharge, mergeMasses);
+        Spectrum<Peak> isotopeSpec = Spectrums.extractIsotopePattern(spectrum, massDeviation, mass, absCharge, mergeMasses);
 
         isotopeSpec = trimToPossiblePattern(isotopeSpec);
 
@@ -198,10 +192,7 @@ public class NotMonoisotopicAnnotatorUsingIPA implements QualityAnnotator {
         FormulaConstraints constraints = sirius.predictElementsFromMs1(mutableIsoExperiment);
         setUpperBounds(constraints);
         IsotopePatternAnalysis isotopePatternAnalysis = sirius.getMs1Analyzer();
-        MutableMeasurementProfile mutableMeasurementProfile = new MutableMeasurementProfile(profile);
-        mutableMeasurementProfile.setFormulaConstraints(constraints);
-        List<IsotopePattern> isotopePatterns = isotopePatternAnalysis.deisotope(mutableIsoExperiment, mutableMeasurementProfile);
-        return isotopePatterns;
+        return isotopePatternAnalysis.deisotope(mutableIsoExperiment);
     }
 
     /*

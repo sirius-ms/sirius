@@ -64,15 +64,16 @@ private final MassToFormulaDecomposer decomposer;
 
 
     @Override
-    public void vote(TObjectIntHashMap<Element> votes, Ms2Experiment experiment, MeasurementProfile profile) {
-        voteForReporterIons(votes, experiment, profile);
+    public void vote(TObjectIntHashMap<Element> votes, Ms2Experiment experiment) {
+        voteForReporterIons(votes, experiment);
     }
 
-    private void voteForReporterIons(TObjectIntHashMap<Element> votes, Ms2Experiment experiment, MeasurementProfile profile) {
+    private void voteForReporterIons(TObjectIntHashMap<Element> votes, Ms2Experiment experiment) {
         final PeriodicTable table = PeriodicTable.getInstance();
         final Element Cl = table.getByName("Cl"), Br = table.getByName("Br"), I = table.getByName("I"), F = table.getByName("F");
         final Element[] halogens = new Element[]{Cl,Br,I,F};
-        final Deviation allowedDev = profile.getAllowedMassDeviation().divide(2);
+        final Deviation allowedDev =
+                experiment.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation.divide(2);
         // search for reporter ion
         final Set<MolecularFormula> detectedFragments = new HashSet<MolecularFormula>();
         final Set<MolecularFormula> detectedLosses = new HashSet<MolecularFormula>();

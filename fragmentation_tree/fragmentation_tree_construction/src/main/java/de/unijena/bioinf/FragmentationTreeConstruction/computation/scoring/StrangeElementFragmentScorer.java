@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
@@ -48,7 +49,8 @@ public class StrangeElementFragmentScorer implements DecompositionScorer<Element
         final Element H = t.getByName("H");
         final Element N = t.getByName("N");
         final Element O = t.getByName("O");
-        for (Element e : input.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet().getElements()) {
+        for (Element e : input.getExperimentInformation().
+                getAnnotationOrDefault(FormulaSettings.class).getConstraints().getChemicalAlphabet().getElements()) {
             if (e == C || e == H || e == N || e == O) continue;
             specialElements.add(e);
         }

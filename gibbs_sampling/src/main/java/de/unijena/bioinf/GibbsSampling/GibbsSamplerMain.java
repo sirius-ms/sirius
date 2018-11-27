@@ -26,7 +26,6 @@ import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
-import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.ionGuessing.IonGuesser;
 import de.unijena.bioinf.sirius.projectspace.DirectoryReader;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
@@ -2401,7 +2400,7 @@ public class GibbsSamplerMain {
             allExperiments.add(mutableMs2Experiment);
 
         }
-        Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
+        Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, Double.NaN);
         Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
         dataset = preprocessor.preprocess(dataset);
         allExperiments = dataset.getExperiments();
@@ -2458,7 +2457,7 @@ public class GibbsSamplerMain {
         final MsExperimentParser parser = new MsExperimentParser();
         List<Ms2Experiment> allExperiments = parser.getParser(mgfFile.toFile()).parseFromFile(mgfFile.toFile());
 
-        Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
+        Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, Double.NaN);
         Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
         dataset = preprocessor.preprocess(dataset);
 //        return parseMFCandidates(trees, allExperiments, maxCandidates, workercount, ignoreSilicon);
@@ -2474,7 +2473,7 @@ public class GibbsSamplerMain {
         final MsExperimentParser parser = new MsExperimentParser();
         List<Ms2Experiment> allExperiments = parser.getParser(mgfFile.toFile()).parseFromFile(mgfFile.toFile());
 
-        Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
+        Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, Double.NaN);
         Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
         dataset = preprocessor.preprocess(dataset);
 //        return parseMFCandidates(trees, allExperiments, maxCandidates, workercount, ignoreSilicon);

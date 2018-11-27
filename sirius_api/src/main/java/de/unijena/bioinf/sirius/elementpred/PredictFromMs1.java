@@ -19,10 +19,11 @@ package de.unijena.bioinf.sirius.elementpred;
 
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
+import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import gnu.trove.map.hash.TObjectIntHashMap;
@@ -39,13 +40,17 @@ public class PredictFromMs1 implements Judge {
     }
 
     @Override
-    public void vote(TObjectIntHashMap<Element> votes, Ms2Experiment experiment, MeasurementProfile profile) {
+    public void vote(TObjectIntHashMap<Element> votes, Ms2Experiment experiment) {
         final Element Cl =PeriodicTable.getInstance().getByName("Cl");
         final Element Br = PeriodicTable.getInstance().getByName("Br");
         boolean evidenceForClBr = false;
         if (experiment.getMs1Spectra().size() > 0) {
+            final MS1MassDeviation dev = experiment.getAnnotationOrDefault(MS1MassDeviation.class);
+            final FormulaSettings settings = experiment.getAnnotationOrDefault(FormulaSettings.class);
             for (Spectrum<Peak> spec : experiment.getMs1Spectra()) {
-                final SimpleSpectrum ms1spec = extractor.extractPattern(spec, profile, experiment.getIonMass());
+                final SimpleSpectrum ms1spec = extractor.extractPattern(
+                        spec, dev, settings.getConstraints().getChemicalAlphabet(), experiment.getIonMass()
+                );
                 if (ms1spec==null) continue;
                 final double mono = ms1spec.getMzAt(0);
                 final int plus1 = (int)Math.round(mono+1);

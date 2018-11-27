@@ -19,6 +19,8 @@ public class IonGuesser {
         boolean guessedFromMergedMs1 = false;
         Spectrum<Peak> spec = experiment.getMergedMs1Spectrum();
         SimpleMutableSpectrum mutableMerged = null;
+        final MS1MassDeviation dev = experiment.getAnnotationOrDefault(MS1MassDeviation.class);
+
         if (spec != null) {
             guessedFromMergedMs1 = true;
             mutableMerged = new MutableMs2Spectrum(spec);
@@ -27,7 +29,7 @@ public class IonGuesser {
         //todo hack: if the merged spectrum only contains a single monoisotopic peak: use most intense MS1 (problem if only M+H+ and M+ in merged MS1?)
         if ((mutableMerged == null || mutableMerged.size() == 1) && experiment.getMs1Spectra().size() > 0) {
             guessedFromMergedMs1 = false;
-            spec = Spectrums.selectSpectrumWithMostIntensePrecursor(experiment.getMs1Spectra(), experiment.getIonMass(), getMs1Analyzer().getDefaultProfile().getAllowedMassDeviation());
+            spec = Spectrums.selectSpectrumWithMostIntensePrecursor(experiment.getMs1Spectra(), experiment.getIonMass(), dev.allowedMassDeviation);
             if (spec == null) spec = experiment.getMs1Spectra().get(0);
         }
 
@@ -38,9 +40,9 @@ public class IonGuesser {
         Spectrums.normalizeToMax(mutableSpectrum, 100d);
         Spectrums.applyBaseline(mutableSpectrum, 1d);
 //        //changed
-        Spectrums.filterIsotpePeaks(mutableSpectrum, getMs1Analyzer().getDefaultProfile(experiment).getStandardMassDifferenceDeviation(), 0.3, 1, 5, new ChemicalAlphabet());
+        Spectrums.filterIsotpePeaks(mutableSpectrum, dev.massDifferenceDeviation, 0.3, 1, 5, new ChemicalAlphabet());
 
-        PrecursorIonType[] ionType = Spectrums.guessIonization(mutableSpectrum, experiment.getIonMass(), profile.fragmentationPatternAnalysis.getDefaultProfile().getAllowedMassDeviation(), candidateIonizations);
+        PrecursorIonType[] ionType = Spectrums.guessIonization(mutableSpectrum, experiment.getIonMass(), dev.allowedMassDeviation, candidateIonizations);
         return new GuessIonizationFromMs1Result(ionType, candidateIonizations, guessedFromMergedMs1 ? IonGuessingSource.MergedMs1Spectrum : IonGuessingSource.NormalMs1);
     }
 }

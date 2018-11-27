@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius;
 
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -12,7 +13,7 @@ import java.util.List;
 /**
  * Created by ge28quv on 13/07/17.
  * //TODO test!!
- * this {@link IsolationWindow} tests how reasonable the patterns are using IPA while extracting them for estimation
+ * this {IsolationWindow} tests how reasonable the patterns are using IPA while extracting them for estimation
  */
 public class BetterEstimatedIsolationWindow extends EstimatedIsolationWindow {
 
@@ -32,14 +33,14 @@ public class BetterEstimatedIsolationWindow extends EstimatedIsolationWindow {
     }
 
     @Override
-    public ChargedSpectrum extractPatternMs1(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz) {
+    public ChargedSpectrum extractPatternMs1(Spectrum<Peak> ms1Spec, MS1MassDeviation dev, FormulaConstraints constraints, double targetMz) {
         //test charge
         ChargedSpectrum bestSpec = null;
         for (int charge : charges) {
-            final ChargedSpectrum current = extractPattern(ms1Spec, profile, targetMz, charge);
+            final ChargedSpectrum current = extractPattern(ms1Spec, dev, targetMz, charge);
             double longestLength = 0;
             for (final PrecursorIonType ionType : precursorIonTypes) {
-                List<MolecularFormula> formulas = sirius.decompose(current.getMzAt(0), ionType.getIonization(), profile.getFormulaConstraints(), profile.getAllowedMassDeviation());
+                List<MolecularFormula> formulas = sirius.decompose(current.getMzAt(0), ionType.getIonization(), constraints, dev.allowedMassDeviation);
                 SimpleSpectrum spectrum;
                 if (current.getAbsCharge()==1){
                     spectrum = new SimpleSpectrum(current);
@@ -52,7 +53,7 @@ public class BetterEstimatedIsolationWindow extends EstimatedIsolationWindow {
                         }
                     });
                 }
-                List<IsotopePattern> patterns = sirius.getMs1Analyzer().scoreFormulas(spectrum, formulas, null, profile, ionType);
+                List<IsotopePattern> patterns = sirius.getMs1Analyzer().scoreFormulas(spectrum, formulas, null, ionType);
                 for (IsotopePattern pattern : patterns) longestLength = Math.max(longestLength, pattern.getPattern().size());
             }
             if (current.size()>longestLength){

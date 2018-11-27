@@ -18,7 +18,6 @@
 package de.unijena.bioinf.sirius.elementpred;
 
 import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
@@ -30,6 +29,6 @@ import gnu.trove.map.hash.TObjectIntHashMap;
  */
 public interface Judge {
 
-    void vote(TObjectIntHashMap<Element> votes, Ms2Experiment experiment, MeasurementProfile profile);
+    void vote(TObjectIntHashMap<Element> votes, Ms2Experiment experiment);
 
 }

@@ -21,8 +21,8 @@ import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -77,23 +77,30 @@ public class SpectralAligner {
 
     public double align(final Ms2Experiment a, final Ms2Experiment b) {
         final MissingValueValidator v = new MissingValueValidator();
-        final MutableMeasurementProfile prof = new MutableMeasurementProfile();
-        prof.setAllowedMassDeviation(new Deviation(20, 1e-3));
-        prof.setFormulaConstraints(new FormulaConstraints());
+        FormulaSettings s = FormulaSettings.defaultWithMs1().withConstraints(new FormulaConstraints());
+        MS1MassDeviation md = MS1MassDeviation.DEFAULT.withAllowedMassDeviation(new Deviation(20, 1e-3));
+
         MutableMs2Experiment xa = new MutableMs2Experiment(a);
+        xa.setAnnotation(FormulaSettings.class, s);
+        xa.setAnnotation(MS1MassDeviation.class, md);
+
         MutableMs2Experiment xb = new MutableMs2Experiment(b);
-        final Spectrum<Peak> as = preprocess(v.validate(xa, new Warning.Noop(), true), prof);
-        final Spectrum<Peak> bs = preprocess(v.validate(xb, new Warning.Noop(), true), prof);
+        xb.setAnnotation(FormulaSettings.class, s);
+        xb.setAnnotation(MS1MassDeviation.class, md);
+
+        final Spectrum<Peak> as = preprocess(v.validate(xa, new Warning.Noop(), true));
+        final Spectrum<Peak> bs = preprocess(v.validate(xb, new Warning.Noop(), true));
         return align(as, bs);
     }
 
     public Spectrum<Peak> preprocessExperiment(final MutableMs2Experiment a) {
         final MissingValueValidator v = new MissingValueValidator();
-        final MutableMeasurementProfile prof = new MutableMeasurementProfile();
-        prof.setAllowedMassDeviation(new Deviation(20, 1e-3));
-        prof.setFormulaConstraints(new FormulaConstraints());
+        FormulaSettings s = FormulaSettings.defaultWithMs1().withConstraints(new FormulaConstraints());
+        MS1MassDeviation md = MS1MassDeviation.DEFAULT.withAllowedMassDeviation(new Deviation(20, 1e-3));
         MutableMs2Experiment xa = new MutableMs2Experiment(a);
-        final Spectrum<Peak> as = preprocess(v.validate(xa, new Warning.Noop(), true), prof);
+        xa.setAnnotation(FormulaSettings.class, s);
+        xa.setAnnotation(MS1MassDeviation.class, md);
+        final Spectrum<Peak> as = preprocess(v.validate(xa, new Warning.Noop(), true));
         return as;
     }
 
@@ -122,14 +129,14 @@ public class SpectralAligner {
         return score / Math.min(xs.size(), ys.size());
     }
 
-    private Spectrum<Peak> preprocess(MutableMs2Experiment a, MeasurementProfile prof) {
+    private Spectrum<Peak> preprocess(MutableMs2Experiment a) {
         // delete peaks with intensities below threshold
         final NoiseThresholdFilter filter = new NoiseThresholdFilter(threshold);
-        a = filter.process(a, prof);
+        a = filter.process(a);
 
         // normalize spectrum
         final NormalizeToSumPreprocessor n2s = new NormalizeToSumPreprocessor();
-        a = n2s.process(a, prof);
+        a = n2s.process(a);
         final List<ProcessedPeak> normalized = normalize(a);
 
         // merge spectrum
@@ -147,12 +154,7 @@ public class SpectralAligner {
         final ChemicalAlphabet alphabet = new ChemicalAlphabet(a.getMolecularFormula().elementArray());
         final MassToFormulaDecomposer decomposer = decomposers.getDecomposer(alphabet);
         final Map<Element, Interval> boundary = alphabet.toMap();
-        a.getMolecularFormula().visit(new FormulaVisitor<Object>() {
-            @Override
-            public Object visit(Element element, int amount) {
-                return boundary.put(element, new Interval(0, amount));
-            }
-        });
+        a.getMolecularFormula().visit((element, amount) -> boundary.put(element, new Interval(0, amount)));
         // delete peaks with no decomposition
         /*
         final ListIterator<ProcessedPeak> iter = merged.listIterator();
