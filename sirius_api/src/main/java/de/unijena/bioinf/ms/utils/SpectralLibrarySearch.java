@@ -5,14 +5,10 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.babelms.MsExperimentParser;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Comparator;
-import java.util.List;
 
 public class SpectralLibrarySearch {
     //todo remove precursor mass?! or +-17Da or +-50Da?
