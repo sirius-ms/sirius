@@ -15,33 +15,6 @@ import java.util.Comparator;
 import java.util.List;
 
 public class SpectralLibrarySearch {
-
-
-
-    public static void main(String... args) throws IOException {
-        File file = new File("/home/ge28quv/Data/data_and_databases/massbank.ms");
-        List<Ms2Experiment> experiments = new MsExperimentParser().getParser(file).parseFromFile(file);
-
-
-        Deviation deviation = new Deviation(10);
-        boolean sqrtIntensity = true;
-        boolean multiplyByMass = true;
-        int minSharedPeaks = 5;
-        SpectralLibrarySearch spectralLibrarySearch = SpectralLibrarySearch.newInstance(experiments.toArray(new Ms2Experiment[0]), deviation, sqrtIntensity, multiplyByMass, minSharedPeaks);
-
-
-        for (Ms2Experiment experiment : experiments) {
-            SpectralLibraryHit hit = spectralLibrarySearch.findBestHit(experiment);
-            if (hit.getLibraryHit()==null){
-                System.out.println("none");
-            }
-
-            System.out.println(hit.getCosine()+" "+hit.getNumberOfSharedPeaks()+" "+hit.getLibraryHit().getName()+" "+experiment.getName());
-
-        }
-
-    }
-
     //todo remove precursor mass?! or +-17Da or +-50Da?
     private final LibrarySpectrum[] librarySpectra;
     private final OrderedSpectrum<Peak>[] librarySpectraInverse;
@@ -50,6 +23,8 @@ public class SpectralLibrarySearch {
     private final IntensityTransformation intensityTransformation;
     private final int minSharedPeaks;
     private final Deviation deviation;
+    private static final Normalization NORMALIZATION = Normalization.Sum(100);
+
 
     public SpectralLibrarySearch(LibrarySpectrum[] librarySpectra, Deviation ms2Deviation, boolean transformSqrtIntensity, boolean multiplyIntensityByMass, int minSharedPeaks) {
         this.librarySpectra = librarySpectra.clone();
@@ -79,11 +54,14 @@ public class SpectralLibrarySearch {
         selfSimilarity = new double[this.librarySpectra.length];
         selfSimilarityLosses = new double[this.librarySpectra.length];
         for (int i = 0; i < this.librarySpectra.length; i++) {
-            LibrarySpectrum librarySpectrum = this.librarySpectra[i];
+            LibrarySpectrum ls = this.librarySpectra[i];
+            Spectrum<Peak> normalized = Spectrums.getNormalizedSpectrum(ls.getFragmentationSpectrum(), NORMALIZATION);
+            LibrarySpectrum librarySpectrum = new LibrarySpectrum(ls.getName(), normalized, ls.getMolecularFormula(), ls.getIonType(), ls.getSmiles(), ls.getInChI());
+            this.librarySpectra[i] = librarySpectrum;
             OrderedSpectrum<Peak> spec = librarySpectrum.getFragmentationSpectrum();
             selfSimilarity[i] = Spectrums.dotProductPeaks(spec,spec,deviation);
 
-            SimpleSpectrum inverse = Spectrums.getInversedSpectrum(spec, librarySpectrum.getIonMass());
+            SimpleSpectrum inverse = Spectrums.getInversedSpectrum(spec, librarySpectrum.getIonMass());//todo ionmass?vs measured
             librarySpectraInverse[i] = inverse;
             selfSimilarityLosses[i] = Spectrums.dotProductPeaks(inverse,inverse,deviation);
         }
@@ -124,6 +102,11 @@ public class SpectralLibrarySearch {
         if (intensityTransformation !=null){
             spectrum = Spectrums.transform(new SimpleMutableSpectrum(spectrum), intensityTransformation);
         }
+
+        spectrum = Spectrums.getNormalizedSpectrum(spectrum, NORMALIZATION);
+
+
+        //todo if obsolete?
         if (!(spectrum instanceof OrderedSpectrum)) {
             spectrum = new SimpleSpectrum(spectrum);
         }
@@ -151,24 +134,6 @@ public class SpectralLibrarySearch {
     }
 
 
-//    private MergedMs2Spectrum[] extractMergedSpectra(Ms2Experiment[] library){
-//        MergedMs2Spectrum[] ms2SpectraLibrary = new MergedMs2Spectrum[library.length];
-//        SqrtIntensityTransformation intensityTransformation = new SqrtIntensityTransformation();
-//        for (int i = 0; i < library.length; i++) {
-//            final Ms2Experiment experiment = library[i];
-//            MergedMs2Spectrum mergedMs2Spectrum;
-//            if (experiment.hasAnnotation(MergedMs2Spectrum.class)){
-//                mergedMs2Spectrum = experiment.getAnnotation(MergedMs2Spectrum.class);
-//                mergedMs2Spectrum = Spectrums.transform(mergedMs2Spectrum, intensityTransformation);
-//            } else {
-//                mergedMs2Spectrum = mergeMs2Spectra(experiment, deviation);
-//            }
-//            ms2SpectraLibrary[i] = mergedMs2Spectrum;
-//        }
-//    }
-
-
-
     Similarity cosineProduct(QueryWithSelfSimilarity query, int libIdx) {
         Similarity similarity = dotProductPeaksWithMinSharedPeaksThreshold(query.spectrum, librarySpectra[libIdx].getFragmentationSpectrum());
         return new Similarity(similarity.similarity /Math.sqrt(query.selfSimilarity*selfSimilarity[libIdx]), similarity.shardPeaks);
@@ -176,7 +141,7 @@ public class SpectralLibrarySearch {
 
     Similarity cosineProductOfInverse(QueryWithSelfSimilarity query, int libIdx) {
         Similarity similarity = dotProductPeaksWithMinSharedPeaksThreshold(query.inverseSpectrum, librarySpectraInverse[libIdx]);
-        return new Similarity(similarity.similarity /Math.sqrt(query.selfSimilarityLosses *selfSimilarityLosses[libIdx]), similarity.shardPeaks);
+        return new Similarity(similarity.similarity /(Math.sqrt(query.selfSimilarityLosses*selfSimilarityLosses[libIdx])), similarity.shardPeaks);
     }
 
     private Similarity cosineProductWithLosses(QueryWithSelfSimilarity query, int libIdx) {
@@ -230,8 +195,9 @@ public class SpectralLibrarySearch {
 
 
     private static MergedMs2Spectrum mergeMs2Spectra(Ms2Experiment experiment, Deviation deviation){
-        //todo best to merge spectra?
-        return new MergedMs2Spectrum(Spectrums.mergeSpectra(deviation, true, true, experiment.getMs2Spectra()));
+        //todo best to merge spectra? only combining MS2 without merging results in less cosines >1, but overall lower values
+        return new MergedMs2Spectrum(Spectrums.mergeSpectra(experiment.getMs2Spectra()));
+//        return new MergedMs2Spectrum(Spectrums.mergeSpectra(deviation, true, true, experiment.getMs2Spectra()));
     }
 
     protected class IntensityTransformation implements Spectrums.Transformation<Peak, Peak> {
@@ -271,9 +237,12 @@ public class SpectralLibrarySearch {
         final SimpleSpectrum inverseSpectrum;
         final double selfSimilarity;
         final double selfSimilarityLosses;
+        final double precursorMz;
 
         public QueryWithSelfSimilarity(OrderedSpectrum<Peak> spectrum, double precursorMz) {
             this.spectrum = spectrum;
+            this.precursorMz = precursorMz;
+            //todo remove parent from inversed!?
             this.inverseSpectrum = Spectrums.getInversedSpectrum(this.spectrum, precursorMz);
             this.selfSimilarity = Spectrums.dotProductPeaks(this.spectrum, this.spectrum, deviation);
             this.selfSimilarityLosses = Spectrums.dotProductPeaks(inverseSpectrum, inverseSpectrum, deviation);

@@ -197,7 +197,7 @@ public class Spectrums {
         OrderedSpectrum<Peak> left_, right_;
         if (left instanceof OrderedSpectrum) left_ = (OrderedSpectrum)left;
         else left_ = new SimpleSpectrum(left);
-        if (left instanceof OrderedSpectrum) right_ = (OrderedSpectrum)right;
+        if (right instanceof OrderedSpectrum) right_ = (OrderedSpectrum)right;
         else right_ = new SimpleSpectrum(right);
         return dotProductPeaks(left_, right_, deviation) / Math.sqrt(dotProductPeaks(left_,left_,deviation)*dotProductPeaks(right_,right_,deviation));
     }
@@ -207,7 +207,7 @@ public class Spectrums {
         OrderedSpectrum<Peak> left_, right_;
         if (left instanceof OrderedSpectrum) left_ = (OrderedSpectrum)left;
         else left_ = new SimpleSpectrum(left);
-        if (left instanceof OrderedSpectrum) right_ = (OrderedSpectrum)right;
+        if (right instanceof OrderedSpectrum) right_ = (OrderedSpectrum)right;
         else right_ = new SimpleSpectrum(right);
         return (cosineProduct(left_,right_,deviation) + cosineProduct(getInversedSpectrum(left_, precursorLeft), getInversedSpectrum(right_, precursorRight), deviation))/2d;
     }
@@ -236,7 +236,7 @@ public class Spectrums {
         OrderedSpectrum<Peak> left_, right_;
         if (left instanceof OrderedSpectrum) left_ = (OrderedSpectrum)left;
         else left_ = new SimpleSpectrum(left);
-        if (left instanceof OrderedSpectrum) right_ = (OrderedSpectrum)right;
+        if (right instanceof OrderedSpectrum) right_ = (OrderedSpectrum)right;
         else right_ = new SimpleSpectrum(right);
 
         int i=0, j=0;
