@@ -1,6 +1,5 @@
 package de.unijena.bioinf;
 
-import com.google.common.base.Joiner;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 
@@ -13,9 +12,9 @@ import javax.lang.model.element.*;
 import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @SupportedAnnotationTypes("de.unijena.bioinf.ms.properties.DefaultProperty")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
@@ -32,26 +31,82 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
         if (annotationSet.elements.isEmpty()) return true;
         annotationSet.sort();
         try(final Writer w = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "de.unijena.bioinf", "properties.txt").openWriter()) {
-            for (Field e : annotationSet.elements) {
-                w.write(e.toString()+ "\n");
+            final List<FieldGroup> grps = new ArrayList<>(annotationSet.fieldGroups.values());
+            grps.sort((u,v)->u.groupName.compareTo(v.groupName));
+            for (FieldGroup e : grps) {
+                if (!e.fields.isEmpty() && !e.comment.isEmpty()) {
+                    w.write(e.beautifiedComment());
+                }
+                for (Field f : e.fields) {
+                    if (!f.comment.isEmpty() || !f.possibleValues.isEmpty()) {
+                        w.write(f.beautifiedComment());
+                    }
+                    w.write(f.paramString());
+                    w.write('\n');
+                }
+                w.write("\n");
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
         return true;
     }
+    protected static Pattern TAGMATCH = Pattern.compile("^\\s+@"), PARAMMATCH = Pattern.compile("^\\s+@param (\\S+) (.+)$");
 
     protected class AnnotationSet {
-
         private List<Field> elements;
-        private String possibleValues;
-        private String comment;
+        private HashMap<String, FieldGroup> fieldGroups;
 
         protected AnnotationSet() {
             this.elements = new ArrayList<>();
-            possibleValues = "";
-            comment = "";
+            fieldGroups = new HashMap<>();
         }
+
+        protected void addFieldInGroup(TypeElement enclosed, Field field) {
+            fieldGroups.computeIfAbsent(enclosed.getQualifiedName().toString(), k->initializeFieldGroup(enclosed)).fields.add(field);
+            elements.add(field);
+        }
+
+        private void addFieldsInGroup(TypeElement enclosed, List<Field> fields) {
+            if (fields.isEmpty()) return;
+            fieldGroups.computeIfAbsent(enclosed.getQualifiedName().toString(), k->initializeFieldGroup(enclosed)).fields.addAll(fields);
+            elements.addAll(fields);
+        }
+
+        private FieldGroup initializeFieldGroup(TypeElement klass) {
+            FieldGroup g = new FieldGroup(klass.getQualifiedName().toString());
+            g.comment = getCommentWithoutTags(klass);
+            return g;
+        }
+
+        protected String getParamTagFor(ExecutableElement method, Element parameter) {
+            String c= getComment(method);
+            StringBuilder buf = new StringBuilder();
+            for (String line : c.split("\n")) {
+                final Matcher m = PARAMMATCH.matcher(line);
+                if (m.find() && m.group(1).matches(parameter.getSimpleName().toString())) {
+                    buf.append(m.group(2).trim());
+                }
+            }
+            return buf.toString();
+        }
+
+        protected String getCommentWithoutTags(Element elem) {
+            String c= getComment(elem);
+            StringBuilder buf = new StringBuilder();
+            for (String line : c.split("\n")) {
+                if (TAGMATCH.matcher(line).find()) return buf.toString();
+                buf.append(line.trim()).append("\n");
+            }
+            return buf.toString();
+        }
+
+        protected String getComment(Element elem) {
+            String c= processingEnv.getElementUtils().getDocComment(elem);
+            if (c==null) return "";
+            return c;
+        }
+
 
         protected void add(Element element) {
             if (element.getKind().isClass()) {
@@ -77,7 +132,7 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
                 System.err.println("Warning: @DefaultProperty is used for a parameter of a method which does not contain an @DefaultInstanceProvider annotation!");
                 return;
             }
-            elements.add(new Field(resolveParentName(klass, parameter), resolveKeyName(parameter)));
+            addFieldInGroup(klass, new Field(resolveParentName(klass, parameter), resolveKeyName(parameter)));
         }
 
         private void addEnum(TypeElement element) {
@@ -88,7 +143,7 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
                     possibleValues.add(e.getSimpleName().toString());
                 }
             }
-            elements.add(new Field(parentKey, "", Joiner.on('|').join(possibleValues)));
+            addFieldInGroup(element, new Field(parentKey, "", "", possibleValues));
         }
 
         private String resolveParentName(TypeElement enclosingType) {
@@ -134,9 +189,9 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
             }
             if (innerFields.size()==1 && !hasAno) {
                 // its a single field wrapper
-                elements.add(new Field(innerFields.get(0).parent, ""));
+                addFieldInGroup(element, new Field(innerFields.get(0).parent, ""));
             } else {
-                elements.addAll(innerFields);
+                addFieldsInGroup(element, innerFields);
             }
         }
 
@@ -144,7 +199,7 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
             if (element.getModifiers().contains(Modifier.STATIC)) return;
             final Element e = element.getEnclosingElement();
             if (e.getKind().isClass()) {
-                elements.add(new Field(resolveParentName((TypeElement) e,element), resolveKeyName(element)));
+                addFieldInGroup((TypeElement) e, new Field(resolveParentName((TypeElement) e,element), resolveKeyName(element), getComment(element)));
             } else {
                 System.err.println("Ignore " + element.toString() + ". is a parameter of a method.");
             }
@@ -158,27 +213,96 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
         }
     }
 
+    static Pattern wordSplit = Pattern.compile("\\s");
+    protected static String splitLongComment(String comment) {
+        StringBuilder buffer = new StringBuilder();
+        for (String line : comment.split("\n")) {
+            line = line.trim()+"\n";
+            Matcher m = wordSplit.matcher(line);
+            int offset = 0; int l=1;
+            buffer.append("# ");
+            while (m.find(offset)) {
+                l += m.start()-offset;
+                if (l > 80 ) {
+                    buffer.append("\n# ");
+                    l=m.start()-offset+2;
+                    buffer.append(line, offset, m.start());
+                    buffer.append(line, m.start(), m.end());
+                    offset = m.end();
+                } else {
+                    buffer.append(line, offset, m.start());
+                    buffer.append(line, m.start(), m.end());
+                    offset = m.end();
+                }
+            }
+        }
+        return buffer.toString();
+    }
+
+    protected static class FieldGroup {
+        private String groupName;
+        private List<Field> fields;
+        private String comment;
+
+        public FieldGroup(String groupName) {
+            this.groupName = groupName;
+            this.comment = "";
+            this.fields = new ArrayList<>();
+        }
+
+        public String beautifiedComment() {
+            return splitLongComment(comment);
+        }
+    }
+
     protected static class Field {
         private String parent, name, comment;
+        List<? extends Object> possibleValues;
 
-        public Field(String parent, String name, String comment) {
+        public Field(String parent, String name, String comment, List<? extends Object> possibleValues) {
             this.parent = parent;
             this.name = name;
             this.comment = comment;
+            this.possibleValues = possibleValues;
         }
+
+        public Field(String parent, String name, String comment) {
+            this(parent,name,comment, Collections.emptyList());
+        }
+
+
         public Field(String parent, String name) {
             this(parent,name,"");
         }
 
-        public String toString() {
-            StringBuilder buf = new StringBuilder(parent.length()+name.length()+comment.length()+5);
-            buf.append(parent);
-            if (!name.isEmpty()) buf.append('.').append(name);
-            buf.append('=');
-            if (!comment.isEmpty()) {
-                buf.append(" # ").append(comment);
+        public Field withPossibleValues(List<? extends Object> xs) {
+            return new Field(parent,name,comment,xs);
+        }
+
+        public String beautifiedComment() {
+            if (!possibleValues.isEmpty()) {
+                return splitLongComment((comment.trim() + "\n" + possibleValueComment()).trim());
+            } else return splitLongComment(comment.trim());
+        }
+
+        private String possibleValueComment() {
+            if (possibleValues.isEmpty()) return "";
+            if (possibleValues.size()==1) return "Must be '" + possibleValues.get(0).toString() + "'";
+            StringBuilder buf = new StringBuilder();
+            buf.append("Must be "+ (possibleValues.size()==2 ? "either '" : "one of '"));
+            buf.append(possibleValues.get(0).toString());
+            buf.append("'");
+            for (int k=1; k < possibleValues.size()-1; ++k) {
+                buf.append(", ");
+                buf.append("'").append(possibleValues.get(k).toString()).append("'");
             }
+            buf.append(" or ").append(possibleValues.get(possibleValues.size()-1).toString()).append("'");
             return buf.toString();
+        }
+
+        public String paramString() {
+            if (name.isEmpty()) return parent + " = ";
+            else return parent + "." + name + " = ";
         }
     }
 }

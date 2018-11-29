@@ -4,7 +4,7 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 
 /**
- * if this annotation is set, recalibration is ommited
+ * if this annotation is set, recalibration is omited
  */
 @DefaultProperty
 public enum ForbidRecalibration implements Ms2ExperimentAnnotation {

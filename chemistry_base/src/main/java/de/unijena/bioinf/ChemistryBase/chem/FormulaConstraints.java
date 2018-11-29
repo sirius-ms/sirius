@@ -29,8 +29,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * FormulaConstraints contains all constraints which reduce the size of all possible decompositions of a mass.
- * It contains of:
+ * FormulaConstraints contain all constraints which reduce the size of all possible decompositions of a mass.
+ * It consists of:
  * - allowed elements
  * - boundaries for elements
  * - constraints for formulas
@@ -41,6 +41,8 @@ import java.util.regex.Pattern;
  *
  * But in application, you probably want the RDBE filter always active. If you just want to change its limit, set
  * it explicitly by calling new FormulaConstraints(alphabet, Arrays.asList(new ValenceFilter(-4)));
+ *
+ * @author kaidu
  */
 public class FormulaConstraints implements Ms2ExperimentAnnotation {
 
