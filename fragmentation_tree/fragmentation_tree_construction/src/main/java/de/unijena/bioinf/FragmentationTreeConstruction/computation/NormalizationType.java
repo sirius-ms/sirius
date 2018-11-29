@@ -17,6 +17,9 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
+import de.unijena.bioinf.ms.properties.DefaultProperty;
+
+@DefaultProperty
 public enum NormalizationType {
 
     LOCAL, GLOBAL
