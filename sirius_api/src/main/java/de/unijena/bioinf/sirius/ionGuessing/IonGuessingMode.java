@@ -15,7 +15,9 @@ public enum IonGuessingMode implements Ms2ExperimentAnnotation {
     SELECT,
     ADD_IONS;
 
-    public static final IonGuessingMode DEFAULT_ENABLED_GUESSING_MODE = PropertyManager.DEFAULTS.createInstanceWithDefaults(IonGuessingMode.class);
+    public static final IonGuessingMode DEFAULT() {
+        return PropertyManager.DEFAULTS.createInstanceWithDefaults(IonGuessingMode.class);
+    }
 
     public boolean isEnabled() {
         return this.equals(SELECT) || this.equals(ADD_IONS);

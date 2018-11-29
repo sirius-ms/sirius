@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,7 +14,10 @@ import java.util.stream.Collectors;
 
 @DefaultProperty
 public class PossibleAdductSwitches implements Ms2ExperimentAnnotation {
-//todo what about K?!
+    public static PossibleAdductSwitches DEFAULT() {
+        return PropertyManager.DEFAULTS.createInstanceWithDefaults(PossibleAdductSwitches.class);
+    }
+    //todo what about K?!
 
     private final Map<Ionization, List<Ionization>> precursorIonizationToFragmentIonizations;
 
