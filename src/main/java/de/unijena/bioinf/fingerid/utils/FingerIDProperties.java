@@ -1,7 +1,7 @@
 package de.unijena.bioinf.fingerid.utils;
 
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
