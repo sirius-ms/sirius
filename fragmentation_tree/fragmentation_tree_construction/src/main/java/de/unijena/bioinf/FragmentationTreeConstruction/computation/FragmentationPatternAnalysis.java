@@ -116,34 +116,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private IsotopePatternInMs2Scorer isoInMs2Scorer;
     private IsotopeInMs2Handling isotopeInMs2Handling;
 
-    public enum IsotopeInMs2Handling {
-        /**
-         * never look for isotopes in MS2
-         */
-        IGNORE,
-
-        /**
-         * enable if estimated isolation window allows for isotope peaks in MS2
-         */
-        IF_NECESSARY,
-
-        /**
-         * look for isotopes in MS2 if experiment is measured on a Bruker Maxis
-         */
-        BRUKER_ONLY,
-
-        /**
-         * look for isotopes in MS2 if experiment is measured on a Bruker Maxis.
-         * But enable isotope scoring only if enough intensive peaks show an isotope pattern
-         */
-        BRUKER_IF_NECESSARY,
-
-        /**
-         * enforce scoring of isotopes in MS2, even if spectrum is not measured on a Bruker Maxis.
-         */
-        ALWAYS
-    }
-
     private static ParameterHelper parameterHelper = ParameterHelper.getParameterHelper();
 
     /**
@@ -857,27 +829,23 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * Remove all scorers and set analyzer to clean state
      */
     public void setInitial() {
-        this.inputValidators = new ArrayList<Ms2ExperimentValidator>();
+        this.inputValidators = new ArrayList<>();
         inputValidators.add(new MissingValueValidator());
         this.validatorWarning = new Warning.Noop();
         this.normalizationType = NormalizationType.GLOBAL;
         this.peakMerger = new HighIntensityMerger();
         this.repairInput = true;
-        this.decompositionScorers = new ArrayList<DecompositionScorer<?>>();
-        this.preprocessors = new ArrayList<Preprocessor>();
-        this.postProcessors = new ArrayList<PostProcessor>();
-        this.rootScorers = new ArrayList<DecompositionScorer<?>>();
-        this.peakPairScorers = new ArrayList<PeakPairScorer>();
-        this.fragmentPeakScorers = new ArrayList<PeakScorer>();
+        this.decompositionScorers = new ArrayList<>();
+        this.preprocessors = new ArrayList<>();
+        this.postProcessors = new ArrayList<>();
+        this.rootScorers = new ArrayList<>();
+        this.peakPairScorers = new ArrayList<>();
+        this.fragmentPeakScorers = new ArrayList<>();
         this.graphBuilder = new SubFormulaGraphBuilder();
-        this.lossScorers = new ArrayList<LossScorer>();
+        this.lossScorers = new ArrayList<>();
         isoInMs2Scorer = new IsotopePatternInMs2Scorer();
-        isotopeInMs2Handling = IsotopeInMs2Handling.BRUKER_ONLY;
+        isotopeInMs2Handling = IsotopeInMs2Handling.DEFAULT();
         this.reduction = new SimpleReduction();
-
-        //final TreeBuilder solver = TreeBuilderFactory.getInstance().getTreeBuilder();
-        //setTreeBuilder(solver);
-
     }
 
     /**

@@ -6,8 +6,9 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 
 @DefaultProperty
 public class MedianNoiseIntensity implements Ms2ExperimentAnnotation {
-    public final static MedianNoiseIntensity DEFAULT =
-            PropertyManager.DEFAULTS.createInstanceWithDefaults(MedianNoiseIntensity.class);
+    public final static MedianNoiseIntensity DEFAULT(){
+        return PropertyManager.DEFAULTS.createInstanceWithDefaults(MedianNoiseIntensity.class);
+    }
 
     public final double value;
 

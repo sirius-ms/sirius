@@ -6,8 +6,9 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
 public final class MS1MassDeviation extends MassDeviation {
-    public static final MS1MassDeviation DEFAULT =
-            PropertyManager.DEFAULTS.createInstanceWithDefaults(MS1MassDeviation.class);
+    public static final MS1MassDeviation DEFAULT() {
+        return PropertyManager.DEFAULTS.createInstanceWithDefaults(MS1MassDeviation.class);
+    }
 
     public MS1MassDeviation(@NotNull Deviation allowedMassDeviation, @NotNull Deviation standardMassDeviation, @NotNull Deviation massDifferenceDeviation) {
         super(allowedMassDeviation, standardMassDeviation, massDifferenceDeviation);
