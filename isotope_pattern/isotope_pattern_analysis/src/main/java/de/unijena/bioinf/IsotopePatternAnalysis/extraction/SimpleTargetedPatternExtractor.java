@@ -8,7 +8,6 @@ import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -32,7 +31,7 @@ public class SimpleTargetedPatternExtractor implements TargetedPatternExtraction
 
 
         final ChemicalAlphabet stdalphabet =
-                experiment.getAnnotationOrDefault(FormulaSettings.class).getConstraints().getExtendedConstraints(new FormulaConstraints(ChemicalAlphabet.getExtendedAlphabet())).getChemicalAlphabet();
+                experiment.getAnnotationOrDefault(FormulaConstraints.class).getExtendedConstraints(new FormulaConstraints(ChemicalAlphabet.getExtendedAlphabet())).getChemicalAlphabet();
 
         final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(ms1);
         final ArrayList<SimpleSpectrum> patterns = new ArrayList<SimpleSpectrum>();

@@ -145,7 +145,7 @@ public class Sirius {
     }
 
     public void enableAutomaticElementDetection(@NotNull Ms2Experiment experiment, boolean enabled) {
-        FormulaSettings current = experiment.getAnnotation(FormulaSettings.class, FormulaSettings::defaultWithMs2Only);
+        FormulaSettings current = experiment.getAnnotationOrDefault(FormulaSettings.class);
         if (enabled) {
             experiment.setAnnotation(FormulaSettings.class, current.autoDetect(getElementPrediction().getChemicalAlphabet().getElements().toArray(new Element[0])));
         } else {
@@ -172,12 +172,12 @@ public class Sirius {
     }
 
     public void detectPossibleIonModesFromMs1(ProcessedInput processedInput, PrecursorIonType... allowedIonModes) {
-        final IonGuessingMode gm = processedInput.getAnnotation(IonGuessingMode.class, PropertyManager.DEFAULTS.createInstanceWithDefaults(IonGuessingMode.class));
+        final IonGuessingMode gm = processedInput.getAnnotationOrDefault(IonGuessingMode.class);
         //if disabled, do not guess ionization
         if (!gm.isEnabled())
             return;
 
-        final PossibleIonModes pim = processedInput.getAnnotation(PossibleIonModes.class, new PossibleIonModes());
+        final PossibleIonModes pim = processedInput.getAnnotation(PossibleIonModes.class, () -> new PossibleIonModes());
         final GuessIonizationFromMs1Result guessIonization = ionGuessing.guessIonization(processedInput.getExperimentInformation(), allowedIonModes);
 
         if (guessIonization.guessedIonTypes.length > 0) {
@@ -213,7 +213,7 @@ public class Sirius {
         }
         processedInput.setAnnotation(PossibleIonModes.class, pim);
         //also update PossibleAdducts
-        final PossibleAdducts pa = processedInput.getAnnotation(PossibleAdducts.class, new PossibleAdducts());
+        final PossibleAdducts pa = processedInput.computeAnnotationIfAbsent(PossibleAdducts.class, PossibleAdducts::new);
         pa.update(pim);
     }
 
@@ -346,7 +346,7 @@ public class Sirius {
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
 
         if (formulaConstraints != null)
-            pinput.setAnnotation(FormulaSettings.class, pinput.getAnnotation(FormulaSettings.class, FormulaSettings.defaultWithMs2Only()).withConstraints(formulaConstraints));
+            pinput.setAnnotation(FormulaConstraints.class, formulaConstraints);
 
         performMs1Analysis(instance, deisotope);
         SiriusJobs.getGlobalJobManager().submitJob(instance);
@@ -557,7 +557,7 @@ public class Sirius {
     }
 
     public static void setIsotopeMode(@NotNull MutableMs2Experiment experiment, IsotopePatternHandling handling) {
-        FormulaSettings current = experiment.getAnnotation(FormulaSettings.class, FormulaSettings::defaultWithMs2Only);
+        FormulaSettings current = experiment.getAnnotationOrDefault(FormulaSettings.class);
         if (handling.isFiltering()) current = current.withIsotopeFormulaFiltering();
         else current = current.withoutIsotopeFormulaFiltering();
         experiment.setAnnotation(FormulaSettings.class, current);
@@ -569,13 +569,12 @@ public class Sirius {
     }
 
     public static void setAutomaticElementDetectionFor(@NotNull Ms2Experiment experiment, Element elements) {
-        FormulaSettings current = experiment.getAnnotation(FormulaSettings.class, FormulaSettings::defaultWithMs2Only);
+        FormulaSettings current = experiment.getAnnotationOrDefault(FormulaSettings.class);
         experiment.setAnnotation(FormulaSettings.class, current.withoutAutoDetect().autoDetect(elements));
     }
 
     public static void setFormulaConstraints(@NotNull Ms2Experiment experiment, FormulaConstraints constraints) {
-        FormulaSettings current = experiment.getAnnotation(FormulaSettings.class, FormulaSettings::defaultWithMs2Only);
-        experiment.setAnnotation(FormulaSettings.class, current.withConstraints(constraints));
+        experiment.setAnnotation(FormulaConstraints.class, constraints);
     }
 
     public static void setIsolationWindow(@NotNull MutableMs2Experiment experiment, IsolationWindow isolationWindow) {
@@ -592,7 +591,7 @@ public class Sirius {
     }
 
     public static void disableElementDetection(@NotNull Ms2Experiment experiment) {
-        disableElementDetection(experiment, experiment.getAnnotation(FormulaSettings.class, FormulaSettings::defaultWithMs2Only));
+        disableElementDetection(experiment, experiment.getAnnotationOrDefault(FormulaSettings.class));
     }
 
     public static void disableElementDetection(@NotNull Ms2Experiment experiment, FormulaSettings current) {
@@ -1037,14 +1036,14 @@ public class Sirius {
 
         // step 2: adduct type search
         PossibleIonModes pim = input.getAnnotation(PossibleIonModes.class, null);
-        IonGuessingMode gm = input.getAnnotation(IonGuessingMode.class, IonGuessingMode.DEFAULT());
+        IonGuessingMode gm = input.getAnnotationOrDefault(IonGuessingMode.class);
         if (pim == null)
             detectPossibleIonModesFromMs1(input);
         else if (gm.isEnabled()) {
             detectPossibleIonModesFromMs1(input, pim.getIonModesAsPrecursorIonType().toArray(new PrecursorIonType[0]));
         }
         // step 3: Isotope pattern analysis
-        if (input.getAnnotation(IsotopeScoring.class, IsotopeScoring.DEFAULT).getIsotopeScoreWeighting() <= 0)
+        if (input.getAnnotationOrDefault(IsotopeScoring.class).getIsotopeScoreWeighting() <= 0)
             return false;
         final DecompositionList decompositions = instance.precompute().getAnnotationOrThrow(DecompositionList.class);
         final IsotopePatternAnalysis an = getMs1Analyzer();
@@ -1091,11 +1090,12 @@ public class Sirius {
     }
 
     private void performAutomaticElementDetection(ProcessedInput input, SimpleSpectrum extractedPattern) {
-        final FormulaSettings settings = input.getAnnotation(FormulaSettings.class, FormulaSettings.defaultWithMs1());
+        final FormulaSettings settings = input.getAnnotationOrDefault(FormulaSettings.class);
+        final FormulaConstraints inputConstraints = input.getAnnotation(FormulaConstraints.class, () -> (new FormulaConstraints("CHNOP[5]SFI[5]BrCl")));
         if (settings.isElementDetectionEnabled()) {
             final ElementPredictor predictor = getElementPrediction();
-            final HashSet<Element> allowedElements = new HashSet<>(settings.getConstraints().getChemicalAlphabet().getElements());
-            final HashSet<Element> auto = settings.getAutomaticDetectionEnabled();
+            final HashSet<Element> allowedElements = new HashSet<>(inputConstraints.getChemicalAlphabet().getElements());
+            final HashSet<Element> auto = settings.getAutoDetectionElements();
             allowedElements.addAll(auto);
             Iterator<Element> e = allowedElements.iterator();
             final FormulaConstraints constraints = predictor.predictConstraints(extractedPattern);
@@ -1104,11 +1104,11 @@ public class Sirius {
                 if (auto.contains(detectable) && getElementPrediction().isPredictable(detectable) && constraints.getUpperbound(detectable) <= 0)
                     e.remove();
             }
-            final FormulaConstraints revised = settings.getConstraints().getExtendedConstraints(allowedElements.toArray(new Element[allowedElements.size()]));
+            final FormulaConstraints revised = inputConstraints.getExtendedConstraints(allowedElements.toArray(new Element[allowedElements.size()]));
             for (Element det : auto) {
                 revised.setUpperbound(det, constraints.getUpperbound(det));
             }
-            input.setAnnotation(FormulaSettings.class, settings.withConstraints(revised));
+            input.setAnnotation(FormulaConstraints.class, revised);
         }
     }
 

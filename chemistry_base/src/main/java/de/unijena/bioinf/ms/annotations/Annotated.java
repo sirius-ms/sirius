@@ -1,11 +1,11 @@
 package de.unijena.bioinf.ms.annotations;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface Annotated<A extends Annotaion> {
@@ -52,9 +52,7 @@ public interface Annotated<A extends Annotaion> {
      * {@link de.unijena.bioinf.ms.properties.DefaultPropertyLoader}
      */
     default <T extends A> T getAnnotationOrDefault(Class<T> klass) {
-        final T val = getAnnotation(klass);
-        if (val == null) return PropertyManager.DEFAULTS.createInstanceWithDefaults(klass);
-        else return val;
+        return getAnnotation(klass, () -> annotations().autoInstanceSupplier(klass));
     }
 
     /**
@@ -74,13 +72,28 @@ public interface Annotated<A extends Annotaion> {
         return val != null;
     }
 
+    default <T extends A> void addAnnotation(Class<T> klass, T annotation) {
+        if (annotations().map.containsKey(klass))
+            throw new RuntimeException("Peak annotation '" + klass.getName() + "' is already present.");
+        setAnnotation(klass, annotation);
+    }
+
     /**
      * Set the annotation with the given key
      *
      * @return true if there was no previous value for this annotation
      */
-    default <T extends A> T computeAnnotationIfAbsent(Class<T> klass, Function<Class<A>, A> mappingFunction) {
-        return (T) annotations().map.computeIfAbsent((Class<A>) klass, mappingFunction);
+    default <T extends A> T computeAnnotationIfAbsent(final Class<T> klass, Supplier<T> defaultValueSupplier) {
+        return (T) annotations().map.computeIfAbsent((Class<A>) klass, (c) -> defaultValueSupplier.get());
+    }
+
+    /**
+     * Set the annotation with the given key
+     *
+     * @return true if there was no previous value for this annotation
+     */
+    default <T extends A> T computeAnnotationIfAbsent(@NotNull final Class<T> klass) {
+        return computeAnnotationIfAbsent(klass, () -> annotations().autoInstanceSupplier(klass));
     }
 
 
@@ -146,6 +159,16 @@ public interface Annotated<A extends Annotaion> {
             }
 
             return new Annotations<>(cloneMap);
+        }
+
+        private <T extends Annotaion> T autoInstanceSupplier(Class<T> klass) {
+            if (PropertyManager.DEFAULTS.isInstantiatableWithDefaults(klass))
+                return PropertyManager.DEFAULTS.createInstanceWithDefaults(klass);
+            try {
+                return klass.newInstance();
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new IllegalArgumentException(klass.getName() + " cannot be instantiated automatically");
+            }
         }
     }
 }

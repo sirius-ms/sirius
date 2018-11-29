@@ -29,7 +29,6 @@ import de.unijena.bioinf.ChemistryBase.math.LogNormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Ms2ExperimentValidator;
@@ -158,15 +157,15 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final ProcessedInput pinput = new ProcessedInput(new MutableMs2Experiment(exp), originalExperiment);
 
         //annotate settings to pintput, If null use the original one if present
-        FormulaSettings settings = input.getAnnotation(FormulaSettings.class);
-        if (settings == null && (originalExperiment.getAnnotation(FormulaSettings.class, null) != null)) {
-            settings = originalExperiment.getAnnotation(FormulaSettings.class);
-            pinput.setAnnotation(FormulaSettings.class, settings);
+        FormulaConstraints constraints = input.getAnnotation(FormulaConstraints.class);
+        if (constraints == null && (originalExperiment.getAnnotation(FormulaConstraints.class, null) != null)) {
+            constraints = originalExperiment.getAnnotation(FormulaConstraints.class);
+            pinput.setAnnotation(FormulaConstraints.class, constraints);
         }
 
         //merge molecular formula into constraints
         if (originalExperiment.getMolecularFormula()!=null) {
-            pinput.setAnnotation(FormulaSettings.class, settings.withAdditionalConstraints(FormulaConstraints.allSubsetsOf(originalExperiment.getMolecularFormula())));
+            pinput.setAnnotation(FormulaConstraints.class, constraints.getExtendedConstraints(FormulaConstraints.allSubsetsOf(originalExperiment.getMolecularFormula())));
         }
 
         // set precursor ion types
@@ -413,7 +412,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     public ProcessedInput performDecomposition(ProcessedInput input) {
         final PeriodicTable PT = PeriodicTable.getInstance();
         final Whiteset whiteset = input.getAnnotation(Whiteset.class, null);
-        final FormulaConstraints constraints = input.getAnnotation(FormulaSettings.class, null).getConstraints();
+        final FormulaConstraints constraints = input.getAnnotation(FormulaConstraints.class, null);
         final Ms2Experiment experiment = input.getExperimentInformation();
         final Deviation parentDeviation = input.getAnnotation(MS2MassDeviation.class, null).allowedMassDeviation;
         // sort again...
@@ -588,7 +587,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final List<ProcessedPeak> processedPeaks = input.getMergedPeaks();
         final ProcessedPeak parentPeak = input.getParentPeak();
         final int n = processedPeaks.size();
-        input.getOrCreateAnnotation(Scoring.class).initializeScoring(n);
+        input.computeAnnotationIfAbsent(Scoring.class).initializeScoring(n);
         // score peak pairs
         final double[][] peakPairScores = input.getAnnotationOrThrow(Scoring.class).getPeakPairScores();
         for (PeakPairScorer scorer : peakPairScorers) {
@@ -1028,7 +1027,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // TODO: we need a more general way to transfer annotations from graph nodes to tree nodes!
 
         final FragmentAnnotation<Ms1IsotopePattern> ms1IsoAno = originalGraph.getFragmentAnnotationOrNull(Ms1IsotopePattern.class);
-        final FragmentAnnotation<Ms1IsotopePattern> treeMs1IsoAno = (ms1IsoAno == null && pinput.getAnnotation(ExtractedIsotopePattern.class,null)==null) ? null : tree.addFragmentAnnotation(Ms1IsotopePattern.class);
+        final FragmentAnnotation<Ms1IsotopePattern> treeMs1IsoAno = (ms1IsoAno == null && pinput.getAnnotation(ExtractedIsotopePattern.class) == null) ? null : tree.addFragmentAnnotation(Ms1IsotopePattern.class);
 
         // check for MS1 isotope scores
         treeScoring.setIsotopeMs1Score(0d);
@@ -1401,7 +1400,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     public boolean isScoringIsotopes(ProcessedInput input) {
-        final boolean isBrukerMaxis = input.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown).hasIsotopesInMs2();
+        final boolean isBrukerMaxis = input.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown).hasIsotopesInMs2();
         switch (isotopeInMs2Handling) {
             case IGNORE: return false;
             case IF_NECESSARY:

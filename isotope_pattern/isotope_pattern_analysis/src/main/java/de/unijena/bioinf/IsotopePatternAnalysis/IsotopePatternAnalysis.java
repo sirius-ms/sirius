@@ -25,7 +25,6 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -151,8 +150,7 @@ public class IsotopePatternAnalysis implements Parameterized {
     public SimpleSpectrum extractPattern(Ms2Experiment experiment, double targetMz) {
         final Spectrum<Peak> s = experiment.getMergedMs1Spectrum();
         final MS1MassDeviation dev = experiment.getAnnotationOrDefault(MS1MassDeviation.class);
-        ChemicalAlphabet stdalphabet = experiment.getAnnotationOrDefault(FormulaSettings.class)
-                .getConstraints().getChemicalAlphabet();
+        ChemicalAlphabet stdalphabet = experiment.getAnnotationOrDefault(FormulaConstraints.class).getChemicalAlphabet();
         if (s != null) return extractPattern(s, dev, stdalphabet, targetMz);
         else if (experiment.getMs1Spectra() != null && !experiment.getMs1Spectra().isEmpty()) {
             return extractPattern(experiment.getMs1Spectra().get(0), dev, stdalphabet, targetMz);
@@ -204,7 +202,7 @@ public class IsotopePatternAnalysis implements Parameterized {
         final SimpleSpectrum pattern = extractPattern(experiment, experiment.getIonMass());
         if (pattern == null) return Collections.emptyList();
         final PrecursorIonType ionization = experiment.getPrecursorIonType();
-        final FormulaConstraints constraints = experiment.getAnnotationOrDefault(FormulaSettings.class).getConstraints();
+        final FormulaConstraints constraints = experiment.getAnnotationOrDefault(FormulaConstraints.class);
         final MS1MassDeviation deviation = experiment.getAnnotationOrDefault(MS1MassDeviation.class);
 
         if (ionization.isIonizationUnknown()) {

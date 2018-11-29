@@ -4,11 +4,12 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.RecalibrationFunction;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Peak;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.ms.annotations.Annotaion;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
-public class SpectralRecalibration {
+public class SpectralRecalibration implements Annotaion {
 
     private final static SpectralRecalibration NONE = new SpectralRecalibration(null,null,null);
 

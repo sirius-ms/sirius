@@ -19,10 +19,8 @@ package de.unijena.bioinf.spectralign;
 
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -77,15 +75,12 @@ public class SpectralAligner {
 
     public double align(final Ms2Experiment a, final Ms2Experiment b) {
         final MissingValueValidator v = new MissingValueValidator();
-        FormulaSettings s = FormulaSettings.defaultWithMs1().withConstraints(new FormulaConstraints());
         MS1MassDeviation md = MS1MassDeviation.DEFAULT().withAllowedMassDeviation(new Deviation(20, 1e-3));
 
         MutableMs2Experiment xa = new MutableMs2Experiment(a);
-        xa.setAnnotation(FormulaSettings.class, s);
         xa.setAnnotation(MS1MassDeviation.class, md);
 
         MutableMs2Experiment xb = new MutableMs2Experiment(b);
-        xb.setAnnotation(FormulaSettings.class, s);
         xb.setAnnotation(MS1MassDeviation.class, md);
 
         final Spectrum<Peak> as = preprocess(v.validate(xa, new Warning.Noop(), true));
@@ -95,10 +90,8 @@ public class SpectralAligner {
 
     public Spectrum<Peak> preprocessExperiment(final MutableMs2Experiment a) {
         final MissingValueValidator v = new MissingValueValidator();
-        FormulaSettings s = FormulaSettings.defaultWithMs1().withConstraints(new FormulaConstraints());
         MS1MassDeviation md = MS1MassDeviation.DEFAULT().withAllowedMassDeviation(new Deviation(20, 1e-3));
         MutableMs2Experiment xa = new MutableMs2Experiment(a);
-        xa.setAnnotation(FormulaSettings.class, s);
         xa.setAnnotation(MS1MassDeviation.class, md);
         final Spectrum<Peak> as = preprocess(v.validate(xa, new Warning.Noop(), true));
         return as;

@@ -19,6 +19,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
@@ -27,7 +28,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
@@ -61,7 +61,7 @@ public class IsotopePeakFilter implements Preprocessor {
         for (int k=0; k < maxNumberOfIsotopePeaks; ++k) minDists[k] = maxDists[k] = Hdiff*(k+1);
 
 
-        for (Element e : experiment.getAnnotation(FormulaSettings.class).getConstraints().getChemicalAlphabet().getElements()) {
+        for (Element e : experiment.getAnnotation(FormulaConstraints.class).getChemicalAlphabet().getElements()) {
             final Isotopes isotope = dist.getIsotopesFor(e);
             if (isotope != null && isotope.getNumberOfIsotopes()>1) {
                 for (int k=1; k < Math.min(maxNumberOfIsotopePeaks+1, isotope.getNumberOfIsotopes()); ++k) {
