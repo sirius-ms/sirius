@@ -23,7 +23,7 @@ public class IsotopeMs1Scorer implements DecompositionScorer<IsotopeMs1Scorer.Pr
 
     @Override
     public Prepared prepare(ProcessedInput input) {
-        return new Prepared(input.getAnnotation(IsotopeScoring.class, IsotopeScoring.DEFAULT), input.getAnnotation(ExtractedIsotopePattern.class, null));
+        return new Prepared(input.getAnnotationOrDefault(IsotopeScoring.class), input.getAnnotation(ExtractedIsotopePattern.class, null));
     }
 
     @Override

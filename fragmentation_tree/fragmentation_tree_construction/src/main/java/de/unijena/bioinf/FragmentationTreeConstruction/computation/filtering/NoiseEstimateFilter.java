@@ -6,7 +6,6 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
@@ -62,7 +61,7 @@ public class NoiseEstimateFilter implements Preprocessor, Initializable {
             npeaks += spec.size();
         if (npeaks <= minNumberOfNoisePeaks) return experiment;
 
-        final FormulaConstraints constraints = experiment.getAnnotationOrDefault(FormulaSettings.class).getConstraints();
+        final FormulaConstraints constraints = experiment.getAnnotationOrDefault(FormulaConstraints.class);
         final MassToFormulaDecomposer decomposer = getCache().getDecomposer(constraints.getChemicalAlphabet());
         final Deviation dev = experiment.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
         final boolean intrinsicalCharged = experiment.getPrecursorIonType().isIntrinsicalCharged();

@@ -2,7 +2,6 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -212,7 +211,7 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
 
                 final MS1MassDeviation ms1Deviation = experiment.getAnnotationOrDefault(MS1MassDeviation.class);
                 final MS2MassDeviation ms2Deviation = experiment.getAnnotationOrDefault(MS2MassDeviation.class);
-                final FormulaSettings formulaSettings = experiment.getAnnotationOrDefault(FormulaSettings.class);
+                final FormulaConstraints formulaConstraints = experiment.getAnnotationOrDefault(FormulaConstraints.class);
 
                 //find precursor/parent peak
                 int monoMs1Idx = Spectrums.mostIntensivePeakWithin(ms1, ionMass, ms1Deviation.allowedMassDeviation);
@@ -255,7 +254,7 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
 
                 for (Peak peak : intensityMs1) {
                     //todo may use peaks multiple times!
-                    ChargedSpectrum isotopePatternMs1 = extractPatternMs1(ms1, ms1Deviation, formulaSettings.getConstraints(), peak.getMass());
+                    ChargedSpectrum isotopePatternMs1 = extractPatternMs1(ms1, ms1Deviation, formulaConstraints, peak.getMass());
                     ChargedSpectrum isotopePatternMs2 = extractPattern(ms2, ms2Deviation, peak.getMass(), isotopePatternMs1.getAbsCharge());
 
                     expCounter2++;

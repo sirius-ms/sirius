@@ -3,7 +3,6 @@ package de.unijena.bioinf.sirius;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.PeaklistSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -293,8 +292,9 @@ public class Ms2DatasetPreprocessor {
 
         //guess elements
         for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
-            FormulaConstraints constraints = predictElements(experiment, ms2Dataset);
-            experiment.setAnnotation(FormulaSettings.class, experiment.getAnnotationOrDefault(FormulaSettings.class).withConstraints(constraints));
+            FormulaConstraints constraints = predictElements(experiment);
+            if (constraints != null)
+                experiment.setAnnotation(FormulaConstraints.class, constraints);
         }
 
         MutableDatasetStatistics mutableDatasetStatistics = new MutableDatasetStatistics();
@@ -486,9 +486,9 @@ public class Ms2DatasetPreprocessor {
         return experiment.getAnnotation(CompoundQuality.class, () ->  new CompoundQuality(SpectrumProperty.Good)).isGoodQuality();
     }
 
-    private FormulaConstraints predictElements(Ms2Experiment experiment, Ms2Dataset ms2Dataset) {
+    private FormulaConstraints predictElements(Ms2Experiment experiment) {
         FormulaConstraints constraints = sirius.predictElementsFromMs1(experiment);
-        FormulaConstraints globalConstraints = experiment.getAnnotationOrDefault(FormulaSettings.class).getConstraints();
+        FormulaConstraints globalConstraints = experiment.getAnnotationOrDefault(FormulaConstraints.class);
         if (constraints==null) return globalConstraints;
 
         ElementPredictor elementPredictor = sirius.getElementPrediction();
@@ -526,8 +526,8 @@ public class Ms2DatasetPreprocessor {
 //        FormulaConstraints constraints = sirius.predictElementsFromMs1(experiment);
 
         FormulaConstraints constraints;
-        if (experiment.hasAnnotation(FormulaSettings.class)){
-            constraints = experiment.getAnnotation(FormulaSettings.class).getConstraints();
+        if (experiment.hasAnnotation(FormulaConstraints.class)){
+            constraints = experiment.getAnnotation(FormulaConstraints.class);
         } else {
             constraints = new FormulaConstraints(ChemicalAlphabet.getExtendedAlphabet());
         }

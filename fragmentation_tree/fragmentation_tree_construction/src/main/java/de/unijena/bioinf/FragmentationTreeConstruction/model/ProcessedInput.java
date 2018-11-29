@@ -21,6 +21,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
+import de.unijena.bioinf.ms.annotations.Annotaion;
+import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.util.*;
@@ -63,26 +65,31 @@ import java.util.*;
  *
  *
  */
-public class ProcessedInput implements Cloneable {
+public class ProcessedInput implements Cloneable, Annotated<Annotaion> {
 
     private final Ms2Experiment originalExperiment;
     private MutableMs2Experiment experiment;
     private List<ProcessedPeak> mergedPeaks;
     private ProcessedPeak parentPeak;
     private HashMap<Class, PeakAnnotation> peakAnnotations;
-    private HashMap<Class, Object> annotations;
+    private Annotated.Annotations<Annotaion> annotations;
+
+    @Override
+    public Annotations<Annotaion> annotations() {
+        return annotations;
+    }
 
     public ProcessedInput(MutableMs2Experiment experiment, Ms2Experiment originalExperiment) {
         this.experiment = experiment;
         this.originalExperiment = originalExperiment;
-        this.mergedPeaks = new ArrayList<ProcessedPeak>();
-        this.annotations = new HashMap<Class, Object>();
-        this.annotations.put(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown));
+        this.mergedPeaks = new ArrayList<>();
+        this.annotations = new Annotations<>();
+        setAnnotation(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown));
         this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
         final Iterator<Map.Entry<Class<Ms2ExperimentAnnotation>,Ms2ExperimentAnnotation>> anos = experiment.forEachAnnotation();
         while (anos.hasNext()) {
             final Map.Entry<Class<Ms2ExperimentAnnotation>,Ms2ExperimentAnnotation> entry = anos.next();
-            annotations.put(entry.getKey(), entry.getValue());
+            setAnnotation(entry.getKey(), entry.getValue());
         }
     }
 
@@ -92,8 +99,8 @@ public class ProcessedInput implements Cloneable {
         this.originalExperiment = originalExperiment;
         this.mergedPeaks = mergedPeaks;
         this.parentPeak = parentPeak;
-        this.annotations = new HashMap<Class, Object>();
-        this.annotations.put(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown));
+        this.annotations = new Annotations<>();
+       setAnnotation(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown));
         this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
     }
 
@@ -103,7 +110,7 @@ public class ProcessedInput implements Cloneable {
         // it might introduce side effects. I just hope that nobody access this object at this stage of computation
         p.mergedPeaks = new ArrayList<>(mergedPeaks.size());
         p.peakAnnotations = (HashMap<Class, PeakAnnotation>) peakAnnotations.clone();
-        p.annotations = (HashMap<Class, Object>) annotations.clone();
+        p.annotations = annotations.clone();
         final PeakAnnotation<DecompositionList> dl = p.getPeakAnnotationOrThrow(DecompositionList.class);
         for (ProcessedPeak peak : mergedPeaks) {
             ProcessedPeak recalibrated = peak.recalibrate(rec);
@@ -121,8 +128,8 @@ public class ProcessedInput implements Cloneable {
     // we have to do this smarter -_-
     public ProcessedInput cloneForBeautification() {
         final ProcessedInput p = clone();
-        p.annotations = (HashMap<Class, Object>) annotations.clone();
-        p.setAnnotation(Scoring.class,getAnnotation(Scoring.class, new Scoring()).clone());
+        p.annotations = annotations.clone();
+        p.setAnnotation(Scoring.class, getAnnotation(Scoring.class, Scoring::new).clone());
         return p;
     }
 
@@ -130,7 +137,7 @@ public class ProcessedInput implements Cloneable {
     public ProcessedInput clone() {
         try {
             ProcessedInput p =  (ProcessedInput) super.clone();
-            p.annotations = new HashMap<>(p.annotations);
+            p.annotations = p.annotations.clone();
             return p;
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
@@ -148,15 +155,16 @@ public class ProcessedInput implements Cloneable {
         return ano;
     }
 
-    public Map<Class,Object> getAnnotations() {
+   /* public Map<Class,Object> getAnnotations() {
         return Collections.unmodifiableMap(annotations);
     }
-    public Map<Class,PeakAnnotation> getPeakAnnotations() {
-        return Collections.unmodifiableMap(peakAnnotations);
-    }
+    */
+   public Map<Class,PeakAnnotation> getPeakAnnotations() {
+       return Collections.unmodifiableMap(peakAnnotations);
+   }
 
     @SuppressWarnings("unchecked cast")
-    public <T> T getAnnotationOrThrow(Class<T> klass) {
+   /* public <T> T getAnnotationOrThrow(Class<T> klass) {
         final T ano = (T)annotations.get(klass);
         if (ano == null) throw new NullPointerException("No annotation '" + klass.getName() + "' in ProcessedInput");
         return ano;
@@ -166,7 +174,7 @@ public class ProcessedInput implements Cloneable {
         final T ano = (T)annotations.get(klass);
         if (ano == null) return defaultval;
         return ano;
-    }
+    }*/
 
     public <T> PeakAnnotation<T> addPeakAnnotation(Class<T> klass) {
         if (peakAnnotations.containsKey(klass)) throw new RuntimeException("Peak annotation '" + klass.getName() + "' is already present.");
@@ -175,14 +183,11 @@ public class ProcessedInput implements Cloneable {
         return ano;
     }
 
-    public <T> void addAnnotation(Class<T> klass, T annotation) {
-        if (annotations.containsKey(klass)) throw new RuntimeException("Peak annotation '" + klass.getName() + "' is already present.");
-        annotations.put(klass, annotation);
-    }
 
-    public <T> boolean setAnnotation(Class<T> klass, T annotation) {
+
+    /*public <T> boolean setAnnotation(Class<T> klass, T annotation) {
         return annotations.put(klass, annotation) == annotation;
-    }
+    }*/
 
     @SuppressWarnings("unchecked cast")
     public <T> PeakAnnotation<T> getOrCreatePeakAnnotation(Class<T> klass) {
@@ -190,20 +195,6 @@ public class ProcessedInput implements Cloneable {
         final PeakAnnotation<T> ano = new PeakAnnotation<T>(peakAnnotations.size(), klass);
         peakAnnotations.put(klass, ano);
         return ano;
-    }
-
-    @SuppressWarnings("unchecked cast")
-    public <T> T getOrCreateAnnotation(Class<T> klass) {
-        if (annotations.containsKey(klass)) return (T)annotations.get(klass);
-        try {
-            final T obj = klass.newInstance();
-            annotations.put(klass, obj);
-            return obj;
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e.getMessage());
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e.getMessage());
-        }
     }
 
     public MutableMs2Experiment getExperimentInformation() {

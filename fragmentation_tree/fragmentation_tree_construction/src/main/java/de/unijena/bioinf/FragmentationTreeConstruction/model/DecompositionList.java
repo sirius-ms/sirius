@@ -23,10 +23,11 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
+import de.unijena.bioinf.ms.annotations.Annotaion;
 
 import java.util.*;
 
-public class DecompositionList {
+public class DecompositionList implements Annotaion {
 
     private final List<Decomposition> decompositions;
 

@@ -12,7 +12,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.ExtendedCriticalPathHeuristic;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
@@ -116,7 +117,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
     protected FinalResult compute() throws Exception {
         score();
         startTime = System.currentTimeMillis();
-        final Timeout timeout = pinput.getAnnotation(Timeout.class, Timeout.NO_TIMEOUT);
+        final Timeout timeout = pinput.getAnnotationOrDefault(Timeout.class);
         secondsPerInstance = timeout.getNumberOfSecondsPerInstance();
         secondsPerTree = timeout.getNumberOfSecondsPerDecomposition();
         restTime = Math.min(secondsPerInstance, secondsPerTree);
@@ -311,7 +312,7 @@ public class TreeComputationInstance extends AbstractTreeComputationInstance {
             CHECK_FOR_TREESIZE = false;
         }
         // now recalibrate trees
-        if (pinput.getAnnotation(ForbidRecalibration.class, ForbidRecalibration.ALLOWED).isAllowed()) {
+        if (pinput.getAnnotationOrDefault(ForbidRecalibration.class).isAllowed()) {
             double maxRecalibrationBonus = Double.POSITIVE_INFINITY;
 
             final ArrayList<RecalibrationJob> recalibrationJobs = new ArrayList<>();

@@ -3,10 +3,11 @@ package de.unijena.bioinf.FragmentationTreeConstruction.model;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
+import de.unijena.bioinf.ms.annotations.Annotaion;
 
 import java.util.HashMap;
 
-public class ExtractedIsotopePattern {
+public class ExtractedIsotopePattern implements Annotaion {
 
     protected SimpleSpectrum pattern;
     protected HashMap<MolecularFormula, IsotopePattern> explanations;
