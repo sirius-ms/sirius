@@ -78,7 +78,7 @@ public class SpectralAligner {
     public double align(final Ms2Experiment a, final Ms2Experiment b) {
         final MissingValueValidator v = new MissingValueValidator();
         FormulaSettings s = FormulaSettings.defaultWithMs1().withConstraints(new FormulaConstraints());
-        MS1MassDeviation md = MS1MassDeviation.DEFAULT.withAllowedMassDeviation(new Deviation(20, 1e-3));
+        MS1MassDeviation md = MS1MassDeviation.DEFAULT().withAllowedMassDeviation(new Deviation(20, 1e-3));
 
         MutableMs2Experiment xa = new MutableMs2Experiment(a);
         xa.setAnnotation(FormulaSettings.class, s);
@@ -96,7 +96,7 @@ public class SpectralAligner {
     public Spectrum<Peak> preprocessExperiment(final MutableMs2Experiment a) {
         final MissingValueValidator v = new MissingValueValidator();
         FormulaSettings s = FormulaSettings.defaultWithMs1().withConstraints(new FormulaConstraints());
-        MS1MassDeviation md = MS1MassDeviation.DEFAULT.withAllowedMassDeviation(new Deviation(20, 1e-3));
+        MS1MassDeviation md = MS1MassDeviation.DEFAULT().withAllowedMassDeviation(new Deviation(20, 1e-3));
         MutableMs2Experiment xa = new MutableMs2Experiment(a);
         xa.setAnnotation(FormulaSettings.class, s);
         xa.setAnnotation(MS1MassDeviation.class, md);

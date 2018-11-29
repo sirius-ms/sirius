@@ -43,7 +43,7 @@ public class Ms2CompoundMerger {
         //todo is hashmap necessary? or just array?
         experimentToMergedMs2 = new HashMap<>();
 
-        this.findIsotopesMeasurementProfile = MS2MassDeviation.DEFAULT
+        this.findIsotopesMeasurementProfile = MS2MassDeviation.DEFAULT()
                 .withAllowedMassDeviation(maxMzDeviation)
                 .withMassDifferenceDeviation(maxMzDeviation.divide(2));
     }

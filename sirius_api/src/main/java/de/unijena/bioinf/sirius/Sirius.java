@@ -71,10 +71,30 @@ public class Sirius {
      * for internal use to easily switch and experiment with implementation details
      */
     protected boolean useFastMode = true;
-
     public void setFastMode(boolean useFastMode) {
         this.useFastMode = useFastMode;
     }
+
+
+    public Sirius(@NotNull String profile) {
+        this(Profile.fromString(profile));
+    }
+
+    public Sirius(@NotNull Profile profile) {
+        this(profile, PeriodicTable.getInstance());
+    }
+
+    public Sirius() {
+        this.profile = Profile.DEFAULT();
+    }
+
+    public Sirius(@NotNull Profile profile, @NotNull PeriodicTable table) {
+        this.profile = profile;
+        this.table = table;
+        this.ionGuessing = new IonGuesser();
+    }
+
+
 
     /**
      * parses a file and return an iterator over all MS/MS experiments contained in this file
@@ -145,7 +165,7 @@ public class Sirius {
 
     public void detectPossibleIonModesFromMs1(ProcessedInput processedInput) {
         final List<PrecursorIonType> ionTypes = new ArrayList<>();
-        for (Ionization ionMode : PeriodicTable.getInstance().getKnownIonModes(processedInput.getExperimentInformation().getPrecursorIonType().getCharge())) {
+        for (Ionization ionMode : table.getKnownIonModes(processedInput.getExperimentInformation().getPrecursorIonType().getCharge())) {
             ionTypes.add(PrecursorIonType.getPrecursorIonType(ionMode));
         }
         detectPossibleIonModesFromMs1(processedInput, ionTypes.toArray(new PrecursorIonType[ionTypes.size()]));
@@ -1017,7 +1037,7 @@ public class Sirius {
 
         // step 2: adduct type search
         PossibleIonModes pim = input.getAnnotation(PossibleIonModes.class, null);
-        IonGuessingMode gm = input.getAnnotation(IonGuessingMode.class, IonGuessingMode.DEFAULT_ENABLED_GUESSING_MODE);
+        IonGuessingMode gm = input.getAnnotation(IonGuessingMode.class, IonGuessingMode.DEFAULT());
         if (pim == null)
             detectPossibleIonModesFromMs1(input);
         else if (gm.isEnabled()) {
