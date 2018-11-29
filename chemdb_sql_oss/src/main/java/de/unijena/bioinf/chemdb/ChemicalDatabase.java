@@ -7,7 +7,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.connection_pooling.ConnectionPool;
 import de.unijena.bioinf.fingerid.connection_pooling.PoolFunction;
 import de.unijena.bioinf.fingerid.connection_pooling.PooledConnection;
