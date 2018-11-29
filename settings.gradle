@@ -1,4 +1,7 @@
 rootProject.name = 'sirius'
+include ':default_properties'
+	include ':default_properties:annotations'
+	include ':default_properties:processor'
 include ':chemistry_base'
 include ':fragmentation_tree'
 	include ':fragmentation_tree:fragmentation_tree_construction'

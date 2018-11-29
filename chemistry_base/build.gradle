@@ -1,4 +1,6 @@
 dependencies {
+    compile project(':default_properties:annotations')
+    compile project(':default_properties:processor')
     compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
 
 //    compile group: 'javax.json', name: 'javax.json-api', version:"$json_version"
