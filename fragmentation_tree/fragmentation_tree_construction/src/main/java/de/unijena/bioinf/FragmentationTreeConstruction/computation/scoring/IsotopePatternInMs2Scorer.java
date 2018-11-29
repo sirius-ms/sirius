@@ -2,12 +2,12 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -423,7 +423,7 @@ public class IsotopePatternInMs2Scorer {
                 final double ionMass = peak.getMz();
                 final int index = Spectrums.mostIntensivePeakWithin(mergedMs1, ionMass, dev.allowedMassDeviation);
                 if (index >= 0) {
-                    final SimpleSpectrum spec = Spectrums.getNormalizedSpectrum(analyzer.extractPattern(mergedMs1, dev, exp.getAnnotationOrDefault(FormulaSettings.class).getConstraints().getChemicalAlphabet(), ionMass), Normalization.Max(1d));
+                    final SimpleSpectrum spec = Spectrums.getNormalizedSpectrum(analyzer.extractPattern(mergedMs1, dev, exp.getAnnotationOrDefault(FormulaConstraints.class).getChemicalAlphabet(), ionMass), Normalization.Max(1d));
                     if (spec.size() > 1) {
                         // use pattern!
                         //peak.setMz(spec.getMzAt(0));

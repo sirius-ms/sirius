@@ -1,8 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.ms.inputValidators;
 
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
@@ -56,7 +56,7 @@ public class ChimericAnnotator implements QualityAnnotator {
         for (Ms2Experiment experiment : dataset.getExperiments()) {
             Deviation maxDeviation = experiment.getAnnotationOrDefault(MS1MassDeviation.class).massDifferenceDeviation.multiply(2d);
             annotate(experiment, maxDeviation, isolationWindow,
-                    experiment.getAnnotationOrDefault(FormulaSettings.class).getConstraints().getChemicalAlphabet());
+                    experiment.getAnnotationOrDefault(FormulaConstraints.class).getChemicalAlphabet());
         }
     }
 
@@ -67,8 +67,8 @@ public class ChimericAnnotator implements QualityAnnotator {
 
 
         ChemicalAlphabet alphabet;
-        if (experiment.hasAnnotation(FormulaSettings.class)){
-            alphabet = experiment.getAnnotation(FormulaSettings.class).getConstraints().getChemicalAlphabet();
+        if (experiment.hasAnnotation(FormulaConstraints.class)){
+            alphabet = experiment.getAnnotation(FormulaConstraints.class).getChemicalAlphabet();
         }
         else {
             alphabet = defaultAlphabet;

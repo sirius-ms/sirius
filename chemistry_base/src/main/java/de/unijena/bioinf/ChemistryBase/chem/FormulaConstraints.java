@@ -17,11 +17,9 @@
  */
 package de.unijena.bioinf.ChemistryBase.chem;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
-import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
-import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 import gnu.trove.list.array.TIntArrayList;
@@ -44,7 +42,7 @@ import java.util.regex.Pattern;
  * But in application, you probably want the RDBE filter always active. If you just want to change its limit, set
  * it explicitly by calling new FormulaConstraints(alphabet, Arrays.asList(new ValenceFilter(-4)));
  */
-public class FormulaConstraints implements ImmutableParameterized<FormulaConstraints> {
+public class FormulaConstraints implements Ms2ExperimentAnnotation {
 
     private final ChemicalAlphabet chemicalAlphabet;
     private final int[] upperbounds, lowerbounds;
@@ -457,41 +455,41 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         return new FormulaConstraints(this);
     }
 
-    @Override
-    public <G, D, L> FormulaConstraints readFromParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        final ChemicalAlphabet alphabet = new ChemicalAlphabet(MolecularFormula.parse(document.getStringFromDictionary(dictionary, "alphabet")).elementArray());
-        final FormulaConstraints constraints = new FormulaConstraints(alphabet);
-        final Iterator<Map.Entry<String, G>> upperbounds = document.iteratorOfDictionary(document.getDictionaryFromDictionary(dictionary, "upperbounds"));
-        final PeriodicTable PT = PeriodicTable.getInstance();
-        final int[] ub = constraints.getUpperbounds();
-        while (upperbounds.hasNext()) {
-            final Map.Entry<String, G> entry = upperbounds.next();
-            final Element e = PT.getByName(entry.getKey());
-            ub[alphabet.getElements().indexOf(e)] = (int)document.getInt(entry.getValue());
-        }
-        final Iterator<G> filters = document.iteratorOfList(document.getListFromDictionary(dictionary, "filters"));
-        while (filters.hasNext()) {
-            addFilter((FormulaFilter)helper.unwrap(document, filters.next()));
-        }
-        return constraints;
-    }
-
-    @Override
-    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        document.addToDictionary(dictionary, "alphabet", chemicalAlphabet.toString());
-        final D upper = document.newDictionary();
-        for (int i=0; i < upperbounds.length; ++i) {
-            if (upperbounds[i] < Integer.MAX_VALUE) {
-                document.addToDictionary(upper, chemicalAlphabet.getElements().get(i).getSymbol(), document.wrap(upperbounds[i]));
-            }
-        }
-        document.addToDictionary(dictionary, "upperbounds", document.wrapDictionary(upper));
-        final L filters = document.newList();
-        for (FormulaFilter filter : getFilters()) {
-            document.addToList(filters, helper.wrap(document, filter));
-        }
-        document.addToDictionary(dictionary, "filters", document.wrapList(filters));
-    }
+//    @Override
+//    public <G, D, L> FormulaConstraints readFromParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+//        final ChemicalAlphabet alphabet = new ChemicalAlphabet(MolecularFormula.parse(document.getStringFromDictionary(dictionary, "alphabet")).elementArray());
+//        final FormulaConstraints constraints = new FormulaConstraints(alphabet);
+//        final Iterator<Map.Entry<String, G>> upperbounds = document.iteratorOfDictionary(document.getDictionaryFromDictionary(dictionary, "upperbounds"));
+//        final PeriodicTable PT = PeriodicTable.getInstance();
+//        final int[] ub = constraints.getUpperbounds();
+//        while (upperbounds.hasNext()) {
+//            final Map.Entry<String, G> entry = upperbounds.next();
+//            final Element e = PT.getByName(entry.getKey());
+//            ub[alphabet.getElements().indexOf(e)] = (int)document.getInt(entry.getValue());
+//        }
+//        final Iterator<G> filters = document.iteratorOfList(document.getListFromDictionary(dictionary, "filters"));
+//        while (filters.hasNext()) {
+//            addFilter((FormulaFilter)helper.unwrap(document, filters.next()));
+//        }
+//        return constraints;
+//    }
+//
+//    @Override
+//    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+//        document.addToDictionary(dictionary, "alphabet", chemicalAlphabet.toString());
+//        final D upper = document.newDictionary();
+//        for (int i=0; i < upperbounds.length; ++i) {
+//            if (upperbounds[i] < Integer.MAX_VALUE) {
+//                document.addToDictionary(upper, chemicalAlphabet.getElements().get(i).getSymbol(), document.wrap(upperbounds[i]));
+//            }
+//        }
+//        document.addToDictionary(dictionary, "upperbounds", document.wrapDictionary(upper));
+//        final L filters = document.newList();
+//        for (FormulaFilter filter : getFilters()) {
+//            document.addToList(filters, helper.wrap(document, filter));
+//        }
+//        document.addToDictionary(dictionary, "filters", document.wrapList(filters));
+//    }
 
     public String toString() {
         StringBuilder buf = new StringBuilder();

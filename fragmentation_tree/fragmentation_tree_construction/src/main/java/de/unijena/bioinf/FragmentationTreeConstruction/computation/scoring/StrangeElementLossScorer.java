@@ -19,11 +19,11 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
 import java.util.ArrayList;
@@ -72,7 +72,7 @@ public class StrangeElementLossScorer implements LossScorer {
         final Element O = t.getByName("O");
         final MolecularFormula hydrogen = MolecularFormula.parse("H");
         for (Element e : input.getExperimentInformation()
-                .getAnnotationOrDefault(FormulaSettings.class).getConstraints().getChemicalAlphabet().getElements()) {
+                .getAnnotationOrDefault(FormulaConstraints.class).getChemicalAlphabet().getElements()) {
             if (e == C || e == H || e == N || e == O) continue;
             specialElements.add(MolecularFormula.singleElement(e));
         }

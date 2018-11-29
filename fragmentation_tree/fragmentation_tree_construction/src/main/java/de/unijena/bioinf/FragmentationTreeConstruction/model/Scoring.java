@@ -17,7 +17,9 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
-public class Scoring {
+import de.unijena.bioinf.ms.annotations.Annotaion;
+
+public class Scoring implements Annotaion {
 
     private double[] peakScores;
     private double[][] peakPairScores;

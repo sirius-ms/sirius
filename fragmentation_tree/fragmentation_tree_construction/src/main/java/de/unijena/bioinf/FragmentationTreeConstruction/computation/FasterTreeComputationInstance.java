@@ -11,7 +11,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.treebuilder.ExtendedCriticalPathHeuristicTreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
 import org.jetbrains.annotations.NotNull;
@@ -138,7 +139,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         configureProgress(0, 2, 1);
         score();
         startTime = System.currentTimeMillis();
-        final Timeout timeout = pinput.getAnnotation(Timeout.class, Timeout.NO_TIMEOUT);
+        final Timeout timeout = pinput.getAnnotationOrDefault(Timeout.class);
         secondsPerInstance = timeout.getNumberOfSecondsPerInstance();
         secondsPerTree = timeout.getNumberOfSecondsPerDecomposition();
         restTime = Math.min(secondsPerInstance, secondsPerTree);
@@ -163,7 +164,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         if (Math.abs(newScore - oldScore) > 0.1) {
 
             final double treeSize = tree.numberOfVertices()==1 ? 0 : tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(tree.numberOfVertices() - 1)).get("TreeSizeScorer");
-            this.LOG().warn(prefix + ": Score of " + tree.getRoot().getFormula() + " differs significantly from recalculated score: " + oldScore + " vs " + newScore + " with tree size is " + pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(-0.5d)).score + " and root score is " + tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(0)).sum() + " and " + treeSize + " sort key is score " + tree.getTreeWeight() + " and filename is " + String.valueOf(pinput.getExperimentInformation().getSource()));
+            this.LOG().warn(prefix + ": Score of " + tree.getRoot().getFormula() + " differs significantly from recalculated score: " + oldScore + " vs " + newScore + " with tree size is " + pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, () -> new TreeSizeScorer.TreeSizeBonus(-0.5d)).score + " and root score is " + tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(0)).sum() + " and " + treeSize + " sort key is score " + tree.getTreeWeight() + " and filename is " + String.valueOf(pinput.getExperimentInformation().getSource()));
         }
     }
 
@@ -176,7 +177,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         TreeSizeScorer.TreeSizeBonus treeSizeBonus;
         final TreeSizeScorer tss = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
         if (tss != null) {
-            treeSizeBonus = pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(tss.getTreeSizeScore()));
+            treeSizeBonus = pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, () -> new TreeSizeScorer.TreeSizeBonus(tss.getTreeSizeScore()));
             pinput.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, treeSizeBonus);
         } else {
             treeSizeBonus = null;
@@ -214,7 +215,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         }
         final List<ExactResult> topResults = extractExactResults(results, numberOfResultsToKeep+10, numberOfResultsToKeepPerIonization+5);
         configureProgress(100, topResults.size());
-        if (pinput.getAnnotation(ForbidRecalibration.class, ForbidRecalibration.ALLOWED).isForbidden()) {
+        if (pinput.getAnnotationOrDefault(ForbidRecalibration.class).isForbidden()) {
             final List<BasicJJob<ExactResult>> jobs = new ArrayList<>();
             if (useHeuristic) {
                 topResults.forEach((t) -> jobs.add(new ExactJob(t)));

@@ -1,17 +1,21 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft.model;
 
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.DefaultProperty;
 
 /**
  * Determines how strong the isotope pattern score influences the final scoring
  */
-public class IsotopeScoring implements Ms2ExperimentAnnotation {
+@DefaultProperty
+public enum IsotopeScoring implements Ms2ExperimentAnnotation {
+
+    DEFAULT(1d),
+    DISABLED(0d);
 
     private final double weighting;
 
-    public final static IsotopeScoring DEFAULT = new IsotopeScoring(1d), DISABLED = new IsotopeScoring(0d);
 
-    public IsotopeScoring(double weighting) {
+    IsotopeScoring(double weighting) {
         this.weighting = weighting;
     }
 

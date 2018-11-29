@@ -403,7 +403,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 fields.put(optionName, value);
             } else if (depth == 2) {
                 if (currentSpectrum != null)
-                    currentSpectrum.computeAnnotationIfAbsent(AdditionalFields.class, (it) -> new AdditionalFields()).put(optionName, value);
+                    currentSpectrum.computeAnnotationIfAbsent(AdditionalFields.class).put(optionName, value);
                 else
                     warn("Cannot parse spectrum level (##) comment (" + line + ") because there is no Spectrum it belongs to.");
             }
