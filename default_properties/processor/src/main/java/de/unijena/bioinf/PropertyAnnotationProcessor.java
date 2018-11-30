@@ -9,9 +9,13 @@ import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
+import javax.tools.FileObject;
 import javax.tools.StandardLocation;
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,8 +24,6 @@ import java.util.regex.Pattern;
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class PropertyAnnotationProcessor extends AbstractProcessor {
 
-
-
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         final AnnotationSet annotationSet = new AnnotationSet();
@@ -29,22 +31,33 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
             annotationSet.add(element);
         }
         if (annotationSet.elements.isEmpty()) return true;
+
         annotationSet.sort();
-        try(final Writer w = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "de.unijena.bioinf", "properties.txt").openWriter()) {
-            final List<FieldGroup> grps = new ArrayList<>(annotationSet.fieldGroups.values());
-            grps.sort((u,v)->u.groupName.compareTo(v.groupName));
-            for (FieldGroup e : grps) {
-                if (!e.fields.isEmpty() && !e.comment.isEmpty()) {
-                    w.write(e.beautifiedComment());
-                }
-                for (Field f : e.fields) {
-                    if (!f.comment.isEmpty() || !f.possibleValues.isEmpty()) {
-                        w.write(f.beautifiedComment());
+
+        try {
+            FileObject resource = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", "tmp");
+            Path resourcePath = Paths.get(resource.toUri()).getParent().getParent().getParent().getParent().resolve("resources").resolve("main").resolve("profile.properties");
+            Files.createDirectories(resourcePath.getParent());
+            resource.delete();
+
+            try (BufferedWriter w = Files.newBufferedWriter(resourcePath)) {
+                final List<FieldGroup> grps = new ArrayList<>(annotationSet.fieldGroups.values());
+                grps.sort(Comparator.comparing(u -> u.groupName));
+                for (FieldGroup e : grps) {
+                    if (!e.fields.isEmpty() && !e.comment.isEmpty()) {
+                        w.write(e.beautifiedComment());
                     }
-                    w.write(f.paramString());
-                    w.write('\n');
+                    for (Field f : e.fields) {
+                        if (!f.comment.isEmpty() || !f.possibleValues.isEmpty()) {
+                            w.write(f.beautifiedComment());
+                        }
+                        w.write(f.paramString());
+                        w.write('\n');
+                    }
+                    w.write("\n");
                 }
-                w.write("\n");
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         } catch (IOException e) {
             e.printStackTrace();
