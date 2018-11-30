@@ -56,8 +56,6 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
                     }
                     w.write("\n");
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         } catch (IOException e) {
             e.printStackTrace();
