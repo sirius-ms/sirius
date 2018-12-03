@@ -9,8 +9,8 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import java.util.Arrays;
 import java.util.HashSet;
 /**
- * This class holds the information how autdetected and autoelements
- * Note: during Validation this is compared to the molecular formular an may be changed
+ * This class holds the information how to autodetect elements based on the given FormulaConstraints
+ * Note: during Validation this is compared to the molecular formula an may be changed
  *
  *
  * */
