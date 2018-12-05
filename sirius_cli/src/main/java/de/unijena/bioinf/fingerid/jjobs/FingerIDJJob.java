@@ -23,7 +23,6 @@ import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.db.CachedRESTDB;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.net.PredictionJJob;
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
@@ -217,7 +216,8 @@ public class FingerIDJJob extends BasicDependentMasterJJob<Map<IdentificationRes
                         validatedExperiment = experiment;
                     }
                 }
-                final PossibleAdducts adductTypes = validatedExperiment.getAnnotation(PossibleAdducts.class, new PossibleAdducts(PeriodicTable.getInstance().adductsByIonisation(experiment.getPrecursorIonType())));
+                final Ms2Experiment finalExperiment = experiment;
+                final PossibleAdducts adductTypes = validatedExperiment.getAnnotation(PossibleAdducts.class, () -> new PossibleAdducts(PeriodicTable.getInstance().adductsByIonisation(finalExperiment.getPrecursorIonType())));
                 for (PrecursorIonType ionType : adductTypes) {
                     if (!ionType.equals(ir.getBeautifulTree().getAnnotationOrThrow(PrecursorIonType.class)) && new IonTreeUtils().isResolvable(ir.getBeautifulTree(), ionType)) {
                         IdentificationResult newIr = IdentificationResult.withPrecursorIonType(ir, ionType);

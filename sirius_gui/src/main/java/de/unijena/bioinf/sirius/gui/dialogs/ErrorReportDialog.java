@@ -5,7 +5,7 @@ package de.unijena.bioinf.sirius.gui.dialogs;
  * 30.09.16.
  */
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.core.errorReport.FinngerIDWebErrorReporter;

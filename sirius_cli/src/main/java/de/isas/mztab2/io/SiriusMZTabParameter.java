@@ -5,7 +5,7 @@ import de.isas.mztab2.model.Database;
 import de.isas.mztab2.model.OptColumnMapping;
 import de.isas.mztab2.model.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import uk.ac.ebi.pride.jmztab2.model.OptColumnMappingBuilder;
 

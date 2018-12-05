@@ -1,46 +1,10 @@
 package de.unijena.bioinf.ms.cli;
 
-import com.google.common.collect.Iterables;
-import com.lexicalscope.jewel.cli.CliFactory;
-import com.lexicalscope.jewel.cli.HelpRequestedException;
-import de.unijena.bioinf.ChemistryBase.SimpleRectangularIsolationWindow;
-import de.unijena.bioinf.ChemistryBase.chem.*;
-import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
-import de.unijena.bioinf.babelms.GenericParser;
-import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.babelms.SpectralParser;
-import de.unijena.bioinf.chemdb.BioFilter;
-import de.unijena.bioinf.chemdb.DatasourceService;
-import de.unijena.bioinf.chemdb.FormulaCandidate;
-import de.unijena.bioinf.chemdb.RESTDatabase;
-import de.unijena.bioinf.fingerid.FingeridProjectSpaceFactory;
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.fingerid.net.WebAPI;
-import de.unijena.bioinf.fingerworker.WorkerList;
-import de.unijena.bioinf.ms.cli.utils.FormatedTableBuilder;
-import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.projectspace.*;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.ParseException;
-import java.util.*;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 public class CombinedCLI extends ApplicationCore {
 
-    protected ProjectWriter projectWriter;
+   /* protected ProjectWriter projectWriter;
     protected static boolean shellOutputSurpressed = false; //todo extra Utils class?
 
     protected org.slf4j.Logger logger = LoggerFactory.getLogger(CombinedCLI.class);
@@ -340,7 +304,7 @@ public class CombinedCLI extends ApplicationCore {
         // two different input modes:
         // general information that should be used if this fields are missing in the file
         final Double defaultParentMass = options.getParentMz();
-        final FormulaConstraints constraints = options.getElements() == null ? null/*getDefaultElementSet(options, ion)*/ : options.getElements();
+        final FormulaConstraints constraints = options.getElements() == null ? null*//*getDefaultElementSet(options, ion)*//* : options.getElements();
         // direct input: --ms1 and --ms2 command line options are given
         if (options.getMs2() != null && !options.getMs2().isEmpty()) {
             final MutableMeasurementProfile profile = new MutableMeasurementProfile();
@@ -533,12 +497,12 @@ public class CombinedCLI extends ApplicationCore {
     /// set data and Sirius dependent parameters
     ////////////////////////////////////////////////////////////////////////////////////////////
 
-    /**
+    *//**
      * add here (instance specific) parameters
      *
      * @param inst
      * @return
-     */
+     *//*
     protected Instance setupInstance(Instance inst) {
         final MutableMs2Experiment exp = inst.experiment instanceof MutableMs2Experiment ? (MutableMs2Experiment) inst.experiment : new MutableMs2Experiment(inst.experiment);
         if (exp.getPrecursorIonType() == null || exp.getPrecursorIonType().isIonizationUnknown())
@@ -644,9 +608,9 @@ public class CombinedCLI extends ApplicationCore {
     }
 
 
-    /*
+    *//*
     remove all but the most intense ms2
-     */
+     *//*
     protected void onlyKeepMostIntenseMS2(MutableMs2Experiment experiment) {
         if (experiment.getMs2Spectra().size() == 0) return;
         double precursorMass = experiment.getIonMass();
@@ -805,5 +769,5 @@ public class CombinedCLI extends ApplicationCore {
                     throw new IllegalArgumentException("SIRIUS does not support different charge states for the same compound");
             return PrecursorIonType.unknown(ch);
         }
-    }
+    }*/
 }

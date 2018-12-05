@@ -3,16 +3,12 @@ package de.unijena.bioinf.ms.cli;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.*;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.jjobs.FingerIDJJob;
 import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
 import de.unijena.bioinf.sirius.projectspace.ProjectWriter;
@@ -32,19 +28,19 @@ import java.util.concurrent.ExecutionException;
  */
 public class FingerIdWorkflow implements Workflow<Instance> {
 
-    FingerIdOptions options;
+//    FingerIdOptions options;
     ProjectWriter projectWriter;
     SiriusInstanceProcessor siriusInstanceProcessor;
     FingerIdInstanceProcessor fingerIdInstanceProcessor;
 
     protected Logger logger = LoggerFactory.getLogger(FingerIdWorkflow.class);
 
-    public FingerIdWorkflow(SiriusInstanceProcessor siriusIP, FingerIdInstanceProcessor fingeridIP, FingerIdOptions options, ProjectWriter projectWriter) {
+   /* public FingerIdWorkflow(SiriusInstanceProcessor siriusIP, FingerIdInstanceProcessor fingeridIP, FingerIdOptions options, ProjectWriter projectWriter) {
         this.options = options;
         this.projectWriter = projectWriter;
         siriusInstanceProcessor = siriusIP;
         fingerIdInstanceProcessor = fingeridIP;
-    }
+    }*/
 
     @Override
     public boolean setup() {
@@ -64,7 +60,7 @@ public class FingerIdWorkflow implements Workflow<Instance> {
     @Override
     public void compute(Iterator<Instance> allInstances) {
         //set options todo: i would like to do this in the cli parser but how with jewelcli?
-        int initBuffer = options.getMinInstanceBuffer() != null ? options.getMinInstanceBuffer() : PropertyManager.getNumberOfCores() * 2;
+        /*int initBuffer = options.getMinInstanceBuffer() != null ? options.getMinInstanceBuffer() : PropertyManager.getNumberOfCores() * 2;
         int maxBuffer = options.getMaxInstanceBuffer() != null ? options.getMaxInstanceBuffer() : initBuffer * 2;
 
         if (initBuffer <= 0) {
@@ -114,7 +110,7 @@ public class FingerIdWorkflow implements Workflow<Instance> {
         }
 
         JobSubmitter submitter = new JobSubmitter(allInstances);
-        submitter.start(initBuffer, maxBuffer);
+        submitter.start(initBuffer, maxBuffer);*/
 
     }
 
@@ -200,14 +196,14 @@ public class FingerIdWorkflow implements Workflow<Instance> {
 
         @Override
         protected void submitJobs(final JobContainer watcher) {
-            Instance instance = watcher.sourceInstance;
+            /*Instance instance = watcher.sourceInstance;
             ExperimentResultJJob siriusJob = siriusInstanceProcessor.makeSiriusJob(instance);
             submitJob(siriusJob, watcher);
             if (options.isFingerid()){
                 FingerIDJJob fingerIDJob = fingerIdInstanceProcessor.makeFingerIdJob(instance, siriusJob);
                 if (fingerIDJob!=null)
                     submitJob(fingerIDJob, watcher);
-            }
+            }*/
         }
 
         @Override

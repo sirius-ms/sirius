@@ -4,7 +4,7 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.Filterator;
 import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.matchers.MatcherEditor;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.candidate_filters.CandidateStringMatcherEditor;
 import de.unijena.bioinf.fingerid.candidate_filters.DatabaseFilterMatcherEditor;
 import de.unijena.bioinf.sirius.core.SiriusProperties;

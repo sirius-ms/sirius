@@ -1,6 +1,6 @@
 package de.unijena.bioinf.sirius.gui.net;
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.sirius.gui.utils.BooleanJlabel;

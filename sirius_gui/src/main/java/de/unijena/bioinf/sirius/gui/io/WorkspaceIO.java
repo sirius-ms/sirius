@@ -23,7 +23,7 @@ import com.google.common.collect.Lists;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;

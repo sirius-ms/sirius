@@ -1,34 +1,6 @@
 package de.unijena.bioinf.ms.cli;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
-import de.unijena.bioinf.babelms.GenericParser;
-import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.babelms.SpectralParser;
-import de.unijena.bioinf.fingerid.FingeridProjectSpaceFactory;
-import de.unijena.bioinf.fingerid.net.WebAPI;
-import de.unijena.bioinf.fingerworker.WorkerList;
-import de.unijena.bioinf.ms.cli.parameters.*;
-import de.unijena.bioinf.ms.cli.utils.FormatedTableBuilder;
-import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.projectspace.*;
-import org.slf4j.LoggerFactory;
-import picocli.CommandLine;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.ParseException;
-import java.util.*;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Logger;
 
 
 /**
@@ -47,7 +19,7 @@ import java.util.logging.Logger;
  */
 public class CLI extends ApplicationCore {
 
-    protected ProjectWriter projectWriter;
+    /*protected ProjectWriter projectWriter;
     protected static boolean shellOutputSurpressed = false; //todo extra Utils class?
 
     protected org.slf4j.Logger logger = LoggerFactory.getLogger(CombinedCLI.class);
@@ -469,12 +441,12 @@ public class CLI extends ApplicationCore {
         }
     }
 
-    /**
+    *//**
      * add here (instance specific) parameters
      *
      * @param inst instance to modify
      * @return new modified instance
-     */
+     *//*
     protected Instance setupInstance(Instance inst) {
         final MutableMs2Experiment exp = inst.experiment instanceof MutableMs2Experiment ? inst.experiment : new MutableMs2Experiment(inst.experiment);
         siriusOptions.setParamatersToExperiment(exp);
@@ -493,5 +465,5 @@ public class CLI extends ApplicationCore {
             } else queue.add(f);
         }
         return queue;
-    }
+    }*/
 }

@@ -1,37 +1,28 @@
 package de.unijena.bioinf.ms.cli;
 
-import com.google.common.base.Joiner;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
-import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.canopus.Canopus;
-import de.unijena.bioinf.chemdb.*;
-import de.unijena.bioinf.fingerid.CSIPredictor;
-import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.fingerid.TrainingStructuresPerPredictor;
-import de.unijena.bioinf.fingerid.db.*;
-import de.unijena.bioinf.fingerid.jjobs.FingerIDJJob;
-import de.unijena.bioinf.fingerid.net.WebAPI;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.*;
-
-import static de.unijena.bioinf.ms.cli.FingerIdOptions.CONSIDER_ALL_FORMULAS;
+import java.util.Map;
 
 
 public class FingerIdInstanceProcessor implements InstanceProcessor<Map<IdentificationResult, ProbabilityFingerprint>> {
+    @Override
+    public boolean setup() {
+        return false;
+    }
 
-    protected Logger logger = LoggerFactory.getLogger(getClass());
+    @Override
+    public boolean validate() {
+        return false;
+    }
+
+    @Override
+    public void output(Map<IdentificationResult, ProbabilityFingerprint> result) {
+
+    }
+
+   /* protected Logger logger = LoggerFactory.getLogger(getClass());
 
     FingerIdOptions options;
 
@@ -131,7 +122,7 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
                 if (topBio == null) topBio = fc;
             }
         }
-            /*
+            *//*
             if (!confidenceList.isEmpty()) {
                 final Scored<CompoundWithAbstractFP<Fingerprint>> c = confidenceList.get(0);
                 final CompoundCandidate fc = allCandidates.get(0).getCandidate();
@@ -149,7 +140,7 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
                 else
                     progress.info(String.format(Locale.US, "Top compound is %s %s (%s) with confidence %.2f\n", name, topResult.getPrecursorIonType().toString(), fc.getInchi().in2D, confidenceScore));
             }
-            */
+            *//*
         //todo the biofilter does also stay constant for all i
         if (getBioFilter() != BioFilter.ONLY_BIO && topBio != null && topBio.getCandidate() != allCandidates.get(0).getCandidate()) {
             final Scored<CompoundWithAbstractFP<Fingerprint>> c = bioConfidenceList.get(0);
@@ -384,5 +375,5 @@ public class FingerIdInstanceProcessor implements InstanceProcessor<Map<Identifi
     protected void printf(String msg, Object... args) {
         if (!CombinedCLI.shellOutputSurpressed)
             System.out.printf(Locale.US, msg, args);
-    }
+    }*/
 }

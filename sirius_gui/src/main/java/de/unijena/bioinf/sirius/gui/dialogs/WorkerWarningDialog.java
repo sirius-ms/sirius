@@ -1,6 +1,6 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.net.ConnectionCheckPanel;

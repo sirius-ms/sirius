@@ -1,6 +1,6 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import org.slf4j.LoggerFactory;
