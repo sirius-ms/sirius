@@ -747,25 +747,5 @@
         "$name": "LimitNumberOfPeaksFilter"
       }
     ]
-  },
-  "profile": {
-    "allowedMassDeviation": "5.0 ppm (0.001 m/z)",
-    "intensityDeviation": 0.06,
-    "standardMs2MassDeviation": "5.0 ppm (5E-4 m/z)",
-    "$name": "ChemistryBase.ms.MutableMeasurementProfile",
-    "standardMs1MassDeviation": "5.0 ppm (5E-4 m/z)",
-    "medianNoiseIntensity": 0.01,
-    "formulaConstraints": {
-      "$name": "ChemistryBase.chem.FormulaConstraints",
-      "upperbounds": {},
-      "alphabet": "CHNOPS",
-      "filters": [
-        {
-          "$name": "ChemistryBase.chem.utils.ValenceFilter",
-          "minValence": -0.5
-        }
-      ]
-    },
-    "standardMassDifferenceDeviation": "2 ppm (3.0E-4 m/z)"
   }
 }
