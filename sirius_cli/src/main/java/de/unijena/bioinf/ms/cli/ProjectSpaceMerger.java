@@ -38,7 +38,7 @@ public class ProjectSpaceMerger implements ProjectWriter {
                 try {
                     final ExperimentResult er = reader.next();
                     pw.writeExperiment(er);
-                    numberOfWrittenExperiments = Math.max(numberOfWrittenExperiments, er.getExperiment().getAnnotation(Index.class, Index.NO_INDEX).index);
+                    numberOfWrittenExperiments = Math.max(numberOfWrittenExperiments, er.getExperiment().getAnnotation(Index.class, () -> Index.NO_INDEX).index);
                 } catch (Throwable t) {
                     LoggerFactory.getLogger(ProjectSpaceMerger.class).error(t.getMessage(),t);
                 }

@@ -5,7 +5,7 @@ package de.unijena.bioinf.sirius.core.errorReport;
  * 29.09.16.
  */
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;

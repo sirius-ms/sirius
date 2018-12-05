@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.cli.parameters;
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import picocli.CommandLine;
@@ -25,6 +25,15 @@ public interface Options {
         @Override
         public String[] getVersion() throws Exception {
             return new String[]{ApplicationCore.VERSION_STRING, "SIRIUS lib: " + FingerIDProperties.siriusVersion(), "CSI:FingerID lib: " + FingerIDProperties.fingeridVersion()};
+        }
+    }
+
+    class DefaultPropertyTypeConverter implements CommandLine.ITypeConverter<Object>{
+
+        @Override
+        public Object convert(String value) throws Exception {
+//            if (PropertyManager.DEFAULTS.isInstantiatableWithDefaults())
+            return null;
         }
     }
 }

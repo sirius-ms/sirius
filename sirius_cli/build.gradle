@@ -1,3 +1,8 @@
+import org.apache.commons.configuration.PropertiesConfiguration
+import org.apache.commons.configuration.PropertiesConfigurationLayout
+
+import java.util.stream.Collectors
+
 dependencies {
     //compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
     compile "info.picocli:picocli:$picocli_version"
@@ -201,6 +206,115 @@ distributions {
         }
     }
     artifactoryPublish.dependsOn 'distribute'
+
+    //auto generate profiles to store default values
+// todo extent to also find Properties in the frontend module
+    task collectProfiles(type: Copy, dependsOn: compileJava) {
+        group = 'other'
+
+        def c = configurations.runtime.resolve().stream().map { f ->
+            zipTree(f)
+                    .matching {
+                include 'profile.properties'
+            }
+        }.collect(Collectors.toList())
+
+        def i = 0
+//            println(c)
+        from c
+        rename { String filename -> "${i++/*f.getName().split('.')[0]*/}_${filename}" }
+        into "$buildDir/tmp/profiles"
+    }
+
+    task makeProfileTemplate(dependsOn: collectProfiles) {
+        group = 'other'
+        outputs.file("$buildDir/tmp/profiles_concat/concat.profile")
+        doLast {
+            outputs.files.singleFile.withWriter { w ->
+                // For each input file path
+                tasks.collectProfiles.outputs.files.singleFile.listFiles().each { f ->
+                    // Get a reader for the input file
+                    f.withReader { r ->
+                        // And write data from the input into the output
+                        w << r << '\n'
+                    }
+                }
+            }
+        }
+    }
+
+    task collectDefaultProfile(type: Copy, dependsOn: compileJava) {
+        group = 'other'
+        from zipTree(configurations.runtime.find { it.name.startsWith("chemistry_base") })
+                .matching {
+            include 'default.profile'
+        }
+        into "$buildDir/tmp/profiles_source_default/"
+    }
+
+    task mergeTemplateWithDefaultProfile() {
+        group = 'other'
+        dependsOn 'makeProfileTemplate'
+        dependsOn 'collectDefaultProfile'
+
+        outputs.file("${rootDir}/src/main/resources/custom.profile");
+        doLast {
+            PropertiesConfiguration config = new PropertiesConfiguration()
+            PropertiesConfigurationLayout layout = new PropertiesConfigurationLayout(config)
+            layout.load(new InputStreamReader(new FileInputStream(
+                    tasks.makeProfileTemplate.outputs.files.singleFile
+            )))
+
+            Properties defaultProfile = new Properties()
+            tasks.collectDefaultProfile.outputs.files.singleFile.listFiles().first()
+                    .withReader("UTF8", {
+                defaultProfile.load(it)
+            })
+
+            defaultProfile.entrySet().each { e ->
+                config.setProperty(e.key, e.value)
+            }
+
+            outputs.files.singleFile.withWriter {
+                layout.save(it)
+            }
+        }
+    }
+
+    task checkDefaultProfile(dependsOn: collectDefaultProfile) {
+        group = 'other'
+        doLast {
+            Properties defaultProfile = new Properties()
+            tasks.collectDefaultProfile.outputs.files.singleFile.listFiles().first()
+                    .withReader("UTF8", { defaultProfile.load(it) })
+
+
+            Properties tmp = new Properties()
+            tasks.mergeTemplateWithDefaultProfile.outputs.files.singleFile
+                    .withReader("UTF8", {
+                tmp.load(it)
+            })
+            defaultProfile.putAll(tmp)
+
+            def errorCount = 0
+            logger.lifecycle(System.lineSeparator() + "Checking for NULL values in Profile...")
+            defaultProfile.keys().each { e ->
+                def v = defaultProfile.getProperty(e);
+                if (v == null || ((String) v).isEmpty()) {
+                    logger.warn("${e} is NULL!")
+                    errorCount++
+                }
+            }
+            if (errorCount > 0) {
+                logger.error("FAILED: $errorCount NULL values found!" + System.lineSeparator())
+                throw new GradleException("Error: There are NULL values in the default.profile of chemistry base")
+            }
+            logger.lifecycle("DONE: No NULL values found!" + System.lineSeparator())
+        }
+    }
+
+    distribute.dependsOn('checkDefaultPofile')
+
 
     task runCLI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
         File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}").toFile()

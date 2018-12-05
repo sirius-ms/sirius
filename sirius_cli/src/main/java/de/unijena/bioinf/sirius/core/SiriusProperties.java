@@ -1,11 +1,11 @@
 package de.unijena.bioinf.sirius.core;
 
-import de.unijena.bioinf.ChemistryBase.properties.PersistentProperties;
+import de.unijena.bioinf.ms.properties.PersistentProperties;
 
 import java.nio.file.Path;
 import java.util.Properties;
 
-import static de.unijena.bioinf.ChemistryBase.properties.PropertyManager.PROPERTY_BASE;
+import static de.unijena.bioinf.ms.properties.PropertyManager.PROPERTY_BASE;
 
 /* *
  * This class can be used to manage persistent properties of the sirius_frontend

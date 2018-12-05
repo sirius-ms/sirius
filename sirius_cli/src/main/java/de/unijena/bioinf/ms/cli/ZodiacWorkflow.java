@@ -1,22 +1,14 @@
 package de.unijena.bioinf.ms.cli;
 
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.GibbsSampling.model.ZodiacResultsWithClusters;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class ZodiacWorkflow implements Workflow<ExperimentResult> {
 
     private static final  org.slf4j.Logger LOG = LoggerFactory.getLogger(ZodiacWorkflow.class);
-    private ZodiacOptions options;
+//    private ZodiacOptions options;
 
     private ZodiacInstanceProcessor zodiacIP;
 
@@ -31,14 +23,14 @@ public class ZodiacWorkflow implements Workflow<ExperimentResult> {
     }
 
 
-    public ZodiacWorkflow(ZodiacOptions options) {
+    /*public ZodiacWorkflow(ZodiacOptions options) {
         this.options = options;
         this.zodiacIP = new ZodiacInstanceProcessor(options);
-    }
+    }*/
 
     @Override
     public void compute(Iterator<ExperimentResult> experimentResultIterator) {
-        Path originalSpectraPath = Paths.get(options.getSpectraFile());
+        /*Path originalSpectraPath = Paths.get(options.getSpectraFile());
 
         List<ExperimentResult> allExperimentResults = new ArrayList<>();
         while (experimentResultIterator.hasNext()) {
@@ -75,7 +67,7 @@ public class ZodiacWorkflow implements Workflow<ExperimentResult> {
         }catch (IOException e) {
             LOG.error("Error writing ZODIAC output.", e);
 
-        }
+        }*/
     }
 
 

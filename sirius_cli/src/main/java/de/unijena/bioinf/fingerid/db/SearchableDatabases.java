@@ -1,7 +1,7 @@
 package de.unijena.bioinf.fingerid.db;
 
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import org.jetbrains.annotations.NotNull;
 

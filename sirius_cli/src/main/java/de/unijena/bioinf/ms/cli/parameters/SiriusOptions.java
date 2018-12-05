@@ -17,9 +17,9 @@
  */
 package de.unijena.bioinf.ms.cli.parameters;
 
-import com.google.common.collect.Iterables;
-import de.unijena.bioinf.ChemistryBase.SimpleRectangularIsolationWindow;
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.sirius.IsotopePatternHandling;
 import de.unijena.bioinf.sirius.Sirius;
@@ -172,15 +172,9 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
 
     private IsolationWindow isolationWindow = null;
 
-    public IsolationWindow getIsolationWindow() {
-        if (isolationWindow != null || isolationWindowWidth == null) return isolationWindow;
-        final double right = Math.abs(isolationWindowWidth) / 2d + isolationWindowShift;
-        final double left = -Math.abs(isolationWindowWidth) / 2d + isolationWindowShift;
-        return new SimpleRectangularIsolationWindow(left, right);
-    }
 
 
-    private void configureAndAnnotateIonMode(MutableMs2Experiment exp) {
+    /*private void configureAndAnnotateIonMode(MutableMs2Experiment exp) {
         //set precursor of from parameters if it is still unknown at this stage
         //so we do not have to check possibleIonAdducts.isPrecursorIonType() after this block again.
         if (exp.getPrecursorIonType() == null) {
@@ -231,7 +225,7 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
 
         Sirius.setAllowedAdducts(exp, pa);
         Sirius.setAllowedIonModes(exp, im);
-    }
+    }*/
 
     protected Set<MolecularFormula> getFormulaWhitesetNoDB(Ms2Experiment experiment) {
         final Set<MolecularFormula> whiteset = new HashSet<MolecularFormula>();
@@ -244,7 +238,7 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
     //////////////////////////////////////////////////////////////////////////////////
     @Override
     public void setParamatersToExperiment(MutableMs2Experiment exp) {
-        configureAndAnnotateIonMode(exp);
+//        configureAndAnnotateIonMode(exp);
 
         if (numberOfCandidates != null)
             Sirius.setNumberOfCandidates(exp, numberOfCandidates);
@@ -268,7 +262,7 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
         if (whiteSet != null)
             Sirius.setFormulaSearchList(exp, whiteSet);
 
-        final IsolationWindow window = getIsolationWindow();
+        final IsolationWindow window = null; //todo getIsolationWindow();
         if (window != null) Sirius.setIsolationWindow(exp, window);
 
         Sirius.setTimeout(exp, instanceTimeout, treeTimeout);

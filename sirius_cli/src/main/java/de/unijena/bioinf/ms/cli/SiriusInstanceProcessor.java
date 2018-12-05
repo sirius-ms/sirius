@@ -1,9 +1,6 @@
 package de.unijena.bioinf.ms.cli;
 
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
@@ -21,10 +18,8 @@ import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Class to process Instances with Sirius algorithms
@@ -47,14 +42,14 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
     @Override
     public boolean setup() {
 
-        try {
+//        try {
             //todo combing profile with argument default values
             sirius = new Sirius(options.profile);
             sirius.setFastMode(!options.disableFastMode);
             final FragmentationPatternAnalysis ms2 = sirius.getMs2Analyzer();
             final IsotopePatternAnalysis ms1 = sirius.getMs1Analyzer();
-            final MutableMeasurementProfile ms1Prof = new MutableMeasurementProfile(ms1.getDefaultProfile());
-            final MutableMeasurementProfile ms2Prof = new MutableMeasurementProfile(ms2.getDefaultProfile());
+//            final MutableMeasurementProfile ms1Prof = new MutableMeasurementProfile(ms1.getDefaultProfile());
+//            final MutableMeasurementProfile ms2Prof = new MutableMeasurementProfile(ms2.getDefaultProfile());
             final String outerClassName = getClass().getName();
 
             //Validator warning
@@ -62,7 +57,7 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
 
             //setting up the profile (not Instance but Sirius dependent)
             //todo usually we want to get rid of this profile stuff
-            if (options.medianNoise != null) {
+            /*if (options.medianNoise != null) {
                 ms2Prof.setMedianNoiseIntensity(options.medianNoise);
             }
             if (options.ppmMax != null) {
@@ -71,7 +66,7 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
             }
             if (options.ppmMaxMs2 != null) {
                 ms2Prof.setAllowedMassDeviation(new Deviation(options.ppmMaxMs2));
-            }
+            }*/
 
             final TreeBuilder builder = sirius.getMs2Analyzer().getTreeBuilder();
             if (builder == null) {
@@ -82,8 +77,8 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
             logger.info("Compute trees using " + builder);
 
 
-            sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
-            sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
+//            sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
+//            sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
 
             if (options.enableSiliconDetection) {
                 ElementPredictor elementPredictor = sirius.getElementPrediction();
@@ -92,10 +87,10 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
                 }
             }
 
-        } catch (IOException e) {
+       /* } catch (IOException e) {
             logger.error("Cannot load profile '" + options.profile + "':\n", e);
             return false;
-        }
+        }*/
         return true;
     }
 
@@ -114,7 +109,7 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
             for (IdentificationResult result : results) {
                 final IsotopePattern pat = result.getRawTree().getAnnotationOrNull(IsotopePattern.class);
                 final int isoPeaks = pat == null ? 0 : pat.getPattern().size();
-                printf("%" + n + "d.) %s\t%s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\texplained intensity: %.2f %%\tisotope peaks: %d\n", rank++, result.getMolecularFormula().toString(), String.valueOf(result.getResolvedTree().getAnnotationOrNull(PrecursorIonType.class)), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getResolvedTree().numberOfVertices(), getSirius().getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getResolvedTree()) * 100, isoPeaks);
+//                printf("%" + n + "d.) %s\t%s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\texplained intensity: %.2f %%\tisotope peaks: %d\n", rank++, result.getMolecularFormula().toString(), String.valueOf(result.getResolvedTree().getAnnotationOrNull(PrecursorIonType.class)), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getResolvedTree().numberOfVertices(), getSirius().getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getResolvedTree()) * 100, isoPeaks);
             }
 
 
@@ -123,11 +118,11 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
             if (error.equals(ExperimentResult.ErrorCause.NORESULTS)) {
                 logger.warn("Cannot find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
             } else if (error.equals(ExperimentResult.ErrorCause.TIMEOUT)) {
-                println("Ignore " + experimentResult.getExperiment().getName() + " due to timeout!");
+//                println("Ignore " + experimentResult.getExperiment().getName() + " due to timeout!");
             } else {
                 //todo save and output error
 //                e.printStackTrace();
-                println("Error during computation of " + experimentResult.getExperiment().getName() + ": " + experimentResult.getErrorMessage());
+//                println("Error during computation of " + experimentResult.getExperiment().getName() + ": " + experimentResult.getErrorMessage());
                 logger.debug("Error during computation of " + experimentResult.getExperiment().getName(), experimentResult.getErrorMessage());
             }
         }
@@ -177,7 +172,7 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void print(String s) {
+    /*public void print(String s) {
         if (!CombinedCLI.shellOutputSurpressed) System.out.print(s);
     }
 
@@ -188,7 +183,7 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
     protected void printf(String msg, Object... args) {
         if (!CombinedCLI.shellOutputSurpressed)
             System.out.printf(Locale.US, msg, args);
-    }
+    }*/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -1,6 +1,6 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.storage.FileFormat;

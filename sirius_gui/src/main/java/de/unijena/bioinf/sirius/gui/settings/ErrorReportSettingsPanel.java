@@ -5,7 +5,7 @@ package de.unijena.bioinf.sirius.gui.settings;
  * 07.10.16.
  */
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.utils.mailService.Mail;
 import org.slf4j.LoggerFactory;

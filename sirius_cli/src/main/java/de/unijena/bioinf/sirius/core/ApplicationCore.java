@@ -5,18 +5,15 @@ package de.unijena.bioinf.sirius.core;
  * 19.09.16.
  */
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,7 +40,7 @@ public abstract class ApplicationCore {
     //creating
     static {
         System.setProperty("de.unijena.bioinf.ms.sirius.props",
-                "csi_fingerid.build.properties,sirius_frontend.build.properties"
+                "sirius.build.properties,csi_fingerid.build.properties,sirius_frontend.build.properties"
         );
 
         final String version = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.version");
@@ -90,6 +87,7 @@ public abstract class ApplicationCore {
         // create ws files
         Path loggingPropFile = WORKSPACE.resolve("logging.properties");
         Path siriusPropsFile = WORKSPACE.resolve("sirius.properties");
+        Path customProfileFile = WORKSPACE.resolve("custom.profile");
         Path versionFile = WORKSPACE.resolve("version");
         try {
             if (Files.exists(versionFile)) {
@@ -168,6 +166,22 @@ public abstract class ApplicationCore {
                 e.printStackTrace();
             }
         }
+
+        //create custom properties if it not exists
+        if (Files.notExists(customProfileFile)) {
+            try (InputStream stream = ApplicationCore.class.getResourceAsStream("/custom.profile")) {
+                byte[] buffer = new byte[stream.available()];
+                stream.read(buffer);
+
+                OutputStream outStream = Files.newOutputStream(customProfileFile);
+                outStream.write(buffer);
+            } catch (IOException e) {
+                DEFAULT_LOGGER.error("Could NOT create sirius properties file", e);
+            }
+        }
+
+        //overite default profiles from chemistry-base with custom profile
+        PropertyManager.addProfilePropertiesFromFile(customProfileFile);
 
         DEFAULT_LOGGER = LoggerFactory.getLogger(ApplicationCore.class);
         DEFAULT_LOGGER.debug("Logging service initialized!");

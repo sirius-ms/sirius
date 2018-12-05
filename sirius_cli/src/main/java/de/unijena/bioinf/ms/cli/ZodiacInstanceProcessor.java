@@ -1,46 +1,9 @@
 package de.unijena.bioinf.ms.cli;
 
-import com.google.common.collect.Iterables;
-import de.unijena.bioinf.ChemistryBase.SimpleRectangularIsolationWindow;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.*;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
-import de.unijena.bioinf.GibbsSampling.ZodiacUtils;
-import de.unijena.bioinf.GibbsSampling.model.*;
-import de.unijena.bioinf.GibbsSampling.model.distributions.*;
-import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
-import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
-import de.unijena.bioinf.GibbsSampling.model.scorer.SameIonizationScorer;
-import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.babelms.ms.JenaMsWriter;
-import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
-import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.projectspace.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import oshi.SystemInfo;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.ParseException;
-import java.util.*;
+import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 
 public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResult> {
-    protected static Logger LOG = LoggerFactory.getLogger(ZodiacInstanceProcessor.class);
+    /*protected static Logger LOG = LoggerFactory.getLogger(ZodiacInstanceProcessor.class);
     protected ZodiacOptions options;
     protected FilenameFormatter filenameFormatter;
 
@@ -576,9 +539,9 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
 
 
 
-    /*
+    *//*
     experimentMap necessary since FragmentsCandidate might be the cluster representative.
-     */
+     *//*
     private static void writeSpectra(String[] ids, CompoundResult<FragmentsCandidate>[] result, Map<String, ExperimentResult> experimentMap, Path outputPath, FilenameFormatter filenameFormatter) throws IOException {
         for (int i = 0; i < ids.length; i++) {
             final Scored<FragmentsCandidate>[] currentResults = result[i].getCandidates();
@@ -627,8 +590,20 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             results.add(result);
         }
         return results;
+    }*/
+
+    @Override
+    public boolean setup() {
+        return false;
     }
 
+    @Override
+    public boolean validate() {
+        return false;
+    }
 
+    @Override
+    public void output(ExperimentResult result) {
 
+    }
 }
