@@ -29,7 +29,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-@DefaultProperty(propertyKey = "AlgorithmProfile")
+@DefaultProperty(propertyParent = "AlgorithmProfile")
 public class Profile {
     public static final Profile DEFAULT() {
         return PropertyManager.DEFAULTS.createInstanceWithDefaults(Profile.class);
