@@ -114,7 +114,11 @@ public interface Annotated<A extends Annotaion> {
         annotations().map.clear();
     }
 
-    //overrides existing
+    /**
+     * Add all given annotations. Overrides existing.
+     *
+     * @param annotated annotations to add
+     */
     default void setAnnotationsFrom(Annotated<A> annotated) {
         final Iterator<Map.Entry<Class<A>, A>> iter = annotated.forEachAnnotation();
         while (iter.hasNext()) {
@@ -123,7 +127,11 @@ public interface Annotated<A extends Annotaion> {
         }
     }
 
-    //doe not override existing
+    /**
+     * Add all given annotations if they do not exist
+     *
+     * @param annotated annotations to add
+     */
     default void addAnnotationsFrom(Annotated<A> annotated) {
         final Iterator<Map.Entry<Class<A>, A>> iter = annotated.forEachAnnotation();
         while (iter.hasNext()) {

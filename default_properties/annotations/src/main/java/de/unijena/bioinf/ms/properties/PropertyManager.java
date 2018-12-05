@@ -28,7 +28,9 @@ public class PropertyManager {
     public static final DefaultPropertyLoader DEFAULTS;
 
     static {
-        PROPERTIES = loadDefaultProperties();
+        PROPERTIES = new Properties();
+        loadDefaultProperties();
+        loadProfileProperties();
         DEFAULTS = new DefaultPropertyLoader(PROPERTIES, PROPERTY_BASE + ".ms");
     }
 
@@ -61,27 +63,40 @@ public class PropertyManager {
         }
     }
 
-    private static Properties loadDefaultProperties() {
-        String p = System.getProperties().getProperty("de.unijena.bioinf.ms.sirius.props");
+    public static void addProfilePropertiesFromFile(@NotNull Path profilePath) {
+        addPropertiesFromFile(profilePath, PROPERTY_BASE + ".ms");
+    }
+
+    public static void addProfilePropertiesFromStream(@NotNull InputStream stream) throws IOException {
+        addPropertiesFromStream(stream, PROPERTY_BASE + ".ms");
+    }
+
+    private static void loadProfileProperties() {
+        loadProperties(PROPERTIES.getProperty("de.unijena.bioinf.ms.sirius.profiles"), PROPERTY_BASE + ".ms");
+    }
+
+    private static void loadDefaultProperties() {
+        loadProperties(System.getProperties().getProperty("de.unijena.bioinf.ms.sirius.props"), null);
+    }
+
+    private static void loadProperties(@Nullable final String locations, @Nullable final String prefixToAdd) {
         LinkedHashSet<String> resources = new LinkedHashSet<>();
-        resources.add("sirius.build.properties");
 
-        if (p != null && !p.isEmpty())
-            resources.addAll(Arrays.asList(p.split(",")));
+        if (locations != null && !locations.isEmpty())
+            resources.addAll(Arrays.asList(locations.split(",")));
 
-        Properties global = new Properties();
+        loadProperties(resources, prefixToAdd);
+    }
+
+    private static void loadProperties(@NotNull final LinkedHashSet<String> resources, @Nullable String prefixToAdd) {
         for (String resource : resources) {
             try (InputStream input = PropertyManager.class.getResourceAsStream("/" + resource)) {
-                Properties props = new Properties();
-                props.load(input);
-                global.putAll(props);
+                addPropertiesFromStream(input, prefixToAdd);
             } catch (IOException e) {
-                System.err.println("Could not load properties from " + resource.toString());
+                System.err.println("Could not load properties from " + resource);
                 e.printStackTrace();
             }
         }
-        return global;
-
     }
 
     public static Object setProperty(String key, String value) {
@@ -159,10 +174,10 @@ public class PropertyManager {
     }
 
 
-    public static void main(String[] args) throws IOException {
+    /*public static void main(String[] args) throws IOException {
         PropertyManager.PROPERTIES.get("foo");
         PropertyManager.addPropertiesFromStream(DefaultPropertyLoader.class.getResourceAsStream("/default.annotation.properties"),PROPERTY_BASE + ".ms");
         System.out.println(PropertyManager.PROPERTIES);
-    }
+    }*/
 
 }
