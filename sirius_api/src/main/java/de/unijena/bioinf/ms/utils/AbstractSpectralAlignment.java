@@ -2,27 +2,36 @@ package de.unijena.bioinf.ms.utils;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import gnu.trove.set.hash.TIntHashSet;
 
 import java.util.BitSet;
 
-public class SpectralAlignment {
+/**
+ * spectral comparison. dot product like.
+ */
+public abstract class AbstractSpectralAlignment {
 
-    private Deviation deviation;
+    protected Deviation deviation;
 
-        public SpectralAlignment(Deviation deviation) {
+    /**
+     *
+     * @param deviation should be higher than usual expected mass deviation to not punish mz errors too much. this results in low cosine scores even for the same compounds
+     */
+    public AbstractSpectralAlignment(Deviation deviation) {
         this.deviation = deviation;
     }
 
 
-    public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right) {
-        SpectralSimilarity s1 = score1(left, right);
-        return s1;
-    }
+    public abstract SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right);
 
-    public SpectralSimilarity score1(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right) {
+    /**
+     * one peak can only match one peak in the other spectrum
+     * @param left
+     * @param right
+     * @return
+     */
+    public SpectralSimilarity score1To1(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right) {
         if (left.size()==0 || right.size()==0) return new SpectralSimilarity(0d, 0);
         MatchesMatrix backtrace = new MatchesMatrix(left.size(), right.size());
         double[] scoreRowBefore = new double[left.size()];
@@ -117,6 +126,59 @@ public class SpectralAlignment {
 
     }
 
+
+    public SpectralSimilarity scoreAllAgainstAll(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right) {
+        final BitSet usedIndicesLeft = new BitSet();
+        final BitSet usedIndicesRight = new BitSet();
+
+        int i = 0, j = 0;
+        double score = 0d;
+
+        final int nl=left.size(), nr=right.size();
+        while (i < nl && left.getMzAt(i) < 0.5d) ++i; //skip negative peaks of inversed spectra
+        while (j < nr && right.getMzAt(j) < 0.5d) ++j;
+        while (i < nl && j < nr) {
+            Peak lp = left.getPeakAt(i);
+            Peak rp = right.getPeakAt(j);
+            final double difference = lp.getMass()- rp.getMass();
+            final double allowedDifference = maxAllowedDifference(Math.min(lp.getMass(), rp.getMass()));
+
+            if (Math.abs(difference) <= allowedDifference) {
+                double matchScore = scorePeaks(lp,rp);
+                score += matchScore;
+                usedIndicesLeft.set(i);
+                usedIndicesRight.set(j);
+                for (int k=i+1; k < nl; ++k) {
+                    Peak lp2 = left.getPeakAt(k);
+                    final double difference2 = lp2.getMass()- rp.getMass();
+                    if (Math.abs(difference2) <= allowedDifference) {
+                        matchScore = scorePeaks(lp2,rp);
+                        score += matchScore;
+                        usedIndicesLeft.set(k);
+                    } else break;
+                }
+                for (int l=j+1; l < nr; ++l) {
+                    Peak rp2 = right.getPeakAt(l);
+                    final double difference2 = lp.getMass()- rp2.getMass();
+                    if (Math.abs(difference2) <= allowedDifference) {
+                        matchScore = scorePeaks(lp,rp2);
+                        score += matchScore;
+                        usedIndicesRight.set(l);
+                    } else break;
+                }
+                ++i; ++j;
+            } else if (difference > 0) {
+                ++j;
+
+            } else {
+                ++i;
+            }
+        }
+        int matchedPeaks = Math.min(usedIndicesLeft.cardinality(), usedIndicesRight.cardinality());
+        return  new SpectralSimilarity(score, matchedPeaks);
+
+    }
+
     private int backtraceAndCountMatchedPeaks(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, MatchesMatrix backtrace, int imax, int jmax, double maxScore){
         //todo take only one best match. should result in same number of peaks!?!?
         int i = imax;
@@ -156,28 +218,9 @@ public class SpectralAlignment {
     }
 
 
+    protected abstract double scorePeaks(Peak lp, Peak rp);
 
-    private double scorePeaks(Peak lp, Peak rp) {
-//        return lp.getIntensity()*rp.getIntensity();
-        //formula from Jebara: Probability Product Kernels. multiplied by intensites
-        // (1/(4*pi*sigma**2))*exp(-(mu1-mu2)**2/(4*sigma**2))
-        final double mzDiff = Math.abs(lp.getMass()-rp.getMass());
-
-        final double variance = Math.pow(deviation.absoluteFor(Math.min(lp.getMass(), rp.getMass())),2);
-//        final double variance = Math.pow(0.01,2); //todo same sigma for all?
-        final double varianceTimes4 = 4*variance;
-        final double constTerm = 1.0/(Math.PI*varianceTimes4);
-
-        final double propOverlap = constTerm*Math.exp(-(mzDiff*mzDiff)/varianceTimes4);
-        return (lp.getIntensity()*rp.getIntensity())*propOverlap;
-    }
-
-
-    private double maxAllowedDifference(double mz) {
-        //change to, say 3*dev, when using gaussians
-        return deviation.absoluteFor(mz);
-//        return 0.01;
-    }
+    protected abstract double maxAllowedDifference(double mz);
 
 
     private class MatchesMatrix {
