@@ -271,7 +271,8 @@ public class Sirius {
         final ProcessedInput pinput = instance.validateInput();
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
         if (whiteList != null) pinput.setAnnotation(Whiteset.class, new Whiteset(whiteList));
-        performMs1Analysis(instance, deisotope);
+        pinput.setAnnotation(IsotopeSettings.class, new IsotopeSettings(deisotope.isFiltering(), deisotope.isScoring() ? 1 : 0));
+        performMs1Analysis(instance);
         SiriusJobs.getGlobalJobManager().submitJob(instance);
         AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = createIdentificationResults(fr, instance);//postprocess results
@@ -343,12 +344,11 @@ public class Sirius {
                                                        formulaConstraints) {
         final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, numberOfCandidates, numberOfCandidatesPerIonization);
         final ProcessedInput pinput = instance.validateInput();
+        pinput.setAnnotation(IsotopeSettings.class, new IsotopeSettings(deisotope.isFiltering(), deisotope.isScoring() ? 1 : 0));
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
+        pinput.setAnnotation(FormulaSettings.class, new FormulaSettings(formulaConstraints, getElementPrediction().getChemicalAlphabet(), FormulaConstraints.empty()));
 
-        if (formulaConstraints != null)
-            pinput.setAnnotation(FormulaConstraints.class, formulaConstraints);
-
-        performMs1Analysis(instance, deisotope);
+        performMs1Analysis(instance);
         SiriusJobs.getGlobalJobManager().submitJob(instance);
         AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = createIdentificationResults(fr, instance);//postprocess results
@@ -556,16 +556,8 @@ public class Sirius {
         experiment.setAnnotation(ForbidRecalibration.class, enabled ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
     }
 
-    public static void setIsotopeMode(@NotNull MutableMs2Experiment experiment, IsotopePatternHandling handling) {
-        FormulaSettings current = experiment.getAnnotationOrDefault(FormulaSettings.class);
-        if (handling.isFiltering()) current = current.withIsotopeFormulaFiltering();
-        else current = current.withoutIsotopeFormulaFiltering();
-        experiment.setAnnotation(FormulaSettings.class, current);
-        if (handling.isScoring()) {
-            experiment.setAnnotation(IsotopeScoring.class, IsotopeScoring.DEFAULT);
-        } else {
-            experiment.setAnnotation(IsotopeScoring.class, IsotopeScoring.DISABLED);
-        }
+    public static void setIsotopeMode(@NotNull MutableMs2Experiment experiment, IsotopeSettings isotopeSettings) {
+        experiment.setAnnotation(IsotopeSettings.class, isotopeSettings);
     }
 
     public static void setAutomaticElementDetectionFor(@NotNull Ms2Experiment experiment, Element elements) {
@@ -573,8 +565,14 @@ public class Sirius {
         experiment.setAnnotation(FormulaSettings.class, current.withoutAutoDetect().autoDetect(elements));
     }
 
+    @Deprecated
     public static void setFormulaConstraints(@NotNull Ms2Experiment experiment, FormulaConstraints constraints) {
-        experiment.setAnnotation(FormulaConstraints.class, constraints);
+        //experiment.setAnnotation(FormulaConstraints.class, constraints);
+        setFormulaSettings(experiment, experiment.getAnnotationOrDefault(FormulaSettings.class).enforce(constraints));
+    }
+
+    public static void setFormulaSettings(@NotNull Ms2Experiment experiment, FormulaSettings settings) {
+        experiment.setAnnotation(FormulaSettings.class, settings);
     }
 
     public static void setIsolationWindow(@NotNull MutableMs2Experiment experiment, IsolationWindow isolationWindow) {
@@ -1010,27 +1008,22 @@ public class Sirius {
         } else return new SimpleSpectrum(new double[0], new double[0]);
     }
 
-    protected boolean performMs1Analysis(AbstractTreeComputationInstance instance) {
-        FormulaSettings fs = instance.validateInput().getAnnotation(FormulaSettings.class, null);
-        IsotopeScoring iso = instance.validateInput().getAnnotation(IsotopeScoring.class, null);
-        if (fs == null || fs.isAllowIsotopeElementFiltering()) {
-            if (iso == null || iso.getIsotopeScoreWeighting() > 0) {
-                return performMs1Analysis(instance, IsotopePatternHandling.both);
-            } else return performMs1Analysis(instance, IsotopePatternHandling.filter);
-        } else if (iso == null || iso.getIsotopeScoreWeighting() > 0)
-            return performMs1Analysis(instance, IsotopePatternHandling.score);
-        else return performMs1Analysis(instance, IsotopePatternHandling.omit);
-    }
-
     /*
     TODO: We have to move this at some point back into the FragmentationPatternAnalysis pipeline -_-
      */
-    protected boolean performMs1Analysis(AbstractTreeComputationInstance instance, IsotopePatternHandling handling) {
-        if (handling == IsotopePatternHandling.omit) return false;
+    protected boolean performMs1Analysis(AbstractTreeComputationInstance instance) {
         final ProcessedInput input = instance.validateInput();
+        IsotopeSettings isotopeSettings = input.getAnnotation(IsotopeSettings.class);
+        FormulaSettings formulaSettings = input.getAnnotation(FormulaSettings.class);
+
+        if (!isotopeSettings.isFiltering() && !isotopeSettings.isScoring() && !formulaSettings.isElementDetectionEnabled())
+            return false;
+
         final ExtractedIsotopePattern pattern = extractedIsotopePattern(input);
-        if (pattern == null || !pattern.hasPatternWithAtLeastTwoPeaks())
+        if (pattern == null || !pattern.hasPatternWithAtLeastTwoPeaks()) {
+            input.setAnnotation(FormulaConstraints.class, formulaSettings.getEnforcedAlphabet().getExtendedConstraints(formulaSettings.getFallbackAlphabet()));
             return false; // we cannot do any analysis without isotope information
+        }
         // step 1: automatic element detection
         performAutomaticElementDetection(input, pattern.getPattern());
 
@@ -1043,7 +1036,7 @@ public class Sirius {
             detectPossibleIonModesFromMs1(input, pim.getIonModesAsPrecursorIonType().toArray(new PrecursorIonType[0]));
         }
         // step 3: Isotope pattern analysis
-        if (input.getAnnotationOrDefault(IsotopeScoring.class).getIsotopeScoreWeighting() <= 0)
+        if (!isotopeSettings.isScoring())
             return false;
         final DecompositionList decompositions = instance.precompute().getAnnotationOrThrow(DecompositionList.class);
         final IsotopePatternAnalysis an = getMs1Analyzer();
@@ -1068,7 +1061,7 @@ public class Sirius {
         //doFilter = doFilter && pattern.getExplanations().size() > 100;
         // step 3: apply filtering and/or scoring
         if (doFilter && maxScore >= scoreThresholdForFiltering) {
-            if (handling.isFiltering()) {
+            if (isotopeSettings.isFiltering()) {
                 //final Iterator<Map.Entry<MolecularFormula, IsotopePattern>> iter = pattern.getExplanations().entrySet().iterator();
                 final Iterator<Decomposition> iter = decompositions.getDecompositions().iterator();
                 while (iter.hasNext()) {
@@ -1083,7 +1076,7 @@ public class Sirius {
         final Iterator<Map.Entry<MolecularFormula, IsotopePattern>> iter = pattern.getExplanations().entrySet().iterator();
         while (iter.hasNext()) {
             final Map.Entry<MolecularFormula, IsotopePattern> val = iter.next();
-            val.setValue(val.getValue().withScore(handling.isScoring() ? Math.max(val.getValue().getScore(), 0d) : 0d));
+            val.setValue(val.getValue().withScore(isotopeSettings.isScoring() ? Math.max(val.getValue().getScore()*isotopeSettings.getMultiplier(), 0d) : 0d));
         }
 
         return true;
@@ -1091,24 +1084,10 @@ public class Sirius {
 
     private void performAutomaticElementDetection(ProcessedInput input, SimpleSpectrum extractedPattern) {
         final FormulaSettings settings = input.getAnnotationOrDefault(FormulaSettings.class);
-        final FormulaConstraints inputConstraints = input.getAnnotation(FormulaConstraints.class, () -> (new FormulaConstraints("CHNOP[5]SFI[5]BrCl")));
         if (settings.isElementDetectionEnabled()) {
             final ElementPredictor predictor = getElementPrediction();
-            final HashSet<Element> allowedElements = new HashSet<>(inputConstraints.getChemicalAlphabet().getElements());
-            final HashSet<Element> auto = settings.getAutoDetectionElements();
-            allowedElements.addAll(auto);
-            Iterator<Element> e = allowedElements.iterator();
-            final FormulaConstraints constraints = predictor.predictConstraints(extractedPattern);
-            while (e.hasNext()) {
-                final Element detectable = e.next();
-                if (auto.contains(detectable) && getElementPrediction().isPredictable(detectable) && constraints.getUpperbound(detectable) <= 0)
-                    e.remove();
-            }
-            final FormulaConstraints revised = inputConstraints.getExtendedConstraints(allowedElements.toArray(new Element[allowedElements.size()]));
-            for (Element det : auto) {
-                revised.setUpperbound(det, constraints.getUpperbound(det));
-            }
-            input.setAnnotation(FormulaConstraints.class, revised);
+            final FormulaConstraints constraints = settings.getEnforcedAlphabet().getExtendedConstraints(predictor.predictConstraints(extractedPattern).intersection(new FormulaConstraints(settings.getAutoDetectionAlphabet())));
+            input.setAnnotation(FormulaConstraints.class, constraints);
         }
     }
 
