@@ -65,13 +65,14 @@ public class SpectralLibrarySearch {
     private final Deviation deviation;
     private static final Normalization NORMALIZATION = Normalization.Sum(100);
 
-    private final SpectralAlignment spectralAlignment;
+    private final AbstractSpectralAlignment spectralAlignment;
 
     public SpectralLibrarySearch(LibrarySpectrum[] librarySpectra, Deviation ms2Deviation, boolean transformSqrtIntensity, boolean multiplyIntensityByMass, int minSharedPeaks) {
         this.librarySpectra = librarySpectra.clone();
         this.minSharedPeaks = minSharedPeaks;
         this.deviation = ms2Deviation;
-        spectralAlignment = new SpectralAlignment(deviation);
+        spectralAlignment = new GaussianSpectralAlignment(deviation);
+//        spectralAlignment = new IntensityWeightedSpectralAlignment(deviation);
 
 
         //sort for binary mz search
@@ -104,7 +105,6 @@ public class SpectralLibrarySearch {
             LibrarySpectrum librarySpectrum = new LibrarySpectrum(ls.getName(), normalized, ls.getMolecularFormula(), ls.getIonType(), ls.getSmiles(), ls.getInChI());
             this.librarySpectra[i] = librarySpectrum;
             OrderedSpectrum<Peak> spec = librarySpectrum.getFragmentationSpectrum();
-//            selfSimilarity[i] = Spectrums.dotProductPeaks(spec,spec,deviation);
             selfSimilarity[i] = spectralAlignment.score(spec,spec).similarity;
 
             SimpleSpectrum inverse = Spectrums.getInversedSpectrum(spec, librarySpectrum.getIonMass());//todo ionmass?vs measured
@@ -158,7 +158,6 @@ public class SpectralLibrarySearch {
         }
 
 
-        //todo same iontype !?
         if (intensityTransformation !=null){
             spectrum = Spectrums.transform(new SimpleMutableSpectrum(spectrum), intensityTransformation);
         }
@@ -202,10 +201,6 @@ public class SpectralLibrarySearch {
             LibrarySpectrum librarySpectrum = librarySpectra[i];
             double libMz = librarySpectrum.getIonMass();
             if (precursorMass>=libMz-allowedShift-deviation.absoluteFor(libMz)){
-//            if (precursorMass<=libMz+allowedShift+deviation.absoluteFor(libMz)){
-//
-//            }
-//            if (deviation.inErrorWindow(librarySpectrum.getIonMass(), precursorMass)){
                 upper = i;
             } else break;
         }
@@ -215,8 +210,6 @@ public class SpectralLibrarySearch {
             LibrarySpectrum librarySpectrum = librarySpectra[i];
             double libMz = librarySpectrum.getIonMass();
             if (precursorMass<=libMz+allowedShift+deviation.absoluteFor(libMz)){
-//            if (precursorMass>=libMz-allowedShift-deviation.absoluteFor(libMz)){
-//            if (deviation.inErrorWindow(librarySpectrum.getIonMass(), precursorMass)){
                 lower = i;
             } else break;
         }
@@ -379,8 +372,6 @@ public class SpectralLibrarySearch {
             this.precursorMz = precursorMz;
             //todo remove parent from inversed!?
             this.inverseSpectrum = Spectrums.getInversedSpectrum(this.spectrum, precursorMz);
-//            this.selfSimilarity = Spectrums.dotProductPeaks(this.spectrum, this.spectrum, deviation);
-//            this.selfSimilarityLosses = Spectrums.dotProductPeaks(inverseSpectrum, inverseSpectrum, deviation);
             this.selfSimilarity = spectralAlignment.score(this.spectrum, this.spectrum).similarity;
             this.selfSimilarityLosses = spectralAlignment.score(inverseSpectrum, inverseSpectrum).similarity;
 
