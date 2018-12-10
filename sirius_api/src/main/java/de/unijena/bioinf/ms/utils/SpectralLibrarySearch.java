@@ -1,16 +1,46 @@
 package de.unijena.bioinf.ms.utils;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.babelms.MsExperimentParser;
+import gnu.trove.iterator.TIntIterator;
 
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Comparator;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 public class SpectralLibrarySearch {
+
+    public static void main(String... args) throws IOException {
+        File file = new File("");
+        List<Ms2Experiment> experiments = new MsExperimentParser().getParser(file).parseFromFile(file);
+
+
+        Deviation deviation = new Deviation(10);
+        boolean sqrtIntensity = true;
+        boolean multiplyByMass = true;
+        int minSharedPeaks = 1;
+//        experiments = experiments.subList(6, experiments.size());
+        SpectralLibrarySearch spectralLibrarySearch = SpectralLibrarySearch.newInstance(experiments.toArray(new Ms2Experiment[0]), deviation, sqrtIntensity, multiplyByMass, minSharedPeaks);
+
+
+        for (Ms2Experiment experiment : experiments) {
+//            if (!experiment.getName().equals("Theobromine")) continue;
+            SpectralLibraryHit hit = spectralLibrarySearch.findBestHit(experiment);
+            if (hit.getLibraryHit()==null){
+                System.out.println("none");
+                continue;
+            }
+
+            System.out.println(hit.getCosine()+" "+hit.getNumberOfSharedPeaks()+" "+hit.getLibraryHit().getName()+" "+experiment.getName());
+
+        }
+
+    }
     //todo remove precursor mass?! or +-17Da or +-50Da?
     private final LibrarySpectrum[] librarySpectra;
     private final OrderedSpectrum<Peak>[] librarySpectraInverse;
@@ -21,11 +51,16 @@ public class SpectralLibrarySearch {
     private final Deviation deviation;
     private static final Normalization NORMALIZATION = Normalization.Sum(100);
 
+    private final SpectralAlignment spectralAlignment;
 
     public SpectralLibrarySearch(LibrarySpectrum[] librarySpectra, Deviation ms2Deviation, boolean transformSqrtIntensity, boolean multiplyIntensityByMass, int minSharedPeaks) {
         this.librarySpectra = librarySpectra.clone();
         this.minSharedPeaks = minSharedPeaks;
         this.deviation = ms2Deviation;
+        spectralAlignment = new SpectralAlignment(deviation);
+
+
+        //sort for binary mz search
         Arrays.sort(this.librarySpectra, new Comparator<LibrarySpectrum>() {
             @Override
             public int compare(LibrarySpectrum o1, LibrarySpectrum o2) {
@@ -55,11 +90,16 @@ public class SpectralLibrarySearch {
             LibrarySpectrum librarySpectrum = new LibrarySpectrum(ls.getName(), normalized, ls.getMolecularFormula(), ls.getIonType(), ls.getSmiles(), ls.getInChI());
             this.librarySpectra[i] = librarySpectrum;
             OrderedSpectrum<Peak> spec = librarySpectrum.getFragmentationSpectrum();
-            selfSimilarity[i] = Spectrums.dotProductPeaks(spec,spec,deviation);
+//            selfSimilarity[i] = Spectrums.dotProductPeaks(spec,spec,deviation);
+            selfSimilarity[i] = spectralAlignment.score(spec,spec).similarity;
 
             SimpleSpectrum inverse = Spectrums.getInversedSpectrum(spec, librarySpectrum.getIonMass());//todo ionmass?vs measured
             librarySpectraInverse[i] = inverse;
-            selfSimilarityLosses[i] = Spectrums.dotProductPeaks(inverse,inverse,deviation);
+//            selfSimilarityLosses[i] = Spectrums.dotProductPeaks(inverse,inverse,deviation);
+            selfSimilarityLosses[i] = spectralAlignment.score(inverse,inverse).similarity;
+//            if (selfSimilarity[i]!=spec.size() || selfSimilarityLosses[i]!=inverse.size()){
+//                System.out.println("problem");
+//            }
         }
     }
 
@@ -83,18 +123,23 @@ public class SpectralLibrarySearch {
         return new SpectralLibrarySearch(librarySpectra, ms2MergeDeviation, transformSqrtIntensity, multiplyIntensityByMass, minSharedPeaks);
     }
 
-
     public SpectralLibraryHit findBestHit(Ms2Experiment compound){
+        return findBestHit(compound, compound.getPrecursorIonType());
+    }
+
+    public SpectralLibraryHit findBestHit(Ms2Experiment compound, PrecursorIonType ionType){
         MergedMs2Spectrum mergedMs2Spectrum;
         if (compound.hasAnnotation(MergedMs2Spectrum.class)){
             mergedMs2Spectrum = compound.getAnnotation(MergedMs2Spectrum.class);
         } else {
+            //todo merge now unnecessary?!
             mergedMs2Spectrum = mergeMs2Spectra(compound, deviation); //todo extra ms2MergeDeviation?
         }
-        return findBestHit(mergedMs2Spectrum, compound.getIonMass());
+        return findBestHit(mergedMs2Spectrum, compound.getIonMass(), ionType);
     }
 
-    public SpectralLibraryHit findBestHit(Spectrum<Peak> spectrum, double precursorMass){
+    public SpectralLibraryHit findBestHit(Spectrum<Peak> spectrum, double precursorMass, PrecursorIonType ionType){
+        //todo same iontype !?
         if (intensityTransformation !=null){
             spectrum = Spectrums.transform(new SimpleMutableSpectrum(spectrum), intensityTransformation);
         }
@@ -108,47 +153,138 @@ public class SpectralLibrarySearch {
         }
 //        double dotProduct =
         LibrarySpectrum bestHit = null;
-        Similarity bestSimilarity = null;
+        SpectralSimilarity bestSimilarity = null;
         QueryWithSelfSimilarity query = new QueryWithSelfSimilarity((OrderedSpectrum<Peak>)spectrum, precursorMass);
-        for (int i = 0; i < librarySpectra.length; i++) {
+        TIntIterator candidateIterator = canditateIterator(precursorMass, 0d);
+        while (candidateIterator.hasNext()) {
+            int current = candidateIterator.next();
+            if (ionType!=null && !librarySpectra[current].getIonType().equals(ionType)) continue; //only same or unknown iontype
             //i is the library spectrum
-            Similarity similarity = score(query, i);
+            SpectralSimilarity similarity = score(query, current);
             if (similarity.shardPeaks<=minSharedPeaks) continue;
             if (bestHit==null || bestSimilarity.similarity<similarity.similarity){
-                bestHit = librarySpectra[i];
+                bestHit = librarySpectra[current];
                 bestSimilarity = similarity;
             }
         }
+//        for (int i = 0; i < librarySpectra.length; i++) {
+//            //i is the library spectrum
+//            SpectralSimilarity similarity = score(query, i);
+//            if (similarity.shardPeaks<=minSharedPeaks) continue;
+//            if (bestHit==null || bestSimilarity.similarity<similarity.similarity){
+//                bestHit = librarySpectra[i];
+//                bestSimilarity = similarity;
+//            }
+//        }
         if (bestHit==null) {
             return new SpectralLibraryHit(bestHit, 0, 0);
         }
         return new SpectralLibraryHit(bestHit, bestSimilarity.similarity, bestSimilarity.shardPeaks);
     }
 
-    private Similarity score(QueryWithSelfSimilarity query, int librarySpectrum) {
+    private TIntIterator canditateIterator(double precursorMass, double allowedShift) {
+        //iterate library spectra with matching mz
+        //todo what about different precursoriontypes?
+        int mid = binarySearch(librarySpectra, precursorMass);
+        if (mid<0) mid = -(mid+1);
+        int upper = mid-1; //mid-1 tested for lower
+        for (int i = mid; i < librarySpectra.length; i++) {
+            LibrarySpectrum librarySpectrum = librarySpectra[i];
+            double libMz = librarySpectrum.getIonMass();
+            if (precursorMass>=libMz-allowedShift-deviation.absoluteFor(libMz)){
+//            if (precursorMass<=libMz+allowedShift+deviation.absoluteFor(libMz)){
+//
+//            }
+//            if (deviation.inErrorWindow(librarySpectrum.getIonMass(), precursorMass)){
+                upper = i;
+            } else break;
+        }
+
+        int lower = mid; //mid is tested for upper
+        for (int i = mid - 1; i >= 0; i--) {
+            LibrarySpectrum librarySpectrum = librarySpectra[i];
+            double libMz = librarySpectrum.getIonMass();
+            if (precursorMass<=libMz+allowedShift+deviation.absoluteFor(libMz)){
+//            if (precursorMass>=libMz-allowedShift-deviation.absoluteFor(libMz)){
+//            if (deviation.inErrorWindow(librarySpectrum.getIonMass(), precursorMass)){
+                lower = i;
+            } else break;
+        }
+        int lowerFinal = lower;
+        int upperFinal = upper;
+        TIntIterator intIterator = new TIntIterator() {
+            int current = lowerFinal;
+            @Override
+            public int next() {
+                ++current;
+                return current-1;
+            }
+
+            @Override
+            public boolean hasNext() {
+                return current<=upperFinal;
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException("removal not supported");
+            }
+        };
+        return intIterator;
+    }
+
+    private int binarySearch(LibrarySpectrum[] librarySpectra, double precursorMass) {
+        if (librarySpectra.length > 0) {
+            int low = 0;
+            int high = librarySpectra.length - 1;
+            while (low <= high) {
+                int mid = (low + high) >>> 1;
+                int c = Double.compare(librarySpectra[mid].getIonMass(), precursorMass);
+                if (c < 0)
+                    low = mid + 1;
+                else if (c > 0)
+                    high = mid - 1;
+                else
+                    return mid; // key found
+            }
+            return -(low + 1);
+        }
+        return -1;
+    }
+
+    private SpectralSimilarity score(QueryWithSelfSimilarity query, int librarySpectrum) {
         return cosineProductWithLosses(query, librarySpectrum);
     }
 
 
-    Similarity cosineProduct(QueryWithSelfSimilarity query, int libIdx) {
-        Similarity similarity = dotProductPeaksWithMinSharedPeaksThreshold(query.spectrum, librarySpectra[libIdx].getFragmentationSpectrum());
-        return new Similarity(similarity.similarity /Math.sqrt(query.selfSimilarity*selfSimilarity[libIdx]), similarity.shardPeaks);
+    SpectralSimilarity cosineProduct(QueryWithSelfSimilarity query, int libIdx) {
+        SpectralSimilarity similarity1 = dotProductPeaksWithMinSharedPeaksThreshold(query.spectrum, librarySpectra[libIdx].getFragmentationSpectrum());
+        SpectralSimilarity similarity = spectralAlignment.score(query.spectrum, librarySpectra[libIdx].getFragmentationSpectrum());
+        if (similarity1.similarity>similarity.similarity) {
+            System.out.println(similarity1.similarity+" "+similarity.similarity+" | "+ similarity.shardPeaks+" "+similarity1.shardPeaks);
+        }
+
+        return new SpectralSimilarity(similarity.similarity /Math.sqrt(query.selfSimilarity*selfSimilarity[libIdx]), similarity.shardPeaks);
     }
 
-    Similarity cosineProductOfInverse(QueryWithSelfSimilarity query, int libIdx) {
-        Similarity similarity = dotProductPeaksWithMinSharedPeaksThreshold(query.inverseSpectrum, librarySpectraInverse[libIdx]);
-        return new Similarity(similarity.similarity /(Math.sqrt(query.selfSimilarityLosses*selfSimilarityLosses[libIdx])), similarity.shardPeaks);
+    SpectralSimilarity cosineProductOfInverse(QueryWithSelfSimilarity query, int libIdx) {
+        SpectralSimilarity similarity1 = dotProductPeaksWithMinSharedPeaksThreshold(query.inverseSpectrum, librarySpectraInverse[libIdx]);
+        SpectralSimilarity similarity = spectralAlignment.score(query.inverseSpectrum, librarySpectraInverse[libIdx]);
+        if (similarity1.similarity>similarity.similarity) {
+            System.out.println(similarity1.similarity+" "+similarity.similarity+" | "+ similarity.shardPeaks+" "+similarity1.shardPeaks);
+        }
+        return new SpectralSimilarity(similarity.similarity /(Math.sqrt(query.selfSimilarityLosses*selfSimilarityLosses[libIdx])), similarity.shardPeaks);
     }
 
-    private Similarity cosineProductWithLosses(QueryWithSelfSimilarity query, int libIdx) {
-        Similarity similarity = cosineProduct(query, libIdx);
-        Similarity similarityLosses = cosineProductOfInverse(query, libIdx);
+    private SpectralSimilarity cosineProductWithLosses(QueryWithSelfSimilarity query, int libIdx) {
+        SpectralSimilarity similarity = cosineProduct(query, libIdx);
+        SpectralSimilarity similarityLosses = cosineProductOfInverse(query, libIdx);
 
-        return new Similarity((similarity.similarity +similarityLosses.similarity)/2d, Math.max(similarity.shardPeaks, similarityLosses.shardPeaks));
+        return new SpectralSimilarity((similarity.similarity +similarityLosses.similarity)/2d, Math.max(similarity.shardPeaks, similarityLosses.shardPeaks));
     }
 
     private  <P extends Peak, S extends OrderedSpectrum<P>, P2 extends Peak, S2 extends OrderedSpectrum<P2>>
-    Similarity dotProductPeaksWithMinSharedPeaksThreshold(S left, S2 right) {
+    SpectralSimilarity dotProductPeaksWithMinSharedPeaksThreshold(S left, S2 right) {
         int i=0, j=0;
         final int nl=left.size(), nr=right.size();
         final BitSet usedIndicesLeft = new BitSet();
@@ -163,20 +299,20 @@ public class SpectralLibrarySearch {
                 score += left.getIntensityAt(i)*right.getIntensityAt(j);
                 usedIndicesLeft.set(i);
                 usedIndicesRight.set(j);
-                for (int k=i+1; k < nl; ++k) {
-                    final double difference2 = left.getMzAt(k)- right.getMzAt(j);
-                    if (Math.abs(difference2) <= allowedDifference) {
-                        score += left.getIntensityAt(k)*right.getIntensityAt(j);
-                        usedIndicesLeft.set(k);
-                    } else break;
-                }
-                for (int l=j+1; l < nr; ++l) {
-                    final double difference2 = left.getMzAt(i)- right.getMzAt(l);
-                    if (Math.abs(difference2) <= allowedDifference) {
-                        score += left.getIntensityAt(i)*right.getIntensityAt(l);
-                        usedIndicesRight.set(l);
-                    } else break;
-                }
+//                for (int k=i+1; k < nl; ++k) {
+//                    final double difference2 = left.getMzAt(k)- right.getMzAt(j);
+//                    if (Math.abs(difference2) <= allowedDifference) {
+//                        score += left.getIntensityAt(k)*right.getIntensityAt(j);
+//                        usedIndicesLeft.set(k);
+//                    } else break;
+//                }
+//                for (int l=j+1; l < nr; ++l) {
+//                    final double difference2 = left.getMzAt(i)- right.getMzAt(l);
+//                    if (Math.abs(difference2) <= allowedDifference) {
+//                        score += left.getIntensityAt(i)*right.getIntensityAt(l);
+//                        usedIndicesRight.set(l);
+//                    } else break;
+//                }
                 ++i; ++j;
             } else if (difference > 0) {
                 ++j;
@@ -184,7 +320,7 @@ public class SpectralLibrarySearch {
                 ++i;
             }
         }
-        return new Similarity(score, Math.min(usedIndicesLeft.cardinality(), usedIndicesRight.cardinality()));
+        return new SpectralSimilarity(score, Math.min(usedIndicesLeft.cardinality(), usedIndicesRight.cardinality()));
     }
 
 
@@ -218,15 +354,15 @@ public class SpectralLibrarySearch {
         }
     }
 
-    private class Similarity {
-        final double similarity;
-        final int shardPeaks;
-
-        public Similarity(double similarity, int shardPeaks) {
-            this.similarity = similarity;
-            this.shardPeaks = shardPeaks;
-        }
-    }
+//    private class SpectralSimilarity {
+//        final double similarity;
+//        final int shardPeaks;
+//
+//        public SpectralSimilarity(double similarity, int shardPeaks) {
+//            this.similarity = similarity;
+//            this.shardPeaks = shardPeaks;
+//        }
+//    }
 
     private class QueryWithSelfSimilarity {
         final OrderedSpectrum<Peak> spectrum;
@@ -240,8 +376,10 @@ public class SpectralLibrarySearch {
             this.precursorMz = precursorMz;
             //todo remove parent from inversed!?
             this.inverseSpectrum = Spectrums.getInversedSpectrum(this.spectrum, precursorMz);
-            this.selfSimilarity = Spectrums.dotProductPeaks(this.spectrum, this.spectrum, deviation);
-            this.selfSimilarityLosses = Spectrums.dotProductPeaks(inverseSpectrum, inverseSpectrum, deviation);
+//            this.selfSimilarity = Spectrums.dotProductPeaks(this.spectrum, this.spectrum, deviation);
+//            this.selfSimilarityLosses = Spectrums.dotProductPeaks(inverseSpectrum, inverseSpectrum, deviation);
+            this.selfSimilarity = spectralAlignment.score(this.spectrum, this.spectrum).similarity;
+            this.selfSimilarityLosses = spectralAlignment.score(inverseSpectrum, inverseSpectrum).similarity;
 
         }
     }
