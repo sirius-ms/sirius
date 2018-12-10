@@ -87,6 +87,18 @@ public class ChemicalAlphabet implements Iterable<Element> {
         this(PeriodicTable.getInstance().getSelectionFor(elements), elements);
     }
 
+    private static final ChemicalAlphabet EMPTY = new ChemicalAlphabet(new Element[0]);
+    public static ChemicalAlphabet empty() {
+        return EMPTY;
+    }
+
+
+    public ChemicalAlphabet extend(Element... elements) {
+        final HashSet<Element> elems = new HashSet<Element>(Arrays.asList(elements));
+        for (Element e : this) elems.add(e);
+        return new ChemicalAlphabet(elems.toArray(elements));
+    }
+
     public static ChemicalAlphabet getExtendedAlphabet() {
         return new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S", "Cl", "Br", "I", "F", "Na", "K", "Si"));
     }
@@ -181,6 +193,27 @@ public class ChemicalAlphabet implements Iterable<Element> {
         int result = selection.hashCode();
         result = 31 * result + Arrays.hashCode(allowedElements);
         return result;
+    }
+
+    public Set<Element> toSet() {
+        return new AbstractSet<Element>(){
+
+            @Override
+            public boolean contains(Object o) {
+                if (!(o instanceof Element)) return false;
+                return ChemicalAlphabet.this.indexOf((Element)o)>=0;
+            }
+
+            @Override
+            public Iterator<Element> iterator() {
+                return ChemicalAlphabet.this.iterator();
+            }
+
+            @Override
+            public int size() {
+                return ChemicalAlphabet.this.size();
+            }
+        };
     }
 
 

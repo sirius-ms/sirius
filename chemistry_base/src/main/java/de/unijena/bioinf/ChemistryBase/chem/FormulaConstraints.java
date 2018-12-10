@@ -20,8 +20,6 @@ package de.unijena.bioinf.ChemistryBase.chem;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
-import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
-import de.unijena.bioinf.ms.properties.DefaultProperty;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.*;
@@ -52,10 +50,7 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
 
     private final static Pattern INTERVAL = Pattern.compile("\\[(?:(\\d*)\\s*-\\s*)?(\\d*)?\\]");
 
-
-    @DefaultInstanceProvider
-    public static FormulaConstraints fromString(@DefaultProperty String alphabet,
-                                                @DefaultProperty(propertyKey = "valenceFilter") double rdbeToPass) {
+    public static FormulaConstraints fromString(String alphabet, double rdbeToPass) {
         final FormulaConstraints fc = new FormulaConstraints(alphabet);
         if (Double.compare(rdbeToPass, -0.5d) != 0) {
             fc.filters.clear();
@@ -260,6 +255,11 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
 
     public FormulaConstraints(ChemicalAlphabet alphabet) {
         this(alphabet, null);
+    }
+
+    private static final FormulaConstraints EMPTY = new FormulaConstraints(ChemicalAlphabet.empty());
+    public static FormulaConstraints empty() {
+        return EMPTY;
     }
 
     public FormulaConstraints(ChemicalAlphabet alphabet, List<FormulaFilter> filters) {
