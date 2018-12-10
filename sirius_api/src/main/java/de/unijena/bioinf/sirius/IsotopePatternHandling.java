@@ -17,10 +17,9 @@
  */
 package de.unijena.bioinf.sirius;
 
-import de.unijena.bioinf.ms.properties.DefaultProperty;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
-@DefaultProperty(propertyParent = "IsotopeHandling")
+@Deprecated
 public enum IsotopePatternHandling {
 
     omit, filter, score, both;

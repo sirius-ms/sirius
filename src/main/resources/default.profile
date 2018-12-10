@@ -3,46 +3,33 @@ AlgorithmProfile = default
 IsotopeHandlingMs2 =BRUKER_ONLY
 
 # Must be either 'LOCAL' or GLOBAL'
-NormalizationType =
+NormalizationType = GLOBAL
 
+# default alphabet
+FormulaConstraints.alphabet = CHNOP[5]S
 
-IsolationWindow.width =2
-IsolationWindow.shift =0
-
-# FormulaConstraints contain all constraints which reduce the size of all possible
-# decompositions of a mass.
-# It consists of:
-# - allowed elements
-# - boundaries for elements
-# - constraints for formulas
-#
-# Important: The RDBE Filter is always added to the FormulaConstraints! If you don't want so:
-# either exlude it
-# explicitly by calling constraints.getFilters().clear(); or create the constraints using
-# the constructor
-# new FormulaConstraints(alphabet, new ArrayList());
-#
-# But in application, you probably want the RDBE filter always active. If you just want to change
-# its limit, set
-# it explicitly by calling new FormulaConstraints(alphabet, Arrays.asList(new
-# ValenceFilter(-4)));
-FormulaConstraints.alphabet =CHNOP[5]S
+# minimal allowed RDBE value
 FormulaConstraints.valenceFilter =-0.5
 
+# MS1 mass deviation in ppm
 MS1MassDeviation.allowedMassDeviation =10.0
 MS1MassDeviation.standardMassDeviation =10.0
 MS1MassDeviation.massDifferenceDeviation =5.0
 
+# MS/MS mass deviation in ppm
 MS2MassDeviation.allowedMassDeviation =10.0
 MS2MassDeviation.standardMassDeviation =10.0
 
 MedianNoiseIntensity =0.015
 
-NumberOfCandidates =5
+# number of suboptimal results to keep
+NumberOfCandidates = 5
 
-NumberOfCandidatesPerIon =-1
+# additional to NumberOfCandidates, keep for each ion mode the top k suboptimal results
+NumberOfCandidatesPerIon = 0
 
-PossibleAdductSwitches =[M+H]+:{[M+Na]+}
+#
+PossibleAdductSwitches =[M+Na]+:{[M+H]+}
 
 # Can be attached to a Ms2Experiment or ProcessedInput. If PrecursorIonType is unknown,
 # CSI:FingerID will use this

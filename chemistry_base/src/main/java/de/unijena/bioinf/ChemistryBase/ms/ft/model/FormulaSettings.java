@@ -1,75 +1,87 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft.model;
 
+import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Set;
+
 /**
  * This class holds the information how to autodetect elements based on the given FormulaConstraints
  * Note: during Validation this is compared to the molecular formula an may be changed
  *
  *
  * */
-@DefaultProperty
+
 public class FormulaSettings implements Ms2ExperimentAnnotation {
-    public static FormulaSettings DEFAULT = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
+    private static FormulaSettings DEFAULT = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
 
-    private final HashSet<Element> autoDetectionElements;
-    private final boolean allowIsotopeElementFiltering;
 
-    public HashSet<Element> getAutoDetectionElements() {
-        return autoDetectionElements;
+    public static FormulaSettings getDefault() {
+        return DEFAULT;
     }
 
-    public boolean isAllowIsotopeElementFiltering() {
-        return allowIsotopeElementFiltering;
+    @NotNull protected final FormulaConstraints enforced;
+    @NotNull protected final FormulaConstraints fallback;
+    @NotNull protected final ChemicalAlphabet detectable;
+
+    /**
+     * @param enforced elements that are always considered
+     * @param detectable detectable elements are added to the chemical alphabet, if there are indications for them (e.g. in isotope pattern)
+     * @param fallback these elements are used, if the autodetection fails (e.g. no isotope pattern available)
+     * @return
+     */
+    @DefaultInstanceProvider  public static FormulaSettings newInstance(@DefaultProperty FormulaConstraints enforced, @DefaultProperty ChemicalAlphabet detectable, @DefaultProperty FormulaConstraints fallback) {
+        return new FormulaSettings(enforced,detectable,fallback);
     }
+
+    public FormulaSettings(FormulaConstraints enforced, ChemicalAlphabet detectable, FormulaConstraints fallback) {
+        if (enforced==null || fallback==null || detectable==null)
+            throw new NullPointerException();
+        this.enforced = enforced;
+        this.fallback = fallback;
+        this.detectable = detectable;
+    }
+
+    public FormulaConstraints getEnforcedAlphabet() {
+        return enforced;
+    }
+
+    public FormulaConstraints getFallbackAlphabet() {
+        return fallback;
+    }
+
+    @NotNull  public Set<Element> getAutoDetectionElements() {
+        return detectable.toSet();
+    }
+
 
     public boolean isElementDetectionEnabled() {
-        return autoDetectionElements.size() > 0;
+        return detectable.size() > 0;
     }
 
-    public static FormulaSettings create(boolean allowIsotopeElementFiltering, String... autoDetect) {
-        final HashSet<Element> set = new HashSet<>();
-        final PeriodicTable T = PeriodicTable.getInstance();
-        for (String e : autoDetect) set.add(T.getByName(e));
-        return new FormulaSettings(set, allowIsotopeElementFiltering);
+    @NotNull public FormulaSettings autoDetect(Element... elems) {
+        return new FormulaSettings(enforced,detectable.extend(elems),fallback);
     }
 
-    public static FormulaSettings create(boolean allowIsotopeElementFiltering, Element... autoDetect) {
-        final HashSet<Element> set = new HashSet<>();
-        for (Element e : autoDetect) set.add(e);
-        return new FormulaSettings(set, allowIsotopeElementFiltering);
+    @NotNull public FormulaSettings withoutAutoDetect() {
+        return new FormulaSettings(enforced, new ChemicalAlphabet(new Element[0]), fallback);
     }
 
-    protected FormulaSettings(HashSet<Element> automaticDetectionEnabled, boolean allowIsotopeElementFiltering) {
-        this.autoDetectionElements = automaticDetectionEnabled;
-        this.allowIsotopeElementFiltering = allowIsotopeElementFiltering;
+    public ChemicalAlphabet getAutoDetectionAlphabet() {
+        return detectable;
     }
 
-    private FormulaSettings() {
-        this(null, true);
+    public FormulaSettings enforce(FormulaConstraints constraints) {
+        return new FormulaSettings(constraints, detectable, fallback);
     }
 
-    public FormulaSettings autoDetect(Element... elems) {
-        final HashSet<Element> set = (HashSet<Element>) autoDetectionElements.clone();
-        set.addAll(Arrays.asList(elems));
-        return new FormulaSettings(set, allowIsotopeElementFiltering);
-    }
-
-    public FormulaSettings withoutAutoDetect() {
-        return new FormulaSettings(new HashSet<Element>(), allowIsotopeElementFiltering);
-    }
-
-    public FormulaSettings withIsotopeFormulaFiltering() {
-        return new FormulaSettings(autoDetectionElements, true);
-    }
-
-    public FormulaSettings withoutIsotopeFormulaFiltering() {
-        return new FormulaSettings(autoDetectionElements, false);
+    public FormulaSettings withFallback(FormulaConstraints constraints) {
+        return new FormulaSettings(enforced, detectable, constraints);
     }
 }
