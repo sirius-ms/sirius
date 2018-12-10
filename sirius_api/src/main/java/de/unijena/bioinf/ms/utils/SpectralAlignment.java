@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
+import gnu.trove.set.hash.TIntHashSet;
 
 import java.util.BitSet;
 
@@ -11,7 +12,7 @@ public class SpectralAlignment {
 
     private Deviation deviation;
 
-    public SpectralAlignment(Deviation deviation) {
+        public SpectralAlignment(Deviation deviation) {
         this.deviation = deviation;
     }
 
@@ -23,8 +24,7 @@ public class SpectralAlignment {
 
     public SpectralSimilarity score1(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right) {
         if (left.size()==0 || right.size()==0) return new SpectralSimilarity(0d, 0);
-//        byte[][] backtrace = new byte[left.size()][right.size()];
-        boolean[][] backtrace = new boolean[left.size()][right.size()];
+        MatchesMatrix backtrace = new MatchesMatrix(left.size(), right.size());
         double[] scoreRowBefore = new double[left.size()];
         double[] scoreRow = new double[left.size()];
         int i = 0, j = 0, i_lower;
@@ -47,33 +47,18 @@ public class SpectralAlignment {
             }
             if (i==0) {
                 scoreRow[i] = Math.max(scoreRowBefore[i], matchScore);
-//                if (scoreRowBefore[i]==scoreRow[i]){
-//                    backtrace[i][j] = (byte) (backtrace[i][j]|1);
-//                }
                 if (matchScore==scoreRow[i]){
-//                    backtrace[i][j] = (byte) (backtrace[i][j]|4);
-                    backtrace[i][j] = true;
+                    backtrace.setMatch(i,j);
                 }
             } else {
                 //might not have been updated because of this whole window moving but it must hold that scoreRowBefore[i]>=scoreRowBefore[i-1] and scoreRow[i]>=scoreRow[i-1]
                 if (scoreRowBefore[i] <= scoreRowBefore[i-1]) {
                     scoreRowBefore[i] = scoreRowBefore[i-1];
-//                    if (j>0){
-//                        backtrace[i][j-1] = (byte) (backtrace[i][j-1]|2);
-//                    }
-
                 }
 //                scoreRowBefore[i] = Math.max(scoreRowBefore[i], scoreRowBefore[i-1]); //might not have been updated because of this whole window moving but it must hold that scoreRowBefore[i]>=scoreRowBefore[i-1] and scoreRow[i]>=scoreRow[i-1]
                 scoreRow[i] = Math.max(Math.max(scoreRow[i-1], scoreRowBefore[i]), matchScore+scoreRowBefore[i-1]); //todo max(scoreRow[i]...?
-//                if (scoreRowBefore[i]==scoreRow[i]){
-//                    backtrace[i][j] = (byte) (backtrace[i][j]|1); //from top
-//                }
-//                if (scoreRow[i-1]==scoreRow[i]){
-//                    backtrace[i][j] = (byte) (backtrace[i][j]|2); //from left
-//                }
                 if (matchScore+scoreRowBefore[i-1]==scoreRow[i]){
-//                    backtrace[i][j] = (byte) (backtrace[i][j]|4); //from matching
-                    backtrace[i][j] = true; //from matching
+                    backtrace.setMatch(i,j);
                 }
             }
 
@@ -88,13 +73,13 @@ public class SpectralAlignment {
                 scoreRow = tmp; //could be an empty array, but in this way we save creation time
                 //update horizontal gaps???
                 for (int k = i_lower; k <= i; k++) {
-//                    scoreRow[k] = scoreRowBefore[k];
-                    scoreRow[k] = Math.max(scoreRow[k], scoreRowBefore[k]);
+                    scoreRow[k] = scoreRowBefore[k]; //todo alway greater equal? Math.max(scoreRow[k], scoreRowBefore[k]);
+
                 }
                 i = i_lower;
             } else {
-                i_lower = i; //todo or i-1?
                 ++i;
+                i_lower = i; //todo or i-1?
             }
             if (i>=nl){
                 if (j>=nr-1) break;
@@ -104,16 +89,7 @@ public class SpectralAlignment {
                 scoreRow = tmp; //could be an empty array, but in this way we save creation time
                 //update horizontal gaps???
                 for (int k = i_lower; k <= nl-1; k++) {
-                    if (scoreRowBefore[k]==scoreRow[k]){
-//                        backtrace[k][j] = (byte) (backtrace[k][j]+1); //from top
-                    } else {
-//                        scoreRow[k] = scoreRowBefore[k];
-                        scoreRow[k] = Math.max(scoreRow[k], scoreRowBefore[k]);
-                    }
-
-//                    scoreRow[k] = scoreRowBefore[k];
-
-//                    scoreRow[k] = Math.max(scoreRow[k], scoreRowBefore[k]);
+                    scoreRow[k] = scoreRowBefore[k]; //todo alway greater equal? Math.max(scoreRow[k], scoreRowBefore[k]);
                 }
                 i = i_lower;
             }
@@ -131,7 +107,7 @@ public class SpectralAlignment {
                 maxScore = s;
             }
 
-            if (maxMzRight<mz && maxAllowedDifference(maxMzRight)>(mz-maxMzRight)){
+            if (maxMzRight<mz && maxAllowedDifference(maxMzRight)<(mz-maxMzRight)){
                 break;
             }
         }
@@ -141,7 +117,7 @@ public class SpectralAlignment {
 
     }
 
-    private int backtraceAndCountMatchedPeaks(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, boolean[][] backtrace, int imax, int jmax, double maxScore){
+    private int backtraceAndCountMatchedPeaks(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, MatchesMatrix backtrace, int imax, int jmax, double maxScore){
         //todo take only one best match. should result in same number of peaks!?!?
         int i = imax;
         int j = jmax;
@@ -162,81 +138,72 @@ public class SpectralAlignment {
                 matchScore = 0d;
             }
 
-
-
-//            if (((backtrace[i][j] & 4 ) != 0)){
-//                if (matchScore>0) {
-//                    usedIndicesLeft.set(i);
-//                    usedIndicesRight.set(j);
-//                }
-//                --i;
-//                --j;
-//
-////            } else if (i>0 && ((backtrace[i][j] & 2 ) != 0)){
-//            } else if (((backtrace[i][j] & 2 ) != 0)){
-//                --i;
-//                //            } else if (j>0 && ((backtrace[i][j] & 1 ) != 0)){
-//            } else if (((backtrace[i][j] & 1 ) != 0)){
-//                --j;
-//            } else if (lp.getMass()>=rp.getMass()){
-//                --j;
-////                --i;
-//            } else {
-//                --i;
-////                --j;
-//            }
-
-
-
-
-//
-//            if (((backtrace[i][j] & 4 ) != 0)){
-            if (backtrace[i][j]){
+            if (backtrace.hasMatch(i,j)){
                 if (matchScore>0) {
                     usedIndicesLeft.set(i);
                     usedIndicesRight.set(j);
                 }
                 --i;
                 --j;
-
-//            } else if (i>0 && ((backtrace[i][j] & 2 ) != 0)){
             } else if (lp.getMass()>=rp.getMass()){
-//                --j;
                 --i;
             } else {
-//                --i;
                 --j;
             }
-
-
 
         }
         return Math.min(usedIndicesLeft.cardinality(), usedIndicesRight.cardinality());
     }
 
 
+
     private double scorePeaks(Peak lp, Peak rp) {
-        return lp.getIntensity()*rp.getIntensity();
-        //        return Math.max(0.0000001,lp.getIntensity()*rp.getIntensity());
-//        return 1d;
-//        double min = Math.min(lp.getMass(), rp.getMass());
-//        double max = Math.max(lp.getMass(), rp.getMass());
-//
-//        return deviation.inErrorWindow(min, max)?1d:0d;
-    }
+//        return lp.getIntensity()*rp.getIntensity();
+        //formula from Jebara: Probability Product Kernels. multiplied by intensites
+        // (1/(4*pi*sigma**2))*exp(-(mu1-mu2)**2/(4*sigma**2))
+        final double mzDiff = Math.abs(lp.getMass()-rp.getMass());
 
-    private double scorePeaksOld(Peak lp, Peak rp) {
-        double min = Math.min(lp.getMass(), rp.getMass());
-        double max = Math.max(lp.getMass(), rp.getMass());
+        final double variance = Math.pow(deviation.absoluteFor(Math.min(lp.getMass(), rp.getMass())),2);
+//        final double variance = Math.pow(0.01,2); //todo same sigma for all?
+        final double varianceTimes4 = 4*variance;
+        final double constTerm = 1.0/(Math.PI*varianceTimes4);
 
-//        return deviation.inErrorWindow(min, max)?1d:0d;
-        return deviation.inErrorWindow(min, max)?lp.getIntensity()*rp.getIntensity():0d;
+        final double propOverlap = constTerm*Math.exp(-(mzDiff*mzDiff)/varianceTimes4);
+        return (lp.getIntensity()*rp.getIntensity())*propOverlap;
     }
 
 
     private double maxAllowedDifference(double mz) {
         //change to, say 3*dev, when using gaussians
         return deviation.absoluteFor(mz);
+//        return 0.01;
     }
 
+
+    private class MatchesMatrix {
+        private int leftN, rightN;
+        TIntHashSet pairedIndexSet;
+
+        public MatchesMatrix(int leftN, int rightN) {
+            this.leftN = leftN;
+            this.rightN = rightN;
+            this.pairedIndexSet = new TIntHashSet();
+        }
+
+        public void setMatch(int leftIdx, int rightIdx){
+            //cantor pairing
+            final int sum = leftIdx+rightIdx;
+            final int pairedIdx = ((sum)*(sum+1))/2+rightIdx;
+            if (pairedIdx>Integer.MAX_VALUE) throw new RuntimeException("cannot map peak indices. paired index in bigger than largest Integer value");
+            pairedIndexSet.add(pairedIdx);
+        }
+
+        public boolean hasMatch(int leftIdx, int rightIdx){
+            //cantor pairing
+            final int sum = leftIdx+rightIdx;
+            final int pairedIdx = ((sum)*(sum+1))/2+rightIdx;
+            return pairedIndexSet.contains(pairedIdx);
+        }
+
+    }
 }
