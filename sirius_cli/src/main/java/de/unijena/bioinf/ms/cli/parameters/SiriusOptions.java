@@ -21,6 +21,8 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeSettings;
 import de.unijena.bioinf.sirius.IsotopePatternHandling;
 import de.unijena.bioinf.sirius.Sirius;
 import org.jetbrains.annotations.Nullable;
@@ -247,7 +249,7 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
             Sirius.setNumberOfCandidatesPerIon(exp, numberOfCandidatesPerIon);
 
         if (elements != null)
-            Sirius.setFormulaConstraints(exp, elements);
+            Sirius.setFormulaSettings(exp, exp.getAnnotation(FormulaSettings.class).enforce(elements));
 
         if (disableElementDetection)
             Sirius.disableElementDetection(exp);
@@ -267,7 +269,7 @@ public class SiriusOptions extends AbstractMs2ExperimentOptions {
 
         Sirius.setTimeout(exp, instanceTimeout, treeTimeout);
         Sirius.enableRecalibration(exp, notRecalibrating);
-        Sirius.setIsotopeMode(exp, isotopeHandling);
+        Sirius.setIsotopeMode(exp, new IsotopeSettings(isotopeHandling.isFiltering(), isotopeHandling.isScoring() ? 1 : 0));
 
         //only keep most intense ms2 (hack used for bad data)
         if (mostIntenseMs2) {
