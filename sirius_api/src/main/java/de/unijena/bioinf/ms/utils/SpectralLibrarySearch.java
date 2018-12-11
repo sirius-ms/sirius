@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.utils;
 
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -27,7 +28,7 @@ public class SpectralLibrarySearch {
         boolean sqrtIntensity = true;
         boolean multiplyByMass = true;
         int minSharedPeaks = 5;
-        SpectralLibrarySearch spectralLibrarySearch = SpectralLibrarySearch.newInstance(experiments.toArray(new Ms2Experiment[0]), deviation, sqrtIntensity, multiplyByMass, minSharedPeaks);
+        SpectralLibrarySearch spectralLibrarySearch = SpectralLibrarySearch.newInstance(experiments.toArray(new Ms2Experiment[0]), new GaussianSpectralAlignment(deviation), deviation, sqrtIntensity, multiplyByMass, minSharedPeaks);
 
 
         TDoubleArrayList doubleArrayList = new TDoubleArrayList();
@@ -67,12 +68,11 @@ public class SpectralLibrarySearch {
 
     private final AbstractSpectralAlignment spectralAlignment;
 
-    public SpectralLibrarySearch(LibrarySpectrum[] librarySpectra, Deviation ms2Deviation, boolean transformSqrtIntensity, boolean multiplyIntensityByMass, int minSharedPeaks) {
+    public SpectralLibrarySearch(LibrarySpectrum[] librarySpectra, AbstractSpectralAlignment spectralAlignment, Deviation ms2Deviation, boolean transformSqrtIntensity, boolean multiplyIntensityByMass, int minSharedPeaks) {
         this.librarySpectra = librarySpectra.clone();
         this.minSharedPeaks = minSharedPeaks;
         this.deviation = ms2Deviation;
-        spectralAlignment = new GaussianSpectralAlignment(deviation);
-//        spectralAlignment = new IntensityWeightedSpectralAlignment(deviation);
+        this.spectralAlignment = spectralAlignment;
 
 
         //sort for binary mz search
@@ -114,10 +114,10 @@ public class SpectralLibrarySearch {
     }
 
     public static SpectralLibrarySearch newInstance(Ms2Experiment[] library) {
-        return newInstance(library, new Deviation(20, 0.005), true, true, 5);
+        return newInstance(library, new GaussianSpectralAlignment(new Deviation(20, 005)), new Deviation(20, 0.005), true, true, 5);
     }
 
-    public static SpectralLibrarySearch newInstance(Ms2Experiment[] library, Deviation ms2MergeDeviation, boolean transformSqrtIntensity, boolean multiplyIntensityByMass, int minSharedPeaks) {
+    public static SpectralLibrarySearch newInstance(Ms2Experiment[] library, AbstractSpectralAlignment spectralAlignment,  Deviation ms2MergeDeviation, boolean transformSqrtIntensity, boolean multiplyIntensityByMass, int minSharedPeaks) {
         LibrarySpectrum[] librarySpectra = new LibrarySpectrum[library.length];
 
         for (int i = 0; i < librarySpectra.length; i++) {
@@ -133,11 +133,31 @@ public class SpectralLibrarySearch {
             librarySpectra[i] = librarySpectrum;
         }
 
-        return new SpectralLibrarySearch(librarySpectra, ms2MergeDeviation, transformSqrtIntensity, multiplyIntensityByMass, minSharedPeaks);
+        return new SpectralLibrarySearch(librarySpectra, spectralAlignment, ms2MergeDeviation, transformSqrtIntensity, multiplyIntensityByMass, minSharedPeaks);
     }
 
+    /**
+     * if iontype unknown, test common ones
+     * @param compound
+     * @return
+     */
     public SpectralLibraryHit findBestHit(Ms2Experiment compound){
-        return findBestHit(compound, compound.getPrecursorIonType());
+        if (compound.getPrecursorIonType().isIonizationUnknown()){
+            Set<PrecursorIonType> commonIonTypes = PeriodicTable.getInstance().getIonizations(compound.getPrecursorIonType().getCharge());
+            SpectralLibraryHit libraryHit = null;
+            for (PrecursorIonType commonIonType : commonIonTypes) {
+                SpectralLibraryHit currentHit = findBestHit(compound, commonIonType);
+                if (libraryHit==null || currentHit.getCosine()>libraryHit.getCosine() ||
+                        (currentHit.getCosine()==libraryHit.getCosine() && currentHit.getNumberOfSharedPeaks()>libraryHit.getNumberOfSharedPeaks())
+                ) {
+                    libraryHit = currentHit;
+                }
+            }
+            return libraryHit;
+        } else {
+            return findBestHit(compound, compound.getPrecursorIonType());
+        }
+
     }
 
     public SpectralLibraryHit findBestHit(Ms2Experiment compound, PrecursorIonType ionType){
@@ -322,7 +342,7 @@ public class SpectralLibrarySearch {
 
 
     private static MergedMs2Spectrum mergeMs2Spectra(Ms2Experiment experiment, Deviation deviation){
-        //todo best to merge spectra? only combining MS2 without merging results in less cosines >1, but overall lower values
+        //todo don't merge for gaussian. merge for alignment?
         return new MergedMs2Spectrum(Spectrums.mergeSpectra(experiment.getMs2Spectra()));
 //        return new MergedMs2Spectrum(Spectrums.mergeSpectra(deviation, true, true, experiment.getMs2Spectra()));
     }
