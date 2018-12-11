@@ -1,7 +1,6 @@
-package de.unijena.bioinf.sirius.projectspace;
+package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.sirius.IdentificationResult;
 
 import java.io.File;
 import java.util.List;
@@ -91,4 +90,6 @@ public class ExperimentResult {
         int i = Math.min(48,filename.lastIndexOf('.'));
         return filename.substring(0,i);
     }
+
+
 }
