@@ -120,13 +120,14 @@ public class SpectralLibrarySearch {
     public static SpectralLibrarySearch newInstance(Ms2Experiment[] library, AbstractSpectralAlignment spectralAlignment,  Deviation ms2MergeDeviation, boolean transformSqrtIntensity, boolean multiplyIntensityByMass, int minSharedPeaks) {
         LibrarySpectrum[] librarySpectra = new LibrarySpectrum[library.length];
 
+        boolean mergePeaks = (spectralAlignment instanceof IntensityWeightedSpectralAlignment);
         for (int i = 0; i < librarySpectra.length; i++) {
             Ms2Experiment experiment = library[i];
             MergedMs2Spectrum mergedMs2Spectrum;
             if (experiment.hasAnnotation(MergedMs2Spectrum.class)){
                 mergedMs2Spectrum = experiment.getAnnotation(MergedMs2Spectrum.class);
             } else {
-                mergedMs2Spectrum = mergeMs2Spectra(experiment, ms2MergeDeviation);
+                mergedMs2Spectrum = mergeMs2Spectra(experiment, ms2MergeDeviation, mergePeaks);
             }
 
             final LibrarySpectrum librarySpectrum = LibrarySpectrum.fromExperiment(experiment, mergedMs2Spectrum);
@@ -165,8 +166,8 @@ public class SpectralLibrarySearch {
         if (compound.hasAnnotation(MergedMs2Spectrum.class)){
             mergedMs2Spectrum = compound.getAnnotation(MergedMs2Spectrum.class);
         } else {
-            //todo merge now unnecessary?!
-            mergedMs2Spectrum = mergeMs2Spectra(compound, deviation); //todo extra ms2MergeDeviation?
+            boolean mergePeaks = (spectralAlignment instanceof IntensityWeightedSpectralAlignment);
+            mergedMs2Spectrum = mergeMs2Spectra(compound, deviation, mergePeaks);
         }
         return findBestHit(mergedMs2Spectrum, compound.getIonMass(), ionType);
     }
@@ -341,10 +342,13 @@ public class SpectralLibrarySearch {
 
 
 
-    private static MergedMs2Spectrum mergeMs2Spectra(Ms2Experiment experiment, Deviation deviation){
-        //todo don't merge for gaussian. merge for alignment?
-        return new MergedMs2Spectrum(Spectrums.mergeSpectra(experiment.getMs2Spectra()));
-//        return new MergedMs2Spectrum(Spectrums.mergeSpectra(deviation, true, true, experiment.getMs2Spectra()));
+    private static MergedMs2Spectrum mergeMs2Spectra(Ms2Experiment experiment, Deviation deviation, boolean mergePeaks){
+        if (mergePeaks){
+            return new MergedMs2Spectrum(Spectrums.mergeSpectra(deviation, true, true, experiment.getMs2Spectra()));
+        } else {
+            //todo don't merge for gaussian. merge for alignment?
+            return new MergedMs2Spectrum(Spectrums.mergeSpectra(experiment.getMs2Spectra()));
+        }
     }
 
     protected class IntensityTransformation implements Spectrums.Transformation<Peak, Peak> {
