@@ -21,8 +21,9 @@ package de.unijena.bioinf.sirius;
 import com.google.gson.JsonObject;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
-import de.unijena.bioinf.babelms.json.JSONDocumentType;
+import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -60,12 +61,12 @@ public class Profile {
         this.isotopePatternAnalysis = ms1;
     }
 
-    public void writeToFile(String fileName) throws IOException  {
+    public void writeToFile(@NotNull final String fileName) throws IOException  {
         writeToFile(new File(fileName));
     }
 
-    public void writeToFile(File name) throws IOException {
-        final FileWriter writer = new FileWriter(name);
+    public void writeToFile(@NotNull final File file) throws IOException {
+        final FileWriter writer = new FileWriter(file);
         final JSONDocumentType json = new JSONDocumentType();
         final JsonObject obj = json.newDictionary();
         if (fragmentationPatternAnalysis != null) {
