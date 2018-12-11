@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.projectspace;
+package de.unijena.bioinf.ms.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -8,6 +8,7 @@ import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.CSVOutputWriter;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

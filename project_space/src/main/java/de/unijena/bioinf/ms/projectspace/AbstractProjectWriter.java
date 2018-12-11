@@ -1,6 +1,7 @@
-package de.unijena.bioinf.sirius.projectspace;
+package de.unijena.bioinf.ms.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 import java.io.IOException;
@@ -37,15 +38,15 @@ public abstract class AbstractProjectWriter implements ProjectWriter {
     @Override
     public void writeExperiment(ExperimentResult result) throws IOException {
         this.experimentResult = result;
-        writeInput(result, result.experiment);
-        if (result.results!=null) {
-            startWritingIdentificationResults(result, result.results);
-            for (IdentificationResult r : result.results) {
+        writeInput(result, result.getExperiment());
+        if (result.getResults()!=null) {
+            startWritingIdentificationResults(result, result.getResults());
+            for (IdentificationResult r : result.getResults()) {
                 startWritingIdentificationResult(r);
                 writeIdentificationResult(r);
                 endWritingIdentificationResult(r);
             }
-            endWritingIdentificationResults(result.results);
+            endWritingIdentificationResults(result.getResults());
         }
         endWritingExperiment(result);
     }

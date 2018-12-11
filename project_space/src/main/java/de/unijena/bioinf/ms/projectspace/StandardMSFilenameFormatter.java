@@ -1,7 +1,8 @@
-package de.unijena.bioinf.sirius.projectspace;
+package de.unijena.bioinf.ms.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;

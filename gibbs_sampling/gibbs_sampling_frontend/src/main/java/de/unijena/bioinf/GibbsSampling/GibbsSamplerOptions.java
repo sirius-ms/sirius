@@ -2,8 +2,6 @@ package de.unijena.bioinf.GibbsSampling;
 
 import com.lexicalscope.jewel.cli.Option;
 
-import java.util.List;
-
 public interface GibbsSamplerOptions {
 
 

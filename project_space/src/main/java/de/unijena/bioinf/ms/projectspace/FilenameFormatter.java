@@ -1,4 +1,6 @@
-package de.unijena.bioinf.sirius.projectspace;
+package de.unijena.bioinf.ms.projectspace;
+
+import de.unijena.bioinf.sirius.ExperimentResult;
 
 public interface FilenameFormatter {
 

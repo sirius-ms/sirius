@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.projectspace;
+package de.unijena.bioinf.ms.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -6,20 +6,17 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 import java.io.*;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.CharBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static de.unijena.bioinf.sirius.projectspace.DirectoryWriter.logger;
+import static de.unijena.bioinf.ms.projectspace.DirectoryWriter.logger;
 
 public class DirectoryReader implements ProjectReader {
 

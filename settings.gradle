@@ -19,4 +19,7 @@ include ':mass_decomposition'
 include ':io'
 include ':sirius_api'
 include ':gibbs_sampling'
+    include ':gibbs_sampling:gibbs_sampling_frontend'
 include ':utils'
+include ':project_space'
+

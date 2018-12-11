@@ -1,6 +1,8 @@
-package de.unijena.bioinf.sirius.projectspace;
+package de.unijena.bioinf.ms.projectspace;
 
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.sirius.ExperimentResult;
+
 import java.io.IOException;
 
 public class ProjectWriterJJob extends BasicJJob{
