@@ -22,7 +22,7 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
+import de.unijena.bioinf.babelms.Index;
 import de.unijena.bioinf.babelms.DataWriter;
 
 import java.io.BufferedWriter;

@@ -4,12 +4,9 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
-import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.GibbsSampling.model.*;
-import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TCharSet;
 import gnu.trove.set.hash.TCharHashSet;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -19,7 +16,6 @@ import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 import org.slf4j.Logger;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -257,7 +253,8 @@ public class ZodiacUtils {
 
 
     private final static String IDX_HEADER = "FEATURE_ID";
-    public static List<LibraryHit> parseLibraryHits(Path libraryHitsPath, List<ExperimentResult> experimentResults, Logger logger) throws IOException {
+
+    /*public static List<LibraryHit> parseLibraryHits(Path libraryHitsPath, List<ExperimentResult> experimentResults, Logger logger) throws IOException {
         BufferedReader reader = Files.newBufferedReader(libraryHitsPath);
         String line = reader.readLine();
         reader.close();
@@ -272,9 +269,9 @@ public class ZodiacUtils {
             logger.info("Parsing spectral library hits file. Use #Scan# column to match library hits to compounds by position in the spectrum file.");
             return parseLibraryHitsByPosition(libraryHitsPath, experimentResults, logger);
         }
-    }
+    }*/
 
-    @Deprecated
+    /*@Deprecated
     public static List<LibraryHit> parseLibraryHits(Path libraryHitsPath, Path mgfFile, Logger logger) throws IOException {
         BufferedReader reader = Files.newBufferedReader(libraryHitsPath);
         String line = reader.readLine();
@@ -290,7 +287,7 @@ public class ZodiacUtils {
             logger.info("Parsing spectral library hits file. Use #Scan# column to match library hits to compounds by position in the spectrum file.");
             return parseLibraryHitsByPosition(libraryHitsPath, mgfFile, logger);
         }
-    }
+    }*/
 
     private static List<LibraryHit> parseLibraryHitsByFeatureId(Path libraryHitsPath, List<ExperimentResult> experimentResults, Logger logger) throws IOException {
         try {
@@ -379,7 +376,7 @@ public class ZodiacUtils {
         }
     }
 
-    @Deprecated
+    /*@Deprecated
     private static List<LibraryHit> parseLibraryHitsByFeatureId(Path libraryHitsPath, Path mgfFile, Logger logger) throws IOException {
         try {
             List<String> featureIDs = new ArrayList<>();
@@ -686,7 +683,7 @@ public class ZodiacUtils {
             throw new IOException("cannot parse library hits. Reason "+e.getMessage());
         }
 
-    }
+    }*/
     
     private static int parseIntegerOrThrow(String value) {
         double d = Double.parseDouble(value);

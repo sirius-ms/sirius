@@ -39,8 +39,6 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.IsotopePatternGenerator;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNRegressionPredictor;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
-import de.unijena.bioinf.babelms.CloseableIterator;
-import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
@@ -56,8 +54,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 
@@ -92,35 +88,6 @@ public class Sirius {
         this.profile = profile;
         this.table = table;
         this.ionGuessing = new IonGuesser();
-    }
-
-
-
-    /**
-     * parses a file and return an iterator over all MS/MS experiments contained in this file
-     * An experiment consists of all MS and MS/MS spectra belonging to one feature (=compound).
-     * <p>
-     * Supported file formats are .ms and .mgf
-     * <p>
-     * The returned iterator supports the close method to close the input stream. The stream is closed automatically,
-     * after the last element is iterated. However, it is recommendet to use the following syntax (since java 7):
-     * <p>
-     * <pre>
-     * {@code
-     * try ( CloseableIterator<Ms2Experiment> iter = sirius.parse(myfile) ) {
-     *   while (iter.hasNext()) {
-     *      Ms2Experiment experiment = iter.next();
-     *      // ...
-     *   }
-     * }}
-     * </pre>
-     *
-     * @param file
-     * @return
-     * @throws IOException
-     */
-    public CloseableIterator<Ms2Experiment> parseExperiment(File file) throws IOException {
-        return new MsExperimentParser().getParser(file).parseFromFileIterator(file);
     }
 
     public FragmentationPatternAnalysis getMs2Analyzer() {
@@ -1155,20 +1122,5 @@ public class Sirius {
         }
     }
 
-    public static void main(String[] args) {
-        try {
-            Sirius sirius = new Sirius();
-            // input file
-            Ms2Experiment experiment = sirius.parseExperiment(new File("someFile.ms")).next();
-            // intermediate object
-            ProcessedInput pinput = sirius.getMs2Analyzer().preprocessing(experiment);
-            Decomposition decomposition = pinput.getAnnotationOrThrow(DecompositionList.class).find(experiment.getMolecularFormula());
-            FGraph graph = sirius.getMs2Analyzer().buildGraphWithoutReduction(pinput, decomposition);
 
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
 }

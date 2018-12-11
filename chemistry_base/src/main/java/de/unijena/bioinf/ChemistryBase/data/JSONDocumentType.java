@@ -15,11 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.unijena.bioinf.babelms.json;
+package de.unijena.bioinf.ChemistryBase.data;
 
 import com.google.gson.*;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 
 import java.io.*;
 import java.math.BigDecimal;
