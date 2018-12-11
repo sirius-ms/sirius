@@ -1,8 +1,6 @@
 dependencies() {
     //project
-    compile project(':chemistry_base')
     compile project(':sirius_api')
-    compile project(':io')
 
     compile group: "org.openscience.cdk", name: "cdk-smiles", version: "$cdk_version"
     compile group: "org.openscience.cdk", name: "cdk-data", version: "$cdk_version"
