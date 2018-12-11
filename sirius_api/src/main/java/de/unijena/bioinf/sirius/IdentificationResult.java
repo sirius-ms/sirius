@@ -174,6 +174,7 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
         }
     }
 
+    //this is also called neutralizedTree
     public FTree getResolvedTree() {
         if (resolvedBeautifulTree == null) {
             resolvedBeautifulTree = new IonTreeUtils().treeToNeutralTree(new FTree(getRawTree()));
