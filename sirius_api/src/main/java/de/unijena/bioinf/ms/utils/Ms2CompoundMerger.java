@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.utils.clustering.CompleteLinkage;
 import de.unijena.bioinf.utils.clustering.HierarchicalClustering;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -43,7 +44,7 @@ public class Ms2CompoundMerger {
         //todo is hashmap necessary? or just array?
         experimentToMergedMs2 = new HashMap<>();
 
-        this.findIsotopesMeasurementProfile = MS2MassDeviation.DEFAULT()
+        this.findIsotopesMeasurementProfile = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class)
                 .withAllowedMassDeviation(maxMzDeviation)
                 .withMassDifferenceDeviation(maxMzDeviation.divide(2));
     }

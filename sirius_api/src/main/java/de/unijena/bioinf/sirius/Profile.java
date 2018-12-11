@@ -23,7 +23,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.Fragmentation
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.babelms.json.JSONDocumentType;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -31,10 +30,6 @@ import java.io.IOException;
 
 @DefaultProperty(propertyParent = "AlgorithmProfile")
 public class Profile {
-    public static final Profile DEFAULT() {
-        return PropertyManager.DEFAULTS.createInstanceWithDefaults(Profile.class);
-    }
-
     public final FragmentationPatternAnalysis fragmentationPatternAnalysis;
     public final IsotopePatternAnalysis isotopePatternAnalysis;
 
