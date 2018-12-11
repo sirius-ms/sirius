@@ -5,7 +5,6 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import java.util.Arrays;
 
@@ -14,10 +13,6 @@ public enum IonGuessingMode implements Ms2ExperimentAnnotation {
     DISABLED,
     SELECT,
     ADD_IONS;
-
-    public static final IonGuessingMode DEFAULT() {
-        return PropertyManager.DEFAULTS.createInstanceWithDefaults(IonGuessingMode.class);
-    }
 
     public boolean isEnabled() {
         return this.equals(SELECT) || this.equals(ADD_IONS);
