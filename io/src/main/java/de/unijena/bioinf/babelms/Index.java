@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ChemistryBase.sirius.projectspace;
+package de.unijena.bioinf.babelms;
 
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 

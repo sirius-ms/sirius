@@ -22,13 +22,8 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
-import de.unijena.bioinf.babelms.dot.FTDotWriter;
-import de.unijena.bioinf.babelms.json.FTJsonWriter;
-import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.regex.Pattern;
@@ -221,36 +216,6 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
         return treeScore.getOverallScore() - treeScore.getIsotopeMs1Score();
     }
 
-    public void writeTreeToFile(File target) throws IOException {
-        final String name = target.getName();
-        if (name.endsWith(".dot")) {
-            new FTDotWriter().writeTreeToFile(target, getRawTree());
-        } else new FTJsonWriter().writeTreeToFile(target, getRawTree());
-    }
-
-    public String getNeutralizedJSONTree() {
-        final StringWriter sw = new StringWriter(1024);
-        try {
-            new FTJsonWriter().writeTree(sw, getResolvedTree());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return sw.toString();
-    }
-
-    public String getRawJSONTree() {
-        final StringWriter sw = new StringWriter(1024);
-        try {
-            new FTJsonWriter().writeTree(sw, getRawTree());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return sw.toString();
-    }
-
-    public void writeAnnotatedSpectrumToFile(File target) throws IOException {
-        new AnnotatedSpectrumWriter().writeFile(target, getRawTree());
-    }
 
     public double getIsotopeScore() {
         final TreeScoring treeScore = tree.getAnnotationOrThrow(TreeScoring.class);
