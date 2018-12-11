@@ -6,7 +6,6 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -19,13 +18,6 @@ import java.util.Set;
  * */
 
 public class FormulaSettings implements Ms2ExperimentAnnotation {
-    private static FormulaSettings DEFAULT = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
-
-
-    public static FormulaSettings getDefault() {
-        return DEFAULT;
-    }
-
     @NotNull protected final FormulaConstraints enforced;
     @NotNull protected final FormulaConstraints fallback;
     @NotNull protected final ChemicalAlphabet detectable;

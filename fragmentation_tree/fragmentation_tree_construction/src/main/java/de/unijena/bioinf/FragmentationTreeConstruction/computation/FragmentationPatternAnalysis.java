@@ -843,7 +843,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.graphBuilder = new SubFormulaGraphBuilder();
         this.lossScorers = new ArrayList<>();
         isoInMs2Scorer = new IsotopePatternInMs2Scorer();
-        isotopeInMs2Handling = IsotopeInMs2Handling.DEFAULT();
+        isotopeInMs2Handling = PropertyManager.DEFAULTS.createInstanceWithDefaults(IsotopeInMs2Handling.class);
         this.reduction = new SimpleReduction();
     }
 

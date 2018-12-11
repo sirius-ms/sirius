@@ -29,6 +29,7 @@ import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import org.slf4j.LoggerFactory;
@@ -532,11 +533,11 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             if (ppmMax == 0 && ppmMaxMs2 == 0 && noiseMs2 == 0) return;
             if (ppmMaxMs2 == 0) ppmMaxMs2 = ppmMax;
             if (ppmMax != 0) {
-                annotations.put(MS1MassDeviation.class, MS1MassDeviation.DEFAULT().withAllowedMassDeviation(new Deviation(ppmMax)));
+                annotations.put(MS1MassDeviation.class, PropertyManager.DEFAULTS.createInstanceWithDefaults(MS1MassDeviation.class).withAllowedMassDeviation(new Deviation(ppmMax)));
             }
 
             if (ppmMaxMs2 != 0) {
-                annotations.put(MS2MassDeviation.class, MS2MassDeviation.DEFAULT().withAllowedMassDeviation(new Deviation(ppmMaxMs2)));
+                annotations.put(MS2MassDeviation.class, PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).withAllowedMassDeviation(new Deviation(ppmMaxMs2)));
             }
 
             if (noiseMs2 != 0) {

@@ -1,7 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import de.unijena.bioinf.ms.properties.DefaultProperty;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 
 @DefaultProperty(propertyParent = "IsotopeHandlingMs2")
 public enum IsotopeInMs2Handling {
@@ -30,8 +29,4 @@ public enum IsotopeInMs2Handling {
      * enforce scoring of isotopes in MS2, even if spectrum is not measured on a Bruker Maxis.
      */
     ALWAYS;
-
-    public static final IsotopeInMs2Handling DEFAULT() {
-        return PropertyManager.DEFAULTS.createInstanceWithDefaults(IsotopeInMs2Handling.class);
-    }
 }

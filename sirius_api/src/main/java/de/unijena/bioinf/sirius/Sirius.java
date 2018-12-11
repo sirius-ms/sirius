@@ -85,7 +85,7 @@ public class Sirius {
     }
 
     public Sirius() {
-        this.profile = Profile.DEFAULT();
+        this.profile = PropertyManager.DEFAULTS.createInstanceWithDefaults(Profile.class);
     }
 
     public Sirius(@NotNull Profile profile, @NotNull PeriodicTable table) {

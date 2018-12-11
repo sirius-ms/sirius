@@ -36,6 +36,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.MassDecomposer.Interval;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import java.util.*;
 
@@ -75,7 +76,7 @@ public class SpectralAligner {
 
     public double align(final Ms2Experiment a, final Ms2Experiment b) {
         final MissingValueValidator v = new MissingValueValidator();
-        MS1MassDeviation md = MS1MassDeviation.DEFAULT().withAllowedMassDeviation(new Deviation(20, 1e-3));
+        MS1MassDeviation md = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS1MassDeviation.class).withAllowedMassDeviation(new Deviation(20, 1e-3));
 
         MutableMs2Experiment xa = new MutableMs2Experiment(a);
         xa.setAnnotation(MS1MassDeviation.class, md);
@@ -90,7 +91,7 @@ public class SpectralAligner {
 
     public Spectrum<Peak> preprocessExperiment(final MutableMs2Experiment a) {
         final MissingValueValidator v = new MissingValueValidator();
-        MS1MassDeviation md = MS1MassDeviation.DEFAULT().withAllowedMassDeviation(new Deviation(20, 1e-3));
+        MS1MassDeviation md = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS1MassDeviation.class).withAllowedMassDeviation(new Deviation(20, 1e-3));
         MutableMs2Experiment xa = new MutableMs2Experiment(a);
         xa.setAnnotation(MS1MassDeviation.class, md);
         final Spectrum<Peak> as = preprocess(v.validate(xa, new Warning.Noop(), true));
