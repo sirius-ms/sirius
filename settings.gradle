@@ -21,5 +21,5 @@ include ':sirius_api'
 include ':gibbs_sampling'
     include ':gibbs_sampling:gibbs_sampling_frontend'
 include ':utils'
-include ':project_space'
+include ':sirius_project_space'
 
