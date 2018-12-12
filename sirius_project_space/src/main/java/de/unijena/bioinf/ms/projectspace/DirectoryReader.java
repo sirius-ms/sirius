@@ -44,22 +44,6 @@ public class DirectoryReader implements ProjectReader {
         void close() throws IOException;
     }
 
-//    protected static class Instance {
-//        protected String name;
-//        protected int index;
-//        protected String fileName;
-//
-//        protected Instance(int index, String fileName, String name) {
-//            this.name = name;
-//            this.index = index;
-//            this.fileName = fileName;
-//        }
-//
-//        protected String getDirectory() {
-//            return index + "_" + fileName + "_" + name;
-//        }
-//    }
-
     protected static class Instance {
         protected String directory;
         protected Instance(String directory) {

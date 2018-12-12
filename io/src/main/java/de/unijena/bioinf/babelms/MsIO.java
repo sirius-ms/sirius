@@ -11,7 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 
-public class IO {
+public class MsIO {
 
     /**
      * parses a file and return an iterator over all MS/MS experiments contained in this file
