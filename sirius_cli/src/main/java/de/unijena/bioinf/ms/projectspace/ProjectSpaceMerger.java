@@ -1,7 +1,7 @@
-package de.unijena.bioinf.ms.cli;
+package de.unijena.bioinf.ms.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
-import de.unijena.bioinf.sirius.projectspace.*;
+import de.unijena.bioinf.babelms.Index;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;

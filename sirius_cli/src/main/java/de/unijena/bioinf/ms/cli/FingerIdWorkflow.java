@@ -8,10 +8,10 @@ import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.jjobs.FingerIDJJob;
 import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.ms.projectspace.ExperimentResultJJob;
+import de.unijena.bioinf.ms.projectspace.ProjectWriter;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
-import de.unijena.bioinf.sirius.projectspace.ProjectWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

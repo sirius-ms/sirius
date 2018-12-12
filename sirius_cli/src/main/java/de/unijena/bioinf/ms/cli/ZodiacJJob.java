@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.cli;
 import de.unijena.bioinf.GibbsSampling.Zodiac;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
+import de.unijena.bioinf.sirius.ExperimentResult;
 
 import java.util.List;
 

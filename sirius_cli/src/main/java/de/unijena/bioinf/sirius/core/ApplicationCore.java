@@ -14,6 +14,7 @@ import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.LogManager;
+import java.util.stream.Collectors;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -167,14 +169,13 @@ public abstract class ApplicationCore {
             }
         }
 
-        //create custom properties if it not exists
+        //create custom properties if it not exists -> everything is commented out
         if (Files.notExists(customProfileFile)) {
             try (InputStream stream = ApplicationCore.class.getResourceAsStream("/custom.profile")) {
-                byte[] buffer = new byte[stream.available()];
-                stream.read(buffer);
-
-                OutputStream outStream = Files.newOutputStream(customProfileFile);
-                outStream.write(buffer);
+                List<String> lines =
+                        new BufferedReader(new InputStreamReader(stream,
+                                StandardCharsets.UTF_8)).lines().map(line -> line.startsWith("#") ? line : "#" + line).collect(Collectors.toList());
+                Files.write(customProfileFile, lines);
             } catch (IOException e) {
                 DEFAULT_LOGGER.error("Could NOT create sirius properties file", e);
             }

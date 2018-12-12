@@ -1,4 +1,4 @@
-package de.unijena.bioinf.io;
+package de.unijena.bioinf.ms.projectspace.mztab;
 
 import de.isas.mztab2.io.MZTabParameter;
 import de.isas.mztab2.io.SiriusMZTabParameter;
@@ -13,9 +13,9 @@ import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.fingerid.FingerIdResultWriter;
+import de.unijena.bioinf.ms.projectspace.fingerid.FingerIdResultWriter;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import uk.ac.ebi.pride.jmztab2.model.MZTabConstants;
@@ -26,7 +26,7 @@ import java.io.Writer;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.io.JenaMSAdditionalKeys.*;
+import static de.unijena.bioinf.ms.projectspace.mztab.JenaMSAdditionalKeys.*;
 
 public class MztabMExporter {
     private int smlID = 0;
