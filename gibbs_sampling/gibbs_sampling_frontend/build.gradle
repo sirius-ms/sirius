@@ -13,7 +13,7 @@ mainClassName = "de.unijena.bioinf.GibbsSampling.GibbsSamplerMain"
 dependencies() {
     //project
     compile project(':gibbs_sampling')
-    compile project(':project_space')
+    compile project(':sirius_project_space')
     compile 'com.lexicalscope.jewelcli:jewelcli:0.8.1'
 }
 
