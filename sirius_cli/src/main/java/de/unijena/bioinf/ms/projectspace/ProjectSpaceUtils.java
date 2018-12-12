@@ -1,6 +1,6 @@
-package de.unijena.bioinf.ms.cli;
+package de.unijena.bioinf.ms.projectspace;
 
-import de.unijena.bioinf.sirius.projectspace.*;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

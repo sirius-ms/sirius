@@ -11,10 +11,10 @@ import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
 import de.unijena.bioinf.ms.cli.parameters.SiriusOptions;
+import de.unijena.bioinf.ms.projectspace.ExperimentResultJJob;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

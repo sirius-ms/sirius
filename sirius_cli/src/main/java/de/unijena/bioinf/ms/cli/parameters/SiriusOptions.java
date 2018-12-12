@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeSettings;
 import de.unijena.bioinf.sirius.IsotopePatternHandling;
 import de.unijena.bioinf.sirius.Sirius;
 import org.jetbrains.annotations.Nullable;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.util.ArrayList;
@@ -40,10 +41,10 @@ import java.util.Set;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
+@Command(name = "sirius", aliases = {"S"}, description = "Identify Molecular formula for each compound Individually using fragmentation trees and isotope patterns.")
 public class SiriusOptions extends AbstractMs2ExperimentOptions {
-    @Option(names = {"-S", "--sirius"})
-    public boolean sirius;
-
+    //    @Option(names = {"-S", "--sirius"})
+//    public boolean sirius;
     @Option(names = {"-s", "--isotope"}, description = "how to handle isotope pattern data. Use 'score' to use them for ranking or 'filter' if you just want to remove candidates with bad isotope pattern. With 'both' you can use isotopes for filtering and scoring (default). Use 'omit' to ignore isotope pattern.")
     public IsotopePatternHandling isotopeHandling;
 

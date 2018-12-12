@@ -2,26 +2,17 @@ package de.unijena.bioinf.fingerid.jjobs;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.confidence_score.svm.SVMPredict;
-import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.ConfidenceResult;
-import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
-import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.jjobs.BasicDependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.confidence_score.ConfidenceScoreComputor;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 

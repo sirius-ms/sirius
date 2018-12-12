@@ -447,6 +447,7 @@ public class CLI extends ApplicationCore {
      * @param inst instance to modify
      * @return new modified instance
      *//*
+
     protected Instance setupInstance(Instance inst) {
         final MutableMs2Experiment exp = inst.experiment instanceof MutableMs2Experiment ? inst.experiment : new MutableMs2Experiment(inst.experiment);
         siriusOptions.setParamatersToExperiment(exp);

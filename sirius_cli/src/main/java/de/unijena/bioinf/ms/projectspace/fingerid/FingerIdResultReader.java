@@ -1,4 +1,4 @@
-package de.unijena.bioinf.fingerid;
+package de.unijena.bioinf.ms.projectspace.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
@@ -6,9 +6,10 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.ms.projectspace.DirectoryReader;
+import de.unijena.bioinf.ms.projectspace.DirectoryWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.projectspace.DirectoryReader;
-import de.unijena.bioinf.sirius.projectspace.DirectoryWriter;
 
 import java.io.BufferedReader;
 import java.io.IOException;

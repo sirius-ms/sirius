@@ -28,10 +28,10 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.projectspace.ExperimentResultJJob;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResultJJob;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;

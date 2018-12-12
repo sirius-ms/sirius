@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.sirius.Sirius;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.util.Collections;
@@ -18,13 +19,14 @@ import java.util.Set;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
+@Command(name = "fingerid", aliases = {"F"}, description = "Identify molecular structure for each compound Individually using CSI:FingerID.")
 public class FingerIdOptions extends AbstractMs2ExperimentOptions {
     private SiriusOptions siriusOptions;
     private Sirius siriusAPI; //todo fill me
     public final static String CONSIDER_ALL_FORMULAS = "all";
 
-    @Option(names = "-F, --fingerid", description = "search structure with CSI:FingerID")
-    public boolean fingerid;
+//    @Option(names = "-F, --fingerid", description = "search structure with CSI:FingerID")
+//    public boolean fingerid;
 
     @Option(names = "-d", description = "search formulas in given database: all, pubchem, bio, kegg, hmdb")
     public String database;
@@ -40,11 +42,6 @@ public class FingerIdOptions extends AbstractMs2ExperimentOptions {
 
     @Option(names = "--generate-custom-db", description = "EXPERIMENTAL FEATURE: generate a custom compound database. Ignore all other options. Import compounds from all given files. Usage: sirius --generate-custom-db [DATABASENAME] [INPUTFILE1] [INPUTFILE2] ... ")
     public String generatingCompoundDatabase;
-
-
-    public boolean isOffline() { //todo i do not understand the naming of this method??
-        return !fingerid && database.equals(CONSIDER_ALL_FORMULAS);
-    }
 
     /*
     @Option(description = "output predicted fingerprint")
@@ -116,7 +113,7 @@ public class FingerIdOptions extends AbstractMs2ExperimentOptions {
 
     @Override
     public void setParamatersToExperiment(MutableMs2Experiment experiment) {
-        if (!database.toLowerCase().equals("all") && !isOffline()) {
+        if (!database.toLowerCase().equals("all")) {
             Set<MolecularFormula> whiteSet = getFormulaWhitesetWithDB(experiment);
             if (whiteSet != null)
                 Sirius.setFormulaSearchList(experiment, whiteSet);

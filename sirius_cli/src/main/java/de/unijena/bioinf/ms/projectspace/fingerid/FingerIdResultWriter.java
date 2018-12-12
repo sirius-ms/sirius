@@ -1,13 +1,16 @@
-package de.unijena.bioinf.fingerid;
+package de.unijena.bioinf.ms.projectspace.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.io.MztabMExporter;
+import de.unijena.bioinf.fingerid.CSVExporter;
+import de.unijena.bioinf.fingerid.CanopusResult;
+import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.ms.projectspace.DirectoryWriter;
+import de.unijena.bioinf.ms.projectspace.FilenameFormatter;
+import de.unijena.bioinf.ms.projectspace.mztab.MztabMExporter;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.projectspace.DirectoryWriter;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
-import de.unijena.bioinf.sirius.projectspace.FilenameFormatter;
 import gnu.trove.map.hash.TIntFloatHashMap;
 
 import java.io.IOException;
@@ -92,16 +95,16 @@ public class FingerIdResultWriter extends DirectoryWriter {
     }
 
     private void writeFingerprint(IdentificationResult result, FingerIdResult f) throws IOException {
-        if (csiVersion == null) csiVersion = f.predictedFingerprint.getFingerprintVersion();
+        if (csiVersion == null) csiVersion = f.getPredictedFingerprint().getFingerprintVersion();
         write(locations().FINGERID_FINGERPRINT.fileName(result), w -> {
-            for (FPIter fp : f.predictedFingerprint) {
+            for (FPIter fp : f.getPredictedFingerprint()) {
                 w.write(String.format(Locale.US, "%.3f\n", fp.getProbability()));
             }
         });
     }
 
     private void writeCanopus(final IdentificationResult result, final CanopusResult r) throws IOException {
-        if (canopusVersion == null) canopusVersion = r.canopusFingerprint.getFingerprintVersion();
+        if (canopusVersion == null) canopusVersion = r.getCanopusFingerprint().getFingerprintVersion();
         write(locations().CANOPUS_FINGERPRINT.fileName(result), w -> {
             /*
             if (canopusSummary.isEmpty()) {

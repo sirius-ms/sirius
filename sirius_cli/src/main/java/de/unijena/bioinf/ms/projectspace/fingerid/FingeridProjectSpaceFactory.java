@@ -1,6 +1,7 @@
-package de.unijena.bioinf.fingerid;
+package de.unijena.bioinf.ms.projectspace.fingerid;
 
-import de.unijena.bioinf.sirius.projectspace.*;
+
+import de.unijena.bioinf.ms.projectspace.*;
 
 public class FingeridProjectSpaceFactory implements ReaderWriterFactory {
     private FilenameFormatter filenameFormatter;

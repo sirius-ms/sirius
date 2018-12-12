@@ -4,7 +4,7 @@ import de.unijena.bioinf.sirius.core.ApplicationCore;
 
 public class CombinedCLI extends ApplicationCore {
 
-   /* protected ProjectWriter projectWriter;
+    /*protected ProjectWriter projectWriter;
     protected static boolean shellOutputSurpressed = false; //todo extra Utils class?
 
     protected org.slf4j.Logger logger = LoggerFactory.getLogger(CombinedCLI.class);
@@ -304,7 +304,7 @@ public class CombinedCLI extends ApplicationCore {
         // two different input modes:
         // general information that should be used if this fields are missing in the file
         final Double defaultParentMass = options.getParentMz();
-        final FormulaConstraints constraints = options.getElements() == null ? null*//*getDefaultElementSet(options, ion)*//* : options.getElements();
+        final FormulaConstraints constraints = options.getElements() == null ? nullgetDefaultElementSet(options, ion) : options.getElements();
         // direct input: --ms1 and --ms2 command line options are given
         if (options.getMs2() != null && !options.getMs2().isEmpty()) {
             final MutableMeasurementProfile profile = new MutableMeasurementProfile();
@@ -497,12 +497,12 @@ public class CombinedCLI extends ApplicationCore {
     /// set data and Sirius dependent parameters
     ////////////////////////////////////////////////////////////////////////////////////////////
 
-    *//**
+    *
      * add here (instance specific) parameters
      *
      * @param inst
      * @return
-     *//*
+
     protected Instance setupInstance(Instance inst) {
         final MutableMs2Experiment exp = inst.experiment instanceof MutableMs2Experiment ? (MutableMs2Experiment) inst.experiment : new MutableMs2Experiment(inst.experiment);
         if (exp.getPrecursorIonType() == null || exp.getPrecursorIonType().isIonizationUnknown())
@@ -608,9 +608,9 @@ public class CombinedCLI extends ApplicationCore {
     }
 
 
-    *//*
+
     remove all but the most intense ms2
-     *//*
+
     protected void onlyKeepMostIntenseMS2(MutableMs2Experiment experiment) {
         if (experiment.getMs2Spectra().size() == 0) return;
         double precursorMass = experiment.getIonMass();

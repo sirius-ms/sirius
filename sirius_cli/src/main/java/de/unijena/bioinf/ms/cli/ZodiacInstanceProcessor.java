@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.cli;
 
-import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
+
+import de.unijena.bioinf.sirius.ExperimentResult;
 
 public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResult> {
     /*protected static Logger LOG = LoggerFactory.getLogger(ZodiacInstanceProcessor.class);
