@@ -21,6 +21,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
 import java.util.List;
@@ -37,9 +38,10 @@ public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotat
     String getName();
 
     /**
+     * Either the ion/adduct type of the ion OR the charge.
      * @return the ionization type of the ion (not null)
      */
-    PrecursorIonType getPrecursorIonType();
+    @NotNull PrecursorIonType getPrecursorIonType();
 
 
     /**

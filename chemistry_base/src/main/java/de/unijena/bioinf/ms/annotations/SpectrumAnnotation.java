@@ -1,4 +1,4 @@
 package de.unijena.bioinf.ms.annotations;
 
-public interface SpectrumAnnotation extends Annotaion {
+public interface SpectrumAnnotation extends DataAnnotation {
 }

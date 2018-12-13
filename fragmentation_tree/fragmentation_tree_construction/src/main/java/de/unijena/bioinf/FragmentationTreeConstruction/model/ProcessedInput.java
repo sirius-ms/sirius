@@ -21,8 +21,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
-import de.unijena.bioinf.ms.annotations.Annotaion;
 import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.util.*;
@@ -65,17 +65,17 @@ import java.util.*;
  *
  *
  */
-public class ProcessedInput implements Cloneable, Annotated<Annotaion> {
+public class ProcessedInput implements Cloneable, Annotated<DataAnnotation> {
 
     private final Ms2Experiment originalExperiment;
     private MutableMs2Experiment experiment;
     private List<ProcessedPeak> mergedPeaks;
     private ProcessedPeak parentPeak;
     private HashMap<Class, PeakAnnotation> peakAnnotations;
-    private Annotated.Annotations<Annotaion> annotations;
+    private Annotated.Annotations<DataAnnotation> annotations;
 
     @Override
-    public Annotations<Annotaion> annotations() {
+    public Annotations<DataAnnotation> annotations() {
         return annotations;
     }
 

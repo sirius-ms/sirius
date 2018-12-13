@@ -25,10 +25,18 @@ import org.jetbrains.annotations.NotNull;
  *
  */
 public class IonMode extends Ionization {
+
 	private final double mass;
 	private final int charge;
 	private final String name;
 	private final MolecularFormula molecularFormula;
+
+	public static IonMode fromString(String value) {
+		PrecursorIonType precursorIonType = PeriodicTable.getInstance().ionByName(value);
+		if (precursorIonType==null || !precursorIonType.hasNeitherAdductNorInsource())
+			throw new IllegalArgumentException("Unknown ion mode '" + value + "'");
+		return (IonMode) precursorIonType.getIonization();
+	}
 
     /**
      * Construct an adduct from a charge and a molecular name. The mass is computed as mass(adduct) - charge * electron mass
