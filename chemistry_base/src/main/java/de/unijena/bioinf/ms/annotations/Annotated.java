@@ -8,7 +8,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public interface Annotated<A extends Annotaion> {
+public interface Annotated<A extends DataAnnotation> {
 
     Annotations<A> annotations();
 
@@ -169,7 +169,7 @@ public interface Annotated<A extends Annotaion> {
             return new Annotations<>(cloneMap);
         }
 
-        private <T extends Annotaion> T autoInstanceSupplier(Class<T> klass) {
+        private <T extends DataAnnotation> T autoInstanceSupplier(Class<T> klass) {
             if (PropertyManager.DEFAULTS.isInstantiatableWithDefaults(klass))
                 return PropertyManager.DEFAULTS.createInstanceWithDefaults(klass);
             try {

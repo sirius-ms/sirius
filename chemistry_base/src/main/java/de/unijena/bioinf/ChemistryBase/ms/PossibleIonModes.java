@@ -1,11 +1,16 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import com.google.common.collect.Iterables;
+import de.unijena.bioinf.ChemistryBase.chem.IonMode;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.annotations.ProcessedInputAnnotation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 //import de.unijena.bioinf.sirius.ionGuessing.IonGuessingMode;
 
@@ -14,52 +19,21 @@ import java.util.*;
  * object and compute trees for all ion types with probability &gt; 0.
  * If probability is unknown, you can assign a constant to each ion type.
  */
-public class PossibleIonModes implements Ms2ExperimentAnnotation {
+public class PossibleIonModes implements ProcessedInputAnnotation {
 
-    public static PossibleIonModes deterministic(PrecursorIonType precursorIonType) {
-        final PossibleIonModes a = new PossibleIonModes();
-        a.add(precursorIonType, 1);
-//        a.disableGuessFromMs1();
-        return a;
+    public static PossibleIonModes uniformlyDistributed(Iterable<IonMode> ionModes) {
+        return new PossibleIonModes(Iterables.transform(ionModes,u->new ProbabilisticIonization(u,1d)));
     }
 
-    public static PossibleIonModes useAlwaysProtonationButAllowMs1Detection(int charge) {
-        final PossibleIonModes a = new PossibleIonModes();
-        final PeriodicTable t = PeriodicTable.getInstance();
-        if (charge > 0) {
-            a.add(t.ionByName("[M+H]+").getIonization(), 1);
-//            a.add(t.ionByName("[M+Na]+").getIonization(), 0);
-//            a.add(t.ionByName("[M+K]+").getIonization(), 0);
-        } else {
-            a.add(t.ionByName("[M-H]-").getIonization(), 1);
-//            a.add(t.ionByName("[M+Cl]-").getIonization(), 0);
-//            a.add(t.ionByName("[M+Br]-").getIonization(), 0);
-        }
-//        a.enableGuessFromMs1();
-        return a;
-    }
-
-    public static PossibleIonModes defaultFor(int charge) {
-        final PossibleIonModes a = new PossibleIonModes();
-        final PeriodicTable t = PeriodicTable.getInstance();
-        if (charge > 0) {
-            a.add(t.ionByName("[M+H]+").getIonization(), 0.95);
-            a.add(t.ionByName("[M+Na]+").getIonization(), 0.03);
-            a.add(t.ionByName("[M+K]+").getIonization(), 0.02);
-        } else {
-            a.add(t.ionByName("[M-H]-").getIonization(), 0.95);
-            a.add(t.ionByName("[M+Cl]-").getIonization(), 0.03);
-            a.add(t.ionByName("[M+Br]-").getIonization(), 0.02);
-        }
-//        a.enableGuessFromMs1();
-        return a;
+    public static PossibleIonModes deterministic(IonMode ionType) {
+        return new PossibleIonModes(Collections.singleton(new ProbabilisticIonization(ionType,1d)));
     }
 
     public static class ProbabilisticIonization {
-        public final Ionization ionMode;
+        public final IonMode ionMode;
         public final double probability;
 
-        private ProbabilisticIonization(Ionization ionMode, double probability) {
+        private ProbabilisticIonization(IonMode ionMode, double probability) {
             this.ionMode = ionMode;
             this.probability = probability;
         }
@@ -72,189 +46,72 @@ public class PossibleIonModes implements Ms2ExperimentAnnotation {
 
 
 
-    protected List<ProbabilisticIonization> ionTypes;//todo i think class is currently not save for having ionization multiple times in the list
-    protected double totalProb;
-//    protected IonGuessingMode guessingModeFromMs1;
+    protected final HashMap<IonMode, ProbabilisticIonization> ionTypes;
+    protected final double totalProb;
 
-
-    public PossibleIonModes(PossibleIonModes pi) {
-        this.ionTypes = new ArrayList<>();
-        for (ProbabilisticIonization i : pi.ionTypes)
-            this.ionTypes.add(new ProbabilisticIonization(i.ionMode, i.probability));
-        this.totalProb = pi.totalProb;
-//        this.guessingModeFromMs1 = pi.guessingModeFromMs1;
+    protected PossibleIonModes() {
+        this.totalProb = 0d;
+        this.ionTypes = new HashMap<>();
     }
 
-    public PossibleIonModes() {
-        this.ionTypes = new ArrayList<>();
-//        this.guessingModeFromMs1 = DEFAULT_ENABLED_GUESSING_MODE;
-    }
-
-//    public boolean isGuessFromMs1Enabled() {
-//        return guessingModeFromMs1.isEnabled();
-//    }
-
-//    public void setGuessFromMs1(IonGuessingMode mode) {
-//        this.guessingModeFromMs1 = mode;
-//    }
-
-    /*public void enableGuessFromMs1WithCommonIonModes(int charge) {
-        if (!isGuessFromMs1Enabled()) setGuessFromMs1(DEFAULT_ENABLED_GUESSING_MODE);
-        final PossibleIonModes pm = PossibleIonModes.useAlwaysProtonationButAllowMs1Detection(charge);
-        for (ProbabilisticIonization pa : pm.ionTypes) {
-            if (getProbabilityFor(pa.ionMode)<=0) takeMaxProbability(pa);
+    public PossibleIonModes(Iterable<ProbabilisticIonization> ions) {
+        this.ionTypes = new HashMap<>();
+        double acum=0d;
+        for (ProbabilisticIonization ion : ions) {
+            ionTypes.compute(ion.ionMode, (k,v)->v==null ? ion : new ProbabilisticIonization(k,ion.probability+v.probability));
+            acum += ion.probability;
         }
-    }*/
-
-    /*public void enableGuessFromMs1(){
-        setGuessFromMs1(DEFAULT_ENABLED_GUESSING_MODE);
-    }
-    public void disableGuessFromMs1() {
-        setGuessFromMs1(IonGuessingMode.DISABLED);
-    }*/
-
-//    public IonGuessingMode getGuessingMode() {
-//        return guessingModeFromMs1;
-//    }
-
-    protected void takeMaxProbability(ProbabilisticIonization pi){
-        final ListIterator<ProbabilisticIonization> iter = ionTypes.listIterator();
-        while (iter.hasNext()) {
-            final ProbabilisticIonization ion = iter.next();
-            if (ion.ionMode.equals(pi.ionMode)) {
-                if (ion.probability>=pi.probability) return;
-                totalProb -= ion.probability;
-                iter.set(pi);
-                totalProb += pi.probability;
-                return;
-            }
-        }
-        ionTypes.add(pi);
-        totalProb += pi.probability;
-        return;
+        this.totalProb = acum;
     }
 
-    /*public void add(ProbabilisticIonization ionMode) {
-        add(ionMode.ionMode,ionMode.probability);
-    }*/
-
-    public boolean add(PrecursorIonType ionType, double probability) {
-        final ListIterator<ProbabilisticIonization> iter = ionTypes.listIterator();
-        while (iter.hasNext()) {
-            final ProbabilisticIonization ion = iter.next();
-            if (ion.ionMode.equals(ionType.getIonization())) {
-                totalProb -= ion.probability;
-                iter.set(new ProbabilisticIonization(ionType.getIonization(),probability));
-                totalProb += probability;
-                return false;
-            }
-        }
-        ionTypes.add(new ProbabilisticIonization(ionType.getIonization(), probability));
-        totalProb += probability;
-        return true;
-    }
-
-    public void add(String ionType, double probability) {
-        add(PrecursorIonType.getPrecursorIonType(ionType), probability);
-    }
-
-    public void add(Ionization ionType, double probability) {
-        add(PrecursorIonType.getPrecursorIonType(ionType), probability);
-    }
-
-    public void add(Ionization ionType) {
-        add(PrecursorIonType.getPrecursorIonType(ionType), 1d);
-    }
-
-    public void add(PrecursorIonType[] ionTypes, double[] probabilities) {
-        for (int i = 0; i < ionTypes.length; i++) {
-            add(ionTypes[i], probabilities[i]);
-        }
-    }
 
     public List<ProbabilisticIonization> probabilisticIonizations() {
-        return ionTypes;
+        return new ArrayList<>(ionTypes.values());
     }
 
     public boolean hasPositiveCharge() {
-        for (ProbabilisticIonization a : ionTypes)
+        for (ProbabilisticIonization a : ionTypes.values())
             if (a.ionMode.getCharge() > 0)
                 return true;
         return false;
     }
 
     public boolean hasNegativeCharge() {
-        for (ProbabilisticIonization a : ionTypes)
+        for (ProbabilisticIonization a : ionTypes.values())
             if (a.ionMode.getCharge() < 0)
                 return true;
         return false;
     }
 
     public double getProbabilityFor(PrecursorIonType ionType) {
-        if (ionTypes.isEmpty()) return 0d;
-        for (ProbabilisticIonization a : ionTypes) {
-            if (a.ionMode.equals(ionType.getIonization())) return a.probability / totalProb;
-        }
-        return 0d;
+        return getProbabilityFor(ionType.getIonization());
     }
 
     public double getProbabilityFor(Ionization ionType) {
-        if (ionTypes.isEmpty()) return 0d;
-        double prob = 0d;
-        for (ProbabilisticIonization a : ionTypes) {
-            if (a.ionMode.equals(ionType)) prob += a.probability;
-        }
-        return prob / totalProb;
+        return ionTypes.getOrDefault(ionType,ZERO).probability/totalProb;
     }
 
     public List<Ionization> getIonModesWithProbabilityAboutZero() {
-        final Set<Ionization> ions = new HashSet<>(ionTypes.size());
-        for (ProbabilisticIonization a : ionTypes)
-            if (a.probability>0)
-                ions.add(a.ionMode);
-        return new ArrayList<>(ions);
+        return ionTypes.values().stream().filter(x->x.probability>0).map(u->u.ionMode).collect(Collectors.toList());
     }
 
     public List<PrecursorIonType> getIonModesWithProbabilityAboutZeroAsPrecursorIonType() {
-        final Set<PrecursorIonType> ions = new HashSet<>(ionTypes.size());
-        for (ProbabilisticIonization a : ionTypes)
-            if (a.probability>0)
-                ions.add(PrecursorIonType.getPrecursorIonType(a.ionMode));
-        return new ArrayList<>(ions);
+        return ionTypes.values().stream().filter(x->x.probability>0).map(u->PrecursorIonType.getPrecursorIonType(u.ionMode)).collect(Collectors.toList());
     }
 
     public List<Ionization> getIonModes() {
-        final Set<Ionization> ions = new HashSet<>(ionTypes.size());
-        for (ProbabilisticIonization a : ionTypes) ions.add(a.ionMode);
-        return new ArrayList<>(ions);
+        return new ArrayList<>(ionTypes.keySet());
     }
 
     public List<PrecursorIonType> getIonModesAsPrecursorIonType() {
-        final Set<PrecursorIonType> ions = new HashSet<>(ionTypes.size());
-        for (ProbabilisticIonization a : ionTypes) ions.add(PrecursorIonType.getPrecursorIonType(a.ionMode));
-        return new ArrayList<>(ions);
+        return ionTypes.keySet().stream().map(PrecursorIonType::getPrecursorIonType).collect(Collectors.toList());
     }
 
-
-    public static PossibleIonModes reduceTo(PossibleIonModes source, Collection<String> toKeep) {
-        if (toKeep instanceof Set)
-            return reduceTo(source, (Set<String>) toKeep);
-        else
-            return reduceTo(source, (new HashSet<>(toKeep)));
-
-    }
-
-    public static PossibleIonModes reduceTo(PossibleIonModes source, Set<String> toKeep) {
-        PossibleIonModes nu = new PossibleIonModes();
-        for (ProbabilisticIonization n : source.ionTypes) {
-            if (toKeep.contains(n.ionMode.toString()))
-                nu.add(n.ionMode,n.probability);
-        }
-        return nu;
-    }
 
     @Override
     public String toString() {
         return ionTypes.toString();
     }
+
+    private static ProbabilisticIonization ZERO = new ProbabilisticIonization(null,0d);
 }

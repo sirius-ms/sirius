@@ -22,14 +22,14 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Scoring;
-import de.unijena.bioinf.ms.annotations.Annotaion;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
 import java.util.List;
 
 public class TreeSizeScorer implements PeakScorer {
 
 
-    public final static class TreeSizeBonus implements Annotaion {
+    public final static class TreeSizeBonus implements DataAnnotation {
         public final double score;
 
         public TreeSizeBonus(double score) {
