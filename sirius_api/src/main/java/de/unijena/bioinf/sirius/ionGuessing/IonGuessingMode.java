@@ -9,6 +9,7 @@ import de.unijena.bioinf.ms.properties.DefaultProperty;
 import java.util.Arrays;
 
 @DefaultProperty
+@Deprecated
 public enum IonGuessingMode implements Ms2ExperimentAnnotation {
     DISABLED,
     SELECT,

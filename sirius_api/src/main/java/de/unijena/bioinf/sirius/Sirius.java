@@ -48,7 +48,6 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.ionGuessing.GuessIonizationFromMs1Result;
 import de.unijena.bioinf.sirius.ionGuessing.IonGuesser;
-import de.unijena.bioinf.sirius.ionGuessing.IonGuessingMode;
 import de.unijena.bioinf.sirius.ionGuessing.IonGuessingSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,57 +130,32 @@ public class Sirius {
     }
 
     public void detectPossibleIonModesFromMs1(ProcessedInput processedInput) {
-        final List<PrecursorIonType> ionTypes = new ArrayList<>();
-        for (Ionization ionMode : table.getKnownIonModes(processedInput.getExperimentInformation().getPrecursorIonType().getCharge())) {
-            ionTypes.add(PrecursorIonType.getPrecursorIonType(ionMode));
+        final PrecursorIonType ionType = processedInput.getExperimentInformation().getPrecursorIonType();
+        if (!ionType.isIonizationUnknown()) {
+            processedInput.setAnnotation(PossibleIonModes.class, PossibleIonModes.deterministic((IonMode) ionType.getIonization()));
+            return; // we already know the ion type
         }
-        detectPossibleIonModesFromMs1(processedInput, ionTypes.toArray(new PrecursorIonType[ionTypes.size()]));
-    }
+        final int charge = ionType.getCharge();
+        final IonModeSettings settings = processedInput.getAnnotationOrDefault(IonModeSettings.class);
 
-    public void detectPossibleIonModesFromMs1(ProcessedInput processedInput, PrecursorIonType... allowedIonModes) {
-        final IonGuessingMode gm = processedInput.getAnnotationOrDefault(IonGuessingMode.class);
-        //if disabled, do not guess ionization
-        if (!gm.isEnabled())
-            return;
-
-        final PossibleIonModes pim = processedInput.getAnnotation(PossibleIonModes.class, () -> new PossibleIonModes());
-        final GuessIonizationFromMs1Result guessIonization = ionGuessing.guessIonization(processedInput.getExperimentInformation(), allowedIonModes);
-
-        if (guessIonization.guessedIonTypes.length > 0) {
-            if (gm.equals(IonGuessingMode.SELECT)) {
-                //fully trust any ionization prediction
-                gm.updateGuessedIons(pim, guessIonization.guessedIonTypes);
-
-            } else {
-
-                if (guessIonization.getGuessingSource() == IonGuessingSource.MergedMs1Spectrum
-                ) {
-                    //don't fully trust guessing from simple (non-merged) MS1 spectrum.
-                    double[] probabilities = new double[allowedIonModes.length];
-                    Arrays.fill(probabilities, 0.01);
-                    PrecursorIonType[] guessedIonizations = guessIonization.guessedIonTypes;
-                    for (int i = 0; i < allowedIonModes.length; i++) {
-                        PrecursorIonType allowedIonMode = allowedIonModes[i];
-                        for (int j = 0; j < guessedIonizations.length; j++) {
-                            PrecursorIonType guessedIonization = guessedIonizations[j];
-                            if (guessedIonization.equals(allowedIonMode)) {
-                                probabilities[i] = 1d;
-                                break;
-                            }
-                        }
-                    }
-                    gm.updateGuessedIons(pim, guessIonization.candidateIonTypes, probabilities);
-                } else {
-                    //merged MS1 should be more reliable (probably openMS features or something like that), so we trust more
-                    gm.updateGuessedIons(pim, guessIonization.guessedIonTypes);
-                }
-                gm.updateGuessedIons(pim, guessIonization.guessedIonTypes);
-            }
+        final PrecursorIonType[] autoDetectable = settings.getDetectable(charge).stream().map(PrecursorIonType::getPrecursorIonType).toArray(PrecursorIonType[]::new);
+        final GuessIonizationFromMs1Result guessIonization = autoDetectable.length>0 ? ionGuessing.guessIonization(processedInput.getExperimentInformation(), autoDetectable) : null;
+        final HashSet<IonMode> selectedIons = new HashSet<>();
+        selectedIons.addAll(settings.getEnforced());
+        if (guessIonization==null || guessIonization.getGuessingSource()==IonGuessingSource.NoSource || guessIonization.guessedIonTypes.length==0) {
+            // fallback
+            selectedIons.addAll(settings.getFallback());
+        } else {
+            for (PrecursorIonType ion : guessIonization.getGuessedIonTypes())
+                if (ion.getIonization() instanceof IonMode)
+                    selectedIons.add((IonMode) ion.getIonization());
+                else
+                    LoggerFactory.getLogger(Sirius.class).warn("IonMode guess from MS1 '" + guessIonization.getClass().getSimpleName() + "' returns an unknown ion type: " + ion.toString());
         }
-        processedInput.setAnnotation(PossibleIonModes.class, pim);
+        processedInput.setAnnotation(PossibleIonModes.class, PossibleIonModes.uniformlyDistributed(selectedIons));
         //also update PossibleAdducts
         final PossibleAdducts pa = processedInput.computeAnnotationIfAbsent(PossibleAdducts.class, PossibleAdducts::new);
-        pa.update(pim);
+        pa.update(processedInput.getAnnotation(PossibleIonModes.class));
     }
 
     /**
@@ -211,14 +185,6 @@ public class Sirius {
         AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = createIdentificationResults(fr, instance);//postprocess results
         return irs;
-    }
-
-    @Deprecated
-    public List<IdentificationResult> identifyPrecursorAndIonization(Ms2Experiment experiment,
-                                                                     int numberOfCandidates, IsotopePatternHandling iso) {
-        final MutableMs2Experiment exp = new MutableMs2Experiment(experiment);
-        exp.setAnnotation(PossibleIonModes.class, PossibleIonModes.defaultFor(experiment.getPrecursorIonType().getCharge()));
-        return identify(exp, numberOfCandidates, true, iso);
     }
 
     /**
@@ -456,39 +422,6 @@ public class Sirius {
 
     public static <T extends MassDeviation> void setAllowedMassDeviation(@NotNull MutableMs2Experiment experiment, Deviation fragmentMassDeviation, Class<T> deviationType) {
         experiment.setAnnotation(deviationType, experiment.getAnnotationOrDefault(deviationType).withAllowedMassDeviation(fragmentMassDeviation));
-    }
-
-
-    public static void setAllowedIonModes(@NotNull Ms2Experiment experiment, Ionization... ionModes) {
-        final PossibleIonModes pa = new PossibleIonModes();
-        for (Ionization ion : ionModes) {
-            pa.add(ion, 1d);
-        }
-        setAllowedIonModes(experiment, pa);
-    }
-
-    public static void setAllowedIonModes(@NotNull Ms2Experiment experiment, PossibleIonModes ionModes) {
-        experiment.setAnnotation(PossibleIonModes.class, ionModes);
-    }
-
-    public static void setAllowedIonModes(@NotNull ProcessedInput experiment, Ionization... ionModes) {
-        final PossibleIonModes pa = new PossibleIonModes();
-        for (Ionization ion : ionModes) {
-            pa.add(ion, 1d);
-        }
-        setAllowedIonModes(experiment, ionModes);
-    }
-
-    public static void setAllowedIonModes(@NotNull ProcessedInput experiment, PossibleIonModes ionModes) {
-        experiment.setAnnotation(PossibleIonModes.class, ionModes);
-
-    }
-
-    public static void setIonModeWithProbability(@NotNull Ms2Experiment experiment, Ionization ion,
-                                                 double probability) {
-        final PossibleIonModes pa = experiment.getAnnotation(PossibleIonModes.class, PossibleIonModes::new);
-        pa.add(ion, probability);
-        experiment.setAnnotation(PossibleIonModes.class, pa);
     }
 
     public static void setAllowedAdducts(@NotNull Ms2Experiment experiment, PrecursorIonType... adducts) {
@@ -995,13 +928,7 @@ public class Sirius {
         performAutomaticElementDetection(input, pattern.getPattern());
 
         // step 2: adduct type search
-        PossibleIonModes pim = input.getAnnotation(PossibleIonModes.class, null);
-        IonGuessingMode gm = input.getAnnotationOrDefault(IonGuessingMode.class);
-        if (pim == null)
-            detectPossibleIonModesFromMs1(input);
-        else if (gm.isEnabled()) {
-            detectPossibleIonModesFromMs1(input, pim.getIonModesAsPrecursorIonType().toArray(new PrecursorIonType[0]));
-        }
+        detectPossibleIonModesFromMs1(input);
         // step 3: Isotope pattern analysis
         if (!isotopeSettings.isScoring())
             return false;
