@@ -5,8 +5,8 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.ms.annotations.Annotaion;
 import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
 import java.util.List;
 
@@ -62,7 +62,7 @@ public class FingerIdResult implements Annotated {
     }
 
     @Override
-    public Annotations<Annotaion> annotations() {
+    public Annotations<DataAnnotation> annotations() {
         return annotations;
     }
 }

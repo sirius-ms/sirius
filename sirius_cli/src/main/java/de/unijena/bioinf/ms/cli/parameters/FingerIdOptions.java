@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.sirius.Sirius;
-import picocli.CommandLine.Command;
+import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 import java.util.Collections;
@@ -19,14 +19,12 @@ import java.util.Set;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@Command(name = "fingerid", aliases = {"F"}, description = "Identify molecular structure for each compound Individually using CSI:FingerID.")
-public class FingerIdOptions extends AbstractMs2ExperimentOptions {
+@CommandLine.Command(name = "fingerid", aliases = {"F"}, description = "Identify molecular structure for each compound Individually using CSI:FingerID.")
+public class FingerIdOptions extends AbstractMsExperimentOptions {
     private SiriusOptions siriusOptions;
     private Sirius siriusAPI; //todo fill me
     public final static String CONSIDER_ALL_FORMULAS = "all";
 
-//    @Option(names = "-F, --fingerid", description = "search structure with CSI:FingerID")
-//    public boolean fingerid;
 
     @Option(names = "-d", description = "search formulas in given database: all, pubchem, bio, kegg, hmdb")
     public String database;
