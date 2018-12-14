@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 public class DefaultParameterOptionLoader {
     private final Properties parsedDefaults = new Properties();
     private final List<CommandLine.Model.OptionSpec> options;
+    private CommandLine.Model.CommandSpec commandSpec = null;
 
 
     public DefaultParameterOptionLoader() throws IOException {
@@ -65,5 +66,20 @@ public class DefaultParameterOptionLoader {
 
     public List<CommandLine.Model.OptionSpec> getOptions() {
         return options;
+    }
+
+    public CommandLine.Model.CommandSpec asCommandSpec() {
+        if (commandSpec == null) {
+            final CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.forAnnotatedObject(new DefaultParameterOptions());
+            for (CommandLine.Model.OptionSpec option : options) {
+                spec.addOption(option);
+            }
+            commandSpec = spec;
+        }
+        return commandSpec;
+    }
+
+    @CommandLine.Command(name = "config", description = "This allows you to set all configuration from the profile files from the command line.")
+    private class DefaultParameterOptions {
     }
 }

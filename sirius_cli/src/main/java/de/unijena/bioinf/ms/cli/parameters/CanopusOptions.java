@@ -13,10 +13,7 @@ import java.io.File;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  * */
 @CommandLine.Command(name = "canopus", aliases = {"C"}, description = "Predict compound categories for the whole dataset using CANOPUS.")
-public class CanopusOptions extends AbstractMs2ExperimentOptions {
-//    @Option(names = {"-C","--canopus"})
-//    public boolean canopus;
-
+public class CanopusOptions extends AbstractMsExperimentOptions {
 
     @Option(names = {"--experimental-canopus"}, hidden = true) //experimental/temporary/internal
     public File experimentalCanopus;
@@ -25,4 +22,5 @@ public class CanopusOptions extends AbstractMs2ExperimentOptions {
     public void setParamatersToExperiment(MutableMs2Experiment experiment) {
         //todo fill me
     }
+
 }

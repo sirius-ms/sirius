@@ -1,6 +1,15 @@
 package de.unijena.bioinf.ms.cli;
 
+import de.unijena.bioinf.fingerid.net.WebAPI;
+import de.unijena.bioinf.fingerworker.WorkerList;
+import de.unijena.bioinf.ms.cli.parameters.*;
+import de.unijena.bioinf.ms.cli.utils.FormatedTableBuilder;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
+
+import java.io.IOException;
 
 
 /**
@@ -19,26 +28,26 @@ import de.unijena.bioinf.sirius.core.ApplicationCore;
  */
 public class CLI extends ApplicationCore {
 
-    /*protected ProjectWriter projectWriter;
     protected static boolean shellOutputSurpressed = false; //todo extra Utils class?
-
     protected org.slf4j.Logger logger = LoggerFactory.getLogger(CombinedCLI.class);
 
+    //    protected ProjectWriter projectWriter;
     protected Workflow workflow;
     protected SiriusInstanceProcessor siriusInstanceProcessor;
-    protected Sirius sirius;
+//    protected Sirius sirius;
 
 
-    BasicOptions basicOptions = new BasicOptions();
-    SiriusOptions siriusOptions = new SiriusOptions();
-    ZodiacOptions zodiacOptions = new ZodiacOptions();
-    FingerIdOptions fingeridOptions = new FingerIdOptions();
-    CanopusOptions canopusOptions = new CanopusOptions();
+    BasicOptions basicOptions;
+    SiriusOptions siriusOptions;
+    ZodiacOptions zodiacOptions;
+    FingerIdOptions fingeridOptions;
+    CanopusOptions canopusOptions;
+    DefaultParameterOptionLoader configOptionLoader;
 
     protected int instanceIdOffset; //index offset if project space is merged
 
 
-    public void compute() {
+    /*public void compute() {
         final long time = System.currentTimeMillis();
         try {
             if (workflow instanceof ZodiacWorkflow) {
@@ -60,7 +69,7 @@ public class CLI extends ApplicationCore {
             logger.info("Computation time: " + (double) (System.currentTimeMillis() - time) / 1000d + "s");
         }
     }
-
+*/
 
     //////////////////////////////////////////////////
     // init
@@ -92,34 +101,61 @@ public class CLI extends ApplicationCore {
             // output
             align.output(System.out::println);
 
-//            System.out.println();
             System.out.println("Number of pending jobs: " + info.getPendingJobs());
         }
     }
 
     protected void parseArgsAndInit(String[] args) {
         parseArgs(args);
-        if (!workflow.setup()) System.exit(1);
-        if (!workflow.validate()) System.exit(1);
+//        if (!workflow.setup()) System.exit(1);
+//        if (!workflow.validate()) System.exit(1);
     }
 
     protected CommandLine.Model.CommandSpec configureCommandLine() {
-        final CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.forAnnotatedObject(basicOptions);
-        spec.addMixin("SIRIUS", CommandLine.Model.CommandSpec.forAnnotatedObject(siriusOptions));
-        spec.addMixin("Zodiac", CommandLine.Model.CommandSpec.forAnnotatedObject(zodiacOptions));
-        spec.addMixin("FingerID", CommandLine.Model.CommandSpec.forAnnotatedObject(fingeridOptions));
-        spec.addMixin("Canopus", CommandLine.Model.CommandSpec.forAnnotatedObject(canopusOptions));
+        try {
+            configOptionLoader = new DefaultParameterOptionLoader();
+            basicOptions = new BasicOptions();
+            siriusOptions = new SiriusOptions();
+            zodiacOptions = new ZodiacOptions();
+            fingeridOptions = new FingerIdOptions();
+            canopusOptions = new CanopusOptions();
 
-        spec.usageMessage().footerHeading("Please cite the following publications when using our tool:");
-        spec.usageMessage().footer(ApplicationCore.CITATION);
 
-        return spec;
+            CommandLine.Model.CommandSpec fingeridSpec = forAnnotatedObjectWithSubCommands(fingeridOptions, canopusOptions);
+            CommandLine.Model.CommandSpec zodiacSpec = forAnnotatedObjectWithSubCommands(zodiacOptions, fingeridSpec);
+            CommandLine.Model.CommandSpec siriusSpec = forAnnotatedObjectWithSubCommands(siriusOptions, zodiacSpec, fingeridSpec);
+
+            CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), siriusSpec, zodiacSpec, fingeridSpec, canopusOptions);
+            CommandLine.Model.CommandSpec basicSpec = forAnnotatedObjectWithSubCommands(basicOptions, configSpec, siriusSpec, zodiacSpec, fingeridSpec, canopusOptions);
+
+            basicSpec.usageMessage().footerHeading("Please cite the following publications when using our tool:");
+            basicSpec.usageMessage().footer(ApplicationCore.CITATION);
+
+            return basicSpec;
+        } catch (IOException e) {
+            throw new RuntimeException("Could not load default Config from .jar. This build seems to be corrupted!", e);
+        }
+    }
+
+    public static CommandLine.Model.CommandSpec forAnnotatedObjectWithSubCommands(Object parent, Object... subs) {
+        final CommandLine.Model.CommandSpec parentSpec = parent instanceof CommandLine.Model.CommandSpec
+                ? (CommandLine.Model.CommandSpec) parent
+                : CommandLine.Model.CommandSpec.forAnnotatedObject(parent);
+        for (Object sub : subs) {
+            final CommandLine.Model.CommandSpec subSpec = sub instanceof CommandLine.Model.CommandSpec
+                    ? (CommandLine.Model.CommandSpec) sub
+                    : CommandLine.Model.CommandSpec.forAnnotatedObject(sub);
+            parentSpec.addSubcommand(subSpec.name(), subSpec);
+        }
+        return parentSpec;
     }
 
     protected void parseArgs(String[] args) {
 
         final CommandLine.Model.CommandSpec spec = configureCommandLine();
-        final CommandLine.ParseResult parseResult = spec.commandLine().parseArgs(args);
+        final CommandLine.ParseResult parseResult = new CommandLine(spec).parseArgs(args);
+        configOptionLoader.overrideDefaults(); //writing commandline defaults over file defaults
+
         //printing version or usage help
         if (CommandLine.printHelpIfRequested(parseResult))
             System.exit(0);
@@ -138,8 +174,9 @@ public class CLI extends ApplicationCore {
             PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(basicOptions.numOfCores));
         }
 
+        //todo implemet real parsing stuff
         //configure file formatter for workspace
-        FilenameFormatter filenameFormatter = null;
+      /*  FilenameFormatter filenameFormatter = null;
         if (basicOptions.workspaceNamingConvention != null) {
             try {
                 filenameFormatter = new StandardMSFilenameFormatter(basicOptions.workspaceNamingConvention);
@@ -181,12 +218,12 @@ public class CLI extends ApplicationCore {
         } else {
             FingerIdInstanceProcessor fingerIdInstanceProcessor = new FingerIdInstanceProcessor(options);
             workflow = new FingerIdWorkflow(siriusInstanceProcessor, fingerIdInstanceProcessor, options, projectWriter);
-        }
+        }*/
 
 
     }
 
-    protected void handleOutputOptions(ReaderWriterFactory readerWriterFactory) {
+    /*protected void handleOutputOptions(ReaderWriterFactory readerWriterFactory) {
 
         //output and logging
         if (basicOptions.quiet || "-".equals(basicOptions.workspaceZip)) {
@@ -441,7 +478,7 @@ public class CLI extends ApplicationCore {
         }
     }
 
-    *//**
+    *//* *
      * add here (instance specific) parameters
      *
      * @param inst instance to modify

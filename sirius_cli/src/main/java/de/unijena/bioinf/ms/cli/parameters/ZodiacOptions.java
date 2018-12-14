@@ -13,7 +13,7 @@ import picocli.CommandLine.Option;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "zodiac", aliases = {"Z"}, description = "Identify Molecular formulas of all compounds in a dataset together using ZODIAC.")
-public class ZodiacOptions extends AbstractMs2ExperimentOptions {
+public class ZodiacOptions extends AbstractMsExperimentOptions {
 //    @Option(names = {"-Z", "--zodiac"}, description = "run zodiac on a given sirius workspace.", hidden = true)
 //    public boolean zodiac;
 

@@ -21,9 +21,10 @@ public class SiriusCLIApplication {
         }));
 
         try {
-            CombinedCLI combinedCLI = new CombinedCLI();
-//            combinedCLI.parseArgsAndInit(args);
-//            combinedCLI.compute();
+            CLI cli = new CLI();
+            cli.parseArgsAndInit(args);
+//            cli.compute(); //todo enable computation
+            System.out.println("DONE!");
         } catch (Exception e) {
             LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unkown Error!", e);
         } finally {
