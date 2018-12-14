@@ -14,10 +14,11 @@ import java.util.Properties;
 import static org.junit.Assert.assertEquals;
 
 public class DefaultParameterOptionLoaderTest {
-    public static final String TEST_VALUE =  "tw_blub_bla";
+    public static final String SINGLE_VALUE = "tw_blub_bla";
+    public static final String LIST_VALUE = "l1, l 2 , l3 ll";
 
     @Test
-    public void inputVsOutputTest() throws IOException {
+    public void singleValueTest() throws IOException {
         {
             String c = ApplicationCore.CITATION;
             Properties p = PropertyManager.PROPERTIES;
@@ -38,11 +39,19 @@ public class DefaultParameterOptionLoaderTest {
 
         final List<String> argList = new ArrayList<>();
 
-        defaults.keySet().stream().forEach(key -> {
-            argList.add("--"+key);
-            argList.add(TEST_VALUE);
+        List<String> singleKeys = new ArrayList<>();
+        List<String> listKeys = new ArrayList<>();
+        defaults.entrySet().stream().forEach(e -> {
+            argList.add("--" + e.getKey());
+            if (((String) e.getValue()).contains(",")) {
+                listKeys.add((String) e.getKey());
+                argList.add(LIST_VALUE);
+            } else {
+                singleKeys.add((String) e.getKey());
+                argList.add(SINGLE_VALUE);
+            }
         });
-        argList.add("/fantasy/path/tmp");
+//        argList.add("/fantasy/path/tmp");
 
         final String[] args = argList.toArray(new String[0]);
 
@@ -52,8 +61,13 @@ public class DefaultParameterOptionLoaderTest {
         builder.overrideDefaults();
 
 
-        defaults.keySet().stream().forEach(key -> {
-            assertEquals(TEST_VALUE,PropertyManager.PROPERTIES.getProperty((String) key));
+        singleKeys.stream().forEach(key -> {
+            assertEquals(SINGLE_VALUE, PropertyManager.PROPERTIES.getProperty(key));
+        });
+        listKeys.stream().forEach(key -> {
+            assertEquals(
+                    LIST_VALUE.replaceAll("\\s+", ""),
+                    PropertyManager.PROPERTIES.getProperty(key).replaceAll("\\s+", ""));
         });
     }
 

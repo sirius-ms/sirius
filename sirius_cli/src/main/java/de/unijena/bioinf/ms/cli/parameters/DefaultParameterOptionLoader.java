@@ -27,16 +27,30 @@ public class DefaultParameterOptionLoader {
         return defaults.entrySet().stream().map((entry) -> {
             CommandLine.Model.OptionSpec.Builder pSpec = CommandLine.Model.OptionSpec
                     .builder((String) "--" + entry.getKey())
-                    .type(String.class)
                     .hasInitialValue(false)
                     .defaultValue((String) entry.getValue())
-                    .setter(new CommandLine.Model.ISetter() {
-                        @Override
-                        public <T> T set(T value) throws Exception {
-                            return (T) parsedDefaults.setProperty((String) entry.getKey(), (String) value);
-                        }
-                    })
                     .hidden(true); //todo hidden or subtool???
+
+            if (((String) entry.getValue()).contains(",")) {
+                pSpec.type(List.class)
+                        .splitRegex("\\s+,\\s+")
+                        .setter(new CommandLine.Model.ISetter() {
+                            @Override
+                            public <T> T set(T value) throws Exception {
+                                return (T) parsedDefaults.setProperty((String) entry.getKey(),
+                                        String.join(",", (List<String>) value));
+                            }
+                        });
+
+            } else {
+                pSpec.type(String.class)
+                        .setter(new CommandLine.Model.ISetter() {
+                            @Override
+                            public <T> T set(T value) throws Exception {
+                                return (T) parsedDefaults.setProperty((String) entry.getKey(), (String) value);
+                            }
+                        });
+            }
             return pSpec.build();
         }).collect(Collectors.toList());
     }
