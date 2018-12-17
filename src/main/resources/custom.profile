@@ -41,8 +41,7 @@ NumberOfCandidates =5
 
 NumberOfCandidatesPerIon =-1
 
-PossibleAdductSwitches =[M+H]+:{[M+Na]+}
-
+PossibleAdductSwitches = [M+H]+ -> [M+Na]+, [M+H]+ -> [M+K]+, [M+Na]+ -> [M+K]+
 # Can be attached to a Ms2Experiment or ProcessedInput. If PrecursorIonType is unknown, 
 # CSI:FingerID will use this
 # object and for all different adducts.
