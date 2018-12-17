@@ -11,10 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 /**
- * This class holds the information how to autodetect elements based on the given FormulaConstraints
- * Note: during Validation this is compared to the molecular formula an may be changed
- *
- *
+ * This configurations hold the information how to autodetect elements based on the given formula constraints.
+ * Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.
  * */
 
 public class FormulaSettings implements Ms2ExperimentAnnotation {
@@ -26,15 +24,12 @@ public class FormulaSettings implements Ms2ExperimentAnnotation {
      * @param enforced elements that are always considered
      * @param detectable detectable elements are added to the chemical alphabet, if there are indications for them (e.g. in isotope pattern)
      * @param fallback these elements are used, if the autodetection fails (e.g. no isotope pattern available)
-     * @return
      */
     @DefaultInstanceProvider  public static FormulaSettings newInstance(@DefaultProperty FormulaConstraints enforced, @DefaultProperty ChemicalAlphabet detectable, @DefaultProperty FormulaConstraints fallback) {
         return new FormulaSettings(enforced,detectable,fallback);
     }
 
-    public FormulaSettings(FormulaConstraints enforced, ChemicalAlphabet detectable, FormulaConstraints fallback) {
-        if (enforced==null || fallback==null || detectable==null)
-            throw new NullPointerException();
+    public FormulaSettings(@NotNull FormulaConstraints enforced, @NotNull ChemicalAlphabet detectable, @NotNull FormulaConstraints fallback) {
         this.enforced = enforced;
         this.fallback = fallback;
         this.detectable = detectable;
@@ -48,7 +43,7 @@ public class FormulaSettings implements Ms2ExperimentAnnotation {
         return fallback;
     }
 
-    @NotNull  public Set<Element> getAutoDetectionElements() {
+    @NotNull public Set<Element> getAutoDetectionElements() {
         return detectable.toSet();
     }
 
