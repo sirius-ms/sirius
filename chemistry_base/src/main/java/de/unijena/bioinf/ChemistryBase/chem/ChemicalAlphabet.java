@@ -20,6 +20,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
 import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ElementMap;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -38,9 +39,9 @@ import java.util.*;
  */
 public class ChemicalAlphabet implements Iterable<Element> {
 
-    private final TableSelection selection;
-    private final Element[] allowedElements;
-    private final int[] orderOfElements;
+    @NotNull private final TableSelection selection;
+    @NotNull private final Element[] allowedElements;
+    @NotNull private final int[] orderOfElements;
     private final int maxLen;
 
     /**
@@ -50,7 +51,7 @@ public class ChemicalAlphabet implements Iterable<Element> {
         this(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S"));
     }
 
-    public ChemicalAlphabet(ChemicalAlphabet alpha) {
+    public ChemicalAlphabet(@NotNull ChemicalAlphabet alpha) {
         this.allowedElements = alpha.allowedElements;
         this.selection = alpha.selection;
         this.orderOfElements = alpha.orderOfElements;
