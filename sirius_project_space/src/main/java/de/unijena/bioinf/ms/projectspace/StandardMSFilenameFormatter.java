@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +93,6 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
         return builder.toString();
     }
 
-
     private interface FormatString {
         String format(ExperimentResult experimentResult, int index);
     }
@@ -154,4 +153,8 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
         }
     }
 
+    @Override
+    public String getFormatExpression() {
+        return unparsedFormatString;
+    }
 }

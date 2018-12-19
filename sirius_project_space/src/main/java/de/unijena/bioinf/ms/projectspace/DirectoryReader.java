@@ -1,13 +1,11 @@
 package de.unijena.bioinf.ms.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.babelms.Index;
-import de.unijena.bioinf.babelms.json.FTJsonReader;
+import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.sirius.ExperimentResult;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.URL;
@@ -16,9 +14,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static de.unijena.bioinf.ms.projectspace.DirectoryWriter.logger;
+import static de.unijena.bioinf.ms.projectspace.DirectoryWriter.LOG;
 
-public class DirectoryReader implements ProjectReader {
+public class DirectoryReader implements ProjectReader, SiriusLocations {
 
     public interface ReadingEnvironment {
 
@@ -42,181 +40,176 @@ public class DirectoryReader implements ProjectReader {
         void leaveDirectory() throws IOException;
 
         void close() throws IOException;
-    }
 
-    protected static class Instance {
-        protected String directory;
-        protected Instance(String directory) {
-            this.directory = directory;
+        default boolean containsFile(@NotNull String dirName, @NotNull String fileName) throws IOException {
+            if (!isDirectory(dirName)) return false;
+            try {
+                enterDirectory(dirName);
+                for (String file : list()) {
+                    if (file.equals(fileName))
+                        return true;
+                }
+                return false;
+            } finally {
+                leaveDirectory();
+            }
         }
 
-        protected String getDirectory() {
-            return directory;
+        default <T> T read(String name, Do<T> f) throws IOException {
+            final InputStream stream = openFile(name);
+            try {
+                final BufferedReader inReader = new BufferedReader(new InputStreamReader(stream));
+                try {
+                    return f.run(new DirectoryReader.DoNotCloseReader(inReader));
+                } catch (IOException e) {
+                    LOG.error(e.getMessage(), e);
+                    throw e;
+                }
+            } finally {
+                closeFile();
+            }
+        }
+
+        @FunctionalInterface
+        interface Do<T> {
+            T run(Reader r) throws IOException;
         }
     }
 
     protected final ReadingEnvironment env;
-    protected final List<Instance> experiments;
-    protected int currentIndex = 0;
+    protected final MetaDataSerializer[] metaDataReader;
 
-    public DirectoryReader(ReadingEnvironment env) {
+    public DirectoryReader(ReadingEnvironment env, MetaDataSerializer... metaDataReader) {
         this.env = env;
-        List<String> names = env.list();
-        this.experiments = new ArrayList<>(names.size());
-        for (String name : names) {
-            try {
-                if (!containsSpectrumMS(env, name)) continue;
-            } catch (IOException e) {
-                throw new RuntimeException("Cannot read directory: "+e.getMessage(), e);
-            }
-            experiments.add(new Instance(name));
-        }
+        this.metaDataReader = metaDataReader;
     }
 
-    private boolean containsSpectrumMS(ReadingEnvironment env, String dirName) throws IOException {
-        if (!env.isDirectory(dirName)) return false;
-        env.enterDirectory(dirName);
-        boolean hasSpectrum = false;
-        for (String file : env.list()) {
-            if (file.equals("spectrum.ms")) hasSpectrum = true;
-        }
-        env.leaveDirectory();
-        return hasSpectrum;
-    }
 
-    @Override
-    public void close() throws IOException {
-
-    }
-
-    @Override
-    public boolean hasNext() {
-        return currentIndex < experiments.size();
-    }
-
-    @Override
-    public ExperimentResult next() {
-        if (!hasNext()) throw new NoSuchElementException();
-        try {
-            return parseExperiment(experiments.get(currentIndex));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            ++currentIndex;
-        }
-    }
-
-    private final static Pattern RESULT_PATTERN = Pattern.compile("(\\d+)_(.+)(_(.+))?\\.json");
     private final static Pattern INDEX_PATTERN = Pattern.compile("^(\\d+)_");
-    private ExperimentResult parseExperiment(final Instance instance) throws IOException {
-        env.enterDirectory(instance.getDirectory());
+
+
+    public ExperimentResult parseExperiment(final ExperimentDirectory expDir) throws IOException {
+        final String directory = expDir.getDirectoryName();
+        env.enterDirectory(directory);
         final HashSet<String> names = new HashSet<>(env.list());
-        Ms2Experiment input = null;
-        final List<IdentificationResult> results = new ArrayList<>();
+
         // read spectrum
+        final Ms2Experiment input;
         if (names.contains("spectrum.ms")) {
-            input = parseSpectrum(instance);
-        }
-        boolean hasIndex = true;
-        if (!input.hasAnnotation(Index.class)){
-            //fallback for older versions
-            hasIndex = false;
-            Matcher matcher = INDEX_PATTERN.matcher(instance.getDirectory());
-            if (matcher.matches()){
-                input.setAnnotation(Index.class, new Index(Integer.parseInt(matcher.group(1))));
-            } else {
-                logger.warn("Cannot parse index for compound in directory "+instance.getDirectory());
-            }
-        }
-        // read trees
-        if (names.contains("trees")) {
-            env.enterDirectory("trees");
-            final List<String> trs = env.list();
-            keep(trs, RESULT_PATTERN);
-            for (final String s : trs) {
-                Matcher m = RESULT_PATTERN.matcher(s);
-                m.matches();
-                final MolecularFormula formula = MolecularFormula.parse(m.group(2));
-                final int rank = Integer.parseInt(m.group(1));
-                final FTree tree = read(s, new Do<FTree>() {
-                    @Override
-                    public FTree run(Reader r) throws IOException {
-                        return new FTJsonReader().parse(new BufferedReader(r), env.absolutePath(instance.getDirectory() + "/trees/" + s));
-                    }
-                });
-                results.add(new IdentificationResult(tree, rank));
-            }
-            env.leaveDirectory();
-        }
-        Collections.sort(results, new Comparator<IdentificationResult>() {
-            @Override
-            public int compare(IdentificationResult o1, IdentificationResult o2) {
-                return Integer.compare(o1.getRank(), o2.getRank());
-            }
-        });
-        addMetaData(input, results);
-        env.leaveDirectory();
-        if (input.getSource()!=null && hasIndex){
-            return new ExperimentResult(input, results);
+            input = parseSpectrum(directory);
+        } else
+            throw new IOException("Invalid Experiment directory. No spectrum.ms found! Your workspace seems to be corrupted.");
+
+
+        final ExperimentResult expResult;
+        if (input.getSource() != null && input.getName() != null) {
+            expResult = new ExperimentResult(input, new ArrayList<>());
         } else {
             //fallback for older versions
-            String[] nameSplit = instance.getDirectory().split("_");
-            String source = nameSplit.length>1?nameSplit[1]:"";
-            String name = nameSplit.length>2?nameSplit[2]:"unknown";
-            return new ExperimentResult(input, results, source, name);
-
+            String[] nameSplit = directory.split("_");
+            String source = nameSplit.length > 1 ? nameSplit[1] : "";
+            String name = nameSplit.length > 2 ? nameSplit[2] : "unknown";
+            expResult = new ExperimentResult(input, new ArrayList<>(), source, name);
         }
+        expResult.setAnnotation(ExperimentDirectory.class, expDir);
 
+        readAndAddMetaData(expResult, names);
+        env.leaveDirectory();
+
+        return expResult;
     }
 
-    protected void addMetaData(Ms2Experiment input, List<IdentificationResult> results) throws IOException {
 
+    private Ms2Experiment parseSpectrum(final String directory) throws IOException {
+        return env.read("spectrum.ms", r ->
+                new JenaMsParser().parse(new BufferedReader(r), env.absolutePath(directory + "/spectrum.ms"))
+        );
     }
 
-    private void keep(List<String> trs, Pattern p) {
-        Iterator<String> i = trs.iterator();
-        while (i.hasNext()) {
-            if (!p.matcher(i.next()).matches()) {
-                i.remove();
+    @NotNull
+    private void parseAndAddIndex(@NotNull final ExperimentDirectory expDir) throws IOException {
+        Integer index = env.read(".index", r ->
+                new BufferedReader(r).lines().findFirst().map(Integer::valueOf).orElse(null)
+        );
+
+        //parse spectrum ms to find index -> backward compatibility
+        if (index == null) {
+            expDir.setRewrite(true);
+
+            final Ms2Experiment input = parseSpectrum(expDir.getDirectoryName());
+            final String si = input.getAnnotation(AdditionalFields.class).get("index");
+            if (si != null) index = Integer.valueOf(si);
+
+            //parse spectrum ms to find index -> backward compatibility
+            if (index == null) {
+                //fallback for older versions
+                Matcher matcher = INDEX_PATTERN.matcher(expDir.getDirectoryName());
+                if (matcher.matches()) {
+                    index = Integer.parseInt(matcher.group(1));
+                } else {
+                    index = ExperimentDirectory.NO_INDEX;
+                    LOG.warn("Cannot parse index for compound in directory " + expDir.getDirectoryName());
+                }
             }
         }
-    }
-
-    private Ms2Experiment parseSpectrum(final Instance i) throws IOException {
-        return read("spectrum.ms", new Do<Ms2Experiment>() {
-            @Override
-            public Ms2Experiment run(Reader r) throws IOException {
-//                return new JenaMsParser().parse(new BufferedReader(r), env.absolutePath(i.getDirectory() + "/" + i.fileName + ".ms"));
-                return new JenaMsParser().parse(new BufferedReader(r), env.absolutePath(i.getDirectory() + "/spectrum.ms"));
-            }
-        });
-    }
-
-    @Override
-    public void remove() {
-        throw new UnsupportedOperationException();
+        expDir.setIndex(index);
     }
 
 
-    protected interface Do<T> {
-        T run(Reader r) throws IOException;
-    }
-
-    protected <T> T read(String name, DirectoryReader.Do<T> f)throws IOException  {
-        final
-        InputStream stream = env.openFile(name);
-        try {
-            final BufferedReader inReader = new BufferedReader(new InputStreamReader(stream));
+    private void readAndAddMetaData(ExperimentResult expResult, Set<String> names) {
+        for (MetaDataSerializer reader : metaDataReader) {
             try {
-                return f.run(new DirectoryReader.DoNotCloseReader(inReader));
+                reader.read(expResult, this, names);
             } catch (IOException e) {
-                logger.error(e.getMessage(), e);
-                throw e;
+                LOG.warn("Could not add meta data of " + reader.getClass() + ". Your data might be incomplete.");
             }
-        } finally {
-            env.closeFile();
         }
     }
+
+    @NotNull
+    @Override
+    public Iterator<ExperimentDirectory> iterator() {
+        return new DirectoryReaderIterator();
+    }
+
+    private class DirectoryReaderIterator implements CloseableIterator<ExperimentDirectory> {
+        private final Iterator<String> experiments;
+
+
+        private DirectoryReaderIterator() {
+            this.experiments = env.list().stream().filter((name) -> {
+                try {
+                    return env.containsFile(name, "spectrum.ms");
+                } catch (IOException e) {
+                    throw new RuntimeException("Cannot Enter directory: " + name + System.lineSeparator() + e.getMessage(), e);
+                }
+            }).iterator();
+        }
+
+        @Override
+        public void close() throws IOException {
+
+        }
+
+        @Override
+        public boolean hasNext() {
+            return experiments.hasNext();
+        }
+
+        @Override
+        public ExperimentDirectory next() {
+            if (!hasNext()) throw new NoSuchElementException();
+            String it = experiments.next();
+            try {
+                final ExperimentDirectory expDir = new ExperimentDirectory(it);
+                parseAndAddIndex(expDir);
+                return expDir;
+            } catch (IOException e) {
+                throw new RuntimeException("Error when parsing index information: " + it + System.lineSeparator() + e.getMessage(), e);
+            }
+        }
+    }
+
 
     private static class DoNotCloseReader extends Reader {
 
