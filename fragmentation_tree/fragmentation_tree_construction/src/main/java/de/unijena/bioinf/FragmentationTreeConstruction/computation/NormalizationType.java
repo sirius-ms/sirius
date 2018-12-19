@@ -19,6 +19,12 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 
+/**
+ * Defines how to normalize between several MS/MS spectra. LOCAL normalization means that each spectrum is
+ * normalized and merged afterwards. GLOBAL normalization means that all spectra are normalized according to the largest
+ * base peak across all spectra and merged afterwards. GLOBAL normalization should be the preferred way - otherwise
+ * low intensive spectra become as important as high intensive spectra.
+ */
 @DefaultProperty
 public enum NormalizationType {
 

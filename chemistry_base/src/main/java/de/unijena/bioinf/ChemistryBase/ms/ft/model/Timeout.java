@@ -5,7 +5,10 @@ import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 
 /**
- * If this annotation is set, Tree Builder will stop after reaching the given number of seconds
+ * This configurations define a timeout for the tree computation. As the underlying problem is NP-hard, it might take
+ * forever to compute trees for very challenging (e.g. large mass) compounds. Setting an time constraint allow the program
+ * to continue with other instances and just skip the challenging ones.
+ * Note that, due to multithreading, this time constraints are not absolutely accurate.
  */
 public class Timeout implements Ms2ExperimentAnnotation {
 
@@ -13,6 +16,10 @@ public class Timeout implements Ms2ExperimentAnnotation {
 
     private final int numberOfSecondsPerDecomposition, numberOfSecondsPerInstance;
 
+    /**
+     * @param secondsPerInstance Set the maximum number of seconds for computing a single compound. Set to 0 to disable the time constraint.
+     * @param secondsPerTree Set the maximum number of seconds for a single molecular formula check. Set to 0 to disable the time constraint
+     */
     @DefaultInstanceProvider
     public static Timeout newInstance(
             @DefaultProperty int secondsPerInstance,

@@ -9,7 +9,9 @@ import gnu.trove.set.hash.TCustomHashSet;
 import java.util.*;
 
 /**
- * Only allow certain molecular formulas as root
+ * This annotation defines the set of molecular formulas which have to be checked. This annotation makes only sense to
+ * be assigned to each compound separately, e.g. to implement database search. As usual, the annotation is ignored
+ * if there is a single molecular assigned to the compound.
  */
 public class Whiteset implements Ms2ExperimentAnnotation {
 
