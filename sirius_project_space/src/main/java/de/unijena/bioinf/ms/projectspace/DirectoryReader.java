@@ -6,6 +6,8 @@ import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URL;
@@ -14,9 +16,13 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static de.unijena.bioinf.ms.projectspace.DirectoryWriter.LOG;
+import static de.unijena.bioinf.ms.projectspace.SiriusLocations.SIRIUS_SPECTRA;
 
-public class DirectoryReader implements ProjectReader, SiriusLocations {
+
+public class DirectoryReader implements ProjectReader {
+    protected static final Logger LOG = LoggerFactory.getLogger(DirectoryReader.class);
+    private final static Pattern INDEX_PATTERN = Pattern.compile("^(\\d+)_");
+
 
     public interface ReadingEnvironment {
 
@@ -85,7 +91,6 @@ public class DirectoryReader implements ProjectReader, SiriusLocations {
     }
 
 
-    private final static Pattern INDEX_PATTERN = Pattern.compile("^(\\d+)_");
 
 
     public ExperimentResult parseExperiment(final ExperimentDirectory expDir) throws IOException {
@@ -95,7 +100,7 @@ public class DirectoryReader implements ProjectReader, SiriusLocations {
 
         // read spectrum
         final Ms2Experiment input;
-        if (names.contains("spectrum.ms")) {
+        if (names.contains(SIRIUS_SPECTRA.fileName())) {
             input = parseSpectrum(directory);
         } else
             throw new IOException("Invalid Experiment directory. No spectrum.ms found! Your workspace seems to be corrupted.");
@@ -121,8 +126,8 @@ public class DirectoryReader implements ProjectReader, SiriusLocations {
 
 
     private Ms2Experiment parseSpectrum(final String directory) throws IOException {
-        return env.read("spectrum.ms", r ->
-                new JenaMsParser().parse(new BufferedReader(r), env.absolutePath(directory + "/spectrum.ms"))
+        return env.read(SIRIUS_SPECTRA.fileName(), r ->
+                new JenaMsParser().parse(new BufferedReader(r), env.absolutePath(directory + "/" + SIRIUS_SPECTRA.fileName()))
         );
     }
 
@@ -179,7 +184,7 @@ public class DirectoryReader implements ProjectReader, SiriusLocations {
         private DirectoryReaderIterator() {
             this.experiments = env.list().stream().filter((name) -> {
                 try {
-                    return env.containsFile(name, "spectrum.ms");
+                    return env.containsFile(name, SIRIUS_SPECTRA.fileName());
                 } catch (IOException e) {
                     throw new RuntimeException("Cannot Enter directory: " + name + System.lineSeparator() + e.getMessage(), e);
                 }

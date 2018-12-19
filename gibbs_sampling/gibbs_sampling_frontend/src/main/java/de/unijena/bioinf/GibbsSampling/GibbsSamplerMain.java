@@ -26,7 +26,7 @@ import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.projectspace.DirectoryReader;
 import de.unijena.bioinf.ms.projectspace.SiriusFileReader;
-import de.unijena.bioinf.ms.projectspace.SiriusWorkspaceReader;
+import de.unijena.bioinf.ms.projectspace.SiriusZipFileReader;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
@@ -2351,7 +2351,7 @@ public class GibbsSamplerMain {
         if (file.isDirectory()) {
             env = new SiriusFileReader(file);
         } else {
-            env = new SiriusWorkspaceReader(file);
+            env = new SiriusZipFileReader(file);
         }
         final DirectoryReader reader = new DirectoryReader(env);
 
