@@ -5,12 +5,21 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
 public class SpectralLibraryHit {
 
+    private final MolecularFormula estimatedFormula;
     private final LibrarySpectrum libraryHit;
     private final double cosine;
     private final int sharedPeaks;
 
-    public SpectralLibraryHit(LibrarySpectrum libraryHit, double cosine, int numberOfSharedPeaks) {
+    /**
+     *
+     * @param libraryHit
+     * @param estimatedFormula might be different from library MF in case of mass difference to compound
+     * @param cosine
+     * @param numberOfSharedPeaks
+     */
+    public SpectralLibraryHit(LibrarySpectrum libraryHit, MolecularFormula estimatedFormula, double cosine, int numberOfSharedPeaks) {
         this.libraryHit = libraryHit;
+        this.estimatedFormula = estimatedFormula;
 
         this.cosine = cosine;
         this.sharedPeaks = numberOfSharedPeaks;
@@ -21,7 +30,7 @@ public class SpectralLibraryHit {
     }
 
     public MolecularFormula getMolecularFormula() {
-        return this.libraryHit.getMolecularFormula();
+        return estimatedFormula;
     }
 
     public double getCosine() {

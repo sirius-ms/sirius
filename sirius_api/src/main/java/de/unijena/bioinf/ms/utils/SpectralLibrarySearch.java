@@ -1,7 +1,9 @@
 package de.unijena.bioinf.ms.utils;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformation;
 import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
@@ -11,6 +13,8 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TDoubleArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,6 +73,8 @@ public class SpectralLibrarySearch {
     private static final Normalization NORMALIZATION = Normalization.Sum(100);
 
     private final AbstractSpectralAlignment spectralAlignment;
+
+    private final Logger Log = LoggerFactory.getLogger(SpectralLibrarySearch.class);
 
     public SpectralLibrarySearch(LibrarySpectrum[] librarySpectra, AbstractSpectralAlignment spectralAlignment, Deviation ms2Deviation, boolean transformSqrtIntensity, boolean multiplyIntensityByMass, int minSharedPeaks) {
         //todo remove parent peaks!?
@@ -211,9 +217,51 @@ public class SpectralLibrarySearch {
             }
         }
         if (bestHit==null) {
-            return new SpectralLibraryHit(bestHit, 0, 0);
+            return new SpectralLibraryHit(bestHit, null, 0, 0);
         }
-        return new SpectralLibraryHit(bestHit, bestSimilarity.similarity, bestSimilarity.shardPeaks);
+        MolecularFormula estimatedMF = findFormulaOfCompound(bestHit, precursorMass, deviation);
+        return new SpectralLibraryHit(bestHit, estimatedMF, bestSimilarity.similarity, bestSimilarity.shardPeaks);
+    }
+
+    /**
+     * if library hit and compound have different mass, estimate the compounds MF using biotransformations
+     */
+    private MolecularFormula findFormulaOfCompound(LibrarySpectrum librarySpectrum, double compoundMass, Deviation deviation){
+        double libraryMz = librarySpectrum.getIonMass();
+        if (deviation.inErrorWindow(libraryMz, compoundMass)) return librarySpectrum.getMolecularFormula();
+
+        List<MolecularFormula> possibleTransf = new ArrayList<>();
+        for (BioTransformation transformation : BioTransformation.values()) {
+            if (transformation.isConditional()) continue;//don't use conditional transformations
+            MolecularFormula transformedMF = explainMassDiffWithTransformation(libraryMz, librarySpectrum.getMolecularFormula(), compoundMass, transformation, deviation);
+            if (transformedMF!=null) possibleTransf.add(transformedMF);
+        }
+        if (possibleTransf.size()==0){
+            Log.warn("no suitable biotransformation found for compounds mz "+compoundMass+" and library MF "+librarySpectrum.getMolecularFormula()+" | "+librarySpectrum.getIonType());
+            return null;
+        } else if (possibleTransf.size()>1){
+            Log.warn("mass difference of compound and library hit is ambiguous. skipping");
+            return null;
+        }
+        return possibleTransf.get(0);
+    }
+
+    private MolecularFormula explainMassDiffWithTransformation(double libMz, MolecularFormula libFormula, double compoundMz, BioTransformation transformation, Deviation deviation){
+        double libMzWithTransfShift;
+        if (libMz<compoundMz){
+            libMzWithTransfShift = libMz+transformation.getFormula().getMass();
+        } else {
+            libMzWithTransfShift = libMz-transformation.getFormula().getMass();
+        }
+        if (deviation.inErrorWindow(libMzWithTransfShift, compoundMz)){
+            if (libMz<compoundMz) return libFormula.add(transformation.getFormula());
+            else {
+                MolecularFormula withoutTransf = libFormula.subtract(transformation.getFormula());
+                if (withoutTransf.isAllPositiveOrZero()) return withoutTransf;
+                else return null;
+            }
+        }
+        return null;
     }
 
     private TIntIterator canditateIterator(double precursorMass, double allowedShift) {
