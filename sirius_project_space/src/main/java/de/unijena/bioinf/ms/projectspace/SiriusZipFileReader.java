@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class SiriusWorkspaceReader implements DirectoryReader.ReadingEnvironment {
+public class SiriusZipFileReader implements DirectoryReader.ReadingEnvironment {
 
     protected ZipFile zipFile;
 
@@ -21,7 +21,7 @@ public class SiriusWorkspaceReader implements DirectoryReader.ReadingEnvironment
     protected InputStream currentStream = null;
     protected File root;
 
-    public SiriusWorkspaceReader(File file) throws IOException {
+    public SiriusZipFileReader(File file) throws IOException {
         this.zipFile = new ZipFile(file, Charset.forName("UTF-8"));
         this.root = file;
         this.directory = new DirectoryTree("");

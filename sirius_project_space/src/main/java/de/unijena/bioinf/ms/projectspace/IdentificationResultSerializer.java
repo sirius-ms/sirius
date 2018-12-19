@@ -61,15 +61,15 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
     protected void writeIdentificationResults(List<IdentificationResult> results, DirectoryWriter writer) throws IOException {
         // JSON and DOT
         if (writer.isAllowed(OutputOptions.TREES_DOT) || writer.isAllowed(OutputOptions.TREES_JSON)) {
-            writer.W.enterDirectory(SiriusLocations.SIRIUS_TREES_DOT.directory);
+            writer.env.enterDirectory(SiriusLocations.SIRIUS_TREES_DOT.directory);
             writeTrees(results, writer);
-            writer.W.leaveDirectory();
+            writer.env.leaveDirectory();
         }
         // CSV
         if (writer.isAllowed(OutputOptions.ANNOTATED_SPECTRA)) {
-            writer.W.enterDirectory(SiriusLocations.SIRIUS_ANNOTATED_SPECTRA.directory);
+            writer.env.enterDirectory(SiriusLocations.SIRIUS_ANNOTATED_SPECTRA.directory);
             writeRecalibratedSpectra(results, writer);
-            writer.W.leaveDirectory();
+            writer.env.leaveDirectory();
         }
         // formula summary
         writeFormulaSummary(results, writer);
@@ -102,15 +102,19 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
     }
 
     private void writeDOTTree(final IdentificationResult result, DirectoryWriter writer) throws IOException {
-        writer.write(SiriusLocations.SIRIUS_TREES_DOT.fileName(result), w
-                -> new FTDotWriter(true, true).writeTree(w, result.getRawTree())
-        );
+        if (writer.isAllowed(OutputOptions.TREES_DOT)) {
+            writer.write(SiriusLocations.SIRIUS_TREES_DOT.fileName(result), w
+                    -> new FTDotWriter(true, true).writeTree(w, result.getRawTree())
+            );
+        }
     }
 
     private void writeJSONTree(final IdentificationResult result, DirectoryWriter writer) throws IOException {
-        writer.write(SiriusLocations.SIRIUS_TREES_JSON.fileName(result), w ->
-                new FTJsonWriter().writeTree(w, result.getResolvedTree())
-        );
+        if (writer.isAllowed(OutputOptions.TREES_JSON)) {
+            writer.write(SiriusLocations.SIRIUS_TREES_JSON.fileName(result), w ->
+                    new FTJsonWriter().writeTree(w, result.getResolvedTree())
+            );
+        }
     }
 
 }
