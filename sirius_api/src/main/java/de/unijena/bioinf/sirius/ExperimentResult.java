@@ -1,11 +1,12 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ms.annotations.Annotated;
 
 import java.io.File;
 import java.util.List;
 
-public class ExperimentResult {
+public class ExperimentResult implements Annotated<ResultAnnotation> {
     public static enum ErrorCause {TIMEOUT, NORESULTS, ERROR, NOERROR};
 
     protected String experimentName, experimentSource;
@@ -13,6 +14,7 @@ public class ExperimentResult {
     protected List<IdentificationResult> results;
     protected ErrorCause error;
     protected String errorMessage;
+    private final Annotations<ResultAnnotation> annotations = new Annotations<>();
 
     public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results, String source, String name) {
         this.experiment = experiment;
@@ -91,5 +93,8 @@ public class ExperimentResult {
         return filename.substring(0,i);
     }
 
-
+    @Override
+    public Annotations<ResultAnnotation> annotations() {
+        return annotations;
+    }
 }

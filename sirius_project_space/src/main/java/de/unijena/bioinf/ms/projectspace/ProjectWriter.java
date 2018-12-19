@@ -8,6 +8,4 @@ import java.io.IOException;
 public interface ProjectWriter extends AutoCloseable, Closeable {
 
     void writeExperiment(ExperimentResult result) throws IOException;
-//    void writeSummary(ExperimentResult result) throws IOException;
-
 }

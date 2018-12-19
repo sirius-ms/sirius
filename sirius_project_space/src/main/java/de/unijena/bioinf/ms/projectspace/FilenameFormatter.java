@@ -4,7 +4,6 @@ import de.unijena.bioinf.sirius.ExperimentResult;
 
 public interface FilenameFormatter {
 
-    public String formatName(ExperimentResult experimentResult, int index);
-
-
+    String formatName(ExperimentResult experimentResult, int index);
+    String getFormatExpression();
 }
