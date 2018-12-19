@@ -20,7 +20,8 @@ public class SpectralLibrarySearch {
     public static final boolean TEST = false;
 
     public static void main(String... args) throws IOException {
-        File file = new File("");
+        PeriodicTable periodicTable = PeriodicTable.getInstance();
+        File file = new File("/home/ge28quv/Data_work/Data/data_and_databases/massbank.ms");
         List<Ms2Experiment> experiments = new MsExperimentParser().getParser(file).parseFromFile(file);
 
 
@@ -33,7 +34,7 @@ public class SpectralLibrarySearch {
 
         TDoubleArrayList doubleArrayList = new TDoubleArrayList();
         for (Ms2Experiment experiment : experiments) {
-            SpectralLibraryHit hit = spectralLibrarySearch.findBestHit(experiment);
+            SpectralLibraryHit hit = spectralLibrarySearch.findBestHit(experiment, AllowedMassDifference.allowDirectMatchesAndBiotransformations());
             if (hit.getLibraryHit()==null){
                 System.out.println("none");
                 continue;
@@ -56,6 +57,7 @@ public class SpectralLibrarySearch {
         }
 
     }
+
     //todo remove precursor mass?! or +-17Da or +-50Da?
     private final LibrarySpectrum[] librarySpectra;
     private final OrderedSpectrum<Peak>[] librarySpectraInverse;
@@ -69,6 +71,7 @@ public class SpectralLibrarySearch {
     private final AbstractSpectralAlignment spectralAlignment;
 
     public SpectralLibrarySearch(LibrarySpectrum[] librarySpectra, AbstractSpectralAlignment spectralAlignment, Deviation ms2Deviation, boolean transformSqrtIntensity, boolean multiplyIntensityByMass, int minSharedPeaks) {
+        //todo remove parent peaks!?
         this.librarySpectra = librarySpectra.clone();
         this.minSharedPeaks = minSharedPeaks;
         this.deviation = ms2Deviation;
@@ -142,12 +145,12 @@ public class SpectralLibrarySearch {
      * @param compound
      * @return
      */
-    public SpectralLibraryHit findBestHit(Ms2Experiment compound){
+    public SpectralLibraryHit findBestHit(Ms2Experiment compound, AllowedMassDifference allowedMassDifference){
         if (compound.getPrecursorIonType().isIonizationUnknown()){
             Set<PrecursorIonType> commonIonTypes = PeriodicTable.getInstance().getIonizations(compound.getPrecursorIonType().getCharge());
             SpectralLibraryHit libraryHit = null;
             for (PrecursorIonType commonIonType : commonIonTypes) {
-                SpectralLibraryHit currentHit = findBestHit(compound, commonIonType);
+                SpectralLibraryHit currentHit = findBestHit(compound, commonIonType, allowedMassDifference);
                 if (libraryHit==null || currentHit.getCosine()>libraryHit.getCosine() ||
                         (currentHit.getCosine()==libraryHit.getCosine() && currentHit.getNumberOfSharedPeaks()>libraryHit.getNumberOfSharedPeaks())
                 ) {
@@ -156,12 +159,12 @@ public class SpectralLibrarySearch {
             }
             return libraryHit;
         } else {
-            return findBestHit(compound, compound.getPrecursorIonType());
+            return findBestHit(compound, compound.getPrecursorIonType(), allowedMassDifference);
         }
 
     }
 
-    public SpectralLibraryHit findBestHit(Ms2Experiment compound, PrecursorIonType ionType){
+    public SpectralLibraryHit findBestHit(Ms2Experiment compound, PrecursorIonType ionType, AllowedMassDifference allowedMassDifference){
         MergedMs2Spectrum mergedMs2Spectrum;
         if (compound.hasAnnotation(MergedMs2Spectrum.class)){
             mergedMs2Spectrum = compound.getAnnotation(MergedMs2Spectrum.class);
@@ -169,10 +172,10 @@ public class SpectralLibrarySearch {
             boolean mergePeaks = (spectralAlignment instanceof IntensityWeightedSpectralAlignment);
             mergedMs2Spectrum = mergeMs2Spectra(compound, deviation, mergePeaks);
         }
-        return findBestHit(mergedMs2Spectrum, compound.getIonMass(), ionType);
+        return findBestHit(mergedMs2Spectrum, compound.getIonMass(), ionType, allowedMassDifference);
     }
 
-    public SpectralLibraryHit findBestHit(Spectrum<Peak> spectrum, double precursorMass, PrecursorIonType ionType){
+    public SpectralLibraryHit findBestHit(Spectrum<Peak> spectrum, double precursorMass, PrecursorIonType ionType, AllowedMassDifference allowedMassDifference){
         if (TEST){
             NoiseTransformation noiseTransformation = new NoiseTransformation();
             spectrum = Spectrums.transform(new SimpleMutableSpectrum(spectrum), noiseTransformation);
@@ -194,10 +197,11 @@ public class SpectralLibrarySearch {
         LibrarySpectrum bestHit = null;
         SpectralSimilarity bestSimilarity = null;
         QueryWithSelfSimilarity query = new QueryWithSelfSimilarity((OrderedSpectrum<Peak>)spectrum, precursorMass);
-        TIntIterator candidateIterator = canditateIterator(precursorMass, 0d);
+        TIntIterator candidateIterator = canditateIterator(precursorMass, allowedMassDifference.maxAllowedShift());
         while (candidateIterator.hasNext()) {
             int current = candidateIterator.next();
             if (ionType!=null && !librarySpectra[current].getIonType().equals(ionType)) continue; //only same or unknown iontype
+            if (!allowedMassDifference.isAllowed(precursorMass, librarySpectra[current].getIonMass(), deviation)) continue; //only specific mass differences allowed. e.g. 0 or biotransformation
             //i is the library spectrum
             SpectralSimilarity similarity = score(query, current);
             if (similarity.shardPeaks<=minSharedPeaks) continue;
