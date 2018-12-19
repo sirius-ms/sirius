@@ -8,7 +8,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
+/**
+ * This configurations define which ion modes have to be considered, as well as the auto detection of ion modes via MS1.
+ * Note: An ion mode is an elementary modification of the neutral molecular formula. For example, protonation is an
+ * ion mode, formid acid, however, is an adduct. [M+H]+, [M+K]+, and [M+Na]+ are ion modes, [M+NH3+H]+ is an adduct.
+ * Note: When a compound is assigned to a specific adduct or ion mode, this setting is ignored.
+ */
 public class IonModeSettings implements Ms2ExperimentAnnotation  {
 
     protected final Set<IonMode> enforced;
@@ -27,6 +32,11 @@ public class IonModeSettings implements Ms2ExperimentAnnotation  {
         this.fallback = fallback;
     }
 
+    /**
+     * @param enforced ion modes that are always considered
+     * @param detectable ion modes which are only considered if there is an indication in the MS1 scan (e.g. right mass delta)
+     * @param fallback ion modes which are considered if the auto detection did not find any indication for an ion mode.
+     */
     public static IonModeSettings newInstance(@DefaultProperty Set<IonMode> enforced, @DefaultProperty Set<IonMode> detectable, @DefaultProperty  Set<IonMode> fallback) {
         return new IonModeSettings(enforced, detectable, fallback);
     }
