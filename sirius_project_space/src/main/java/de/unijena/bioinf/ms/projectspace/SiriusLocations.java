@@ -4,11 +4,14 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 public interface SiriusLocations {
+    //experiment level
     Location SIRIUS_TREES_JSON = new Location("trees", null, ".json");
     Location SIRIUS_TREES_DOT = new Location("trees", null, ".dot");
     Location SIRIUS_ANNOTATED_SPECTRA = new Location("spectra", null, ".ms");
     Location SIRIUS_SPECTRA = new Location(null, "spectrum", ".ms");
     Location SIRIUS_SUMMARY = new Location(null, "summary_sirius", ".csv");
+    Location SIRIUS_INDEX_FILE = new Location(null, ".index", ""); //todo null or empty?
+    //project-space level
     Location SIRIUS_VERSION_FILE = new Location(null, "version", ".txt");
     Location SIRIUS_CITATION_FILE = new Location(null, "cite", ".txt");
     Location SIRIUS_FORMATTER_FILE = new Location(null, "format", ".txt");

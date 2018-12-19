@@ -4,15 +4,15 @@ import de.unijena.bioinf.sirius.ResultAnnotation;
 
 /**
  * Annotation
- * that represents the makePath on the filesystem where the object,
- * usually an ExperimentResult, is stored.
+ * that represents the relative path int a ProjectSpace where the ExperimentResult is stored.
  *
- * Objects that are inported read from file contain an ExperimentDirectory
+ * Objects that are imported read from file contain an ExperimentDirectory
  * Objects that were already written to file at som stage contain also an ExperimentDirectory
  * Objects that were never Serialized do NOT contain an ExperimentDirectory
 */
 public class ExperimentDirectory implements ResultAnnotation {
     public static final int NO_INDEX = -1;
+
     private String directory;
     private int index = NO_INDEX;
     private boolean rewrite = false;

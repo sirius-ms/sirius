@@ -20,6 +20,12 @@ public class SiriusFileWriter implements DirectoryWriter.WritingEnvironment {
     }
 
     @Override
+    public boolean deleteDirectory(String name) {
+        return new File(root, name).delete();
+    }
+
+
+    @Override
     public OutputStream openFile(String name) {
         try {
             this.currentStream = new BufferedOutputStream(new FileOutputStream(new File(root, name)), 32768);
