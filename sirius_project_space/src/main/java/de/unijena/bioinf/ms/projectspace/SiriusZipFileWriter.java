@@ -32,6 +32,11 @@ public class SiriusZipFileWriter implements DirectoryWriter.WritingEnvironment {
         }
     }
 
+    @Override
+    public void enterDirectory(String name, boolean rewriteTreeIfItExists) {
+        enterDirectory(name);
+    }
+
     private String join(List<String> pathElements) {
         StringBuilder buf = new StringBuilder(pathElements.size()*8);
         for (String p : pathElements) buf.append(p).append('/');

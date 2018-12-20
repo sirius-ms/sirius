@@ -22,7 +22,5 @@ public interface ProjectSpace extends ProjectWriter, ProjectReader {
 
     void writeSummaries();
 
-    default void close() {
-        writeSummaries();
-    }
+    int getNumberOfWrittenExperiments();
 }

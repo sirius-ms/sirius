@@ -39,6 +39,10 @@ public class ExperimentDirectory implements ResultAnnotation {
         return index == NO_INDEX;
     }
 
+    public boolean hasIndex() {
+        return !hasNoIndex();
+    }
+
     protected void setIndex(int index) {
         this.index = index;
     }

@@ -177,6 +177,12 @@ public class DirectoryReader implements ProjectReader {
         return new DirectoryReaderIterator();
     }
 
+
+    @Override
+    public void close() throws IOException {
+        env.close();
+    }
+
     private class DirectoryReaderIterator implements CloseableIterator<ExperimentDirectory> {
         private final Iterator<String> experiments;
 

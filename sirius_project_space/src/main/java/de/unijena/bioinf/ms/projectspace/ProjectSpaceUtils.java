@@ -1,71 +1,13 @@
 package de.unijena.bioinf.ms.projectspace;
 
-import de.unijena.bioinf.sirius.ExperimentResult;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Pattern;
 
 public class ProjectSpaceUtils {
-    public static @NotNull SiriusProjectSpace loadProjectSpace(@Nullable FilenameFormatter filenameFormatter, @NotNull final String projectSpaceRoot) throws IOException {
-        return loadProjectSpace(filenameFormatter, Paths.get(projectSpaceRoot));
-    }
-
-    public static @NotNull SiriusProjectSpace loadProjectSpace(@Nullable FilenameFormatter filenameFormatter, @NotNull final File projectSpaceRoot) throws IOException {
-        return loadProjectSpace(filenameFormatter, projectSpaceRoot.toPath());
-    }
-
-    public static @NotNull SiriusProjectSpace loadProjectSpace(@Nullable FilenameFormatter filenameFormatter, @NotNull final Path projectSpaceRoot) throws IOException {
-        if (Files.notExists(projectSpaceRoot))
-            throw new IOException("Path does not exists");
-        if (Files.isWritable(projectSpaceRoot))
-            throw new IOException("No writing permission for Path");
-        final SiriusProjectSpace ps = new SiriusProjectSpace(filenameFormatter, projectSpaceRoot);
-
-        ps.loadProjectSpace();
-        return ps;
-
-    }
-
-    public static @NotNull SiriusProjectSpace createNewProjectSpace(@Nullable FilenameFormatter filenameFormatter, @NotNull final String projectSpaceRoot) throws IOException {
-        return createNewProjectSpace(filenameFormatter, Paths.get(projectSpaceRoot));
-    }
-
-    public static @NotNull SiriusProjectSpace createNewProjectSpace(@Nullable FilenameFormatter filenameFormatter, @NotNull final File projectSpaceRoot) throws IOException {
-        return createNewProjectSpace(filenameFormatter, projectSpaceRoot.toPath());
-    }
-
-
-    public static @NotNull SiriusProjectSpace createNewProjectSpace(@Nullable FilenameFormatter filenameFormatter, @NotNull final Path projectSpaceRoot) throws IOException {
-        if (Files.notExists(projectSpaceRoot)) {
-            Files.createDirectories(projectSpaceRoot);
-        } else {
-            if (Files.isWritable(projectSpaceRoot))
-                throw new IOException("No writing permission for Project-Space makePath: " + projectSpaceRoot.toAbsolutePath().toString());
-            if (!Files.isDirectory(projectSpaceRoot))
-                throw new IOException("Project-Space makePath is not a Directory: " + projectSpaceRoot.toAbsolutePath().toString());
-            if (Files.list(projectSpaceRoot).findAny().isPresent())
-                throw new IOException("Project-Space directory is not empty: " + projectSpaceRoot.toAbsolutePath().toString());
-        }
-        if (filenameFormatter == null)
-            filenameFormatter = new StandardMSFilenameFormatter();
-
-        return new SiriusProjectSpace(filenameFormatter, projectSpaceRoot);
-    }
-
-
-
-    // TODO: implement merge?
     public static DirectoryWriter.WritingEnvironment getWorkspaceWritingEnvironmentForSirius(String value) throws IOException {
         try {
             if (value.equals("-")) {
@@ -101,8 +43,8 @@ public class ProjectSpaceUtils {
         return new SiriusFileReader(root);
     }
 
-
-    public static ProjectWriter getDirectoryOutputWriter(String directoryOutputPath, ReaderWriterFactory readerWriterFactory) throws IOException {
+    //todo check where this is needed an replace with SiriusProjectSpace
+    /*public static ProjectWriter getDirectoryOutputWriter(String directoryOutputPath, ReaderWriterFactory readerWriterFactory) throws IOException {
         final ProjectWriter pw;
         if ((new File(directoryOutputPath)).exists()) {
             try {
@@ -174,7 +116,7 @@ public class ProjectSpaceUtils {
         }
 
         return new ProjectWriterInfo(projectWriter, numberOfWrittenExperiments);
-    }
+    }*/
 
 
     private static void checkForValidProjectDirectory(String output) throws IOException {
