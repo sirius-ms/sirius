@@ -110,17 +110,14 @@ public class SiriusProjectSpace implements ProjectSpace {
     }
 
     @Override
-    public boolean deleteExperiment(ExperimentDirectory id) throws IOException {
-        if (!experimentIDs.contains(id)) //todo not compatible with rename
+    public void deleteExperiment(ExperimentDirectory id) throws IOException {
+        if (!experimentIDs.contains(id))
             throw new IllegalArgumentException("The project-space does not contain the given ID: " + id.getDirectoryName());
 
-        if (writer.deleteExperiment(id)) {
-            return experimentIDs.remove(id);
-        }
-        return false;
+        writer.deleteExperiment(id);
+        experimentIDs.remove(id);
     }
 
-    //todo maybe write always temp dir for override?
     @Override
     public void writeExperiment(final @NotNull ExperimentResult result) throws IOException {
         final ExperimentDirectory expDir = result.computeAnnotationIfAbsent(ExperimentDirectory.class, () -> createID(result));

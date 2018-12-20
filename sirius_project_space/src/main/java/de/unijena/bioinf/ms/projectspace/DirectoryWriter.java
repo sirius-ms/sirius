@@ -16,9 +16,21 @@ public class DirectoryWriter implements ProjectWriter {
     protected static final Logger LOG = LoggerFactory.getLogger(DirectoryWriter.class);
 
     public interface WritingEnvironment {
-        void enterDirectory(String name) throws IOException;
+        /**
+        * Enter a new sub directory an creates it if it does not exist.
+        * @param name: name of the sub directory
+        * @param rewriteTreeIfItExists: if true the whole directory tree will be deleted
+         *                             and rewritten. The new tree will be written to a tmp
+         *                             dir and moved to ist real location when it is finished.
+         *                             So only a finished file tree will replace an existing file tree
+        * */
+        void enterDirectory(String name, boolean rewriteTreeIfItExists);
 
-        default boolean deleteDirectory(String name) throws IOException {
+        default void enterDirectory(String name) {
+            enterDirectory(name, false);
+        }
+
+        default void deleteDirectory(String name) throws IOException {
             throw new UnsupportedOperationException("delete directory");
         }
 
@@ -36,7 +48,7 @@ public class DirectoryWriter implements ProjectWriter {
 
     protected WritingEnvironment env;
     protected MetaDataSerializer[] metaDataWriters;
-    //todo do we still need this suppressing stuff -> not adding metainfo writer instead?
+    //todo do we still need this suppressing stuff -> not adding or forbidding MetaDataSerializer instead?
     protected final HashSet<String> surpressedOutputs = new HashSet<>();
 
 
@@ -132,25 +144,25 @@ public class DirectoryWriter implements ProjectWriter {
     }
 
     @Override
-    public boolean deleteExperiment(@NotNull final ExperimentDirectory expDir) throws IOException {
-        return env.deleteDirectory(expDir.getDirectoryName());
+    public void deleteExperiment(@NotNull final ExperimentDirectory expDir) throws IOException {
+        env.deleteDirectory(expDir.getDirectoryName());
     }
 
     @Override
     public void writeExperiment(ExperimentResult result) throws IOException {
-        writeInput(result);
-        writeMetaData(result);
-        env.leaveDirectory();
-        env.updateProgress(result.getAnnotation(ExperimentDirectory.class).getDirectoryName() + "\t" + errorCode(result) + "\n");
-    }
-
-    protected void writeInput(ExperimentResult result) throws IOException {
         ExperimentDirectory expDir = result.getAnnotation(ExperimentDirectory.class);
         if (expDir == null) throw new IOException("Given experiment result has no ExperimentDirectory Annotation");
-        env.enterDirectory(expDir.getDirectoryName());
+        env.enterDirectory(expDir.getDirectoryName(), true);
+
         // ms file
         if (isAllowed(OutputOptions.INPUT))
             writeMsFile(result);
+
+        // write metaData
+        writeMetaData(result);
+
+        env.leaveDirectory();
+        env.updateProgress(result.getAnnotation(ExperimentDirectory.class).getDirectoryName() + "\t" + errorCode(result) + "\n");
     }
 
     protected void writeMetaData(ExperimentResult expResult) {
