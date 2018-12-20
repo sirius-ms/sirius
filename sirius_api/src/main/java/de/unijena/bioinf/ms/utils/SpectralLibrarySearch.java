@@ -110,8 +110,12 @@ public class SpectralLibrarySearch {
         selfSimilarityLosses = new double[this.librarySpectra.length];
         for (int i = 0; i < this.librarySpectra.length; i++) {
             LibrarySpectrum ls = this.librarySpectra[i];
-            Spectrum<Peak> normalized = Spectrums.getNormalizedSpectrum(ls.getFragmentationSpectrum(), NORMALIZATION);
-            LibrarySpectrum librarySpectrum = new LibrarySpectrum(ls.getName(), normalized, ls.getMolecularFormula(), ls.getIonType(), ls.getSmiles(), ls.getInChI());
+            SimpleMutableSpectrum mutableSpectrum = new SimpleMutableSpectrum(ls.getFragmentationSpectrum());
+            //filter out parent and every peak with mz greater precursor mz
+            Spectrums.cutByMassThreshold(mutableSpectrum, ls.getIonMass()-0.5);
+            //normalize
+            Spectrums.normalize(mutableSpectrum, NORMALIZATION);
+            LibrarySpectrum librarySpectrum = new LibrarySpectrum(ls.getName(), mutableSpectrum, ls.getMolecularFormula(), ls.getIonType(), ls.getSmiles(), ls.getInChI());
             this.librarySpectra[i] = librarySpectrum;
             OrderedSpectrum<Peak> spec = librarySpectrum.getFragmentationSpectrum();
             selfSimilarity[i] = spectralAlignment.score(spec,spec).similarity;
@@ -182,27 +186,27 @@ public class SpectralLibrarySearch {
     }
 
     public SpectralLibraryHit findBestHit(Spectrum<Peak> spectrum, double precursorMass, PrecursorIonType ionType, AllowedMassDifference allowedMassDifference){
+        SimpleMutableSpectrum mutableSpectrum = new SimpleMutableSpectrum(spectrum);
         if (TEST){
             NoiseTransformation noiseTransformation = new NoiseTransformation();
-            spectrum = Spectrums.transform(new SimpleMutableSpectrum(spectrum), noiseTransformation);
+            mutableSpectrum = Spectrums.transform(mutableSpectrum, noiseTransformation);
         }
 
+        //filter out parent and every peak with mz greater precursor mz
+        Spectrums.cutByMassThreshold(mutableSpectrum, precursorMass-0.5);
 
         if (intensityTransformation !=null){
-            spectrum = Spectrums.transform(new SimpleMutableSpectrum(spectrum), intensityTransformation);
+            mutableSpectrum = Spectrums.transform(mutableSpectrum, intensityTransformation);
         }
 
-        spectrum = Spectrums.getNormalizedSpectrum(spectrum, NORMALIZATION);
+        Spectrums.normalize(mutableSpectrum, NORMALIZATION);
 
+        OrderedSpectrum<Peak> orderedSpectrum = new SimpleSpectrum(mutableSpectrum);
 
-        //todo if obsolete?
-        if (!(spectrum instanceof OrderedSpectrum)) {
-            spectrum = new SimpleSpectrum(spectrum);
-        }
 //        double dotProduct =
         LibrarySpectrum bestHit = null;
         SpectralSimilarity bestSimilarity = null;
-        QueryWithSelfSimilarity query = new QueryWithSelfSimilarity((OrderedSpectrum<Peak>)spectrum, precursorMass);
+        QueryWithSelfSimilarity query = new QueryWithSelfSimilarity(orderedSpectrum, precursorMass);
         TIntIterator candidateIterator = canditateIterator(precursorMass, allowedMassDifference.maxAllowedShift());
         while (candidateIterator.hasNext()) {
             int current = candidateIterator.next();
@@ -210,6 +214,7 @@ public class SpectralLibrarySearch {
             if (!allowedMassDifference.isAllowed(precursorMass, librarySpectra[current].getIonMass(), deviation)) continue; //only specific mass differences allowed. e.g. 0 or biotransformation
             //i is the library spectrum
             SpectralSimilarity similarity = score(query, current);
+//            findFormulaOfCompound(librarySpectra[current], precursorMass, deviation, allowedMassDifference);
             if (similarity.shardPeaks<=minSharedPeaks) continue;
             if (bestHit==null || bestSimilarity.similarity<similarity.similarity){
                 bestHit = librarySpectra[current];
@@ -219,14 +224,14 @@ public class SpectralLibrarySearch {
         if (bestHit==null) {
             return new SpectralLibraryHit(bestHit, null, 0, 0);
         }
-        MolecularFormula estimatedMF = findFormulaOfCompound(bestHit, precursorMass, deviation);
+        MolecularFormula estimatedMF = findFormulaOfCompound(bestHit, precursorMass, deviation, allowedMassDifference);
         return new SpectralLibraryHit(bestHit, estimatedMF, bestSimilarity.similarity, bestSimilarity.shardPeaks);
     }
 
     /**
      * if library hit and compound have different mass, estimate the compounds MF using biotransformations
      */
-    private MolecularFormula findFormulaOfCompound(LibrarySpectrum librarySpectrum, double compoundMass, Deviation deviation){
+    private MolecularFormula findFormulaOfCompound(LibrarySpectrum librarySpectrum, double compoundMass, Deviation deviation, AllowedMassDifference allowedMassDifference){
         double libraryMz = librarySpectrum.getIonMass();
         if (deviation.inErrorWindow(libraryMz, compoundMass)) return librarySpectrum.getMolecularFormula();
 
@@ -238,6 +243,12 @@ public class SpectralLibrarySearch {
         }
         if (possibleTransf.size()==0){
             Log.warn("no suitable biotransformation found for compounds mz "+compoundMass+" and library MF "+librarySpectrum.getMolecularFormula()+" | "+librarySpectrum.getIonType());
+//            allowedMassDifference.isAllowed(compoundMass, librarySpectrum.getIonMass(), deviation);
+//            for (BioTransformation transformation : BioTransformation.values()) {
+//                if (transformation.isConditional()) continue;//don't use conditional transformations
+//                MolecularFormula transformedMF = explainMassDiffWithTransformation(libraryMz, librarySpectrum.getMolecularFormula(), compoundMass, transformation, deviation);
+//                if (transformedMF!=null) possibleTransf.add(transformedMF);
+//            }
             return null;
         } else if (possibleTransf.size()>1){
             Log.warn("mass difference of compound and library hit is ambiguous. skipping");
@@ -247,14 +258,33 @@ public class SpectralLibrarySearch {
     }
 
     private MolecularFormula explainMassDiffWithTransformation(double libMz, MolecularFormula libFormula, double compoundMz, BioTransformation transformation, Deviation deviation){
-        double libMzWithTransfShift;
+//        double libMzWithTransfShift;
+//        if (libMz<compoundMz){
+//            libMzWithTransfShift = libMz+transformation.getFormula().getMass();
+//        } else {
+//            libMzWithTransfShift = libMz-transformation.getFormula().getMass();
+//        }
+//        if (deviation.inErrorWindow(libMzWithTransfShift, compoundMz)){
+//            if (libMz<compoundMz) return libFormula.add(transformation.getFormula());
+//            else {
+//                MolecularFormula withoutTransf = libFormula.subtract(transformation.getFormula());
+//                if (withoutTransf.isAllPositiveOrZero()) return withoutTransf;
+//                else return null;
+//            }
+//        }
+//        return null;
+
+        double min,max;
         if (libMz<compoundMz){
-            libMzWithTransfShift = libMz+transformation.getFormula().getMass();
+            min = libMz;
+            max = compoundMz;
         } else {
-            libMzWithTransfShift = libMz-transformation.getFormula().getMass();
+            min = compoundMz;
+            max = libMz;
         }
-        if (deviation.inErrorWindow(libMzWithTransfShift, compoundMz)){
-            if (libMz<compoundMz) return libFormula.add(transformation.getFormula());
+
+        if (deviation.inErrorWindow(min+transformation.getFormula().getMass(), max)){
+            if (libMz<compoundMz) return libFormula.add(transformation.getCondition());
             else {
                 MolecularFormula withoutTransf = libFormula.subtract(transformation.getFormula());
                 if (withoutTransf.isAllPositiveOrZero()) return withoutTransf;
