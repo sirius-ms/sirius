@@ -1,10 +1,16 @@
 package de.unijena.bioinf.ms.projectspace;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.*;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class SiriusFileWriter implements DirectoryWriter.WritingEnvironment {
 
     protected File root;
+    protected Queue<File> realRoots = new LinkedList<>();
+
     protected BufferedWriter progressOutput = null;
     protected OutputStream currentStream = null;
 
@@ -13,15 +19,39 @@ public class SiriusFileWriter implements DirectoryWriter.WritingEnvironment {
         this.progressOutput = new BufferedWriter(new FileWriter(new File(root, ".progress")));
     }
 
+    //todo i think we need a special override option here. To just create temp on experiment level
     @Override
-    public void enterDirectory(String name) {
-        this.root = new File(root, name);
-        root.mkdirs();
+    public void enterDirectory(String name, boolean rewriteTreeIfItExists) {
+        final File toCreate = new File(root, name);
+        if (!toCreate.mkdir() && rewriteTreeIfItExists) {
+            try {
+                root = File.createTempFile("." + root.getName(), "", root.getParentFile());
+                realRoots.add(toCreate);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            root = new File(root, name);
+        }
     }
 
     @Override
-    public boolean deleteDirectory(String name) {
-        return new File(root, name).delete();
+    public void leaveDirectory() {
+        final File current = root;
+        root = root.getParentFile();
+        try {
+            if (realRoots.peek() != null && realRoots.peek().getParentFile().equals(root)) {
+                deleteDirectory(realRoots.peek().getName());
+                FileUtils.moveDirectory(current, realRoots.poll());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void deleteDirectory(String name) throws IOException {
+        FileUtils.deleteDirectory(new File(root.getAbsolutePath(), name));
     }
 
 
@@ -43,11 +73,6 @@ public class SiriusFileWriter implements DirectoryWriter.WritingEnvironment {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public void leaveDirectory() {
-        root = root.getParentFile();
     }
 
     @Override
