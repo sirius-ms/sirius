@@ -86,7 +86,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
      * @param useFragments true: normal spectrum and fragments, false: inverted spectrum and losses
      * @return
      */
-    private PeakWithExplanation[] getPeaksWithExplanations(FragmentsCandidate[] currentCandidates, final boolean useFragments){
+    protected PeakWithExplanation[] getPeaksWithExplanations(FragmentsCandidate[] currentCandidates, final boolean useFragments){
         Set<Ionization> ions = collectIons(currentCandidates);
 
         int maxIdx = -1;
@@ -167,7 +167,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         return peaksWithExplanations;
     }
 
-    private double meanMass(String[] formulas){
+    protected double meanMass(String[] formulas){
         FormulaFactory factory = FormulaFactory.getInstance();
 
         double sum = 0;
@@ -177,7 +177,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         return sum/formulas.length;
     }
 
-    private Set<Ionization> collectIons(FragmentsCandidate[] candidates) {
+    protected Set<Ionization> collectIons(FragmentsCandidate[] candidates) {
         HashSet<Ionization> ions = new HashSet();
         for(int i = 0; i < candidates.length; ++i) {
             FragmentsCandidate candidate = candidates[i];
