@@ -2353,12 +2353,16 @@ public class GibbsSamplerMain {
         } else {
             env = new SiriusZipFileReader(file);
         }
-        final DirectoryReader reader = new DirectoryReader(env);
 
-        while (reader.hasNext()) {
-            final ExperimentResult result = reader.next();
-            results.add(result);
-        }
+        final DirectoryReader reader = new DirectoryReader(env);
+        reader.forEach(expDir -> {
+            try {
+                final ExperimentResult result = reader.parseExperiment(expDir);
+                results.add(result);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
 
         final MsExperimentParser parser = new MsExperimentParser();
         List<Ms2Experiment> rawExperiments = parser.getParser(originalMsInformation.toFile()).parseFromFile(originalMsInformation.toFile());
