@@ -1,4 +1,5 @@
 dependencies {
     compile project(':io')
     compile project(':sirius_api')
+    testCompile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version" 
 }

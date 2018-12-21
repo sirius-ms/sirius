@@ -11,6 +11,6 @@ dependencies {
     testCompile group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
 }
 
-//sourceSets.main.resources {
-//    srcDir rootProject.rootDir.toPath().resolve('src').resolve('main').resolve('resources').toString()
-//}
+sourceSets.main.resources {
+    srcDir rootProject.rootDir.toPath().resolve('src').resolve('main').resolve('resources').toString()
+}

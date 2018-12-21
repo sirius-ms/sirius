@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.util.HashSet;
 
+import static de.unijena.bioinf.ms.projectspace.SiriusLocations.SIRIUS_INDEX_FILE;
 import static de.unijena.bioinf.ms.projectspace.SiriusLocations.SIRIUS_SPECTRA;
 
 public class DirectoryWriter implements ProjectWriter {
@@ -158,11 +159,26 @@ public class DirectoryWriter implements ProjectWriter {
         if (isAllowed(OutputOptions.INPUT))
             writeMsFile(result);
 
+        // write index file
+        writeIndex(result);
+
         // write metaData
         writeMetaData(result);
 
         env.leaveDirectory();
         env.updateProgress(result.getAnnotation(ExperimentDirectory.class).getDirectoryName() + "\t" + errorCode(result) + "\n");
+    }
+
+
+    private void writeIndex(ExperimentResult result) {
+        try {
+            write(SIRIUS_INDEX_FILE.fileName(), w -> {
+                final ExperimentDirectory expDir = result.getAnnotation(ExperimentDirectory.class);
+                w.write(Integer.toString(expDir != null ? expDir.getIndex() : ExperimentDirectory.NO_INDEX));
+            });
+        } catch (IOException e) {
+            LOG.warn("Could not write index file.");
+        }
     }
 
     protected void writeMetaData(ExperimentResult expResult) {

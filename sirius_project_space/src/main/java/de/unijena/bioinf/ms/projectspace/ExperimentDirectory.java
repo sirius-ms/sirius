@@ -2,8 +2,6 @@ package de.unijena.bioinf.ms.projectspace;
 
 import de.unijena.bioinf.sirius.ResultAnnotation;
 
-import java.util.Objects;
-
 /**
  * Annotation
  * that represents the relative path int a ProjectSpace where the ExperimentResult is stored.
@@ -55,7 +53,7 @@ public class ExperimentDirectory implements ResultAnnotation {
         this.rewrite = rewrite;
     }
 
-    @Override
+   /* @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -66,5 +64,5 @@ public class ExperimentDirectory implements ResultAnnotation {
     @Override
     public int hashCode() {
         return Objects.hash(directory);
-    }
+    }*/
 }

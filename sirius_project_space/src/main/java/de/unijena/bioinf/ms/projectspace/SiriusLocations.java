@@ -14,7 +14,7 @@ public interface SiriusLocations {
     //project-space level
     Location SIRIUS_VERSION_FILE = new Location(null, "version", ".txt");
     Location SIRIUS_CITATION_FILE = new Location(null, "cite", ".txt");
-    Location SIRIUS_FORMATTER_FILE = new Location(null, "format", ".txt");
+    Location SIRIUS_FORMATTER_FILE = new Location(null, ".format","");
 
     static String makeFileName(IdentificationResult result) {
         return result.getRank() + "_" + result.getMolecularFormula() + "_" + simplify(result.getPrecursorIonType());
