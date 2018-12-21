@@ -6,10 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.annotations.ProcessedInputAnnotation;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 //import de.unijena.bioinf.sirius.ionGuessing.IonGuessingMode;
@@ -64,6 +61,14 @@ public class PossibleIonModes implements ProcessedInputAnnotation {
         this.totalProb = acum;
     }
 
+    public PossibleIonModes merge(PossibleIonModes modes) {
+        final HashMap<IonMode, ProbabilisticIonization> copy = new HashMap<>(ionTypes);
+        for (Map.Entry<IonMode, ProbabilisticIonization> m : modes.ionTypes.entrySet()) {
+            copy.merge(m.getKey(), m.getValue(), (v1,v2)->v1.probability>v2.probability ? v1 : v2);
+        }
+        return new PossibleIonModes(copy.values());
+    }
+
 
     public List<ProbabilisticIonization> probabilisticIonizations() {
         return new ArrayList<>(ionTypes.values());
@@ -91,7 +96,7 @@ public class PossibleIonModes implements ProcessedInputAnnotation {
         return ionTypes.getOrDefault(ionType,ZERO).probability/totalProb;
     }
 
-    public List<Ionization> getIonModesWithProbabilityAboutZero() {
+    public List<IonMode> getIonModesWithProbabilityAboutZero() {
         return ionTypes.values().stream().filter(x->x.probability>0).map(u->u.ionMode).collect(Collectors.toList());
     }
 
@@ -99,7 +104,7 @@ public class PossibleIonModes implements ProcessedInputAnnotation {
         return ionTypes.values().stream().filter(x->x.probability>0).map(u->PrecursorIonType.getPrecursorIonType(u.ionMode)).collect(Collectors.toList());
     }
 
-    public List<Ionization> getIonModes() {
+    public List<IonMode> getIonModes() {
         return new ArrayList<>(ionTypes.keySet());
     }
 

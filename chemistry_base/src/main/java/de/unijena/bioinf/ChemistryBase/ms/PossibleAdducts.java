@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import com.google.common.collect.Sets;
+import de.unijena.bioinf.ChemistryBase.chem.IonMode;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
@@ -80,10 +81,7 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Ms2Exp
     }
 
     public PossibleIonModes merge(PossibleIonModes ionModes) {
-        final PossibleIonModes copy = new PossibleIonModes(ionModes);
-        for (PrecursorIonType ionType : value)
-            copy.add(ionType.getIonization());
-        return copy;
+        return ionModes.merge(PossibleIonModes.uniformlyDistributed(value.stream().map(u->(IonMode)u.getIonization()).collect(Collectors.toList())));
     }
 
     public void update(PossibleIonModes ionModes) {
