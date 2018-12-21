@@ -11,52 +11,58 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.ParseException;
 import java.util.*;
+import java.util.stream.Collectors;
 
-/*
- * This is the Sirius Project space. It operates only on uncompressed
+/**
+ * This is the SiriusProjectSpace. It operates only on uncompressed
  * directory based projects. For zip based projects: They should be
- * decompressed in some temp dir and copied/compressed back when all tasks are done (close method).
+ * decompressed in some temp dir and copied/compressed back after the
+ * project-space was closed method.
  *
+ * @author Markus Fleischauer
  * */
 public class SiriusProjectSpace implements ProjectSpace {
     protected static final Logger LOG = LoggerFactory.getLogger(SiriusProjectSpace.class);
 
-    public static @NotNull SiriusProjectSpace createProjectSpace(@Nullable FilenameFormatter filenameFormatter, @NotNull final Path projectSpaceRoot) throws IOException {
-        return createProjectSpace(filenameFormatter, projectSpaceRoot.toFile());
+    public static @NotNull SiriusProjectSpace create(@Nullable FilenameFormatter filenameFormatter, @NotNull final Path projectSpaceRoot, MetaDataSerializer... metaDataSerializers) throws IOException {
+        return create(filenameFormatter, projectSpaceRoot.toFile(), metaDataSerializers);
     }
 
-    public static @NotNull SiriusProjectSpace createProjectSpace(@Nullable FilenameFormatter filenameFormatter, @NotNull final String projectSpaceRoot) throws IOException {
-        return createProjectSpace(filenameFormatter, new File(projectSpaceRoot));
+    public static @NotNull SiriusProjectSpace create(@Nullable FilenameFormatter filenameFormatter, @NotNull final String projectSpaceRoot, MetaDataSerializer... metaDataSerializers) throws IOException {
+        return create(filenameFormatter, new File(projectSpaceRoot), metaDataSerializers);
     }
 
-    public static @NotNull SiriusProjectSpace createProjectSpace(@Nullable FilenameFormatter filenameFormatter, @NotNull final File projectSpaceRoot) throws IOException {
-        if (filenameFormatter == null)
-            filenameFormatter = new StandardMSFilenameFormatter();
-
-        SiriusProjectSpace space = new SiriusProjectSpace(projectSpaceRoot, filenameFormatter);
+    public static @NotNull SiriusProjectSpace create(@Nullable FilenameFormatter filenameFormatter, @NotNull final File projectSpaceRoot, MetaDataSerializer... metaDataSerializers) throws IOException {
+        SiriusProjectSpace space = new SiriusProjectSpace(projectSpaceRoot, filenameFormatter, metaDataSerializers);
         space.loadProjectSpace();
         return space;
     }
 
-    public static SiriusProjectSpace createMergedProjectSpace(@NotNull final File rootOutPath, @NotNull final Iterable<File> rootInputPaths, @NotNull final FilenameFormatter filenameFormatter, MetaDataSerializer... metaDataSerializers) throws IOException {
+    public static SiriusProjectSpace create(@NotNull final File rootOutPath, @NotNull final Collection<File> rootInputPaths, @Nullable final FilenameFormatter filenameFormatter, MetaDataSerializer... metaDataSerializers) throws IOException {
         final SiriusProjectSpace merged = new SiriusProjectSpace(rootOutPath, filenameFormatter, metaDataSerializers);
         final TIntSet ids = new TIntHashSet();
         merged.loadProjectSpace(merged.reader, ids, false);
+        rootInputPaths.remove(rootOutPath);
         for (File file : rootInputPaths) {
             // check for zip stream
             final DirectoryReader.ReadingEnvironment env = file.isDirectory() ? new SiriusFileReader(file) : new SiriusZipFileReader(file);
             merged.loadProjectSpace(new DirectoryReader(env), ids, true);
         }
         return merged;
-        //todo skip existing as in previous merger?
+
+        //todo skip existing as in previous merger? could it not be that the user wants to
+        // compare result of runs with different parameters?
+
         //protected HashSet<String> ignoreSet = new HashSet<>();
         //ignoreSet.add(result.getExperimentSource() + "_" + result.getExperimentName());
     }
 
 
-    protected final LinkedHashSet<ExperimentDirectory> experimentIDs = new LinkedHashSet<>();
+    private final LinkedHashMap<String, ExperimentDirectory> experimentIDs = new LinkedHashMap<>();
     protected final List<SummaryWriter> summaryWriters = new ArrayList<>();
 
     protected DirectoryWriter writer;
@@ -66,7 +72,7 @@ public class SiriusProjectSpace implements ProjectSpace {
     protected int currentMaxIndex = ExperimentDirectory.NO_INDEX;
 
     //loads existing project-space from reader and uses given writer
-    protected SiriusProjectSpace(@NotNull final File rootPath, @NotNull final FilenameFormatter filenameFormatter, MetaDataSerializer... metaDataSerializers) throws IOException {
+    protected SiriusProjectSpace(@NotNull File rootPath, @Nullable FilenameFormatter filenameFormatter, MetaDataSerializer... metaDataSerializers) throws IOException {
         rootPath.mkdirs();
 
         if (!rootPath.canWrite())
@@ -74,10 +80,32 @@ public class SiriusProjectSpace implements ProjectSpace {
         if (!rootPath.isDirectory())
             throw new IOException("Project-Space path is not a Directory but has to be: " + rootPath.getAbsolutePath());
 
-        this.filenameFormatter = filenameFormatter;
-        this.reader = new DirectoryReader(new SiriusZipFileReader(rootPath), metaDataSerializers);
+        this.reader = new DirectoryReader(new SiriusFileReader(rootPath), metaDataSerializers);
         this.writer = new DirectoryWriter(new SiriusFileWriter(rootPath), metaDataSerializers);
+
+        this.filenameFormatter = filenameFormatter != null ? filenameFormatter : readFormatter(rootPath);
+
         summaryWriters.addAll(initBasicSummaries());
+    }
+
+    @NotNull
+    private FilenameFormatter readFormatter(File rootPath) {
+        FilenameFormatter filenameFormatter = null;
+        Path formatFile = rootPath.toPath().resolve(SiriusLocations.SIRIUS_FORMATTER_FILE.fileName());
+        if (Files.exists(formatFile)) {
+            try {
+                String l = Files.readAllLines(formatFile).stream().findFirst().orElse(null);
+                if (l != null && !l.isEmpty())
+                    try {
+                        filenameFormatter = new StandardMSFilenameFormatter(l);
+                    } catch (ParseException e) {
+                        LOG.warn("Could not parse FileFormatter string: " + l);
+                    }
+            } catch (IOException ignored) {
+                LOG.warn("Could not read FileFormatter file: " + formatFile.toAbsolutePath().toString());
+            }
+        }
+        return filenameFormatter != null ? filenameFormatter : new StandardMSFilenameFormatter();
     }
 
     protected void loadProjectSpace() {
@@ -95,16 +123,18 @@ public class SiriusProjectSpace implements ProjectSpace {
                 expDir.setRewrite(forceRewrite || expDir.isRewrite());
             }
 
-            experimentIDs.add(expDir);
+            addID(expDir);
             currentMaxIndex = Math.max(currentMaxIndex, expDir.getIndex());
         });
 
-        //write .index to convert the project space automatically to ne new format
-        experimentIDs.stream().filter(ExperimentDirectory::isRewrite).forEach(expDir -> {
+        experimentIDs.values().stream().filter(ExperimentDirectory::hasNoIndex).forEach(expDir ->
+                expDir.setIndex(++currentMaxIndex));
+
+        //rewrite Experiments if necessary. Either to convert the project space to a new format
+        // or move the Experiments to a new writing location or apply a new naming convention
+        experimentIDs.values().stream().filter(ExperimentDirectory::isRewrite).collect(Collectors.toList()).forEach(expDir -> {
             try {
                 LOG.info("Writing " + expDir.getDirectoryName() + "to update your project-space to the current version");
-                if (expDir.hasNoIndex())
-                    expDir.setIndex(++currentMaxIndex);
                 final ExperimentResult expResult = r.parseExperiment(expDir);
                 writeExperiment(expResult);
                 expDir.setRewrite(false);
@@ -120,6 +150,14 @@ public class SiriusProjectSpace implements ProjectSpace {
         final ExperimentDirectory dir = new ExperimentDirectory(filenameFormatter.formatName(result, index));
         dir.setIndex(index);
         return dir;
+    }
+
+    private ExperimentDirectory addID(ExperimentDirectory expDir) {
+        return experimentIDs.put(expDir.getDirectoryName(), expDir);
+    }
+
+    private ExperimentDirectory removeID(ExperimentDirectory expDir) {
+        return experimentIDs.remove(expDir.getDirectoryName());
     }
 
     protected List<SummaryWriter> initBasicSummaries() {
@@ -160,18 +198,32 @@ public class SiriusProjectSpace implements ProjectSpace {
 
 
     //API methods
+
+    /**
+     * Parses an experiment with the given ID.
+     * Override this method to implement caching for the project-space
+     *
+     * @param id ExperimentDirectory that identifies the experiment to parse.
+     *           The id needs to be part of the project-space
+     * @return The parsed ExperimentResult annotated with the given id
+     *
+     * @throws IllegalArgumentException if the project-space does not contain the given id/path
+     * @throws IOException            if the given path cannot be parsed from disk.
+     *
+     */
     @Override
     public ExperimentResult parseExperiment(ExperimentDirectory id) throws IOException {
+        if (!experimentIDs.containsKey(id.getDirectoryName()))
+            throw new IllegalArgumentException("The project-space does not contain the given ID: " + id.getDirectoryName());
+
         return reader.parseExperiment(id);
     }
 
     @Override
     public void deleteExperiment(ExperimentDirectory id) throws IOException {
-        if (!experimentIDs.contains(id))
+        if (removeID(id) == null)
             throw new IllegalArgumentException("The project-space does not contain the given ID: " + id.getDirectoryName());
-
         writer.deleteExperiment(id);
-        experimentIDs.remove(id);
     }
 
     @Override
@@ -179,9 +231,17 @@ public class SiriusProjectSpace implements ProjectSpace {
         final ExperimentDirectory expDir = result.computeAnnotationIfAbsent(ExperimentDirectory.class, () -> createID(result));
         final String nuName = filenameFormatter.formatName(result, result.getAnnotation(ExperimentDirectory.class).getIndex());
 
-        if (!nuName.equals(expDir.getDirectoryName())) { //rewrite with nu name and delete old
-            ExperimentDirectory deleteKey = new ExperimentDirectory(expDir.getDirectoryName());
+        if (!nuName.equals(expDir.getDirectoryName())) { //rewrite with new name and delete old
+            //check if new name conflicts with old name
+            if (experimentIDs.containsKey(nuName))
+                throw new IOException(
+                        "Duplicate Experiment name. " +
+                                "Either your naming scheme doe not create unique experiment names " +
+                                "or som experiment naming results in a naming conflict");
+
+            final ExperimentDirectory deleteKey = new ExperimentDirectory(expDir.getDirectoryName());
             expDir.setDirectoryName(nuName);
+            addID(expDir);
             writer.writeExperiment(result);
             deleteExperiment(deleteKey);
         } else { //override old
@@ -192,7 +252,7 @@ public class SiriusProjectSpace implements ProjectSpace {
     @Override
     public void writeSummaries() {
         for (SummaryWriter summaryWriter : summaryWriters) {
-            summaryWriter.writeSummary(experimentResults(), writer);
+            summaryWriter.writeSummary(parseExperiments(), writer);
         }
     }
 
@@ -219,7 +279,8 @@ public class SiriusProjectSpace implements ProjectSpace {
     }
 
     @NotNull
-    public Iterable<ExperimentResult> experimentResults() {
+    @Override
+    public Iterable<ExperimentResult> parseExperiments() {
         return ExperimentIterator::new;
     }
 
@@ -231,7 +292,7 @@ public class SiriusProjectSpace implements ProjectSpace {
 
     //internal classes
     public class IdIterator implements Iterator<ExperimentDirectory> {
-        private final Iterator<ExperimentDirectory> baseIter = experimentIDs.iterator();
+        private final Iterator<ExperimentDirectory> baseIter = experimentIDs.values().iterator();
         private ExperimentDirectory current;
 
         @Override
@@ -258,7 +319,7 @@ public class SiriusProjectSpace implements ProjectSpace {
 
 
     public class ExperimentIterator implements Iterator<ExperimentResult> {
-        private final Iterator<ExperimentDirectory> baseIter = experimentIDs.iterator();
+        private final Iterator<ExperimentDirectory> baseIter = experimentIDs.values().iterator();
         private ExperimentDirectory current;
 
         @Override

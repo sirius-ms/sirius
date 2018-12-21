@@ -21,7 +21,6 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.babelms.Index;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.SpectralParser;
 import org.slf4j.LoggerFactory;
@@ -310,7 +309,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         if (exp.getName() == null) {
             exp.setName("FEATURE_" + inst.specIndex);
         }
-        exp.setAnnotation(Index.class, new Index(inst.specIndex));
+        exp.computeAnnotationIfAbsent(AdditionalFields.class, AdditionalFields::new).put("index",Integer.toString(inst.specIndex));
         final AdditionalFields additionalFields = new AdditionalFields();
 
         while (true) {

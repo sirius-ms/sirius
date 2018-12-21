@@ -512,15 +512,17 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                         return;
                     }
                 }
-                PossibleIonModes ionModes = new PossibleIonModes();
+                List<PossibleIonModes.ProbabilisticIonization> ionizations = new ArrayList<>(ionTypes.length);
                 for (int i = 0; i < ionTypes.length; i++) {
                     PrecursorIonType ionType = ionTypes[i];
                     double p = probabilities[i];
-                    ionModes.add(ionType, p);
+                    ionizations.add(new PossibleIonModes.ProbabilisticIonization(IonMode.fromString(ionType.toString()), p));
                 }
-                annotations.put(PossibleIonModes.class, ionModes);
+                annotations.put(PossibleIonModes.class, new PossibleIonModes(ionizations));
+
             } else {
-                final PrecursorIonType ion = PeriodicTable.getInstance().ionByName(ions.trim());
+                final PeriodicTable t = PeriodicTable.getInstance();
+                final PrecursorIonType ion = t.ionByName(ions.trim());
                 if (ion == null) {
                     warn("Unknown ionization: '" + ions + "'");
                     return;
