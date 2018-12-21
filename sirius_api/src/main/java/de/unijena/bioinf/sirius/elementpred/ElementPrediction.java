@@ -33,6 +33,7 @@ import java.util.Collections;
  * temporary class for predicting elements. Should be replaced by Marvins ML as soon as the
  * paper is published
  */
+@Deprecated
 public class ElementPrediction {
 
     private Judge[] judges;

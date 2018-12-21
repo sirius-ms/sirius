@@ -14,6 +14,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
 import java.util.ArrayList;
 
+@Deprecated
 public class SimpleTargetedPatternExtractor implements TargetedPatternExtraction {
 
     @Override

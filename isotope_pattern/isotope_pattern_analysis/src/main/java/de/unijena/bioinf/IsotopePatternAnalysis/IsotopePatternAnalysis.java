@@ -209,9 +209,8 @@ public class IsotopePatternAnalysis implements Parameterized {
             // try different ionization types
             final List<IsotopePattern> ionFormulas = new ArrayList<IsotopePattern>();
             final int charge = ionization.getCharge();
-            final Iterable<Ionization> ionModes = experiment.hasAnnotation(PossibleIonModes.class)
-                    ? experiment.getAnnotation(PossibleIonModes.class).getIonModes()
-                    : PeriodicTable.getInstance().getKnownIonModes(charge);
+            // TODO: update
+            List<IonMode> ionModes = new ArrayList<>();
             for (Ionization ion : ionModes) {
                 final List<MolecularFormula> formulas =
                         decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(ion.subtractFromMass(pattern.getMzAt(0)), deviation.allowedMassDeviation, constraints);

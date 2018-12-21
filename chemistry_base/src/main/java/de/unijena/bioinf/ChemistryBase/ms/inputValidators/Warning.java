@@ -17,10 +17,20 @@
  */
 package de.unijena.bioinf.ChemistryBase.ms.inputValidators;
 
+import org.slf4j.LoggerFactory;
+
 /**
  * Can be implemented by logger, PrintStreams or others to track warnings in the validation process
  */
 public interface Warning {
+
+    Warning Logger = new Warning() {
+        org.slf4j.Logger logger = LoggerFactory.getLogger(Warning.class);
+        @Override
+        public void warn(String message) {
+            logger.warn(message);
+        }
+    };
 
     class Noop implements Warning{
 
