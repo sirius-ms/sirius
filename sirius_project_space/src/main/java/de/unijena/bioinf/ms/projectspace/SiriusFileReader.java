@@ -46,6 +46,11 @@ public class SiriusFileReader implements DirectoryReader.ReadingEnvironment {
     }
 
     @Override
+    public URL currentAbsolutePath(String name) throws IOException {
+        return new File(current, name).toURI().toURL();
+    }
+
+    @Override
     public URL absolutePath(String name) throws IOException {
         return new File(root, name).toURI().toURL();
     }

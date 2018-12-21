@@ -39,6 +39,8 @@ public class DirectoryReader implements ProjectReader {
 
         InputStream openFile(String name) throws IOException;
 
+        URL currentAbsolutePath(String name) throws IOException;
+
         URL absolutePath(String name) throws IOException;
 
         void closeFile() throws IOException;
@@ -101,7 +103,7 @@ public class DirectoryReader implements ProjectReader {
         // read spectrum
         final Ms2Experiment input;
         if (names.contains(SIRIUS_SPECTRA.fileName())) {
-            input = parseSpectrum(directory);
+            input = parseSpectrum();
         } else
             throw new IOException("Invalid Experiment directory. No spectrum.ms found! Your workspace seems to be corrupted.");
 
@@ -125,39 +127,50 @@ public class DirectoryReader implements ProjectReader {
     }
 
 
-    private Ms2Experiment parseSpectrum(final String directory) throws IOException {
+    private Ms2Experiment parseSpectrum() throws IOException {
         return env.read(SIRIUS_SPECTRA.fileName(), r ->
-                new JenaMsParser().parse(new BufferedReader(r), env.absolutePath(directory + "/" + SIRIUS_SPECTRA.fileName()))
+                new JenaMsParser().parse(new BufferedReader(r), env.currentAbsolutePath(SIRIUS_SPECTRA.fileName()))
         );
+
     }
 
     @NotNull
     private void parseAndAddIndex(@NotNull final ExperimentDirectory expDir) throws IOException {
-        Integer index = env.read(".index", r ->
-                new BufferedReader(r).lines().findFirst().map(Integer::valueOf).orElse(null)
-        );
-
-        //parse spectrum ms to find index -> backward compatibility
-        if (index == null) {
-            expDir.setRewrite(true);
-
-            final Ms2Experiment input = parseSpectrum(expDir.getDirectoryName());
-            final String si = input.getAnnotation(AdditionalFields.class).get("index");
-            if (si != null) index = Integer.valueOf(si);
+        try {
+            env.enterDirectory(expDir.getDirectoryName());
+            Integer index = null;
+            try {
+                index = env.read(".index", r ->
+                        new BufferedReader(r).lines().findFirst().map(Integer::valueOf).orElse(null)
+                );
+            } catch (IOException e) {
+                LOG.warn("Cannot parse index from index file. Cause: " + e.getMessage());
+            }
 
             //parse spectrum ms to find index -> backward compatibility
             if (index == null) {
-                //fallback for older versions
-                Matcher matcher = INDEX_PATTERN.matcher(expDir.getDirectoryName());
-                if (matcher.matches()) {
-                    index = Integer.parseInt(matcher.group(1));
-                } else {
-                    index = ExperimentDirectory.NO_INDEX;
-                    LOG.warn("Cannot parse index for compound in directory " + expDir.getDirectoryName());
+                expDir.setRewrite(true);
+
+                final Ms2Experiment input = parseSpectrum();
+                final String si = input.getAnnotation(AdditionalFields.class, AdditionalFields::new).get("index");
+                if (si != null) index = Integer.valueOf(si);
+
+                //parse spectrum ms to find index -> backward compatibility
+                if (index == null) {
+                    //fallback for older versions
+                    Matcher matcher = INDEX_PATTERN.matcher(expDir.getDirectoryName());
+                    if (matcher.matches()) {
+                        index = Integer.parseInt(matcher.group(1));
+                    } else {
+                        index = ExperimentDirectory.NO_INDEX;
+                        LOG.warn("Cannot parse index for compound in directory " + expDir.getDirectoryName());
+                    }
                 }
             }
+            expDir.setIndex(index);
+        } finally {
+            env.leaveDirectory();
         }
-        expDir.setIndex(index);
     }
 
 

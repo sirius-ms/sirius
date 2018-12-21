@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -76,6 +77,12 @@ public class SiriusZipFileReader implements DirectoryReader.ReadingEnvironment {
     public InputStream openFile(String name) throws IOException {
         currentStream = zipFile.getInputStream(zipFile.getEntry(join(stack.subList(1,stack.size()), name)));
         return currentStream;
+    }
+
+    @Override
+    public URL currentAbsolutePath(String name) throws IOException {
+        final String path = stack.stream().map(tree -> tree.name).collect(Collectors.joining("/"));
+        return new URL("jar:file:/" + root.getAbsolutePath() + "!/" + path + "/" + name);
     }
 
     @Override
