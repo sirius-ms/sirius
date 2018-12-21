@@ -28,6 +28,8 @@ public class PropertyManager {
     public static final DefaultPropertyLoader DEFAULTS;
 
     static {
+        if (System.getProperty("de.unijena.bioinf.ms.sirius.props") == null)
+            System.getProperties().put("de.unijena.bioinf.ms.sirius.props", "sirius.build.properties");
         PROPERTIES = new Properties();
         loadDefaultProperties();
         loadProfileProperties();
