@@ -1,42 +1,42 @@
-package de.unijena.bioinf.IsotopePatternAnalysis.extraction;
+package de.unijena.bioinf.sirius.preprocessing.deisotope;
 
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
+import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.ms.annotations.Provides;
+import de.unijena.bioinf.ms.annotations.Requires;
 
 import java.util.ArrayList;
 
-@Deprecated
-public class SimpleTargetedPatternExtractor implements TargetedPatternExtraction {
+@Requires(MergedMs1Spectrum.class)
+@Provides(Ms1IsotopePattern.class)
+public class TargetedIsotopePatternDetection implements IsotopePatternDetection {
 
-    @Override
-    public SimpleSpectrum extractSpectrum(Ms2Experiment experiment) {
-
-        if (experiment.getIonMass()<=0 || Double.isNaN(experiment.getIonMass()) )
-            throw new IllegalArgumentException("ion mass is not set.");
-
-        final SimpleSpectrum ms1;
-        if (experiment.getMergedMs1Spectrum()==null || experiment.getMergedMs1Spectrum().size()>0) {
-            ms1 = merge(experiment);
-        } else ms1 = experiment.getMergedMs1Spectrum();
-
-        if (ms1==null) return null;
-
-
-        final ChemicalAlphabet stdalphabet =
-                experiment.getAnnotationOrDefault(FormulaConstraints.class).getExtendedConstraints(new FormulaConstraints(ChemicalAlphabet.getExtendedAlphabet())).getChemicalAlphabet();
+    protected SimpleSpectrum extractSpectrum(ProcessedInput processedInput) {
+        final Ms2Experiment experiment = processedInput.getExperimentInformation();
+        final SimpleSpectrum ms1 = processedInput.getAnnotationOrThrow(MergedMs1Spectrum.class).mergedSpectrum;
+        final ChemicalAlphabet stdalphabet;
+        if (experiment.getMolecularFormula()!=null) {
+            stdalphabet = ChemicalAlphabet.alphabetFor(processedInput.getExperimentInformation().getMolecularFormula());
+        } else if (processedInput.hasAnnotation(FormulaConstraints.class)) {
+            stdalphabet = processedInput.getAnnotation(FormulaConstraints.class).getChemicalAlphabet();
+        } else {
+            FormulaSettings fs = processedInput.getAnnotationOrDefault(FormulaSettings.class);
+            stdalphabet = fs.getEnforcedAlphabet().getExtendedConstraints(fs.getFallbackAlphabet()).getExtendedConstraints(fs.getAutoDetectionElements().toArray(new Element[0])).getChemicalAlphabet();
+        }
 
         final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(ms1);
         final ArrayList<SimpleSpectrum> patterns = new ArrayList<SimpleSpectrum>();
-        MS1MassDeviation dev = experiment.getAnnotationOrDefault(MS1MassDeviation.class);
+        MS1MassDeviation dev = processedInput.getAnnotationOrDefault(MS1MassDeviation.class);
         final int index = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, experiment.getIonMass(), dev.allowedMassDeviation);
         if (index < 0) return null;
         final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
@@ -66,9 +66,8 @@ public class SimpleTargetedPatternExtractor implements TargetedPatternExtraction
         return new SimpleSpectrum(spec);
     }
 
-    private SimpleSpectrum merge(Ms2Experiment experiment) {
-        if (experiment.getMs1Spectra().size()>0) {
-            return Spectrums.mergeSpectra(experiment.<Spectrum<Peak>>getMs1Spectra());
-        } else return null;
+    @Override
+    public void detectIsotopePattern(ProcessedInput processedInput) {
+        processedInput.setAnnotation(Ms1IsotopePattern.class, new Ms1IsotopePattern(extractSpectrum(processedInput), 0d));
     }
 }

@@ -27,6 +27,7 @@ import gnu.trove.map.hash.TObjectIntHashMap;
  *
  * This system should be replaced by a ML approach as soon as Marvin published his paper
  */
+@Deprecated
 public interface Judge {
 
     void vote(TObjectIntHashMap<Element> votes, Ms2Experiment experiment);

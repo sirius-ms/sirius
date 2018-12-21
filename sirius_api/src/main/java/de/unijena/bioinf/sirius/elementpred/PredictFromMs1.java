@@ -31,6 +31,7 @@ import gnu.trove.map.hash.TObjectIntHashMap;
 /**
  * Vote for Br and Cl from the isotope pattern
  */
+@Deprecated
 public class PredictFromMs1 implements Judge {
 
     private final IsotopePatternAnalysis extractor;

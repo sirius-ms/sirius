@@ -8,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 /**
  * Predicts presence of chemical elements from isotope patterns
  */
+@Deprecated
 public interface ElementPredictor {
 
     FormulaConstraints predictConstraints(SimpleSpectrum pickedPattern);

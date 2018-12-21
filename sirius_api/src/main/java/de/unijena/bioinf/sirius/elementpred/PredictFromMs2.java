@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+@Deprecated
 public class PredictFromMs2 implements Judge {
 
     private static final String[] REPORTER_IONS = new String[]{"C7H5Cl", "C8H6ClN", "C8H4ClN", "C9H5Cl", "C6H3Cl", "C7H3Cl", "C9H8ClN", "C8H5Cl", "C7H5F", "C9H5F", "C5H3Cl", "C8H7Cl", "C9H7Cl", "C8H8ClN", "C13H8ClN", "C10H9FO", "C11H7FN2O", "C6H3F", "C7H3FO", "C8H5F", "C7H4Cl2", "C7H4ClN", "C7H3ClO", "C6H4ClN"};
