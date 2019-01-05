@@ -1,7 +1,9 @@
 package de.unijena.bioinf.sirius;
 
 import com.google.common.collect.Range;
+import de.unijena.bioinf.ChemistryBase.SimpleRectangularIsolationWindow;
 import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.exceptions.InsufficientDataException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.*;
@@ -682,13 +684,28 @@ public class Ms2DatasetPreprocessor {
             if (Double.isNaN(width) || width<=0){
                 width = 10;
                 ms2Dataset.setIsolationWindow(new EstimatedIsolationWindow(width, 0, true, findMs1PeakDeviation));
-                ms2Dataset.getIsolationWindow().estimate(ms2Dataset);
-                width = ms2Dataset.getIsolationWindow().getEstimatedWindowSize();
-                ms2Dataset.setIsolationWindowWidth(width);
+                try {
+                    ms2Dataset.getIsolationWindow().estimate(ms2Dataset);
+                    width = ms2Dataset.getIsolationWindow().getEstimatedWindowSize();
+                    ms2Dataset.setIsolationWindowWidth(width);
+                } catch (InsufficientDataException e) {
+                    LOG.warn("Cannot estimate isolation window. Fallback to rectangular isolation window with width 1Da.");
+                    ms2Dataset.setIsolationWindow(new SimpleRectangularIsolationWindow(-0.5, 0.5));
+                    ms2Dataset.setIsolationWindowWidth(1.0);
+                }
+
             } else {
                 ms2Dataset.setIsolationWindow(new EstimatedIsolationWindow(width, 0, false, findMs1PeakDeviation));
-                ms2Dataset.getIsolationWindow().estimate(ms2Dataset);
-                //todo also set new isolationWindowWidth?
+                try {
+                    ms2Dataset.getIsolationWindow().estimate(ms2Dataset);
+                    //todo also set new isolationWindowWidth?
+                } catch (InsufficientDataException e) {
+                    LOG.warn("Cannot estimate isolation window. Fallback to rectangular isolation window with width "+width+" Da.");
+                    double right = width/2d;
+                    double left = -width/2d;
+                    ms2Dataset.setIsolationWindow(new SimpleRectangularIsolationWindow(left, right));
+                    ms2Dataset.setIsolationWindowWidth(width);
+                }
             }
 
         }
