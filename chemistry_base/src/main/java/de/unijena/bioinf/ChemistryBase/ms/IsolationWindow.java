@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import de.unijena.bioinf.ChemistryBase.exceptions.InsufficientDataException;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -53,7 +54,7 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
      * estimate the isolation filter from a list of {@link de.unijena.bioinf.ChemistryBase.ms.IsolationWindow.IntensityRatio}
      * @param intensityRatios
      */
-    protected abstract void estimateDistribution(IsotopeRatioInformation intensityRatios);
+    protected abstract void estimateDistribution(IsotopeRatioInformation intensityRatios, Ms2Dataset ms2Dataset) throws InsufficientDataException;
 
 
     /**
@@ -134,9 +135,9 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
 
     public abstract double getEstimatedMassShift();
 
-    public void estimate(Ms2Dataset ms2Dataset) {
+    public void estimate(Ms2Dataset ms2Dataset) throws InsufficientDataException {
         IsotopeRatioInformation isotopeRatioInformation = extractIntensityRatios(ms2Dataset);
-        estimateDistribution(isotopeRatioInformation);
+        estimateDistribution(isotopeRatioInformation, ms2Dataset);
     }
 
 
@@ -187,15 +188,17 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
                     ms2Spectra.add(experiment.getMs2Spectra().get(i));
                 }
             } else if (experiment.getMs1Spectra().size()==1){
-                //MS1 corresponds to all MS2
-                for (int i = 0; i < experiment.getMs2Spectra().size(); i++) {
-                    ms1Spectra.add(experiment.getMs1Spectra().get(0));
-                    ms2Spectra.add(experiment.getMs2Spectra().get(i));
-                }
+//                //MS1 corresponds to all MS2
+//                for (int i = 0; i < experiment.getMs2Spectra().size(); i++) {
+//                    ms1Spectra.add(experiment.getMs1Spectra().get(0));
+//                    ms2Spectra.add(experiment.getMs2Spectra().get(i));
+//                }
+                LOG.warn("cannot match ms1 and ms2 spectra for isolation filter estimation: "+experiment.getName());
+                continue;
             } else {
-                if (DEBUG) {
-                    LOG.warn("cannot match ms1 and ms2 spectra for isolation filter estimation: "+experiment.getName());
-                }
+//                if (DEBUG) {
+                LOG.warn("cannot match ms1 and ms2 spectra for isolation filter estimation: "+experiment.getName());
+//                }
                 continue;
             }
 
@@ -868,6 +871,10 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
 
         public double[] getMS2Intensity(double pos){
             return posToFilter.get(pos).getMS2Intensity().toArray();
+        }
+
+        public int getExampleSize(double pos) {
+            return posToFilter.get(pos).exampleSize();
         }
 
     }
