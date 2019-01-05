@@ -24,7 +24,7 @@ public class ImmutableIsolationWindow extends EstimatedIsolationWindow {
     }
 
     @Override
-    protected void estimateDistribution(IsotopeRatioInformation isotopeRatioInformation) {
-        throw new UnsupportedOperationException("cannot estimate distribution. immutable.");
+    protected void estimateDistribution(IsotopeRatioInformation isotopeRatioInformation, Ms2Dataset dataset) {
+        throw new NoSuchMethodError("cannot estimate distribution. immutable.");
     }
 }
