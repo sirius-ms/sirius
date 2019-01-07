@@ -34,6 +34,8 @@ public class Ms2CompoundMerger {
     private final boolean mergeWithinRuns;
     private final MeasurementProfile findIsotopesMeasurementProfile;
 
+    private final CosineQueryUtils cosineUtils;
+
 //    private Map<Ms2Experiment, Spectrum<Peak>> experimentToMergedMs2;
 
     public Ms2CompoundMerger(Deviation maxMzDeviation, double maxRetentionTimeShift, double cosineSimilarity, boolean mergeWithinRuns) {
@@ -48,6 +50,8 @@ public class Ms2CompoundMerger {
         mmp.setAllowedMassDeviation(maxMzDeviation);
         mmp.setStandardMassDifferenceDeviation(maxMzDeviation.divide(2));//todo add hoc solution works with ms1merged from openMs features
         this.findIsotopesMeasurementProfile = mmp;
+
+        this.cosineUtils = new CosineQueryUtils(new GaussianSpectralAlignment(maxMzDeviation));//todo what deviation? for library search using 10ppm for parent mz, but 20 ppm for cosine scoring on ms2 peaks
     }
 
 
@@ -68,7 +72,8 @@ public class Ms2CompoundMerger {
             }
             ++idx;
         }
-        OrderedSpectrum<Peak>[] mergedSpectra = new OrderedSpectrum[allExperimentsWithMs2.size()];
+//        OrderedSpectrum<Peak>[] mergedSpectra = new OrderedSpectrum[allExperimentsWithMs2.size()];
+        CosineQuerySpectrum[] querySpectra = new CosineQuerySpectrum[allExperimentsWithMs2.size()];
 
         //create merged Ms2 to compare compounds (sqrt of intensity fo improve similarity comparison)
         SqrtIntensityTransformation sqrtIntensityTransformation = new SqrtIntensityTransformation();
@@ -80,8 +85,7 @@ public class Ms2CompoundMerger {
             int i = 0;
             for (Ms2Experiment experiment : allExperimentsWithMs2) {
                 MergedMs2Spectrum mergedMs2Spectrum = experiment.getAnnotation(MergedMs2Spectrum.class);
-//                mergedMs2Spectrum = Spectrums.transform(mergedMs2Spectrum, sqrtIntensityTransformation);
-                putSpectrum(mergedSpectra, i++, mergedMs2Spectrum);
+                putSpectrum(querySpectra, i++, mergedMs2Spectrum);
 
             }
 
@@ -90,8 +94,7 @@ public class Ms2CompoundMerger {
             int i = 0;
             for (Ms2Experiment experiment : allExperimentsWithMs2) {
                 MergedMs2Spectrum mergedMs2Spectrum = mergeMs2Spectra(experiment, deviation);
-//                mergedMs2Spectrum = Spectrums.transform(mergedMs2Spectrum, sqrtIntensityTransformation);
-                putSpectrum(mergedSpectra, i++, mergedMs2Spectrum);
+                putSpectrum(querySpectra, i++, mergedMs2Spectrum);
             }
         }
 
@@ -104,7 +107,7 @@ public class Ms2CompoundMerger {
             Ms2Experiment exp1 = allExperimentsWithMs2.get(i);
             final PrecursorIonType ionType1 = exp1.getPrecursorIonType();
             short runIdx1 = expWithMs2RunIndices.get(i);
-            OrderedSpectrum<Peak> mergedMs2Spectrum1 = mergedSpectra[i];
+            CosineQuerySpectrum querySpectrum1 = querySpectra[i];
             for (int j = i+1; j < allExperimentsWithMs2.size(); j++) {
                 Ms2Experiment exp2 = allExperimentsWithMs2.get(j);
                 final PrecursorIonType ionType2 = exp2.getPrecursorIonType();
@@ -118,7 +121,7 @@ public class Ms2CompoundMerger {
                     distances[j][i] = distances[i][j] = Double.POSITIVE_INFINITY;
                     continue;
                 }
-                OrderedSpectrum<Peak> mergedMs2Spectrum2 = mergedSpectra[j];
+                CosineQuerySpectrum querySpectrum2 = querySpectra[j];
                 if (!maxMzDeviation.inErrorWindow(exp1.getIonMass(), exp2.getIonMass())){
                     distances[j][i] = distances[i][j] = Double.POSITIVE_INFINITY;
                     continue;
@@ -131,7 +134,9 @@ public class Ms2CompoundMerger {
                         continue;
                     }
                 }
-                double cosine = Spectrums.cosineProduct(mergedMs2Spectrum1, mergedMs2Spectrum2, deviation);
+//                double cosine = Spectrums.cosineProduct(mergedMs2Spectrum1, mergedMs2Spectrum2, deviation);
+                //changed
+                double cosine = cosineUtils.cosineProductWithLosses(querySpectrum1, querySpectrum2).similarity;
                 assert cosine<=1d;
                 if (cosine<cosineSimilarity){
                     distances[j][i] = distances[i][j] = Double.POSITIVE_INFINITY;
@@ -143,29 +148,6 @@ public class Ms2CompoundMerger {
 
         }
 
-//        {
-//            //temp
-//            for (int i = 0; i < distances.length; i++) {
-//                double[] distance = distances[i];
-//                for (int j = 0; j < distance.length; j++) {
-//                    double d = distance[j];
-//                    if (d>0.5 && d<2){
-//                        if (experimentToMergedMs2.get(allExperimentsWithMs2.get(i)).size()>2 &&
-//                                experimentToMergedMs2.get(allExperimentsWithMs2.get(j)).size()>2
-//                        ) {
-//                            System.out.println(expWithMs2RunIndices.get(i));
-//                            System.out.println(allExperimentsWithMs2.get(i).getName());
-//                            System.out.println(expWithMs2RunIndices.get(j));
-//                            System.out.println(allExperimentsWithMs2.get(j).getName());
-//                            System.out.println("........");
-//                        }
-//
-//                    }
-//                }
-//            }
-//
-//
-//        }
 
         //2. cluster
         HierarchicalClustering<Ms2Experiment> clustering = new HierarchicalClustering<>(new CompleteLinkage());
@@ -186,11 +168,21 @@ public class Ms2CompoundMerger {
         return mergedExperiments;
     }
 
+    @Deprecated
     private void putSpectrum(Spectrum<Peak>[] mergedSpectra, int index, MergedMs2Spectrum mergedMs2Spectrum) {
         if (Spectrums.isMassOrderedSpectrum(mergedMs2Spectrum)){
             mergedSpectra[index] = Spectrums.getAlreadyOrderedSpectrum(mergedMs2Spectrum);
         } else {
             mergedSpectra[index] = new SimpleSpectrum(mergedMs2Spectrum);
+        }
+    }
+
+    private void putSpectrum(CosineQuerySpectrum[] cosineQuerySpectra, int index, MergedMs2Spectrum mergedMs2Spectrum) {
+        assert mergedMs2Spectrum.getPrecursorMz()>0;
+        if (Spectrums.isMassOrderedSpectrum(mergedMs2Spectrum)){
+            cosineQuerySpectra[index] = cosineUtils.createQuery(Spectrums.getAlreadyOrderedSpectrum(mergedMs2Spectrum), mergedMs2Spectrum.getPrecursorMz());
+        } else {
+            cosineQuerySpectra[index] = cosineUtils.createQuery(new SimpleSpectrum(mergedMs2Spectrum), mergedMs2Spectrum.getPrecursorMz());
         }
     }
 
@@ -214,7 +206,10 @@ public class Ms2CompoundMerger {
 
     private MergedMs2Spectrum mergeMs2Spectra(Ms2Experiment experiment, Deviation deviation){
         //todo best to merge spectra?
-        return new MergedMs2Spectrum(Spectrums.mergeSpectra(deviation, true, true, experiment.getMs2Spectra()));
+//        return new MergedMs2Spectrum(Spectrums.mergeSpectra(deviation, true, true, experiment.getMs2Spectra()));
+        //changed because we are now using Gaussian cosine scoring
+        //important to set precursor mass
+        return new MergedMs2Spectrum(Spectrums.mergeSpectra(experiment.getMs2Spectra()), experiment.getIonMass(), null, 0);
     }
 
     private Ms2Experiment mergeExperiments(List<Ms2Experiment> experiments, Deviation deviation){

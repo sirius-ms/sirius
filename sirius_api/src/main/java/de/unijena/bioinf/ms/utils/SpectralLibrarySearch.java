@@ -64,15 +64,17 @@ public class SpectralLibrarySearch {
 
     //todo remove precursor mass?! or +-17Da or +-50Da?
     private final LibrarySpectrum[] librarySpectra;
-    private final OrderedSpectrum<Peak>[] librarySpectraInverse;
-    private final double[] selfSimilarity;
-    private final double[] selfSimilarityLosses;
+    private final CosineQuerySpectrum[] libraryQueries;
+//    private final OrderedSpectrum<Peak>[] librarySpectraInverse;
+//    private final double[] selfSimilarity;
+//    private final double[] selfSimilarityLosses;
     private final IntensityTransformation intensityTransformation;
     private final int minSharedPeaks;
     private final Deviation deviation;
     private static final Normalization NORMALIZATION = Normalization.Sum(100);
 
     private final AbstractSpectralAlignment spectralAlignment;
+    private final CosineQueryUtils cosineUtils;
 
     private final Logger Log = LoggerFactory.getLogger(SpectralLibrarySearch.class);
 
@@ -82,6 +84,7 @@ public class SpectralLibrarySearch {
         this.minSharedPeaks = minSharedPeaks;
         this.deviation = ms2Deviation;
         this.spectralAlignment = spectralAlignment;
+        this.cosineUtils = new CosineQueryUtils(spectralAlignment);
 
 
         //sort for binary mz search
@@ -105,9 +108,7 @@ public class SpectralLibrarySearch {
         }
 
         //compute self-similarities
-        librarySpectraInverse = new OrderedSpectrum[this.librarySpectra.length];
-        selfSimilarity = new double[this.librarySpectra.length];
-        selfSimilarityLosses = new double[this.librarySpectra.length];
+        this.libraryQueries = new CosineQuerySpectrum[this.librarySpectra.length];
         for (int i = 0; i < this.librarySpectra.length; i++) {
             LibrarySpectrum ls = this.librarySpectra[i];
             SimpleMutableSpectrum mutableSpectrum = new SimpleMutableSpectrum(ls.getFragmentationSpectrum());
@@ -115,14 +116,11 @@ public class SpectralLibrarySearch {
             Spectrums.cutByMassThreshold(mutableSpectrum, ls.getIonMass()-0.5);
             //normalize
             Spectrums.normalize(mutableSpectrum, NORMALIZATION);
-            LibrarySpectrum librarySpectrum = new LibrarySpectrum(ls.getName(), mutableSpectrum, ls.getMolecularFormula(), ls.getIonType(), ls.getSmiles(), ls.getInChI());
-            this.librarySpectra[i] = librarySpectrum;
-            OrderedSpectrum<Peak> spec = librarySpectrum.getFragmentationSpectrum();
-            selfSimilarity[i] = spectralAlignment.score(spec,spec).similarity;
 
-            SimpleSpectrum inverse = Spectrums.getInversedSpectrum(spec, librarySpectrum.getIonMass());//todo ionmass?vs measured
-            librarySpectraInverse[i] = inverse;
-            selfSimilarityLosses[i] = spectralAlignment.score(inverse,inverse).similarity;
+            OrderedSpectrum<Peak> orderedSpectrum = new SimpleSpectrum(mutableSpectrum);
+            LibrarySpectrum librarySpectrum = new LibrarySpectrum(ls.getName(), orderedSpectrum, ls.getMolecularFormula(), ls.getIonType(), ls.getSmiles(), ls.getInChI());
+            this.librarySpectra[i] = librarySpectrum;
+            this.libraryQueries[i] = cosineUtils.createQuery(orderedSpectrum, librarySpectrum.getIonMass());//todo ionmass?vs measured
         }
     }
 
@@ -206,7 +204,7 @@ public class SpectralLibrarySearch {
 //        double dotProduct =
         LibrarySpectrum bestHit = null;
         SpectralSimilarity bestSimilarity = null;
-        QueryWithSelfSimilarity query = new QueryWithSelfSimilarity(orderedSpectrum, precursorMass);
+        CosineQuerySpectrum query = cosineUtils.createQuery(orderedSpectrum, precursorMass);
         TIntIterator candidateIterator = canditateIterator(precursorMass, allowedMassDifference.maxAllowedShift());
         while (candidateIterator.hasNext()) {
             int current = candidateIterator.next();
@@ -358,26 +356,8 @@ public class SpectralLibrarySearch {
         return -1;
     }
 
-    private SpectralSimilarity score(QueryWithSelfSimilarity query, int librarySpectrum) {
-        return cosineProductWithLosses(query, librarySpectrum);
-    }
-
-
-    SpectralSimilarity cosineProduct(QueryWithSelfSimilarity query, int libIdx) {
-        SpectralSimilarity similarity = spectralAlignment.score(query.spectrum, librarySpectra[libIdx].getFragmentationSpectrum());
-        return new SpectralSimilarity(similarity.similarity /Math.sqrt(query.selfSimilarity*selfSimilarity[libIdx]), similarity.shardPeaks);
-    }
-
-    SpectralSimilarity cosineProductOfInverse(QueryWithSelfSimilarity query, int libIdx) {
-        SpectralSimilarity similarity = spectralAlignment.score(query.inverseSpectrum, librarySpectraInverse[libIdx]);
-        return new SpectralSimilarity(similarity.similarity /(Math.sqrt(query.selfSimilarityLosses*selfSimilarityLosses[libIdx])), similarity.shardPeaks);
-    }
-
-    private SpectralSimilarity cosineProductWithLosses(QueryWithSelfSimilarity query, int libIdx) {
-        SpectralSimilarity similarity = cosineProduct(query, libIdx);
-        SpectralSimilarity similarityLosses = cosineProductOfInverse(query, libIdx);
-
-        return new SpectralSimilarity((similarity.similarity +similarityLosses.similarity)/2d, Math.max(similarity.shardPeaks, similarityLosses.shardPeaks));
+    private SpectralSimilarity score(CosineQuerySpectrum query, int librarySpectrumIdx) {
+        return cosineUtils.cosineProductWithLosses(query, libraryQueries[librarySpectrumIdx]);
     }
 
     @Deprecated
@@ -466,22 +446,22 @@ public class SpectralLibrarySearch {
         }
     }
 
-    private class QueryWithSelfSimilarity {
-        final OrderedSpectrum<Peak> spectrum;
-        final SimpleSpectrum inverseSpectrum;
-        final double selfSimilarity;
-        final double selfSimilarityLosses;
-        final double precursorMz;
-
-        public QueryWithSelfSimilarity(OrderedSpectrum<Peak> spectrum, double precursorMz) {
-            this.spectrum = spectrum;
-            this.precursorMz = precursorMz;
-            //todo remove parent from inversed!?
-            this.inverseSpectrum = Spectrums.getInversedSpectrum(this.spectrum, precursorMz);
-            this.selfSimilarity = spectralAlignment.score(this.spectrum, this.spectrum).similarity;
-            this.selfSimilarityLosses = spectralAlignment.score(inverseSpectrum, inverseSpectrum).similarity;
-
-        }
-    }
+//    private class QueryWithSelfSimilarity {
+//        final OrderedSpectrum<Peak> spectrum;
+//        final SimpleSpectrum inverseSpectrum;
+//        final double selfSimilarity;
+//        final double selfSimilarityLosses;
+//        final double precursorMz;
+//
+//        public QueryWithSelfSimilarity(OrderedSpectrum<Peak> spectrum, double precursorMz) {
+//            this.spectrum = spectrum;
+//            this.precursorMz = precursorMz;
+//            //todo remove parent from inversed!?
+//            this.inverseSpectrum = Spectrums.getInversedSpectrum(this.spectrum, precursorMz);
+//            this.selfSimilarity = spectralAlignment.score(this.spectrum, this.spectrum).similarity;
+//            this.selfSimilarityLosses = spectralAlignment.score(inverseSpectrum, inverseSpectrum).similarity;
+//
+//        }
+//    }
 
 }
