@@ -34,7 +34,7 @@ public abstract class ApplicationCore {
 
     public static Path WORKSPACE;
 
-    public static String VERSION_STRING;
+
     public static String CITATION;
     public static String CITATION_BIBTEX;
 
@@ -192,8 +192,8 @@ public abstract class ApplicationCore {
         DEFAULT_LOGGER.info("Sirius Workspace Successfull initialized at: " + WORKSPACE.toAbsolutePath().toString());
 
 
-        VERSION_STRING = (version != null && build != null) ? "SIRIUS " + version + " (build " + build + ")" : "SIRIUS <Version Unknown>";
-        DEFAULT_LOGGER.info("You run " + VERSION_STRING);
+        PropertyManager.PROPERTIES.put ("de.unijena.bioinf.sirius.versionString", (version != null && build != null) ? "SIRIUS " + version + " (build " + build + ")" : "SIRIUS <Version Unknown>");
+        DEFAULT_LOGGER.info("You run " + VERSION_STRING());
 
         String prop = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cite");
         CITATION = prop != null ? prop : "";
@@ -242,6 +242,10 @@ public abstract class ApplicationCore {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static String VERSION_STRING(){
+        return PropertyManager.getProperty("de.unijena.bioinf.sirius.versionString");
     }
 }
 
