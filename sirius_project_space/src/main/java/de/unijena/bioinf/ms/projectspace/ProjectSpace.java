@@ -22,7 +22,7 @@ public interface ProjectSpace extends ProjectWriter, ProjectReader {
 
     boolean removeSummaryWriter(List<SummaryWriter> writerList);
 
-    void writeSummaries();
+    void writeSummaries(Iterable<ExperimentResult> resultsToSummarize);
 
     int getNumberOfWrittenExperiments();
 

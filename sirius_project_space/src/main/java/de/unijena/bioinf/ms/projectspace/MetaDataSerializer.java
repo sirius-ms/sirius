@@ -8,6 +8,6 @@ import java.util.Set;
 
 public interface MetaDataSerializer {
     void read(@NotNull final ExperimentResult input, @NotNull final DirectoryReader reader, @NotNull final Set<String> names) throws IOException;
-    void write(ExperimentResult input, DirectoryWriter writer) throws IOException;
+    void write(@NotNull final ExperimentResult input, @NotNull final DirectoryWriter writer) throws IOException;
 
 }

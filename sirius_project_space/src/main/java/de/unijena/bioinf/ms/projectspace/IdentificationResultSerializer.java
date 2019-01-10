@@ -49,7 +49,7 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
 
 
     @Override
-    public void write(ExperimentResult result, DirectoryWriter writer) throws IOException {
+    public void write(@NotNull final ExperimentResult result, @NotNull final DirectoryWriter writer) throws IOException {
         if (result.getResults() != null) {
             writeIdentificationResults(result.getResults(), writer);
         }
