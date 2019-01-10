@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * This is the SiriusProjectSpace. It operates only on uncompressed
  * directory based projects. For zip based projects: They should be
  * decompressed in some temp dir and copied/compressed back after the
- * project-space was closed method.
+ * project-space was closed.
  *
  * @author Markus Fleischauer
  * */
@@ -250,9 +250,9 @@ public class SiriusProjectSpace implements ProjectSpace {
     }
 
     @Override
-    public void writeSummaries() {
+    public void writeSummaries(Iterable<ExperimentResult> resultsToSummarize) {
         for (SummaryWriter summaryWriter : summaryWriters) {
-            summaryWriter.writeSummary(parseExperiments(), writer);
+            summaryWriter.writeSummary(resultsToSummarize, writer);
         }
     }
 
@@ -273,7 +273,6 @@ public class SiriusProjectSpace implements ProjectSpace {
 
     @Override
     public void close() throws IOException {
-        writeSummaries();
         reader.close();
         writer.close();
     }
