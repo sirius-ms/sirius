@@ -86,6 +86,8 @@ public class SiriusProjectSpace implements ProjectSpace {
         this.filenameFormatter = filenameFormatter != null ? filenameFormatter : readFormatter(rootPath);
 
         summaryWriters.addAll(initBasicSummaries());
+        summaryWriters.addAll(Arrays.stream(metaDataSerializers)
+                .filter(v -> v instanceof SummaryWriter).map(v -> (SummaryWriter) v).collect(Collectors.toList()));
     }
 
     @NotNull

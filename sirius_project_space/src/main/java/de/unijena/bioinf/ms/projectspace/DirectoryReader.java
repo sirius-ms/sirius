@@ -140,8 +140,8 @@ public class DirectoryReader implements ProjectReader {
             env.enterDirectory(expDir.getDirectoryName());
             Integer index = null;
             try {
-                index = env.read(".index", r ->
-                        new BufferedReader(r).lines().findFirst().map(Integer::valueOf).orElse(null)
+                index = env.read(SiriusLocations.SIRIUS_EXP_INFO_FILE.fileName(), r ->
+                        new BufferedReader(r).lines().filter(l -> l.split("\t")[0].equals("index")).findFirst().map(l -> Integer.valueOf(l.split("\t")[1])).orElse(null)
                 );
             } catch (IOException e) {
                 LOG.warn("Cannot parse index from index file. Cause: " + e.getMessage());

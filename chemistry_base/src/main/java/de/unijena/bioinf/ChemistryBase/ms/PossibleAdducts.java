@@ -79,12 +79,12 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Ms2Exp
         return new ArrayList<>(ions);
     }
 
-    public PossibleIonModes merge(PossibleIonModes ionModes) {
-        final PossibleIonModes copy = new PossibleIonModes(ionModes);
+    /*public PossibleIonModes merge(PossibleIonModes ionModes) {
+        final PossibleIonModes copy = new PossibleIonModes(ionModes.probabilisticIonizations());
         for (PrecursorIonType ionType : value)
-            copy.add(ionType.getIonization());
+            copy.probabilisticIonizations().add(ionType.getIonization());
         return copy;
-    }
+    }*/
 
     public void update(PossibleIonModes ionModes) {
         for (PrecursorIonType precursorIonType : ionModes.getIonModesAsPrecursorIonType()) {
