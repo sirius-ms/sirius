@@ -429,6 +429,9 @@ public class CombinedCLI extends ApplicationCore {
             if (constraints != null) {
                 sirius.setFormulaConstraints(exp, constraints);
             }
+            if (options.isEnableSiliconDetection()) {
+                sirius.addAutomaticElementDetectionFor(exp, PeriodicTable.getInstance().getByName("Si"));
+            }
             if (options.isDisableElementDetection()) {
                 sirius.enableAutomaticElementDetection(exp, false);
             }
@@ -495,6 +498,9 @@ public class CombinedCLI extends ApplicationCore {
                             }
                             if (constraints != null) {
                                 sirius.setFormulaConstraints(experiment, constraints);
+                            }
+                            if (options.isEnableSiliconDetection()) {
+                                sirius.addAutomaticElementDetectionFor(experiment, PeriodicTable.getInstance().getByName("Si"));
                             }
                             if (options.isDisableElementDetection()) {
                                 sirius.enableAutomaticElementDetection(experiment, false);
