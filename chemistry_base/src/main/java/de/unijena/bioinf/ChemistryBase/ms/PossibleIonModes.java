@@ -4,6 +4,7 @@ import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.IonMode;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.annotations.ProcessedInputAnnotation;
 
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
  * object and compute trees for all ion types with probability &gt; 0.
  * If probability is unknown, you can assign a constant to each ion type.
  */
-public class PossibleIonModes implements ProcessedInputAnnotation {
+public class PossibleIonModes implements ProcessedInputAnnotation, Ms2ExperimentAnnotation {
 
     public static PossibleIonModes uniformlyDistributed(Iterable<IonMode> ionModes) {
         return new PossibleIonModes(Iterables.transform(ionModes,u->new ProbabilisticIonization(u,1d)));
@@ -33,7 +34,7 @@ public class PossibleIonModes implements ProcessedInputAnnotation {
         public final IonMode ionMode;
         public final double probability;
 
-        private ProbabilisticIonization(IonMode ionMode, double probability) {
+        public ProbabilisticIonization(IonMode ionMode, double probability) {
             this.ionMode = ionMode;
             this.probability = probability;
         }
@@ -49,7 +50,7 @@ public class PossibleIonModes implements ProcessedInputAnnotation {
     protected final HashMap<IonMode, ProbabilisticIonization> ionTypes;
     protected final double totalProb;
 
-    protected PossibleIonModes() {
+    public PossibleIonModes() {
         this.totalProb = 0d;
         this.ionTypes = new HashMap<>();
     }
@@ -106,7 +107,6 @@ public class PossibleIonModes implements ProcessedInputAnnotation {
     public List<PrecursorIonType> getIonModesAsPrecursorIonType() {
         return ionTypes.keySet().stream().map(PrecursorIonType::getPrecursorIonType).collect(Collectors.toList());
     }
-
 
     @Override
     public String toString() {
