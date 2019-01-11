@@ -4,6 +4,7 @@ public interface FingerIdLocations extends SiriusLocations {
     Location FINGERID_FINGERPRINT = new Location("fingerprints", null, ".fpt");
     Location FINGERID_FINGERPRINT_INDEX = new Location(null, "fingerprints", ".csv");
     Location FINGERID_CANDIDATES = new Location("csi_fingerid", null, ".csv");
+    Location FINGERID_CANDIDATES_INFO = new Location("csi_fingerid", null, ".info");
     Location FINGERID_SUMMARY = new Location(null, "summary_csi_fingerid", ".csv");
 
     Location CANOPUS_FINGERPRINT = new Location("canopus", null, ".fpt");

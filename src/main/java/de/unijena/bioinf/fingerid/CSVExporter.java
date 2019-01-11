@@ -38,7 +38,7 @@ public class CSVExporter {
         writer.write("inchikey2D\tinchi\tmolecularFormula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
         final ArrayList<Scored<FingerprintCandidate>> candidates = new ArrayList<>();
         for (FingerIdResult r : results) candidates.addAll(r.getCandidates());
-        Collections.sort(candidates, Scored.<FingerprintCandidate>desc());
+        Collections.sort(candidates, Scored.desc());
         final Multimap<String, String> dbMap = HashMultimap.create();
         final List<String> pubchemIds = new ArrayList<>();
         int rank = 0;

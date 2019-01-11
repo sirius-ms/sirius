@@ -2,10 +2,7 @@ package de.unijena.bioinf.ms.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.fp.FPIter;
-import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.MolecularProperty;
+import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
@@ -32,7 +29,6 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
         final List<IdentificationResult> results = result.getResults();
 
         if (!new HashSet<>(env.list()).contains("csi_fingerid")) return;
-
         try {
             env.enterDirectory("csi_fingerid");
             // read compound candidates identificationResult list
@@ -40,10 +36,11 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
             for (IdentificationResult r : results) {
                 String s = SiriusLocations.makeFileName(r) + ".csv";
                 if (files.contains(s)) {
-                    r.setAnnotation(FingerIdResult.class, env.read(s, r1 -> {
+                    final FingerIdResult fingerIdResult = env.read(s, r1 -> {
                         BufferedReader br = new BufferedReader(r1);
                         String line = br.readLine();
                         final List<Scored<FingerprintCandidate>> fpcs = new ArrayList<>();
+                        double confidence = 0;
                         while ((line = br.readLine()) != null) {
                             String[] tabs = line.split("\t");
                             final FingerprintCandidate fpc = new FingerprintCandidate(new InChI(tabs[0], tabs[1]), null);
@@ -63,11 +60,22 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                                 }
                             }
                             fpc.setLinks(links.toArray(new DBLink[links.size()]));
-                            fpcs.add(new Scored<FingerprintCandidate>(fpc, Double.parseDouble(tabs[4])));
+                            fpcs.add(new Scored<>(fpc, Double.parseDouble(tabs[4])));
                         }
-                        // TODO: implement
-                        return new FingerIdResult(fpcs, 0d, null, null);
-                    }));
+                        return new FingerIdResult(fpcs, 0, null, null);
+                    });
+
+                    // TODO: implement read predicted fingerprint and resolved tree
+
+                    s = SiriusLocations.makeFileName(r) + ".info";
+                    //readConfidence
+                    if (files.contains(s)) {
+                        double confidence = env.read(s, in ->
+                                new BufferedReader(in).lines().filter(l -> l.split("\t")[0].equals("csi_confidence")).findFirst().map(l -> Double.valueOf(l.split("\t")[1])).orElse(null)
+                        );
+                        fingerIdResult.setConfidence(confidence);
+                    }
+                    r.setAnnotation(FingerIdResult.class, fingerIdResult);
                 }
             }
         } finally {
@@ -82,18 +90,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
         final List<IdentificationResult> results = input.getResults();
 
         if (writer.isAllowed(FingerIdResult.CANDIDATE_LISTS) && hasFingerId(results)) {
-            // now write CSI:FingerID results
-
-            W.enterDirectory(FingerIdLocations.FINGERID_FINGERPRINT.directory);
-            for (IdentificationResult result : results) {
-                final FingerIdResult f = result.getAnnotationOrNull(FingerIdResult.class);
-                if (f != null) {
-                    writeFingerprint(result, f, writer);
-                }
-            }
-            W.leaveDirectory();
-
-
+            // now write CSI:FingerID candidates
             W.enterDirectory(FingerIdLocations.FINGERID_CANDIDATES.directory);
             final List<FingerIdResult> frs = new ArrayList<>();
             for (IdentificationResult result : results) {
@@ -105,14 +102,24 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
             }
             W.leaveDirectory();
 
+            // now write CSI:FingerID fingerprints
+            for (IdentificationResult result : results) {
+                final FingerIdResult f = result.getAnnotationOrNull(FingerIdResult.class);
+                if (f != null && f.getPredictedFingerprint() != null) {
+                    W.enterDirectory(FingerIdLocations.FINGERID_FINGERPRINT.directory);
+                    writeFingerprint(result, f.getPredictedFingerprint(), writer);
+                    W.leaveDirectory();
+                }
+            }
+
             // and CSI:FingerID summary
             writeFingerIdResultsSummaryCSV(frs, writer);
         }
     }
 
-    private void writeFingerprint(IdentificationResult result, FingerIdResult f, DirectoryWriter writer) throws IOException {
+    private void writeFingerprint(final IdentificationResult result, final ProbabilityFingerprint pfp, final DirectoryWriter writer) throws IOException {
         writer.write(FingerIdLocations.FINGERID_FINGERPRINT.fileName(result), w -> {
-            for (FPIter fp : f.getPredictedFingerprint()) {
+            for (FPIter fp : pfp) {
                 w.write(String.format(Locale.US, "%.3f\n", fp.getProbability()));
             }
         });
@@ -132,15 +139,26 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
     }
 
     private void writeFingerIdResult(final IdentificationResult result, final FingerIdResult f, DirectoryWriter writer) throws IOException {
+        final String name = SiriusLocations.makeFileName(result);
+        //write candidate list
         writer.write(FingerIdLocations.FINGERID_CANDIDATES.fileName(result), w ->
                 new CSVExporter().exportFingerIdResults(w, Arrays.asList(f))
         );
+
+        //write additional information
+        writer.write(FingerIdLocations.FINGERID_CANDIDATES_INFO.fileName(result), w -> {
+            w.write("confidence\t" + f.getConfidence());
+            w.write(System.lineSeparator());
+            w.write("searched_db\t" + "To Be Implemented"); //todo add searched database
+            w.write(System.lineSeparator());
+            w.flush();
+        });
     }
 
     @Override
     public void writeSummary(Iterable<ExperimentResult> experiments, DirectoryWriter writer) {
         try {
-            FingerprintVersion csiVersion = null; //todo this is ugly and error prone
+            FingerprintVersion csiVersion = null;
             final List<Scored<String>> topHits = new ArrayList<>();
             if (writer.isAllowed(FingerIdResult.CANDIDATE_LISTS)) {
                 for (ExperimentResult experimentResult : experiments) {
@@ -170,8 +188,8 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
+
 
     private void writeSummaryCSV(List<Scored<String>> topHits, DirectoryWriter writer) throws IOException {
         writer.write(FingerIdLocations.FINGERID_SUMMARY.fileName(), w -> {
