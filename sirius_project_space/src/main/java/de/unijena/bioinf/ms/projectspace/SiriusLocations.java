@@ -10,7 +10,7 @@ public interface SiriusLocations {
     Location SIRIUS_ANNOTATED_SPECTRA = new Location("spectra", null, ".ms");
     Location SIRIUS_SPECTRA = new Location(null, "spectrum", ".ms");
     Location SIRIUS_SUMMARY = new Location(null, "summary_sirius", ".csv");
-    Location SIRIUS_INDEX_FILE = new Location(null, ".index", ""); //todo null or empty?
+    Location SIRIUS_EXP_INFO_FILE = new Location(null, "experiment", ".info");
     //project-space level
     Location SIRIUS_VERSION_FILE = new Location(null, "version", ".txt");
     Location SIRIUS_CITATION_FILE = new Location(null, "cite", ".txt");
