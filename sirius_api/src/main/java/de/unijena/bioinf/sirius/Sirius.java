@@ -767,9 +767,14 @@ public class Sirius {
         }
     }
 
-    public void setAutomaticElementDetectionFor(Ms2Experiment experiment, Element elements) {
+    public void setAutomaticElementDetectionFor(Ms2Experiment experiment, Element... elements) {
         FormulaSettings current = experiment.getAnnotation(FormulaSettings.class, FormulaSettings.defaultWithMs2Only());
         experiment.setAnnotation(FormulaSettings.class, current.withoutAutoDetect().autoDetect(elements));
+    }
+
+    public void addAutomaticElementDetectionFor(Ms2Experiment experiment, Element element) {
+        FormulaSettings current = experiment.getAnnotation(FormulaSettings.class, FormulaSettings.defaultWithMs2Only());
+        experiment.setAnnotation(FormulaSettings.class, current.autoDetect(element));
     }
 
     public void setFormulaConstraints(Ms2Experiment experiment, FormulaConstraints constraints) {
