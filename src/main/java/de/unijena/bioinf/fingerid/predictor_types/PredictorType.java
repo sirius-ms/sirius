@@ -1,5 +1,6 @@
 package de.unijena.bioinf.fingerid.predictor_types;
 
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -8,7 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public enum PredictorType {
+public enum PredictorType implements DataAnnotation {
     CSI_FINGERID_POSITIVE,//CSI for negative ionization
     IOKR_POSITIVE,
     CSI_FINGERID_NEGATIVE, //CSI for negative ionization
