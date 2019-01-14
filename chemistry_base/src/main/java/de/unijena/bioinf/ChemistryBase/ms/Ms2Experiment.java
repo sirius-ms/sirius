@@ -20,6 +20,7 @@ package de.unijena.bioinf.ChemistryBase.ms;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +31,7 @@ import java.util.List;
  * A Ms2Experiment is a MS/MS measurement of a *single* compound. If there are multiple compounds measured in your
  * spectrum, clean up and separate them into multiple Ms2Experiment instances, too!
  */
-public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotation> {
+public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotation>, DataAnnotation {
 
 
     URL getSource();
