@@ -15,6 +15,7 @@ import java.nio.CharBuffer;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.projectspace.SiriusLocations.SIRIUS_SPECTRA;
 
@@ -63,7 +64,7 @@ public class DirectoryReader implements ProjectReader {
             }
         }
 
-        default <T> T read(String name, Do<T> f) throws IOException {
+        default <T> T read(@NotNull String name, @NotNull Do<T> f) throws IOException {
             final InputStream stream = openFile(name);
             try {
                 final BufferedReader inReader = new BufferedReader(new InputStreamReader(stream));
@@ -76,6 +77,12 @@ public class DirectoryReader implements ProjectReader {
             } finally {
                 closeFile();
             }
+        }
+
+        default Map<String,String> readKeyValueFile(@NotNull String name) throws IOException {
+            return read(name, w -> {
+                return new BufferedReader(w).lines().map(l -> l.split("\t")).collect(Collectors.toMap(k -> k[0], v -> v[1]));
+            });
         }
 
         @FunctionalInterface

@@ -1,6 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
-public class ZodiacScore {
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
+
+public class ZodiacScore implements DataAnnotation {
     private double probability;
 
     public ZodiacScore(double probability) {

@@ -1,8 +1,9 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
-public interface IdentificationResultAnnotationJJob<R> extends JJob<R> {
+public interface IdentificationResultAnnotationJJob<R extends DataAnnotation> extends JJob<R> {
 
     IdentificationResult getIdentificationResult();
 
