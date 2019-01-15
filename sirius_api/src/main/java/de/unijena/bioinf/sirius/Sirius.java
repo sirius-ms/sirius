@@ -352,7 +352,9 @@ public class Sirius {
 
         SimpleMutableSpectrum mutableSpectrum = new SimpleMutableSpectrum(spec);
         Spectrums.normalizeToMax(mutableSpectrum, 100d);
-        Spectrums.applyBaseline(mutableSpectrum, 1d);
+        //changed intensityThreshold
+        Spectrums.applyBaseline(mutableSpectrum, 5d);
+//        Spectrums.applyBaseline(mutableSpectrum, 1d);
 //        //changed
         Spectrums.filterIsotpePeaks(mutableSpectrum, getMs1Analyzer().getDefaultProfile(experiment).getStandardMassDifferenceDeviation(), 0.3, 1, 5, new ChemicalAlphabet());
 
