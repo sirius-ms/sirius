@@ -8,7 +8,9 @@ import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.CSVExporter;
 import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.fingerid.db.CustomDatabase;
+import de.unijena.bioinf.fingerid.db.SearchableDatabase;
+import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -26,6 +28,12 @@ import java.util.stream.Collectors;
 //todo handle fingerprint version correctly
 public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWriter {
     private static Pattern DBPAT = Pattern.compile("([^(])+\\(([^)]+)\\)");
+
+    protected final WebAPI api;
+
+    public FingerIdResultSerializer(WebAPI api) {
+        this.api = api;
+    }
 
     @Override
     public void read(@NotNull final ExperimentResult result, @NotNull final DirectoryReader reader, @NotNull Set<String> names) throws IOException {
@@ -90,23 +98,30 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                 if (expInfo.containsKey("csi_confidence"))
                     fingerIdResult.setConfidence(Double.valueOf(expInfo.get("csi_confidence")));
 
-                //read predictor type
-                if (expInfo.containsKey("fingerid_predictor_type"))
-                    fingerIdResult.setAnnotation(PredictorType.class, PredictorType.valueOf(expInfo.get("fingerid_predictor_type")));
-
-
-                //todo read db type
-
-                if (fingerIdResult.hasAnnotation(PredictorType.class)) {
-                    try {
-                        fingerIdResult.setPredictedFingerprint(env.read(FingerIdLocations.FINGERID_FINGERPRINT.fileName(r), w -> {
-                            return new ProbabilityFingerprint(
-                                    WebAPI.INSTANCE.getMaskedFingerprintVersion(fingerIdResult.getAnnotation(PredictorType.class)), new BufferedReader(w).lines().mapToDouble(Double::valueOf).toArray());
-                        }));
-                    } catch (IllegalArgumentException e) {
-                        LoggerFactory.getLogger(getClass()).warn("Fingerprint version of the imported data is imcompatible with the current version. " +
-                                "Fingerpringerprint has to be recomputed!", e);
+                final String db = expInfo.get("searched_db");
+                if (db != null && !db.equals("unknown")) {
+                    if (db.equals(SearchableDatabases.getPubchemDb().name())) {
+                        fingerIdResult.setAnnotation(SearchableDatabase.class, SearchableDatabases.getPubchemDb());
+                    } else if (db.equals(SearchableDatabases.getBioDb().name())) {
+                        fingerIdResult.setAnnotation(SearchableDatabase.class, SearchableDatabases.getBioDb());
+                    } else { //custom dbs
+                        for (CustomDatabase customDatabase : SearchableDatabases.getCustomDatabases()) {
+                            if (customDatabase.name().equals(db)) {
+                                fingerIdResult.setAnnotation(SearchableDatabase.class, customDatabase);
+                                break;
+                            }
+                        }
                     }
+                }
+
+                try {
+                    fingerIdResult.setPredictedFingerprint(env.read(FingerIdLocations.FINGERID_FINGERPRINT.fileName(r), w -> {
+                        return new ProbabilityFingerprint(
+                                api.getFingerprintMaskedVersion(result.getExperiment().getPrecursorIonType().getCharge()), new BufferedReader(w).lines().mapToDouble(Double::valueOf).toArray());
+                    }));
+                } catch (IllegalArgumentException e) {
+                    LoggerFactory.getLogger(getClass()).warn("Fingerprint version of the imported data is imcompatible with the current version. " +
+                            "Fingerpringerprint has to be recomputed!", e);
                 }
             }
             env.leaveDirectory();
@@ -140,22 +155,16 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                 if (f != null && f.getPredictedFingerprint() != null) {
                     writeFingerprint(result, f.getPredictedFingerprint(), writer);
 
-                    // now get predictor information
-                    final PredictorType predictorType;
-                    if (f.hasAnnotation(PredictorType.class)) {
-                        predictorType = f.getAnnotation(PredictorType.class);
-                    } else {
-                        LoggerFactory.getLogger(getClass()).warn("No Predictortype set for this FingeridResult. Using CSI_FINGERID as default");
-                        predictorType = result.getPrecursorIonType().getCharge() < 0 ? PredictorType.CSI_FINGERID_NEGATIVE : PredictorType.CSI_FINGERID_POSITIVE;
-                    }
+                    final String db;
+                    if (f.hasAnnotation(SearchableDatabase.class))
+                        db = f.getAnnotation(SearchableDatabase.class).name();
+                    else db = "unknown";
 
                     //write additional information
                     writer.write(FingerIdLocations.FINGERID_FINGERPRINT_INFO.fileName(result), w -> {
                         w.write("confidence\t" + f.getConfidence());
                         w.write(System.lineSeparator());
-                        w.write("searched_db\t" + "To Be Implemented"); //todo add searched database
-                        w.write(System.lineSeparator());
-                        w.write("fingerid_predictor_type\t" + predictorType.name());
+                        w.write("searched_db\t" + db);
                         w.write(System.lineSeparator());
                         w.flush();
                     });
