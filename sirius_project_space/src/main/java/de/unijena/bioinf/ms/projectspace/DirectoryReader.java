@@ -81,7 +81,7 @@ public class DirectoryReader implements ProjectReader {
 
         default Map<String,String> readKeyValueFile(@NotNull String name) throws IOException {
             return read(name, w -> {
-                return new BufferedReader(w).lines().map(l -> l.split("\t")).collect(Collectors.toMap(k -> k[0], v -> v[1]));
+                return new BufferedReader(w).lines().filter(l -> l != null && !l.isEmpty()).map(l -> l.split("\t")).collect(Collectors.toMap(k -> k[0], v -> v[1]));
             });
         }
 
