@@ -208,11 +208,12 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         final double commonF = this.scoreCommons(candidate1.getFragments(), candidate2.getFragments());
         final double commonL = this.scoreCommons(candidate1.getLosses(), candidate2.getLosses());
 
-        if (commonF+commonL<MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES) return 0;
+        final double sumFLMinusMinCount = commonF+commonL-MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES;
+        if (sumFLMinusMinCount<=0) return 0;
 
         final double norm1 = this.normalizationMap.get(candidate1.getExperiment());
         final double norm2 = this.normalizationMap.get(candidate2.getExperiment());
-        final double score =  ((commonF + commonL) / norm1) + ((commonF + commonL) / norm2);
+        final double score =  ((sumFLMinusMinCount) / norm1) + ((sumFLMinusMinCount) / norm2);
 
         return score;
     }
@@ -224,10 +225,9 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         final double norm1 = this.normalizationMap.get(candidate1.getExperiment());
         final double norm2 = this.normalizationMap.get(candidate2.getExperiment());
 
-        if (commonF+commonL<MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES) return 0;//todo changed!!!!!!!!!!
-
-        final double score =  ((commonF + commonL) / norm1) + ((commonF + commonL) / norm2);
-
+        final double sumFLMinusMinCount = commonF+commonL-MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES;
+        if (sumFLMinusMinCount<=0) return 0;
+        final double score =  ((sumFLMinusMinCount) / norm1) + ((sumFLMinusMinCount) / norm2);
         return score;
     }
 
