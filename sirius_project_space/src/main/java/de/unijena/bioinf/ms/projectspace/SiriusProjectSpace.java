@@ -134,15 +134,16 @@ public class SiriusProjectSpace implements ProjectSpace {
 
         //rewrite Experiments if necessary. Either to convert the project space to a new format
         // or move the Experiments to a new writing location or apply a new naming convention
-        experimentIDs.values().stream().filter(ExperimentDirectory::isRewrite).collect(Collectors.toList()).forEach(expDir -> {
-            try {
-                LOG.info("Writing " + expDir.getDirectoryName() + "to update your project-space to the current version");
-                final ExperimentResult expResult = r.parseExperiment(expDir);
-                writeExperiment(expResult);
-                expDir.setRewrite(false);
-            } catch (IOException e) {
-                LOG.error("Could not update you project-space to the new format");
-            }
+        experimentIDs.values().stream().filter(ExperimentDirectory::isRewrite).collect(Collectors.toList())
+                .forEach(expDir -> {
+                    try {
+                        LOG.info("Writing " + expDir.getDirectoryName() + "to update your project-space to the current version");
+                        final ExperimentResult expResult = r.parseExperiment(expDir);
+                        writeExperiment(expResult);
+                        expDir.setRewrite(false);
+                    } catch (IOException e) {
+                        LOG.error("Could not update you project-space to the new format", e);
+                    }
         });
         return this;
     }

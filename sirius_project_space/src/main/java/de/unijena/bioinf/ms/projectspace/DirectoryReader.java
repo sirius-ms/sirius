@@ -79,10 +79,14 @@ public class DirectoryReader implements ProjectReader {
             }
         }
 
-        default Map<String,String> readKeyValueFile(@NotNull String name) throws IOException {
+        default Map<String, String> readKeyValueFile(@NotNull String name) throws IOException {
+            if (!list().contains(name))
+                return Collections.emptyMap();
+
             return read(name, w -> {
                 return new BufferedReader(w).lines().filter(l -> l != null && !l.isEmpty()).map(l -> l.split("\t")).collect(Collectors.toMap(k -> k[0], v -> v[1]));
             });
+
         }
 
         @FunctionalInterface
@@ -186,7 +190,7 @@ public class DirectoryReader implements ProjectReader {
             try {
                 reader.read(expResult, this, names);
             } catch (IOException e) {
-                LOG.warn("Could not add meta data of " + reader.getClass() + ". Your data might be incomplete.");
+                LOG.warn("Could not add meta data of " + reader.getClass() + ". Your data might be incomplete.", e);
             }
         }
     }
