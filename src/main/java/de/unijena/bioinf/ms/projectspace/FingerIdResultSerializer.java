@@ -93,6 +93,19 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
             if (r.hasAnnotation(FingerIdResult.class)) {
                 final FingerIdResult fingerIdResult = r.getAnnotation(FingerIdResult.class);
 
+                //read fingerprint
+                try {
+                    fingerIdResult.setPredictedFingerprint(env.read(FingerIdLocations.FINGERID_FINGERPRINT.fileName(r), w -> {
+                        return new ProbabilityFingerprint(
+                                api.getFingerprintMaskedVersion(result.getExperiment().getPrecursorIonType().getCharge()), new BufferedReader(w).lines().mapToDouble(Double::valueOf).toArray());
+                    }));
+                } catch (IllegalArgumentException e) {
+                    LoggerFactory.getLogger(getClass()).warn("Fingerprint version of the imported data is imcompatible with the current version. " +
+                            "Fingerpringerprint has to be recomputed!", e);
+                }
+
+
+                //read fingerprint meta data
                 Map<String, String> expInfo = env.readKeyValueFile(FingerIdLocations.FINGERID_FINGERPRINT_INFO.fileName(r));
                 //readConfidence
                 if (expInfo.containsKey("csi_confidence"))
@@ -114,15 +127,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                     }
                 }
 
-                try {
-                    fingerIdResult.setPredictedFingerprint(env.read(FingerIdLocations.FINGERID_FINGERPRINT.fileName(r), w -> {
-                        return new ProbabilityFingerprint(
-                                api.getFingerprintMaskedVersion(result.getExperiment().getPrecursorIonType().getCharge()), new BufferedReader(w).lines().mapToDouble(Double::valueOf).toArray());
-                    }));
-                } catch (IllegalArgumentException e) {
-                    LoggerFactory.getLogger(getClass()).warn("Fingerprint version of the imported data is imcompatible with the current version. " +
-                            "Fingerpringerprint has to be recomputed!", e);
-                }
+
             }
             env.leaveDirectory();
         }

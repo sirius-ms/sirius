@@ -1,28 +1,54 @@
 package de.unijena.bioinf.ms.projectspace;
 
 import com.google.gson.stream.JsonWriter;
-import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
-import de.unijena.bioinf.ChemistryBase.fp.FPIter;
-import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 public class CanopusResultSerializer implements MetaDataSerializer, SummaryWriter {
+    protected final Canopus canopus;
+
+    public CanopusResultSerializer(Canopus canopus) {
+        this.canopus = canopus;
+    }
+
     @Override
-    public void read(@NotNull ExperimentResult input, @NotNull DirectoryReader reader, @NotNull Set<String> names) throws IOException {
-        //todo read something? Dow we want to read canopus results? Why not if not?
+    public void read(@NotNull ExperimentResult expResult, @NotNull DirectoryReader reader, @NotNull Set<String> names) throws IOException {
+        final DirectoryReader.ReadingEnvironment env = reader.env;
+        final List<IdentificationResult> results = expResult.getResults();
+
+        if (!new HashSet<>(env.list()).contains(FingerIdLocations.CANOPUS_FINGERPRINT.directory)) return;
+
+        try {
+            env.enterDirectory(FingerIdLocations.CANOPUS_FINGERPRINT.directory);
+            for (IdentificationResult result : results) {
+                try {
+                    result.setAnnotation(CanopusResult.class, new CanopusResult(env.read(FingerIdLocations.CANOPUS_FINGERPRINT.fileName(result), w -> {
+                        return new ProbabilityFingerprint(canopus.getCanopusMask(), new BufferedReader(w).lines().mapToDouble(Double::valueOf).toArray());
+                    })));
+
+                } catch (IllegalArgumentException e) {
+                    LoggerFactory.getLogger(getClass()).warn("CanopusFingerprint version of the imported data is imcompatible with the current version. " +
+                            "CanopusFingerprint has to be recomputed!", e);
+                }
+            }
+
+        } finally {
+            env.leaveDirectory();
+        }
+
+
     }
 
     @Override
