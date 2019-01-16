@@ -22,13 +22,27 @@ public enum UserDefineablePredictorType {
     }
 
     public PredictorType toPredictorType(@NotNull PrecursorIonType ion) {
-        return toPredictorType(ion.getIonization());
+        return toPredictorType(ion.getCharge());
     }
 
     public PredictorType toPredictorType(@NotNull Ionization ion) {
-        if (ion.getCharge() < 0)
+        return toPredictorType(ion.getCharge());
+    }
+
+    public PredictorType toPredictorType(final int charge) {
+        if (charge < 0)
             return negative;
-        return positive;
+        if (charge > 0)
+            return positive;
+        throw new IllegalArgumentException("Uncharged is not allowed!");
+    }
+
+    public boolean contains(@NotNull final PredictorType type) {
+        return positive == type || negative == type;
+    }
+
+    public EnumSet<PredictorType> asEnumSet() {
+        return EnumSet.of(positive, negative);
     }
 
     public static EnumSet<PredictorType> toPredictorTypes(@NotNull final PrecursorIonType ion, @NotNull UserDefineablePredictorType... types) {

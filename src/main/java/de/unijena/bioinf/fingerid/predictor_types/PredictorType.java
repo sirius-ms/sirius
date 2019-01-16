@@ -1,6 +1,5 @@
 package de.unijena.bioinf.fingerid.predictor_types;
 
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -9,12 +8,33 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public enum PredictorType implements DataAnnotation {
-    CSI_FINGERID_POSITIVE,//CSI for negative ionization
-    IOKR_POSITIVE,
-    CSI_FINGERID_NEGATIVE, //CSI for negative ionization
-    IOKR_NEGATIVE;
+public enum PredictorType {
+    CSI_FINGERID_POSITIVE(true),//CSI for negative ionization
+    IOKR_POSITIVE(true),
+    CSI_FINGERID_NEGATIVE(false), //CSI for negative ionization
+    IOKR_NEGATIVE(false);
 
+
+    private final boolean positive;
+
+    PredictorType(boolean isPositive) {
+        this.positive = isPositive;
+    }
+
+    public boolean isPositive() {
+        return positive;
+    }
+
+    public boolean isNegative() {
+        return !isPositive();
+    }
+
+    public boolean isValid(int charge) {
+        if (charge > 0) return isPositive();
+        if (charge < 0) return isNegative();
+        throw new IllegalArgumentException("Neutral charge is not Allowed!");
+
+    }
 
     public String toBitsAsString() {
         return String.valueOf(toBits());
