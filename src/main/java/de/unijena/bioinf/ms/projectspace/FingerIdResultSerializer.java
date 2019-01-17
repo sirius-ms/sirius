@@ -46,8 +46,9 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
 
         if (!new HashSet<>(env.list()).contains(FingerIdLocations.FINGERID_CANDIDATES.directory)) return;
 
+        reader.env.leaveDirectory();
         Map<String, String> versionInfo = reader.env.readKeyValueFile(FingerIdLocations.SIRIUS_VERSION_FILE.fileName());
-
+        reader.env.enterDirectory(result.getAnnotation(ExperimentDirectory.class).getDirectoryName());
 
         try {
             env.enterDirectory(FingerIdLocations.FINGERID_CANDIDATES.directory);
@@ -60,7 +61,6 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                         BufferedReader br = new BufferedReader(r1);
                         String line = br.readLine();
                         final List<Scored<FingerprintCandidate>> fpcs = new ArrayList<>();
-                        double confidence = 0;
                         while ((line = br.readLine()) != null) {
                             String[] tabs = line.split("\t");
                             final FingerprintCandidate fpc = new FingerprintCandidate(new InChI(tabs[0], tabs[1]), null);
@@ -91,11 +91,8 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
         }
 
         //read Fingerprints
-        if (!new HashSet<>(env.list()).contains(FingerIdLocations.FINGERID_FINGERPRINT.directory)) return;
-        if (isFingerIdCompatible(versionInfo.get("csi:fingerid"))) return;
-
-
-
+        if (!env.list().contains(FingerIdLocations.FINGERID_FINGERPRINT.directory)) return;
+        if (!isFingerIdCompatible(versionInfo.get("csi:fingerid"))) return;
 
         for (IdentificationResult r : results) {
             env.enterDirectory(FingerIdLocations.FINGERID_FINGERPRINT.directory);
@@ -206,7 +203,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
 
         boolean r = false;
         if (version != null)
-            r = VersionsInfo.areMinorEqual(needed, new DefaultArtifactVersion(version));
+            r = VersionsInfo.areMinorEqual(needed, new DefaultArtifactVersion(version.trim()));
         if (!r)
             LoggerFactory.getLogger(getClass()).warn("CSI:FingerID Fingerprints cannot be imported due to Version incompatibility. Expected: " + needed + " Found in ProjectSpace: " + version);
         return r;
@@ -253,8 +250,9 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                             topHits.add(new Scored<>(experimentResult.getExperimentSource() + "\t" + experimentResult.getExperimentName() + "\t" + confidence + "\t" + lines[1] + "\n", confidence));
                         }
 
-                        if (csiVersion == null && !frs.isEmpty())
+                        if (csiVersion == null && !frs.isEmpty()) {
                             csiVersion = frs.get(0).getPredictedFingerprint().getFingerprintVersion();
+                        }
                     }
                 }
 
@@ -293,7 +291,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
             w.write("relativeIndex\tabsoluteIndex\tdescription\n");
             int k = 0;
             for (int index : indizes) {
-                final MolecularProperty prop = (MolecularProperty) version.getMolecularProperty(index);
+                final MolecularProperty prop = version.getMolecularProperty(index);
                 w.write(String.valueOf(k++));
                 w.write('\t');
                 w.write(String.valueOf(index));
