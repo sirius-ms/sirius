@@ -2,6 +2,9 @@ package de.unijena.bioinf.GibbsSampling.model.scorer;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.math.ByMedianEstimatable;
+import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
+import de.unijena.bioinf.ChemistryBase.math.RealDistribution;
 import de.unijena.bioinf.GibbsSampling.model.FragmentWithIndex;
 import de.unijena.bioinf.GibbsSampling.model.FragmentsCandidate;
 import gnu.trove.map.hash.TObjectIntHashMap;
@@ -10,12 +13,32 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CommonFragmentAndLossWithTreeScoresScorer extends CommonFragmentAndLossScorer{
+public class CommonFragmentAndLossScorerNoiseIntensityWeighted extends CommonFragmentAndLossScorer {
 
-    public CommonFragmentAndLossWithTreeScoresScorer(double threshold) {
+    final RealDistribution distribution;
+    private double beta;
+
+    public CommonFragmentAndLossScorerNoiseIntensityWeighted(double threshold) {
         super(threshold);
-        MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 0.1; //changed from 5
+//        MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 0.1; //changed from 5
+        beta = 0.00001;
+        double xmin = 0.002;
+        double medianNoise = 0.015;
+        ByMedianEstimatable<? extends RealDistribution> estimatableDistribution = ParetoDistribution.getMedianEstimator(xmin);
+        distribution = estimatableDistribution.extimateByMedian(medianNoise);
+
     }
+
+
+    private double peakIsNoNoise(double relativeIntensity) {
+        if (relativeIntensity>=1d) return 1d;
+        final double clipping = 1d - distribution.getCumulativeProbability(1d);
+        final double peakIntensity = relativeIntensity;
+        final double noiseProbability = 1d-distribution.getCumulativeProbability(peakIntensity);
+        final double clippingCorrection = (noiseProbability-clipping+beta)/(1-clipping+beta);
+        return 1d-clippingCorrection;
+    }
+
 
 
     /**
@@ -50,7 +73,7 @@ public class CommonFragmentAndLossWithTreeScoresScorer extends CommonFragmentAnd
         double[] maxScore;//todo use 0 as min?
         if (useFragments){
             matchedFragments = new Set[maxIdx*ions.size()];
-             maxScore = new double[maxIdx*ions.size()];
+            maxScore = new double[maxIdx*ions.size()];
         }  else {
             matchedFragments = new Set[maxIdx];
             maxScore = new double[maxIdx];
@@ -115,6 +138,7 @@ public class CommonFragmentAndLossWithTreeScoresScorer extends CommonFragmentAnd
         return peaksWithExplanations;
     }
 
+
     @Override
     public double[] normalization(FragmentsCandidate[][] candidates, double minimum_number_matched_peaks_losses) {
         double[] norm = new double[candidates.length];
@@ -126,10 +150,10 @@ public class CommonFragmentAndLossWithTreeScoresScorer extends CommonFragmentAnd
             for (FragmentsCandidate compoundCandidate : compoundCandidates) {
                 double bestPossibleScore = 0d;
                 for (FragmentWithIndex fragment : compoundCandidate.getFragments()) {
-                    bestPossibleScore += fragment.getScore();
+                    bestPossibleScore += peakIsNoNoise(fragment.getScore());
                 }
                 for (FragmentWithIndex loss : compoundCandidate.getLosses()) {
-                    bestPossibleScore += loss.getScore();
+                    bestPossibleScore += peakIsNoNoise(loss.getScore());
                 }
                 bestPossibleScoreOverAll = Math.max(bestPossibleScoreOverAll, bestPossibleScore);
             }
@@ -142,11 +166,11 @@ public class CommonFragmentAndLossWithTreeScoresScorer extends CommonFragmentAnd
 
     @Override
     protected double scoreMatchedPeaks(PeakWithExplanation peak1, PeakWithExplanation peak2){
-        return Math.max(0, Math.min(peak1.bestScore,peak2.bestScore));//changed to take minimum score of both (at least enables reasonable normalization)
+        return Math.max(0, peakIsNoNoise(peak1.bestScore)*peakIsNoNoise(peak2.bestScore));//todo totally inefficient to do this here
     }
 
     @Override
     protected double scoreMatchedFragments(FragmentWithIndex fragment1, FragmentWithIndex fragment2){
-        return Math.max(0, Math.min(fragment1.getScore(),fragment2.getScore()));//changed to take minimum score of both (at least enables reasonable normalization)
+        return Math.max(0, peakIsNoNoise(fragment1.getScore())*peakIsNoNoise(fragment2.getScore()));
     }
 }
