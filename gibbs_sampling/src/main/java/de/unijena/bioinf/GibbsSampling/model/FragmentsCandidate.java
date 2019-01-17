@@ -136,9 +136,11 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
 
 //            return new Peak(meanMass, meanIntensity);
             //changed
-            return new Peak(meanMass, annotatedPeak.getRelativeIntensity());
+//            return new Peak(meanMass, annotatedPeak.getRelativeIntensity());
+            return new Peak(meanMass, meanIntensity);
         } else {
-            return new Peak(annotatedPeak.getMass(), annotatedPeak.getSumedIntensity());
+//            return new Peak(annotatedPeak.getMass(), annotatedPeak.getSumedIntensity());
+            return new Peak(annotatedPeak.getMass(), annotatedPeak.getMaximalIntensity());
         }
     }
 
@@ -173,7 +175,8 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                 final Score ls = f.getInDegree()==0?null:lscore.get(f.getIncomingEdge());
                 final double score = (fs==null?0d:fs.sum())+(ls==null?0d:ls.sum());
                 //changed
-                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), f.getIonization(), (short)idx, peak.getIntensity()/maxIntensity);
+//                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), f.getIonization(), (short)idx, peak.getIntensity()/maxIntensity);
+                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), f.getIonization(), (short)idx, peak.getIntensity());
 //                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), f.getIonization(), (short)idx, score);
 
             }
@@ -193,10 +196,15 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             final Score ls = f.getInDegree()==0?null:lscore.get(f.getIncomingEdge());
             final double score = (fs==null?0d:fs.sum())+(ls==null?0d:ls.sum());
             //changed
+//            if (f.getFormula().equals(root)){
+//                fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, 1d);
+//            } else {
+//                fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, peak.getIntensity()/maxIntensity);
+//            }
             if (f.getFormula().equals(root)){
-                fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, 1d);
+                fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, maxIntensity);
             } else {
-                fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, peak.getIntensity()/maxIntensity);
+                fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, peak.getIntensity());
             }
 
 //            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, score);
