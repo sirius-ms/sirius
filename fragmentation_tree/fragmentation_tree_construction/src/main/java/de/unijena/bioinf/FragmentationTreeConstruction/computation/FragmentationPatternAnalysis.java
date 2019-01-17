@@ -171,13 +171,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // set precursor ion types
         if (pinput.getExperimentInformation().getPrecursorIonType().isIonizationUnknown()) {
             PossibleIonModes adductTypes = pinput.getExperimentInformation().getAnnotation(PossibleIonModes.class, null);
-            if (adductTypes==null) {
+            /*if (adductTypes==null) {
                 adductTypes = PossibleIonModes.defaultFor(pinput.getExperimentInformation().getPrecursorIonType().getCharge());
-            }
+            }*/
             pinput.setAnnotation(PossibleIonModes.class, adductTypes);
-        } else {
-            pinput.setAnnotation(PossibleIonModes.class, PossibleIonModes.deterministic(pinput.getExperimentInformation().getPrecursorIonType()));
-        }
+        } /*else {
+            pinput.setAnnotation(PossibleIonModes.class, PossibleIonModes.deterministic(pinput.getExperimentInformation().getPrecursorIonType().));
+        }*/
 
         // set whiteset
         if (input.getAnnotation(Whiteset.class, null)!=null) {
