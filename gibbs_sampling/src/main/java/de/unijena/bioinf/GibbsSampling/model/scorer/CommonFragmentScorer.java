@@ -264,7 +264,7 @@ public class CommonFragmentScorer implements EdgeScorer<FragmentsCandidate> {
         return commonCounter;
     }
 
-    public double[] normalization(FragmentsCandidate[][] candidates) {
+    public double[] normalization(FragmentsCandidate[][] candidates, double minimum_number_matched_peaks_losses) {
         int[][] maxMatches = this.getMaximumMatchablePeaks(candidates);
         double[] norm = new double[candidates.length];
 

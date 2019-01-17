@@ -29,7 +29,7 @@ public class ScoreProbabilityDistributionFix<C extends Candidate<?>> extends Sco
     }
 
     @Override
-    public double[] normalization(C[][] var1) {
+    public double[] normalization(C[][] var1, double minimum_number_matched_peaks_losses) {
         return new double[0];
     }
 }
