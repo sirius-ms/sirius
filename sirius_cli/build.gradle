@@ -24,8 +24,8 @@ dependencies {
     compile group: "de.unijena.bioinf.ms", name: "chemical_db_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "confidence_score_predict_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "canopus_predict_oss", version: "$fingeridVersion"
-    compile group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
-    compile group: "net.iharder", name: "base64", version: "2.3.8"
+    compile group: "de.unijena.bioinf.ms", name: "fingerid_client_api_oss", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "fingerid_project_space_oss", version: "$fingeridVersion"
 
     //cdk
     compile "org.openscience.cdk:cdk-silent:$cdk_version"

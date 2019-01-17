@@ -6,6 +6,7 @@ package de.unijena.bioinf.sirius.core;
  */
 
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
+import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 import org.slf4j.Logger;
@@ -30,13 +31,14 @@ import java.util.stream.Collectors;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public abstract class ApplicationCore {
-    public static Logger DEFAULT_LOGGER;
+    public static final Logger DEFAULT_LOGGER;
 
-    public static Path WORKSPACE;
+    public static final String CITATION;
+    public static final String CITATION_BIBTEX;
 
+    public static final Path WORKSPACE;
+    public static final WebAPI WEB_API;
 
-    public static String CITATION;
-    public static String CITATION_BIBTEX;
 
 
     //creating
@@ -177,7 +179,8 @@ public abstract class ApplicationCore {
                                 StandardCharsets.UTF_8)).lines().map(line -> line.startsWith("#") ? line : "#" + line).collect(Collectors.toList());
                 Files.write(customProfileFile, lines);
             } catch (IOException e) {
-                DEFAULT_LOGGER.error("Could NOT create sirius properties file", e);
+                System.err.println("Could NOT create sirius properties file");
+                e.printStackTrace();
             }
         }
 
@@ -229,8 +232,10 @@ public abstract class ApplicationCore {
 
         //bug reporting
         ErrorReporter.INIT_PROPS(PropertyManager.PROPERTIES);
-        DEFAULT_LOGGER.info("Bug reporter initialized!");
+        DEFAULT_LOGGER.info("Bug reporter initialized.");
 
+        WEB_API = new WebAPI();
+        DEFAULT_LOGGER.info("Web API initialized.");
     }
 
     private static void deleteFromWorkspace(final Path... files) {

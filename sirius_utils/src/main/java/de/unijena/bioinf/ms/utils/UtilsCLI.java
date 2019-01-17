@@ -10,11 +10,10 @@ import de.unijena.bioinf.babelms.DataWriter;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.mgf.MgfWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
-import de.unijena.bioinf.ms.projectspace.fingerid.FingeridProjectSpaceFactory;
-import de.unijena.bioinf.ms.projectspace.ProjectSpaceUtils;
+import de.unijena.bioinf.ms.projectspace.FilenameFormatter;
+import de.unijena.bioinf.ms.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.ms.projectspace.StandardMSFilenameFormatter;
 import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
-import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.projectspace.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -260,7 +259,7 @@ public class UtilsCLI {
 
 
             Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(false);
-            MutableMs2Dataset dataset = new MutableMs2Dataset(experiments, "default", Double.NaN, (new Sirius()).getMs2Analyzer().getDefaultProfile());
+            MutableMs2Dataset dataset = new MutableMs2Dataset(experiments, Double.NaN);
             preprocessor.estimateIsolationWindow(dataset);
             IsolationWindow isolationWindow = dataset.getIsolationWindow();
             if (isolationWindow.getEstimatedWindowSize() <= 1) {
@@ -507,25 +506,12 @@ public class UtilsCLI {
             System.exit(0);
         }
 
-
         Path output = Paths.get(options.getOutput()).toAbsolutePath();
-        File[] inputFiles = options.getInput().stream().map(File::new).toArray(l->new File[l]);
-
-        List<ExperimentResult> experimentResults = new ArrayList<>();
-        for (File inputFile : inputFiles) {
-            try {
-                experimentResults.addAll(loadWorkspace(inputFile));
-            } catch (IOException e) {
-                Log.error("Error reading workspace: " + inputFile);
-                Log.error(e.getMessage());
-                System.exit(-1);
-            }
-        }
-
 
         boolean isZip = false;
         String lowercaseName = output.getFileName().toString().toLowerCase();
-        if (lowercaseName.endsWith(".workspace") || lowercaseName.endsWith(".zip") || lowercaseName.endsWith(".sirius")) isZip = true;
+        if (lowercaseName.endsWith(".workspace") || lowercaseName.endsWith(".zip") || lowercaseName.endsWith(".sirius"))
+            isZip = true;
 
 
         FilenameFormatter filenameFormatter = null;
@@ -542,10 +528,39 @@ public class UtilsCLI {
             filenameFormatter = new StandardMSFilenameFormatter();
         }
 
-        String dirOutput = isZip?null:output.toString();
-        String siriusOutput = isZip?output.toString():null;
+        List<File> inputFiles = options.getInput().stream().map(File::new).collect(Collectors.toList());
 
-        ProjectWriter projectWriter = null;
+        if (isZip) {
+            throw new IllegalArgumentException("Zip output ist Currently not supported");
+        } else {
+            try {
+                //todo meta data serializer and summary writer
+                SiriusProjectSpace.create(output.toFile(), inputFiles, filenameFormatter).close();
+
+            } catch (IOException e) {
+                Log.error("Error when collecting workspaces");
+            }
+        }
+
+
+        /*List<ExperimentResult> experimentResults = new ArrayList<>();
+        for (File inputFile : inputFiles) {
+            try {
+                experimentResults.addAll(loadWorkspace(inputFile));
+            } catch (IOException e) {
+                Log.error("Error reading workspace: " + inputFile);
+                Log.error(e.getMessage());
+                System.exit(-1);
+            }
+        }
+*/
+
+
+//        String dirOutput = isZip?null:output.toString();
+//        String siriusOutput = isZip?output.toString():null;
+
+
+        /*ProjectWriter projectWriter = null;
         try {
             ProjectSpaceUtils.ProjectWriterInfo projectWriterInfo = ProjectSpaceUtils.getProjectWriter(dirOutput, siriusOutput, new FingeridProjectSpaceFactory(filenameFormatter));
             projectWriter = projectWriterInfo.getProjectWriter();
@@ -569,14 +584,14 @@ public class UtilsCLI {
                 };
             }
 
-        }
+        }*/
 
 
 
     }
 
 
-    protected List<ExperimentResult> loadWorkspace(File file) throws IOException {
+    /*protected List<ExperimentResult> loadWorkspace(File file) throws IOException {
         final List<ExperimentResult> results = new ArrayList<>();
         final DirectoryReader.ReadingEnvironment env;
         if (file.isDirectory()) {
@@ -591,7 +606,7 @@ public class UtilsCLI {
             results.add(result);
         }
         return results;
-    }
+    }*/
 
 
 

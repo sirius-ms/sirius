@@ -4,13 +4,13 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.fingerid.FingerIDJJob;
 import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.fingerid.jjobs.FingerIDJJob;
 import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.ms.projectspace.ExperimentResultJJob;
 import de.unijena.bioinf.ms.projectspace.ProjectWriter;
 import de.unijena.bioinf.sirius.ExperimentResult;
+import de.unijena.bioinf.sirius.ExperimentResultJJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,7 +118,7 @@ public class FingerIdWorkflow implements Workflow<Instance> {
     protected ExperimentResult handleJobs(BufferedJJobSubmitter<Instance>.JobContainer jc) throws IOException {
         //todo add a getJobByIntanceOf method?!
         //sirius
-        ExperimentResultJJob j = jc.getJob(SiriusInstanceProcessor.ExperimentResultForSiriusJJob.class);
+        ExperimentResultJJob j = (ExperimentResultJJob) jc.getJob(SiriusInstanceProcessor.ExperimentResultForSiriusJJob.class);
         System.out.println("Sirius results for: '" + jc.sourceInstance.file.getName() + "', " + jc.sourceInstance.experiment.getName());
         ExperimentResult experimentResult = null;
         if (j != null){
