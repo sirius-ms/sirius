@@ -145,8 +145,9 @@ public class DirectoryWriter implements ProjectWriter {
     }
 
     @Override
-    public void deleteExperiment(@NotNull final ExperimentDirectory expDir) throws IOException {
+    public boolean deleteExperiment(@NotNull final ExperimentDirectory expDir) throws IOException {
         env.deleteDirectory(expDir.getDirectoryName());
+        return true;
     }
 
     @Override

@@ -64,6 +64,7 @@ public class SiriusProjectSpace implements ProjectSpace {
 
     private final LinkedHashMap<String, ExperimentDirectory> experimentIDs = new LinkedHashMap<>();
     protected final List<SummaryWriter> summaryWriters = new ArrayList<>();
+    protected final Map<String, String> versionInfo = new HashMap<>();
 
     protected DirectoryWriter writer;
     protected DirectoryReader reader;
@@ -85,9 +86,10 @@ public class SiriusProjectSpace implements ProjectSpace {
 
         this.filenameFormatter = filenameFormatter != null ? filenameFormatter : readFormatter(rootPath);
 
-        summaryWriters.addAll(initBasicSummaries());
-        summaryWriters.addAll(Arrays.stream(metaDataSerializers)
+        addVersionInfo("sirius", PropertyManager.getProperty("de.unijena.bioinf.sirius.versionString"));
+        registerSummaryWriter(Arrays.stream(metaDataSerializers)
                 .filter(v -> v instanceof SummaryWriter).map(v -> (SummaryWriter) v).collect(Collectors.toList()));
+
     }
 
     @NotNull
@@ -115,30 +117,41 @@ public class SiriusProjectSpace implements ProjectSpace {
         loadProjectSpace(reader, new TIntHashSet(), false);
     }
 
-    private SiriusProjectSpace loadProjectSpace(@NotNull final DirectoryReader r, @NotNull final TIntSet ids, boolean forceRewrite) {
+    private SiriusProjectSpace loadProjectSpace(@NotNull final DirectoryReader r, @NotNull final TIntSet ids, final boolean forceRewrite) {
+        final ArrayList<ExperimentDirectory> expDirs = new ArrayList<>();
         r.forEach(expDir -> {
-            //resolve index conflicts
+            expDirs.add(expDir);
+            //resolve index conflicts and specify rewrite behaviour
             if (expDir.hasIndex() && !ids.add(expDir.getIndex())) {
                 expDir.setIndex(ExperimentDirectory.NO_INDEX);
                 expDir.setRewrite(true);
-            } else {
-                expDir.setRewrite(forceRewrite || expDir.isRewrite());
             }
 
-            addID(expDir);
+            if (forceRewrite) {
+                expDir.setRewrite(true);
+            } else {
+                addID(expDir);
+            }
+
             currentMaxIndex = Math.max(currentMaxIndex, expDir.getIndex());
         });
 
-        experimentIDs.values().stream().filter(ExperimentDirectory::hasNoIndex).forEach(expDir ->
-                expDir.setIndex(++currentMaxIndex));
+        expDirs.stream().filter(ExperimentDirectory::hasNoIndex).forEach(expDir -> {
+            final int index = ++currentMaxIndex;
+            if (!ids.add(index))
+                throw new IllegalArgumentException("Index is already assigned " + index + ". Assigned indices: " + Arrays.toString(ids.toArray())); //todo special index exception
+            expDir.setIndex(index);
+        });
 
         //rewrite Experiments if necessary. Either to convert the project space to a new format
-        // or move the Experiments to a new writing location or apply a new naming convention
-        experimentIDs.values().stream().filter(ExperimentDirectory::isRewrite).collect(Collectors.toList())
+        //or to move the Experiments to a new writing location or apply a new naming convention
+        expDirs.stream().filter(ExperimentDirectory::isRewrite).collect(Collectors.toList())
                 .forEach(expDir -> {
                     try {
                         LOG.info("Writing " + expDir.getDirectoryName() + "to update your project-space to the current version");
                         final ExperimentResult expResult = r.parseExperiment(expDir);
+                        if (forceRewrite)
+                            expDir.setDirectoryName(null);
                         writeExperiment(expResult);
                         expDir.setRewrite(false);
                     } catch (IOException e) {
@@ -163,19 +176,26 @@ public class SiriusProjectSpace implements ProjectSpace {
         return experimentIDs.remove(expDir.getDirectoryName());
     }
 
-    protected List<SummaryWriter> initBasicSummaries() {
+    protected List<SummaryWriter> makeBasicSummaries() {
         List<SummaryWriter> sums = new ArrayList<>();
 
         sums.add((experiments, writer) -> {
-            final String v = PropertyManager.getProperty("de.unijena.bioinf.sirius.versionString");
-            if (v != null) {
-                try {
-                    writer.write(SiriusLocations.SIRIUS_VERSION_FILE.fileName(), w -> w.write(v));
-                } catch (IOException e) {
-                    LOG.error("Could not write Version info", e);
-                }
+            try {
+                writer.write(SiriusLocations.SIRIUS_VERSION_FILE.fileName(), w -> {
+                    for (Map.Entry<String, String> entry : versionInfo.entrySet()) {
+                        if (entry.getValue() != null) {
+                            w.write(entry.getKey() + "\t" + entry.getValue());
+                            w.write(System.lineSeparator());
+                        } else {
+                            LOG.error("NO version info for key: " + entry.getKey());
+                        }
+                    }
+                });
+            } catch (IOException e) {
+                LOG.error("Could not write Version info", e);
             }
         });
+
 
         sums.add((experiments, writer) -> {
             final String v = PropertyManager.getProperty("de.unijena.bioinf.sirius.cite");
@@ -185,6 +205,8 @@ public class SiriusProjectSpace implements ProjectSpace {
                 } catch (IOException e) {
                     LOG.error("Could not write Citation info", e);
                 }
+            } else {
+                LOG.error("NO Citation info found!");
             }
         });
 
@@ -215,7 +237,7 @@ public class SiriusProjectSpace implements ProjectSpace {
      *
      */
     @Override
-    public ExperimentResult parseExperiment(ExperimentDirectory id) throws IOException {
+    public ExperimentResult parseExperiment(ExperimentDirectory id) throws IOException, IllegalArgumentException {
         if (!experimentIDs.containsKey(id.getDirectoryName()))
             throw new IllegalArgumentException("The project-space does not contain the given ID: " + id.getDirectoryName());
 
@@ -223,16 +245,19 @@ public class SiriusProjectSpace implements ProjectSpace {
     }
 
     @Override
-    public void deleteExperiment(ExperimentDirectory id) throws IOException {
-        if (removeID(id) == null)
-            throw new IllegalArgumentException("The project-space does not contain the given ID: " + id.getDirectoryName());
-        writer.deleteExperiment(id);
+    public boolean deleteExperiment(ExperimentDirectory id) throws IOException {
+        if (removeID(id) != null) {
+            writer.deleteExperiment(id);
+            return true;
+        }
+        return false;
+
     }
 
     @Override
     public void writeExperiment(final @NotNull ExperimentResult result) throws IOException {
         final ExperimentDirectory expDir = result.computeAnnotationIfAbsent(ExperimentDirectory.class, () -> createID(result));
-        final String nuName = filenameFormatter.formatName(result, result.getAnnotation(ExperimentDirectory.class).getIndex());
+        final String nuName = filenameFormatter.formatName(result, expDir.getIndex());
 
         if (!nuName.equals(expDir.getDirectoryName())) { //rewrite with new name and delete old
             //check if new name conflicts with old name
@@ -240,7 +265,7 @@ public class SiriusProjectSpace implements ProjectSpace {
                 throw new IOException(
                         "Duplicate Experiment name. " +
                                 "Either your naming scheme doe not create unique experiment names " +
-                                "or som experiment naming results in a naming conflict");
+                                "or some project merging or renaming results in a naming conflict");
 
             final ExperimentDirectory deleteKey = new ExperimentDirectory(expDir.getDirectoryName());
             expDir.setDirectoryName(nuName);
@@ -253,15 +278,16 @@ public class SiriusProjectSpace implements ProjectSpace {
     }
 
     @Override
-    public void writeSummaries(Iterable<ExperimentResult> resultsToSummarize) {
-        for (SummaryWriter summaryWriter : summaryWriters) {
+    public void writeSummaries(@NotNull final Iterable<ExperimentResult> resultsToSummarize) {
+        for (SummaryWriter summaryWriter : summaryWriters)
             summaryWriter.writeSummary(resultsToSummarize, writer);
-        }
+        makeBasicSummaries().forEach(sw -> sw.writeSummary(resultsToSummarize, writer));
     }
 
     @Override
     public void registerSummaryWriter(List<SummaryWriter> writers) {
         summaryWriters.addAll(writers);
+        writers.forEach(sw -> sw.getVersionInfo().forEach(this::addVersionInfo));
     }
 
     @Override
@@ -274,8 +300,16 @@ public class SiriusProjectSpace implements ProjectSpace {
         return experimentIDs.size();
     }
 
+
+    public String addVersionInfo(@NotNull final String key, @NotNull final String value) {
+        if (key.contains("\t"))
+            throw new IllegalArgumentException("TAB is not allowed in the key");
+        return versionInfo.put(key, value.replaceAll("\t", " "));
+    }
+
     @Override
     public void close() throws IOException {
+        writeSummaries(parseExperiments());
         reader.close();
         writer.close();
     }

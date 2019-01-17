@@ -49,6 +49,17 @@ public interface SiriusLocations {
             return makeFileName(result) + fileExtension;
         }
 
+        public String toAbsolutePath(ExperimentDirectory ex, IdentificationResult result) {
+            StringBuilder location = new StringBuilder();
+            if (ex != null)
+                location.append(ex.getDirectoryName()).append("/");
 
+            if (directory != null && !directory.isEmpty())
+                location.append(directory).append("/");
+
+            location.append(fileName(result));
+
+            return location.toString();
+        }
     }
 }
