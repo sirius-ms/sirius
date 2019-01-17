@@ -13,7 +13,9 @@ import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.ms.projectspace.fingerid.FingerIdResultWriter;
+import de.unijena.bioinf.ms.projectspace.ExperimentDirectory;
+import de.unijena.bioinf.ms.projectspace.FingerIdLocations;
+import de.unijena.bioinf.ms.projectspace.SiriusLocations;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jetbrains.annotations.NotNull;
@@ -36,12 +38,10 @@ public class MztabMExporter {
 
     private boolean fingerID = false;
 
-    private final FingerIdResultWriter.Locations locations;
     private final Map<String, MsRun> pathToRun = new HashMap<>();
 
 
-    public MztabMExporter(@NotNull FingerIdResultWriter.Locations locations) {
-        this.locations = locations;
+    public MztabMExporter() {
         mztab = new MzTab();
         mztab.setMetadata(
                 buildMTDBlock()
@@ -52,8 +52,8 @@ public class MztabMExporter {
         setTitle("SIRIUS Analysis Report: " + id.toString());
     }
 
-    public MztabMExporter(@NotNull FingerIdResultWriter.Locations locations, String title, String id) {
-        this(locations);
+    public MztabMExporter(String title, String id) {
+        this();
         setTitle(title);
         setID(id);
     }
@@ -84,7 +84,7 @@ public class MztabMExporter {
 
 
         for (IdentificationResult result : results) {
-            final FingerIdResult r = result.getAnnotationOrNull(FingerIdResult.class);
+            final FingerIdResult r = result.getAnnotation(FingerIdResult.class);
 
             if (r != null && r.getCandidates() != null) {
                 final Scored<FingerprintCandidate> localBest = r.getCandidates().stream().min(Scored.desc()).orElse(null);
@@ -179,7 +179,7 @@ public class MztabMExporter {
 
         smeItem.setIdentificationMethod(SiriusMZTabParameter.SOFTWARE_SIRIUS);
         smeItem.setRank(bestHitSource.getRank());
-        smeItem.setEvidenceInputId(locations.makeMassIdentifier(er, bestHitSource));
+        smeItem.setEvidenceInputId(makeMassIdentifier(er, bestHitSource));
 
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_SCORE, String.valueOf(bestHitSource.getScore())));
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_ISOTOPE_SCORE, String.valueOf(bestHitSource.getIsotopeScore())));
@@ -188,9 +188,10 @@ public class MztabMExporter {
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_EXPL_PEAKS, String.valueOf(bestHitSource.getNumOfExplainedPeaks())));
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_EXPL_PEAKS, String.valueOf(bestHitSource.getExplainedIntensityRatio())));
 //        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.SIRIUS_MED_ABS_MASS_DEVIATION,));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_ANNOTATED_SPECTRA_LOCATION, locations.SIRIUS_ANNOTATED_SPECTRA.path(er, bestHitSource)));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_TREE_LOCATION, locations.SIRIUS_TREES_JSON.path(er, bestHitSource)));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_CANDIDATE_LOCATION, locations.SIRIUS_SUMMARY.path(er, bestHitSource)));
+        final ExperimentDirectory erDir = er.getAnnotation(ExperimentDirectory.class);
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_ANNOTATED_SPECTRA_LOCATION, SiriusLocations.SIRIUS_ANNOTATED_SPECTRA.toAbsolutePath(erDir, bestHitSource)));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_TREE_LOCATION, SiriusLocations.SIRIUS_TREES_JSON.toAbsolutePath(erDir, bestHitSource)));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_CANDIDATE_LOCATION, SiriusLocations.SIRIUS_SUMMARY.toAbsolutePath(erDir, bestHitSource)));
 
         return smeItem;
     }
@@ -199,7 +200,7 @@ public class MztabMExporter {
         SmallMoleculeEvidence smeItem = buildSiriusSMEItem(er, bestHitSource, smfItem);
         smeItem.setIdentificationMethod(SiriusMZTabParameter.SOFTWARE_FINGER_ID);
         smeItem.setRank(1); //todo make exported result user definable in gui
-        smeItem.setEvidenceInputId(locations.makeFormulaIdentifier(er, bestHitSource));
+        smeItem.setEvidenceInputId(makeFormulaIdentifier(er, bestHitSource));
 
         smeItem.setChemicalName(bestHit.getCandidate().getName());
         smeItem.setInchi(bestHit.getCandidate().getInchi().in2D);
@@ -212,8 +213,9 @@ public class MztabMExporter {
 
 
 //        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.FINGERID_TANIMOTO_SIMILARITY, bestHit.getCandidate()));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_FINGERPRINT_LOCATION, locations.FINGERID_FINGERPRINT.path(er, bestHitSource)));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_CANDIDATE_LOCATION, locations.FINGERID_SUMMARY.path(er, bestHitSource)));
+        final ExperimentDirectory erDir = er.getAnnotation(ExperimentDirectory.class);
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_FINGERPRINT_LOCATION, FingerIdLocations.FINGERID_FINGERPRINT.toAbsolutePath(erDir, bestHitSource)));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_CANDIDATE_LOCATION, FingerIdLocations.FINGERID_SUMMARY.toAbsolutePath(erDir, bestHitSource)));
 
 
         return smeItem;
@@ -365,4 +367,15 @@ public class MztabMExporter {
             return ref;
         }).collect(Collectors.toCollection(ArrayList::new));
     }
+
+    protected static String makeFormulaIdentifier(ExperimentResult ex, IdentificationResult result) {
+        return ex.getAnnotation(ExperimentDirectory.class).getDirectoryName() + ":" + result.getMolecularFormula() + ":" + SiriusLocations.simplify(result.getPrecursorIonType());
+    }
+
+    protected String makeMassIdentifier(ExperimentResult ex, IdentificationResult result) {
+        return ex.getAnnotation(ExperimentDirectory.class).getDirectoryName() + ":" + ex.getExperiment().getIonMass() + ":" + SiriusLocations.simplify(result.getPrecursorIonType().withoutAdduct());
+    }
+
+
+
 }

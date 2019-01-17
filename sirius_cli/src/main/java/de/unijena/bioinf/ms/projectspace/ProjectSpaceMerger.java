@@ -1,6 +1,6 @@
+/*
 package de.unijena.bioinf.ms.projectspace;
 
-import de.unijena.bioinf.babelms.Index;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.slf4j.LoggerFactory;
 
@@ -92,3 +92,4 @@ public class ProjectSpaceMerger implements ProjectWriter {
     }
 
 }
+*/
