@@ -11,10 +11,14 @@ import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import de.unijena.bioinf.fingerid.webapi.VersionsInfo;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -41,6 +45,8 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
         final List<IdentificationResult> results = result.getResults();
 
         if (!new HashSet<>(env.list()).contains(FingerIdLocations.FINGERID_CANDIDATES.directory)) return;
+
+        Map<String, String> versionInfo = reader.env.readKeyValueFile(FingerIdLocations.SIRIUS_VERSION_FILE.fileName());
 
 
         try {
@@ -86,6 +92,10 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
 
         //read Fingerprints
         if (!new HashSet<>(env.list()).contains(FingerIdLocations.FINGERID_FINGERPRINT.directory)) return;
+        if (isFingerIdCompatible(versionInfo.get("csi:fingerid"))) return;
+
+
+
 
         for (IdentificationResult r : results) {
             env.enterDirectory(FingerIdLocations.FINGERID_FINGERPRINT.directory);
@@ -191,6 +201,17 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
         });
     }
 
+    private boolean isFingerIdCompatible(@Nullable final String version) {
+        DefaultArtifactVersion needed = new DefaultArtifactVersion(FingerIDProperties.fingeridVersion());
+
+        boolean r = false;
+        if (version != null)
+            r = VersionsInfo.areMinorEqual(needed, new DefaultArtifactVersion(version));
+        if (!r)
+            LoggerFactory.getLogger(getClass()).warn("CSI:FingerID Fingerprints cannot be imported due to Version incompatibility. Expected: " + needed + " Found in ProjectSpace: " + version);
+        return r;
+    }
+
     private boolean hasFingerId(List<IdentificationResult> results) {
         for (IdentificationResult r : results) {
             if (r.hasAnnotation(FingerIdResult.class)) return true;
@@ -240,6 +261,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                 if (topHits.size() > 0) {
                     writeSummaryCSV(topHits, writer);
                 }
+
                 writeFingerprintIndex(FingerIdLocations.FINGERID_FINGERPRINT_INDEX.fileName(), csiVersion, writer);
             }
         } catch (IOException e) {
@@ -281,9 +303,9 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
             }
         });
     }
-    //protected MztabMExporter mztabMExporter = new MztabMExporter(locations());
-    //System.out.println("Adding result to report mztab");
-    //mztabMExporter.addExperiment(er, results);
-    //System.out.println("Writing Summary mztab");
-    //write(locations().WORKSPACE_SUMMARY.fileName(), w -> mztabMExporter.write(w));
+
+    @Override
+    public Map<String, String> getVersionInfo() {
+        return Collections.singletonMap("csi:fingerid", FingerIDProperties.fingeridVersion());
+    }
 }
