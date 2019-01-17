@@ -12,10 +12,9 @@ import java.util.Set;
 
 public class CommonFragmentAndLossWithTreeScoresScorer extends CommonFragmentAndLossScorer{
 
-    protected  double MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 0.1; //changed from 5
-
     public CommonFragmentAndLossWithTreeScoresScorer(double threshold) {
         super(threshold);
+        MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 0.1; //changed from 5
     }
 
 
@@ -117,12 +116,37 @@ public class CommonFragmentAndLossWithTreeScoresScorer extends CommonFragmentAnd
     }
 
     @Override
+    public double[] normalization(FragmentsCandidate[][] candidates, double minimum_number_matched_peaks_losses) {
+        double[] norm = new double[candidates.length];
+
+        for(int i = 0; i < candidates.length; ++i) {
+            FragmentsCandidate[] compoundCandidates = candidates[i];
+            double bestPossibleScoreOverAll = -1;
+
+            for (FragmentsCandidate compoundCandidate : compoundCandidates) {
+                double bestPossibleScore = 0d;
+                for (FragmentWithIndex fragment : compoundCandidate.getFragments()) {
+                    bestPossibleScore += fragment.getScore();
+                }
+                for (FragmentWithIndex loss : compoundCandidate.getLosses()) {
+                    bestPossibleScore += loss.getScore();
+                }
+                bestPossibleScoreOverAll = Math.max(bestPossibleScoreOverAll, bestPossibleScore);
+            }
+
+            norm[i] = bestPossibleScoreOverAll-minimum_number_matched_peaks_losses;
+        }
+
+        return norm;
+    }
+
+    @Override
     protected double scoreMatchedPeaks(PeakWithExplanation peak1, PeakWithExplanation peak2){
-        return Math.max(0, peak1.bestScore+peak2.bestScore);
+        return Math.max(0, Math.min(peak1.bestScore,peak2.bestScore));//changed to take minimum score of both (at least enables reasonable normalization)
     }
 
     @Override
     protected double scoreMatchedFragments(FragmentWithIndex fragment1, FragmentWithIndex fragment2){
-        return Math.max(0, fragment1.getScore()+fragment2.getScore());
+        return Math.max(0, Math.min(fragment1.getScore(),fragment2.getScore()));//changed to take minimum score of both (at least enables reasonable normalization)
     }
 }
