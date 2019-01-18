@@ -18,41 +18,63 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeighted extends CommonFra
     final RealDistribution distribution;
     private double beta;
     private double maxClip;
-    public CommonFragmentAndLossScorerNoiseIntensityWeighted(double threshold, double medianNoise) {
+    public CommonFragmentAndLossScorerNoiseIntensityWeighted(double threshold) {
         super(threshold);
-//        MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 0.1; //changed from 5
+        MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 1d; //changed from 5
         beta = 0.00001;
-//        double xmin = 0.002;
+        double xmin = 0.002;
 //        double medianNoise = 0.005;
-        double xmin = medianNoise/10d;
-        maxClip = medianNoise*100d;
+        double medianNoise = 0.015;
         ByMedianEstimatable<? extends RealDistribution> estimatableDistribution = ParetoDistribution.getMedianEstimator(xmin);
         distribution = estimatableDistribution.extimateByMedian(medianNoise);
 
     }
 
 
-
-    public static void main(String... args) {
-        CommonFragmentAndLossScorerNoiseIntensityWeighted noiseScorer = new CommonFragmentAndLossScorerNoiseIntensityWeighted(1, 1800);
-        for (int i = 0; i < 200; i++) {
-//            double inti = i/200.0;
-            double inti = i*100;
-            System.out.println(inti+" "+(noiseScorer.peakIsNoNoise(inti)));
-
-        }
-    }
-
     private double peakIsNoNoise(double relativeIntensity) {
-//        if (relativeIntensity>=1d) return 1d;
-//        final double clipping = 1d - distribution.getCumulativeProbability(1d);
-        if (relativeIntensity>=maxClip) return 1d;
-        final double clipping = 1d - distribution.getCumulativeProbability(maxClip);
+        if (relativeIntensity>=1d) return 1d;
+        final double clipping = 1d - distribution.getCumulativeProbability(1d);
         final double peakIntensity = relativeIntensity;
         final double noiseProbability = 1d-distribution.getCumulativeProbability(peakIntensity);
         final double clippingCorrection = (noiseProbability-clipping+beta)/(1-clipping+beta);
         return 1d-clippingCorrection;
     }
+
+
+//    public static void main(String... args) {
+//        CommonFragmentAndLossScorerNoiseIntensityWeighted noiseScorer = new CommonFragmentAndLossScorerNoiseIntensityWeighted(1, 1800);
+//        for (int i = 0; i < 200; i++) {
+////            double inti = i/200.0;
+//            double inti = i*100;
+//            System.out.println(inti+" "+(noiseScorer.peakIsNoNoise(inti)));
+//
+//        }
+//    }
+
+
+//    public CommonFragmentAndLossScorerNoiseIntensityWeighted(double threshold, double medianNoise) {
+//        super(threshold);
+//        MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 1d; //changed from 5
+//        beta = 0.00001;
+////        double xmin = 0.002;
+////        double medianNoise = 0.005;
+//        double xmin = medianNoise/10d;
+//        maxClip = medianNoise*100d;
+//        ByMedianEstimatable<? extends RealDistribution> estimatableDistribution = ParetoDistribution.getMedianEstimator(xmin);
+//        distribution = estimatableDistribution.extimateByMedian(medianNoise);
+//
+//    }
+
+//    private double peakIsNoNoise(double relativeIntensity) {
+////        if (relativeIntensity>=1d) return 1d;
+////        final double clipping = 1d - distribution.getCumulativeProbability(1d);
+//        if (relativeIntensity>=maxClip) return 1d;
+//        final double clipping = 1d - distribution.getCumulativeProbability(maxClip);
+//        final double peakIntensity = relativeIntensity;
+//        final double noiseProbability = 1d-distribution.getCumulativeProbability(peakIntensity);
+//        final double clippingCorrection = (noiseProbability-clipping+beta)/(1-clipping+beta);
+//        return 1d-clippingCorrection;
+//    }
 
 
 
