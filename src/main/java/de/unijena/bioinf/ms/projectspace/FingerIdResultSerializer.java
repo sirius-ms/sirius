@@ -29,16 +29,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-//todo handle fingerprint version correctly
 public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWriter {
     private static Pattern DBPAT = Pattern.compile("([^(])+\\(([^)]+)\\)");
 
     protected final WebAPI api;
-
     public FingerIdResultSerializer(WebAPI api) {
         this.api = api;
     }
 
+    protected Boolean readFingerprints = null;
     @Override
     public void read(@NotNull final ExperimentResult result, @NotNull final DirectoryReader reader, @NotNull Set<String> names) throws IOException {
         final DirectoryReader.ReadingEnvironment env = reader.env;
@@ -46,9 +45,14 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
 
         if (!new HashSet<>(env.list()).contains(FingerIdLocations.FINGERID_CANDIDATES.directory)) return;
 
-        reader.env.leaveDirectory();
-        Map<String, String> versionInfo = reader.env.readKeyValueFile(FingerIdLocations.SIRIUS_VERSION_FILE.fileName());
-        reader.env.enterDirectory(result.getAnnotation(ExperimentDirectory.class).getDirectoryName());
+        // begin ugly
+        if (readFingerprints == null) {
+            reader.env.leaveDirectory();
+            Map<String, String> versionInfo = reader.env.readKeyValueFile(FingerIdLocations.SIRIUS_VERSION_FILE.fileName());
+            readFingerprints = isFingerIdCompatible(versionInfo.get("csi:fingerid"));
+            reader.env.enterDirectory(result.getAnnotation(ExperimentDirectory.class).getDirectoryName());
+        }
+        // ugly end
 
         try {
             env.enterDirectory(FingerIdLocations.FINGERID_CANDIDATES.directory);
@@ -92,7 +96,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
 
         //read Fingerprints
         if (!env.list().contains(FingerIdLocations.FINGERID_FINGERPRINT.directory)) return;
-        if (!isFingerIdCompatible(versionInfo.get("csi:fingerid"))) return;
+        if (!readFingerprints) return;
 
         for (IdentificationResult r : results) {
             env.enterDirectory(FingerIdLocations.FINGERID_FINGERPRINT.directory);
@@ -133,8 +137,6 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                         }
                     }
                 }
-
-
             }
             env.leaveDirectory();
         }
@@ -198,14 +200,13 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
         });
     }
 
-    private boolean isFingerIdCompatible(@Nullable final String version) {
+    public static boolean isFingerIdCompatible(@Nullable final String version) {
         DefaultArtifactVersion needed = new DefaultArtifactVersion(FingerIDProperties.fingeridVersion());
-
         boolean r = false;
         if (version != null)
             r = VersionsInfo.areMinorEqual(needed, new DefaultArtifactVersion(version.trim()));
         if (!r)
-            LoggerFactory.getLogger(getClass()).warn("CSI:FingerID Fingerprints cannot be imported due to Version incompatibility. Expected: " + needed + " Found in ProjectSpace: " + version);
+            LoggerFactory.getLogger(FingerIdResultSerializer.class).warn("Fingerprints cannot be imported due to Version incompatibility. Expected: " + needed + " Found in ProjectSpace: " + version);
         return r;
     }
 
@@ -250,7 +251,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                             topHits.add(new Scored<>(experimentResult.getExperimentSource() + "\t" + experimentResult.getExperimentName() + "\t" + confidence + "\t" + lines[1] + "\n", confidence));
                         }
 
-                        if (csiVersion == null && !frs.isEmpty()) {
+                        if (csiVersion == null && !frs.isEmpty() && frs.get(0).getPredictedFingerprint() != null) {
                             csiVersion = frs.get(0).getPredictedFingerprint().getFingerprintVersion();
                         }
                     }
