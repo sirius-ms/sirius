@@ -385,7 +385,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         String ionsByMs1 = "";
         if (result.length>0){
             Ms2Experiment experiment = result[0].getCandidate().getExperiment();
-            //TODO hack: this don't have to be the ions used for SIRIUS computation in the first place!
+            //TODO hack: this don't have to be the iondetection used for SIRIUS computation in the first place!
             Sirius.GuessIonizationFromMs1Result guessIonization = getIonsFromMs1Hack(experiment, sirius);
             PrecursorIonType[] ms1IonModes = guessIonization.getGuessedIonTypes();
             if (ms1IonModes!=null && ms1IonModes.length>=1){
