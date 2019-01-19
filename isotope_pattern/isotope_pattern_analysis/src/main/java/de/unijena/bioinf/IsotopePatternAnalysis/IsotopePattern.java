@@ -20,8 +20,9 @@ package de.unijena.bioinf.IsotopePatternAnalysis;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 
-public class IsotopePattern extends Scored<MolecularFormula> {
+public final class IsotopePattern extends Scored<MolecularFormula>  implements TreeAnnotation  {
 
     private final SimpleSpectrum pattern;
 

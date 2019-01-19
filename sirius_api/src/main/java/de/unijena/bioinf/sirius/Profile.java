@@ -19,9 +19,9 @@ package de.unijena.bioinf.sirius;
 
 
 import com.google.gson.JsonObject;
+import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
-import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,6 +33,8 @@ import java.io.IOException;
 public class Profile {
     public final FragmentationPatternAnalysis fragmentationPatternAnalysis;
     public final IsotopePatternAnalysis isotopePatternAnalysis;
+    public final Ms2Preprocessor ms2Preprocessor;
+    public final Ms1Preprocessor ms1Preprocessor;
 
     public Profile(String name) throws IOException {
         final boolean oldSirius = name.startsWith("oldSirius");
@@ -45,6 +47,8 @@ public class Profile {
         else fragmentationPatternAnalysis=null;
         if (document.hasKeyInDictionary(json, "IsotopePatternAnalysis")) this.isotopePatternAnalysis = IsotopePatternAnalysis.loadFromProfile(document, json);
         else isotopePatternAnalysis=null;
+        this.ms2Preprocessor = new Ms2Preprocessor();
+        this.ms1Preprocessor = new Ms1Preprocessor();
     }
 
     public static Profile fromString(String fileName) {
@@ -59,6 +63,8 @@ public class Profile {
     public Profile(IsotopePatternAnalysis ms1, FragmentationPatternAnalysis ms2) {
         this.fragmentationPatternAnalysis = ms2;
         this.isotopePatternAnalysis = ms1;
+        this.ms2Preprocessor = new Ms2Preprocessor();
+        this.ms1Preprocessor = new Ms1Preprocessor();
     }
 
     public void writeToFile(@NotNull final String fileName) throws IOException  {

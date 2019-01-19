@@ -1,7 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.IonMode;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
@@ -18,15 +17,15 @@ import java.util.*;
 @DefaultProperty
 public class PossibleAdductSwitches implements Ms2ExperimentAnnotation {
 
-    private final Map<Ionization, List<Ionization>> precursorIonizationToFragmentIonizations;
+    private final Map<IonMode, List<IonMode>> precursorIonizationToFragmentIonizations;
 
-    public PossibleAdductSwitches(Map<Ionization, List<Ionization>> precursorIonizationToFragmentIonizations) {
+    public PossibleAdductSwitches(Map<IonMode, List<IonMode>> precursorIonizationToFragmentIonizations) {
         this.precursorIonizationToFragmentIonizations = precursorIonizationToFragmentIonizations;
     }
 
     @DefaultInstanceProvider
     protected static PossibleAdductSwitches fromListOfAdductsSwitches(@DefaultProperty List<String> adducts) {
-        final HashMap<Ionization, List<Ionization>> map = new HashMap<>();
+        final HashMap<IonMode, List<IonMode>> map = new HashMap<>();
         for (String ad : adducts) {
             String[] parts = ad.split("\\s*->\\s*",2);
             IonMode left = IonMode.fromString(parts[0]);
@@ -36,8 +35,8 @@ public class PossibleAdductSwitches implements Ms2ExperimentAnnotation {
         return new PossibleAdductSwitches(map);
     }
 
-    public List<Ionization> getPossibleIonizations(Ionization precursorIonization) {
-        List<Ionization> ionizations = precursorIonizationToFragmentIonizations.get(precursorIonization);
+    public List<IonMode> getPossibleIonizations(IonMode precursorIonization) {
+        List<IonMode> ionizations = precursorIonizationToFragmentIonizations.get(precursorIonization);
         if (ionizations==null) return Collections.singletonList(precursorIonization);
         return ionizations;
     }

@@ -37,7 +37,7 @@ public enum IonGuessingMode implements Ms2ExperimentAnnotation {
         }
 
         if (equals(IonGuessingMode.ADD_IONS)) {
-            //adds new ions with their probabilities
+            //adds new iondetection with their probabilities
             modeToModify.add(ionTypes, probabilities);
         } else if (equals(IonGuessingMode.SELECT)) {
             //selects from known ion modes. no new modes allowed

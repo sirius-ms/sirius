@@ -261,15 +261,27 @@ public class Spectrums {
         return performPeakMerging(merged, massWindow, sumIntenstities, mergeMasses);
     }
 
+    public static <T extends Peak> Comparator<T> getPeakIntensityComparatorReversed() {
+        return new Comparator<T>(){
+            @Override
+            public int compare(T o1, T o2) {
+                return Double.compare(o2.getIntensity(),o1.getIntensity());
+            }
+        };
+    }
+    public static <T extends Peak> Comparator<T> getPeakMassComparator() {
+        return new Comparator<T>(){
+            @Override
+            public int compare(T o1, T o2) {
+                return Double.compare(o1.getMass(),o2.getMass());
+            }
+        };
+    }
+
     public static <P extends Peak, S extends Spectrum<P>>
     Spectrum<P> getIntensityOrderedSpectrum(S spectrum) {
         final PeaklistSpectrum<P> wrapper = new PeaklistSpectrum<>(spectrum);
-        Collections.sort(wrapper.peaks, new Comparator<P>() {
-            @Override
-            public int compare(P o1, P o2) {
-                return Double.compare(o2.getIntensity(), o1.getIntensity());
-            }
-        });
+        Collections.sort(wrapper.peaks, getPeakIntensityComparatorReversed());
         return wrapper;
     }
 

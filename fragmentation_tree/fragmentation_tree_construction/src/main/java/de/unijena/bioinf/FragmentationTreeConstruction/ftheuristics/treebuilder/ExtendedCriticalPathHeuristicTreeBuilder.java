@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.IsotopicMarker;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.CriticalPathInsertionHeuristic;
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.CriticalPathInsertionWithIsotopePeaksHeuristic;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedInput;
 
 public class ExtendedCriticalPathHeuristicTreeBuilder implements TreeBuilder {
 

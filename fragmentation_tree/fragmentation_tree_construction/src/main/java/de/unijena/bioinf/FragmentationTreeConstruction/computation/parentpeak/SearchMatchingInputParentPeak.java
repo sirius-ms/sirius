@@ -18,8 +18,8 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.parentpeak;
 
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Peak;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.sirius.MS2Peak;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,7 +91,7 @@ public class SearchMatchingInputParentPeak implements ParentPeakDetector {
     protected ProcessedPeak createSyntheticParentPeak(Ms2Experiment experiment) {
         final ProcessedPeak peak = new ProcessedPeak();
         peak.setCollisionEnergy(new CollisionEnergy(0, 0));
-        peak.setMz(experiment.getIonMass());
+        peak.setMass(experiment.getIonMass());
         peak.setIntensity(1);
         peak.setOriginalPeaks(Collections.<MS2Peak>emptyList());
         return peak;

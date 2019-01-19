@@ -4,10 +4,10 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ExtractedIsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeScoring;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ExtractedIsotopePattern;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 
 public class IsotopeMs1Scorer implements DecompositionScorer<IsotopeMs1Scorer.Prepared> {
 

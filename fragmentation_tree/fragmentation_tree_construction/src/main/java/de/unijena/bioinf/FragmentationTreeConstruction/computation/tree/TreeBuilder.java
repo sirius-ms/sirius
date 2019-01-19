@@ -2,7 +2,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedInput;
 
 public interface TreeBuilder {
 

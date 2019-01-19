@@ -20,6 +20,8 @@ public @interface Provides {
      */
     public Class<? extends DataAnnotation> value();
 
+    public Class<?> in() default Object.class;
+
     @Target({ METHOD,CONSTRUCTOR, TYPE})
     @Retention(SOURCE)
     @interface ProvidedAnnotations {

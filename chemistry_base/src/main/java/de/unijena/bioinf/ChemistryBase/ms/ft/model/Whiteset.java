@@ -31,7 +31,7 @@ public class Whiteset implements Ms2ExperimentAnnotation {
 
     /**
      * returns a new whiteset of all formulas that can be explained with the given mass and one
-     * of the precursor ions
+     * of the precursor iondetection
      */
     public List<Decomposition> resolve(double parentMass, Deviation deviation, Collection<PrecursorIonType> allowedPrecursorIonTypes) {
 

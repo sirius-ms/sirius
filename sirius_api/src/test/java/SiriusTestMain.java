@@ -1,10 +1,10 @@
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.babelms.MsIO;
+import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.annotations.DecompositionList;
 
 import java.io.File;
 import java.io.IOException;

@@ -6,8 +6,8 @@ import de.unijena.bioinf.ChemistryBase.math.ByMedianEstimatable;
 import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.math.RealDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.MedianNoiseIntensity;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 
 import java.util.List;
 

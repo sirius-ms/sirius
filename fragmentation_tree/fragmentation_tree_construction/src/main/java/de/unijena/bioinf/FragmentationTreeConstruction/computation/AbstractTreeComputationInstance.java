@@ -4,9 +4,9 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Beautified;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.sirius.ProcessedInput;
 
 import java.util.List;
 
@@ -14,9 +14,6 @@ public abstract class AbstractTreeComputationInstance extends BasicMasterJJob<Ab
 
     protected final FragmentationPatternAnalysis analyzer;
     protected ProcessedInput pinput;
-    public abstract ProcessedInput validateInput();
-
-    public abstract ProcessedInput precompute();
 
     public static final double MAX_TREESIZE = 2.5d;
     public static final double MAX_TREESIZE_INCREASE = 3d;

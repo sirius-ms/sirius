@@ -17,9 +17,11 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.normalizing;
 
-import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Peak;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.sirius.MS2Peak;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -26,7 +26,11 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ScoredFormulaMap;
+import de.unijena.bioinf.sirius.PeakAnnotation;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bioinf.sirius.annotations.DecompositionList;
 
 import java.util.*;
 
@@ -38,11 +42,11 @@ public class SubFormulaGraphBuilder implements GraphBuilder {
     @Override
     public FGraph initializeEmptyGraph(ProcessedInput input) {
         final FGraph graph = new FGraph();
-        graph.addAnnotation(ProcessedInput.class, input);
+        graph.setAnnotation(ProcessedInput.class, input);
         graph.addFragmentAnnotation(ProcessedPeak.class);
         graph.getOrCreateAnnotation(ScoredFormulaMap.class);
-        graph.addAnnotation(Ionization.class, input.getExperimentInformation().getPrecursorIonType().getIonization());
-        graph.addAnnotation(PrecursorIonType.class, input.getExperimentInformation().getPrecursorIonType());
+        graph.setAnnotation(Ionization.class, input.getExperimentInformation().getPrecursorIonType().getIonization());
+        graph.setAnnotation(PrecursorIonType.class, input.getExperimentInformation().getPrecursorIonType());
         return graph;
     }
 
@@ -139,7 +143,7 @@ public class SubFormulaGraphBuilder implements GraphBuilder {
     public FGraph buildGraph(ProcessedInput input, ScoredMolecularFormula pmd) {
         final ProcessedPeak parentPeak = input.getParentPeak();
         final FGraph graph = new FGraph();
-        graph.addAnnotation(ProcessedInput.class, input);
+        graph.setAnnotation(ProcessedInput.class, input);
         final FragmentAnnotation<ProcessedPeak> peakAno = graph.addFragmentAnnotation(ProcessedPeak.class);
         final ScoredFormulaMap scoring = graph.getOrCreateAnnotation(ScoredFormulaMap.class);
         final Fragment root = graph.addRootVertex(pmd.getCandidate());

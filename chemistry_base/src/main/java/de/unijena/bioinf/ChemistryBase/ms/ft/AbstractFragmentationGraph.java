@@ -21,22 +21,28 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCustomHashMap;
 
 import java.util.*;
 
-abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
+abstract class AbstractFragmentationGraph implements Iterable<Fragment>, Annotated<DataAnnotation> {
 
-    protected final HashMap<Class<Object>, Object> annotations;
+    protected final Annotated.Annotations<DataAnnotation> annotations;//HashMap<Class<Object>, Object> annotations;
     protected final HashSet<Class<Object>> aliases;
     protected final ArrayList<Fragment> fragments;
     protected final HashMap<Class<Object>, FragmentAnnotation<Object>> fragmentAnnotations;
     protected final HashMap<Class<Object>, LossAnnotation<Object>> lossAnnotations;
     protected int edgeNum;
 
+    public Annotated.Annotations<DataAnnotation> annotations() {
+        return annotations;
+    }
+
     public AbstractFragmentationGraph() {
-        this.annotations = new HashMap<Class<Object>, Object>();
+        this.annotations = new Annotations<>();
         this.fragments = new ArrayList<Fragment>();
         this.fragmentAnnotations = new HashMap<Class<Object>, FragmentAnnotation<Object>>();
         this.lossAnnotations = new HashMap<Class<Object>, LossAnnotation<Object>>();
@@ -45,7 +51,7 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
     }
 
     protected AbstractFragmentationGraph(AbstractFragmentationGraph graph) {
-        this.annotations = new HashMap<Class<Object>, Object>(graph.annotations);
+        this.annotations = graph.annotations.clone();
         this.aliases = new HashSet<Class<Object>>();
         this.fragmentAnnotations = new HashMap<Class<Object>, FragmentAnnotation<Object>>(graph.fragmentAnnotations);
         this.lossAnnotations = new HashMap<Class<Object>, LossAnnotation<Object>>(graph.lossAnnotations);
@@ -196,10 +202,6 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         return new ArrayList<FragmentAnnotation<Object>>(fragmentAnnotations.values());
     }
 
-    public Map<Class<Object>, Object> getAnnotations() {
-        return Collections.unmodifiableMap(annotations);
-    }
-
     public List<LossAnnotation<Object>> getLossAnnotations() {
         return new ArrayList<LossAnnotation<Object>>(lossAnnotations.values());
     }
@@ -231,28 +233,8 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         return (LossAnnotation<T>) lossAnnotations.get(klass);
     }
 
-    @SuppressWarnings("unchecked cast")
-    public <T> T getAnnotationOrThrow(Class<T> klass) {
-        final T ano = (T) annotations.get(klass);
-
-        if (ano == null) throw new NullPointerException("No annotation '" + klass.getName() + "' in ProcessedInput");
-
-        return ano;
-    }
-
-    public <T> T getAnnotationOrNull(Class<T> klass) {
-        return getAnnotation(klass, null);
-    }
-
-    @SuppressWarnings("unchecked cast")
-    public <T> T getAnnotation(Class<T> klass, T defaultValue) {
-        final Object o = annotations.get(klass);
-        if (o == null) return defaultValue;
-        else return (T)o;
-    }
-
-    public boolean removeAnnotation(Class<?> klass) {
-        return annotations.remove(klass) != null;
+    public <T extends DataAnnotation> T getAnnotationOrNull(Class<T> klass) {
+        return hasAnnotation(klass) ? getAnnotation(klass) : null;
     }
 
     public boolean removeAliasForFragmentAnnotation(Class<?> klass) {
@@ -294,7 +276,7 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
             }
         }
         for (Map.Entry<Class<Object>,Object> entry : annotations.entrySet()) {
-            otherGraph.addAnnotation(entry.getKey(), entry.getValue());
+            otherGraph.setAnnotation(entry.getKey(), entry.getValue());
         }
         otherGraph.aliases.addAll(aliases);
     }
@@ -372,26 +354,6 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         return newAno;
     }
 
-    public <T> void addAnnotation(Class<T> klass, T annotation) {
-        if (annotations.containsKey(klass))
-            throw new RuntimeException("Peak annotation '" + klass.getName() + "' is already present.");
-        annotations.put((Class<Object>) klass, annotation);
-    }
-
-    public <S, T extends S> void addAliasForAnnotation(Class<T> previous, Class<S> newOne) {
-        if (!annotations.containsKey(previous)) throw new RuntimeException("Cannot find annotation of class " + previous.getName());
-        annotations.put((Class<Object>) newOne, annotations.get(previous));
-        aliases.add((Class<Object>) newOne);
-    }
-
-    public boolean isAliasAnnotation(Class<?> klass) {
-        return aliases.contains(klass);
-    }
-
-    public <T> boolean setAnnotation(Class<T> klass, T annotation) {
-        if (aliases.contains(klass)) throw new IllegalArgumentException("Cannot change value for alias annotation");
-        return annotations.put((Class<Object>) klass, annotation) == annotation;
-    }
 
     @SuppressWarnings("unchecked cast")
     public <T> FragmentAnnotation<T> getOrCreateFragmentAnnotation(Class<T> klass) {
@@ -405,18 +367,16 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         return addLossAnnotation(klass);
     }
 
-    @SuppressWarnings("unchecked cast")
-    public <T> T getOrCreateAnnotation(Class<T> klass) {
-        if (annotations.containsKey(klass)) return (T) annotations.get(klass);
-        try {
-            final T obj = klass.newInstance();
-            annotations.put((Class<Object>) klass, obj);
-            return obj;
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e.getMessage());
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e.getMessage());
-        }
+    @Deprecated
+    public <T extends DataAnnotation> T getOrCreateAnnotation(Class<T> klass) {
+        return getAnnotation(klass, ()-> {
+            try {
+                return klass.newInstance();
+            } catch (InstantiationException|IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
     }
 
     protected Fragment addFragment(MolecularFormula formula, Ionization ionization) {

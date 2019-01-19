@@ -127,7 +127,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
      * creates a new molecular formula from a given string. This should be the preferred way
      * to create molecular formulas. Typical strings which are recognized are
      * "CH4", "NOH(CH2)4COOH", "CH4(C(H)2)8CH4", ""
-     * Modifiers as ions or isotopes are not recognized. For example "Fe+3" or "13C" are no valid
+     * Modifiers as iondetection or isotopes are not recognized. For example "Fe+3" or "13C" are no valid
      * molecular formulas.
      */
     public static MolecularFormula parse(String text) {

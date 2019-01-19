@@ -207,8 +207,8 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
         if (upperBound == null) return;
         //TODO always update as beautified trees are computed each separately!?
 //        if (beautifulTree.getAnnotationOrNull(UnconsideredCandidatesUpperBound.class)==null){
-        beautifulTree.removeAnnotation(UnconsideredCandidatesUpperBound.class);
-        beautifulTree.addAnnotation(UnconsideredCandidatesUpperBound.class, upperBound);
+        beautifulTree.clearAnnotation(UnconsideredCandidatesUpperBound.class);
+        beautifulTree.setAnnotation(UnconsideredCandidatesUpperBound.class, upperBound);
 //        }
     }
 
