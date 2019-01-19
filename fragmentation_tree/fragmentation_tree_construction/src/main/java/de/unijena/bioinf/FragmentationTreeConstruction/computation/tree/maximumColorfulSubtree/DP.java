@@ -20,8 +20,8 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximum
 import com.google.common.collect.BiMap;
 import com.google.common.collect.Lists;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
@@ -99,7 +99,7 @@ class DP {
         scoring.setOverallScore(scoring.getOverallScore() + additionalScore);
 
         assert computationIsCorrect(tree, graph);
-        tree.removeAnnotation(TreeScoring.class);
+        tree.clearAnnotation(TreeScoring.class);
         return tree;
     }
 
@@ -146,7 +146,7 @@ class DP {
         final double optScore = tables[vertexId].bestScore();
         final FTree tree = new FTree(vertex.getFormula(), vertex.getIonization());
         final TreeScoring treeScoring = new TreeScoring();
-        tree.addAnnotation(TreeScoring.class, treeScoring);
+        tree.setAnnotation(TreeScoring.class, treeScoring);
 
         treeScoring.setRootScore(vertex.getIncomingEdge().getWeight());
         treeScoring.setOverallScore(Math.max(0, optScore) + treeScoring.getRootScore());

@@ -2,19 +2,23 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Beautified;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration2;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.treebuilder.ExtendedCriticalPathHeuristicTreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.annotations.DecompositionList;
+import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -29,12 +33,15 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
     protected final int numberOfResultsToKeep;
     protected final int numberOfResultsToKeepPerIonization;
 
+    protected ProcessedInput inputCopyForRecalibration;
+
     // yet another workaround =/
     // 0 = unprocessed, 1 = validated, 2 =  preprocessed, 3 = scored
-    protected int state = 0;
     protected AtomicInteger ticks;
     protected volatile int nextProgress;
     protected int ticksPerProgress, progressPerTick;
+
+    private int state = 0;
 
     protected long startTime;
     protected volatile int restTime;
@@ -50,9 +57,11 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
      *                                           if <=0, this parameter will have no effect and just the top
      *                                           numberOfResultsToKeep results will be reported.
      */
-    public FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
+    public FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
         super(analyzer);
-        this.experiment = input;
+        this.experiment = input.getExperimentInformation();
+        this.pinput = input;
+        this.inputCopyForRecalibration = input.clone();
         this.numberOfResultsToKeep = numberOfResultsToKeep;
         this.numberOfResultsToKeepPerIonization = numberOfResultsToKeepPerIonization<=0?Integer.MIN_VALUE:numberOfResultsToKeepPerIonization;
         this.ticks = new AtomicInteger(0);
@@ -64,7 +73,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
     }
 
     private FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree) {
-        this(analyzer, input.getOriginalInput(), 1, -1);
+        this(analyzer, input, 1, -1);
         this.pinput = input;
         final Decomposition decomp = pinput.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula());
         if (decomp==null) {
@@ -74,25 +83,10 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         this.state = 3;
     }
 
-    public ProcessedInput validateInput() {
-        if (state <= 0) {
-            pinput = analyzer.performValidation(experiment);
-            state = 1;
-        }
-        return pinput;
-    }
-
-    public ProcessedInput precompute() {
-        if (state <= 1) {
-            this.pinput = analyzer.preprocessInputBeforeScoring(validateInput());
-            state = 2;
-        }
-        return pinput;
-    }
-
     private ProcessedInput score() {
         if (state <= 2) {
-            this.pinput = analyzer.performPeakScoring(precompute());
+            this.pinput = analyzer.performDecomposition(pinput)
+            this.pinput = analyzer.performPeakScoring(pinput);
             state = 3;
         }
         return pinput;
@@ -146,7 +140,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         // preprocess input
         List<Decomposition> decompositions = pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions();
         // as long as we do not find good quality results
-        final boolean useHeuristic = pinput.getParentPeak().getMz() > 300;
+        final boolean useHeuristic = pinput.getParentPeak().getMass() > 300;
         final ExactResult[] results = estimateTreeSizeAndRecalibration(decompositions, useHeuristic);
         final List<FTree> trees = new ArrayList<>(results.length);
         for (ExactResult r : results) trees.add(r.tree);
@@ -294,7 +288,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         protected ExactResult compute() throws Exception {
             FGraph graph = analyzer.buildGraph(pinput, template.decomposition);
             final FTree tree = analyzer.getTreeBuilder().computeTree().withMultithreading(1).withTimeLimit(Math.min(restTime, secondsPerTree)).withMinimalScore(template.score - 1e-3)/*.withTemplate(template.tree)*/.solve(pinput, graph).tree;
-            analyzer.addTreeAnnotations(graph, tree);
+            analyzer.addTreeAnnotations(pinput, graph, tree);
             recalculateScore(tree, "ExactJob");
             tick();
             return new ExactResult(template.decomposition, null, tree, tree.getTreeWeight());
@@ -312,7 +306,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         protected ExactResult compute() throws Exception {
             FGraph graph = analyzer.buildGraph(pinput, template.decomposition);
             final FTree tree = template.tree;
-            analyzer.addTreeAnnotations(graph, tree);
+            analyzer.addTreeAnnotations(pinput, graph, tree);
             tick();
             recalculateScore(tree, "annotation");
             return new ExactResult(template.decomposition, null, tree, tree.getTreeWeight());
@@ -381,18 +375,17 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
     }
 
     protected ExactResult recalibrate(ProcessedInput input, TreeBuilder tb, FTree tree, FGraph origGraph) {
-        if (tree.getAnnotationOrNull(ProcessedInput.class) == null)
-            analyzer.addTreeAnnotations(origGraph, tree);
         final SpectralRecalibration rec = new HypothesenDrivenRecalibration2().collectPeaksFromMs2(input.getExperimentInformation(), tree);
-        final ProcessedInput pin = input.getRecalibratedVersion(rec);
+        final ProcessedInput pin = this.inputCopyForRecalibration.clone();
+        pin.setAnnotation(SpectralRecalibration.class, rec);
+        pin.setAnnotation(Whiteset.class, Whiteset.of(tree.getRoot().getFormula())); // TODO: check if this works for adducts
         // we have to completely rescore the input...
-        final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));
-        pin.setAnnotation(DecompositionList.class, l);
+        //final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));
+        //pin.setAnnotation(DecompositionList.class, l);
         analyzer.performDecomposition(pin);
         analyzer.performPeakScoring(pin);
-        FGraph graph = analyzer.buildGraph(pin, l.getDecompositions().get(0));
+        FGraph graph = analyzer.buildGraph(pin, pin.getAnnotation(DecompositionList.class).getDecompositions().get(0));
         graph.addAnnotation(SpectralRecalibration.class, rec);
-        graph.setAnnotation(ProcessedInput.class, pin);
         final FTree recal = tb.computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).solve(pin, graph).tree;
         final FTree finalTree;
         if (recal.getTreeWeight() >= tree.getTreeWeight()) {
@@ -401,19 +394,15 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
                 throw new RuntimeException("Recalibrated tree is null for "+input.getExperimentInformation().getName()+". Error in ILP?");
             }
             finalTree.setAnnotation(SpectralRecalibration.class, rec);
-            finalTree.setAnnotation(ProcessedInput.class, pin);
-            finalTree.setAnnotation(RecalibrationFunction.class, rec.toPolynomial());
-            analyzer.addTreeAnnotations(graph, finalTree);
+            analyzer.addTreeAnnotations(pin, graph, finalTree);
         } else {
             finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(tree).withMinimalScore(tree.getTreeWeight() - 1e-3).solve(input, origGraph).tree;
-            finalTree.setAnnotation(ProcessedInput.class, input);
-            finalTree.setAnnotation(RecalibrationFunction.class, RecalibrationFunction.identity());
             finalTree.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
-            analyzer.addTreeAnnotations(origGraph, finalTree);
+            analyzer.addTreeAnnotations(pin, origGraph, finalTree);
         }
         recalculateScore(finalTree, "recalibrate");
         assert finalTree!=null;
         tick();
-        return new ExactResult(l.getDecompositions().get(0), null, finalTree, finalTree.getTreeWeight());
+        return new ExactResult(pin.getAnnotation(DecompositionList.class).getDecompositions().get(0), null, finalTree, finalTree.getTreeWeight());
     }
 }

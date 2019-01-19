@@ -73,11 +73,15 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Ms2Exp
         value.removeIf(it -> it.getCharge() != 1);
     }
 
-    public List<Ionization> getIonModes() {
-        final Set<Ionization> ions = new HashSet<>();
-        for (PrecursorIonType a : value)
-            ions.add(a.getIonization());
-        return new ArrayList<>(ions);
+    public Set<IonMode> getIonModes() {
+        final Set<IonMode> ions = new HashSet<>();
+        for (PrecursorIonType a : value) {
+            final Ionization ion = a.getIonization();
+            if (ion instanceof IonMode) {
+                ions.add((IonMode) ion);
+            }
+        }
+        return ions;
     }
 
     public PossibleIonModes merge(PossibleIonModes ionModes) {

@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Give access to all chemical elements and ions. This class should be seen as singleton, although it's
+ * Give access to all chemical elements and iondetection. This class should be seen as singleton, although it's
  * possible to create multiple PeriodicTables
  * All this information are parsed from a json file in the ChemistryBase library.
  * <p>
@@ -796,7 +796,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     }
 
     /**
-     * @return an immutable list of ions
+     * @return an immutable list of iondetection
      */
     public Collection<PrecursorIonType> getIons() {
         return new HashSet<>(knownIonTypes.values());
@@ -951,7 +951,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
     /**
      * search for a known ion which mass is corresponding to the given mass while considering the
-     * given mass error. If there multiple ions in the mass window, the method returns the ion with
+     * given mass error. If there multiple iondetection in the mass window, the method returns the ion with
      * the lowest mass error.
      *
      * @param mass

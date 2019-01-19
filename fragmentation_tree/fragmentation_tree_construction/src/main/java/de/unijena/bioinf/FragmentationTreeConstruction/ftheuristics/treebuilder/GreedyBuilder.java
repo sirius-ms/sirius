@@ -3,7 +3,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.treebuilder
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.AbstractHeuristic;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedInput;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

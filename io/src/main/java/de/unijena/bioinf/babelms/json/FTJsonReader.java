@@ -162,7 +162,7 @@ public class FTJsonReader implements Parser<FTree> {
             for (Descriptor<Object> descriptor : descriptors) {
                 final Object annotation = descriptor.read(JSONdoc, treeAnnotations);
                 if (annotation != null) {
-                    tree.addAnnotation(descriptor.getAnnotationClass(), annotation);
+                    tree.setAnnotation(descriptor.getAnnotationClass(), annotation);
                 }
             }
         }
@@ -198,7 +198,7 @@ public class FTJsonReader implements Parser<FTree> {
             }
         }
 
-        if (source != null) tree.addAnnotation(URL.class, source);
+        if (source != null) tree.setAnnotation(URL.class, source);
         return tree;
     }
 

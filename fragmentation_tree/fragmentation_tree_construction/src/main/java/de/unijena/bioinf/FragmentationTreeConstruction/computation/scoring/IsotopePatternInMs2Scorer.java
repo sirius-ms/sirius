@@ -11,11 +11,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2IsotopePatternMatch;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.PeakAnnotation;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.FastIsotopePatternGenerator;
@@ -26,6 +22,10 @@ import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MassDifferenceDeviationS
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MissingPeakScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.NormalDistributedIntensityScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.util.PiecewiseLinearFunctionIntensityDependency;
+import de.unijena.bioinf.sirius.PeakAnnotation;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import org.apache.commons.math3.analysis.UnivariateFunction;
@@ -200,7 +200,7 @@ public class IsotopePatternInMs2Scorer {
                     peakAno.set(pseudoFragment, peaklist.get(index));
                 } else {
                     final ProcessedPeak syntheticPeak = new ProcessedPeak();
-                    syntheticPeak.setMz(mz);
+                    syntheticPeak.setMass(mz);
                     peakAno.set(pseudoFragment, syntheticPeak);
                 }
                 final Loss l = graph.addLoss(currenFrag, pseudoFragment);
@@ -426,7 +426,7 @@ public class IsotopePatternInMs2Scorer {
                     final SimpleSpectrum spec = Spectrums.getNormalizedSpectrum(analyzer.extractPattern(mergedMs1, dev, exp.getAnnotationOrDefault(FormulaConstraints.class).getChemicalAlphabet(), ionMass), Normalization.Max(1d));
                     if (spec.size() > 1) {
                         // use pattern!
-                        //peak.setMz(spec.getMzAt(0));
+                        //peak.setMass(spec.getMzAt(0));
                         ano.set(peak, new IsotopePatternAssignment(spec));
                     }
                 }
