@@ -24,7 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.ChemicalCompoundScorer
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedInput;
 
 public class ChemicalPriorEdgeScorer implements LossScorer {
 

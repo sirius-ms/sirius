@@ -19,10 +19,10 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.PeakAnnotation;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.sirius.PeakAnnotation;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bioinf.sirius.annotations.DecompositionList;
 
 import java.util.*;
 

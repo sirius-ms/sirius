@@ -6,7 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedInput;
 
 import java.util.*;
 

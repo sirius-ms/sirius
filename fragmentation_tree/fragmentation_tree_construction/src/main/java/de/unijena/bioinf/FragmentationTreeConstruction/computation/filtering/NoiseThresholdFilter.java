@@ -24,8 +24,8 @@ import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 
 import java.util.ArrayList;
 import java.util.List;

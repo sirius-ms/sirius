@@ -17,10 +17,10 @@
  */
 package de.unijena.bioinf.ChemistryBase.ms.inputValidators;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 
 public interface Ms2ExperimentValidator {
 
-    Ms2Experiment validate(Ms2Experiment input, Warning warning, boolean repair) throws InvalidException;
+    boolean validate(MutableMs2Experiment input, Warning warning, boolean repair) throws InvalidException;
 
 }

@@ -27,16 +27,15 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NoiseThresholdFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NormalizeToSumPreprocessor;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighIntensityMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.Merger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakMerger;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Peak;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.MassDecomposer.Interval;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.sirius.MS2Peak;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 
 import java.util.*;
 
@@ -198,7 +197,7 @@ public class SpectralAligner {
                     global += p.getGlobalRelativeIntensity();
                     relative += p.getRelativeIntensity();
                 }
-                newPeak.setMz(newMz);
+                newPeak.setMass(newMz);
                 newPeak.setLocalRelativeIntensity(local);
                 newPeak.setGlobalRelativeIntensity(global);
                 newPeak.setRelativeIntensity(relative);

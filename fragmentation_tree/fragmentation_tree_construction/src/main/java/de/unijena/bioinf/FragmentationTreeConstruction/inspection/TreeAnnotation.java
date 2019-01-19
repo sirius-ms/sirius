@@ -28,8 +28,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.Decom
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakPairScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 
 import java.util.*;
 

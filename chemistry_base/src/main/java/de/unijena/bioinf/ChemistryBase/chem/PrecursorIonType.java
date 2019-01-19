@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import de.unijena.bioinf.ms.annotations.TreeAnnotation;
+
 /**
  * The IonType is an arbitrary modification of the molecular formula of the precursor ion
  * <p>
@@ -14,7 +16,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
  * - every modification that only apply to the precursor (e.g. in-source fragmentation) goes into modification
  * - every modification that apply to the precursor but might get lost in the fragments (e.g. adducts) goes into modification
  */
-public class PrecursorIonType {
+public class PrecursorIonType implements TreeAnnotation {
 
     protected static enum SPECIAL_TYPES {
         REGULAR, UNKNOWN, INTRINSICAL_CHARGED

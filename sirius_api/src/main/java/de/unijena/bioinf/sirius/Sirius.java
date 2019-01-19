@@ -30,14 +30,10 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.AbstractTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeComputationInstance;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ExtractedIsotopePattern;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.IsotopePatternGenerator;
-import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNRegressionPredictor;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
@@ -46,9 +42,8 @@ import de.unijena.bioinf.jjobs.MasterJJob;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.sirius.annotations.DecompositionList;
 import de.unijena.bioinf.sirius.ionGuessing.GuessIonizationFromMs1Result;
-import de.unijena.bioinf.sirius.ionGuessing.IonGuesser;
-import de.unijena.bioinf.sirius.ionGuessing.IonGuessingSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -59,17 +54,7 @@ import java.util.*;
 //todo we should cleanup the api methods, proof which should be private and which are no longer needed, or at least change them, so that they use the identification job
 public class Sirius {
     protected Profile profile;
-    protected ElementPredictor elementPrediction;
-    protected IonGuesser ionGuessing;
     protected PeriodicTable table;
-    /**
-     * for internal use to easily switch and experiment with implementation details
-     */
-    protected boolean useFastMode = true;
-    public void setFastMode(boolean useFastMode) {
-        this.useFastMode = useFastMode;
-    }
-
 
     public Sirius(@NotNull String profile) {
         this(Profile.fromString(profile));
@@ -86,7 +71,6 @@ public class Sirius {
     public Sirius(@NotNull Profile profile, @NotNull PeriodicTable table) {
         this.profile = profile;
         this.table = table;
-        this.ionGuessing = new IonGuesser();
     }
 
     public FragmentationPatternAnalysis getMs2Analyzer() {
@@ -97,65 +81,37 @@ public class Sirius {
         return profile.isotopePatternAnalysis;
     }
 
-    public ElementPredictor getElementPrediction() {
-        if (elementPrediction == null) {
-            DNNRegressionPredictor defaultPredictor = new DNNRegressionPredictor();
-            defaultPredictor.disableSilicon();
-            elementPrediction = defaultPredictor;
-        }
-        return elementPrediction;
-    }
-
-    public void setElementPrediction(ElementPredictor elementPrediction) {
-        this.elementPrediction = elementPrediction;
-    }
-
     public void enableAutomaticElementDetection(@NotNull Ms2Experiment experiment, boolean enabled) {
         FormulaSettings current = experiment.getAnnotationOrDefault(FormulaSettings.class);
         if (enabled) {
-            experiment.setAnnotation(FormulaSettings.class, current.autoDetect(getElementPrediction().getChemicalAlphabet().getElements().toArray(new Element[0])));
+            experiment.setAnnotation(FormulaSettings.class, current.autoDetect(profile.ms1Preprocessor.getSetOfPredictableElements().toArray(new Element[0])));
         } else {
             disableElementDetection(experiment, current);
         }
     }
 
-    protected AbstractTreeComputationInstance getTreeComputationImplementation(FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
-        if (useFastMode)
-            return new FasterTreeComputationInstance(analyzer, input, numberOfResultsToKeep, numberOfResultsToKeepPerIonization);
-        else {
-            if (numberOfResultsToKeepPerIonization > 0)
-                throw new RuntimeException("TreeComputationInstance does not support parameter 'numberOfResultsToKeepPerIonization'");
-            return new TreeComputationInstance(analyzer, input, numberOfResultsToKeep);
-        }
+    protected AbstractTreeComputationInstance getTreeComputationImplementation(FragmentationPatternAnalysis analyzer, ProcessedInput input, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
+        return new FasterTreeComputationInstance(analyzer, input, numberOfResultsToKeep, numberOfResultsToKeepPerIonization);
     }
 
-    public void detectPossibleIonModesFromMs1(ProcessedInput processedInput) {
-        final PrecursorIonType ionType = processedInput.getExperimentInformation().getPrecursorIonType();
-        if (!ionType.isIonizationUnknown()) {
-            processedInput.setAnnotation(PossibleIonModes.class, PossibleIonModes.deterministic((IonMode) ionType.getIonization()));
-            return; // we already know the ion type
-        }
-        final int charge = ionType.getCharge();
-        final IonModeSettings settings = processedInput.getAnnotationOrDefault(IonModeSettings.class);
+    /**
+     * Perform all preprocessing steps for MS1 analysis
+     */
+    public ProcessedInput preprocessForMs1Analysis(Ms2Experiment experiment) {
+        return profile.ms1Preprocessor.preprocess(experiment);
+    }
 
-        final PrecursorIonType[] autoDetectable = settings.getDetectable(charge).stream().map(PrecursorIonType::getPrecursorIonType).toArray(PrecursorIonType[]::new);
-        final GuessIonizationFromMs1Result guessIonization = autoDetectable.length>0 ? ionGuessing.guessIonization(processedInput.getExperimentInformation(), autoDetectable) : null;
-        final HashSet<IonMode> selectedIons = new HashSet<>();
-        selectedIons.addAll(settings.getEnforced());
-        if (guessIonization==null || guessIonization.getGuessingSource()==IonGuessingSource.NoSource || guessIonization.guessedIonTypes.length==0) {
-            // fallback
-            selectedIons.addAll(settings.getFallback());
-        } else {
-            for (PrecursorIonType ion : guessIonization.getGuessedIonTypes())
-                if (ion.getIonization() instanceof IonMode)
-                    selectedIons.add((IonMode) ion.getIonization());
-                else
-                    LoggerFactory.getLogger(Sirius.class).warn("IonMode guess from MS1 '" + guessIonization.getClass().getSimpleName() + "' returns an unknown ion type: " + ion.toString());
-        }
-        processedInput.setAnnotation(PossibleIonModes.class, PossibleIonModes.uniformlyDistributed(selectedIons));
-        //also update PossibleAdducts
-        final PossibleAdducts pa = processedInput.computeAnnotationIfAbsent(PossibleAdducts.class, PossibleAdducts::new);
-        pa.update(processedInput.getAnnotation(PossibleIonModes.class));
+    /**
+     * Perform all preprocessing steps for MS/MS analysis
+     */
+    public ProcessedInput preprocessForMs2Analysis(Ms2Experiment experiment) {
+        return profile.ms2Preprocessor.preprocess(experiment);
+    }
+
+    protected ProcessedInput preprocess(Ms2Experiment experiment) {
+        if (experiment.getMs2Spectra().size()>0 && experiment.getMs2Spectra().get(0).size()>1) {
+            return preprocessForMs2Analysis(experiment);
+        } else return preprocessForMs1Analysis(experiment);
     }
 
     /**
@@ -178,9 +134,8 @@ public class Sirius {
      */
     @Deprecated
     public List<IdentificationResult> identify(Ms2Experiment experiment, int numberOfCandidates) {
-        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, numberOfCandidates, -1);
-        final ProcessedInput pinput = instance.validateInput();
-        performMs1Analysis(instance);
+        //final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, numberOfCandidates, -1);
+        final FasterTreeComputationInstance instance = new FasterTreeComputationInstance(getMs2Analyzer(),profile.ms2Preprocessor.preprocess(experiment),numberOfCandidates,-1)
         SiriusJobs.getGlobalJobManager().submitJob(instance);
         AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = createIdentificationResults(fr, instance);//postprocess results
@@ -237,7 +192,7 @@ public class Sirius {
         double lowestConsideredCandidatesScore = fr.getResults().get(numberOfResults - 1).getAnnotationOrThrow(TreeScoring.class).getOverallScore();
         UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = new UnconsideredCandidatesUpperBound(numberOfUnconsideredCandidates, lowestConsideredCandidatesScore);
         for (FTree tree : fr.getResults()) {
-            tree.addAnnotation(UnconsideredCandidatesUpperBound.class, unconsideredCandidatesUpperBound);
+            tree.setAnnotation(UnconsideredCandidatesUpperBound.class, unconsideredCandidatesUpperBound);
         }
     }
 

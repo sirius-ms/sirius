@@ -1,10 +1,12 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
+import de.unijena.bioinf.ms.annotations.TreeAnnotation;
+
 /**
  * This annotation is used when a tree is "beautiful" ;)
  * either it explains enough peaks or we already maxed out its tree size score
  */
-public final class Beautified {
+public final class Beautified implements TreeAnnotation  {
 
     public final static Beautified IS_BEAUTIFUL = new Beautified(true), IS_UGGLY = new Beautified(false);
 

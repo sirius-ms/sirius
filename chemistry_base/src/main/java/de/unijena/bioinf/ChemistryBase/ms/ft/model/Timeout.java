@@ -55,4 +55,8 @@ public class Timeout implements Ms2ExperimentAnnotation {
     public int getNumberOfSecondsPerDecomposition() {
         return numberOfSecondsPerDecomposition;
     }
+
+    public static Timeout none() {
+        return NO_TIMEOUT;
+    }
 }

@@ -24,8 +24,8 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
 import de.unijena.bioinf.ChemistryBase.math.LogNormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.List;
