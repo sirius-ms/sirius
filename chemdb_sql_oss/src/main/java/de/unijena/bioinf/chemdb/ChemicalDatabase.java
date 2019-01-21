@@ -34,6 +34,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
 
     protected final ConnectionPool<Connection> connection;
     protected String host, username, password;
+    protected Properties connectionProps;
 
 
     /**
@@ -45,7 +46,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
      */
     public ChemicalDatabase(final int numOfConnections) {
         setup();
-        connection = new ConnectionPool<>(new SqlConnector(host, username, password), numOfConnections);
+        connection = new ConnectionPool<>(new SqlConnector(host, username, password, null), numOfConnections);
     }
 
     public ChemicalDatabase() {
@@ -58,7 +59,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         this.host = db.host;
         this.username = db.username;
         this.password = db.password;
-
+        this.connectionProps = null;
     }
 
     @Override
@@ -84,12 +85,17 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
      * @param username
      * @param password
      */
-    public ChemicalDatabase(String host, String username, String password) {
+    public ChemicalDatabase(String host, String username, String password, Properties connectionProps) {
         this.host = host;
         this.username = username;
         this.password = password;
+        this.connectionProps = connectionProps;
         setup();
-        this.connection = new ConnectionPool<>(new SqlConnector(this.host, this.username, this.password), DEFAULT_SQL_CAPACITY);
+        this.connection = new ConnectionPool<>(new SqlConnector(this.host, this.username, this.password, this.connectionProps), DEFAULT_SQL_CAPACITY);
+    }
+
+    public ChemicalDatabase(String host, String username, String password) {
+        this(host, username, password, null);
     }
 
 //    public BioFilter getBioFilter() {
@@ -528,17 +534,31 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         }
 
         private String host, username, password;
+        private Properties connectionProps;
 
-        public SqlConnector(String host, String username, String password) {
+        public SqlConnector(String host, String username, String password, Properties connectionProps) {
             this.host = host;
             this.username = username;
             this.password = password;
+            if (connectionProps != null){
+                this.connectionProps = new Properties();
+                this.connectionProps.putAll(connectionProps);
+                this.connectionProps.put("user", username);
+                this.connectionProps.put("password", password);
+            } else {
+                this.connectionProps = null;
+            }
         }
 
         @Override
         public Connection open() throws IOException {
             try {
-                final Connection c = DriverManager.getConnection("jdbc:postgresql://" + host + "/pubchem", username, password);
+                final Connection c;
+                if (connectionProps!=null) {
+                    c = DriverManager.getConnection("jdbc:postgresql://" + host + "/pubchem", connectionProps);
+                } else {
+                    c = DriverManager.getConnection("jdbc:postgresql://" + host + "/pubchem", username, password);
+                }
                 c.setNetworkTimeout(Runnable::run, 30000);
                 return c;
             } catch (SQLException e) {
