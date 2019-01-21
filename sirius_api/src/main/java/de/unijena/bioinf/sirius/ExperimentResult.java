@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ms.annotations.Annotated;
 
 import java.io.File;
@@ -69,6 +70,14 @@ public class ExperimentResult implements Annotated<ResultAnnotation> {
     public String getExperimentName() {
         return experimentName;
     }
+
+    // resturns cleaned result name //todo maybe we should save name as Annotaion to keep Immutability consistent??
+    public String setExperimentName(String nuExperimentName) {
+        ((MutableMs2Experiment) experiment).setName(nuExperimentName);
+        experimentName = simplify(experiment.getName());
+        return experimentName;
+    }
+
 
     public String getExperimentSource() {
         return experimentSource;
