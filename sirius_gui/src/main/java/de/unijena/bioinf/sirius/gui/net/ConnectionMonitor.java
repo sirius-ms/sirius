@@ -1,12 +1,12 @@
 package de.unijena.bioinf.sirius.gui.net;
 
-import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.net.ProxyManager;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.sirius.net.ProxyManager;
 import org.apache.http.annotation.ThreadSafe;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.Nullable;
@@ -97,14 +97,14 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         @Override
         protected ConnetionCheck compute() throws Exception {
             checkForInterruption();
-            int connectionState = WebAPI.INSTANCE.checkConnection();
+            int connectionState = ApplicationCore.WEB_API.checkConnection();
             checkForInterruption();
 
             ConnectionState conState;
             @Nullable WorkerList wl = null;
             if (connectionState == ProxyManager.OK_STATE) {
                 checkForInterruption();
-                wl = WebAPI.INSTANCE.getWorkerInfo();
+                wl = ApplicationCore.WEB_API.getWorkerInfo();
                 checkForInterruption();
                 if (wl != null && wl.supportsAllPredictorTypes(PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors")))) {
                     conState = ConnectionState.YES;

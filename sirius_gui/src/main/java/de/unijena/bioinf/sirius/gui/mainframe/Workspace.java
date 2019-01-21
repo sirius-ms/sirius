@@ -1,36 +1,13 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 27.01.17.
- */
 
-import ca.odell.glazedlists.BasicEventList;
-import de.unijena.bioinf.ChemistryBase.chem.*;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.sirius.core.SiriusProperties;
-import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
-import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import org.openscience.cdk.DefaultChemObjectBuilder;
-import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.smiles.SmilesParser;
-import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
-import org.slf4j.LoggerFactory;
-
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.stream.Collectors;
+import de.unijena.bioinf.ms.projectspace.SiriusProjectSpaceGUI;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public abstract class Workspace {
-    public static final BasicEventList<ExperimentContainer> COMPOUNT_LIST = new BasicEventList<>();
+    public static final SiriusProjectSpaceGUI PROJECT_SPACE = null;
+    /*public static final BasicEventList<ExperimentContainer> COMPOUNT_LIST = new BasicEventList<>();
     private static final HashSet<String> NAMES = new HashSet<>();
 
 
@@ -88,14 +65,14 @@ public abstract class Workspace {
         while (true) {
             if (ec.getGUIName() != null && !ec.getGUIName().isEmpty()) {
                 if (NAMES.contains(ec.getGUIName())) {
-                    ec.setIndex(ec.getIndex() + 1);
+                    ec.setNameCounter(ec.getNameCounter() + 1);
                 } else {
                     NAMES.add(ec.getGUIName());
                     break;
                 }
             } else {
                 ec.setName("Unknown");
-                ec.setIndex(1);
+                ec.setNameCounter(1);
             }
         }
     }
@@ -170,6 +147,6 @@ public abstract class Workspace {
             }
         }
         return false;
-    }
+    }*/
 
 }

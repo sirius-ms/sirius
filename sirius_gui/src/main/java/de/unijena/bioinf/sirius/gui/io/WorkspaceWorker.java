@@ -19,20 +19,20 @@
 package de.unijena.bioinf.sirius.gui.io;
 
 import com.google.common.collect.Iterators;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.sirius.gui.dialogs.ImportWorkspaceDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
-import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
-class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentContainer> {
+class WorkspaceWorker extends SwingWorker<List<MutableMs2Experiment>, MutableMs2Experiment> {
 
     private volatile boolean abort;
     private final ImportWorkspaceDialog dialog;
-    private final ArrayDeque<ExperimentContainer> buffer;
+    private final ArrayDeque<MutableMs2Experiment> buffer;
     private final List<File> files;
 
     private volatile String errorMessage;
@@ -65,7 +65,7 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
     }
 
     @Override
-    protected void process(List<ExperimentContainer> chunks) {
+    protected void process(List<MutableMs2Experiment> chunks) {
         super.process(chunks);
         buffer.addAll(chunks);
         if (dialog.getDecision() != ImportWorkspaceDialog.Decision.NONE) {
@@ -82,16 +82,16 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
             return;
         if (errorMessage != null) return;
         while (!buffer.isEmpty()) {
-            Workspace.importCompound(buffer.pollFirst());
+            Workspace.PROJECT_SPACE.importCompound(buffer.pollFirst());
         }
     }
 
     @Override
-    protected List<ExperimentContainer> doInBackground() throws Exception {
-        final ArrayList<ExperimentContainer> all = new ArrayList<>();
-        final Queue<ExperimentContainer> publishingQueue = new AbstractQueue<ExperimentContainer>() {
+    protected List<MutableMs2Experiment> doInBackground() throws Exception {
+        final ArrayList<MutableMs2Experiment> all = new ArrayList<>();
+        final Queue<MutableMs2Experiment> publishingQueue = new AbstractQueue<MutableMs2Experiment>() {
             @Override
-            public Iterator<ExperimentContainer> iterator() {
+            public Iterator<MutableMs2Experiment> iterator() {
                 return Iterators.emptyIterator();
             }
 
@@ -101,22 +101,23 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
             }
 
             @Override
-            public boolean offer(ExperimentContainer experimentContainer) {
+            public boolean offer(MutableMs2Experiment experimentContainer) {
                 all.add(experimentContainer);
                 publish(experimentContainer);
                 return true;
             }
 
             @Override
-            public ExperimentContainer poll() {
+            public MutableMs2Experiment poll() {
                 return null;
             }
 
             @Override
-            public ExperimentContainer peek() {
+            public MutableMs2Experiment peek() {
                 return null;
             }
         };
+
         for (File file : files) {
             try {
                 new WorkspaceIO().newLoad(file, publishingQueue);

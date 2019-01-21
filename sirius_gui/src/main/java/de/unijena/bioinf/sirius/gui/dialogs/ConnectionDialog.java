@@ -1,6 +1,6 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
-import de.unijena.bioinf.fingerid.net.WebAPI;
+import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;

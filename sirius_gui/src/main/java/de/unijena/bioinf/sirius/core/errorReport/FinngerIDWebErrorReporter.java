@@ -5,7 +5,7 @@ package de.unijena.bioinf.sirius.core.errorReport;
  * 04.10.16.
  */
 
-import de.unijena.bioinf.fingerid.net.WebAPI;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 
@@ -30,7 +30,7 @@ public class FinngerIDWebErrorReporter extends ErrorReporter {
 
     @Override
     protected String reportError(ErrorReport report) throws IOException, URISyntaxException {
-        String r = WebAPI.INSTANCE.reportError(report, SOFTWARE_NAME);
+        String r = ApplicationCore.WEB_API.reportError(report, SOFTWARE_NAME);
         return r;
     }
 }

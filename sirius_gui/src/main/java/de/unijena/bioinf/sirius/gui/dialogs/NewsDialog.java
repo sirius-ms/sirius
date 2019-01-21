@@ -1,7 +1,7 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
 
-import de.unijena.bioinf.fingerid.net.News;
+import de.unijena.bioinf.fingerid.webapi.News;
 import de.unijena.bioinf.sirius.core.SiriusProperties;
 
 import javax.swing.*;

@@ -5,11 +5,10 @@ package de.unijena.bioinf.sirius.gui.settings;
  * 06.10.16.
  */
 
-import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.sirius.core.PasswordCrypter;
 import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
-import de.unijena.bioinf.sirius.net.ProxyManager;
+import de.unijena.bioinf.net.ProxyManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

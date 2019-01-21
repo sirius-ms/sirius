@@ -6,11 +6,11 @@ package de.unijena.bioinf.ms.cli;
  */
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.fingerid.net.VersionsInfo;
-import de.unijena.bioinf.fingerid.net.WebAPI;
+import de.unijena.bioinf.fingerid.webapi.VersionsInfo;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.SwingJobManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.net.ProxyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
@@ -19,7 +19,6 @@ import de.unijena.bioinf.sirius.gui.dialogs.UpdateDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
-import de.unijena.bioinf.sirius.net.ProxyManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.WindowAdapter;
@@ -83,7 +82,7 @@ public class SiriusGUIApplication {
             Jobs.runInBackround(() -> {
                 ConnectionMonitor.ConnetionCheck cc = MainFrame.CONECTION_MONITOR.checkConnection();
                 if (cc.isConnected()) {
-                    @Nullable VersionsInfo versionsNumber = WebAPI.INSTANCE.getVersionInfo();
+                    @Nullable VersionsInfo versionsNumber = ApplicationCore.WEB_API.getVersionInfo();
                     ApplicationCore.DEFAULT_LOGGER.debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
                     if (versionsNumber != null) {
                         if (versionsNumber.expired()) {

@@ -10,7 +10,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.fingerid.net.WebAPI;
+import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 

@@ -23,7 +23,6 @@ import com.google.common.collect.Lists;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -31,8 +30,11 @@ import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.fingerid.FingerIdData;
 import de.unijena.bioinf.fingerid.FingerIdDataCSVExporter;
-import de.unijena.bioinf.ms.projectspace.fingerid.FingerIdResultReader;
-import de.unijena.bioinf.ms.projectspace.fingerid.FingerIdResultWriter;
+import de.unijena.bioinf.ms.projectspace.DirectoryWriter;
+import de.unijena.bioinf.ms.projectspace.SiriusFileWriter;
+import de.unijena.bioinf.ms.projectspace.SiriusZipFileWriter;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
@@ -44,7 +46,6 @@ import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
-import de.unijena.bioinf.sirius.projectspace.*;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -54,9 +55,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
@@ -68,7 +66,7 @@ public class WorkspaceIO {
         if (file.isDirectory()) {
             env = new SiriusFileWriter(file);
         } else {
-            env = new SiriusWorkspaceWriter(file);
+            env = new SiriusZipFileWriter(file);
         }
         final FingerIdResultWriter w = new FingerIdResultWriter(env, new StandardMSFilenameFormatter());
         for (ExperimentContainer c : containers) {
@@ -78,23 +76,11 @@ public class WorkspaceIO {
         w.close();
     }
 
-    public Queue<ExperimentContainer> newLoad(File file, Queue<ExperimentContainer> queue) throws IOException {
-        final DirectoryReader.ReadingEnvironment env;
-        if (file.isDirectory()) {
-            env = new SiriusFileReader(file);
-        } else {
-            env = new SiriusWorkspaceReader(file);
-        }
-        final FingerIdResultReader reader = new FingerIdResultReader(env);
-
-        while (reader.hasNext()) {
-            final ExperimentResult result = reader.next();
-            queue.add(new ExperimentContainer(result.getExperiment(), result.getResults()));
-        }
-        return queue;
+    public Queue<ExperimentContainer> newLoad(File file) throws IOException {
+        Sirius
     }
 
-    public List<ExperimentContainer> load(File file) throws IOException {
+    /*public List<ExperimentContainer> load(File file) throws IOException {
         final ArrayDeque<ExperimentContainer> queue = new ArrayDeque<>();
         load(file, queue);
         return new ArrayList<>(queue);
@@ -138,9 +124,9 @@ public class WorkspaceIO {
                 storeContainer(c, ++k, stream);
             }
         }
-    }
+    }*/
 
-    private void storeContainer(ExperimentContainer c, int i, ZipOutputStream stream) throws IOException {
+    /*private void storeContainer(ExperimentContainer c, int i, ZipOutputStream stream) throws IOException {
         final String prefix = i + "/";
         final ZipEntry dir = new ZipEntry(prefix);
         stream.putNextEntry(dir);
@@ -189,9 +175,9 @@ public class WorkspaceIO {
             bout.write(buf, 0, c);
         }
         return parser.parse(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bout.toByteArray()))), null);
-    }
+    }*/
 
-    private static String buffer(Function<BufferedWriter, Void> f) {
+    /*private static String buffer(Function<BufferedWriter, Void> f) {
         try {
             final StringWriter sw = new StringWriter(1024);
             final BufferedWriter bw = new BufferedWriter(sw);
@@ -202,7 +188,7 @@ public class WorkspaceIO {
             assert false; // StringIO should not raise IO exceptions
             throw new RuntimeException(e);
         }
-    }
+    }*/
 
 
     public static void importWorkspace(List<File> selFile) {
@@ -411,7 +397,7 @@ public class WorkspaceIO {
             String line = br.readLine();
             if (line == null) return false;
             line = line.toUpperCase();
-            if (line.startsWith("SIRIUS")) return true;
+            if (line.startsWith("sirius")) return true;
             else return false;
         } catch (IOException e) {
             // not critical: if file cannot be read, it is not a valid workspace
