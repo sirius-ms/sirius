@@ -3,7 +3,6 @@ package de.unijena.bioinf.ms.projectspace;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -25,12 +24,10 @@ public class SiriusFileWriter implements DirectoryWriter.WritingEnvironment {
     public void enterDirectory(String name, boolean rewriteTreeIfItExists) {
         final File toCreate = new File(root, name);
         if (!toCreate.mkdir() && rewriteTreeIfItExists) {
-            try {
-                root = Files.createTempDirectory(root.toPath(),"." + name + "_").toFile();
+            root = de.unijena.bioinf.ChemistryBase.utils
+                    .FileUtils.newTempFile(root.getPath(), ".", "-" + name).toFile();
+            root.mkdirs();
                 realRoots.add(toCreate);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
         } else {
             root = new File(root, name);
         }
