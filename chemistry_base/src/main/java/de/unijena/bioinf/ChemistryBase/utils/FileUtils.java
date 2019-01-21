@@ -5,11 +5,16 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TObjectProcedure;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.InflaterInputStream;
@@ -476,11 +481,20 @@ public class FileUtils {
             writer.write('\n');
         }
     }
+
     public static void writeIntVector(Writer writer, int[] vector) throws IOException {
         for (int value : vector) {
             writer.write(String.valueOf(value));
             writer.write('\n');
         }
+    }
+
+    public static Path newTempFile(@NotNull String directory, @NotNull String prefix, @NotNull String suffix) {
+        return Paths.get(directory, MessageFormat.format("{0}{1}{2}", prefix, UUID.randomUUID(), suffix));
+    }
+
+    public static Path newTempFile(@NotNull String prefix, @NotNull String suffix) {
+        return newTempFile(System.getProperty("java.io.tmpdir"), prefix, suffix);
     }
 
 }
