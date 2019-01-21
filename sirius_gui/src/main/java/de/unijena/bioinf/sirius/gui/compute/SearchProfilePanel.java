@@ -7,7 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
 import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
-import de.unijena.bioinf.fingerid.net.WebAPI;
+import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.CheckBoxListItem;
@@ -18,8 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.stream.Collectors;
 

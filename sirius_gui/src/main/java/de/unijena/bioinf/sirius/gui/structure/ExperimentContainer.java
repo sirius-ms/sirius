@@ -1,12 +1,12 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.babelms.Index;
 import de.unijena.bioinf.jjobs.JobStateEvent;
+import de.unijena.bioinf.ms.projectspace.ExperimentDirectory;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.core.AbstractEDTBean;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
@@ -14,8 +14,7 @@ import de.unijena.bioinf.sirius.gui.compute.jjobs.SiriusIdentificationGuiJob;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.net.URL;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,8 +25,10 @@ import java.util.List;
  * to care about Synchronization.
  */
 public class ExperimentContainer extends AbstractEDTBean implements PropertyChangeListener {
+    private static final String GUI_NAME_PROPERTY = "guiName";
+
     //the ms experiment we use for computation
-    private final MutableMs2Experiment experiment;
+    private ExperimentResult experimentResult;
 
     //Here are fields to view the SiriusResultElement
     private volatile List<SiriusResultElement> results;
@@ -38,24 +39,21 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
 
 
     //here are fields to view the ExperimentContainer
-    private String guiName;
-//    private int suffix;
+    private int nameCounter = 1;
 
-
-    public ExperimentContainer(Ms2Experiment source) {
-        this(new MutableMs2Experiment(source));
-    }
-
-    public ExperimentContainer(Ms2Experiment source, List<IdentificationResult> results) {
-        this(source);
-        setRawResults(results);
-    }
 
     public ExperimentContainer(MutableMs2Experiment source) {
-        this.experiment = source;
-        guiName = null;
+        this(source, new ArrayList<>());
+    }
+
+    public ExperimentContainer(MutableMs2Experiment source, List<IdentificationResult> results) {
+        this(new ExperimentResult(source, results));
+    }
+
+    public ExperimentContainer(ExperimentResult expResult) {
+        this.experimentResult = expResult;
         bestHit = null;
-        results = Collections.emptyList();
+        results = SiriusResultElementConverter.convertResults(experimentResult.getResults());
     }
 
     public SiriusResultElement getBestHit() {
@@ -67,45 +65,43 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
     }
 
     public String getName() {
-        return experiment.getName();
+        return getMs2Experiment().getName();
     }
 
     public String getGUIName() {
-        if (guiName == null)
-            guiName = createGuiName();
-        return guiName;
+        return getNameCounter() > 1 ? getName() + " (" + getNameCounter() + ")" : getName();
     }
 
-    public int getIndex() {
-        return experiment.getAnnotation(Index.class, Index.NO_INDEX).index;
+    public int getNameCounter() {
+        return nameCounter;
     }
 
     public List<SimpleSpectrum> getMs1Spectra() {
-        return experiment.getMs1Spectra();
+        return getMs2Experiment().getMs1Spectra();
     }
 
     public List<MutableMs2Spectrum> getMs2Spectra() {
-        return experiment.getMs2Spectra();
+        return getMs2Experiment().getMs2Spectra();
     }
 
     public SimpleSpectrum getMergedMs1Spectrum() {
-        return experiment.getMergedMs1Spectrum();
+        return getMs2Experiment().getMergedMs1Spectrum();
     }
 
     public PrecursorIonType getIonization() {
-        return experiment.getPrecursorIonType();
+        return getMs2Experiment().getPrecursorIonType();
     }
 
     public List<SiriusResultElement> getResults() {
         return this.results;
     }
 
-    public Iterable<IdentificationResult> getRawResults() {
-        return () -> new IdentificationResultIterator(getResults().iterator());
+    public double getIonMass() {
+        return getMs2Experiment().getIonMass();
     }
 
-    public double getIonMass() {
-        return experiment.getIonMass();
+    public ExperimentDirectory getIdentifier(){
+        return getExperimentResult().getAnnotation(ExperimentDirectory.class);
     }
 
     public boolean isComputed() {
@@ -144,26 +140,17 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
     }
 
     public void setName(String name) {
-        experiment.setName(name);
-        setGuiName(createGuiName());
+        final String old = getGUIName();
+        experimentResult.setExperimentName(name);
+        firePropertyChange(GUI_NAME_PROPERTY, old, getGUIName());
     }
 
-    public void setIndex(int value) {
-        experiment.setAnnotation(Index.class, new Index(value));
-        setGuiName(createGuiName());
+    public void setNameCounter(int value) {
+        final String old = getGUIName();
+        nameCounter = value;
+        firePropertyChange(GUI_NAME_PROPERTY, old, getGUIName());
     }
 
-    private String createGuiName() {
-        final int i = getIndex();
-        return i >= 2 ? experiment.getName() + " (" + i + ")" : experiment.getName();
-    }
-
-    // with change event
-    private void setGuiName(String guiName) {
-        String old = this.guiName;
-        this.guiName = guiName;
-        firePropertyChange("guiName", old, this.guiName);
-    }
 
     public void setBestHit(final SiriusResultElement bestHit) {
         if (bestHit == null) {
@@ -184,15 +171,15 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
     }
 
     public void setIonization(PrecursorIonType ionization) {
-        PrecursorIonType old = experiment.getPrecursorIonType();
-        experiment.setPrecursorIonType(ionization);
-        firePropertyChange("ionization", old, experiment.getPrecursorIonType());
+        PrecursorIonType old = getMs2Experiment().getPrecursorIonType();
+        getMs2Experiment().setPrecursorIonType(ionization);
+        firePropertyChange("ionization", old, getMs2Experiment().getPrecursorIonType());
     }
 
     public void setIonMass(double ionMass) {
-        double old = experiment.getIonMass();
-        experiment.setIonMass(ionMass);
-        firePropertyChange("ionMass", old, experiment.getIonMass());
+        double old = getMs2Experiment().getIonMass();
+        getMs2Experiment().setIonMass(ionMass);
+        firePropertyChange("ionMass", old, getMs2Experiment().getIonMass());
     }
 
 
@@ -207,12 +194,12 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
         firePropertyChange("updated", false, true);
     }
 
-    public URL getSource() {
-        return experiment.getSource();
+    public MutableMs2Experiment getMs2Experiment() {
+        return (MutableMs2Experiment) experimentResult.getExperiment();
     }
 
-    public MutableMs2Experiment getMs2Experiment() {
-        return experiment;
+    public ExperimentResult getExperimentResult() {
+        return experimentResult;
     }
 
     @Override

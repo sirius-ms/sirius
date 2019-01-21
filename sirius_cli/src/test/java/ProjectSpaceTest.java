@@ -6,6 +6,7 @@ import de.unijena.bioinf.sirius.core.ApplicationCore;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Properties;
 
 public class ProjectSpaceTest {
@@ -22,13 +23,14 @@ public class ProjectSpaceTest {
         File root3 = new File("/home/fleisch/work/sirius_testing/merged_in");
         File root2 = new File("/home/fleisch/work/sirius_testing/CSIfingerID_output_BA_QE_2iso5 (copy)");
         File root = new File("/home/fleisch/work/sirius_testing/merged_out");
+        File rootZip = new File("/home/fleisch/work/sirius_testing/bigTest (copy).zip");
         if (args.length > 0)
             root = new File(args[0]);
 
         final WebAPI api = ApplicationCore.WEB_API;
         final Canopus canopus = Canopus.loadFromFile(new File("/home/fleisch/work/sirius_testing/canopus/canopus_fp.data"));
-        SiriusProjectSpace space = SiriusProjectSpace.create(null, root2,
-//        SiriusProjectSpace space = SiriusProjectSpace.create(root, Arrays.asList(root1,root3,root2), null,
+//        SiriusProjectSpace space = SiriusProjectSpace.create(null, rootZip,
+        SiriusProjectSpace space = SiriusProjectSpace.create(rootZip, Arrays.asList(root1,root3,root2), null,
                 new IdentificationResultSerializer(), new FingerIdResultSerializer(api), new CanopusResultSerializer(canopus));
         space.registerSummaryWriter(new MztabSummaryWriter());
         space.close();

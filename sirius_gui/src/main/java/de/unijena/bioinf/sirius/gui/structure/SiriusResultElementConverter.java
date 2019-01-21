@@ -25,7 +25,7 @@ public class SiriusResultElementConverter {
     }
 
     public static List<SiriusResultElement> convertResults(Iterable<IdentificationResult> in) {
-        if (in == null) return new ArrayList<>();
+        if (in == null) return Collections.emptyList();
         List<SiriusResultElement> outs = new ArrayList<>();
         for (IdentificationResult res : in) {
             outs.add(convertResult(res));

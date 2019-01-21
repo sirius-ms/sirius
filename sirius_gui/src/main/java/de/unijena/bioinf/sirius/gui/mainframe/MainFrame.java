@@ -3,8 +3,8 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.fingerid.CSIFingerIDComputation;
-import de.unijena.bioinf.fingerid.net.VersionsInfo;
-import de.unijena.bioinf.fingerid.net.WebAPI;
+import de.unijena.bioinf.fingerid.webapi.VersionsInfo;
+import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.JobDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
@@ -18,7 +18,6 @@ import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.sirius.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
