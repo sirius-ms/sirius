@@ -4,6 +4,11 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.util.Zip4jConstants;
+import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -15,19 +20,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
- * This is the SiriusProjectSpace. It operates only on uncompressed
- * directory based projects. For zip based projects: They should be
+ * This is the SiriusProjectSpace. It can only write to uncompressed/
+ * directory-based project-spaces. For zip based projects: They will be
  * decompressed in some temp dir and copied/compressed back after the
- * project-space was closed.
+ * project-space has been successfully closed.
  *
  * @author Markus Fleischauer
  * */
 public class SiriusProjectSpace implements ProjectSpace {
     protected static final Logger LOG = LoggerFactory.getLogger(SiriusProjectSpace.class);
 
+    //region Static Builder Methods
     public static @NotNull SiriusProjectSpace create(@Nullable FilenameFormatter filenameFormatter, @NotNull final Path projectSpaceRoot, MetaDataSerializer... metaDataSerializers) throws IOException {
         return create(filenameFormatter, projectSpaceRoot.toFile(), metaDataSerializers);
     }
@@ -42,6 +49,7 @@ public class SiriusProjectSpace implements ProjectSpace {
         return space;
     }
 
+
     public static SiriusProjectSpace create(@NotNull final File rootOutPath, @NotNull final Collection<File> rootInputPaths, @Nullable final FilenameFormatter filenameFormatter, MetaDataSerializer... metaDataSerializers) throws IOException {
         final SiriusProjectSpace merged = new SiriusProjectSpace(rootOutPath, filenameFormatter, metaDataSerializers);
         final TIntSet ids = new TIntHashSet();
@@ -53,18 +61,14 @@ public class SiriusProjectSpace implements ProjectSpace {
             merged.loadProjectSpace(new DirectoryReader(env), ids, true);
         }
         return merged;
-
-        //todo skip existing as in previous merger? could it not be that the user wants to
-        // compare result of runs with different parameters?
-
-        //protected HashSet<String> ignoreSet = new HashSet<>();
-        //ignoreSet.add(result.getExperimentSource() + "_" + result.getExperimentName());
     }
+    //endregion
 
-
+    //region Internal Fields
     private final LinkedHashMap<String, ExperimentDirectory> experimentIDs = new LinkedHashMap<>();
     protected final List<SummaryWriter> summaryWriters = new ArrayList<>();
     protected final Map<String, String> versionInfo = new HashMap<>();
+    protected final AtomicBoolean changed = new AtomicBoolean(false);
 
     protected DirectoryWriter writer;
     protected DirectoryReader reader;
@@ -72,14 +76,30 @@ public class SiriusProjectSpace implements ProjectSpace {
 
     protected int currentMaxIndex = ExperimentDirectory.NO_INDEX;
 
-    //loads existing project-space from reader and uses given writer
-    protected SiriusProjectSpace(@NotNull File rootPath, @Nullable FilenameFormatter filenameFormatter, MetaDataSerializer... metaDataSerializers) throws IOException {
-        rootPath.mkdirs();
+    protected File zipRoot = null;
+    protected File rootPath;
+    //endregion
 
-        if (!rootPath.canWrite())
-            throw new IOException("No writing permission for Project-Space makePath: " + rootPath.getAbsolutePath());
+    //loads existing project-space from reader and uses given writer
+    protected SiriusProjectSpace(@NotNull File root, @Nullable FilenameFormatter filenameFormatter, MetaDataSerializer... metaDataSerializers) throws IOException {
+        rootPath = root;
+        if (rootPath.isFile()) {
+            String lowercaseName = rootPath.getName().toLowerCase();
+            if (lowercaseName.endsWith(".workspace") || lowercaseName.endsWith(".zip") || lowercaseName.endsWith(".sirius")) {
+                zipRoot = rootPath;
+                rootPath = de.unijena.bioinf.ChemistryBase.utils.FileUtils.newTempFile(".", "-" + zipRoot.getName() + "-").toFile();
+                LOG.info("Zipped workspace found! Unpacking it to temp directory: " + rootPath.getAbsolutePath());
+                extractZip();
+            }
+        } else {
+            rootPath.mkdirs();
+        }
+
+
         if (!rootPath.isDirectory())
             throw new IOException("Project-Space path is not a Directory but has to be: " + rootPath.getAbsolutePath());
+        if (!rootPath.canWrite())
+            throw new IOException("No writing permission for Project-Space makePath: " + rootPath.getAbsolutePath());
 
         this.reader = new DirectoryReader(new SiriusFileReader(rootPath), metaDataSerializers);
         this.writer = new DirectoryWriter(new SiriusFileWriter(rootPath), metaDataSerializers);
@@ -92,6 +112,7 @@ public class SiriusProjectSpace implements ProjectSpace {
 
     }
 
+    //region Internal Methods
     @NotNull
     private FilenameFormatter readFormatter(File rootPath) {
         FilenameFormatter filenameFormatter = null;
@@ -143,8 +164,10 @@ public class SiriusProjectSpace implements ProjectSpace {
             expDir.setIndex(index);
         });
 
-        //rewrite Experiments if necessary. Either to convert the project space to a new format
-        //or to move the Experiments to a new writing location or apply a new naming convention
+        /*
+         * rewrite Experiments if necessary. Either to convert the project space to a new format
+         * or to move the Experiments to a new writing location or apply a new naming convention
+         */
         expDirs.stream().filter(ExperimentDirectory::isRewrite).collect(Collectors.toList())
                 .forEach(expDir -> {
                     try {
@@ -221,8 +244,40 @@ public class SiriusProjectSpace implements ProjectSpace {
         return sums;
     }
 
+    private void extractZip() throws IOException {
+        try {
+            ZipFile zipFile = new ZipFile(zipRoot.getPath());
+            if (zipFile.isEncrypted())
+                throw new IllegalArgumentException("Encrypted Workspaces are not Supported!");
+            zipFile.extractAll(rootPath.getPath());
+        } catch (ZipException e) {
+            throw new IOException(e);
+        }
+    }
 
-    //API methods
+    private void moveBackToZip() throws IOException {
+        Path zipRootNew = de.unijena.bioinf.ChemistryBase.utils.FileUtils.newTempFile(zipRoot.toPath().getParent().toString(), ".", "-" + zipRoot.getName());
+
+        try {
+            ZipFile zipFile = new ZipFile(zipRootNew.toFile());
+            ZipParameters p = new ZipParameters();
+            p.setIncludeRootFolder(false);
+//            p.setCompressionMethod();
+            p.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_ULTRA);
+            zipFile.createZipFileFromFolder(rootPath, p, false, 65536);
+        } catch (ZipException e) {
+            throw new IOException("Error during compression. Your compressed Workspace is incomplete an can be found in: "
+                    + zipRootNew.toString() + " The uncompressed version can be found at: " + rootPath.toString(), e);
+        }
+
+        Files.deleteIfExists(zipRoot.toPath());
+        Files.move(zipRootNew, zipRoot.toPath());
+        if (rootPath.exists()) FileUtils.deleteDirectory(rootPath);
+    }
+    //endregion
+
+
+    //region API Methods
 
     /**
      * Parses an experiment with the given ID.
@@ -279,9 +334,12 @@ public class SiriusProjectSpace implements ProjectSpace {
 
     @Override
     public void writeSummaries(@NotNull final Iterable<ExperimentResult> resultsToSummarize) {
+        if (!changed.get())
+            return;
         for (SummaryWriter summaryWriter : summaryWriters)
             summaryWriter.writeSummary(resultsToSummarize, writer);
         makeBasicSummaries().forEach(sw -> sw.writeSummary(resultsToSummarize, writer));
+        changed.set(false);
     }
 
     @Override
@@ -312,6 +370,8 @@ public class SiriusProjectSpace implements ProjectSpace {
         writeSummaries(parseExperiments());
         reader.close();
         writer.close();
+        if (zipRoot != null)
+            moveBackToZip();
     }
 
     @NotNull
@@ -325,6 +385,7 @@ public class SiriusProjectSpace implements ProjectSpace {
     public Iterator<ExperimentDirectory> iterator() {
         return new IdIterator();
     }
+    //endregion
 
     //internal classes
     public class IdIterator implements Iterator<ExperimentDirectory> {
