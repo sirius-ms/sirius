@@ -279,6 +279,20 @@ public class SiriusProjectSpace implements ProjectSpace {
 
     //region API Methods
 
+    public void load(File... toLoad) {
+        final TIntSet ids = new TIntHashSet(experimentIDs.values().stream().mapToInt(ExperimentDirectory::getIndex).toArray());
+
+        for (File file : toLoad) {
+            try {
+                // check for zip stream
+                final DirectoryReader.ReadingEnvironment env = file.isDirectory() ? new SiriusFileReader(file) : new SiriusZipFileReader(file);
+                loadProjectSpace(new DirectoryReader(env), ids, true);
+            } catch (IOException e) {
+                LOG.error("Cannot read this zipFile: " + file.getPath());
+            }
+        }
+    }
+
     /**
      * Parses an experiment with the given ID.
      * Override this method to implement caching for the project-space
