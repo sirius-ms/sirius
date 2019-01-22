@@ -24,7 +24,6 @@ public class DirectoryReader implements ProjectReader {
     protected static final Logger LOG = LoggerFactory.getLogger(DirectoryReader.class);
     private final static Pattern INDEX_PATTERN = Pattern.compile("^(\\d+)_");
 
-
     public interface ReadingEnvironment {
 
         List<String> list();
@@ -197,7 +196,7 @@ public class DirectoryReader implements ProjectReader {
 
     @NotNull
     @Override
-    public Iterator<ExperimentDirectory> iterator() {
+    public DirectoryReaderIterator iterator() {
         return new DirectoryReaderIterator();
     }
 
@@ -207,12 +206,15 @@ public class DirectoryReader implements ProjectReader {
         env.close();
     }
 
-    private class DirectoryReaderIterator implements CloseableIterator<ExperimentDirectory> {
+    public class DirectoryReaderIterator implements CloseableIterator<ExperimentDirectory> {
         private final Iterator<String> experiments;
+        private final int maxSize;
 
 
         private DirectoryReaderIterator() {
-            this.experiments = env.list().stream().filter((name) -> {
+            List<String> l = env.list();
+            maxSize = l.size();
+            this.experiments = l.stream().filter((name) -> {
                 try {
                     return env.containsFile(name, SIRIUS_SPECTRA.fileName());
                 } catch (IOException e) {
@@ -242,6 +244,10 @@ public class DirectoryReader implements ProjectReader {
             } catch (IOException e) {
                 throw new RuntimeException("Error when parsing index information: " + it + System.lineSeparator() + e.getMessage(), e);
             }
+        }
+
+        public int getMaxPossibleSize() {
+            return maxSize;
         }
     }
 
