@@ -41,16 +41,6 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeighted extends CommonFra
     }
 
 
-//    public static void main(String... args) {
-//        CommonFragmentAndLossScorerNoiseIntensityWeighted noiseScorer = new CommonFragmentAndLossScorerNoiseIntensityWeighted(1, 1800);
-//        for (int i = 0; i < 200; i++) {
-////            double inti = i/200.0;
-//            double inti = i*100;
-//            System.out.println(inti+" "+(noiseScorer.peakIsNoNoise(inti)));
-//
-//        }
-//    }
-
 
 //    public CommonFragmentAndLossScorerNoiseIntensityWeighted(double threshold, double medianNoise) {
 //        super(threshold);
