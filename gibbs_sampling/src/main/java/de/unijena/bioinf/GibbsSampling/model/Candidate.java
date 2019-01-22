@@ -1,14 +1,10 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import gnu.trove.list.array.TDoubleArrayList;
+
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class Candidate<T> implements Comparable<Candidate> {
     protected final T candidate;

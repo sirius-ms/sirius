@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ms.annotations.ProcessedInputAnnotation;
+import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 
 import java.util.Arrays;
 
@@ -12,7 +13,7 @@ import java.util.Arrays;
  * Isotope pattern coming from MS1
  * TODO: workaround. We have to clean that up
  */
-public class Ms1IsotopePattern implements ProcessedInputAnnotation {
+public class Ms1IsotopePattern implements ProcessedInputAnnotation, TreeAnnotation {
 
     private SimpleSpectrum spectrum;
     private double score;

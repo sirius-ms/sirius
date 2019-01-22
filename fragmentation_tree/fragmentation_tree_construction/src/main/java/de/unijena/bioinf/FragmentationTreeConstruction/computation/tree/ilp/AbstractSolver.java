@@ -348,7 +348,7 @@ abstract public class AbstractSolver {
         if (graphRoot == null) return null;
 
         final FTree tree = new FTree(graphRoot.getFormula(), graphRoot.getIonization());
-        tree.setTreeWeight(rootScore);
+        tree.setRootScore(rootScore);
         final ArrayDeque<Stackitem> stack = new ArrayDeque<Stackitem>();
         stack.push(new Stackitem(tree.getRoot(), graphRoot));
         while (!stack.isEmpty()) {
@@ -366,6 +366,7 @@ abstract public class AbstractSolver {
                 ++offset;
             }
         }
+        tree.setTreeWeight(tree.getTreeWeight() + tree.getRootScore());
         return tree;
     }
 

@@ -446,7 +446,7 @@ public class TReductionController implements GraphReduction {
 				/*
 				// whatever it is - the construction is right with "cmd ( name1 name2 )"
 				if ( TComperator.compareStats( arg[Ci+1], arg[Ci+2] ) )
-					System.out.println("Header of " + arg[Ci+1] + ", " + arg[Ci+2] + " are equal! ");
+					System.out.println("HeaderBuilder of " + arg[Ci+1] + ", " + arg[Ci+2] + " are equal! ");
 				*/
 
 				Ci = Ci + 4;
@@ -495,7 +495,7 @@ public class TReductionController implements GraphReduction {
 				/*
 				// whatever it is - the construction is right with "cmd ( name1 name2 )"
 				if ( TComperator.compareStats( gReduces.get(id1).gGraph, gReduces.get(id2).gGraph ) )
-					System.out.println("Header of " + arg[Ci+1] + ", " + arg[Ci+2] + " are equal! ");
+					System.out.println("HeaderBuilder of " + arg[Ci+1] + ", " + arg[Ci+2] + " are equal! ");
 				*/
 
 				Ci = Ci + 4;

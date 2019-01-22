@@ -1,7 +1,6 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 
 import java.io.IOException;
 import java.io.Writer;

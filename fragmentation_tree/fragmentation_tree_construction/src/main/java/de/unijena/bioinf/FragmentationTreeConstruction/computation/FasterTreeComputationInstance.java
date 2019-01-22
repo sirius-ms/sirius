@@ -68,24 +68,21 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
     }
 
 
-    public static FasterTreeComputationInstance beautify(FragmentationPatternAnalysis analyzer, FTree tree) {
-        return new FasterTreeComputationInstance(analyzer, tree.getAnnotationOrThrow(ProcessedInput.class).cloneForBeautification(), tree);
+    public static FasterTreeComputationInstance beautify(FragmentationPatternAnalysis analyzer, ProcessedInput processedInput, FTree tree) {
+        return new FasterTreeComputationInstance(analyzer, processedInput, tree);
     }
 
     private FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree) {
         this(analyzer, input, 1, -1);
         this.pinput = input;
-        final Decomposition decomp = pinput.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula());
-        if (decomp==null) {
-            throw new RuntimeException("Try to beautify " + tree.getRoot().getFormula() + " but formula is not contained in decomposition list! " + pinput.getAnnotationOrThrow(DecompositionList.class).toString());
-        }
-        this.pinput.setAnnotation(DecompositionList.class, new DecompositionList(new ArrayList<>(Collections.singletonList(decomp))));
-        this.state = 3;
+        this.pinput.setAnnotation(Whiteset.class, Whiteset.of(tree.getRoot().getFormula()));
+        this.inputCopyForRecalibration = pinput;
+        score();
     }
 
     private ProcessedInput score() {
         if (state <= 2) {
-            this.pinput = analyzer.performDecomposition(pinput)
+            this.pinput = analyzer.performDecomposition(pinput);
             this.pinput = analyzer.performPeakScoring(pinput);
             state = 3;
         }
