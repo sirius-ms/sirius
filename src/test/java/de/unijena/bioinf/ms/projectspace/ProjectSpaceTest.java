@@ -26,6 +26,7 @@ public class ProjectSpaceTest {
         final Canopus canopus =  Canopus.loadFromFile(new File("/home/fleisch/work/sirius_testing/canopus/canopus_fp.data"));
         SiriusProjectSpace space = SiriusProjectSpace.create(null, root,
                 new IdentificationResultSerializer(), new FingerIdResultSerializer(api), new CanopusResultSerializer(canopus));
+        space.writeSummaries(space.parseExperiments()); //this can be cached
         space.close();
         System.out.println("done!");
     }
