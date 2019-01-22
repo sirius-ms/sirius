@@ -3,7 +3,6 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 import com.google.common.collect.TreeMultimap;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 
 import java.util.*;
 
