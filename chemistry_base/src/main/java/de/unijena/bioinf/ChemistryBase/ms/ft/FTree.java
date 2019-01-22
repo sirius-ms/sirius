@@ -28,15 +28,19 @@ public class FTree extends AbstractFragmentationGraph {
     protected Fragment root;
 
     /**
-     * The absolute score of this tree.
-     * It is recommended to using tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore() instead
-     * This score is the raw result of the underlying optimization problem and might differ from the final
-     * score (e.g. there might be orthogonal scores that are added later).
+     * The total score of the tree. This is the sum of scores of all losses plus the root score
      */
     protected double treeWeight;
 
+    /**
+     * Due to a very bad design decision, we cannot assign scores to fragments. Thus, we have to store
+     * the score of the root separately.
+     */
+    protected double rootScore;
+
     public FTree(MolecularFormula rootFormula, Ionization ionization) {
         this.root = addFragment(rootFormula, ionization);
+        this.rootScore = 0d;
     }
 
     /**
@@ -50,8 +54,20 @@ public class FTree extends AbstractFragmentationGraph {
     public FTree(FTree copy) {
         super(copy);
         this.root = fragments.get(0);
+        this.rootScore = copy.rootScore;
         assert root.isRoot();
     }
+
+    public static Comparator<FTree> orderByScoreDescending() {
+        return new Comparator<FTree>() {
+            @Override
+            public int compare(FTree o1, FTree o2) {
+                return Double.compare(o2.treeWeight, o1.treeWeight);
+            }
+        };
+    }
+
+
 
     /**
      * Add a new root to the tree and connecting it with the previous root
@@ -70,6 +86,14 @@ public class FTree extends AbstractFragmentationGraph {
         f.setVertexId(0);
         root = f;
         return f;
+    }
+
+    public double getRootScore() {
+        return rootScore;
+    }
+
+    public void setRootScore(double score) {
+        this.rootScore = score;
     }
 
     public double getTreeWeight() {
