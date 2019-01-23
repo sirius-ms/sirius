@@ -295,7 +295,13 @@ public class Zodiac {
             List<FragmentsCandidate> candidates = FragmentsCandidate.createAllCandidateInstances(trees, experiment);
 
             Collections.sort(candidates);
-            if (candidates.size() > 0) candidatesMap.put(experiment.getName(), candidates);
+            if (candidates.size() > 0){
+                if (candidatesMap.containsKey(experiment.getName())){
+                    //todo change mapping
+                    throw new RuntimeException("compound name must be a unique identifier");
+                }
+                candidatesMap.put(experiment.getName(), candidates);
+            }
             experimentIDSet.add(experiment.getName());
         }
 
