@@ -349,6 +349,13 @@ public class Zodiac {
 
             if (!id.equals(id2)) throw new RuntimeException("different ids: "+id+" vs "+id2);
 
+            if (initial[i]==null){
+                //no candidates
+                writer.newLine();
+                writer.write(id);
+                continue;
+            }
+
             final String siriusMF = initial[i].getCandidate().getMolecularFormula().formatByHill();
             final double siriusScore = initial[i].getScore();
 
@@ -471,6 +478,10 @@ public class Zodiac {
             String id = ids[i];
             ExperimentResult result = experimentResultMap.get(id);
 
+            if (result.getResults().size()==0){
+                best[i] = null;
+                continue;
+            }
 
             //normalize
             double max = Double.NEGATIVE_INFINITY;
