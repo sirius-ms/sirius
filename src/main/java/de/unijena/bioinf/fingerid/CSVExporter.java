@@ -19,30 +19,46 @@
 package de.unijena.bioinf.fingerid;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 
 public class CSVExporter {
+
+    public void exportFingerIdResultsToFile(File file, FingerIdResult data) throws IOException {
+        exportFingerIdResultsToFile(file, Collections.singletonList(data));
+    }
+
+    public void exportFingerIdResultsToFile(File file, List<FingerIdResult> data) throws IOException {
+        try (final BufferedWriter bw = Files.newBufferedWriter(file.toPath(), Charset.defaultCharset())) {
+            exportFingerIdResults(bw, data);
+        }
+    }
+
+    public void exportFingerIdResults(Writer writer, FingerIdResult results) throws IOException {
+        exportFingerIdResults(writer, Collections.singletonList(results));
+
+    }
 
     public void exportFingerIdResults(Writer writer, List<FingerIdResult> results) throws IOException {
         writer.write("inchikey2D\tinchi\tmolecularFormula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
         final ArrayList<Scored<FingerprintCandidate>> candidates = new ArrayList<>();
         for (FingerIdResult r : results) candidates.addAll(r.getCandidates());
-        Collections.sort(candidates, Scored.desc());
-        final Multimap<String, String> dbMap = HashMultimap.create();
-        final List<String> pubchemIds = new ArrayList<>();
+        candidates.sort(Scored.desc());
         int rank = 0;
         for (Scored<FingerprintCandidate> r : candidates) {
+            final Multimap<String, String> dbMap = r.getCandidate().getLinkedDatabases();
+
             writer.write(r.getCandidate().getInchiKey2D());
             writer.write('\t');
             writer.write(r.getCandidate().getInchi().in2D);
@@ -57,44 +73,28 @@ public class CSVExporter {
             writer.write('\t');
             writer.write(escape(r.getCandidate().getSmiles()));
             writer.write('\t');
-            writer.write(""); // TODO: add XLOGP
+            if (Double.isNaN(r.getCandidate().getXlogp())) writer.write("\"\"");
+            else writer.write(String.valueOf(r.getCandidate().getXlogp()));
             writer.write('\t');
-            pubchemIds.clear();
-            dbMap.clear();
-            for (DBLink l : r.getCandidate().getLinks()) {
-                if (l.name.equals(DatasourceService.Sources.PUBCHEM.name)) {
-                    pubchemIds.add(l.id);
-                } else {
-                    dbMap.put(l.name, l.id);
-                }
-            }
-            writer.write(Joiner.on(';').join(pubchemIds));
+            list(writer, dbMap.get(DatasourceService.Sources.PUBCHEM.name));
             writer.write('\t');
             links(writer, dbMap);
             writer.write('\n');
-
         }
-
     }
 
 
-    public static void list(Writer writer, int[] pubchemIds) throws IOException {
-        if (pubchemIds == null || pubchemIds.length == 0) {
+    public static void list(Writer writer, Collection<String> pubchemIds) throws IOException {
+        if (pubchemIds == null || pubchemIds.size() == 0) {
             writer.write("\"\"");
         } else {
-            writer.write(String.valueOf(pubchemIds[0]));
-            for (int i = 1; i < pubchemIds.length; ++i) {
+            final Iterator<String> it = pubchemIds.iterator();
+            writer.write(it.next());
+            while (it.hasNext()) {
                 writer.write(';');
-                writer.write(String.valueOf(pubchemIds[i]));
+                writer.write(it.next());
             }
         }
-    }
-
-    public static void links(Writer w, Compound c) throws IOException {
-        if (c.databases == null) {
-            w.write("\"\"");
-            return;
-        } else links(w, c.databases);
     }
 
     public static void links(Writer w, Multimap<String, String> databases) throws IOException {
@@ -130,12 +130,7 @@ public class CSVExporter {
     }
 
     public static Collection<String> withoutNulls(Collection<String> in) {
-        return Collections2.filter(in, new Predicate<String>() {
-            @Override
-            public boolean apply(String input) {
-                return input != null;
-            }
-        });
+        return Collections2.filter(in, input -> input != null);
     }
 
 }

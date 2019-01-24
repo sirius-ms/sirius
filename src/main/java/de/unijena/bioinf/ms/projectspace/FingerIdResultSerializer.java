@@ -8,7 +8,7 @@ import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.CSVExporter;
 import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.fingerid.db.CustomDatabase;
+import de.unijena.bioinf.fingerid.db.custom.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
@@ -248,7 +248,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                         final double confidence = frs.size() > 0 ? frs.get(0).getConfidence() : 0;
                         final String[] lines = topHit.split("\n", 3);
                         if (lines.length >= 2) {
-                            topHits.add(new Scored<>(experimentResult.getExperimentSource() + "\t" + experimentResult.getExperimentName() + "\t" + confidence + "\t" + lines[1] + "\n", confidence));
+                            topHits.add(new Scored<>(experimentResult.getSimplyfiedExperimentSource() + "\t" + experimentResult.getSimplyfiedExperimentName() + "\t" + confidence + "\t" + lines[1] + "\n", confidence));
                         }
 
                         if (csiVersion == null && !frs.isEmpty() && frs.get(0).getPredictedFingerprint() != null) {
