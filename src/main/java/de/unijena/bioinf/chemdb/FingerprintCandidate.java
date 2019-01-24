@@ -19,14 +19,18 @@
 package de.unijena.bioinf.chemdb;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.FPIter;
-import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.*;
 
+import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.stream.JsonGenerator;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class FingerprintCandidate extends CompoundCandidate {
 
@@ -40,6 +44,60 @@ public class FingerprintCandidate extends CompoundCandidate {
         final FingerprintCandidate c = new FingerprintCandidate(CompoundCandidate.inchiFromJson(o), fp);
         c.readCompoundCandidateFromJson(o);
         return c;
+    }
+
+    /**
+     * merges a given list of fingerprint candidates into the given file. Ignore duplicates
+     *
+     * @return number of newly added candidates
+     */
+    public static int mergeFromJsonToJson(FingerprintVersion version, List<FingerprintCandidate> candidates, File file) throws IOException {
+        int sizeDiff = 0;
+        final MaskedFingerprintVersion mv = (version instanceof MaskedFingerprintVersion) ? (MaskedFingerprintVersion) version : MaskedFingerprintVersion.buildMaskFor(version).enableAll().toMask();
+        final HashMap<String, FingerprintCandidate> compoundPerInchiKey = new HashMap<>();
+        for (FingerprintCandidate fc : candidates) {
+            final FingerprintCandidate duplicate = compoundPerInchiKey.put(fc.getInchiKey2D(), fc);
+            if (duplicate != null) {
+                mergeInto(fc, duplicate);
+            }
+        }
+        sizeDiff = compoundPerInchiKey.size();
+        if (file.exists()) {
+            final List<FingerprintCandidate> compounds = new ArrayList<>();
+            try (final InputStream gzipStream = new GZIPInputStream(new FileInputStream(file))) {
+                final JsonObject obj = Json.createReader(gzipStream).readObject();
+                final JsonArray array = obj.getJsonArray("compounds");
+                for (int i = 0; i < array.size(); ++i) {
+                    compounds.add(FingerprintCandidate.fromJSON(mv, array.getJsonObject(i)));
+                }
+            }
+
+            for (FingerprintCandidate c : compounds) {
+                if (compoundPerInchiKey.containsKey(c.inchi.key2D())) {
+                    --sizeDiff;
+                    mergeInto(compoundPerInchiKey.get(c.inchi.key2D()), c);
+                } else {
+                    compoundPerInchiKey.put(c.inchi.key2D(), c);
+                }
+            }
+        }
+
+        try (final JsonGenerator writer = Json.createGenerator(new GZIPOutputStream(new FileOutputStream(file)))) {
+            writer.writeStartObject();
+            writer.writeStartArray("compounds");
+            for (FingerprintCandidate fc : compoundPerInchiKey.values()) {
+                fc.writeToJSON(writer, true);
+            }
+            writer.writeEnd();
+            writer.writeEnd();
+        }
+        return sizeDiff;
+    }
+
+    private static void mergeInto(FingerprintCandidate a, FingerprintCandidate b) {
+        a.setpLayer(a.getpLayer() | b.getpLayer());
+        a.setqLayer(a.getqLayer() | b.getqLayer());
+        // TODO: links...?
     }
 
     @Override

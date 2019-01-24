@@ -18,6 +18,9 @@
 
 package de.unijena.bioinf.chemdb;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -93,6 +96,22 @@ public class DatasourceService {
 
     }
 
+
+    public static Multimap<String, String> getLinkedDataSources(CompoundCandidate candidate) {
+        Set<String> names = getDataSourcesFromBitFlags(candidate.getBitset());
+        Multimap<String, String> databases = ArrayListMultimap.create(names.size(), 1);
+        if (candidate.getLinks() != null) {
+            for (DBLink link : candidate.getLinks()) {
+                databases.put(link.name, link.id);
+            }
+        }
+
+        for (String aname : names)
+            if (!databases.containsKey(aname))
+                databases.put(aname, null);
+
+        return databases;
+    }
 
     public static Set<String> getDataSourcesFromBitFlags(long flags) {
         final HashSet<String> set = new HashSet<>();

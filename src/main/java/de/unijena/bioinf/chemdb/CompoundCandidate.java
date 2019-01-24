@@ -18,6 +18,7 @@
 
 package de.unijena.bioinf.chemdb;
 
+import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
@@ -33,13 +34,18 @@ import java.util.function.IntConsumer;
 public class CompoundCandidate {
     protected final InChI inchi;
     protected String name;
-    protected long bitset;
     protected String smiles;
-    protected DBLink[] links;
     protected int pLayer;
     protected int qLayer;
     protected double xlogp = Double.NaN;
-    private PubmedLinks pubmedIDs = null;
+
+    //database info
+    protected long bitset;
+    protected DBLink[] links;
+    protected Multimap<String, String> linkedDatabases = null;
+
+    //citation info
+    protected PubmedLinks pubmedIDs = null;
 
     public CompoundCandidate(CompoundCandidate c) {
         this.inchi = c.inchi;
@@ -52,6 +58,10 @@ public class CompoundCandidate {
         this.xlogp = c.xlogp;
         if (c.pubmedIDs != null)
             this.pubmedIDs = c.pubmedIDs;
+    }
+
+    public CompoundCandidate(InChI inchi) {
+        this.inchi = inchi;
     }
 
     public static CompoundCandidate fromJSON(JsonObject o) {
@@ -161,9 +171,7 @@ public class CompoundCandidate {
         }
     }
 
-    public CompoundCandidate(InChI inchi) {
-        this.inchi = inchi;
-    }
+
 
     public InChI getInchi() {
         return inchi;
@@ -187,6 +195,12 @@ public class CompoundCandidate {
 
     public void setLinks(DBLink[] links) {
         this.links = links;
+    }
+
+    public Multimap<String, String> getLinkedDatabases() {
+        if (linkedDatabases == null)
+            linkedDatabases = DatasourceService.getLinkedDataSources(this);
+        return linkedDatabases;
     }
 
     public String getSmiles() {
