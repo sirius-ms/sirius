@@ -100,14 +100,14 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
     private class NameFormat implements FormatString {
         @Override
         public String format(ExperimentResult experimentResult, int index) {
-            return experimentResult.getExperimentName();
+            return experimentResult.getSimplyfiedExperimentName();
         }
     }
 
     private class FilenameFormat implements FormatString {
         @Override
         public String format(ExperimentResult experimentResult, int index) {
-            return experimentResult.getExperimentSource();
+            return experimentResult.getSimplyfiedExperimentSource();
         }
     }
 

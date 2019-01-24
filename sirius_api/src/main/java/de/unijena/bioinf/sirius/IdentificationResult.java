@@ -20,14 +20,9 @@ package de.unijena.bioinf.sirius;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-
-import java.io.IOException;
-import java.io.Writer;
-import java.util.regex.Pattern;
 
 public class IdentificationResult implements Cloneable, Comparable<IdentificationResult>, Annotated<DataAnnotation> {
 
@@ -41,34 +36,6 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
     @Override
     public Annotations<DataAnnotation> annotations() {
         return annotations;
-    }
-
-    private final static Pattern NeedToEscape = Pattern.compile("[\t\n\"]");
-
-    public static void writeIdentifications(Writer writer, Ms2Experiment input, Iterable<IdentificationResult> results) throws IOException {
-        final StringBuilder buffer = new StringBuilder();
-        String name = input.getName();
-        // escape quotation marks
-        {
-            if (name.indexOf('"') >= 0) {
-                name = "\"" + name.replaceAll("\"", "\"\"") + "\"";
-            } else if (name.indexOf('\t') >= 0 || name.indexOf('\n') >= 0) {
-                name = "\"" + name + "\"";
-            }
-        }
-        buffer.append(name);
-        buffer.append('\t');
-        buffer.append(input.getIonMass());
-        buffer.append('\t');
-        buffer.append(input.getPrecursorIonType().toString());
-        for (IdentificationResult r : results) {
-            buffer.append('\t');
-            buffer.append(r.getMolecularFormula().toString());
-            buffer.append('\t');
-            buffer.append(r.getScore());
-        }
-        buffer.append('\n');
-        writer.write(buffer.toString());
     }
 
     public IdentificationResult(IdentificationResult ir) {
