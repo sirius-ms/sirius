@@ -1,6 +1,6 @@
 package de.unijena.bioinf.fingerid;
 
-import de.unijena.bioinf.fingerid.db.CustomDataSourceService;
+import de.unijena.bioinf.fingerid.db.custom.CustomDataSourceService;
 import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.sirius.gui.utils.WrapLayout;
 

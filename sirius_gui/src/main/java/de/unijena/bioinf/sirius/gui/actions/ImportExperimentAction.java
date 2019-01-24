@@ -5,9 +5,9 @@ package de.unijena.bioinf.sirius.gui.actions;
  * 29.01.17.
  */
 
+import de.unijena.bioinf.ms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import javax.swing.*;
@@ -32,7 +32,7 @@ public class ImportExperimentAction extends AbstractAction {
         lc.showDialog();
         ExperimentContainer ec = lc.getExperiment();
         if (ec != null) {
-            Workspace.importCompound(ec);
+            GuiProjectSpace.PS.importCompound(ec);
         }
     }
 }

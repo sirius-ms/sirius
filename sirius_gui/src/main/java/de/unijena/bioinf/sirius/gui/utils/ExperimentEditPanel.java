@@ -4,7 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
+import de.unijena.bioinf.ms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import javax.swing.*;
@@ -68,7 +68,7 @@ public class ExperimentEditPanel extends JPanel {
     }
 
     public void setMolecularFomula(Ms2Experiment ec) {
-        String formulaString = Workspace.extractMolecularFormulaString(ec);
+        String formulaString = GuiProjectSpace.extractMolecularFormulaString(ec);
         formulaTF.setText(formulaString);
     }
 

@@ -13,6 +13,7 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
+import de.unijena.bioinf.ms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.SearchTextField;
 
@@ -22,8 +23,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-
-import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.COMPOUNT_LIST;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -40,8 +39,7 @@ public class ExperimentList {
         searchField = new SearchTextField();
 
 
-
-        compoundList = new FilterList<>(new ObservableElementList<>(COMPOUNT_LIST, GlazedLists.beanConnector(ExperimentContainer.class)),
+        compoundList = new FilterList<>(new ObservableElementList<>(GuiProjectSpace.PS.COMPOUNT_LIST, GlazedLists.beanConnector(ExperimentContainer.class)),
                 new TextComponentMatcherEditor<>(searchField.textField, new TextFilterator<ExperimentContainer>() {
                     @Override
                     public void getFilterStrings(List<String> baseList, ExperimentContainer element) {

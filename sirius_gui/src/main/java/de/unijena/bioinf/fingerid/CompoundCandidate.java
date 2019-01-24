@@ -38,7 +38,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
-
+//TODO CLEANUP merge with compound?
 public class CompoundCandidate extends AbstractEDTBean implements Comparable<CompoundCandidate> {
     public static final CompoundCandidate PROTOTYPE = new PrototypeCompoundCandidate();
 

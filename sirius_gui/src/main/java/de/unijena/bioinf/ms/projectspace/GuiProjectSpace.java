@@ -2,15 +2,18 @@ package de.unijena.bioinf.ms.projectspace;
 
 import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.core.SiriusProperties;
-import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -19,84 +22,77 @@ import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class SiriusProjectSpaceGUI {
+public class GuiProjectSpace {
+    public static final GuiProjectSpace PS;
+
+    static {
+        //todo load workspace form Property
+        PropertyManager.getProperty("path/to/space");
+        PS = new GuiProjectSpace(null);
+    }
+
     public final BasicEventList<ExperimentContainer> COMPOUNT_LIST = new BasicEventList<>();
-    private final HashSet<String> NAMES = new HashSet<>();
-    private SiriusProjectSpace projectSpace;
+    private final Map<String, TIntSet> NAMES = new ConcurrentHashMap<>();
+    private final SiriusProjectSpace projectSpace;
 
-    public SiriusProjectSpaceGUI(@Nullable FilenameFormatter filenameFormatter, @NotNull final File projectSpaceRoot, MetaDataSerializer... metaDataSerializers) {
-
+    public GuiProjectSpace(SiriusProjectSpace space) {
+        projectSpace = space;
     }
 
-
-    public void importCompounds(List<MutableMs2Experiment> exs) {
-        if (exs != null) {
-            for (MutableMs2Experiment ex : exs) {
-                if (ex == null) {
-                    continue;
-                } else {
-                    importCompound(ex);
-                }
-            }
-        }
-    }
-
-    public void importCompound(final MutableMs2Experiment ex) {
+    public void importCompound(@NotNull final ExperimentContainer ec) {
         SwingUtilities.invokeLater(() -> {
-            //search for a missing molecular formula before cleaning the annotations
-            if (ex.getMolecularFormula() == null) {
-                String f = extractMolecularFormulaString(ex);
-                if (f != null && !f.isEmpty())
-                    ex.setMolecularFormula(MolecularFormula.parse(f));
-            }
-
-            if (ex.getPrecursorIonType() == null) {
-                LoggerFactory.getLogger(Workspace.class).warn("Input experiment with name '" + ex.getName() + "' does not have a charge nor an ion type annotation.");
-                ex.setPrecursorIonType(PeriodicTable.getInstance().getUnknownPrecursorIonType(1));
-            }
-            clearExperimentAnotations(ex);
-            addIonToPeriodicTable(ex.getPrecursorIonType());
+            cleanExperiment(ec.getMs2Experiment());
 
             //adding experiment to gui
-            final ExperimentContainer ec = new ExperimentContainer(ex);
-            resolveCompoundNameConflict(ec);
-            COMPOUNT_LIST.add(ec);
+            addToCompoundList(ec);
 
-            //write experiment to workspace
-            Jobs.runInBackround(new TinyBackgroundJJob<ExperimentDirectory>() {
-                @Override
-                protected ExperimentDirectory compute() throws Exception {
-                    projectSpace.writeExperiment(ec.getExperimentResult());
-                    return ec.getIdentifier();
-                }
-            });
+            //write experiment to project-space
+            writeToProjectSpace(ec.getExperimentResult());
 
-            //todo handle compute state in ExperimentContainer
-//            if (ec.getResults().size() > 0) ec.setSiriusComputeState(ComputingStatus.COMPUTED);
         });
     }
 
-    public void resolveCompoundNameConflict(ExperimentContainer ec) {
-        while (true) {
-            if (ec.getGUIName() != null && !ec.getGUIName().isEmpty()) {
-                if (NAMES.contains(ec.getGUIName())) {
-                    ec.setNameCounter(ec.getNameCounter() + 1);
-                } else {
-                    NAMES.add(ec.getGUIName());
-                    break;
-                }
-            } else {
-                ec.setName("Unknown");
+    public void importCompound(@NotNull final MutableMs2Experiment ex) {
+        importCompound(new ExperimentContainer(ex));
+    }
+
+    private void addToCompoundList(@NotNull final ExperimentContainer ec) {
+        addName(ec);
+        COMPOUNT_LIST.add(ec);
+    }
+
+    private void writeToProjectSpace(@NotNull final ExperimentResult exResult) {
+        SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<ExperimentDirectory>(JJob.JobType.IO) {
+            @Override
+            protected ExperimentDirectory compute() throws Exception {
+                projectSpace.writeExperiment(exResult);
+                return exResult.getAnnotation(ExperimentDirectory.class);
             }
+        });
+    }
+
+    private void cleanExperiment(@NotNull final MutableMs2Experiment ex) {
+        //search for a missing molecular formula before cleaning the annotations
+        if (ex.getMolecularFormula() == null) {
+            String f = extractMolecularFormulaString(ex);
+            if (f != null && !f.isEmpty())
+                ex.setMolecularFormula(MolecularFormula.parse(f));
         }
+
+        if (ex.getPrecursorIonType() == null) {
+            LoggerFactory.getLogger(getClass()).warn("Input experiment with name '" + ex.getName() + "' does not have a charge nor an ion type annotation.");
+            ex.setPrecursorIonType(PeriodicTable.getInstance().getUnknownPrecursorIonType(1));
+        }
+        clearExperimentAnotations(ex);
+        addIonToPeriodicTable(ex.getPrecursorIonType());
     }
 
     public void remove(ExperimentContainer... containers) {
@@ -121,18 +117,34 @@ public class SiriusProjectSpaceGUI {
     }
 
     // region static import helper methods
-    /*public static List<ExperimentContainer> toExperimentContainer(Ms2Experiment... exp) {
-        return toExperimentContainer(Arrays.asList(exp));
+    public void changeName(ExperimentContainer ec, String old) {
+        if (NAMES.containsKey(old)) {
+            TIntSet indeces = NAMES.get(old);
+            indeces.remove(ec.getNameIndex());
+
+            if (indeces.isEmpty())
+                NAMES.remove(old);
+        }
+        addName(ec);
     }
 
-    public static List<ExperimentContainer> toExperimentContainer(List<Ms2Experiment> exp) {
-        ArrayList<ExperimentContainer> ecs = new ArrayList<>(exp.size());
-        for (Ms2Experiment ms2Experiment : exp) {
-            ecs.add(new ExperimentContainer(ms2Experiment));
-        }
-        return ecs;
-    }*/
+    public void addName(ExperimentContainer ec) {
+        if (ec.getName() == null || ec.getName().isEmpty()) {
+            ec.setName("Unknown");
+        } else {
+            final TIntSet indeces = NAMES.putIfAbsent(ec.getName(), new TIntHashSet());
+            assert indeces != null;
 
+            int counter = 1;
+            while (indeces.contains(counter))
+                counter++;
+            indeces.add(counter);
+
+            ec.setNameIndex(counter);
+        }
+    }
+
+    //todo check why this is located here
     public static String extractMolecularFormulaString(Ms2Experiment exp) {
         MolecularFormula formula = exp.getMolecularFormula();
         if (formula != null) {

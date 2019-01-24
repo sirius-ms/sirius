@@ -1,9 +1,9 @@
-package de.unijena.bioinf.fingerid.db;
+package de.unijena.bioinf.fingerid.db.custom;
 
 import com.google.common.base.Predicate;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.fingerid.webapi.WebAPI;
+import de.unijena.bioinf.fingerid.db.SearchableDatabases;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.DialogHaeder;
@@ -32,8 +32,8 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class DatabaseDialog extends JDialog {
 
@@ -339,7 +339,7 @@ public class DatabaseDialog extends JDialog {
         protected JLabel statusText;
         protected JProgressBar progressBar;
         protected JTextArea details;
-        protected CustomDatabase.Importer importer;
+        protected CustomDatabaseImporter importer;
         protected JButton close;
         protected volatile boolean doNotCancel = false;
 
@@ -347,7 +347,7 @@ public class DatabaseDialog extends JDialog {
 
         protected SwingWorker<List<InChI>, ImportStatus> worker;
 
-        public ImportCompoundsDialog(CustomDatabase.Importer importer) {
+        public ImportCompoundsDialog(CustomDatabaseImporter importer) {
             super(owner, "Import compounds", false);
             this.importer = importer;
             JPanel panel = new JPanel();
@@ -608,12 +608,12 @@ public class DatabaseDialog extends JDialog {
         }
     }
 
-    protected class ImportDatabaseDialog extends JDialog implements CustomDatabase.ImporterListener {
+    protected class ImportDatabaseDialog extends JDialog implements CustomDatabaseImporter.Listener {
 
         protected ImportList ilist;
         protected JButton importButton;
         protected ImportCompoundsDialog importDialog;
-        protected CustomDatabase.Importer importer;
+        protected CustomDatabaseImporter importer;
         protected Collector collector;
         protected CustomDatabase database;
 
@@ -621,8 +621,8 @@ public class DatabaseDialog extends JDialog {
 
         public ImportDatabaseDialog(String name) {
             super(owner, "Import " + name + " database", false);
-            database = CustomDatabase.createNewdatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name), (CdkFingerprintVersion) WebAPI.getFingerprintVersion());
-            importer = database.getImporter();
+            database = CustomDatabase.createNewDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name), ApplicationCore.WEB_API.getFingerprintVersion());
+            importer = database.getImporter(ApplicationCore.WEB_API);
             importer.init();
             importer.addListener(this);
             collector = new Collector(importer);
@@ -742,10 +742,10 @@ public class DatabaseDialog extends JDialog {
         }
     }
 
-    private static class Collector extends SwingWorker<InChI, InChI> implements CustomDatabase.ImporterListener {
-        private CustomDatabase.Importer importer;
+    private static class Collector extends SwingWorker<InChI, InChI> implements CustomDatabaseImporter.Listener {
+        private CustomDatabaseImporter importer;
 
-        public Collector(CustomDatabase.Importer importer) {
+        public Collector(CustomDatabaseImporter importer) {
             this.importer = importer;
         }
 
@@ -781,7 +781,7 @@ public class DatabaseDialog extends JDialog {
         private final JTextField nameField = new JTextField("COMMON_NAME,SYSTEMATIC_NAME");
         private final JTextField idField = new JTextField("");
 
-        AskForFieldsToImportDialog(Dialog owner, final CustomDatabase.Importer importer) {
+        AskForFieldsToImportDialog(Dialog owner, final CustomDatabaseImporter importer) {
             super(owner, "Specify fields to parse", true);
 
             JPanel main = new JPanel(new BorderLayout());

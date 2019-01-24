@@ -31,8 +31,10 @@ public class ProjectSpaceTest {
         final Canopus canopus = Canopus.loadFromFile(new File("/home/fleisch/work/sirius_testing/canopus/canopus_fp.data"));
 //        SiriusProjectSpace space = SiriusProjectSpace.create(null, rootZip,
         SiriusProjectSpace space = SiriusProjectSpace.create(rootZip, Arrays.asList(root1,root3,root2), null,
+                (cur,max,mess) ->{System.out.println((((((double)cur)/(double)max)) * 100d) + "%");},
                 new IdentificationResultSerializer(), new FingerIdResultSerializer(api), new CanopusResultSerializer(canopus));
         space.registerSummaryWriter(new MztabSummaryWriter());
+        space.writeSummaries(space.parseExperiments(), (cur, max, mess) -> System.out.println((((((double) cur) / (double) max)) * 100d) + "% " + mess));
         space.close();
         System.out.println("done!");
     }

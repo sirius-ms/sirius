@@ -7,11 +7,10 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.SiriusProperties;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedBatchDataFormatFilter;
-import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
+import de.unijena.bioinf.sirius.gui.io.GuiProjecSpaceIO;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -46,7 +45,7 @@ public class ImportExperimentBatchAction extends AbstractAction {
                     SiriusProperties.SIRIUS_PROPERTIES_FILE().
                             setAndStoreProperty(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH, files[0].getParentFile().getAbsolutePath())
             );
-            WorkspaceIO.importOneExperimentPerFile(files);
+            GuiProjecSpaceIO.importOneExperimentPerFile(files);
         }
     }
 }

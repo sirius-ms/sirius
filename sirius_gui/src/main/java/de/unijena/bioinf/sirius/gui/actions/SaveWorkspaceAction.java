@@ -5,16 +5,13 @@ package de.unijena.bioinf.sirius.gui.actions;
  * 29.01.17.
  */
 
-import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.event.ListEventListener;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.SiriusProperties;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
-import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
+import de.unijena.bioinf.sirius.gui.io.GuiProjecSpaceIO;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 
@@ -23,8 +20,8 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.AbstractList;
 
+import static de.unijena.bioinf.ms.projectspace.GuiProjectSpace.PS;
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
-import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.COMPOUNT_LIST;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -32,18 +29,13 @@ import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.COMPOUNT_LIST;
 public class SaveWorkspaceAction extends AbstractAction {
 
     public SaveWorkspaceAction() {
-        super("Save Workspace");
+        super("Save Project");
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_CLOSE_32);
-        putValue(Action.SHORT_DESCRIPTION, "Save current Workspace to file");
-        setEnabled(!COMPOUNT_LIST.isEmpty());
+        putValue(Action.SHORT_DESCRIPTION, "Save current Project to file");
+        setEnabled(!PS.COMPOUNT_LIST.isEmpty());
 
-        //Workspace Listener
-        COMPOUNT_LIST.addListEventListener(new ListEventListener<ExperimentContainer>() {
-            @Override
-            public void listChanged(ListEvent<ExperimentContainer> listChanges) {
-                setEnabled(!listChanges.getSourceList().isEmpty());
-            }
-        });
+        //add Workspace Listener for button activity
+        PS.COMPOUNT_LIST.addListEventListener(listChanges -> setEnabled(!listChanges.getSourceList().isEmpty()));
     }
 
     @Override
@@ -53,7 +45,7 @@ public class SaveWorkspaceAction extends AbstractAction {
         jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_SAVE_FILE_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
-        jfc.addChoosableFileFilter(WorkspaceIO.SAVE_FILE_FILTER);
+        jfc.addChoosableFileFilter(GuiProjecSpaceIO.SAVE_FILE_FILTER);
 
         File selectedFile = null;
 
@@ -90,16 +82,16 @@ public class SaveWorkspaceAction extends AbstractAction {
         }
         if (selectedFile != null) {
             try {
-                WorkspaceIO io = new WorkspaceIO();
-                io.newStore(new AbstractList<ExperimentContainer>() {
+                GuiProjecSpaceIO io = new GuiProjecSpaceIO();
+                io.exportProjectSpace(new AbstractList<ExperimentContainer>() {
                     @Override
                     public ExperimentContainer get(int index) {
-                        return COMPOUNT_LIST.get(index);
+                        return PS.COMPOUNT_LIST.get(index);
                     }
 
                     @Override
                     public int size() {
-                        return COMPOUNT_LIST.size();
+                        return PS.COMPOUNT_LIST.size();
                     }
                 }, selectedFile);
             } catch (Exception e2) {
