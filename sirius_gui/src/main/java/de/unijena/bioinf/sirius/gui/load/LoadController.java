@@ -6,18 +6,17 @@ import ca.odell.glazedlists.swing.GlazedListsSwing;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.core.SiriusProperties;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormatsFilter;
 import de.unijena.bioinf.sirius.gui.mainframe.BatchImportDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.FileImportDialog;
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.CSVToSpectrumConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
@@ -252,7 +251,7 @@ public class LoadController implements LoadDialogListener {
     }
 
     private void addIonToPeriodicTableAndFireChange(PrecursorIonType ionization) {
-        if (Workspace.addIonToPeriodicTable(ionization))
+        if (GuiProjectSpace.addIonToPeriodicTable(ionization))
             loadDialog.editPanel.ionizationCB.refresh();
         loadDialog.ionizationChanged(ionization);
     }

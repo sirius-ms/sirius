@@ -7,10 +7,9 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.SiriusProperties;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
-import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
+import de.unijena.bioinf.sirius.gui.io.GuiProjecSpaceIO;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -36,7 +35,7 @@ public class LoadWorkspaceAction extends AbstractAction {
         jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_SAVE_FILE_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
-        jfc.addChoosableFileFilter(WorkspaceIO.SAVE_FILE_FILTER);
+        jfc.addChoosableFileFilter(GuiProjecSpaceIO.SAVE_FILE_FILTER);
 
         int returnVal = jfc.showOpenDialog(MF);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -46,7 +45,7 @@ public class LoadWorkspaceAction extends AbstractAction {
                             setAndStoreProperty(SiriusProperties.DEFAULT_SAVE_FILE_PATH, selFile.getParentFile().getAbsolutePath())
             );
 
-            WorkspaceIO.importWorkspace(Arrays.asList(selFile));
+            GuiProjecSpaceIO.importProjectSpace(Arrays.asList(selFile));
         }
     }
 }

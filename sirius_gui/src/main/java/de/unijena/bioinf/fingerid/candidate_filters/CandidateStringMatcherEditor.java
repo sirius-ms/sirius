@@ -20,7 +20,7 @@ public class CandidateStringMatcherEditor extends TextComponentMatcherEditor<Com
                 baseList.add(element.getName());
                 baseList.add(element.getInChiKey());
                 baseList.add(element.getCompound().getInchi().in3D);
-                baseList.add(element.getCompound().getSmiles().smiles);
+                baseList.add(element.getCompound().getSmiles());
             }
         });
     }

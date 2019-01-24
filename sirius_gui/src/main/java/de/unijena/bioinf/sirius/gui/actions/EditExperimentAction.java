@@ -7,9 +7,9 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
@@ -50,7 +50,7 @@ public class EditExperimentAction extends AbstractAction {
         LoadController lc = new LoadController(MF, ec);
         lc.showDialog();
         if (!ec.getGUIName().equals(guiname)) {
-            Workspace.resolveCompundNameConflict(ec);
+            GuiProjectSpace.PS.addName(ec);
         }
     }
 }

@@ -3,13 +3,13 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.fingerid.CSIFingerIDComputation;
-import de.unijena.bioinf.fingerid.webapi.VersionsInfo;
-import de.unijena.bioinf.fingerid.webapi.WebAPI;
+import de.unijena.bioinf.ms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.JobDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.*;
+import de.unijena.bioinf.sirius.gui.dialogs.DragAndDropOpenDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.DragAndDropOpenDialogReturnValue;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
-import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
+import de.unijena.bioinf.sirius.gui.io.GuiProjecSpaceIO;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentList;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListView;
@@ -65,6 +65,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return csiFingerId;
     }
 
+
     private JobDialog jobDialog;
 
     public JobDialog getJobDialog() {
@@ -83,7 +84,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
     private MainFrame() {
-        super(ApplicationCore.VERSION_STRING);
+        super(ApplicationCore.VERSION_STRING());
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this); //todo do we want to have the left table as drop target?
@@ -91,7 +92,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     public void decoradeMainFrameInstance() {
         //create computation
-        csiFingerId = new CSIFingerIDComputation();
+        csiFingerId = new CSIFingerIDComputation(); //todo maybe make special gui core to not mix this up with view stuff
 
         // create models for views
         experimentList = new ExperimentList();
@@ -167,7 +168,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         final List<File> newFiles = DragAndDrop.getFileListFromDrop(dtde);
 
         if (newFiles.size() > 0) {
-            importDragAndDropFiles(Arrays.asList(WorkspaceIO.resolveFileList(newFiles.toArray(new File[newFiles.size()]))));
+            importDragAndDropFiles(Arrays.asList(GuiProjecSpaceIO.resolveFileList(newFiles.toArray(new File[newFiles.size()]))));
         }
     }
 
@@ -182,7 +183,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         final Iterator<File> rawFileIterator = rawFiles.iterator();
         while (rawFileIterator.hasNext()) {
             final File f = rawFileIterator.next();
-            if (f.getName().toLowerCase().endsWith(".sirius") || (f.isDirectory() && WorkspaceIO.isSiriusWorkspaceDirectory(f))) {
+            if (f.getName().toLowerCase().endsWith(".sirius") || (f.isDirectory() && GuiProjecSpaceIO.isSiriusWorkspaceDirectory(f))) {
                 siriusFiles.add(f);
                 rawFileIterator.remove();
             }
@@ -194,7 +195,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         }
 
         if (siriusFiles.size() > 0) {
-            WorkspaceIO.importWorkspace(siriusFiles);
+            GuiProjecSpaceIO.importProjectSpace(siriusFiles);
         }
 
         FileImportDialog dropDiag = new FileImportDialog(this, rawFiles);
@@ -212,7 +213,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         if ((csvFiles.size() > 0 && (msFiles.size() + mgfFiles.size() == 0))) {   //nur CSV bzw. nur ein File
             openImporterWindow(csvFiles, msFiles, mgfFiles);
         } else if (csvFiles.size() == 0 && mgfFiles.size() == 0 && msFiles.size() > 0) {
-            WorkspaceIO.importOneExperimentPerFile(msFiles, mgfFiles);
+            GuiProjecSpaceIO.importOneExperimentPerFile(msFiles, mgfFiles);
         } else {
             DragAndDropOpenDialog diag = new DragAndDropOpenDialog(this);
             DragAndDropOpenDialogReturnValue rv = diag.getReturnValue();
@@ -220,7 +221,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
             } else if (rv == DragAndDropOpenDialogReturnValue.oneExperimentForAll) {
                 openImporterWindow(csvFiles, msFiles, mgfFiles);
             } else if (rv == DragAndDropOpenDialogReturnValue.oneExperimentPerFile) {
-                WorkspaceIO.importOneExperimentPerFile(msFiles, mgfFiles);
+                GuiProjecSpaceIO.importOneExperimentPerFile(msFiles, mgfFiles);
             }
         }
     }
@@ -232,7 +233,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         ExperimentContainer ec = lc.getExperiment();
         if (ec != null) {
-            Workspace.importCompound(ec);
+            GuiProjectSpace.PS.importCompound(ec);
         }
     }
     //todo insert canopus here

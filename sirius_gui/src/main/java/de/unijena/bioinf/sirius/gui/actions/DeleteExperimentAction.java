@@ -7,12 +7,12 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.CloseDialogNoSaveReturnValue;
 import de.unijena.bioinf.sirius.gui.dialogs.CloseDialogReturnValue;
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
@@ -59,7 +59,7 @@ public class DeleteExperimentAction extends AbstractAction {
         List<ExperimentContainer> toRemove = new ArrayList<>(MF.getExperimentList().getCompoundListSelectionModel().getSelected());
         for (ExperimentContainer cont : toRemove) {
             Jobs.cancel(cont);
+            GuiProjectSpace.PS.remove(cont);
         }
-        Workspace.removeAll(toRemove);
     }
 }

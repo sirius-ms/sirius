@@ -18,8 +18,8 @@
 
 package de.unijena.bioinf.sirius.gui.dialogs;
 
+import de.unijena.bioinf.ms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,8 +27,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-
-import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.COMPOUNT_LIST;
 
 
 public class ImportWorkspaceDialog extends JDialog implements ActionListener {
@@ -76,7 +74,7 @@ public class ImportWorkspaceDialog extends JDialog implements ActionListener {
     }
 
     public void start() {
-        if (COMPOUNT_LIST.size() > 0) {
+        if (GuiProjectSpace.PS.COMPOUNT_LIST.size() > 0) {
             setVisible(true);
         } else {
             decision = Decision.MERGE;
@@ -86,7 +84,7 @@ public class ImportWorkspaceDialog extends JDialog implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource()==replace) {
-            Workspace.clearWorkspace();
+            GuiProjectSpace.PS.clear();
             decision = Decision.REPLACE;
         } else if (e.getSource()==merge) {
             decision = Decision.MERGE;

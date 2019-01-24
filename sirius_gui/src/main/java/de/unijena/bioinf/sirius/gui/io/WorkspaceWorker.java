@@ -20,8 +20,8 @@ package de.unijena.bioinf.sirius.gui.io;
 
 import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.sirius.gui.dialogs.ImportWorkspaceDialog;
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -82,7 +82,7 @@ class WorkspaceWorker extends SwingWorker<List<MutableMs2Experiment>, MutableMs2
             return;
         if (errorMessage != null) return;
         while (!buffer.isEmpty()) {
-            Workspace.PROJECT_SPACE.importCompound(buffer.pollFirst());
+            GuiProjectSpace.PS.importCompound(buffer.pollFirst());
         }
     }
 
@@ -120,7 +120,7 @@ class WorkspaceWorker extends SwingWorker<List<MutableMs2Experiment>, MutableMs2
 
         for (File file : files) {
             try {
-                new WorkspaceIO().newLoad(file, publishingQueue);
+                GuiProjecSpaceIO.newLoad(file, publishingQueue);
             } catch (Exception e) {
                 LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 this.errorMessage = e.toString();

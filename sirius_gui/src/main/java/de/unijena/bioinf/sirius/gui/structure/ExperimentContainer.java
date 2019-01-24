@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.jjobs.JobStateEvent;
 import de.unijena.bioinf.ms.projectspace.ExperimentDirectory;
+import de.unijena.bioinf.ms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.core.AbstractEDTBean;
@@ -37,9 +38,7 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
 
     private volatile ComputingStatus siriusComputeState = ComputingStatus.UNCOMPUTED;
 
-
-    //here are fields to view the ExperimentContainer
-    private int nameCounter = 1;
+    private volatile int nameIndex = 0;
 
 
     public ExperimentContainer(MutableMs2Experiment source) {
@@ -54,6 +53,7 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
         this.experimentResult = expResult;
         bestHit = null;
         results = SiriusResultElementConverter.convertResults(experimentResult.getResults());
+        if (getResults().size() > 0) siriusComputeState = ComputingStatus.COMPUTED;
     }
 
     public SiriusResultElement getBestHit() {
@@ -69,11 +69,11 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
     }
 
     public String getGUIName() {
-        return getNameCounter() > 1 ? getName() + " (" + getNameCounter() + ")" : getName();
+        return makeGUIName(getName(), getNameIndex());
     }
 
-    public int getNameCounter() {
-        return nameCounter;
+    public int getNameIndex() {
+        return nameIndex;
     }
 
     public List<SimpleSpectrum> getMs1Spectra() {
@@ -93,7 +93,7 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
     }
 
     public List<SiriusResultElement> getResults() {
-        return this.results;
+        return results;
     }
 
     public double getIonMass() {
@@ -140,17 +140,15 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
     }
 
     public void setName(String name) {
-        final String old = getGUIName();
-        experimentResult.setExperimentName(name);
-        firePropertyChange(GUI_NAME_PROPERTY, old, getGUIName());
+        final String old = getMs2Experiment().getName();
+        getMs2Experiment().setName(name);
+        GuiProjectSpace.PS.changeName(this, old);
     }
 
-    public void setNameCounter(int value) {
-        final String old = getGUIName();
-        nameCounter = value;
-        firePropertyChange(GUI_NAME_PROPERTY, old, getGUIName());
+    public void setNameIndex(int nameIndex) {
+        this.nameIndex = nameIndex;
+        firePropertyChange(GUI_NAME_PROPERTY, null, getGUIName());
     }
-
 
     public void setBestHit(final SiriusResultElement bestHit) {
         if (bestHit == null) {
@@ -209,5 +207,11 @@ public class ExperimentContainer extends AbstractEDTBean implements PropertyChan
             if (e.getSource() instanceof SiriusIdentificationGuiJob)
                 setSiriusComputeState(Jobs.getComputingState(e.getNewValue()));
         }
+    }
+
+    private static String makeGUIName(String name, int nameIndex) {
+        if (nameIndex <= 1)
+            return name;
+        return name + " (" + nameIndex + ")";
     }
 }

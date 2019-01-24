@@ -1,7 +1,7 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.chemdb.DatasourceService;
-import de.unijena.bioinf.fingerid.db.CustomDataSourceService;
+import de.unijena.bioinf.fingerid.db.custom.CustomDataSourceService;
 import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.configs.Fonts;
 import de.unijena.bioinf.sirius.gui.table.list_stats.DoubleListStats;

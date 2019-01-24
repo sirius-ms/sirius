@@ -40,7 +40,6 @@ public abstract class ApplicationCore {
     public static final WebAPI WEB_API;
 
 
-
     //creating
     static {
         System.setProperty("de.unijena.bioinf.ms.sirius.props",

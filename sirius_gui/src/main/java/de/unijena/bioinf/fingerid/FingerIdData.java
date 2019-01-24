@@ -22,6 +22,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.sirius.core.AbstractEDTBean;
 
+//todo cleanup wrat/merge FingeridResult
 public class FingerIdData extends AbstractEDTBean {
 
     protected final ProbabilityFingerprint platts;
@@ -33,7 +34,6 @@ public class FingerIdData extends AbstractEDTBean {
     protected final double[] tanimotoScores;
     public final SearchableDatabase db;
 
-    //todo is the confidence stuff still needed or dead?
     private double confidence;
     private double topScore;
 

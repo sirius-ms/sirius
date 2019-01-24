@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -83,7 +82,7 @@ public class Jobs {
         if (siriusPerProfile.containsKey(profile)) return;
         else try {
             siriusPerProfile.put(profile, new Sirius(profile));
-        } catch (IOException | RuntimeException e) {
+        } catch (RuntimeException e) {
             LoggerFactory.getLogger(Jobs.class).error("Unknown instrument: '" + profile + "'", e);
             throw new RuntimeException(e);
         }
