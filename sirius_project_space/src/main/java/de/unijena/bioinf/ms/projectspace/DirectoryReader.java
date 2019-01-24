@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.sirius.ExperimentResult;
@@ -123,10 +124,11 @@ public class DirectoryReader implements ProjectReader {
             expResult = new ExperimentResult(input, new ArrayList<>());
         } else {
             //fallback for older versions
-            String[] nameSplit = directory.split("_");
-            String source = nameSplit.length > 1 ? nameSplit[1] : "";
-            String name = nameSplit.length > 2 ? nameSplit[2] : "unknown";
-            expResult = new ExperimentResult(input, new ArrayList<>(), source, name);
+            expResult = new ExperimentResult(input, new ArrayList<>());
+            if (input.getName() == null) {
+                String[] nameSplit = directory.split("_");
+                ((MutableMs2Experiment) input).setName(nameSplit.length > 2 ? nameSplit[2] : "unknown");
+            }
         }
         expResult.setAnnotation(ExperimentDirectory.class, expDir);
 
