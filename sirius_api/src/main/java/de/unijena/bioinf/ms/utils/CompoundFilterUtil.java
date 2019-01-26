@@ -100,6 +100,47 @@ public class CompoundFilterUtil {
     }
 
 
+    /**
+     * remove ms1 and corresponding ms2 spectra without ms1 precursor peak. e.g. after applying baseline. Or remove spectra wiht precursor intensity below some relative/abs intensity.
+     * @return
+     */
+    public List<Ms2Experiment> removeLowIntensityPrecursorSpectra(List<Ms2Experiment> experiments, double minRelIntensity, double minAbsIntensity, Deviation window) throws InvalidInputData {
+        List<Ms2Experiment> filtered = new ArrayList<>();
+        for (Ms2Experiment experiment : experiments) {
+            MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
+            if (experiment.getMs1Spectra().size() == experiment.getMs2Spectra().size()){
+                Iterator<SimpleSpectrum> ms1Iterator = mutableMs2Experiment.getMs1Spectra().iterator();
+                Iterator<MutableMs2Spectrum> ms2Iterator = mutableMs2Experiment.getMs2Spectra().iterator();
+                while (ms1Iterator.hasNext()) {
+                    SimpleSpectrum ms1 = ms1Iterator.next();
+                    MutableMs2Spectrum ms2 = ms2Iterator.next();
+                    if (ms1.size()==0){
+                        ms1Iterator.remove();
+                        ms2Iterator.remove();
+                        continue;
+                    }
+                    int peakIdx = Spectrums.mostIntensivePeakWithin(ms1, experiment.getIonMass(), window);
+                    if (peakIdx<0){
+                        ms1Iterator.remove();
+                        ms2Iterator.remove();
+                    } else {
+                        double intensity = ms1.getIntensityAt(peakIdx);
+                        double maxInt = Spectrums.getMaximalIntensity(ms1);
+                        if (maxInt==0d || intensity<minAbsIntensity || intensity/maxInt<minRelIntensity){
+                            ms1Iterator.remove();
+                            ms2Iterator.remove();
+                        }
+                    }
+                }
+            } else {
+                throw new InvalidInputData("Different number of MS1 and MS2. No direct mapping possible for "+experiment.getName());
+            }
+
+            filtered.add(mutableMs2Experiment);
+        }
+        return filtered;
+    }
+
 
 
 
@@ -121,6 +162,12 @@ public class CompoundFilterUtil {
         return filtered;
     }
 
+    /**
+     * this looks at the merged spectrum first. So if openMS says intensity 0, we throw it away. If no merged spectrum, use normal ms1
+     * @param experiments
+     * @param findPrecursorInMs1Deviation
+     * @return
+     */
     public List<Ms2Experiment> filterZeroIntensityFeatures(List<Ms2Experiment> experiments, Deviation findPrecursorInMs1Deviation) {
         List<Ms2Experiment> filtered = new ArrayList<>();
         for (Ms2Experiment experiment : experiments) {
