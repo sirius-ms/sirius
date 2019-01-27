@@ -20,7 +20,7 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeighted extends CommonFra
     private double maxClip;
     public CommonFragmentAndLossScorerNoiseIntensityWeighted(double threshold) {
         super(threshold);
-        MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 1d; //changed from 5
+        MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 2d; //changed from 5
         beta = 0.00001;
         double xmin = 0.002;
 //        double medianNoise = 0.005;
