@@ -163,6 +163,25 @@ public class CompoundFilterUtil {
     }
 
     /**
+     * filters compounds which leave LC very early/late.
+     * @param experiments
+     * @return
+     */
+    public List<Ms2Experiment> filterByRetentionTime(List<Ms2Experiment> experiments, double startRT, double endRT) {
+        List<Ms2Experiment> filtered = new ArrayList<>();
+        for (Ms2Experiment experiment : experiments) {
+            if (experiment.hasAnnotation(RetentionTime.class)){
+                double rt = experiment.getAnnotation(RetentionTime.class).getMiddleTime();
+                if (rt>=startRT && rt<=endRT) filtered.add(experiment);
+            }else {
+                //take if no rt availabe
+                filtered.add(experiment);
+            }
+        }
+        return filtered;
+    }
+
+    /**
      * this looks at the merged spectrum first. So if openMS says intensity 0, we throw it away. If no merged spectrum, use normal ms1
      * @param experiments
      * @param findPrecursorInMs1Deviation
