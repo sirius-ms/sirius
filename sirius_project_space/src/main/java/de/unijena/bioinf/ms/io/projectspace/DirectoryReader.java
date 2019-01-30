@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.projectspace;
+package de.unijena.bioinf.ms.io.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -17,8 +17,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static de.unijena.bioinf.ms.projectspace.SiriusLocations.SIRIUS_SPECTRA;
 
 
 public class DirectoryReader implements ProjectReader {
@@ -113,7 +111,7 @@ public class DirectoryReader implements ProjectReader {
 
         // read spectrum
         final Ms2Experiment input;
-        if (names.contains(SIRIUS_SPECTRA.fileName())) {
+        if (names.contains(SiriusLocations.SIRIUS_SPECTRA.fileName())) {
             input = parseSpectrum();
         } else
             throw new IOException("Invalid Experiment directory. No spectrum.ms found! Your workspace seems to be corrupted.");
@@ -140,8 +138,8 @@ public class DirectoryReader implements ProjectReader {
 
 
     private Ms2Experiment parseSpectrum() throws IOException {
-        return env.read(SIRIUS_SPECTRA.fileName(), r ->
-                new JenaMsParser().parse(new BufferedReader(r), env.currentAbsolutePath(SIRIUS_SPECTRA.fileName()))
+        return env.read(SiriusLocations.SIRIUS_SPECTRA.fileName(), r ->
+                new JenaMsParser().parse(new BufferedReader(r), env.currentAbsolutePath(SiriusLocations.SIRIUS_SPECTRA.fileName()))
         );
 
     }
@@ -218,7 +216,7 @@ public class DirectoryReader implements ProjectReader {
             maxSize = l.size();
             this.experiments = l.stream().filter((name) -> {
                 try {
-                    return env.containsFile(name, SIRIUS_SPECTRA.fileName());
+                    return env.containsFile(name, SiriusLocations.SIRIUS_SPECTRA.fileName());
                 } catch (IOException e) {
                     throw new RuntimeException("Cannot Enter directory: " + name + System.lineSeparator() + e.getMessage(), e);
                 }
