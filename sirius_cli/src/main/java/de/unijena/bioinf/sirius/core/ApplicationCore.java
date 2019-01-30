@@ -6,6 +6,7 @@ package de.unijena.bioinf.sirius.core;
  */
 
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
+import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
@@ -38,6 +39,7 @@ public abstract class ApplicationCore {
 
     public static final Path WORKSPACE;
     public static final WebAPI WEB_API;
+    public static final Canopus CANOPUS;
 
 
     //creating
@@ -235,6 +237,17 @@ public abstract class ApplicationCore {
 
         WEB_API = new WebAPI();
         DEFAULT_LOGGER.info("Web API initialized.");
+
+        //todo get canopus from server
+        Canopus c = null;
+        try {
+            c = Canopus.loadFromFile(new File("/home/fleisch/work/sirius_testing/canopus/canopus_fp.data"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            CANOPUS = c;
+        }
+
     }
 
     private static void deleteFromWorkspace(final Path... files) {
