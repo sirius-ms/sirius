@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.projectspace;
+package de.unijena.bioinf.ms.io.projectspace;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.ExperimentResult;
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 public class SiriusProjectSpace implements ProjectSpace {
     protected static final Logger LOG = LoggerFactory.getLogger(SiriusProjectSpace.class);
 
-    //region Static Builder Methods
+    //region Static Helper Methods
     public static @NotNull SiriusProjectSpace create(@Nullable FilenameFormatter filenameFormatter, @NotNull final File projectSpaceRoot, MetaDataSerializer... metaDataSerializers) throws IOException {
         return create(filenameFormatter, projectSpaceRoot, (currentProgress, maxProgress, Message) -> {
         }, metaDataSerializers);
@@ -60,6 +60,23 @@ public class SiriusProjectSpace implements ProjectSpace {
         merged.load(progress, ids, rootInputPaths);
         return merged;
     }
+
+    public static void exortToZip(SiriusProjectSpace projectSpace, File zipFile) throws IOException {
+        if (!isCompressedProjectSpaceName(zipFile.getName()))
+            throw new IllegalArgumentException("Filename needs to be a valid zipped ProjectSpace output.");
+        if (zipFile.exists()) {
+            if (zipFile.isFile())
+                zipFile.delete();
+            else throw new IllegalArgumentException("Output path is not a file!");
+        }
+
+        projectSpace.copyToZip(zipFile);
+    }
+
+    public static boolean isCompressedProjectSpaceName(String fileName) {
+        final String lowercaseName = fileName.toLowerCase();
+        return lowercaseName.endsWith(".workspace") || lowercaseName.endsWith(".zip") || lowercaseName.endsWith(".sirius");
+    }
     //endregion
 
     //region Internal Fields
@@ -82,8 +99,7 @@ public class SiriusProjectSpace implements ProjectSpace {
     protected SiriusProjectSpace(@NotNull File root, @Nullable FilenameFormatter filenameFormatter, MetaDataSerializer... metaDataSerializers) throws IOException {
         rootPath = root;
         if (rootPath.isFile()) {
-            String lowercaseName = rootPath.getName().toLowerCase();
-            if (lowercaseName.endsWith(".workspace") || lowercaseName.endsWith(".zip") || lowercaseName.endsWith(".sirius")) {
+            if (isCompressedProjectSpaceName(rootPath.getName().toLowerCase())) {
                 zipRoot = rootPath;
                 rootPath = de.unijena.bioinf.ChemistryBase.utils.FileUtils.newTempFile(".", "-" + zipRoot.getName() + "-").toFile();
                 LOG.info("Zipped workspace found! Unpacking it to temp directory: " + rootPath.getAbsolutePath());
@@ -300,28 +316,38 @@ public class SiriusProjectSpace implements ProjectSpace {
 
     private void moveBackToZip() throws IOException {
         Path zipRootNew = de.unijena.bioinf.ChemistryBase.utils.FileUtils.newTempFile(zipRoot.toPath().getParent().toString(), ".", "-" + zipRoot.getName());
-
-        try {
-            ZipFile zipFile = new ZipFile(zipRootNew.toFile());
-            ZipParameters p = new ZipParameters();
-            p.setIncludeRootFolder(false);
-            p.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_ULTRA);
-            zipFile.createZipFileFromFolder(rootPath, p, false, 65536);
-        } catch (ZipException e) {
-            throw new IOException("Error during compression. Your compressed Workspace is incomplete an can be found in: "
-                    + zipRootNew.toString() + " The uncompressed version can be found at: " + rootPath.toString(), e);
-        }
-
+        copyToZip(zipRootNew.toFile());
         Files.deleteIfExists(zipRoot.toPath());
         Files.move(zipRootNew, zipRoot.toPath());
         if (rootPath.exists()) FileUtils.deleteDirectory(rootPath);
+    }
+
+    private void copyToZip(@NotNull File rootPathFrom, @NotNull File zipRootTo) throws IOException {
+        try {
+            ZipFile zipFile = new ZipFile(zipRootTo);
+            ZipParameters p = new ZipParameters();
+            p.setIncludeRootFolder(false);
+            p.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_ULTRA);
+            zipFile.createZipFileFromFolder(rootPathFrom, p, false, 65536);
+        } catch (ZipException e) {
+            throw new IOException("Error during compression. Your compressed Workspace is incomplete an can be found in: "
+                    + zipRootTo.toString() + " The uncompressed version can be found at: " + rootPathFrom.toString(), e);
+        }
     }
     //endregion
 
 
     //region API Methods
+    public void copyToZip(@NotNull File zipRootTo) throws IOException {
+        copyToZip(rootPath, zipRootTo);
+    }
+
     public void load(@Nullable ProgressListener progress, @NotNull File... toLoad) {
-        load(progress, new TIntHashSet(experimentIDs.values().stream().mapToInt(ExperimentDirectory::getIndex).toArray()), Arrays.asList(toLoad));
+        load(progress, Arrays.asList(toLoad));
+    }
+
+    public void load(@Nullable ProgressListener progress, @NotNull Collection<File> toLoad) {
+        load(progress, new TIntHashSet(experimentIDs.values().stream().mapToInt(ExperimentDirectory::getIndex).toArray()), toLoad);
     }
 
     /**

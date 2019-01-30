@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.projectspace;
+package de.unijena.bioinf.ms.io.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
@@ -9,9 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.HashSet;
-
-import static de.unijena.bioinf.ms.projectspace.SiriusLocations.SIRIUS_EXP_INFO_FILE;
-import static de.unijena.bioinf.ms.projectspace.SiriusLocations.SIRIUS_SPECTRA;
 
 public class DirectoryWriter implements ProjectWriter {
     protected static final Logger LOG = LoggerFactory.getLogger(DirectoryWriter.class);
@@ -173,7 +170,7 @@ public class DirectoryWriter implements ProjectWriter {
 
     private void writeIndex(ExperimentResult result) {
         try {
-            write(SIRIUS_EXP_INFO_FILE.fileName(), w -> {
+            write(SiriusLocations.SIRIUS_EXP_INFO_FILE.fileName(), w -> {
                 final ExperimentDirectory expDir = result.getAnnotation(ExperimentDirectory.class);
                 w.write("index\t" + (expDir != null ? expDir.getIndex() : ExperimentDirectory.NO_INDEX));
             });
@@ -196,7 +193,7 @@ public class DirectoryWriter implements ProjectWriter {
         // if experiment is stored in results we favour it, as it might be already cleaned and annotated
         final Ms2Experiment experiment = er.getExperiment();
         if (experiment != null) {
-            write(SIRIUS_SPECTRA.fileName(), w -> {
+            write(SiriusLocations.SIRIUS_SPECTRA.fileName(), w -> {
                 final BufferedWriter bw = new BufferedWriter(w);
                 new JenaMsWriter().write(bw, experiment);
                 bw.flush();

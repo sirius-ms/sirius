@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.projectspace;
+package de.unijena.bioinf.ms.io.projectspace;
 
 import java.io.*;
 import java.nio.charset.Charset;
