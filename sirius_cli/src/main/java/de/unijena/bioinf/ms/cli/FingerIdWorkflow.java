@@ -8,7 +8,7 @@ import de.unijena.bioinf.fingerid.FingerIDJJob;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.ms.projectspace.ProjectWriter;
+import de.unijena.bioinf.ms.io.projectspace.ProjectWriter;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.ExperimentResultJJob;
 import de.unijena.bioinf.sirius.IdentificationResult;

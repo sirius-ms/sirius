@@ -13,12 +13,12 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.net.ProxyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.SiriusProperties;
-import de.unijena.bioinf.sirius.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.sirius.gui.dialogs.NewsDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.UpdateDialog;
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
-import de.unijena.bioinf.sirius.gui.net.ConnectionMonitor;
-import de.unijena.bioinf.sirius.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.dialogs.NewsDialog;
+import de.unijena.bioinf.ms.gui.dialogs.UpdateDialog;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.WindowAdapter;

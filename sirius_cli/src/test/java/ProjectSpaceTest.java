@@ -1,6 +1,6 @@
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
-import de.unijena.bioinf.ms.projectspace.*;
+import de.unijena.bioinf.ms.io.projectspace.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 
