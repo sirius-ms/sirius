@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ms.projectspace;
 
+import de.unijena.bioinf.ms.io.projectspace.IdentificationResultSerializer;
+import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import java.io.File;
