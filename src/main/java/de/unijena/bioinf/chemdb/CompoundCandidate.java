@@ -22,6 +22,7 @@ import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.json.*;
 import javax.json.stream.JsonGenerator;
@@ -197,7 +198,7 @@ public class CompoundCandidate {
         this.links = links;
     }
 
-    public Multimap<String, String> getLinkedDatabases() {
+    public @NotNull Multimap<String, String> getLinkedDatabases() {
         if (linkedDatabases == null)
             linkedDatabases = DatasourceService.getLinkedDataSources(this);
         return linkedDatabases;
