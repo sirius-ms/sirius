@@ -39,7 +39,7 @@ public class CSVExporter {
         exportFingerIdResultsToFile(file, Collections.singletonList(data));
     }
 
-    public void exportFingerIdResultsToFile(File file, List<FingerIdResult> data) throws IOException {
+    public void exportFingerIdResultsToFile(File file, Iterable<FingerIdResult> data) throws IOException {
         try (final BufferedWriter bw = Files.newBufferedWriter(file.toPath(), Charset.defaultCharset())) {
             exportFingerIdResults(bw, data);
         }
@@ -50,7 +50,7 @@ public class CSVExporter {
 
     }
 
-    public void exportFingerIdResults(Writer writer, List<FingerIdResult> results) throws IOException {
+    public void exportFingerIdResults(Writer writer, Iterable<FingerIdResult> results) throws IOException {
         writer.write("inchikey2D\tinchi\tmolecularFormula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
         final ArrayList<Scored<FingerprintCandidate>> candidates = new ArrayList<>();
         for (FingerIdResult r : results) candidates.addAll(r.getCandidates());

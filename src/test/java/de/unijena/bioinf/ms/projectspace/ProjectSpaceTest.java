@@ -2,6 +2,10 @@ package de.unijena.bioinf.ms.projectspace;
 
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
+import de.unijena.bioinf.ms.io.projectspace.CanopusResultSerializer;
+import de.unijena.bioinf.ms.io.projectspace.FingerIdResultSerializer;
+import de.unijena.bioinf.ms.io.projectspace.IdentificationResultSerializer;
+import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import java.io.File;

@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.projectspace;
+package de.unijena.bioinf.ms.io.projectspace;
 
 import com.google.gson.stream.JsonWriter;
 import de.unijena.bioinf.ChemistryBase.fp.*;
@@ -15,8 +15,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
-
-import static de.unijena.bioinf.ms.projectspace.FingerIdResultSerializer.isFingerIdCompatible;
 
 public class CanopusResultSerializer implements MetaDataSerializer, SummaryWriter {
     protected final Canopus canopus;
@@ -37,7 +35,7 @@ public class CanopusResultSerializer implements MetaDataSerializer, SummaryWrite
         if (readFingerprints == null) {
             reader.env.leaveDirectory();
             Map<String, String> versionInfo = reader.env.readKeyValueFile(FingerIdLocations.SIRIUS_VERSION_FILE.fileName());
-            readFingerprints = isFingerIdCompatible(versionInfo.get("csi:fingerid"));
+            readFingerprints = FingerIdResultSerializer.isFingerIdCompatible(versionInfo.get("csi:fingerid"));
             reader.env.enterDirectory(expResult.getAnnotation(ExperimentDirectory.class).getDirectoryName());
         }
         // ugly end
