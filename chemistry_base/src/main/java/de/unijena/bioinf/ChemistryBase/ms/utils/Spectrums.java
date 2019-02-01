@@ -843,6 +843,22 @@ public class Spectrums {
         return maxIndex;
     }
 
+    /**
+     *
+     * @param spectrum
+     * @param <P>
+     * @param <S>
+     * @return summed up intensity
+     */
+    public static <P extends Peak, S extends Spectrum<P>> double getTotalIonCount(S spectrum) {
+        final int n = spectrum.size();
+        double sum = 0d;
+        for (int i = 0; i < n; ++i) {
+            sum += spectrum.getIntensityAt(i);
+        }
+        return sum;
+    }
+
     public static <P extends Peak, S extends Spectrum<P>> List<Peak> copyPeakList(S spectrum) {
         final int n = spectrum.size();
         final ArrayList<Peak> peaks = new ArrayList<Peak>(n);

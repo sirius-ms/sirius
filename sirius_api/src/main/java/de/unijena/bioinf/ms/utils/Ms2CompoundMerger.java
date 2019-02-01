@@ -179,11 +179,12 @@ public class Ms2CompoundMerger {
 
     private void putSpectrum(CosineQuerySpectrum[] cosineQuerySpectra, int index, MergedMs2Spectrum mergedMs2Spectrum) {
         assert mergedMs2Spectrum.getPrecursorMz()>0;
-        if (Spectrums.isMassOrderedSpectrum(mergedMs2Spectrum)){
-            cosineQuerySpectra[index] = cosineUtils.createQuery(Spectrums.getAlreadyOrderedSpectrum(mergedMs2Spectrum), mergedMs2Spectrum.getPrecursorMz());
-        } else {
-            cosineQuerySpectra[index] = cosineUtils.createQuery(new SimpleSpectrum(mergedMs2Spectrum), mergedMs2Spectrum.getPrecursorMz());
-        }
+//        if (Spectrums.isMassOrderedSpectrum(mergedMs2Spectrum)){
+//            cosineQuerySpectra[index] = cosineUtils.createQuery(Spectrums.getAlreadyOrderedSpectrum(mergedMs2Spectrum), mergedMs2Spectrum.getPrecursorMz());
+//        } else {
+//            cosineQuerySpectra[index] = cosineUtils.createQuery(new SimpleSpectrum(mergedMs2Spectrum), mergedMs2Spectrum.getPrecursorMz());
+//        }
+        cosineQuerySpectra[index] = cosineUtils.createQueryWithIntensityTransformation(mergedMs2Spectrum, mergedMs2Spectrum.getPrecursorMz(), true);
     }
 
     private boolean hasMs2(Ms2Experiment experiment) {
@@ -216,9 +217,9 @@ public class Ms2CompoundMerger {
         MutableMs2Experiment merged = new MutableMs2Experiment(experiments.get(0));
         double meanMz = experiments.stream().mapToDouble(Ms2Experiment::getIonMass).average().getAsDouble();
         merged.setIonMass(meanMz);
-        PrecursorIonType ionType = null;
-        String filePaths = "";
-        for (int i = 0; i < experiments.size(); i++) {
+        PrecursorIonType ionType = experiments.get(0).getPrecursorIonType();
+        String filePaths = experiments.get(0).getSource().toString();
+        for (int i = 1; i < experiments.size(); i++) {
              Ms2Experiment experiment = experiments.get(i);
              merged.addAnnotationsFrom(experiment); //todo merge annotations in a better way
              merged.getMs2Spectra().addAll(experiment.getMs2Spectra());
