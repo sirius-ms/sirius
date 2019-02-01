@@ -117,12 +117,12 @@ public class MutableDatasetStatistics implements DatasetStatistics, Cloneable {
         return medianNoiseIntensity;
     }
 
-    public double getQuantileMs2NoiseIntensity(int quantile){
+    public double getPrecentileMs2NoiseIntensity(int percentile){
         //todo implement fast median
         if (noiseIntensities.size()==0) throw new RuntimeException("cannot estimate median noise intensity.");
         TDoubleArrayList copy = new TDoubleArrayList(noiseIntensities);
         copy.sort();
-        return copy.get((int)(copy.size()*(quantile/100d)));
+        return copy.get((int)(copy.size()*(percentile/100d)));
     }
 
     public TDoubleArrayList getNoiseIntensities() {
