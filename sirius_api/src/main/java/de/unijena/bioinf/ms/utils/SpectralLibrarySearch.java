@@ -68,7 +68,7 @@ public class SpectralLibrarySearch {
 //    private final OrderedSpectrum<Peak>[] librarySpectraInverse;
 //    private final double[] selfSimilarity;
 //    private final double[] selfSimilarityLosses;
-    private final IntensityTransformation intensityTransformation;
+    private final CosineQueryUtils.IntensityTransformation intensityTransformation;
     private final int minSharedPeaks;
     private final Deviation deviation;
     private static final Normalization NORMALIZATION = Normalization.Sum(100);
@@ -96,7 +96,7 @@ public class SpectralLibrarySearch {
         });
 
         if (transformSqrtIntensity) {
-            intensityTransformation = new IntensityTransformation(multiplyIntensityByMass, transformSqrtIntensity);
+            intensityTransformation = new CosineQueryUtils.IntensityTransformation(multiplyIntensityByMass, transformSqrtIntensity);
             for (int i = 0; i < this.librarySpectra.length; i++) {
                 LibrarySpectrum ls = this.librarySpectra[i];
                 Spectrum<Peak> transformedSpectrum =  Spectrums.transform(new SimpleMutableSpectrum(ls.getFragmentationSpectrum()), intensityTransformation);
@@ -413,27 +413,27 @@ public class SpectralLibrarySearch {
         }
     }
 
-    protected class IntensityTransformation implements Spectrums.Transformation<Peak, Peak> {
-        final boolean multiplyByMass;
-        final boolean sqrtIntensity;
-
-        public IntensityTransformation(boolean multiplyByMass, boolean sqrtIntensity) {
-            this.multiplyByMass = multiplyByMass;
-            this.sqrtIntensity = sqrtIntensity;
-        }
-
-        @Override
-        public Peak transform(Peak input) {
-            double intensity = input.getIntensity();
-            if (sqrtIntensity){
-                intensity = intensity<=0?0:Math.sqrt(intensity);
-            }
-            if (multiplyByMass){
-                intensity = input.getMass()*intensity;
-            }
-            return new Peak(input.getMass(), intensity);
-        }
-    }
+//    protected class IntensityTransformation implements Spectrums.Transformation<Peak, Peak> {
+//        final boolean multiplyByMass;
+//        final boolean sqrtIntensity;
+//
+//        public IntensityTransformation(boolean multiplyByMass, boolean sqrtIntensity) {
+//            this.multiplyByMass = multiplyByMass;
+//            this.sqrtIntensity = sqrtIntensity;
+//        }
+//
+//        @Override
+//        public Peak transform(Peak input) {
+//            double intensity = input.getIntensity();
+//            if (sqrtIntensity){
+//                intensity = intensity<=0?0:Math.sqrt(intensity);
+//            }
+//            if (multiplyByMass){
+//                intensity = input.getMass()*intensity;
+//            }
+//            return new Peak(input.getMass(), intensity);
+//        }
+//    }
 
     protected class NoiseTransformation implements Spectrums.Transformation<Peak, Peak> {
         final Deviation deviation = new Deviation(5,0.001);
