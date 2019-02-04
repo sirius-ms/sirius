@@ -22,6 +22,10 @@ public abstract class AbstractTreeComputationInstance extends BasicMasterJJob<Ab
     public static final double MIN_EXPLAINED_INTENSITY = 0.7d;
     public static final int MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY = 5;
 
+    public ProcessedInput getProcessedInput() {
+        return pinput;
+    }
+
     public final static class FinalResult {
     protected final boolean canceledDueToLowScore;
     protected final List<FTree> results;
@@ -46,13 +50,13 @@ public abstract class AbstractTreeComputationInstance extends BasicMasterJJob<Ab
         this.analyzer = analyzer;
     }
 
-    protected boolean checkForTreeQuality(List<TreeComputationInstance.ExactResult> results, boolean addAnnotation) {
+    protected boolean checkForTreeQuality(List<ExactResult> results, boolean addAnnotation) {
         boolean any = false;
-        for (TreeComputationInstance.ExactResult r : results) {
+        for (ExactResult r : results) {
             final FTree tree = r.tree;
             if (analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput, tree) >= MIN_EXPLAINED_INTENSITY && tree.numberOfVertices() >= Math.min(pinput.getMergedPeaks().size() - 2, MIN_NUMBER_OF_EXPLAINED_PEAKS)) {
                 any = true;
-                if (addAnnotation) tree.setAnnotation(Beautified.class,Beautified.IS_BEAUTIFUL);
+                if (addAnnotation) tree.setAnnotation(Beautified.class,Beautified.beautified(0d));
                 else return true;
             } else if (addAnnotation) tree.setAnnotation(Beautified.class, Beautified.IS_UGGLY);
         }

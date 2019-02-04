@@ -25,7 +25,7 @@ public class FormulaSettings implements Ms2ExperimentAnnotation {
      * @param detectable detectable elements are added to the chemical alphabet, if there are indications for them (e.g. in isotope pattern)
      * @param fallback these elements are used, if the autodetection fails (e.g. no isotope pattern available)
      */
-    @DefaultInstanceProvider  public static FormulaSettings newInstance(@DefaultProperty FormulaConstraints enforced, @DefaultProperty ChemicalAlphabet detectable, @DefaultProperty FormulaConstraints fallback) {
+    @DefaultInstanceProvider  public static FormulaSettings newInstance(@DefaultProperty(propertyKey = "enforced") FormulaConstraints enforced, @DefaultProperty(propertyKey = "detectable") ChemicalAlphabet detectable, @DefaultProperty(propertyKey = "fallback") FormulaConstraints fallback) {
         return new FormulaSettings(enforced,detectable,fallback);
     }
 

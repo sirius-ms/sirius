@@ -136,6 +136,6 @@ public class DecompositionList implements DataAnnotation {
     }
 
     public List<Decomposition> getDecompositions() {
-        return decompositions;
+        return Collections.unmodifiableList(decompositions);
     }
 }

@@ -146,9 +146,6 @@
         "useOriginalMz": true
       },
       {
-        "$name": "AdductTypeScorer"
-      },
-      {
         "$name": "IntrinsicallyChargedScorer",
         "score": -4.605170185988091
       },
@@ -166,9 +163,6 @@
         "prior": {
           "$name": "SupportVectorMolecularFormulaScorer"
         }
-      },
-      {
-        "$name": "IsotopeMs1Scorer"
       }
     ],
     "recalibrationMethod": {
@@ -185,15 +179,6 @@
     },
     "$name": "FragmentationPatternAnalysis",
     "preProcessing": [
-      {
-        "$name": "NormalizeToSumPreprocessor",
-        "onlyForRelativeIntensities": true
-      },
-      {
-        "$name": "DynamicBaselineFilter",
-        "standardDeviation": 0.05,
-        "threshold": 0.25
-      }
     ],
     "merge": {
       "$name": "HighIntensityMerger",
@@ -738,14 +723,6 @@
       }
     ],
     "postProcessing": [
-      {
-        "$name": "NoiseThresholdFilter",
-        "threshold": 0.002
-      },
-      {
-        "limit": 60,
-        "$name": "LimitNumberOfPeaksFilter"
-      }
     ]
   }
 }

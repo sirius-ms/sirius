@@ -12,13 +12,13 @@ FormulaConstraints.alphabet = CHNOP[5]S
 FormulaConstraints.valenceFilter =-0.5
 
 # MS1 mass deviation in ppm
-MS1MassDeviation.allowedMassDeviation =10.0
-MS1MassDeviation.standardMassDeviation =10.0
-MS1MassDeviation.massDifferenceDeviation =5.0
+MS1MassDeviation.allowedMassDeviation =10.0 ppm
+MS1MassDeviation.standardMassDeviation =10.0 ppm
+MS1MassDeviation.massDifferenceDeviation =5.0 ppm
 
 # MS/MS mass deviation in ppm
-MS2MassDeviation.allowedMassDeviation =10.0
-MS2MassDeviation.standardMassDeviation =10.0
+MS2MassDeviation.allowedMassDeviation =10.0 ppm
+MS2MassDeviation.standardMassDeviation =10.0 ppm
 
 MedianNoiseIntensity =0.015
 
@@ -43,17 +43,29 @@ ForbidRecalibration =ALLOWED
 # This class holds the information how to autodetect elements based on the given
 # FormulaConstraints
 # Note: during Validation this is compared to the molecular formula an may be changed
-FormulaSettings.autoDetectionElements =S,Br,Cl,B,Se
-FormulaSettings.allowIsotopeElementFiltering =true
+FormulaSettings.detectable =S,Br,Cl,B,Se
+FormulaSettings.enforced =C,H,N,O,P
+FormulaSettings.fallback=S
 
 # Determines how strong the isotope pattern score influences the final scoring
-# Must be either 'DEFAULT' or DISABLED'
-IsotopeScoring =DEFAULT
+IsotopeSettings.multiplier = 1
+IsotopeSettings.filter = True
 
 # If this annotation is set, Tree Builder will stop after reaching the given number of seconds
 Timeout.secondsPerInstance =0
 Timeout.secondsPerTree =0
-IonGuessingMode = ADD_IONS
-PossibleIons =
-IsotopeHandling = BOTH
+
+AdductSettings.enforced = ,
+AdductSettings.fallback = [M+H]+,[M+Na]+,[M+K]+,[M-H]-,[M+Cl]-
+AdductSettings.detectable = [M+H]+,[M-H2O+H]+, [M+NH3+H]+,[M+Na]+,[M+K]+,[M-H]-,[M+Cl]-
+
+NoiseThresholdSettings.intensityThreshold = 0.002
+NoiseThresholdSettings.maximalNumberOfPeaks = 60
+# this determines which base peak should be used for determining relative intensities. We recommend using NO_PRECURSOR,
+# which will ignore the precursor peak. Other possible values are LARGEST or SECOND_LARGEST. Note, that with LARGEST
+# you might lost all peaks in the spectrum whenever the precursor peak is very large.
+NoiseThresholdSettings.basePeak = NOT_PRECURSOR
+# use this property to implement a absolute intensity threshold
+NoiseThresholdSettings.absoluteThreshold = 0
+
 IntensityDeviation = 0.02

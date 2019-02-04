@@ -18,6 +18,7 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import com.google.common.base.Joiner;
+import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class RecalibrationFunction {
+public class RecalibrationFunction implements TreeAnnotation {
 
     private double[] polynomialTerms;
 

@@ -19,13 +19,14 @@ package de.unijena.bioinf.babelms.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.babelms.Index;
 import de.unijena.bioinf.babelms.GenericParser;
+import de.unijena.bioinf.babelms.Index;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
@@ -507,13 +508,16 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                         return;
                     }
                 }
-                PossibleIonModes ionModes = new PossibleIonModes();
+                final Set<PrecursorIonType> ionTypeSet = new HashSet<>();
                 for (int i = 0; i < ionTypes.length; i++) {
                     PrecursorIonType ionType = ionTypes[i];
-                    double p = probabilities[i];
-                    ionModes.add(ionType, p);
+                    ionTypeSet.add(ionType);
+                    if (probabilities[i]>1) {
+                        warn("Probabilities for ion types are currently not supported");
+                    }
                 }
-                annotations.put(PossibleIonModes.class, ionModes);
+                final AdductSettings s = this.experiment.getAnnotationOrDefault(AdductSettings.class);
+                annotations.put(AdductSettings.class, s.withEnforced(ionTypeSet));
             } else {
                 final PrecursorIonType ion = PeriodicTable.getInstance().ionByName(ions.trim());
                 if (ion == null) {

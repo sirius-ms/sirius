@@ -33,13 +33,17 @@ public class Fragment implements Comparable<Fragment> {
 
     protected MolecularFormula formula;
     protected Ionization ionization;
-    protected int color;
+    protected short color;
+
+    protected short peakId;
+
+
     protected Loss[] outgoingEdges;
     protected Object[] annotations;
     protected int vertexId;
-    protected int outDegree;
+    protected short outDegree;
     protected Loss[] incomingEdges;
-    protected int inDegree;
+    protected short inDegree;
 
     public Fragment(int vertexId) {
         this(vertexId, null, null);
@@ -99,7 +103,15 @@ public class Fragment implements Comparable<Fragment> {
     }
 
     public void setColor(int color) {
-        this.color = color;
+        this.color = (short)color;
+    }
+
+    public short getPeakId() {
+        return peakId;
+    }
+
+    public void setPeakId(int peakId) {
+        this.peakId = (short)peakId;
     }
 
     public MolecularFormula getFormula() {
@@ -239,7 +251,7 @@ public class Fragment implements Comparable<Fragment> {
         return getFormula().compareTo(o.getFormula());
     }
 
-    public static TCustomHashMap<Fragment, Fragment> newFragmentWithIonMap() {
+    public static <T> TCustomHashMap<Fragment, T> newFragmentWithIonMap() {
         return new TCustomHashMap<>(new HashFormulaWithIon());
     }
 

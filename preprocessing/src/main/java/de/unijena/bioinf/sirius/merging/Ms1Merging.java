@@ -24,7 +24,7 @@ public class Ms1Merging {
     }
 
     public void merge(ProcessedInput processedInput) {
-        processedInput.setAnnotation(MergedMs1Spectrum.class, getMergedSpectrum(processedInput));
+        processedInput.setAnnotation(MergedMs1Spectrum.class, getMergedSpectrum(processedInput));;
     }
 
 }

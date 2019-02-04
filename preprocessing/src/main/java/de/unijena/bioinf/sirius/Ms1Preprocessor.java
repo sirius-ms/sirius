@@ -81,7 +81,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         final FormulaSettings settings = pinput.getAnnotationOrDefault(FormulaSettings.class);
         final FormulaConstraints fc = elementDetection.detect(pinput);
         if (fc==null) {
-            pinput.setAnnotation(FormulaConstraints.class, settings.getFallbackAlphabet());
+            pinput.setAnnotation(FormulaConstraints.class, settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()));
         } else {
             pinput.setAnnotation(FormulaConstraints.class, settings.getEnforcedAlphabet().getExtendedConstraints(fc));
         }
@@ -91,9 +91,10 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
      * Detect ion mode based on MS spectrum
      * @param pinput
      */
+    @Provides(PossibleAdducts.class)
     public void adductDetection(ProcessedInput pinput) {
         final int charge = pinput.getExperimentInformation().getPrecursorIonType().getCharge();
-        final AdductSettings settings = pinput.getAnnotation(AdductSettings.class);
+        final AdductSettings settings = pinput.getAnnotationOrDefault(AdductSettings.class);
         final PossibleAdducts ionModes = ionModeDetection.detect(pinput, settings.getDetectable(charge));
 
         final HashSet<PrecursorIonType> set = new HashSet<>(settings.getEnforced(charge));

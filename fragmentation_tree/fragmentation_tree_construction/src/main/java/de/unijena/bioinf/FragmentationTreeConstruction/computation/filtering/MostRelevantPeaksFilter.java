@@ -64,8 +64,8 @@ public class MostRelevantPeaksFilter implements PostProcessor {
         double highestPeakMass = 0;
         double lowestPeakMass = Integer.MAX_VALUE;
         for (ProcessedPeak p : peaks) {
-            if (p.getMz() > highestPeakMass) highestPeakMass = p.getMz();
-            if (p.getMz() < lowestPeakMass) lowestPeakMass = p.getMz();
+            if (p.getMass() > highestPeakMass) highestPeakMass = p.getMass();
+            if (p.getMass() < lowestPeakMass) lowestPeakMass = p.getMass();
         }
 
 

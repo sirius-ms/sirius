@@ -24,10 +24,9 @@ public class CSVOutputWriter {
             w.write('\t');
             w.write(String.valueOf(r.getIsotopeScore()));
             w.write('\t');
-            final TreeScoring scoring = r.getRawTree() == null ? null : r.getRawTree().getAnnotationOrNull(TreeScoring.class);
             w.write(r.getRawTree() == null ? "" : String.valueOf(r.getRawTree().numberOfVertices()));
             w.write('\t');
-            w.write(scoring == null ? "" : String.valueOf(scoring.getExplainedIntensity()));
+            w.write(String.valueOf(r.getExplainedIntensityRatio()));
             w.write('\n');
         }
     }

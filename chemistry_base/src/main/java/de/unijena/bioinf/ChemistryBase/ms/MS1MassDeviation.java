@@ -21,7 +21,7 @@ public final class MS1MassDeviation extends MassDeviation {
     }
 
     @DefaultInstanceProvider
-    public static MS1MassDeviation newInstance(@DefaultProperty Deviation allowedMassDeviation, @DefaultProperty Deviation standardMassDeviation, @DefaultProperty Deviation massDifferenceDeviation) {
+    public static MS1MassDeviation newInstance(@DefaultProperty(propertyKey = "allowedMassDeviation") Deviation allowedMassDeviation, @DefaultProperty(propertyKey = "standardMassDeviation") Deviation standardMassDeviation, @DefaultProperty(propertyKey = "massDifferenceDeviation") Deviation massDifferenceDeviation) {
         return new MS1MassDeviation(allowedMassDeviation, standardMassDeviation, massDifferenceDeviation);
     }
 

@@ -8,8 +8,8 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.PeaklistSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
+import de.unijena.bioinf.sirius.elementdetection.ElementDetection;
 import gnu.trove.list.array.TDoubleArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -186,10 +186,10 @@ public class Ms2DatasetPreprocessor {
 
 
         for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
-            Ms2Experiment validatedExperiment = experiment;
+            MutableMs2Experiment validatedExperiment = new MutableMs2Experiment(experiment);
             for (Ms2ExperimentValidator ms2ExperimentValidator : ms2ExperimentValidators) {
                 try {
-                    validatedExperiment = ms2ExperimentValidator.validate(validatedExperiment, validatorWarning, repairInput);
+                    ms2ExperimentValidator.validate(validatedExperiment, validatorWarning, repairInput);
 
                 } catch (InvalidException exception) {
                     LOG.warn("validation error: remove compound "+experiment.getName());
@@ -491,9 +491,9 @@ public class Ms2DatasetPreprocessor {
         FormulaConstraints globalConstraints = experiment.getAnnotationOrDefault(FormulaConstraints.class);
         if (constraints==null) return globalConstraints;
 
-        ElementPredictor elementPredictor = sirius.getElementPrediction();
+        ElementDetection elementDetection = sirius.profile.ms1Preprocessor.elementDetection;
         for (Element element : globalConstraints.getChemicalAlphabet()) {
-            if (!elementPredictor.isPredictable(element)){
+            if (!elementDetection.isPredictable(element)){
                 if (globalConstraints.getUpperbound(element)>constraints.getUpperbound(element)){
                     constraints.setUpperbound(element, globalConstraints.getUpperbound(element));
                 }

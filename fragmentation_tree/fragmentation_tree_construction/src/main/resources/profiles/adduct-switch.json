@@ -145,9 +145,7 @@
         "standardDeviation": "5.0 ppm (5.0E-4 m/z)",
         "useOriginalMz": true
       },
-      {
-        "$name": "AdductTypeScorer"
-      },
+    
       {
         "$name": "IntrinsicallyChargedScorer",
         "score": -4.605170185988091

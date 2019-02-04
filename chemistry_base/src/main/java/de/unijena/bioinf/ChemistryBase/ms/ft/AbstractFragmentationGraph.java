@@ -17,24 +17,21 @@
  */
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TCustomHashMap;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 abstract class AbstractFragmentationGraph implements Iterable<Fragment>, Annotated<DataAnnotation> {
 
     protected final Annotated.Annotations<DataAnnotation> annotations;//HashMap<Class<Object>, Object> annotations;
-    protected final HashSet<Class<Object>> aliases;
     protected final ArrayList<Fragment> fragments;
-    protected final HashMap<Class<Object>, FragmentAnnotation<Object>> fragmentAnnotations;
-    protected final HashMap<Class<Object>, LossAnnotation<Object>> lossAnnotations;
+    protected final HashMap<Class<DataAnnotation>, FragmentAnnotation<DataAnnotation>> fragmentAnnotations;
+    protected final HashMap<Class<DataAnnotation>, LossAnnotation<DataAnnotation>> lossAnnotations;
     protected int edgeNum;
 
     public Annotated.Annotations<DataAnnotation> annotations() {
@@ -44,17 +41,15 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment>, Annotat
     public AbstractFragmentationGraph() {
         this.annotations = new Annotations<>();
         this.fragments = new ArrayList<Fragment>();
-        this.fragmentAnnotations = new HashMap<Class<Object>, FragmentAnnotation<Object>>();
-        this.lossAnnotations = new HashMap<Class<Object>, LossAnnotation<Object>>();
-        this.aliases = new HashSet<Class<Object>>();
+        this.fragmentAnnotations = new HashMap<>();
+        this.lossAnnotations = new HashMap<>();
         edgeNum = 0;
     }
 
     protected AbstractFragmentationGraph(AbstractFragmentationGraph graph) {
         this.annotations = graph.annotations.clone();
-        this.aliases = new HashSet<Class<Object>>();
-        this.fragmentAnnotations = new HashMap<Class<Object>, FragmentAnnotation<Object>>(graph.fragmentAnnotations);
-        this.lossAnnotations = new HashMap<Class<Object>, LossAnnotation<Object>>(graph.lossAnnotations);
+        this.fragmentAnnotations = new HashMap<>(graph.fragmentAnnotations);
+        this.lossAnnotations = new HashMap<>(graph.lossAnnotations);
         this.edgeNum = graph.edgeNum;
         this.fragments = new ArrayList<Fragment>(graph.fragments.size());
         for (Fragment f : graph.fragments) fragments.add(new Fragment(f));
@@ -76,30 +71,6 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment>, Annotat
                 }
             }
         }
-    }
-
-    /**
-     * maps all vertices from graph1 to graph2. Returns a map (fragment a {@literal ->} fragment b) where a is a fragment of
-     * graph1 and b is a corresponding fragment from graph 2. Two fragments belong to each other if they have the same
-     * molecular formula.
-     */
-    public static BiMap<Fragment, Fragment> createFragmentMapping(AbstractFragmentationGraph graph1, AbstractFragmentationGraph graph2) {
-        if (graph1.numberOfVertices() > graph2.numberOfVertices())
-            return createFragmentMapping(graph2, graph1).inverse();
-//        final HashMap<MolecularFormula, Fragment> formulas = new HashMap<MolecularFormula, Fragment>(graph1.numberOfVertices());
-        final TCustomHashMap<Fragment, Fragment> fragmentsGraph1Map = Fragment.newFragmentWithIonMap();
-        final BiMap<Fragment, Fragment> bimap = HashBiMap.create(Math.min(graph1.numberOfVertices(), graph2.numberOfVertices()));
-
-        for (Fragment f : graph1.getFragments()) {
-            fragmentsGraph1Map.put(f, f);
-        }
-
-        for (Fragment f : graph2.getFragmentsWithoutRoot()) {
-            if (fragmentsGraph1Map.containsKey(f)) {
-                bimap.put(fragmentsGraph1Map.get(f), f);
-            }
-        }
-        return bimap;
     }
 
     private static void deleteOutEdgeInternal(Fragment vertex, Loss l) {
@@ -198,17 +169,17 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment>, Annotat
         return fragments.get(f.vertexId)==f;
     }
 
-    public List<FragmentAnnotation<Object>> getFragmentAnnotations() {
-        return new ArrayList<FragmentAnnotation<Object>>(fragmentAnnotations.values());
+    public List<FragmentAnnotation<DataAnnotation>> getFragmentAnnotations() {
+        return new ArrayList<FragmentAnnotation<DataAnnotation>>(fragmentAnnotations.values());
     }
 
-    public List<LossAnnotation<Object>> getLossAnnotations() {
-        return new ArrayList<LossAnnotation<Object>>(lossAnnotations.values());
+    public List<LossAnnotation<DataAnnotation>> getLossAnnotations() {
+        return new ArrayList<LossAnnotation<DataAnnotation>>(lossAnnotations.values());
     }
 
 
     @SuppressWarnings("unchecked cast")
-    public <T> FragmentAnnotation<T> getFragmentAnnotationOrThrow(Class<T> klass) {
+    public <T extends DataAnnotation> FragmentAnnotation<T> getFragmentAnnotationOrThrow(Class<T> klass) {
         final FragmentAnnotation<T> ano = (FragmentAnnotation<T>) fragmentAnnotations.get(klass);
         if (ano == null)
             throw new NullPointerException("No peak annotation '" + klass.getName() + "' in ProcessedInput");
@@ -216,12 +187,12 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment>, Annotat
     }
 
     @SuppressWarnings("unchecked cast")
-    public <T> FragmentAnnotation<T> getFragmentAnnotationOrNull(Class<T> klass) {
+    public <T extends DataAnnotation> FragmentAnnotation<T> getFragmentAnnotationOrNull(Class<T> klass) {
         return (FragmentAnnotation<T>) fragmentAnnotations.get(klass);
     }
 
     @SuppressWarnings("unchecked cast")
-    public <T> LossAnnotation<T> getLossAnnotationOrThrow(Class<T> klass) {
+    public <T extends DataAnnotation> LossAnnotation<T> getLossAnnotationOrThrow(Class<T> klass) {
         final LossAnnotation<T> ano = (LossAnnotation<T>) lossAnnotations.get(klass);
         if (ano == null)
             throw new NullPointerException("No peak annotation '" + klass.getName() + "' in ProcessedInput");
@@ -229,7 +200,7 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment>, Annotat
     }
 
     @SuppressWarnings("unchecked cast")
-    public <T> LossAnnotation<T> getLossAnnotationOrNull(Class<T> klass) {
+    public <T extends DataAnnotation> LossAnnotation<T> getLossAnnotationOrNull(Class<T> klass) {
         return (LossAnnotation<T>) lossAnnotations.get(klass);
     }
 
@@ -237,71 +208,18 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment>, Annotat
         return hasAnnotation(klass) ? getAnnotation(klass) : null;
     }
 
-    public boolean removeAliasForFragmentAnnotation(Class<?> klass) {
-        FragmentAnnotation<Object> f = fragmentAnnotations.get(klass);
-        if (f.isAlias()) {
-            fragmentAnnotations.remove(klass);
-            return true;
-        } else return false;
-    }
-
-    public boolean removeAliasForLossAnnotation(Class<?> klass) {
-        LossAnnotation<Object> f = lossAnnotations.get(klass);
-        if (f.isAlias()) {
-            lossAnnotations.remove(klass);
-            return true;
-        } else return false;
-    }
-
-    /*
-    public void copyAnnotations(AbstractFragmentationGraph otherGraph) {
-        for (FragmentAnnotation<Object> entry : fragmentAnnotations.values()) {
-           if (!entry.isAlias()) {
-               otherGraph.addFragmentAnnotation(entry.getAnnotationType());
-           }
-        }
-        for (FragmentAnnotation<Object> entry : fragmentAnnotations.values()) {
-            if (entry.isAlias()) {
-                otherGraph.addAliasForFragmentAnnotation(entry.getAliasType(), entry.getAnnotationType());
-            }
-        }
-        for (LossAnnotation<Object> entry : lossAnnotations.values()) {
-            if (!entry.isAlias()) {
-                otherGraph.addLossAnnotation(entry.getAnnotationType());
-            }
-        }
-        for (LossAnnotation<Object> entry : lossAnnotations.values()) {
-            if (entry.isAlias()) {
-                otherGraph.addAliasForLossAnnotation(entry.getAliasType(), entry.getAnnotationType());
-            }
-        }
-        for (Map.Entry<Class<Object>,Object> entry : annotations.entrySet()) {
-            otherGraph.setAnnotation(entry.getKey(), entry.getValue());
-        }
-        otherGraph.aliases.addAll(aliases);
-    }
-    */
-
-    public boolean removeFragmentAnnotation(Class<? extends Object> klass) {
-        final FragmentAnnotation<Object> ano = fragmentAnnotations.get(klass);
+    public boolean removeFragmentAnnotation(Class<? extends DataAnnotation> klass) {
+        final FragmentAnnotation<DataAnnotation> ano = fragmentAnnotations.get(klass);
         if (ano==null) return false;
-        if (ano.isAlias()) {
-            fragmentAnnotations.remove(klass);
-            return true;
-        }
         fragmentAnnotations.remove(klass);
         for (Fragment f : fragments) {
             ano.set(f, null);
         }
         return true;
     }
-    public boolean removeLossAnnotation(Class<? extends Object> klass) {
-        final LossAnnotation<Object> ano = lossAnnotations.get(klass);
+    public boolean removeLossAnnotation(Class<? extends DataAnnotation> klass) {
+        final LossAnnotation<DataAnnotation> ano = lossAnnotations.get(klass);
         if (ano==null) return false;
-        if (ano.isAlias()) {
-            lossAnnotations.remove(klass);
-            return true;
-        }
         lossAnnotations.remove(klass);
         for (Loss f : losses()) {
             ano.set(f, null);
@@ -309,60 +227,63 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment>, Annotat
         return true;
     }
 
-    public <T> FragmentAnnotation<T> addFragmentAnnotation(Class<T> klass) {
+    @Deprecated
+    public <T extends DataAnnotation> FragmentAnnotation<T> addFragmentAnnotation(Class<T> klass) {
+        return addFragmentAnnotation(klass, ()-> {
+            try {
+                return klass.newInstance();
+            } catch (InstantiationException|IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Deprecated
+    public <T extends DataAnnotation> LossAnnotation<T> addLossAnnotation(Class<T> klass) {
+        return addLossAnnotation(klass, ()-> {
+            try {
+                return klass.newInstance();
+            } catch (InstantiationException|IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public <T extends DataAnnotation> FragmentAnnotation<T> addFragmentAnnotation(Class<T> klass, Supplier<T> constructor) {
         if (fragmentAnnotations.containsKey(klass))
             throw new RuntimeException("Peak annotation '" + klass.getName() + "' is already present.");
         final BitSet ids = new BitSet();
-        for (FragmentAnnotation<Object> a : fragmentAnnotations.values())
-            if (!a.isAlias())
+        for (FragmentAnnotation<DataAnnotation> a : fragmentAnnotations.values())
                 ids.set(a.id);
         final int id = ids.nextClearBit(0);
         final int length = ids.length();
-        final FragmentAnnotation<T> ano = new FragmentAnnotation<T>(id, length, klass);
-        for (FragmentAnnotation<Object> a : fragmentAnnotations.values()) a.capa = length;
-        fragmentAnnotations.put((Class<Object>) klass, (FragmentAnnotation<Object>) ano);
+        final FragmentAnnotation<T> ano = new FragmentAnnotation<T>(id, length, klass, constructor);
+        for (FragmentAnnotation<DataAnnotation> a : fragmentAnnotations.values()) a.capa = length;
+        fragmentAnnotations.put( (Class<DataAnnotation>)klass, (FragmentAnnotation<DataAnnotation>) ano);
         return ano;
     }
-    public <T> LossAnnotation<T> addLossAnnotation(Class<T> klass) {
+    public <T extends DataAnnotation> LossAnnotation<T> addLossAnnotation(Class<T> klass, Supplier<T> constructor) {
         if (lossAnnotations.containsKey(klass))
             throw new RuntimeException("Loss annotation '" + klass.getName() + "' is already present.");
         final BitSet ids = new BitSet();
-        for (LossAnnotation<Object> a : lossAnnotations.values())
-            if (!a.isAlias())
+        for (LossAnnotation<DataAnnotation> a : lossAnnotations.values())
                 ids.set(a.id);
         final int id = ids.nextClearBit(0);
         final int length = ids.length();
-        final LossAnnotation<T> ano = new LossAnnotation<T>(id, length, klass);
-        for (LossAnnotation<Object> a : lossAnnotations.values()) a.capa = length;
-        lossAnnotations.put((Class<Object>) klass, (LossAnnotation<Object>) ano);
+        final LossAnnotation<T> ano = new LossAnnotation<T>(id, length, klass, constructor);
+        for (LossAnnotation<DataAnnotation> a : lossAnnotations.values()) a.capa = length;
+        lossAnnotations.put((Class<DataAnnotation>) klass, (LossAnnotation<DataAnnotation>) ano);
         return ano;
     }
 
     @SuppressWarnings("unchecked cast")
-    public <S, T extends S> FragmentAnnotation<S> addAliasForFragmentAnnotation(Class<T> previous, Class<S> newOne) {
-        final FragmentAnnotation<T> ano = getFragmentAnnotationOrThrow(previous);
-        final FragmentAnnotation<S> newAno = new FragmentAnnotation<S>(ano, newOne);
-        fragmentAnnotations.put((Class<Object>) newOne, (FragmentAnnotation<Object>) newAno);
-        return newAno;
-    }
-
-    @SuppressWarnings("unchecked cast")
-    public <S, T extends S> LossAnnotation<S> addAliasForLossAnnotation(Class<T> previous, Class<S> newOne) {
-        final LossAnnotation<T> ano = getLossAnnotationOrThrow(previous);
-        final LossAnnotation<S> newAno = new LossAnnotation<S>(ano, newOne);
-        lossAnnotations.put((Class<Object>) newOne, (LossAnnotation<Object>) newAno);
-        return newAno;
-    }
-
-
-    @SuppressWarnings("unchecked cast")
-    public <T> FragmentAnnotation<T> getOrCreateFragmentAnnotation(Class<T> klass) {
+    public <T extends DataAnnotation> FragmentAnnotation<T> getOrCreateFragmentAnnotation(Class<T> klass) {
         if (fragmentAnnotations.containsKey(klass)) return (FragmentAnnotation<T>) fragmentAnnotations.get(klass);
         return addFragmentAnnotation(klass);
     }
 
     @SuppressWarnings("unchecked cast")
-    public <T> LossAnnotation<T> getOrCreateLossAnnotation(Class<T> klass) {
+    public <T extends DataAnnotation> LossAnnotation<T> getOrCreateLossAnnotation(Class<T> klass) {
         if (lossAnnotations.containsKey(klass)) return (LossAnnotation<T>) lossAnnotations.get(klass);
         return addLossAnnotation(klass);
     }

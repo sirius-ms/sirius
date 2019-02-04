@@ -782,6 +782,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * in the array
      */
     BitSet bitsetOfElements(Element... elements) {
+        if (elements.length==0) return BitSet.valueOf(new long[0]);
         final int maxId = Collections.max(Arrays.asList(elements), new Comparator<Element>() {
             @Override
             public int compare(Element o1, Element o2) {

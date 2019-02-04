@@ -20,11 +20,12 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 
 /**
  * An annotated peak after tree computation is done. Can be used as FragmentAnnotation in FTree
  */
-public final class AnnotatedPeak {
+public final class AnnotatedPeak implements TreeAnnotation  {
 
     /**
      * The molecular formula that is assigned to this peak
@@ -61,6 +62,12 @@ public final class AnnotatedPeak {
      * collision energy belongs to the i-th peak.
      */
     private final CollisionEnergy[] collisionEnergies;
+
+    private final static AnnotatedPeak NO_PEAK = new AnnotatedPeak(MolecularFormula.emptyFormula(), Double.NaN, Double.NaN, 0d, null, new Peak[0], new CollisionEnergy[0]);
+
+    public static AnnotatedPeak none() {
+        return NO_PEAK;
+    }
 
     public AnnotatedPeak(MolecularFormula getFormula, double getMass, double recalibratedMass, double relativeIntensity, Ionization ionization, Peak[] originalPeaks, CollisionEnergy[] collisionEnergies) {
         this.molecularFormula = getFormula;
@@ -102,6 +109,25 @@ public final class AnnotatedPeak {
 
     public AnnotatedPeak withFormula(MolecularFormula newFormula) {
         return new AnnotatedPeak(newFormula, mass, recalibratedMass, relativeIntensity, ionization, originalPeaks, collisionEnergies);
+    }
+
+    /**
+     * @return true if peak does not correspond to a real peak in the spectrum
+     */
+    public boolean isSynthetic() {
+        return relativeIntensity <= 0d;
+    }
+
+    public boolean isMeasured() {
+        return relativeIntensity > 0d;
+    }
+
+    /**
+     *
+     * @return true if there does not exist any peak annotation
+     */
+    public boolean isNoPeak() {
+        return Double.isNaN(mass);
     }
 
     public AnnotatedPeak withIonization(Ionization ion) {

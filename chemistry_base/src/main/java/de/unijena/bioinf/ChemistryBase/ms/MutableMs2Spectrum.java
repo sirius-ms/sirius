@@ -29,7 +29,7 @@ import java.util.Iterator;
  */
 public class MutableMs2Spectrum implements Ms2Spectrum<Peak>,MutableSpectrum<Peak> {
 
-    public static class Header {
+    public static class Header implements Cloneable {
         private double precursorMz = 0d;
         private CollisionEnergy collisionEnergy = null;
         private double totalIoncount = 0d;

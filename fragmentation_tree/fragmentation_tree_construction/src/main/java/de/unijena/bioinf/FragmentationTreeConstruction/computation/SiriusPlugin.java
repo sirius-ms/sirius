@@ -1,8 +1,11 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
-import de.unijena.bioinf.ChemistryBase.chem.IonMode;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.IntergraphMapping;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.LossValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakScorer;
@@ -32,6 +35,17 @@ public abstract class SiriusPlugin {
      * - however, automatic inspection is horrible. We might change this system in future
      */
     public abstract void initializePlugin(PluginInitializer initializer);
+
+    /**
+     * By default, only decompositions from the same ion mode are allowed within a graph. Overwrite this method
+     * to change the default behaviour and allow fragments from different ion modes
+     * @param input processed input
+     * @param candidate ionization of the precursor ion
+     * @param ionModes set of all allowed ion modes in the graph. Contains ion mode of the root by default
+     */
+    public  void addPossibleIonModesToGraph(ProcessedInput input, Ionization candidate, Set<Ionization> ionModes) {
+
+    }
 
     public static class PluginInitializer {
 
@@ -74,14 +88,6 @@ public abstract class SiriusPlugin {
 
     }
 
-    protected Set<IonMode> transformPossibleIonModesForParentPeak(ProcessedInput input, Set<IonMode> ionModes) {
-        return ionModes;
-    }
-
-    protected Set<IonMode> transformPossibleIonModesForFragmentPeaks(ProcessedInput input, Set<IonMode> ionModes) {
-        return ionModes;
-    }
-
     protected DecompositionList transformDecompositionList(ProcessedInput input, ProcessedPeak peak, DecompositionList list) {
         return list;
     }
@@ -92,6 +98,15 @@ public abstract class SiriusPlugin {
 
     protected void beforeGraphBuilding(ProcessedInput input) {
 
+    }
+
+    /**
+     * if not null, add a new LossValidator which might delete edges in the graph.
+     * Because number of edges can get very large, using a validator is more efficient than filtering them afterwards
+     * @return
+     */
+    protected LossValidator filterLossesInGraph(ProcessedInput input, Decomposition root) {
+        return null;
     }
 
     /**
@@ -114,7 +129,7 @@ public abstract class SiriusPlugin {
     protected void afterTreeComputation(ProcessedInput input, FGraph graph, FTree tree) {
     }
 
-    protected void transferAnotationsFromGraphToTree(ProcessedInput input, FGraph graph, FTree tree) {
+    protected void transferAnotationsFromGraphToTree(ProcessedInput input, FGraph graph, FTree tree, IntergraphMapping graph2treeFragments) {
     }
 
     /**

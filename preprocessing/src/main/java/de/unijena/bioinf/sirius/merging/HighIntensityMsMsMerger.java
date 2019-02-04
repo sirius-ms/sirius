@@ -28,7 +28,7 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
     }
 
     protected List<ProcessedPeak> mergePeaks(ProcessedInput processedInput) {
-        final Deviation mergeWindow = processedInput.getAnnotation(MS2MassDeviation.class).allowedMassDeviation.multiply(2);
+        final Deviation mergeWindow = processedInput.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation.multiply(2);
 
         // step 1: delete close peaks within a spectrum
         final List<MS2Peak> peaks = new ArrayList<>();
@@ -55,7 +55,7 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
             // add all remaining peaks to the peaklist
             for (int i = 0; i < sortedByMass.size(); ++i) {
                 if (!deletedPeaks.get(i)) {
-                    peaks.add((MS2Peak) sortedByMass.getPeakAt(i));
+                    peaks.add(new MS2Peak(ms2, sortedByMass.getMzAt(i), sortedByMass.getIntensityAt(i)));
                 }
             }
         }
@@ -98,7 +98,6 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
             // add artificial parent peak
             ProcessedPeak parent = new ProcessedPeak();
             parent.setMass(ionMass);
-            parent.setOriginalMz(ionMass);
             mergedPeaks.add(parent);
         }
 
@@ -154,11 +153,12 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
         final MS2Peak[] originalPeaks = new MS2Peak[endIndex - startIndex];
         for (int u = startIndex; u < endIndex; ++u) {
             global += peaks[u].getIntensity();
-            CollisionEnergy collisionEnergy = originalPeaks[u].getSpectrum().getCollisionEnergy();
+            CollisionEnergy collisionEnergy = peaks[u].getSpectrum().getCollisionEnergy();
             energy = energy == null ? collisionEnergy : energy.merge(collisionEnergy);
+            originalPeaks[u-startIndex] = peaks[u];
         }
-        newPeak.setGlobalRelativeIntensity(global);
         newPeak.setRelativeIntensity(global);
+        newPeak.setIntensity(global);
         newPeak.setOriginalPeaks(Arrays.asList(originalPeaks));
         newPeak.setCollisionEnergy(energy);
         peakList.add(newPeak);

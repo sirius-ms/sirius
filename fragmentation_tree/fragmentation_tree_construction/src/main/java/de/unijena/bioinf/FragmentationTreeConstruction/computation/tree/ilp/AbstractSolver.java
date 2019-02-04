@@ -17,12 +17,8 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
-import com.google.common.collect.BiMap;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
 import de.unijena.bioinf.sirius.ProcessedInput;
@@ -30,7 +26,10 @@ import gnu.trove.map.hash.TCustomHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Spectar on 13.11.2014.
@@ -359,6 +358,8 @@ abstract public class AbstractSolver {
                 if (edesAreUsed[edgeIds[offset]]) {
                     final Loss l = losses.get(edgeIds[offset]);
                     final Fragment child = tree.addFragment(item.treeNode, l.getTarget());
+                    child.setColor(l.getTarget().getColor());
+                    child.setPeakId(l.getTarget().getPeakId());
                     child.getIncomingEdge().setWeight(l.getWeight());
                     tree.setTreeWeight(tree.getTreeWeight() + l.getWeight());
                     stack.push(new Stackitem(child, l.getTarget()));
@@ -391,11 +392,10 @@ abstract public class AbstractSolver {
      */
     protected static boolean isComputationCorrect(FTree tree, FGraph graph, double score) {
         final double optSolScore = score;
-        final BiMap<Fragment, Fragment> fragmentMap = FTree.createFragmentMapping(tree, graph);
+        final IntergraphMapping mapping = IntergraphMapping.map(tree, graph);//BiMap<Fragment, Fragment> fragmentMap = FTree.createFragmentMapping(tree, graph);
         final Fragment pseudoRoot = graph.getRoot();
-        for (Map.Entry<Fragment, Fragment> e : fragmentMap.entrySet()) {
-            final Fragment t = e.getKey();
-            final Fragment g = e.getValue();
+        for (Fragment t : tree) {
+            final Fragment g = mapping.mapLeftToRight(t);
             if (g.getParent() == pseudoRoot) {
                 score -= g.getIncomingEdge().getWeight();
             } else {

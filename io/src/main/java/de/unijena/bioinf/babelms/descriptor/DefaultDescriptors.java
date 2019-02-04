@@ -22,7 +22,7 @@ class DefaultDescriptors {
         registry.put(FTree.class, PrecursorIonType.class, new PrecursorIonTypeDescriptor("precursorIonType"));
         registry.put(FTree.class, RecalibrationFunction.class, new RecalibrationFunctionDescriptor());
         registry.put(FTree.class, Smiles.class, new SmilesDescriptor());
-        registry.put(FTree.class, TreeScoring.class, new TreeScoringDescriptor());
+        //registry.put(FTree.class, TreeStatistics.class, new TreeScoringDescriptor());
         registry.put(Fragment.class, Ms2IsotopePattern.class, new Ms2IsotopePatternDescriptor());
         registry.put(Fragment.class, Ms1IsotopePattern.class, new Ms1IsotopePatternDescriptor());
         registry.put(Fragment.class, Peak.class, new PeakDescriptor());
@@ -263,7 +263,8 @@ class DefaultDescriptors {
         }
     }
 
-    private static class TreeScoringDescriptor implements Descriptor<TreeScoring> {
+    /*
+    private static class TreeScoringDescriptor implements Descriptor<TreeStatistics> {
 
         @Override
         public String[] getKeywords() {
@@ -271,13 +272,15 @@ class DefaultDescriptors {
         }
 
         @Override
-        public Class<TreeScoring> getAnnotationClass() {
-            return TreeScoring.class;
+        public Class<TreeStatistics> getAnnotationClass() {
+            return TreeStatistics.class;
         }
 
+
+        // TODO: quickn dirty
         @Override
-        public <G, D, L> TreeScoring read(DataDocument<G, D, L> document, D dictionary) {
-            final TreeScoring scoring = new TreeScoring();
+        public <G, D, L> TreeStatistics read(DataDocument<G, D, L> document, D dictionary) {
+            final TreeStatistics scoring = new TreeStatistics();
             final D score = document.getDictionaryFromDictionary(dictionary, "score");
             scoring.setOverallScore(document.getDoubleFromDictionary(score, "total"));
             if (document.hasKeyInDictionary(score, "root")) {
@@ -338,6 +341,7 @@ class DefaultDescriptors {
             document.addToDictionary(score, "isotope", annotation.getIsotopeMs1Score());
         }
     }
+    */
 
     private static class RecalibrationFunctionDescriptor implements Descriptor<RecalibrationFunction> {
 
@@ -390,17 +394,21 @@ class DefaultDescriptors {
                 else
                     constantPool.put(names,names);
             }
-            final Score score = new Score(names);
+            final Score.HeaderBuilder score = Score.defineScoring();
             for (int k=0; k < names.length; ++k) {
-                score.set(k, document.getDoubleFromDictionary(scoredict, names[k]));
+                score.define(names[k]);
             }
-            return score;
+            final Score.ScoreAssigner assign = score.score();
+            for (int k=0; k < names.length; ++k) {
+                assign.set(names[k], document.getDoubleFromDictionary(scoredict, names[k]));
+            }
+            return assign.done();
         }
 
         @Override
         public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, Score annotation) {
             final D scoredict = document.newDictionary();
-            for (Map.Entry<String,Double> entry : annotation.entrySet()) {
+            for (Map.Entry<String,Double> entry : annotation.asMap().entrySet()) {
                 document.addToDictionary(scoredict, entry.getKey(), entry.getValue());
             }
             document.addToDictionary(dictionary, "score", annotation.sum());

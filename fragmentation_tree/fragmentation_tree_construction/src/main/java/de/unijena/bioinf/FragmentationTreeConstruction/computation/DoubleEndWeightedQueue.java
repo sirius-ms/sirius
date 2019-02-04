@@ -44,7 +44,7 @@ public class DoubleEndWeightedQueue implements Iterable<FTree> {
     }
 
     public boolean add(FTree tree) {
-        final double score = tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
+        final double score = tree.getTreeWeight();
         if (score > lowerbound) {
             if (backingQueue.put(score, tree)) {
                 ++size;

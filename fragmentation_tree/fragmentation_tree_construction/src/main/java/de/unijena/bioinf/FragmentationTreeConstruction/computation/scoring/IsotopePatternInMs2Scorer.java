@@ -62,7 +62,7 @@ public class IsotopePatternInMs2Scorer {
      * @param graph
      */
     public void score(ProcessedInput input, FGraph graph) {
-        final SpectralRecalibration recalibration = graph.getAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
+        final SpectralRecalibration recalibration = graph.getAnnotation(SpectralRecalibration.class, SpectralRecalibration::none);
         final Ms2Experiment experiment = input.getExperimentInformation();
         final List<MutableMs2Spectrum> ms2Spectra = new ArrayList<>(experiment.getMs2Spectra());
         for (int k=0; k < ms2Spectra.size(); ++k) {
@@ -420,7 +420,7 @@ public class IsotopePatternInMs2Scorer {
                 if (peak == input.getParentPeak())
                     continue;
 
-                final double ionMass = peak.getMz();
+                final double ionMass = peak.getMass();
                 final int index = Spectrums.mostIntensivePeakWithin(mergedMs1, ionMass, dev.allowedMassDeviation);
                 if (index >= 0) {
                     final SimpleSpectrum spec = Spectrums.getNormalizedSpectrum(analyzer.extractPattern(mergedMs1, dev, exp.getAnnotationOrDefault(FormulaConstraints.class).getChemicalAlphabet(), ionMass), Normalization.Max(1d));

@@ -5,9 +5,9 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.sirius.MS2Peak;
+import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 import org.apache.commons.math3.analysis.UnivariateFunction;
@@ -34,7 +34,8 @@ public class HypothesenDrivenRecalibration2 {
         this.method = method;
     }
 
-    public SpectralRecalibration collectPeaksFromMs2(MutableMs2Experiment exp, FTree tree) {
+    public SpectralRecalibration collectPeaksFromMs2(ProcessedInput input, FTree tree) {
+        final MutableMs2Experiment exp = input.getExperimentInformation();
         final int N = exp.getMs2Spectra().size(), M = tree.numberOfVertices();
         final MutableMs2Spectrum[] spectras = new MutableMs2Spectrum[N];
         final SimpleMutableSpectrum[] refs = new SimpleMutableSpectrum[N], collected = new SimpleMutableSpectrum[N];
@@ -47,10 +48,9 @@ public class HypothesenDrivenRecalibration2 {
             collected[k] = new SimpleMutableSpectrum(M);
             ++k;
         }
-        final FragmentAnnotation<ProcessedPeak> ano = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
         final SimpleMutableSpectrum mergedRef = new SimpleMutableSpectrum(), merged = new SimpleMutableSpectrum();
         for (Fragment f : tree) {
-            final ProcessedPeak peak = ano.get(f);
+            final ProcessedPeak peak = input.getMergedPeaks().get(f.getPeakId());
             final double mz = f.getIonization().addToMass(f.getFormula().getMass());
             for (MS2Peak pk : peak.getOriginalPeaks()) {
                 final int sc = ((MutableMs2Spectrum)pk.getSpectrum()).getScanNumber();
@@ -58,7 +58,7 @@ public class HypothesenDrivenRecalibration2 {
                 refs[sc].addPeak(mz, peak.getRelativeIntensity());
             }
             mergedRef.addPeak(mz, peak.getRelativeIntensity());
-            merged.addPeak(peak.getOriginalMz(), peak.getRelativeIntensity());
+            merged.addPeak(peak.getMass(), peak.getRelativeIntensity());
         }
         UnivariateFunction[] recalibrationFunctions = new UnivariateFunction[spectras.length];
         for (int i=0; i < spectras.length; ++i) {

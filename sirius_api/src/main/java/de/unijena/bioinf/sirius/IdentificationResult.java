@@ -22,6 +22,8 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.inspection.ScoringHelper;
+import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -93,7 +95,7 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
 
     protected IdentificationResult(FTree tree, int rank, boolean isBeautiful) {
         this.tree = tree;
-        this.score = tree == null ? 0d : tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
+        this.score = tree == null ? 0d : tree.getTreeWeight();
         this.rank = rank;
         this.annotations = new HashMap<>();
 
@@ -147,10 +149,9 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
         return formula;
     }
 
+    @Deprecated
     public RecalibrationFunction getRecalibrationFunction() {
-        final RecalibrationFunction f = (RecalibrationFunction) getRawTree().getAnnotations().get(RecalibrationFunction.class);
-        if (f == null) return RecalibrationFunction.identity();
-        else return f;
+        return tree.getAnnotation(SpectralRecalibration.class, SpectralRecalibration::none).toPolynomial();
     }
 
     public double getScore() {
@@ -190,17 +191,6 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
         return beautifulTree;
     }
 
-    public void setBeautifulTree(FTree beautifulTree) {
-        this.resolvedBeautifulTree = null;
-        this.beautifulTree = beautifulTree;
-        TreeScoring beautifulScoring = this.beautifulTree.getAnnotationOrThrow(TreeScoring.class);
-        TreeScoring treeScoring = this.tree.getAnnotationOrThrow(TreeScoring.class);
-        beautifulScoring.setBeautificationPenalty(beautifulScoring.getOverallScore() - treeScoring.getOverallScore());
-        beautifulScoring.setOverallScore(treeScoring.getOverallScore());
-
-        copyAnnotations(tree, beautifulTree);
-    }
-
     private void copyAnnotations(FTree tree, FTree beautifulTree) {
         //todo do this for all annotations?
         UnconsideredCandidatesUpperBound upperBound = tree.getAnnotationOrNull(UnconsideredCandidatesUpperBound.class);
@@ -213,14 +203,12 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
     }
 
     public double getTreeScore() {
-        final TreeScoring treeScore = tree.getAnnotationOrThrow(TreeScoring.class);
-        return treeScore.getOverallScore() - treeScore.getIsotopeMs1Score();
+        return new ScoringHelper(tree).getTreeScore();
     }
 
 
     public double getIsotopeScore() {
-        final TreeScoring treeScore = tree.getAnnotationOrThrow(TreeScoring.class);
-        return treeScore.getIsotopeMs1Score();
+        return new ScoringHelper(tree).getIsotopeMs1Score();
     }
 
     public IdentificationResult clone() {
@@ -256,27 +244,15 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
     }
 
     public double getExplainedPeaksRatio() {
-        final TreeScoring treeScoring = getRawTree().getAnnotationOrNull(TreeScoring.class);
-        if (treeScoring != null)
-            return treeScoring.getRatioOfExplainedPeaks();
-        else
-            return Double.NaN;
+        return tree.getAnnotation(TreeStatistics.class).getRatioOfExplainedPeaks();
     }
 
     public double getNumOfExplainedPeaks() {
-        final FTree tree = getRawTree();
-        if (tree != null)
-            return tree.numberOfVertices();
-        else
-            return Double.NaN;
+        return tree.numberOfVertices();
     }
 
     public double getExplainedIntensityRatio() {
-        final TreeScoring treeScoring = getRawTree().getAnnotationOrNull(TreeScoring.class);
-        if (treeScoring != null)
-            return treeScoring.getExplainedIntensity();
-        else
-            return Double.NaN;
+        return tree.getAnnotation(TreeStatistics.class).getExplainedIntensity();
 
     }
 

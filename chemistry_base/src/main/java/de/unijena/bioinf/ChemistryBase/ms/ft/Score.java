@@ -30,6 +30,7 @@ public final class Score implements TreeAnnotation  {
     public static class HeaderBuilder {
         private LinkedHashSet<String> names;
         private String[] order;
+        private String[] __nameCache;
         protected HeaderBuilder() {
             this.names = new LinkedHashSet<>();
         }
@@ -39,10 +40,51 @@ public final class Score implements TreeAnnotation  {
         }
 
         public ScoreAssigner score() {
-            if (order==null || order.length!=names.size())
-                this.order = names.toArray(new String[names.size()]);
+            determineOrder();
             return new ScoreAssigner(order);
         }
+
+        private void determineOrder() {
+            if (order==null || order.length!=names.size())
+                this.order = names.toArray(new String[names.size()]);
+        }
+    }
+
+    public static ScoreAdder extendWith(String newScoringName) {
+        return new ScoreAdder(newScoringName);
+    }
+
+    public static class ScoreAdder {
+
+        private String name;
+        private String[] header;
+        private String[] replace;
+        private int pos;
+
+        private ScoreAdder(String name) {
+            this.name = name;
+        }
+
+        public Score add(Score s, double value) {
+            if (!(header != null && Arrays.equals(header, s.names))) {
+                // first check if score is already existing
+                for (int k=0; k < s.names.length; ++k) {
+                    if (name.equals(s.names[k])) {
+                        pos = k;
+                        replace = s.names;
+                        header = s.names;
+                    }
+                }
+                header = s.names;
+                replace = Arrays.copyOf(header, header.length+1);
+                pos = header.length;
+            }
+            final Score copy = new Score(replace, Arrays.copyOf(s.values,replace.length));
+            copy.values[pos] = value;
+            return copy;
+        }
+
+
     }
 
     /**
@@ -92,6 +134,16 @@ public final class Score implements TreeAnnotation  {
 
     private final String[] names;
     private final double[] values;
+
+    private final static Score NONE = new Score(new String[0], new double[0]);
+
+    public static Score none() {
+        return NONE;
+    }
+
+    public boolean isEmpty() {
+        return names.length==0;
+    }
 
     protected Score(String[] names, double[] values) {
         super();

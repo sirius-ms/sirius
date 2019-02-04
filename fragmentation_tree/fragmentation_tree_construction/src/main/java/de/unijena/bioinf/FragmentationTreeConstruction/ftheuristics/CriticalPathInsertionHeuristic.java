@@ -143,6 +143,8 @@ public class CriticalPathInsertionHeuristic extends AbstractHeuristic {
             final Fragment f = tree.addFragment(fragmentsByFormula.get(L.getSource().getFormula()), L.getTarget());
             f.getIncomingEdge().setWeight(L.getWeight());
             fragmentsByFormula.put(f.getFormula(), f);
+            f.setPeakId(L.getTarget().getPeakId());
+            f.setColor(L.getTarget().getColor());
             score += L.getWeight();
         }
         tree.setTreeWeight(score);

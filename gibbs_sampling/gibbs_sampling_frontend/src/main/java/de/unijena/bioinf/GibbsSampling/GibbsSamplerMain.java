@@ -10,6 +10,7 @@ import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
+import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -29,7 +30,7 @@ import de.unijena.bioinf.ms.projectspace.SiriusWorkspaceReader;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
-import de.unijena.bioinf.sirius.ionGuessing.IonGuesser;
+import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TCharSet;
@@ -2058,7 +2059,9 @@ public class GibbsSamplerMain {
         for (String id : idList) {
             List<C> candidates = candidateMap.get(id);
             Ms2Experiment experiment = candidates.get(0).getExperiment();
-            PrecursorIonType[] guessed = new IonGuesser().guessIonization(experiment, ionTypes).getGuessedIonTypes();
+
+            // TODO: check!
+            PrecursorIonType[] guessed = new Ms2Preprocessor().preprocess(experiment).getAnnotation(PossibleAdducts.class).getAdducts().toArray(new PrecursorIonType[0]);//new IonGuesser().guessIonization(experiment, ionTypes).getGuessedIonTypes();
 
             if (guessed.length==0) continue;
 
@@ -2715,7 +2718,7 @@ public class GibbsSamplerMain {
 
     public static boolean atLeastOneTreeExplainsSomeIntensity(List<FTree> trees, double threshold){
         for (FTree tree : trees) {
-            final double intensity = tree.getAnnotationOrThrow(TreeScoring.class).getExplainedIntensity();
+            final double intensity = tree.getAnnotationOrThrow(TreeStatistics.class).getExplainedIntensity();
             if (intensity>threshold) return true;
         }
         return false;

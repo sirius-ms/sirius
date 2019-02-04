@@ -21,7 +21,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
@@ -70,8 +70,7 @@ public class FTDotWriter {
         final boolean hasScores;
         final FragmentAnnotation<Score> fscore = tree.getFragmentAnnotationOrNull(Score.class);
         final LossAnnotation<Score> lscore = tree.getLossAnnotationOrNull(Score.class);
-        final TreeScoring scoring = tree.getAnnotationOrNull(TreeScoring.class);
-        hasScores = !(fscore == null || lscore == null || scoring == null);
+        hasScores = !(fscore == null || lscore == null);
 
         final FragmentAnnotation<PrecursorIonType> ionPerFragment = tree.getFragmentAnnotationOrNull(PrecursorIonType.class);
         Ionization ion = tree.getAnnotationOrNull(Ionization.class);
@@ -83,7 +82,7 @@ public class FTDotWriter {
             writer.write("\tlabelloc=\"t\";\n");
             writer.write("\tlabel=\"");
             writer.write("Compound Score: ");
-            writer.write(String.format(Locale.US, "%.4f", scoring.getOverallScore()));
+            writer.write(String.format(Locale.US, "%.4f", tree.getTreeWeight()));
             writer.write("\";\n");
         }
 
@@ -172,13 +171,12 @@ public class FTDotWriter {
         final HashMap<Fragment, Integer> ids = new HashMap<Fragment, Integer>();
         buf.write("strict digraph {\n");
         final TreeCursor<Fragment> cursor = graph.getCursor();
-        final FragmentAnnotation<Peak> peakAno = graph.getFragmentAnnotationOrThrow(Peak.class);
-        final FragmentAnnotation<CollisionEnergy> ceAno = graph.getFragmentAnnotationOrThrow(CollisionEnergy.class);
+        final FragmentAnnotation<AnnotatedPeak> peakAno = graph.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
         final double normalization;
         {
             double maxInt = 0d;
             for (Fragment f : graph.getFragments()) {
-                maxInt = Math.max(peakAno.get(f).getIntensity(), maxInt);
+                maxInt = Math.max(peakAno.get(f).getRelativeIntensity(), maxInt);
             }
             normalization = maxInt;
         }
@@ -189,10 +187,10 @@ public class FTDotWriter {
             ids.put(f, ++id);
             buf.write("v" + id + " [label=\"");
             buf.write(f.getFormula().toString());
-            buf.write(String.format(locale, "\\n%.4f Da, %.2f %%", peakAno.get(f).getMass(), peakAno.get(f).getIntensity()/normalization * 100));
+            buf.write(String.format(locale, "\\n%.4f Da, %.2f %%", peakAno.get(f).getMass(), peakAno.get(f).getRelativeIntensity()/normalization * 100));
             final double dev = peakAno.get(f).getMass() - graph.getAnnotationOrThrow(Ionization.class).addToMass(f.getFormula().getMass());
             buf.write(String.format(locale, "\\nMassDev: %.4f ppm, %.4f Da", dev * 1e6d / peakAno.get(f).getMass(), dev));
-            buf.write("\\ncE: " + ceAno.get(f).toString());
+            buf.write("\\ncE: " + Arrays.toString(peakAno.get(f).getCollisionEnergies()));
             if (additionalProperties != null) {
                 final List<String> addProps = additionalProperties.get(f);
                 if (addProps != null) {
@@ -256,47 +254,38 @@ public class FTDotWriter {
         final HashMap<Fragment, Integer> ids = new HashMap<Fragment, Integer>();
         buf.write("strict digraph {\n");
         final TreeCursor<Fragment> cursor = graph.getCursor();
-        final FragmentAnnotation<Peak> peakAno = graph.getFragmentAnnotationOrThrow(Peak.class);
-        final FragmentAnnotation<CollisionEnergy[]> ceAnos = graph.getFragmentAnnotationOrThrow(CollisionEnergy[].class);
+        final FragmentAnnotation<AnnotatedPeak> peakAno = graph.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
         int id = 0;
         final ArrayList<Loss> losses = new ArrayList<Loss>();
         final double normalization;
         {
             double maxInt = 0d;
             for (Fragment f : graph.getFragments()) {
-                maxInt = Math.max(peakAno.get(f).getIntensity(), maxInt);
+                maxInt = Math.max(peakAno.get(f).getRelativeIntensity(), maxInt);
             }
             normalization = maxInt;
         }
-        final FragmentAnnotation<PrecursorIonType> ionPerFragment = graph.getFragmentAnnotationOrNull(PrecursorIonType.class);
-        Ionization ion = graph.getAnnotationOrNull(Ionization.class);
         final PrecursorIonType iontype = graph.getAnnotationOrThrow(PrecursorIonType.class);
-        if (ion==null) ion = iontype.getIonization();
         for (Fragment f : new PostOrderTraversal<Fragment>(cursor)) {
-            PrecursorIonType ftion = null;
-            if (ionPerFragment!=null) ftion = ionPerFragment.get(f);
+            final Ionization ion = f.getIonization();
             ids.put(f, ++id);
             buf.write("v" + id + " [label=");
             buf.write(htmlStart());
-            if (ftion != null) {
-                buf.write(htmlFormula(f.getFormula(), ftion));
-            } else {
+            //if (ftion != null) {
+            //    buf.write(htmlFormula(f.getFormula(), ftion));
+            //} else {
                 buf.write(htmlFormula(f.getFormula(), f.getIonization()));
-            }
+            //}
             buf.write(htmlNewline());
-            buf.write(String.format(locale, "%.4f Da, %.2f %%", peakAno.get(f).getMass(), peakAno.get(f).getIntensity() / normalization * 100));
+            buf.write(String.format(locale, "%.4f Da, %.2f %%", peakAno.get(f).getMass(), peakAno.get(f).getRelativeIntensity() / normalization * 100));
             buf.write(htmlSmall());
 
             final double dev;
-            if (ftion != null) {
-                dev = peakAno.get(f).getMass() - ftion.neutralMassToPrecursorMass(f.getFormula().getMass());
-            } else {
-                dev = peakAno.get(f).getMass() - ion.addToMass(f.getFormula().getMass());
-            }
+            dev = peakAno.get(f).getMass() - ion.addToMass(f.getFormula().getMass());
             buf.write(htmlNewline());
             buf.write(String.format(locale, "MassDev: %.4f ppm, %.4f Da", dev * 1e6d / peakAno.get(f).getMass(), dev));
             buf.write(htmlNewline());
-            buf.write("cE: " + Arrays.toString(ceAnos.get(f)));
+            buf.write("cE: " + Arrays.toString(peakAno.get(f).getCollisionEnergies()));
             if (additionalProperties != null) {
                 final List<String> addProps = additionalProperties.get(f);
                 if (addProps != null) {
@@ -394,8 +383,8 @@ public class FTDotWriter {
     }
 
     public String htmlFormula(MolecularFormula f, PrecursorIonType ion) {
+        if (!HTML) return ion.substituteName(f);
         String s = f.toString();
-        if (!HTML) return s;
         if (includeIon) {
             if (!ion.getInSourceFragmentation().isEmpty()) {
                 s = s + " - " + ion.getInSourceFragmentation().toString();

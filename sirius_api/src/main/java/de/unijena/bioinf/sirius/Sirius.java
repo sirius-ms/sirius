@@ -23,30 +23,25 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransform
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.AbstractTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ExtractedIsotopePattern;
+import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.IsotopePatternGenerator;
-import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
-import de.unijena.bioinf.jjobs.MasterJJob;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.sirius.annotations.DecompositionList;
-import de.unijena.bioinf.sirius.ionGuessing.GuessIonizationFromMs1Result;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -135,7 +130,7 @@ public class Sirius {
     @Deprecated
     public List<IdentificationResult> identify(Ms2Experiment experiment, int numberOfCandidates) {
         //final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, numberOfCandidates, -1);
-        final FasterTreeComputationInstance instance = new FasterTreeComputationInstance(getMs2Analyzer(),profile.ms2Preprocessor.preprocess(experiment),numberOfCandidates,-1)
+        final FasterTreeComputationInstance instance = new FasterTreeComputationInstance(getMs2Analyzer(),profile.ms2Preprocessor.preprocess(experiment),numberOfCandidates,-1);
         SiriusJobs.getGlobalJobManager().submitJob(instance);
         AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = createIdentificationResults(fr, instance);//postprocess results
@@ -155,12 +150,11 @@ public class Sirius {
     @Deprecated
     public List<IdentificationResult> identify(Ms2Experiment experiment, int numberOfCandidates,
                                                boolean recalibrating, IsotopePatternHandling deisotope, Set<MolecularFormula> whiteList) {
-        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, numberOfCandidates, -1);
-        final ProcessedInput pinput = instance.validateInput();
+        final ProcessedInput pinput = preprocessForMs2Analysis(experiment);
+        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), pinput, numberOfCandidates, -1);
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
-        if (whiteList != null) pinput.setAnnotation(Whiteset.class, new Whiteset(whiteList));
+        if (whiteList != null) pinput.setAnnotation(Whiteset.class, Whiteset.of(whiteList));
         pinput.setAnnotation(IsotopeSettings.class, new IsotopeSettings(deisotope.isFiltering(), deisotope.isScoring() ? 1 : 0));
-        performMs1Analysis(instance);
         SiriusJobs.getGlobalJobManager().submitJob(instance);
         AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = createIdentificationResults(fr, instance);//postprocess results
@@ -169,8 +163,6 @@ public class Sirius {
 
     protected List<IdentificationResult> createIdentificationResults(AbstractTreeComputationInstance.FinalResult
                                                                              fr, AbstractTreeComputationInstance computationInstance) {
-        addScoreThresholdOnUnconsideredCandidates(fr, computationInstance.precompute());
-
         final List<IdentificationResult> irs = new ArrayList<>();
         int k = 0;
         for (FTree tree : fr.getResults()) {
@@ -179,21 +171,6 @@ public class Sirius {
 
         }
         return irs;
-    }
-
-    private static void addScoreThresholdOnUnconsideredCandidates(AbstractTreeComputationInstance.FinalResult
-                                                                          fr, ProcessedInput processedInput) {
-        //add annotation of score bound on unconsidered instances
-        int numberOfResults = fr.getResults().size();
-        if (numberOfResults == 0) return;
-        int numberOfDecompositions = processedInput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size();
-        int numberOfUnconsideredCandidates = numberOfDecompositions - numberOfResults;
-        //trees should be sorted by score
-        double lowestConsideredCandidatesScore = fr.getResults().get(numberOfResults - 1).getAnnotationOrThrow(TreeScoring.class).getOverallScore();
-        UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = new UnconsideredCandidatesUpperBound(numberOfUnconsideredCandidates, lowestConsideredCandidatesScore);
-        for (FTree tree : fr.getResults()) {
-            tree.setAnnotation(UnconsideredCandidatesUpperBound.class, unconsideredCandidatesUpperBound);
-        }
     }
 
     public List<IdentificationResult> identify(Ms2Experiment experiment, int numberOfCandidates,
@@ -230,23 +207,20 @@ public class Sirius {
     public List<IdentificationResult> identify(@NotNull Ms2Experiment experiment, int numberOfCandidates,
                                                int numberOfCandidatesPerIonization, boolean recalibrating, @NotNull IsotopePatternHandling deisotope, @Nullable FormulaConstraints
                                                        formulaConstraints) {
-        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, numberOfCandidates, numberOfCandidatesPerIonization);
-        final ProcessedInput pinput = instance.validateInput();
+        final ProcessedInput pinput = preprocessForMs2Analysis(experiment);
+        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), pinput, numberOfCandidates, numberOfCandidatesPerIonization);
         pinput.setAnnotation(IsotopeSettings.class, new IsotopeSettings(deisotope.isFiltering(), deisotope.isScoring() ? 1 : 0));
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
-        pinput.setAnnotation(FormulaSettings.class, new FormulaSettings(formulaConstraints, getElementPrediction().getChemicalAlphabet(), FormulaConstraints.empty()));
-
-        performMs1Analysis(instance);
+        pinput.setAnnotation(FormulaSettings.class, new FormulaSettings(formulaConstraints, new ChemicalAlphabet(this.profile.ms1Preprocessor.elementDetection.getPredictableElements().toArray(new Element[0])), FormulaConstraints.empty()));
         SiriusJobs.getGlobalJobManager().submitJob(instance);
         AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = createIdentificationResults(fr, instance);//postprocess results
         return irs;
     }
 
+    @Deprecated
     public FormulaConstraints predictElementsFromMs1(Ms2Experiment experiment) {
-        final SimpleSpectrum pattern = getMs1Analyzer().extractPattern(experiment, experiment.getIonMass());
-        if (pattern == null) return null;
-        return getElementPrediction().predictConstraints(pattern);
+        return preprocessForMs1Analysis(experiment).getAnnotation(FormulaConstraints.class);
     }
 
     public IdentificationResult compute(@NotNull Ms2Experiment experiment, MolecularFormula formula) {
@@ -255,8 +229,8 @@ public class Sirius {
 
     public BasicJJob<IdentificationResult> makeComputeJob(@NotNull Ms2Experiment experiment, MolecularFormula
             formula) {
-        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, 1, -1);
-        final ProcessedInput pinput = instance.validateInput();
+        final ProcessedInput pinput = preprocessForMs2Analysis(experiment);
+        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), pinput, 1, -1);
         pinput.setAnnotation(Whiteset.class, Whiteset.of(formula));
         pinput.setAnnotation(ForbidRecalibration.class, ForbidRecalibration.ALLOWED);
         return instance.wrap((f) -> new IdentificationResult(f.getResults().get(0), 1));
@@ -272,86 +246,14 @@ public class Sirius {
      */
     public IdentificationResult compute(@NotNull Ms2Experiment experiment, MolecularFormula formula,
                                         boolean recalibrating) {
-        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, 1, -1);
-        final ProcessedInput pinput = instance.validateInput();
+        final ProcessedInput pinput = preprocessForMs2Analysis(experiment);
+        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), pinput, 1, -1);
         pinput.setAnnotation(Whiteset.class, Whiteset.of(formula));
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
         SiriusJobs.getGlobalJobManager().submitJob(instance);
         final IdentificationResult ir = new IdentificationResult(instance.takeResult().getResults().get(0), 1);
-        // tree is always beautyfied
-        if (recalibrating) ir.setBeautifulTree(ir.getRawTree());
         return ir;
 
-    }
-
-
-    public boolean beautifyTree(IdentificationResult result, Ms2Experiment experiment) {
-        return beautifyTree(null, result, experiment, true);
-    }
-
-    /**
-     * compute and set the beautiful version of the {@link IdentificationResult}s {@link FTree}.
-     * Aka: try to find a {@link FTree} with the same root molecular formula which explains the desired amount of the spectrum - if necessary by increasing the tree size scorer.
-     *
-     * @param result
-     * @param experiment
-     * @return true if a beautiful tree was found
-     */
-    public boolean beautifyTree(IdentificationResult result, Ms2Experiment experiment, boolean recalibrating) {
-        return beautifyTree(null, result, experiment, recalibrating);
-    }
-
-    public boolean beautifyTree(MasterJJob<?> master, IdentificationResult result, Ms2Experiment experiment,
-                                boolean recalibrating) {
-        if (result.getBeautifulTree() != null) return true;
-        FTree beautifulTree = beautifyTree(master, result.getStandardTree(), experiment, recalibrating);
-        if (beautifulTree != null) {
-            result.setBeautifulTree(beautifulTree);
-            return true;
-        }
-        return false;
-    }
-
-    public FTree beautifyTree(FTree tree, Ms2Experiment experiment, boolean recalibrating) {
-        return beautifyTree(null, tree, experiment, recalibrating);
-    }
-
-    public FTree beautifyTree(MasterJJob<?> master, FTree tree, Ms2Experiment experiment, boolean recalibrating) {
-        if (tree.getAnnotation(Beautified.class, Beautified.IS_UGGLY).isBeautiful()) return tree;
-        final PrecursorIonType ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
-        final MutableMs2Experiment mexp = new MutableMs2Experiment(experiment);
-        mexp.setPrecursorIonType(ionType);
-        final MolecularFormula formula;
-        switch (tree.getAnnotation(IonTreeUtils.Type.class, IonTreeUtils.Type.RAW)) {
-            case RESOLVED:
-                if (ionType.isIntrinsicalCharged())
-                    formula = ionType.measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
-                else
-                    formula = tree.getRoot().getFormula();
-                break;
-            case IONIZED:
-                formula = ionType.precursorIonToNeutralMolecule(tree.getRoot().getFormula());
-                break;
-            case RAW:
-            default:
-                formula = ionType.measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
-                ;
-                break;
-        }
-        //todo remove when cleaning up the api
-        final FTree btree;
-        if (master != null) {
-            btree = master.submitSubJob(FasterTreeComputationInstance.beautify(getMs2Analyzer(), tree)).takeResult().getResults().get(0);
-        } else {
-            btree = SiriusJobs.getGlobalJobManager().submitJob(FasterTreeComputationInstance.beautify(getMs2Analyzer(), tree)).takeResult().getResults().get(0);
-        }
-
-
-        if (!btree.getAnnotation(Beautified.class, Beautified.IS_UGGLY).isBeautiful()) {
-            LoggerFactory.getLogger(Sirius.class).warn("Tree beautification annotation is not properly set.");
-            btree.setAnnotation(Beautified.class, Beautified.IS_BEAUTIFUL);
-        }
-        return btree;
     }
 
 
@@ -403,7 +305,7 @@ public class Sirius {
                                                     experiment, Iterable<MolecularFormula> formulas) {
         final HashSet<MolecularFormula> fs = new HashSet<MolecularFormula>();
         for (MolecularFormula f : formulas) fs.add(f);
-        final Whiteset whiteset = new Whiteset(fs);
+        final Whiteset whiteset = Whiteset.of(fs);
         experiment.setAnnotation(Whiteset.class, whiteset);
     }
 
@@ -618,8 +520,7 @@ public class Sirius {
      * @param ms2     a list of MS/MS spectra containing the fragmentation pattern of the measured compound
      * @return a MS2Experiment instance, ready to be analyzed by SIRIUS
      */
-    public Ms2Experiment getMs2Experiment(MolecularFormula formula, Ionization ion, Spectrum<Peak> ms1, Spectrum...
-            ms2) {
+    public Ms2Experiment getMs2Experiment(MolecularFormula formula, Ionization ion, Spectrum<Peak> ms1, List<Spectrum<Peak>> ms2) {
         return getMs2Experiment(formula, PrecursorIonType.getPrecursorIonType(ion), ms1, ms2);
     }
 
@@ -633,7 +534,7 @@ public class Sirius {
      * @return a MS2Experiment instance, ready to be analyzed by SIRIUS
      */
     public Ms2Experiment getMs2Experiment(MolecularFormula formula, PrecursorIonType
-            ion, Spectrum<Peak> ms1, Spectrum... ms2) {
+            ion, Spectrum<Peak> ms1, List<Spectrum<Peak>>  ms2) {
         final MutableMs2Experiment exp = (MutableMs2Experiment) getMs2Experiment(ion.neutralMassToPrecursorMass(formula.getMass()), ion, ms1, ms2);
         exp.setMolecularFormula(formula);
         return exp;
@@ -648,11 +549,11 @@ public class Sirius {
      * @param ms2        a list of MS/MS spectra containing the fragmentation pattern of the measured compound
      * @return a MS2Experiment instance, ready to be analyzed by SIRIUS
      */
-    public Ms2Experiment getMs2Experiment(double parentMass, PrecursorIonType ion, Spectrum<Peak> ms1, Spectrum...
-            ms2) {
+    public Ms2Experiment getMs2Experiment(double parentMass, PrecursorIonType ion, Spectrum<Peak> ms1, List<Spectrum<Peak>> ms2) {
         final MutableMs2Experiment mexp = new MutableMs2Experiment();
         mexp.setPrecursorIonType(ion);
         mexp.setIonMass(parentMass);
+        mexp.setMergedMs1Spectrum(new SimpleSpectrum(ms1));
         for (Spectrum<Peak> spec : ms2) {
             mexp.getMs2Spectra().add(new MutableMs2Spectrum(spec, mexp.getIonMass(), CollisionEnergy.none(), 2));
         }
@@ -668,7 +569,7 @@ public class Sirius {
      * @param ms2        a list of MS/MS spectra containing the fragmentation pattern of the measured compound
      * @return a MS2Experiment instance, ready to be analyzed by SIRIUS
      */
-    public Ms2Experiment getMs2Experiment(double parentMass, Ionization ion, Spectrum<Peak> ms1, Spectrum... ms2) {
+    public Ms2Experiment getMs2Experiment(double parentMass, Ionization ion, Spectrum<Peak> ms1, List<Spectrum<Peak>> ms2) {
         return getMs2Experiment(parentMass, PrecursorIonType.getPrecursorIonType(ion), ms1, ms2);
     }
 
@@ -854,91 +755,6 @@ public class Sirius {
         return null;
     }
 
-    private SimpleSpectrum mergeMs1Spec(ProcessedInput pinput) {
-        final MutableMs2Experiment experiment = pinput.getExperimentInformation();
-        if (experiment.getMergedMs1Spectrum() != null) return experiment.getMergedMs1Spectrum();
-        else if (experiment.getMs1Spectra().size() > 0) {
-            experiment.setMergedMs1Spectrum(Spectrums.mergeSpectra(experiment.<Spectrum<Peak>>getMs1Spectra()));
-            return experiment.getMergedMs1Spectrum();
-        } else return new SimpleSpectrum(new double[0], new double[0]);
-    }
-
-    /*
-    TODO: We have to move this at some point back into the FragmentationPatternAnalysis pipeline -_-
-     */
-    protected boolean performMs1Analysis(AbstractTreeComputationInstance instance) {
-        final ProcessedInput input = instance.validateInput();
-        IsotopeSettings isotopeSettings = input.getAnnotation(IsotopeSettings.class);
-        FormulaSettings formulaSettings = input.getAnnotation(FormulaSettings.class);
-
-        if (!isotopeSettings.isFiltering() && !isotopeSettings.isScoring() && !formulaSettings.isElementDetectionEnabled())
-            return false;
-
-        final ExtractedIsotopePattern pattern = extractedIsotopePattern(input);
-        if (pattern == null || !pattern.hasPatternWithAtLeastTwoPeaks()) {
-            input.setAnnotation(FormulaConstraints.class, formulaSettings.getEnforcedAlphabet().getExtendedConstraints(formulaSettings.getFallbackAlphabet()));
-            return false; // we cannot do any analysis without isotope information
-        }
-        // step 1: automatic element detection
-        performAutomaticElementDetection(input, pattern.getPattern());
-
-        // step 2: adduct type search
-        detectPossibleIonModesFromMs1(input);
-        // step 3: Isotope pattern analysis
-        if (!isotopeSettings.isScoring())
-            return false;
-        final DecompositionList decompositions = instance.precompute().getAnnotationOrThrow(DecompositionList.class);
-        final IsotopePatternAnalysis an = getMs1Analyzer();
-        for (Map.Entry<Ionization, List<MolecularFormula>> entry : decompositions.getFormulasPerIonMode().entrySet()) {
-            for (IsotopePattern pat : an.scoreFormulas(pattern.getPattern(), entry.getValue(), input.getExperimentInformation(), PrecursorIonType.getPrecursorIonType(entry.getKey()))) {
-                pattern.getExplanations().put(pat.getCandidate(), pat);
-            }
-        }
-        int isoPeaks = 0;
-        double maxScore = Double.NEGATIVE_INFINITY;
-        boolean doFilter = false;
-        double scoreThresholdForFiltering = 0d;
-        for (IsotopePattern pat : pattern.getExplanations().values()) {
-            maxScore = Math.max(pat.getScore(), maxScore);
-            final int numberOfIsoPeaks = pat.getPattern().size() - 1;
-            if (pat.getScore() >= 2 * numberOfIsoPeaks) {
-                isoPeaks = Math.max(pat.getPattern().size(), isoPeaks);
-                scoreThresholdForFiltering = isoPeaks * 1d;
-                doFilter = true;
-            }
-        }
-        //doFilter = doFilter && pattern.getExplanations().size() > 100;
-        // step 3: apply filtering and/or scoring
-        if (doFilter && maxScore >= scoreThresholdForFiltering) {
-            if (isotopeSettings.isFiltering()) {
-                //final Iterator<Map.Entry<MolecularFormula, IsotopePattern>> iter = pattern.getExplanations().entrySet().iterator();
-                final Iterator<Decomposition> iter = decompositions.getDecompositions().iterator();
-                while (iter.hasNext()) {
-                    final Decomposition d = iter.next();
-                    final IsotopePattern p = pattern.getExplanations().get(d.getCandidate());
-                    if (p == null || p.getScore() < scoreThresholdForFiltering) {
-                        iter.remove();
-                    }
-                }
-            }
-        }
-        final Iterator<Map.Entry<MolecularFormula, IsotopePattern>> iter = pattern.getExplanations().entrySet().iterator();
-        while (iter.hasNext()) {
-            final Map.Entry<MolecularFormula, IsotopePattern> val = iter.next();
-            val.setValue(val.getValue().withScore(isotopeSettings.isScoring() ? Math.max(val.getValue().getScore()*isotopeSettings.getMultiplier(), 0d) : 0d));
-        }
-
-        return true;
-    }
-
-    private void performAutomaticElementDetection(ProcessedInput input, SimpleSpectrum extractedPattern) {
-        final FormulaSettings settings = input.getAnnotationOrDefault(FormulaSettings.class);
-        if (settings.isElementDetectionEnabled()) {
-            final ElementPredictor predictor = getElementPrediction();
-            final FormulaConstraints constraints = settings.getEnforcedAlphabet().getExtendedConstraints(predictor.predictConstraints(extractedPattern).intersection(new FormulaConstraints(settings.getAutoDetectionAlphabet())));
-            input.setAnnotation(FormulaConstraints.class, constraints);
-        }
-    }
 
     public Sirius.SiriusIdentificationJob makeIdentificationJob(final Ms2Experiment experiment) {
         return makeIdentificationJob(experiment, true);
@@ -946,10 +762,6 @@ public class Sirius {
 
     public Sirius.SiriusIdentificationJob makeIdentificationJob(final Ms2Experiment experiment, final boolean beautifyTrees) {
         return new SiriusIdentificationJob(experiment, beautifyTrees);
-    }
-
-    public GuessIonizationFromMs1Result guessIonization(Ms2Experiment experiment, PrecursorIonType[] ionTypes) {
-        return ionGuessing.guessIonization(experiment, ionTypes);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -967,10 +779,9 @@ public class Sirius {
 
         @Override
         protected List<IdentificationResult> compute() throws Exception {
-            final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, experiment.getAnnotation(NumberOfCandidates.class, () -> NumberOfCandidates.ONE).value, experiment.getAnnotation(NumberOfCandidatesPerIon.class, () -> NumberOfCandidatesPerIon.MIN_VALUE).value);
+            final ProcessedInput input = preprocessForMs2Analysis(experiment);
+            final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), input, experiment.getAnnotation(NumberOfCandidates.class, () -> NumberOfCandidates.ONE).value, experiment.getAnnotation(NumberOfCandidatesPerIon.class, () -> NumberOfCandidatesPerIon.MIN_VALUE).value);
             instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, 105, (int) evt.getNewValue()));
-            final ProcessedInput pinput = instance.validateInput();
-            performMs1Analysis(instance);
             submitSubJob(instance);
             AbstractTreeComputationInstance.FinalResult fr = instance.awaitResult();
 
@@ -979,21 +790,12 @@ public class Sirius {
         }
 
         private List<IdentificationResult> createIdentificationResults(AbstractTreeComputationInstance.FinalResult fr, AbstractTreeComputationInstance computationInstance) {
-            addScoreThresholdOnUnconsideredCandidates(fr, computationInstance.precompute());
 
             final List<IdentificationResult> irs = new ArrayList<>();
             int k = 0;
             for (FTree tree : fr.getResults()) {
                 IdentificationResult result = new IdentificationResult(tree, ++k);
                 irs.add(result);
-
-                //beautify tree (try to explain more peaks)
-                if (beautifyTrees)
-                    beautifyTree(this, result, experiment, experiment.getAnnotation(ForbidRecalibration.class, () -> ForbidRecalibration.ALLOWED) == ForbidRecalibration.ALLOWED);
-                final ProcessedInput processedInput = result.getStandardTree().getAnnotationOrNull(ProcessedInput.class);
-                if (processedInput != null)
-                    result.setAnnotation(Ms2Experiment.class, processedInput.getExperimentInformation());
-                else result.setAnnotation(Ms2Experiment.class, experiment);
             }
             return irs;
         }

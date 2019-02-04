@@ -50,6 +50,9 @@ public interface Annotated<A extends DataAnnotation> {
      * @return annotation value for the given class/key or the  default value given {@link PropertyManager}.DEFAULTS
      * The method will fail to provide a default value may fail if the given klass is not instantiatable via
      * {@link de.unijena.bioinf.ms.properties.DefaultPropertyLoader}
+     *
+     *
+     * TODO: only Ms2Experiment has "default" annotations. So this method should removed
      */
     default <T extends A> T getAnnotationOrDefault(Class<T> klass) {
         return getAnnotation(klass, () -> annotations().autoInstanceSupplier(klass));
@@ -147,7 +150,7 @@ public interface Annotated<A extends DataAnnotation> {
      * So we can implement all annotation functionality within this interface
      * instead of each class separately.
      */
-    class Annotations<Annotation> implements Cloneable {
+    class Annotations<Annotation> implements Cloneable, Iterable<Class<Annotation>> {
         private final Map<Class<Annotation>, Annotation> map;
 
         public Annotations() {
@@ -160,12 +163,6 @@ public interface Annotated<A extends DataAnnotation> {
 
         public Annotations<Annotation> clone() {
             final Map<Class<Annotation>, Annotation> cloneMap = new HashMap<>(map);
-            Iterator<Map.Entry<Class<Annotation>, Annotation>> iter = map.entrySet().iterator();
-            while (iter.hasNext()) {
-                final Map.Entry<Class<Annotation>, Annotation> v = iter.next();
-                cloneMap.put(v.getKey(), v.getValue());
-            }
-
             return new Annotations<>(cloneMap);
         }
 
@@ -177,6 +174,12 @@ public interface Annotated<A extends DataAnnotation> {
             } catch (InstantiationException | IllegalAccessException e) {
                 throw new IllegalArgumentException(klass.getName() + " cannot be instantiated automatically");
             }
+        }
+
+        @NotNull
+        @Override
+        public Iterator<Class<Annotation>> iterator() {
+            return map.keySet().iterator();
         }
     }
 }

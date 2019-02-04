@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
  * object and compute trees for all ion types with probability &gt; 0.
  * If probability is unknown, you can assign a constant to each ion type.
  */
+@Deprecated
 public class PossibleIonModes implements ProcessedInputAnnotation {
 
     public static PossibleIonModes uniformlyDistributed(Iterable<IonMode> ionModes) {

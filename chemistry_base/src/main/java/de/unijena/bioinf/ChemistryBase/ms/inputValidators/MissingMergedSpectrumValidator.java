@@ -2,7 +2,6 @@ package de.unijena.bioinf.ChemistryBase.ms.inputValidators;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -17,8 +16,7 @@ import java.util.List;
 public class MissingMergedSpectrumValidator implements Ms2ExperimentValidator {
 
     @Override
-    public Ms2Experiment validate(Ms2Experiment input, Warning warning, boolean repair) throws InvalidException {
-        MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(input);
+    public boolean validate(MutableMs2Experiment mutableMs2Experiment, Warning warning, boolean repair) throws InvalidException {
 //        if (mutableMs2Experiment.getMs1Spectra().isEmpty()){
 //            if (repair){
 //                mutableMs2Experiment.getMs1Spectra().add(new SimpleSpectrum(new double[0], new double[0]));
@@ -43,7 +41,7 @@ public class MissingMergedSpectrumValidator implements Ms2ExperimentValidator {
                 }
             }
         }
-        return mutableMs2Experiment;
+        return true;
     }
 
     private SimpleSpectrum mergeSpectra(List<SimpleSpectrum> spectrumList, Deviation expectedDev) {

@@ -9,9 +9,9 @@ import java.awt.*;
 import java.beans.PropertyEditor;
 import java.beans.PropertyEditorManager;
 import java.lang.reflect.*;
-import java.util.*;
 import java.util.List;
 import java.util.Queue;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -75,7 +75,7 @@ public class DefaultPropertyLoader {
                         } else {
                             try {
                                 final String fieldName = (klassAnnotation.propertyKey().isEmpty() ? "value" : klassAnnotation.propertyKey());
-                                return setDefaultValue(klass.getConstructor().newInstance(), klass.getDeclaredField(fieldName), parent);
+                                return setDefaultValue(invokePossiblyPrivateConstructor(klass), klass.getDeclaredField(fieldName), parent);
                             } catch (NoSuchFieldException e) {
                                 throw new IllegalArgumentException("Input class contains no valid Field. Please Specify a valid Field name in the class annotation (@DefaultProperty), use the default name (value) por directly annotate the field as @DefaultProperty.", e);
                             }
@@ -84,7 +84,7 @@ public class DefaultPropertyLoader {
                         throw new IllegalArgumentException("This class contains no @DefaultProperty annotation!");
                     }
                 } else {
-                    final C instance = klass.getConstructor().newInstance();
+                    final C instance = invokePossiblyPrivateConstructor(klass);
                     for (Field field : fields) {
                         final DefaultProperty fieldAnnotation = field.getAnnotation(DefaultProperty.class);
                         final String fieldParent = (fieldAnnotation.propertyParent().isEmpty() ? parent : sourceParent + "." + fieldAnnotation.propertyParent());
@@ -101,6 +101,17 @@ public class DefaultPropertyLoader {
         }
     }
 
+    private <C> C invokePossiblyPrivateConstructor(Class<C> klass) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+        Constructor<C> constr = klass.getDeclaredConstructor();
+        if (Modifier.isPublic(constr.getModifiers())) return constr.newInstance();
+        else {
+            constr.setAccessible(true);
+            C instance = constr.newInstance();
+            constr.setAccessible(false);
+            return instance;
+        }
+    }
+
 
     private <C> C getDefaultInstanceFromProvider(final Method providerMethod, String parent, String sourceParent) throws InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
         final Parameter[] parameters = providerMethod.getParameters();
@@ -109,11 +120,11 @@ public class DefaultPropertyLoader {
 
         for (int i = 0; i < parameters.length; i++) {
             final Parameter parameter = parameters[i];
-            if (parameter.isAnnotationPresent(DefaultProperty.class) && !parameter.getAnnotation(DefaultProperty.class).propertyKey().isEmpty()) {
+            if (parameter.isAnnotationPresent(DefaultProperty.class) /* kaidu: why?  && !parameter.getAnnotation(DefaultProperty.class).propertyKey().isEmpty() */) {
                 final String fieldParent = !parameter.getAnnotation(DefaultProperty.class).propertyParent().isEmpty()
                         ? sourceParent + "." + parameter.getAnnotation(DefaultProperty.class).propertyParent()
                         : parent;
-                final String fieldName = parameter.getAnnotation(DefaultProperty.class).propertyKey();
+                final String fieldName = parameter.getAnnotation(DefaultProperty.class).propertyKey().isEmpty() ? parameter.getName() : parameter.getAnnotation(DefaultProperty.class).propertyKey();
 //                if (parameters.length == 1)
                 args[i] = parseProperty(parameter.getType(), parameter.getParameterizedType(), fieldName, fieldParent);
 //                else

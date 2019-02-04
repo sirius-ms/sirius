@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -34,6 +35,7 @@ import de.unijena.bioinf.IsotopePatternAnalysis.scoring.IsotopePatternScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MassDifferenceDeviationScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.NormalDistributedIntensityScorer;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
+import de.unijena.bioinf.sirius.ProcessedInput;
 
 import java.util.*;
 
@@ -187,6 +189,25 @@ public class IsotopePatternAnalysis implements Parameterized {
             spec.addPeak(mzBuffer, intensityBuffer);
         }
         return new SimpleSpectrum(spec);
+    }
+
+    public boolean computeAndScoreIsotopePattern(ProcessedInput input) {
+        final Ms1IsotopePattern pattern = input.getAnnotation(Ms1IsotopePattern.class);
+        if (pattern != null) {
+            final HashMap<MolecularFormula, IsotopePattern> explanations = new HashMap<>();
+            final SimpleSpectrum spec = pattern.getSpectrum();
+            final MS1MassDeviation massDev = input.getAnnotationOrDefault(MS1MassDeviation.class);
+            final PossibleAdducts ionModes = input.getAnnotationOrDefault(PossibleAdducts.class);
+            final FormulaConstraints constraints = input.getAnnotationOrDefault(FormulaConstraints.class);
+            for (IonMode ionMode : ionModes.getIonModes()) {
+                final List<MolecularFormula> formulas = decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(ionMode.subtractFromMass(pattern.getPeaks()[0].getMass()), massDev.allowedMassDeviation);
+                for (IsotopePattern pat : scoreFormulas(spec, formulas, input.getExperimentInformation(), PrecursorIonType.getPrecursorIonType(ionMode))) {
+                    explanations.put(pat.getCandidate(), pat);
+                }
+            }
+            input.setAnnotation(ExtractedIsotopePattern.class, new ExtractedIsotopePattern(spec, explanations));
+            return true;
+        } else return false;
     }
 
     public List<IsotopePattern> deisotope(Ms2Experiment experiment, List<MolecularFormula> formulas) {

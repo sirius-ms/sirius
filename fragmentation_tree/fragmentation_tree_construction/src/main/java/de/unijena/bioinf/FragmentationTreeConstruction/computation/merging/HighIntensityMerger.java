@@ -63,7 +63,7 @@ public class HighIntensityMerger implements PeakMerger {
         int parentIndex = mergeParentPeak(experiment, mergeWindow, merger, mzArray, massOrderedSpectrum);
         // after this you can merge the other peaks. Ignore all peaks near the parent peak
         final double parentMass = experiment.getIonMass();
-        for (; parentIndex > 0 && mzArray[parentIndex-1].getMz()+0.1d >= parentMass; --parentIndex);
+        for (; parentIndex > 0 && mzArray[parentIndex-1].getMass()+0.1d >= parentMass; --parentIndex);
         n = parentIndex;
         final ProcessedPeak[] parray = Arrays.copyOf(mzArray, parentIndex);
         Arrays.sort(parray, Collections.reverseOrder(new ProcessedPeak.RelativeIntensityComparator()));
@@ -71,15 +71,15 @@ public class HighIntensityMerger implements PeakMerger {
             final ProcessedPeak p = parray[i];
             final int index = Arrays.binarySearch(mzArray, 0, n, p, massComparator);
             if (index < 0) continue;
-            final double error = mergeWindow.absoluteFor(p.getMz());
-            final double min = p.getMz() - error;
-            final double max = p.getMz() + error;
+            final double error = mergeWindow.absoluteFor(p.getMass());
+            final double min = p.getMass() - error;
+            final double max = p.getMass() + error;
             int minIndex = index;
-            while (minIndex >= 0 && mzArray[minIndex].getMz() >= min) --minIndex;
+            while (minIndex >= 0 && mzArray[minIndex].getMass() >= min) --minIndex;
             ++minIndex;
             int maxIndex = index;
-            while (maxIndex < n && mzArray[maxIndex].getMz() <= max) ++maxIndex;
-            merger.merge(new ArrayList<ProcessedPeak>(Arrays.asList(mzArray).subList(minIndex, maxIndex)), index-minIndex, p.getMz());
+            while (maxIndex < n && mzArray[maxIndex].getMass() <= max) ++maxIndex;
+            merger.merge(new ArrayList<ProcessedPeak>(Arrays.asList(mzArray).subList(minIndex, maxIndex)), index-minIndex, p.getMass());
             System.arraycopy(mzArray, maxIndex, mzArray, minIndex, n-maxIndex);
             n -= (maxIndex - minIndex);
         }
@@ -99,7 +99,7 @@ public class HighIntensityMerger implements PeakMerger {
         int intensiveIndex = properParentPeak;
         int secondIntensiveIndex = properParentPeak;
         // merge now all peaks in its neighbourhood
-        for (int j = properParentPeak-1; j >= 0 && mergeWindow.inErrorWindow(parentMass, mzArray[j].getMz()); --j ) {
+        for (int j = properParentPeak-1; j >= 0 && mergeWindow.inErrorWindow(parentMass, mzArray[j].getMass()); --j ) {
             lowerBound=j;
             if (hightestIntensity < mzArray[j].getIntensity()) {
                 secondIntensiveIndex = intensiveIndex;
@@ -107,7 +107,7 @@ public class HighIntensityMerger implements PeakMerger {
                 intensiveIndex = j;
             }
         }
-        for (int j = properParentPeak+1; j < mzArray.length && mergeWindow.inErrorWindow(parentMass, mzArray[j].getMz()); ++j ) {
+        for (int j = properParentPeak+1; j < mzArray.length && mergeWindow.inErrorWindow(parentMass, mzArray[j].getMass()); ++j ) {
             upperBound=j;
             if (hightestIntensity < mzArray[j].getIntensity()) {
                 hightestIntensity = mzArray[j].getIntensity();
@@ -120,12 +120,12 @@ public class HighIntensityMerger implements PeakMerger {
         // nearest to the parent mass
         final int mainIndex;
         if (mzArray[secondIntensiveIndex].getIntensity() < 0.1 ) mainIndex = intensiveIndex;
-        else if (Math.abs(mzArray[secondIntensiveIndex].getMz() - parentMass) < Math.abs(mzArray[intensiveIndex].getMz() - parentMass))
+        else if (Math.abs(mzArray[secondIntensiveIndex].getMass() - parentMass) < Math.abs(mzArray[intensiveIndex].getMass() - parentMass))
             mainIndex = secondIntensiveIndex;
         else mainIndex = intensiveIndex;
         final ProcessedPeak[] subset = new ProcessedPeak[upperBound-lowerBound+1];
         System.arraycopy(mzArray, lowerBound, subset, 0, upperBound-lowerBound+1);
-        merger.merge(Arrays.asList(subset), mainIndex-lowerBound, mzArray[mainIndex].getMz() );
+        merger.merge(Arrays.asList(subset), mainIndex-lowerBound, mzArray[mainIndex].getMass() );
         return lowerBound;
     }
 

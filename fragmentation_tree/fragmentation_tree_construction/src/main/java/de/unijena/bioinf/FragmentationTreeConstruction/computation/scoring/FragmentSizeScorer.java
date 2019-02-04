@@ -63,7 +63,7 @@ public class FragmentSizeScorer implements PeakScorer {
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
         for (int i=0; i < peaks.size(); ++i) {
-            scores[i] += maxScore - Math.min(1,peaks.get(i).getOriginalMz()/maxSize)*maxScore;
+            scores[i] += maxScore - Math.min(1,peaks.get(i).getMass()/maxSize)*maxScore;
         }
     }
 
