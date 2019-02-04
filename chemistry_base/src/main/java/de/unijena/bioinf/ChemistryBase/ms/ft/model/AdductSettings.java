@@ -2,6 +2,7 @@ package de.unijena.bioinf.ChemistryBase.ms.ft.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,8 +24,15 @@ public class AdductSettings implements Ms2ExperimentAnnotation {
      * @param detectable ion modes which are only considered if there is an indication in the MS1 scan (e.g. right mass delta)
      * @param fallback ion modes which are considered if the auto detection did not find any indication for an ion mode.
      */
-    public static AdductSettings newInstance(@DefaultProperty Set<PrecursorIonType> enforced, @DefaultProperty Set<PrecursorIonType> detectable, @DefaultProperty  Set<PrecursorIonType> fallback) {
+    @DefaultInstanceProvider
+    public static AdductSettings newInstance(@DefaultProperty(propertyKey = "enforced") Set<PrecursorIonType> enforced, @DefaultProperty(propertyKey = "detectable") Set<PrecursorIonType> detectable, @DefaultProperty(propertyKey = "fallback")  Set<PrecursorIonType> fallback) {
         return new AdductSettings(enforced, detectable, fallback);
+    }
+
+    public AdductSettings withEnforced(Set<PrecursorIonType> enforced) {
+        final HashSet<PrecursorIonType> enforcedJoin = new HashSet<>(this.enforced);
+        enforcedJoin.addAll(enforced);
+        return new AdductSettings(enforcedJoin, detectable, fallback);
     }
 
 

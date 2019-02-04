@@ -106,8 +106,8 @@ public class CollisionEnergy {
     @Override
     public String toString() {
         if (this.equals(NONE)) return "none";
-        if (minEnergy == maxEnergy) return stringify(minEnergy);
-        return stringify(minEnergy) + " - " + stringify(maxEnergy);
+        if (minEnergy == maxEnergy) return stringify(minEnergy) + " eV";
+        return stringify(minEnergy) + " - " + stringify(maxEnergy) + " eV";
     }
 
     @Override

@@ -36,13 +36,13 @@ public class FractionOfParentLossScorer implements LossScorer {
     @Override
     public Double prepare(ProcessedInput inputh) {
         //if ion mass known take this
-        double comparableMass = (inputh.getParentPeak() == null ? 0 : inputh.getParentPeak().getMz());
+        double comparableMass = (inputh.getParentPeak() == null ? 0 : inputh.getParentPeak().getMass());
         //else find largest mass, Double.MAX_VALUE means existing dummy node
         if (comparableMass == 0d || comparableMass == Double.MAX_VALUE) {
             comparableMass = 0d;
             final List<ProcessedPeak> peaks = inputh.getMergedPeaks();
             for (ProcessedPeak peak : peaks) {
-                if (peak.getMz() > comparableMass && peak.getMz() < Double.MAX_VALUE) comparableMass = peak.getMz();
+                if (peak.getMass() > comparableMass && peak.getMass() < Double.MAX_VALUE) comparableMass = peak.getMass();
             }
         }
         return comparableMass;

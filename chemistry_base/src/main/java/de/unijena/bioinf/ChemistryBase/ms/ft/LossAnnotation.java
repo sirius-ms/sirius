@@ -17,65 +17,43 @@
  */
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
-public final class LossAnnotation<T> {
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
+
+import java.util.function.Supplier;
+
+public final class LossAnnotation<T extends DataAnnotation> {
+
 
     protected final int id;
     protected final Class<T> klass;
+    protected Supplier<T> nullElement;
     int capa;
-    LossAnnotation<? extends T> alias;
 
-    LossAnnotation(int id, int capa, Class<T> klass) {
+    LossAnnotation(int id, int capa, Class<T> klass, Supplier<T> nullElement) {
         this.id = id;
         this.klass = klass;
         this.capa = capa;
-        this.alias = null;
+        this.nullElement = nullElement;
     }
 
-    <S extends T> LossAnnotation(LossAnnotation<S> prev, Class<T> newOne) {
-        this.id = prev.id;
-        this.klass = newOne;
-        this.capa = prev.capa;
-        this.alias = prev;
+    public T getNullElement() {
+        return nullElement.get();
     }
 
     public T get(Loss loss) {
-        return (T) (loss.getAnnotation(id));
+        final T val = (T) (loss.getAnnotation(id));
+        if (val==null && nullElement!=null) {
+            T o = nullElement.get();
+            loss.setAnnotation(id, capa, o);
+            return o;
+        } else return val;
     }
 
     public Class<T> getAnnotationType() {
         return klass;
     }
 
-
-    public boolean isAlias() {
-        return alias!=null;
-    }
-
-    public Class<? extends T> getAliasType() {
-        return alias.getAnnotationType();
-    }
-
-    public LossAnnotation<? extends T> getAlias() {
-        return alias;
-    }
-
-    public T getOrCreate(Loss loss) {
-        final T obj = get(loss);
-        if (obj == null) {
-            try {
-                final T newObj = (alias != null ? alias.getAnnotationType() : klass).newInstance();
-                loss.setAnnotation(id, capa, newObj);
-                return newObj;
-            } catch (InstantiationException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        } else return obj;
-    }
-
     public void set(Loss loss, T obj) {
-        if (alias != null) throw new UnsupportedOperationException("Cannot set values of alias annotations for alias. Use '" + alias.getAnnotationType().getSimpleName() + "' instead of '" + klass.getSimpleName() + "'");
         loss.setAnnotation(id, capa, obj);
     }
 

@@ -27,13 +27,14 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 import org.apache.commons.math3.special.Erf;
 
 /**
  * @author Kai Dührkop
  */
 @Called("Mass Deviation")
-public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
+public class MassDeviationVertexScorer implements DecompositionScorer<SpectralRecalibration> {
     private final static double sqrt2 = Math.sqrt(2);
 
     private Deviation standardDeviation = null;
@@ -43,8 +44,8 @@ public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
     }
 
     @Override
-    public Object prepare(ProcessedInput input) {
-        return null;
+    public SpectralRecalibration prepare(ProcessedInput input) {
+        return input.getAnnotation(SpectralRecalibration.class,SpectralRecalibration::none);
     }
 
     public Deviation getStandardDeviation() {
@@ -56,11 +57,11 @@ public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
     }
 
     @Override
-    public double score(MolecularFormula formula, Ionization ion,ProcessedPeak peak, ProcessedInput input, Object x_) {
+    public double score(MolecularFormula formula, Ionization ion,ProcessedPeak peak, ProcessedInput input, SpectralRecalibration rec) {
         if (peak.getOriginalPeaks().isEmpty())
             return 0d; // don't score synthetic peaks
         final double theoreticalMass = ion.addToMass(formula.getMass());
-        final double realMass = useOriginalMz ? peak.getOriginalMz() : peak.getMz();
+        final double realMass = useOriginalMz ? peak.getMass() : rec.recalibrate(peak);
         final Deviation dev = standardDeviation != null
                 ? standardDeviation
                 : input.getExperimentInformation().getAnnotationOrDefault(MS2MassDeviation.class).standardMassDeviation;

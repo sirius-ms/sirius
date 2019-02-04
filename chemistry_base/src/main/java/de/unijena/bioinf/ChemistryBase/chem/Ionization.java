@@ -17,6 +17,8 @@
  */
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
+
 /**
  * To measure a molecule in a mass spectrometer, the molecule have to be ionized. We distinguish two different
  * ionization forms:
@@ -28,7 +30,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
  *  The algorithms should compute the neutral mass spectra as early as possible. The neutral mass spectrum is a spectrum
  *  where each peak contains only the masses (not mass-to-charge ratio) of the measured molecules (without adducts).
  */
-public abstract class Ionization implements Comparable<Ionization> {
+public abstract class Ionization implements Comparable<Ionization>, DataAnnotation {
 
     /**
      * @return mass (Dalton) of the ion

@@ -50,16 +50,12 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
 
     private final static Pattern INTERVAL = Pattern.compile("\\[(?:(\\d*)\\s*-\\s*)?(\\d*)?\\]");
 
-    public static FormulaConstraints fromString(String alphabet, double rdbeToPass) {
-        final FormulaConstraints fc = new FormulaConstraints(alphabet);
-        if (Double.compare(rdbeToPass, -0.5d) != 0) {
-            fc.filters.clear();
-            fc.addFilter(new ValenceFilter(rdbeToPass));
-        }
-        return fc;
+    public static FormulaConstraints fromString(String alphabet) {
+        return new FormulaConstraints(alphabet);
     }
 
     public FormulaConstraints(String string) {
+        if (string.indexOf(',')>0) string = string.replace(",","");
         final PeriodicTable PT = PeriodicTable.getInstance();
         final Pattern pattern = PT.getPattern();
         final Matcher matcher = pattern.matcher(string);

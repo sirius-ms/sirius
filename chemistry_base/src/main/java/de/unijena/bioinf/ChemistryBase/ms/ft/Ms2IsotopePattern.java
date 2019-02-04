@@ -1,8 +1,9 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 
-public class Ms2IsotopePattern {
+public class Ms2IsotopePattern implements TreeAnnotation {
 
     private Peak[] peaks;
     private double score;

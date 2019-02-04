@@ -709,6 +709,11 @@ public class Spectrums {
         return set.toArray(new PrecursorIonType[0]);
     }
 
+    private final static SimpleSpectrum EMPTY_SPEC = new SimpleSpectrum(new double[0], new double[0]);
+    public static SimpleSpectrum empty() {
+        return EMPTY_SPEC;
+    }
+
 
     public interface Transformation<P1 extends Peak, P2 extends Peak> {
         P2 transform(P1 input);

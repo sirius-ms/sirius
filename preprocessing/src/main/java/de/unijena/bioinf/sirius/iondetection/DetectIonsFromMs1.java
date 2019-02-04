@@ -29,7 +29,7 @@ public class DetectIonsFromMs1 implements AdductDetection {
             mutableSpectrum = new SimpleMutableSpectrum(ms1.mergedSpectrum);
             Spectrums.filterIsotpePeaks(mutableSpectrum, new Deviation(100), 1, 2, 5, new ChemicalAlphabet());
         } else {
-            if (exp.getMergedMs1Spectrum().size()>0){
+            if (exp.getMergedMs1Spectrum() != null && exp.getMergedMs1Spectrum().size()>0){
                 SimpleSpectrum pks = Spectrums.selectSpectrumWithMostIntensePrecursor(exp.getMs1Spectra(), exp.getIonMass(), dev.allowedMassDeviation);
                 mutableSpectrum = new SimpleMutableSpectrum(pks==null ? exp.getMs1Spectra().get(0) : pks);
             } else return null;

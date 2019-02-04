@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
+import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +19,7 @@ import java.util.List;
  * of the tree
  */
 public class IonTreeUtils {
-    public enum Type {RAW, RESOLVED, IONIZED}
+    public enum Type implements TreeAnnotation  {RAW, RESOLVED, IONIZED}
 
     public boolean isResolvable(FTree tree, PrecursorIonType ionType) {
         return (tree.getAnnotationOrThrow(PrecursorIonType.class).getIonization().equals(ionType.getIonization()) && tree.getRoot().getFormula().isSubtractable(ionType.getAdduct()));
@@ -114,10 +115,12 @@ public class IonTreeUtils {
     }
 
     private void reduceTree(final FTree tree, PrecursorIonType iontype, final MolecularFormula adduct) {
-        reduceSubtree(tree, iontype, adduct, tree.getRoot());
+
+        final Score.ScoreAdder scoreAdd = Score.extendWith("adductSubstitution");
+        reduceSubtree(tree, iontype, adduct, tree.getRoot(), scoreAdd);
     }
 
-    private void reduceSubtree(final FTree tree, PrecursorIonType iontype, final MolecularFormula adduct, Fragment vertex) {
+    private void reduceSubtree(final FTree tree, PrecursorIonType iontype, final MolecularFormula adduct, Fragment vertex, Score.ScoreAdder adder) {
         final FragmentAnnotation<PrecursorIonType> fa = tree.getOrCreateFragmentAnnotation(PrecursorIonType.class);
         final FragmentAnnotation<AnnotatedPeak> peakAno = tree.getOrCreateFragmentAnnotation(AnnotatedPeak.class);
         final LossAnnotation<Score> lossAno = tree.getLossAnnotationOrNull(Score.class);
@@ -138,10 +141,8 @@ public class IonTreeUtils {
                 if (lossAno!=null) {
                     final Score oldScore = lossAno.get(oldLoss);
                     final Score contrScore = lossAno.get(contractedLoss);
-                    if (oldScore != null && contrScore!=null) {
-                        final Score newScore = oldScore.extend("adductSubstitution");
-                        newScore.set("adductSubstitution", contrScore.sum());
-                        lossAno.set(f.getIncomingEdge(), newScore);
+                    if (oldScore != null && contrScore!=null) {;
+                        lossAno.set(f.getIncomingEdge(), adder.add(oldScore, contrScore.sum()));
                     } else if (oldScore!=null) {
                         lossAno.set(f.getIncomingEdge(), oldScore);
                     }
@@ -166,7 +167,7 @@ public class IonTreeUtils {
             fa.set(vertex, newIonType);
             final ArrayList<Fragment> childs = new ArrayList<Fragment>(vertex.getChildren());
             for (Fragment g : childs) {
-                reduceSubtree(tree, iontype, adduct, g);
+                reduceSubtree(tree, iontype, adduct, g, adder);
             }
         } else if (vertex.getInDegree()>0){
             // if adduct is part of the loss, remove it from loss

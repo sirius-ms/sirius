@@ -14,18 +14,28 @@ import java.util.Arrays;
  * TODO: workaround. We have to clean that up
  */
 public class Ms1IsotopePattern implements ProcessedInputAnnotation, TreeAnnotation {
+    private static final SimpleSpectrum EMPTY_SPECTRUM = new SimpleSpectrum(new double[0], new double[0]);
+    private static final Ms1IsotopePattern EMPTY_PATTERN = new Ms1IsotopePattern(EMPTY_SPECTRUM, 0d);
 
-    private SimpleSpectrum spectrum;
-    private double score;
+    private final SimpleSpectrum spectrum;
+    private final double score;
+
+    public static Ms1IsotopePattern none() {
+        return EMPTY_PATTERN;
+    }
 
     public Ms1IsotopePattern(Spectrum<? extends Peak> ms, double score) {
-        this.spectrum = new SimpleSpectrum(ms);
+        this.spectrum = (ms.size()==0) ? EMPTY_SPECTRUM : new SimpleSpectrum(ms);
         this.score = score;
     }
 
     public Ms1IsotopePattern(Peak[] peaks, double score) {
-        this.spectrum = Spectrums.from(Arrays.asList(peaks));
+        this.spectrum = peaks.length==0 ? EMPTY_SPECTRUM : Spectrums.from(Arrays.asList(peaks));
         this.score = score;
+    }
+
+    public boolean isEmpty() {
+        return spectrum.size()==0;
     }
 
 

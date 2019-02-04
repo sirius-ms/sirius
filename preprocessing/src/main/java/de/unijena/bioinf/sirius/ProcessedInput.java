@@ -144,6 +144,7 @@ public class ProcessedInput implements Cloneable, Annotated<DataAnnotation> {
             p.annotations = p.annotations.clone();
             p.mergedPeaks = new ArrayList<>();
             for (ProcessedPeak k : mergedPeaks) p.mergedPeaks.add(k.clone());
+            p.setParentPeak(p.mergedPeaks.get(getParentPeak().getIndex()));
             return p;
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
@@ -236,4 +237,6 @@ public class ProcessedInput implements Cloneable, Annotated<DataAnnotation> {
             mergedPeaks.get(k).setIndex(k);
         }
     }
+
+
 }

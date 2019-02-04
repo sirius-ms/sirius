@@ -4,9 +4,13 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.sirius.merging.HighIntensityMsMsMerger;
 import de.unijena.bioinf.sirius.merging.Ms2Merger;
 import de.unijena.bioinf.sirius.peakprocessor.MergedSpectrumProcessor;
+import de.unijena.bioinf.sirius.peakprocessor.NoiseIntensityThresholdFilter;
+import de.unijena.bioinf.sirius.peakprocessor.NormalizeToSumPreprocessor;
 import de.unijena.bioinf.sirius.peakprocessor.UnmergedSpectrumProcessor;
 import de.unijena.bioinf.sirius.validation.Ms2Validator;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Ms2Preprocessor extends Ms1Preprocessor {
@@ -18,6 +22,12 @@ public class Ms2Preprocessor extends Ms1Preprocessor {
     public Ms2Preprocessor() {
         super();
         this.validator = new Ms2Validator();
+        this.preprocessors = new ArrayList<>(Arrays.asList(
+                new NormalizeToSumPreprocessor()
+        ));
+        this.postProcessors = new ArrayList<>(Arrays.asList(
+           new NoiseIntensityThresholdFilter()
+        ));
     }
 
     @Override

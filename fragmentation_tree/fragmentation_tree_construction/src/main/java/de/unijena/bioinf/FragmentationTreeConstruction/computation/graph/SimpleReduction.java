@@ -34,7 +34,6 @@ public class SimpleReduction implements GraphReduction {
 
     @Override
     public FGraph reduce(FGraph graph, double lowerbound) {
-        graph.sortTopological();
         final int N = graph.numberOfEdges();
         final double[] upperbounds = new double[graph.numberOfVertices()];
         final TIntDoubleHashMap2[] scoresPerColor = new TIntDoubleHashMap2[graph.numberOfVertices()];

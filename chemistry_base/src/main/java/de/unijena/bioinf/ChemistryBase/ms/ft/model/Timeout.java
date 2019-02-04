@@ -22,8 +22,8 @@ public class Timeout implements Ms2ExperimentAnnotation {
      */
     @DefaultInstanceProvider
     public static Timeout newInstance(
-            @DefaultProperty int secondsPerInstance,
-            @DefaultProperty int secondsPerTree
+            @DefaultProperty(propertyKey = "secondsPerInstance") int secondsPerInstance,
+            @DefaultProperty(propertyKey = "secondsPerTree") int secondsPerTree
     ) {
         return new Timeout(secondsPerInstance, secondsPerTree);
     }
