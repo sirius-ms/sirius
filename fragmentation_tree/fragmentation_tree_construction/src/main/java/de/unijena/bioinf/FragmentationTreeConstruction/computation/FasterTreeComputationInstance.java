@@ -2,6 +2,8 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
+import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIon;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
@@ -48,19 +50,14 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
      *
      * @param analyzer
      * @param input
-     * @param numberOfResultsToKeep
-     * @param numberOfResultsToKeepPerIonization use this parameter if you want to force to report at least
-     *                                           numberOfResultsToKeepPerIonization results per ionization.
-     *                                           if <=0, this parameter will have no effect and just the top
-     *                                           numberOfResultsToKeep results will be reported.
      */
-    public FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
+    public FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input) {
         super(analyzer);
         this.experiment = input.getExperimentInformation();
         this.pinput = input;
         this.inputCopyForRecalibration = input.clone();
-        this.numberOfResultsToKeep = numberOfResultsToKeep;
-        this.numberOfResultsToKeepPerIonization = numberOfResultsToKeepPerIonization<=0?Integer.MIN_VALUE:numberOfResultsToKeepPerIonization;
+        this.numberOfResultsToKeep = input.getAnnotationOrDefault(NumberOfCandidates.class).value;
+        this.numberOfResultsToKeepPerIonization = input.getAnnotationOrDefault(NumberOfCandidatesPerIon.class).value;
         this.ticks = new AtomicInteger(0);
     }
 
@@ -70,7 +67,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
     }
 
     private FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree) {
-        this(analyzer, input, 1, -1);
+        this(analyzer, input);
         this.pinput = input;
         this.pinput.setAnnotation(Whiteset.class, Whiteset.of(tree.getRoot().getFormula()));
         this.inputCopyForRecalibration = pinput;
@@ -374,9 +371,6 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         //pin.setAnnotation(DecompositionList.class, l);
         analyzer.performDecomposition(pin);
         analyzer.performPeakScoring(pin);
-        if (!pin.getAnnotation(DecompositionList.class).getDecompositions().get(0).equals(decomp)) {
-            System.err.println("WTF? " + decomp + " but list is: " + pin.getAnnotation(DecompositionList.class).getDecompositions().toString()  );
-        }
         FGraph graph = analyzer.buildGraph(pin, decomp);
         graph.addAnnotation(SpectralRecalibration.class, rec);
         final FTree recal = tb.computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).solve(pin, graph).tree;
