@@ -30,7 +30,7 @@ public class TestMain {
         s.getMs2Analyzer().registerPlugin(new AdductSwitchPlugin());
         s.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin());
 
-        final Ms2Experiment experiment = s.getMs2Experiment(368.113616943359d, PrecursorIonType.getPrecursorIonType("[M+H]+"),
+        final Ms2Experiment experiment = s.getMs2Experiment(368.113616943359d, PrecursorIonType.getPrecursorIonType("[M+?]+"),
                 new SimpleSpectrum(
                         new double[]{368.113616943359d, 369.116424560547d, 370.118530273438d, 371.121459960938d},
                         new double[]{7.4298448E7d, 1.656387E7d, 2646426.25d,  296325.0625d }
@@ -46,7 +46,7 @@ public class TestMain {
         final ProcessedInput processedInput = preprocessor.preprocess(experiment);
         s.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
         final FragmentationPatternAnalysis analysis = s.getMs2Analyzer();
-        FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput, 10, 10);
+        FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
         JobManager jobs = SiriusJobs.getGlobalJobManager();
         jobs.submitJob(instance);
         AbstractTreeComputationInstance.FinalResult finalResult = instance.takeResult();
