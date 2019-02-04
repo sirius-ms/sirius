@@ -31,10 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Ms2ExperimentValidator;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.*;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighIntensityMerger;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
@@ -93,8 +90,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private List<Ms2ExperimentValidator> inputValidators;
     private Warning validatorWarning;
     private boolean repairInput;
-    private NormalizationType normalizationType;
-    private PeakMerger peakMerger;
     private DecomposerCache decomposers;
     private List<DecompositionScorer<?>> decompositionScorers;
     private List<DecompositionScorer<?>> rootScorers;
@@ -102,8 +97,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private List<PeakPairScorer> peakPairScorers;
     private List<PeakScorer> fragmentPeakScorers;
     private GraphBuilder graphBuilder;
-    private List<Preprocessor> preprocessors;
-    private List<PostProcessor> postProcessors;
     private TreeBuilder treeBuilder;
     private GraphReduction reduction;
     private IsotopePatternInMs2Scorer isoInMs2Scorer;
@@ -174,7 +167,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         } else if (whiteset != null && !whiteset.getFormulas().isEmpty()) {
             final Collection<PrecursorIonType> ionTypes;
             if (experiment.getPrecursorIonType().isIonizationUnknown())
-                ionTypes = experiment.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
+                ionTypes = input.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
             else ionTypes = Arrays.asList(experiment.getPrecursorIonType());
             decomps.addAll(whiteset.resolve(parentPeak.getMass(), parentDeviation, ionTypes));
             pmds = new ArrayList<>();
@@ -253,7 +246,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             }
         }
         input.setAnnotation(DecompositionList.class, decompositionList.get(parentPeak));
-        return postProcess(PostProcessor.Stage.AFTER_DECOMPOSING, input);
+        return input;
     }
 
     private void getDecomposersFor(List<MolecularFormula> pmds, FormulaConstraints constraint, List<MassToFormulaDecomposer> decomposers, List<FormulaConstraints> constraintList) {
@@ -395,8 +388,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             throw new IllegalArgumentException("No field 'FragmentationPatternAnalysis' in profile");
         final FragmentationPatternAnalysis analyzer = (FragmentationPatternAnalysis) helper.unwrap(document,
                 document.getFromDictionary(dict, "FragmentationPatternAnalysis"));
-        analyzer.initialize();
-
         return analyzer;
     }
 
@@ -442,51 +433,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.setFragmentPeakScorers(peakScorers);
         analysis.setPeakPairScorers(peakPairScorers);
 
-        analysis.setPeakMerger(new HighIntensityMerger(0.01d));
-        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.005d));
-        analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
-
-        analysis.initialize();
-
         return analysis;
-    }
-
-    private void initialize() {
-        for (Object o : this.inputValidators) {
-            initialize(o);
-        }
-        initialize(this.peakMerger);
-        for (Object o : this.decompositionScorers) {
-            initialize(o);
-        }
-        for (Object o : this.rootScorers) {
-            initialize(o);
-        }
-        for (Object o : this.lossScorers) {
-            initialize(o);
-        }
-        for (Object o : this.peakPairScorers) {
-            initialize(o);
-        }
-        for (Object o : this.fragmentPeakScorers) {
-            initialize(o);
-        }
-        initialize(graphBuilder);
-        for (Object o : this.preprocessors) {
-            initialize(o);
-        }
-        for (Object o : this.postProcessors) {
-            initialize(o);
-        }
-        //initialize(treeBuilder);
-        initialize(reduction);
-        initialize(isoInMs2Scorer);
-    }
-    private void initialize(Object o)  {
-        if (o==null) return;
-        if (o instanceof Initializable) {
-            ((Initializable)o).initialize(this);
-        }
     }
 
 
@@ -536,12 +483,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     public void setInitial() {
         this.inputValidators = new ArrayList<>();
         this.validatorWarning = new Warning.Noop();
-        this.normalizationType = NormalizationType.GLOBAL;
-        this.peakMerger = new HighIntensityMerger();
         this.repairInput = true;
         this.decompositionScorers = new ArrayList<>();
-        this.preprocessors = new ArrayList<>();
-        this.postProcessors = new ArrayList<>();
         this.rootScorers = new ArrayList<>();
         this.peakPairScorers = new ArrayList<>();
         this.fragmentPeakScorers = new ArrayList<>();
@@ -1106,15 +1049,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      */
 
 
-    ProcessedInput postProcess(PostProcessor.Stage stage, ProcessedInput input) {
-        for (PostProcessor proc : postProcessors) {
-            if (proc.getStage() == stage) {
-                input = proc.process(input);
-            }
-        }
-        return input;
-    }
-
     /**
      * is called immediately after computing the tree
      */
@@ -1189,22 +1123,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.repairInput = repairInput;
     }
 
-    public NormalizationType getNormalizationType() {
-        return normalizationType;
-    }
-
-    public void setNormalizationType(NormalizationType normalizationType) {
-        this.normalizationType = normalizationType;
-    }
-
-    public PeakMerger getPeakMerger() {
-        return peakMerger;
-    }
-
-    public void setPeakMerger(PeakMerger peakMerger) {
-        this.peakMerger = peakMerger;
-    }
-
     public List<DecompositionScorer<?>> getDecompositionScorers() {
         return decompositionScorers;
     }
@@ -1245,22 +1163,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.fragmentPeakScorers = fragmentPeakScorers;
     }
 
-    public List<Preprocessor> getPreprocessors() {
-        return preprocessors;
-    }
-
-    public void setPreprocessors(List<Preprocessor> preprocessors) {
-        this.preprocessors = preprocessors;
-    }
-
-    public List<PostProcessor> getPostProcessors() {
-        return postProcessors;
-    }
-
-    public void setPostProcessors(List<PostProcessor> postProcessors) {
-        this.postProcessors = postProcessors;
-    }
-
     public TreeBuilder getTreeBuilder() {
         if (treeBuilder==null) {
             setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder());
@@ -1283,8 +1185,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         setInitial();
-        fillList(preprocessors, helper, document, dictionary, "preProcessing");
-        fillList(postProcessors, helper, document, dictionary, "postProcessing");
         fillList(rootScorers, helper, document, dictionary, "rootScorers");
         fillList(decompositionScorers, helper, document, dictionary, "fragmentScorers");
         fillList(fragmentPeakScorers, helper, document, dictionary, "peakScorers");
@@ -1293,7 +1193,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         if (document.hasKeyInDictionary(dictionary, "isotopesInMs2")) {
             this.isoInMs2Scorer = (IsotopePatternInMs2Scorer) helper.unwrap(document, document.getFromDictionary(dictionary,"isotopesInMs2"));
         }
-        peakMerger = (PeakMerger) helper.unwrap(document, document.getFromDictionary(dictionary, "merge"));
     }
 
     private <T, G, D, L> void fillList(List<T> list, ParameterHelper helper, DataDocument<G, D, L> document, D dictionary, String keyName) {
@@ -1308,11 +1207,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         L list = document.newList();
-        for (Preprocessor p : preprocessors) document.addToList(list, helper.wrap(document, p));
-        document.addListToDictionary(dictionary, "preProcessing", list);
-        list = document.newList();
-        for (PostProcessor p : postProcessors) document.addToList(list, helper.wrap(document, p));
-        document.addListToDictionary(dictionary, "postProcessing", list);
         list = document.newList();
         for (DecompositionScorer s : rootScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "rootScorers", list);
@@ -1329,6 +1223,5 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (LossScorer s : lossScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "lossScorers", list);
         document.addToDictionary(dictionary, "isotopesInMs2", helper.wrap(document, isoInMs2Scorer));
-        document.addToDictionary(dictionary, "merge", helper.wrap(document, peakMerger));
     }
 }

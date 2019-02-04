@@ -687,8 +687,8 @@ public class Spectrums {
                 if (i == j) continue;
                 if (removedIT.equals(lighterType) && addedIT.equals(heavierType))
                     continue; //probably just +1 isotope peak
-                double diffAdductMass = addedIT.addIonAndAdduct(removedIT.subtractIonAndAdduct(ionMass));
-                int idx = Spectrums.binarySearch(spectrum, diffAdductMass, deviation);
+                double diffAdductMass = addedIT.getIonization().getMass() + addedIT.getModificationMass() - (removedIT.getModificationMass() + removedIT.getIonization().getMass());
+                int idx = Spectrums.binarySearch(spectrum, ionMass + diffAdductMass, deviation);
                 if (idx < 0) continue; // no corresponding mass found;
                 Set<PrecursorIonType> addedList = adductDiffs.get(removedIT);
                 if (addedList == null) {

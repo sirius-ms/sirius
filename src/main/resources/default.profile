@@ -23,10 +23,10 @@ MS2MassDeviation.standardMassDeviation =10.0 ppm
 MedianNoiseIntensity =0.015
 
 # number of suboptimal results to keep
-NumberOfCandidates = 5
+NumberOfCandidates = 10
 
 # additional to NumberOfCandidates, keep for each ion mode the top k suboptimal results
-NumberOfCandidatesPerIon = 0
+NumberOfCandidatesPerIon = 1
 
 #
 PossibleAdductSwitches =[M+Na]+:{[M+H]+}

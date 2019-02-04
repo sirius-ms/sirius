@@ -93,13 +93,19 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
      */
     @Provides(PossibleAdducts.class)
     public void adductDetection(ProcessedInput pinput) {
+        // if input file contains an adduct annotation, disable adduct detection
+        if (pinput.getAnnotation(PossibleAdducts.class)!=null) return;
+        if (pinput.getExperimentInformation().getAnnotation(PossibleAdducts.class)!=null) {
+            pinput.setAnnotation(PossibleAdducts.class, pinput.getExperimentInformation().getAnnotation(PossibleAdducts.class));
+            return;
+        }
         final int charge = pinput.getExperimentInformation().getPrecursorIonType().getCharge();
         final AdductSettings settings = pinput.getAnnotationOrDefault(AdductSettings.class);
         final PossibleAdducts ionModes = ionModeDetection.detect(pinput, settings.getDetectable(charge));
 
         final HashSet<PrecursorIonType> set = new HashSet<>(settings.getEnforced(charge));
 
-        if (ionModes==null) set.addAll(settings.getFallback(charge));
+        if (ionModes.isEmpty()) set.addAll(settings.getFallback(charge));
         else set.addAll(ionModes.getAdducts());
         pinput.setAnnotation(PossibleAdducts.class, new PossibleAdducts(set));
     }

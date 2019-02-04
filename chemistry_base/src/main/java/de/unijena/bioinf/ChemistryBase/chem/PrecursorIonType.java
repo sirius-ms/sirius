@@ -246,6 +246,9 @@ public class PrecursorIonType implements TreeAnnotation {
         return ionization.subtractFromMass(mz - adduct.getMass());
     }
 
+    /*
+    TODO: in-source is not contained here. is this correct? CHECK!
+     */
     public double addIonAndAdduct(double mz) {
         return ionization.addToMass(mz + adduct.getMass());
     }
