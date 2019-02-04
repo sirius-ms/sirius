@@ -22,11 +22,13 @@ import com.google.gson.*;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.data.DataSource;
 import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.descriptor.Descriptor;
 import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
@@ -159,8 +161,8 @@ public class FTJsonReader implements Parser<FTree> {
             final JsonObject treeAnnotations = json.get("annotations").getAsJsonObject();
             final String[] keywords = getKeyArray(treeAnnotations);
             final Descriptor[] descriptors = registry.getByKeywords(FTree.class, keywords);
-            for (Descriptor<Object> descriptor : descriptors) {
-                final Object annotation = descriptor.read(JSONdoc, treeAnnotations);
+            for (Descriptor<DataAnnotation> descriptor : descriptors) {
+                final DataAnnotation annotation = descriptor.read(JSONdoc, treeAnnotations);
                 if (annotation != null) {
                     tree.setAnnotation(descriptor.getAnnotationClass(), annotation);
                 }
@@ -175,10 +177,10 @@ public class FTJsonReader implements Parser<FTree> {
 
             final String[] keywords = getKeyArray(jsonfragment);
             final Descriptor[] descriptors = registry.getByKeywords(Fragment.class, keywords);
-            for (Descriptor<Object> descriptor : descriptors) {
-                final Object annotation = descriptor.read(JSONdoc, jsonfragment);
+            for (Descriptor<DataAnnotation> descriptor : descriptors) {
+                final DataAnnotation annotation = descriptor.read(JSONdoc, jsonfragment);
                 if (annotation != null) {
-                    FragmentAnnotation<Object> fano = tree.getOrCreateFragmentAnnotation(descriptor.getAnnotationClass());
+                    FragmentAnnotation<DataAnnotation> fano = tree.getOrCreateFragmentAnnotation(descriptor.getAnnotationClass());
                     fano.set(f, annotation);
                 }
             }
@@ -189,16 +191,16 @@ public class FTJsonReader implements Parser<FTree> {
             final JsonObject jsonloss = incomingLossMap.get(fragmentByIdMap.get(treeFragmentIdToIdMap.get(l.getTarget().getVertexId())));
             final String[] keywords = getKeyArray(jsonloss);
             final Descriptor[] descriptors = registry.getByKeywords(Loss.class, keywords);
-            for (Descriptor<Object> descriptor : descriptors) {
-                final Object annotation = descriptor.read(JSONdoc, jsonloss);
+            for (Descriptor<DataAnnotation> descriptor : descriptors) {
+                final DataAnnotation annotation = descriptor.read(JSONdoc, jsonloss);
                 if (annotation != null) {
-                    LossAnnotation<Object> lano = tree.getOrCreateLossAnnotation(descriptor.getAnnotationClass());
+                    LossAnnotation<DataAnnotation> lano = tree.getOrCreateLossAnnotation(descriptor.getAnnotationClass());
                     lano.set(l, annotation);
                 }
             }
         }
 
-        if (source != null) tree.setAnnotation(URL.class, source);
+        if (source != null) tree.setAnnotation(DataSource.class, new DataSource(source));
         return tree;
     }
 

@@ -21,11 +21,13 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
+
 /**
  * @author Martin Engler
  *
  */
-public class Peak implements Comparable<Peak>, Cloneable {
+public class Peak implements Comparable<Peak>, Cloneable, DataAnnotation {
 	
 	protected static final double DELTA = 1e-8;
 	

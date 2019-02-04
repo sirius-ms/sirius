@@ -1,7 +1,9 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
-public class ZodiacScore {
-    private double probability;
+import de.unijena.bioinf.ms.annotations.TreeAnnotation;
+
+public class ZodiacScore implements TreeAnnotation {
+    private final double probability;
 
     public ZodiacScore(double probability) {
         this.probability = probability;

@@ -59,7 +59,7 @@ public class LimitNumberOfPeaksFilter implements PostProcessor {
         final Deviation parentPeakDeviation = new Deviation(1, 0.1);
         final double parentMz = input.getExperimentInformation().getIonMass();
         for (int i = limit; i < peaks.length; ++i) {
-            if (parentPeakDeviation.inErrorWindow(parentMz, peaks[i].getMz())) filtered.add(peaks[i]);
+            if (parentPeakDeviation.inErrorWindow(parentMz, peaks[i].getMass())) filtered.add(peaks[i]);
         }
 
         input.setMergedPeaks(filtered);

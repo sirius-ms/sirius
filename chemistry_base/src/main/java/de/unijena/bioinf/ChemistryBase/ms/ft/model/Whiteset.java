@@ -19,9 +19,13 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         return new Whiteset(new HashSet<MolecularFormula>(Arrays.asList(formulas)));
     }
 
+    public static Whiteset of(Collection<MolecularFormula> formulas) {
+        return new Whiteset(new HashSet<MolecularFormula>(formulas));
+    }
+
     protected final Set<MolecularFormula> formulas;
 
-    public Whiteset(Set<MolecularFormula> formulas) {
+    private Whiteset(Set<MolecularFormula> formulas) {
         this.formulas = formulas;
     }
 
@@ -48,4 +52,9 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         return Arrays.asList(decompositionSet.toArray(new Decomposition[decompositionSet.size()]));
     }
 
+    public Whiteset intersection(MolecularFormula[] formulas) {
+        final Set<MolecularFormula> intersection = new HashSet<>(this.formulas);
+        intersection.retainAll(Arrays.asList(formulas));
+        return new Whiteset(intersection);
+    }
 }

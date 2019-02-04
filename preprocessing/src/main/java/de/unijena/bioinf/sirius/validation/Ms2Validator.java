@@ -42,7 +42,7 @@ public class Ms2Validator extends Ms1Validator {
 
     private static Pattern P_LAYER = Pattern.compile("/p([+-])(\\d+)");
     private void checkInchi(Warning warn, boolean repair, MutableMs2Experiment input) {
-        final InChI inchi = input.getAnnotation(InChI.class,null);
+        final InChI inchi = input.getAnnotation(InChI.class);
         if (inchi==null || inchi.in3D == null) return;
         final MolecularFormula formula = inchi.extractFormula();
         if (input.getMolecularFormula() != null && !input.getMolecularFormula().equals(formula)) {

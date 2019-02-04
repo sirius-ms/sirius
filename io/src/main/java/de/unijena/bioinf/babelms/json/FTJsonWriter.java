@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.babelms.descriptor.Descriptor;
 import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -35,7 +36,6 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.Map;
 
 public class FTJsonWriter {
 
@@ -77,10 +77,10 @@ public class FTJsonWriter {
         final JsonObject ano = new JsonObject();
         j.add("annotations", ano);
 
-        for (Map.Entry<Class<Object>, Object> anot : tree.getAnnotations().entrySet()) {
-            Descriptor<Object> d = registry.get(FTree.class, anot.getKey());
+        for (Class<DataAnnotation> anot : tree.annotations()) {
+            Descriptor<DataAnnotation> d = registry.get(FTree.class, anot);
             if (d != null) {
-                d.write(JSON, ano, anot.getValue());
+                d.write(JSON, ano, tree.getAnnotation(anot));
             } else {
                 hardCodedAnnotations(JSON, ano, tree);
             }
@@ -89,15 +89,15 @@ public class FTJsonWriter {
         final JsonArray fragmentList = new JsonArray();
         j.add("fragments", fragmentList);
 
-        final List<FragmentAnnotation<Object>> fragmentAnnotations = tree.getFragmentAnnotations();
+        final List<FragmentAnnotation<DataAnnotation>> fragmentAnnotations = tree.getFragmentAnnotations();
         for (Fragment f : tree.getFragments()) {
             final JsonObject fragment = new JsonObject();
             fragmentList.add(fragment);
             fragment.addProperty("id", f.getVertexId());
             fragment.addProperty("molecularFormula", f.getFormula().toString());
-            for (FragmentAnnotation<Object> fano : fragmentAnnotations) {
+            for (FragmentAnnotation<DataAnnotation> fano : fragmentAnnotations) {
                 if (fano.get(f)!=null) {
-                    Descriptor<Object> d = registry.get(Fragment.class, fano.getAnnotationType());
+                    Descriptor<DataAnnotation> d = registry.get(Fragment.class, fano.getAnnotationType());
                     if (d != null)
                         d.write(JSON, fragment, fano.get(f));
                 }
@@ -107,16 +107,16 @@ public class FTJsonWriter {
         final JsonArray lossList = new JsonArray();
         j.add("losses", lossList);
 
-        final List<LossAnnotation<Object>> lossAnnotations = tree.getLossAnnotations();
+        final List<LossAnnotation<DataAnnotation>> lossAnnotations = tree.getLossAnnotations();
         for (Loss l : tree.losses()) {
             final JsonObject loss = new JsonObject();
             lossList.add(loss);
             loss.addProperty("source", l.getSource().getVertexId());
             loss.addProperty("target", l.getTarget().getVertexId());
             loss.addProperty("molecularFormula", l.getFormula().toString());
-            for (LossAnnotation<Object> lano : lossAnnotations) {
+            for (LossAnnotation<DataAnnotation> lano : lossAnnotations) {
                 if (lano.get(l)!=null) {
-                    Descriptor<Object> d = registry.get(Loss.class, lano.getAnnotationType());
+                    Descriptor<DataAnnotation> d = registry.get(Loss.class, lano.getAnnotationType());
                     if (d != null)
                         d.write(JSON, loss, lano.get(l));
                 }

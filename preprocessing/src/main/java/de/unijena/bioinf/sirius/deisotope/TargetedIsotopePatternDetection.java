@@ -38,7 +38,7 @@ public class TargetedIsotopePatternDetection implements IsotopePatternDetection 
         final ArrayList<SimpleSpectrum> patterns = new ArrayList<SimpleSpectrum>();
         MS1MassDeviation dev = processedInput.getAnnotationOrDefault(MS1MassDeviation.class);
         final int index = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, experiment.getIonMass(), dev.allowedMassDeviation);
-        if (index < 0) return null;
+        if (index < 0) return Spectrums.empty();
         final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
         spec.addPeak(massOrderedSpectrum.getPeakAt(index));
         // add additional peaks

@@ -22,7 +22,7 @@ public class MS2MassDeviation extends MassDeviation {
     }
 
     @DefaultInstanceProvider
-    public static MS2MassDeviation newInstance(@DefaultProperty Deviation allowedMassDeviation, @DefaultProperty Deviation standardMassDeviation) {
+    public static MS2MassDeviation newInstance(@DefaultProperty(propertyKey = "allowedMassDeviation") Deviation allowedMassDeviation, @DefaultProperty(propertyKey = "standardMassDeviation" ) Deviation standardMassDeviation) {
         return new MS2MassDeviation(allowedMassDeviation, standardMassDeviation, Deviation.NULL_DEVIATION);
     }
 

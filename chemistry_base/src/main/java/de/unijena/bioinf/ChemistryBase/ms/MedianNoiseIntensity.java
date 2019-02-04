@@ -2,7 +2,6 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 
 @DefaultProperty
 public class MedianNoiseIntensity implements Ms2ExperimentAnnotation {
@@ -12,7 +11,7 @@ public class MedianNoiseIntensity implements Ms2ExperimentAnnotation {
         this.value = value;
     }
 
-    private MedianNoiseIntensity() {
+    MedianNoiseIntensity() {
         this(Double.NaN);
     }
 }

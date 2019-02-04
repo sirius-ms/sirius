@@ -58,6 +58,15 @@ public class ChemicalAlphabet implements Iterable<Element> {
         this.maxLen = alpha.maxLen;
     }
 
+    public static ChemicalAlphabet fromString(String value) {
+        if (value.indexOf(',')>0) {
+            final PeriodicTable T = PeriodicTable.getInstance();
+            return new ChemicalAlphabet(Arrays.stream(value.split(",")).map(s->T.getByName(s)).toArray(Element[]::new));
+        } else {
+            return new ChemicalAlphabet(MolecularFormula.parse(value).elementArray());
+        }
+    }
+
     /**
      * Construct a chemical alphabet with the given selection and elements.
      * Remark: The selection is not important for the function of this class. But you can improve the performance

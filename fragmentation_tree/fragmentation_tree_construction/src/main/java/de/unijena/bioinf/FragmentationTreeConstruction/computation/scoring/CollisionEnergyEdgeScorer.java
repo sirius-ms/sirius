@@ -216,7 +216,7 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
                 if (minEnergy[fragment]==maxEnergy[fragment] && minEnergy[fragment]==0) continue;
                 // you don't have to score pairs where the parent is smaller than the fragment, because
                 // we don't allow this in later steps --> so matrix is not symmetric
-                if (parentFragment.getMz() <= peaks.get(fragment).getMz())  {
+                if (parentFragment.getMass() <= peaks.get(fragment).getMass())  {
                     scores[parent][fragment] += Double.NEGATIVE_INFINITY;
                     assert false;
                 }
