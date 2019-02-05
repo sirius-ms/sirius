@@ -201,6 +201,7 @@ public class FTJsonReader implements Parser<FTree> {
         }
 
         if (source != null) tree.setAnnotation(DataSource.class, new DataSource(source));
+        tree.normalizeStructure();
         return tree;
     }
 

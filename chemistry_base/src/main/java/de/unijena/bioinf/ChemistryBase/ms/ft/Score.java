@@ -18,6 +18,7 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ms.annotations.TreeAnnotation;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -61,7 +62,7 @@ public final class Score implements TreeAnnotation  {
         private String[] replace;
         private int pos;
 
-        private ScoreAdder(String name) {
+        private ScoreAdder(@NotNull  String name) {
             this.name = name;
         }
 
@@ -77,6 +78,7 @@ public final class Score implements TreeAnnotation  {
                 }
                 header = s.names;
                 replace = Arrays.copyOf(header, header.length+1);
+                replace[header.length] = name;
                 pos = header.length;
             }
             final Score copy = new Score(replace, Arrays.copyOf(s.values,replace.length));
@@ -122,6 +124,8 @@ public final class Score implements TreeAnnotation  {
         public Score done() {
             final double[] scores = new double[map.size()];
             for (int i=0; i < names.length; ++i) {
+                if (names[i]==null)
+                    throw new NullPointerException("score name is null");
                 scores[i] = map.get(names[i]);
             }
             return new Score(names, scores);
@@ -136,6 +140,11 @@ public final class Score implements TreeAnnotation  {
     private final double[] values;
 
     private final static Score NONE = new Score(new String[0], new double[0]);
+
+    public Score() {
+        this.names = new String[0];
+        this.values = new double[0];
+    }
 
     public static Score none() {
         return NONE;

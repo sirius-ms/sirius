@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -73,15 +74,13 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
     private MolecularFormula[] filterFormulasByIsotopeScore(ExtractedIsotopePattern pattern) {
         int isoPeaks = 0;
         double maxScore = Double.NEGATIVE_INFINITY;
-        double scoreThresholdForFiltering = 0d;
-        boolean doFilter = false;
+        double scoreThresholdForFiltering = Double.NEGATIVE_INFINITY;
         for (IsotopePattern pat : pattern.getExplanations().values()) {
             maxScore = Math.max(pat.getScore(), maxScore);
             final int numberOfIsoPeaks = pat.getPattern().size() - 1;
             if (pat.getScore() >= 2 * numberOfIsoPeaks) {
                 isoPeaks = Math.max(pat.getPattern().size(), isoPeaks);
                 scoreThresholdForFiltering = isoPeaks * 1d;
-                doFilter = true;
             }
         }
         final double SCORE_THRESHOLD = scoreThresholdForFiltering;
@@ -89,15 +88,18 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
     }
 
     @Called("MS-Isotopes")
-    protected static class Ms1IsotopePatternScorer implements DecompositionScorer<IsotopePatternInMs1Plugin.Prepared> {
+    public static class Ms1IsotopePatternScorer implements DecompositionScorer<IsotopePatternInMs1Plugin.Prepared> {
 
         @Override
         public IsotopePatternInMs1Plugin.Prepared prepare(ProcessedInput input) {
-            return new IsotopePatternInMs1Plugin.Prepared(input.getAnnotationOrDefault(IsotopeSettings.class), input.getAnnotation(ExtractedIsotopePattern.class, null));
+            return new IsotopePatternInMs1Plugin.Prepared(input.getAnnotationOrDefault(IsotopeSettings.class), input.getAnnotation(ExtractedIsotopePattern.class, null), input.getExperimentInformation().getPrecursorIonType());
         }
 
         @Override
         public double score(MolecularFormula formula, Ionization ion, ProcessedPeak peak, ProcessedInput input, IsotopePatternInMs1Plugin.Prepared precomputed) {
+            // the tree is always neutralized!
+            if (!precomputed.ionType.isIonizationUnknown())
+                formula = precomputed.ionType.precursorIonToNeutralMolecule(formula);
             if (precomputed.pattern!=null && precomputed.pattern.getExplanations().get(formula)!=null) {
                 return precomputed.weight.getMultiplier() * precomputed.pattern.getExplanations().get(formula).getScore();
             } else return 0d;
@@ -118,10 +120,12 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
     protected static class Prepared {
         private final IsotopeSettings weight;
         private final ExtractedIsotopePattern pattern;
+        private final PrecursorIonType ionType;
 
-        public Prepared(IsotopeSettings weight, ExtractedIsotopePattern pattern) {
+        public Prepared(IsotopeSettings weight, ExtractedIsotopePattern pattern, PrecursorIonType ionType) {
             this.weight = weight;
             this.pattern = pattern;
+            this.ionType = ionType;
         }
     }
 

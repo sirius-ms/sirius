@@ -9,7 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration2;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.treebuilder.ExtendedCriticalPathHeuristicTreeBuilder;
@@ -134,7 +134,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         final boolean useHeuristic = pinput.getParentPeak().getMass() > 300;
         final ExactResult[] results = estimateTreeSizeAndRecalibration(decompositions, useHeuristic);
         final List<FTree> trees = new ArrayList<>(results.length);
-        for (ExactResult r : results) trees.add(r.tree);
+        for (ExactResult r : results) trees.add(resolve(r.tree));
         //trees.forEach(this::recalculateScore);
         return new FinalResult(trees);
     }
@@ -258,6 +258,13 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         }
     }
 
+    protected FTree resolve(FTree tree) {
+        if (pinput.getExperimentInformation().getPrecursorIonType().isIonizationUnknown())
+            return tree;
+        else
+            return new IonTreeUtils().treeToNeutralTree(tree, pinput.getExperimentInformation().getPrecursorIonType());
+    }
+
     @NotNull
     private ExtendedCriticalPathHeuristicTreeBuilder getHeuristicTreeBuilder() {
         return new ExtendedCriticalPathHeuristicTreeBuilder();
@@ -362,10 +369,10 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
     }
 
     protected ExactResult recalibrate(ProcessedInput input, TreeBuilder tb, Decomposition decomp, FTree tree, FGraph origGraphOrNull) {
-        final SpectralRecalibration rec = new HypothesenDrivenRecalibration2().collectPeaksFromMs2(input, tree);
+        final SpectralRecalibration rec = new HypothesenDrivenRecalibration().collectPeaksFromMs2(input, tree);
         final ProcessedInput pin = this.inputCopyForRecalibration.clone();
         pin.setAnnotation(SpectralRecalibration.class, rec);
-        pin.setAnnotation(Whiteset.class, Whiteset.of(tree.getRoot().getFormula())); // TODO: check if this works for adducts
+        pin.setAnnotation(Whiteset.class, Whiteset.of(input.getExperimentInformation().getPrecursorIonType().measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula()))); // TODO: check if this works for adducts
         // we have to completely rescore the input...
         //final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));
         //pin.setAnnotation(DecompositionList.class, l);
@@ -374,7 +381,6 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         FGraph graph = analyzer.buildGraph(pin, decomp);
         graph.addAnnotation(SpectralRecalibration.class, rec);
         final FTree recal = tb.computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).solve(pin, graph).tree;
-        System.out.println(recal.getRoot().getFormula() + " FROM " + decomp.toString());
         final FTree finalTree;
         if (recal.getTreeWeight() >= tree.getTreeWeight()) {
             finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(recal).withMinimalScore(recal.getTreeWeight() - 1e-3).solve(pin, graph).tree;

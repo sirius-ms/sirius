@@ -55,7 +55,7 @@ public class FTDotReader implements Parser<FTree> {
 
         Peak peak = rootSet.peak;
         CollisionEnergy[] energy = rootSet.collisionEnergies;
-        peakAno.set(tree.getRoot(), new AnnotatedPeak(rootSet.formula, peak.getMass(), 0d, peak.getIntensity(), rootSet.ion, new Peak[]{peak}, rootSet.collisionEnergies));
+        peakAno.set(tree.getRoot(), new AnnotatedPeak(rootSet.formula, peak.getMass(), 0d, peak.getIntensity(), rootSet.ion, new Peak[]{peak}, rootSet.collisionEnergies, null));
 
 
         new PreOrderTraversal<Vertex>(g.getRoot(), g.getTreeAdapter()).call(new PreOrderTraversal.Call<Vertex, Fragment>() {
@@ -64,7 +64,7 @@ public class FTDotReader implements Parser<FTree> {
                 if (parentResult == null) return tree.getRoot();
                 final FragmentPropertySet set = new FragmentPropertySet(node.getProperties());
                 final Fragment f = tree.addFragment(parentResult, set.formula, set.ion);
-                peakAno.set(f, new AnnotatedPeak(set.formula, set.peak.getMass(), 0d, set.peak.getIntensity(), set.ion, new Peak[]{set.peak}, set.collisionEnergies));
+                peakAno.set(f, new AnnotatedPeak(set.formula, set.peak.getMass(), 0d, set.peak.getIntensity(), set.ion, new Peak[]{set.peak}, set.collisionEnergies, null));
                 return f;
             }
         });

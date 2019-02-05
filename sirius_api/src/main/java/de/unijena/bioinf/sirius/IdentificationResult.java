@@ -21,9 +21,10 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.*;
-import de.unijena.bioinf.FragmentationTreeConstruction.inspection.ScoringHelper;
-import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
+import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
+import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -147,11 +148,6 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
 
     public MolecularFormula getMolecularFormula() {
         return formula;
-    }
-
-    @Deprecated
-    public RecalibrationFunction getRecalibrationFunction() {
-        return tree.getAnnotation(SpectralRecalibration.class, SpectralRecalibration::none).toPolynomial();
     }
 
     public double getScore() {

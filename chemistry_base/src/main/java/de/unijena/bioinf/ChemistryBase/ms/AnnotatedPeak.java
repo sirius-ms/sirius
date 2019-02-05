@@ -63,13 +63,18 @@ public final class AnnotatedPeak implements TreeAnnotation  {
      */
     private final CollisionEnergy[] collisionEnergies;
 
-    private final static AnnotatedPeak NO_PEAK = new AnnotatedPeak(MolecularFormula.emptyFormula(), Double.NaN, Double.NaN, 0d, null, new Peak[0], new CollisionEnergy[0]);
+    /**
+     * The index of the MS/MS spectrum this peak is derived from
+     */
+    private final int[] spectrumIds;
+
+    private final static AnnotatedPeak NO_PEAK = new AnnotatedPeak(MolecularFormula.emptyFormula(), Double.NaN, Double.NaN, 0d, null, new Peak[0], new CollisionEnergy[0], new int[0]);
 
     public static AnnotatedPeak none() {
         return NO_PEAK;
     }
 
-    public AnnotatedPeak(MolecularFormula getFormula, double getMass, double recalibratedMass, double relativeIntensity, Ionization ionization, Peak[] originalPeaks, CollisionEnergy[] collisionEnergies) {
+    public AnnotatedPeak(MolecularFormula getFormula, double getMass, double recalibratedMass, double relativeIntensity, Ionization ionization, Peak[] originalPeaks, CollisionEnergy[] collisionEnergies, int[] spectrumIds) {
         this.molecularFormula = getFormula;
         this.mass = getMass;
         this.recalibratedMass = recalibratedMass;
@@ -77,6 +82,11 @@ public final class AnnotatedPeak implements TreeAnnotation  {
         this.ionization = ionization;
         this.originalPeaks = originalPeaks;
         this.collisionEnergies = collisionEnergies;
+        this.spectrumIds = spectrumIds;
+    }
+
+    public int[] getSpectrumIds() {
+        return spectrumIds;
     }
 
     public MolecularFormula getMolecularFormula() {
@@ -108,7 +118,7 @@ public final class AnnotatedPeak implements TreeAnnotation  {
     }
 
     public AnnotatedPeak withFormula(MolecularFormula newFormula) {
-        return new AnnotatedPeak(newFormula, mass, recalibratedMass, relativeIntensity, ionization, originalPeaks, collisionEnergies);
+        return new AnnotatedPeak(newFormula, mass, recalibratedMass, relativeIntensity, ionization, originalPeaks, collisionEnergies, spectrumIds);
     }
 
     /**
@@ -131,7 +141,7 @@ public final class AnnotatedPeak implements TreeAnnotation  {
     }
 
     public AnnotatedPeak withIonization(Ionization ion) {
-        return new AnnotatedPeak(molecularFormula, mass, recalibratedMass, relativeIntensity, ion, originalPeaks, collisionEnergies);
+        return new AnnotatedPeak(molecularFormula, mass, recalibratedMass, relativeIntensity, ion, originalPeaks, collisionEnergies, spectrumIds);
     }
 
     public double getMaximalIntensity() {
