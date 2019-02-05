@@ -3,6 +3,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibratio
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.RecalibrationFunction;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -11,6 +12,8 @@ import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.analysis.function.Identity;
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 /*
 Zwei Strategien:
@@ -21,16 +24,16 @@ Zwei Strategien:
     zuerst geprüft wie viele Referenz-Peaks wir pro Spektrum haben. Wenn wir in jedem Spektrum
     mindestens
  */
-public class HypothesenDrivenRecalibration2 {
+public class HypothesenDrivenRecalibration {
 
 
     protected AbstractRecalibrationStrategy method;
 
-    public HypothesenDrivenRecalibration2() {
+    public HypothesenDrivenRecalibration() {
         this(new MedianSlope(new Deviation(2, 5e-4),8,0.01));
     }
 
-    public HypothesenDrivenRecalibration2(AbstractRecalibrationStrategy method) {
+    public HypothesenDrivenRecalibration(AbstractRecalibrationStrategy method) {
         this.method = method;
     }
 
@@ -60,14 +63,24 @@ public class HypothesenDrivenRecalibration2 {
             mergedRef.addPeak(mz, peak.getRelativeIntensity());
             merged.addPeak(peak.getMass(), peak.getRelativeIntensity());
         }
-        UnivariateFunction[] recalibrationFunctions = new UnivariateFunction[spectras.length];
+        RecalibrationFunction[] recalibrationFunctions = new RecalibrationFunction[spectras.length];
         for (int i=0; i < spectras.length; ++i) {
             if (refs[i].size() >= method.getMinNumberOfPeaks()) {
-                recalibrationFunctions[i] = method.recalibrate(collected[i], refs[i]);
+                recalibrationFunctions[i] = convertUnivariate(method.recalibrate(collected[i], refs[i]));
             }
         }
         final UnivariateFunction mergedFunc = method.recalibrate(merged, mergedRef);
-        return new SpectralRecalibration(spectras, recalibrationFunctions, mergedFunc);
+        return new SpectralRecalibration(recalibrationFunctions, convertUnivariate(mergedFunc));
+    }
+
+    private RecalibrationFunction convertUnivariate(UnivariateFunction f) {
+        if (f instanceof PolynomialFunction) {
+            return new RecalibrationFunction(((PolynomialFunction) f).getCoefficients());
+        } else if (f instanceof Identity) {
+            return RecalibrationFunction.identity();
+        } else {
+            throw new RuntimeException("Unknown recalibration function: " + f.toString() + " of class " + f.getClass().getSimpleName());
+        }
     }
 
 }

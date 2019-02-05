@@ -2,11 +2,10 @@ package de.unijena.bioinf.babelms.descriptor;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
-import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
+import gnu.trove.list.array.TIntArrayList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +16,9 @@ class DefaultDescriptors {
 
 
     static void addAll(DescriptorRegistry registry) {
-        registry.put(FTree.class, Ionization.class, new IonizationDescriptor());
         registry.put(FTree.class, InChI.class, new InChIDescriptor());
         registry.put(FTree.class, PrecursorIonType.class, new PrecursorIonTypeDescriptor("precursorIonType"));
-        registry.put(FTree.class, RecalibrationFunction.class, new RecalibrationFunctionDescriptor());
+        registry.put(FTree.class, SpectralRecalibration.class, new RecalibrationFunctionDescriptor());
         registry.put(FTree.class, Smiles.class, new SmilesDescriptor());
         //registry.put(FTree.class, TreeStatistics.class, new TreeScoringDescriptor());
         registry.put(Fragment.class, Ms2IsotopePattern.class, new Ms2IsotopePatternDescriptor());
@@ -29,9 +27,11 @@ class DefaultDescriptors {
         registry.put(Fragment.class, AnnotatedPeak.class, new AnnotatedPeakDescriptor());
         registry.put(Fragment.class, Score.class, new ScoreDescriptor());
         registry.put(Fragment.class, Ionization.class, new IonizationDescriptor());
+        registry.put(Fragment.class, ImplicitAdduct.class, new ImplicitAdductDescriptor());
 
         registry.put(Loss.class, Score.class, new ScoreDescriptor());
-        registry.put(Loss.class, InsourceFragmentation.class, new InsourceDescriptor());
+        registry.put(Loss.class, LossType.class, new LossTypeDescriptor());
+        registry.put(Loss.class, ImplicitAdduct.class, new ImplicitAdductDescriptor());
 
         registry.put(FTree.class, IonTreeUtils.Type.class, new IonTypeDescriptor());
 
@@ -65,31 +65,75 @@ class DefaultDescriptors {
         }
     }
 
-    private static class InsourceDescriptor implements Descriptor<InsourceFragmentation> {
+    private static class LossTypeDescriptor implements Descriptor<LossType> {
 
         @Override
         public String[] getKeywords() {
-            return new String[]{"insourceFragmentation"};
+            return new String[]{"insourceFragmentation", "adductLoss"};
         }
 
         @Override
-        public Class<InsourceFragmentation> getAnnotationClass() {
-            return InsourceFragmentation.class;
+        public Class<LossType> getAnnotationClass() {
+            return LossType.class;
         }
 
         @Override
-        public <G, D, L> InsourceFragmentation read(DataDocument<G, D, L> document, D dictionary) {
-            if (document.hasKeyInDictionary(dictionary, "insourceFragmentation")) return new InsourceFragmentation(true);
-            else return null;
+        public <G, D, L> LossType read(DataDocument<G, D, L> document, D dictionary) {
+            if (document.hasKeyInDictionary(dictionary, "insourceFragmentation")) return LossType.insource();
+            else if (document.hasKeyInDictionary(dictionary, "adductLoss")) {
+                final D ad = document.getDictionaryFromDictionary(dictionary, "adductLoss");
+                final String adduct = document.getStringFromDictionary(ad, "adduct");
+                final String orig = document.getStringFromDictionary(ad, "modifiedMolecularFormula");
+                return LossType.adductLoss(MolecularFormula.parse(adduct), MolecularFormula.parse(orig));
+            } else return LossType.regular();
         }
 
         @Override
-        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, InsourceFragmentation annotation) {
-            if (annotation!=null && annotation.isInsource()) {
-                document.addToDictionary(dictionary, "insourceFragmentation", true);
+        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, LossType annotation) {
+            switch (annotation.getType()) {
+                case REGULAR:
+                    return;
+                case IN_SOURCE:
+                    document.addToDictionary(dictionary, "insourceFragmentation", "yes");
+                    return;
+                case ADDUCT_LOSS:
+                    final LossType.AdductLossInformation ad = annotation.getAdductLossInformation();
+                    final D dic = document.newDictionary();
+                    document.addToDictionary(dic, "adduct", ad.getAdductFormula().toString());
+                    document.addToDictionary(dic,"modifiedMolecularFormula", ad.getOriginalFormula().toString());
+                    document.addDictionaryToDictionary(dictionary, "adductLoss", dic);
             }
         }
     }
+
+
+    private static class ImplicitAdductDescriptor implements Descriptor<ImplicitAdduct> {
+
+        @Override
+        public String[] getKeywords() {
+            return new String[]{"implicitAdduct"};
+        }
+
+        @Override
+        public Class<ImplicitAdduct> getAnnotationClass() {
+            return ImplicitAdduct.class;
+        }
+
+        @Override
+        public <G, D, L> ImplicitAdduct read(DataDocument<G, D, L> document, D dictionary) {
+            if (document.hasKeyInDictionary(dictionary,"implicitAdduct")) {
+                return new ImplicitAdduct(MolecularFormula.parse(document.getStringFromDictionary(dictionary, "implicitAdduct")));
+            } else return ImplicitAdduct.none();
+        }
+
+        @Override
+        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, ImplicitAdduct annotation) {
+            if (annotation.hasImplicitAdduct()) {
+                document.addToDictionary(dictionary, "implicitAdduct", annotation.getAdductFormula().toString());
+            }
+        }
+    }
+
 
     private static class InChIDescriptor implements Descriptor<InChI> {
 
@@ -343,7 +387,7 @@ class DefaultDescriptors {
     }
     */
 
-    private static class RecalibrationFunctionDescriptor implements Descriptor<RecalibrationFunction> {
+    private static class RecalibrationFunctionDescriptor implements Descriptor<SpectralRecalibration> {
 
         @Override
         public String[] getKeywords() {
@@ -351,18 +395,49 @@ class DefaultDescriptors {
         }
 
         @Override
-        public Class<RecalibrationFunction> getAnnotationClass() {
-            return RecalibrationFunction.class;
+        public Class<SpectralRecalibration> getAnnotationClass() {
+            return SpectralRecalibration.class;
         }
 
         @Override
-        public <G, D, L> RecalibrationFunction read(DataDocument<G, D, L> document, D dictionary) {
-            return RecalibrationFunction.fromString(document.getStringFromDictionary(dictionary, "recalibration"));
+        public <G, D, L> SpectralRecalibration read(DataDocument<G, D, L> document, D dictionary) {
+            if (!document.hasKeyInDictionary(dictionary, "recalibration")) return SpectralRecalibration.none();
+            final D rec = document.getDictionaryFromDictionary(dictionary, "recalibration");
+            final RecalibrationFunction merged;
+            if (!document.hasKeyInDictionary(rec,"merged")) merged = RecalibrationFunction.identity();
+            else merged = RecalibrationFunction.fromString(document.getStringFromDictionary(rec, "merged"));
+            final RecalibrationFunction[] separates;
+            if (document.hasKeyInDictionary(rec, "separate")) {
+                final List<RecalibrationFunction> seps = new ArrayList<>();
+                final L list = document.getListFromDictionary(rec, "separate");
+                for (int k=0; k < document.sizeOfList(list); ++k) {
+                    final String s = document.getStringFromList(list, k);
+                    if (s.equals("none")) seps.add(null);
+                    else seps.add(RecalibrationFunction.fromString(s));
+                }
+                separates = seps.toArray(new RecalibrationFunction[seps.size()]);
+            } else separates = null;
+            return new SpectralRecalibration(separates, merged);
         }
 
         @Override
-        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, RecalibrationFunction annotation) {
-            document.addToDictionary(dictionary, "recalibration", annotation.toString());
+        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, SpectralRecalibration annotation) {
+
+            final D rec = document.newDictionary();
+            final RecalibrationFunction f = annotation.getMergedRecalibrationFunction();
+            document.addToDictionary(rec, "merged", f.toString());
+
+            final RecalibrationFunction[] singleSpectrumRecalibrationFunctions = annotation.getSingleSpectrumRecalibrationFunctions();
+            if (singleSpectrumRecalibrationFunctions!=null) {
+                final L list = document.newList();
+                for (RecalibrationFunction g : singleSpectrumRecalibrationFunctions) {
+                    if (g==null) document.addToList(list, "none");
+                    else document.addToList(list, g.toString());
+                }
+                document.addListToDictionary(rec, "separate", list);
+            }
+
+            document.addDictionaryToDictionary(dictionary, "recalibration", rec);
         }
     }
 
@@ -465,7 +540,10 @@ class DefaultDescriptors {
                     document.getDoubleFromDictionary(dictionary, "recalibratedMass") : 0d;
             final Ionization ion = PeriodicTable.getInstance().ionByName(document.getStringFromDictionary(dictionary, "ion")).getIonization();
 
+            final ArrayList<CollisionEnergy> energies = new ArrayList<CollisionEnergy>();
+
             final ArrayList<Peak> originalPeaks = new ArrayList<Peak>();
+            final TIntArrayList specIds = new TIntArrayList();
             if (document.hasKeyInDictionary(dictionary, "peaks")) {
                 final L peakList = document.getListFromDictionary(dictionary, "peaks");
                 for (int i=0, n=document.sizeOfList(peakList); i < n; ++i) {
@@ -477,12 +555,21 @@ class DefaultDescriptors {
                         intensity = document.getDoubleFromDictionary(peakData, "intensity");
                     } else intensity = document.getDoubleFromDictionary(peakData, "int");
 
+                    if (document.hasKeyInDictionary(peakData, "ce")) {
+                        energies.add(CollisionEnergy.fromString(document.getStringFromDictionary(peakData, "ce")));
+                    }
+                    if (document.hasKeyInDictionary(peakData, "spectrum")) {
+                        specIds.add((int)document.getIntFromDictionary(peakData, "spectrum"));
+                    }
+
                     originalPeaks.add(new Peak(document.getDoubleFromDictionary(peakData, "mz"), intensity));
                 }
             }
 
-            final ArrayList<CollisionEnergy> energies = new ArrayList<CollisionEnergy>();
+
+            // LEGACY MODE
             if (document.hasKeyInDictionary(dictionary, "collisionEnergies")) {
+                energies.clear();
                 if (document.hasKeyInDictionary(dictionary, "collisionEnergies")) {
                     final L energyList = document.getListFromDictionary(dictionary, "collisionEnergies");
                     for (int i=0, n=document.sizeOfList(energyList); i < n; ++i) {
@@ -492,7 +579,7 @@ class DefaultDescriptors {
                 }
             }
 
-            return new AnnotatedPeak(formula, mass, recalibratedMass, relativeIntensity, ion, originalPeaks.toArray(new Peak[originalPeaks.size()]), energies.toArray(new CollisionEnergy[energies.size()]));
+            return new AnnotatedPeak(formula, mass, recalibratedMass, relativeIntensity, ion, originalPeaks.toArray(new Peak[originalPeaks.size()]), energies.toArray(new CollisionEnergy[energies.size()]),specIds.toArray() );
         }
 
         @Override
@@ -508,21 +595,27 @@ class DefaultDescriptors {
 
             final Peak[] peaks = annotation.getOriginalPeaks();
             final L peaklist = document.newList();
-            for (Peak p : peaks) {
+            for (int k=0; k < peaks.length; ++k) {
                 final D dic = document.newDictionary();
-                document.addToDictionary(dic, "mz", p.getMass());
-                document.addToDictionary(dic, "intensity", p.getIntensity());
+                document.addToDictionary(dic, "mz", peaks[k].getMass());
+                document.addToDictionary(dic, "intensity", peaks[k].getIntensity());
+                if (annotation.getCollisionEnergies()[k]!=null) {
+                    document.addToDictionary(dic, "ce", annotation.getCollisionEnergies()[k].toString());
+                }
+                document.addToDictionary(dic,"spectrum", annotation.getSpectrumIds()[k]);
                 document.addDictionaryToList(peaklist, dic);
             }
             document.addListToDictionary(dictionary, "peaks", peaklist);
-
+/*
             final CollisionEnergy[] energies = annotation.getCollisionEnergies();
             final L energyList = document.newList();
             for (CollisionEnergy e : energies) {
                 document.addToList(energyList, e.toString());
             }
             document.addListToDictionary(dictionary, "collisionEnergies", energyList);
+            */
         }
+
     }
 
     private static class IonTypeDescriptor implements Descriptor<IonTreeUtils.Type> {

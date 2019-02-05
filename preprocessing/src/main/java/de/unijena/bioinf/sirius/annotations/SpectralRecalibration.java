@@ -1,37 +1,61 @@
 package de.unijena.bioinf.sirius.annotations;
 
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.ft.RecalibrationFunction;
+import de.unijena.bioinf.ChemistryBase.ms.RecalibrationFunction;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.sirius.MS2Peak;
 import de.unijena.bioinf.sirius.ProcessedPeak;
-import org.apache.commons.math3.analysis.UnivariateFunction;
-import org.apache.commons.math3.analysis.function.Identity;
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * Recalibration function for MS/MS spectra. Each MS/MS spectrum might have its own separate recalibration function.
+ * The merged spectrum has a recalibration function as well which can be used instead.
+ */
 public class SpectralRecalibration implements DataAnnotation {
 
-    private final static SpectralRecalibration NONE = new SpectralRecalibration(null,null,null);
+    private final static SpectralRecalibration NONE = new SpectralRecalibration(null,null);
 
     public static SpectralRecalibration none() {
         return NONE;
     }
+    @Nullable protected final RecalibrationFunction[] recalibrationFunctions;
+    @NotNull  protected final RecalibrationFunction mergedFunc;
 
-    protected final UnivariateFunction[] recalibrationFunctions;
-    protected final UnivariateFunction mergedFunc;
-
-    public SpectralRecalibration(MutableMs2Spectrum[] originalSpectra, UnivariateFunction[] recalibrationFunctions, UnivariateFunction mergedFunc) {
-        this.recalibrationFunctions = recalibrationFunctions;
-        this.mergedFunc = mergedFunc==null ? new Identity() : mergedFunc;
+    public SpectralRecalibration(RecalibrationFunction[] recalibrationFunctions, RecalibrationFunction mergedFunc) {
+        this.recalibrationFunctions = simplify(recalibrationFunctions, mergedFunc);
+        this.mergedFunc = mergedFunc==null ? RecalibrationFunction.identity() : mergedFunc;
     }
 
-    public UnivariateFunction getRecalibrationFunction() {
+    private static RecalibrationFunction[] simplify(RecalibrationFunction[] recalibrationFunctions, RecalibrationFunction merged) {
+        if (recalibrationFunctions==null) return null;
+        recalibrationFunctions = recalibrationFunctions.clone();
+        int nonNull = 0;
+        for (int i=0; i < recalibrationFunctions.length; ++i) {
+            final RecalibrationFunction f = recalibrationFunctions[i];
+            if (f!=null) {
+                if (f.equals(merged)) {
+                    recalibrationFunctions[i] = null;
+                } else {
+                    ++nonNull;
+                }
+            }
+        }
+        if (nonNull==0) return null;
+        else return recalibrationFunctions;
+    }
+
+    public RecalibrationFunction getMergedRecalibrationFunction() {
         return mergedFunc;
     }
 
-    public UnivariateFunction getRecalibrationFunctionFor(MutableMs2Spectrum spec) {
+    @Nullable public RecalibrationFunction[] getSingleSpectrumRecalibrationFunctions() {
+        return recalibrationFunctions==null ? null : recalibrationFunctions.clone();
+    }
+
+    public RecalibrationFunction getRecalibrationFunctionFor(MutableMs2Spectrum spec) {
         if (recalibrationFunctions==null) return mergedFunc;
-        final UnivariateFunction f = recalibrationFunctions[spec.getScanNumber()];
+        final RecalibrationFunction f = recalibrationFunctions[spec.getScanNumber()];
         if (f==null) return mergedFunc;
         else return f;
     }
@@ -46,21 +70,12 @@ public class SpectralRecalibration implements DataAnnotation {
         }
         if (mostIntensive!=null) {
             final int sc = ((MutableMs2Spectrum)mostIntensive.getSpectrum()).getScanNumber();
-            if (recalibrationFunctions[sc]!=null) {
-                return recalibrationFunctions[sc].value(peak.getMass());
+            if (recalibrationFunctions!=null && recalibrationFunctions[sc]!=null) {
+                return recalibrationFunctions[sc].apply(peak.getMass());
             }
         }
         // 2. use merged recalibration function
-        return mergedFunc.value(peak.getMass());
+        return mergedFunc.apply(peak.getMass());
     }
 
-
-    public RecalibrationFunction toPolynomial() {
-        final UnivariateFunction f = getRecalibrationFunction();
-        if (f instanceof PolynomialFunction)
-            return new RecalibrationFunction(((PolynomialFunction) f).getCoefficients());
-        else if (f instanceof Identity)
-            return RecalibrationFunction.identity();
-        else throw new RuntimeException("Cannot represent " + f + " as polynomial function");
-    }
 }

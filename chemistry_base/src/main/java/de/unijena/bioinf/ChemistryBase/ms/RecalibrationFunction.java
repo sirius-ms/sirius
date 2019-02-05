@@ -15,18 +15,18 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.unijena.bioinf.ChemistryBase.ms.ft;
+package de.unijena.bioinf.ChemistryBase.ms;
 
 import com.google.common.base.Joiner;
-import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class RecalibrationFunction implements TreeAnnotation {
+public class RecalibrationFunction  {
 
     private double[] polynomialTerms;
 
@@ -36,10 +36,6 @@ public class RecalibrationFunction implements TreeAnnotation {
 
     public double[] getPolynomialTerms() {
         return polynomialTerms;
-    }
-
-    public void setPolynomialTerms(double[] polynomialTerms) {
-        this.polynomialTerms = polynomialTerms;
     }
 
     public double apply(double x) {
@@ -83,7 +79,21 @@ public class RecalibrationFunction implements TreeAnnotation {
         return new RecalibrationFunction(list.toArray());
     }
 
+    private final static RecalibrationFunction IDENTITY = new RecalibrationFunction(new double[]{0,1});
     public static RecalibrationFunction identity() {
-        return new RecalibrationFunction(new double[]{0d,1d});
+        return IDENTITY;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RecalibrationFunction that = (RecalibrationFunction) o;
+        return Arrays.equals(polynomialTerms, that.polynomialTerms);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(polynomialTerms);
     }
 }
