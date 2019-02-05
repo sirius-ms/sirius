@@ -55,6 +55,7 @@ public class FTree extends AbstractFragmentationGraph {
         super(copy);
         this.root = fragments.get(0);
         this.rootScore = copy.rootScore;
+        this.treeWeight = copy.treeWeight;
         assert root.isRoot();
     }
 

@@ -1,8 +1,8 @@
-package de.unijena.bioinf.FragmentationTreeConstruction.inspection;
+package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.IsotopeMs1Scorer;
+import de.unijena.bioinf.sirius.plugins.IsotopePatternInMs1Plugin;
 
 public class ScoringHelper {
 
@@ -26,7 +26,7 @@ public class ScoringHelper {
     }
 
     public double getIsotopeMs1Score() {
-        return fragmentScoring.get(tree.getRoot()).get(FragmentationPatternAnalysis.getScoringMethodName(IsotopeMs1Scorer.class));
+        return fragmentScoring.get(tree.getRoot()).get(FragmentationPatternAnalysis.getScoringMethodName(IsotopePatternInMs1Plugin.Ms1IsotopePatternScorer.class));
     }
 
     public double getBeautificationPenalty() {

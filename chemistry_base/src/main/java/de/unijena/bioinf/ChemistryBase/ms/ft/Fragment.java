@@ -65,6 +65,7 @@ public class Fragment implements Comparable<Fragment> {
         this.formula = other.formula;
         this.ionization = other.ionization;
         this.color = other.color;
+        this.peakId = other.peakId;
         this.outDegree = other.outDegree;
         this.outgoingEdges = other.outgoingEdges.clone();
         this.annotations = other.annotations.clone();

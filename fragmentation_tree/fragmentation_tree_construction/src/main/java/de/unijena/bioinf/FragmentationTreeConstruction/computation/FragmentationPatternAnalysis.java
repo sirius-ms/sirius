@@ -886,11 +886,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
         final FragmentAnnotation<Score> fAno = tree.getOrCreateFragmentAnnotation(Score.class);
         final LossAnnotation<Score> lAno = tree.getOrCreateLossAnnotation(Score.class);
-        final LossAnnotation<InsourceFragmentation> isInsource = tree.getOrCreateLossAnnotation(InsourceFragmentation.class);
+        final LossAnnotation<LossType> lossType = tree.getOrCreateLossAnnotation(LossType.class);
         final double[][] pseudoMatrix = new double[2][2];
         while (edges.hasNext()) {
             final Loss loss = edges.next();
-            if (isInsource.get(loss)!= null && isInsource.get(loss).isInsource()) continue;
+            if (lossType.get(loss).isInSource()) continue;
             final Fragment u = loss.getSource();
             final Fragment v = loss.getTarget();
 
@@ -930,7 +930,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
         // set root
         Fragment root = tree.getRoot();
-        if (root.getOutDegree()==1 && isInsource.get(root.getOutgoingEdge(0))!=null && isInsource.get(root.getOutgoingEdge(0)).isInsource()) {
+        if (root.getOutDegree()==1 && lossType.get(root.getOutgoingEdge(0)).isInSource()) {
             root = root.getChildren(0);
         }
         final Score.ScoreAssigner rootScore = rootHeader.score();
@@ -1064,9 +1064,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     public void makeTreeReleaseReady(ProcessedInput input, FGraph graph, FTree tree) {
         final IntergraphMapping graphFragmentMap = IntergraphMapping.map(graph,tree);
         addPeakAnnotationToTree(input, graph, tree, graphFragmentMap);
-        final LossAnnotation<InsourceFragmentation> insource = tree.addLossAnnotation(InsourceFragmentation.class, InsourceFragmentation::no);
+        final LossAnnotation<LossType> lossType = tree.addLossAnnotation(LossType.class, LossType::regular);
         for (Loss l : tree.losses()) {
-            insource.set(l, InsourceFragmentation.no());
+            lossType.set(l,LossType.regular());
         }
         transferDefaultAnotationsFromGraphToTree(input,graph,tree,graphFragmentMap);
         for (SiriusPlugin plugin : siriusPlugins.values()) {
@@ -1075,6 +1075,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (SiriusPlugin plugin : siriusPlugins.values()) {
             plugin.releaseTreeToUser(input,graph,tree);
         }
+        tree.setAnnotation(PrecursorIonType.class, input.getExperimentInformation().getPrecursorIonType());
+        tree.normalizeStructure();
     }
 
     private void addPeakAnnotationToTree(ProcessedInput input, FGraph graph, FTree tree, IntergraphMapping graph2tree) {

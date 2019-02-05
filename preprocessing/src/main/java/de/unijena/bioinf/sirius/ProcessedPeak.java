@@ -21,10 +21,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
-import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 
 import java.util.*;
@@ -54,14 +51,16 @@ public class ProcessedPeak extends Peak {
     public AnnotatedPeak toAnnotatedPeak(MolecularFormula formulaAnnotation, PrecursorIonType ionType, SpectralRecalibration recalibration) {
         final CollisionEnergy[] energies = new CollisionEnergy[originalPeaks.size()];
         final Peak[] opeaks = new Peak[originalPeaks.size()];
+        final int[] spectrumIds = new int[originalPeaks.size()];
         int k=0;
         for (MS2Peak peak : originalPeaks) {
             energies[k] = peak.getSpectrum().getCollisionEnergy();
             if (energies[k]==null) energies[k] = CollisionEnergy.none();
             opeaks[k] = new Peak(peak);
+            spectrumIds[k] = ((MutableMs2Spectrum)peak.getSpectrum()).getScanNumber();
             ++k;
         }
-        return new AnnotatedPeak(formulaAnnotation, mass, recalibration.recalibrate(this), relativeIntensity,ionType.getIonization(), opeaks, energies);
+        return new AnnotatedPeak(formulaAnnotation, mass, recalibration.recalibrate(this), relativeIntensity,ionType.getIonization(), opeaks, energies, spectrumIds);
     }
 
     public ProcessedPeak(MS2Peak peak) {
