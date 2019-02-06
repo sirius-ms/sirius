@@ -44,4 +44,11 @@ public class IsotopeSettings implements Ms2ExperimentAnnotation {
     public double getMultiplier() {
         return multiplier;
     }
+
+    /**
+     * @return true if isotope pattern analysis is enablec
+     */
+    public boolean isEnabled() {
+        return filter || multiplier>0;
+    }
 }
