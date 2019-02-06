@@ -1,8 +1,8 @@
 package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.net.ProxyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.net.ProxyManager;
 import org.slf4j.LoggerFactory;
 
 

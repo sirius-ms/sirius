@@ -19,7 +19,6 @@ package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.babelms.Index;
 
 import java.io.File;
 import java.util.HashMap;
@@ -29,7 +28,6 @@ public class Instance {
 
     final MutableMs2Experiment experiment;
     final File file;
-    final int index;
 
     //todo don't need them!? we should delegate from experiment???
     protected final HashMap<Class<Object>, Object> annotations;
@@ -37,15 +35,12 @@ public class Instance {
     private Instance() {
         experiment = null;
         file = null;
-        index = 0;
         annotations = new HashMap<>();
     }
 
-    public Instance(Ms2Experiment experiment, File file, int index) {
+    public Instance(Ms2Experiment experiment, File file) {
         this.experiment = new MutableMs2Experiment(experiment);
         this.file = file;
-        this.index = index;
-        this.experiment.setAnnotation(Index.class, new Index(index));
         annotations = new HashMap<>();
     }
 

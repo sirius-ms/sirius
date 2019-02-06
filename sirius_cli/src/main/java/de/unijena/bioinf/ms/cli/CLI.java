@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.cli;
 
-import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.ms.cli.parameters.*;
 import de.unijena.bioinf.ms.cli.utils.FormatedTableBuilder;
@@ -85,7 +84,7 @@ public class CLI extends ApplicationCore {
     private void fingerIDInfo() {
         System.out.println();
 
-        WorkerList info = WebAPI.INSTANCE.getWorkerInfo();
+        WorkerList info = ApplicationCore.WEB_API.getWorkerInfo();
         if (info != null) {
             System.out.println("Active worker instances: ");
             System.out.println();
