@@ -20,7 +20,6 @@ package de.unijena.bioinf.sirius;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformation;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformer;
-import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -31,7 +30,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.AbstractTreeC
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
-import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.IsotopePatternGenerator;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -41,9 +39,11 @@ import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 
 
 //todo we should cleanup the api methods, proof which should be private and which are no longer needed, or at least change them, so that they use the identification job
@@ -112,116 +112,15 @@ public class Sirius {
     /**
      * Identify the molecular formula of the measured compound using the provided MS and MSMS data
      *
+     * TODO: find a better solution which does not block if Job queue is full
+     *
      * @param experiment input data
      * @return the top tree
      */
-    @Deprecated
-    public IdentificationResult identify(Ms2Experiment experiment) {
-        return identify(experiment, 1).get(0);
+    public List<IdentificationResult> identify(Ms2Experiment experiment) {
+        return SiriusJobs.getGlobalJobManager().submitJob(makeIdentificationJob(experiment)).takeResult();
     }
 
-    /**
-     * Identify the molecular formula of the measured compound using the provided MS and MSMS data
-     *
-     * @param experiment        input data
-     * @param numberOfCandidates number of top candidates to return
-     * @return a list of identified molecular formulas together with their tree
-     */
-    @Deprecated
-    public List<IdentificationResult> identify(Ms2Experiment experiment, int numberOfCandidates) {
-        //final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), experiment, numberOfCandidates, -1);
-        experiment.setAnnotation(NumberOfCandidates.class, new NumberOfCandidates(numberOfCandidates));
-        final FasterTreeComputationInstance instance = new FasterTreeComputationInstance(getMs2Analyzer(),profile.ms2Preprocessor.preprocess(experiment));
-        SiriusJobs.getGlobalJobManager().submitJob(instance);
-        AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
-        final List<IdentificationResult> irs = createIdentificationResults(fr, instance);//postprocess results
-        return irs;
-    }
-
-    /**
-     * Identify the molecular formula of the measured compound by combining an isotope pattern analysis on MS data with a fragmentation pattern analysis on MS/MS data
-     *
-     * @param experiment        input data
-     * @param numberOfCandidates number of candidates to output
-     * @param recalibrating      true if spectra should be recalibrated during tree computation
-     * @param deisotope          set this to 'omit' to ignore isotope pattern, 'filter' to use it for selecting molecular formula candidates or 'score' to rerank the candidates according to their isotope pattern
-     * @param whiteList          restrict the analysis to this subset of molecular formulas. If this set is empty, consider all possible molecular formulas
-     * @return a list of identified molecular formulas together with their tree
-     */
-    @Deprecated
-    public List<IdentificationResult> identify(Ms2Experiment experiment, int numberOfCandidates,
-                                               boolean recalibrating, IsotopePatternHandling deisotope, Set<MolecularFormula> whiteList) {
-        final ProcessedInput pinput = preprocessForMs2Analysis(experiment);
-        experiment.setAnnotation(NumberOfCandidates.class, new NumberOfCandidates(numberOfCandidates));
-        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), pinput);
-        pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
-        if (whiteList != null) pinput.setAnnotation(Whiteset.class, Whiteset.of(whiteList));
-        pinput.setAnnotation(IsotopeSettings.class, new IsotopeSettings(deisotope.isFiltering(), deisotope.isScoring() ? 1 : 0));
-        SiriusJobs.getGlobalJobManager().submitJob(instance);
-        AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
-        final List<IdentificationResult> irs = createIdentificationResults(fr, instance);//postprocess results
-        return irs;
-    }
-
-    protected List<IdentificationResult> createIdentificationResults(AbstractTreeComputationInstance.FinalResult
-                                                                             fr, AbstractTreeComputationInstance computationInstance) {
-        final List<IdentificationResult> irs = new ArrayList<>();
-        int k = 0;
-        for (FTree tree : fr.getResults()) {
-            IdentificationResult result = new IdentificationResult(tree, ++k);
-            irs.add(result);
-
-        }
-        return irs;
-    }
-
-    public List<IdentificationResult> identify(Ms2Experiment experiment, int numberOfCandidates,
-                                               boolean recalibrating, IsotopePatternHandling deisotope) {
-        return identify(experiment, numberOfCandidates, recalibrating, deisotope, (FormulaConstraints) null);
-    }
-
-    /**
-     * Identify the molecular formula of the measured compound by combining an isotope pattern analysis on MS data with a fragmentation pattern analysis on MS/MS data
-     *
-     * @param experiment        input data
-     * @param numberOfCandidates number of candidates to output
-     * @param recalibrating      true if spectra should be recalibrated during tree computation
-     * @param deisotope          set this to 'omit' to ignore isotope pattern, 'filter' to use it for selecting molecular formula candidates or 'score' to rerank the candidates according to their isotope pattern
-     * @param formulaConstraints use if specific constraints on the molecular formulas shall be imposed (may be null)
-     * @return a list of identified molecular formulas together with their tree
-     */
-    public List<IdentificationResult> identify(Ms2Experiment experiment, int numberOfCandidates,
-                                               boolean recalibrating, IsotopePatternHandling deisotope, FormulaConstraints formulaConstraints) {
-        return identify(experiment, numberOfCandidates, -1, recalibrating, deisotope, formulaConstraints);
-    }
-
-    /**
-     * Identify the molecular formula of the measured compound by combining an isotope pattern analysis on MS data with a fragmentation pattern analysis on MS/MS data
-     *
-     * @param experiment                     input data
-     * @param numberOfCandidates              number of candidates to output
-     * @param numberOfCandidatesPerIonization minimum number of candidates to output per ionization
-     * @param recalibrating                   true if spectra should be recalibrated during tree computation
-     * @param deisotope                       set this to 'omit' to ignore isotope pattern, 'filter' to use it for selecting molecular formula candidates or 'score' to rerank the candidates according to their isotope pattern
-     * @param formulaConstraints              use if specific constraints on the molecular formulas shall be imposed (may be null)
-     * @return a list of identified molecular formulas together with their tree
-     */
-    @Deprecated
-    public List<IdentificationResult> identify(@NotNull Ms2Experiment experiment, int numberOfCandidates,
-                                               int numberOfCandidatesPerIonization, boolean recalibrating, @NotNull IsotopePatternHandling deisotope, @Nullable FormulaConstraints
-                                                       formulaConstraints) {
-        experiment.setAnnotation(NumberOfCandidates.class, new NumberOfCandidates(numberOfCandidates));
-        experiment.setAnnotation(NumberOfCandidatesPerIon.class, new NumberOfCandidatesPerIon(numberOfCandidatesPerIonization));
-        final ProcessedInput pinput = preprocessForMs2Analysis(experiment);
-        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), pinput);
-        pinput.setAnnotation(IsotopeSettings.class, new IsotopeSettings(deisotope.isFiltering(), deisotope.isScoring() ? 1 : 0));
-        pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
-        pinput.setAnnotation(FormulaSettings.class, new FormulaSettings(formulaConstraints, new ChemicalAlphabet(this.profile.ms1Preprocessor.elementDetection.getPredictableElements().toArray(new Element[0])), FormulaConstraints.empty()));
-        SiriusJobs.getGlobalJobManager().submitJob(instance);
-        AbstractTreeComputationInstance.FinalResult fr = instance.takeResult();
-        final List<IdentificationResult> irs = createIdentificationResults(fr, instance);//postprocess results
-        return irs;
-    }
 
     @Deprecated
     public FormulaConstraints predictElementsFromMs1(Ms2Experiment experiment) {
@@ -229,35 +128,20 @@ public class Sirius {
     }
 
     public IdentificationResult compute(@NotNull Ms2Experiment experiment, MolecularFormula formula) {
-        return compute(experiment, formula, true);
+        final MutableMs2Experiment copy = new MutableMs2Experiment(experiment);
+        copy.setMolecularFormula(formula);
+        copy.setAnnotation(Whiteset.class, Whiteset.of(formula));
+        final List<IdentificationResult> irs = identify(copy);
+        if (irs.isEmpty()) return null;
+        else return irs.get(0);
     }
 
     public BasicJJob<IdentificationResult> makeComputeJob(@NotNull Ms2Experiment experiment, MolecularFormula
             formula) {
-        final ProcessedInput pinput = preprocessForMs2Analysis(experiment);
-        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), pinput);
-        pinput.setAnnotation(Whiteset.class, Whiteset.of(formula));
-        pinput.setAnnotation(ForbidRecalibration.class, ForbidRecalibration.ALLOWED);
-        return instance.wrap((f) -> new IdentificationResult(f.getResults().get(0), 1));
-    }
-
-    /**
-     * Compute a fragmentation tree for the given MS/MS data using the given neutral molecular formula as explanation for the measured compound
-     *
-     * @param experiment    input data
-     * @param formula       neutral molecular formula of the measured compound
-     * @param recalibrating true if spectra should be recalibrated during tree computation
-     * @return A single instance of IdentificationResult containing the computed fragmentation tree
-     */
-    public IdentificationResult compute(@NotNull Ms2Experiment experiment, MolecularFormula formula,
-                                        boolean recalibrating) {
-        final ProcessedInput pinput = preprocessForMs2Analysis(experiment);
-        final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), pinput);
-        pinput.setAnnotation(Whiteset.class, Whiteset.of(formula));
-        pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
-        SiriusJobs.getGlobalJobManager().submitJob(instance);
-        final IdentificationResult ir = new IdentificationResult(instance.takeResult().getResults().get(0), 1);
-        return ir;
+        final MutableMs2Experiment copy = new MutableMs2Experiment(experiment);
+        copy.setMolecularFormula(formula);
+        copy.setAnnotation(Whiteset.class, Whiteset.of(formula));
+        return new SiriusIdentificationJob(copy).wrap(x->x.get(0));
 
     }
 
@@ -661,67 +545,6 @@ public class Sirius {
         return gen.simulatePattern(compound, ion);
     }
 
-    /**
-     * depending on the isotope pattern policy this method is
-     * - omit: doing nothing
-     * - scoring: adds all isotope pattern candidates with their score into the hashmap
-     * - filtering: adds only a subset of isotope pattern candidates with good scores into the hashmap
-     *
-     * @return score of the best isotope candidate
-     */
-    private double filterCandidateList
-    (List<IsotopePattern> candidates, HashMap<MolecularFormula, IsotopePattern> formulas, IsotopePatternHandling
-            handling) {
-        if (handling == IsotopePatternHandling.omit) {
-            return 0d;
-        }
-        if (candidates.size() == 0) return 0d;
-        {
-            double opt = Double.NEGATIVE_INFINITY;
-            final SupportVectorMolecularFormulaScorer formulaScorer = new SupportVectorMolecularFormulaScorer();
-            for (IsotopePattern p : candidates) {
-                opt = Math.max(opt, p.getScore() + formulaScorer.score(p.getCandidate()));
-            }
-            if (opt < 0) {
-                for (IsotopePattern p : candidates)
-                    formulas.put(p.getCandidate(), new IsotopePattern(p.getCandidate(), 0d, p.getPattern()));
-                return candidates.get(0).getScore();
-            }
-        }
-        final double optscore = candidates.get(0).getScore();
-        if (!handling.isFiltering()) {
-            for (IsotopePattern p : candidates) formulas.put(p.getCandidate(), p);
-            return candidates.get(0).getScore();
-        }
-        formulas.put(candidates.get(0).getCandidate(), candidates.get(0));
-        int n = 1;
-        for (; n < candidates.size(); ++n) {
-            final double score = candidates.get(n).getScore();
-            final double prev = candidates.get(n - 1).getScore();
-            if (((optscore - score) > 5) && (score <= 0 || score / optscore < 0.5 || score / prev < 0.5)) break;
-        }
-        for (int i = 0; i < n; ++i) formulas.put(candidates.get(i).getCandidate(), candidates.get(i));
-        return optscore;
-    }
-
-    //todo this is from ms2datapreprocessor. not sure if this is really neeed -> changed to the version below
-    /*private SimpleSpectrum extractIsotopePattern(Ms2Experiment experiment) {
-
-        Ms2Experiment experiment2;
-        if (experiment.getMergedMs1Spectrum()!=null) experiment2 = experiment;
-        else {
-            experiment2 = new MutableMs2Experiment(experiment);
-            if (experiment2.getMs1Spectra().size() > 0) {
-                ((MutableMs2Experiment)experiment2).setMergedMs1Spectrum(Spectrums.mergeSpectra(experiment2.<Spectrum<Peak>>getMs1Spectra()));
-            } else {
-                return new SimpleSpectrum(new double[0], new double[0]);
-            }
-
-        }
-
-        return getMs1Analyzer().extractPattern(experiment2, experiment2.getIonMass());
-    }
-*/
     public ExtractedIsotopePattern extractedIsotopePattern(@NotNull ProcessedInput pinput) {
         ExtractedIsotopePattern pat = pinput.getAnnotation(ExtractedIsotopePattern.class, null);
         if (pat == null) {
@@ -762,11 +585,7 @@ public class Sirius {
 
 
     public Sirius.SiriusIdentificationJob makeIdentificationJob(final Ms2Experiment experiment) {
-        return makeIdentificationJob(experiment, true);
-    }
-
-    public Sirius.SiriusIdentificationJob makeIdentificationJob(final Ms2Experiment experiment, final boolean beautifyTrees) {
-        return new SiriusIdentificationJob(experiment, beautifyTrees);
+        return new SiriusIdentificationJob(experiment);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -774,17 +593,17 @@ public class Sirius {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public class SiriusIdentificationJob extends BasicMasterJJob<List<IdentificationResult>> {
         private final Ms2Experiment experiment;
-        private final boolean beautifyTrees;
 
-        public SiriusIdentificationJob(Ms2Experiment experiment, boolean beautifyTrees) {
+        public SiriusIdentificationJob(Ms2Experiment experiment) {
             super(JobType.CPU);
             this.experiment = experiment;
-            this.beautifyTrees = beautifyTrees;
         }
 
         @Override
         protected List<IdentificationResult> compute() throws Exception {
             final ProcessedInput input = preprocessForMs2Analysis(experiment);
+            if (experiment.getAnnotationOrDefault(IsotopeSettings.class).isEnabled())
+                profile.isotopePatternAnalysis.computeAndScoreIsotopePattern(input);
             final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), input);
             instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, 105, (int) evt.getNewValue()));
             submitSubJob(instance);
