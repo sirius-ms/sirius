@@ -22,7 +22,6 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.babelms.Index;
 import de.unijena.bioinf.babelms.DataWriter;
 
 import java.io.BufferedWriter;
@@ -51,10 +50,6 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         writer.write(">instrumentation " + instrumentation.description());
         writer.newLine();
         writeIfAvailable(writer, ">source", data.getSource());
-        Index index = data.getAnnotation(Index.class);
-        if (index != null) {
-            write(writer, ">index", String.valueOf(index.index));
-        }
         writeIfAvailable(writer, ">quality", data.getAnnotation(CompoundQuality.class));
         final RetentionTime retentionTime = data.getAnnotation(RetentionTime.class);
         if (retentionTime != null) {

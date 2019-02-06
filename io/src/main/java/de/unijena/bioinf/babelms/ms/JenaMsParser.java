@@ -116,7 +116,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private MutableMs2Experiment experiment;
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
         private AdditionalFields fields;
-        private Index index;
+        private Integer index;
         private HashMap<Class<? extends Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> annotations;
         private double treeTimeout;
         private double compoundTimeout;
@@ -235,7 +235,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 //override in source set in ms file
                 this.source = new URL(value);
             } else if (optionName.equals("index")) {
-                this.index = new Index(Integer.parseInt(value));
+                this.index = Integer.parseInt(value);
             } else if (optionName.equals("formula")) {
                 if (formula != null || annotations.containsKey(Whiteset.class)) warn("Molecular formula is set twice");
                 MolecularFormula[] formulas = parseFormulas(value);
@@ -361,7 +361,12 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             exp.setMs2Spectra(ms2spectra);
             if (mergedMs1 != null) exp.setMergedMs1Spectrum(mergedMs1);
             exp.setSource(source);
-            if (index != null) exp.setAnnotation(Index.class, index);
+            if (index != null) {
+                //index is replaced against .index file during new
+                //project-space implementation. This is for compatibility
+                if (fields == null) fields = new AdditionalFields();
+                fields.put("index", index.toString());
+            }
             if (smiles != null) exp.setAnnotation(Smiles.class, new Smiles(smiles));
             if (splash != null) exp.setAnnotation(Splash.class, new Splash(splash));
             if (spectrumQualityString != null)
