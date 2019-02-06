@@ -26,7 +26,7 @@ import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.projectspace.DirectoryReader;
 import de.unijena.bioinf.ms.projectspace.SiriusFileReader;
-import de.unijena.bioinf.ms.projectspace.SiriusWorkspaceReader;
+import de.unijena.bioinf.ms.projectspace.SiriusZipFileReader;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
@@ -2353,14 +2353,18 @@ public class GibbsSamplerMain {
         if (file.isDirectory()) {
             env = new SiriusFileReader(file);
         } else {
-            env = new SiriusWorkspaceReader(file);
+            env = new SiriusZipFileReader(file);
         }
-        final DirectoryReader reader = new DirectoryReader(env);
 
-        while (reader.hasNext()) {
-            final ExperimentResult result = reader.next();
-            results.add(result);
-        }
+        final DirectoryReader reader = new DirectoryReader(env);
+        reader.forEach(expDir -> {
+            try {
+                final ExperimentResult result = reader.parseExperiment(expDir);
+                results.add(result);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
 
         final MsExperimentParser parser = new MsExperimentParser();
         List<Ms2Experiment> rawExperiments = parser.getParser(originalMsInformation.toFile()).parseFromFile(originalMsInformation.toFile());

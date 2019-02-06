@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.projectspace;
+package de.unijena.bioinf.ms.io.projectspace;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,6 +43,11 @@ public class SiriusFileReader implements DirectoryReader.ReadingEnvironment {
     public InputStream openFile(String name) throws IOException {
         currentStream = new FileInputStream(new File(current, name));
         return currentStream;
+    }
+
+    @Override
+    public URL currentAbsolutePath(String name) throws IOException {
+        return new File(current, name).toURI().toURL();
     }
 
     @Override

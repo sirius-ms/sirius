@@ -20,57 +20,31 @@ package de.unijena.bioinf.sirius;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
 
-import java.io.IOException;
-import java.io.Writer;
-import java.util.HashMap;
-import java.util.regex.Pattern;
-
-public class IdentificationResult implements Cloneable, Comparable<IdentificationResult> {
+public class IdentificationResult implements Cloneable, Comparable<IdentificationResult>, Annotated<DataAnnotation> {
 
     // TODO: we have to get rid of all these -_-
     protected FTree tree, beautifulTree, resolvedBeautifulTree;
     protected MolecularFormula formula;
     protected int rank;
     protected double score;
-    protected HashMap<Class<?>, Object> annotations;
+    private final Annotated.Annotations<DataAnnotation> annotations = new Annotated.Annotations<>();
 
-    private final static Pattern NeedToEscape = Pattern.compile("[\t\n\"]");
-
-    public static void writeIdentifications(Writer writer, Ms2Experiment input, Iterable<IdentificationResult> results) throws IOException {
-        final StringBuilder buffer = new StringBuilder();
-        String name = input.getName();
-        // escape quotation marks
-        {
-            if (name.indexOf('"') >= 0) {
-                name = "\"" + name.replaceAll("\"", "\"\"") + "\"";
-            } else if (name.indexOf('\t') >= 0 || name.indexOf('\n') >= 0) {
-                name = "\"" + name + "\"";
-            }
-        }
-        buffer.append(name);
-        buffer.append('\t');
-        buffer.append(input.getIonMass());
-        buffer.append('\t');
-        buffer.append(input.getPrecursorIonType().toString());
-        for (IdentificationResult r : results) {
-            buffer.append('\t');
-            buffer.append(r.getMolecularFormula().toString());
-            buffer.append('\t');
-            buffer.append(r.getScore());
-        }
-        buffer.append('\n');
-        writer.write(buffer.toString());
+    @Override
+    public Annotations<DataAnnotation> annotations() {
+        return annotations;
     }
 
     public IdentificationResult(IdentificationResult ir) {
-        this.annotations = new HashMap<>();
-        this.annotations.putAll(ir.annotations);
+        setAnnotationsFrom(ir);
         this.rank = ir.rank;
         this.tree = ir.tree;
         this.beautifulTree = ir.beautifulTree;
@@ -98,7 +72,6 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
         this.tree = tree;
         this.score = tree == null ? 0d : tree.getTreeWeight();
         this.rank = rank;
-        this.annotations = new HashMap<>();
 
         if (tree != null) {
             tree.normalizeStructure();
@@ -214,26 +187,6 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
         return r;
     }
 
-    @SuppressWarnings("unchecked cast")
-    public <T> T getAnnotationOrThrow(Class<T> klass) {
-        final T ano = (T) annotations.get(klass);
-        if (ano == null) throw new NullPointerException("No annotation '" + klass.getName() + "' in ProcessedInput");
-        return ano;
-    }
-
-    @SuppressWarnings("unchecked cast")
-    public <T> T getAnnotationOrNull(Class<T> klass) {
-        return (T) annotations.get(klass);
-    }
-
-    public boolean removeAnnotation(Class<?> klass) {
-        return annotations.remove(klass) != null;
-    }
-
-
-    public <T> boolean setAnnotation(Class<T> klass, T annotation) {
-        return annotations.put(klass, annotation) == annotation;
-    }
 
     public String toString() {
         return formula + " with score " + getScore() + " at rank " + rank;

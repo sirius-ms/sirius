@@ -1,32 +1,24 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ms.annotations.Annotated;
 
 import java.io.File;
 import java.util.List;
 
-public class ExperimentResult {
+public class ExperimentResult implements Annotated<ResultAnnotation> {
     public static enum ErrorCause {TIMEOUT, NORESULTS, ERROR, NOERROR};
 
-    protected String experimentName, experimentSource;
     protected Ms2Experiment experiment;
     protected List<IdentificationResult> results;
     protected ErrorCause error;
     protected String errorMessage;
+    private final Annotations<ResultAnnotation> annotations = new Annotations<>();
 
-    public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results, String source, String name) {
-        this.experiment = experiment;
-        this.results = results;
-        this.experimentName = name;
-        this.experimentSource = source;
-        this.error = ErrorCause.NOERROR;
-    }
 
     public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results) {
         this.experiment = experiment;
         this.results = results;
-        this.experimentName = simplify(experiment.getName());
-        this.experimentSource = simplifyURL(experiment.getSource().getFile());
         this.error = ErrorCause.NOERROR;
     }
 
@@ -64,12 +56,16 @@ public class ExperimentResult {
         return errorMessage;
     }
 
-    public String getExperimentName() {
-        return experimentName;
+    public String getSimplyfiedExperimentName() {
+        if (experiment.getName() == null)
+            return "";
+        return simplify(experiment.getName());
     }
 
-    public String getExperimentSource() {
-        return experimentSource;
+    public String getSimplyfiedExperimentSource() {
+        if (experiment.getSource() == null)
+            return "";
+        return simplifyURL(experiment.getSource().getFile());
     }
 
     public Ms2Experiment getExperiment() {
@@ -91,5 +87,8 @@ public class ExperimentResult {
         return filename.substring(0,i);
     }
 
-
+    @Override
+    public Annotations<ResultAnnotation> annotations() {
+        return annotations;
+    }
 }
