@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.projectspace;
+package de.unijena.bioinf.ms.io.projectspace;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,10 +9,11 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class SiriusWorkspaceReader implements DirectoryReader.ReadingEnvironment {
+public class SiriusZipFileReader implements DirectoryReader.ReadingEnvironment {
 
     protected ZipFile zipFile;
 
@@ -21,7 +22,7 @@ public class SiriusWorkspaceReader implements DirectoryReader.ReadingEnvironment
     protected InputStream currentStream = null;
     protected File root;
 
-    public SiriusWorkspaceReader(File file) throws IOException {
+    public SiriusZipFileReader(File file) throws IOException {
         this.zipFile = new ZipFile(file, Charset.forName("UTF-8"));
         this.root = file;
         this.directory = new DirectoryTree("");
@@ -76,6 +77,12 @@ public class SiriusWorkspaceReader implements DirectoryReader.ReadingEnvironment
     public InputStream openFile(String name) throws IOException {
         currentStream = zipFile.getInputStream(zipFile.getEntry(join(stack.subList(1,stack.size()), name)));
         return currentStream;
+    }
+
+    @Override
+    public URL currentAbsolutePath(String name) throws IOException {
+        final String path = stack.stream().map(tree -> tree.name).collect(Collectors.joining("/"));
+        return new URL("jar:file:/" + root.getAbsolutePath() + "!/" + path + "/" + name);
     }
 
     @Override

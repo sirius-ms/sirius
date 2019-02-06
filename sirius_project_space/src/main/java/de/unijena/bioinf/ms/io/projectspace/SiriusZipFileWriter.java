@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.projectspace;
+package de.unijena.bioinf.ms.io.projectspace;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -7,16 +7,16 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public class SiriusWorkspaceWriter implements DirectoryWriter.WritingEnvironment {
+public class SiriusZipFileWriter implements DirectoryWriter.WritingEnvironment {
 
     protected ZipOutputStream zip;
     protected List<String> pathElements;
 
-    public SiriusWorkspaceWriter(File file) throws FileNotFoundException {
+    public SiriusZipFileWriter(File file) throws FileNotFoundException {
         this(new FileOutputStream(file));
     }
 
-    public SiriusWorkspaceWriter(OutputStream stream) {
+    public SiriusZipFileWriter(OutputStream stream) {
         this.zip = new ZipOutputStream(stream, Charset.forName("UTF-8"));
         this.pathElements = new ArrayList<>();
     }
@@ -30,6 +30,11 @@ public class SiriusWorkspaceWriter implements DirectoryWriter.WritingEnvironment
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void enterDirectory(String name, boolean rewriteTreeIfItExists) {
+        enterDirectory(name);
     }
 
     private String join(List<String> pathElements) {
