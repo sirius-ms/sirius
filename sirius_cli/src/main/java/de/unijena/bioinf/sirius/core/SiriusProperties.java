@@ -7,7 +7,7 @@ import java.util.Properties;
 
 import static de.unijena.bioinf.ms.properties.PropertyManager.PROPERTY_BASE;
 
-/* *
+/**
  * This class can be used to manage persistent properties of the sirius_frontend
  * The Properties are globally managed by the @PropertyManager class
  * The properties are stored in the user accessible Sirius.properties file

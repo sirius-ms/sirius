@@ -4,7 +4,7 @@ import picocli.CommandLine;
 
 public class TestMain {
     public static void main(String[] args){
-        String t = ApplicationCore.VERSION_STRING;
+        String t = ApplicationCore.VERSION_STRING();
         BasicOptions basicOptions = new BasicOptions();
         final CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.forAnnotatedObject(basicOptions);
 //        spec.addMixin("SIRIUS", CommandLine.Model.CommandSpec.forAnnotatedObject(siriusOptions));
