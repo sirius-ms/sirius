@@ -142,7 +142,6 @@ public class CompoundFilterUtil {
     }
 
     /**
-     * remove ms1 and corresponding ms2 spectra without ms1 precursor peak. e.g. after applying baseline. Or remove spectra wiht precursor intensity below some relative/abs intensity.
      * @return
      */
     public List<Ms2Experiment> removeMS2WithLowTotalIonCount(List<Ms2Experiment> experiments, double minTIC) throws InvalidInputData {
@@ -219,6 +218,27 @@ public class CompoundFilterUtil {
         for (Ms2Experiment experiment : experiments) {
             double compoundsIntensity = getFeatureIntensity(experiment, findPrecursorInMs1Deviation);
             if (compoundsIntensity!=0d) filtered.add(experiment);
+        }
+        return filtered;
+    }
+
+
+
+    /**
+     * @return
+     */
+    public List<Ms2Experiment> filterBySumOfMS2TICs(List<Ms2Experiment> experiments, double minTIC) {
+        List<Ms2Experiment> filtered = new ArrayList<>();
+        for (Ms2Experiment experiment : experiments) {
+            MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
+            double totalTIC = 0d;
+            for (Ms2Spectrum<Peak> ms2 : experiment.getMs2Spectra()) {
+                totalTIC += Spectrums.getTotalIonCount(ms2);
+            }
+
+            if (totalTIC>=minTIC){
+                filtered.add(mutableMs2Experiment);
+            }
         }
         return filtered;
     }

@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -334,18 +335,43 @@ public class Ms2DatasetPreprocessor {
 
         }
 
-        //find (very high probability) noise
-        for (ExperimentWithAnnotatedSpectra experiment : experiments) {
-            annotateNoise(experiment);
-            for (Spectrum<PeakWithAnnotation> spectrum : experiment.getMs2spectra()) {
-                for (PeakWithAnnotation peakWithAnnotation : spectrum) {
-                    if (peakWithAnnotation.isNoise()){
-                        mutableDatasetStatistics.addMs2NoiseIntensity(peakWithAnnotation.getIntensity());
+        if (DEBUG) {
+            try {
+                BufferedWriter writer = Files.newBufferedWriter(Paths.get("noise_intensities.csv"));
+                //find (very high probability) noise
+                for (ExperimentWithAnnotatedSpectra experiment : experiments) {
+                    annotateNoise(experiment);
+                    for (Spectrum<PeakWithAnnotation> spectrum : experiment.getMs2spectra()) {
+                        for (PeakWithAnnotation peakWithAnnotation : spectrum) {
+                            if (peakWithAnnotation.isNoise()){
+                                mutableDatasetStatistics.addMs2NoiseIntensity(peakWithAnnotation.getIntensity());
+                                writer.write(peakWithAnnotation.getMass()+"\t"+peakWithAnnotation.getIntensity());
+                                writer.newLine();
 //                        System.out.println("noise "+peakWithAnnotation.getMass());
+                            }
+                        }
+                    }
+                }
+                writer.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            //find (very high probability) noise
+            for (ExperimentWithAnnotatedSpectra experiment : experiments) {
+                annotateNoise(experiment);
+                for (Spectrum<PeakWithAnnotation> spectrum : experiment.getMs2spectra()) {
+                    for (PeakWithAnnotation peakWithAnnotation : spectrum) {
+                        if (peakWithAnnotation.isNoise()){
+                            mutableDatasetStatistics.addMs2NoiseIntensity(peakWithAnnotation.getIntensity());
+//                        System.out.println("noise "+peakWithAnnotation.getMass());
+                        }
                     }
                 }
             }
         }
+
+
 
         if (DEBUG) {
             System.out.println("number of noise peaks "+ mutableDatasetStatistics.getNoiseIntensities().size());
