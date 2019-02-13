@@ -66,6 +66,51 @@ public class CompoundFilterUtil {
         return filtered;
     }
 
+    public List<Ms2Experiment> removeIsotopesFromMs2(List<Ms2Experiment> experiments, Deviation isotopeDifferenceDeviatio){
+        return removeIsotopesFromMs2(experiments, isotopeDifferenceDeviatio, 1, 2, 4, ChemicalAlphabet.getExtendedAlphabet());
+    }
+
+    /**
+     *
+     * @param experiments
+     * @param maxIntensityRatioAt0
+     * @param maxIntensityRatioAt1000
+     * @param maxNumberOfIsotopePeaks
+     * @param alphabet this is used to estimate mz difference between isotope peak.
+     * @return
+     */
+    public List<Ms2Experiment> removeIsotopesFromMs2(List<Ms2Experiment> experiments, Deviation isotopeDifferenceDeviation, double maxIntensityRatioAt0, double maxIntensityRatioAt1000, int maxNumberOfIsotopePeaks, ChemicalAlphabet alphabet){
+        List<Ms2Experiment> filtered = new ArrayList<>();
+        for (Ms2Experiment experiment : experiments) {
+            MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
+            if (mutableMs2Experiment.getMs2Spectra()!=null) {
+                List<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
+                for (MutableMs2Spectrum spectrum : mutableMs2Experiment.getMs2Spectra()) {
+                    MutableMs2Spectrum s = new MutableMs2Spectrum(spectrum);
+                    Spectrums.filterIsotpePeaks(s, isotopeDifferenceDeviation, maxIntensityRatioAt0, maxIntensityRatioAt1000, maxNumberOfIsotopePeaks, alphabet);
+                    ms2Spectra.add(s);
+                }
+                mutableMs2Experiment.setMs2Spectra(ms2Spectra);
+            }
+
+            //remove empty spectra. they are not imported/exported and create issues with mapping
+            Iterator<SimpleSpectrum> ms1Iterator = mutableMs2Experiment.getMs1Spectra().iterator();
+            Iterator<MutableMs2Spectrum> ms2Iterator = mutableMs2Experiment.getMs2Spectra().iterator();
+            while (ms1Iterator.hasNext()) {
+                SimpleSpectrum ms1 = ms1Iterator.next();
+                MutableMs2Spectrum ms2 = ms2Iterator.next();
+                if (ms2.size()==0){
+                    ms1Iterator.remove();
+                    ms2Iterator.remove();
+                }
+            }
+
+            filtered.add(mutableMs2Experiment);
+        }
+
+        return filtered;
+    }
+
     /**
      *
      * @param experiments
