@@ -9,7 +9,7 @@ dependencies {
     compile group: 'org.glassfish', name: 'javax.json', version: "$json_impl_version"
 
     compile "net.sf.opencsv:opencsv:2.3"
-    compile "org.swinglabs.swingx:swingx-all:1.+"
+    compile "org.swinglabs.swingx:swingx-all:1.6.5-1"
     compile "org.openscience.cdk:cdk-render:$cdk_version"
     compile "org.openscience.cdk:cdk-renderextra:$cdk_version"
     compile "org.openscience.cdk:cdk-renderawt:$cdk_version"
