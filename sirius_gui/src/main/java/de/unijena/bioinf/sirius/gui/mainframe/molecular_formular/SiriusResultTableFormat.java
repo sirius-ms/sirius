@@ -57,7 +57,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<SiriusResultEleme
             case 7:
                 return "Total Explained Intensity";
             case 8:
-                return "Median Absolute Mass Deviation in ppm";
+                return "Median Mass Deviation in ppm";
             case 9:
                 return "Best";
             default:
