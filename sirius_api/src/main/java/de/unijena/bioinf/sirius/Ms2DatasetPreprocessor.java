@@ -404,7 +404,8 @@ public class Ms2DatasetPreprocessor {
             }
 
             SimpleSpectrum isotopePattern = extractIsotopePattern(experiment);
-            writer.write(SEP+String.valueOf(isotopePattern.size()));
+            int isoPatternSize = isotopePattern==null?0:isotopePattern.size();
+            writer.write(SEP+String.valueOf(isoPatternSize));
         }
         writer.close();
     }
