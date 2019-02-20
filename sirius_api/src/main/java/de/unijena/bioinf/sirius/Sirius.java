@@ -146,7 +146,8 @@ public class Sirius {
     }
 
 
-    //////////////////////////////////// STATIC API METHODS ////////////////////////////////////////////////////////////
+    // region STATIC API METHODS
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public static void setAnnotations(@NotNull Ms2Experiment
                                               experiment, @NotNull Annotated<Ms2ExperimentAnnotation> annotations) {
         experiment.setAnnotationsFrom(annotations);
@@ -302,13 +303,12 @@ public class Sirius {
         experiment.setMs1Spectra(ms1List);
         experiment.setMs2Spectra(ms2List);
     }
+    //endregion
     ////////////////////////////////////////////////////////////////////////////////
 
 
 
-    /*
-        DATA STRUCTURES API CALLS
-     */
+    //region DATA STRUCTURES API CALLS
 
     /**
      * Wraps an array of m/z values and and array of intensity values into a spectrum object that can be used by the SIRIUS library. The resulting spectrum is a lightweight view on the array, so changes in the array are reflected in the spectrum. The spectrum object itself is immutable.
@@ -587,7 +587,9 @@ public class Sirius {
     public Sirius.SiriusIdentificationJob makeIdentificationJob(final Ms2Experiment experiment) {
         return new SiriusIdentificationJob(experiment);
     }
+    //endregion
 
+    //region CLASSES
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////CLASSES/////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -629,6 +631,5 @@ public class Sirius {
             return experiment;
         }
     }
-
-
+    //endregion
 }
