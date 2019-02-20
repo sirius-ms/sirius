@@ -298,20 +298,25 @@ public class Zodiac {
         }
 
         if (outputDir!=null){
-            Path qualityPath = outputDir.resolve("spectra_quality.csv");
-            Ms2Dataset dataset2 = new MutableMs2Dataset(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
-            SpectrumProperty[] usedProperties = CompoundQuality.getUsedProperties(dataset2);
-            preprocessor.writeExperimentInfos(dataset2, qualityPath, usedProperties);
+            try {
+                Path qualityPath = outputDir.resolve("spectra_quality.csv");
+                Ms2Dataset dataset2 = new MutableMs2Dataset(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
+                SpectrumProperty[] usedProperties = CompoundQuality.getUsedProperties(dataset2);
+                preprocessor.writeExperimentInfos(dataset2, qualityPath, usedProperties);
 
 //            if (dataset.getIsolationWindow()!=null){
 //
 //            }
-            dataset.getIsolationWindow().writeIntensityRatiosToCsv(dataset, outputDir.resolve("isolation_window_intensities.csv"));
+                dataset.getIsolationWindow().writeIntensityRatiosToCsv(dataset, outputDir.resolve("isolation_window_intensities.csv"));
 
-            Path summary = outputDir.resolve("data_summary.csv");
-            System.out.println("write summary");
-            preprocessor.writeDatasetSummary(dataset, summary);
-            System.out.println("writing summary ended");
+                Path summary = outputDir.resolve("data_summary.csv");
+                System.out.println("write summary");
+                preprocessor.writeDatasetSummary(dataset, summary);
+                System.out.println("writing summary ended");
+            } catch (Exception e){
+                LOG.error("Error while writing quality statistics.", e);
+            }
+
         }
 
         return newExperimentResults;
