@@ -15,11 +15,11 @@ import java.util.Set;
 /**
  * This is for CSI:FingerID specific parameters.
  * <p>
- * It will be annotated to the MS2 Experiment
+ * They may be annotated to the MS2 Experiment
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "fingerid", aliases = {"F"}, description = "Identify molecular structure for each compound Individually using CSI:FingerID.")
+@CommandLine.Command(name = "fingerid", aliases = {"F"}, description = "Identify molecular structure for each compound Individually using CSI:FingerID.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
 public class FingerIdOptions extends AbstractMsExperimentOptions {
     private SiriusOptions siriusOptions;
     private Sirius siriusAPI; //todo fill me

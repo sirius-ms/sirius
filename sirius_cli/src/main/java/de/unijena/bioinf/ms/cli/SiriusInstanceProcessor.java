@@ -6,8 +6,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
-import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNRegressionPredictor;
-import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
+//import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNRegressionPredictor;
+//import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
 import de.unijena.bioinf.ms.cli.parameters.SiriusOptions;
@@ -45,7 +45,7 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
 //        try {
             //todo combing profile with argument default values
             sirius = new Sirius(options.profile);
-            sirius.setFastMode(!options.disableFastMode);
+//            sirius.setFastMode(!options.disableFastMode);
             final FragmentationPatternAnalysis ms2 = sirius.getMs2Analyzer();
             final IsotopePatternAnalysis ms1 = sirius.getMs1Analyzer();
 //            final MutableMeasurementProfile ms1Prof = new MutableMeasurementProfile(ms1.getDefaultProfile());
@@ -80,12 +80,12 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
 //            sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
 //            sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
 
-            if (options.enableSiliconDetection) {
+            /*if (options.enableSiliconDetection) {
                 ElementPredictor elementPredictor = sirius.getElementPrediction();
                 if (elementPredictor instanceof DNNRegressionPredictor) {
                     ((DNNRegressionPredictor) elementPredictor).enableSilicon();
                 }
-            }
+            }*/
 
        /* } catch (IOException e) {
             logger.error("Cannot load profile '" + options.profile + "':\n", e);

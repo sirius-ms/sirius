@@ -37,11 +37,11 @@ import java.util.Set;
 /**
  * This is for SIRIUS specific parameters.
  * <p>
- * It will be annotated to the MS2 Experiment
+ * They may be annotated to the MS2 Experiment
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@Command(name = "sirius", aliases = {"S"}, description = "Identify Molecular formula for each compound Individually using fragmentation trees and isotope patterns.")
+@Command(name = "sirius", aliases = {"S"}, description = "Identify Molecular formula for each compound Individually using fragmentation trees and isotope patterns.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
 public class SiriusOptions extends AbstractMsExperimentOptions {
 
     @Option(names = {"-s", "--isotope"}, description = "how to handle isotope pattern data. Use 'score' to use them for ranking or 'filter' if you just want to remove candidates with bad isotope pattern. With 'both' you can use isotopes for filtering and scoring (default). Use 'omit' to ignore isotope pattern.")

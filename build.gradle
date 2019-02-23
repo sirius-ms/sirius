@@ -14,13 +14,12 @@ buildscript {
     dependencies {
         classpath 'edu.sc.seis.gradle:launch4j:2.4.4'
         classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
-        classpath group: 'commons-configuration', name: 'commons-configuration', version: '1.10'
-
+        classpath 'org.apache.commons:commons-configuration2:2.4'
     }
 }
 
 plugins {
-    id "com.jfrog.artifactory" version "4.3.0"
+    id "com.jfrog.artifactory" version "4.9.3"
 }
 
 //Global Properties
@@ -35,7 +34,7 @@ ext {
     cdk_version = "2.1.1"
 
     jewelcli_version = '0.8.9'
-    picocli_version = '3.6.1'
+    picocli_version = '3.9.5'
 
     //locations of runtime libraries
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
@@ -58,7 +57,7 @@ ext {
 
     logger.lifecycle('reading build properties file...')
     props = new Properties()
-    File propertiesFileIn = new File("${projectDir}/src/main/resources/sirius_frontend.build.properties")
+    File propertiesFileIn = new File("${projectDir}/sirius_cli/src/main/resources/sirius_frontend.build.properties")
     propertiesFileIn.withReader("UTF8", {
         props.load(it)
     })
@@ -313,10 +312,6 @@ subprojects {
         classpath.add('./lib/*')
         classpath.addAll(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':'))
         println(classpath)
-
-        sourceSets.main.resources {
-            srcDir rootDir.toPath().resolve('src').resolve('main').resolve('resources').toString()
-        }
     }
 
     /*################### Linux release Stuff ################### */

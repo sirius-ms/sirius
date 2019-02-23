@@ -2,6 +2,7 @@ import de.unijena.bioinf.ms.cli.parameters.BasicOptions;
 import de.unijena.bioinf.ms.cli.parameters.DefaultParameterOptionLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import org.apache.commons.configuration2.CombinedConfiguration;
 import org.junit.Test;
 import picocli.CommandLine;
 
@@ -21,7 +22,7 @@ public class DefaultParameterOptionLoaderTest {
     public void singleValueTest() throws IOException {
         {
             String c = ApplicationCore.CITATION;
-            Properties p = PropertyManager.PROPERTIES;
+            CombinedConfiguration p = PropertyManager.PROPERTIES;
         }
         final DefaultParameterOptionLoader builder = new DefaultParameterOptionLoader();
         final List<CommandLine.Model.OptionSpec> options = builder.getOptions();
@@ -67,7 +68,7 @@ public class DefaultParameterOptionLoaderTest {
         listKeys.stream().forEach(key -> {
             assertEquals(
                     LIST_VALUE.replaceAll("\\s+", ""),
-                    PropertyManager.PROPERTIES.getProperty(key).replaceAll("\\s+", ""));
+                    PropertyManager.PROPERTIES.getString(key).replaceAll("\\s+", ""));
         });
     }
 
