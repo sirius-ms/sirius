@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Properties;
 
 //todo this should be combineable with Property FileWatcherService
+//todo move to Propertyconfiguration
 public class PersistentProperties extends Properties {
     private static final Logger LOGGER = LoggerFactory.getLogger(PersistentProperties.class);
     private final String fileheader;
@@ -35,19 +36,20 @@ public class PersistentProperties extends Properties {
             }
         }
 
-        PropertyManager.PROPERTIES.putAll(this);
+        PropertyManager.setProperties(this);
     }
 
 
     @Override
     public void putAll(Map<?, ?> properties) {
-        PropertyManager.PROPERTIES.putAll(properties);
-        super.putAll(properties);
+        throw new IllegalArgumentException();
+//        PropertyManager.setProperties(properties);
+//        super.putAll(properties);
     }
 
     @Override
     public Object put(Object key, Object value) {
-        PropertyManager.PROPERTIES.put(key, value);
+        PropertyManager.setProperty((String) key, value);
         return super.put(key, value);
     }
 

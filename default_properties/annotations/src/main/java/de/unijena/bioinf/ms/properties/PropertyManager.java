@@ -5,17 +5,28 @@ package de.unijena.bioinf.ms.properties;
  * 31.08.17.
  */
 
+
+import org.apache.commons.configuration2.CombinedConfiguration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.SubsetConfiguration;
+import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.combined.CombinedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.fluent.Parameters;
+import org.apache.commons.configuration2.builder.fluent.PropertiesBuilderParameters;
+import org.apache.commons.configuration2.convert.DisabledListDelimiterHandler;
+import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration2.tree.OverrideCombiner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Properties;
 
@@ -24,109 +35,185 @@ import java.util.Properties;
  */
 public class PropertyManager {
     public static final String PROPERTY_BASE = "de.unijena.bioinf";
-    public static final Properties PROPERTIES;
-    public static final DefaultPropertyLoader DEFAULTS;
+    public static final String MS_PROPERTY_BASE = PROPERTY_BASE + ".ms";
+    private static final String PROPERTY_LOCATIONS_KEY = MS_PROPERTY_BASE + ".propertyLocations";
+
+    public static final CombinedConfiguration PROPERTIES;
+
+    public static final String MS_CONFIGS_BASE = PropertyManager.MS_PROPERTY_BASE + ".configs";
+    public static final String CONFIGS_LOCATIONS_KEY = PropertyManager.MS_PROPERTY_BASE + ".configLocations";
+
+    public static final DefaultParameterConfig DEFAULTS;
+
+
+
 
     static {
-        if (System.getProperty("de.unijena.bioinf.ms.sirius.props") == null)
-            System.getProperties().put("de.unijena.bioinf.ms.sirius.props", "sirius.build.properties");
-        PROPERTIES = new Properties();
-        loadDefaultProperties();
-        loadProfileProperties();
-        DEFAULTS = new DefaultPropertyLoader(PROPERTIES, PROPERTY_BASE + ".ms");
-    }
-
-    public static void addPropertiesFromStream(@NotNull InputStream stream, @Nullable String prefixToAdd) throws IOException {
-        Properties props = new Properties();
-        props.load(stream);
-
-        if (prefixToAdd != null && !prefixToAdd.isEmpty())
-            props.forEach((key, value) -> PropertyManager.PROPERTIES.put(prefixToAdd + "." + key, value));
-        else
-            PropertyManager.PROPERTIES.putAll(props);
-    }
-
-    public static void addPropertiesFromStream(@NotNull InputStream stream) throws IOException {
-        addPropertiesFromStream(stream, null);
-    }
-
-    public static void addPropertiesFromFile(@NotNull Path files) {
-        addPropertiesFromFile(files, null);
-    }
-
-    public static void addPropertiesFromFile(@NotNull Path files, @Nullable String prefixToAdd) {
         try {
-            if (Files.exists(files)) {
-                addPropertiesFromStream(Files.newInputStream(files, StandardOpenOption.READ), prefixToAdd);
-            }
-        } catch (IOException e) {
-            System.err.println("WARNING: could not load Properties from: " + files.toString());
-            e.printStackTrace();
+            PROPERTIES = newCombinedProperties();
+            loadDefaultProperties();
+
+            DEFAULTS = new DefaultParameterConfig(
+                    PROPERTIES,
+                    loadDefaultConfigs().getLayout(),
+                    MS_CONFIGS_BASE
+            );
+        } catch (Throwable e) {
+            System.err.println("Property Manager STATIC Block Error!");
+            e.printStackTrace(System.err);
+            throw e;
         }
     }
 
-    public static void addProfilePropertiesFromFile(@NotNull Path profilePath) {
-        addPropertiesFromFile(profilePath, PROPERTY_BASE + ".ms");
+    public static CombinedConfiguration newCombinedProperties() {
+        try {
+            CombinedConfiguration c = new CombinedConfigurationBuilder()
+                    .configure(new Parameters().combined()
+                            .setThrowExceptionOnMissing(false)
+                            .setListDelimiterHandler(new DisabledListDelimiterHandler()))
+                    .getConfiguration();
+            c.setNodeCombiner(new OverrideCombiner());
+            return c;
+
+        } catch (ConfigurationException e) {
+            System.err.println("WARNING: Error during initProperties");
+            return new CombinedConfiguration();
+        }
     }
 
-    public static void addProfilePropertiesFromStream(@NotNull InputStream stream) throws IOException {
-        addPropertiesFromStream(stream, PROPERTY_BASE + ".ms");
+    public static PropertiesConfiguration initProperties() {
+        return initProperties(null);
     }
 
-    private static void loadProfileProperties() {
-        loadProperties(PROPERTIES.getProperty("de.unijena.bioinf.ms.sirius.profiles"), PROPERTY_BASE + ".ms");
+    public static @NotNull PropertiesConfiguration initProperties(@Nullable Path file) {
+        try {
+            PropertiesBuilderParameters props = new Parameters().properties()
+                    .setThrowExceptionOnMissing(false)
+                    .setListDelimiterHandler(new DisabledListDelimiterHandler())
+                    .setIncludesAllowed(false);
+            if (file != null)
+                props.setFile(file.toFile());
+
+            return new FileBasedConfigurationBuilder<>(PropertiesConfiguration.class).configure(props).getConfiguration();
+        } catch (ConfigurationException e) {
+            System.err.println("WARNING: Error during initProperties");
+            return new PropertiesConfiguration();
+        }
     }
 
-    private static void loadDefaultProperties() {
-        loadProperties(System.getProperties().getProperty("de.unijena.bioinf.ms.sirius.props"), null);
+    private static PropertiesConfiguration loadDefaultProperties() {
+        if (System.getProperty(PROPERTY_LOCATIONS_KEY) == null)
+            System.getProperties().put(PROPERTY_LOCATIONS_KEY, "sirius.build.properties");
+        return addPropertiesFromResources(System.getProperties().getProperty(PROPERTY_LOCATIONS_KEY), null, "resource_properties");
     }
 
-    private static void loadProperties(@Nullable final String locations, @Nullable final String prefixToAdd) {
+    private static PropertiesConfiguration loadDefaultConfigs() {
+        return addPropertiesFromResources(PROPERTIES.getString(CONFIGS_LOCATIONS_KEY), MS_CONFIGS_BASE, "resource_configs");
+    }
+
+    public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream input, @Nullable String name, @Nullable String prefixToAdd) throws IOException, ConfigurationException {
+        PropertiesConfiguration config = initProperties();
+        config.read(new InputStreamReader(input));
+
+        if (prefixToAdd != null && !prefixToAdd.isEmpty()) {
+            final PropertiesConfiguration tmp = initProperties();
+            ((SubsetConfiguration) tmp.subset(prefixToAdd)).append(config);
+            config = tmp;
+        }
+
+        return addPropertiesFromConfiguration(config, name);
+    }
+
+    public static PropertiesConfiguration addPropertiesFromConfiguration(@NotNull PropertiesConfiguration config, @Nullable String name) {
+        if (name == null || name.isEmpty())
+            PROPERTIES.addConfiguration(config);
+        else
+            PROPERTIES.addConfiguration(config, name);
+        return config;
+    }
+
+    public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream stream, @NotNull PropertiesConfiguration config, @Nullable String name) throws IOException, ConfigurationException {
+        config.read(new InputStreamReader(stream));
+        addPropertiesFromConfiguration(config, name);
+        return config;
+    }
+
+    public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream stream, @Nullable String name) throws IOException, ConfigurationException {
+        return addPropertiesFromStream(stream, initProperties(), name);
+    }
+
+    public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream stream) throws IOException, ConfigurationException {
+        return addPropertiesFromStream(stream, null);
+    }
+
+
+    /*public static @Nullable Configuration addPropertiesFromFile(@NotNull Path file) {
+        try {
+            if (Files.exists(file)) {
+                return addPropertiesFromStream(Files.newInputStream(file, StandardOpenOption.READ), initProperties(file), file.getFileName().toString());
+            }
+        } catch (ConfigurationException | IOException e) {
+            System.err.println("WARNING: could not load Properties from: " + file.toString());
+            e.printStackTrace();
+        }
+        return null;
+    }*/
+
+    //this reads and merges read only properties from within jar resources
+    public static PropertiesConfiguration addPropertiesFromResources(@Nullable final String locations, @Nullable final String prefixToAdd, @Nullable String name) {
         LinkedHashSet<String> resources = new LinkedHashSet<>();
 
         if (locations != null && !locations.isEmpty())
             resources.addAll(Arrays.asList(locations.split(",")));
 
-        loadProperties(resources, prefixToAdd);
+        return addPropertiesFromResources(resources, prefixToAdd, name);
     }
 
-    private static void loadProperties(@NotNull final LinkedHashSet<String> resources, @Nullable String prefixToAdd) {
+    //this reads and merges read only properties from within jar resources
+    public static PropertiesConfiguration addPropertiesFromResources(@NotNull final LinkedHashSet<String> resources, @Nullable String prefixToAdd, @Nullable String name) {
+        name = (name == null || name.isEmpty()) ? String.join("_", resources) : name;
+        final PropertiesConfiguration combined = initProperties();
         for (String resource : resources) {
             try (InputStream input = PropertyManager.class.getResourceAsStream("/" + resource)) {
-                addPropertiesFromStream(input, prefixToAdd);
-            } catch (IOException e) {
+                final PropertiesConfiguration tmp = initProperties();
+                tmp.read(new InputStreamReader(input));
+
+                if (prefixToAdd != null && !prefixToAdd.isEmpty())
+                    ((SubsetConfiguration) combined.subset(prefixToAdd)).append(tmp);
+                else
+                    combined.append(tmp);
+
+                addPropertiesFromConfiguration(combined, name);
+            } catch (ConfigurationException | IOException e) {
                 System.err.println("Could not load properties from " + resource);
                 e.printStackTrace();
             }
         }
+        return combined;
     }
 
-    public static Object setProperty(String key, String value) {
-        return PROPERTIES.setProperty(key, value);
+    public static void setProperty(String key, Object value) {
+        PROPERTIES.setProperty(key, value);
     }
 
-    public static Object put(String key, String value) {
-        return PROPERTIES.put(key, value);
+    public static void setProperties(Properties properties) {
+        properties.forEach((k, v) -> setProperty(String.valueOf(k), v));
     }
 
     public static int getNumberOfCores() {
-        return Integer.valueOf(PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1"));
+        return PROPERTIES.getInt("de.unijena.bioinf.sirius.cpu.cores", 1);
     }
 
     public static int getNumberOfThreads() {
-        return Integer.valueOf(PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.threads", "2"));
+        return PROPERTIES.getInt("de.unijena.bioinf.sirius.cpu.threads", 2);
     }
 
-    public static String getProperty(String key, String defaultValue) {
-        return PROPERTIES.getProperty(key, defaultValue);
-    }
-
-    public static String getProperty(String key) {
-        return PROPERTIES.getProperty(key);
+    public static String getStringProperty(String key) {
+        return PROPERTIES.getString(key);
     }
 
     public static String getStringProperty(String key, String backupKey, String defaultValue) {
-        return getProperty(key, getProperty(backupKey, defaultValue));
+        return PROPERTIES.getString(key, PROPERTIES.getString(backupKey, defaultValue));
     }
 
 
@@ -134,7 +221,7 @@ public class PropertyManager {
         return getStringProperty(key, backupKey, null);
     }
 
-    public static int getIntProperty(String key, String backupKey) {
+    /*public static int getIntProperty(String key, String backupKey) {
         return Integer.valueOf(getStringProperty(key, backupKey));
     }
 
@@ -144,9 +231,9 @@ public class PropertyManager {
 
     public static boolean getBooleanProperty(String key, String backupKey) {
         return Boolean.valueOf(getStringProperty(key, backupKey));
-    }
+    }*/
 
-    public static int getIntProperty(String key, int defaultValue) {
+    /*public static int getIntProperty(String key, int defaultValue) {
         String v = getProperty(key);
         return v == null ? defaultValue : Integer.valueOf(v);
     }
@@ -163,16 +250,26 @@ public class PropertyManager {
 
     public static boolean getBooleanProperty(String key) {
         return getBooleanProperty(key, false);
-    }
+    }*/
 
     public static Path getPath(String key) {
-        String v = getProperty(key);
+        String v = PROPERTIES.getString(key);
         return (v == null) ? null : Paths.get(v);
     }
 
     public static File getFile(String key) {
-        String v = getProperty(key);
+        String v = PROPERTIES.getString(key);
         return (v == null) ? null : new File(v);
+    }
+
+    public static Iterator<String> getDefaultPropertyKeys() {
+        return PROPERTIES.getKeys();
+    }
+
+    public static Properties asProperties() {
+        final Properties p = new Properties();
+        getDefaultPropertyKeys().forEachRemaining(k -> p.put(k, PROPERTIES.getString(k)));
+        return p;
     }
 
 

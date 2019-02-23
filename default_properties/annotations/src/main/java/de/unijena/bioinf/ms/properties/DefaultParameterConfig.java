@@ -1,6 +1,8 @@
 package de.unijena.bioinf.ms.properties;
 
 import com.google.gson.internal.Primitives;
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.PropertiesConfigurationLayout;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,14 +17,24 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
-public class DefaultPropertyLoader {
-    private String propertyRoot;
-    private Properties properties;
+public class DefaultParameterConfig {
+    private final String propertyRoot;
+    private final PropertiesConfigurationLayout layout;
+    private final Configuration properties;
 
 
-    public DefaultPropertyLoader(Properties properties, String propertyRoot) {
-        this.propertyRoot = propertyRoot;
+    public DefaultParameterConfig(Configuration properties, PropertiesConfigurationLayout layout, String propertyRoot) {
         this.properties = properties;
+        this.propertyRoot = propertyRoot;
+        this.layout = layout;
+    }
+
+    public Set<String> getDefaultPropertyKeys() {
+        return layout.getKeys();
+    }
+
+    public String getDefaultPropertyDescription(String key) {
+        return layout.getComment(key);
     }
 
     public <C> boolean isInstantiatableWithDefaults(Class<C> klass) {
@@ -162,9 +174,9 @@ public class DefaultPropertyLoader {
     }
 
     private <T> T parseProperty(@NotNull Class<T> type, @Nullable Type generic, @Nullable String fieldName, @NotNull String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
-        String stringValue = properties.getProperty(propertyName);
+        String stringValue = properties.getString(propertyName);
         if (stringValue == null && fieldName != null && !propertyName.endsWith(fieldName))
-            stringValue = properties.getProperty(propertyName + "." + fieldName);
+            stringValue = properties.getString(propertyName + "." + fieldName);
         if (stringValue == null)
             return null;
         return convertStringToType(type, generic, stringValue);
