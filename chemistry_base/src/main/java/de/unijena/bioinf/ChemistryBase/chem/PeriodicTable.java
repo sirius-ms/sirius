@@ -265,7 +265,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
         // ADDUCTS
         //create positives
-        final String[] adductsPositive = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.chem.adducts.positive").split(",");
+        final String[] adductsPositive = PropertyManager.getStringProperty("de.unijena.bioinf.sirius.chem.adducts.positive").split(",");
         for (String pos : adductsPositive) {
             PrecursorIonType type = ionByName(pos);
             assert type.getIonization().getCharge() > 0;
@@ -274,7 +274,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
 
         //create negatives
-        final String[] adductsNegative = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.chem.adducts.negative").split(",");
+        final String[] adductsNegative = PropertyManager.getStringProperty("de.unijena.bioinf.sirius.chem.adducts.negative").split(",");
         for (String neg : adductsNegative) {
             PrecursorIonType type = ionByName(neg);
             assert type.getIonization().getCharge() < 0;

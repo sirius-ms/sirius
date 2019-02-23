@@ -17,7 +17,7 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
 @RunWith(Parameterized.class)
-public class DefaultPropertyLoaderTest {
+public class DefaultParameterConfigTest {
 
     @Parameterized.Parameter(0)
     public Class<?> classToCreate;
@@ -30,7 +30,7 @@ public class DefaultPropertyLoaderTest {
 
     @Before
     public void init() throws IOException {
-        PropertyManager.addPropertiesFromStream(DefaultPropertyLoader.class.getResourceAsStream("/test.annotation.properties"));
+        PropertyManager.addPropertiesFromResources("/test.annotation.properties",null,null);
         for (int i = 0; i < propertyKey.length; i++) {
             PropertyManager.setProperty(propertyKey[i], propertyValue[i]);
         }
