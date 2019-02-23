@@ -10,30 +10,32 @@ import java.nio.file.Paths;
  * All version numbers are directly taken from the build. So there is no more redundant data. Note that version a.b.c-SNAPSHOT lower than a.b.c
  */
 public class FingerIDProperties {
-    static {
+    /*static {
+        //todo fix
         //init sirius credentials to global property manager
         Path creds = Paths.get(System.getProperty("user.home"), "sirius.credentials");
         PropertyManager.addPropertiesFromFile(creds);
-    }
+    }*/
+
 
     public static String fingeridVersion() {
-        return PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.fingerid.version");
+        return PropertyManager.getStringProperty("de.unijena.bioinf.fingerid.version");
     }
 
     public static String fingeridWebHost() {
-        return PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.fingerid.web.host");
+        return PropertyManager.getStringProperty("de.unijena.bioinf.fingerid.web.host");
     }
 
     public static String fingeridWebPort() {
-        return PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.fingerid.web.port");
+        return PropertyManager.getStringProperty("de.unijena.bioinf.fingerid.web.port");
     }
 
     public static String databaseDate() {
-        return PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.fingerid.db.date");
+        return PropertyManager.getStringProperty("de.unijena.bioinf.fingerid.db.date");
     }
 
     public static String siriusVersion() {
-        return PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.version");
+        return PropertyManager.getStringProperty("de.unijena.bioinf.sirius.version");
     }
 
     public static String sirius_guiVersion() {

@@ -1,6 +1,3 @@
 dependencies {
     compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
 }
-//sourceSets.main.resources {
-//    srcDir rootProject.rootDir.toPath().resolve('src').resolve('main').resolve('resources').toString()
-//}
