@@ -2,4 +2,6 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
     compile group: 'de.unijena.bioinf', name: 'jjobs-core', version: "$jjobs_version"
     compile group: 'com.google.code.gson', name: 'gson', version: "$gson_version"
+    compile group: 'org.apache.commons', name: 'commons-configuration2', version: '2.4'
+    compile group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.3'
 }

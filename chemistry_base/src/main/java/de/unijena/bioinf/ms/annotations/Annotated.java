@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.annotations;
 
+import de.unijena.bioinf.ms.properties.DefaultParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,7 +59,7 @@ public interface Annotated<A extends DataAnnotation> {
     /**
      * @return annotation value for the given class/key or the  default value given {@link PropertyManager}.DEFAULTS
      * The method will fail to provide a default value may fail if the given klass is not instantiatable via
-     * {@link de.unijena.bioinf.ms.properties.DefaultPropertyLoader}
+     * {@link DefaultParameterConfig}
      *
      *
      * TODO: only Ms2Experiment has "default" annotations. So this method should removed

@@ -10,6 +10,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+//todo change to apache property configuration
 public class PropertyFileWatcher extends Thread {
     private final Path file;
     private AtomicBoolean stop = new AtomicBoolean(false);
@@ -18,7 +19,7 @@ public class PropertyFileWatcher extends Thread {
     public PropertyFileWatcher(Path file, Properties propertiesToKeepUpToDate) {
         this.file = file;
         props = propertiesToKeepUpToDate;
-        PropertyManager.PROPERTIES.putAll(props);
+        PropertyManager.setProperties(props);
     }
 
     //these constructors create ab instance that adds changes to System.properties
@@ -45,7 +46,7 @@ public class PropertyFileWatcher extends Thread {
             Object nu = properties.getProperty(key);
             Object old = props.put(key, nu);
             if (old == null || !old.equals(nu)) {
-                PropertyManager.PROPERTIES.put(key, nu);
+                PropertyManager.setProperty(key, nu);
                 putted = true;
             }
         }
