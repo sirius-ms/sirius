@@ -8,18 +8,13 @@ import picocli.CommandLine.Option;
 /**
  * This is for Zodiac specific parameters.
  * <p>
- * It will be annotated to the MS2 Experiment
+ * They may be annotated to the MS2 Experiment
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "zodiac", aliases = {"Z"}, description = "Identify Molecular formulas of all compounds in a dataset together using ZODIAC.")
+@CommandLine.Command(name = "zodiac", aliases = {"Z"}, description = "Identify Molecular formulas of all compounds in a dataset together using ZODIAC.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
 public class ZodiacOptions extends AbstractMsExperimentOptions {
-//    @Option(names = {"-Z", "--zodiac"}, description = "run zodiac on a given sirius workspace.", hidden = true)
-//    public boolean zodiac;
 
-    /////////////////////////////////////////////////
-    // zodiac parameters
-    /////////////////////////////////////////////////
     @Option(
             names = {"--lowest-cosine"},
             description = "Below this cosine threshold a spectral library hit does not give any score bonus."

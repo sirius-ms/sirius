@@ -5,6 +5,7 @@ import de.unijena.bioinf.ms.cli.parameters.*;
 import de.unijena.bioinf.ms.cli.utils.FormatedTableBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
@@ -26,14 +27,8 @@ import java.io.IOException;
  * So they need to merge their results with the existing ones.
  */
 public class CLI extends ApplicationCore {
+    protected Logger logger = LoggerFactory.getLogger(CLI.class);
 
-    protected static boolean shellOutputSurpressed = false; //todo extra Utils class?
-    protected org.slf4j.Logger logger = LoggerFactory.getLogger(CombinedCLI.class);
-
-    //    protected ProjectWriter projectWriter;
-    protected Workflow workflow;
-    protected SiriusInstanceProcessor siriusInstanceProcessor;
-//    protected Sirius sirius;
 
 
     BasicOptions basicOptions;
@@ -43,32 +38,6 @@ public class CLI extends ApplicationCore {
     CanopusOptions canopusOptions;
     DefaultParameterOptionLoader configOptionLoader;
 
-    protected int instanceIdOffset; //index offset if project space is merged
-
-
-    /*public void compute() {
-        final long time = System.currentTimeMillis();
-        try {
-            if (workflow instanceof ZodiacWorkflow) {
-                Path workspace = Paths.get(basicOptions.workspaceZip);
-                List<ExperimentResult> experimentResults = loadWorkspace(workspace.toFile());
-                workflow.compute(experimentResults.iterator());
-            } else {
-                Iterator<Instance> instanceIterator = handleInput();
-                workflow.compute(instanceIterator);
-            }
-        } catch (IOException e) {
-            logger.error("Error while handling the input data", e);
-        } finally {
-            if (projectWriter != null) try {
-                projectWriter.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            logger.info("Computation time: " + (double) (System.currentTimeMillis() - time) / 1000d + "s");
-        }
-    }
-*/
 
     //////////////////////////////////////////////////
     // init
@@ -104,6 +73,22 @@ public class CLI extends ApplicationCore {
         }
     }
 
+    private boolean printHelpIfRequested(String[] args, CommandLine.ParseResult parseResult) {
+        boolean r = false;
+        if (args == null || args.length == 0) {
+            parseResult.commandSpec().commandLine().usage(System.out);
+            return true;
+        }
+
+        for (CommandLine commandLine : parseResult.asCommandLineList()) {
+            if (commandLine.isUsageHelpRequested()) {
+                commandLine.usage(System.out);
+                r = true;
+            }
+        }
+        return r;
+    }
+
     protected void parseArgsAndInit(String[] args) {
         parseArgs(args);
 //        if (!workflow.setup()) System.exit(1);
@@ -127,7 +112,7 @@ public class CLI extends ApplicationCore {
             CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), siriusSpec, zodiacSpec, fingeridSpec, canopusOptions);
             CommandLine.Model.CommandSpec basicSpec = forAnnotatedObjectWithSubCommands(basicOptions, configSpec, siriusSpec, zodiacSpec, fingeridSpec, canopusOptions);
 
-            basicSpec.usageMessage().footerHeading("Please cite the following publications when using our tool:");
+            basicSpec.usageMessage().footerHeading(System.lineSeparator() + System.lineSeparator() + "Please cite the following publications when using our tool:" + System.lineSeparator() + System.lineSeparator());
             basicSpec.usageMessage().footer(ApplicationCore.CITATION);
 
             return basicSpec;
@@ -156,7 +141,7 @@ public class CLI extends ApplicationCore {
         configOptionLoader.overrideDefaults(); //writing commandline defaults over file defaults
 
         //printing version or usage help
-        if (CommandLine.printHelpIfRequested(parseResult))
+        if (printHelpIfRequested(args, parseResult))
             System.exit(0);
         if (basicOptions.cite) { //todo this should be the header or footer of the tool
             cite(spec);

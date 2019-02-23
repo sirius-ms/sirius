@@ -5,21 +5,20 @@ import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import picocli.CommandLine;
 
-@CommandLine.Command(defaultValueProvider = Options.Defaults.class, versionProvider = Options.Versions.class, footer = {}, footerHeading = "Please cite the following paper when using our tool: ")
-public interface Options {
+public class Provide {
 
-    class Defaults implements CommandLine.IDefaultValueProvider {
+    static class Defaults implements CommandLine.IDefaultValueProvider {
         public static final String PROPERTY_BASE = "de.unijena.bioinf.sirius.parameters";
 
         @Override
         public String defaultValue(CommandLine.Model.ArgSpec argSpec) {
             final String l = argSpec.paramLabel(); //this should be the field name per default
             if (l == null || l.isEmpty()) return null;
-            return PropertyManager.PROPERTIES.getProperty(PROPERTY_BASE + "." + l);
+            return PropertyManager.PROPERTIES.getString(PROPERTY_BASE + "." + l);
         }
     }
 
-    class Versions implements CommandLine.IVersionProvider {
+    static class Versions implements CommandLine.IVersionProvider {
         public static final String PROPERTY_BASE = "de.unijena.bioinf.sirius.parameters";
 
         @Override
@@ -28,8 +27,7 @@ public interface Options {
         }
     }
 
-    class DefaultPropertyTypeConverter implements CommandLine.ITypeConverter<Object>{
-
+    static class DefaultPropertyTypeConverter implements CommandLine.ITypeConverter<Object>{
         @Override
         public Object convert(String value) throws Exception {
 //            if (PropertyManager.DEFAULTS.isInstantiatableWithDefaults())

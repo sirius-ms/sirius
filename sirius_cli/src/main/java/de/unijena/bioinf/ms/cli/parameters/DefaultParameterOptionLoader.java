@@ -21,24 +21,22 @@ public class DefaultParameterOptionLoader {
     }
 
     private List<CommandLine.Model.OptionSpec> loadDefaultParameterOptions() throws IOException {
-        Properties defaults = new Properties();
-        try (InputStream stream = ApplicationCore.class.getResourceAsStream("/custom.profile")) {
-            defaults.load(stream);
-        }
-        return defaults.entrySet().stream().map((entry) -> {
-            CommandLine.Model.OptionSpec.Builder pSpec = CommandLine.Model.OptionSpec
-                    .builder((String) "--" + entry.getKey())
-                    .hasInitialValue(false)
-                    .defaultValue((String) entry.getValue())
-                    .hidden(true); //todo hidden or subtool???
 
-            if (((String) entry.getValue()).contains(",")) {
+        return PropertyManager.DEFAULTS.getDefaultPropertyKeys().stream().map((key) -> {
+            final String value = PropertyManager.getStringProperty(key);
+            CommandLine.Model.OptionSpec.Builder pSpec = CommandLine.Model.OptionSpec
+                    .builder("--" + key)
+                    .description(PropertyManager.DEFAULTS.getDefaultPropertyDescription(key))
+                    .hasInitialValue(false)
+                    .defaultValue(value);
+
+            if (value.contains(",")) {
                 pSpec.type(List.class)
                         .splitRegex("\\s+,\\s+")
                         .setter(new CommandLine.Model.ISetter() {
                             @Override
                             public <T> T set(T value) throws Exception {
-                                return (T) parsedDefaults.setProperty((String) entry.getKey(),
+                                return (T) parsedDefaults.setProperty(key,
                                         String.join(",", (List<String>) value));
                             }
                         });
@@ -48,7 +46,7 @@ public class DefaultParameterOptionLoader {
                         .setter(new CommandLine.Model.ISetter() {
                             @Override
                             public <T> T set(T value) throws Exception {
-                                return (T) parsedDefaults.setProperty((String) entry.getKey(), (String) value);
+                                return (T) parsedDefaults.setProperty(key, (String) value);
                             }
                         });
             }
@@ -57,7 +55,7 @@ public class DefaultParameterOptionLoader {
     }
 
     public void overrideDefaults() {
-        PropertyManager.PROPERTIES.putAll(parsedDefaults);
+        PropertyManager.setProperties(parsedDefaults);
     }
 
     public Properties getParsedDefaults() {
@@ -70,7 +68,11 @@ public class DefaultParameterOptionLoader {
 
     public CommandLine.Model.CommandSpec asCommandSpec() {
         if (commandSpec == null) {
-            final CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.forAnnotatedObject(new DefaultParameterOptions());
+            CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.create();
+            spec.name("config");
+            spec.versionProvider(new Provide.Versions());
+            spec.defaultValueProvider(new Provide.Defaults());
+            spec.mixinStandardHelpOptions(true); // usageHelp and versionHelp options
             for (CommandLine.Model.OptionSpec option : options) {
                 spec.addOption(option);
             }
@@ -79,7 +81,8 @@ public class DefaultParameterOptionLoader {
         return commandSpec;
     }
 
-    @CommandLine.Command(name = "config", description = "This allows you to set all configuration from the profile files from the command line.")
+    /*@CommandLine.Command(name = "config", description = "This allows you to set all configuration from the profile files from the command line.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
     private class DefaultParameterOptions {
-    }
+
+    }*/
 }

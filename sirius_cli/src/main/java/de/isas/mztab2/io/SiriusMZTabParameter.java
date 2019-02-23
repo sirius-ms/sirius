@@ -66,12 +66,12 @@ public enum SiriusMZTabParameter {
 
 
     public final static Parameter SOFTWARE_SIRIUS = new Parameter()
-            .name(PropertyManager.getProperty("de.unijena.bioinf.utils.errorReport.softwareName", "SIRIUS"))
-            .value(PropertyManager.getProperty("de.unijena.bioinf.sirius.version"));
+            .name(PropertyManager.PROPERTIES.getString("de.unijena.bioinf.utils.errorReport.softwareName", "SIRIUS"))
+            .value(PropertyManager.PROPERTIES.getString("de.unijena.bioinf.sirius.version"));
 
     public final static Parameter SOFTWARE_FINGER_ID = new Parameter()
             .name("CSI:FingerID")
-            .value(PropertyManager.getProperty("de.unijena.bioinf.fingerid.version"));
+            .value(PropertyManager.PROPERTIES.getString("de.unijena.bioinf.fingerid.version"));
 
     //todo should we integrade this service in DataSourceService.java
     public final static Database NO_DATABASE = new Database().id(1).param(new Parameter().name("no database").value("null"));
@@ -79,7 +79,7 @@ public enum SiriusMZTabParameter {
     public final static Database PUBCHEM = new Database().id(3)
             .prefix("CID")
             .uri("https://pubchem.ncbi.nlm.nih.gov/compound/")
-            .version(PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.date"))
+            .version(PropertyManager.PROPERTIES.getString("de.unijena.bioinf.fingerid.db.date"))
             .param(new Parameter().name("CSI:FingerID PubChem Copy").value("CID"));
 
 
