@@ -55,7 +55,7 @@ ext {
 
     logger.lifecycle('reading build properties file...')
     props = new Properties()
-    File propertiesFileIn = new File("${projectDir}/src/main/resources/sirius_frontend.build.properties")
+    File propertiesFileIn = new File("${projectDir}/sirius_cli/src/main/resources/sirius_frontend.build.properties")
     propertiesFileIn.withReader("UTF8", {
         props.load(it)
     })
@@ -311,10 +311,6 @@ subprojects {
         classpath.add('./lib/*')
         classpath.addAll(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':'))
         println(classpath)
-
-        sourceSets.main.resources {
-            srcDir rootDir.toPath().resolve('src').resolve('main').resolve('resources').toString()
-        }
     }
 
     /*################### Linux release Stuff ################### */
