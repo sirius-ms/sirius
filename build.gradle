@@ -17,7 +17,7 @@ ext {
     System.properties.putAll(props)
     logger.lifecycle('reading build properties file...')
     props = new Properties()
-    File propertiesFileIn = new File("${projectDir}/src/main/resources/sirius.build.properties")
+    File propertiesFileIn = new File("${projectDir}/chemistry_base/src/main/resources/sirius.build.properties")
     propertiesFileIn.withReader("UTF8", {
         props.load(it)
     })
