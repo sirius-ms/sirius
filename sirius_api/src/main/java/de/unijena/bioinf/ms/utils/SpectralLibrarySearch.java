@@ -23,68 +23,40 @@ import java.util.*;
 public class SpectralLibrarySearch {
     public static final boolean TEST = false;
 
-    public static void main(String... args) throws IOException {
-        PeriodicTable periodicTable = PeriodicTable.getInstance();
-        File file = new File("/home/ge28quv/Data_work/Data/data_and_databases/massbank.ms");
-        List<Ms2Experiment> experiments = new MsExperimentParser().getParser(file).parseFromFile(file);
-
-
-        Deviation deviation = new Deviation(20,0.005);
-        boolean sqrtIntensity = true;
-        boolean multiplyByMass = true;
-        int minSharedPeaks = 5;
-        SpectralLibrarySearch spectralLibrarySearch = SpectralLibrarySearch.newInstance(experiments.toArray(new Ms2Experiment[0]), new GaussianSpectralAlignment(deviation), deviation, sqrtIntensity, multiplyByMass, minSharedPeaks);
-
-
-        TDoubleArrayList doubleArrayList = new TDoubleArrayList();
-        for (Ms2Experiment experiment : experiments) {
-            SpectralLibraryHit hit = spectralLibrarySearch.findBestHit(experiment, AllowedMassDifference.allowDirectMatchesAndBiotransformations());
-            if (hit.getLibraryHit()==null){
-                System.out.println("none");
-                continue;
-            }
-
-            doubleArrayList.add(hit.getCosine());
-            System.out.println(hit.getCosine()+" "+hit.getNumberOfSharedPeaks()+" "+hit.getLibraryHit().getName()+" "+experiment.getName());
-
-        }
-
-        double min = 0;
-        double max = 1d;
-        double step = 0.02;
-
-        for (double i = min; i < max; i+=step) {
-            double finalI = i;
-            int count = doubleArrayList.grep(d-> (d>finalI&&d<=finalI+step)).size();
-            System.out.println(i+" "+count);
-
-        }
-
-    }
-
     //todo remove precursor mass?! or +-17Da or +-50Da?
     private final LibrarySpectrum[] librarySpectra;
     private final CosineQuerySpectrum[] libraryQueries;
-//    private final OrderedSpectrum<Peak>[] librarySpectraInverse;
-//    private final double[] selfSimilarity;
-//    private final double[] selfSimilarityLosses;
+
     private final CosineQueryUtils.IntensityTransformation intensityTransformation;
     private final int minSharedPeaks;
     private final Deviation deviation;
     private static final Normalization NORMALIZATION = Normalization.Sum(100);
+
+    private final boolean transformationSearch;
 
     private final AbstractSpectralAlignment spectralAlignment;
     private final CosineQueryUtils cosineUtils;
 
     private final Logger Log = LoggerFactory.getLogger(SpectralLibrarySearch.class);
 
-    public SpectralLibrarySearch(LibrarySpectrum[] librarySpectra, AbstractSpectralAlignment spectralAlignment, Deviation ms2Deviation, boolean transformSqrtIntensity, boolean multiplyIntensityByMass, int minSharedPeaks) {
+    /**
+     *
+     * @param librarySpectra
+     * @param spectralAlignment
+     * @param ms2Deviation
+     * @param transformSqrtIntensity
+     * @param multiplyIntensityByMass
+     * @param minSharedPeaks
+     * @param transformationSearch search for similar compounds. For this the similiarity is not the mean of the cosines of the spectras and the inverse spectras but the maximum
+     */
+    public SpectralLibrarySearch(LibrarySpectrum[] librarySpectra, AbstractSpectralAlignment spectralAlignment, Deviation ms2Deviation, boolean transformSqrtIntensity, boolean multiplyIntensityByMass, int minSharedPeaks, boolean transformationSearch) {
         //todo remove parent peaks!?
         this.librarySpectra = librarySpectra.clone();
         this.minSharedPeaks = minSharedPeaks;
         this.deviation = ms2Deviation;
         this.spectralAlignment = spectralAlignment;
         this.cosineUtils = new CosineQueryUtils(spectralAlignment);
+        this.transformationSearch = transformationSearch;
 
 
         //sort for binary mz search
@@ -125,10 +97,10 @@ public class SpectralLibrarySearch {
     }
 
     public static SpectralLibrarySearch newInstance(Ms2Experiment[] library) {
-        return newInstance(library, new GaussianSpectralAlignment(new Deviation(20, 005)), new Deviation(20, 0.005), true, true, 5);
+        return newInstance(library, new GaussianSpectralAlignment(new Deviation(20, 005)), new Deviation(20, 0.005), true, true, 5, false);
     }
 
-    public static SpectralLibrarySearch newInstance(Ms2Experiment[] library, AbstractSpectralAlignment spectralAlignment,  Deviation ms2MergeDeviation, boolean transformSqrtIntensity, boolean multiplyIntensityByMass, int minSharedPeaks) {
+    public static SpectralLibrarySearch newInstance(Ms2Experiment[] library, AbstractSpectralAlignment spectralAlignment,  Deviation ms2MergeDeviation, boolean transformSqrtIntensity, boolean multiplyIntensityByMass, int minSharedPeaks, boolean transformationSearch) {
         LibrarySpectrum[] librarySpectra = new LibrarySpectrum[library.length];
 
         boolean mergePeaks = (spectralAlignment instanceof IntensityWeightedSpectralAlignment);
@@ -145,7 +117,7 @@ public class SpectralLibrarySearch {
             librarySpectra[i] = librarySpectrum;
         }
 
-        return new SpectralLibrarySearch(librarySpectra, spectralAlignment, ms2MergeDeviation, transformSqrtIntensity, multiplyIntensityByMass, minSharedPeaks);
+        return new SpectralLibrarySearch(librarySpectra, spectralAlignment, ms2MergeDeviation, transformSqrtIntensity, multiplyIntensityByMass, minSharedPeaks, transformationSearch);
     }
 
     /**
@@ -208,7 +180,8 @@ public class SpectralLibrarySearch {
         TIntIterator candidateIterator = canditateIterator(precursorMass, allowedMassDifference.maxAllowedShift());
         while (candidateIterator.hasNext()) {
             int current = candidateIterator.next();
-            if (ionType!=null && !librarySpectra[current].getIonType().equals(ionType)) continue; //only same or unknown iontype
+//            if (ionType!=null && !librarySpectra[current].getIonType().equals(ionType)) continue; //only same or unknown iontype
+            if (ionType!=null && !librarySpectra[current].getIonType().getIonization().equals(ionType.getIonization())) continue; //only same or unknown ionization
             if (!allowedMassDifference.isAllowed(precursorMass, librarySpectra[current].getIonMass(), deviation)) continue; //only specific mass differences allowed. e.g. 0 or biotransformation
             //i is the library spectrum
             SpectralSimilarity similarity = score(query, current);
@@ -223,6 +196,7 @@ public class SpectralLibrarySearch {
             return new SpectralLibraryHit(bestHit, null, 0, 0);
         }
         MolecularFormula estimatedMF = findFormulaOfCompound(bestHit, precursorMass, deviation, allowedMassDifference);
+        if (!ionType.hasNeitherAdductNorInsource() && estimatedMF!=null) estimatedMF = ionType.measuredNeutralMoleculeToNeutralMolecule(estimatedMF);
         return new SpectralLibraryHit(bestHit, estimatedMF, bestSimilarity.similarity, bestSimilarity.shardPeaks);
     }
 
@@ -230,48 +204,29 @@ public class SpectralLibrarySearch {
      * if library hit and compound have different mass, estimate the compounds MF using biotransformations
      */
     private MolecularFormula findFormulaOfCompound(LibrarySpectrum librarySpectrum, double compoundMass, Deviation deviation, AllowedMassDifference allowedMassDifference){
+        //todo or rather transform libraryMz with adducts/in-source-losses??
+        MolecularFormula libraryPrecursorMF = librarySpectrum.getIonType().neutralMoleculeToMeasuredNeutralMolecule(librarySpectrum.getMolecularFormula());
+
         double libraryMz = librarySpectrum.getIonMass();
-        if (deviation.inErrorWindow(libraryMz, compoundMass)) return librarySpectrum.getMolecularFormula();
+        if (deviation.inErrorWindow(libraryMz, compoundMass)) return libraryPrecursorMF;
 
         List<MolecularFormula> possibleTransf = new ArrayList<>();
         for (BioTransformation transformation : BioTransformation.values()) {
             if (transformation.isConditional()) continue;//don't use conditional transformations
-            MolecularFormula transformedMF = explainMassDiffWithTransformation(libraryMz, librarySpectrum.getMolecularFormula(), compoundMass, transformation, deviation);
+            MolecularFormula transformedMF = explainMassDiffWithTransformation(libraryMz, libraryPrecursorMF, compoundMass, transformation, deviation);
             if (transformedMF!=null) possibleTransf.add(transformedMF);
         }
         if (possibleTransf.size()==0){
-            Log.warn("no suitable biotransformation found for compounds mz "+compoundMass+" and library MF "+librarySpectrum.getMolecularFormula()+" | "+librarySpectrum.getIonType());
-//            allowedMassDifference.isAllowed(compoundMass, librarySpectrum.getIonMass(), deviation);
-//            for (BioTransformation transformation : BioTransformation.values()) {
-//                if (transformation.isConditional()) continue;//don't use conditional transformations
-//                MolecularFormula transformedMF = explainMassDiffWithTransformation(libraryMz, librarySpectrum.getMolecularFormula(), compoundMass, transformation, deviation);
-//                if (transformedMF!=null) possibleTransf.add(transformedMF);
-//            }
+            Log.debug("no suitable biotransformation found for compounds mz "+compoundMass+" and library MF "+librarySpectrum.getMolecularFormula()+" | "+librarySpectrum.getIonType());
             return null;
         } else if (possibleTransf.size()>1){
-            Log.warn("mass difference of compound and library hit is ambiguous. skipping");
+            Log.debug("mass difference of compound and library hit is ambiguous. skipping");
             return null;
         }
         return possibleTransf.get(0);
     }
 
     private MolecularFormula explainMassDiffWithTransformation(double libMz, MolecularFormula libFormula, double compoundMz, BioTransformation transformation, Deviation deviation){
-//        double libMzWithTransfShift;
-//        if (libMz<compoundMz){
-//            libMzWithTransfShift = libMz+transformation.getFormula().getMass();
-//        } else {
-//            libMzWithTransfShift = libMz-transformation.getFormula().getMass();
-//        }
-//        if (deviation.inErrorWindow(libMzWithTransfShift, compoundMz)){
-//            if (libMz<compoundMz) return libFormula.add(transformation.getFormula());
-//            else {
-//                MolecularFormula withoutTransf = libFormula.subtract(transformation.getFormula());
-//                if (withoutTransf.isAllPositiveOrZero()) return withoutTransf;
-//                else return null;
-//            }
-//        }
-//        return null;
-
         double min,max;
         if (libMz<compoundMz){
             min = libMz;
@@ -282,7 +237,8 @@ public class SpectralLibrarySearch {
         }
 
         if (deviation.inErrorWindow(min+transformation.getFormula().getMass(), max)){
-            if (libMz<compoundMz) return libFormula.add(transformation.getCondition());
+            //todo ignore condition or don't?
+            if (libMz<compoundMz) return libFormula.add(transformation.getFormula());
             else {
                 MolecularFormula withoutTransf = libFormula.subtract(transformation.getFormula());
                 if (withoutTransf.isAllPositiveOrZero()) return withoutTransf;
@@ -357,7 +313,20 @@ public class SpectralLibrarySearch {
     }
 
     private SpectralSimilarity score(CosineQuerySpectrum query, int librarySpectrumIdx) {
-        return cosineUtils.cosineProductWithLosses(query, libraryQueries[librarySpectrumIdx]);
+        if (transformationSearch){
+            //take max
+            SpectralSimilarity cos = cosineUtils.cosineProduct(query, libraryQueries[librarySpectrumIdx]);
+            SpectralSimilarity cosInv = cosineUtils.cosineProductOfInverse(query, libraryQueries[librarySpectrumIdx]);
+            if (cos.similarity>cosInv.similarity || (cos.similarity==cosInv.similarity && cos.shardPeaks>cosInv.shardPeaks)){
+                return cos;
+            } else {
+                return cosInv;
+            }
+        } else {
+            //take mean
+            return cosineUtils.cosineProductWithLosses(query, libraryQueries[librarySpectrumIdx]);
+        }
+
     }
 
     @Deprecated

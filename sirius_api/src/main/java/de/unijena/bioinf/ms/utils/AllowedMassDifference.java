@@ -31,6 +31,10 @@ public interface AllowedMassDifference {
         return new DirectMatch();
     }
 
+    public static AllowedMassDifference allowMaxDifference(double maxDifference) {
+        return new MaxDifference(maxDifference);
+    }
+
     /**
      * allow same mz and biotransformations. but not conditional biotransformations
      * @return
@@ -55,6 +59,25 @@ public interface AllowedMassDifference {
                 return deviation.inErrorWindow(mz2, mz1);
             }
 
+        }
+
+    }
+
+    public class MaxDifference implements AllowedMassDifference {
+        private double maxDiff;
+
+        public MaxDifference(double maxDiff) {
+            this.maxDiff = maxDiff;
+        }
+
+        @Override
+        public double maxAllowedShift() {
+            return maxDiff;
+        }
+
+        @Override
+        public boolean isAllowed(double mz1, double mz2, Deviation deviation) {
+            return Math.abs(mz1-mz2)<=maxDiff+deviation.absoluteFor(Math.max(mz1, mz2));
         }
 
     }
