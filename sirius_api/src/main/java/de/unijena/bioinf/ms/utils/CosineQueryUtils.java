@@ -73,12 +73,12 @@ public class CosineQueryUtils {
         return new SpectralSimilarity((similarity.similarity +similarityLosses.similarity)/2d, Math.max(similarity.shardPeaks, similarityLosses.shardPeaks));
     }
 
-    private SpectralSimilarity cosineProduct(CosineQuerySpectrum query1, CosineQuerySpectrum query2) {
+    public SpectralSimilarity cosineProduct(CosineQuerySpectrum query1, CosineQuerySpectrum query2) {
         SpectralSimilarity similarity = spectralAlignmentMethod.score(query1.spectrum, query2.spectrum);
         return new SpectralSimilarity(similarity.similarity /Math.sqrt(query1.selfSimilarity*query2.selfSimilarity), similarity.shardPeaks);
     }
 
-    private SpectralSimilarity cosineProductOfInverse(CosineQuerySpectrum query, CosineQuerySpectrum query2) {
+    public SpectralSimilarity cosineProductOfInverse(CosineQuerySpectrum query, CosineQuerySpectrum query2) {
         SpectralSimilarity similarity = spectralAlignmentMethod.score(query.inverseSpectrum, query2.inverseSpectrum);
         return new SpectralSimilarity(similarity.similarity /(Math.sqrt(query.selfSimilarityLosses*query2.selfSimilarityLosses)), similarity.shardPeaks);
     }

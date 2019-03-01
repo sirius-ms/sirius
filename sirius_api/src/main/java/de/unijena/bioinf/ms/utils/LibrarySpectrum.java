@@ -32,7 +32,7 @@ public class LibrarySpectrum {
         this.smiles = smiles;
         this.inChI = inChI;
 
-        this.ionMass = ionType.addIonAndAdduct(molecularFormula.getMass());
+        this.ionMass = ionType.neutralMassToPrecursorMass(molecularFormula.getMass());
     }
 
     public static LibrarySpectrum fromExperiment(Ms2Experiment experiment, Spectrum<Peak> fragmentationSpectrum) {
