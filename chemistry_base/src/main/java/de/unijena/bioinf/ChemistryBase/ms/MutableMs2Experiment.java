@@ -62,6 +62,11 @@ public class MutableMs2Experiment implements Ms2Experiment {
         this.name = experiment.getName();
     }
 
+    @Override
+    public MutableMs2Experiment mutate() {
+        return this;
+    }
+
     public void setSource(URL source) {
         this.source = source;
     }
