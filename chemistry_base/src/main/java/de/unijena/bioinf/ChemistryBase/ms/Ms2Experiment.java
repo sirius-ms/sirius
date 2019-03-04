@@ -94,6 +94,13 @@ public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotat
     }
 
     /**
+     * @return either a mutable copy, or a reference to itself when already mutable. Use new MutableMs2Experiment to enforce a copy!
+     */
+    default MutableMs2Experiment mutate() {
+        return new MutableMs2Experiment(this);
+    }
+
+    /**
      * @return molecular formula of the neutral molecule
      */
     MolecularFormula getMolecularFormula();
