@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
@@ -21,16 +22,15 @@ public class TreeFeatures implements FeatureCreator {
     @Override
     public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query,  IdentificationResult idresult,long flags) {
 
-       /* double[] scores= new double[4];
-        TreeScoring current_tree_scores =  idresult.getRawTree().getAnnotationOrThrow(TreeScoring.class);
+        double[] scores= new double[4];
+        TreeStatistics current_tree_scores =  idresult.getRawTree().getAnnotationOrThrow(TreeStatistics.class);
 
         scores[0]=current_tree_scores.getExplainedIntensityOfExplainablePeaks();
         scores[1]= current_tree_scores.getExplainedIntensity();
         scores[2]=current_tree_scores.getRatioOfExplainedPeaks();
-        scores[3]= current_tree_scores.getOverallScore();
+        scores[3]= idresult.getRawTree().getTreeWeight();
 
-        return scores;*/
-        throw new IllegalArgumentException("This method has to be reimplemented to work with new sirius api");
+        return scores;
 
     }
 
