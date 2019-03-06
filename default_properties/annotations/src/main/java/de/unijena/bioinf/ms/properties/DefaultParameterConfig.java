@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 
 public class DefaultParameterConfig {
-    private final String propertyRoot;
+    public final String propertyRoot;
     private final PropertiesConfigurationLayout layout;
     private final Configuration properties;
 
