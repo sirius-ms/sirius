@@ -113,7 +113,7 @@ public class PropertyManager {
 
     public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream input, @Nullable String name, @Nullable String prefixToAdd) throws IOException, ConfigurationException {
         PropertiesConfiguration config = initProperties();
-        config.read(new InputStreamReader(input));
+        config.getLayout().load(config, new InputStreamReader(input));
 
         if (prefixToAdd != null && !prefixToAdd.isEmpty()) {
             final PropertiesConfiguration tmp = initProperties();
@@ -133,7 +133,7 @@ public class PropertyManager {
     }
 
     public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream stream, @NotNull PropertiesConfiguration config, @Nullable String name) throws IOException, ConfigurationException {
-        config.read(new InputStreamReader(stream));
+        config.getLayout().load(config, new InputStreamReader(stream));
         addPropertiesFromConfiguration(config, name);
         return config;
     }
@@ -176,19 +176,25 @@ public class PropertyManager {
         for (String resource : resources) {
             try (InputStream input = PropertyManager.class.getResourceAsStream("/" + resource)) {
                 final PropertiesConfiguration tmp = initProperties();
-                tmp.read(new InputStreamReader(input));
+                tmp.getLayout().load(tmp, new InputStreamReader(input));
 
-                if (prefixToAdd != null && !prefixToAdd.isEmpty())
-                    ((SubsetConfiguration) combined.subset(prefixToAdd)).append(tmp);
-                else
+                if (prefixToAdd != null && !prefixToAdd.isEmpty()) {
+                    SubsetConfiguration sub = ((SubsetConfiguration) combined.subset(prefixToAdd));
+                    sub.append(tmp);
+                    tmp.getLayout().getKeys().stream().forEach(key -> {
+                        final String kk = prefixToAdd + "." + key;
+                        if (combined.getLayout().getComment(kk) == null)
+                            combined.getLayout().setComment(kk, tmp.getLayout().getComment(key));
+                    });
+                } else {
                     combined.append(tmp);
-
-                addPropertiesFromConfiguration(combined, name);
+                }
             } catch (ConfigurationException | IOException e) {
                 System.err.println("Could not load properties from " + resource);
                 e.printStackTrace();
             }
         }
+        addPropertiesFromConfiguration(combined, name);
         return combined;
     }
 
