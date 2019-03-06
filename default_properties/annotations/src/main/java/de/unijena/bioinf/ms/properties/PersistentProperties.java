@@ -42,9 +42,10 @@ public class PersistentProperties extends Properties {
 
     @Override
     public void putAll(Map<?, ?> properties) {
-        throw new IllegalArgumentException();
-//        PropertyManager.setProperties(properties);
-//        super.putAll(properties);
+        if (!(properties instanceof Properties))
+            throw new IllegalArgumentException();
+        PropertyManager.setProperties((Properties) properties);
+        super.putAll(properties);
     }
 
     @Override
