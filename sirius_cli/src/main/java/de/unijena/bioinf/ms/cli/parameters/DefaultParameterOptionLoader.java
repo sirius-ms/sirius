@@ -1,11 +1,9 @@
 package de.unijena.bioinf.ms.cli.parameters;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
 import picocli.CommandLine;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -24,15 +22,16 @@ public class DefaultParameterOptionLoader {
 
         return PropertyManager.DEFAULTS.getDefaultPropertyKeys().stream().map((key) -> {
             final String value = PropertyManager.getStringProperty(key);
+            final String descr = PropertyManager.DEFAULTS.getDefaultPropertyDescription(key);
             CommandLine.Model.OptionSpec.Builder pSpec = CommandLine.Model.OptionSpec
-                    .builder("--" + key)
-                    .description(PropertyManager.DEFAULTS.getDefaultPropertyDescription(key))
+                    .builder("--" + key.replace(PropertyManager.DEFAULTS.propertyRoot + ".", ""))
+                    .description((descr != null) ? descr.replaceAll(System.lineSeparator()," ").replaceAll("#\\s*","") : "")
                     .hasInitialValue(false)
                     .defaultValue(value);
 
             if (value.contains(",")) {
                 pSpec.type(List.class)
-                        .splitRegex("\\s+,\\s+")
+                        .splitRegex(",")
                         .setter(new CommandLine.Model.ISetter() {
                             @Override
                             public <T> T set(T value) throws Exception {
