@@ -256,7 +256,9 @@ public class ZodiacUtils {
     }
 
 
-    private final static String IDX_HEADER = "FEATURE_ID";
+//    private final static String IDX_HEADER = "FEATURE_ID";
+    private final static String[] KNOWN_IDX_HEADER = new String[]{"FEATURE_ID", "#Scan#", "compoundName", "compoundID", "compound_name", "compound_name"};
+
     public static List<LibraryHit> parseLibraryHits(Path libraryHitsPath, List<ExperimentResult> experimentResults, Logger logger) throws IOException {
         BufferedReader reader = Files.newBufferedReader(libraryHitsPath);
         String line = reader.readLine();
@@ -265,17 +267,18 @@ public class ZodiacUtils {
             throw new IOException("Spectral library hits file is empty.");
         }
         String[] header = line.split("\t");
-        if (arrayFind(header, IDX_HEADER)>=0){
-            logger.info("Parsing spectral library hits file. Use "+IDX_HEADER+" column to match library hits to compounds in the spectrum file.");
-            return parseLibraryHitsByFeatureId(libraryHitsPath, experimentResults, logger);
-        } else {
-            logger.info("Parsing spectral library hits file. Use #Scan# column to match library hits to compounds by position in the spectrum file.");
-            return parseLibraryHitsByPosition(libraryHitsPath, experimentResults, logger);
+        for (String idxHeader : KNOWN_IDX_HEADER) {
+            if (arrayFind(header, idxHeader)>=0){
+                logger.debug("Parsing spectral library hits file. Use "+idxHeader+" column to match library hits to compounds in the spectrum file.");
+                return parseLibraryHitsByFeatureId(libraryHitsPath, experimentResults, idxHeader, logger);
+            }
         }
+        logger.error("Cannot parse spectral library file. Could not find ID column");
+        return null;
     }
 
     @Deprecated
-    public static List<LibraryHit> parseLibraryHits(Path libraryHitsPath, Path mgfFile, Logger logger) throws IOException {
+    public static List<LibraryHit> parseLibraryHits(Path libraryHitsPath, Path mgfFile, Logger logger, String idxHeader) throws IOException {
         BufferedReader reader = Files.newBufferedReader(libraryHitsPath);
         String line = reader.readLine();
         reader.close();
@@ -283,6 +286,7 @@ public class ZodiacUtils {
             throw new IOException("Spectral library hits file is empty.");
         }
         String[] header = line.split("\t");
+        String IDX_HEADER = "FEATURE_ID";
         if (arrayFind(header, IDX_HEADER)>=0){
             logger.info("Parsing spectral library hits file. Use "+IDX_HEADER+" column to match library hits to compounds in the spectrum file.");
             return parseLibraryHitsByFeatureId(libraryHitsPath, mgfFile, logger);
@@ -292,14 +296,15 @@ public class ZodiacUtils {
         }
     }
 
-    private static List<LibraryHit> parseLibraryHitsByFeatureId(Path libraryHitsPath, List<ExperimentResult> experimentResults, Logger logger) throws IOException {
+    private static List<LibraryHit> parseLibraryHitsByFeatureId(Path libraryHitsPath, List<ExperimentResult> experimentResults, String idHeader, Logger logger) throws IOException {
         try {
             final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
             for (ExperimentResult experimentResult : experimentResults) {
                 //todo removed clean string
                 //                String name = cleanString(experiment.getName());
 //               todo  String name = cleanString(experimentResult.getExperimentName()); vs
-                String name = cleanString(experimentResult.getExperiment().getName());
+//                String name = cleanString(experimentResult.getExperiment().getName());
+                String name = experimentResult.getExperiment().getName();
                 if (experimentMap.containsKey(name)) throw new IOException("compound id duplicate: "+name+". Ids must be unambiguous to map library hits");
                 experimentMap.put(name, experimentResult.getExperiment());
             }
@@ -307,17 +312,47 @@ public class ZodiacUtils {
 
             List<String> lines = Files.readAllLines(libraryHitsPath, Charset.defaultCharset());
             String[] header = lines.remove(0).split("\t");
-//        String[] ofInterest = new String[]{"Feature_id", "Formula", "Structure", "Adduct", "Cosine", "SharedPeaks", "Quality"};
-            String[] ofInterest = new String[]{IDX_HEADER, "INCHI", "Smiles", "Adduct", "MQScore", "SharedPeaks", "Quality"};
-            int[] indices = new int[ofInterest.length];
-            for (int i = 0; i < ofInterest.length; i++) {
-                int idx = arrayFind(header, ofInterest[i]);
-                if (idx<0){
-                    int[] more = arrayFindSimilar(header, ofInterest[i]);
-                    if (more.length!=1) throw new IOException("Cannot parse spectral library hits file. Column "+ofInterest[i]+" not found.");
-                    else idx = more[0];
+
+
+            LibraryHitInfo idCol = new LibraryHitInfo(idHeader, true, null);
+            LibraryHitInfo inchiCol = new LibraryHitInfo("INCHI", false, null);
+            LibraryHitInfo smilesCol = new LibraryHitInfo("Smiles", false, null);
+            LibraryHitInfo adductCol = new LibraryHitInfo(new String[]{"libraryAdduct", "Adduct"}, false, null);
+            LibraryHitInfo cosineCol = new LibraryHitInfo(new String[]{"MQScore", "cosine"}, true, null);
+            LibraryHitInfo sharePeaksCol = new LibraryHitInfo("SharedPeaks", false, "Infinity");
+            LibraryHitInfo qualityCol = new LibraryHitInfo("Quality", false, "Unknown");
+            LibraryHitInfo mfCol = new LibraryHitInfo("molecularFormula", false, null);
+
+            LibraryHitInfo[] columnsOfInterest = new LibraryHitInfo[]{
+                    idCol, inchiCol, smilesCol, adductCol, cosineCol, sharePeaksCol, qualityCol, mfCol
+            };
+            for (int i = 0; i < columnsOfInterest.length; i++) {
+                LibraryHitInfo libraryHitInfo = columnsOfInterest[i];
+                int idx = -1;
+                for (String colName : libraryHitInfo.possibleColumnNames) {
+                    idx = arrayFind(header, colName);
+                    if (idx>=0){
+                        break;
+                    } else {
+                        int[] more = arrayFindSimilar(header, colName);
+                        if (more.length>1) throw new IOException("Cannot parse spectral library hits file. Column "+colName+" ambiguous.");
+                        else if (more.length==1){
+                            idx = more[0];
+                            break;
+                        }
+                    }
+
                 }
-                indices[i] = idx;
+                if (idx<0) {
+                    if (libraryHitInfo.isMandatory){
+                        throw new IOException("Cannot parse spectral library hits file. Column "+Arrays.toString(libraryHitInfo.possibleColumnNames)+" not found.");
+                    } else {
+                        idx = -1;
+                    }
+                }
+
+                libraryHitInfo.colIdx = idx;
+
             }
 
 
@@ -325,46 +360,56 @@ public class ZodiacUtils {
             for (String line : lines) {
                 try {
                     String[] cols = line.split("\t",-1);
-                    final String featureId = cols[indices[0]];
+                    final String featureId = idCol.getInfo(cols);
 
                     final Ms2Experiment experiment = experimentMap.get(featureId);
 
                     if (experiment==null){
                         logger.warn("No compound in SIRIUS workspace found that corresponds to spectral library hit " +
-                                "(this also happens with multiple charged compounds which are not supported by Sirius). " +
-                                IDX_HEADER+" "+featureId);
+                                "(this will occur for multiple charged compounds which are not supported by Sirius or the library file is incorrect). " +
+                                idHeader+" "+featureId);
                         continue;
                     }
 
-                    final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
+                    String mfString = mfCol.getInfo(cols);
+                    String inchiString = inchiCol.getInfo(cols).replace("\"", "");
+                    String smilesString = smilesCol.getInfo(cols).replace("\"", "");
+                    final MolecularFormula formula = getFormulaFromStructure(mfString, inchiString, smilesString);
 
                     if (formula==null){
-                        logger.warn("Cannot parse molecular formula of library hit. "+IDX_HEADER+" "+featureId);
+                        logger.warn("Cannot parse molecular formula of library hit. "+idHeader+" "+featureId);
                         continue;
                     }
 
-                    if (cols[indices[3]].replace(" ","").length()==0){
-                        logger.warn("Cannot parse library hit. Reason: adduct information missing. "+IDX_HEADER+" "+featureId);
+                    String adductString = adductCol.getInfo(cols);
+                    if (adductString.replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: adduct information missing. "+idHeader+" "+featureId);
+                    }
+
+                    String cosineString = cosineCol.getInfo(cols);
+                    if (cosineString.replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: cosine score information missing. "+idHeader+" "+featureId);
                         continue;
                     }
-                    if (cols[indices[4]].replace(" ","").length()==0){
-                        logger.warn("Cannot parse library hit. Reason: cosine score information missing. "+IDX_HEADER+" "+featureId);
-                        continue;
-                    }
-                    if (cols[indices[5]].replace(" ","").length()==0){
-                        logger.warn("Cannot parse library hit. Reason: number of shared peaks missing. "+IDX_HEADER+" "+featureId);
-                        continue;
-                    }
-                    if (cols[indices[6]].replace(" ","").length()==0){
-                        logger.warn("Cannot parse library hit. Reason: quality information missing. "+IDX_HEADER+" "+featureId);
+                    String sharePeaksString = sharePeaksCol.getInfo(cols);
+                    if (sharePeaksString.replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: number of shared peaks missing. "+idHeader+" "+featureId);
                         continue;
                     }
 
-                    final String structure = (isInchi(cols[indices[1]]) ? cols[indices[1]] : cols[indices[2]]);
-                    final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(cols[indices[3]]);
-                    final double cosine = Double.parseDouble(cols[indices[4]]);
-                    final int sharedPeaks = parseIntegerOrThrow(cols[indices[5]]);
-                    final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
+                    String qualityString = qualityCol.getInfo(cols);
+                    if (qualityString.replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: quality information missing. "+idHeader+" "+featureId);
+                        continue;
+                    }
+
+                    final String structure = (isInchi(inchiString) ? inchiString : smilesString);
+                    final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(adductString);
+                    final double cosine = Double.parseDouble(cosineString);
+                    final int sharedPeaks = parseIntegerOrThrow(sharePeaksString);
+                    LibraryHitQuality quality = LibraryHitQuality.valueOf(qualityString);
+                    if (quality==null) quality = LibraryHitQuality.Unknown;
+
                     LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
                     libraryHits.add(libraryHit);
                 } catch (Exception e) {
@@ -379,8 +424,34 @@ public class ZodiacUtils {
         }
     }
 
+    private static class LibraryHitInfo {
+        private String[] possibleColumnNames;
+        private boolean isMandatory;
+        private String fallBack;
+        private int colIdx;
+
+        public LibraryHitInfo(String possibleColumnName, boolean isMandatory, String fallBack) {
+            this(new String[]{possibleColumnName}, isMandatory, fallBack);
+        }
+
+        public LibraryHitInfo(String[] possibleColumnNames, boolean isMandatory, String fallBack) {
+            this.possibleColumnNames = possibleColumnNames;
+            this.isMandatory = isMandatory;
+            this.fallBack = fallBack;
+        }
+
+        public String getInfo(String[] row){
+            if (colIdx<0){
+                if (isMandatory) throw new RuntimeException("Option is mandatory but column unknown");
+                return fallBack;
+            }
+            return row[colIdx];
+        }
+    }
+
     @Deprecated
     private static List<LibraryHit> parseLibraryHitsByFeatureId(Path libraryHitsPath, Path mgfFile, Logger logger) throws IOException {
+        String IDX_HEADER = "FEATURE_ID";
         try {
             List<String> featureIDs = new ArrayList<>();
             try(BufferedReader reader = Files.newBufferedReader(mgfFile)){
@@ -444,7 +515,7 @@ public class ZodiacUtils {
                         continue;
                     }
 
-                    final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
+                    final MolecularFormula formula = getFormulaFromStructure(null, cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
 
                     if (formula==null){
                         logger.warn("Cannot parse molecular formula of library hit. "+IDX_HEADER+" "+featureId);
@@ -530,7 +601,7 @@ public class ZodiacUtils {
                         continue;
                     }
 
-                    final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
+                    final MolecularFormula formula = getFormulaFromStructure(null, cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
 
                     if (formula==null){
                         logger.warn("Cannot parse molecular formula of library hit #SCAN# "+scanNumber);
@@ -644,7 +715,7 @@ public class ZodiacUtils {
                         continue;
                     }
 
-                    final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
+                    final MolecularFormula formula = getFormulaFromStructure(null, cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
 
                     if (formula==null){
                         logger.warn("Cannot parse molecular formula of library hit #SCAN# "+scanNumber);
@@ -690,23 +761,26 @@ public class ZodiacUtils {
     
     private static int parseIntegerOrThrow(String value) {
         double d = Double.parseDouble(value);
+        if (d==Double.POSITIVE_INFINITY) return Integer.MAX_VALUE;
+        if (d==Double.NEGATIVE_INFINITY) return Integer.MIN_VALUE;
         int i = (int)Math.round(d);
         if (Math.abs(d-i)>0.01) throw new NumberFormatException(value+" in not an integer value");
         return i;
     }
 
-    private static MolecularFormula getFormulaFromStructure(String inchi, String smiles){
+    private static MolecularFormula getFormulaFromStructure(String formulaString, String inchi, String smiles){
+        if (formulaString!=null && formulaString.length()>0) return MolecularFormula.parse(formulaString);
 
         MolecularFormula formula = null;
         if (inchi!=null && isInchi(inchi)){
             formula = new InChI(null, inchi).extractFormula();
         }
 
-        if (formula==null && smiles.length()>0){
+        if (formula==null && smiles!=null && smiles.length()>0){
             try {
                 final SmilesParser parser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
                 final IAtomContainer c = parser.parseSmiles(smiles);
-                String formulaString = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(c));
+                formulaString = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(c));
                 formula = MolecularFormula.parse(formulaString);
             } catch (CDKException e) {
                 return null;
@@ -716,6 +790,7 @@ public class ZodiacUtils {
     }
 
     private static boolean isInchi(String inchi) {
+        if (inchi==null) return false;
         if (!inchi.toLowerCase().startsWith("inchi=")) return false;
         int idx1 = inchi.indexOf("/");
         int idx2 = inchi.indexOf("/", idx1+1);
@@ -731,6 +806,16 @@ public class ZodiacUtils {
             }
         }
 
+        return -1;
+    }
+
+    private static int arrayFindIgnoreCase(String[] array, String s) {
+        for(int i = 0; i < array.length; ++i) {
+            String t = array[i];
+            if(t.equalsIgnoreCase(s)) {
+                return i;
+            }
+        }
         return -1;
     }
 
