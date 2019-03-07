@@ -19,9 +19,4 @@ public class CanopusOptions extends AbstractMsExperimentOptions {
     @Option(names = {"--experimental-canopus"}, hidden = true) //experimental/temporary/internal
     public File experimentalCanopus;
 
-    @Override
-    public void setParamatersToExperiment(MutableMs2Experiment experiment) {
-        //todo fill me
-    }
-
 }
