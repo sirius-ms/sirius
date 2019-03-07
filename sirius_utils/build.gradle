@@ -22,7 +22,7 @@ repositories {
 
 
 apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow'
+//apply plugin: 'com.github.johnrengelman.shadow'
 
 //sourceCompatibility = 1.8
 //targetCompatibility = 1.8
@@ -34,10 +34,10 @@ jar {
         attributes 'Main-Class': mainClassName
     }
 }
-shadowJar {
+/*shadowJar {
     baseName = 'sirius-utils'
     classifier = null
     version = null
-}
+}*/
 
 
