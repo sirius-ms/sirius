@@ -46,8 +46,7 @@ public abstract class ApplicationCore {
     //creating
     static {
         try {
-            System.setProperty("de.unijena.bioinf.ms.propertyLocations",
-                    "sirius.build.properties,csi_fingerid.build.properties,sirius_frontend.build.properties"
+            System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties"
             );
 
             final String version = PropertyManager.PROPERTIES.getString("de.unijena.bioinf.sirius.version");
@@ -191,7 +190,7 @@ public abstract class ApplicationCore {
 
             //overite default profiles from chemistry-base with custom profile
             try {
-                PropertyManager.addPropertiesFromStream(Files.newInputStream(customProfileFile), "custom_config", PropertyManager.MS_CONFIGS_BASE);
+                PropertyManager.addPropertiesFromStream(Files.newInputStream(customProfileFile), "custom_configs", PropertyManager.MS_CONFIGS_BASE);
             } catch (IOException | ConfigurationException e) {
                 System.err.println("Could not load custom Configs");
                 e.printStackTrace();
