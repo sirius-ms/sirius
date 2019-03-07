@@ -1,10 +1,10 @@
 import org.apache.commons.configuration.PropertiesConfiguration
-//import org.apache.commons.configuration2.PropertiesConfiguration;
-//import org.apache.commons.configuration2.PropertiesConfigurationLayout;
 import org.apache.commons.configuration.PropertiesConfigurationLayout
 
 import java.util.stream.Collectors
 
+//import org.apache.commons.configuration2.PropertiesConfiguration;
+//import org.apache.commons.configuration2.PropertiesConfigurationLayout;
 
 dependencies {
     //compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
@@ -261,8 +261,10 @@ distributions {
         dependsOn 'makeProfileTemplate'
         dependsOn 'collectDefaultProfile'
 
-        outputs.file("${rootDir}/src/main/resources/custom.profile");
+        outputs.file("${projectDir}/src/main/resources/custom.profile");
+
         doLast {
+            println("Writing new merge profile to: " + outputs.files.singleFile)
             PropertiesConfiguration config = new PropertiesConfiguration()
             PropertiesConfigurationLayout layout = new PropertiesConfigurationLayout(config)
             layout.load(new InputStreamReader(new FileInputStream(
