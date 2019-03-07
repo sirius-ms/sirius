@@ -1,9 +1,9 @@
-plugins {
+/*plugins {
     id 'com.github.johnrengelman.shadow' version '1.2.3'
-}
+}*/
 
 apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow'
+//apply plugin: 'com.github.johnrengelman.shadow'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -18,8 +18,9 @@ dependencies() {
 }
 
 
+/*
 shadowJar {
     baseName = 'shadow'
     classifier = null
     version = null
-}
+}*/
