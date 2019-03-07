@@ -1,9 +1,10 @@
-//import org.apache.commons.configuration.PropertiesConfiguration
-import org.apache.commons.configuration2.PropertiesConfiguration;
-import org.apache.commons.configuration2.PropertiesConfigurationLayout;
-//import org.apache.commons.configuration.PropertiesConfigurationLayout
+import org.apache.commons.configuration.PropertiesConfiguration
+//import org.apache.commons.configuration2.PropertiesConfiguration;
+//import org.apache.commons.configuration2.PropertiesConfigurationLayout;
+import org.apache.commons.configuration.PropertiesConfigurationLayout
 
 import java.util.stream.Collectors
+
 
 dependencies {
     //compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
