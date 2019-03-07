@@ -15,6 +15,7 @@ import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.builder.fluent.PropertiesBuilderParameters;
 import org.apache.commons.configuration2.convert.DisabledListDelimiterHandler;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration2.io.FileHandler;
 import org.apache.commons.configuration2.tree.OverrideCombiner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -90,7 +90,7 @@ public class PropertyManager {
             PropertiesBuilderParameters props = new Parameters().properties()
                     .setThrowExceptionOnMissing(false)
                     .setListDelimiterHandler(new DisabledListDelimiterHandler())
-                    .setIncludesAllowed(false);
+                    .setIncludesAllowed(true);
             if (file != null)
                 props.setFile(file.toFile());
 
@@ -113,7 +113,7 @@ public class PropertyManager {
 
     public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream input, @Nullable String name, @Nullable String prefixToAdd) throws IOException, ConfigurationException {
         PropertiesConfiguration config = initProperties();
-        config.getLayout().load(config, new InputStreamReader(input));
+        new FileHandler(config).load(input);
 
         if (prefixToAdd != null && !prefixToAdd.isEmpty()) {
             final PropertiesConfiguration tmp = initProperties();
@@ -133,7 +133,7 @@ public class PropertyManager {
     }
 
     public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream stream, @NotNull PropertiesConfiguration config, @Nullable String name) throws IOException, ConfigurationException {
-        config.getLayout().load(config, new InputStreamReader(stream));
+        new FileHandler(config).load(stream);
         addPropertiesFromConfiguration(config, name);
         return config;
     }
@@ -176,7 +176,7 @@ public class PropertyManager {
         for (String resource : resources) {
             try (InputStream input = PropertyManager.class.getResourceAsStream("/" + resource)) {
                 final PropertiesConfiguration tmp = initProperties();
-                tmp.getLayout().load(tmp, new InputStreamReader(input));
+                new FileHandler(tmp).load(input);
 
                 if (prefixToAdd != null && !prefixToAdd.isEmpty()) {
                     SubsetConfiguration sub = ((SubsetConfiguration) combined.subset(prefixToAdd));
