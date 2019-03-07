@@ -110,6 +110,24 @@ allprojects {
             }
         }
     }
+
+    sourceSets {
+        main {
+            resources {
+                srcDirs "src/main/resources", "configs"
+            }
+        }
+    }
+
+    task cleanConfig {
+        group = 'build'
+        doLast {
+            def f = file("${projectDir}/configs")
+            if (f.exists())
+                f.deleteDir()
+        }
+    }
+    clean.dependsOn cleanConfig
 }
 
 def javaProjects() {

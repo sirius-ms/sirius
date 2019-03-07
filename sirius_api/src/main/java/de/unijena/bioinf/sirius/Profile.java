@@ -22,6 +22,7 @@ import com.google.gson.JsonObject;
 import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
+import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +30,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+/**
+ * Configuration profile to store instrument specific algorithm properties.
+ * Some of the default profiles are: 'qtof', 'orbitrap', 'fticr'.
+ */
 @DefaultProperty(propertyParent = "AlgorithmProfile")
 public class Profile {
     public final FragmentationPatternAnalysis fragmentationPatternAnalysis;
@@ -51,9 +56,10 @@ public class Profile {
         this.ms1Preprocessor = new Ms1Preprocessor();
     }
 
-    public static Profile fromString(String fileName) {
+    @DefaultInstanceProvider
+    public static Profile fromString(@DefaultProperty String value) {
         try {
-            return new Profile(fileName);
+            return new Profile(value);
         } catch (IOException e) {
             throw new RuntimeException("Could not find profile JSON", e);
         }
