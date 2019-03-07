@@ -109,12 +109,12 @@ public class FingerIdOptions extends AbstractMsExperimentOptions {
         return null;
     }
 
-    @Override
+  /*  @Override
     public void setParamatersToExperiment(MutableMs2Experiment experiment) {
         if (!database.toLowerCase().equals("all")) {
             Set<MolecularFormula> whiteSet = getFormulaWhitesetWithDB(experiment);
             if (whiteSet != null)
                 Sirius.setFormulaSearchList(experiment, whiteSet);
         }
-    }
+    }*/
 }

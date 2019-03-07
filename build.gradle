@@ -119,6 +119,24 @@ allprojects {
 
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
+
+    sourceSets {
+        main {
+            resources {
+                srcDirs "src/main/resources", "configs"
+            }
+        }
+    }
+
+    task cleanConfig {
+        group = 'build'
+        doLast {
+            def f = file("${projectDir}/configs")
+            if (f.exists())
+                f.deleteDir()
+        }
+    }
+    clean.dependsOn cleanConfig
 }
 
 task downloadGLPK(type: Copy) {

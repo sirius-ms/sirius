@@ -213,17 +213,13 @@ distributions {
     task collectProfiles(type: Copy, dependsOn: compileJava) {
         group = 'other'
 
-        def c = configurations.runtime.resolve().stream().map { f ->
+        from configurations.runtime.resolve().stream().map { f ->
             zipTree(f)
                     .matching {
-                include 'profile.properties'
+                include '*.auto.config'
             }
         }.collect(Collectors.toList())
 
-        def i = 0
-//            println(c)
-        from c
-        rename { String filename -> "${i++/*f.getName().split('.')[0]*/}_${filename}" }
         into "$buildDir/tmp/profiles"
     }
 
@@ -275,7 +271,10 @@ distributions {
             })
 
             defaultProfile.entrySet().each { e ->
-                config.setProperty(e.key, e.value)
+                if (config.containsKey(e.key))
+                    config.setProperty(e.key, e.value)
+                else
+                    println("Deprecated Profile key: ${e.key}")
             }
 
             outputs.files.singleFile.withWriter {

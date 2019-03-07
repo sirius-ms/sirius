@@ -109,8 +109,8 @@ public class ZodiacOptions extends AbstractMsExperimentOptions {
     )
     public Double medianNoiseIntensity;
 
-    @Override
+    /*@Override
     public void setParamatersToExperiment(MutableMs2Experiment experiment) {
         //todo fill me
-    }
+    }*/
 }
