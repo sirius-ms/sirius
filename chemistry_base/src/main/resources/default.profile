@@ -1,3 +1,6 @@
+AlgorithmProfile =default
+
+
 # Must be one of 'IGNORE', 'IF_NECESSARY', 'BRUKER_ONLY', 'BRUKER_IF_NECESSARY' or ALWAYS'
 IsotopeHandlingMs2 =BRUKER_ONLY
 
@@ -42,7 +45,7 @@ NumberOfCandidatesPerIon =1
 # in the
 # form "a -> b, a -> c, d -> c" where a, b, c, and d are adducts and a -> b denotes an allowed switch from
 # a to b within the MS/MS spectrum.
-PossibleAdductSwitches.adducts =
+PossibleAdductSwitches =[M+Na]+:{[M+H]+}
 
 # Can be attached to a Ms2Experiment or ProcessedInput. If PrecursorIonType is unknown, 
 # CSI:FingerID will use this
@@ -51,7 +54,7 @@ PossibleAdducts =[M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+N
 
 AdductSettings.enforced = ,
 AdductSettings.detectable =[M+H]+,[M-H2O+H]+,[M+NH3+H]+,[M+Na]+,[M+K]+,[M-H]-,[M+Cl]-
-AdductSettings.fallback =[M+H]+,[M+Na]+,[M+K]+,[M-H]-,[M+Cl]-
+AdductSettings.fallback =[M+H]+
 
 # Enable/Disable the hypothesen driven recalibration of MS/MS spectra
 # Must be either 'ALLOWED' or FORBIDDEN'
@@ -85,11 +88,5 @@ IsotopeSettings.multiplier =1
 # Note that, due to multithreading, this time constraints are not absolutely accurate.
 Timeout.secondsPerInstance =0
 Timeout.secondsPerTree =0
-PossibleAdductSwitches = [M+Na]+:{[M+H]+}
-FormulaConstraints.alphabet = CHNOP[5]S
-NormalizationType = GLOBAL
-FormulaConstraints.valenceFilter = -0.5
-AlgorithmProfile = default
-IntensityDeviation = 0.02
 
 

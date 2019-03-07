@@ -12,13 +12,13 @@ import javax.lang.model.element.*;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import java.io.BufferedWriter;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @SupportedAnnotationTypes("de.unijena.bioinf.ms.properties.DefaultProperty")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
@@ -36,28 +36,40 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
 
         try {
             FileObject resource = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", "tmp");
-            Path resourcePath = Paths.get(resource.toUri()).getParent().getParent().getParent().getParent().resolve("resources").resolve("main").resolve("profile.properties");
+            Path moduleRoot = Paths.get(resource.toUri()).getParent().getParent().getParent().getParent().getParent();
+            Path resourcePath = moduleRoot.resolve("configs").resolve(moduleRoot.getFileName() + ".auto.config");
+
+            System.out.println("#####################");
+            System.out.println(resourcePath);
+            System.out.println("#####################");
+
             Files.createDirectories(resourcePath.getParent());
+            Files.deleteIfExists(resourcePath);
+
             resource.delete();
 
             try (BufferedWriter w = Files.newBufferedWriter(resourcePath)) {
                 final List<FieldGroup> grps = new ArrayList<>(annotationSet.fieldGroups.values());
+                System.out.println(grps.stream().map(it -> it.groupName).collect(Collectors.joining(",")));
                 grps.sort(Comparator.comparing(u -> u.groupName));
                 for (FieldGroup e : grps) {
                     if (!e.fields.isEmpty() && !e.comment.isEmpty()) {
                         w.write(e.beautifiedComment());
                     }
+
+                    if (e.fields.size() == 1)
+                        e.fields.get(0).name = "";
+
                     for (Field f : e.fields) {
-                        if (!f.comment.isEmpty() || !f.possibleValues.isEmpty()) {
+                        if (!f.comment.isEmpty() || !f.possibleValues.isEmpty())
                             w.write(f.beautifiedComment());
-                        }
                         w.write(f.paramString());
                         w.write('\n');
                     }
                     w.write("\n");
                 }
             }
-        } catch (IOException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         return true;
