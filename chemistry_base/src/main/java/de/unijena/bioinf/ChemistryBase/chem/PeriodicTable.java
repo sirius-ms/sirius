@@ -265,7 +265,8 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
         // ADDUCTS
         //create positives
-        final String[] adductsPositive = PropertyManager.getStringProperty("de.unijena.bioinf.sirius.chem.adducts.positive").split(",");
+        String ss = PropertyManager.getStringProperty("de.unijena.bioinf.sirius.chem.adducts.positive");
+        final String[] adductsPositive = ss.split(",");
         for (String pos : adductsPositive) {
             PrecursorIonType type = ionByName(pos);
             assert type.getIonization().getCharge() > 0;

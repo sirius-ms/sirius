@@ -2,7 +2,7 @@ dependencies {
     compile project(':default_properties:annotations')
     compile project(':default_properties:processor')
     compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
-    
+
     compile group: 'com.google.code.gson', name: 'gson', version: "$gson_version"
     compile group: 'org.slf4j', name: 'slf4j-api', version:"$slf4j_version"
     compile group: 'de.unijena.bioinf', name: 'jjobs-core', version:"$jjobs_version"
