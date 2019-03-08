@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.properties;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIon;
 import de.unijena.bioinf.jjobs.JJob;
+import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -93,8 +94,8 @@ public class DefaultParameterConfigTest {
                         , new String[]{"1:SuperValue"}},
                 //
                 {EnumClass.class, (Consumer<EnumClass>) c -> assertEquals(c.value, JJob.JobState.DONE), new String[]{"de.unijena.bioinf.ms.EnumClass"}, new String[]{"dOnE"}},
-                {NumberOfCandidatesPerIon.class, (Consumer<NumberOfCandidatesPerIon>) c -> assertEquals(c.value, -1), new String[]{"de.unijena.bioinf.ms.NumberOfCandidatesPerIon"}, new String[]{"-1"}},
-                {NumberOfCandidates.class, (Consumer<NumberOfCandidates>) c -> assertEquals(c.value, 666), new String[]{"de.unijena.bioinf.ms.NumberOfCandidates"}, new String[]{"666"}}
+                {NumberOfCandidatesPerIon.class, (Consumer<NumberOfCandidatesPerIon>) c -> TestCase.assertEquals(c.value, -1), new String[]{"de.unijena.bioinf.ms.NumberOfCandidatesPerIon"}, new String[]{"-1"}},
+                {NumberOfCandidates.class, (Consumer<NumberOfCandidates>) c -> TestCase.assertEquals(c.value, 666), new String[]{"de.unijena.bioinf.ms.NumberOfCandidates"}, new String[]{"666"}}
         });
     }
 

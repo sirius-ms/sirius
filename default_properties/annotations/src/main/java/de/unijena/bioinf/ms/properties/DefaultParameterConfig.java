@@ -18,14 +18,16 @@ import java.util.stream.Collectors;
 
 
 public class DefaultParameterConfig {
-    public final String propertyRoot;
+    public final String configRoot;
+    public final String classRoot;
     private final PropertiesConfigurationLayout layout;
     private final Configuration properties;
 
 
-    public DefaultParameterConfig(Configuration properties, PropertiesConfigurationLayout layout, String propertyRoot) {
+    public DefaultParameterConfig(Configuration properties, PropertiesConfigurationLayout layout, String configRoot, String classRoot) {
         this.properties = properties;
-        this.propertyRoot = propertyRoot;
+        this.configRoot = configRoot;
+        this.classRoot = classRoot;
         this.layout = layout;
     }
 
@@ -43,8 +45,55 @@ public class DefaultParameterConfig {
                 || Arrays.stream(klass.getDeclaredFields()).anyMatch(field -> field.isAnnotationPresent(DefaultProperty.class));
     }
 
+    public void changeDefault(@NotNull String key, @NotNull String value) {
+        String backup = null;
+        try {
+            if (!key.startsWith(configRoot))
+                key = configRoot + "." + key;
+
+            // find actual value
+            backup = properties.getString(key);
+            if (backup == null)
+                throw new IllegalDefaultPropertyKeyException("No Default value found for given key.");
+
+            // set new property
+            properties.setProperty(key, value);
+
+            // check new property
+            Object nuDefault = createInstanceWithDefaults(key);
+            if (nuDefault == null)
+                throw new NullPointerException("Test default instance is NULL");
+
+
+        } catch (Throwable e) {
+            // rollback property
+            properties.setProperty(key, backup);
+            throw new IllegalDefaultPropertyKeyException("Default value change finished with errors! Rollback previous default value for key " + key + " if possible.");
+        }
+    }
+
+
+    public Class<?> getClassFromKey(@NotNull String key) {
+        try {
+            key = classRoot + key.replaceFirst(classRoot, "")
+                    .replaceFirst(configRoot, "").split("[.]")[0];
+            final String value = properties.getString(key);
+            if (value == null)
+                throw new NullPointerException("No Class value found for given key.");
+            Class<?> clazz = Class.forName(value);
+            return clazz;
+        } catch (Throwable e) {
+            throw new IllegalDefaultPropertyKeyException(e);
+        }
+    }
+
+    public Object createInstanceWithDefaults(String key) {
+        Class<?> clazz = getClassFromKey(key);
+        return createInstanceWithDefaults(clazz);
+    }
+
     public <C> C createInstanceWithDefaults(Class<C> klass) {
-        return createInstanceWithDefaults(klass, propertyRoot);
+        return createInstanceWithDefaults(klass, configRoot);
     }
 
     public <C> C createInstanceWithDefaults(Class<C> klass, @NotNull final String sourceParent) {
