@@ -41,11 +41,12 @@ public class PropertyManager {
     public static final CombinedConfiguration PROPERTIES;
 
     public static final String MS_CONFIGS_BASE = PropertyManager.MS_PROPERTY_BASE + ".configs";
+    public static final String MS_CONFIG_CLASSES_BASE = PropertyManager.MS_PROPERTY_BASE + ".configClasses";
+
     public static final String CONFIGS_LOCATIONS_KEY = PropertyManager.MS_PROPERTY_BASE + ".configLocations";
+    public static final String CONFIG_CLASSES_LOCATIONS_KEY = PropertyManager.MS_PROPERTY_BASE + ".configClassesLocations";
 
     public static final DefaultParameterConfig DEFAULTS;
-
-
 
 
     static {
@@ -53,10 +54,12 @@ public class PropertyManager {
             PROPERTIES = newCombinedProperties();
             loadDefaultProperties();
 
+            loadDefaultConfigClasses();
             DEFAULTS = new DefaultParameterConfig(
                     PROPERTIES,
                     loadDefaultConfigs().getLayout(),
-                    MS_CONFIGS_BASE
+                    MS_CONFIGS_BASE,
+                    MS_CONFIG_CLASSES_BASE
             );
         } catch (Throwable e) {
             System.err.println("Property Manager STATIC Block Error!");
@@ -109,6 +112,10 @@ public class PropertyManager {
 
     private static PropertiesConfiguration loadDefaultConfigs() {
         return addPropertiesFromResources(PROPERTIES.getString(CONFIGS_LOCATIONS_KEY), MS_CONFIGS_BASE, "resource_configs");
+    }
+
+    private static PropertiesConfiguration loadDefaultConfigClasses() {
+        return addPropertiesFromResources(PROPERTIES.getString(CONFIG_CLASSES_LOCATIONS_KEY), MS_CONFIG_CLASSES_BASE, "resource_configs_classes");
     }
 
     public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream input, @Nullable String name, @Nullable String prefixToAdd) throws IOException, ConfigurationException {
