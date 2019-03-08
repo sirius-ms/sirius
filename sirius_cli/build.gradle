@@ -1,5 +1,6 @@
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.apache.commons.configuration.PropertiesConfigurationLayout
+import org.gradle.api.tasks.Copy
 
 import java.util.stream.Collectors
 
@@ -223,6 +224,20 @@ distributions {
         into "$buildDir/tmp/profiles"
     }
 
+    task collectClassMaps(type: Copy, dependsOn: compileJava) {
+        group = 'other'
+
+        from configurations.runtime.resolve().stream().map { f ->
+            zipTree(f)
+                    .matching {
+                include '*.class.map'
+            }
+        }.collect(Collectors.toList())
+
+        into "$buildDir/tmp/class_maps"
+    }
+
+
     task makeProfileTemplate(dependsOn: collectProfiles) {
         group = 'other'
         outputs.file("$buildDir/tmp/profiles_concat/concat.profile")
@@ -240,11 +255,28 @@ distributions {
         }
     }
 
+    task mergeClassMaps(dependsOn: collectClassMaps) {
+        group = 'other'
+        outputs.file("${projectDir}/src/main/resources/config_class.map");
+        doLast {
+            outputs.files.singleFile.withWriter { w ->
+                // For each input file path
+                tasks.collectClassMaps.outputs.files.singleFile.listFiles().each { f ->
+                    // Get a reader for the input file
+                    f.withReader { r ->
+                        // And write data from the input into the output
+                        w << r << '\n'
+                    }
+                }
+            }
+        }
+    }
+
     task collectDefaultProfile(type: Copy, dependsOn: compileJava) {
         group = 'other'
         from zipTree(configurations.runtime.find { it.name.startsWith("chemistry_base") })
                 .matching {
-            include 'default.profile'
+            include 'default.config'
         }
         into "$buildDir/tmp/profiles_source_default/"
     }
@@ -253,8 +285,9 @@ distributions {
         group = 'other'
         dependsOn 'makeProfileTemplate'
         dependsOn 'collectDefaultProfile'
+        dependsOn 'mergeClassMaps'
 
-        outputs.file("${projectDir}/src/main/resources/custom.profile");
+        outputs.file("${projectDir}/src/main/resources/custom.config");
 
         doLast {
             println("Writing new merge profile to: " + outputs.files.singleFile)
@@ -309,7 +342,7 @@ distributions {
             }
             if (errorCount > 0) {
                 logger.error("FAILED: $errorCount NULL values found!" + System.lineSeparator())
-                throw new GradleException("Error: There are NULL values in the default.profile of chemistry base")
+                throw new GradleException("Error: There are NULL values in the default.config of chemistry base")
             }
             logger.lifecycle("DONE: No NULL values found!" + System.lineSeparator())
         }

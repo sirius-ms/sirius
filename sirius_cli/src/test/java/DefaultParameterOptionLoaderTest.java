@@ -34,7 +34,7 @@ public class DefaultParameterOptionLoaderTest {
 
 
         Properties defaults = new Properties();
-        try (InputStream stream = ApplicationCore.class.getResourceAsStream("/custom.profile")) {
+        try (InputStream stream = ApplicationCore.class.getResourceAsStream("/custom.config")) {
             defaults.load(stream);
         }
 
