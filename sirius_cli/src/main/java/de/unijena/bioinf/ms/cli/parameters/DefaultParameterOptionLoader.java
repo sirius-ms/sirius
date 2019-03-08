@@ -24,7 +24,7 @@ public class DefaultParameterOptionLoader {
             final String value = PropertyManager.getStringProperty(key);
             final String descr = PropertyManager.DEFAULTS.getDefaultPropertyDescription(key);
             CommandLine.Model.OptionSpec.Builder pSpec = CommandLine.Model.OptionSpec
-                    .builder("--" + key.replace(PropertyManager.DEFAULTS.propertyRoot + ".", ""))
+                    .builder("--" + key.replace(PropertyManager.DEFAULTS.configRoot + ".", ""))
                     .description((descr != null) ? descr.replaceAll(System.lineSeparator()," ").replaceAll("#\\s*","") : "")
                     .hasInitialValue(false)
                     .defaultValue(value);
@@ -35,8 +35,8 @@ public class DefaultParameterOptionLoader {
                         .setter(new CommandLine.Model.ISetter() {
                             @Override
                             public <T> T set(T value) throws Exception {
-                                return (T) parsedDefaults.setProperty(key,
-                                        String.join(",", (List<String>) value));
+                                PropertyManager.DEFAULTS.changeDefault(key, String.join(",", (List<String>) value));
+                                return value;
                             }
                         });
 
@@ -45,7 +45,9 @@ public class DefaultParameterOptionLoader {
                         .setter(new CommandLine.Model.ISetter() {
                             @Override
                             public <T> T set(T value) throws Exception {
-                                return (T) parsedDefaults.setProperty(key, (String) value);
+                                PropertyManager.DEFAULTS.changeDefault(key, String.valueOf(value));
+//                                return (T) parsedDefaults.setProperty(key, (String) value);
+                                return value;
                             }
                         });
             }

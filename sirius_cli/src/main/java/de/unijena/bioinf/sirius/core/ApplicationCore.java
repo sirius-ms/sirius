@@ -93,7 +93,7 @@ public abstract class ApplicationCore {
             // create ws files
             Path loggingPropFile = WORKSPACE.resolve("logging.properties");
             Path siriusPropsFile = WORKSPACE.resolve("sirius.properties");
-            Path customProfileFile = WORKSPACE.resolve("custom.profile");
+            Path customProfileFile = WORKSPACE.resolve("custom.config");
             Path versionFile = WORKSPACE.resolve("version");
             try {
                 if (Files.exists(versionFile)) {
@@ -177,7 +177,7 @@ public abstract class ApplicationCore {
 
             //create custom properties if it not exists -> everything is commented out
             if (Files.notExists(customProfileFile)) {
-                try (InputStream stream = ApplicationCore.class.getResourceAsStream("/custom.profile")) {
+                try (InputStream stream = ApplicationCore.class.getResourceAsStream("/custom.config")) {
                     List<String> lines =
                             new BufferedReader(new InputStreamReader(stream,
                                     StandardCharsets.UTF_8)).lines().map(line -> line.startsWith("#") ? line : "#" + line).collect(Collectors.toList());
