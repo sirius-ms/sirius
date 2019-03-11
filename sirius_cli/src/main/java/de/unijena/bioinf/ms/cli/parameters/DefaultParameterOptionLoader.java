@@ -1,16 +1,18 @@
 package de.unijena.bioinf.ms.cli.parameters;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class DefaultParameterOptionLoader {
-    private final Properties parsedDefaults = new Properties();
-    private final List<CommandLine.Model.OptionSpec> options;
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultParameterOptionLoader.class);
+    private final Map<String, CommandLine.Model.OptionSpec> options;
     private CommandLine.Model.CommandSpec commandSpec = null;
 
 
@@ -18,7 +20,7 @@ public class DefaultParameterOptionLoader {
         options = loadDefaultParameterOptions();
     }
 
-    private List<CommandLine.Model.OptionSpec> loadDefaultParameterOptions() throws IOException {
+    private Map<String, CommandLine.Model.OptionSpec> loadDefaultParameterOptions() throws IOException {
 
         return PropertyManager.DEFAULTS.getDefaultPropertyKeys().stream().map((key) -> {
             final String value = PropertyManager.getStringProperty(key);
@@ -26,8 +28,7 @@ public class DefaultParameterOptionLoader {
             CommandLine.Model.OptionSpec.Builder pSpec = CommandLine.Model.OptionSpec
                     .builder("--" + key.replace(PropertyManager.DEFAULTS.configRoot + ".", ""))
                     .description((descr != null) ? descr.replaceAll(System.lineSeparator()," ").replaceAll("#\\s*","") : "")
-                    .hasInitialValue(false)
-                    .defaultValue(value);
+                    .hasInitialValue(false);
 
             if (value.contains(",")) {
                 pSpec.type(List.class)
@@ -35,7 +36,9 @@ public class DefaultParameterOptionLoader {
                         .setter(new CommandLine.Model.ISetter() {
                             @Override
                             public <T> T set(T value) throws Exception {
-                                PropertyManager.DEFAULTS.changeDefault(key, String.join(",", (List<String>) value));
+                                final String v = String.join(",", (List<String>) value);
+                                LOG.debug("Changing DEFAULT:" + key + " -> " + v);
+                                PropertyManager.DEFAULTS.changeDefault(key, v);
                                 return value;
                             }
                         });
@@ -45,25 +48,17 @@ public class DefaultParameterOptionLoader {
                         .setter(new CommandLine.Model.ISetter() {
                             @Override
                             public <T> T set(T value) throws Exception {
+                                LOG.debug("Changing DEFAULT:" + key + " -> " + value);
                                 PropertyManager.DEFAULTS.changeDefault(key, String.valueOf(value));
-//                                return (T) parsedDefaults.setProperty(key, (String) value);
                                 return value;
                             }
                         });
             }
             return pSpec.build();
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toMap(it -> it.names()[0].replaceFirst("--", ""), it -> it));
     }
 
-    public void overrideDefaults() {
-        PropertyManager.setProperties(parsedDefaults);
-    }
-
-    public Properties getParsedDefaults() {
-        return parsedDefaults;
-    }
-
-    public List<CommandLine.Model.OptionSpec> getOptions() {
+    public Map<String, CommandLine.Model.OptionSpec> getOptions() {
         return options;
     }
 
@@ -74,7 +69,7 @@ public class DefaultParameterOptionLoader {
             spec.versionProvider(new Provide.Versions());
             spec.defaultValueProvider(new Provide.Defaults());
             spec.mixinStandardHelpOptions(true); // usageHelp and versionHelp options
-            for (CommandLine.Model.OptionSpec option : options) {
+            for (CommandLine.Model.OptionSpec option : options.values()) {
                 spec.addOption(option);
             }
             commandSpec = spec;
@@ -82,8 +77,7 @@ public class DefaultParameterOptionLoader {
         return commandSpec;
     }
 
-    /*@CommandLine.Command(name = "config", description = "This allows you to set all configuration from the profile files from the command line.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-    private class DefaultParameterOptions {
-
-    }*/
+    public void changeOption(String optionName, String value) throws Exception {
+        options.get(optionName).setter().set(value);
+    }
 }

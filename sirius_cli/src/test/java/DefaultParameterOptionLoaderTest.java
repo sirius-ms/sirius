@@ -25,7 +25,7 @@ public class DefaultParameterOptionLoaderTest {
             CombinedConfiguration p = PropertyManager.PROPERTIES;
         }
         final DefaultParameterOptionLoader builder = new DefaultParameterOptionLoader();
-        final List<CommandLine.Model.OptionSpec> options = builder.getOptions();
+        final List<CommandLine.Model.OptionSpec> options = new ArrayList<>(builder.getOptions().values());
         final CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.forAnnotatedObject(new BasicOptions());
         for (CommandLine.Model.OptionSpec option : options) {
             spec.addOption(option);
@@ -59,7 +59,7 @@ public class DefaultParameterOptionLoaderTest {
 //        final CommandLine cm  = CommandLine. spec.commandLine();
         final CommandLine cm = new CommandLine(spec);
         cm.parseArgs(args);
-        builder.overrideDefaults();
+//        builder.overrideDefaults();
 
 
         singleKeys.stream().forEach(key -> {

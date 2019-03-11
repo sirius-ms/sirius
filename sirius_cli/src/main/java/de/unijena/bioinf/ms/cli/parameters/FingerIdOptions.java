@@ -2,7 +2,6 @@ package de.unijena.bioinf.ms.cli.parameters;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.sirius.Sirius;
 import picocli.CommandLine;
@@ -20,7 +19,7 @@ import java.util.Set;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "fingerid", aliases = {"F"}, description = "Identify molecular structure for each compound Individually using CSI:FingerID.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
-public class FingerIdOptions extends AbstractMsExperimentOptions {
+public class FingerIdOptions {
     private SiriusOptions siriusOptions;
     private Sirius siriusAPI; //todo fill me
     public final static String CONSIDER_ALL_FORMULAS = "all";

@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.cli.parameters;
 
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -13,7 +12,7 @@ import picocli.CommandLine.Option;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "zodiac", aliases = {"Z"}, description = "Identify Molecular formulas of all compounds in a dataset together using ZODIAC.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
-public class ZodiacOptions extends AbstractMsExperimentOptions {
+public class ZodiacOptions {
 
     @Option(
             names = {"--lowest-cosine"},

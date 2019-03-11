@@ -138,7 +138,6 @@ public class CLI extends ApplicationCore {
 
         final CommandLine.Model.CommandSpec spec = configureCommandLine();
         final CommandLine.ParseResult parseResult = new CommandLine(spec).parseArgs(args);
-        configOptionLoader.overrideDefaults(); //writing commandline defaults over file defaults
 
         //printing version or usage help
         if (printHelpIfRequested(args, parseResult))
