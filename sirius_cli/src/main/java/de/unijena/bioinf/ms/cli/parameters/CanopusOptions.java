@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.cli.parameters;
 
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -14,7 +13,7 @@ import java.io.File;
  * */
 @CommandLine.Command(name = "canopus", aliases = {"C"}, description = "Predict compound categories for the whole dataset using CANOPUS.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
 
-public class CanopusOptions extends AbstractMsExperimentOptions {
+public class CanopusOptions {
 
     @Option(names = {"--experimental-canopus"}, hidden = true) //experimental/temporary/internal
     public File experimentalCanopus;

@@ -44,7 +44,7 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
 
 //        try {
             //todo combing profile with argument default values
-            sirius = new Sirius(options.profile);
+            sirius = new Sirius();
 //            sirius.setFastMode(!options.disableFastMode);
             final FragmentationPatternAnalysis ms2 = sirius.getMs2Analyzer();
             final IsotopePatternAnalysis ms1 = sirius.getMs1Analyzer();
