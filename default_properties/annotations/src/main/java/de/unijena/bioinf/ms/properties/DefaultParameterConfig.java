@@ -68,15 +68,24 @@ public class DefaultParameterConfig {
         } catch (Throwable e) {
             // rollback property
             properties.setProperty(key, backup);
-            throw new IllegalDefaultPropertyKeyException("Default value change finished with errors! Rollback previous default value for key " + key + " if possible.");
+            throw new IllegalDefaultPropertyKeyException("Default value change finished with errors! Rollback previous default value for key " + key + " if possible.", e);
         }
     }
 
 
+    private String cleanKey(@NotNull String key) {
+        return key.replaceFirst(classRoot + ".", "")
+                .replaceFirst(configRoot + ".", "");
+    }
+
+    public String getProperty(@NotNull String key) {
+        return properties.getString(configRoot + '.' + cleanKey(key));
+    }
+
     public Class<?> getClassFromKey(@NotNull String key) {
         try {
-            key = classRoot + key.replaceFirst(classRoot, "")
-                    .replaceFirst(configRoot, "").split("[.]")[0];
+            final String ks = cleanKey(key);
+            key = classRoot + '.' + ks.split("[.]")[0];
             final String value = properties.getString(key);
             if (value == null)
                 throw new NullPointerException("No Class value found for given key.");
@@ -162,13 +171,24 @@ public class DefaultParameterConfig {
         }
     }
 
-    private <C> C invokePossiblyPrivateConstructor(Class<C> klass) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+    private static <C> C invokePossiblyPrivateConstructor(Class<C> klass) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
         Constructor<C> constr = klass.getDeclaredConstructor();
         if (Modifier.isPublic(constr.getModifiers())) return constr.newInstance();
         else {
             constr.setAccessible(true);
             C instance = constr.newInstance();
             constr.setAccessible(false);
+            return instance;
+        }
+    }
+
+    private static Object invokePossiblyPrivateMethod(Method provideMethod, Object obj, Object... args) throws IllegalAccessException, InvocationTargetException {
+        if (Modifier.isPublic(provideMethod.getModifiers()))
+            return provideMethod.invoke(obj, args);
+        else {
+            provideMethod.setAccessible(true);
+            Object instance = provideMethod.invoke(obj, args);
+            provideMethod.setAccessible(false);
             return instance;
         }
     }
@@ -196,11 +216,11 @@ public class DefaultParameterConfig {
                 throw new IllegalArgumentException("Parameter need to be annotated With @DefaultProperty and the property key is mandatory!");
             }
         }
-        return (C) providerMethod.invoke(null, args);
+        return (C) invokePossiblyPrivateMethod(providerMethod, null, args);
     }
 
     private <C> C getDefaultInstanceFromString(final Method providerMethod, String stringValue) throws InvocationTargetException, IllegalAccessException {
-        return (C) providerMethod.invoke(null, stringValue);
+        return (C) invokePossiblyPrivateMethod(providerMethod, null, stringValue);
     }
 
 
@@ -255,7 +275,7 @@ public class DefaultParameterConfig {
         T objectValue = null;
         final Method fromString = getFromStringMethod(fType);
         if (fromString != null) {
-            objectValue = (T) fromString.invoke(null, stringValue);
+            objectValue = (T) invokePossiblyPrivateMethod(fromString, null, stringValue);
         } else {
             if (fType.isPrimitive() || fType.isAssignableFrom(Boolean.class) || fType.isAssignableFrom(Byte.class) || fType.isAssignableFrom(Short.class) || fType.isAssignableFrom(Integer.class) || fType.isAssignableFrom(Long.class) || fType.isAssignableFrom(Float.class) || fType.isAssignableFrom(Double.class) || fType.isAssignableFrom(String.class) || fType.isAssignableFrom(Color.class)) {
                 objectValue = convertToDefaultType(fType, stringValue);

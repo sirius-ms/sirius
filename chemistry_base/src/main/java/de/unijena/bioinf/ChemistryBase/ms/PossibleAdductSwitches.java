@@ -27,7 +27,7 @@ public class PossibleAdductSwitches implements Ms2ExperimentAnnotation {
     protected static PossibleAdductSwitches fromListOfAdductsSwitches(@DefaultProperty List<String> adducts) {
         final HashMap<IonMode, List<IonMode>> map = new HashMap<>();
         for (String ad : adducts) {
-            String[] parts = ad.split("\\s*->\\s*",2);
+            String[] parts = ad.split("\\s*(:|->)\\s*",2); //->,
             IonMode left = IonMode.fromString(parts[0]);
             IonMode right = IonMode.fromString(parts[1]);
             map.computeIfAbsent(left, (k)->new ArrayList<>()).add(right);
