@@ -366,7 +366,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         if (!additionalFields.isEmpty()) {
             exp.setAnnotation(AdditionalFields.class, additionalFields);
         }
-        exp.setSource(source);
+        exp.setAnnotation(SpectrumFileSource.class, new SpectrumFileSource(source));
         return exp;
     }
 }

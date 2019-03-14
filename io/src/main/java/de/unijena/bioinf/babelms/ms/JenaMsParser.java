@@ -91,13 +91,14 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
     private static class ParserInstance {
 
         private ParserInstance(URL source, BufferedReader reader) {
-            this.source = source;
+            this.source = new MsFileSource(source);
             this.reader = reader;
             lineNumber = 0;
             this.currentSpectrum = new SimpleMutableSpectrum();
         }
 
-        private URL source;
+        private final MsFileSource source;
+        private SpectrumFileSource externalSource;
         private final BufferedReader reader;
         private int lineNumber;
         private String compoundName = null;
@@ -232,7 +233,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 }
             } else if (optionName.equals("source")) {
                 //override in source set in ms file
-                this.source = new URL(value);
+                this.externalSource = new SpectrumFileSource(new URL(value));
             } else if (optionName.equals("index")) {
                 this.index = Integer.parseInt(value);
             } else if (optionName.equals("formula")) {
@@ -359,7 +360,9 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             exp.setMs1Spectra(ms1spectra);
             exp.setMs2Spectra(ms2spectra);
             if (mergedMs1 != null) exp.setMergedMs1Spectrum(mergedMs1);
-            exp.setSource(source);
+            exp.setAnnotation(MsFileSource.class, source);
+            if (externalSource != null)
+                exp.setAnnotation(SpectrumFileSource.class, externalSource);
             if (index != null) {
                 //index is replaced against .index file during new
                 //project-space implementation. This is for compatibility

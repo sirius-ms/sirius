@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 public interface Annotated<A extends DataAnnotation> {
@@ -164,15 +165,15 @@ public interface Annotated<A extends DataAnnotation> {
         private final Map<Class<Annotation>, Annotation> map;
 
         public Annotations() {
-            this(new HashMap<>());
+            this(new ConcurrentHashMap<>());
         }
 
-        public Annotations(Map<Class<Annotation>, Annotation> annotations) {
+        private Annotations(Map<Class<Annotation>, Annotation> annotations) {
             this.map = annotations;
         }
 
         public Annotations<Annotation> clone() {
-            final Map<Class<Annotation>, Annotation> cloneMap = new HashMap<>(map);
+            final Map<Class<Annotation>, Annotation> cloneMap = new ConcurrentHashMap<>(map);
             return new Annotations<>(cloneMap);
         }
 
