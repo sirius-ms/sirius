@@ -155,8 +155,32 @@ public class SmartsMapper {
         private HijackedSmarts(String orig) {
             this.originalSmarts = orig;
             this.hijackedSmarts = flaggify(originalSmarts);
-            this.query = SMARTSParser.parse(hijackedSmarts, SilentChemObjectBuilder.getInstance());
+            try {
+                this.query = SMARTSParser.parse(hijackedSmarts, SilentChemObjectBuilder.getInstance());
+            } catch (Throwable e) {
+                System.err.println(originalSmarts + " ->" + hijackedSmarts);
+                throw e;
+            }
             this.atomid2occurence = makeMapping();
+        }
+
+        public String map(Function<Integer, String> f) {
+            int k=0;
+            final String smarts = originalSmarts;
+            int offs = ELEM_OFFSET;
+            final Matcher m = Pattern.compile("\\[?(!#1|\\*)\\]?").matcher(smarts);
+            boolean result = m.find();
+            if (result) {
+                StringBuffer sb = new StringBuffer();
+                do {
+                    m.appendReplacement(sb, f.apply(k));
+                    ++k;
+                    result = m.find();
+                } while (result);
+                m.appendTail(sb);
+                return sb.toString();
+            }
+            return originalSmarts;
         }
 
         public int numberOfWildcards() {
