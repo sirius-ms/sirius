@@ -21,7 +21,6 @@ public class MutableMs2Experiment implements Ms2Experiment {
 
     private double ionMass;
     private MolecularFormula molecularFormula;
-    private URL source;
     private String name;
 
 
@@ -36,7 +35,6 @@ public class MutableMs2Experiment implements Ms2Experiment {
         this.ms1Spectra = new ArrayList<>();
         this.ms2Spectra = new ArrayList<>();
         this.annotations = new Annotations<>();
-        this.source = null;
         this.name = "";
     }
 
@@ -58,7 +56,6 @@ public class MutableMs2Experiment implements Ms2Experiment {
         this.ionMass = experiment.getIonMass();
 //        this.moleculeNeutralMass = experiment.getMoleculeNeutralMass();
         this.molecularFormula = experiment.getMolecularFormula();
-        this.source = experiment.getSource();
         this.name = experiment.getName();
     }
 
@@ -67,25 +64,15 @@ public class MutableMs2Experiment implements Ms2Experiment {
         return this;
     }
 
-    public void setSource(URL source) {
-        this.source = source;
-    }
-
-    public void setSource(File source) {
-        try {
-            this.source = source.toURI().toURL();
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public void setName(String name) {
         this.name = name;
     }
 
     @Override
     public URL getSource() {
-        return source;
+        if (hasAnnotation(SpectrumFileSource.class))
+            return getAnnotation(SpectrumFileSource.class).value;
+        return getAnnotation(MsFileSource.class).value;
     }
 
     @Override

@@ -228,7 +228,7 @@ public class Ms2CompoundMerger {
         //todo set name and sources
         //hack to write multiple sources into output file
         try {
-            merged.setSource(new URL(filePaths));
+            merged.setAnnotation(MsFileSource.class, new MsFileSource(new URL(filePaths)));
         } catch (MalformedURLException e) {
             LoggerFactory.getLogger(Ms2CompoundMerger.class).warn("Could not set source paths");
         }

@@ -1,10 +1,12 @@
 package de.unijena.bioinf.ms.io.projectspace;
 
 import de.unijena.bioinf.sirius.ExperimentResult;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 public interface ProjectSpace extends ProjectWriter, ProjectReader {
@@ -37,5 +39,11 @@ public interface ProjectSpace extends ProjectWriter, ProjectReader {
     }
 
 
-    Iterable<ExperimentResult> parseExperiments();
+    @NotNull
+    default Iterable<ExperimentResult> parseExperiments() {
+        return this::parseExperimentIterator;
+    }
+
+    @NotNull
+    Iterator<ExperimentResult> parseExperimentIterator();
 }

@@ -338,15 +338,15 @@ public class SiriusProjectSpace implements ProjectSpace {
 
 
     //region API Methods
-    public void copyToZip(@NotNull File zipRootTo) throws IOException {
+    public synchronized void copyToZip(@NotNull File zipRootTo) throws IOException {
         copyToZip(rootPath, zipRootTo);
     }
 
-    public void load(@Nullable ProgressListener progress, @NotNull File... toLoad) {
+    public synchronized void load(@Nullable ProgressListener progress, @NotNull File... toLoad) {
         load(progress, Arrays.asList(toLoad));
     }
 
-    public void load(@Nullable ProgressListener progress, @NotNull Collection<File> toLoad) {
+    public synchronized void load(@Nullable ProgressListener progress, @NotNull Collection<File> toLoad) {
         load(progress, new TIntHashSet(experimentIDs.values().stream().mapToInt(ExperimentDirectory::getIndex).toArray()), toLoad);
     }
 
@@ -363,7 +363,7 @@ public class SiriusProjectSpace implements ProjectSpace {
      *
      */
     @Override
-    public ExperimentResult parseExperiment(ExperimentDirectory id) throws IOException, IllegalArgumentException {
+    public synchronized ExperimentResult parseExperiment(ExperimentDirectory id) throws IOException, IllegalArgumentException {
         if (!experimentIDs.containsKey(id.getDirectoryName()))
             throw new IllegalArgumentException("The project-space does not contain the given ID: " + id.getDirectoryName());
 
@@ -371,7 +371,7 @@ public class SiriusProjectSpace implements ProjectSpace {
     }
 
     @Override
-    public boolean deleteExperiment(ExperimentDirectory id) throws IOException {
+    public synchronized boolean deleteExperiment(ExperimentDirectory id) throws IOException {
         if (removeID(id) != null) {
             writer.deleteExperiment(id);
             return true;
@@ -381,7 +381,7 @@ public class SiriusProjectSpace implements ProjectSpace {
     }
 
     @Override
-    public void writeExperiment(final @NotNull ExperimentResult result) throws IOException {
+    public synchronized void writeExperiment(final @NotNull ExperimentResult result) throws IOException {
         final ExperimentDirectory expDir = result.computeAnnotationIfAbsent(ExperimentDirectory.class, () -> createID(result));
         final String nuName = filenameFormatter.formatName(result, expDir.getIndex());
 
@@ -405,12 +405,12 @@ public class SiriusProjectSpace implements ProjectSpace {
     }
 
     @Override
-    public void writeSummaries(@NotNull final Iterable<ExperimentResult> resultsToSummarize) {
+    public synchronized void writeSummaries(@NotNull final Iterable<ExperimentResult> resultsToSummarize) {
         writeSummaries(resultsToSummarize, (a, b, c) -> {
         });
     }
 
-    public void writeSummaries(@NotNull final Iterable<ExperimentResult> resultsToSummarize, ProgressListener progress) {
+    public synchronized void writeSummaries(@NotNull final Iterable<ExperimentResult> resultsToSummarize, ProgressListener progress) {
         if (!changed.get())
             return;
 
@@ -434,18 +434,18 @@ public class SiriusProjectSpace implements ProjectSpace {
     }
 
     @Override
-    public void registerSummaryWriter(List<SummaryWriter> writers) {
+    public synchronized void registerSummaryWriter(List<SummaryWriter> writers) {
         summaryWriters.addAll(writers);
         writers.forEach(sw -> sw.getVersionInfo().forEach(this::addVersionInfo));
     }
 
     @Override
-    public boolean removeSummaryWriter(List<SummaryWriter> writers) {
+    public synchronized boolean removeSummaryWriter(List<SummaryWriter> writers) {
         return summaryWriters.removeAll(writers);
     }
 
     @Override
-    public int getNumberOfWrittenExperiments() {
+    public synchronized int getNumberOfWrittenExperiments() {
         return experimentIDs.size();
     }
 
@@ -464,10 +464,11 @@ public class SiriusProjectSpace implements ProjectSpace {
             moveBackToZip();
     }
 
+
     @NotNull
     @Override
-    public Iterable<ExperimentResult> parseExperiments() {
-        return ExperimentIterator::new;
+    public Iterator<ExperimentResult> parseExperimentIterator() {
+        return new ExperimentIterator();
     }
 
     @NotNull
