@@ -1,6 +1,8 @@
-package de.unijena.bioinf.ms.cli.parameters;
+package de.unijena.bioinf.ms.cli.parameters.zodiac;
 
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
+import de.unijena.bioinf.ms.cli.parameters.DefaultParameterOptionLoader;
+import de.unijena.bioinf.ms.cli.parameters.Provide;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -13,7 +15,11 @@ import picocli.CommandLine.Option;
  */
 @CommandLine.Command(name = "zodiac", aliases = {"Z"}, description = "Identify Molecular formulas of all compounds in a dataset together using ZODIAC.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
 public class ZodiacOptions {
+    protected final DefaultParameterOptionLoader defaultConfigOptions;
 
+    public ZodiacOptions(DefaultParameterOptionLoader defaultConfigOptions) {
+        this.defaultConfigOptions = defaultConfigOptions;
+    }
     @Option(
             names = {"--lowest-cosine"},
             description = "Below this cosine threshold a spectral library hit does not give any score bonus."

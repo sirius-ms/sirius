@@ -10,7 +10,7 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 //import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
-import de.unijena.bioinf.ms.cli.parameters.SiriusOptions;
+import de.unijena.bioinf.ms.cli.parameters.sirius.SiriusOptions;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.ExperimentResultJJob;
 import de.unijena.bioinf.sirius.IdentificationResult;

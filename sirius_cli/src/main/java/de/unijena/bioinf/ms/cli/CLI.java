@@ -1,8 +1,8 @@
 package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.fingerworker.WorkerList;
-import de.unijena.bioinf.ms.cli.parameters.*;
 import de.unijena.bioinf.ms.cli.utils.FormatedTableBuilder;
+import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import org.slf4j.Logger;
@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.util.List;
 
 
 /**
@@ -27,17 +28,10 @@ import java.io.IOException;
  * So they need to merge their results with the existing ones.
  */
 public class CLI extends ApplicationCore {
-    protected Logger logger = LoggerFactory.getLogger(CLI.class);
+    protected final static Logger logger = LoggerFactory.getLogger(CLI.class);
 
 
-
-    BasicOptions basicOptions;
-    SiriusOptions siriusOptions;
-    ZodiacOptions zodiacOptions;
-    FingerIdOptions fingeridOptions;
-    CanopusOptions canopusOptions;
-    DefaultParameterOptionLoader configOptionLoader;
-
+    SiriusProjectSpace prohectSpace;
 
     //////////////////////////////////////////////////
     // init
@@ -89,58 +83,23 @@ public class CLI extends ApplicationCore {
         return r;
     }
 
-    protected void parseArgsAndInit(String[] args) {
+    protected void parseArgsAndInit(String[] args) throws IOException {
         parseArgs(args);
 //        if (!workflow.setup()) System.exit(1);
 //        if (!workflow.validate()) System.exit(1);
     }
 
-    protected CommandLine.Model.CommandSpec configureCommandLine() {
-        try {
-            configOptionLoader = new DefaultParameterOptionLoader();
-            basicOptions = new BasicOptions();
-            siriusOptions = new SiriusOptions();
-            zodiacOptions = new ZodiacOptions();
-            fingeridOptions = new FingerIdOptions();
-            canopusOptions = new CanopusOptions();
 
+    protected void parseArgs(String[] args) throws IOException {
 
-            CommandLine.Model.CommandSpec fingeridSpec = forAnnotatedObjectWithSubCommands(fingeridOptions, canopusOptions);
-            CommandLine.Model.CommandSpec zodiacSpec = forAnnotatedObjectWithSubCommands(zodiacOptions, fingeridSpec);
-            CommandLine.Model.CommandSpec siriusSpec = forAnnotatedObjectWithSubCommands(siriusOptions, zodiacSpec, fingeridSpec);
+        final CommandlineBuilder builder = new CommandlineBuilder();
+//        final CommandLine.ParseResult parseResult = new CommandLine(builder.rootSpec).parseArgs(args);
+        final List<Object> configurationResults = new CommandLine(builder.rootSpec).parseWithHandler(builder.makeParseResultHandler(), args);
 
-            CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), siriusSpec, zodiacSpec, fingeridSpec, canopusOptions);
-            CommandLine.Model.CommandSpec basicSpec = forAnnotatedObjectWithSubCommands(basicOptions, configSpec, siriusSpec, zodiacSpec, fingeridSpec, canopusOptions);
-
-            basicSpec.usageMessage().footerHeading(System.lineSeparator() + System.lineSeparator() + "Please cite the following publications when using our tool:" + System.lineSeparator() + System.lineSeparator());
-            basicSpec.usageMessage().footer(ApplicationCore.CITATION);
-
-            return basicSpec;
-        } catch (IOException e) {
-            throw new RuntimeException("Could not load default Config from .jar. This build seems to be corrupted!", e);
-        }
-    }
-
-    public static CommandLine.Model.CommandSpec forAnnotatedObjectWithSubCommands(Object parent, Object... subs) {
-        final CommandLine.Model.CommandSpec parentSpec = parent instanceof CommandLine.Model.CommandSpec
-                ? (CommandLine.Model.CommandSpec) parent
-                : CommandLine.Model.CommandSpec.forAnnotatedObject(parent);
-        for (Object sub : subs) {
-            final CommandLine.Model.CommandSpec subSpec = sub instanceof CommandLine.Model.CommandSpec
-                    ? (CommandLine.Model.CommandSpec) sub
-                    : CommandLine.Model.CommandSpec.forAnnotatedObject(sub);
-            parentSpec.addSubcommand(subSpec.name(), subSpec);
-        }
-        return parentSpec;
-    }
-
-    protected void parseArgs(String[] args) {
-
-        final CommandLine.Model.CommandSpec spec = configureCommandLine();
-        final CommandLine.ParseResult parseResult = new CommandLine(spec).parseArgs(args);
-
+        System.out.println("here!");
+        //todo print help on error!!
         //printing version or usage help
-        if (printHelpIfRequested(args, parseResult))
+        /*if (printHelpIfRequested(args, parseResult))
             System.exit(0);
         if (basicOptions.cite) { //todo this should be the header or footer of the tool
             cite(spec);
@@ -155,23 +114,15 @@ public class CLI extends ApplicationCore {
         //run application
         if (basicOptions.numOfCores > 0) {
             PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(basicOptions.numOfCores));
-        }
+        }*/
 
+        //configure file formatter and workspace
+//        prohectSpace = makeSiriusProjectSpace();
+
+
+
+        /*
         //todo implemet real parsing stuff
-        //configure file formatter for workspace
-      /*  FilenameFormatter filenameFormatter = null;
-        if (basicOptions.workspaceNamingConvention != null) {
-            try {
-                filenameFormatter = new StandardMSFilenameFormatter(basicOptions.workspaceNamingConvention);
-            } catch (ParseException e) {
-                logger.error("Cannot parse naming convention: " + basicOptions.workspaceNamingConvention + System.lineSeparator() + e.getMessage(), e);
-                System.exit(1);
-            }
-        } else {
-            //default
-            filenameFormatter = new StandardMSFilenameFormatter();
-        }
-
 
         //configure output
         handleOutputOptions(new FingeridProjectSpaceFactory(filenameFormatter));
@@ -203,8 +154,9 @@ public class CLI extends ApplicationCore {
             workflow = new FingerIdWorkflow(siriusInstanceProcessor, fingerIdInstanceProcessor, options, projectWriter);
         }*/
 
-
     }
+
+
 
     /*protected void handleOutputOptions(ReaderWriterFactory readerWriterFactory) {
 
@@ -399,7 +351,7 @@ public class CLI extends ApplicationCore {
                 final MsExperimentParser parser = new MsExperimentParser();
                 File currentFile;
                 int index = instanceIdOffset;
-                Iterator<Ms2Experiment> experimentIterator = fetchNext();
+                Iterator<Ms2Experiment> currentExperimentIterator = fetchNext();
 
                 @Override
                 public boolean hasNext() {
@@ -416,20 +368,20 @@ public class CLI extends ApplicationCore {
                 private Iterator<Ms2Experiment> fetchNext() {
                     start:
                     while (true) {
-                        if (experimentIterator == null || !experimentIterator.hasNext()) {
+                        if (currentExperimentIterator == null || !currentExperimentIterator.hasNext()) {
                             if (fileIter.hasNext()) {
                                 currentFile = fileIter.next();
                                 try {
                                     GenericParser<Ms2Experiment> p = parser.getParser(currentFile);
                                     if (p == null) {
                                         logger.error("Unknown file format: '" + currentFile + "'");
-                                    } else experimentIterator = p.parseFromFileIterator(currentFile);
+                                    } else currentExperimentIterator = p.parseFromFileIterator(currentFile);
                                 } catch (IOException e) {
                                     logger.error("Cannot parse file '" + currentFile + "':\n", e);
                                 }
                             } else return null;
                         } else {
-                            MutableMs2Experiment experiment = sirius.makeMutable(experimentIterator.next());
+                            MutableMs2Experiment experiment = sirius.makeMutable(currentExperimentIterator.next());
                             if (basicOptions.maxMz != null)
                                 //skip high-mass compounds
                                 if (experiment.getIonMass() > basicOptions.maxMz) continue start;
@@ -446,7 +398,7 @@ public class CLI extends ApplicationCore {
 
                             Instance instance = new Instance(experiment, currentFile, currentIndex);
                             instances.add(instance);
-                            return experimentIterator;
+                            return currentExperimentIterator;
                         }
                     }
                 }
