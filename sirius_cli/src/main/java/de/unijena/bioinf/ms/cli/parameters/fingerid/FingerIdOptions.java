@@ -1,8 +1,12 @@
-package de.unijena.bioinf.ms.cli.parameters;
+package de.unijena.bioinf.ms.cli.parameters.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
+import de.unijena.bioinf.ms.cli.parameters.DefaultParameterOptionLoader;
+import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
+import de.unijena.bioinf.ms.cli.parameters.Provide;
+import de.unijena.bioinf.ms.cli.parameters.sirius.SiriusOptions;
 import de.unijena.bioinf.sirius.Sirius;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -10,6 +14,7 @@ import picocli.CommandLine.Option;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * This is for CSI:FingerID specific parameters.
@@ -19,11 +24,16 @@ import java.util.Set;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "fingerid", aliases = {"F"}, description = "Identify molecular structure for each compound Individually using CSI:FingerID.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
-public class FingerIdOptions {
+public class FingerIdOptions  implements Callable<InstanceJob.Factory> {
     private SiriusOptions siriusOptions;
     private Sirius siriusAPI; //todo fill me
     public final static String CONSIDER_ALL_FORMULAS = "all";
 
+    protected final DefaultParameterOptionLoader defaultConfigOptions;
+
+    public FingerIdOptions(DefaultParameterOptionLoader defaultConfigOptions) {
+        this.defaultConfigOptions = defaultConfigOptions;
+    }
 
     @Option(names = "-d", description = "search formulas in given database: all, pubchem, bio, kegg, hmdb")
     public String database;
@@ -106,6 +116,11 @@ public class FingerIdOptions {
         }
         return allowedSet;*/
         return null;
+    }
+
+    @Override
+    public InstanceJob.Factory call() throws Exception {
+        return FingeridSubToolJob::new;
     }
 
   /*  @Override

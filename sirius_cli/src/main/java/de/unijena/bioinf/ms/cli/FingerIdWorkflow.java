@@ -188,37 +188,6 @@ public class FingerIdWorkflow implements Workflow<Instance> {
     }
 
 
-    protected class JobSubmitter extends BufferedJJobSubmitter<Instance> {
 
-        public JobSubmitter(Iterator<Instance> instances) {
-            super(instances);
-        }
-
-        @Override
-        protected void submitJobs(final JobContainer watcher) {
-            /*Instance instance = watcher.sourceInstance;
-            ExperimentResultJJob siriusJob = siriusInstanceProcessor.makeSiriusJob(instance);
-            submitJob(siriusJob, watcher);
-            if (options.isFingerid()){
-                FingerIDJJob fingerIDJob = fingerIdInstanceProcessor.makeFingerIdJob(instance, siriusJob);
-                if (fingerIDJob!=null)
-                    submitJob(fingerIDJob, watcher);
-            }*/
-        }
-
-        @Override
-        protected void handleResults(JobContainer watcher) {
-            try {
-                handleJobs(watcher);
-            } catch (IOException e) {
-                logger.error("Error processing instance: " + watcher.sourceInstance.file.getName());
-            }
-        }
-
-        @Override
-        protected JobManager jobManager() {
-            return SiriusJobs.getGlobalJobManager();
-        }
-    }
 
 }

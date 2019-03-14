@@ -123,7 +123,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
         TwoCloumnPanel panel2 = new TwoCloumnPanel();
         panel2.setBorder(new EmptyBorder(0, 0, 0, 0));
         smartFilterTextField.setPreferredSize(new Dimension(100, smartFilterTextField.getPreferredSize().height));
-        panel2.add(new JLabel("SMART Filter"), smartFilterTextField);
+        panel2.add(new JLabel("SMARTS Filter"), smartFilterTextField);
 
         tb.add(filterByMolecularPropertyButton);
         tb.add(panel2);

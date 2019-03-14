@@ -15,13 +15,17 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.unijena.bioinf.ms.cli.parameters;
+package de.unijena.bioinf.ms.cli.parameters.sirius;
 
+import de.unijena.bioinf.ms.cli.parameters.DefaultParameterOptionLoader;
+import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
+import de.unijena.bioinf.ms.cli.parameters.Provide;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * This is for SIRIUS specific parameters.
@@ -33,7 +37,7 @@ import java.util.List;
 
 //todo got descriprions from defaultConfigOptions
 @Command(name = "sirius", aliases = {"S"}, description = "Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true, sortOptions = false)
-public class SiriusOptions {
+public class SiriusOptions implements Callable<InstanceJob.Factory> {
     protected final DefaultParameterOptionLoader defaultConfigOptions;
 
     public SiriusOptions(DefaultParameterOptionLoader defaultConfigOptions) {
@@ -49,6 +53,7 @@ public class SiriusOptions {
     public void setPpmMaxMs2(String value) throws Exception {
         defaultConfigOptions.changeOption("MS2MassDeviation.allowedMassDeviation", value);
     }
+
     @Option(names = "--tree-timeout", description = "Time out in seconds per fragmentation tree computations. 0 for an infinite amount of time. Default: 0"/*, defaultValue = "0"*/)
     public void setTreeTimeout(String value) throws Exception {
         defaultConfigOptions.changeOption("Timeout.secondsPerTree", value);
@@ -82,13 +87,13 @@ public class SiriusOptions {
 
     // Elements
     @Option(names = {"-e", "--elements-considered"}, description = "Set the allowed elements for rare element detection. Write SBrClBSe to allow the elements S,Br,Cl,B and Se.")
-    public void setDetectableElements(String elements) throws Exception {
+    public void setDetectableElements(List<String> elements) throws Exception {
         defaultConfigOptions.changeOption("FormulaSettings.detectable", elements);
         defaultConfigOptions.changeOption("FormulaSettings.fallback", elements);
     }
 
     @Option(names = {"-E", "--elements-enforced"}, description = "Enforce elements for molecular formula determination. Write CHNOPSCl to allow the elements C, H, N, O, P, S and Cl. Add numbers in brackets to restrict the minimal and maximal allowed occurrence of these elements: CHNOP[5]S[8]Cl[1-2]. When one number is given then it is interpreted as upper bound. Default is CHNOP")
-    public void setEnforcedElements(String elements) throws Exception {
+    public void setEnforcedElements(List<String> elements) throws Exception {
         defaultConfigOptions.changeOption("FormulaSettings.enforced", elements);
     }
 
@@ -109,12 +114,12 @@ public class SiriusOptions {
 
     //Adducts
     @Option(names = {"-i", "--ions-considered"}, description = "the iontype/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.")
-    public void setIonsConsidered(String adducts) throws Exception {
+    public void setIonsConsidered(List<String> adducts) throws Exception {
         defaultConfigOptions.changeOption("AdductSettings.detectable", adducts);
     }
 
     @Option(names = {"-I", "--ions-enforced"}, description = "the iontype/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.")
-    public void setIonsEnforced(String adducts) throws Exception {
+    public void setIonsEnforced(List<String> adducts) throws Exception {
         defaultConfigOptions.changeOption("AdductSettings.enforced", adducts);
     }
 
@@ -138,7 +143,7 @@ public class SiriusOptions {
     }
 
     @Option(names = "--trust-ion-prediction", description = "By default we use MS1 information to select additional ionizations ([M+Na]+,[M+K]+,[M+Cl]-,[M+Br]-) for considerations. With this parameter we trust the MS1 prediction and only consider these found ionizations.", hidden = true)
-    public void setTrustGuessIonFromMS1() {
+    public void setTrustGuessIonFromMS1(boolean trust) {
         throw new IllegalArgumentException("Parameter not implemented!");
         //todo manipulate adduct lists for marcus?????
     }
@@ -148,5 +153,11 @@ public class SiriusOptions {
 
     @Option(names = "--disable-fast-mode", hidden = true)
     public boolean disableFastMode;
+
+
+    @Override
+    public InstanceJob.Factory call() throws Exception {
+        return SiriusSubToolJob::new;
+    }
 
 }

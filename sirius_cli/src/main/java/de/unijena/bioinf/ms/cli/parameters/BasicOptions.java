@@ -1,12 +1,20 @@
 package de.unijena.bioinf.ms.cli.parameters;
 
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.cli.InputIterator;
+import de.unijena.bioinf.ms.io.projectspace.*;
+import de.unijena.bioinf.sirius.ExperimentResult;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.*;
+import java.util.concurrent.Callable;
+
 /**
  * This is for not algorithm related parameters.
  *
@@ -17,7 +25,10 @@ import java.util.List;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  * */
 @CommandLine.Command(name = "night-sky", aliases = {"ns"/*, "sirius"*/}, defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
-public class BasicOptions {
+public class BasicOptions implements Callable<Iterator<ExperimentResult>> {
+    Map<ExperimentResult, List<JJob>> someMappingToTheJobs;
+    SiriusProjectSpace projectSpace;
+
 
     // region Options: Quality
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,19 +69,43 @@ public class BasicOptions {
     public String workspace;
 
     @Option(names = {"--project-space", "-p"}, description = "Specify project-space to read from and also write to if nothing else is specified. For compression use the File ending .zip or .sirius", order = 70)
-    public String projectSpace;
+    public File projectSpaceLocation;
 
-    @Option(names = {"--output-project-space", "-o"}, description = "Specify a different project-space for writing than for reading. For compression use the File ending .zip or .sirius", order = 80)
-    public String output_project_space;
+    @Option(names = {"--input-project-space"}, description = "Specify different project-space(s) for reading than for writing. For compression use the File ending .zip or .sirius", order = 80)
+    public List<File> inputProjectSpaceLocations;
 
     @Option(names = "--naming-convention", description = "Specify a format for compounds' output directories. Default %%index_%%filename_%%compoundname", order = 90)
-    public String projectSpaceNamingConvention;
+    public void setProjectSpaceFilenameFormatter(String projectSpaceFilenameFormatter) throws ParseException {
+        this.projectSpaceFilenameFormatter = new StandardMSFilenameFormatter(projectSpaceFilenameFormatter);
+    }
+
+    public FilenameFormatter projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
 
     @Option(names = "--maxmz", description = "Just consider compounds with a precursor mz lower or equal this maximum mz. All other compounds in the input file are ignored.", order = 100)
-    public Double maxMz;
+    public Double maxMz = Double.POSITIVE_INFINITY;
+
+
 
     @Parameters(description = "Input spectra in .ms or .mgf file format")
-    public List<String> input = new ArrayList<>();
+    public void setInput(List<String> inputs) {
+        final List<File> infiles = new ArrayList<>();
+        for (String f : inputs) {
+            final File g = new File(f);
+            if (g.isDirectory()) {
+                File[] ins = g.listFiles(pathname -> pathname.isFile());
+                if (ins != null) {
+                    Arrays.sort(ins, Comparator.comparing(File::getName));
+                    infiles.addAll(Arrays.asList(ins));
+                }
+            } else {
+                infiles.add(g);
+            }
+        }
+        this.input = infiles;
+    }
+
+    public List<File> input = new ArrayList<>();
+
     // endregion
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -87,5 +122,49 @@ public class BasicOptions {
     public Double parentMz;
     //endregion
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Iterator<ExperimentResult> call() throws Exception {
+       /* //make a project space
+        projectSpace = configureProjectSpace();
+        //read new input if available
+        final Iterator<ExperimentResult> inputIter = (input == null || input.isEmpty())
+                ? projectSpace.parseExperimentIterator()
+                : new InputIterator(input, maxMz).asExpResultIterator();
+
+        //todo how to handle merge of new input and already existing workspace???
+        return inputIter;*/
+
+       return null;
+    }
+
+    protected SiriusProjectSpace configureProjectSpace() throws IOException {
+        SiriusProjectSpace space;
+        if (inputProjectSpaceLocations == null || inputProjectSpaceLocations.isEmpty()) {
+            space = SiriusProjectSpace.create(projectSpaceFilenameFormatter, projectSpaceLocation,
+                    (currentProgress, maxProgress, Message) -> {
+                        System.out.println("Creating Project Space: " + (((((double) currentProgress) / (double) maxProgress)) * 100d) + "%");
+                    }
+                    , makeSerializerArray());
+        } else {
+            space = SiriusProjectSpace.create(projectSpaceLocation, inputProjectSpaceLocations, projectSpaceFilenameFormatter,
+                    (currentProgress, maxProgress, Message) -> {
+                        System.out.println("Creating Project Space: " + (((((double) currentProgress) / (double) maxProgress)) * 100d) + "%");
+                    }
+                    , makeSerializerArray());
+        }
+        space.registerSummaryWriter(new MztabSummaryWriter());
+
+        return space;
+    }
+
+    protected MetaDataSerializer[] makeSerializerArray() {
+        //todo check weather Canopus and WebService is available
+        return new MetaDataSerializer[]{
+                new IdentificationResultSerializer()
+                , new FingerIdResultSerializer(ApplicationCore.WEB_API)
+                , new CanopusResultSerializer(ApplicationCore.CANOPUS)
+        };
+    }
 
 }
