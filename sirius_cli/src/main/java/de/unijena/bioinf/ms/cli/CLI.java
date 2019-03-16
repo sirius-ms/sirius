@@ -1,16 +1,17 @@
 package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.fingerworker.WorkerList;
+import de.unijena.bioinf.ms.cli.parameters.RootOptionsCLI;
 import de.unijena.bioinf.ms.cli.utils.FormatedTableBuilder;
-import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.cli.workflow.Workflow;
+import de.unijena.bioinf.ms.cli.workflow.WorkflowBuilder;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 
 /**
@@ -21,7 +22,7 @@ import java.util.List;
  * <p>
  * Basic Idea:
  * <p>
- * Note: A Workpace can be input and output at the same time!
+ * Note: A Workspace can be input and output at the same time!
  * Some methods will use it as input and check whether
  * the needed input is present (e.g Zodiac).
  * Other Methods only produce output to the Workspace (e.g. SIRIUS).
@@ -30,8 +31,6 @@ import java.util.List;
 public class CLI extends ApplicationCore {
     protected final static Logger logger = LoggerFactory.getLogger(CLI.class);
 
-
-    SiriusProjectSpace prohectSpace;
 
     //////////////////////////////////////////////////
     // init
@@ -83,25 +82,26 @@ public class CLI extends ApplicationCore {
         return r;
     }
 
-    protected void parseArgsAndInit(String[] args) throws IOException {
+    protected void parseArgsAndInit(String[] args) throws IOException, ExecutionException {
         parseArgs(args);
 //        if (!workflow.setup()) System.exit(1);
 //        if (!workflow.validate()) System.exit(1);
     }
 
 
-    protected void parseArgs(String[] args) throws IOException {
+    protected void parseArgs(String[] args) throws IOException, ExecutionException {
 
-        final CommandlineBuilder builder = new CommandlineBuilder();
-//        final CommandLine.ParseResult parseResult = new CommandLine(builder.rootSpec).parseArgs(args);
-        final List<Object> configurationResults = new CommandLine(builder.rootSpec).parseWithHandler(builder.makeParseResultHandler(), args);
+        final WorkflowBuilder<RootOptionsCLI> builder = new WorkflowBuilder<>(new RootOptionsCLI());
+        final Workflow flow = new CommandLine(builder.rootSpec).parseWithHandler(builder.makeParseResultHandler(), args);
+
+        flow.run();
 
         System.out.println("here!");
         //todo print help on error!!
         //printing version or usage help
         /*if (printHelpIfRequested(args, parseResult))
             System.exit(0);
-        if (basicOptions.cite) { //todo this should be the header or footer of the tool
+        if (rootOptions.cite) { //todo this should be the header or footer of the tool
             cite(spec);
             System.exit(0);
         }
@@ -112,8 +112,8 @@ public class CLI extends ApplicationCore {
         }
 
         //run application
-        if (basicOptions.numOfCores > 0) {
-            PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(basicOptions.numOfCores));
+        if (rootOptions.numOfCores > 0) {
+            PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(rootOptions.numOfCores));
         }*/
 
         //configure file formatter and workspace
@@ -161,12 +161,12 @@ public class CLI extends ApplicationCore {
     /*protected void handleOutputOptions(ReaderWriterFactory readerWriterFactory) {
 
         //output and logging
-        if (basicOptions.quiet || "-".equals(basicOptions.workspaceZip)) {
+        if (rootOptions.quiet || "-".equals(rootOptions.workspaceZip)) {
             this.shellOutputSurpressed = true;
             disableShellLogging();
         }
 
-        if ("-".equals(basicOptions.workspaceDir)) {
+        if ("-".equals(rootOptions.workspaceDir)) {
             logger.error("Cannot write output files and folders into standard output stream. Please use --workspace|-w to write a zip file of the SIRIUS output into the standard output stream.");
             System.exit(1);
         }
@@ -233,13 +233,13 @@ public class CLI extends ApplicationCore {
         ///////////////////////////////////////////////////////////////////
         // direct input: --ms1 and --ms2 command line options are given
         ///////////////////////////////////////////////////////////////////
-        if (basicOptions.ms2 != null && !basicOptions.ms2.isEmpty()) {
+        if (rootOptions.ms2 != null && !rootOptions.ms2.isEmpty()) {
             final MutableMs2Experiment exp = new MutableMs2Experiment();
-            exp.setSource(basicOptions.ms2.get(0));
+            exp.setSource(rootOptions.ms2.get(0));
             final PrecursorIonType precursor = siriusOptions.getPrecursorIonType();
 
             exp.setMs2Spectra(new ArrayList<MutableMs2Spectrum>());
-            for (File f : foreachIn(basicOptions.ms2)) {
+            for (File f : foreachIn(rootOptions.ms2)) {
                 final Iterator<Ms2Spectrum<Peak>> spiter = SpectralParser.getParserFor(f).parseSpectra(f);
                 while (spiter.hasNext()) {
                     final Ms2Spectrum<Peak> spec = spiter.next();
@@ -275,9 +275,9 @@ public class CLI extends ApplicationCore {
             if (exp.getMs2Spectra().size() <= 0)
                 throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
 
-            if (basicOptions.ms1 != null && !basicOptions.ms1.isEmpty()) {
+            if (rootOptions.ms1 != null && !rootOptions.ms1.isEmpty()) {
                 exp.setMs1Spectra(new ArrayList<SimpleSpectrum>());
-                for (File f : basicOptions.ms1) {
+                for (File f : rootOptions.ms1) {
                     final Iterator<Ms2Spectrum<Peak>> spiter = SpectralParser.getParserFor(f).parseSpectra(f);
                     while (spiter.hasNext()) {
                         exp.getMs1Spectra().add(new SimpleSpectrum(spiter.next()));
@@ -318,9 +318,9 @@ public class CLI extends ApplicationCore {
                 exp.setName("unknown");
             }
 
-            Instance instance = new Instance(exp, basicOptions.ms2.get(0), ++instanceIdOffset);
+            Instance instance = new Instance(exp, rootOptions.ms2.get(0), ++instanceIdOffset);
             instances.add(setupInstance(instance));
-        } else if (basicOptions.ms1 != null && !basicOptions.ms1.isEmpty()) {
+        } else if (rootOptions.ms1 != null && !rootOptions.ms1.isEmpty()) {
             throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
         }
 
@@ -328,11 +328,11 @@ public class CLI extends ApplicationCore {
         ///////////////////////////////////////////////////////////////////
         // batch input: files containing ms1 and ms2 data are given
         ///////////////////////////////////////////////////////////////////
-        if (!basicOptions.input.isEmpty()) {
+        if (!rootOptions.input.isEmpty()) {
             final Iterator<File> fileIter;
             final ArrayList<File> infiles = new ArrayList<File>();
-            Collections.sort(basicOptions.input);
-            for (String f : basicOptions.input) {
+            Collections.sort(rootOptions.input);
+            for (String f : rootOptions.input) {
                 final File g = new File(f);
                 if (g.isDirectory()) {
                     File[] ins = g.listFiles(pathname -> pathname.isFile());
@@ -382,9 +382,9 @@ public class CLI extends ApplicationCore {
                             } else return null;
                         } else {
                             MutableMs2Experiment experiment = sirius.makeMutable(currentExperimentIterator.next());
-                            if (basicOptions.maxMz != null)
+                            if (rootOptions.maxMz != null)
                                 //skip high-mass compounds
-                                if (experiment.getIonMass() > basicOptions.maxMz) continue start;
+                                if (experiment.getIonMass() > rootOptions.maxMz) continue start;
 
                             Index expIndex = experiment.getAnnotation(Index.class);
                             int currentIndex;

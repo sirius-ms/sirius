@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.cli.parameters.canopus;
 
-import de.unijena.bioinf.ms.cli.parameters.DefaultParameterOptionLoader;
+import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
 import de.unijena.bioinf.ms.cli.parameters.Provide;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;

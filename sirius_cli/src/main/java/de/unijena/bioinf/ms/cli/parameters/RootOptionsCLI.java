@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.cli.parameters;
 
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.cli.InputIterator;
 import de.unijena.bioinf.ms.io.projectspace.*;
 import de.unijena.bioinf.sirius.ExperimentResult;
@@ -13,7 +12,6 @@ import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
-import java.util.concurrent.Callable;
 
 /**
  * This is for not algorithm related parameters.
@@ -25,10 +23,7 @@ import java.util.concurrent.Callable;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  * */
 @CommandLine.Command(name = "night-sky", aliases = {"ns"/*, "sirius"*/}, defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
-public class BasicOptions implements Callable<Iterator<ExperimentResult>> {
-    Map<ExperimentResult, List<JJob>> someMappingToTheJobs;
-    SiriusProjectSpace projectSpace;
-
+public class RootOptionsCLI implements RootOptions {
 
     // region Options: Quality
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,7 +63,7 @@ public class BasicOptions implements Callable<Iterator<ExperimentResult>> {
     @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius", order = 70)
     public String workspace;
 
-    @Option(names = {"--project-space", "-p"}, description = "Specify project-space to read from and also write to if nothing else is specified. For compression use the File ending .zip or .sirius", order = 70)
+    @Option(names = {"--project-space", "-p"}, description = "Specify project-space to read from and also write to if nothing else is specified. For compression use the File ending .zip or .sirius", required = true, order = 70)
     public File projectSpaceLocation;
 
     @Option(names = {"--input-project-space"}, description = "Specify different project-space(s) for reading than for writing. For compression use the File ending .zip or .sirius", order = 80)
@@ -85,26 +80,10 @@ public class BasicOptions implements Callable<Iterator<ExperimentResult>> {
     public Double maxMz = Double.POSITIVE_INFINITY;
 
 
+    @Parameters(description = "Input spectra in .ms or .mgf file format", type = File.class)
+    public List<File> input = null;
 
-    @Parameters(description = "Input spectra in .ms or .mgf file format")
-    public void setInput(List<String> inputs) {
-        final List<File> infiles = new ArrayList<>();
-        for (String f : inputs) {
-            final File g = new File(f);
-            if (g.isDirectory()) {
-                File[] ins = g.listFiles(pathname -> pathname.isFile());
-                if (ins != null) {
-                    Arrays.sort(ins, Comparator.comparing(File::getName));
-                    infiles.addAll(Arrays.asList(ins));
-                }
-            } else {
-                infiles.add(g);
-            }
-        }
-        this.input = infiles;
-    }
 
-    public List<File> input = new ArrayList<>();
 
     // endregion
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -123,19 +102,21 @@ public class BasicOptions implements Callable<Iterator<ExperimentResult>> {
     //endregion
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
-    public Iterator<ExperimentResult> call() throws Exception {
-       /* //make a project space
-        projectSpace = configureProjectSpace();
+
+    public RootOptions.IO call() throws Exception {
+        //make a project space
+        final SiriusProjectSpace projectSpace = configureProjectSpace();
         //read new input if available
-        final Iterator<ExperimentResult> inputIter = (input == null || input.isEmpty())
+
+
+        final List<File> input = expandInput(this.input);
+        final Iterator<ExperimentResult> inputIterator = (input == null || input.isEmpty())
                 ? projectSpace.parseExperimentIterator()
                 : new InputIterator(input, maxMz).asExpResultIterator();
 
-        //todo how to handle merge of new input and already existing workspace???
-        return inputIter;*/
 
-       return null;
+        //todo how to handle merge of new input and already existing workspace???
+        return new IO(projectSpace, inputIterator);
     }
 
     protected SiriusProjectSpace configureProjectSpace() throws IOException {
@@ -158,6 +139,24 @@ public class BasicOptions implements Callable<Iterator<ExperimentResult>> {
         return space;
     }
 
+    protected List<File> expandInput(List<File> files) {
+        if (files == null) return null;
+
+        final List<File> infiles = new ArrayList<>();
+        for (File g : files) {
+            if (g.isDirectory()) {
+                File[] ins = g.listFiles(pathname -> pathname.isFile());
+                if (ins != null) {
+                    Arrays.sort(ins, Comparator.comparing(File::getName));
+                    infiles.addAll(Arrays.asList(ins));
+                }
+            } else {
+                infiles.add(g);
+            }
+        }
+        return infiles;
+    }
+
     protected MetaDataSerializer[] makeSerializerArray() {
         //todo check weather Canopus and WebService is available
         return new MetaDataSerializer[]{
@@ -166,5 +165,6 @@ public class BasicOptions implements Callable<Iterator<ExperimentResult>> {
                 , new CanopusResultSerializer(ApplicationCore.CANOPUS)
         };
     }
+
 
 }
