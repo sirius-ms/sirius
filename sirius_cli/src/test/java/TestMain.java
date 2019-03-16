@@ -1,11 +1,11 @@
-import de.unijena.bioinf.ms.cli.parameters.BasicOptions;
+import de.unijena.bioinf.ms.cli.parameters.RootOptionsCLI;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import picocli.CommandLine;
 
 public class TestMain {
     public static void main(String[] args){
         String t = ApplicationCore.VERSION_STRING();
-        BasicOptions basicOptions = new BasicOptions();
+        RootOptionsCLI basicOptions = new RootOptionsCLI();
         final CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.forAnnotatedObject(basicOptions);
 //        spec.addMixin("SIRIUS", CommandLine.Model.CommandSpec.forAnnotatedObject(siriusOptions));
 //        spec.addMixin("Zodiac", CommandLine.Model.CommandSpec.forAnnotatedObject(zodiacOptions));

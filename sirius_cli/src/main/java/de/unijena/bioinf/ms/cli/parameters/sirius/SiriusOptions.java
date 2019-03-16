@@ -17,7 +17,7 @@
  */
 package de.unijena.bioinf.ms.cli.parameters.sirius;
 
-import de.unijena.bioinf.ms.cli.parameters.DefaultParameterOptionLoader;
+import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
 import de.unijena.bioinf.ms.cli.parameters.Provide;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -134,7 +134,7 @@ public class SiriusOptions implements Callable<InstanceJob.Factory> {
     @Option(names = "--enable-silicon-detection", hidden = true) //todo schliesst sich aus mit disable-element-detection
     public void enableSiliconDetection(boolean enable) throws Exception {
         if (enable) {
-            String value = PropertyManager.DEFAULTS.getProperty("FormulaSettings.detectable");
+            String value = defaultConfigOptions.config.getConfigValue("FormulaSettings.detectable");
             if (value.isEmpty())
                 defaultConfigOptions.changeOption("FormulaSettings.detectable", "Si");
             else if (!value.contains("Si"))

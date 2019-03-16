@@ -24,11 +24,12 @@ public class InputIterator implements Iterator<Ms2Experiment> {
     private final MsExperimentParser parser = new MsExperimentParser();
 
     File currentFile;
-    Iterator<Ms2Experiment> currentExperimentIterator = fetchNext();
+    Iterator<Ms2Experiment> currentExperimentIterator;
 
     public InputIterator(Collection<File> input, double maxMz) {
         fileIter = input.iterator();
         this.maxMz = maxMz;
+        currentExperimentIterator = fetchNext();
     }
 
 

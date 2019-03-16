@@ -1,5 +1,5 @@
-import de.unijena.bioinf.ms.cli.parameters.BasicOptions;
-import de.unijena.bioinf.ms.cli.parameters.DefaultParameterOptionLoader;
+import de.unijena.bioinf.ms.cli.parameters.RootOptionsCLI;
+import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import org.apache.commons.configuration2.CombinedConfiguration;
@@ -26,7 +26,7 @@ public class DefaultParameterOptionLoaderTest {
         }
         final DefaultParameterOptionLoader builder = new DefaultParameterOptionLoader();
         final List<CommandLine.Model.OptionSpec> options = new ArrayList<>(builder.getOptions().values());
-        final CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.forAnnotatedObject(new BasicOptions());
+        final CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.forAnnotatedObject(new RootOptionsCLI());
         for (CommandLine.Model.OptionSpec option : options) {
             spec.addOption(option);
         }

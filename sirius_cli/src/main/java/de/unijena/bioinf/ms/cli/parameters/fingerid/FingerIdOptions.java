@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.cli.parameters.fingerid;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
-import de.unijena.bioinf.ms.cli.parameters.DefaultParameterOptionLoader;
+import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
 import de.unijena.bioinf.ms.cli.parameters.Provide;
 import de.unijena.bioinf.ms.cli.parameters.sirius.SiriusOptions;
