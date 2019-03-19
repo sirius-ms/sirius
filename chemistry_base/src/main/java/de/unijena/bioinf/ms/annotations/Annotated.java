@@ -154,6 +154,24 @@ public interface Annotated<A extends DataAnnotation> {
         }
     }
 
+    /**
+     * Add all given annotations. Overrides existing.
+     *
+     * @param annotations annotations to add
+     */
+    default void setAnnotationsFrom(Map<Class<A>, A> annotations) {
+        this.annotations().map.putAll(annotations);
+    }
+
+    /**
+     * Add all given annotations if they do not exist
+     *
+     * @param annotations annotations to add
+     */
+    default void addAnnotationsFrom(Map<Class<A>, A> annotations) {
+        annotations.forEach((k, v) -> this.annotations().map.putIfAbsent(k, v));
+    }
+
 
     /**
      * This allows us to hide the annotation map from the outside

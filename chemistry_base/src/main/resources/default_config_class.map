@@ -10,7 +10,6 @@ MedianNoiseIntensity=de.unijena.bioinf.ChemistryBase.ms.MedianNoiseIntensity
 Timeout=de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout
 AdductSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings
 PossibleAdducts=de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts
-IsolationWindow=de.unijena.bioinf.ChemistryBase.SimpleRectangularIsolationWindow
 PossibleAdductSwitches=de.unijena.bioinf.ChemistryBase.ms.PossibleAdductSwitches
 IsotopeSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeSettings
 NumberOfCandidatesPerIon=de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIon
