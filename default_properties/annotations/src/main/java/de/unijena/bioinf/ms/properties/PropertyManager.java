@@ -247,7 +247,7 @@ public class PropertyManager {
     }*/
 
     /*public static int getIntProperty(String key, int defaultValue) {
-        String v = getProperty(key);
+        String v = .getProperty(key);
         return v == null ? defaultValue : Integer.valueOf(v);
     }
 

@@ -1,10 +1,9 @@
 package de.unijena.bioinf.ChemistryBase;
 
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
-import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
-import de.unijena.bioinf.ms.properties.DefaultProperty;
 
-@DefaultProperty(propertyParent = "IsolationWindow")
+//todo we need a nice isolation window annotationwith defaults???
+//@DefaultProperty(propertyParent = "IsolationWindow")
 public class SimpleRectangularIsolationWindow extends IsolationWindow {
     private double leftBorder;
     private double rightBorder;
@@ -16,8 +15,8 @@ public class SimpleRectangularIsolationWindow extends IsolationWindow {
         this.rightBorder = rightBorder;
     }
 
-    @DefaultInstanceProvider
-    public static SimpleRectangularIsolationWindow newInstance(@DefaultProperty double width, @DefaultProperty double shift) {
+    //    @DefaultInstanceProvider
+    public static SimpleRectangularIsolationWindow newInstance(/*@DefaultProperty */double width, /*@DefaultProperty*/ double shift) {
         final double right = Math.abs(width) / 2d + shift;
         final double left = -Math.abs(width) / 2d + shift;
         return new SimpleRectangularIsolationWindow(left, right);

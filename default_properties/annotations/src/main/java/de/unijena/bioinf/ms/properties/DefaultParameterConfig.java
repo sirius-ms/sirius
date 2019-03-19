@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.properties;
 
 import com.google.gson.internal.Primitives;
 import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.PropertiesConfigurationLayout;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +15,7 @@ import java.lang.reflect.*;
 import java.util.List;
 import java.util.Queue;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 
@@ -31,12 +33,33 @@ public class DefaultParameterConfig {
         this.layout = layout;
     }
 
-    public Set<String> getDefaultPropertyKeys() {
-        return layout.getKeys();
+    public DefaultParameterConfig newIndependendInstance() {
+        PropertiesConfiguration props = PropertyManager.initProperties();
+        properties.getKeys(configRoot).forEachRemaining(key -> {
+            props.setProperty(key, properties.getString(key));
+        });
+
+        properties.getKeys(classRoot).forEachRemaining(key -> {
+            props.setProperty(key, properties.getString(key));
+        });
+
+        return new DefaultParameterConfig(props, layout, configRoot, classRoot);
     }
 
-    public String getDefaultPropertyDescription(String key) {
+    public Iterator<String> getConfigKeys() {
+        return properties.getKeys(configRoot);
+    }
+
+    public Iterator<String> getConfigClassKeys() {
+        return properties.getKeys(classRoot);
+    }
+
+    public String getConfigDescription(String key) {
         return layout.getComment(key);
+    }
+
+    public String getConfigValue(@NotNull String key) {
+        return properties.getString(configRoot + '.' + cleanKey(key));
     }
 
     public <C> boolean isInstantiatableWithDefaults(Class<C> klass) {
@@ -45,7 +68,7 @@ public class DefaultParameterConfig {
                 || Arrays.stream(klass.getDeclaredFields()).anyMatch(field -> field.isAnnotationPresent(DefaultProperty.class));
     }
 
-    public void changeDefault(@NotNull String key, @NotNull String value) {
+    public void changeConfig(@NotNull String key, @NotNull String value) {
         String backup = null;
         try {
             if (!key.startsWith(configRoot))
@@ -78,9 +101,6 @@ public class DefaultParameterConfig {
                 .replaceFirst(configRoot + ".", "");
     }
 
-    public String getProperty(@NotNull String key) {
-        return properties.getString(configRoot + '.' + cleanKey(key));
-    }
 
     public Class<?> getClassFromKey(@NotNull String key) {
         try {
@@ -170,6 +190,20 @@ public class DefaultParameterConfig {
 
         }
     }
+
+    public <A> Map<Class<A>, A> createInstancesWithDefaults(Class<A> annotationType) {
+        Map<Class<A>, A> defaultInstances = new ConcurrentHashMap<>();
+        getConfigClassKeys().forEachRemaining(classKey -> {
+            Class<?> cls = getClassFromKey(classKey);
+            if (annotationType.isAssignableFrom(cls)) {
+                defaultInstances.put((Class<A>) cls, (A) createInstanceWithDefaults(cls));
+            }
+        });
+        return Collections.unmodifiableMap(defaultInstances);
+    }
+
+
+
 
     private static <C> C invokePossiblyPrivateConstructor(Class<C> klass) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
         Constructor<C> constr = klass.getDeclaredConstructor();
