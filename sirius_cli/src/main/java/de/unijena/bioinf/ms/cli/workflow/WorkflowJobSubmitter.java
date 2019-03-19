@@ -6,7 +6,6 @@ import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.cli.parameters.DataSetJob;
-import de.unijena.bioinf.ms.cli.parameters.DymmyExpResultJob;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
 import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.sirius.ExperimentResult;

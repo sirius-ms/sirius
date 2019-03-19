@@ -38,8 +38,8 @@ public class Workflow {
         for (Object o : toolchain) {
             if (o instanceof InstanceJob.Factory) {
                 instanceJobChain.add((InstanceJob.Factory) o);
-            } else if (o instanceof DataSetJob) {
-                final DataSetJob dataSetJob = (DataSetJob) o;
+            } else if (o instanceof DataSetJob.Factory) {
+                final DataSetJob dataSetJob = ((DataSetJob.Factory) o).makeJob();
                 final WorkflowJobSubmitter submitter = new WorkflowJobSubmitter(inputIterator, project, instanceJobChain, dataSetJob);
                 submitter.start(10, 10); //todo how to wait on this? blocking?
                 inputIterator = submitter.jobManager().submitJob(dataSetJob).awaitResult().iterator();
@@ -50,7 +50,8 @@ public class Workflow {
         }
         if (!instanceJobChain.isEmpty()) {
             final WorkflowJobSubmitter submitter = new WorkflowJobSubmitter(inputIterator, project, instanceJobChain, null);
-            submitter.start(10, 10); //todo how to wait on this? blocking?
+            submitter.start(10, 10);
+            System.out.println("workflow finished");
         }
     }
 

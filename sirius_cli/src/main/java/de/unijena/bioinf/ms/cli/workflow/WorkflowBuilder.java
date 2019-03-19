@@ -70,8 +70,7 @@ public class WorkflowBuilder<R extends RootOptions> {
         @Override
         protected Workflow handle(CommandLine.ParseResult parseResult) throws CommandLine.ExecutionException {
             //todo check for citation command
-            //todo this should already create a valid job factory list
-            //here we create the workflow we will execute later
+            //here we create the workflow that we will execute later
             List<Object> result = new ArrayList<>();
             execute(parseResult.commandSpec().commandLine(), result);
 
@@ -79,7 +78,9 @@ public class WorkflowBuilder<R extends RootOptions> {
                 parseResult = parseResult.subcommand();
                 execute(parseResult.commandSpec().commandLine(), result);
             }
-            return returnResultOrExit(new Workflow((RootOptions.IO) result.get(0), configOptionLoader.config, result.subList(1, result.size())));
+
+            final List<Object> toolchain = new ArrayList<>(result.subList(1, result.size()));
+            return returnResultOrExit(new Workflow((RootOptions.IO) result.get(0), configOptionLoader.config, toolchain));
         }
 
         private void execute(CommandLine parsed, List<Object> executionResult) {
