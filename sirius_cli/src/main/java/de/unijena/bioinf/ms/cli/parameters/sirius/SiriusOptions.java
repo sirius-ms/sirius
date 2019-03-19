@@ -17,10 +17,9 @@
  */
 package de.unijena.bioinf.ms.cli.parameters.sirius;
 
-import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
 import de.unijena.bioinf.ms.cli.parameters.Provide;
-import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -37,7 +36,7 @@ import java.util.concurrent.Callable;
 
 //todo got descriprions from defaultConfigOptions
 @Command(name = "sirius", aliases = {"S"}, description = "Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true, sortOptions = false)
-public class SiriusOptions implements Callable<InstanceJob.Factory> {
+public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubToolJob>> {
     protected final DefaultParameterOptionLoader defaultConfigOptions;
 
     public SiriusOptions(DefaultParameterOptionLoader defaultConfigOptions) {
@@ -156,7 +155,7 @@ public class SiriusOptions implements Callable<InstanceJob.Factory> {
 
 
     @Override
-    public InstanceJob.Factory call() throws Exception {
+    public InstanceJob.Factory<SiriusSubToolJob> call() throws Exception {
         return SiriusSubToolJob::new;
     }
 

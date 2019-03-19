@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.cli.parameters;
+package de.unijena.bioinf.ms.cli.workflow;
 
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.ExperimentResult;

@@ -1,10 +1,13 @@
 package de.unijena.bioinf.ms.cli.parameters.zodiac;
 
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
-import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
+import de.unijena.bioinf.ms.cli.parameters.DataSetJob;
 import de.unijena.bioinf.ms.cli.parameters.Provide;
+import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+
+import java.util.concurrent.Callable;
 
 /**
  * This is for Zodiac specific parameters.
@@ -14,7 +17,7 @@ import picocli.CommandLine.Option;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "zodiac", aliases = {"Z"}, description = "Identify Molecular formulas of all compounds in a dataset together using ZODIAC.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
-public class ZodiacOptions {
+public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiakSubToolJob>> {
     protected final DefaultParameterOptionLoader defaultConfigOptions;
 
     public ZodiacOptions(DefaultParameterOptionLoader defaultConfigOptions) {
@@ -114,8 +117,8 @@ public class ZodiacOptions {
     )
     public Double medianNoiseIntensity;
 
-    /*@Override
-    public void setParamatersToExperiment(MutableMs2Experiment experiment) {
-        //todo fill me
-    }*/
+    @Override
+    public DataSetJob.Factory<ZodiakSubToolJob> call() throws Exception {
+        return ZodiakSubToolJob::new;
+    }
 }

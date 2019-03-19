@@ -1,11 +1,14 @@
 package de.unijena.bioinf.ms.cli.parameters.canopus;
 
-import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
+import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
 import de.unijena.bioinf.ms.cli.parameters.Provide;
+import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 import java.io.File;
+import java.util.concurrent.Callable;
+
 /**
  * This is for Canopus specific parameters.
  *
@@ -14,7 +17,7 @@ import java.io.File;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  * */
 @CommandLine.Command(name = "canopus", aliases = {"C"}, description = "Predict compound categories for the whole dataset using CANOPUS.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
-public class CanopusOptions {
+public class CanopusOptions implements Callable<InstanceJob.Factory<CanopusSubToolJob>> {
     protected final DefaultParameterOptionLoader defaultConfigOptions;
 
     public CanopusOptions(DefaultParameterOptionLoader defaultConfigOptions) {
@@ -23,4 +26,8 @@ public class CanopusOptions {
     @Option(names = {"--experimental-canopus"}, hidden = true) //experimental/temporary/internal
     public File experimentalCanopus;
 
+    @Override
+    public InstanceJob.Factory<CanopusSubToolJob> call() throws Exception {
+        return CanopusSubToolJob::new;
+    }
 }
