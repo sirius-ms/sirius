@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.cli.parameters;
 
 import de.unijena.bioinf.ms.cli.InputIterator;
 import de.unijena.bioinf.ms.io.projectspace.*;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import picocli.CommandLine;
@@ -27,6 +28,7 @@ public class RootOptionsCLI implements RootOptions {
 
     // region Options: Quality
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //todo think how to implement this into the cli???
     @Option(names = "--noise", description = "Median intensity of noise peaks", order = 10,  hidden = true)
     public Double medianNoise;
 
@@ -48,13 +50,24 @@ public class RootOptionsCLI implements RootOptions {
     // region Options: Technical
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @Option(names = {"--processors", "--cores"}, description = "Number of cpu cores to use. If not specified Sirius uses all available cores.", order =50)
-    public int numOfCores;
+    public void setNumOfCores(int numOfCores) {
+        PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(numOfCores));
+    }
+
 
     @Option(names = "--max-compound-buffer", description = "Maxmimal number of compounds that will be buffered in Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. For Infinite buffer size set it to 0. Default: 2 * --initial_intance_buffer", order = 60)
     public Integer maxInstanceBuffer;
 
     @Option(names = "--initial-compound-buffer", description = "Number of compounds that will be loaded initially into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores", order = 60)
-    public Integer minInstanceBuffer;
+    public Integer initialInstanceBuffer;
+
+    private void initBuffers(){
+        if (initialInstanceBuffer == null)
+            initialInstanceBuffer = PropertyManager.getNumberOfCores() * 2;
+        if (maxInstanceBuffer == null)
+            maxInstanceBuffer = initialInstanceBuffer * 2;
+    }
+
     //endregion
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -104,18 +117,21 @@ public class RootOptionsCLI implements RootOptions {
 
 
     public RootOptions.IO call() throws Exception {
+        //init buffer sizes
+        initBuffers();
+
         //make a project space
         final SiriusProjectSpace projectSpace = configureProjectSpace();
         //read new input if available
 
 
+        //todo how to handle merge of new input and already existing workspace???
         final List<File> input = expandInput(this.input);
         final Iterator<ExperimentResult> inputIterator = (input == null || input.isEmpty())
                 ? projectSpace.parseExperimentIterator()
                 : new InputIterator(input, maxMz).asExpResultIterator();
 
 
-        //todo how to handle merge of new input and already existing workspace???
         return new IO(projectSpace, inputIterator);
     }
 
@@ -159,6 +175,7 @@ public class RootOptionsCLI implements RootOptions {
 
     protected MetaDataSerializer[] makeSerializerArray() {
         //todo check weather Canopus and WebService is available
+        // this should be collected from the different subtool
         return new MetaDataSerializer[]{
                 new IdentificationResultSerializer()
                 , new FingerIdResultSerializer(ApplicationCore.WEB_API)
