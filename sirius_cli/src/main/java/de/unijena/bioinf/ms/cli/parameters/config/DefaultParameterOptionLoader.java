@@ -95,9 +95,9 @@ public class DefaultParameterOptionLoader {
     }
 
     @CommandLine.Command(name = "config", description = "Override all possible default configurations of this toolbox from the command line.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-    private class ConfigOptions implements Callable<DefaultParameterConfig> {
+    private class ConfigOptions /*implements Callable<DefaultParameterConfig>*/ {
 
-        public DefaultParameterConfig config() {
+       /* public DefaultParameterConfig config() {
             return config;
         }
 
@@ -105,6 +105,6 @@ public class DefaultParameterOptionLoader {
         public DefaultParameterConfig call() throws Exception {
             System.out.println("I am the Config thing and do just set configs");
             return config();
-        }
+        }*/
     }
 }

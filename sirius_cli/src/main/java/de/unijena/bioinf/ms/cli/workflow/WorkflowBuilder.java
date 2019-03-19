@@ -6,7 +6,6 @@ import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
 import de.unijena.bioinf.ms.cli.parameters.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.cli.parameters.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.cli.parameters.zodiac.ZodiacOptions;
-import de.unijena.bioinf.ms.properties.DefaultParameterConfig;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
@@ -75,19 +74,19 @@ public class WorkflowBuilder<R extends RootOptions> {
             //here we create the workflow we will execute later
             List<Object> result = new ArrayList<>();
             execute(parseResult.commandSpec().commandLine(), result);
+
             while (parseResult.hasSubcommand()) {
                 parseResult = parseResult.subcommand();
                 execute(parseResult.commandSpec().commandLine(), result);
             }
-            return returnResultOrExit(new Workflow((RootOptions.IO) result.get(0), (DefaultParameterConfig) result.get(1), result.subList(2, result.size())));
+            return returnResultOrExit(new Workflow((RootOptions.IO) result.get(0), configOptionLoader.config, result.subList(1, result.size())));
         }
 
-        private List<Object> execute(CommandLine parsed, List<Object> executionResult) {
+        private void execute(CommandLine parsed, List<Object> executionResult) {
             Object command = parsed.getCommand();
             if (command instanceof Runnable) {
                 try {
                     ((Runnable) command).run();
-                    return executionResult;
                 } catch (CommandLine.ParameterException ex) {
                     throw ex;
                 } catch (CommandLine.ExecutionException ex) {
@@ -99,7 +98,6 @@ public class WorkflowBuilder<R extends RootOptions> {
                 try {
                     @SuppressWarnings("unchecked") Callable<Object> callable = (Callable<Object>) command;
                     executionResult.add(callable.call());
-                    return executionResult;
                 } catch (CommandLine.ParameterException ex) {
                     throw ex;
                 } catch (CommandLine.ExecutionException ex) {
@@ -108,7 +106,6 @@ public class WorkflowBuilder<R extends RootOptions> {
                     throw new CommandLine.ExecutionException(parsed, "Error while calling command (" + command + "): " + ex, ex);
                 }
             }
-            throw new CommandLine.ExecutionException(parsed, "Parsed command (" + command + ") is not Method, Runnable or Callable");
         }
 
         @Override

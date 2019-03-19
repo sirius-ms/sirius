@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ms.cli.workflow;
 
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.cli.parameters.AddConfigsJob;
 import de.unijena.bioinf.ms.cli.parameters.DataSetJob;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
 import de.unijena.bioinf.ms.cli.parameters.RootOptions;
@@ -29,6 +31,10 @@ public class Workflow {
 
     public void run() throws ExecutionException {
         final List<InstanceJob.Factory> instanceJobChain = new ArrayList<>(toolchain.size());
+        //job factory for job that add config annotations to an instance
+        instanceJobChain.add(makeConfigJob());
+
+        //other jobs
         for (Object o : toolchain) {
             if (o instanceof InstanceJob.Factory) {
                 instanceJobChain.add((InstanceJob.Factory) o);
@@ -46,6 +52,10 @@ public class Workflow {
             final WorkflowJobSubmitter submitter = new WorkflowJobSubmitter(inputIterator, project, instanceJobChain, null);
             submitter.start(10, 10); //todo how to wait on this? blocking?
         }
+    }
+
+    protected InstanceJob.Factory<AddConfigsJob> makeConfigJob() {
+        return () -> new AddConfigsJob(parameters.createInstancesWithDefaults(Ms2ExperimentAnnotation.class));
     }
 
 
