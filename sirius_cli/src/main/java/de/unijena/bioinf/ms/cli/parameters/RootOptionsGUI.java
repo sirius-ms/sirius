@@ -6,9 +6,10 @@ import picocli.CommandLine;
 
 import java.util.Iterator;
 //todo move to GUI?
+//maypbe define API in interface and make a abstract basic root cli
 
 @CommandLine.Command
-public class RootOptionsGUI implements RootOptions {
+public class RootOptionsGUI extends RootOptionsCLI {
     //input an project-space
     private final SiriusProjectSpace projectSpace;
     private final Iterator<ExperimentResult> inputIterator;

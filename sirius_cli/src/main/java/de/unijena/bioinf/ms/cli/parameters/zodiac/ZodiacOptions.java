@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.cli.parameters.zodiac;
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
 import de.unijena.bioinf.ms.cli.parameters.DataSetJob;
 import de.unijena.bioinf.ms.cli.parameters.Provide;
-import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
+import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterConfigLoader;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -18,9 +18,9 @@ import java.util.concurrent.Callable;
  */
 @CommandLine.Command(name = "zodiac", aliases = {"Z"}, description = "Identify Molecular formulas of all compounds in a dataset together using ZODIAC.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
 public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiakSubToolJob>> {
-    protected final DefaultParameterOptionLoader defaultConfigOptions;
+    protected final DefaultParameterConfigLoader defaultConfigOptions;
 
-    public ZodiacOptions(DefaultParameterOptionLoader defaultConfigOptions) {
+    public ZodiacOptions(DefaultParameterConfigLoader defaultConfigOptions) {
         this.defaultConfigOptions = defaultConfigOptions;
     }
     @Option(

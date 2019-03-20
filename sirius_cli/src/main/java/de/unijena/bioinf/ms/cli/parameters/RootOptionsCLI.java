@@ -29,6 +29,7 @@ public class RootOptionsCLI implements RootOptions {
     // region Options: Quality
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //todo think how to implement this into the cli???
+    // I think a subtool that can be called multiple times could be cool???
     @Option(names = "--noise", description = "Median intensity of noise peaks", order = 10,  hidden = true)
     public Double medianNoise;
 

@@ -1,8 +1,9 @@
 package de.unijena.bioinf.ms.cli.workflow;
 
 import de.unijena.bioinf.ms.cli.parameters.RootOptions;
+import de.unijena.bioinf.ms.cli.parameters.RootOptionsCLI;
 import de.unijena.bioinf.ms.cli.parameters.canopus.CanopusOptions;
-import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
+import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.cli.parameters.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.cli.parameters.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.cli.parameters.zodiac.ZodiacOptions;
@@ -15,14 +16,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class WorkflowBuilder<R extends RootOptions> {
+public class WorkflowBuilder<R extends RootOptionsCLI> {
 
     //root
     public final CommandLine.Model.CommandSpec rootSpec;
     public final R rootOptions;
 
     //global configs (subtool)
-    DefaultParameterOptionLoader configOptionLoader = new DefaultParameterOptionLoader();
+    DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
 
     //subtools
     public final SiriusOptions siriusOptions = new SiriusOptions(configOptionLoader);
@@ -80,7 +81,9 @@ public class WorkflowBuilder<R extends RootOptions> {
             }
 
             final List<Object> toolchain = new ArrayList<>(result.subList(1, result.size()));
-            return returnResultOrExit(new Workflow((RootOptions.IO) result.get(0), configOptionLoader.config, toolchain));
+            final Workflow wf = new Workflow((RootOptions.IO) result.get(0), configOptionLoader.config, toolchain);
+            wf.setInstanceBuffer(rootOptions.initialInstanceBuffer, rootOptions.maxInstanceBuffer);
+            return returnResultOrExit(wf);
         }
 
         private void execute(CommandLine parsed, List<Object> executionResult) {

@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.cli.parameters.config;
 
 import de.unijena.bioinf.ms.cli.parameters.Provide;
-import de.unijena.bioinf.ms.properties.DefaultParameterConfig;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,22 +12,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class DefaultParameterOptionLoader {
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultParameterOptionLoader.class);
+public class DefaultParameterConfigLoader {
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultParameterConfigLoader.class);
     private final Map<String, CommandLine.Model.OptionSpec> options;
     private CommandLine.Model.CommandSpec commandSpec = null;
-    public final DefaultParameterConfig config;
+    public final ParameterConfig config;
 
 
-    public DefaultParameterOptionLoader() throws IOException {
+    public DefaultParameterConfigLoader() throws IOException {
         this(PropertyManager.DEFAULTS.newIndependendInstance());
     }
 
-    public DefaultParameterOptionLoader(DefaultParameterConfig config) throws IOException {
+    public DefaultParameterConfigLoader(ParameterConfig config) throws IOException {
         this.config = config;
         options = loadDefaultParameterOptions();
     }
@@ -95,14 +94,14 @@ public class DefaultParameterOptionLoader {
     }
 
     @CommandLine.Command(name = "config", description = "Override all possible default configurations of this toolbox from the command line.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-    private class ConfigOptions /*implements Callable<DefaultParameterConfig>*/ {
+    private class ConfigOptions /*implements Callable<ParameterConfig>*/ {
 
-       /* public DefaultParameterConfig config() {
+       /* public ParameterConfig config() {
             return config;
         }
 
         @Override
-        public DefaultParameterConfig call() throws Exception {
+        public ParameterConfig call() throws Exception {
             System.out.println("I am the Config thing and do just set configs");
             return config();
         }*/
