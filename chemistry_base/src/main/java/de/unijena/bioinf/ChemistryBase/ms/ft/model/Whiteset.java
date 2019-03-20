@@ -7,6 +7,7 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import gnu.trove.set.hash.TCustomHashSet;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This annotation defines the set of molecular formulas which have to be checked. This annotation makes only sense to
@@ -16,11 +17,15 @@ import java.util.*;
 public class Whiteset implements Ms2ExperimentAnnotation {
 
     public static Whiteset of(MolecularFormula... formulas) {
-        return new Whiteset(new HashSet<MolecularFormula>(Arrays.asList(formulas)));
+        return new Whiteset(new HashSet<>(Arrays.asList(formulas)));
     }
 
     public static Whiteset of(Collection<MolecularFormula> formulas) {
-        return new Whiteset(new HashSet<MolecularFormula>(formulas));
+        return new Whiteset(new HashSet<>(formulas));
+    }
+
+    public static Whiteset of(List<String> formulas) {
+        return of(formulas.stream().map(MolecularFormula::parse).collect(Collectors.toSet()));
     }
 
     protected final Set<MolecularFormula> formulas;
