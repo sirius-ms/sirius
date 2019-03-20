@@ -68,7 +68,7 @@ public class DefaultParameterConfig {
                 || Arrays.stream(klass.getDeclaredFields()).anyMatch(field -> field.isAnnotationPresent(DefaultProperty.class));
     }
 
-    public void changeConfig(@NotNull String key, @NotNull String value) {
+    public Class<?> changeConfig(@NotNull String key, @NotNull String value) {
         String backup = null;
         try {
             if (!key.startsWith(configRoot))
@@ -87,18 +87,25 @@ public class DefaultParameterConfig {
             if (nuDefault == null)
                 throw new NullPointerException("Test default instance is NULL");
 
-
+            return nuDefault.getClass();
         } catch (Throwable e) {
             // rollback property
             properties.setProperty(key, backup);
             throw new IllegalDefaultPropertyKeyException("Default value change finished with errors! Rollback previous default value for key " + key + " if possible.", e);
         }
+
+
     }
 
 
     private String cleanKey(@NotNull String key) {
         return key.replaceFirst(classRoot + ".", "")
                 .replaceFirst(configRoot + ".", "");
+    }
+
+    public boolean containsConfigKey(@NotNull String key) {
+        key = configRoot + "." + cleanKey(key);
+        return properties.containsKey(key);
     }
 
 
