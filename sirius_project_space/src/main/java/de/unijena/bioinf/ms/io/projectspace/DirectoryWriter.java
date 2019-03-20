@@ -154,8 +154,10 @@ public class DirectoryWriter implements ProjectWriter {
         env.enterDirectory(expDir.getDirectoryName(), true);
 
         // ms file
-        if (isAllowed(OutputOptions.INPUT))
+        if (isAllowed(OutputOptions.INPUT)) {
             writeMsFile(result);
+//            writeConfigFile(result);
+        }
 
         // write index file
         writeIndex(result);
@@ -179,7 +181,7 @@ public class DirectoryWriter implements ProjectWriter {
         }
     }
 
-    protected void writeMetaData(ExperimentResult expResult) {
+    private void writeMetaData(ExperimentResult expResult) {
         for (MetaDataSerializer writer : metaDataWriters) {
             try {
                 writer.write(expResult, this);
@@ -200,6 +202,15 @@ public class DirectoryWriter implements ProjectWriter {
             });
         }
     }
+
+    /*private void writeConfigFile(ExperimentResult er) throws IOException {
+        final Ms2Experiment experiment = er.getExperiment();
+        if (experiment != null) {
+            if (experiment.hasAnnotation(FinalConfig.class)) {
+                write(SiriusLocations.SIRIUS_CONFIG.fileName(), experiment.getAnnotation(FinalConfig.class).config::write);
+            }
+        }
+    }*/
 
     private String errorCode(ExperimentResult experiment) {
         if (!experiment.hasError()) return "DONE";

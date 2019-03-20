@@ -1,10 +1,10 @@
 package de.unijena.bioinf.ms.annotations;
 
-import de.unijena.bioinf.ms.properties.DefaultParameterConfig;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
+import java.lang.reflect.ParameterizedType;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,7 +60,7 @@ public interface Annotated<A extends DataAnnotation> {
     /**
      * @return annotation value for the given class/key or the  default value given {@link PropertyManager}.DEFAULTS
      * The method will fail to provide a default value may fail if the given klass is not instantiatable via
-     * {@link DefaultParameterConfig}
+     * {@link ParameterConfig}
      *
      *
      * TODO: only Ms2Experiment has "default" annotations. So this method should removed
@@ -86,10 +86,15 @@ public interface Annotated<A extends DataAnnotation> {
         return val != null;
     }
 
-    default <T extends A> void addAnnotation(Class<T> klass, T annotation) {
+    default <T extends A> void addAnnotationIfAbsend(Class<T> klass, T value) {
+        if (!annotations().map.containsKey(klass))
+            setAnnotation(klass, value);
+    }
+
+    default <T extends A> void addAnnotation(Class<T> klass, T value) {
         if (annotations().map.containsKey(klass))
             throw new RuntimeException("Peak annotation '" + klass.getName() + "' is already present.");
-        setAnnotation(klass, annotation);
+        setAnnotation(klass, value);
     }
 
     /**
@@ -137,20 +142,7 @@ public interface Annotated<A extends DataAnnotation> {
         final Iterator<Map.Entry<Class<A>, A>> iter = annotated.forEachAnnotation();
         while (iter.hasNext()) {
             final Map.Entry<Class<A>, A> v = iter.next();
-            this.annotations().map.put(v.getKey(), v.getValue());
-        }
-    }
-
-    /**
-     * Add all given annotations if they do not exist
-     *
-     * @param annotated annotations to add
-     */
-    default void addAnnotationsFrom(Annotated<A> annotated) {
-        final Iterator<Map.Entry<Class<A>, A>> iter = annotated.forEachAnnotation();
-        while (iter.hasNext()) {
-            final Map.Entry<Class<A>, A> v = iter.next();
-            this.annotations().map.putIfAbsent(v.getKey(), v.getValue());
+            setAnnotation(v.getKey(), v.getValue());
         }
     }
 
@@ -164,12 +156,45 @@ public interface Annotated<A extends DataAnnotation> {
     }
 
     /**
+     * Add all annotations of type Class<A> from the given config. Overrides existing.
+     *
+     * @param config from which the annotations will be add
+     */
+    default void setAnnotationsFrom(ParameterConfig config) {
+        final Class<A> clz = (Class<A>) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+        config.createInstancesWithDefaults(clz).forEach(this::setAnnotation);
+    }
+
+    /**
+     * Add all given annotations if they do not exist
+     *
+     * @param annotated annotations to add
+     */
+    default void addAnnotationsFrom(Annotated<A> annotated) {
+        final Iterator<Map.Entry<Class<A>, A>> iter = annotated.forEachAnnotation();
+        while (iter.hasNext()) {
+            final Map.Entry<Class<A>, A> v = iter.next();
+            addAnnotationIfAbsend(v.getKey(), v.getValue());
+        }
+    }
+
+    /**
      * Add all given annotations if they do not exist
      *
      * @param annotations annotations to add
      */
     default void addAnnotationsFrom(Map<Class<A>, A> annotations) {
-        annotations.forEach((k, v) -> this.annotations().map.putIfAbsent(k, v));
+        annotations.forEach(this::addAnnotationIfAbsend);
+    }
+
+    /**
+     * Add all annotations of type Class<A> from the given config if they do  NOT already exist.
+     *
+     * @param config from which the annotations will be add
+     */
+    default void addAnnotationsFrom(ParameterConfig config) {
+        final Class<A> clz = (Class<A>) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+        config.createInstancesWithDefaults(clz).forEach(this::addAnnotationIfAbsend);
     }
 
 

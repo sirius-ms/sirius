@@ -23,9 +23,11 @@ import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.babelms.DataWriter;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
 
 public class JenaMsWriter implements DataWriter<Ms2Experiment> {
@@ -59,6 +61,17 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
                 write(writer, ">rt_end", String.valueOf(retentionTime.getEndTime()) + "s");
             }
         }
+
+        //write original config to file
+        if (data.hasAnnotation(MsFileConfig.class)) {
+            ParameterConfig config = data.getAnnotation(MsFileConfig.class).config;
+            Iterator<String> it = config.getModifiedConfigKeys();
+            while (it.hasNext()) {
+                final String key = it.next();
+                write(writer, ">" + config.shortKey(key), config.getConfigValue(key));
+            }
+        }
+
         final Map<String, String> arbitraryKeys = data.getAnnotation(AdditionalFields.class, AdditionalFields::new);
         for (Map.Entry<String, String> e : arbitraryKeys.entrySet()) {
             writer.write("#" + e.getKey() + " " + e.getValue());

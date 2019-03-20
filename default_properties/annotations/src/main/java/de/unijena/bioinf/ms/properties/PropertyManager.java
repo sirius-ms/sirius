@@ -46,7 +46,7 @@ public class PropertyManager {
     public static final String CONFIGS_LOCATIONS_KEY = PropertyManager.MS_PROPERTY_BASE + ".configLocations";
     public static final String CONFIG_CLASSES_LOCATIONS_KEY = PropertyManager.MS_PROPERTY_BASE + ".configClassesLocations";
 
-    public static final DefaultParameterConfig DEFAULTS;
+    public static final ParameterConfig DEFAULTS;
 
 
     static {
@@ -55,7 +55,7 @@ public class PropertyManager {
             loadDefaultProperties();
 
             loadDefaultConfigClasses();
-            DEFAULTS = new DefaultParameterConfig(
+            DEFAULTS = new ParameterConfig(
                     PROPERTIES,
                     loadDefaultConfigs().getLayout(),
                     MS_CONFIGS_BASE,
@@ -275,15 +275,17 @@ public class PropertyManager {
         return (v == null) ? null : new File(v);
     }
 
-    public static Iterator<String> getDefaultPropertyKeys() {
+    public static Iterator<String> getPropertyKeys() {
         return PROPERTIES.getKeys();
     }
 
     public static Properties asProperties() {
         final Properties p = new Properties();
-        getDefaultPropertyKeys().forEachRemaining(k -> p.put(k, PROPERTIES.getString(k)));
+        getPropertyKeys().forEachRemaining(k -> p.put(k, PROPERTIES.getString(k)));
         return p;
     }
+
+
 
 
     /*public static void main(String[] args) throws IOException {

@@ -4,6 +4,7 @@ import com.google.gson.internal.Primitives;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.PropertiesConfigurationLayout;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.beans.PropertyEditor;
 import java.beans.PropertyEditorManager;
+import java.io.IOException;
+import java.io.Writer;
 import java.lang.reflect.*;
 import java.util.List;
 import java.util.Queue;
@@ -19,47 +22,64 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 
-public class DefaultParameterConfig {
+public class ParameterConfig {
     public final String configRoot;
     public final String classRoot;
     private final PropertiesConfigurationLayout layout;
     private final Configuration properties;
 
+    private final Set<String> changedKeys = new LinkedHashSet<>();
 
-    public DefaultParameterConfig(Configuration properties, PropertiesConfigurationLayout layout, String configRoot, String classRoot) {
+    public ParameterConfig(Configuration properties, PropertiesConfigurationLayout layout, String configRoot, String classRoot) {
         this.properties = properties;
         this.configRoot = configRoot;
         this.classRoot = classRoot;
         this.layout = layout;
     }
 
-    public DefaultParameterConfig newIndependendInstance() {
-        PropertiesConfiguration props = PropertyManager.initProperties();
-        properties.getKeys(configRoot).forEachRemaining(key -> {
-            props.setProperty(key, properties.getString(key));
-        });
+    public void write(Writer writer) throws IOException {
+        try {
+            final PropertiesConfiguration props = PropertyManager.initProperties();
+            props.append(properties.subset(configRoot));
+            final PropertiesConfigurationLayout l = props.getLayout();
+            props.getKeys().forEachRemaining(keyShort -> l.setComment(keyShort, getConfigDescription(keyShort)));
 
-        properties.getKeys(classRoot).forEachRemaining(key -> {
-            props.setProperty(key, properties.getString(key));
-        });
+            l.save(props, writer);
+        } catch (ConfigurationException e) {
+            throw new IOException(e);
+        }
+    }
 
-        return new DefaultParameterConfig(props, layout, configRoot, classRoot);
+    public ParameterConfig newIndependendInstance() {
+        final PropertiesConfiguration props = PropertyManager.initProperties();
+        properties.getKeys(configRoot).forEachRemaining(key ->
+                props.setProperty(key, properties.getString(key)));
+
+        return new ParameterConfig(props, layout, configRoot, classRoot);
     }
 
     public Iterator<String> getConfigKeys() {
         return properties.getKeys(configRoot);
     }
 
+    public Iterator<String> getModifiedConfigKeys() {
+        return Collections.unmodifiableSet(changedKeys).iterator();
+    }
+
+    private Configuration getClassRootProperties() {
+        return PropertyManager.PROPERTIES.getConfiguration("resource_configs_classes");
+    }
+
     public Iterator<String> getConfigClassKeys() {
-        return properties.getKeys(classRoot);
+        return getClassRootProperties().getKeys(classRoot);
     }
 
     public String getConfigDescription(String key) {
-        return layout.getComment(key);
+        return layout.getComment(configRoot + '.' + shortKey(key));
     }
 
     public String getConfigValue(@NotNull String key) {
-        return properties.getString(configRoot + '.' + cleanKey(key));
+        return properties.getString(configRoot + '.' + shortKey(key));
     }
 
     public <C> boolean isInstantiatableWithDefaults(Class<C> klass) {
@@ -87,33 +107,32 @@ public class DefaultParameterConfig {
             if (nuDefault == null)
                 throw new NullPointerException("Test default instance is NULL");
 
+            changedKeys.add(key);
             return nuDefault.getClass();
         } catch (Throwable e) {
             // rollback property
             properties.setProperty(key, backup);
             throw new IllegalDefaultPropertyKeyException("Default value change finished with errors! Rollback previous default value for key " + key + " if possible.", e);
         }
-
-
     }
 
 
-    private String cleanKey(@NotNull String key) {
+    public String shortKey(@NotNull String key) {
         return key.replaceFirst(classRoot + ".", "")
                 .replaceFirst(configRoot + ".", "");
     }
 
     public boolean containsConfigKey(@NotNull String key) {
-        key = configRoot + "." + cleanKey(key);
+        key = configRoot + "." + shortKey(key);
         return properties.containsKey(key);
     }
 
 
     public Class<?> getClassFromKey(@NotNull String key) {
         try {
-            final String ks = cleanKey(key);
+            final String ks = shortKey(key);
             key = classRoot + '.' + ks.split("[.]")[0];
-            final String value = properties.getString(key);
+            final String value = getClassRootProperties().getString(key);
             if (value == null)
                 throw new NullPointerException("No Class value found for given key.");
             Class<?> clazz = Class.forName(value);
@@ -199,18 +218,24 @@ public class DefaultParameterConfig {
     }
 
     public <A> Map<Class<A>, A> createInstancesWithDefaults(Class<A> annotationType) {
+        return Collections.unmodifiableMap(createInstancesWithDefaults(getConfigKeys(), annotationType));
+    }
+
+
+    public <A> Map<Class<A>, A> createInstancesWithModifiedDefaults(Class<A> annotationType) {
+        return Collections.unmodifiableMap(createInstancesWithDefaults(getModifiedConfigKeys(), annotationType));
+    }
+
+    private <A> Map<Class<A>, A> createInstancesWithDefaults(Iterator<String> keys, Class<A> annotationType) {
         Map<Class<A>, A> defaultInstances = new ConcurrentHashMap<>();
-        getConfigClassKeys().forEachRemaining(classKey -> {
+        keys.forEachRemaining(classKey -> {
             Class<?> cls = getClassFromKey(classKey);
             if (annotationType.isAssignableFrom(cls)) {
                 defaultInstances.put((Class<A>) cls, (A) createInstanceWithDefaults(cls));
             }
         });
-        return Collections.unmodifiableMap(defaultInstances);
+        return defaultInstances;
     }
-
-
-
 
     private static <C> C invokePossiblyPrivateConstructor(Class<C> klass) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
         Constructor<C> constr = klass.getDeclaredConstructor();
