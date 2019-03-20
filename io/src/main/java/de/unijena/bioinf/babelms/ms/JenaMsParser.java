@@ -29,9 +29,9 @@ import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.DefaultParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -47,7 +47,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
     public static void main(String... args) throws IOException {
 
-        Path p = Paths.get("/home/fleisch/Downloads/demo-data/ms/Kaempferol_openms.ms");
+//        Path p = Paths.get("/home/fleisch/Downloads/demo-data/ms/Kaempferol_openms.ms");
+        Path p = Paths.get("/home/fleisch/Downloads/demo/demo-data/ms/Kaempferol.ms");
         GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParser(p.toFile());
         Ms2Experiment experiment = parser.parseFromFile(p.toFile()).get(0);
         System.out.println(experiment.getMolecularFormula());
@@ -97,15 +98,20 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             this.currentSpectrum = new SimpleMutableSpectrum();
         }
 
+        private Set<Class<Ms2ExperimentAnnotation>> configKeys;
+        private DefaultParameterConfig config;
+
         private final MsFileSource source;
         private SpectrumFileSource externalSource;
         private final BufferedReader reader;
         private int lineNumber;
         private String compoundName = null;
-        private MolecularFormula formula;
+        private Whiteset formulas;
+
         private int charge = 0;
         private SPECTRUM_TYPE spectrumType = SPECTRUM_TYPE.UNKNOWN;
         private PrecursorIonType ionization;
+
         private CollisionEnergy currentEnergy;
         private double tic = 0, parentMass = 0, retentionTime = 0, retentionTimeStart = Double.NaN, retentionTimeEnd = Double.NaN;
         private SimpleMutableSpectrum currentSpectrum;
@@ -115,14 +121,14 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private String inchi, inchikey, smiles, splash, spectrumQualityString;
         private MutableMs2Experiment experiment;
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
-        private AdditionalFields fields;
-        private Integer index;
-        private HashMap<Class<? extends Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> annotations;
-        private double treeTimeout;
-        private double compoundTimeout;
-        private double ppmMax = 0d, ppmMaxMs2 = 0d, noiseMs2 = 0d;
+//        private double treeTimeout;
+//        private double compoundTimeout;
+//        private double ppmMax = 0d, ppmMaxMs2 = 0d, noiseMs2 = 0d;
 
-        private TIntObjectMap<AdditionalFields> additionalFields = new TIntObjectHashMap<>();
+        //these are comments/additional options or metainfos that are mot nessecarily used by sirius
+        private AdditionalFields fields;
+
+
 
         private void newCompound(String name) {
             inchi = null;
@@ -139,13 +145,16 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             ionization = null;
             spectrumType = SPECTRUM_TYPE.UNKNOWN;
             charge = 0;
-            formula = null;
+            formulas = null;
             compoundName = name;
             instrumentation = MsInstrumentation.Unknown;
-            annotations = new HashMap<>();
-            treeTimeout = 0d;
-            compoundTimeout = 0d;
-            ppmMax = ppmMaxMs2 = noiseMs2 = 0d;
+//            annotations = new HashMap<>();
+//            treeTimeout = 0d;
+//            compoundTimeout = 0d;
+//            ppmMax = ppmMaxMs2 = noiseMs2 = 0d;
+            config = PropertyManager.DEFAULTS.newIndependendInstance();
+            configKeys = new LinkedHashSet<>();
+
         }
 
         private MutableMs2Experiment parse() throws IOException {
@@ -231,18 +240,25 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                         break;
                     }
                 }
+            } else if (config.containsConfigKey(optionName)) {
+                Class<?> cls = config.changeConfig(optionName, value);
+                if (Ms2ExperimentAnnotation.class.isAssignableFrom(cls))
+                    configKeys.add((Class<Ms2ExperimentAnnotation>) cls);
+            } else if (optionName.equals("index")) {
+                //set additional index for backward compatibility
+                //index is replaced against .index file during new
+                //project-space implementation. This is for compatibility
+                final Integer index = Integer.parseInt(value);
+                addAsAdditionalField("index", index.toString());
             } else if (optionName.equals("source")) {
                 //override in source set in ms file
                 this.externalSource = new SpectrumFileSource(new URL(value));
-            } else if (optionName.equals("index")) {
-                this.index = Integer.parseInt(value);
-            } else if (optionName.equals("formula")) {
-                if (formula != null || annotations.containsKey(Whiteset.class)) warn("Molecular formula is set twice");
-                MolecularFormula[] formulas = parseFormulas(value);
-                if (formulas.length == 1) this.formula = formulas[0];
-                else {
-                    Whiteset whiteset = Whiteset.of(formulas);
-                    annotations.put(Whiteset.class, whiteset);
+            } else if (optionName.equals("formulas")) {
+                if (formulas == null) {
+                    formulas = Whiteset.of(parseFormulas(value));
+                } else {
+                    warn("Molecular formulas is set twice, Sirius will collect them as a Whitelist!");
+                    formulas.getFormulas().addAll(Arrays.asList(parseFormulas(value)));
                 }
             } else if (optionName.equals("parentmass")) {
                 if (parentMass != 0) warn("parent mass is set twice");
@@ -314,25 +330,20 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } else if (optionName.contains("ion") || optionName.equalsIgnoreCase("adduct")) {
                 parseIonizations(value);
             } else if (optionName.equals("elements")) {
-//                annotations.put(FormulaConstraints.class, new FormulaConstraints(value));
+                changeConfig("FormulaSettings.detectable", value);
+                changeConfig("FormulaSettings.fallback", value);
             } else if (optionName.equals("ppm-max")) {
-                ppmMax = Double.parseDouble(value);
+                changeConfig("MS1MassDeviation.allowedMassDeviation", value);
             } else if (optionName.equals("ppm-max-ms2")) {
-                ppmMaxMs2 = Double.parseDouble(value);
+                changeConfig("MS2MassDeviation.allowedMassDeviation", value);
             } else if (optionName.equals("noise")) {
-                noiseMs2 = Double.parseDouble(value);
-            } else if (optionName.equals("profile")) {
-                warn("option '>profile' is currently not parsed from .ms file"); //TODO include somehow
+                changeConfig("MedianNoiseIntensity", value);
             } else if (optionName.equals("compound-timeout")) {
-                double t = parseTime(value);
-                if (Double.isNaN(t)) warn("Cannot parse compound-timeout.");
-                else compoundTimeout = t;
+                changeConfig("Timeout.secondsPerInstance", String.valueOf(parseTime(value)));
             } else if (optionName.equals("tree-timeout")) {
-                double t = parseTime(value);
-                if (Double.isNaN(t)) warn("Cannot parse tree-timeout.");
-                else treeTimeout = t;
+                changeConfig("Timeout.secondsPerTree", String.valueOf(parseTime(value)));
             } else if (optionName.equals("no-recalibration")) {
-                experiment.setAnnotation(ForbidRecalibration.class, ForbidRecalibration.FORBIDDEN);
+                changeConfig("ForbidRecalibration", ForbidRecalibration.FORBIDDEN.name());
             } else {
                 warn("Unknown option " + "'>" + optionName + "'" + " in .ms file. Option will be ignored");
                 if (fields == null) fields = new AdditionalFields();
@@ -341,14 +352,33 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             return false;
         }
 
+        private void addAsAdditionalField(@NotNull String key, @NotNull String value) {
+            if (fields == null) fields = new AdditionalFields();
+            fields.put(key, value);
+        }
+
+        private void changeConfig(@NotNull String key, @NotNull String value) throws IOException {
+            try {
+                configKeys.add((Class<Ms2ExperimentAnnotation>) config.changeConfig(key, value));
+            } catch (Throwable e) {
+                error("Could not parse Config key: " + key);
+            }
+        }
+
         private void flushCompound() {
             newSpectrum();
-            postprocess();
             experiment = null;
             if (compoundName == null) return;
             final MutableMs2Experiment exp = new MutableMs2Experiment();
+
+            //set fields
             exp.setIonMass(parentMass);
-            exp.setMolecularFormula(formula);
+            if (formulas != null) {
+                if (formulas.getFormulas().size() == 1)
+                    exp.setMolecularFormula(formulas.getFormulas().iterator().next());
+                else
+                    exp.setAnnotation(Whiteset.class, formulas);
+            }
             exp.setName(compoundName);
             if (ionization == null) {
                 if (charge != 0) {
@@ -359,32 +389,28 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             }
             exp.setMs1Spectra(ms1spectra);
             exp.setMs2Spectra(ms2spectra);
+
             if (mergedMs1 != null) exp.setMergedMs1Spectrum(mergedMs1);
             exp.setAnnotation(MsFileSource.class, source);
             if (externalSource != null)
                 exp.setAnnotation(SpectrumFileSource.class, externalSource);
-            if (index != null) {
-                //index is replaced against .index file during new
-                //project-space implementation. This is for compatibility
-                if (fields == null) fields = new AdditionalFields();
-                fields.put("index", index.toString());
-            }
+
             if (smiles != null) exp.setAnnotation(Smiles.class, new Smiles(smiles));
             if (splash != null) exp.setAnnotation(Splash.class, new Splash(splash));
+
             if (spectrumQualityString != null)
                 exp.setAnnotation(CompoundQuality.class, CompoundQuality.fromString(spectrumQualityString));
             if (inchi != null || inchikey != null) exp.setAnnotation(InChI.class, new InChI(inchikey, inchi));
             if (instrumentation != null) exp.setAnnotation(MsInstrumentation.class, instrumentation);
             if (retentionTime != 0)
                 exp.setAnnotation(RetentionTime.class, new RetentionTime(retentionTimeStart, retentionTimeEnd, retentionTime));
+
+            //add config annotations that have been set within the file
+            configKeys.forEach(cls -> exp.setAnnotation(cls, config.createInstanceWithDefaults(cls)));
+
+            //add additional fields
             if (fields != null) exp.setAnnotation(AdditionalFields.class, fields);
-            for (Map.Entry<Class<? extends Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> entry : annotations.entrySet()) {
-                exp.setAnnotation((Class<Ms2ExperimentAnnotation>) entry.getKey(), entry.getValue());
-            }
-            if (compoundTimeout != 0 || treeTimeout != 0) {
-                Timeout timeout = Timeout.newTimeout((int) compoundTimeout, (int) treeTimeout);
-                exp.setAnnotation(Timeout.class, timeout);
-            }
+
             this.experiment = exp;
             fields = null;
             this.compoundName = null;
@@ -470,7 +496,6 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } else return;
             spectrumType = SPECTRUM_TYPE.UNKNOWN;
             this.tic = 0;
-//            this.retentionTime = 0d; //todo currently the retention time is a MsExperiment attribute, not a spectrum property
             this.currentEnergy = null;
             this.currentSpectrum = new SimpleMutableSpectrum();
         }
@@ -488,10 +513,10 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             }
         }
 
-        private void parseIonizations(String ions) {
+        private void parseIonizations(String ions) throws IOException {
             if (ions.contains(",")) {
-                //todo support ionizations with modifications as PossibleAdducts?
-                String[] arr = ions.split(",");
+                changeConfig("AdductSettings.enforced",ions);
+                /*String[] arr = ions.split(",");
                 PrecursorIonType[] ionTypes = new PrecursorIonType[arr.length];
                 double[] probabilities = new double[arr.length];
                 for (int i = 0; i < arr.length; i++) {
@@ -524,7 +549,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                     }
                 }
                 final AdductSettings s = this.experiment.getAnnotationOrDefault(AdductSettings.class);
-                annotations.put(AdductSettings.class, s.withEnforced(ionTypeSet));
+                annotations.put(AdductSettings.class, s.withEnforced(ionTypeSet));*/
             } else {
                 final PrecursorIonType ion = PeriodicTable.getInstance().ionByName(ions.trim());
                 if (ion == null) {
@@ -536,11 +561,11 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         }
 
 
-        private void postprocess() {
+        /*private void postprocess() {
             setMassDeviations();
-        }
+        }*/
 
-        private void setMassDeviations() {
+        /*private void setMassDeviations() {
             if (ppmMax == 0 && ppmMaxMs2 == 0 && noiseMs2 == 0) return;
             if (ppmMaxMs2 == 0) ppmMaxMs2 = ppmMax;
             if (ppmMax != 0) {
@@ -554,7 +579,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             if (noiseMs2 != 0) {
                 annotations.put(MedianNoiseIntensity.class, new MedianNoiseIntensity(noiseMs2));
             }
-        }
+        }*/
 
     }
 }
