@@ -19,9 +19,7 @@ package de.unijena.bioinf.babelms.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -29,7 +27,7 @@ import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
-import de.unijena.bioinf.ms.properties.DefaultParameterConfig;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -39,7 +37,10 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -98,8 +99,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             this.currentSpectrum = new SimpleMutableSpectrum();
         }
 
-        private Set<Class<Ms2ExperimentAnnotation>> configKeys;
-        private DefaultParameterConfig config;
+        private ParameterConfig config;
 
         private final MsFileSource source;
         private SpectrumFileSource externalSource;
@@ -153,8 +153,6 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 //            compoundTimeout = 0d;
 //            ppmMax = ppmMaxMs2 = noiseMs2 = 0d;
             config = PropertyManager.DEFAULTS.newIndependendInstance();
-            configKeys = new LinkedHashSet<>();
-
         }
 
         private MutableMs2Experiment parse() throws IOException {
@@ -240,10 +238,6 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                         break;
                     }
                 }
-            } else if (config.containsConfigKey(optionName)) {
-                Class<?> cls = config.changeConfig(optionName, value);
-                if (Ms2ExperimentAnnotation.class.isAssignableFrom(cls))
-                    configKeys.add((Class<Ms2ExperimentAnnotation>) cls);
             } else if (optionName.equals("index")) {
                 //set additional index for backward compatibility
                 //index is replaced against .index file during new
@@ -344,6 +338,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 changeConfig("Timeout.secondsPerTree", String.valueOf(parseTime(value)));
             } else if (optionName.equals("no-recalibration")) {
                 changeConfig("ForbidRecalibration", ForbidRecalibration.FORBIDDEN.name());
+            } else if (config.containsConfigKey(options[0])) {
+                changeConfig(options[0], value);
             } else {
                 warn("Unknown option " + "'>" + optionName + "'" + " in .ms file. Option will be ignored");
                 if (fields == null) fields = new AdditionalFields();
@@ -359,9 +355,9 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
         private void changeConfig(@NotNull String key, @NotNull String value) throws IOException {
             try {
-                configKeys.add((Class<Ms2ExperimentAnnotation>) config.changeConfig(key, value));
+                config.changeConfig(key, value);
             } catch (Throwable e) {
-                error("Could not parse Config key: " + key);
+                error("Could not parse Config key = " + key + " with value = " + value + ".");
             }
         }
 
@@ -406,14 +402,15 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 exp.setAnnotation(RetentionTime.class, new RetentionTime(retentionTimeStart, retentionTimeEnd, retentionTime));
 
             //add config annotations that have been set within the file
-            configKeys.forEach(cls -> exp.setAnnotation(cls, config.createInstanceWithDefaults(cls)));
+            exp.setAnnotation(MsFileConfig.class, new MsFileConfig(config));
 
             //add additional fields
             if (fields != null) exp.setAnnotation(AdditionalFields.class, fields);
 
-            this.experiment = exp;
+            experiment = exp;
             fields = null;
-            this.compoundName = null;
+            config = null;
+            compoundName = null;
         }
 
         private void error(String s) throws IOException {
