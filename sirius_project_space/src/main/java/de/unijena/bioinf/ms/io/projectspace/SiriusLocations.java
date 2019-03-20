@@ -9,6 +9,7 @@ public interface SiriusLocations {
     Location SIRIUS_TREES_DOT = new Location("trees", null, ".dot");
     Location SIRIUS_ANNOTATED_SPECTRA = new Location("spectra", null, ".ms");
     Location SIRIUS_SPECTRA = new Location(null, "spectrum", ".ms");
+    Location SIRIUS_CONFIG = new Location(null, "computation", ".config");
     Location SIRIUS_SUMMARY = new Location(null, "summary_sirius", ".csv");
     Location SIRIUS_EXP_INFO_FILE = new Location(null, "experiment", ".info");
     //project-space level

@@ -18,7 +18,7 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
 @RunWith(Parameterized.class)
-public class DefaultParameterConfigTest {
+public class ParameterConfigTest {
 
     @Parameterized.Parameter(0)
     public Class<?> classToCreate;
