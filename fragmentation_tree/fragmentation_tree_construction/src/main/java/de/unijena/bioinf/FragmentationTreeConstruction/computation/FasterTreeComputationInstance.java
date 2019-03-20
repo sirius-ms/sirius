@@ -58,16 +58,22 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
     }
 
 
-    public static FasterTreeComputationInstance beautify(FragmentationPatternAnalysis analyzer, FTree tree) {
-        return new FasterTreeComputationInstance(analyzer, tree.getAnnotationOrThrow(ProcessedInput.class).cloneForBeautification(), tree);
+    public static FasterTreeComputationInstance beautify(FragmentationPatternAnalysis analyzer, FTree tree, ProcessedInput initialInput) {
+        return new FasterTreeComputationInstance(analyzer, tree.getAnnotationOrThrow(ProcessedInput.class).cloneForBeautification(), tree, initialInput);
     }
 
-    private FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree) {
+    private FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree, ProcessedInput initialInput) {
         this(analyzer, input.getOriginalInput(), 1, -1);
         this.pinput = input;
-        final Decomposition decomp = pinput.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula());
+        Decomposition decomp = pinput.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula());
         if (decomp==null) {
-            throw new RuntimeException("Try to beautify " + tree.getRoot().getFormula() + " but formula is not contained in decomposition list! " + pinput.getAnnotationOrThrow(DecompositionList.class).toString());
+            decomp = initialInput.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula());
+            if (decomp==null){
+                throw new RuntimeException(input.getOriginalInput().getName()+": Try to beautify " + tree.getRoot().getFormula() + " but formula is not contained in decomposition list! " + pinput.getAnnotationOrThrow(DecompositionList.class).toString());
+            } else {
+                System.out.println("use initial processed inputs decomposition list for "+initialInput.getOriginalInput().getName()+" "+tree.getRoot().getFormula());
+            }
+
         }
         this.pinput.setAnnotation(DecompositionList.class, new DecompositionList(new ArrayList<>(Collections.singletonList(decomp))));
         this.state = 3;
