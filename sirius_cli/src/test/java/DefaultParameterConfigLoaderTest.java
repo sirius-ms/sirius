@@ -1,5 +1,5 @@
 import de.unijena.bioinf.ms.cli.parameters.RootOptionsCLI;
-import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
+import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import org.apache.commons.configuration2.CombinedConfiguration;
@@ -14,7 +14,7 @@ import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
-public class DefaultParameterOptionLoaderTest {
+public class DefaultParameterConfigLoaderTest {
     public static final String SINGLE_VALUE = "tw_blub_bla";
     public static final String LIST_VALUE = "l1, l 2 , l3 ll";
 
@@ -24,7 +24,7 @@ public class DefaultParameterOptionLoaderTest {
             String c = ApplicationCore.CITATION;
             CombinedConfiguration p = PropertyManager.PROPERTIES;
         }
-        final DefaultParameterOptionLoader builder = new DefaultParameterOptionLoader();
+        final DefaultParameterConfigLoader builder = new DefaultParameterConfigLoader();
         final List<CommandLine.Model.OptionSpec> options = new ArrayList<>(builder.getOptions().values());
         final CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.forAnnotatedObject(new RootOptionsCLI());
         for (CommandLine.Model.OptionSpec option : options) {

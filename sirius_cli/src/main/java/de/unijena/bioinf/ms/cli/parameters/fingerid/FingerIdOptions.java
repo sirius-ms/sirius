@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
 import de.unijena.bioinf.ms.cli.parameters.Provide;
-import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
+import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.cli.parameters.sirius.SiriusOptions;
 import de.unijena.bioinf.sirius.Sirius;
 import picocli.CommandLine;
@@ -29,9 +29,9 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
     private Sirius siriusAPI; //todo fill me
     public final static String CONSIDER_ALL_FORMULAS = "all";
 
-    protected final DefaultParameterOptionLoader defaultConfigOptions;
+    protected final DefaultParameterConfigLoader defaultConfigOptions;
 
-    public FingerIdOptions(DefaultParameterOptionLoader defaultConfigOptions) {
+    public FingerIdOptions(DefaultParameterConfigLoader defaultConfigOptions) {
         this.defaultConfigOptions = defaultConfigOptions;
     }
 

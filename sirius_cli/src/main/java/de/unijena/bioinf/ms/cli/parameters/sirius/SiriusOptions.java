@@ -17,9 +17,10 @@
  */
 package de.unijena.bioinf.ms.cli.parameters.sirius;
 
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
 import de.unijena.bioinf.ms.cli.parameters.Provide;
-import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterOptionLoader;
+import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterConfigLoader;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -37,9 +38,9 @@ import java.util.concurrent.Callable;
 //todo got descriprions from defaultConfigOptions
 @Command(name = "sirius", aliases = {"S"}, description = "Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true, sortOptions = false)
 public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubToolJob>> {
-    protected final DefaultParameterOptionLoader defaultConfigOptions;
+    protected final DefaultParameterConfigLoader defaultConfigOptions;
 
-    public SiriusOptions(DefaultParameterOptionLoader defaultConfigOptions) {
+    public SiriusOptions(DefaultParameterConfigLoader defaultConfigOptions) {
         this.defaultConfigOptions = defaultConfigOptions;
     }
 
@@ -97,7 +98,10 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
     }
 
     @Option(names = {"-f", "--formula", "--formulas"}, description = "Specify the neutral molecular formula of the measured compound to compute its tree or a list of candidate formulas the method should discriminate. Omit this option if you want to consider all possible molecular formulas")
-    public List<String> formulaWhiteList;
+    public void setFormulaWhiteList(List<String> formulaWhiteList) throws Exception {
+        formulaWhiteSet = Whiteset.of(formulaWhiteList);
+    }
+    public Whiteset formulaWhiteSet =  null;
 
 
     @Option(names = {"--no-isotope-filter"}, description = "Disable molecular formula filter. When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.")
