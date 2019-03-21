@@ -204,6 +204,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             }
         } else {
             if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
+                if (i.experiment.getPrecursorIonType().getCharge()==0)
                 setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType().getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-")), enabledGuessingMode, true); // TODO: ins MS1 gucken
             } else {
                 setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()), PossibleIonModes.GuessingMode.DISABLED, false);
@@ -706,6 +707,18 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                     break;
                 }
             }
+            if (options.getIon()!=null){
+                for (String ionString : options.getIon()) {
+                    for (String formula : formulas) {
+                        if (formula.equals(ionString)){
+                            throw new IllegalArgumentException(String.format("The formula '%s' is also provided as an ionization. The CLI seemed to incorrectly parsed the parameters. " +
+                                    "Please specify formulas as last parameter (but before the list of input files).", formula));
+                        }
+                    }
+                }
+            }
+
+
         }
 
         final MsExperimentParser parser = new MsExperimentParser();
@@ -715,11 +728,19 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         final FormulaConstraints constraints = options.getElements() == null ? null/*getDefaultElementSet(options, ion)*/ : options.getElements();
         // direct input: --ms1 and --ms2 command line options are given
         if (options.getMs2() != null && !options.getMs2().isEmpty()) {
+            if (options.getIon()==null){
+                throw new IllegalArgumentException("Please specify ionization via --ion when using --ms2 option.");
+            }
             final MutableMeasurementProfile profile = new MutableMeasurementProfile();
             profile.setFormulaConstraints(constraints);
             final MutableMs2Experiment exp = new MutableMs2Experiment();
             exp.setSource(options.getMs2().get(0));
             final PrecursorIonType ionType = getIonFromOptions(options, 0);
+            if (ionType.isIonizationUnknown() && options.getParentMz()==null && formulas.size()==1){
+                throw new IllegalArgumentException("Please specify a single ionization via --ion. Precursor mass cannot be computed from molecular formula only.");
+            } else if (ionType.isIonizationUnknown() && options.getParentMz()==null) {
+                throw new IllegalArgumentException("Please specify ionization and precursor mass when using --ms2 option.");
+            }
             exp.setPrecursorIonType(ionType);
             exp.setMs2Spectra(new ArrayList<MutableMs2Spectrum>());
             for (File f : foreachIn(options.getMs2())) {
@@ -775,7 +796,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                 expPrecursor = exp.getPrecursorIonType().neutralMassToPrecursorMass(exp.getMolecularFormula().getMass());
             } else {
                 double prec = 0d;
-                for (int k = 1; k < exp.getMs2Spectra().size(); ++k) {
+                for (int k = 0; k < exp.getMs2Spectra().size(); ++k) {
                     final double pmz = exp.getMs2Spectra().get(k).getPrecursorMz();
                     if (pmz != 0 && Math.abs(pmz - exp.getMs2Spectra().get(0).getPrecursorMz()) > 1e-3) {
                         throw new IllegalArgumentException("The given MS/MS spectra have different precursor mass and cannot belong to the same compound");
