@@ -9,6 +9,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.AbstractTreeC
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractTreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GrbSolver;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -33,7 +34,7 @@ public class TestSirius {
 
     public TestSirius() {
         this.sirius = new Sirius("qtof");
-        sirius.getMs2Analyzer().setTreeBuilder(new AbstractTreeBuilder<>(GrbSolver.Factory));
+        sirius.getMs2Analyzer().setTreeBuilder(new AbstractTreeBuilder<>(CPLEXSolver.Factory));
         sirius.getMs2Analyzer().registerPlugin(new TreeStatisticPlugin());
         sirius.getMs2Analyzer().registerPlugin(new AdductSwitchPlugin());
         sirius.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin());
