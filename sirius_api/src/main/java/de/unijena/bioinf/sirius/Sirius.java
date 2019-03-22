@@ -37,6 +37,7 @@ import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,8 +60,11 @@ public class Sirius {
         this(profile, PeriodicTable.getInstance());
     }
 
+    public Sirius(ParameterConfig config) {
+        this(config.createInstanceWithDefaults(Profile.class));
+    }
     public Sirius() {
-        this.profile = PropertyManager.DEFAULTS.createInstanceWithDefaults(Profile.class);
+        this(PropertyManager.DEFAULTS);
     }
 
     public Sirius(@NotNull Profile profile, @NotNull PeriodicTable table) {
