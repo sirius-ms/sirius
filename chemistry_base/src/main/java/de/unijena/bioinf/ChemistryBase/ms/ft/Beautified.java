@@ -28,44 +28,36 @@ public final class Beautified implements TreeAnnotation  {
 
     public String toString() {
         if (!beautiful) return "nope";
-        else return "beautiful (" + beautificationScoreAddition + ")";
+        else return "beautiful";
     }
+
+    public double getNodeBoost() {
+        return nodeBoost;
+    }
+
 
     public final static Beautified IS_UGGLY = new Beautified(false,0d);
 
     protected final boolean beautiful;
-    protected final double beautificationScoreAddition;
+    protected final double nodeBoost;
 
     public static final String PENALTY_KEY = "BeautificationPenalty";
 
-    private Beautified(boolean beautiful, double beautificationBonus) {
+    private Beautified(boolean beautiful, double nodeBoost) {
         this.beautiful = beautiful;
-        this.beautificationScoreAddition = beautificationBonus;
+        this.nodeBoost = nodeBoost;
     }
 
     public static Beautified ugly() {
         return IS_UGGLY;
     }
 
-    public static Beautified beautified(double score) {
-        return new Beautified(true, score);
-    }
-
-    /**
-     * Automatically calculates the beautification bonus
-     * @param tree which is beautified
-     * @param increaseInTreeSize which was artificially added to the default tree size to beautify the tree
-     */
-    public static Beautified beautifiedFrom(FTree tree, double increaseInTreeSize) {
-        return beautified(tree.numberOfEdges() * increaseInTreeSize);
+    public static Beautified beautified(double nodeBoost) {
+        return new Beautified(true, nodeBoost);
     }
 
     public boolean isBeautiful() {
         return beautiful;
-    }
-
-    public double getBeautificationScoreAddition() {
-        return beautificationScoreAddition;
     }
 
     @Override
@@ -74,11 +66,11 @@ public final class Beautified implements TreeAnnotation  {
         if (o == null || getClass() != o.getClass()) return false;
         Beautified that = (Beautified) o;
         return beautiful == that.beautiful &&
-                Double.compare(that.beautificationScoreAddition, beautificationScoreAddition) == 0;
+                Double.compare(that.nodeBoost, nodeBoost) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(beautiful, beautificationScoreAddition);
+        return Objects.hash(beautiful, nodeBoost);
     }
 }
