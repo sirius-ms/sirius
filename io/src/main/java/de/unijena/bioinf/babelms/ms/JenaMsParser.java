@@ -247,7 +247,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } else if (optionName.equals("source")) {
                 //override in source set in ms file
                 this.externalSource = new SpectrumFileSource(new URL(value));
-            } else if (optionName.equals("formulas")) {
+            } else if (optionName.equals("formula") || optionName.equals("formulas")) {
                 if (formulas == null) {
                     formulas = Whiteset.of(parseFormulas(value));
                 } else {

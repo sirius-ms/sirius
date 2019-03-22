@@ -220,7 +220,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                     for (int D=0; D < decomposers.size(); ++D) {
                         formulas.addAll(decomposers.get(D).decomposeToFormulas(mass, fragmentDeviation.absoluteFor(peak.getMass()), constraintList.get(D)));
                     }
-                    for (MolecularFormula f : formulas) decompositions.add(new Decomposition(f, ion, 0d));
+                    for (MolecularFormula f : formulas){
+                        decompositions.add(new Decomposition(f, ion, 0d));
+                    }
                 }
             }
 

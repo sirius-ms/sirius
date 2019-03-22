@@ -50,12 +50,27 @@ public class ParameterConfig {
         }
     }
 
+    public ParameterConfig newIndependendInstance(boolean keepChanges) {
+        ParameterConfig it = newIndependendInstance();
+        if (keepChanges)
+            it.changedKeys.addAll(changedKeys);
+        return it;
+    }
+
     public ParameterConfig newIndependendInstance() {
         final PropertiesConfiguration props = PropertyManager.initProperties();
         properties.getKeys(configRoot).forEachRemaining(key ->
                 props.setProperty(key, properties.getString(key)));
 
         return new ParameterConfig(props, layout, configRoot, classRoot);
+    }
+
+    public void changeModifiedFrom(ParameterConfig config) {
+        // this can be unchecked because ParameterConfig entries have to be valid
+        config.changedKeys.forEach(key -> {
+            properties.setProperty(key, config.properties.getString(key));
+            changedKeys.add(key);
+        });
     }
 
     public Iterator<String> getConfigKeys() {

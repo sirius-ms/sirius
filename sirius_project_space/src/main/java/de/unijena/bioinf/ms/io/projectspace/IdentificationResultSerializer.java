@@ -104,7 +104,8 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
     private void writeDOTTree(final IdentificationResult result, DirectoryWriter writer) throws IOException {
         if (writer.isAllowed(OutputOptions.TREES_DOT)) {
             writer.write(SiriusLocations.SIRIUS_TREES_DOT.fileName(result), w
-                    -> new FTDotWriter(true, true).writeTree(w, result.getRawTree())
+//                    -> new FTDotWriter(true, true).writeTree(w, result.getRawTree())
+                    -> new FTDotWriter(true, true).writeTree(w, result.getResolvedTree())
             );
         }
     }

@@ -22,7 +22,6 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
 import de.unijena.bioinf.graphUtils.tree.TreeAdapter;
@@ -58,14 +57,8 @@ public class FTDotWriter {
     public void writeTree(Writer writer, FTree tree) throws IOException {
         if (!(writer instanceof BufferedWriter)) writer=new BufferedWriter(writer);
         writer.write("strict digraph {\n");
-        final FragmentAnnotation<Peak> peakAno = tree.getFragmentAnnotationOrThrow(Peak.class);
+        final FragmentAnnotation<AnnotatedPeak> peakAno = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
         final LossAnnotation<LossType> lossType = tree.getLossAnnotationOrNull(LossType.class);
-        // normalize intensities
-        double maxInt = 1e-12;
-        for (Fragment f : tree.getFragments()) {
-            if (peakAno.get(f)==null) continue;
-            maxInt = Math.max(maxInt, peakAno.get(f).getIntensity());
-        }
 
         final boolean hasScores;
         final FragmentAnnotation<Score> fscore = tree.getFragmentAnnotationOrNull(Score.class);
@@ -105,13 +98,13 @@ public class FTDotWriter {
                 writer.write(htmlFormula(formula,ftion));
             else
                 writer.write(htmlFormula(formula,f.getIonization()));
-            final Peak p = peakAno.get(f);
+            final AnnotatedPeak p = peakAno.get(f);
             if (p != null) {
                 writer.write(htmlSmall());
                 writer.write(htmlNewline());
                 writer.write(" ");
                 writer.write(htmlNewline());
-                writer.write(htmlLabel(String.format(Locale.US, "%.4f Da, %.2f %%", p.getMass(), p.getIntensity() * 100d / maxInt)));
+                writer.write(htmlLabel(String.format(Locale.US, "%.4f Da, %.2f %%", p.getMass(), p.getRelativeIntensity())));
                 if (hasScores) {
                     writer.write(htmlNewline());
                     double score = fscore.get(f).sum();
