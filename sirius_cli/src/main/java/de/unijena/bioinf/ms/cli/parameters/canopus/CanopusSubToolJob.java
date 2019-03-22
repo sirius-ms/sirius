@@ -8,7 +8,7 @@ public class CanopusSubToolJob extends InstanceJob {
     protected ExperimentResult compute() throws Exception {
         final ExperimentResult expRes = awaitInput();
         System.out.println("I am Canopus on Experiment " + expRes.getSimplyfiedExperimentName());
-        expRes.getExperiment().forEachAnnotation().forEachRemaining(e -> System.out.println(e.getKey().toString() + " -> " + e.getValue().toString()));
+//        expRes.getExperiment().forEachAnnotation().forEachRemaining(e -> System.out.println(e.getKey().toString() + " -> " + e.getValue().toString()));
 
         return expRes;
     }

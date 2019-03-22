@@ -64,7 +64,7 @@ public class RootOptionsCLI implements RootOptions {
 
     private void initBuffers(){
         if (initialInstanceBuffer == null)
-            initialInstanceBuffer = PropertyManager.getNumberOfCores() * 2;
+            initialInstanceBuffer = PropertyManager.getNumberOfCores() * 5;
         if (maxInstanceBuffer == null)
             maxInstanceBuffer = initialInstanceBuffer * 2;
     }

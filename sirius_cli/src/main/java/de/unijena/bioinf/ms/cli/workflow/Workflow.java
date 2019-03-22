@@ -45,7 +45,7 @@ public class Workflow {
                 parameters.createInstancesWithDefaults(Ms2ExperimentAnnotation.class);
         final List<InstanceJob.Factory> instanceJobChain = new ArrayList<>(toolchain.size());
         //job factory for job that add config annotations to an instance
-        instanceJobChain.add(() -> new AddConfigsJob(parameterInstancesCache));
+        instanceJobChain.add(() -> new AddConfigsJob(parameters,parameterInstancesCache));
 
         //other jobs
         for (Object o : toolchain) {
