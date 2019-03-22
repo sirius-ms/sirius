@@ -74,7 +74,7 @@ public class LossSizeScorer implements LossScorer, PeakPairScorer, MolecularForm
         return distribution;
     }
 
-    private final double scoring(double mass) {
+    public final double scoring(double mass) {
         return Math.log(Math.max(1e-12, distribution.getDensity(mass))) - normalization;
     }
 

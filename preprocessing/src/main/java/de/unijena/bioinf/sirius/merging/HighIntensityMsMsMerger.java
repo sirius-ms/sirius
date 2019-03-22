@@ -70,7 +70,7 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
         double ionMass = processedInput.getExperimentInformation().getIonMass();
         final int parentIndex = mergeParentPeak(mzArray, mergeWindow, ionMass,mergedPeaks);
         // after this you can merge the other peaks. Ignore all peaks near the parent peak
-        int subIndex = parentIndex;
+        int subIndex = parentIndex<0 ? mzArray.length : parentIndex;
         for (; subIndex > 0 && mzArray[subIndex - 1].getMz() + 0.1d >= ionMass; --subIndex) ;
         n = subIndex;
         final MS2Peak[] parray = Arrays.copyOf(mzArray, subIndex);
@@ -111,7 +111,7 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
         if (properParentPeak < 0) {
             // there is no parent peak in spectrum
             // therefore it is save to merge all peaks
-            return massOrderedSpectrum.size();
+            return -1;
         }
         double maxIntensity = massOrderedSpectrum.getIntensityAt(properParentPeak);
         int lastIndex = properParentPeak;

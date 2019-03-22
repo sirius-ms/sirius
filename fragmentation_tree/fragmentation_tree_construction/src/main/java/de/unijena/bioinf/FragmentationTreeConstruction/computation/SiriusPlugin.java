@@ -71,7 +71,9 @@ public abstract class SiriusPlugin {
             analysis.getRootScorers().add(scorer);
         }
 
-
+        public FragmentationPatternAnalysis getAnalysis() {
+            return analysis;
+        }
     }
 
     /*

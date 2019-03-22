@@ -160,6 +160,19 @@ public final class Score implements TreeAnnotation  {
         this.values = values;
     }
 
+    public String toString() {
+        final StringBuilder buf = new StringBuilder();
+        buf.append("{");
+        for (int i=0; i < names.length; ++i) {
+            if (i > 0) buf.append(", ");
+            buf.append(names[i]);
+            buf.append(" = ");
+            buf.append(values[i]);
+        }
+        buf.append("}");
+        return buf.toString();
+    }
+
     public double get(int k) {
         return values[k];
     }

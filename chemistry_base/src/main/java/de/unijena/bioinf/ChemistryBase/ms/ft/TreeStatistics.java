@@ -8,6 +8,12 @@ public final class TreeStatistics implements TreeAnnotation {
     protected final double explainedIntensityOfExplainablePeaks;
     protected final double ratioOfExplainedPeaks;
 
+    private final static TreeStatistics NONE = new TreeStatistics();
+
+    public static TreeStatistics none() {
+        return NONE;
+    }
+
     protected TreeStatistics() {
         this(0d,0d,0d);
     }

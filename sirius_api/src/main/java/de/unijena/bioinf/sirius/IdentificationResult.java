@@ -31,8 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
 
 public class IdentificationResult implements Cloneable, Comparable<IdentificationResult>, Annotated<DataAnnotation> {
 
-    // TODO: we have to get rid of all these -_-
-    protected FTree tree, beautifulTree, resolvedBeautifulTree;
+    protected FTree tree;
     protected MolecularFormula formula;
     protected int rank;
     protected double score;
@@ -47,9 +46,7 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
         setAnnotationsFrom(ir);
         this.rank = ir.rank;
         this.tree = ir.tree;
-        this.beautifulTree = ir.beautifulTree;
         this.formula = ir.formula;
-        this.resolvedBeautifulTree = ir.resolvedBeautifulTree;
         this.score = ir.score;
     }
 
@@ -59,16 +56,12 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
 
     public static IdentificationResult withPrecursorIonType(IdentificationResult ir, PrecursorIonType ionType) {
         IdentificationResult r = new IdentificationResult(ir);
-        r.resolvedBeautifulTree = new IonTreeUtils().treeToNeutralTree(ir.getBeautifulTree(), ionType);
+        r.tree = new IonTreeUtils().treeToNeutralTree(ir.tree, ionType);
         r.formula = ionType.measuredNeutralMoleculeToNeutralMolecule(ir.formula);
         return r;
     }
 
     public IdentificationResult(FTree tree, int rank) {
-        this(tree, rank, false);
-    }
-
-    protected IdentificationResult(FTree tree, int rank, boolean isBeautiful) {
         this.tree = tree;
         this.score = tree == null ? 0d : tree.getTreeWeight();
         this.rank = rank;
@@ -86,8 +79,6 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
                 this.formula = tree.getAnnotationOrThrow(PrecursorIonType.class).measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
             }
         }
-        if (isBeautiful)
-            beautifulTree = tree;
     }
 
     @Deprecated
@@ -112,7 +103,7 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
                 throw new RuntimeException("Tree is not compatible with precursor ion type " + ionType.getIonization().toString() + ": " + tree.getRoot().getFormula() + " with " + currentIonType.getIonization().toString());
         }
         tree.setAnnotation(PrecursorIonType.class, ionType);
-        return new IdentificationResult(new IonTreeUtils().treeToNeutralTree(tree), rank, true);
+        return new IdentificationResult(new IonTreeUtils().treeToNeutralTree(tree), rank);
     }
 
     public int getRank() {
@@ -132,32 +123,34 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
      *
      * @return
      */
+    @Deprecated
     public boolean isBeautiful() {
-        return beautifulTree != null;
+        return true;
     }
 
+    public FTree getTree() {
+        return tree;
+    }
+
+    @Deprecated
     public FTree getRawTree() {
-        if (isBeautiful()) {
-            return beautifulTree;
-        } else {
-            return tree;
-        }
+        return tree;
     }
 
     //this is also called neutralizedTree
+    @Deprecated
     public FTree getResolvedTree() {
-        if (resolvedBeautifulTree == null) {
-            resolvedBeautifulTree = new IonTreeUtils().treeToNeutralTree(new FTree(getRawTree()));
-        }
-        return resolvedBeautifulTree;
+        return tree;
     }
 
+    @Deprecated
     public FTree getStandardTree() {
         return tree;
     }
 
+    @Deprecated
     public FTree getBeautifulTree() {
-        return beautifulTree;
+        return tree;
     }
 
     private void copyAnnotations(FTree tree, FTree beautifulTree) {
@@ -182,7 +175,6 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
 
     public IdentificationResult clone() {
         final IdentificationResult r = new IdentificationResult(new FTree(tree), rank);
-        if (beautifulTree != null) r.beautifulTree = new FTree(beautifulTree);
         r.score = score;
         return r;
     }

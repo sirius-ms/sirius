@@ -6,9 +6,11 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.SiriusPlugin;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.LossValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.AdductSwitchLossScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossSizeScorer;
 import de.unijena.bioinf.sirius.ProcessedInput;
 
 import java.util.Set;
@@ -17,7 +19,7 @@ public final class AdductSwitchPlugin extends SiriusPlugin {
 
     @Override
     public void initializePlugin(PluginInitializer initializer) {
-        initializer.addLossScorer(new AdductSwitchLossScorer());
+        initializer.addLossScorer(new AdductSwitchLossScorer(FragmentationPatternAnalysis.getByClassName(LossSizeScorer.class, initializer.getAnalysis().getPeakPairScorers())));
     }
 
     @Override

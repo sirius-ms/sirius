@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.AbstractTreeComputationInstance;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractTreeBuilder;
@@ -65,7 +65,7 @@ public class TestSirius {
         FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
         JobManager jobs = SiriusJobs.getGlobalJobManager();
         jobs.submitJob(instance);
-        AbstractTreeComputationInstance.FinalResult finalResult = instance.takeResult();
+        FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
         final FTree top = finalResult.getResults().get(0);
         assertEquals(MolecularFormula.parse("C20H17NO6"), top.getRoot().getFormula());
     }
@@ -81,7 +81,7 @@ public class TestSirius {
         FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
         JobManager jobs = SiriusJobs.getGlobalJobManager();
         jobs.submitJob(instance);
-        AbstractTreeComputationInstance.FinalResult finalResult = instance.takeResult();
+        FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
         final FTree top = finalResult.getResults().get(0);
 
         final String s1 = new FTJsonWriter().treeToJsonString(top);
@@ -113,7 +113,7 @@ public class TestSirius {
         FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
         JobManager jobs = SiriusJobs.getGlobalJobManager();
         jobs.submitJob(instance);
-        AbstractTreeComputationInstance.FinalResult finalResult = instance.takeResult();
+        FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
         final FTree top = finalResult.getResults().get(0);
 
         assertEquals(PrecursorIonType.getPrecursorIonType("[M-H2O+H]+"), top.getAnnotation(PrecursorIonType.class));
@@ -146,7 +146,7 @@ public class TestSirius {
             FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
             JobManager jobs = SiriusJobs.getGlobalJobManager();
             jobs.submitJob(instance);
-            AbstractTreeComputationInstance.FinalResult finalResult = instance.takeResult();
+            FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
             orig = finalResult.getResults().get(0);
         }
         experiment.setPrecursorIonType(PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"));
@@ -156,7 +156,7 @@ public class TestSirius {
             FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
             JobManager jobs = SiriusJobs.getGlobalJobManager();
             jobs.submitJob(instance);
-            AbstractTreeComputationInstance.FinalResult finalResult = instance.takeResult();
+            FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
             top = finalResult.getResults().get(0);
         }
 

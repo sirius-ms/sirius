@@ -7,10 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 import gnu.trove.list.array.TIntArrayList;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.*;
 
 class DefaultDescriptors {
 
@@ -19,6 +16,7 @@ class DefaultDescriptors {
         registry.put(FTree.class, InChI.class, new InChIDescriptor());
         registry.put(FTree.class, PrecursorIonType.class, new PrecursorIonTypeDescriptor("precursorIonType"));
         registry.put(FTree.class, SpectralRecalibration.class, new RecalibrationFunctionDescriptor());
+        registry.put(FTree.class, Beautified.class, new BeautificationDescriptor());
         registry.put(FTree.class, Smiles.class, new SmilesDescriptor());
         //registry.put(FTree.class, TreeStatistics.class, new TreeScoringDescriptor());
         registry.put(Fragment.class, Ms2IsotopePattern.class, new Ms2IsotopePatternDescriptor());
@@ -36,6 +34,70 @@ class DefaultDescriptors {
         registry.put(FTree.class, IonTreeUtils.Type.class, new IonTypeDescriptor());
 
         registry.put(FTree.class, UnconsideredCandidatesUpperBound.class, new UnregardedCandidatesUpperBoundDescriptor());
+        registry.put(FTree.class, TreeStatistics.class, new TreeStatisticsDescriptor());
+    }
+
+
+    private static class TreeStatisticsDescriptor implements Descriptor<TreeStatistics> {
+
+        @Override
+        public String[] getKeywords() {
+            return new String[]{"statistics"};
+        }
+
+        @Override
+        public Class<TreeStatistics> getAnnotationClass() {
+            return TreeStatistics.class;
+        }
+
+        @Override
+        public <G, D, L> TreeStatistics read(DataDocument<G, D, L> document, D dictionary) {
+            if (document.hasKeyInDictionary(dictionary,"statistics")) {
+                return new TreeStatistics(
+                        document.getDoubleFromDictionary(dictionary,"explainedIntensity"),
+                        document.getDoubleFromDictionary(dictionary,"explainedIntensityOfExplainablePeaks"),
+                        document.getDoubleFromDictionary(dictionary,"ratioOfExplainedPeaks")
+                );
+            } else {
+                return TreeStatistics.none();
+            }
+        }
+
+        @Override
+        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, TreeStatistics annotation) {
+            final D dic = document.newDictionary();
+            document.addToDictionary(dic, "explainedIntensity", annotation.getExplainedIntensity());
+            document.addToDictionary(dic, "explainedIntensityOfExplainablePeaks", annotation.getExplainedIntensityOfExplainablePeaks());
+            document.addToDictionary(dic, "ratioOfExplainedPeaks", annotation.getRatioOfExplainedPeaks());
+            document.addDictionaryToDictionary(dictionary,"statistics", dic);
+        }
+    }
+
+    private static class BeautificationDescriptor implements Descriptor<Beautified> {
+
+        @Override
+        public String[] getKeywords() {
+            return new String[]{"nodeBoost"};
+        }
+
+        @Override
+        public Class<Beautified> getAnnotationClass() {
+            return Beautified.class;
+        }
+
+        @Override
+        public <G, D, L> Beautified read(DataDocument<G, D, L> document, D dictionary) {
+            if (document.hasKeyInDictionary(dictionary,"nodeBoost")) {
+                return Beautified.beautified(document.getDoubleFromDictionary(dictionary, "nodeBoost"));
+            } else {
+                return Beautified.ugly();
+            }
+        }
+
+        @Override
+        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, Beautified annotation) {
+            document.addToDictionary(dictionary, "nodeBoost", annotation.getNodeBoost() );
+        }
     }
 
     private static class IonizationDescriptor implements Descriptor<Ionization> {
