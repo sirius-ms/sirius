@@ -85,6 +85,9 @@ downloaded either as graphical user interface (see Sirius GUI) or as
 command-line tool.
 
 ## Main citations
+K. Dührkop, M. Fleischauer, M. Ludwig, A. A. Aksenov, A. V. Melnik, M. Meusel, P. C. Dorrestein, J. Rousu, and S. Böcker, 
+[Sirius~4: turning tandem mass spectra into metabolite structure information](https://doi.org/10.1038/s41592-019-0344-8), 
+*Nat methods*, 2019.
 
 Kai Dührkop and Sebastian Böcker. [Fragmentation trees
 reloaded.](http://dx.doi.org/10.1007/978-3-319-16706-0_10)  *J
