@@ -26,7 +26,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.AbstractTreeComputationInstance;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
@@ -39,6 +39,9 @@ import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.sirius.plugins.AdductSwitchPlugin;
+import de.unijena.bioinf.sirius.plugins.IsotopePatternInMs1Plugin;
+import de.unijena.bioinf.sirius.plugins.TreeStatisticPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -64,12 +67,20 @@ public class Sirius {
         this(config.createInstanceWithDefaults(Profile.class));
     }
     public Sirius() {
-        this(PropertyManager.DEFAULTS);
+        this(PropertyManager.DEFAULTS.createInstanceWithDefaults(Profile.class));
+
+    }
+
+    private void addDefaultPlugins() {
+        this.getMs2Analyzer().registerPlugin(new TreeStatisticPlugin());
+        this.getMs2Analyzer().registerPlugin(new AdductSwitchPlugin());
+        this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin());
     }
 
     public Sirius(@NotNull Profile profile, @NotNull PeriodicTable table) {
         this.profile = profile;
         this.table = table;
+        addDefaultPlugins();
     }
 
     public FragmentationPatternAnalysis getMs2Analyzer() {
@@ -89,7 +100,7 @@ public class Sirius {
         }
     }
 
-    protected AbstractTreeComputationInstance getTreeComputationImplementation(FragmentationPatternAnalysis analyzer, ProcessedInput input) {
+    protected FasterTreeComputationInstance getTreeComputationImplementation(FragmentationPatternAnalysis analyzer, ProcessedInput input) {
         return new FasterTreeComputationInstance(analyzer, input);
     }
 
@@ -610,16 +621,16 @@ public class Sirius {
             final ProcessedInput input = preprocessForMs2Analysis(experiment);
             if (experiment.getAnnotationOrDefault(IsotopeSettings.class).isEnabled())
                 profile.isotopePatternAnalysis.computeAndScoreIsotopePattern(input);
-            final AbstractTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), input);
+            final FasterTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), input);
             instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, 105, (int) evt.getNewValue()));
             submitSubJob(instance);
-            AbstractTreeComputationInstance.FinalResult fr = instance.awaitResult();
+            FasterTreeComputationInstance.FinalResult fr = instance.awaitResult();
 
             List<IdentificationResult> r = createIdentificationResults(fr, instance);//postprocess results
             return r;
         }
 
-        private List<IdentificationResult> createIdentificationResults(AbstractTreeComputationInstance.FinalResult fr, AbstractTreeComputationInstance computationInstance) {
+        private List<IdentificationResult> createIdentificationResults(FasterTreeComputationInstance.FinalResult fr, FasterTreeComputationInstance computationInstance) {
 
             final List<IdentificationResult> irs = new ArrayList<>();
             int k = 0;

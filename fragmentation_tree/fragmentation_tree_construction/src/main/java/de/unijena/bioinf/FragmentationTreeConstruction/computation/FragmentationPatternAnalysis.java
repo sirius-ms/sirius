@@ -49,6 +49,7 @@ import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.map.hash.TObjectLongHashMap;
 import gnu.trove.procedure.TLongProcedure;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -99,7 +100,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private GraphBuilder graphBuilder;
     private TreeBuilder treeBuilder;
     private GraphReduction reduction;
-    private IsotopePatternInMs2Scorer isoInMs2Scorer;
+    //private IsotopePatternInMs2Scorer isoInMs2Scorer;
     private IsotopeInMs2Handling isotopeInMs2Handling;
 
     private static ParameterHelper parameterHelper = ParameterHelper.getParameterHelper();
@@ -144,6 +145,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final ProcessedPeak parentPeak = processedPeaks.get(processedPeaks.size() - 1);
         // decompose peaks
         final Set<IonMode> ionModes = input.getAnnotationOrThrow(PossibleAdducts.class).getIonModes();
+        if (!input.getExperimentInformation().getPrecursorIonType().isIonizationUnknown()) {
+            ionModes.clear();
+            ionModes.add((IonMode)input.getExperimentInformation().getPrecursorIonType().getIonization());
+        }
         final PeakAnnotation<DecompositionList> decompositionList = input.getOrCreatePeakAnnotation(DecompositionList.class);
         final MassToFormulaDecomposer decomposer = decomposers.getDecomposer(constraints.getChemicalAlphabet());
         final Deviation fragmentDeviation = input.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
@@ -492,7 +497,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.fragmentPeakScorers = new ArrayList<>();
         this.graphBuilder = new SubFormulaGraphBuilder();
         this.lossScorers = new ArrayList<>();
-        isoInMs2Scorer = new IsotopePatternInMs2Scorer();
         isotopeInMs2Handling = PropertyManager.DEFAULTS.createInstanceWithDefaults(IsotopeInMs2Handling.class);
         this.reduction = new SimpleReduction();
     }
@@ -946,11 +950,16 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // check scoreSum
         double scoreSum = 0d;
         for (Loss l : tree.losses()) {
+            double lossScore = 0d;
             Score s = lAno.get(l);
             if (s==null) continue;
-            scoreSum += s.sum();
+            lossScore += s.sum();
             s = fAno.get(l.getTarget());
-            scoreSum += s.sum();
+            lossScore += s.sum();
+            scoreSum += lossScore;
+            if (Math.abs(lossScore-l.getWeight()) > 1e-4) {
+                LoggerFactory.getLogger(FragmentationPatternAnalysis.class).warn("Score difference: loss " + l.toString() + " should have score " + lossScore + " but edge is weighted with " + l.getWeight() + ", loss is " + lAno.get(l) + " and fragment is " + fAno.get(l.getTarget()));
+            }
         }
         scoreSum += fAno.get(root).sum();
         return scoreSum;
@@ -996,8 +1005,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             assert !Double.isInfinite(score);
             loss.setWeight(score);
         }
-        scoreIsotopesInMs2(input, graph);
-
         return graph;
     }
 
@@ -1019,14 +1026,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             default:
         }
         return true;
-    }
-
-    private void scoreIsotopesInMs2(ProcessedInput input, FGraph graph) {
-
-//        isoInMs2Scorer.scoreFromMs1(input, graph);
-        if (isScoringIsotopes(input))
-            isoInMs2Scorer.score(input, graph);
-
     }
 
     private void addSyntheticParent(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks, double parentmass) {
@@ -1194,9 +1193,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         fillList(fragmentPeakScorers, helper, document, dictionary, "peakScorers");
         fillList(peakPairScorers, helper, document, dictionary, "peakPairScorers");
         fillList(lossScorers, helper, document, dictionary, "lossScorers");
-        if (document.hasKeyInDictionary(dictionary, "isotopesInMs2")) {
-            this.isoInMs2Scorer = (IsotopePatternInMs2Scorer) helper.unwrap(document, document.getFromDictionary(dictionary,"isotopesInMs2"));
-        }
     }
 
     private <T, G, D, L> void fillList(List<T> list, ParameterHelper helper, DataDocument<G, D, L> document, D dictionary, String keyName) {
@@ -1226,6 +1222,5 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         list = document.newList();
         for (LossScorer s : lossScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "lossScorers", list);
-        document.addToDictionary(dictionary, "isotopesInMs2", helper.wrap(document, isoInMs2Scorer));
     }
 }

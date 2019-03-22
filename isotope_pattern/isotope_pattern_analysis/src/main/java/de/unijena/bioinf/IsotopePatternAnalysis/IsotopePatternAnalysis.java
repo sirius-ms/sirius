@@ -192,8 +192,8 @@ public class IsotopePatternAnalysis implements Parameterized {
     }
 
     public boolean computeAndScoreIsotopePattern(ProcessedInput input) {
-        final Ms1IsotopePattern pattern = input.getAnnotation(Ms1IsotopePattern.class);
-        if (pattern != null) {
+        final Ms1IsotopePattern pattern = input.getAnnotation(Ms1IsotopePattern.class, Ms1IsotopePattern::none);
+        if (!pattern.isEmpty()) {
             final HashMap<MolecularFormula, IsotopePattern> explanations = new HashMap<>();
             final SimpleSpectrum spec = pattern.getSpectrum();
             final MS1MassDeviation massDev = input.getAnnotationOrDefault(MS1MassDeviation.class);

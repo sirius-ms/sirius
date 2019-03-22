@@ -14,10 +14,13 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeS
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.treebuilder.ExtendedCriticalPathHeuristicTreeBuilder;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.annotations.DecompositionList;
 import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
+import gnu.trove.list.array.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +29,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class FasterTreeComputationInstance extends AbstractTreeComputationInstance {
+public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeComputationInstance.FinalResult> {
 
     protected final Ms2Experiment experiment;
     protected final int numberOfResultsToKeep;
@@ -52,18 +55,14 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
      * @param input
      */
     public FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input) {
-        super(analyzer);
+        super(JJob.JobType.CPU);
+        this.analyzer = analyzer;
         this.experiment = input.getExperimentInformation();
         this.pinput = input;
         this.inputCopyForRecalibration = input.clone();
         this.numberOfResultsToKeep = input.getAnnotationOrDefault(NumberOfCandidates.class).value;
         this.numberOfResultsToKeepPerIonization = input.getAnnotationOrDefault(NumberOfCandidatesPerIon.class).value;
         this.ticks = new AtomicInteger(0);
-    }
-
-
-    public static FasterTreeComputationInstance beautify(FragmentationPatternAnalysis analyzer, ProcessedInput processedInput, FTree tree) {
-        return new FasterTreeComputationInstance(analyzer, processedInput, tree);
     }
 
     private FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree) {
@@ -165,6 +164,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         }
         double inc = tss == null ? 0d : treeSizeBonus.score - tss.getTreeSizeScore();
         double treeSize = treeSizeBonus == null ? 0d : treeSizeBonus.score;
+        final double originalTreeSize = treeSize;
         final List<ExactResult> results = new ArrayList<>(decompositions.size());
         // TREE SIZE
         while (inc <= MAX_TREESIZE_INCREASE) {
@@ -188,11 +188,15 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             }
             Collections.sort(results, Collections.reverseOrder());
             final int treeSizeCheck = Math.min(results.size(), MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY);
-            if (tss == null || checkForTreeQuality(results.subList(0, treeSizeCheck), false)) {
+            if (tss == null || checkForTreeQuality(results.subList(0, treeSizeCheck))) {
                 break;
             }
             inc += TREE_SIZE_INCREASE;
             treeSize += TREE_SIZE_INCREASE;
+        }
+        if (inc > MAX_TREESIZE_INCREASE) {
+            inc -= TREE_SIZE_INCREASE;
+            treeSize -= TREE_SIZE_INCREASE;
         }
         final List<ExactResult> topResults = extractExactResults(results, numberOfResultsToKeep+10, numberOfResultsToKeepPerIonization+5);
         configureProgress(100, topResults.size());
@@ -215,12 +219,52 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         }
         final ExactResult[] exact = extractExactResults(recalibrationJobs.stream().map(this::takeResultAndCheckTime).sorted(Collections.reverseOrder()).collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization).toArray(new ExactResult[0]);
 
-        if (inc >= MAX_TREESIZE_INCREASE) {
-            for (ExactResult t : exact) t.tree.setAnnotation(Beautified.class, Beautified.beautifiedFrom(t.tree, inc));
-        } else {
-            checkForTreeQuality(Arrays.asList(exact), true);
+        final ExactJob[] beautify = new ExactJob[exact.length];
+        final TIntArrayList beautifyTodo = new TIntArrayList();
+        while (tss!=null) {
+            beautifyTodo.resetQuick();
+            for (int k=0; k < exact.length; ++k) {
+                if (!exact[k].tree.hasAnnotation(Beautified.class)) {
+                    if ((treeSize >= MAX_TREESIZE || inc >= MAX_TREESIZE_INCREASE )|| isHighQuality(exact[k])) {
+                        setBeautiful(exact[k], treeSize, originalTreeSize);
+                    } else {
+                        beautifyTodo.add(k);
+                    }
+                }
+            }
+            if (beautifyTodo.isEmpty()) break;
+            inc += TREE_SIZE_INCREASE;
+            treeSize += TREE_SIZE_INCREASE;
+            tss.fastReplace(pinput, new TreeSizeScorer.TreeSizeBonus(treeSize));
+            for (int j=0; j < beautifyTodo.size(); ++j) {
+                final int K = beautifyTodo.getQuick(j);
+                if (exact[K].input!=null) tss.fastReplace(exact[K].input, new TreeSizeScorer.TreeSizeBonus(treeSize));
+                beautify[K] = submitSubJob(new ExactJob(exact[K]));
+            }
+            for (int j=0; j < beautifyTodo.size(); ++j) {
+                final int K = beautifyTodo.getQuick(j);
+                exact[K] = beautify[K].takeResult();
+            }
         }
+        revertTreeSizeIncrease(exact, originalTreeSize);
         return exact;
+    }
+
+    private void revertTreeSizeIncrease(ExactResult[] exact, double orig) {
+        pinput.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(orig));
+        for (ExactResult r : exact) {
+            if (r.input!=null) r.input.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(orig));
+            final double penalty = (r.tree.getAnnotation(Beautified.class).getNodeBoost());
+            r.tree.setTreeWeight(r.tree.getTreeWeight() - r.tree.numberOfEdges() * penalty);
+            for (Loss l : r.tree.losses()) {
+                l.setWeight(l.getWeight() - penalty); // TODO: check if tree size is added to ALL nodes
+            }
+            recalculateScore(r.input==null ? pinput : r.input, r.tree, "final");
+        }
+    }
+
+    private void setBeautiful(ExactResult t,double maxTreeSize, double originalTreeSize) {
+        t.tree.setAnnotation(Beautified.class, Beautified.beautified(maxTreeSize-originalTreeSize));
     }
 
     private List<ExactResult> extractExactResults(List<ExactResult> results, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
@@ -285,12 +329,13 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
 
         @Override
         protected ExactResult compute() throws Exception {
-            FGraph graph = analyzer.buildGraph(pinput, template.decomposition);
+            final ProcessedInput input = template.input==null ? pinput : template.input;
+            FGraph graph = analyzer.buildGraph(input, template.decomposition);
             final FTree tree = analyzer.getTreeBuilder().computeTree().withMultithreading(1).withTimeLimit(Math.min(restTime, secondsPerTree)).withMinimalScore(template.score - 1e-3)/*.withTemplate(template.tree)*/.solve(pinput, graph).tree;
-            analyzer.makeTreeReleaseReady(pinput, graph, tree);
-            recalculateScore(pinput, tree, "ExactJob");
+            analyzer.makeTreeReleaseReady(input, graph, tree);
+            recalculateScore(input, tree, "ExactJob");
             tick();
-            return new ExactResult(template.decomposition, null, tree, tree.getTreeWeight());
+            return new ExactResult(template.input==null ? null : template.input, template.decomposition, null, tree, tree.getTreeWeight());
         }
     }
 
@@ -373,6 +418,7 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
         final ProcessedInput pin = this.inputCopyForRecalibration.clone();
         pin.setAnnotation(SpectralRecalibration.class, rec);
         pin.setAnnotation(Whiteset.class, Whiteset.of(input.getExperimentInformation().getPrecursorIonType().measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula()))); // TODO: check if this works for adducts
+        pin.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class));
         // we have to completely rescore the input...
         //final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));
         //pin.setAnnotation(DecompositionList.class, l);
@@ -390,14 +436,103 @@ public class FasterTreeComputationInstance extends AbstractTreeComputationInstan
             finalTree.setAnnotation(SpectralRecalibration.class, rec);
             analyzer.makeTreeReleaseReady(pin, graph, finalTree);
         } else {
+            pin.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
             final FGraph origGraph = origGraphOrNull==null ? analyzer.buildGraph(pinput, decomp) : origGraphOrNull;
-            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(tree).withMinimalScore(tree.getTreeWeight() - 1e-3).solve(input, origGraph).tree;
+            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(tree).withMinimalScore(tree.getTreeWeight() - 1e-3).solve(pin, origGraph).tree;
             finalTree.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
             analyzer.makeTreeReleaseReady(pin, origGraph, finalTree);
         }
         recalculateScore(pin, finalTree, "recalibrate");
         assert finalTree!=null;
         tick();
-        return new ExactResult(pin.getAnnotation(DecompositionList.class).getDecompositions().get(0), null, finalTree, finalTree.getTreeWeight());
+        return new ExactResult(pin, pin.getAnnotation(DecompositionList.class).getDecompositions().get(0), null, finalTree, finalTree.getTreeWeight());
+    }
+
+
+    protected final FragmentationPatternAnalysis analyzer;
+    protected ProcessedInput pinput;
+
+    public static final double MAX_TREESIZE = 2.5d;
+    public static final double MAX_TREESIZE_INCREASE = 3d;
+    public static final double TREE_SIZE_INCREASE = 1d;
+    public static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;
+    public static final double MIN_EXPLAINED_INTENSITY = 0.7d;
+    public static final int MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY = 5;
+
+    public ProcessedInput getProcessedInput() {
+        return pinput;
+    }
+
+    public final static class FinalResult {
+        protected final boolean canceledDueToLowScore;
+        protected final List<FTree> results;
+
+        public FinalResult(List<FTree> results) {
+            this.canceledDueToLowScore = false;
+            this.results = results;
+        }
+
+        public FinalResult() {
+            this.canceledDueToLowScore = true;
+            this.results = null;
+        }
+
+        public List<FTree> getResults() {
+            return results;
+        }
+    }
+
+
+    protected boolean checkForTreeQuality(List<ExactResult> results) {
+        for (ExactResult r : results) {
+            final FTree tree = r.tree;
+            if (isHighQuality(r)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected boolean isHighQuality(ExactResult r) {
+        return analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput, r.tree) >= MIN_EXPLAINED_INTENSITY && r.tree.numberOfVertices() >= Math.min(pinput.getMergedPeaks().size() - 2, MIN_NUMBER_OF_EXPLAINED_PEAKS);
+    }
+
+
+    protected final static class ExactResult implements Comparable<ExactResult> {
+
+        protected ProcessedInput input;
+        protected final Decomposition decomposition;
+        protected final double score;
+        protected FGraph graph;
+        protected FTree tree;
+
+        public ExactResult(ProcessedInput input, Decomposition decomposition, FGraph graph, FTree tree, double score) {
+            this.input = input;
+            this.decomposition = decomposition;
+            this.score = score;
+            this.tree = tree;
+            this.graph = graph;
+        }
+
+        public ExactResult(Decomposition decomposition, FGraph graph, FTree tree, double score) {
+            this(null,decomposition,graph,tree,score);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof ExactResult) return equals((ExactResult) o);
+            else return false;
+        }
+
+        public boolean equals(ExactResult o) {
+            return score == o.score && decomposition.getCandidate().equals(o.decomposition.getCandidate());
+        }
+
+        @Override
+        public int compareTo(ExactResult o) {
+            final int a = Double.compare(score, o.score);
+            if (a != 0) return a;
+            return decomposition.getCandidate().compareTo(o.decomposition.getCandidate());
+        }
     }
 }

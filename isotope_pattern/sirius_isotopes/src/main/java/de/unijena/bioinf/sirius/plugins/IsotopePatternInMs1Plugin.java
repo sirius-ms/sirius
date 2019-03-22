@@ -92,7 +92,7 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
 
         @Override
         public IsotopePatternInMs1Plugin.Prepared prepare(ProcessedInput input) {
-            return new IsotopePatternInMs1Plugin.Prepared(input.getAnnotationOrDefault(IsotopeSettings.class), input.getAnnotation(ExtractedIsotopePattern.class, null), input.getExperimentInformation().getPrecursorIonType());
+            return new IsotopePatternInMs1Plugin.Prepared(input.getAnnotationOrDefault(IsotopeSettings.class), input.getAnnotation(ExtractedIsotopePattern.class, ()->null), input.getExperimentInformation().getPrecursorIonType());
         }
 
         @Override

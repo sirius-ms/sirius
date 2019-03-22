@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import java.util.*;
 
