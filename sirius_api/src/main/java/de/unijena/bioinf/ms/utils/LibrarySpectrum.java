@@ -10,6 +10,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 
+import java.net.URL;
+
 public class LibrarySpectrum {
     private String name;
     private OrderedSpectrum<Peak> fragmentationSpectrum;
@@ -18,8 +20,9 @@ public class LibrarySpectrum {
     private Smiles smiles;
     private InChI inChI;
     private double ionMass;
+    private URL source;
 
-    public LibrarySpectrum(String name, Spectrum<Peak> fragmentationSpectrum, MolecularFormula molecularFormula, PrecursorIonType ionType, Smiles smiles, InChI inChI) {
+    public LibrarySpectrum(String name, Spectrum<Peak> fragmentationSpectrum, MolecularFormula molecularFormula, PrecursorIonType ionType, Smiles smiles, InChI inChI, URL source) {
         if (fragmentationSpectrum instanceof OrderedSpectrum){
             this.fragmentationSpectrum = (OrderedSpectrum<Peak>)fragmentationSpectrum;
         } else {
@@ -31,6 +34,7 @@ public class LibrarySpectrum {
         this.ionType = ionType;
         this.smiles = smiles;
         this.inChI = inChI;
+        this.source = source;
 
         this.ionMass = ionType.neutralMassToPrecursorMass(molecularFormula.getMass());
     }
@@ -41,7 +45,8 @@ public class LibrarySpectrum {
         final PrecursorIonType ionType = experiment.getPrecursorIonType();
         final Smiles smiles = experiment.getAnnotation(Smiles.class);
         final InChI inChI = experiment.getAnnotation(InChI.class);
-        return new LibrarySpectrum(name, fragmentationSpectrum, formula, ionType, smiles, inChI);
+        final URL source = experiment.getSource();
+        return new LibrarySpectrum(name, fragmentationSpectrum, formula, ionType, smiles, inChI, source);
     }
 
     public String getName() {
@@ -79,5 +84,9 @@ public class LibrarySpectrum {
             return smiles.smiles;
         }
         return null;
+    }
+
+    public URL getSource() {
+        return source;
     }
 }
