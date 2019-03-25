@@ -14,7 +14,8 @@ dependencies {
 	// external
 	compile group: "de.bwaldvogel", name: "liblinear", version: "$liblinear_version"
 	compile group: "tw.edu.ntu.csie", name: "libsvm", version: "$libsvm_version"
-    // https://mvnrepository.com/artifact/org.apache.spark/spark-mllib
-    compile group: 'org.apache.spark', name: 'spark-mllib_2.12', version: '2.4.0'
+
+    // https://mvnrepository.com/artifact/ca.umontreal.iro.simul/ssj
+    compile group: 'ca.umontreal.iro.simul', name: 'ssj', version: '3.1.0'
 
 }	

@@ -22,13 +22,13 @@ public class Utils {
             return candidates;
         }
 
-        for(Scored<FingerprintCandidate> cand : candidates){
-            if ((cand.getCandidate().getBitset() & flags) !=0){
-                condensed_as_list.add(cand);
-
+        for(int i=0;i<candidates.length;i++){
+            if ((candidates[i].getCandidate().getBitset() & flags)!=0){
+                condensed_as_list.add(candidates[i]);
             }
 
         }
+
 
         condensed = new Scored[condensed_as_list.size()];
 

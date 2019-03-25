@@ -65,7 +65,12 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
 
         PvalueScoreUtils utils = new PvalueScoreUtils();
 
-        pvalueScore[0] = utils.computePvalueScore(rankedCands,current);
+        pvalueScore[0] = utils.computePvalueScore(rankedCands,current,flags);
+
+        if (pvalueScore[0]==0){
+            pvalueScore[1]=-20;
+            return pvalueScore;
+        }
 
         pvalueScore[1] = Math.log(pvalueScore[0]);
 
