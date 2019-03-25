@@ -80,6 +80,10 @@ public class Candidate<T> implements Comparable<Candidate> {
         this.nodeScores.add(Math.log(score));
     }
 
+    protected void addNodeLogProbabilityScore(double score) {
+        this.nodeScores.add(score);
+    }
+
     protected void clearNodeScores(){
         nodeScores.clear();
     }

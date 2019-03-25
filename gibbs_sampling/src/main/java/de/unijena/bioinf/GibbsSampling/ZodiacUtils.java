@@ -372,8 +372,10 @@ public class ZodiacUtils {
                     }
 
                     String mfString = mfCol.getInfo(cols);
-                    String inchiString = inchiCol.getInfo(cols).replace("\"", "");
-                    String smilesString = smilesCol.getInfo(cols).replace("\"", "");
+                    String inchiString = inchiCol.getInfo(cols);
+                    if (inchiString!=null) inchiString = inchiString.replace("\"", "");
+                    String smilesString = smilesCol.getInfo(cols);
+                    if (smilesString!=null) smilesString = smilesString.replace("\"", "");
                     final MolecularFormula formula = getFormulaFromStructure(mfString, inchiString, smilesString);
 
                     if (formula==null){
@@ -382,29 +384,29 @@ public class ZodiacUtils {
                     }
 
                     String adductString = adductCol.getInfo(cols);
-                    if (adductString.replace(" ","").length()==0){
-                        logger.warn("Cannot parse library hit. Reason: adduct information missing. "+idHeader+" "+featureId);
+                    if (adductString==null || adductString.replace(" ","").length()==0){
+                        logger.warn("Cannot parse adduct information for library hit. "+idHeader+" "+featureId);
                     }
 
                     String cosineString = cosineCol.getInfo(cols);
-                    if (cosineString.replace(" ","").length()==0){
+                    if (cosineString==null || cosineString.replace(" ","").length()==0){
                         logger.warn("Cannot parse library hit. Reason: cosine score information missing. "+idHeader+" "+featureId);
                         continue;
                     }
                     String sharePeaksString = sharePeaksCol.getInfo(cols);
-                    if (sharePeaksString.replace(" ","").length()==0){
+                    if (sharePeaksString==null || sharePeaksString.replace(" ","").length()==0){
                         logger.warn("Cannot parse library hit. Reason: number of shared peaks missing. "+idHeader+" "+featureId);
                         continue;
                     }
 
                     String qualityString = qualityCol.getInfo(cols);
-                    if (qualityString.replace(" ","").length()==0){
-                        logger.warn("Cannot parse library hit. Reason: quality information missing. "+idHeader+" "+featureId);
-                        continue;
+                    if (qualityString==null || qualityString.replace(" ","").length()==0){
+                        logger.warn("Cannot parse quality information for library hit. Use 'unknown'. "+idHeader+" "+featureId);
+                        qualityString = qualityCol.fallBack;
                     }
 
                     final String structure = (isInchi(inchiString) ? inchiString : smilesString);
-                    final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(adductString);
+                    final PrecursorIonType ionType = adductString==null?null:PeriodicTable.getInstance().ionByName(adductString);
                     final double cosine = Double.parseDouble(cosineString);
                     final int sharedPeaks = parseIntegerOrThrow(sharePeaksString);
                     LibraryHitQuality quality = LibraryHitQuality.valueOf(qualityString);
