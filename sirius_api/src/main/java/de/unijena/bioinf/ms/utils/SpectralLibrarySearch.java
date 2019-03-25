@@ -72,7 +72,7 @@ public class SpectralLibrarySearch {
             for (int i = 0; i < this.librarySpectra.length; i++) {
                 LibrarySpectrum ls = this.librarySpectra[i];
                 Spectrum<Peak> transformedSpectrum =  Spectrums.transform(new SimpleMutableSpectrum(ls.getFragmentationSpectrum()), intensityTransformation);
-                LibrarySpectrum transformedLibrarySpectrum = new LibrarySpectrum(ls.getName(), transformedSpectrum, ls.getMolecularFormula(), ls.getIonType(), ls.getSmiles(), ls.getInChI());
+                LibrarySpectrum transformedLibrarySpectrum = new LibrarySpectrum(ls.getName(), transformedSpectrum, ls.getMolecularFormula(), ls.getIonType(), ls.getSmiles(), ls.getInChI(), ls.getSource());
                 this.librarySpectra[i] = transformedLibrarySpectrum;
             }
         } else {
@@ -90,7 +90,7 @@ public class SpectralLibrarySearch {
             Spectrums.normalize(mutableSpectrum, NORMALIZATION);
 
             OrderedSpectrum<Peak> orderedSpectrum = new SimpleSpectrum(mutableSpectrum);
-            LibrarySpectrum librarySpectrum = new LibrarySpectrum(ls.getName(), orderedSpectrum, ls.getMolecularFormula(), ls.getIonType(), ls.getSmiles(), ls.getInChI());
+            LibrarySpectrum librarySpectrum = new LibrarySpectrum(ls.getName(), orderedSpectrum, ls.getMolecularFormula(), ls.getIonType(), ls.getSmiles(), ls.getInChI(), ls.getSource());
             this.librarySpectra[i] = librarySpectrum;
             this.libraryQueries[i] = cosineUtils.createQuery(orderedSpectrum, librarySpectrum.getIonMass());//todo ionmass?vs measured
         }
