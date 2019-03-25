@@ -82,7 +82,7 @@ public class PvalueDistanceFeatures implements FeatureCreator {
 
         for (int j = 0; j < distances.length; j++) {
 
-            scores[pos++] = putils.computePvalueScore(rankedCandidatesOrig, rankedCandidates[0]) - putils.computePvalueScore(rankedCandidatesOrig,rankedCandidates[distances[j]]);
+            scores[pos++] = putils.computePvalueScore(rankedCandidatesOrig, rankedCandidates[0],flags) - putils.computePvalueScore(rankedCandidatesOrig,rankedCandidates[distances[j]],flags);
         }
 
         assert pos == scores.length;

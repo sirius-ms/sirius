@@ -36,7 +36,7 @@ LibLinearImpl imp;
 
     public TrainedSVM trainLinearSVMWithCV(double[][] featureMatrix,double[] labels){
 
-        int folds = 10;
+        int folds = 5;
 
         this.featureMatrix=featureMatrix;
         this.labels=labels;
@@ -46,6 +46,9 @@ LibLinearImpl imp;
         SVMScales scales =  utils.calculateScales(featureMatrix);
 
         utils.standardize_features(featureMatrix,scales);
+
+
+
 
         utils.normalize_features(featureMatrix,scales);
 
@@ -264,6 +267,7 @@ LibLinearImpl imp;
         double[] c_values = new double[]{0.0001,0.001,0.01,0.1,1,10,100,1000};
 
         double best_AUC=-1;
+        double[] best_probAB = new double[2];
         LibLinearImpl.svm_model best_model=null;
 
         for(int i=0;i<c_values.length;i++) {
@@ -295,6 +299,11 @@ LibLinearImpl imp;
 
             TrainedSVM trained = new TrainedSVM(scales,model.getModel().getFeatureWeights(),feature_names);
 
+            //TODO: testing
+            double[] probAB = new double[2];
+
+            trainSigmoid(trainfeatureMatrix,labels,trained,probAB);
+
 
 
             double[] scores = predict.predict_confidence(testFeatureMatrix,trained);
@@ -320,6 +329,7 @@ LibLinearImpl imp;
             if(stats.getAUC()>best_AUC){
                 best_AUC=stats.getAUC();
                best_model=model;
+                best_probAB=probAB;
             }
 
 
@@ -330,7 +340,10 @@ LibLinearImpl imp;
 
         TrainedSVM trained = new TrainedSVM(scales,best_model.getModel().getFeatureWeights(),feature_names);
 
-        System.out.println(best_AUC);
+        trained.probAB=best_probAB;
+
+
+        System.out.println(best_AUC+" - "+best_model.getParam().C);
 
         return trained;
 
@@ -365,7 +378,7 @@ LibLinearImpl imp;
     }
 
 
-    public TrainedSVM trainLinearSVMNoEval(double[][] featureMatrix,double[] labels, String[] feature_names){
+    public TrainedSVM trainLinearSVMNoEval(double[][] featureMatrix,double[] labels, String[] feature_names,double c){
 
 
         imp = new LibLinearImpl();
@@ -382,61 +395,6 @@ LibLinearImpl imp;
 
         //split into test/train
 
-        ArrayList<double[]> trainfeatures = new ArrayList<>();
-        ArrayList<Double> trainlabels =  new ArrayList<>();
-        ArrayList<double[]> testfeatures = new ArrayList<>();
-        ArrayList<Double> testlabels = new ArrayList<>();
-
-
-        List<Integer> range = IntStream.rangeClosed(0, featureMatrix.length-1)
-                .boxed().collect(Collectors.toList());
-
-
-        Collections.shuffle(range,new Random(1));
-
-
-        for(int i=0;i<range.size()*0.9;i++){
-
-            trainfeatures.add(featureMatrix[range.get(i)]);
-            trainlabels.add(labels[range.get(i)]);
-
-
-        }
-
-
-        for(int i=(int) Math.round(range.size()*0.9);i<range.size();i++){
-
-            testfeatures.add(featureMatrix[range.get(i)]);
-            testlabels.add(labels[range.get(i)]);
-
-
-        }
-
-
-
-        double[][] trainfeatureMatrix = new double[trainfeatures.size()][trainfeatures.get(0).length];
-        double[][] testfeatureMatrix = new double[testfeatures.size()][trainfeatures.get(0).length];
-
-        for(int i=0;i<trainfeatures.size();i++){
-            trainfeatureMatrix[i]=trainfeatures.get(i);
-
-        }
-
-        for(int i=0;i<testfeatures.size();i++){
-            testfeatureMatrix[i]=testfeatures.get(i);
-
-        }
-
-
-        double[] trainlabelsarray = new double[trainlabels.size()];
-
-        for(int i=0;i<trainlabels.size();i++){
-
-            trainlabelsarray[i] = trainlabels.get(i);
-        }
-
-
-
 
 
 
@@ -449,41 +407,26 @@ LibLinearImpl imp;
 
 
 
-        for(int i=0;i<trainfeatureMatrix.length;i++){
+        for(int i=0;i<featureMatrix.length;i++){
             int index=1;
             List<LibLinearImpl.svm_nodeImpl> temp_list= new ArrayList<>();
-            for(int j=0;j<trainfeatureMatrix[i].length;j++) {
+            for(int j=0;j<featureMatrix[i].length;j++) {
 
 
-                temp_list.add(imp.createSVM_Node(index, trainfeatureMatrix[i][j]));
+                temp_list.add(imp.createSVM_Node(index, featureMatrix[i][j]));
                 index++;
             }
             features.add(temp_list);
         }
 
-        for(int i=0;i<trainlabels.size();i++){
-            if(trainlabels.get(i)==1){
+        for(int i=0;i<labels.length;i++){
+            if(labels[i]==1){
                 positive_examples+=1;
             }else {
                 negative_examples+=1;
             }
 
         }
-
-
-
-
-
-        //grid search here
-
-        double[] c_values = new double[]{0.0001,0.001,0.01,0.1,1,10,100,1000};
-
-        double best_AUC=-1;
-        double[] best_probAB = new double[2];
-        LibLinearImpl.svm_model best_model=null;
-
-        for(int i=0;i<c_values.length;i++) {
-
 
 
 
@@ -494,13 +437,13 @@ LibLinearImpl imp;
 
 
             prob.setX(features);
-            prob.setY(trainlabelsarray);
+            prob.setY(labels);
             prob.setL(features.size());
 
 
             para = new LibSVMImpl.svm_parameter();
 
-            para.C = c_values[i];
+            para.C = c;
             para.kernel_type = 0;
             para.eps = 0.0001;
             para.weight = new double[]{1, negative_examples / positive_examples};
@@ -509,36 +452,15 @@ LibLinearImpl imp;
 
             model = imp.svm_train(prob, para); //trains the svm model
 
-            SVMPredict predict = new SVMPredict();
 
             TrainedSVM trained = new TrainedSVM(scales,model.getModel().getFeatureWeights(),feature_names);
 
-
-
-            double[] scores = predict.predict_confidence(testfeatureMatrix,trained);
-
-            boolean[] testLabelToBool = new boolean[testlabels.size()];
-
-
-            double[] testlabelsdouble = new double[testlabels.size()];
-
-            for(int j=0;j<testlabels.size();j++){
-                if(testlabels.get(j)==1){
-                    testLabelToBool[j]=true;
-                    testlabelsdouble[j]=1;
-                }else {
-                    testLabelToBool[j]=false;
-                    testlabelsdouble[j]=-1;
-                }
-
-
-            }
 
             double[] probAB = new double[2];
 
             trainSigmoid(featureMatrix,labels,trained,probAB);
 
-            Stats stats = new Stats(scores,testLabelToBool);
+
 
             //getUpperFeatures(featureMatrix,0.6,trained);
 
@@ -547,69 +469,8 @@ LibLinearImpl imp;
            // SVM.sigmoid_train(featureMatrix.length,predict.predict_confidence(featureMatrix,trained),labels,probAB);
 
 
-            if(stats.getAUC()>best_AUC){
-                best_AUC=stats.getAUC();
-                best_model=model;
-                best_probAB=probAB;
-            }
 
-
-
-
-
-
-
-        }
-
-
-
-        TrainedSVM trained = new TrainedSVM(scales,best_model.getModel().getFeatureWeights(),feature_names);
-
-
-
-
-
-
-
-
-        SVMPredict predict = new SVMPredict();
-        double[] testscores = predict.predict_confidence(featureMatrix,trained);
-        ArrayList<Double> testscoresarray = new ArrayList<>();
-        for(int i=0;i<featureMatrix.length;i++){
-
-                testscoresarray.add(testscores[i]);
-        }
-
-
-        boolean[] testLabelToBool = new boolean[labels.length];
-
-
-        for(int j=0;j<labels.length;j++){
-            if(labels[j]==1){
-                testLabelToBool[j]=true;
-            }else {
-                testLabelToBool[j]=false;
-            }
-
-
-        }
-
-
-
-
-
-        writeScores(testscores,testLabelToBool);
-
-        writeBogusScores(testscores,testLabelToBool);
-
-
-
-        System.out.println("proba; "+best_probAB[0]+" - "+best_probAB[1]);
-
-
-        System.out.println(best_AUC);
-
-        trained.probAB=best_probAB;
+        trained.probAB=probAB;
 
 
 

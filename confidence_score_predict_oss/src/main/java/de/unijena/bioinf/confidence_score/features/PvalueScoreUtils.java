@@ -1,19 +1,27 @@
 package de.unijena.bioinf.confidence_score.features;
 
+import Tools.ExpectationMaximization1D;
+import Tools.KMeans;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.Utils;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import jMEF.MixtureModel;
+import jMEF.PVector;
+import jMEF.Parameter;
+import org.apache.commons.math3.distribution.ExponentialDistribution;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.ParetoDistribution;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.mllib.clustering.GaussianMixture;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.mllib.clustering.GaussianMixtureModel;
-import org.apache.spark.mllib.linalg.Vector;
-import org.apache.spark.mllib.linalg.Vectors;
+import umontreal.ssj.probdist.EmpiricalDist;
+import umontreal.ssj.randvar.KernelDensityGen;
+import umontreal.ssj.randvar.NormalGen;
+import umontreal.ssj.rng.F2NL607;
+import umontreal.ssj.rng.RandomStream;
+import umontreal.ssj.rng.RandomStreamBase;
+import umontreal.ssj.rng.RandomStreamFactory;
+
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -35,11 +43,12 @@ public class PvalueScoreUtils {
     }
 
 
-    public double computePvalueScore(Scored<FingerprintCandidate>[] ranked_candidates, Scored<FingerprintCandidate> current_candidate){
+    public double computePvalueScore(Scored<FingerprintCandidate>[] ranked_candidates, Scored<FingerprintCandidate> current_candidate, long flag){
 
 
+       // double pvalue=compute_pvalue_with_KDE(ranked_candidates,current_candidate);
 
-
+       // return(pvalue);
 
         ArrayList<Double> score_samples = new ArrayList<>();
 
@@ -50,7 +59,6 @@ public class PvalueScoreUtils {
 
         }
 
-        System.out.println(ranked_candidates[0]+" "+ranked_candidates[ranked_candidates.length-1]+" "+score_samples.get(0)+" "+score_samples.get(score_samples.size()-1));
 
       //  Collections.sort(score_samples);
 
@@ -97,7 +105,10 @@ public class PvalueScoreUtils {
         //TODO: This is a whacky fix
         if (p_value_lognormal == 0) p_value_lognormal = 0.00000000000001;
 
-        double score = p_value_lognormal * ranked_candidates.length;//utils.condense_candidates_by_flag(ranked_candidates,flag).length;
+        Utils utils = new Utils();
+
+
+        double score = p_value_lognormal * utils.condense_candidates_by_flag(ranked_candidates,flag).length;
 
 
         //sort list back to original state
@@ -177,40 +188,6 @@ try {
     e.printStackTrace();
 }
 return null;
-    }
-
-
-    public void gmmtest(ArrayList<Double> scores){
-
-        GaussianMixture mixture = new GaussianMixture();
-
-        String path = "data/mllib/gmm_data.txt";
-        JavaSparkContext jsc = new JavaSparkContext();
-
-        JavaRDD<String> data = jsc.textFile(path);
-
-
-        JavaRDD<Vector> parsedData = data.map(s -> {
-            String[] sarray = s.trim().split(" ");
-            double[] values = new double[sarray.length];
-            for (int i = 0; i < sarray.length; i++) {
-                values[i] = Double.parseDouble(sarray[i]);
-            }
-            return Vectors.dense(values);
-        });
-        parsedData.cache();
-
-
-// Cluster the data into two classes using GaussianMixture
-        GaussianMixtureModel gmm = new GaussianMixture().setK(2).run(parsedData.rdd());
-
-
-// Output the parameters of the mixture model
-        for (int j = 0; j < gmm.k(); j++) {
-            System.out.printf("weight=%f\nmu=%s\nsigma=\n%s\n",
-                    gmm.weights()[j], gmm.gaussians()[j].mu(), gmm.gaussians()[j].sigma());
-        }
-
 
     }
 
@@ -271,6 +248,112 @@ return null;
 
     }
 
+    public double compute_pvalue_with_KDE(Scored<FingerprintCandidate>[] candidates, Scored<FingerprintCandidate> current, long flag){
+
+        Utils utils = new Utils();
+        double biosize= utils.condense_candidates_by_flag(candidates,flag).length;
+        double pvalue=0;
+
+        double[] scored_array= new double[candidates.length-1];
+
+        ArrayList<Double> tosortlist = new ArrayList<>();
+
+        for(int i=1;i<candidates.length;i++){
+            tosortlist.add(Math.log(candidates[i].getScore()+score_shift));
+        }
+
+        Collections.sort(tosortlist);
+        for(int i=0;i<tosortlist.size();i++){
+            scored_array[i]=tosortlist.get(i);
+        }
+
+
+        EmpiricalDist empdist= new EmpiricalDist(scored_array);
+
+        double bandwidth= KernelDensityGen.getBaseBandwidth(empdist);
+
+        for(int i=0;i<scored_array.length;i++){
+
+            NormalDistribution dist = new NormalDistribution(Math.log(candidates[i+1].getScore()+score_shift),bandwidth);
+
+            pvalue+=1-dist.cumulativeProbability(Math.log(current.getScore()+score_shift));
+
+
+
+        }
+       // System.out.println(pvalue+" ---"+scored_array.length+" --- "+(double)scored_array.length);
+        pvalue=(double)pvalue/(double)scored_array.length;
+
+
+
+        System.out.println("pvalues: "+pvalue+" --- "+(double)biosize*pvalue+ " --- "+ (-Math.expm1(biosize* Math.log1p(-pvalue)))+"\n");
+
+
+
+        //return (biosize*pvalue);
+        return -Math.expm1(biosize* Math.log1p(-pvalue));
+    }
+
+
+
+    public double compute_pvalue_with_gmm(Scored<FingerprintCandidate>[] candidates, Scored<FingerprintCandidate> current){
+
+
+        double pvalue=0;
+        int component_nr=1;
+
+        if(candidates.length>50) component_nr=2;
+
+
+
+
+
+
+
+
+
+        double transformed_curr_score = Math.log(current.getScore()+score_shift);
+
+        ArrayList<Double> score_samples = new ArrayList<>();
+
+        for (int i=0;i<candidates.length;i++) {
+
+            score_samples.add( Math.log(candidates[i].getScore() + score_shift));
+
+
+        }
+
+        PVector[]         vector   =  new PVector[score_samples.size()];
+
+        for(int i=0;i<vector.length;i++){
+            vector[i]= new PVector(1);
+            vector[i].array[0]= score_samples.get(i);
+        }
+
+
+        Vector<PVector>[] clusters = KMeans.run(vector, component_nr);
+
+        // Classical EM
+        MixtureModel mmc;
+        mmc = ExpectationMaximization1D.initialize(clusters);
+        mmc = ExpectationMaximization1D.run(vector, mmc);
+
+
+        for(int i=0;i<mmc.param.length;i++){
+            PVector vec=(PVector)mmc.param[i];
+            double mean= vec.array[0];
+            double sigma= vec.array[1];
+            double weight= mmc.weight[i];
+
+            NormalDistribution norm= new NormalDistribution(mean,Math.sqrt(sigma));
+
+            double partial = weight*(1-norm.cumulativeProbability(transformed_curr_score))*(weight*candidates.length);
+            pvalue+=partial;
+
+
+        }
+        return pvalue;
+    }
 
 
     public LogNormalDistribution estimate_lognormal_parameters(ArrayList<Double> scores){

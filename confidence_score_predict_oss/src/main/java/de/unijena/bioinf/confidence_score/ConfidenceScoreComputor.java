@@ -51,6 +51,12 @@ public class ConfidenceScoreComputor {
         return performances;
    }
 
+   public double compute_fast_confidence(Ms2Experiment exp, Scored<FingerprintCandidate>[] ranked_candidates,CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult,CSIFingerIdScoring csiscoring, CovarianceScoring covscore,long flags){
+
+
+       return 0;
+   }
+
 
 
     public double compute_confidence(Ms2Experiment exp, Scored<FingerprintCandidate>[] ranked_candidates,  CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, CSIFingerIdScoring csiscoring, CovarianceScoring covscore, long flags){
@@ -131,10 +137,11 @@ public class ConfidenceScoreComputor {
         if((flags&4294967292L)!=0 && flags!=2){
             dbType="bio";
 
+            //TODO: change distance stuff back, reenable BIOr
 
             if(utils.condense_candidates_by_flag(ranked_candidates_covscore,flags).length>1) {
                 distanceType="distance";
-                comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore,ranked_candidates_covscore,performances,covscore);
+//                comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore,ranked_candidates_covscore,performances,covscore);
                 svm= trainedSVMs.get("fe"+ce+"_"+dbType+"_"+distanceType+".svm");
 
 

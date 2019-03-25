@@ -10,45 +10,45 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.confidence_score.Utils;
+import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
- * Created by martin on 20.06.18.
+ * Created by Marcus Ludwig on 07.03.16.
  */
-public class PvalueFeatures implements FeatureCreator {
+public class AllConfidenceScoreFeatures implements FeatureCreator {
+    private final String[] names;
+    private FingerblastScoring scoring;
+    private PredictionPerformance[] statistics;
+    private Utils utils;
     Scored<FingerprintCandidate>[] rankedCandidates;
-    long flags=-1;
+    long flags;
+    double conf;
+
+    public AllConfidenceScoreFeatures(double conf){
+        this.rankedCandidates=rankedCandidates;
+        names = new String[]{"AllConfScore"};
+        this.scoring=scoring;
+        this.conf=conf;
+    }
+
+
+    //TODO: Also code in that this is different for same pubchem hit - different pubchem hit
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
-
+        this.statistics = statistics;
     }
-
-    public PvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates){
-        this.rankedCandidates=rankedCandidates;
-    }
-
-    public PvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates, long flags){
-        this.rankedCandidates=rankedCandidates;
-        this.flags=flags;
-    }
-
-
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query,  IdentificationResult idresult, long flags) {
-        double[] return_value =  new double[1];
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult,long flags) {
 
 
-        if(this.flags==-1)this.flags=flags;
-        PvalueScoreUtils utils= new PvalueScoreUtils();
+        final double[] scores = new double[1];
 
-        Utils utils2 = new Utils();
+        scores[0] = conf;
 
-
-        return_value[0]  = utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0],flags);
-
-        return return_value;
+        return scores;
     }
 
     @Override
@@ -58,28 +58,28 @@ public class PvalueFeatures implements FeatureCreator {
 
     @Override
     public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
-        return false;
+        return rankedCandidates.length>0;
     }
 
     @Override
     public int getRequiredCandidateSize() {
-        return 0;
+        return 1;
     }
 
     @Override
     public String[] getFeatureNames() {
-        String[] name = new String[1];
-        name[0]="pvalueScore";
-        return name;
+
+
+        return names;
     }
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-
+        //Nothing to do as long as ScoringMethods stay the same
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-
+        //Nothing to do as long as ScoringMethods stay the same
     }
 }

@@ -33,6 +33,12 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
         long all=0;
         long bio=4294967292L;
 
+        //CombinedFeatureCreatorALL conf_score_all = new CombinedFeatureCreatorALL(scored_array,scored_array_covscore,performance,covscore);
+        //conf_score_all.prepare(performance);
+
+
+
+
         ArrayList<FeatureCreator> creators = new ArrayList<>(Arrays.asList(new PlattFeatures(), new LogPvalueDistanceFeatures(scored_array,all,1),
                 new LogDistanceFeatures(scored_array,all,1),
                 new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,all),
@@ -45,6 +51,7 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
                 new ScoreDiffScorerFeatures(scored_array[0],scored_array_covscore[0],covscore.getScoring()),
                 new ScoreFeatures(covscore.getScoring(),scored_array,all),
                 new ScoreFeatures(covscore.getScoring(),scored_array_covscore,all),
+               // new AllConfidenceScoreFeatures(all_confidence),
 
 
                 new LogDistanceFeatures(scored_array,bio,1),
