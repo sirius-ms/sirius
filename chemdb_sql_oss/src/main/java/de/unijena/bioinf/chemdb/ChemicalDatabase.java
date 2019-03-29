@@ -252,9 +252,9 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         final PreparedStatement statement;
         if (enforceBio) {
             final long bioflag = DatasourceService.BIOFLAG;
-            statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, p_layer, q_layer, xlogp FROM " + STRUCTURES_TABLE + " WHERE formula = ? AND (flags & " + bioflag + " ) != 0");
+            statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM " + STRUCTURES_TABLE + " WHERE formula = ? AND (flags & " + bioflag + " ) != 0");
         } else {
-            statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, p_layer, q_layer, xlogp FROM " + STRUCTURES_TABLE + " WHERE formula = ?");
+            statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM " + STRUCTURES_TABLE + " WHERE formula = ?");
         }
         statement.setString(1, formula.toString());
         ArrayList<CompoundCandidate> candidates = new ArrayList<>();
@@ -264,9 +264,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
                 candidate.setName(set.getString(3));
                 candidate.setSmiles(set.getString(4));
                 candidate.setBitset(set.getLong(5));
-                candidate.setpLayer(set.getInt(6));
-                candidate.setqLayer(set.getInt(7));
-                candidate.setXlogp(set.getDouble(8));
+                candidate.setXlogp(set.getDouble(6));
                 candidates.add(candidate);
             }
         }
@@ -338,18 +336,18 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT s.inchi_key_1, s.inchi, s.name, s.smiles, s.flags, s.p_layer, s.q_layer, s.xlogp, f.fingerprint FROM "+STRUCTURES_TABLE+" as s, "+FINGERPRINT_TABLE+" as f WHERE f.fp_id = "+FINGERPRINT_ID+" AND s.inchi_key_1 = ? AND f.inchi_key_1 = s.inchi_key_1")) {
+            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT s.inchi_key_1, s.inchi, s.name, s.smiles, s.flags, s.xlogp, f.fingerprint FROM "+STRUCTURES_TABLE+" as s, "+FINGERPRINT_TABLE+" as f WHERE f.fp_id = "+FINGERPRINT_ID+" AND s.inchi_key_1 = ? AND f.inchi_key_1 = s.inchi_key_1")) {
                 for (String inchikey : inchi_keys) {
                     statement.setString(1, inchikey);
                     try (final ResultSet set = statement.executeQuery()) {
                         if (set.next()) {
-                            final FingerprintCandidate candidate = new FingerprintCandidate(new InChI(set.getString(1), set.getString(2)), parseFingerprint(set, 9));
+                            final FingerprintCandidate candidate = new FingerprintCandidate(new InChI(set.getString(1), set.getString(2)), parseFingerprint(set, 7));
                             candidate.setName(set.getString(3));
                             candidate.setSmiles(set.getString(4));
                             candidate.setBitset(set.getLong(5));
-                            candidate.setpLayer(set.getInt(6));
-                            candidate.setqLayer(set.getInt(7));
-                            candidate.setXlogp(set.getDouble(8));
+                            //candidate.setpLayer(set.getInt(6));
+                            //candidate.setqLayer(set.getInt(7));
+                            candidate.setXlogp(set.getDouble(6));
                             candidates.add(candidate);
                         }
                     }
