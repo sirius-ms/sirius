@@ -7,7 +7,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.connection_pooling.ConnectionPool;
 import de.unijena.bioinf.fingerid.connection_pooling.PoolFunction;
 import de.unijena.bioinf.fingerid.connection_pooling.PooledConnection;
@@ -24,6 +24,13 @@ import java.sql.*;
 import java.util.*;
 
 public class ChemicalDatabase extends AbstractChemicalDatabase implements PooledDB<Connection> {
+
+    // temporary switch
+    public static final boolean USE_NEW_FINGERPRINTS = true;
+
+    private final static String STRUCTURES_TABLE = USE_NEW_FINGERPRINTS ? "tmp.structures" : "structures";
+    private final static String FINGERPRINT_TABLE = USE_NEW_FINGERPRINTS ? "tmp.fingerprints" : "fingerprints";
+    private final static String FINGERPRINT_ID = USE_NEW_FINGERPRINTS ? "2" : "1";
 
     private static final int DEFAULT_SQL_CAPACITY = 5;
     protected static final Logger log = LoggerFactory.getLogger(ChemicalDatabase.class);
@@ -70,11 +77,11 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     private void setup() {
         // check for system variables -> we do not want defaults because it is secret
         if (host == null)
-            this.host = PropertyManager.getStringProperty("de.unijena.bioinf.fingerid.chemical_db.host");
+            this.host = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.fingerid.chemical_db.host");
         if (username == null)
-            this.username = PropertyManager.getStringProperty("de.unijena.bioinf.fingerid.chemical_db.username");
+            this.username = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.fingerid.chemical_db.username");
         if (password == null)
-            this.password = PropertyManager.getStringProperty("de.unijena.bioinf.fingerid.chemical_db.password");
+            this.password = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.fingerid.chemical_db.password");
     }
 
     /**
@@ -245,9 +252,9 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         final PreparedStatement statement;
         if (enforceBio) {
             final long bioflag = DatasourceService.BIOFLAG;
-            statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, p_layer, q_layer, xlogp FROM structures WHERE formula = ? AND (flags & " + bioflag + " ) != 0");
+            statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM " + STRUCTURES_TABLE + " WHERE formula = ? AND (flags & " + bioflag + " ) != 0");
         } else {
-            statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, p_layer, q_layer, xlogp FROM structures WHERE formula = ?");
+            statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM " + STRUCTURES_TABLE + " WHERE formula = ?");
         }
         statement.setString(1, formula.toString());
         ArrayList<CompoundCandidate> candidates = new ArrayList<>();
@@ -257,9 +264,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
                 candidate.setName(set.getString(3));
                 candidate.setSmiles(set.getString(4));
                 candidate.setBitset(set.getLong(5));
-                candidate.setpLayer(set.getInt(6));
-                candidate.setqLayer(set.getInt(7));
-                candidate.setXlogp(set.getDouble(8));
+                candidate.setXlogp(set.getDouble(6));
                 candidates.add(candidate);
             }
         }
@@ -303,7 +308,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
             }
 
             // then lookup fingerprints
-            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT inchi_key_1, fingerprint FROM fingerprints WHERE fp_id = 1 AND formula = ?")) {
+            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT inchi_key_1, fingerprint FROM "+FINGERPRINT_TABLE+" WHERE fp_id = "+FINGERPRINT_ID+" AND formula = ?")) {
                 statement.setString(1, formula.toString());
                 try (final ResultSet r = statement.executeQuery()) {
                     while (r.next()) {
@@ -331,18 +336,18 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT s.inchi_key_1, s.inchi, s.name, s.smiles, s.flags, s.p_layer, s.q_layer, s.xlogp, f.fingerprint FROM structures as s, fingerprints as f WHERE f.fp_id = 1 AND s.inchi_key_1 = ? AND f.inchi_key_1 = s.inchi_key_1")) {
+            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT s.inchi_key_1, s.inchi, s.name, s.smiles, s.flags, s.xlogp, f.fingerprint FROM "+STRUCTURES_TABLE+" as s, "+FINGERPRINT_TABLE+" as f WHERE f.fp_id = "+FINGERPRINT_ID+" AND s.inchi_key_1 = ? AND f.inchi_key_1 = s.inchi_key_1")) {
                 for (String inchikey : inchi_keys) {
                     statement.setString(1, inchikey);
                     try (final ResultSet set = statement.executeQuery()) {
                         if (set.next()) {
-                            final FingerprintCandidate candidate = new FingerprintCandidate(new InChI(set.getString(1), set.getString(2)), parseFingerprint(set, 9));
+                            final FingerprintCandidate candidate = new FingerprintCandidate(new InChI(set.getString(1), set.getString(2)), parseFingerprint(set, 7));
                             candidate.setName(set.getString(3));
                             candidate.setSmiles(set.getString(4));
                             candidate.setBitset(set.getLong(5));
-                            candidate.setpLayer(set.getInt(6));
-                            candidate.setqLayer(set.getInt(7));
-                            candidate.setXlogp(set.getDouble(8));
+                            //candidate.setpLayer(set.getInt(6));
+                            //candidate.setqLayer(set.getInt(7));
+                            candidate.setXlogp(set.getDouble(6));
                             candidates.add(candidate);
                         }
                     }
@@ -361,7 +366,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         final ArrayList<InChI> candidates = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi FROM structures WHERE inchi_key_1 = ?")) {
+            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi FROM "+STRUCTURES_TABLE+" WHERE inchi_key_1 = ?")) {
                 statement.setFetchSize(10000);
                 for (String inchikey : inchi_keys) {
                     statement.setString(1, inchikey);
@@ -390,7 +395,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT fingerprint FROM fingerprints WHERE fp_id = 1 AND inchi_key_1 = ?")) {
+            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT fingerprint FROM "+FINGERPRINT_TABLE+" WHERE fp_id = "+FINGERPRINT_ID+" AND inchi_key_1 = ?")) {
                 for (CompoundCandidate candidate : compounds) {
                     statement.setString(1, candidate.getInchiKey2D());
                     try (final ResultSet set = statement.executeQuery()) {
@@ -569,6 +574,6 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
             final short s = fp.getShort(2);
             shorts.add(s);
         }
-        return new ArrayFingerprint(CdkFingerprintVersion.getComplete(), shorts.toArray());
+        return new ArrayFingerprint(USE_NEW_FINGERPRINTS ?  CdkFingerprintVersion.getExtended() : CdkFingerprintVersion.getComplete(), shorts.toArray());
     }
 }
