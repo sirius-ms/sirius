@@ -11,6 +11,12 @@ public class ExtractedIsotopePattern implements DataAnnotation {
     protected SimpleSpectrum pattern;
     protected HashMap<MolecularFormula, IsotopePattern> explanations;
 
+    private final static ExtractedIsotopePattern NONE = new ExtractedIsotopePattern(new SimpleSpectrum(new double[0], new double[0]));
+
+    public static ExtractedIsotopePattern none() {
+        return NONE;
+    }
+
     public ExtractedIsotopePattern(SimpleSpectrum spectrum) {
         this(spectrum, new HashMap<MolecularFormula, IsotopePattern>());
     }
