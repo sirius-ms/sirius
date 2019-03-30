@@ -185,7 +185,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             if (experiment.getPrecursorIonType().isIonizationUnknown())
                 ionTypes = input.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
             else ionTypes = Arrays.asList(experiment.getPrecursorIonType());
-            decomps.addAll(whiteset.resolve(parentPeak.getMass(), parentDeviation, ionTypes));
+            decomps.addAll(whiteset.resolve(parentMass, parentDeviation, ionTypes));
             pmds = new ArrayList<>();
             for (Decomposition d : decomps) pmds.add(d.getCandidate());
         } else if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
@@ -696,6 +696,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final FGraph graph = graphBuilder.fillGraph(input,
                 graphBuilder.addRoot(graphBuilder.initializeEmptyGraph(input),
                         input.getParentPeak(), Collections.singletonList(candidate)),ionModes,validator);
+        graph.setAnnotation(PrecursorIonType.class, PrecursorIonType.getPrecursorIonType(candidate.getIon()));
         siriusPlugins.values().forEach(p->p.afterGraphBuilding(input,graph));
         siriusPlugins.values().forEach(p->p.afterGraphBuilding(input,graph));
         siriusPlugins.values().forEach(p->p.transferAnotationsFromInputToGraph(input,graph));
@@ -1010,9 +1011,14 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 score += peakPairScores[u.getColor()][v.getColor()];//peakPairScores[peakAno.get(u).getIndex()][peakAno.get(v).getIndex()]; // TODO: Umdrehen!
             assert !Double.isInfinite(score);
             // add the score of the loss
-            if (!u.isRoot())
-                for (int i = 0; i < lossScorers.length; ++i)
+            if (!u.isRoot()) {
+                for (int i = 0; i < lossScorers.length; ++i) {
                     score += lossScorers[i].score(loss, input, precomputeds[i]);
+                }
+            }
+            if (Double.isInfinite(score)) {
+                System.err.println("check");
+            }
             assert !Double.isInfinite(score);
             loss.setWeight(score);
         }
@@ -1087,7 +1093,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (SiriusPlugin plugin : siriusPlugins.values()) {
             plugin.releaseTreeToUser(input,graph,tree);
         }
-        tree.setAnnotation(PrecursorIonType.class, input.getExperimentInformation().getPrecursorIonType());
         tree.normalizeStructure();
     }
 

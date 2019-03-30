@@ -445,6 +445,9 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         recalculateScore(pin, finalTree, "recalibrate");
         assert finalTree!=null;
         tick();
+        if (pin.getAnnotation(DecompositionList.class).getDecompositions().size() <= 0) {
+            System.err.println("WTF?");
+        }
         return new ExactResult(pin, pin.getAnnotation(DecompositionList.class).getDecompositions().get(0), null, finalTree, finalTree.getTreeWeight());
     }
 

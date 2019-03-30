@@ -3,7 +3,10 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
+import de.unijena.bioinf.ChemistryBase.ms.Precursor;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
@@ -30,6 +33,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -42,9 +46,6 @@ public class TestSirius {
         this.sirius = new Sirius("qtof");
       //  sirius.getMs2Analyzer().setTreeBuilder(new AbstractTreeBuilder<>(CPLEXSolver.Factory));
         sirius.getMs2Analyzer().setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder());
-        sirius.getMs2Analyzer().registerPlugin(new TreeStatisticPlugin());
-        sirius.getMs2Analyzer().registerPlugin(new AdductSwitchPlugin());
-        sirius.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin());
     }
 
     public MutableMs2Experiment getStandardExperiment() {
@@ -203,7 +204,53 @@ public class TestSirius {
 
     }
 
-    public void testMs1() {
+    @Test
+    public void testSodiumOrProtonation() {
+        final MutableMs2Experiment experiment = getStandardExperiment().mutate();
+        final FTree top;
+        {
+            experiment.setAnnotation(NumberOfCandidates.class, new NumberOfCandidates(100));
+            final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
+            final ProcessedInput processedInput = preprocessor.preprocess(experiment);
+            sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
+            final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
+            FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
+            JobManager jobs = SiriusJobs.getGlobalJobManager();
+            jobs.submitJob(instance);
+            FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
+            top = finalResult.getResults().get(0);
+        }
+
+        final MutableMs2Experiment experiment2 = getStandardExperiment().mutate();
+        experiment2.setAnnotation(AdductSettings.class,experiment2.getAnnotationOrDefault(AdductSettings.class).withEnforced(new HashSet<>(Arrays.asList(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+")))));
+        experiment2.setPrecursorIonType(PrecursorIonType.unknown(1));
+        {
+            experiment2.setAnnotation(NumberOfCandidates.class, new NumberOfCandidates(100));
+            final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
+            final ProcessedInput processedInput = preprocessor.preprocess(experiment2);
+            sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
+            final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
+            FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
+            JobManager jobs = SiriusJobs.getGlobalJobManager();
+            jobs.submitJob(instance);
+            FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
+            FTree otherTop = finalResult.getResults().get(0);
+
+            assertEquals(top.getFragments().stream().map(x->x.getFormula()).collect(Collectors.toSet()), otherTop.getFragments().stream().map(x->x.getFormula()).collect(Collectors.toSet()));
+
+            // there should be sodium candidates
+            boolean found = false;
+            final PrecursorIonType sodium = PrecursorIonType.fromString("[M+Na]+");
+            for (FTree tree : finalResult.getResults()) {
+                if (tree.getAnnotation(PrecursorIonType.class).equals(sodium))  {
+                    found = true;
+                    break;
+                }
+            }
+            assertTrue("There should be at least one candidate with sodium", found);
+
+        }
+
 
     }
 
