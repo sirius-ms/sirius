@@ -38,6 +38,7 @@ import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.sirius.ProcessedInput;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.addOffset;
 import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.normalize;
@@ -200,7 +201,11 @@ public class IsotopePatternAnalysis implements Parameterized {
             final PossibleAdducts ionModes = input.getAnnotationOrDefault(PossibleAdducts.class);
             final FormulaConstraints constraints = input.getAnnotationOrDefault(FormulaConstraints.class);
             for (IonMode ionMode : ionModes.getIonModes()) {
-                final List<MolecularFormula> formulas = decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(ionMode.subtractFromMass(pattern.getPeaks()[0].getMass()), massDev.allowedMassDeviation);
+                List<MolecularFormula> formulas = decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(ionMode.subtractFromMass(pattern.getPeaks()[0].getMass()), massDev.allowedMassDeviation, constraints);
+                PrecursorIonType precursorIonType = input.getExperimentInformation().getPrecursorIonType();
+                if (!precursorIonType.isIonizationUnknown() && !precursorIonType.isPlainProtonationOrDeprotonation()) {
+                    formulas=formulas.stream().filter(f->precursorIonType.precursorIonToNeutralMolecule(f).isAllPositiveOrZero()).collect(Collectors.toList());
+                }
                 for (IsotopePattern pat : scoreFormulas(spec, formulas, input.getExperimentInformation(), PrecursorIonType.getPrecursorIonType(ionMode))) {
                     explanations.put(pat.getCandidate(), pat);
                 }

@@ -36,6 +36,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Scoring;
+import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.ms.annotations.Provides;
@@ -138,7 +139,17 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final Whiteset whiteset = input.getAnnotation(Whiteset.class);
         final FormulaConstraints constraints = input.getAnnotation(FormulaConstraints.class);
         final Ms2Experiment experiment = input.getExperimentInformation();
-        final Deviation parentDeviation = input.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
+        final double parentMass;
+        // if parent peak stems from MS1, use MS1 mass deviation instead
+        final Deviation parentDeviation;
+        if (input.getAnnotation(ExtractedIsotopePattern.class, ExtractedIsotopePattern::none).hasPattern()) {
+            parentDeviation = input.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
+            parentMass = input.getAnnotation(ExtractedIsotopePattern.class, ExtractedIsotopePattern::none).getPattern().getMzAt(0);
+        } else {
+            parentDeviation = input.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
+            parentMass = input.getParentPeak().getMass();
+        }
+
         // sort again...
         final ArrayList<ProcessedPeak> processedPeaks = new ArrayList<ProcessedPeak>(input.getMergedPeaks());
         Collections.sort(processedPeaks, new ProcessedPeak.MassComparator());
@@ -180,7 +191,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         } else if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
             // use given ionization
             final PrecursorIonType ionType = experiment.getPrecursorIonType();
-            final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ionType.precursorMassToNeutralMass(parentPeak.getMass()), parentDeviation.absoluteFor(parentPeak.getMass()), constraints);
+            final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ionType.precursorMassToNeutralMass(parentMass), parentDeviation.absoluteFor(parentMass), constraints);
             pmds = new ArrayList<>();
             for (MolecularFormula f : forms)  {
                 final MolecularFormula neutralMeasuredFormula = ionType.neutralMoleculeToMeasuredNeutralMolecule(f);
@@ -193,7 +204,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
             pmds = new ArrayList<>();
             for (Ionization ion : ionModes) {
-                final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ion.subtractFromMass(parentPeak.getMass()), parentDeviation.absoluteFor(parentPeak.getMass()), constraints);
+                final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ion.subtractFromMass(parentMass), parentDeviation.absoluteFor(parentMass), constraints);
                 pmds.addAll(forms);
                 for (MolecularFormula f : forms) decomps.add(new Decomposition(f, ion, 0d));
             }

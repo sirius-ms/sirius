@@ -8,21 +8,27 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GrbSolver;
+import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.annotations.DecompositionList;
 import de.unijena.bioinf.sirius.plugins.AdductSwitchPlugin;
 import de.unijena.bioinf.sirius.plugins.IsotopePatternInMs1Plugin;
 import de.unijena.bioinf.sirius.plugins.TreeStatisticPlugin;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -34,7 +40,8 @@ public class TestSirius {
 
     public TestSirius() {
         this.sirius = new Sirius("qtof");
-        sirius.getMs2Analyzer().setTreeBuilder(new AbstractTreeBuilder<>(CPLEXSolver.Factory));
+      //  sirius.getMs2Analyzer().setTreeBuilder(new AbstractTreeBuilder<>(CPLEXSolver.Factory));
+        sirius.getMs2Analyzer().setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder());
         sirius.getMs2Analyzer().registerPlugin(new TreeStatisticPlugin());
         sirius.getMs2Analyzer().registerPlugin(new AdductSwitchPlugin());
         sirius.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin());
@@ -68,6 +75,13 @@ public class TestSirius {
         FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
         final FTree top = finalResult.getResults().get(0);
         assertEquals(MolecularFormula.parse("C20H17NO6"), top.getRoot().getFormula());
+
+        // test ms1
+        final FragmentAnnotation<Score> score = top.getFragmentAnnotationOrThrow(Score.class);
+        assertTrue(score.get(top.getRoot()).get("MS-Isotopes") > 0);
+
+        // number of decompositions should be equal in MS1 and MSMS
+        assertEquals(processedInput.getAnnotation(ExtractedIsotopePattern.class).getExplanations().size(), processedInput.getPeakAnnotationOrThrow(DecompositionList.class).get(processedInput.getParentPeak()).getDecompositions().size());
     }
 
     @Test
@@ -186,6 +200,10 @@ public class TestSirius {
             if (!f.isRoot()) scoreSum += lscore.get(f.getIncomingEdge()).sum();
         }
         assertEquals("sum of scores of nodes and edges should equal to tree score", scoreSum, top.getTreeWeight(), 1e-6);
+
+    }
+
+    public void testMs1() {
 
     }
 
