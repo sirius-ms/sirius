@@ -53,10 +53,11 @@ class DefaultDescriptors {
         @Override
         public <G, D, L> TreeStatistics read(DataDocument<G, D, L> document, D dictionary) {
             if (document.hasKeyInDictionary(dictionary,"statistics")) {
+                final D stats = document.getDictionaryFromDictionary(dictionary, "statistics");
                 return new TreeStatistics(
-                        document.getDoubleFromDictionary(dictionary,"explainedIntensity"),
-                        document.getDoubleFromDictionary(dictionary,"explainedIntensityOfExplainablePeaks"),
-                        document.getDoubleFromDictionary(dictionary,"ratioOfExplainedPeaks")
+                        document.getDoubleFromDictionary(stats,"explainedIntensity"),
+                        document.getDoubleFromDictionary(stats,"explainedIntensityOfExplainablePeaks"),
+                        document.getDoubleFromDictionary(stats,"ratioOfExplainedPeaks")
                 );
             } else {
                 return TreeStatistics.none();

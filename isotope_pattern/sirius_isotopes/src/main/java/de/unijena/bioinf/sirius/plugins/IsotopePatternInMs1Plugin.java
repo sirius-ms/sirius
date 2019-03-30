@@ -98,8 +98,8 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
         @Override
         public double score(MolecularFormula formula, Ionization ion, ProcessedPeak peak, ProcessedInput input, IsotopePatternInMs1Plugin.Prepared precomputed) {
             // the tree is always neutralized!
-            if (!precomputed.ionType.isIonizationUnknown())
-                formula = precomputed.ionType.precursorIonToNeutralMolecule(formula);
+//            if (!precomputed.ionType.isIonizationUnknown())
+//                formula = precomputed.ionType.precursorIonToNeutralMolecule(formula);
             if (precomputed.pattern!=null && precomputed.pattern.getExplanations().get(formula)!=null) {
                 return precomputed.weight.getMultiplier() * precomputed.pattern.getExplanations().get(formula).getScore();
             } else return 0d;
