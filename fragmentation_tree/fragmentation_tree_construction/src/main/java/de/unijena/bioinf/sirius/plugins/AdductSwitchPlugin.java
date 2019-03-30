@@ -1,8 +1,6 @@
 package de.unijena.bioinf.sirius.plugins;
 
-import de.unijena.bioinf.ChemistryBase.chem.IonMode;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
@@ -42,15 +40,27 @@ public final class AdductSwitchPlugin extends SiriusPlugin {
 
     private static class AllowAdductSwitch implements LossValidator{
         private Ionization sodium, hplus;
+        private Element F,Cl,Br,I;
         public AllowAdductSwitch() {
             sodium = PrecursorIonType.getPrecursorIonType("[M+Na]+").getIonization();
             hplus=PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization();
+            final PeriodicTable pt = PeriodicTable.getInstance();
+            F = pt.getByName("F");
+            Cl = pt.getByName("Cl");
+            Br = pt.getByName("Br");
+            I = pt.getByName("I");
+
 
         }
 
         @Override
         public boolean isForbidden(ProcessedInput input, FGraph graph, Fragment a, Fragment b) {
             if (a.getIonization().equals(hplus) && b.getIonization().equals(sodium)) return true;
+            if (a.getIonization().equals(sodium) && b.getIonization().equals(hplus)) {
+                final MolecularFormula difference = a.getFormula().subtract(b.getFormula());
+                if ((difference.numberOfOxygens()>0) || (difference.numberOf(F)>0) || (difference.numberOf(Cl)>0) || (difference.numberOf(Br)>0) || (difference.numberOf(I)>0)) return false;
+                return true;
+            }
             return false;
         }
     }
