@@ -23,6 +23,7 @@ public class AddConfigsJob extends InstanceJob {
         final ExperimentResult expRes = awaitInput();
         final Ms2Experiment exp = expRes.getExperiment();
 
+        //todo why not seting the annotions in the parser? I think because of thw output
         if (exp.hasAnnotation(MsFileConfig.class)) {
             MsFileConfig msc = exp.getAnnotation(MsFileConfig.class);
             expRes.getExperiment().setAnnotationsFrom(msc.config.createInstancesWithModifiedDefaults(Ms2ExperimentAnnotation.class));

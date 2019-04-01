@@ -1,18 +1,16 @@
 package de.unijena.bioinf.ms.cli.parameters;
 
-import de.unijena.bioinf.ms.cli.InputIterator;
 import de.unijena.bioinf.ms.io.projectspace.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.ParseException;
-import java.util.*;
+import java.util.List;
 
 /**
  * This is for not algorithm related parameters.
@@ -42,8 +40,9 @@ public class RootOptionsCLI implements RootOptions {
     @Option(names = "-q", description = "suppress shell output", order = 30)
     public boolean quiet;
 
-    @Option(names = "--cite", description = "show citations", order = 40)
-    public boolean cite;
+    /*@Option(names = "--cite", description = "show citations", order = 40,)
+    public boolean cite;*/
+
     //endregion
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -57,10 +56,22 @@ public class RootOptionsCLI implements RootOptions {
 
 
     @Option(names = "--max-compound-buffer", description = "Maxmimal number of compounds that will be buffered in Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. For Infinite buffer size set it to 0. Default: 2 * --initial_intance_buffer", order = 60)
-    public Integer maxInstanceBuffer;
+    private Integer maxInstanceBuffer;
+
+    @Override
+    public Integer getMaxInstanceBuffer() {
+        initBuffers();
+        return maxInstanceBuffer;
+    }
 
     @Option(names = "--initial-compound-buffer", description = "Number of compounds that will be loaded initially into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores", order = 60)
-    public Integer initialInstanceBuffer;
+    private Integer initialInstanceBuffer;
+
+    @Override
+    public Integer getInitialInstanceBuffer() {
+        initBuffers();
+        return initialInstanceBuffer;
+    }
 
     private void initBuffers(){
         if (initialInstanceBuffer == null)
@@ -74,10 +85,10 @@ public class RootOptionsCLI implements RootOptions {
 
     // region Options: INPUT/OUTPUT
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius", order = 70)
-    public String workspace;
+    @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius", order = 70)
+    public Files workspace; //todo change in application core
 
-    @Option(names = {"--project-space", "-p"}, description = "Specify project-space to read from and also write to if nothing else is specified. For compression use the File ending .zip or .sirius", required = true, order = 70)
+    @Option(names = {"--project-space", "-p"}, description = "Specify project-space to read from and also write to if nothing else is specified. For compression use the File ending .zip or .sirius", order = 70)
     public File projectSpaceLocation;
 
     @Option(names = {"--input-project-space"}, description = "Specify different project-space(s) for reading than for writing. For compression use the File ending .zip or .sirius", order = 80)
@@ -90,51 +101,34 @@ public class RootOptionsCLI implements RootOptions {
 
     public FilenameFormatter projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
 
-    @Option(names = "--maxmz", description = "Just consider compounds with a precursor mz lower or equal this maximum mz. All other compounds in the input file are ignored.", order = 100)
-    public Double maxMz = Double.POSITIVE_INFINITY;
+    private SiriusProjectSpace projectSpaceToWriteOn = null;
+    @Override
+    public SiriusProjectSpace getProjectSpace() throws IOException {
+        if (projectSpaceToWriteOn == null) {
+            projectSpaceToWriteOn = configureProjectSpace();
+        }
+        return projectSpaceToWriteOn;
+    }
 
 
-    @Parameters(description = "Input spectra in .ms or .mgf file format", type = File.class)
-    public List<File> input = null;
-
-
-
-    // endregion
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // region Options: SINGLE_COMPOUND_MODE
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //todo hidden?
-    @Option(names = {"-1", "--ms1"}, description = "MS1 spectrum file name", order = 110)
-    public List<File> ms1;
-
-    @Option(names = {"-2", "--ms2"}, description = "MS2 spectra file names", order = 120)
-    public List<File> ms2;
-
-    @Option(names = {"-z", "--parentmass", "precursor", "mz"}, description = "the mass of the parent ion", order = 130)
-    public Double parentMz;
-    //endregion
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-    public RootOptions.IO call() throws Exception {
+       /*public WorkflowConfiguration self() throws Exception {
         //init buffer sizes
         initBuffers();
 
         //make a project space
-        final SiriusProjectSpace projectSpace = configureProjectSpace();
+        SiriusProjectSpace it = configureProjectSpace();
         //read new input if available
 
-
+            return null;
         //todo how to handle merge of new input and already existing workspace???
-        final List<File> input = expandInput(this.input);
-        final Iterator<ExperimentResult> inputIterator = (input == null || input.isEmpty())
+
+        *//*final Iterator<ExperimentResult> inputIterator = (input == null || input.isEmpty())
                 ? projectSpace.parseExperimentIterator()
-                : new InputIterator(input, maxMz).asExpResultIterator();
+                : new InputIterator(input, maxMz).asExpResultIterator();*//*
 
-
-        return new IO(projectSpace, inputIterator);
-    }
+//        final Iterator<ExperimentResult> inputIterator = projectSpace.parseExperimentIterator();
+//        return new IO(projectSpace, inputIterator);
+    }*/
 
     protected SiriusProjectSpace configureProjectSpace() throws IOException {
         SiriusProjectSpace space;
@@ -156,23 +150,7 @@ public class RootOptionsCLI implements RootOptions {
         return space;
     }
 
-    protected List<File> expandInput(List<File> files) {
-        if (files == null) return null;
 
-        final List<File> infiles = new ArrayList<>();
-        for (File g : files) {
-            if (g.isDirectory()) {
-                File[] ins = g.listFiles(pathname -> pathname.isFile());
-                if (ins != null) {
-                    Arrays.sort(ins, Comparator.comparing(File::getName));
-                    infiles.addAll(Arrays.asList(ins));
-                }
-            } else {
-                infiles.add(g);
-            }
-        }
-        return infiles;
-    }
 
     protected MetaDataSerializer[] makeSerializerArray() {
         //todo check weather Canopus and WebService is available
@@ -183,6 +161,5 @@ public class RootOptionsCLI implements RootOptions {
                 , new CanopusResultSerializer(ApplicationCore.CANOPUS)
         };
     }
-
 
 }
