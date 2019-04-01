@@ -141,8 +141,8 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             allExperiments.add(mutableMs2Experiment);
 
         }
-        Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
-        Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
+        Ms2Run dataset = new MutableMs2Run(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
+        Ms2RunPreprocessor preprocessor = new Ms2RunPreprocessor(true);
 
         if (options.getMedianNoiseIntensity()!=null) {
             double medianNoiseInt = options.getMedianNoiseIntensity();
@@ -156,17 +156,17 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             double meanMs2NoiseIntensity = medianNoiseInt;
             double medianMs2NoiseIntensity = medianNoiseInt;
             FixedDatasetStatistics fixedDatasetStatistics = new FixedDatasetStatistics(minMs1Intensity, maxMs1Intensity, minMs2Intensity, maxMs2Intensity, minMs2NoiseIntensity, maxMs2NoiseIntensity, meanMs2NoiseIntensity, medianMs2NoiseIntensity);
-            ((MutableMs2Dataset) dataset).setDatasetStatistics(fixedDatasetStatistics);
+            ((MutableMs2Run) dataset).setDatasetStatistics(fixedDatasetStatistics);
         }
         
         List<QualityAnnotator> qualityAnnotators = new ArrayList<>();
-        qualityAnnotators.add(new NoMs1PeakAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION));
-        qualityAnnotators.add(new FewPeaksAnnotator(Ms2DatasetPreprocessor.MIN_NUMBER_OF_PEAKS));
-        qualityAnnotators.add(new LowIntensityAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, 0.01, Double.NaN));
-//        qualityAnnotators.add(new NotMonoisotopicAnnotatorUsingIPA(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION));
+        qualityAnnotators.add(new NoMs1PeakAnnotator(Ms2RunPreprocessor.FIND_MS1_PEAK_DEVIATION));
+        qualityAnnotators.add(new FewPeaksAnnotator(Ms2RunPreprocessor.MIN_NUMBER_OF_PEAKS));
+        qualityAnnotators.add(new LowIntensityAnnotator(Ms2RunPreprocessor.FIND_MS1_PEAK_DEVIATION, 0.01, Double.NaN));
+//        qualityAnnotators.add(new NotMonoisotopicAnnotatorUsingIPA(Ms2RunPreprocessor.FIND_MS1_PEAK_DEVIATION));
         double max2ndMostIntenseRatio = 0.33;
         double maxSummedIntensitiesRatio = 1.0;
-        qualityAnnotators.add(new ChimericAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, max2ndMostIntenseRatio, maxSummedIntensitiesRatio));
+        qualityAnnotators.add(new ChimericAnnotator(Ms2RunPreprocessor.FIND_MS1_PEAK_DEVIATION, max2ndMostIntenseRatio, maxSummedIntensitiesRatio));
 
         preprocessor.setQualityAnnotators(qualityAnnotators);
 
@@ -174,7 +174,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         if (isolationWindowWidth>0){
             double right = isolationWindowWidth/2d+isolationWindowShift;
             double left = -isolationWindowWidth/2d+isolationWindowShift;
-            ((MutableMs2Dataset) dataset).setIsolationWindow(new SimpleRectangularIsolationWindow(left, right));
+            ((MutableMs2Run) dataset).setIsolationWindow(new SimpleRectangularIsolationWindow(left, right));
         }
 
         dataset = preprocessor.preprocess(dataset);
@@ -204,7 +204,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
 
         if (outputDir!=null){
             Path qualityPath = outputDir.resolve("spectra_quality.csv");
-            Ms2Dataset dataset2 = new MutableMs2Dataset(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
+            Ms2Run dataset2 = new MutableMs2Run(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
             SpectrumProperty[] usedProperties = CompoundQuality.getUsedProperties(dataset2);
             preprocessor.writeExperimentInfos(dataset2, qualityPath, usedProperties);
 

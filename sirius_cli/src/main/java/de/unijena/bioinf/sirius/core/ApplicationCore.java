@@ -277,5 +277,10 @@ public abstract class ApplicationCore {
     public static String VERSION_STRING(){
         return PropertyManager.PROPERTIES.getString("de.unijena.bioinf.sirius.versionString");
     }
+
+    public static void cite() {
+        System.out.println(System.lineSeparator() + System.lineSeparator() + "Please cite the following publications when using our tool:" + System.lineSeparator());
+        System.out.println(ApplicationCore.CITATION);
+    }
 }
 

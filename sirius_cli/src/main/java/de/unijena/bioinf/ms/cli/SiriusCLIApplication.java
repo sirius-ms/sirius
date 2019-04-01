@@ -28,6 +28,7 @@ public class SiriusCLIApplication {
         } catch (Exception e) {
             LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unkown Error!", e);
         } finally {
+            ApplicationCore.cite();
             System.exit(0);
         }
     }

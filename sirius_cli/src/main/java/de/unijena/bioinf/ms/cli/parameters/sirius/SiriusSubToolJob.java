@@ -17,7 +17,8 @@ public class SiriusSubToolJob extends InstanceJob {
     public SiriusSubToolJob(SiriusCachedFactory siriusProvider) {
         this.siriusProvider = siriusProvider;
     }
-
+    //todo use white set
+    //todo search db for formula
     @Override
     protected ExperimentResult compute() throws Exception {
         final ExperimentResult expRes = awaitInput();
@@ -26,6 +27,8 @@ public class SiriusSubToolJob extends InstanceJob {
         System.out.println("I am Sirius on Experiment " + expRes.getSimplyfiedExperimentName());
         final Sirius sirius = siriusProvider.sirius(exp.getAnnotation(FinalConfig.class).config.getConfigValue("AlgorithmProfile"));
         List<IdentificationResult> results = SiriusJobs.getGlobalJobManager().submitJob(sirius.makeIdentificationJob(exp)).awaitResult();
+
+        //annotate result
         expRes.getResults().clear();
         expRes.getResults().addAll(results);
 

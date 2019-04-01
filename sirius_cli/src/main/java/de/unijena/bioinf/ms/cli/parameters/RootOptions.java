@@ -1,14 +1,19 @@
 package de.unijena.bioinf.ms.cli.parameters;
 
 import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.sirius.ExperimentResult;
 
-import java.util.Iterator;
-import java.util.concurrent.Callable;
+import java.io.IOException;
 
-public interface RootOptions extends Callable<RootOptions.IO> {
+public interface RootOptions {
 
-    final class IO {
+    Integer getMaxInstanceBuffer();
+
+    Integer getInitialInstanceBuffer();
+
+    SiriusProjectSpace getProjectSpace() throws IOException;
+
+
+    /*final class IO {
         public final SiriusProjectSpace projectSpace;
         public final Iterator<ExperimentResult> inputIterator;
 
@@ -16,5 +21,5 @@ public interface RootOptions extends Callable<RootOptions.IO> {
             this.projectSpace = projectSpace;
             this.inputIterator = inputIterator;
         }
-    }
+    }*/
 }

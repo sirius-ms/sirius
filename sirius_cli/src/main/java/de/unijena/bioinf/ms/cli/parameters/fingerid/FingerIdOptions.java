@@ -3,11 +3,12 @@ package de.unijena.bioinf.ms.cli.parameters.fingerid;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
+import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
 import de.unijena.bioinf.ms.cli.parameters.Provide;
 import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.cli.parameters.sirius.SiriusOptions;
-import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.ms.cli.utils.FormatedTableBuilder;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -25,9 +26,8 @@ import java.util.concurrent.Callable;
  */
 @CommandLine.Command(name = "fingerid", aliases = {"F"}, description = "Identify molecular structure for each compound Individually using CSI:FingerID.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
 public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSubToolJob>> {
-    private SiriusOptions siriusOptions;
-    private Sirius siriusAPI; //todo fill me
-    public final static String CONSIDER_ALL_FORMULAS = "all";
+//    private SiriusOptions siriusOptions;
+//    private Sirius siriusAPI; //todo fill me
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
@@ -35,20 +35,23 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
         this.defaultConfigOptions = defaultConfigOptions;
     }
 
-    @Option(names = "-d", description = "search formulas in given database: all, pubchem, bio, kegg, hmdb")
-    public String database;
+    @Option(names = {"--info", "--webservice-info", "-W"}, description = "information about connection of CSI:FingerID Webservice")
+    public boolean fingeridInfo;
 
     @Option(names = {"--fingerid-db", "--fingerid_db", "--fingeriddb"}, description = "search structure in given database. By default the same database for molecular formula search is also used for structure search. If no database is used for molecular formula search, PubChem is used for structure search. Accepts also a filepath to a valid database directory.")
     public String fingerIdDb;
 
-    @Option(names = {"--webservice-info", "-W"}, description = "information about connection of CSI:FingerID Webservice")
-    public boolean fingeridInfo;
+
 
     @Option(names = {"--fingerid-predictors", "-P"}, description = "Predictors used to search structure with CSI:FingerID")
     public List<UserDefineablePredictorType> getPredictors = Collections.singletonList(UserDefineablePredictorType.CSI_FINGERID);
 
-    @Option(names = "--generate-custom-db", description = "EXPERIMENTAL FEATURE: generate a custom compound database. Ignore all other options. Import compounds from all given files. Usage: sirius --generate-custom-db [DATABASENAME] [INPUTFILE1] [INPUTFILE2] ... ")
-    public String generatingCompoundDatabase;
+
+    // candidates
+    @Option(names = {"-c", "--candidates"}, description = "Number of molecular structure candidates in the output.")
+    public void setNumberOfCandidates(String value) throws Exception {
+        defaultConfigOptions.changeOption("NumberOfStructureCandidates", value);
+    }
 
     /*
     @Option(description = "output predicted fingerprint")
@@ -122,6 +125,8 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
     public InstanceJob.Factory<FingeridSubToolJob> call() throws Exception {
         return FingeridSubToolJob::new;
     }
+
+
 
   /*  @Override
     public void setParamatersToExperiment(MutableMs2Experiment experiment) {

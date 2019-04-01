@@ -3,7 +3,6 @@ package de.unijena.bioinf.ms.cli;
 import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.ms.cli.parameters.RootOptionsCLI;
 import de.unijena.bioinf.ms.cli.utils.FormatedTableBuilder;
-import de.unijena.bioinf.ms.cli.workflow.Workflow;
 import de.unijena.bioinf.ms.cli.workflow.WorkflowBuilder;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import org.slf4j.Logger;
@@ -30,57 +29,13 @@ import java.util.concurrent.ExecutionException;
  */
 public class CLI extends ApplicationCore {
     protected final static Logger logger = LoggerFactory.getLogger(CLI.class);
-
+    private de.unijena.bioinf.ms.cli.workflow.Workflow flow;
 
     //////////////////////////////////////////////////
     // init
     ////////////////////////////////////////////////////
 
-    protected void cite(final CommandLine.Model.CommandSpec spec) {
-        System.out.println(spec.usageMessage().footerHeading());
-        for (String footerLine : spec.usageMessage().footer()) {
-            System.out.println(footerLine);
-        }
-    }
 
-    private void fingerIDInfo() {
-        System.out.println();
-
-        WorkerList info = ApplicationCore.WEB_API.getWorkerInfo();
-        if (info != null) {
-            System.out.println("Active worker instances: ");
-            System.out.println();
-            final FormatedTableBuilder align = new FormatedTableBuilder();
-            // header
-            align.addLine("ID", "Type", "Predictors", "Version", "Host", "Pulse");
-
-            info.forEach((workerInfo) ->
-                    // data
-                    align.addLine(String.valueOf(workerInfo.id), workerInfo.workerType.name(), workerInfo.predictors.toString(), workerInfo.version, workerInfo.hostname, String.valueOf(workerInfo.getPulse()))
-            );
-
-            // output
-            align.output(System.out::println);
-
-            System.out.println("Number of pending jobs: " + info.getPendingJobs());
-        }
-    }
-
-    private boolean printHelpIfRequested(String[] args, CommandLine.ParseResult parseResult) {
-        boolean r = false;
-        if (args == null || args.length == 0) {
-            parseResult.commandSpec().commandLine().usage(System.out);
-            return true;
-        }
-
-        for (CommandLine commandLine : parseResult.asCommandLineList()) {
-            if (commandLine.isUsageHelpRequested()) {
-                commandLine.usage(System.out);
-                r = true;
-            }
-        }
-        return r;
-    }
 
     protected void parseArgsAndInit(String[] args) throws IOException, ExecutionException {
         parseArgs(args);
@@ -92,12 +47,18 @@ public class CLI extends ApplicationCore {
     protected void parseArgs(String[] args) throws IOException, ExecutionException {
 
         final WorkflowBuilder<RootOptionsCLI> builder = new WorkflowBuilder<>(new RootOptionsCLI());
-        final Workflow flow = new CommandLine(builder.rootSpec).parseWithHandler(builder.makeParseResultHandler(), args);
+         flow = new CommandLine(builder.rootSpec).parseWithHandler(builder.makeParseResultHandler(), args);
 
-        flow.run();
+        if (flow != null)
+            flow.run();
 
-        System.out.println("here!");
-        //todo print help on error!!
+//        if (fingeridOptions.fingeridInfo) {
+
+
+//            System.exit(0);
+//        }
+
+
         //printing version or usage help
         /*if (printHelpIfRequested(args, parseResult))
             System.exit(0);
@@ -105,19 +66,7 @@ public class CLI extends ApplicationCore {
             cite(spec);
             System.exit(0);
         }
-        if (fingeridOptions.fingeridInfo) {
-            fingerIDInfo();
-            cite(spec);
-            System.exit(0);
-        }
 
-        //run application
-        if (rootOptions.numOfCores > 0) {
-            PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(rootOptions.numOfCores));
-        }*/
-
-        //configure file formatter and workspace
-//        prohectSpace = makeSiriusProjectSpace();
 
 
 
