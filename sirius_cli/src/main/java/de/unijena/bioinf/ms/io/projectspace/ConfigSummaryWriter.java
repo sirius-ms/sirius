@@ -16,7 +16,7 @@ public class ConfigSummaryWriter implements SummaryWriter {
     @Override
     public void writeSummary(Iterable<ExperimentResult> experiments, DirectoryWriter writer) {
         try {
-            writer.write(SiriusLocations.SIRIUS_CONFIG.fileName(), config::write);
+            writer.write(SiriusLocations.SIRIUS_WORKSPACE_CONFIG.fileName(), config::write);
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).error("Error when writing Config Summary");
         }
