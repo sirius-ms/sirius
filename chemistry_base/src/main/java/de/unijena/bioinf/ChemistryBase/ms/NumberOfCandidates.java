@@ -13,7 +13,7 @@ public class NumberOfCandidates implements Ms2ExperimentAnnotation {
     public int value;
 
 
-    public NumberOfCandidates() {}
+    private NumberOfCandidates() {}
     public NumberOfCandidates(int value) {
         this.value = value;
     }
