@@ -13,7 +13,7 @@ import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.ms.io.projectspace.FilenameFormatter;
 import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.ms.io.projectspace.StandardMSFilenameFormatter;
-import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
+import de.unijena.bioinf.sirius.Ms2RunPreprocessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -258,8 +258,8 @@ public class UtilsCLI {
             Deviation isoDifferenceDeviation = new Deviation(options.getPPMDiff());
 
 
-            Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(false);
-            MutableMs2Dataset dataset = new MutableMs2Dataset(experiments, Double.NaN);
+            Ms2RunPreprocessor preprocessor = new Ms2RunPreprocessor(false);
+            MutableMs2Run dataset = new MutableMs2Run(experiments, Double.NaN);
             preprocessor.estimateIsolationWindow(dataset);
             IsolationWindow isolationWindow = dataset.getIsolationWindow();
             if (isolationWindow.getEstimatedWindowSize() <= 1) {
