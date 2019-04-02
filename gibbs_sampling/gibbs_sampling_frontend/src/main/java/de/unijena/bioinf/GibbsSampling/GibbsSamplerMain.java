@@ -29,7 +29,7 @@ import de.unijena.bioinf.ms.io.projectspace.SiriusFileReader;
 import de.unijena.bioinf.ms.io.projectspace.SiriusZipFileReader;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
+import de.unijena.bioinf.sirius.Ms2RunPreprocessor;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
@@ -2406,10 +2406,11 @@ public class GibbsSamplerMain {
             allExperiments.add(mutableMs2Experiment);
 
         }
-        Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, Double.NaN);
-        Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
+        Ms2Run dataset = new MutableMs2Run(allExperiments, Double.NaN);
+        Ms2RunPreprocessor preprocessor = new Ms2RunPreprocessor(true);
         dataset = preprocessor.preprocess(dataset);
-        allExperiments = dataset.getExperiments();
+        //this loads everything to memory but this is needed for zodiac anyways
+        allExperiments = dataset.loadExperiments();
 
 //        //changed: test just by chance assign compound bad quality
 //        for (Ms2Experiment experiment : allExperiments) {
@@ -2463,8 +2464,8 @@ public class GibbsSamplerMain {
         final MsExperimentParser parser = new MsExperimentParser();
         List<Ms2Experiment> allExperiments = parser.getParser(mgfFile.toFile()).parseFromFile(mgfFile.toFile());
 
-        Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, Double.NaN);
-        Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
+        Ms2Run dataset = new MutableMs2Run(allExperiments, Double.NaN);
+        Ms2RunPreprocessor preprocessor = new Ms2RunPreprocessor(true);
         dataset = preprocessor.preprocess(dataset);
 //        return parseMFCandidates(trees, allExperiments, maxCandidates, workercount, ignoreSilicon);
         return parseMFCandidates(trees, dataset.getExperiments(), maxCandidates, workercount, ignoreSilicon);
@@ -2479,18 +2480,20 @@ public class GibbsSamplerMain {
         final MsExperimentParser parser = new MsExperimentParser();
         List<Ms2Experiment> allExperiments = parser.getParser(mgfFile.toFile()).parseFromFile(mgfFile.toFile());
 
-        Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, Double.NaN);
-        Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
+        Ms2Run dataset = new MutableMs2Run(allExperiments, Double.NaN);
+        Ms2RunPreprocessor preprocessor = new Ms2RunPreprocessor(true);
         dataset = preprocessor.preprocess(dataset);
 //        return parseMFCandidates(trees, allExperiments, maxCandidates, workercount, ignoreSilicon);
         return parseMFCandidatesEval(trees, dataset.getExperiments(), maxCandidates, workercount, ignoreSilicon);
     }
 
-    public static Map<String, List<FragmentsCandidate>> parseMFCandidatesEval(Path[] treesPaths, List<Ms2Experiment> experiments, int maxCandidates, int workercount, boolean ignoreSilicon) throws IOException {
+    public static Map<String, List<FragmentsCandidate>> parseMFCandidatesEval(Path[] treesPaths, Iterable<Ms2Experiment> experiments, int maxCandidates, int workercount, boolean ignoreSilicon) throws IOException {
 //        final SpectralPreprocessor preprocessor = new SpectralPreprocessor((new Sirius()).getMs2Analyzer());
 //        final Map<String, PriorityBlockingQueue<FragmentsCandidate>> explanationsMap = new HashMap<>();
         final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
+        int numOfComp = 0;
         for (Ms2Experiment experiment : experiments) {
+            numOfComp++;
             String name = cleanString(experiment.getName());
             if (experimentMap.containsKey(name)) throw new RuntimeException("experiment name duplicate: "+name);
             experimentMap.put(name, experiment);
@@ -2596,12 +2599,12 @@ public class GibbsSamplerMain {
         }
 
         System.out.println("keys size "+keys.size());
-        System.out.println("all compounds: "+experiments.size()+" | used compounds: "+listMap.size());
+        System.out.println("all compounds: "+ numOfComp +" | used compounds: "+listMap.size());
 
         return listMap;
     }
 
-    public static Map<String, List<FragmentsCandidate>> parseMFCandidates(Path[] treesPaths, List<Ms2Experiment> experiments, int maxCandidates, int workercount, boolean ignoreSilicon) throws IOException {
+    public static Map<String, List<FragmentsCandidate>> parseMFCandidates(Path[] treesPaths, Iterable<Ms2Experiment> experiments, int maxCandidates, int workercount, boolean ignoreSilicon) throws IOException {
         final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
         for (Ms2Experiment experiment : experiments) {
             String name = cleanString(experiment.getName());

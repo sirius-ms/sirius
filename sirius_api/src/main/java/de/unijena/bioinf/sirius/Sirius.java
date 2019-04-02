@@ -73,7 +73,7 @@ public class Sirius {
     private void addDefaultPlugins() {
         this.getMs2Analyzer().registerPlugin(new TreeStatisticPlugin());
         this.getMs2Analyzer().registerPlugin(new AdductSwitchPlugin());
-        this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin());//todo reenable
+        this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin());
     }
 
     public Sirius(@NotNull Profile profile, @NotNull PeriodicTable table) {

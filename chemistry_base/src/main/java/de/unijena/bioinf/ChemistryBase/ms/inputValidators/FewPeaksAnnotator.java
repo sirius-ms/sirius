@@ -46,7 +46,7 @@ public class FewPeaksAnnotator implements QualityAnnotator {
      * @param dataset
      */
     @Override
-    public void annotate(Ms2Dataset dataset) {
+    public void annotate(Ms2Run dataset) {
         //to few peaks
         for (Ms2Experiment experiment : dataset.getExperiments()) {
             //todo merge Ms2 beforehand?

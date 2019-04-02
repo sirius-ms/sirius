@@ -3,19 +3,28 @@ package de.unijena.bioinf.ChemistryBase.ms;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 /**
  * Created by ge28quv on 05/07/17.
  */
-public class MutableMs2Dataset implements Ms2Dataset {
+public class MutableMs2Run implements Ms2Run {
 
-    private List<MutableMs2Experiment> experiments;
-    double isolationWindowWidth;
+    //todo we should think if this is a good model -> it forces us to keep the whole Run in memory.
+    //private List<MutableMs2Experiment> experiments;
+    private Iterable<Ms2Experiment> experiments;
+    private double isolationWindowWidth;
     private IsolationWindow isolationWindow;
     private DatasetStatistics statistics;
 
-    public MutableMs2Dataset() {
+    private final Annotations<Ms2Run.Annotation> annotations;
+
+    @Override
+    public Annotations<Ms2Run.Annotation> annotations() {
+        return null;
+    }
+
+    public MutableMs2Run() {
+        annotations = new Annotations<>();
         experiments = new ArrayList<>();
     }
 
@@ -24,19 +33,19 @@ public class MutableMs2Dataset implements Ms2Dataset {
      * @param experiments
      * @param isolationWindowWidth maximum isolation window width. will be used to bound isolation window estimation.
      */
-    public MutableMs2Dataset(List<Ms2Experiment> experiments, double isolationWindowWidth) {
-        this.experiments = new ArrayList<>();
-        for (Ms2Experiment experiment : experiments) {
-            this.experiments.add(new MutableMs2Experiment(experiment));
-        }
+    public MutableMs2Run(Iterable<Ms2Experiment> experiments, double isolationWindowWidth) {
+        this();
+
+        this.experiments = experiments;
         this.isolationWindowWidth = isolationWindowWidth;
     }
 
-    public MutableMs2Dataset(Ms2Dataset dataset) {
-        this.experiments = new ArrayList<>();
-        for (Ms2Experiment experiment : dataset.getExperiments()) {
+    public MutableMs2Run(Ms2Run dataset) {
+        annotations = dataset.annotations().clone();
+        this.experiments = dataset.getExperiments(); //todo we might want to copy th collection.
+        /*for (Ms2Experiment experiment : dataset.getExperiments()) {
             this.experiments.add(new MutableMs2Experiment(experiment));
-        }
+        }*/
         this.isolationWindowWidth = dataset.getIsolationWindowWidth();
         this.isolationWindow = dataset.getIsolationWindow();
         this.setDatasetStatistics(dataset.getDatasetStatistics());
@@ -52,15 +61,19 @@ public class MutableMs2Dataset implements Ms2Dataset {
     }
 
 
-    public List<MutableMs2Experiment> getExperiments() {
+    public Iterable<Ms2Experiment> getExperiments() {
         return experiments;
     }
 
+
+    public List<Ms2Experiment> loadExperiments() {
+        List<Ms2Experiment> ex = new ArrayList<>();
+        getExperiments().forEach(ex::add);
+        return ex;
+    }
+
     public void setExperiments(List<Ms2Experiment> experiments) {
-        this.experiments = new ArrayList<>();
-        for (Ms2Experiment experiment : experiments) {
-            this.experiments.add(new MutableMs2Experiment(experiment));
-        }
+        this.experiments = experiments;
     }
 
     public double getIsolationWindowWidth() {
@@ -74,7 +87,8 @@ public class MutableMs2Dataset implements Ms2Dataset {
 
     @Override
     public Iterator<Ms2Experiment> iterator() {
-        return new Iterator<Ms2Experiment>() {
+        return experiments.iterator();
+        /*return new Iterator<Ms2Experiment>() {
             private int index;
             @Override
             public boolean hasNext() {
@@ -94,7 +108,7 @@ public class MutableMs2Dataset implements Ms2Dataset {
                 throw new UnsupportedOperationException();
             }
 
-        };
+        };*/
     }
 
     public void setDatasetStatistics(DatasetStatistics statistics){
@@ -105,4 +119,6 @@ public class MutableMs2Dataset implements Ms2Dataset {
     public DatasetStatistics getDatasetStatistics() {
         return statistics;
     }
+
+
 }

@@ -45,7 +45,7 @@ public class ChimericAnnotator implements QualityAnnotator {
      * //TODO currently removes all isotopes from MS1, but they in fact still produce chimerics. Test with and without
      */
     @Override
-    public void annotate(Ms2Dataset dataset) {
+    public void annotate(Ms2Run dataset) {
 //        Deviation maxDeviation = dataset.getMeasurementProfile().getAllowedMassDeviation();
         //changed
         IsolationWindow isolationWindow = dataset.getIsolationWindow();
