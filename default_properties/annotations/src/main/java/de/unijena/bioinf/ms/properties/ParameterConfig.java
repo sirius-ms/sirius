@@ -1,9 +1,7 @@
 package de.unijena.bioinf.ms.properties;
 
 import com.google.gson.internal.Primitives;
-import org.apache.commons.configuration2.Configuration;
-import org.apache.commons.configuration2.PropertiesConfiguration;
-import org.apache.commons.configuration2.PropertiesConfigurationLayout;
+import org.apache.commons.configuration2.*;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
@@ -23,62 +21,70 @@ import java.util.stream.Collectors;
 
 
 public class ParameterConfig {
-    public final String configRoot;
-    public final String classRoot;
+//    public final String configRoot; //todo review the name spaces!!
+//    public final String classRoot;
     private final PropertiesConfigurationLayout layout;
-    private final Configuration properties;
+    private final CombinedConfiguration config;
+    private final CombinedConfiguration config_classes;
 
-    private final Set<String> changedKeys = new LinkedHashSet<>();
+    private final String localConfigName;
 
-    public ParameterConfig(Configuration properties, PropertiesConfigurationLayout layout, String configRoot, String classRoot) {
-        this.properties = properties;
+    protected ParameterConfig(CombinedConfiguration config, CombinedConfiguration config_classes, PropertiesConfigurationLayout layout, String localConfigName, String configRoot, String classRoot) {
+        this.config = config;
+        this.config_classes = config_classes;
+        this.localConfigName = localConfigName;
+        this.layout = layout;
         this.configRoot = configRoot;
         this.classRoot = classRoot;
-        this.layout = layout;
     }
 
     public void write(Writer writer) throws IOException {
         try {
-            final PropertiesConfiguration props = PropertyManager.initProperties();
-            props.append(properties.subset(configRoot));
-            final PropertiesConfigurationLayout l = props.getLayout();
-            props.getKeys().forEachRemaining(keyShort -> l.setComment(keyShort, getConfigDescription(keyShort)));
-
-            l.save(props, writer);
+            final PropertiesConfiguration toWrite = PropertyManager.initProperties();
+            config.getKeys().forEachRemaining(key -> toWrite.setProperty(key, config.getString(key)));
+            layout.save(toWrite, writer);
         } catch (ConfigurationException e) {
             throw new IOException(e);
         }
     }
 
-    public ParameterConfig newIndependendInstance(boolean keepChanges) {
-        ParameterConfig it = newIndependendInstance();
-        if (keepChanges)
-            it.changedKeys.addAll(changedKeys);
-        return it;
+    public void writeModified(Writer writer) throws IOException {
+        try {
+            layout.save(localConfig(), writer);
+        } catch (ConfigurationException e) {
+            throw new IOException(e);
+        }
     }
 
-    public ParameterConfig newIndependendInstance() {
-        final PropertiesConfiguration props = PropertyManager.initProperties();
-        properties.getKeys(configRoot).forEachRemaining(key ->
-                props.setProperty(key, properties.getString(key)));
+    public ParameterConfig newIndependentInstance(@NotNull final String name) {
+        if (name.isEmpty())
+            throw new IllegalArgumentException("Empty name is not Allowed here");
 
-        return new ParameterConfig(props, layout, configRoot, classRoot);
+        final CombinedConfiguration nuConfig = PropertyManager.newCombinedProperties();
+        nuConfig.addConfiguration(PropertyManager.initProperties(), name);
+        this.config.getConfigurationNames().forEach(n -> nuConfig.addConfiguration(config.getConfiguration(n), n));
+
+        return new ParameterConfig(nuConfig, config_classes, layout, name, configRoot, classRoot);
     }
 
-    public void changeModifiedFrom(ParameterConfig config) {
-        // this can be unchecked because ParameterConfig entries have to be valid
-        config.changedKeys.forEach(key -> {
-            properties.setProperty(key, config.properties.getString(key));
-            changedKeys.add(key);
-        });
-    }
 
     public Iterator<String> getConfigKeys() {
-        return properties.getKeys(configRoot);
+        return config.getKeys(configRoot);
     }
 
     public Iterator<String> getModifiedConfigKeys() {
-        return Collections.unmodifiableSet(changedKeys).iterator();
+        return localConfig().getKeys(configRoot);
+    }
+
+
+    public ImmutableConfiguration getModifiedConfigs() {
+        return localConfig();
+    }
+
+    private PropertiesConfiguration localConfig() {
+        if (localConfigName == null || localConfigName.isEmpty())
+            throw new UnsupportedOperationException("This is an unmodifiable config. Please use newIndependentInstance(name) to create a modifiable child instance.");
+        return (PropertiesConfiguration) config.getConfiguration(localConfigName);
     }
 
     private Configuration getClassRootProperties() {
@@ -94,7 +100,7 @@ public class ParameterConfig {
     }
 
     public String getConfigValue(@NotNull String key) {
-        return properties.getString(configRoot + '.' + shortKey(key));
+        return config.getString(configRoot + '.' + shortKey(key));
     }
 
     public <C> boolean isInstantiatableWithDefaults(Class<C> klass) {
@@ -110,23 +116,27 @@ public class ParameterConfig {
                 key = configRoot + "." + key;
 
             // find actual value
-            backup = properties.getString(key);
-            if (backup == null)
+            backup = localConfig().getString(key);
+            if (config.getString(key) == null)
                 throw new IllegalDefaultPropertyKeyException("No Default value found for given key.");
 
+
             // set new property
-            properties.setProperty(key, value);
+            localConfig().setProperty(key, value);
 
             // check new property
             Object nuDefault = createInstanceWithDefaults(key);
             if (nuDefault == null)
                 throw new NullPointerException("Test default instance is NULL");
 
-            changedKeys.add(key);
             return nuDefault.getClass();
         } catch (Throwable e) {
             // rollback property
-            properties.setProperty(key, backup);
+            if (backup == null)
+                localConfig().clearProperty(backup);
+            else
+                localConfig().setProperty(key, backup);
+
             throw new IllegalDefaultPropertyKeyException("Default value change finished with errors! Rollback previous default value for key " + key + " if possible.", e);
         }
     }
@@ -139,7 +149,7 @@ public class ParameterConfig {
 
     public boolean containsConfigKey(@NotNull String key) {
         key = configRoot + "." + shortKey(key);
-        return properties.containsKey(key);
+        return config.containsKey(key);
     }
 
 
@@ -324,9 +334,9 @@ public class ParameterConfig {
     }
 
     private <T> T parseProperty(@NotNull Class<T> type, @Nullable Type generic, @Nullable String fieldName, @NotNull String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
-        String stringValue = properties.getString(propertyName);
+        String stringValue = config.getString(propertyName);
         if (stringValue == null && fieldName != null && !propertyName.endsWith(fieldName))
-            stringValue = properties.getString(propertyName + "." + fieldName);
+            stringValue = config.getString(propertyName + "." + fieldName);
         if (stringValue == null)
             return null;
         return convertStringToType(type, generic, stringValue);

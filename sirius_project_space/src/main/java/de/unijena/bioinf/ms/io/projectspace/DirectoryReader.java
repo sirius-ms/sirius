@@ -5,6 +5,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -113,6 +115,7 @@ public class DirectoryReader implements ProjectReader {
         final Ms2Experiment input;
         if (names.contains(SiriusLocations.SIRIUS_SPECTRA.fileName())) {
             input = parseSpectrum();
+            parseConfig(input);
         } else
             throw new IOException("Invalid Experiment directory. No spectrum.ms found! Your workspace seems to be corrupted.");
 
@@ -134,6 +137,11 @@ public class DirectoryReader implements ProjectReader {
         env.leaveDirectory();
 
         return expResult;
+    }
+
+    private void parseConfig(Ms2Experiment input) {
+        ParameterConfig
+        PropertyManager.
     }
 
 

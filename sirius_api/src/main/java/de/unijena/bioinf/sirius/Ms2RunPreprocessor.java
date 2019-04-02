@@ -27,10 +27,10 @@ import java.util.stream.Collectors;
 
 /**
  * Created by ge28quv on 01/07/17.
- * Do statistics and validation on Ms2Datasets.
+ * Do statistics and validation on Ms2Runs.
  * Not everything is threadsafe
  */
-public class Ms2DatasetPreprocessor {
+public class Ms2RunPreprocessor {
     /*
     BIG TODOS:
         validators:
@@ -53,7 +53,7 @@ public class Ms2DatasetPreprocessor {
 
     private static final boolean DEBUG = false;
 
-    protected final static Logger LOG = LoggerFactory.getLogger(Ms2DatasetPreprocessor.class);
+    protected final static Logger LOG = LoggerFactory.getLogger(Ms2RunPreprocessor.class);
 
     //these ionizations do not include adducts as gauging adduct mass differences without peak correlation data is probably to risky
     private static String[] STANDARD_IONIZATIONS_POSITIVE = new String[]{"[M]+", "[M+H]+", "[M+Na]+", "[M+K]+"};
@@ -77,11 +77,11 @@ public class Ms2DatasetPreprocessor {
 
     private Sirius sirius = new Sirius();
 
-    public Ms2DatasetPreprocessor() {
+    public Ms2RunPreprocessor() {
         this(true);
     }
 
-    public Ms2DatasetPreprocessor(boolean repairInput) {
+    public Ms2RunPreprocessor(boolean repairInput) {
         this.repairInput = repairInput;
         setInitials();
     }
@@ -128,11 +128,11 @@ public class Ms2DatasetPreprocessor {
      * ASSUMES NO BASELINE WAS APPLIED !!
      * @return
      */
-    public List<Ms2Experiment> preprocess(List<Ms2Experiment> experiments) {
-        Ms2Dataset dataset = new MutableMs2Dataset(experiments, Double.NaN);
-        Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
+    public Ms2Run preprocess(Iterable<Ms2Experiment> experiments) {
+        Ms2Run dataset = new MutableMs2Run(experiments, Double.NaN);
+        Ms2RunPreprocessor preprocessor = new Ms2RunPreprocessor(true);
         dataset = preprocessor.preprocess(dataset);
-        return dataset.getExperiments();
+        return dataset;
     }
 
     /**
@@ -141,12 +141,12 @@ public class Ms2DatasetPreprocessor {
      * @param ms2Dataset
      * @return
      */
-    public Ms2Dataset preprocess(Ms2Dataset ms2Dataset) {
+    public Ms2Run preprocess(Ms2Run ms2Dataset) {
         //todo inplace?
         ms2Dataset = validate(ms2Dataset);
         ms2Dataset = flagBadQualitySpectra(ms2Dataset);
         //todo this is this very alpha version. Has to be tested.
-        estimateIsolationWindow((MutableMs2Dataset) ms2Dataset);
+        estimateIsolationWindow((MutableMs2Run) ms2Dataset);
 
         //todo as estimateIsolationWindow is in alpha version, chimeric annotation might also not perform perfect
 //        double max2ndMostIntenseRatio = 0.33;
@@ -179,8 +179,8 @@ public class Ms2DatasetPreprocessor {
      * @param ms2Dataset
      * @return
      */
-    public MutableMs2Dataset validate(Ms2Dataset ms2Dataset) {
-        MutableMs2Dataset mutableMs2Dataset = new MutableMs2Dataset(ms2Dataset);
+    public MutableMs2Run validate(Ms2Run ms2Dataset) {
+        MutableMs2Run mutableMs2Run = new MutableMs2Run(ms2Dataset);
         List<Ms2Experiment> validatedExperiments = new ArrayList<>();
 
 
@@ -199,9 +199,9 @@ public class Ms2DatasetPreprocessor {
             }
             if (validatedExperiment!=null) validatedExperiments.add(validatedExperiment);
         }
-        mutableMs2Dataset.setExperiments(validatedExperiments);
+        mutableMs2Run.setExperiments(validatedExperiments);
 
-        return mutableMs2Dataset;
+        return mutableMs2Run;
     }
 
 
@@ -209,7 +209,7 @@ public class Ms2DatasetPreprocessor {
      * initialized Sirus, ionizations, element predictors etc.
      * @param ms2Dataset
      */
-    private void init(Ms2Dataset ms2Dataset) {
+    private void init(Ms2Run ms2Dataset) {
         int chargeSign;
         try {
           chargeSign  = testCharge(ms2Dataset);
@@ -237,7 +237,7 @@ public class Ms2DatasetPreprocessor {
      * @return
      * @throws IllegalArgumentException dataset contains positive and negative charges
      */
-    private int testCharge(Ms2Dataset ms2Dataset) throws IllegalArgumentException{
+    private int testCharge(Ms2Run ms2Dataset) throws IllegalArgumentException{
         int charge = 0;
         for (Ms2Experiment experiment : ms2Dataset) {
             PrecursorIonType precursorIonType = experiment.getPrecursorIonType();
@@ -253,19 +253,19 @@ public class Ms2DatasetPreprocessor {
 
 
 
-    public MutableMs2Dataset flagBadQualitySpectra(Ms2Dataset ms2Dataset){
-        MutableMs2Dataset mutableMs2Dataset = new MutableMs2Dataset(ms2Dataset);
+    public MutableMs2Run flagBadQualitySpectra(Ms2Run ms2Dataset){
+        MutableMs2Run mutableMs2Run = new MutableMs2Run(ms2Dataset);
         init(ms2Dataset);
         DatasetStatistics datasetStatistics;
-        if (mutableMs2Dataset.getDatasetStatistics()==null){
-            datasetStatistics = makeStatistics(mutableMs2Dataset); //mainly noise, min max intensities
-            mutableMs2Dataset.setDatasetStatistics(datasetStatistics);
+        if (mutableMs2Run.getDatasetStatistics()==null){
+            datasetStatistics = makeStatistics(mutableMs2Run); //mainly noise, min max intensities
+            mutableMs2Run.setDatasetStatistics(datasetStatistics);
         } else {
-            datasetStatistics = mutableMs2Dataset.getDatasetStatistics();
+            datasetStatistics = mutableMs2Run.getDatasetStatistics();
         }
 
         //todo this assumes relative noise intensity. we learned absolute. adjust at some point?
-//        ((MutableMeasurementProfile)mutableMs2Dataset.getMeasurementProfile()).setMedianNoiseIntensity(datasetStatistics.getMedianMs2NoiseIntensity());
+//        ((MutableMeasurementProfile)mutableMs2Run.getMeasurementProfile()).setMedianNoiseIntensity(datasetStatistics.getMedianMs2NoiseIntensity());
 
 
 
@@ -273,12 +273,12 @@ public class Ms2DatasetPreprocessor {
         for (QualityAnnotator qualityAnnotator : qualityAnnotators) {
             if (qualityAnnotator instanceof ChimericAnnotator) continue;
             qualityAnnotator.prepare(datasetStatistics);
-            qualityAnnotator.annotate(mutableMs2Dataset);
+            qualityAnnotator.annotate(mutableMs2Run);
         }
 
         //todo saturation, brumm peaks, contamination ...
 
-        return mutableMs2Dataset;
+        return mutableMs2Run;
     }
 
     /**
@@ -287,7 +287,7 @@ public class Ms2DatasetPreprocessor {
      * @param ms2Dataset
      * @return
      */
-    public MutableDatasetStatistics makeStatistics(Ms2Dataset ms2Dataset){
+    public MutableDatasetStatistics makeStatistics(Ms2Run ms2Dataset){
         init(ms2Dataset);
 
         //guess elements
@@ -375,13 +375,13 @@ public class Ms2DatasetPreprocessor {
         }
     }
 
-    public void writeExperimentInfos(Ms2Dataset ms2Dataset, Path outputFile) throws IOException {
+    public void writeExperimentInfos(Ms2Run ms2Dataset, Path outputFile) throws IOException {
         SpectrumProperty[] allProperties = SpectrumProperty.values();
         writeExperimentInfos(ms2Dataset, outputFile, allProperties);
     }
 
     private final static String SEP = "\t";
-    public void writeExperimentInfos(Ms2Dataset ms2Dataset, Path outputFile, SpectrumProperty[] properties) throws IOException {
+    public void writeExperimentInfos(Ms2Run ms2Dataset, Path outputFile, SpectrumProperty[] properties) throws IOException {
         init(ms2Dataset);
         BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset());
 
@@ -405,7 +405,7 @@ public class Ms2DatasetPreprocessor {
         writer.close();
     }
 
-    public void writeDatasetSummary(Ms2Dataset ms2Dataset, Path outputFile) throws IOException {
+    public void writeDatasetSummary(Ms2Run ms2Dataset, Path outputFile) throws IOException {
         BufferedWriter writer = Files.newBufferedWriter(outputFile);
         DatasetStatistics ds = ms2Dataset.getDatasetStatistics();
 
@@ -646,7 +646,7 @@ public class Ms2DatasetPreprocessor {
         }
     }
 
-    public void estimateIsolationWindow(MutableMs2Dataset ms2Dataset){
+    public void estimateIsolationWindow(MutableMs2Run ms2Dataset){
         if (ms2Dataset.getIsolationWindow()==null){
             double width = ms2Dataset.getIsolationWindowWidth();
             if (Double.isNaN(width) || width<=0){
@@ -664,10 +664,9 @@ public class Ms2DatasetPreprocessor {
         }
     }
 
-    private List<ExperimentWithAnnotatedSpectra> extractSpectra(Ms2Dataset ms2Dataset){
+    private List<ExperimentWithAnnotatedSpectra> extractSpectra(Ms2Run ms2Dataset){
         List<ExperimentWithAnnotatedSpectra> experimentsWithAnnotatedSpectra = new ArrayList<>();
-        final List<Ms2Experiment> experiments = ms2Dataset.getExperiments();
-        for (Ms2Experiment experiment : experiments) {
+        for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
             List<Spectrum<PeakWithAnnotation>> ms1 = convert(experiment.getMs1Spectra());
             List<Spectrum<PeakWithAnnotation>> ms2 = convert(experiment.getMs2Spectra());
             experimentsWithAnnotatedSpectra.add(new ExperimentWithAnnotatedSpectra(new MutableMs2Experiment(experiment), ms1, ms2));
@@ -675,10 +674,9 @@ public class Ms2DatasetPreprocessor {
         return experimentsWithAnnotatedSpectra;
     }
 
-    private List<Spectrum<PeakWithAnnotation>> extractAllMs1(Ms2Dataset ms2Dataset){
+    private List<Spectrum<PeakWithAnnotation>> extractAllMs1(Ms2Run ms2Dataset){
         List<Spectrum<PeakWithAnnotation>> ms1Spectra = new ArrayList<>();
-        final List<Ms2Experiment> experiments = ms2Dataset.getExperiments();
-        for (Ms2Experiment experiment : experiments) {
+        for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
             for (Spectrum<Peak> spectrum : experiment.getMs1Spectra()) {
                 ms1Spectra.add(convert(spectrum));
             }
@@ -686,10 +684,9 @@ public class Ms2DatasetPreprocessor {
         return ms1Spectra;
     }
 
-    private List<Spectrum<PeakWithAnnotation>> extractAllMs2(Ms2Dataset ms2Dataset){
+    private List<Spectrum<PeakWithAnnotation>> extractAllMs2(Ms2Run ms2Dataset){
         List<Spectrum<PeakWithAnnotation>> ms2Spectra = new ArrayList<>();
-        final List<Ms2Experiment> experiments = ms2Dataset.getExperiments();
-        for (Ms2Experiment experiment : experiments) {
+        for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
             for (Spectrum<Peak> spectrum : experiment.getMs2Spectra()) {
                 ms2Spectra.add(convert(spectrum));
             }

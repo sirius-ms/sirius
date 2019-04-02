@@ -121,9 +121,6 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private String inchi, inchikey, smiles, splash, spectrumQualityString;
         private MutableMs2Experiment experiment;
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
-//        private double treeTimeout;
-//        private double compoundTimeout;
-//        private double ppmMax = 0d, ppmMaxMs2 = 0d, noiseMs2 = 0d;
 
         //these are comments/additional options or metainfos that are mot nessecarily used by sirius
         private AdditionalFields fields;
@@ -152,7 +149,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 //            treeTimeout = 0d;
 //            compoundTimeout = 0d;
 //            ppmMax = ppmMaxMs2 = noiseMs2 = 0d;
-            config = PropertyManager.DEFAULTS.newIndependendInstance();
+            config = PropertyManager.DEFAULTS.newIndependentInstance();
         }
 
         private MutableMs2Experiment parse() throws IOException {
@@ -402,7 +399,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 exp.setAnnotation(RetentionTime.class, new RetentionTime(retentionTimeStart, retentionTimeEnd, retentionTime));
 
             //add config annotations that have been set within the file
-            exp.setAnnotation(MsFileConfig.class, new MsFileConfig(config));
+            exp.setAnnotation(MsFileConfig.class, new MsFileConfig(config)); //set map for reconstructability
+            exp.setAnnotationsFrom(config.createInstancesWithModifiedDefaults(Ms2ExperimentAnnotation.class));
 
             //add additional fields
             if (fields != null) exp.setAnnotation(AdditionalFields.class, fields);
