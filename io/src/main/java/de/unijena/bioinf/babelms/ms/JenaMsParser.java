@@ -149,7 +149,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 //            treeTimeout = 0d;
 //            compoundTimeout = 0d;
 //            ppmMax = ppmMaxMs2 = noiseMs2 = 0d;
-            config = PropertyManager.DEFAULTS.newIndependentInstance();
+            config = PropertyManager.DEFAULTS.newIndependentInstance(name);
         }
 
         private MutableMs2Experiment parse() throws IOException {
