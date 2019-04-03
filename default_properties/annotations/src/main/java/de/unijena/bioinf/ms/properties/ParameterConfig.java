@@ -1,7 +1,10 @@
 package de.unijena.bioinf.ms.properties;
 
 import com.google.gson.internal.Primitives;
-import org.apache.commons.configuration2.*;
+import org.apache.commons.configuration2.CombinedConfiguration;
+import org.apache.commons.configuration2.ImmutableConfiguration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.PropertiesConfigurationLayout;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
@@ -20,18 +23,25 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 
-public class ParameterConfig {
-//    public final String configRoot; //todo review the name spaces!!
-//    public final String classRoot;
+public final class ParameterConfig {
+    public final String configRoot;
+    public final String classRoot;
     private final PropertiesConfigurationLayout layout;
     private final CombinedConfiguration config;
-    private final CombinedConfiguration config_classes;
+    private final CombinedConfiguration classesConfig;
 
     private final String localConfigName;
 
-    protected ParameterConfig(CombinedConfiguration config, CombinedConfiguration config_classes, PropertiesConfigurationLayout layout, String localConfigName, String configRoot, String classRoot) {
+    ParameterConfig(CombinedConfiguration config, CombinedConfiguration classesConfig, String layoutConfigName, String localConfigName, String configRoot, String classRoot) {
+        this(config, classesConfig,
+                ((PropertiesConfiguration) config.getConfiguration(layoutConfigName)).getLayout(),
+                localConfigName, configRoot, classRoot
+        );
+    }
+
+    ParameterConfig(CombinedConfiguration config, CombinedConfiguration classesConfig, PropertiesConfigurationLayout layout, String localConfigName, String configRoot, String classRoot) {
         this.config = config;
-        this.config_classes = config_classes;
+        this.classesConfig = classesConfig;
         this.localConfigName = localConfigName;
         this.layout = layout;
         this.configRoot = configRoot;
@@ -40,7 +50,7 @@ public class ParameterConfig {
 
     public void write(Writer writer) throws IOException {
         try {
-            final PropertiesConfiguration toWrite = PropertyManager.initProperties();
+            final PropertiesConfiguration toWrite = SiriusConfigUtils.newConfiguration();
             config.getKeys().forEachRemaining(key -> toWrite.setProperty(key, config.getString(key)));
             layout.save(toWrite, writer);
         } catch (ConfigurationException e) {
@@ -60,25 +70,42 @@ public class ParameterConfig {
         if (name.isEmpty())
             throw new IllegalArgumentException("Empty name is not Allowed here");
 
-        final CombinedConfiguration nuConfig = PropertyManager.newCombinedProperties();
-        nuConfig.addConfiguration(PropertyManager.initProperties(), name);
+        final CombinedConfiguration nuConfig = SiriusConfigUtils.newCombinedConfiguration();
+        nuConfig.addConfiguration(SiriusConfigUtils.newConfiguration(), name);
         this.config.getConfigurationNames().forEach(n -> nuConfig.addConfiguration(config.getConfiguration(n), n));
 
-        return new ParameterConfig(nuConfig, config_classes, layout, name, configRoot, classRoot);
+        return new ParameterConfig(nuConfig, classesConfig, layout, name, configRoot, classRoot);
     }
 
 
+    public String shortKey(@NotNull String key) {
+        return key.replaceFirst(classRoot + ".", "")
+                .replaceFirst(configRoot + ".", "");
+    }
+
     public Iterator<String> getConfigKeys() {
-        return config.getKeys(configRoot);
+        return config.getKeys();
     }
 
     public Iterator<String> getModifiedConfigKeys() {
-        return localConfig().getKeys(configRoot);
+        return localConfig().getKeys();
+    }
+
+    public Iterator<String> getClassConfigKeys() {
+        return classesConfig.getKeys();
     }
 
 
     public ImmutableConfiguration getModifiedConfigs() {
         return localConfig();
+    }
+
+    public ImmutableConfiguration getConfigs() {
+        return config;
+    }
+
+    public ImmutableConfiguration getClassConfigs() {
+        return classesConfig;
     }
 
     private PropertiesConfiguration localConfig() {
@@ -87,20 +114,12 @@ public class ParameterConfig {
         return (PropertiesConfiguration) config.getConfiguration(localConfigName);
     }
 
-    private Configuration getClassRootProperties() {
-        return PropertyManager.PROPERTIES.getConfiguration("resource_configs_classes");
-    }
-
-    public Iterator<String> getConfigClassKeys() {
-        return getClassRootProperties().getKeys(classRoot);
-    }
-
     public String getConfigDescription(String key) {
-        return layout.getComment(configRoot + '.' + shortKey(key));
+        return layout.getComment(shortKey(key));
     }
 
     public String getConfigValue(@NotNull String key) {
-        return config.getString(configRoot + '.' + shortKey(key));
+        return config.getString(shortKey(key));
     }
 
     public <C> boolean isInstantiatableWithDefaults(Class<C> klass) {
@@ -109,11 +128,15 @@ public class ParameterConfig {
                 || Arrays.stream(klass.getDeclaredFields()).anyMatch(field -> field.isAnnotationPresent(DefaultProperty.class));
     }
 
+
+    void setConfigProperty(@NotNull String key, @NotNull String value) {
+        localConfig().setProperty(key, value);
+    }
+
     public Class<?> changeConfig(@NotNull String key, @NotNull String value) {
         String backup = null;
         try {
-            if (!key.startsWith(configRoot))
-                key = configRoot + "." + key;
+            key = shortKey(key);
 
             // find actual value
             backup = localConfig().getString(key);
@@ -141,14 +164,8 @@ public class ParameterConfig {
         }
     }
 
-
-    public String shortKey(@NotNull String key) {
-        return key.replaceFirst(classRoot + ".", "")
-                .replaceFirst(configRoot + ".", "");
-    }
-
     public boolean containsConfigKey(@NotNull String key) {
-        key = configRoot + "." + shortKey(key);
+        key = shortKey(key);
         return config.containsKey(key);
     }
 
@@ -156,8 +173,8 @@ public class ParameterConfig {
     public Class<?> getClassFromKey(@NotNull String key) {
         try {
             final String ks = shortKey(key);
-            key = classRoot + '.' + ks.split("[.]")[0];
-            final String value = getClassRootProperties().getString(key);
+            key = ks.split("[.]")[0];
+            final String value = classesConfig.getString(key);
             if (value == null)
                 throw new NullPointerException("No Class value found for given key.");
             Class<?> clazz = Class.forName(value);
@@ -173,7 +190,7 @@ public class ParameterConfig {
     }
 
     public <C> C createInstanceWithDefaults(Class<C> klass) {
-        return createInstanceWithDefaults(klass, configRoot);
+        return createInstanceWithDefaults(klass, "");
     }
 
     public <C> C createInstanceWithDefaults(Class<C> klass, @NotNull final String sourceParent) {
@@ -181,19 +198,21 @@ public class ParameterConfig {
     }
 
     private <C> C createInstanceWithDefaults(Class<C> klass, @NotNull final String sourceParent, boolean useClassParent) {
-        String parent = sourceParent;
-        if (parent.isEmpty())
-            throw new IllegalArgumentException("Some parent path is needed!");
+        if (!sourceParent.isEmpty() && !sourceParent.endsWith("."))
+            throw new IllegalArgumentException("Parent path has either to be empty or end with a \".\".");
+
 
         //search class annotation
         DefaultProperty klassAnnotation = null;
         if (klass.isAnnotationPresent(DefaultProperty.class))
             klassAnnotation = klass.getAnnotation(DefaultProperty.class);
 
+        final String parent;
         if (useClassParent)
-            parent = parent + "." + (klassAnnotation != null && !klassAnnotation.propertyParent().isEmpty()
+            parent = sourceParent + (klassAnnotation != null && !klassAnnotation.propertyParent().isEmpty()
                     ? klass.getAnnotation(DefaultProperty.class).propertyParent()
                     : klass.getSimpleName());
+        else parent = sourceParent.substring(0, sourceParent.length() - 1); //remove dot
 
         try {
             Method method = getFromStringMethod(klass);
@@ -207,33 +226,33 @@ public class ParameterConfig {
                 return getDefaultInstanceFromProvider(method, parent, sourceParent);
             }
 
-                // find all fields with @DefaultProperty annotation
-                final List<Field> fields = Arrays.stream(klass.getDeclaredFields()).filter(field -> field.isAnnotationPresent(DefaultProperty.class)).collect(Collectors.toList());
-                if (fields.isEmpty()) { //no field annotation -> check if it is a single field wrapper class
-                    if (klassAnnotation != null) {
-                        if (klass.isEnum()) {
-                            return parseProperty(klass, null, null, parent);
-                        } else {
-                            try {
-                                final String fieldName = (klassAnnotation.propertyKey().isEmpty() ? "value" : klassAnnotation.propertyKey());
-                                return setDefaultValue(invokePossiblyPrivateConstructor(klass), klass.getDeclaredField(fieldName), parent);
-                            } catch (NoSuchFieldException e) {
-                                throw new IllegalArgumentException("Input class contains no valid Field. Please Specify a valid Field name in the class annotation (@DefaultProperty), use the default name (value) por directly annotate the field as @DefaultProperty.", e);
-                            }
-                        }
+            // find all fields with @DefaultProperty annotation
+            final List<Field> fields = Arrays.stream(klass.getDeclaredFields()).filter(field -> field.isAnnotationPresent(DefaultProperty.class)).collect(Collectors.toList());
+            if (fields.isEmpty()) { //no field annotation -> check if it is a single field wrapper class
+                if (klassAnnotation != null) {
+                    if (klass.isEnum()) {
+                        return parseProperty(klass, null, null, parent);
                     } else {
-                        throw new IllegalArgumentException("This class contains no @DefaultProperty annotation!");
+                        try {
+                            final String fieldName = (klassAnnotation.propertyKey().isEmpty() ? "value" : klassAnnotation.propertyKey());
+                            return setDefaultValue(invokePossiblyPrivateConstructor(klass), klass.getDeclaredField(fieldName), parent);
+                        } catch (NoSuchFieldException e) {
+                            throw new IllegalArgumentException("Input class contains no valid Field. Please Specify a valid Field name in the class annotation (@DefaultProperty), use the default name (value) por directly annotate the field as @DefaultProperty.", e);
+                        }
                     }
                 } else {
-                    final C instance = invokePossiblyPrivateConstructor(klass);
-                    for (Field field : fields) {
-                        final DefaultProperty fieldAnnotation = field.getAnnotation(DefaultProperty.class);
-                        final String fieldParent = (fieldAnnotation.propertyParent().isEmpty() ? parent : sourceParent + "." + fieldAnnotation.propertyParent());
-                        final String fieldName = (fieldAnnotation.propertyKey().isEmpty() ? field.getName() : fieldAnnotation.propertyKey());
-                        setDefaultValue(instance, field, fieldParent + "." + fieldName);
-                    }
-                    return instance;
+                    throw new IllegalArgumentException("This class contains no @DefaultProperty annotation!");
                 }
+            } else {
+                final C instance = invokePossiblyPrivateConstructor(klass);
+                for (Field field : fields) {
+                    final DefaultProperty fieldAnnotation = field.getAnnotation(DefaultProperty.class);
+                    final String fieldParent = (fieldAnnotation.propertyParent().isEmpty() ? parent : sourceParent + fieldAnnotation.propertyParent());
+                    final String fieldName = (fieldAnnotation.propertyKey().isEmpty() ? field.getName() : fieldAnnotation.propertyKey());
+                    setDefaultValue(instance, field, fieldParent + "." + fieldName);
+                }
+                return instance;
+            }
         } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
             throw new IllegalArgumentException("Could not instantiate input class by empty Constructor", e);
         } catch (NoSuchMethodException e) {
@@ -292,9 +311,9 @@ public class ParameterConfig {
 
         for (int i = 0; i < parameters.length; i++) {
             final Parameter parameter = parameters[i];
-            if (parameter.isAnnotationPresent(DefaultProperty.class) /* kaidu: why?  && !parameter.getAnnotation(DefaultProperty.class).propertyKey().isEmpty() */) {
+            if (parameter.isAnnotationPresent(DefaultProperty.class)) {
                 final String fieldParent = !parameter.getAnnotation(DefaultProperty.class).propertyParent().isEmpty()
-                        ? sourceParent + "." + parameter.getAnnotation(DefaultProperty.class).propertyParent()
+                        ? sourceParent + parameter.getAnnotation(DefaultProperty.class).propertyParent()
                         : parent;
                 final String fieldName = parameter.getAnnotation(DefaultProperty.class).propertyKey().isEmpty() ? parameter.getName() : parameter.getAnnotation(DefaultProperty.class).propertyKey();
 //                if (parameters.length == 1)
@@ -320,7 +339,7 @@ public class ParameterConfig {
         try {
             final Object objectValue;
             if (isInstantiatableWithDefaults(field.getType())) {
-                objectValue = createInstanceWithDefaults(field.getType(), propertyName, false);
+                objectValue = createInstanceWithDefaults(field.getType(), propertyName + ".", false);
             } else {
                 objectValue = parseProperty(field.getType(), field.getGenericType(), field.getName(), propertyName);
             }

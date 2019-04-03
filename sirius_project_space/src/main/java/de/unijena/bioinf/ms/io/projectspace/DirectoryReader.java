@@ -140,8 +140,8 @@ public class DirectoryReader implements ProjectReader {
     }
 
     private void parseConfig(Ms2Experiment input) {
-        ParameterConfig
-        PropertyManager.
+//        ParameterConfig
+//        PropertyManager. //todo IMPLEMENT
     }
 
 
