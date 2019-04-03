@@ -14,6 +14,7 @@ import java.awt.*;
 import java.beans.PropertyEditor;
 import java.beans.PropertyEditorManager;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Writer;
 import java.lang.reflect.*;
 import java.util.List;
@@ -67,11 +68,26 @@ public final class ParameterConfig {
     }
 
     public ParameterConfig newIndependentInstance(@NotNull final String name) {
+        return newIdependendInstance(SiriusConfigUtils.newConfiguration(), name);
+    }
+
+    public ParameterConfig newIndependentInstance(@NotNull final ParameterConfig modificationLayer) {
+        if (!modificationLayer.isModifiable())
+            throw new IllegalArgumentException("Unmodifiable \"modificationLayer\"! Only modifiable ParameterConfigs are allowed as modification layer.");
+
+        return newIdependendInstance(modificationLayer.localConfig(), modificationLayer.localConfigName);
+    }
+
+    public ParameterConfig newIndependentInstance(@NotNull final InputStream streamToLoad, @NotNull final String name) throws ConfigurationException {
+        return newIdependendInstance(SiriusConfigUtils.makeConfigFromStream(streamToLoad), name);
+    }
+
+    private ParameterConfig newIdependendInstance(@NotNull final PropertiesConfiguration modifiableLayer, @NotNull final String name) {
         if (name.isEmpty())
             throw new IllegalArgumentException("Empty name is not Allowed here");
 
         final CombinedConfiguration nuConfig = SiriusConfigUtils.newCombinedConfiguration();
-        nuConfig.addConfiguration(SiriusConfigUtils.newConfiguration(), name);
+        nuConfig.addConfiguration(modifiableLayer, name);
         this.config.getConfigurationNames().forEach(n -> nuConfig.addConfiguration(config.getConfiguration(n), n));
 
         return new ParameterConfig(nuConfig, classesConfig, layout, name, configRoot, classRoot);
@@ -108,8 +124,11 @@ public final class ParameterConfig {
         return classesConfig;
     }
 
+    public boolean isModifiable() {
+        return localConfigName != null && !localConfigName.isEmpty();
+    }
     private PropertiesConfiguration localConfig() {
-        if (localConfigName == null || localConfigName.isEmpty())
+        if (!isModifiable())
             throw new UnsupportedOperationException("This is an unmodifiable config. Please use newIndependentInstance(name) to create a modifiable child instance.");
         return (PropertiesConfiguration) config.getConfiguration(localConfigName);
     }
