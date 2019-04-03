@@ -8,6 +8,7 @@ import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.ExperimentResult;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,8 +105,6 @@ public class DirectoryReader implements ProjectReader {
     }
 
 
-
-
     public ExperimentResult parseExperiment(final ExperimentDirectory expDir) throws IOException {
         final String directory = expDir.getDirectoryName();
         env.enterDirectory(directory);
@@ -115,7 +114,7 @@ public class DirectoryReader implements ProjectReader {
         final Ms2Experiment input;
         if (names.contains(SiriusLocations.SIRIUS_SPECTRA.fileName())) {
             input = parseSpectrum();
-            parseConfig(input);
+            parseAndAnnotateConfig(input);
         } else
             throw new IOException("Invalid Experiment directory. No spectrum.ms found! Your workspace seems to be corrupted.");
 
@@ -139,11 +138,22 @@ public class DirectoryReader implements ProjectReader {
         return expResult;
     }
 
-    private void parseConfig(Ms2Experiment input) {
-//        ParameterConfig
-//        PropertyManager. //todo IMPLEMENT
-    }
+    private void parseAndAnnotateConfig(Ms2Experiment experiment) {
+        ParameterConfig config = null;
 
+        try {
+            config = PropertyManager.DEFAULTS.newIndependentInstance(
+                    env.openFile(SiriusLocations.SIRIUS_COMPOUND_CONFIG.fileName()),
+                    "PROJECT_SPACE_" + experiment.getName()
+            );
+        } catch (ConfigurationException | IOException e) {
+            LOG.warn("Could not parse CONFIG for Experiment: " + experiment.getName() + ".", e);
+        }
+
+
+        if (config != null && !config.getModifiedConfigs().isEmpty())
+            experiment.setAnnotation(ProjectSpaceConfig.class, new ProjectSpaceConfig(config));
+    }
 
     private Ms2Experiment parseSpectrum() throws IOException {
         return env.read(SiriusLocations.SIRIUS_SPECTRA.fileName(), r ->

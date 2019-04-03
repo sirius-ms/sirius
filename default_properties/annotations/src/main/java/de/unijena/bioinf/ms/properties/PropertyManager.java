@@ -19,7 +19,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Properties;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -98,12 +101,12 @@ public class PropertyManager {
     }
 
     private static CombinedConfiguration loadDefaultConfigClasses() {
-        return addPropertiesFromResources(PROPERTIES.getString(CONFIG_CLASSES_LOCATIONS_KEY), DEFAULT_CONFIG_SOURCE, MS_CONFIG_CLASSES_BASE, "CONFIG_CLASSES");
+        return addPropertiesFromResources(PROPERTIES.getString(CONFIG_CLASSES_LOCATIONS_KEY), DEFAULT_CONFIG_CLASSES_SOURCE, MS_CONFIG_CLASSES_BASE, "CONFIG_CLASSES");
     }
 
     private static CombinedConfiguration loadDefaultConfigs() {
 //        GLOBAL_CONFIGS.addConfiguration(SiriusConfigUtils.newConfiguration(), "MODIFIED_DEFAULTS");
-        return addPropertiesFromResources(PROPERTIES.getString(CONFIGS_LOCATIONS_KEY), DEFAULT_CONFIG_CLASSES_SOURCE, MS_CONFIGS_BASE, "GLOBAL_CONFIG");
+        return addPropertiesFromResources(PROPERTIES.getString(CONFIGS_LOCATIONS_KEY), DEFAULT_CONFIG_SOURCE, MS_CONFIGS_BASE, "GLOBAL_CONFIG");
     }
 
     public static PropertiesConfiguration loadConfigurationFromStream(@NotNull InputStream input) throws ConfigurationException {
@@ -152,55 +155,19 @@ public class PropertyManager {
         return addPropertiesFromResources(resources, prefixToAdd, name);
     }
 
-    //this reads and merges read only properties from within jar resources
-    public static CombinedConfiguration makePropertiesFromResources(@NotNull final LinkedHashSet<String> resources, @Nullable String prefixToAdd, @Nullable String name) {
-        name = (name == null || name.isEmpty()) ? String.join("_", resources) : name;
-        final CombinedConfiguration combined = SiriusConfigUtils.newCombinedConfiguration();
-        List<String> reverse = new ArrayList<>(resources);
-        Collections.reverse(reverse);
-        for (String resource : reverse) {
-            combined.addConfiguration(makePropertiesFromResource(resource), resource);
-        }
-
-        return combined;
-    }
 
     public static CombinedConfiguration addPropertiesFromResources(@NotNull final LinkedHashSet<String> resources, @Nullable String prefixToAdd, @Nullable String name) {
         if (resources.isEmpty())
             throw new IllegalArgumentException("resources to add are empty!");
-        CombinedConfiguration configToAdd = makePropertiesFromResources(resources, prefixToAdd, name);
+        CombinedConfiguration configToAdd = SiriusConfigUtils.makeConfigFromResources(resources, prefixToAdd, name);
         PROPERTIES.addConfiguration(configToAdd, name, prefixToAdd);
         return configToAdd;
     }
 
     public static PropertiesConfiguration addPropertiesFromResource(@NotNull final String resource, @Nullable String prefixToAdd, @Nullable String name) {
-        PropertiesConfiguration configToAdd = makePropertiesFromResource(resource);
+        PropertiesConfiguration configToAdd = SiriusConfigUtils.makeConfigFromStream(resource);
         PROPERTIES.addConfiguration(configToAdd, name, prefixToAdd);
         return configToAdd;
-    }
-
-    private static PropertiesConfiguration makePropertiesFromResource(@NotNull final String resource) {
-        final PropertiesConfiguration config = SiriusConfigUtils.newConfiguration();
-        try (InputStream input = PropertyManager.class.getResourceAsStream("/" + resource)) {
-            if (input != null)
-                new FileHandler(config).load(input);
-                /*if (prefixToAdd != null && !prefixToAdd.isEmpty()) {
-                    SubsetConfiguration sub = ((SubsetConfiguration) combined.subset(prefixToAdd));
-                    sub.append(tmp);
-                    tmp.getLayout().getKeys().stream().forEach(key -> {
-                        final String kk = prefixToAdd + "." + key;
-                        if (combined.getLayout().getComment(kk) == null)
-                            combined.getLayout().setComment(kk, tmp.getLayout().getComment(key));
-                    });
-                } else {
-                    combined.append(tmp);
-                }*/
-            } catch (ConfigurationException | IOException e) {
-                System.err.println("Could not load properties from " + resource);
-                e.printStackTrace();
-            }
-
-        return config;
     }
 
     public static void setProperty(String key, Object value) {
@@ -232,37 +199,6 @@ public class PropertyManager {
         return getStringProperty(key, backupKey, null);
     }
 
-    /*public static int getIntProperty(String key, String backupKey) {
-        return Integer.valueOf(getStringProperty(key, backupKey));
-    }
-
-    public static double getDoubleProperty(String key, String backupKey) {
-        return Double.valueOf(getStringProperty(key, backupKey));
-    }
-
-    public static boolean getBooleanProperty(String key, String backupKey) {
-        return Boolean.valueOf(getStringProperty(key, backupKey));
-    }*/
-
-    /*public static int getIntProperty(String key, int defaultValue) {
-        String v = .getProperty(key);
-        return v == null ? defaultValue : Integer.valueOf(v);
-    }
-
-    public static double getDoubleProperty(String key, double defaultValue) {
-        String v = getProperty(key);
-        return v == null ? defaultValue : Double.valueOf(v);
-    }
-
-    public static boolean getBooleanProperty(String key, boolean defaultValue) {
-        String v = getProperty(key);
-        return v == null ? defaultValue : Boolean.valueOf(v);
-    }
-
-    public static boolean getBooleanProperty(String key) {
-        return getBooleanProperty(key, false);
-    }*/
-
     public static Path getPath(String key) {
         String v = PROPERTIES.getString(key);
         return (v == null) ? null : Paths.get(v);
@@ -282,9 +218,6 @@ public class PropertyManager {
         getPropertyKeys().forEachRemaining(k -> p.put(k, PROPERTIES.getString(k)));
         return p;
     }
-
-
-
 
     /*public static void main(String[] args) throws IOException {
         PropertyManager.PROPERTIES.get("foo");
