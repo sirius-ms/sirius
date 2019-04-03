@@ -4,7 +4,6 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.cli.parameters.AddConfigsJob;
 import de.unijena.bioinf.ms.cli.parameters.DataSetJob;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
-import de.unijena.bioinf.ms.io.projectspace.ConfigSummaryWriter;
 import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.sirius.ExperimentResult;
@@ -35,8 +34,6 @@ public class ToolChainWorkflow implements Workflow {
 
         this.parameters = parameters;
         this.toolchain = toolchain;
-
-        project.registerSummaryWriter(new ConfigSummaryWriter(parameters));
     }
 
     @Override
