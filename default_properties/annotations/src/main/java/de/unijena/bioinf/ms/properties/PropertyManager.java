@@ -7,15 +7,10 @@ package de.unijena.bioinf.ms.properties;
 
 
 import org.apache.commons.configuration2.CombinedConfiguration;
+import org.apache.commons.configuration2.ImmutableConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
-import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
-import org.apache.commons.configuration2.builder.combined.CombinedConfigurationBuilder;
-import org.apache.commons.configuration2.builder.fluent.Parameters;
-import org.apache.commons.configuration2.builder.fluent.PropertiesBuilderParameters;
-import org.apache.commons.configuration2.convert.DisabledListDelimiterHandler;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.io.FileHandler;
-import org.apache.commons.configuration2.tree.OverrideCombiner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +31,8 @@ public class PropertyManager {
 
     public static final CombinedConfiguration PROPERTIES;
 
-    private static final CombinedConfiguration GLOBAL_CONFIGS;
-    private static final CombinedConfiguration CONFIG_CLASSES;
+//    private static final CombinedConfiguration GLOBAL_CONFIGS;
+//    private static final CombinedConfiguration CONFIG_CLASSES;
 
     public static final String DEFAULT_PROPERTY_SOURCE = "sirius.build.properties";
     public static final String DEFAULT_CONFIG_SOURCE = "default.config";
@@ -55,22 +50,20 @@ public class PropertyManager {
     static {
         try {
 
-            PROPERTIES = newCombinedProperties();
+            PROPERTIES = SiriusConfigUtils.newCombinedConfiguration();
             loadDefaultProperties();
 
-            //config class for configs
-            CONFIG_CLASSES = loadDefaultConfigClasses();
-
-            //configs an properties need to have disjoint keys
-            GLOBAL_CONFIGS = loadDefaultConfigs();
 
             DEFAULTS = new ParameterConfig(
-                    GLOBAL_CONFIGS,
-                    CONFIG_CLASSES,
+                    loadDefaultConfigs(),//config class for configs
+                    loadDefaultConfigClasses(),//configs an properties need to have disjoint keys
+                    DEFAULT_CONFIG_SOURCE,
                     null,
                     MS_CONFIGS_BASE,
                     MS_CONFIG_CLASSES_BASE
-            );
+            ).newIndependentInstance("CHANGED_DEFAULTS");
+
+
         } catch (Throwable e) {
             System.err.println("Property Manager STATIC Block Error!");
             e.printStackTrace(System.err);
@@ -78,40 +71,26 @@ public class PropertyManager {
         }
     }
 
-    public static CombinedConfiguration newCombinedProperties() {
-        try {
-            CombinedConfiguration c = new CombinedConfigurationBuilder()
-                    .configure(new Parameters().combined()
-                            .setThrowExceptionOnMissing(false)
-                            .setListDelimiterHandler(new DisabledListDelimiterHandler()))
-                    .getConfiguration();
-            c.setNodeCombiner(new OverrideCombiner());
-            return c;
-
-        } catch (ConfigurationException e) {
-            System.err.println("WARNING: Error during initProperties");
-            return new CombinedConfiguration();
-        }
+    public static ImmutableConfiguration getConfigClassProperties() {
+        return DEFAULTS.getClassConfigs();
     }
 
-    public static PropertiesConfiguration initProperties() {
-        return initProperties(null);
+    public static String getConfigClassStringProperty(String key) {
+        if (key.startsWith(MS_CONFIG_CLASSES_BASE))
+            return getStringProperty(key);
+        else
+            return getConfigClassProperties().getString(key);
     }
 
-    public static @NotNull PropertiesConfiguration initProperties(@Nullable Path file) {
-        try {
-            PropertiesBuilderParameters props = new Parameters().properties()
-                    .setThrowExceptionOnMissing(false)
-                    .setListDelimiterHandler(new DisabledListDelimiterHandler())
-                    .setIncludesAllowed(true);
-            if (file != null)
-                props.setFile(file.toFile());
+    public static ImmutableConfiguration getDefaultConfigProperties() {
+        return DEFAULTS.getConfigs();
+    }
 
-            return new FileBasedConfigurationBuilder<>(PropertiesConfiguration.class).configure(props).getConfiguration();
-        } catch (ConfigurationException e) {
-            System.err.println("WARNING: Error during initProperties");
-            return new PropertiesConfiguration();
-        }
+    public static String getDefaultConfigStringProperty(String key) {
+        if (key.startsWith(MS_CONFIGS_BASE))
+            return getStringProperty(key);
+        else
+            return getDefaultConfigProperties().getString(key);
     }
 
     private static CombinedConfiguration loadDefaultProperties() {
@@ -123,12 +102,12 @@ public class PropertyManager {
     }
 
     private static CombinedConfiguration loadDefaultConfigs() {
-        GLOBAL_CONFIGS.addConfiguration(initProperties(), "");
+//        GLOBAL_CONFIGS.addConfiguration(SiriusConfigUtils.newConfiguration(), "MODIFIED_DEFAULTS");
         return addPropertiesFromResources(PROPERTIES.getString(CONFIGS_LOCATIONS_KEY), DEFAULT_CONFIG_CLASSES_SOURCE, MS_CONFIGS_BASE, "GLOBAL_CONFIG");
     }
 
     public static PropertiesConfiguration loadConfigurationFromStream(@NotNull InputStream input) throws ConfigurationException {
-        PropertiesConfiguration config = initProperties();
+        PropertiesConfiguration config = SiriusConfigUtils.newConfiguration();
         new FileHandler(config).load(input);
 
         /*if (prefixToAdd != null && !prefixToAdd.isEmpty()) {
@@ -153,7 +132,7 @@ public class PropertyManager {
     }
 
     public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream stream, @Nullable String name) throws IOException, ConfigurationException {
-        return addPropertiesFromStream(stream, initProperties(), name);
+        return addPropertiesFromStream(stream, SiriusConfigUtils.newConfiguration(), name);
     }
 
     public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream stream) throws IOException, ConfigurationException {
@@ -176,7 +155,7 @@ public class PropertyManager {
     //this reads and merges read only properties from within jar resources
     public static CombinedConfiguration makePropertiesFromResources(@NotNull final LinkedHashSet<String> resources, @Nullable String prefixToAdd, @Nullable String name) {
         name = (name == null || name.isEmpty()) ? String.join("_", resources) : name;
-        final CombinedConfiguration combined = newCombinedProperties();
+        final CombinedConfiguration combined = SiriusConfigUtils.newCombinedConfiguration();
         List<String> reverse = new ArrayList<>(resources);
         Collections.reverse(reverse);
         for (String resource : reverse) {
@@ -201,7 +180,7 @@ public class PropertyManager {
     }
 
     private static PropertiesConfiguration makePropertiesFromResource(@NotNull final String resource) {
-        final PropertiesConfiguration config = initProperties();
+        final PropertiesConfiguration config = SiriusConfigUtils.newConfiguration();
         try (InputStream input = PropertyManager.class.getResourceAsStream("/" + resource)) {
             if (input != null)
                 new FileHandler(config).load(input);
