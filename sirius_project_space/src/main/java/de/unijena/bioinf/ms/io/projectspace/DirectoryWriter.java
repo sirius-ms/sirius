@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.io.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.ms.FinalConfig;
+import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.ExperimentResult;

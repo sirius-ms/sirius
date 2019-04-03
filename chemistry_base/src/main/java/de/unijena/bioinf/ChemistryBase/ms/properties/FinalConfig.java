@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ChemistryBase.ms;
+package de.unijena.bioinf.ChemistryBase.ms.properties;
 
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 
