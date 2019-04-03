@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
+@Deprecated //currently not used because we do the config stuff on the compound level
 public class ConfigSummaryWriter implements SummaryWriter {
     private final ParameterConfig config;
 

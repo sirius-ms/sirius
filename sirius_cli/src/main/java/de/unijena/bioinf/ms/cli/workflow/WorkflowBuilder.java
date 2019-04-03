@@ -51,8 +51,6 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
 
         CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), customDBOptions, siriusSpec, zodiacSpec, fingeridSpec, canopusOptions);
         rootSpec = forAnnotatedObjectWithSubCommands(this.rootOptions, customDBOptions, configSpec, siriusSpec, zodiacSpec, fingeridSpec, canopusOptions);
-
-
     }
 
 

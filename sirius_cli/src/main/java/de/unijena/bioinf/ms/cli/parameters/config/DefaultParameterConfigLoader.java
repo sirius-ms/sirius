@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class DefaultParameterConfigLoader {
+    public static final String CLI_CONFIG_NAME = "CLI_CONFIG";
     private static final Logger LOG = LoggerFactory.getLogger(DefaultParameterConfigLoader.class);
     private final Map<String, CommandLine.Model.OptionSpec> options;
     private CommandLine.Model.CommandSpec commandSpec = null;
@@ -23,11 +24,11 @@ public class DefaultParameterConfigLoader {
 
 
     public DefaultParameterConfigLoader() throws IOException {
-        this(PropertyManager.DEFAULTS.newIndependendInstance());
+        this(PropertyManager.DEFAULTS);
     }
 
-    public DefaultParameterConfigLoader(ParameterConfig config) throws IOException {
-        this.config = config;
+    public DefaultParameterConfigLoader(ParameterConfig baseConfig) throws IOException {
+        this.config = baseConfig.newIndependentInstance(CLI_CONFIG_NAME);
         options = loadDefaultParameterOptions();
     }
 

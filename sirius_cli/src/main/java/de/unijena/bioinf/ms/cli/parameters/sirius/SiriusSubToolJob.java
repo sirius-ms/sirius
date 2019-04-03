@@ -1,8 +1,8 @@
 package de.unijena.bioinf.ms.cli.parameters.sirius;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.FinalConfig;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
