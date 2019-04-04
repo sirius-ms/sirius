@@ -1,5 +1,6 @@
 import de.unijena.bioinf.ms.cli.parameters.RootOptionsCLI;
 import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import org.apache.commons.configuration2.CombinedConfiguration;
@@ -22,7 +23,7 @@ public class DefaultParameterConfigLoaderTest {
     public void singleValueTest() throws IOException {
         {
             String c = ApplicationCore.CITATION;
-            CombinedConfiguration p = PropertyManager.PROPERTIES;
+            ParameterConfig p = PropertyManager.DEFAULTS;
         }
         final DefaultParameterConfigLoader builder = new DefaultParameterConfigLoader();
         final List<CommandLine.Model.OptionSpec> options = new ArrayList<>(builder.getOptions().values());
@@ -63,12 +64,12 @@ public class DefaultParameterConfigLoaderTest {
 
 
         singleKeys.stream().forEach(key -> {
-            assertEquals(SINGLE_VALUE, PropertyManager.PROPERTIES.getProperty(key));
+            assertEquals(SINGLE_VALUE, PropertyManager.getProperty(key));
         });
         listKeys.stream().forEach(key -> {
             assertEquals(
                     LIST_VALUE.replaceAll("\\s+", ""),
-                    PropertyManager.PROPERTIES.getString(key).replaceAll("\\s+", ""));
+                    PropertyManager.getProperty(key).replaceAll("\\s+", ""));
         });
     }
 

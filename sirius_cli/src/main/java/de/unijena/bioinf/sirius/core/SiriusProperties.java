@@ -1,9 +1,10 @@
 package de.unijena.bioinf.sirius.core;
 
 import de.unijena.bioinf.ms.properties.PersistentProperties;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
-import java.util.Properties;
+import java.io.File;
 
 import static de.unijena.bioinf.ms.properties.PropertyManager.PROPERTY_BASE;
 
@@ -22,6 +23,9 @@ public class SiriusProperties extends PersistentProperties {
         return SIRIUS_PROPERTIES_FILE;
     }
 
+    static void initSiriusPropertyFile(@NotNull File siriusPropsFile, @NotNull PropertiesConfiguration baseConfig) {
+        SIRIUS_PROPERTIES_FILE = new SiriusProperties(siriusPropsFile, baseConfig);
+    }
 
     public static final String DEFAULT_LOAD_DIALOG_PATH = PROPERTY_BASE + ".sirius.paths.load_dialog";
     public static final String DEFAULT_TREE_EXPORT_PATH = PROPERTY_BASE + ".sirius.paths.tree_export";
@@ -29,34 +33,29 @@ public class SiriusProperties extends PersistentProperties {
     public static final String CSV_EXPORT_PATH = PROPERTY_BASE + ".sirius.paths.csv_export";
     public static final String DEFAULT_TREE_FILE_FORMAT = PROPERTY_BASE + ".sirius.paths.tree_file_format";
 
-    public SiriusProperties(Path propertiesFile, Properties defaultProps, String fileheader) {
-        super(propertiesFile, defaultProps, fileheader);
-    }
 
-    static void initSiriusPropertyFile(Path siriusPropsFile, Properties defaultProps) {
-        SIRIUS_PROPERTIES_FILE = new SiriusProperties(siriusPropsFile, defaultProps, USER_PROPERTIES_FILE_HAEDER);
-        SIRIUS_PROPERTIES_FILE.store();
+    public SiriusProperties(@NotNull File propertiesFile, @NotNull PropertiesConfiguration baseConfig) {
+        super(propertiesFile, baseConfig);
     }
 
 
-    public Object setAndStoreDefaultPath(String propertyKey, String path) {
-        final Object re = setDefaultPath(propertyKey, path);
+    public void setAndStoreDefaultPath(String propertyKey, String path) {
+        setDefaultPath(propertyKey, path);
         store();
-        return re;
     }
 
-    public Object setDefaultPath(String propertyKey, String path) {
-        final Object re = put(propertyKey, path);
+
+    public void setDefaultPath(String propertyKey, String path) {
+        setProperty(propertyKey, path);
         setAllStoragePaths(path);
-        return re;
     }
 
 
     private void setAllStoragePaths(String path) {
-        if (getProperty(DEFAULT_LOAD_DIALOG_PATH) == null) put(DEFAULT_LOAD_DIALOG_PATH, path);
-        if (getProperty(DEFAULT_TREE_EXPORT_PATH) == null) put(DEFAULT_TREE_EXPORT_PATH, path);
-        if (getProperty(DEFAULT_SAVE_FILE_PATH) == null) put(DEFAULT_SAVE_FILE_PATH, path);
-        if (getProperty(CSV_EXPORT_PATH) == null) put(CSV_EXPORT_PATH, path);
+        if (getProperty(DEFAULT_LOAD_DIALOG_PATH) == null) setProperty(DEFAULT_LOAD_DIALOG_PATH, path);
+        if (getProperty(DEFAULT_TREE_EXPORT_PATH) == null) setProperty(DEFAULT_TREE_EXPORT_PATH, path);
+        if (getProperty(DEFAULT_SAVE_FILE_PATH) == null) setProperty(DEFAULT_SAVE_FILE_PATH, path);
+        if (getProperty(CSV_EXPORT_PATH) == null) setProperty(CSV_EXPORT_PATH, path);
     }
 
 }

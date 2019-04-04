@@ -36,7 +36,7 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
 
         add(new JXTitledSeparator("ILP solver"));
         Vector<String> items = new Vector<>(Arrays.asList("gurobi,cplex,glpk", "gurobi,glpk", "glpk,gurobi", "gurobi", "cplex", "glpk"));
-        String selected = props.getProperty("de.unijena.bioinf.sirius.treebuilder");
+        String selected = props.getProperty("de.unijena.bioinf.sirius.treebuilder.solvers");
         if (!items.contains(selected))
             items.add(selected);
         solver = new JComboBox<>(items);
@@ -55,7 +55,7 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
 
     @Override
     public void saveProperties() {
-        props.setProperty("de.unijena.bioinf.sirius.treebuilder", (String) solver.getSelectedItem());
+        props.setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", (String) solver.getSelectedItem());
         props.setProperty("de.unijena.bioinf.sirius.treebuilder.timeout", treeTimeout.getNumber().toString());
         final Path dir = Paths.get(db.getFilePath());
         if (Files.isDirectory(dir)) {

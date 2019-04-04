@@ -9,7 +9,9 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,12 +51,12 @@ public abstract class ApplicationCore {
             System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties"
             );
 
-            final String version = PropertyManager.PROPERTIES.getString("de.unijena.bioinf.sirius.version");
-            final String build = PropertyManager.PROPERTIES.getString("de.unijena.bioinf.sirius.build");
+            final String version = PropertyManager.getProperty("de.unijena.bioinf.sirius.version");
+            final String build = PropertyManager.getProperty("de.unijena.bioinf.sirius.build");
 
             //#################### start init workspace ################################
             final String home = System.getProperty("user.home");
-            final String defaultFolderName = PropertyManager.PROPERTIES.getString("de.unijena.bioinf.sirius.ws.default.name", ".sirius");
+            final String defaultFolderName = PropertyManager.getProperty("de.unijena.bioinf.sirius.ws.default.name", null, ".sirius");
             final Path DEFAULT_WORKSPACE = Paths.get(home).resolve(defaultFolderName);
             final Map<String, String> env = System.getenv();
             final String ws = env.get("SIRIUS_WORKSPACE");
@@ -203,29 +205,29 @@ public abstract class ApplicationCore {
             DEFAULT_LOGGER.info("Sirius Workspace Successfull initialized at: " + WORKSPACE.toAbsolutePath().toString());
 
 
-            PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.versionString", (version != null && build != null) ? "SIRIUS " + version + " (build " + build + ")" : "SIRIUS <Version Unknown>");
+            PropertyManager.setProperty("de.unijena.bioinf.sirius.versionString", (version != null && build != null) ? "SIRIUS " + version + " (build " + build + ")" : "SIRIUS <Version Unknown>");
             DEFAULT_LOGGER.info("You run " + VERSION_STRING());
 
-            String prop = PropertyManager.PROPERTIES.getString("de.unijena.bioinf.sirius.cite");
+            String prop = PropertyManager.getProperty("de.unijena.bioinf.sirius.cite");
             CITATION = prop != null ? prop : "";
-            prop = PropertyManager.PROPERTIES.getString("de.unijena.bioinf.sirius.cite-bib");
+            prop = PropertyManager.getProperty("de.unijena.bioinf.sirius.cite-bib");
             CITATION_BIBTEX = prop != null ? prop : "";
 
             DEFAULT_LOGGER.debug("build properties initialized!");
 
             //init application properties
             //todo use apache property configuration to keep layout and comments
-            Properties defaultProps = new Properties();
+
             try (InputStream stream = ApplicationCore.class.getResourceAsStream("/sirius.properties")) {
-                defaultProps.load(stream);
-                defaultProps.put("de.unijena.bioinf.sirius.fingerID.cache", WORKSPACE.resolve("csi_fingerid_cache").toString());
+                final PropertiesConfiguration defaultProps = SiriusConfigUtils.makeConfigFromStream(stream);
+                defaultProps.setProperty("de.unijena.bioinf.sirius.fingerID.cache", WORKSPACE.resolve("csi_fingerid_cache").toString());
+                SiriusProperties.initSiriusPropertyFile(siriusPropsFile.toFile(), defaultProps);
             } catch (IOException e) {
                 DEFAULT_LOGGER.error("Could NOT create sirius properties file", e);
             }
 
 
-            SiriusProperties.initSiriusPropertyFile(siriusPropsFile, defaultProps);
-            PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.workspace", WORKSPACE.toAbsolutePath().toString());
+            PropertyManager.setProperty("de.unijena.bioinf.sirius.workspace", WORKSPACE.toAbsolutePath().toString());
             DEFAULT_LOGGER.debug("application properties initialized!");
 
 
@@ -235,8 +237,8 @@ public abstract class ApplicationCore {
 
             HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
             int cores = hardware.getProcessor().getPhysicalProcessorCount();
-            PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(cores));
-            PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(hardware.getProcessor().getLogicalProcessorCount()));
+            PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(cores));
+            PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(hardware.getProcessor().getLogicalProcessorCount()));
             DEFAULT_LOGGER.info("CPU check done. " + PropertyManager.getNumberOfCores() + " cores that handle " + PropertyManager.getNumberOfThreads() + " threads were found.");
 
             //bug reporting
@@ -258,7 +260,7 @@ public abstract class ApplicationCore {
         } catch (Throwable e) {
             System.err.println("Application Core STATIC Block Error!");
             e.printStackTrace(System.err);
-            throw e;
+            throw new RuntimeException(e);
         }
     }
 
@@ -274,7 +276,7 @@ public abstract class ApplicationCore {
     }
 
     public static String VERSION_STRING(){
-        return PropertyManager.PROPERTIES.getString("de.unijena.bioinf.sirius.versionString");
+        return PropertyManager.getProperty("de.unijena.bioinf.sirius.versionString");
     }
 
     public static void cite() {

@@ -3,12 +3,9 @@ package de.unijena.bioinf.ms.cli.parameters.fingerid;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
-import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
 import de.unijena.bioinf.ms.cli.parameters.Provide;
 import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.cli.utils.FormatedTableBuilder;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -38,7 +35,7 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
     @Option(names = {"--info", "--webservice-info", "-W"}, description = "information about connection of CSI:FingerID Webservice")
     public boolean fingeridInfo;
 
-    @Option(names = {"--fingerid-db", "--fingerid_db", "--fingeriddb"}, description = "search structure in given database. By default the same database for molecular formula search is also used for structure search. If no database is used for molecular formula search, PubChem is used for structure search. Accepts also a filepath to a valid database directory.")
+    @Option(names = {"-d", "--db ", "--fingerid-db", "--fingerid_db", "--fingeriddb"}, description = "search structure in given database. By default the same database for molecular formula search is also used for structure search. If no database is used for molecular formula search, PubChem is used for structure search.")/*Accepts also a filepath to a valid database directory.*/
     public String fingerIdDb;
 
 

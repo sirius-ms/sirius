@@ -104,7 +104,7 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
         defaultConfigOptions.changeOption("FormulaSettings.enforced", elements);
     }
 
-    @Option(names = "-d", description = "Search formulas in given database: all, pubchem, bio, kegg, hmdb")
+    @Option(names = {"-d", "--db"}, description = "Search formulas in given database: all, pubchem, bio, kegg, hmdb")
     public String database;
 
     @Option(names = {"-f", "--formula", "--formulas"}, description = "Specify the neutral molecular formula of the measured compound to compute its tree or a list of candidate formulas the method should discriminate. Omit this option if you want to consider all possible molecular formulas")
