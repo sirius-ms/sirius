@@ -68,14 +68,18 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
     @Override
     public Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
+        return parse(reader, source, PropertyManager.DEFAULTS);
+    }
+
+    public Ms2Experiment parse(BufferedReader reader, URL source, ParameterConfig config) throws IOException {
         ParserInstance p = null;
         try {
             if (reader == lastReader) {
-                p = new ParserInstance(source, reader);
+                p = new ParserInstance(source, reader, config);
                 p.newCompound(lastCompundName);
                 return p.parse();
             } else {
-                p = new ParserInstance(source, reader);
+                p = new ParserInstance(source, reader, config);
                 return p.parse();
             }
         } finally {
@@ -92,13 +96,15 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
     private static class ParserInstance {
 
-        private ParserInstance(URL source, BufferedReader reader) {
+        private ParserInstance(URL source, BufferedReader reader, ParameterConfig baseConfig) {
             this.source = new MsFileSource(source);
             this.reader = reader;
             lineNumber = 0;
             this.currentSpectrum = new SimpleMutableSpectrum();
+            this.baseConfig = baseConfig;
         }
 
+        private final ParameterConfig baseConfig;
         private ParameterConfig config;
 
         private final MsFileSource source;
@@ -149,7 +155,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 //            treeTimeout = 0d;
 //            compoundTimeout = 0d;
 //            ppmMax = ppmMaxMs2 = noiseMs2 = 0d;
-            config = PropertyManager.DEFAULTS.newIndependentInstance("MS_FILE_" + name);
+            config = baseConfig.newIndependentInstance("MS_FILE:" + name);
         }
 
         private MutableMs2Experiment parse() throws IOException {
