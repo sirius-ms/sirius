@@ -70,11 +70,11 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     private void setup() {
         // check for system variables -> we do not want defaults because it is secret
         if (host == null)
-            this.host = PropertyManager.getStringProperty("de.unijena.bioinf.fingerid.chemical_db.host");
+            this.host = PropertyManager.getProperty("de.unijena.bioinf.fingerid.chemical_db.host");
         if (username == null)
-            this.username = PropertyManager.getStringProperty("de.unijena.bioinf.fingerid.chemical_db.username");
+            this.username = PropertyManager.getProperty("de.unijena.bioinf.fingerid.chemical_db.username");
         if (password == null)
-            this.password = PropertyManager.getStringProperty("de.unijena.bioinf.fingerid.chemical_db.password");
+            this.password = PropertyManager.getProperty("de.unijena.bioinf.fingerid.chemical_db.password");
     }
 
     /**
