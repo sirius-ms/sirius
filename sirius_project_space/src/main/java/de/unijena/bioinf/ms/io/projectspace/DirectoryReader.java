@@ -113,8 +113,8 @@ public class DirectoryReader implements ProjectReader {
         // read spectrum
         final Ms2Experiment input;
         if (names.contains(SiriusLocations.SIRIUS_SPECTRA.fileName())) {
-            input = parseSpectrum();
-            parseAndAnnotateConfig(input);
+            input = parseSpectrum(expDir);
+
         } else
             throw new IOException("Invalid Experiment directory. No spectrum.ms found! Your workspace seems to be corrupted.");
 
@@ -138,31 +138,38 @@ public class DirectoryReader implements ProjectReader {
         return expResult;
     }
 
-    private void parseAndAnnotateConfig(Ms2Experiment experiment) {
+    private ProjectSpaceConfig parseConfig(@NotNull final String name) {
         ParameterConfig config = null;
 
         try {
             config = PropertyManager.DEFAULTS.newIndependentInstance(
                     env.openFile(SiriusLocations.SIRIUS_COMPOUND_CONFIG.fileName()),
-                    "PROJECT_SPACE_" + experiment.getName()
+                    "PROJECT_SPACE:" + name
             );
         } catch (ConfigurationException | IOException e) {
-            LOG.warn("Could not parse CONFIG for Experiment: " + experiment.getName() + ".", e);
+            LOG.warn("Could not parse CONFIG for Experiment: " + name + ".", e);
         }
 
 
         if (config != null && !config.getModifiedConfigs().isEmpty())
-            experiment.setAnnotation(ProjectSpaceConfig.class, new ProjectSpaceConfig(config));
+            return new ProjectSpaceConfig(config);
+        return null;
+
     }
 
-    private Ms2Experiment parseSpectrum() throws IOException {
-        return env.read(SiriusLocations.SIRIUS_SPECTRA.fileName(), r ->
-                new JenaMsParser().parse(new BufferedReader(r), env.currentAbsolutePath(SiriusLocations.SIRIUS_SPECTRA.fileName()))
+    private Ms2Experiment parseSpectrum(@NotNull final ExperimentDirectory expDir) throws IOException {
+        final ProjectSpaceConfig psConfig = parseConfig(expDir.getDirectoryName());
+        final ParameterConfig baseConfig = psConfig != null ? psConfig.config : PropertyManager.DEFAULTS;
+
+        final Ms2Experiment exp = env.read(SiriusLocations.SIRIUS_SPECTRA.fileName(), r ->
+                new JenaMsParser().parse(new BufferedReader(r), env.currentAbsolutePath(SiriusLocations.SIRIUS_SPECTRA.fileName()), baseConfig)
         );
 
+        if (psConfig != null)
+            exp.setAnnotation(ProjectSpaceConfig.class, psConfig);
+        return exp;
     }
 
-    @NotNull
     private void parseAndAddIndex(@NotNull final ExperimentDirectory expDir) throws IOException {
         try {
             env.enterDirectory(expDir.getDirectoryName());
@@ -179,7 +186,7 @@ public class DirectoryReader implements ProjectReader {
             if (index == null) {
                 expDir.setRewrite(true);
 
-                final Ms2Experiment input = parseSpectrum();
+                final Ms2Experiment input = parseSpectrum(expDir);
                 final String si = input.getAnnotation(AdditionalFields.class, AdditionalFields::new).get("index");
                 if (si != null) index = Integer.valueOf(si);
 
