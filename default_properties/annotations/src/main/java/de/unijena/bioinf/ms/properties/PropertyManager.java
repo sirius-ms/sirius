@@ -32,11 +32,6 @@ public class PropertyManager {
     public static final String MS_PROPERTY_BASE = PROPERTY_BASE + ".ms";
     private static final String PROPERTY_LOCATIONS_KEY = MS_PROPERTY_BASE + ".propertyLocations";
 
-    public static final CombinedConfiguration PROPERTIES;
-
-//    private static final CombinedConfiguration GLOBAL_CONFIGS;
-//    private static final CombinedConfiguration CONFIG_CLASSES;
-
     public static final String DEFAULT_PROPERTY_SOURCE = "sirius.build.properties";
     public static final String DEFAULT_CONFIG_SOURCE = "default.config";
     public static final String DEFAULT_CONFIG_CLASSES_SOURCE = "default_config_class.map";
@@ -47,15 +42,19 @@ public class PropertyManager {
     public static final String CONFIGS_LOCATIONS_KEY = PropertyManager.MS_PROPERTY_BASE + ".configLocations";
     public static final String CONFIG_CLASSES_LOCATIONS_KEY = PropertyManager.MS_PROPERTY_BASE + ".configClassesLocations";
 
+    protected static final CombinedConfiguration PERSISTENT_PROPERTIES;
+    protected static final CombinedConfiguration PROPERTIES;
     public static final ParameterConfig DEFAULTS;
 
 
     static {
         try {
+            PERSISTENT_PROPERTIES = SiriusConfigUtils.newCombinedConfiguration();
 
             PROPERTIES = SiriusConfigUtils.newCombinedConfiguration();
+            PROPERTIES.addConfiguration(PERSISTENT_PROPERTIES, "PERSISTENT_PROPERTIES");
+            PERSISTENT_PROPERTIES.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
             loadDefaultProperties();
-
 
             DEFAULTS = new ParameterConfig(
                     loadDefaultConfigs(),//config class for configs
@@ -74,13 +73,14 @@ public class PropertyManager {
         }
     }
 
+
     public static ImmutableConfiguration getConfigClassProperties() {
         return DEFAULTS.getClassConfigs();
     }
 
     public static String getConfigClassStringProperty(String key) {
         if (key.startsWith(MS_CONFIG_CLASSES_BASE))
-            return getStringProperty(key);
+            return getProperty(key);
         else
             return getConfigClassProperties().getString(key);
     }
@@ -91,7 +91,7 @@ public class PropertyManager {
 
     public static String getDefaultConfigStringProperty(String key) {
         if (key.startsWith(MS_CONFIGS_BASE))
-            return getStringProperty(key);
+            return getProperty(key);
         else
             return getDefaultConfigProperties().getString(key);
     }
@@ -112,13 +112,13 @@ public class PropertyManager {
     public static PropertiesConfiguration loadConfigurationFromStream(@NotNull InputStream input) throws ConfigurationException {
         PropertiesConfiguration config = SiriusConfigUtils.newConfiguration();
         new FileHandler(config).load(input);
-
-        /*if (prefixToAdd != null && !prefixToAdd.isEmpty()) {
-            final PropertiesConfiguration tmp = initProperties();
-            ((SubsetConfiguration) tmp.subset(prefixToAdd)).append(config);
-            config = tmp;
-        }*/
         return config;
+    }
+
+    public static PropertiesConfiguration loadPersistentPropertiesFile(@NotNull File file) throws ConfigurationException {
+        @NotNull PropertiesConfiguration fileConfig = SiriusConfigUtils.newConfiguration(file);
+        PERSISTENT_PROPERTIES.addConfiguration(fileConfig, file.getAbsolutePath());
+        return fileConfig;
     }
 
     public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream input, @Nullable String name, @Nullable String prefixToAdd) throws ConfigurationException {
@@ -161,6 +161,7 @@ public class PropertyManager {
             throw new IllegalArgumentException("resources to add are empty!");
         CombinedConfiguration configToAdd = SiriusConfigUtils.makeConfigFromResources(resources, prefixToAdd, name);
         PROPERTIES.addConfiguration(configToAdd, name, prefixToAdd);
+        configToAdd.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
         return configToAdd;
     }
 
@@ -178,25 +179,14 @@ public class PropertyManager {
         properties.forEach((k, v) -> setProperty(String.valueOf(k), v));
     }
 
-    public static int getNumberOfCores() {
-        return PROPERTIES.getInt("de.unijena.bioinf.sirius.cpu.cores", 1);
+    public static String getProperty(@NotNull String key, @Nullable String backupKey, @Nullable String defaultValue) {
+        if (backupKey != null)
+            return PROPERTIES.getString(key, PROPERTIES.getString(backupKey, defaultValue));
+        return PROPERTIES.getString(key, defaultValue);
     }
 
-    public static int getNumberOfThreads() {
-        return PROPERTIES.getInt("de.unijena.bioinf.sirius.cpu.threads", 2);
-    }
-
-    public static String getStringProperty(String key) {
+    public static String getProperty(String key) {
         return PROPERTIES.getString(key);
-    }
-
-    public static String getStringProperty(String key, String backupKey, String defaultValue) {
-        return PROPERTIES.getString(key, PROPERTIES.getString(backupKey, defaultValue));
-    }
-
-
-    public static String getStringProperty(String key, String backupKey) {
-        return getStringProperty(key, backupKey, null);
     }
 
     public static Path getPath(String key) {
@@ -207,6 +197,14 @@ public class PropertyManager {
     public static File getFile(String key) {
         String v = PROPERTIES.getString(key);
         return (v == null) ? null : new File(v);
+    }
+
+    public static int getNumberOfCores() {
+        return PROPERTIES.getInt("de.unijena.bioinf.sirius.cpu.cores", 1);
+    }
+
+    public static int getNumberOfThreads() {
+        return PROPERTIES.getInt("de.unijena.bioinf.sirius.cpu.threads", 2);
     }
 
     public static Iterator<String> getPropertyKeys() {
