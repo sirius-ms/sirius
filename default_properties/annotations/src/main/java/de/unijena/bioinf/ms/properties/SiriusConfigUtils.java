@@ -1,9 +1,9 @@
 package de.unijena.bioinf.ms.properties;
 
 import org.apache.commons.configuration2.CombinedConfiguration;
+import org.apache.commons.configuration2.FileBasedConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
-import org.apache.commons.configuration2.builder.combined.CombinedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.builder.fluent.PropertiesBuilderParameters;
 import org.apache.commons.configuration2.convert.DisabledListDelimiterHandler;
@@ -13,9 +13,9 @@ import org.apache.commons.configuration2.tree.OverrideCombiner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -31,16 +31,16 @@ public class SiriusConfigUtils {
         return newConfiguration(null);
     }
 
-    public static @NotNull PropertiesConfiguration newConfiguration(@Nullable Path file) {
+    public static @NotNull PropertiesConfiguration newConfiguration(@Nullable File file) {
         try {
             PropertiesBuilderParameters props = new Parameters().properties()
                     .setThrowExceptionOnMissing(false)
                     .setListDelimiterHandler(new DisabledListDelimiterHandler())
                     .setIncludesAllowed(true);
             if (file != null)
-                props.setFile(file.toFile());
+                props.setFile(file);
 
-            return new FileBasedConfigurationBuilder<>(PropertiesConfiguration.class).configure(props).getConfiguration();
+            return (PropertiesConfiguration) new FileBasedConfigurationBuilder<FileBasedConfiguration>(PropertiesConfiguration.class).configure(props).getConfiguration();
         } catch (ConfigurationException e) {
             System.err.println("WARNING: Error during PropertiesConfiguration initialization");
             e.printStackTrace();
