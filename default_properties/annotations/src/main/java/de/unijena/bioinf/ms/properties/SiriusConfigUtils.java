@@ -22,20 +22,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public class SiriusConfigUtils {
-    public static CombinedConfiguration newCombinedConfiguration() {
-        try {
-            CombinedConfiguration c = new CombinedConfigurationBuilder()
-                    .configure(new Parameters().combined()
-                            .setThrowExceptionOnMissing(false)
-                            .setListDelimiterHandler(new DisabledListDelimiterHandler()))
-                    .getConfiguration();
-            c.setNodeCombiner(new OverrideCombiner());
-            return c;
 
-        } catch (ConfigurationException e) {
-            System.err.println("WARNING: Error during initProperties");
-            return new CombinedConfiguration();
-        }
+    public static CombinedConfiguration newCombinedConfiguration() {
+        return new CombinedConfiguration(new OverrideCombiner());
     }
 
     public static PropertiesConfiguration newConfiguration() {
@@ -53,7 +42,8 @@ public class SiriusConfigUtils {
 
             return new FileBasedConfigurationBuilder<>(PropertiesConfiguration.class).configure(props).getConfiguration();
         } catch (ConfigurationException e) {
-            System.err.println("WARNING: Error during initProperties");
+            System.err.println("WARNING: Error during PropertiesConfiguration initialization");
+            e.printStackTrace();
             return new PropertiesConfiguration();
         }
     }
