@@ -21,7 +21,7 @@ public class ILPSettings extends TwoCloumnPanel implements SettingsPanel {
         this.props = properties;
 
         Vector<String> items = new Vector<>(Arrays.asList("gurobi,cplex,glpk", "gurobi,glpk", "glpk,gurobi", "gurobi", "cplex", "glpk"));
-        String selected = props.getProperty("de.unijena.bioinf.sirius.treebuilder");
+        String selected = props.getProperty("de.unijena.bioinf.sirius.treebuilder.solvers");
         if (!items.contains(selected))
             items.add(selected);
         solver = new JComboBox<>(items);
@@ -46,7 +46,7 @@ public class ILPSettings extends TwoCloumnPanel implements SettingsPanel {
 
     @Override
     public void saveProperties() {
-        props.setProperty("de.unijena.bioinf.sirius.treebuilder", (String) solver.getSelectedItem());
+        props.setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", (String) solver.getSelectedItem());
         props.setProperty("de.unijena.bioinf.sirius.gurobi.home", gurobi.getFilePath());
         props.setProperty("de.unijena.bioinf.sirius.cplex.home", cplex.getFilePath());
     }

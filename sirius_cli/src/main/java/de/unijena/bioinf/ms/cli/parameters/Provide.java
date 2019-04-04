@@ -14,7 +14,7 @@ public class Provide {
         public String defaultValue(CommandLine.Model.ArgSpec argSpec) {
             final String l = argSpec.paramLabel(); //this should be the field name per default
             if (l == null || l.isEmpty()) return null;
-            return PropertyManager.PROPERTIES.getString(PROPERTY_BASE + "." + l);
+            return PropertyManager.getProperty(PROPERTY_BASE + "." + l);
         }
     }
 
