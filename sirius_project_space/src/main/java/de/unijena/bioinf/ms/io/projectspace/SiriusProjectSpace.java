@@ -120,7 +120,7 @@ public class SiriusProjectSpace implements ProjectSpace {
 
         this.filenameFormatter = filenameFormatter != null ? filenameFormatter : readFormatter(rootPath);
 
-        addVersionInfo("sirius", PropertyManager.PROPERTIES.getString("de.unijena.bioinf.sirius.versionString", "Unknown"));
+        addVersionInfo("sirius", PropertyManager.getProperty("de.unijena.bioinf.sirius.versionString", null, "Unknown"));
         registerSummaryWriter(Arrays.stream(metaDataSerializers)
                 .filter(v -> v instanceof SummaryWriter).map(v -> (SummaryWriter) v).collect(Collectors.toList()));
 
@@ -280,7 +280,7 @@ public class SiriusProjectSpace implements ProjectSpace {
 
 
         sums.add((experiments, writer) -> {
-            final String v = PropertyManager.getStringProperty("de.unijena.bioinf.sirius.cite");
+            final String v = PropertyManager.getProperty("de.unijena.bioinf.sirius.cite");
             if (v != null) {
                 try {
                     writer.write(SiriusLocations.SIRIUS_CITATION_FILE.fileName(), w -> w.write(v));
