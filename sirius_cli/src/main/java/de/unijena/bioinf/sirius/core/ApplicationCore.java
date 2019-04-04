@@ -158,8 +158,7 @@ public abstract class ApplicationCore {
                     logProps.put("de.unijena.bioinf.sirius.core.errorReport.ErrorReportHandler.level", "CONFIG");
                     logProps.put("de.unijena.bioinf.sirius.core.errorReport.ErrorReportHandler.formatter", "java.util.logging.SimpleFormatter");
                 } catch (ClassNotFoundException ignore) {
-                    System.err.println("Skipping error report logger in CLI");
-                    //                DEFAULT_LOGGER.debug("Skipping Error report logger",ignore);
+                    //System.err.println("Skipping error report logger in CLI");
                     //this is just to skip the error report logger if it is no available (e.g. CLI)
                 }
 
