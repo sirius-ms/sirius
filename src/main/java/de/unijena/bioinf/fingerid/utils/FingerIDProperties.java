@@ -19,23 +19,23 @@ public class FingerIDProperties {
 
 
     public static String fingeridVersion() {
-        return PropertyManager.getStringProperty("de.unijena.bioinf.fingerid.version");
+        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.version");
     }
 
     public static String fingeridWebHost() {
-        return PropertyManager.getStringProperty("de.unijena.bioinf.fingerid.web.host");
+        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host");
     }
 
     public static String fingeridWebPort() {
-        return PropertyManager.getStringProperty("de.unijena.bioinf.fingerid.web.port");
+        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.port");
     }
 
     public static String databaseDate() {
-        return PropertyManager.getStringProperty("de.unijena.bioinf.fingerid.db.date");
+        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.date");
     }
 
     public static String siriusVersion() {
-        return PropertyManager.getStringProperty("de.unijena.bioinf.sirius.version");
+        return PropertyManager.getProperty("de.unijena.bioinf.sirius.version");
     }
 
     public static String sirius_guiVersion() {
