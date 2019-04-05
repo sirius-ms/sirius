@@ -16,10 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 public class SiriusConfigUtils {
 
@@ -48,17 +45,35 @@ public class SiriusConfigUtils {
         }
     }
 
+
+    public static LinkedHashSet<String> parseResourcesLocation(@Nullable final String locations) {
+        return parseResourcesLocation(locations, null);
+    }
+
+    public static LinkedHashSet<String> parseResourcesLocation(@Nullable final String locations, @Nullable final String defaultLocation) {
+        LinkedHashSet<String> resources = new LinkedHashSet<>();
+        if (defaultLocation != null && !defaultLocation.isEmpty())
+            resources.add(defaultLocation);
+
+        if (locations != null && !locations.isEmpty())
+            resources.addAll(Arrays.asList(locations.trim().split("\\s*,\\s*")));
+
+        return resources;
+    }
+
     //this reads and merges read only properties from within jar resources
-    public static CombinedConfiguration makeConfigFromResources(@NotNull final LinkedHashSet<String> resources, @Nullable String prefixToAdd, @Nullable String name) {
-        name = (name == null || name.isEmpty()) ? String.join("_", resources) : name;
-        final CombinedConfiguration combined = SiriusConfigUtils.newCombinedConfiguration();
+    public static CombinedConfiguration makeConfigFromResources(@NotNull final LinkedHashSet<String> resources) {
+        return makeConfigFromResources(SiriusConfigUtils.newCombinedConfiguration(), resources);
+    }
+
+    public static CombinedConfiguration makeConfigFromResources(@NotNull CombinedConfiguration configToAddTo, @NotNull final LinkedHashSet<String> resources) {
         List<String> reverse = new ArrayList<>(resources);
         Collections.reverse(reverse);
         for (String resource : reverse) {
-            combined.addConfiguration(makeConfigFromStream(resource), resource);
+            configToAddTo.addConfiguration(makeConfigFromStream(resource), resource);
         }
 
-        return combined;
+        return configToAddTo;
     }
 
     public static PropertiesConfiguration makeConfigFromStream(@NotNull final String resource) {
