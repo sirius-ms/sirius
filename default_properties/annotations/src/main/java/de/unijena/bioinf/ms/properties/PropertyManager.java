@@ -7,6 +7,7 @@ package de.unijena.bioinf.ms.properties;
 
 
 import org.apache.commons.configuration2.CombinedConfiguration;
+import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.ImmutableConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
@@ -19,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Properties;
@@ -43,6 +43,7 @@ public class PropertyManager {
     public static final String CONFIG_CLASSES_LOCATIONS_KEY = PropertyManager.MS_PROPERTY_BASE + ".configClassesLocations";
 
     protected static final CombinedConfiguration PERSISTENT_PROPERTIES;
+    protected static final PropertiesConfiguration CHANGED_PROPERTIES;
     protected static final CombinedConfiguration PROPERTIES;
     public static final ParameterConfig DEFAULTS;
 
@@ -54,7 +55,7 @@ public class PropertyManager {
             PROPERTIES = SiriusConfigUtils.newCombinedConfiguration();
             PROPERTIES.addConfiguration(PERSISTENT_PROPERTIES, "PERSISTENT_PROPERTIES");
             PERSISTENT_PROPERTIES.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
-            loadDefaultProperties();
+            CHANGED_PROPERTIES = loadDefaultProperties();
 
             DEFAULTS = new ParameterConfig(
                     loadDefaultConfigs(),//config class for configs
@@ -63,7 +64,7 @@ public class PropertyManager {
                     null,
                     MS_CONFIGS_BASE,
                     MS_CONFIG_CLASSES_BASE
-            ).newIndependentInstance("CHANGED_DEFAULTS");
+            ).newIndependentInstance("CHANGED_DEFAULT_CONFIGS");
 
 
         } catch (Throwable e) {
@@ -96,8 +97,13 @@ public class PropertyManager {
             return getDefaultConfigProperties().getString(key);
     }
 
-    private static CombinedConfiguration loadDefaultProperties() {
-        return addPropertiesFromResources(System.getProperties().getProperty(PROPERTY_LOCATIONS_KEY), DEFAULT_PROPERTY_SOURCE, null, "PROPERTIES");
+    private static PropertiesConfiguration loadDefaultProperties() {
+        CombinedConfiguration configToAdd = SiriusConfigUtils.newCombinedConfiguration();
+        PropertiesConfiguration changeable = SiriusConfigUtils.newConfiguration();
+        configToAdd.addConfiguration(changeable, "CHANGED_DEFAULT_PROPERTIES");
+        SiriusConfigUtils.makeConfigFromResources(configToAdd, SiriusConfigUtils.parseResourcesLocation(System.getProperties().getProperty(PROPERTY_LOCATIONS_KEY), DEFAULT_PROPERTY_SOURCE));
+        addConfiguration(configToAdd, null, "PROPERTIES");
+        return changeable;
     }
 
     private static CombinedConfiguration loadDefaultConfigClasses() {
@@ -105,7 +111,6 @@ public class PropertyManager {
     }
 
     private static CombinedConfiguration loadDefaultConfigs() {
-//        GLOBAL_CONFIGS.addConfiguration(SiriusConfigUtils.newConfiguration(), "MODIFIED_DEFAULTS");
         return addPropertiesFromResources(PROPERTIES.getString(CONFIGS_LOCATIONS_KEY), DEFAULT_CONFIG_SOURCE, MS_CONFIGS_BASE, "GLOBAL_CONFIG");
     }
 
@@ -145,24 +150,32 @@ public class PropertyManager {
 
     //this reads and merges read only properties from within jar resources
     public static CombinedConfiguration addPropertiesFromResources(@Nullable final String locations, @Nullable final String defaultLocation, @Nullable final String prefixToAdd, @Nullable String name) {
-        LinkedHashSet<String> resources = new LinkedHashSet<>();
-        if (defaultLocation != null && !defaultLocation.isEmpty())
-            resources.add(defaultLocation);
-
-        if (locations != null && !locations.isEmpty())
-            resources.addAll(Arrays.asList(locations.trim().split("\\s*,\\s*")));
-
-        return addPropertiesFromResources(resources, prefixToAdd, name);
+        return addPropertiesFromResources(SiriusConfigUtils.parseResourcesLocation(locations, defaultLocation), prefixToAdd, name);
     }
 
 
     public static CombinedConfiguration addPropertiesFromResources(@NotNull final LinkedHashSet<String> resources, @Nullable String prefixToAdd, @Nullable String name) {
         if (resources.isEmpty())
             throw new IllegalArgumentException("resources to add are empty!");
-        CombinedConfiguration configToAdd = SiriusConfigUtils.makeConfigFromResources(resources, prefixToAdd, name);
+
+        name = (name == null || name.isEmpty()) ? String.join("_", resources) : name;
+
+
+        return addConfiguration(
+                SiriusConfigUtils.makeConfigFromResources(resources),
+                prefixToAdd, name
+        );
+    }
+
+    public static <C extends Configuration> C addConfiguration(@NotNull final C configToAdd, @Nullable String prefixToAdd, @NotNull String name) {
         PROPERTIES.addConfiguration(configToAdd, name, prefixToAdd);
-        configToAdd.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
+        if (configToAdd instanceof CombinedConfiguration)
+            listenCombinedConfiguration((CombinedConfiguration) configToAdd, prefixToAdd, name);
         return configToAdd;
+    }
+
+    private static void listenCombinedConfiguration(@NotNull final CombinedConfiguration configToAdd, @Nullable String prefixToAdd, @NotNull String name) {
+        configToAdd.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
     }
 
     public static PropertiesConfiguration addPropertiesFromResource(@NotNull final String resource, @Nullable String prefixToAdd, @Nullable String name) {
@@ -172,7 +185,8 @@ public class PropertyManager {
     }
 
     public static void setProperty(String key, Object value) {
-        PROPERTIES.setProperty(key, value);
+        //todo do we want to change persintent props automatically?
+        CHANGED_PROPERTIES.setProperty(key, value);
     }
 
     public static void setProperties(Properties properties) {
