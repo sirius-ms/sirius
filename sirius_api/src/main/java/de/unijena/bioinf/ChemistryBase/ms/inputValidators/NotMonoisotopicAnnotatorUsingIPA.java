@@ -48,7 +48,7 @@ public class NotMonoisotopicAnnotatorUsingIPA implements QualityAnnotator {
      * @param dataset
      */
     @Override
-    public void annotate(Ms2Dataset dataset) {
+    public void annotate(Ms2Run dataset) {
         if (sirius == null)
             sirius = new Sirius();
 

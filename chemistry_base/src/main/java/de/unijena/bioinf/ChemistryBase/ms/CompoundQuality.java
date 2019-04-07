@@ -109,11 +109,11 @@ public class CompoundQuality implements Ms2ExperimentAnnotation {
         return Collections.unmodifiableList(quality.getProperties());
     }
 
-    public static SpectrumProperty[] getUsedProperties(Ms2Dataset dataset){
+    public static SpectrumProperty[] getUsedProperties(Ms2Run dataset){
         return getUsedProperties(dataset.getExperiments());
     }
 
-    public static SpectrumProperty[] getUsedProperties(List<Ms2Experiment> experiments){
+    public static SpectrumProperty[] getUsedProperties(Iterable<Ms2Experiment> experiments){
         Set<SpectrumProperty> properties = new HashSet<>();
         for (Ms2Experiment experiment : experiments) {
             properties.addAll(CompoundQuality.getProperties(experiment));
