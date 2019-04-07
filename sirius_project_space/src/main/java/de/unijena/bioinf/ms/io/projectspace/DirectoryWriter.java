@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.io.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.ExperimentResult;
@@ -156,7 +157,7 @@ public class DirectoryWriter implements ProjectWriter {
         // ms file
         if (isAllowed(OutputOptions.INPUT)) {
             writeMsFile(result);
-//            writeConfigFile(result);
+            writeConfigFile(result);
         }
 
         // write index file
@@ -203,14 +204,15 @@ public class DirectoryWriter implements ProjectWriter {
         }
     }
 
-    /*private void writeConfigFile(ExperimentResult er) throws IOException {
+
+    private void writeConfigFile(ExperimentResult er) throws IOException {
         final Ms2Experiment experiment = er.getExperiment();
         if (experiment != null) {
             if (experiment.hasAnnotation(FinalConfig.class)) {
-                write(SiriusLocations.SIRIUS_CONFIG.fileName(), experiment.getAnnotation(FinalConfig.class).config::write);
+                write(SiriusLocations.SIRIUS_COMPOUND_CONFIG.fileName(), experiment.getAnnotation(FinalConfig.class).config::write);
             }
         }
-    }*/
+    }
 
     private String errorCode(ExperimentResult experiment) {
         if (!experiment.hasError()) return "DONE";

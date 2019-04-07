@@ -68,14 +68,18 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
     @Override
     public Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
+        return parse(reader, source, PropertyManager.DEFAULTS);
+    }
+
+    public Ms2Experiment parse(BufferedReader reader, URL source, ParameterConfig config) throws IOException {
         ParserInstance p = null;
         try {
             if (reader == lastReader) {
-                p = new ParserInstance(source, reader);
+                p = new ParserInstance(source, reader, config);
                 p.newCompound(lastCompundName);
                 return p.parse();
             } else {
-                p = new ParserInstance(source, reader);
+                p = new ParserInstance(source, reader, config);
                 return p.parse();
             }
         } finally {
@@ -92,13 +96,15 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
     private static class ParserInstance {
 
-        private ParserInstance(URL source, BufferedReader reader) {
+        private ParserInstance(URL source, BufferedReader reader, ParameterConfig baseConfig) {
             this.source = new MsFileSource(source);
             this.reader = reader;
             lineNumber = 0;
             this.currentSpectrum = new SimpleMutableSpectrum();
+            this.baseConfig = baseConfig;
         }
 
+        private final ParameterConfig baseConfig;
         private ParameterConfig config;
 
         private final MsFileSource source;
@@ -121,9 +127,6 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private String inchi, inchikey, smiles, splash, spectrumQualityString;
         private MutableMs2Experiment experiment;
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
-//        private double treeTimeout;
-//        private double compoundTimeout;
-//        private double ppmMax = 0d, ppmMaxMs2 = 0d, noiseMs2 = 0d;
 
         //these are comments/additional options or metainfos that are mot nessecarily used by sirius
         private AdditionalFields fields;
@@ -152,7 +155,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 //            treeTimeout = 0d;
 //            compoundTimeout = 0d;
 //            ppmMax = ppmMaxMs2 = noiseMs2 = 0d;
-            config = PropertyManager.DEFAULTS.newIndependendInstance();
+            config = baseConfig.newIndependentInstance("MS_FILE:" + name);
         }
 
         private MutableMs2Experiment parse() throws IOException {
@@ -402,7 +405,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 exp.setAnnotation(RetentionTime.class, new RetentionTime(retentionTimeStart, retentionTimeEnd, retentionTime));
 
             //add config annotations that have been set within the file
-            exp.setAnnotation(MsFileConfig.class, new MsFileConfig(config));
+            exp.setAnnotation(MsFileConfig.class, new MsFileConfig(config)); //set map for reconstructability
+            exp.setAnnotationsFrom(config.createInstancesWithModifiedDefaults(Ms2ExperimentAnnotation.class));
 
             //add additional fields
             if (fields != null) exp.setAnnotation(AdditionalFields.class, fields);

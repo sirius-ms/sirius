@@ -28,7 +28,7 @@ public class NoMs1PeakAnnotator implements QualityAnnotator {
     }
 
     @Override
-    public void annotate(Ms2Dataset dataset) {
+    public void annotate(Ms2Run dataset) {
         for (Ms2Experiment ms2Experiment : dataset.getExperiments()) {
             annotate(ms2Experiment);
         }
