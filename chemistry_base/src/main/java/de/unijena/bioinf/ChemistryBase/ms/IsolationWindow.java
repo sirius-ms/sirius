@@ -134,13 +134,13 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
 
     public abstract double getEstimatedMassShift();
 
-    public void estimate(Ms2Dataset ms2Dataset) {
+    public void estimate(Ms2Run ms2Dataset) {
         IsotopeRatioInformation isotopeRatioInformation = extractIntensityRatios(ms2Dataset);
         estimateDistribution(isotopeRatioInformation);
     }
 
 
-    protected IsotopeRatioInformation extractIntensityRatios(Ms2Dataset ms2Dataset) {
+    protected IsotopeRatioInformation extractIntensityRatios(Ms2Run ms2Dataset) {
         List<NormalizedPattern> normalizedPatterns = new ArrayList<>();
 
         boolean foundIonPeakInMs2AtLeastOnce = false;
@@ -636,7 +636,7 @@ public abstract class IsolationWindow implements Ms2ExperimentAnnotation {
     }
 
 
-    public void writeIntensityRatiosToCsv(Ms2Dataset ms2Dataset, Path outpuPath) throws IOException {
+    public void writeIntensityRatiosToCsv(Ms2Run ms2Dataset, Path outpuPath) throws IOException {
         IsotopeRatioInformation isotopeRatioInformation = extractIntensityRatios(ms2Dataset);
 
         try(BufferedWriter writer = Files.newBufferedWriter(outpuPath, Charset.defaultCharset())){

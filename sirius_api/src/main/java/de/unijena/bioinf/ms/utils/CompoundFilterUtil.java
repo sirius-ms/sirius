@@ -8,7 +8,7 @@ import de.unijena.bioinf.ChemistryBase.ms.inputValidators.ChimericAnnotator;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
+import de.unijena.bioinf.sirius.Ms2RunPreprocessor;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -75,7 +75,7 @@ public class CompoundFilterUtil {
      */
     public List<Ms2Experiment> removeChimericSpectra(List<Ms2Experiment> experiments, double max2ndMostIntenseRatio, double maxSummedIntensitiesRatio, Deviation isotopesDeviation, IsolationWindow isolationWindow, ChemicalAlphabet alphabet) throws InvalidInputData {
         List<Ms2Experiment> filtered = new ArrayList<>();
-        ChimericAnnotator chimericAnnotator = new ChimericAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, max2ndMostIntenseRatio, maxSummedIntensitiesRatio);
+        ChimericAnnotator chimericAnnotator = new ChimericAnnotator(Ms2RunPreprocessor.FIND_MS1_PEAK_DEVIATION, max2ndMostIntenseRatio, maxSummedIntensitiesRatio);
         for (Ms2Experiment experiment : experiments) {
             MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
             if (experiment.getMs1Spectra().size() == experiment.getMs2Spectra().size()){

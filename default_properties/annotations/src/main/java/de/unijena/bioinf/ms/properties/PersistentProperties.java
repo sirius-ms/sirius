@@ -1,62 +1,32 @@
 package de.unijena.bioinf.ms.properties;
 
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.Map;
 import java.util.Properties;
 
-//todo this should be combineable with Property FileWatcherService
-//todo move to Propertyconfiguration
-public class PersistentProperties extends Properties {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PersistentProperties.class);
-    private final String fileheader;
-    private final Path propsSourceFile;
+//todo this should be combineable with Property FileWatcherService -> use configuration file watching
+public class PersistentProperties {
+    protected static final Logger LOGGER = LoggerFactory.getLogger(PersistentProperties.class);
+    protected final PropertiesConfiguration config;
 
-    public PersistentProperties(Path propertiesFile, Properties defaultProps, String fileheader) {
-        super();
-        this.fileheader = fileheader;
-        this.propsSourceFile = propertiesFile;
-        putAll(defaultProps);
 
-        if (Files.exists(propsSourceFile)) {
-            try (InputStream stream = Files.newInputStream(propsSourceFile)) {
-                Properties tmp = new Properties();
-                tmp.load(stream);
-                putAll(tmp);
-            } catch (IOException e) {
-                LOGGER.error("Could NOT load Properties from given properties file, falling back to default properties", e);
-            }
+    public PersistentProperties(File propertiesFile, PropertiesConfiguration baseProps) {
+        try {
+            if (!propertiesFile.exists())
+                new org.apache.commons.configuration2.io.FileHandler(baseProps).save(propertiesFile);
+            baseProps = PropertyManager.loadPersistentPropertiesFile(propertiesFile);
+        } catch (ConfigurationException e) {
+            LOGGER.error("Could NOT load Properties from given properties file, falling back to default properties. Property changes during Runtime are NOT persistent!", e);
         }
-
-        PropertyManager.setProperties(this);
+        config = baseProps;
     }
 
-
-    @Override
-    public void putAll(Map<?, ?> properties) {
-        if (!(properties instanceof Properties))
-            throw new IllegalArgumentException();
-        PropertyManager.setProperties((Properties) properties);
-        super.putAll(properties);
-    }
-
-    @Override
-    public Object put(Object key, Object value) {
-        PropertyManager.setProperty((String) key, value);
-        return super.put(key, value);
-    }
-
-    @Override
-    public Object setProperty(String key, String value) {
-        return put(key, value);
+    public void setProperty(String key, String value) {
+        config.setProperty(key, value);
     }
 
 
@@ -66,17 +36,7 @@ public class PersistentProperties extends Properties {
     }
 
     public void setProperties(Properties properties) {
-        putAll(properties);
-    }
-
-    public void setProperties(File properties) throws IOException {
-        setProperties(properties.toPath());
-    }
-
-    public void setProperties(Path properties) throws IOException {
-        Properties p = new Properties();
-        p.load(Files.newInputStream(properties));
-        putAll(p);
+        properties.forEach((k, v) -> setProperty((String) k, (String) v));
     }
 
     public void setAndStoreProperties(Properties properties) {
@@ -84,20 +44,16 @@ public class PersistentProperties extends Properties {
         store();
     }
 
-    public Properties getCopyOfPersistentProperties() {
-        return new Properties(this);
+    public String getProperty(String key) {
+        return PropertyManager.getProperty(key);
     }
 
     public synchronized void store() {
         try {
-            Files.deleteIfExists(propsSourceFile);
-            try (OutputStream stream = Files.newOutputStream(propsSourceFile, StandardOpenOption.CREATE_NEW)) {
-                store(stream, fileheader);
-            } catch (IOException e) {
-                LOGGER.error("Could not save new Properties file! Changes not saved!", e);
-            }
-        } catch (IOException e) {
-            LOGGER.error("Could not remove old Properties file! Changes not saved!", e);
+            new org.apache.commons.configuration2.io.FileHandler(config).save();
+        } catch (ConfigurationException e) {
+            LOGGER.error("Could not save new Properties file! Changes not saved!", e);
         }
     }
+
 }

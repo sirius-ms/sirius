@@ -31,7 +31,7 @@ public class NotMonoisotopicAnnotator implements QualityAnnotator {
     }
 
     @Override
-    public void annotate(Ms2Dataset dataset) {
+    public void annotate(Ms2Run dataset) {
         for (Ms2Experiment ms2Experiment : dataset) {
             if (CompoundQuality.hasProperty(ms2Experiment, SpectrumProperty.NoMS1Peak)) continue;
             if (isNotMonoisotopicPeak(ms2Experiment)) {

@@ -1,7 +1,8 @@
 package de.unijena.bioinf.ms.properties;
 
 import com.google.gson.internal.Primitives;
-import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.CombinedConfiguration;
+import org.apache.commons.configuration2.ImmutableConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.PropertiesConfigurationLayout;
 import org.apache.commons.configuration2.ex.ConfigurationException;
@@ -13,6 +14,7 @@ import java.awt.*;
 import java.beans.PropertyEditor;
 import java.beans.PropertyEditorManager;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Writer;
 import java.lang.reflect.*;
 import java.util.List;
@@ -22,113 +24,73 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 
-public class ParameterConfig {
+public final class ParameterConfig {
     public final String configRoot;
     public final String classRoot;
     private final PropertiesConfigurationLayout layout;
-    private final Configuration properties;
+    private final CombinedConfiguration config;
+    private final CombinedConfiguration classesConfig;
 
-    private final Set<String> changedKeys = new LinkedHashSet<>();
+    private final String localConfigName;
 
-    public ParameterConfig(Configuration properties, PropertiesConfigurationLayout layout, String configRoot, String classRoot) {
-        this.properties = properties;
+    ParameterConfig(CombinedConfiguration config, CombinedConfiguration classesConfig, String layoutConfigName, String localConfigName, String configRoot, String classRoot) {
+        this(config, classesConfig,
+                ((PropertiesConfiguration) config.getConfiguration(layoutConfigName)).getLayout(),
+                localConfigName, configRoot, classRoot
+        );
+    }
+
+    ParameterConfig(CombinedConfiguration config, CombinedConfiguration classesConfig, PropertiesConfigurationLayout layout, String localConfigName, String configRoot, String classRoot) {
+        this.config = config;
+        this.classesConfig = classesConfig;
+        this.localConfigName = localConfigName;
+        this.layout = layout;
         this.configRoot = configRoot;
         this.classRoot = classRoot;
-        this.layout = layout;
     }
 
     public void write(Writer writer) throws IOException {
         try {
-            final PropertiesConfiguration props = PropertyManager.initProperties();
-            props.append(properties.subset(configRoot));
-            final PropertiesConfigurationLayout l = props.getLayout();
-            props.getKeys().forEachRemaining(keyShort -> l.setComment(keyShort, getConfigDescription(keyShort)));
-
-            l.save(props, writer);
+            final PropertiesConfiguration toWrite = SiriusConfigUtils.newConfiguration();
+            config.getKeys().forEachRemaining(key -> toWrite.setProperty(key, config.getString(key)));
+            layout.save(toWrite, writer);
         } catch (ConfigurationException e) {
             throw new IOException(e);
         }
     }
 
-    public ParameterConfig newIndependendInstance(boolean keepChanges) {
-        ParameterConfig it = newIndependendInstance();
-        if (keepChanges)
-            it.changedKeys.addAll(changedKeys);
-        return it;
-    }
-
-    public ParameterConfig newIndependendInstance() {
-        final PropertiesConfiguration props = PropertyManager.initProperties();
-        properties.getKeys(configRoot).forEachRemaining(key ->
-                props.setProperty(key, properties.getString(key)));
-
-        return new ParameterConfig(props, layout, configRoot, classRoot);
-    }
-
-    public void changeModifiedFrom(ParameterConfig config) {
-        // this can be unchecked because ParameterConfig entries have to be valid
-        config.changedKeys.forEach(key -> {
-            properties.setProperty(key, config.properties.getString(key));
-            changedKeys.add(key);
-        });
-    }
-
-    public Iterator<String> getConfigKeys() {
-        return properties.getKeys(configRoot);
-    }
-
-    public Iterator<String> getModifiedConfigKeys() {
-        return Collections.unmodifiableSet(changedKeys).iterator();
-    }
-
-    private Configuration getClassRootProperties() {
-        return PropertyManager.PROPERTIES.getConfiguration("resource_configs_classes");
-    }
-
-    public Iterator<String> getConfigClassKeys() {
-        return getClassRootProperties().getKeys(classRoot);
-    }
-
-    public String getConfigDescription(String key) {
-        return layout.getComment(configRoot + '.' + shortKey(key));
-    }
-
-    public String getConfigValue(@NotNull String key) {
-        return properties.getString(configRoot + '.' + shortKey(key));
-    }
-
-    public <C> boolean isInstantiatableWithDefaults(Class<C> klass) {
-        return klass.isAnnotationPresent(DefaultProperty.class)
-                || Arrays.stream(klass.getDeclaredMethods()).anyMatch(m -> m.isAnnotationPresent(DefaultInstanceProvider.class))
-                || Arrays.stream(klass.getDeclaredFields()).anyMatch(field -> field.isAnnotationPresent(DefaultProperty.class));
-    }
-
-    public Class<?> changeConfig(@NotNull String key, @NotNull String value) {
-        String backup = null;
+    public void writeModified(Writer writer) throws IOException {
         try {
-            if (!key.startsWith(configRoot))
-                key = configRoot + "." + key;
-
-            // find actual value
-            backup = properties.getString(key);
-            if (backup == null)
-                throw new IllegalDefaultPropertyKeyException("No Default value found for given key.");
-
-            // set new property
-            properties.setProperty(key, value);
-
-            // check new property
-            Object nuDefault = createInstanceWithDefaults(key);
-            if (nuDefault == null)
-                throw new NullPointerException("Test default instance is NULL");
-
-            changedKeys.add(key);
-            return nuDefault.getClass();
-        } catch (Throwable e) {
-            // rollback property
-            properties.setProperty(key, backup);
-            throw new IllegalDefaultPropertyKeyException("Default value change finished with errors! Rollback previous default value for key " + key + " if possible.", e);
+            layout.save(localConfig(), writer);
+        } catch (ConfigurationException e) {
+            throw new IOException(e);
         }
+    }
+
+    public ParameterConfig newIndependentInstance(@NotNull final String name) {
+        return newIdependendInstance(SiriusConfigUtils.newConfiguration(), name);
+    }
+
+    public ParameterConfig newIndependentInstance(@NotNull final ParameterConfig modificationLayer) {
+        if (!modificationLayer.isModifiable())
+            throw new IllegalArgumentException("Unmodifiable \"modificationLayer\"! Only modifiable ParameterConfigs are allowed as modification layer.");
+
+        return newIdependendInstance(modificationLayer.localConfig(), modificationLayer.localConfigName);
+    }
+
+    public ParameterConfig newIndependentInstance(@NotNull final InputStream streamToLoad, @NotNull final String name) throws ConfigurationException {
+        return newIdependendInstance(SiriusConfigUtils.makeConfigFromStream(streamToLoad), name);
+    }
+
+    private ParameterConfig newIdependendInstance(@NotNull final PropertiesConfiguration modifiableLayer, @NotNull final String name) {
+        if (name.isEmpty())
+            throw new IllegalArgumentException("Empty name is not Allowed here");
+
+        final CombinedConfiguration nuConfig = SiriusConfigUtils.newCombinedConfiguration();
+        nuConfig.addConfiguration(modifiableLayer, name);
+        this.config.getConfigurationNames().forEach(n -> nuConfig.addConfiguration(config.getConfiguration(n), n));
+
+        return new ParameterConfig(nuConfig, classesConfig, layout, name, configRoot, classRoot);
     }
 
 
@@ -137,17 +99,101 @@ public class ParameterConfig {
                 .replaceFirst(configRoot + ".", "");
     }
 
+    public Iterator<String> getConfigKeys() {
+        return config.getKeys();
+    }
+
+    public Iterator<String> getModifiedConfigKeys() {
+        return localConfig().getKeys();
+    }
+
+    public Iterator<String> getClassConfigKeys() {
+        return classesConfig.getKeys();
+    }
+
+
+    public ImmutableConfiguration getModifiedConfigs() {
+        return localConfig();
+    }
+
+    public ImmutableConfiguration getConfigs() {
+        return config;
+    }
+
+    public ImmutableConfiguration getClassConfigs() {
+        return classesConfig;
+    }
+
+    public boolean isModifiable() {
+        return localConfigName != null && !localConfigName.isEmpty();
+    }
+    private PropertiesConfiguration localConfig() {
+        if (!isModifiable())
+            throw new UnsupportedOperationException("This is an unmodifiable config. Please use newIndependentInstance(name) to create a modifiable child instance.");
+        return (PropertiesConfiguration) config.getConfiguration(localConfigName);
+    }
+
+    public String getConfigDescription(String key) {
+        return layout.getComment(shortKey(key));
+    }
+
+    public String getConfigValue(@NotNull String key) {
+        return config.getString(shortKey(key));
+    }
+
+    public <C> boolean isInstantiatableWithDefaults(Class<C> klass) {
+        return klass.isAnnotationPresent(DefaultProperty.class)
+                || Arrays.stream(klass.getDeclaredMethods()).anyMatch(m -> m.isAnnotationPresent(DefaultInstanceProvider.class))
+                || Arrays.stream(klass.getDeclaredFields()).anyMatch(field -> field.isAnnotationPresent(DefaultProperty.class));
+    }
+
+
+    void setConfigProperty(@NotNull String key, @NotNull String value) {
+        localConfig().setProperty(key, value);
+    }
+
+    public Class<?> changeConfig(@NotNull String key, @NotNull String value) {
+        String backup = null;
+        try {
+            key = shortKey(key);
+
+            // find actual value
+            backup = localConfig().getString(key);
+            if (config.getString(key) == null)
+                throw new IllegalDefaultPropertyKeyException("No Default value found for given key.");
+
+
+            // set new property
+            localConfig().setProperty(key, value);
+
+            // check new property
+            Object nuDefault = createInstanceWithDefaults(key);
+            if (nuDefault == null)
+                throw new NullPointerException("Test default instance is NULL");
+
+            return nuDefault.getClass();
+        } catch (Throwable e) {
+            // rollback property
+            if (backup == null)
+                localConfig().clearProperty(backup);
+            else
+                localConfig().setProperty(key, backup);
+
+            throw new IllegalDefaultPropertyKeyException("Default value change finished with errors! Rollback previous default value for key " + key + " if possible.", e);
+        }
+    }
+
     public boolean containsConfigKey(@NotNull String key) {
-        key = configRoot + "." + shortKey(key);
-        return properties.containsKey(key);
+        key = shortKey(key);
+        return config.containsKey(key);
     }
 
 
     public Class<?> getClassFromKey(@NotNull String key) {
         try {
             final String ks = shortKey(key);
-            key = classRoot + '.' + ks.split("[.]")[0];
-            final String value = getClassRootProperties().getString(key);
+            key = ks.split("[.]")[0];
+            final String value = classesConfig.getString(key);
             if (value == null)
                 throw new NullPointerException("No Class value found for given key.");
             Class<?> clazz = Class.forName(value);
@@ -163,7 +209,7 @@ public class ParameterConfig {
     }
 
     public <C> C createInstanceWithDefaults(Class<C> klass) {
-        return createInstanceWithDefaults(klass, configRoot);
+        return createInstanceWithDefaults(klass, "");
     }
 
     public <C> C createInstanceWithDefaults(Class<C> klass, @NotNull final String sourceParent) {
@@ -171,19 +217,21 @@ public class ParameterConfig {
     }
 
     private <C> C createInstanceWithDefaults(Class<C> klass, @NotNull final String sourceParent, boolean useClassParent) {
-        String parent = sourceParent;
-        if (parent.isEmpty())
-            throw new IllegalArgumentException("Some parent path is needed!");
+        if (!sourceParent.isEmpty() && !sourceParent.endsWith("."))
+            throw new IllegalArgumentException("Parent path has either to be empty or end with a \".\".");
+
 
         //search class annotation
         DefaultProperty klassAnnotation = null;
         if (klass.isAnnotationPresent(DefaultProperty.class))
             klassAnnotation = klass.getAnnotation(DefaultProperty.class);
 
+        final String parent;
         if (useClassParent)
-            parent = parent + "." + (klassAnnotation != null && !klassAnnotation.propertyParent().isEmpty()
+            parent = sourceParent + (klassAnnotation != null && !klassAnnotation.propertyParent().isEmpty()
                     ? klass.getAnnotation(DefaultProperty.class).propertyParent()
                     : klass.getSimpleName());
+        else parent = sourceParent.substring(0, sourceParent.length() - 1); //remove dot
 
         try {
             Method method = getFromStringMethod(klass);
@@ -197,33 +245,33 @@ public class ParameterConfig {
                 return getDefaultInstanceFromProvider(method, parent, sourceParent);
             }
 
-                // find all fields with @DefaultProperty annotation
-                final List<Field> fields = Arrays.stream(klass.getDeclaredFields()).filter(field -> field.isAnnotationPresent(DefaultProperty.class)).collect(Collectors.toList());
-                if (fields.isEmpty()) { //no field annotation -> check if it is a single field wrapper class
-                    if (klassAnnotation != null) {
-                        if (klass.isEnum()) {
-                            return parseProperty(klass, null, null, parent);
-                        } else {
-                            try {
-                                final String fieldName = (klassAnnotation.propertyKey().isEmpty() ? "value" : klassAnnotation.propertyKey());
-                                return setDefaultValue(invokePossiblyPrivateConstructor(klass), klass.getDeclaredField(fieldName), parent);
-                            } catch (NoSuchFieldException e) {
-                                throw new IllegalArgumentException("Input class contains no valid Field. Please Specify a valid Field name in the class annotation (@DefaultProperty), use the default name (value) por directly annotate the field as @DefaultProperty.", e);
-                            }
-                        }
+            // find all fields with @DefaultProperty annotation
+            final List<Field> fields = Arrays.stream(klass.getDeclaredFields()).filter(field -> field.isAnnotationPresent(DefaultProperty.class)).collect(Collectors.toList());
+            if (fields.isEmpty()) { //no field annotation -> check if it is a single field wrapper class
+                if (klassAnnotation != null) {
+                    if (klass.isEnum()) {
+                        return parseProperty(klass, null, null, parent);
                     } else {
-                        throw new IllegalArgumentException("This class contains no @DefaultProperty annotation!");
+                        try {
+                            final String fieldName = (klassAnnotation.propertyKey().isEmpty() ? "value" : klassAnnotation.propertyKey());
+                            return setDefaultValue(invokePossiblyPrivateConstructor(klass), klass.getDeclaredField(fieldName), parent);
+                        } catch (NoSuchFieldException e) {
+                            throw new IllegalArgumentException("Input class contains no valid Field. Please Specify a valid Field name in the class annotation (@DefaultProperty), use the default name (value) por directly annotate the field as @DefaultProperty.", e);
+                        }
                     }
                 } else {
-                    final C instance = invokePossiblyPrivateConstructor(klass);
-                    for (Field field : fields) {
-                        final DefaultProperty fieldAnnotation = field.getAnnotation(DefaultProperty.class);
-                        final String fieldParent = (fieldAnnotation.propertyParent().isEmpty() ? parent : sourceParent + "." + fieldAnnotation.propertyParent());
-                        final String fieldName = (fieldAnnotation.propertyKey().isEmpty() ? field.getName() : fieldAnnotation.propertyKey());
-                        setDefaultValue(instance, field, fieldParent + "." + fieldName);
-                    }
-                    return instance;
+                    throw new IllegalArgumentException("This class contains no @DefaultProperty annotation!");
                 }
+            } else {
+                final C instance = invokePossiblyPrivateConstructor(klass);
+                for (Field field : fields) {
+                    final DefaultProperty fieldAnnotation = field.getAnnotation(DefaultProperty.class);
+                    final String fieldParent = (fieldAnnotation.propertyParent().isEmpty() ? parent : sourceParent + fieldAnnotation.propertyParent());
+                    final String fieldName = (fieldAnnotation.propertyKey().isEmpty() ? field.getName() : fieldAnnotation.propertyKey());
+                    setDefaultValue(instance, field, fieldParent + "." + fieldName);
+                }
+                return instance;
+            }
         } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
             throw new IllegalArgumentException("Could not instantiate input class by empty Constructor", e);
         } catch (NoSuchMethodException e) {
@@ -282,9 +330,9 @@ public class ParameterConfig {
 
         for (int i = 0; i < parameters.length; i++) {
             final Parameter parameter = parameters[i];
-            if (parameter.isAnnotationPresent(DefaultProperty.class) /* kaidu: why?  && !parameter.getAnnotation(DefaultProperty.class).propertyKey().isEmpty() */) {
+            if (parameter.isAnnotationPresent(DefaultProperty.class)) {
                 final String fieldParent = !parameter.getAnnotation(DefaultProperty.class).propertyParent().isEmpty()
-                        ? sourceParent + "." + parameter.getAnnotation(DefaultProperty.class).propertyParent()
+                        ? sourceParent + parameter.getAnnotation(DefaultProperty.class).propertyParent()
                         : parent;
                 final String fieldName = parameter.getAnnotation(DefaultProperty.class).propertyKey().isEmpty() ? parameter.getName() : parameter.getAnnotation(DefaultProperty.class).propertyKey();
 //                if (parameters.length == 1)
@@ -310,7 +358,7 @@ public class ParameterConfig {
         try {
             final Object objectValue;
             if (isInstantiatableWithDefaults(field.getType())) {
-                objectValue = createInstanceWithDefaults(field.getType(), propertyName, false);
+                objectValue = createInstanceWithDefaults(field.getType(), propertyName + ".", false);
             } else {
                 objectValue = parseProperty(field.getType(), field.getGenericType(), field.getName(), propertyName);
             }
@@ -324,9 +372,9 @@ public class ParameterConfig {
     }
 
     private <T> T parseProperty(@NotNull Class<T> type, @Nullable Type generic, @Nullable String fieldName, @NotNull String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
-        String stringValue = properties.getString(propertyName);
+        String stringValue = config.getString(propertyName);
         if (stringValue == null && fieldName != null && !propertyName.endsWith(fieldName))
-            stringValue = properties.getString(propertyName + "." + fieldName);
+            stringValue = config.getString(propertyName + "." + fieldName);
         if (stringValue == null)
             return null;
         return convertStringToType(type, generic, stringValue);
