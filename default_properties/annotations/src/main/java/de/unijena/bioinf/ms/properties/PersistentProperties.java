@@ -1,28 +1,42 @@
 package de.unijena.bioinf.ms.properties;
 
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JobManager;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration2.io.FileHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Properties;
 
-//todo this should be combineable with Property FileWatcherService -> use configuration file watching
-public class PersistentProperties {
+public final class PersistentProperties {
     protected static final Logger LOGGER = LoggerFactory.getLogger(PersistentProperties.class);
+
+    protected final File propertiesFile;
     protected final PropertiesConfiguration config;
+    protected final PropertyFileWatcher watcher;
 
 
-    public PersistentProperties(File propertiesFile, PropertiesConfiguration baseProps) {
-        try {
-            if (!propertiesFile.exists())
-                new org.apache.commons.configuration2.io.FileHandler(baseProps).save(propertiesFile);
-            baseProps = PropertyManager.loadPersistentPropertiesFile(propertiesFile);
-        } catch (ConfigurationException e) {
-            LOGGER.error("Could NOT load Properties from given properties file, falling back to default properties. Property changes during Runtime are NOT persistent!", e);
+    protected PersistentProperties(File propertiesFile, PropertiesConfiguration baseProps, boolean watchFile) {
+        if (!propertiesFile.exists()) {
+            try {
+                new FileHandler(baseProps).save(propertiesFile);
+            } catch (ConfigurationException e) {
+                LOGGER.error("Could NOT write default Properties from given properties file, falling back to default properties. Property changes during Runtime may NOT persistent!", e);
+            }
         }
-        config = baseProps;
+
+        this.propertiesFile = propertiesFile;
+        if (watchFile) {
+            this.config = SiriusConfigUtils.newConfiguration(propertiesFile);
+            this.watcher = null;
+        } else {
+            this.watcher = new PropertyFileWatcher(propertiesFile.toPath());
+            this.config = SiriusConfigUtils.newConfiguration(watcher);
+        }
+
     }
 
     public void setProperty(String key, String value) {
@@ -44,8 +58,19 @@ public class PersistentProperties {
         store();
     }
 
-    public String getProperty(String key) {
-        return PropertyManager.getProperty(key);
+    public PropertyFileWatcher startWatcher(JobManager manager) {
+        if (watcher == null) return null;
+        return manager.submitJob(watcher);
+    }
+
+    public void stopWatcher() {
+        if (watcher != null)
+            watcher.stop();
+    }
+
+    public boolean isWatching() {
+        if (watcher == null) return false;
+        return watcher.getState() == JJob.JobState.RUNNING;
     }
 
     public synchronized void store() {

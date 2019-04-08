@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
@@ -120,10 +121,10 @@ public class PropertyManager {
         return config;
     }
 
-    public static PropertiesConfiguration loadPersistentPropertiesFile(@NotNull File file) throws ConfigurationException {
-        @NotNull PropertiesConfiguration fileConfig = SiriusConfigUtils.newConfiguration(file);
-        PERSISTENT_PROPERTIES.addConfiguration(fileConfig, file.getAbsolutePath());
-        return fileConfig;
+    public static PersistentProperties addPersistentPropertiesFile(File propertiesFile, PropertiesConfiguration baseProps, boolean watchFile) {
+        PersistentProperties persProps = new PersistentProperties(propertiesFile, baseProps, watchFile);
+        PERSISTENT_PROPERTIES.addConfiguration(persProps.config, persProps.propertiesFile.getAbsolutePath());
+        return persProps;
     }
 
     public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream input, @Nullable String name, @Nullable String prefixToAdd) throws ConfigurationException {
@@ -133,7 +134,7 @@ public class PropertyManager {
     }
 
 
-    public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream stream, @NotNull PropertiesConfiguration config, @Nullable String name) throws IOException, ConfigurationException {
+    public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream stream, @NotNull PropertiesConfiguration config, @Nullable String name) throws ConfigurationException {
         new FileHandler(config).load(stream);
         PROPERTIES.addConfiguration(config, name);
         return config;
@@ -199,8 +200,59 @@ public class PropertyManager {
         return PROPERTIES.getString(key, defaultValue);
     }
 
-    public static String getProperty(String key) {
+    public static String getProperty(@NotNull String key) {
         return PROPERTIES.getString(key);
+    }
+
+    public static Boolean getBoolean(@NotNull String key, Boolean defaultValue) {
+        return PROPERTIES.getBoolean(key, defaultValue);
+    }
+
+    public static Boolean getBoolean(@NotNull String key, @Nullable String backupKey, @Nullable Boolean defaultValue) {
+        if (backupKey != null)
+            return PROPERTIES.getBoolean(key, PROPERTIES.getBoolean(backupKey, defaultValue));
+        return PROPERTIES.getBoolean(key, defaultValue);
+    }
+
+
+    public static Double getDouble(@NotNull String key, Double defaultValue) {
+        return PROPERTIES.getDouble(key, defaultValue);
+    }
+
+    public static Double getDouble(@NotNull String key, @Nullable String backupKey, @Nullable Double defaultValue) {
+        if (backupKey != null)
+            return PROPERTIES.getDouble(key, PROPERTIES.getDouble(backupKey, defaultValue));
+        return PROPERTIES.getDouble(key, defaultValue);
+    }
+
+    public static Integer getInteger(@NotNull String key, Integer defaultValue) {
+        return PROPERTIES.getInteger(key, defaultValue);
+    }
+
+    public static Integer getInteger(@NotNull String key, @Nullable String backupKey, @Nullable Integer defaultValue) {
+        if (backupKey != null)
+            return PROPERTIES.getInteger(key, PROPERTIES.getInteger(backupKey, defaultValue));
+        return PROPERTIES.getInteger(key, defaultValue);
+    }
+
+    public static Long getLong(@NotNull String key, Long defaultValue) {
+        return PROPERTIES.getLong(key, defaultValue);
+    }
+
+    public static Long getLong(@NotNull String key, @Nullable String backupKey, @Nullable Long defaultValue) {
+        if (backupKey != null)
+            return PROPERTIES.getLong(key, PROPERTIES.getLong(backupKey, defaultValue));
+        return PROPERTIES.getLong(key, defaultValue);
+    }
+
+    public static BigDecimal getBigDecimal(@NotNull String key, BigDecimal defaultValue) {
+        return PROPERTIES.getBigDecimal(key, defaultValue);
+    }
+
+    public static BigDecimal getBigDecimal(@NotNull String key, @Nullable String backupKey, @Nullable BigDecimal defaultValue) {
+        if (backupKey != null)
+            return PROPERTIES.getBigDecimal(key, PROPERTIES.getBigDecimal(backupKey, defaultValue));
+        return PROPERTIES.getBigDecimal(key, defaultValue);
     }
 
     public static Path getPath(String key) {

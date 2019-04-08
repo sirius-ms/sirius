@@ -1,9 +1,9 @@
 package de.unijena.bioinf.ms.properties;
 
 import org.apache.commons.configuration2.CombinedConfiguration;
-import org.apache.commons.configuration2.FileBasedConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.ReloadingFileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.builder.fluent.PropertiesBuilderParameters;
 import org.apache.commons.configuration2.convert.DisabledListDelimiterHandler;
@@ -24,22 +24,41 @@ public class SiriusConfigUtils {
         return new CombinedConfiguration(new OverrideCombiner());
     }
 
+    private static PropertiesBuilderParameters makeConfigProps(@Nullable File file) {
+        final PropertiesBuilderParameters paras = new Parameters().properties()
+                .setThrowExceptionOnMissing(false)
+                .setListDelimiterHandler(new DisabledListDelimiterHandler())
+                .setIncludesAllowed(true);
+        if (file != null)
+            paras.setFile(file);
+        return paras;
+    }
+
     public static PropertiesConfiguration newConfiguration() {
-        return newConfiguration(null);
+        return newConfiguration((File) null);
     }
 
     public static @NotNull PropertiesConfiguration newConfiguration(@Nullable File file) {
         try {
-            PropertiesBuilderParameters props = new Parameters().properties()
-                    .setThrowExceptionOnMissing(false)
-                    .setListDelimiterHandler(new DisabledListDelimiterHandler())
-                    .setIncludesAllowed(true);
-            if (file != null)
-                props.setFile(file);
-
-            return (PropertiesConfiguration) new FileBasedConfigurationBuilder<FileBasedConfiguration>(PropertiesConfiguration.class).configure(props).getConfiguration();
+            return new FileBasedConfigurationBuilder<>(PropertiesConfiguration.class).configure(makeConfigProps(file)).getConfiguration();
         } catch (ConfigurationException e) {
             System.err.println("WARNING: Error during PropertiesConfiguration initialization");
+            e.printStackTrace();
+            return new PropertiesConfiguration();
+        }
+
+    }
+
+    public static @NotNull PropertiesConfiguration newConfiguration(@NotNull PropertyFileWatcher watcher) {
+        try {
+            ReloadingFileBasedConfigurationBuilder<PropertiesConfiguration> builder =
+                    new ReloadingFileBasedConfigurationBuilder<>(PropertiesConfiguration.class)
+                            .configure(makeConfigProps(watcher.getFile().toFile()));
+            watcher.setController(builder.getReloadingController());
+            return builder.getConfiguration();
+
+        } catch (ConfigurationException e) {
+            System.err.println("WARNING: Error during PropertiesConfiguration initialization with auto reloading");
             e.printStackTrace();
             return new PropertiesConfiguration();
         }
