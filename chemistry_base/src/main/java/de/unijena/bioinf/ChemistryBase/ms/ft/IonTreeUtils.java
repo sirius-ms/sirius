@@ -62,6 +62,9 @@ public class IonTreeUtils {
             tree.addRoot(ion.getInSourceFragmentation().add(tree.getRoot().getFormula()), ion.getIonization());
             tree.getOrCreateLossAnnotation(LossType.class).set(tree.getRoot().getOutgoingEdge(0), LossType.insource());
             ion = ion.withoutInsource();
+
+            // TODO: maybe we can outsource that in a separate method
+            tree.getOrCreateFragmentAnnotation(AnnotatedPeak.class).set(tree.getRoot(), AnnotatedPeak.artificial(tree.getRoot().getFormula(), tree.getRoot().getIonization()));
         }
         if (ion.getAdduct().atomCount() > 0) {
             // remove the adduct from all fragments

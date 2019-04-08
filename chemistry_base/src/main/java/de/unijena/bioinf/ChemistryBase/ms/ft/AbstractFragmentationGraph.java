@@ -26,7 +26,7 @@ import gnu.trove.list.array.TIntArrayList;
 import java.util.*;
 import java.util.function.Supplier;
 
-abstract class AbstractFragmentationGraph implements Iterable<Fragment>, Annotated<DataAnnotation> {
+public abstract class AbstractFragmentationGraph implements Iterable<Fragment>, Annotated<DataAnnotation> {
 
     protected final Annotated.Annotations<DataAnnotation> annotations;//HashMap<Class<Object>, Object> annotations;
     protected final ArrayList<Fragment> fragments;
@@ -279,13 +279,13 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment>, Annotat
     @SuppressWarnings("unchecked cast")
     public <T extends DataAnnotation> FragmentAnnotation<T> getOrCreateFragmentAnnotation(Class<T> klass) {
         if (fragmentAnnotations.containsKey(klass)) return (FragmentAnnotation<T>) fragmentAnnotations.get(klass);
-        return addFragmentAnnotation(klass);
+        return addFragmentAnnotation(klass,()->null);
     }
 
     @SuppressWarnings("unchecked cast")
     public <T extends DataAnnotation> LossAnnotation<T> getOrCreateLossAnnotation(Class<T> klass) {
         if (lossAnnotations.containsKey(klass)) return (LossAnnotation<T>) lossAnnotations.get(klass);
-        return addLossAnnotation(klass);
+        return addLossAnnotation(klass,()->null);
     }
 
     @Deprecated
@@ -307,7 +307,7 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment>, Annotat
     }
 
     protected Loss addLoss(Fragment u, Fragment v) {
-        return addLoss(u, v, u.formula.subtract(v.formula));
+        return addLoss(u, v, u.formula.isEmpty() || v.formula.isEmpty() ? MolecularFormula.emptyFormula() : u.formula.subtract(v.formula));
     }
 
     protected Loss addLoss(Fragment u, Fragment v, MolecularFormula f) {

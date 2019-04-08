@@ -8,6 +8,10 @@ public class Ms2IsotopePattern implements TreeAnnotation {
     private Peak[] peaks;
     private double score;
 
+    public Ms2IsotopePattern() {
+        this(new Peak[0], 0d);
+    }
+
     public Ms2IsotopePattern(Peak[] peaks, double score) {
         this.peaks = peaks;
         this.score = score;
