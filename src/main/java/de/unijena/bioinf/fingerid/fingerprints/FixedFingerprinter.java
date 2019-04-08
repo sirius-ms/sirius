@@ -15,6 +15,7 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.smiles.smarts.SMARTSQueryTool;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
@@ -34,6 +35,10 @@ public class FixedFingerprinter {
         this.cdkFingerprintVersion = cdkFingerprintVersion;
     }
 
+    public ArrayFingerprint computeFingerprintFromSMILES(String smiles) {
+        return new BooleanFingerprint(cdkFingerprintVersion, new FixedFingerprinterInstance(FixedFingerprinter.parseStructureFromStandardizedSMILES(smiles),false).getAsBooleanArray()).asArray();
+    }
+
     public ArrayFingerprint computeFingerprint(String inchi) {
         return new BooleanFingerprint(cdkFingerprintVersion, new FixedFingerprinterInstance(inchi).getAsBooleanArray()).asArray();
     }
@@ -42,7 +47,7 @@ public class FixedFingerprinter {
     }
     public ArrayFingerprint computeFingerprint(IAtomContainer molecule) {
         try {
-            return new BooleanFingerprint(cdkFingerprintVersion, new FixedFingerprinterInstance(molecule.clone()).getAsBooleanArray()).asArray();
+            return new BooleanFingerprint(cdkFingerprintVersion, new FixedFingerprinterInstance(molecule.clone(),false).getAsBooleanArray()).asArray();
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
@@ -57,14 +62,14 @@ public class FixedFingerprinter {
         protected Set<IBond> cdkAromaticBonds;
 
         protected FixedFingerprinterInstance(String inchi) {
-            this(parseInchi(inchi));
+            this(parseInchi(inchi),true);
         }
 
-        protected FixedFingerprinterInstance(IAtomContainer molecule) {
+        protected FixedFingerprinterInstance(IAtomContainer molecule, boolean hotfix) {
             try {
                 this.molecule = molecule;//.clone();
                 this.fingerprints = new BitSet[cdkFingerprintVersion.numberOfFingerprintTypesInUse()];
-                initialize();
+                initialize(hotfix);
             } catch (CDKException e) {
                 throw new RuntimeException(e);
             }
@@ -146,8 +151,8 @@ public class FixedFingerprinter {
 
 
 
-        private void initialize() throws CDKException {
-            initializeMolecule(molecule);
+        private void initialize(boolean hotfix) throws CDKException {
+            initializeMolecule(molecule,hotfix);
             this.implicit = true;
         }
 
@@ -201,21 +206,31 @@ public class FixedFingerprinter {
         }
     }
 
-    private static void initializeMolecule(IAtomContainer molecule) throws CDKException {
+    private static void initializeMolecule(IAtomContainer molecule, boolean hotfix) throws CDKException {
         CDKHydrogenAdder adder = CDKHydrogenAdder.getInstance(SilentChemObjectBuilder.getInstance());
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(molecule);
         adder.addImplicitHydrogens(molecule);
-        removeStrangeImidoSubstructure(molecule);
+        if (hotfix) removeStrangeImidoSubstructure(molecule);
     }
 
     public static IAtomContainer parseNormalizedStructure(String __inchi) {
         IAtomContainer mol = parseInchi(__inchi);
         try {
-            initializeMolecule(mol);
+            initializeMolecule(mol,true);
         } catch (CDKException e) {
             throw new RuntimeException(e);
         }
         return mol;
+    }
+
+    public static IAtomContainer parseStructureFromStandardizedSMILES(String smiles) {
+        try {
+            IAtomContainer mol = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles);
+            initializeMolecule(mol,false);
+            return mol;
+        } catch (CDKException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static IAtomContainer parseInchi(String __inchi) {
