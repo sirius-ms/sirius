@@ -12,6 +12,10 @@ public class Decomposition extends Scored<MolecularFormula> implements DataAnnot
 
     protected final Ionization ion;
 
+    public Decomposition() {
+        this(MolecularFormula.emptyFormula(),null,0d);
+    }
+
     public Decomposition(MolecularFormula candidate, Ionization ion, double score) {
         super(candidate, score);
         this.ion = ion;

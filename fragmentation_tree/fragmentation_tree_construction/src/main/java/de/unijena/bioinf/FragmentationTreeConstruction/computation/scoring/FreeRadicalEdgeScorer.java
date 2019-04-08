@@ -22,6 +22,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import gnu.trove.decorator.TObjectDoubleMapDecorator;
@@ -95,7 +96,7 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
     }
 
     @Override
-    public Object prepare(ProcessedInput input) {
+    public Object prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
