@@ -68,10 +68,25 @@ public final class AnnotatedPeak implements TreeAnnotation  {
      */
     private final int[] spectrumIds;
 
-    private final static AnnotatedPeak NO_PEAK = new AnnotatedPeak(MolecularFormula.emptyFormula(), Double.NaN, Double.NaN, 0d, null, new Peak[0], new CollisionEnergy[0], new int[0]);
+    private final static Peak[] NO_PEAKS = new Peak[0];
+    private final static CollisionEnergy[] NO_ENERGY = new CollisionEnergy[0];
+    private final static int[] NO_SPECTRUM = new int[0];
+
+    private final static AnnotatedPeak NO_PEAK = new AnnotatedPeak(MolecularFormula.emptyFormula(), Double.NaN, Double.NaN, 0d, null, NO_PEAKS, new CollisionEnergy[0], new int[0]);
+
+    public static AnnotatedPeak artificial(MolecularFormula formula, Ionization ionization) {
+        return artificial(formula, ionization, ionization.addToMass(formula.getMass()));
+    }
+    public static AnnotatedPeak artificial(MolecularFormula formula, Ionization ionization, double mass) {
+        return new AnnotatedPeak(formula, mass, mass, 0d, ionization, NO_PEAKS, NO_ENERGY, NO_SPECTRUM);
+    }
 
     public static AnnotatedPeak none() {
         return NO_PEAK;
+    }
+
+    public boolean isArtificial() {
+        return originalPeaks.length==0;
     }
 
     public AnnotatedPeak(MolecularFormula getFormula, double getMass, double recalibratedMass, double relativeIntensity, Ionization ionization, Peak[] originalPeaks, CollisionEnergy[] collisionEnergies, int[] spectrumIds) {

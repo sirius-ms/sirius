@@ -192,7 +192,7 @@ public class IsotopePatternInMs2Scorer {
                 final int color = index < 0 ? (++maxColor) : peaklist.get(index).getIndex();
                 // introduce new isotope node
                 final Fragment pseudoFragment = graph.addFragment(MolecularFormula.emptyFormula(), PrecursorIonType.unknown().getIonization());
-                pseudoAno.set(pseudoFragment, new IsotopicMarker());
+                pseudoAno.set(pseudoFragment, IsotopicMarker.is());
                 pseudoFragment.setColor(color);
                 if (index >= 0) {
                     peakAno.set(pseudoFragment, peaklist.get(index));
