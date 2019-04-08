@@ -216,8 +216,6 @@ public abstract class ApplicationCore {
             DEFAULT_LOGGER.debug("build properties initialized!");
 
             //init application properties
-            //todo use apache property configuration to keep layout and comments
-
             try (InputStream stream = ApplicationCore.class.getResourceAsStream("/sirius.properties")) {
                 final PropertiesConfiguration defaultProps = SiriusConfigUtils.makeConfigFromStream(stream);
                 defaultProps.setProperty("de.unijena.bioinf.sirius.fingerID.cache", WORKSPACE.resolve("csi_fingerid_cache").toString());
@@ -248,7 +246,7 @@ public abstract class ApplicationCore {
             WEB_API = new WebAPI();
             DEFAULT_LOGGER.info("Web API initialized.");
 
-            //todo get canopus from server
+            //todo get canopus from server or from jar.
             Canopus c = null;
             try {
                 c = Canopus.loadFromFile(new File("/home/fleisch/work/sirius_testing/canopus/canopus_fp.data"));
