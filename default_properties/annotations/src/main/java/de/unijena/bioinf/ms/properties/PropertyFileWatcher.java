@@ -1,74 +1,56 @@
 package de.unijena.bioinf.ms.properties;
 
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import org.apache.commons.configuration2.reloading.ReloadingController;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.*;
 import java.util.LinkedHashSet;
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-//todo change to apache property configuration
-public class PropertyFileWatcher extends Thread {
-    private final Path file;
+public class PropertyFileWatcher extends TinyBackgroundJJob<Object> implements Runnable {
     private AtomicBoolean stop = new AtomicBoolean(false);
-    private final Properties props;
+    private ReloadingController controller;
+    private Path file;
 
-    public PropertyFileWatcher(Path file, Properties propertiesToKeepUpToDate) {
+    public PropertyFileWatcher() {
+        this(null);
+    }
+
+    public PropertyFileWatcher(@Nullable Path fileToWath) {
+        this(null, fileToWath);
+    }
+
+    public PropertyFileWatcher(@Nullable ReloadingController controllerToNotify, @Nullable Path fileToWath) {
+        this.controller = controllerToNotify;
+        this.file = fileToWath;
+    }
+
+    public void setController(ReloadingController controller) {
+        notSubmittedOrThrow();
+        this.controller = controller;
+    }
+
+    public void setFile(Path file) {
+        notSubmittedOrThrow();
         this.file = file;
-        props = propertiesToKeepUpToDate;
-        PropertyManager.setProperties(props);
     }
 
-    //these constructors create ab instance that adds changes to System.properties
-    public PropertyFileWatcher(Path file) {
-        this(file, new Properties());
+    public Path getFile() {
+        return file;
     }
 
-    public PropertyFileWatcher(String file) {
-        this(Paths.get(file));
-    }
-
-
-    public boolean isStopped() {
+    public boolean isStopping() {
         return stop.get();
     }
 
-    public void stopThread() {
+    public void stop() {
         stop.set(true);
     }
 
-    private boolean putAll(Properties properties) {
-        boolean putted = false;
-        for (String key : properties.stringPropertyNames()) {
-            Object nu = properties.getProperty(key);
-            Object old = props.put(key, nu);
-            if (old == null || !old.equals(nu)) {
-                PropertyManager.setProperty(key, nu);
-                putted = true;
-            }
-        }
-        return putted;
-    }
-
-    public void notifyListeners() {
-        notifyListeners(false);
-    }
-
-    public void notifyListeners(final boolean forceReload) {
-        try (final InputStream in = Files.newInputStream(file, StandardOpenOption.READ)) {
-            final Properties properties = new Properties();
-            properties.load(in);
-            if (putAll(properties) || forceReload) {
-                for (PropertyFileListener listener : listeners) {
-                    listener.propertiesFileChanged(props);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void notifyController() {
+        controller.checkForReloading(null);
     }
 
     private final LinkedHashSet<PropertyFileListener> listeners = new LinkedHashSet<>();
@@ -86,19 +68,14 @@ public class PropertyFileWatcher extends Thread {
         try (WatchService watcher = FileSystems.getDefault().newWatchService()) {
             Path path = file.getParent();
             path.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY);
-            notifyListeners(true);
+            notifyController();
 
-            while (!isStopped()) {
-                WatchKey key;
-                try {
-                    key = watcher.poll(25, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    return;
-                }
-                if (key == null) {
-                    Thread.yield();
+            while (!isStopping()) {
+                Thread.yield();
+                final WatchKey key = watcher.poll();
+
+                if (key == null)
                     continue;
-                }
 
                 for (WatchEvent<?> event : key.pollEvents()) {
                     WatchEvent.Kind<?> kind = event.kind();
@@ -108,22 +85,24 @@ public class PropertyFileWatcher extends Thread {
                     Path filename = ev.context();
 
                     if (kind == StandardWatchEventKinds.OVERFLOW) {
-                        Thread.yield();
                         continue;
                     } else if (kind == java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
                             && filename.toString().equals(file.getFileName().toString())) {
-                        notifyListeners();
+                        notifyController();
                     }
-                    boolean valid = key.reset();
-                    if (!valid) {
-                        break;
-                    }
-                }
-                Thread.yield();
-            }
 
+                    if (!key.reset())
+                        break;
+                }
+            }
         } catch (Throwable e) {
             LoggerFactory.getLogger(this.getClass()).error("FileWatcher Error", e);
         }
+    }
+
+    @Override
+    protected Object compute() throws Exception {
+        run();
+        return null;
     }
 }
