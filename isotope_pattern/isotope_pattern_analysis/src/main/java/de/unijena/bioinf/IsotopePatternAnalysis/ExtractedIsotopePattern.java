@@ -31,7 +31,7 @@ public class ExtractedIsotopePattern implements DataAnnotation {
     }
 
     public boolean hasPattern() {
-        return pattern!=null;
+        return pattern!=null && !pattern.isEmpty();
     }
 
     public SimpleSpectrum getPattern() {

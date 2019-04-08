@@ -182,9 +182,13 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             } else {
                 if (NOT_AVAILABLE.matcher(value).matches()) return;
                 if (keyword.equalsIgnoreCase("INCHI")) {
-                    spec.inchi = value;
+                    if (!value.equalsIgnoreCase("n/a") && !value.equalsIgnoreCase("na")) {
+                        spec.inchi = value;
+                    }
                 } else if (keyword.equalsIgnoreCase("SMILES")) {
-                    spec.smiles = value;
+                    if (!value.equalsIgnoreCase("n/a") && !value.equalsIgnoreCase("na"))  {
+                        spec.smiles = value;
+                    }
                 } else if (keyword.equalsIgnoreCase("NAME") || keyword.equalsIgnoreCase("TITLE")) {
                     spec.name = value;
                 } else {

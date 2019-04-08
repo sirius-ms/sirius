@@ -3,6 +3,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.sirius.ProcessedInput;
 
@@ -41,7 +42,7 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
     }
 
     @Override
-    public Object prepare(ProcessedInput input) {
+    public Object prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
         return null;
     }
 
@@ -63,6 +64,7 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
         if (sourceIon.equals(naIon) && targetIon.equals(hIon) ) {
             MolecularFormula F = loss.getFormula();
             if (F.isEmpty()) return Double.NEGATIVE_INFINITY;
+
             // first: correct loss size error
             final double wrongLossSize = lossSizeScorer.scoring(input.getMergedPeaks().get(loss.getSource().getPeakId()).getMass() - input.getMergedPeaks().get(loss.getTarget().getPeakId()).getMass());
 
