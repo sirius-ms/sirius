@@ -7,12 +7,12 @@ import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.connection_pooling.ConnectionPool;
 import de.unijena.bioinf.fingerid.connection_pooling.PoolFunction;
 import de.unijena.bioinf.fingerid.connection_pooling.PooledConnection;
 import de.unijena.bioinf.fingerid.connection_pooling.PooledDB;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import gnu.trove.list.array.TShortArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
@@ -28,9 +28,9 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     // temporary switch
     public static final boolean USE_NEW_FINGERPRINTS = true;
 
-    private final static String STRUCTURES_TABLE = USE_NEW_FINGERPRINTS ? "tmp.structures" : "structures";
-    private final static String FINGERPRINT_TABLE = USE_NEW_FINGERPRINTS ? "tmp.fingerprints" : "fingerprints";
-    private final static String FINGERPRINT_ID = USE_NEW_FINGERPRINTS ? "2" : "1";
+    public final static String STRUCTURES_TABLE = USE_NEW_FINGERPRINTS ? "tmp.structures" : "structures";
+    public final static String FINGERPRINT_TABLE = USE_NEW_FINGERPRINTS ? "tmp.fingerprints" : "fingerprints";
+    public final static String FINGERPRINT_ID = USE_NEW_FINGERPRINTS ? "2" : "1";
 
     private static final int DEFAULT_SQL_CAPACITY = 5;
     protected static final Logger log = LoggerFactory.getLogger(ChemicalDatabase.class);
@@ -74,6 +74,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     }
 
 
+
     private void setup() {
         // check for system variables -> we do not want defaults because it is secret
         if (host == null)
@@ -83,7 +84,6 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         if (password == null)
             this.password = PropertyManager.getProperty("de.unijena.bioinf.fingerid.chemical_db.password");
     }
-
     /**
      * initialize a chemical database connection using the given authentification values
      *
