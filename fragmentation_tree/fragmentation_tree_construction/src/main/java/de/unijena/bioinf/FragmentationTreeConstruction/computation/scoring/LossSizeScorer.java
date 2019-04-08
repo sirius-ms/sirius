@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
 import de.unijena.bioinf.ChemistryBase.math.LogNormalDistribution;
+import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
@@ -129,7 +130,7 @@ public class LossSizeScorer implements LossScorer, PeakPairScorer, MolecularForm
     }
 
     @Override
-    public Object prepare(ProcessedInput input) {
+    public Object prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
         return null;
     }
 

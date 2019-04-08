@@ -39,6 +39,12 @@ public final class FragmentAnnotation<T extends DataAnnotation> {
         return nullElement.get();
     }
 
+    public T get(Fragment vertex, Supplier<T> defaultValue) {
+        final T val = (T) (vertex.getAnnotation(id));
+        if (val==null) return defaultValue.get();
+        else return val;
+    }
+
     public T get(Fragment vertex) {
         final T val = (T) (vertex.getAnnotation(id));
         if (val==null && nullElement!=null) {

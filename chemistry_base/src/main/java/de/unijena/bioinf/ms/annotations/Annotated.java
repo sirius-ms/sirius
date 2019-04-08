@@ -79,9 +79,15 @@ public interface Annotated<A extends DataAnnotation> {
     /**
      * Set the annotation with the given key
      *
+     * TODO: cannot set this value to null, due to ConcurrentHashMap =/ We might want to build a workaround for that!
+     *
+     *
      * @return true if there was no previous value for this annotation
      */
     default <T extends A> boolean setAnnotation(Class<T> klass, T value) {
+        if (value==null) {
+            return annotations().map.remove(klass)!=null;
+        }
         final T val = (T) annotations().map.put((Class<A>) klass, value);
         return val != null;
     }

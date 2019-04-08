@@ -44,6 +44,16 @@ public class ProcessedPeak extends Peak {
         this.originalPeaks = Collections.emptyList();
     }
 
+    public int getIndexOfMostIntensiveOriginalPeak() {
+        if (originalPeaks.isEmpty()) return -1;
+        int best = 0;
+        for (int k=1; k < originalPeaks.size(); ++k) {
+            if (originalPeaks.get(k).getIntensity() > originalPeaks.get(best).getIntensity())
+                best=k;
+        }
+        return best;
+    }
+
     public ProcessedPeak clone() {
         return new ProcessedPeak(this);
     }

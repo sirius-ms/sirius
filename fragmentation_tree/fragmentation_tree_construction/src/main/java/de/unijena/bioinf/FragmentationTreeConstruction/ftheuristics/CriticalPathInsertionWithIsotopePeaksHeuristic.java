@@ -59,6 +59,7 @@ public class CriticalPathInsertionWithIsotopePeaksHeuristic extends CriticalPath
 
             final Fragment f = tree.addFragment(fragmentsByFormula.get(L.getSource().getFormula()), L.getTarget());
             f.getIncomingEdge().setWeight(L.getWeight());
+            f.setPeakId(L.getTarget().getPeakId());
             fragmentsByFormula.put(f.getFormula(), f);
             score += L.getWeight();
         }
@@ -83,6 +84,7 @@ public class CriticalPathInsertionWithIsotopePeaksHeuristic extends CriticalPath
                     score += weight;
                     init = tree.addFragment(init, MolecularFormula.emptyFormula(), PrecursorIonType.unknown().getIonization());
                     init.getIncomingEdge().setWeight(weight);
+                    init.setPeakId(xs.get(i).getTarget().getPeakId());
                 }
             }
         }
