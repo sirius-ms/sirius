@@ -22,6 +22,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.sirius.ProcessedInput;
 
@@ -38,7 +39,7 @@ public class PureCarbonNitrogenLossScorer implements LossScorer<Element[]> {
     }
 
     @Override
-    public Element[] prepare(ProcessedInput input) {
+    public Element[] prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
         final PeriodicTable T = PeriodicTable.getInstance();
         return new Element[]{T.getByName("Cl"), T.getByName("K"),T.getByName("Na")};
     }

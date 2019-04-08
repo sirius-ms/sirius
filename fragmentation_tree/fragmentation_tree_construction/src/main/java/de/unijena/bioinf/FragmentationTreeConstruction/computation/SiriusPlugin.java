@@ -47,6 +47,14 @@ public abstract class SiriusPlugin {
 
     }
 
+    /**
+     * set to true if anything in your plugin clashs with the reduction heuristics
+     * @return
+     */
+    public boolean isGraphReductionForbidden(){
+        return false;
+    }
+
     public static class PluginInitializer {
 
         protected final FragmentationPatternAnalysis analysis;

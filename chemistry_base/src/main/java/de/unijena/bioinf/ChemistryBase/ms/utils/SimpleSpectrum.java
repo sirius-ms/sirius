@@ -29,6 +29,12 @@ import java.util.Arrays;
  */
 public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectrum{
 
+	private static SimpleSpectrum EMPTY = new SimpleSpectrum(new double[0], new double[0]);
+
+	public static SimpleSpectrum empty() {
+		return EMPTY;
+	}
+
 	protected final int hash;
 	
 	public SimpleSpectrum(double[] masses, double[] intensities) {

@@ -33,4 +33,10 @@ public interface MutableSpectrum<T extends Peak> extends Spectrum<T> {
 
     void swap(int index1, int index2);
 
+    default void clear() {
+        for (int k=size()-1; k >= 0; --k) {
+            removePeakAt(k);
+        }
+    }
+
 }

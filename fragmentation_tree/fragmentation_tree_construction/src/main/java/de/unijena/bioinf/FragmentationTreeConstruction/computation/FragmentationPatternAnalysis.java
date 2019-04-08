@@ -377,6 +377,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 final Decomposition f = scored.get(j);
                 for (DecompositionScorer<?> scorer : rootScorers) {
                     score += ((DecompositionScorer<Object>) scorer).score(f.getCandidate(),f.getIon(), input.getParentPeak(), input, preparations.get(k++));
+                    if (!Double.isFinite(score)) {
+                        throw new RuntimeException(score + " is not finite.");
+                    }
                 }
                 scored.set(j, new Decomposition(scored.get(j).getCandidate(), scored.get(j).getIon(), score));
 
@@ -698,7 +701,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                         input.getParentPeak(), Collections.singletonList(candidate)),ionModes,validator);
         graph.setAnnotation(PrecursorIonType.class, PrecursorIonType.getPrecursorIonType(candidate.getIon()));
         siriusPlugins.values().forEach(p->p.afterGraphBuilding(input,graph));
-        siriusPlugins.values().forEach(p->p.afterGraphBuilding(input,graph));
         siriusPlugins.values().forEach(p->p.transferAnotationsFromInputToGraph(input,graph));
         final FGraph scoredGraph = performGraphScoring(input, graph);
         siriusPlugins.values().forEach(p->p.afterGraphScoring(input,scoredGraph));
@@ -799,6 +801,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
     public FGraph performGraphReduction(FGraph fragments, double lowerbound) {
         if(reduction==null) return fragments;
+        for (SiriusPlugin plugin : siriusPlugins.values()) {
+            if (plugin.isGraphReductionForbidden()) {
+                return fragments;
+            }
+        }
         return reduction.reduce(fragments, lowerbound);
     }
 
@@ -862,8 +869,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final Object[] preparedLoss = new Object[lossScorers.size()];
         final Object[] preparedFrag = new Object[decompositionScorers.size()];
         final PrecursorIonType ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
-        final FragmentAnnotation<Ms2IsotopePattern> msMsIso = tree.getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
-        final FragmentAnnotation<Ms1IsotopePattern> msIso1 = tree.getFragmentAnnotationOrNull(Ms1IsotopePattern.class);
         final String[] fragmentScores;
         final String[] lossScores;
         final String[] rootScores;
@@ -879,7 +884,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 fragScores.add(fragmentHeader.define(getScoringMethodName(peakScorer)));
                 preparedFrag[i++] = peakScorer.prepare(input);
             }
-            if (msMsIso!=null) fragScores.add(fragmentHeader.define(getScoringMethodName(new IsotopePatternInMs2Scorer())));
             fragmentScores = fragScores.toArray(new String[fragScores.size()]);
         }
         {
@@ -890,7 +894,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             int i=0;
             for (LossScorer lossScorer : this.lossScorers) {
                 lScores.add(lossHeader.define(getScoringMethodName(lossScorer)));
-                preparedLoss[i++] = lossScorer.prepare(input);
+                preparedLoss[i++] = lossScorer.prepare(input,tree);
             }
             lossScores = lScores.toArray(new String[lScores.size()]);
         }
@@ -918,7 +922,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             for (int i=0; i < peakPairScorers.size(); ++i) {
                 pseudoMatrix[0][0]=pseudoMatrix[0][1]=pseudoMatrix[1][0]=pseudoMatrix[1][1]=0.0d;
                 peakPairScorers.get(i).score(Arrays.asList(peaks.get(v.getPeakId()), peaks.get(u.getPeakId())), input,pseudoMatrix);
-                lscore.set(lossScores[k++], pseudoMatrix[1][0]);
+                lscore.set(lossScores[k++], lossShouldBeScoredbyPeakPairScorers(loss) ? pseudoMatrix[1][0] : 0d);
             }
             for (int i=0; i < lossScorers.size(); ++i) {
                 lscore.set(lossScores[k++], lossScorers.get(i).score(loss, input, preparedLoss[i]));
@@ -936,13 +940,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             for (int i=0; i < decompositionScorers.size(); ++i) {
                 fscore.set(fragmentScores[k++], ((DecompositionScorer<Object>) decompositionScorers.get(i)).score(v.getFormula(),v.getIonization(), peaks.get(v.getPeakId()), input, preparedFrag[i]));
             }
-
-            double isoScore = 0d;
-            if (msMsIso!=null && msMsIso.get(v)!=null) {
-                isoScore += msMsIso.get(v).getScore();
-            }
-            if (isoScore>0)
-                fscore.set(fragmentScores[k++], isoScore);
 
             fAno.set(v, fscore.done());
         }
@@ -970,7 +967,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             lossScore += s.sum();
             scoreSum += lossScore;
             if (Math.abs(lossScore-l.getWeight()) > 1e-4) {
-                LoggerFactory.getLogger(FragmentationPatternAnalysis.class).warn("Score difference: loss " + l.toString() + " should have score " + lossScore + " but edge is weighted with " + l.getWeight() + ", loss is " + lAno.get(l) + " and fragment is " + fAno.get(l.getTarget()));
+                LoggerFactory.getLogger(FragmentationPatternAnalysis.class).warn("Score difference: loss " + l.toString() + " (" + l.getSource().getFormula().toString() + " -> " + l.getTarget().getFormula().toString() + ") should have score " + lossScore + " but edge is weighted with " + l.getWeight() + ", loss is " + lAno.get(l) + " and fragment is " + fAno.get(l.getTarget()));
             }
         }
         scoreSum += fAno.get(root).sum();
@@ -995,25 +992,28 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final Object[] precomputeds = new Object[lossScorers.length];
         final FragmentAnnotation<Decomposition> decompositionFragmentAnnotation = graph.getFragmentAnnotationOrThrow(Decomposition.class);
         //final FragmentAnnotation<ProcessedPeak> peakAno = graph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
-        for (int i = 0; i < precomputeds.length; ++i) precomputeds[i] = lossScorers[i].prepare(input);
+        for (int i = 0; i < precomputeds.length; ++i) precomputeds[i] = lossScorers[i].prepare(input,graph);
         while (edges.hasNext()) {
             final Loss loss = edges.next();
+            final boolean isArtificial = loss.isArtificial();
             final Fragment u = loss.getSource();
             final Fragment v = loss.getTarget();
             // take score of molecular formula
-            double score = decompositionFragmentAnnotation.get(v).getScore();
+            final Decomposition decomp = decompositionFragmentAnnotation.get(v);
+            double score = decomp==null ? 0d : decomp.getScore();
             assert !Double.isInfinite(score);
             // add it to score of the peak
             score += peakScores[v.getColor()];//peakScores[peakAno.get(v).getIndex()];
             assert !Double.isInfinite(score);
             // add it to the score of the peak pairs
-            if (!u.isRoot())
-                score += peakPairScores[u.getColor()][v.getColor()];//peakPairScores[peakAno.get(u).getIndex()][peakAno.get(v).getIndex()]; // TODO: Umdrehen!
+            if (!u.isRoot() && lossShouldBeScoredbyPeakPairScorers(loss))
+                score +=  peakPairScores[u.getColor()][v.getColor()];//peakPairScores[peakAno.get(u).getIndex()][peakAno.get(v).getIndex()]; // TODO: Umdrehen!
             assert !Double.isInfinite(score);
             // add the score of the loss
             if (!u.isRoot()) {
                 for (int i = 0; i < lossScorers.length; ++i) {
-                    score += lossScorers[i].score(loss, input, precomputeds[i]);
+                    if (!isArtificial || lossScorers[i].processArtificialEdges())
+                        score += lossScorers[i].score(loss, input, precomputeds[i]);
                 }
             }
             if (Double.isInfinite(score)) {
@@ -1023,6 +1023,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             loss.setWeight(score);
         }
         return graph;
+    }
+
+    private boolean lossShouldBeScoredbyPeakPairScorers(Loss loss) {
+        return !loss.isArtificial();
     }
 
     public boolean isScoringIsotopes(ProcessedInput input) {
@@ -1106,6 +1110,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 u.setPeakId(peakIndex);
                 if (peakIndex>=0) {
                     peakAno.set(u, input.getMergedPeaks().get(peakIndex).toAnnotatedPeak(u.getFormula(),PrecursorIonType.getPrecursorIonType(u.getIonization()), rec));
+                } else {
+                    peakAno.set(u, AnnotatedPeak.artificial(u.getFormula(), u.getIonization()));
                 }
             } else {
                 System.err.println("unknown node " + u);

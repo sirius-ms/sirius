@@ -40,6 +40,12 @@ public final class LossAnnotation<T extends DataAnnotation> {
         return nullElement.get();
     }
 
+    public T get(Loss loss, Supplier<T> defaultValue) {
+        final T val = (T) (loss.getAnnotation(id));
+        if (val==null) return defaultValue.get();
+        else return val;
+    }
+
     public T get(Loss loss) {
         final T val = (T) (loss.getAnnotation(id));
         if (val==null && nullElement!=null) {
