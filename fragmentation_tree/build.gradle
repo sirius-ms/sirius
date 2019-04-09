@@ -16,3 +16,9 @@ subprojects {
         testCompile project(':io')
     }
 }
+
+allprojects {
+    dependencies {
+        annotationProcessor project(':default_properties:processor')
+    }
+}
