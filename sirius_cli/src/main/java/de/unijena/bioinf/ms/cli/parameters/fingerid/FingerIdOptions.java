@@ -36,11 +36,12 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
     public boolean fingeridInfo;
 
     @Option(names = {"-d", "--db ", "--fingerid-db", "--fingerid_db", "--fingeriddb"}, description = "search structure in given database. By default the same database for molecular formula search is also used for structure search. If no database is used for molecular formula search, PubChem is used for structure search.")/*Accepts also a filepath to a valid database directory.*/
-    public String fingerIdDb;
+    public void setDatabase(String name) throws Exception {
+        defaultConfigOptions.changeOption("StructureSearchDB", name);
+    }
 
 
-
-    @Option(names = {"--fingerid-predictors", "-P"}, description = "Predictors used to search structure with CSI:FingerID")
+    @Option(names = {"--fingerid-predictors", "-P"}, description = "Predictors used to search structure with CSI:FingerID", hidden = true)
     public List<UserDefineablePredictorType> getPredictors = Collections.singletonList(UserDefineablePredictorType.CSI_FINGERID);
 
 

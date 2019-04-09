@@ -1,21 +1,22 @@
 package de.unijena.bioinf.ms.cli.parameters;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.ms.MsFileConfig;
+import de.unijena.bioinf.fingerid.FormulaWhiteListJob;
+import de.unijena.bioinf.fingerid.db.annotation.FormulaSearchDB;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.io.projectspace.ProjectSpaceConfig;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.sirius.ExperimentResult;
-
-import java.util.Map;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 
 public class AddConfigsJob extends InstanceJob {
-    protected final Map<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> configInstances;
     private ParameterConfig cliConfig;
 
-    public AddConfigsJob(ParameterConfig cliConfig, Map<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> configInstances) {
-        this.configInstances = configInstances;
+    public AddConfigsJob(ParameterConfig cliConfig) {
         this.cliConfig = cliConfig;
     }
 
@@ -34,8 +35,9 @@ public class AddConfigsJob extends InstanceJob {
         if (exp.hasAnnotation(MsFileConfig.class))
             baseConfig = baseConfig.newIndependentInstance(exp.getAnnotation(MsFileConfig.class).config);
 
-        exp.addAnnotationsFrom(configInstances);
+        //fill all annotations
         exp.setAnnotation(FinalConfig.class, new FinalConfig(baseConfig));
+        exp.addAnnotationsFrom(baseConfig, Ms2ExperimentAnnotation.class);
 
         return expRes;
     }
