@@ -8,9 +8,6 @@ import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.CSVExporter;
 import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.fingerid.db.custom.CustomDatabase;
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.fingerid.webapi.VersionsInfo;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
@@ -121,22 +118,6 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                 //readConfidence
                 if (expInfo.containsKey("csi_confidence"))
                     fingerIdResult.setConfidence(Double.valueOf(expInfo.get("csi_confidence")));
-
-                final String db = expInfo.get("searched_db");
-                if (db != null && !db.equals("unknown")) {
-                    if (db.equals(SearchableDatabases.getPubchemDb().name())) {
-                        fingerIdResult.setAnnotation(SearchableDatabase.class, SearchableDatabases.getPubchemDb());
-                    } else if (db.equals(SearchableDatabases.getBioDb().name())) {
-                        fingerIdResult.setAnnotation(SearchableDatabase.class, SearchableDatabases.getBioDb());
-                    } else { //custom dbs
-                        for (CustomDatabase customDatabase : SearchableDatabases.getCustomDatabases()) {
-                            if (customDatabase.name().equals(db)) {
-                                fingerIdResult.setAnnotation(SearchableDatabase.class, customDatabase);
-                                break;
-                            }
-                        }
-                    }
-                }
             }
             env.leaveDirectory();
         }
@@ -169,16 +150,9 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                 if (f != null && f.getPredictedFingerprint() != null) {
                     writeFingerprint(result, f.getPredictedFingerprint(), writer);
 
-                    final String db;
-                    if (f.hasAnnotation(SearchableDatabase.class))
-                        db = f.getAnnotation(SearchableDatabase.class).name();
-                    else db = "unknown";
-
                     //write additional information
                     writer.write(FingerIdLocations.FINGERID_FINGERPRINT_INFO.fileName(result), w -> {
                         w.write("confidence\t" + f.getConfidence());
-                        w.write(System.lineSeparator());
-                        w.write("searched_db\t" + db);
                         w.write(System.lineSeparator());
                         w.flush();
                     });
