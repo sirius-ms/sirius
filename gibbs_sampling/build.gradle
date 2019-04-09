@@ -6,3 +6,9 @@ dependencies() {
     compile group: "org.openscience.cdk", name: "cdk-data", version: "$cdk_version"
     compile group: "org.openscience.cdk", name: "cdk-formula", version: "$cdk_version"
 }
+
+allprojects {
+    dependencies {
+        annotationProcessor project(':default_properties:processor')
+    }
+}

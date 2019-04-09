@@ -1,6 +1,6 @@
 dependencies {
+    annotationProcessor project(':default_properties:processor')
     compile project(':default_properties:annotations')
-    compile project(':default_properties:processor')
     compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
 
     compile group: 'com.google.code.gson', name: 'gson', version: "$gson_version"

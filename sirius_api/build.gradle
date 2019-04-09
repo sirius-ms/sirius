@@ -1,6 +1,6 @@
 dependencies {
+    annotationProcessor project(':default_properties:processor')
     compile project(':default_properties:annotations')
-    compile project(':default_properties:processor')
     compile project(':chemistry_base')
     compile project(':isotope_pattern:isotope_pattern_analysis')
     compile project(':isotope_pattern:sirius_isotopes')

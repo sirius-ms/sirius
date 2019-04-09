@@ -293,8 +293,14 @@ public final class ParameterConfig {
         Map<Class<A>, A> defaultInstances = new ConcurrentHashMap<>();
         keys.forEachRemaining(classKey -> {
             Class<?> cls = getClassFromKey(classKey);
+            if (cls == null)
+                throw new IllegalArgumentException("Could not found a class for key: " + classKey);
             if (annotationType.isAssignableFrom(cls)) {
-                defaultInstances.put((Class<A>) cls, (A) createInstanceWithDefaults(cls));
+                A instance = (A) createInstanceWithDefaults(cls);
+                if (instance == null)
+                    throw new IllegalArgumentException("Could not create instance for: " + cls.getName());
+
+                defaultInstances.put((Class<A>) cls, instance);
             }
         });
         return defaultInstances;
