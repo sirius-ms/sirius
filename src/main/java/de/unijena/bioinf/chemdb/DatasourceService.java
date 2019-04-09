@@ -129,20 +129,4 @@ public class DatasourceService {
             if (s.name.equalsIgnoreCase(name)) return s;
         return null;
     }
-
-
-    public final static String CONSIDER_ALL_FORMULAS = "all";
-    public static Map<String, Long> getAliasMap() {
-        final HashMap<String, Long> aliasMap = new HashMap<>();
-        for (DatasourceService.Sources source : DatasourceService.Sources.values()) {
-            aliasMap.put(source.name.toLowerCase(), source.searchFlag);
-        }
-        aliasMap.put("biocyc", DatasourceService.Sources.METACYC.flag);
-        aliasMap.put("bio", DatasourceService.Sources.BIO.searchFlag);
-        aliasMap.put("unpd", DatasourceService.Sources.UNDP.flag);
-
-        aliasMap.put(CONSIDER_ALL_FORMULAS, 0L);
-
-        return aliasMap;
-    }
 }
