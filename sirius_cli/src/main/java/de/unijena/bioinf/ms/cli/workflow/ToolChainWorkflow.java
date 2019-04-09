@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.cli.workflow;
 
-import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.cli.parameters.AddConfigsJob;
 import de.unijena.bioinf.ms.cli.parameters.DataSetJob;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class ToolChainWorkflow implements Workflow {
@@ -27,7 +25,6 @@ public class ToolChainWorkflow implements Workflow {
 
     protected int initialInstanceNum, maxBufferSize = 0;
 
-    //todo we need the buffer infos here
     public ToolChainWorkflow(SiriusProjectSpace projectSpace, Iterator<ExperimentResult> inputIterator, ParameterConfig parameters, List<Object> toolchain) {
         this.project = projectSpace;
         this.inputIterator = inputIterator;
@@ -39,11 +36,11 @@ public class ToolChainWorkflow implements Workflow {
     @Override
     public void run() {
         try {
-            final Map<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> parameterInstancesCache =
-                    parameters.createInstancesWithDefaults(Ms2ExperimentAnnotation.class);
+//            final Map<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> parameterInstancesCache =
+//                    parameters.createInstancesWithDefaults(Ms2ExperimentAnnotation.class); //todo cache instances???
             final List<InstanceJob.Factory> instanceJobChain = new ArrayList<>(toolchain.size());
             //job factory for job that add config annotations to an instance
-            instanceJobChain.add(() -> new AddConfigsJob(parameters, parameterInstancesCache));
+            instanceJobChain.add(() -> new AddConfigsJob(parameters));
 
             //other jobs
             for (Object o : toolchain) {

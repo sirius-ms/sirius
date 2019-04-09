@@ -18,6 +18,8 @@
 package de.unijena.bioinf.ms.cli.parameters.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
+import de.unijena.bioinf.fingerid.db.SearchableDatabase;
+import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.ms.cli.InputIterator;
 import de.unijena.bioinf.ms.cli.parameters.InputProvider;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
@@ -105,7 +107,9 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
     }
 
     @Option(names = {"-d", "--db"}, description = "Search formulas in given database: all, pubchem, bio, kegg, hmdb")
-    public String database;
+    public void setDatabase(String name) throws Exception {
+        defaultConfigOptions.changeOption("FormulaSearchDB", name);
+    }
 
     @Option(names = {"-f", "--formula", "--formulas"}, description = "Specify the neutral molecular formula of the measured compound to compute its tree or a list of candidate formulas the method should discriminate. Omit this option if you want to consider all possible molecular formulas")
     public void setFormulaWhiteList(List<String> formulaWhiteList) throws Exception {
@@ -215,7 +219,8 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
 
     @Override
     public InstanceJob.Factory<SiriusSubToolJob> call() throws Exception {
-        return () -> new SiriusSubToolJob(siriusProvider);
+        return () -> new SiriusSubToolJob(this);
     }
+
 
 }
