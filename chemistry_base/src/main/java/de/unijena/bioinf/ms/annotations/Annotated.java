@@ -4,7 +4,6 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.ParameterizedType;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -166,8 +165,7 @@ public interface Annotated<A extends DataAnnotation> {
      *
      * @param config from which the annotations will be add
      */
-    default void setAnnotationsFrom(ParameterConfig config) {
-        final Class<A> clz = (Class<A>) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+    default void setAnnotationsFrom(ParameterConfig config, Class<A> clz) {
         config.createInstancesWithDefaults(clz).forEach(this::setAnnotation);
     }
 
@@ -198,8 +196,7 @@ public interface Annotated<A extends DataAnnotation> {
      *
      * @param config from which the annotations will be add
      */
-    default void addAnnotationsFrom(ParameterConfig config) {
-        final Class<A> clz = (Class<A>) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+    default void addAnnotationsFrom(ParameterConfig config, Class<A> clz) {
         config.createInstancesWithDefaults(clz).forEach(this::addAnnotationIfAbsend);
     }
 
@@ -210,7 +207,7 @@ public interface Annotated<A extends DataAnnotation> {
      * So we can implement all annotation functionality within this interface
      * instead of each class separately.
      */
-    class Annotations<Annotation> implements Cloneable, Iterable<Class<Annotation>> {
+    final class Annotations<Annotation> implements Cloneable, Iterable<Class<Annotation>> {
         private final Map<Class<Annotation>, Annotation> map;
 
         public Annotations() {
