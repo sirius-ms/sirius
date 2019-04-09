@@ -2,14 +2,12 @@ package de.unijena.bioinf.ms.cli.parameters.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
 import de.unijena.bioinf.ms.cli.parameters.Provide;
 import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterConfigLoader;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -32,7 +30,7 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
         this.defaultConfigOptions = defaultConfigOptions;
     }
 
-    @Option(names = {"--info", "--webservice-info", "-W"}, description = "information about connection of CSI:FingerID Webservice")
+    @Option(names = {"--info", "--webservice-info"}, description = "information about connection of CSI:FingerID Webservice")
     public boolean fingeridInfo;
 
     @Option(names = {"-d", "--db ", "--fingerid-db", "--fingerid_db", "--fingeriddb"}, description = "search structure in given database. By default the same database for molecular formula search is also used for structure search. If no database is used for molecular formula search, PubChem is used for structure search.")/*Accepts also a filepath to a valid database directory.*/
@@ -40,10 +38,10 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
         defaultConfigOptions.changeOption("StructureSearchDB", name);
     }
 
-
-    @Option(names = {"--fingerid-predictors", "-P"}, description = "Predictors used to search structure with CSI:FingerID", hidden = true)
-    public List<UserDefineablePredictorType> getPredictors = Collections.singletonList(UserDefineablePredictorType.CSI_FINGERID);
-
+    @Option(names = {"-p", "--structure-predictors"}, description = "Predictors used to search structures. Currently only CSI:FingerID is working.", hidden = true)
+    public void setPredictors(List<String> predictors) throws Exception {
+        defaultConfigOptions.changeOption("StructurePredictors", predictors);
+    }
 
     // candidates
     @Option(names = {"-c", "--candidates"}, description = "Number of molecular structure candidates in the output.")
@@ -56,9 +54,9 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
     public File getPredict();
     */
 
-    protected Set<MolecularFormula> getFormulaWhitesetWithDB(Ms2Experiment experiment) {
+    /*protected Set<MolecularFormula> getFormulaWhitesetWithDB(Ms2Experiment experiment) {
         //todo this should be a remote job we should just annotate that we want to recompute the white list
-        /*final String dbOptName = database.toLowerCase();
+        *//*final String dbOptName = database.toLowerCase();
         FingerIdInstanceProcessor fingerIdInstanceProcessor = new FingerIdInstanceProcessor();
         //todo may create extra DB class
         final HashMap<String, Long> aliasMap = fingerIdInstanceProcessor.getDatabaseAliasMap();
@@ -115,9 +113,9 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
                         allowedSet.add(f.getFormula());
             }
         }
-        return allowedSet;*/
+        return allowedSet;*//*
         return null;
-    }
+    }*/
 
     @Override
     public InstanceJob.Factory<FingeridSubToolJob> call() throws Exception {
