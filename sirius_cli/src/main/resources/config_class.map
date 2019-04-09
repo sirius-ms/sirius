@@ -1,3 +1,4 @@
+FormulaIdentificationsThreshold=de.unijena.bioinf.fingerid.FormulaIdentificationsThreshold
 NumberOfStructureCandidates=de.unijena.bioinf.fingerid.NumberOfStructureCandidates
 FormulaSearchDB=de.unijena.bioinf.fingerid.db.annotation.FormulaSearchDB
 StructureSearchDB=de.unijena.bioinf.fingerid.db.annotation.StructureSearchDB
@@ -5,6 +6,8 @@ StructureSearchDB=de.unijena.bioinf.fingerid.db.annotation.StructureSearchDB
 AlgorithmProfile=de.unijena.bioinf.sirius.Profile
 
 IsotopeHandlingMs2=de.unijena.bioinf.FragmentationTreeConstruction.computation.IsotopeInMs2Handling
+
+StructurePredictors=de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation
 
 NoiseThresholdSettings=de.unijena.bioinf.sirius.annotations.NoiseThresholdSettings
 
