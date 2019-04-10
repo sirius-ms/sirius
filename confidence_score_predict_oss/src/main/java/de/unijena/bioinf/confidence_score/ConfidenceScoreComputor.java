@@ -2,29 +2,21 @@ package de.unijena.bioinf.confidence_score;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
-import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.confidence_score.features.*;
 import de.unijena.bioinf.confidence_score.svm.SVMPredict;
 import de.unijena.bioinf.confidence_score.svm.SVMUtils;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
-import de.unijena.bioinf.fingerid.blast.Fingerblast;
-import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.Map;
 
 /**
  * Created by martin on 20.06.18.
@@ -32,33 +24,23 @@ import java.util.List;
 public class ConfidenceScoreComputor {
 
 
-    HashMap<String,TrainedSVM> trainedSVMs;
-    PredictionPerformance[] performances;
+    private final Map<String, TrainedSVM> trainedSVMs;
+    private final CovarianceScoring covarianceScoring;
+    private final CSIFingerIdScoring csiFingerIdScoring;
+
 
     //TODO: IdentificationResult is onyl for SIRIUS, not FingerID, so cant use it as tophit (needed at all?)
 
-    public ConfidenceScoreComputor(HashMap<String,TrainedSVM> trainedsvms, PredictionPerformance[] performances){
-
+    public ConfidenceScoreComputor(@NotNull Map<String, TrainedSVM> trainedsvms, @NotNull CovarianceScoring covarianceScoring, CSIFingerIdScoring csiFingerIDScoring) {
         this.trainedSVMs=trainedsvms;
-
-
-
-
+        this.covarianceScoring = covarianceScoring;
+        this.csiFingerIdScoring = csiFingerIDScoring;
     }
 
-   public PredictionPerformance[] getPerformances(){
-        return performances;
-   }
 
-
-
-    public double compute_confidence(Ms2Experiment exp, Scored<FingerprintCandidate>[] ranked_candidates,  CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, CSIFingerIdScoring csiscoring, CovarianceScoring covscore, long flags){
-
+    public double compute_confidence(Ms2Experiment exp, Scored<FingerprintCandidate>[] allCandidates, Scored<FingerprintCandidate>[] filteredCandidates, CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idResult) {
 
         String ce = "nothing";
-
-
-
         for(Ms2Spectrum spec : exp.getMs2Spectra()){
 
             if(ce.equals("nothing")) {
@@ -71,35 +53,25 @@ public class ConfidenceScoreComputor {
 
         }
 
-
-
         //TODO: Is covariance scoring the one used already?
+        //todo: we could you an annotation of  the identification result? like idResult.getAnnotation(FingerprintScorerType.class)
 
-        Scored<FingerprintCandidate>[] ranked_candidates_covscore = ranked_candidates;
+        Scored<FingerprintCandidate>[] ranked_candidates_covscore = allCandidates;
 
 
-        Scored<FingerprintCandidate>[] ranked_candidates_csiscore = new Scored[ranked_candidates.length];
+        Scored<FingerprintCandidate>[] ranked_candidates_csiscore = new Scored[allCandidates.length];
         ArrayList<Scored<FingerprintCandidate>> candlist = new ArrayList<>();
 
-        csiscoring.prepare(query.getFingerprint());
+        csiFingerIdScoring.prepare(query.getFingerprint());
 
-        for(int i=0;i<ranked_candidates.length;i++){
+        for (int i = 0; i < allCandidates.length; i++)
+            candlist.add(new Scored<>(allCandidates[i].getCandidate(), csiFingerIdScoring.score(query.getFingerprint(), allCandidates[i].getCandidate().getFingerprint())));
 
-
-            candlist.add(new Scored<>(ranked_candidates[i].getCandidate(),csiscoring.score(query.getFingerprint(),ranked_candidates[i].getCandidate().getFingerprint())));
-
-
-
-
-        }
 
         Collections.sort(candlist);
 
-        for(int i=0;i<candlist.size();i++){
+        for (int i = 0; i < candlist.size(); i++)
             ranked_candidates_csiscore[i]=candlist.get(i);
-        }
-
-
 
 
         CombinedFeatureCreator comb = new CombinedFeatureCreator();
@@ -111,45 +83,33 @@ public class ConfidenceScoreComputor {
         String dbType="bio";
 
 
-
+        long flags = 0L; //todo change to filtered list.
+        System.out.println("################ Replace Flags with filtered list############");
         if(flags==0){
-
-           comb= new CombinedFeatureCreatorALL(ranked_candidates_csiscore,ranked_candidates_covscore,performances,covscore);
+            comb = new CombinedFeatureCreatorALL(ranked_candidates_csiscore, ranked_candidates_covscore, csiFingerIdScoring.getPerfomances(), covarianceScoring);
             dbType="all";
-
         }
 
         if((flags&4294967292L)!=0 && flags!=2){
-
             if(ranked_candidates_covscore.length>1) {
-
-
-                comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore,ranked_candidates_covscore,performances,covscore);
-
+                comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, csiFingerIdScoring.getPerfomances(), covarianceScoring);
             }else {
-                comb =  new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore,ranked_candidates_covscore,performances,covscore);
+                comb = new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, csiFingerIdScoring.getPerfomances(), covarianceScoring);
                 distanceType="noDistance";
             }
         }
 
-        TrainedSVM svm = trainedSVMs.get(dbType+""+distanceType+""+ce);
+        TrainedSVM svm = trainedSVMs.get(dbType + "" + distanceType + "" + ce); //todo there should be global variable or enums for these identifiers.
 
+        comb.prepare(csiFingerIdScoring.getPerfomances());
 
-
-        comb.prepare(performances);
-
-
-
-        double[] feature = comb.computeFeatures(query,idresult,flags);
-
+        double[] feature = comb.computeFeatures(query, idResult, flags);
 
         double[][]featureMatrix= new double[1][feature.length];
 
         featureMatrix[0]=feature;
 
         SVMPredict predict = new SVMPredict();
-
-
 
         SVMUtils utils = new SVMUtils();
 
