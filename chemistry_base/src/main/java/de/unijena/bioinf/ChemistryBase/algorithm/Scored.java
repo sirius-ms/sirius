@@ -1,10 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.algorithm;
 
-import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
-
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 
 public class Scored<T> implements Comparable<Scored<T>> {
 
