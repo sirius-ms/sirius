@@ -1,15 +1,21 @@
 package de.unijena.bioinf.ms.cli.parameters.fingerid;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.confidence_score.ConfidenceScoreComputor;
+import de.unijena.bioinf.fingerid.CSIPredictor;
+import de.unijena.bioinf.fingerid.TrainingStructuresPerPredictor;
+import de.unijena.bioinf.fingerid.TrainingStructuresSet;
+import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
 import de.unijena.bioinf.ms.cli.parameters.Provide;
 import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
+import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
@@ -21,10 +27,12 @@ import java.util.concurrent.Callable;
  */
 @CommandLine.Command(name = "fingerid", aliases = {"F"}, description = "Identify molecular structure for each compound Individually using CSI:FingerID.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
 public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSubToolJob>> {
-//    private SiriusOptions siriusOptions;
-//    private Sirius siriusAPI; //todo fill me
-
     protected final DefaultParameterConfigLoader defaultConfigOptions;
+    protected CSIPredictor positivePredictor = null;
+    protected CSIPredictor negativePredictor = null;
+    protected TrainingStructuresSet positiveTrainingStructures = null;
+    protected TrainingStructuresSet negativeTrainingStructures = null;
+    protected ConfidenceScoreComputor confidenceScoreComputor = null;
 
     public FingerIdOptions(DefaultParameterConfigLoader defaultConfigOptions) {
         this.defaultConfigOptions = defaultConfigOptions;
@@ -53,6 +61,40 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
     @Option(description = "output predicted fingerprint")
     public File getPredict();
     */
+
+
+    @Override
+    public InstanceJob.Factory<FingeridSubToolJob> call() throws Exception {
+
+        initDatabasesAndVersionInfo();
+        initConfidence();
+        return () -> new FingeridSubToolJob(this);
+    }
+
+    private void initDatabasesAndVersionInfo() throws IOException {
+        positivePredictor = new CSIPredictor(PredictorType.CSI_FINGERID_POSITIVE, ApplicationCore.WEB_API);
+        negativePredictor = new CSIPredictor(PredictorType.CSI_FINGERID_NEGATIVE, ApplicationCore.WEB_API);
+        positivePredictor.initialize();
+        negativePredictor.initialize();
+        //download training structures
+        positiveTrainingStructures = TrainingStructuresPerPredictor.getInstance().getTrainingStructuresSet(PredictorType.CSI_FINGERID_POSITIVE, ApplicationCore.WEB_API);
+        negativeTrainingStructures = TrainingStructuresPerPredictor.getInstance().getTrainingStructuresSet(PredictorType.CSI_FINGERID_NEGATIVE, ApplicationCore.WEB_API);
+    }
+
+    protected void initConfidence(PredictionPerformance[] performances) {
+        try {
+            //todo do we need negative an positive, if we do it like this??
+            //todo maybe we should move the confidence computer to the CSI-Predictor
+            confidenceScoreComputor = new ConfidenceScoreComputor(ApplicationCore.WEB_API.getTrainedConfidence(), ApplicationCore.WEB_API.getCovarianceScoring(), new CSIFingerIdScoring());
+            System.out.println("initialized");
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        }
+
+
+    }
+
 
     /*protected Set<MolecularFormula> getFormulaWhitesetWithDB(Ms2Experiment experiment) {
         //todo this should be a remote job we should just annotate that we want to recompute the white list
@@ -117,10 +159,7 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
         return null;
     }*/
 
-    @Override
-    public InstanceJob.Factory<FingeridSubToolJob> call() throws Exception {
-        return FingeridSubToolJob::new;
-    }
+
 
 
 
