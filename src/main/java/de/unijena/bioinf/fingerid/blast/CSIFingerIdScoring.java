@@ -4,7 +4,7 @@ import de.unijena.bioinf.ChemistryBase.fp.*;
 
 public class CSIFingerIdScoring implements FingerblastScoring {
 
-    private PredictionPerformance performances[];
+    private PredictionPerformance[] performances;
     private double[] tp,fp,tn,fn;
     private double[] logOneMinusRecall, logOneminusSpecificity;
     private double alpha;
@@ -25,6 +25,10 @@ public class CSIFingerIdScoring implements FingerblastScoring {
             logOneminusSpecificity[k] = Math.log(1d - this.performances[k].getSpecitivity());
         }
 
+    }
+
+    public PredictionPerformance[] getPerfomances() {
+        return performances;
     }
 
     public double getThreshold() {
