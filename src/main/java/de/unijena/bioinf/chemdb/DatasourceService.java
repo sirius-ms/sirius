@@ -20,8 +20,10 @@ package de.unijena.bioinf.chemdb;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 /**
@@ -38,10 +40,6 @@ public class DatasourceService {
             bioflag |= (1L<<i);
         }
         BIOFLAG = bioflag;
-    }
-
-    public static boolean isBio(long flags) {
-        return (flags & BIOFLAG) != 0;
     }
 
     public enum Sources {
@@ -67,9 +65,13 @@ public class DatasourceService {
         ECOCYCMINE("EcoCyc Mine", 17179869184L, null,null, 17179869184L | 2048L),
         YMDBMINE("YMDB Mine", 34359738368L, null,null, 34359738368L | 65536L);
 
-        public final long flag; public final String name; public final String sqlQuery;
+
+        public final long flag;
+        public final String name;
+        public final String sqlQuery;
         public final long searchFlag;
         public final String URI;
+
         Sources(String name, long flag, String sqlQuery, String uri) {
             this(name,flag,sqlQuery,uri,flag);
         }
@@ -93,6 +95,36 @@ public class DatasourceService {
 
     }
 
+    private static final Map<String, String> SOURCES_ALIAS_MAP = new ConcurrentHashMap<>();
+
+    public static Map<String, String> getSourcesAliasMap() {
+        return Collections.unmodifiableMap(SOURCES_ALIAS_MAP);
+    }
+
+    public static Iterable<String> getAliasNames(){
+        return Collections.unmodifiableSet(SOURCES_ALIAS_MAP.keySet());
+    }
+
+    static {
+        for (Sources value : Sources.values())
+            SOURCES_ALIAS_MAP.put(value.name.toLowerCase(), value.name);
+
+        SOURCES_ALIAS_MAP.put("biocyc", Sources.METACYC.name);
+        SOURCES_ALIAS_MAP.put("bio", Sources.BIO.name);
+        SOURCES_ALIAS_MAP.put("unpd", Sources.UNDP.name);
+    }
+
+    public static String cleanSourceName(@NotNull final String name) {
+        return SOURCES_ALIAS_MAP.get(name.toLowerCase());
+    }
+
+    public static boolean containsSource(@NotNull final String name) {
+        return cleanSourceName(name) != null;
+    }
+
+    public static boolean isBio(long flags) {
+        return (flags & BIOFLAG) != 0;
+    }
 
     public static Multimap<String, String> getLinkedDataSources(CompoundCandidate candidate) {
         Set<String> names = getDataSourcesFromBitFlags(candidate.getBitset());
@@ -124,9 +156,9 @@ public class DatasourceService {
         return set;
     }
 
-    public static DatasourceService.Sources getFromName(String name) {
-        for (Sources s : Sources.values())
-            if (s.name.equalsIgnoreCase(name)) return s;
-        return null;
+    public static DatasourceService.Sources getFromName(@NotNull final String name) {
+        final String cleanName = cleanSourceName(name);
+        if (cleanName == null) return null;
+        return Sources.valueOf(cleanName);
     }
 }
