@@ -84,7 +84,11 @@ identify the elemental composition of the sample molecule. SIRIUS can be
 downloaded either as graphical user interface (see Sirius GUI) or as
 command-line tool.
 
+<!--begin cite-->
 ## Main citations
+Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker, 
+[Sirius 4: turning tandem mass spectra into metabolite structure information](https://doi.org/10.1038/s41592-019-0344-8), 
+*Nat methods*, 16, 2019.
 
 Kai Dührkop and Sebastian Böcker. [Fragmentation trees
 reloaded.](http://dx.doi.org/10.1007/978-3-319-16706-0_10)  *J
@@ -144,6 +148,8 @@ tandem mass
 spectra](http://bioinformatics.oxfordjournals.org/content/24/16/i49.abstract).
 *Bioinformatics* (2008) 24 (16): i49-i55. (The very *first paper to
 mention fragmentation trees* as used by SIRIUS)
+
+<!--end cite-->
 
 ## License
 
