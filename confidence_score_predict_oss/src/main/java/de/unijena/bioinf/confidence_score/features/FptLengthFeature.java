@@ -24,10 +24,10 @@ public class FptLengthFeature implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
         double[] length =  new double[1];
 
-        length[0]= query.getFingerprint().asDeterministic().cardinality();
+        length[0]= query.asDeterministic().cardinality();
 
         return length;
     }
@@ -38,7 +38,7 @@ public class FptLengthFeature implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return false;
     }
 

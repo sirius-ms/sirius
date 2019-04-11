@@ -42,12 +42,12 @@ public class ScoreDiffScorerFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
         double[] distance = new double[1];
 
-        scoring.prepare(query.getFingerprint());
+        scoring.prepare(query);
 
-        distance[0]=Math.abs(scoring.score(query.getFingerprint(),best_hit_scorer1.getCandidate().getFingerprint())-scoring.score(query.getFingerprint(),best_hit_scorer2.getCandidate().getFingerprint()));
+        distance[0]=Math.abs(scoring.score(query,best_hit_scorer1.getCandidate().getFingerprint())-scoring.score(query,best_hit_scorer2.getCandidate().getFingerprint()));
 
 
 
@@ -61,7 +61,7 @@ public class ScoreDiffScorerFeatures implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return false;
     }
 

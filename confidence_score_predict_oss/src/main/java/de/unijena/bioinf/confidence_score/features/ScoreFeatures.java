@@ -42,7 +42,7 @@ public class ScoreFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult,long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult,long flags) {
 
         utils= new Utils();
         if(this.flags==-1)this.flags=flags;
@@ -54,8 +54,8 @@ public class ScoreFeatures implements FeatureCreator {
         final FingerprintCandidate topHit = rankedCandidates[0].getCandidate();
         final double[] scores = new double[1];
 
-        scoring.prepare(query.getFingerprint());
-        scores[0] = scoring.score(query.getFingerprint(), topHit.getFingerprint());
+        scoring.prepare(query);
+        scores[0] = scoring.score(query, topHit.getFingerprint());
 
         return scores;
     }
@@ -66,7 +66,7 @@ public class ScoreFeatures implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return rankedCandidates.length>0;
     }
 

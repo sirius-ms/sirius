@@ -24,12 +24,12 @@ public class PredictionQualityFeatures implements FeatureCreator{
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
 
         double[] qualityReturn = new double[1];
 
         double quality=0;
-        double[] prob_fpt= query.getFingerprint().toProbabilityArray();
+        double[] prob_fpt= query.toProbabilityArray();
 
         for(int i=0;i<prob_fpt.length;i++){
             quality+=Math.max(1-prob_fpt[i],prob_fpt[i]);
@@ -54,7 +54,7 @@ public class PredictionQualityFeatures implements FeatureCreator{
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return false;
     }
 

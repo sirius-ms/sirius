@@ -20,7 +20,7 @@ public class TreeFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query,  IdentificationResult idresult,long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult,long flags) {
 
         double[] scores= new double[4];
         TreeStatistics current_tree_scores =  idresult.getRawTree().getAnnotationOrThrow(TreeStatistics.class);
@@ -40,7 +40,7 @@ public class TreeFeatures implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return false;
     }
 
