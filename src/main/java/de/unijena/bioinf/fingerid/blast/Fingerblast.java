@@ -8,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.SearchStructureByFormula;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,11 +40,20 @@ public class Fingerblast {
         this.scoringMethod = scoringMethod;
     }
 
-    public List<Scored<FingerprintCandidate>> search(MolecularFormula formula, ProbabilityFingerprint fingerprint) throws ChemicalDatabaseException {
-        List<FingerprintCandidate> candidates = searchEngine.lookupStructuresAndFingerprintsByFormula(formula);
-        return score(candidates, fingerprint);
+    public List<Scored<FingerprintCandidate>> search(@NotNull MolecularFormula formula, @NotNull ProbabilityFingerprint fingerprint) throws ChemicalDatabaseException {
+        return search(searchEngine, scoringMethod, formula, fingerprint);
     }
-    public List<Scored<FingerprintCandidate>> score(List<FingerprintCandidate> candidates, ProbabilityFingerprint fingerprint) throws ChemicalDatabaseException {
+
+    public List<Scored<FingerprintCandidate>> score(@NotNull List<FingerprintCandidate> candidates, @NotNull ProbabilityFingerprint fingerprint) throws ChemicalDatabaseException {
+        return score(scoringMethod, candidates, fingerprint);
+    }
+
+    public static List<Scored<FingerprintCandidate>> search(@NotNull final SearchStructureByFormula searchEngine, @NotNull final FingerblastScoringMethod scoringMethod, @NotNull final MolecularFormula formula, @NotNull final ProbabilityFingerprint fingerprint) throws ChemicalDatabaseException {
+        final List<FingerprintCandidate> candidates = searchEngine.lookupStructuresAndFingerprintsByFormula(formula);
+        return score(scoringMethod, candidates, fingerprint);
+    }
+
+    public static List<Scored<FingerprintCandidate>> score(@NotNull final FingerblastScoringMethod scoringMethod, @NotNull final List<FingerprintCandidate> candidates, @NotNull final ProbabilityFingerprint fingerprint) {
         final ArrayList<Scored<FingerprintCandidate>> results = new ArrayList<>();
         MaskedFingerprintVersion mask = null;
         if (fingerprint.getFingerprintVersion() instanceof MaskedFingerprintVersion) mask = (MaskedFingerprintVersion)fingerprint.getFingerprintVersion();

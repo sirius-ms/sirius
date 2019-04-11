@@ -40,7 +40,7 @@ public class ScoringMethodFactory {
         }
 
         @Override
-        public FingerblastScoring getScoring() {
+        public CSIFingerIdScoring getScoring() {
             return new CSIFingerIdScoring(performances);
         }
     }
@@ -53,7 +53,7 @@ public class ScoringMethodFactory {
         }
 
         @Override
-        public FingerblastScoring getScoring() {
+        public ProbabilityEstimateScoring getScoring() {
             return new ProbabilityEstimateScoring(performances);
         }
     }
@@ -66,7 +66,7 @@ public class ScoringMethodFactory {
         }
 
         @Override
-        public FingerblastScoring getScoring() {
+        public SimpleMaximumLikelihoodScoring getScoring() {
             return new SimpleMaximumLikelihoodScoring(performances);
         }
     }
