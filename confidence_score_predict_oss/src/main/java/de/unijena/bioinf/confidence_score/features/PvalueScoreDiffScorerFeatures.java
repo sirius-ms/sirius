@@ -52,14 +52,14 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
         double[] pvalueScore = new double[2];
 
 
         if(this.flags==-1)this.flags=flags;
-        scoring.prepare(query.getFingerprint());
+        scoring.prepare(query);
 
-        double score = scoring.score(query.getFingerprint(),best_hit_scorer.getCandidate().getFingerprint());
+        double score = scoring.score(query,best_hit_scorer.getCandidate().getFingerprint());
 
         Scored<FingerprintCandidate> current = new Scored<FingerprintCandidate>(best_hit_scorer.getCandidate(),score);
 
@@ -83,7 +83,7 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return false;
     }
 

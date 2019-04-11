@@ -17,11 +17,11 @@ public interface FeatureCreator extends Parameterized {
     void prepare(PredictionPerformance[] statistics);
 
 
-    double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags);
+    double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags);
 
     int getFeatureSize();
 
-    boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates);
+    boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates);
 
     int getRequiredCandidateSize();
 

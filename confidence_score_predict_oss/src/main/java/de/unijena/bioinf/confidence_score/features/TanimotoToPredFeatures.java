@@ -60,7 +60,7 @@ public class TanimotoToPredFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
 
 
         utils= new Utils();
@@ -79,7 +79,7 @@ public class TanimotoToPredFeatures implements FeatureCreator {
 
 
 
-            scores[0] = rankedCandidates[0].getCandidate().getFingerprint().tanimoto(query.getFingerprint().asDeterministic());
+            scores[0] = rankedCandidates[0].getCandidate().getFingerprint().tanimoto(query.asDeterministic());
 
 
         return scores;
@@ -94,7 +94,7 @@ public class TanimotoToPredFeatures implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return false;
     }
 

@@ -1,7 +1,6 @@
 package de.unijena.bioinf.confidence_score;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
@@ -21,7 +20,7 @@ import java.util.Map;
 /**
  * Created by martin on 20.06.18.
  */
-public class ConfidenceScoreComputor {
+public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
 
 
     private final Map<String, TrainedSVM> trainedSVMs;
@@ -31,15 +30,14 @@ public class ConfidenceScoreComputor {
 
     //TODO: IdentificationResult is onyl for SIRIUS, not FingerID, so cant use it as tophit (needed at all?)
 
-    public ConfidenceScoreComputor(@NotNull Map<String, TrainedSVM> trainedsvms, @NotNull CovarianceScoring covarianceScoring, CSIFingerIdScoring csiFingerIDScoring) {
+    public CSICovarianceConfidenceScorer(@NotNull Map<String, TrainedSVM> trainedsvms, @NotNull CovarianceScoring covarianceScoring, CSIFingerIdScoring csiFingerIDScoring) {
         this.trainedSVMs=trainedsvms;
         this.covarianceScoring = covarianceScoring;
         this.csiFingerIdScoring = csiFingerIDScoring;
     }
 
 
-    public double compute_confidence(Ms2Experiment exp, Scored<FingerprintCandidate>[] allCandidates, Scored<FingerprintCandidate>[] filteredCandidates, CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idResult) {
-
+    public double computeConfidence(Ms2Experiment exp, Scored<FingerprintCandidate>[] allCandidates, Scored<FingerprintCandidate>[] filteredCandidates, ProbabilityFingerprint query, IdentificationResult idResult) {
         String ce = "nothing";
         for(Ms2Spectrum spec : exp.getMs2Spectra()){
 
@@ -49,8 +47,6 @@ public class ConfidenceScoreComputor {
                 ce= "ramp";
                 break;
             }
-
-
         }
 
         //TODO: Is covariance scoring the one used already?
@@ -62,10 +58,10 @@ public class ConfidenceScoreComputor {
         Scored<FingerprintCandidate>[] ranked_candidates_csiscore = new Scored[allCandidates.length];
         ArrayList<Scored<FingerprintCandidate>> candlist = new ArrayList<>();
 
-        csiFingerIdScoring.prepare(query.getFingerprint());
+        csiFingerIdScoring.prepare(query);
 
         for (int i = 0; i < allCandidates.length; i++)
-            candlist.add(new Scored<>(allCandidates[i].getCandidate(), csiFingerIdScoring.score(query.getFingerprint(), allCandidates[i].getCandidate().getFingerprint())));
+            candlist.add(new Scored<>(allCandidates[i].getCandidate(), csiFingerIdScoring.score(query, allCandidates[i].getCandidate().getFingerprint())));
 
 
         Collections.sort(candlist);
@@ -118,14 +114,6 @@ public class ConfidenceScoreComputor {
         utils.normalize_features(featureMatrix,svm.scales);
 
         return predict.predict_confidence(featureMatrix,svm)[0];
-
-
-
-
-
-
-
-
     }
 
 

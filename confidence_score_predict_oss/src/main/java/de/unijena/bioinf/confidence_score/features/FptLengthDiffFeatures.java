@@ -31,10 +31,10 @@ public class FptLengthDiffFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
         double[] diff = new double[1];
 
-        diff[0]=Math.abs(ranked_candidates[0].getCandidate().getFingerprint().cardinality()-query.getFingerprint().asDeterministic().cardinality());
+        diff[0]=Math.abs(ranked_candidates[0].getCandidate().getFingerprint().cardinality() - query.asDeterministic().cardinality());
 
         return diff;
     }
@@ -45,7 +45,7 @@ public class FptLengthDiffFeatures implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return false;
     }
 

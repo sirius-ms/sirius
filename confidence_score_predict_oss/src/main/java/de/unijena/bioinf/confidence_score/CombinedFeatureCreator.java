@@ -48,7 +48,7 @@ public class CombinedFeatureCreator implements FeatureCreator{
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query,  IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult, long flags) {
 
         computed_features= new double[getFeatureSize()];
         int pos = 0;
@@ -65,7 +65,7 @@ public class CombinedFeatureCreator implements FeatureCreator{
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         for (FeatureCreator featureCreator : featureCreators) {
             if (!featureCreator.isCompatible(query, rankedCandidates)) return false;
         }
