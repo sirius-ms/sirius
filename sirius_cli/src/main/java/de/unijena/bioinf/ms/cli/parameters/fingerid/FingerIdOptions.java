@@ -1,20 +1,11 @@
 package de.unijena.bioinf.ms.cli.parameters.fingerid;
 
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
-import de.unijena.bioinf.confidence_score.ConfidenceScoreComputor;
-import de.unijena.bioinf.fingerid.CSIPredictor;
-import de.unijena.bioinf.fingerid.TrainingStructuresPerPredictor;
-import de.unijena.bioinf.fingerid.TrainingStructuresSet;
-import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.cli.parameters.InstanceJob;
 import de.unijena.bioinf.ms.cli.parameters.Provide;
 import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -28,11 +19,7 @@ import java.util.concurrent.Callable;
 @CommandLine.Command(name = "fingerid", aliases = {"F"}, description = "Identify molecular structure for each compound Individually using CSI:FingerID.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
 public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
-    protected CSIPredictor positivePredictor = null;
-    protected CSIPredictor negativePredictor = null;
-    protected TrainingStructuresSet positiveTrainingStructures = null;
-    protected TrainingStructuresSet negativeTrainingStructures = null;
-    protected ConfidenceScoreComputor confidenceScoreComputor = null;
+
 
     public FingerIdOptions(DefaultParameterConfigLoader defaultConfigOptions) {
         this.defaultConfigOptions = defaultConfigOptions;
@@ -65,110 +52,9 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
 
     @Override
     public InstanceJob.Factory<FingeridSubToolJob> call() throws Exception {
-
-        initDatabasesAndVersionInfo();
-        initConfidence();
-        return () -> new FingeridSubToolJob(this);
-    }
-
-    private void initDatabasesAndVersionInfo() throws IOException {
-        positivePredictor = new CSIPredictor(PredictorType.CSI_FINGERID_POSITIVE, ApplicationCore.WEB_API);
-        negativePredictor = new CSIPredictor(PredictorType.CSI_FINGERID_NEGATIVE, ApplicationCore.WEB_API);
-        positivePredictor.initialize();
-        negativePredictor.initialize();
-        //download training structures
-        positiveTrainingStructures = TrainingStructuresPerPredictor.getInstance().getTrainingStructuresSet(PredictorType.CSI_FINGERID_POSITIVE, ApplicationCore.WEB_API);
-        negativeTrainingStructures = TrainingStructuresPerPredictor.getInstance().getTrainingStructuresSet(PredictorType.CSI_FINGERID_NEGATIVE, ApplicationCore.WEB_API);
-    }
-
-    protected void initConfidence(PredictionPerformance[] performances) {
-        try {
-            //todo do we need negative an positive, if we do it like this??
-            //todo maybe we should move the confidence computer to the CSI-Predictor
-            confidenceScoreComputor = new ConfidenceScoreComputor(ApplicationCore.WEB_API.getTrainedConfidence(), ApplicationCore.WEB_API.getCovarianceScoring(), new CSIFingerIdScoring());
-            System.out.println("initialized");
-        } catch (Exception e) {
-            e.printStackTrace();
-
-        }
-
-
+        return FingeridSubToolJob::new;
     }
 
 
-    /*protected Set<MolecularFormula> getFormulaWhitesetWithDB(Ms2Experiment experiment) {
-        //todo this should be a remote job we should just annotate that we want to recompute the white list
-        *//*final String dbOptName = database.toLowerCase();
-        FingerIdInstanceProcessor fingerIdInstanceProcessor = new FingerIdInstanceProcessor();
-        //todo may create extra DB class
-        final HashMap<String, Long> aliasMap = fingerIdInstanceProcessor.getDatabaseAliasMap();
-        final SearchableDatabase searchableDatabase = fingerIdInstanceProcessor.getDatabase();
-        final long flag;
 
-        if (aliasMap.containsKey(dbOptName)) {
-            flag = aliasMap.get(dbOptName).longValue() == DatasourceService.Sources.BIO.flag ? 0 : aliasMap.get(dbOptName);
-        } else {
-            flag = 0L;
-        }
-        final Deviation dev;
-        if (siriusOptions.ppmMax != null) dev = new Deviation(siriusOptions.ppmMax);
-        else
-            dev = siriusAPI.getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation();
-        final Set<PrecursorIonType> allowedIonTypes = new HashSet<>();
-        if (experiment.getPrecursorIonType() == null || experiment.getPrecursorIonType().isIonizationUnknown()) {
-            allowedIonTypes.addAll(experiment.getAnnotation(PossibleAdducts.class).getAdducts());
-        } else {
-            allowedIonTypes.add(experiment.getPrecursorIonType());
-        }
-        final FormulaConstraints allowedAlphabet;
-        if (siriusOptions.elements != null) allowedAlphabet = siriusOptions.elements;
-        else
-            allowedAlphabet = new FormulaConstraints("CHNOPSBBrClIF"); //todo can we move this to args parsing as default
-
-        List<List<FormulaCandidate>> candidates = new ArrayList<>();
-        try {
-            if (searchableDatabase.searchInBio()) {
-                try (final RESTDatabase db = WebAPI.INSTANCE.getRESTDb(BioFilter.ONLY_BIO, fingerIdInstanceProcessor.bioDatabase.getDatabasePath())) {
-                    candidates.addAll(db.lookupMolecularFormulas(experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
-                }
-            }
-            if (searchableDatabase.searchInPubchem()) {
-                try (final RESTDatabase db = WebAPI.INSTANCE.getRESTDb(BioFilter.ONLY_NONBIO, fingerIdInstanceProcessor.pubchemDatabase.getDatabasePath())) {
-                    candidates.addAll(db.lookupMolecularFormulas(experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
-                }
-            }
-            if (searchableDatabase.isCustomDb()) {
-                candidates.addAll(fingerIdInstanceProcessor.getFileBasedDb(searchableDatabase).lookupMolecularFormulas(experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
-            }
-        } catch (IOException e) {
-            LoggerFactory.getLogger(this.getClass()).error("Connection to database fails. Probably our webservice is currently offline. You can still use SIRIUS in offline mode - you just have to remove the database flags -d or --database because database search is not available in offline mode.", e);
-            System.exit(1);
-            return null;
-        }
-
-        final HashSet<MolecularFormula> allowedSet = new HashSet<>();
-        for (List<FormulaCandidate> fc : candidates) {
-            for (FormulaCandidate f : fc) {
-                final long bitset = f.getBitset();
-                if (flag == 0 || (bitset & flag) != 0)
-                    if (allowedAlphabet.isSatisfied(f.getFormula()))
-                        allowedSet.add(f.getFormula());
-            }
-        }
-        return allowedSet;*//*
-        return null;
-    }*/
-
-
-
-
-
-  /*  @Override
-    public void setParamatersToExperiment(MutableMs2Experiment experiment) {
-        if (!database.toLowerCase().equals("all")) {
-            Set<MolecularFormula> whiteSet = getFormulaWhitesetWithDB(experiment);
-            if (whiteSet != null)
-                Sirius.setFormulaSearchList(experiment, whiteSet);
-        }
-    }*/
 }
