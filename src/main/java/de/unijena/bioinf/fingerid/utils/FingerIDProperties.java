@@ -10,13 +10,6 @@ import java.nio.file.Paths;
  * All version numbers are directly taken from the build. So there is no more redundant data. Note that version a.b.c-SNAPSHOT lower than a.b.c
  */
 public class FingerIDProperties {
-    /*static {
-        //todo fix
-        //init sirius credentials to global property manager
-        Path creds = Paths.get(System.getProperty("user.home"), "sirius.credentials");
-        PropertyManager.addPropertiesFromFile(creds);
-    }*/
-
 
     public static String fingeridVersion() {
         return PropertyManager.getProperty("de.unijena.bioinf.fingerid.version");
