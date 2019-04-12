@@ -1,10 +1,4 @@
 package de.unijena.bioinf.ms.properties;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius
- * 31.08.17.
- */
-
 
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.apache.commons.configuration2.Configuration;
@@ -14,11 +8,13 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.io.FileHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
@@ -26,6 +22,9 @@ import java.util.LinkedHashSet;
 import java.util.Properties;
 
 /**
+ * Created as part of the SIRIUS
+ * 31.08.17.
+ *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class PropertyManager {
@@ -126,6 +125,13 @@ public class PropertyManager {
         PERSISTENT_PROPERTIES.addConfiguration(persProps.config, persProps.propertiesFile.getAbsolutePath());
         return persProps;
     }
+
+    public static void addPropertiesFromFile(@NotNull Path propertiesFile) throws IOException, ConfigurationException {
+        try (InputStream in = Files.newInputStream(propertiesFile)) {
+            PropertyManager.addPropertiesFromStream(in, propertiesFile.toString());
+        }
+    }
+
 
     public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream input, @Nullable String name, @Nullable String prefixToAdd) throws ConfigurationException {
         final PropertiesConfiguration config = loadConfigurationFromStream(input);
@@ -283,10 +289,13 @@ public class PropertyManager {
         return p;
     }
 
-    /*public static void main(String[] args) throws IOException {
-        PropertyManager.PROPERTIES.get("foo");
-        PropertyManager.addPropertiesFromStream(DefaultPropertyLoader.class.getResourceAsStream("/default.annotation.properties"),PROPERTY_BASE + ".ms");
-        System.out.println(PropertyManager.PROPERTIES);
-    }*/
-
+    public static void loadSiriusCredentials() {
+        Path p = null;
+        try {
+            p = Paths.get(System.getProperty("user.home"), "sirius.credentials");
+            addPropertiesFromFile(p);
+        } catch (IOException | ConfigurationException e) {
+            LoggerFactory.getLogger(PropertyManager.class).error("Could not load Sirius Credentials from: " + p.toString());
+        }
+    }
 }
