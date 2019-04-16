@@ -9,4 +9,11 @@ package de.unijena.bioinf.ms.annotations;
  * - serializable (e.g. by a toString and fromString method)
  */
 public interface DataAnnotation {
+    static <T extends DataAnnotation> String getIdientifier(Class<T> annotationType) {
+        return annotationType.getName();
+    }
+
+    default String getIdientifier() {
+        return getIdientifier(getClass());
+    }
 }
