@@ -2,13 +2,11 @@ import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.ms.io.projectspace.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
-import org.apache.commons.configuration2.CombinedConfiguration;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Properties;
 
 public class ProjectSpaceTest {
 

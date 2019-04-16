@@ -1,5 +1,5 @@
-import de.unijena.bioinf.ms.cli.parameters.RootOptionsCLI;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.parameters.RootOptionsCLI;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import picocli.CommandLine;
 
 public class TestMain {

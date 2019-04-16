@@ -7,7 +7,7 @@ import de.unijena.bioinf.ms.gui.sirius.msviewer.MSViewerPanel;
 import de.unijena.bioinf.ms.gui.sirius.msviewer.MSViewerPanelListener;
 import de.unijena.bioinf.ms.gui.sirius.msviewer.data.ExperimentContainerDataModel;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.SiriusResultElement;
+import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.PanelDescription;
 
@@ -19,7 +19,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
 
-public class SpectraVisualizationPanel extends JPanel implements ActionListener, MSViewerPanelListener, MouseListener, PanelDescription, ActiveElementChangedListener<SiriusResultElement, ExperimentResultBean> {
+public class SpectraVisualizationPanel extends JPanel implements ActionListener, MSViewerPanelListener, MouseListener, PanelDescription, ActiveElementChangedListener<IdentificationResultBean, ExperimentResultBean> {
     @Override
     public String getDescription() {
         return "Spectra visualisation. Peaks that are explained by the Fragmentation tree of the selected molecular formula are highlighted in red";
@@ -150,7 +150,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     }
 
     @Override
-    public void resultsChanged(ExperimentResultBean experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(ExperimentResultBean experiment, IdentificationResultBean sre, List<IdentificationResultBean> resultElements, ListSelectionModel selections) {
         final String selected = (String) spectraSelection.getSelectedItem();
         if (model.changeData(experiment, sre)) {
             spectraSelection.removeActionListener(this);

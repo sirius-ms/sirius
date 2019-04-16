@@ -18,7 +18,7 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
-import de.unijena.bioinf.sirius.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 
 import javax.swing.*;

@@ -5,8 +5,8 @@ package de.unijena.bioinf.ms.gui.settings;
  * 06.10.16.
  */
 
-import de.unijena.bioinf.sirius.core.PasswordCrypter;
-import de.unijena.bioinf.sirius.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.core.PasswordCrypter;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.net.ProxyManager;
 

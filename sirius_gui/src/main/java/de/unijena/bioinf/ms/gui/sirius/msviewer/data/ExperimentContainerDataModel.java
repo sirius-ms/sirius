@@ -8,7 +8,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.SiriusResultElement;
+import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
 
 import javax.swing.*;
 import java.text.DecimalFormat;
@@ -50,7 +50,7 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
         return cbModel;
     }
 
-    public boolean changeData(ExperimentResultBean ec, SiriusResultElement result) {
+    public boolean changeData(ExperimentResultBean ec, IdentificationResultBean result) {
         if (this.ec != ec || (result != null && this.currentResult != result.getResult())) {
             this.ec = ec;
 

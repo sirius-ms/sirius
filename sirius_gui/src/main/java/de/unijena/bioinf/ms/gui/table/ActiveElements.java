@@ -4,7 +4,7 @@ package de.unijena.bioinf.ms.gui.table;/**
  * 30.01.17.
  */
 
-import de.unijena.bioinf.sirius.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)

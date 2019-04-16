@@ -10,7 +10,7 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentList;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.SiriusResultElement;
+import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 
@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaList extends ActionList<SiriusResultElement, ExperimentResultBean> {
+public class FormulaList extends ActionList<IdentificationResultBean, ExperimentResultBean> {
     public final FormulaScoreListStats scoreStats = new FormulaScoreListStats();
     public final DoubleListStats isotopeScoreStats = new DoubleListStats();
     public final DoubleListStats treeScoreStats = new DoubleListStats();
@@ -28,7 +28,7 @@ public class FormulaList extends ActionList<SiriusResultElement, ExperimentResul
     public final DoubleListStats explainedIntensity = new DoubleListStats();
 
     public FormulaList(final ExperimentList compoundList) {
-        super(SiriusResultElement.class);
+        super(IdentificationResultBean.class);
 
         DefaultEventSelectionModel<ExperimentResultBean> m = compoundList.getCompoundListSelectionModel();
         if (!m.isSelectionEmpty()) {
@@ -78,7 +78,7 @@ public class FormulaList extends ActionList<SiriusResultElement, ExperimentResul
         }
 
         //set selection
-        SiriusResultElement sre = null;
+        IdentificationResultBean sre = null;
         if (!elementList.isEmpty()) {
             selectionModel.setSelectionInterval(this.data.getBestHitIndex(), this.data.getBestHitIndex());
             sre = elementList.get(selectionModel.getMinSelectionIndex());
@@ -89,13 +89,13 @@ public class FormulaList extends ActionList<SiriusResultElement, ExperimentResul
     }
 
     private void intiResultList() {
-        List<SiriusResultElement> r = data.getResults();
+        List<IdentificationResultBean> r = data.getResults();
         if (r != null && !r.isEmpty()) {
             double[] scores = new double[r.size()];
             double[] iScores = new double[r.size()];
             double[] tScores = new double[r.size()];
             int i = 0;
-            for (SiriusResultElement element : r) {
+            for (IdentificationResultBean element : r) {
                 elementList.add(element);
                 scores[i] = element.getScore();
                 iScores[i] = element.getResult().getIsotopeScore();
@@ -119,8 +119,8 @@ public class FormulaList extends ActionList<SiriusResultElement, ExperimentResul
     }
 
 
-    public List<SiriusResultElement> getSelectedValues() {
-        List<SiriusResultElement> selected = new ArrayList<>();
+    public List<IdentificationResultBean> getSelectedValues() {
+        List<IdentificationResultBean> selected = new ArrayList<>();
         for (int i = selectionModel.getMinSelectionIndex(); i <= selectionModel.getMaxSelectionIndex(); i++) {
             if (selectionModel.isSelectedIndex(i)) {
                 selected.add(elementList.get(i));

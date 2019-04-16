@@ -9,7 +9,7 @@ import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.CandidateStringMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.DatabaseFilterMatcherEditor;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.sirius.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;

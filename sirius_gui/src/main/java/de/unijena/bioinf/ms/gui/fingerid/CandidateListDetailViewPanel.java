@@ -22,7 +22,7 @@ import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.CSIFingerIDComputation;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.SiriusResultElement;
+import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.PanelDescription;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
@@ -32,7 +32,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class CandidateListDetailViewPanel extends JPanel implements ActiveElementChangedListener<SiriusResultElement, ExperimentResultBean>, PanelDescription {
+public class CandidateListDetailViewPanel extends JPanel implements ActiveElementChangedListener<IdentificationResultBean, ExperimentResultBean>, PanelDescription {
     @Override
     public String getDescription() {
         return "<html>"
@@ -83,7 +83,7 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
     }
 
     @Override
-    public void resultsChanged(ExperimentResultBean ec, SiriusResultElement resultElement, List<SiriusResultElement> sres, ListSelectionModel selection) {
+    public void resultsChanged(ExperimentResultBean ec, IdentificationResultBean resultElement, List<IdentificationResultBean> sres, ListSelectionModel selection) {
         if (resultElement == null)
             layout.show(this, "null");
         else {

@@ -5,7 +5,7 @@ package de.unijena.bioinf.ms.gui.dialogs;
  * 06.10.16.
  */
 
-import de.unijena.bioinf.sirius.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.settings.*;

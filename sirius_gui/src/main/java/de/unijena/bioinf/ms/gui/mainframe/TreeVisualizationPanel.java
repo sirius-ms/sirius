@@ -1,25 +1,24 @@
 package de.unijena.bioinf.ms.gui.mainframe;
 
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
-import de.unijena.bioinf.sirius.core.SiriusProperties;
-import de.unijena.bioinf.sirius.storage.FileFormat;
-import de.unijena.bioinf.myxo.gui.tree.render.NodeColor;
-import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
-import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
-import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
-import de.unijena.bioinf.ms.io.DotIO;
-import de.unijena.bioinf.ms.io.RasterGraphicsIO;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.utils.ReturnValue;
-import de.unijena.bioinf.ms.gui.sirius.SiriusResultElement;
+import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
 import de.unijena.bioinf.ms.gui.sirius.TreeCopyTool;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.PanelDescription;
+import de.unijena.bioinf.ms.gui.utils.ReturnValue;
+import de.unijena.bioinf.ms.io.DotIO;
+import de.unijena.bioinf.ms.io.RasterGraphicsIO;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.myxo.gui.tree.render.NodeColor;
+import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
+import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
+import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -33,7 +32,11 @@ import java.util.List;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
-public class TreeVisualizationPanel extends JPanel implements ActionListener, ActiveElementChangedListener<SiriusResultElement, ExperimentResultBean>, PanelDescription {
+public class TreeVisualizationPanel extends JPanel implements ActionListener, ActiveElementChangedListener<IdentificationResultBean, ExperimentResultBean>, PanelDescription {
+    public enum FileFormat {
+        dot, json, jpg, png, gif, none
+    }
+
     @Override
     public String getDescription() {
         return "Visualisation of the Fragmentation tree for the selected molecular formula";
@@ -47,7 +50,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
     private JButton saveTreeB;
 
 
-    private SiriusResultElement sre;
+    private IdentificationResultBean sre;
 
     public TreeVisualizationPanel() {
         this.sre = null;
@@ -90,7 +93,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
         this.add(pane, BorderLayout.CENTER);
     }
 
-    public void showTree(SiriusResultElement sre) {
+    public void showTree(IdentificationResultBean sre) {
         this.sre = sre;
         if (sre != null) {
             TreeNode root = sre.getTreeVisualization();
@@ -147,7 +150,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             jfc.addChoosableFileFilter(jsonFilter);
 //			jfc.addChoosableFileFilter(new FTreeJsonFilter());
 
-            FileFormat defaultFF = FileFormat.valueOf(PropertyManager.getProperty(SiriusProperties.DEFAULT_TREE_FILE_FORMAT, FileFormat.png.name()));
+            FileFormat defaultFF = FileFormat.valueOf(PropertyManager.getProperty(SiriusProperties.DEFAULT_TREE_FILE_FORMAT, null, FileFormat.png.name()));
 
             if (defaultFF == FileFormat.dot) {
                 jfc.setFileFilter(dotFilter);
@@ -277,7 +280,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
     }
 
     @Override
-    public void resultsChanged(ExperimentResultBean experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(ExperimentResultBean experiment, IdentificationResultBean sre, List<IdentificationResultBean> resultElements, ListSelectionModel selections) {
         if (sre == null || sre.getResult() == null) showTree(null);
         else showTree(sre);
     }
@@ -352,5 +355,8 @@ class FTreeJSONFilter extends FTreeFilter {
         super(".json", "JSON");
     }
 }
+
+
+
 
 

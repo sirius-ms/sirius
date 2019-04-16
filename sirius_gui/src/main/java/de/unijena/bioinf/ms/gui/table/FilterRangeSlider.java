@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.gui.table;
 
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
-import de.unijena.bioinf.sirius.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
 import eu.hansolo.rangeslider.RangeSlider;
 
 import javax.swing.*;

@@ -4,7 +4,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.sirius.ComputingStatus;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.SiriusResultElement;
+import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
@@ -15,7 +15,7 @@ import java.util.*;
 /**
  * Created by fleisch on 15.05.17.
  */
-public class CandidateList extends ActionList<FingerprintCandidateBean, Set<FingerIdResultBean>> implements ActiveElementChangedListener<SiriusResultElement, ExperimentResultBean> {
+public class CandidateList extends ActionList<FingerprintCandidateBean, Set<FingerIdResultBean>> implements ActiveElementChangedListener<IdentificationResultBean, ExperimentResultBean> {
 
     public final DoubleListStats scoreStats;
     public final DoubleListStats logPStats;
@@ -36,7 +36,7 @@ public class CandidateList extends ActionList<FingerprintCandidateBean, Set<Fing
     }
 
     @Override
-    public void resultsChanged(ExperimentResultBean experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selectionModel) {
+    public void resultsChanged(ExperimentResultBean experiment, IdentificationResultBean sre, List<IdentificationResultBean> resultElements, ListSelectionModel selectionModel) {
         //call only from EDT
         elementList.clear();
         scoreStats.reset();
@@ -44,7 +44,7 @@ public class CandidateList extends ActionList<FingerprintCandidateBean, Set<Fing
         tanimotoStats.reset();
 
         data = new HashSet<>();
-        List<SiriusResultElement> formulasToShow = new LinkedList<>();
+        List<IdentificationResultBean> formulasToShow = new LinkedList<>();
 
         switch (selectionType) {
             case ALL:
@@ -63,7 +63,7 @@ public class CandidateList extends ActionList<FingerprintCandidateBean, Set<Fing
         }
 
         List<FingerprintCandidateBean> emChache = new ArrayList<>();
-        for (SiriusResultElement e : formulasToShow) {
+        for (IdentificationResultBean e : formulasToShow) {
             if (e != null && e.getFingerIdComputeState().equals(ComputingStatus.COMPUTED)) {
                 for (int j = 0; j < e.getFingerIdData().getCompounds().length; j++) {
                     FingerprintCandidateBean c = new FingerprintCandidateBean(j + 1, j, e.getFingerIdData(), e.getResult().getPrecursorIonType());

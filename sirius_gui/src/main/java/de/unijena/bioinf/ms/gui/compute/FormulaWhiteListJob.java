@@ -11,7 +11,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import java.util.ArrayList;

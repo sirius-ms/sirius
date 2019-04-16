@@ -30,7 +30,7 @@ public class CheckConnectionAction extends AbstractAction {
         super("Webservice");
         putValue(Action.SHORT_DESCRIPTION, "Check and refresh webservice connection");
 
-        MainFrame.CONECTION_MONITOR.addConectionStateListener(evt -> {
+        MainFrame.CONNECTION_MONITOR.addConectionStateListener(evt -> {
             if (!execAction.get()) {
                 ConnectionMonitor.ConnetionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
                 setIcon(check);
@@ -38,7 +38,7 @@ public class CheckConnectionAction extends AbstractAction {
             }
         });
 
-        Jobs.runInBackround(() -> setIcon(MainFrame.CONECTION_MONITOR.checkConnection()));
+        Jobs.runInBackround(() -> setIcon(MainFrame.CONNECTION_MONITOR.checkConnection()));
     }
 
 
@@ -65,7 +65,7 @@ public class CheckConnectionAction extends AbstractAction {
         TinyBackgroundJJob<ConnectionMonitor.ConnetionCheck> connectionChecker = new TinyBackgroundJJob<ConnectionMonitor.ConnetionCheck>() {
             @Override
             protected ConnectionMonitor.ConnetionCheck compute() throws Exception {
-                return MainFrame.CONECTION_MONITOR.checkConnection();
+                return MainFrame.CONNECTION_MONITOR.checkConnection();
             }
         };
 

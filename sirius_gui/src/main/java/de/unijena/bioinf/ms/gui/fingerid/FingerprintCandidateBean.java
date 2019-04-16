@@ -29,7 +29,7 @@ import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.db.custom.CustomDataSourceService;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.sirius.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
 import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;

@@ -10,7 +10,7 @@ import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.sirius.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
 import de.unijena.bioinf.ms.gui.utils.SearchTextField;
 
 import javax.swing.*;

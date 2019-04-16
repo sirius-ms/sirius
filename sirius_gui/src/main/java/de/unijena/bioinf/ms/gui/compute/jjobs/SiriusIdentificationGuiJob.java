@@ -8,17 +8,17 @@ import de.unijena.bioinf.jjobs.SwingJJobContainer;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.SiriusResultElement;
+import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 
 import java.util.List;
 
 //todo would be nicer to simply extend the sirius identification job, or simply wrap it, but its not a static class
-public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<SiriusResultElement>> implements GuiObservableJJob<List<SiriusResultElement>> {
+public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<IdentificationResultBean>> implements GuiObservableJJob<List<IdentificationResultBean>> {
     final ExperimentResultBean ec;
     final int numberOfCandidates;
     private final Sirius sirius;
-    TextAreaJJobContainer<List<SiriusResultElement>> swingJobContainer;
+    TextAreaJJobContainer<List<IdentificationResultBean>> swingJobContainer;
 
     public SiriusIdentificationGuiJob(String profile, int numberOfCandidates, ExperimentResultBean ec) {
         super(JobType.CPU);
@@ -31,7 +31,7 @@ public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<Si
 
 
     @Override
-    protected List<SiriusResultElement> compute() throws Exception {
+    protected List<IdentificationResultBean> compute() throws Exception {
         final MutableMs2Experiment experiment = ec.getMs2Experiment();
 
         //todo find a nice way to combine progress between subjobs
@@ -60,8 +60,8 @@ public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<Si
     }
 
     @Override
-    public SwingJJobContainer<List<SiriusResultElement>> asSwingJob() {
-        TextAreaJJobContainer<List<SiriusResultElement>> jsw = new TextAreaJJobContainer<>(this, ec.getGUIName(), "Molecular Formula Identification");
+    public SwingJJobContainer<List<IdentificationResultBean>> asSwingJob() {
+        TextAreaJJobContainer<List<IdentificationResultBean>> jsw = new TextAreaJJobContainer<>(this, ec.getGUIName(), "Molecular Formula Identification");
         return jsw;
     }
 }

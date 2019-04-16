@@ -24,7 +24,7 @@ import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.sirius.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
 
 /**
  * This is the wrapper for the FingerIdResult class to interact with the gui

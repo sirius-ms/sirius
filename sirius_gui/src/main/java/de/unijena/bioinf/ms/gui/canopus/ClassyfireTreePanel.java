@@ -12,7 +12,7 @@ import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeNode;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.SiriusResultElement;
+import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +77,7 @@ public class ClassyfireTreePanel extends TreeRenderPanel {
         return null;
     }
 
-    public void updateTree(ExperimentResultBean experiment, SiriusResultElement sre) {
+    public void updateTree(ExperimentResultBean experiment, IdentificationResultBean sre) {
         if (sre == null || sre.getFingerIdData() == null || sre.getFingerIdData().getFingerIdFingerprint() == null) {
             showTree(null);
         } else {
@@ -90,7 +90,7 @@ public class ClassyfireTreePanel extends TreeRenderPanel {
         }
     }
 
-    private void computeCanopus(final SiriusResultElement sre) {
+    private void computeCanopus(final IdentificationResultBean sre) {
         final FingerIdResultBean data = sre.getFingerIdData();
         final ProbabilityFingerprint platts = data.getFingerIdFingerprint();
         final MolecularFormula formula = sre.getMolecularFormula();
