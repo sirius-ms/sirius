@@ -17,6 +17,7 @@ import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -104,6 +105,7 @@ public class SaveWorkspaceAction extends AbstractAction {
                 }, selectedFile);
             } catch (Exception e2) {
                 new ErrorReportDialog(MF, e2.getMessage());
+                LoggerFactory.getLogger(getClass()).error("Error when saving Workspace",e2);
             }
 
         }
