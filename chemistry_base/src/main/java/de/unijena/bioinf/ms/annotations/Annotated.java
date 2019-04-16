@@ -4,9 +4,12 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 public interface Annotated<A extends DataAnnotation> {
@@ -88,6 +91,7 @@ public interface Annotated<A extends DataAnnotation> {
             return annotations().map.remove(klass)!=null;
         }
         final T val = (T) annotations().map.put((Class<A>) klass, value);
+        fireAnnotationChange(val, value);
         return val != null;
     }
 
@@ -103,16 +107,20 @@ public interface Annotated<A extends DataAnnotation> {
     }
 
     /**
-     * Set the annotation with the given key
+     * Compute the annotation with the given key if it is absent.
+     * Return the current value otherwise //todo
      *
      * @return true if there was no previous value for this annotation
      */
     default <T extends A> T computeAnnotationIfAbsent(final Class<T> klass, Supplier<T> defaultValueSupplier) {
-        return (T) annotations().map.computeIfAbsent((Class<A>) klass, (c) -> defaultValueSupplier.get());
+        return (T) annotations().map.computeIfAbsent((Class<A>) klass, (c) -> {
+            T newVal = defaultValueSupplier.get();
+            return fireAnnotationChange(null, newVal);
+        });
     }
 
     /**
-     * Set the annotation with the given key
+     * Set the annotation with the given key //todo
      *
      * @return true if there was no previous value for this annotation
      */
@@ -127,15 +135,20 @@ public interface Annotated<A extends DataAnnotation> {
      * @return the value associated with this key or null if there is no value for this key
      */
 
-    default <T extends A> Object clearAnnotation(Class<T> klass) {
-        return annotations().map.remove(klass);
+    default <T extends A> T clearAnnotation(Class<T> klass) {
+        return (T) fireAnnotationChange(annotations().map.remove(klass), null);
     }
 
     /**
      * Remove all map from this experiment
      */
-    default void clearAllAnnotations() {
-        annotations().map.clear();
+    default void clearAnnotations() {
+        final Iterator<Class<A>> it = annotations().iterator();
+        while (it.hasNext()) {
+            final A old = getAnnotation(it.next());
+            it.remove();
+            fireAnnotationChange(old, null);
+        }
     }
 
     /**
@@ -157,7 +170,7 @@ public interface Annotated<A extends DataAnnotation> {
      * @param annotations annotations to add
      */
     default void setAnnotationsFrom(Map<Class<A>, A> annotations) {
-        this.annotations().map.putAll(annotations);
+        annotations.forEach(this::setAnnotation);
     }
 
     /**
@@ -201,13 +214,48 @@ public interface Annotated<A extends DataAnnotation> {
     }
 
 
+    // delegate change support
+    //todo doc
+    default void addAnnotationChangeListener(PropertyChangeListener listener) {
+        annotations().annotationChangeSupport.addPropertyChangeListener(listener);
+    }
+
+    default <T extends A> void addAnnotationChangeListener(Class<T> annotationToListenOn, PropertyChangeListener listener) {
+        annotations().annotationChangeSupport.addPropertyChangeListener(DataAnnotation.getIdientifier(annotationToListenOn), listener);
+    }
+
+    default void removeAnnotationChangeListener(PropertyChangeListener listener) {
+        annotations().annotationChangeSupport.removePropertyChangeListener(listener);
+    }
+
+    default <T extends A> PropertyChangeListener[] getAnnotationChangeListeners(Class<T> annotationToListenOn) {
+        return annotations().annotationChangeSupport.getPropertyChangeListeners(DataAnnotation.getIdientifier(annotationToListenOn));
+    }
+
+    default <T extends A> T fireAnnotationChange(T oldValue, T newValue) {
+        if (oldValue != null) {
+            annotations().annotationChangeSupport.firePropertyChange(oldValue.getIdientifier(), oldValue, newValue);
+        } else if (newValue != null) {
+            annotations().annotationChangeSupport.firePropertyChange(newValue.getIdientifier(), oldValue, newValue);
+        }
+        return newValue;
+    }
+
+    default boolean hasListeners(String propertyName) {
+        return annotations().annotationChangeSupport.hasListeners(propertyName);
+    }
+
+
+
+
     /**
      * This allows us to hide the annotation map from the outside
      * but inject it from the class that implements the interface.
      * So we can implement all annotation functionality within this interface
      * instead of each class separately.
      */
-    final class Annotations<Annotation> implements Cloneable, Iterable<Class<Annotation>> {
+    final class Annotations<Annotation extends DataAnnotation> implements Cloneable, Iterable<Class<Annotation>> {
+        private final PropertyChangeSupport annotationChangeSupport;
         private final Map<Class<Annotation>, Annotation> map;
 
         public Annotations() {
@@ -215,6 +263,7 @@ public interface Annotated<A extends DataAnnotation> {
         }
 
         private Annotations(Map<Class<Annotation>, Annotation> annotations) {
+            this.annotationChangeSupport = new PropertyChangeSupport(this);
             this.map = annotations;
         }
 
@@ -223,7 +272,7 @@ public interface Annotated<A extends DataAnnotation> {
             return new Annotations<>(cloneMap);
         }
 
-        private <T extends DataAnnotation> T autoInstanceSupplier(Class<T> klass) {
+        private <T extends Annotation> T autoInstanceSupplier(Class<T> klass) {
             if (PropertyManager.DEFAULTS.isInstantiatableWithDefaults(klass))
                 return PropertyManager.DEFAULTS.createInstanceWithDefaults(klass);
             try {
@@ -238,5 +287,10 @@ public interface Annotated<A extends DataAnnotation> {
         public Iterator<Class<Annotation>> iterator() {
             return map.keySet().iterator();
         }
+
+        public void forEach(BiConsumer<? super Class<Annotation>, ? super Annotation> action) {
+            map.forEach(action);
+        }
+
     }
 }
