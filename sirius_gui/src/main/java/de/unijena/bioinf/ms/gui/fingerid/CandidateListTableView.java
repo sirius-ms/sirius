@@ -5,7 +5,7 @@ import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
 import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.SiriusResultElement;
+import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
 import de.unijena.bioinf.ms.gui.table.*;
 
 import javax.swing.*;
@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Created by fleisch on 15.05.17.
  */
-public class CandidateListTableView extends CandidateListView implements ActiveElementChangedListener<SiriusResultElement, ExperimentResultBean> {
+public class CandidateListTableView extends CandidateListView implements ActiveElementChangedListener<IdentificationResultBean, ExperimentResultBean> {
 
     private final ActionTable<FingerprintCandidateBean> table;
     private SortedList<FingerprintCandidateBean> sortedSource;
@@ -50,7 +50,7 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
     }
 
     @Override
-    public void resultsChanged(ExperimentResultBean experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(ExperimentResultBean experiment, IdentificationResultBean sre, List<IdentificationResultBean> resultElements, ListSelectionModel selections) {
         //not used
     }
 }

@@ -16,7 +16,7 @@ import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.ms.io.load.CsvFields;
 import de.unijena.bioinf.ms.io.load.csv.GeneralCSVDialog;
 import de.unijena.bioinf.ms.io.load.csv.SimpleCsvParser;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import org.jdesktop.swingx.JXRadioGroup;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.ReaderFactory;

@@ -6,8 +6,8 @@ package de.unijena.bioinf.ms.gui.dialogs;
  */
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.errorReport.FingerIDWebErrorReporter;
 import de.unijena.bioinf.ms.gui.errorReport.SiriusDefaultErrorReport;
 import de.unijena.bioinf.ms.gui.settings.ErrorReportSettingsPanel;

@@ -10,7 +10,7 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.SiriusResultElement;
+import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 
@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, SiriusResultElement> implements ActiveElementChangedListener<SiriusResultElement, ExperimentResultBean> {
+public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, IdentificationResultBean> implements ActiveElementChangedListener<IdentificationResultBean, ExperimentResultBean> {
 
     protected FingerIdResultBean data;
     protected FingerprintVisualization[] visualizations;
@@ -54,7 +54,7 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Si
     }
 
     @Override
-    public void resultsChanged(ExperimentResultBean experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(ExperimentResultBean experiment, IdentificationResultBean sre, List<IdentificationResultBean> resultElements, ListSelectionModel selections) {
         //no lock all in edt
         elementList.clear();
         if (sre != null && sre.getFingerIdData() != null) {

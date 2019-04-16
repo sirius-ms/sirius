@@ -4,7 +4,7 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.compute.CSIFingerIDComputation;
 import de.unijena.bioinf.ms.io.projectspace.GuiProjectSpace;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.dialogs.DragAndDropOpenDialog;
 import de.unijena.bioinf.ms.gui.dialogs.DragAndDropOpenDialogReturnValue;
@@ -79,7 +79,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     private DropTarget dropTarget;
 
-    public static final ConnectionMonitor CONECTION_MONITOR = new ConnectionMonitor();
+    public static final ConnectionMonitor CONNECTION_MONITOR = new ConnectionMonitor();
 
 
     private MainFrame() {

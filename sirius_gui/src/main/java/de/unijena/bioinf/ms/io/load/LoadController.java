@@ -10,7 +10,7 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.io.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
-import de.unijena.bioinf.sirius.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;

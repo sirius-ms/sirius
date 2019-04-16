@@ -6,7 +6,7 @@ package de.unijena.bioinf.ms.gui.errorReport;
  */
 
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import org.slf4j.LoggerFactory;
 

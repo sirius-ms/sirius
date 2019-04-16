@@ -18,15 +18,15 @@ import java.util.List;
 @Deprecated //todo may not be needed anymore when using cli/api computation
 public class SiriusResultElementConverter {
 
-    public static SiriusResultElement convertResult(IdentificationResult res) {
-        SiriusResultElement out = new SiriusResultElement(res);
+    public static IdentificationResultBean convertResult(IdentificationResult res) {
+        IdentificationResultBean out = new IdentificationResultBean(res);
         out.buildTreeVisualization(input -> convertTree(input));
         return out;
     }
 
-    public static List<SiriusResultElement> convertResults(Iterable<IdentificationResult> in) {
+    public static List<IdentificationResultBean> convertResults(Iterable<IdentificationResult> in) {
         if (in == null) return Collections.emptyList();
-        List<SiriusResultElement> outs = new ArrayList<>();
+        List<IdentificationResultBean> outs = new ArrayList<>();
         for (IdentificationResult res : in) {
             outs.add(convertResult(res));
         }

@@ -9,7 +9,7 @@ import de.unijena.bioinf.ms.io.projectspace.ExperimentDirectory;
 import de.unijena.bioinf.ms.io.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.SiriusIdentificationGuiJob;
 
@@ -32,8 +32,8 @@ public class ExperimentResultBean extends AbstractEDTBean implements PropertyCha
     private ExperimentResult experimentResult;
 
     //Here are fields to view the SiriusResultElement
-    private volatile List<SiriusResultElement> results;
-    private volatile SiriusResultElement bestHit;
+    private volatile List<IdentificationResultBean> results;
+    private volatile IdentificationResultBean bestHit;
     private volatile int bestHitIndex = 0;
 
     private volatile ComputingStatus siriusComputeState = ComputingStatus.UNCOMPUTED;
@@ -56,7 +56,7 @@ public class ExperimentResultBean extends AbstractEDTBean implements PropertyCha
         if (getResults().size() > 0) siriusComputeState = ComputingStatus.COMPUTED;
     }
 
-    public SiriusResultElement getBestHit() {
+    public IdentificationResultBean getBestHit() {
         return bestHit;
     }
 
@@ -92,7 +92,7 @@ public class ExperimentResultBean extends AbstractEDTBean implements PropertyCha
         return getMs2Experiment().getPrecursorIonType();
     }
 
-    public List<SiriusResultElement> getResults() {
+    public List<IdentificationResultBean> getResults() {
         return results;
     }
 
@@ -133,10 +133,10 @@ public class ExperimentResultBean extends AbstractEDTBean implements PropertyCha
         setResults(SiriusResultElementConverter.convertResults(results));
     }
 
-    public void setResults(List<SiriusResultElement> myxoresults) {
-        List<SiriusResultElement> old = this.results;
+    public void setResults(List<IdentificationResultBean> myxoresults) {
+        List<IdentificationResultBean> old = this.results;
         this.results = myxoresults;
-        firePropertyChange("results_upadated", old, this.results);
+        firePropertyChange("results_updated", old, this.results);
     }
 
     public void setName(String name) {
@@ -150,7 +150,7 @@ public class ExperimentResultBean extends AbstractEDTBean implements PropertyCha
         firePropertyChange(GUI_NAME_PROPERTY, null, getGUIName());
     }
 
-    public void setBestHit(final SiriusResultElement bestHit) {
+    public void setBestHit(final IdentificationResultBean bestHit) {
         if (bestHit == null) {
             if (this.bestHit != null)
                 this.bestHit.setBestHit(false);

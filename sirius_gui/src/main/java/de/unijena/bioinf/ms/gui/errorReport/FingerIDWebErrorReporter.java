@@ -5,7 +5,7 @@ package de.unijena.bioinf.ms.gui.errorReport;
  * 04.10.16.
  */
 
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 

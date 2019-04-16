@@ -31,7 +31,7 @@ public class ComputeCSIAction extends AbstractAction {
         putValue(Action.SMALL_ICON, Icons.FINGER_32);
         putValue(Action.SHORT_DESCRIPTION, "Search computed compounds with CSI:FingerID");
 
-        Jobs.runInBackround(() -> proofCSI(MainFrame.CONECTION_MONITOR.checkConnection().isConnected()));
+        Jobs.runInBackround(() -> proofCSI(MainFrame.CONNECTION_MONITOR.checkConnection().isConnected()));
 
         MF.getExperimentList().addChangeListener(new ExperimentListChangeListener() {
             @Override
@@ -54,7 +54,7 @@ public class ComputeCSIAction extends AbstractAction {
             }
         });
 
-        MainFrame.CONECTION_MONITOR.addConectionStateListener(evt -> {
+        MainFrame.CONNECTION_MONITOR.addConectionStateListener(evt -> {
             ConnectionMonitor.ConnectionState value = (ConnectionMonitor.ConnectionState) evt.getNewValue();
             setEnabled(proofCSI(value.equals(ConnectionMonitor.ConnectionState.YES)));
         });

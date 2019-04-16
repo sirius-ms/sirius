@@ -5,7 +5,7 @@ import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.net.ProxyManager;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import org.apache.http.annotation.ThreadSafe;
 import org.jdesktop.beans.AbstractBean;

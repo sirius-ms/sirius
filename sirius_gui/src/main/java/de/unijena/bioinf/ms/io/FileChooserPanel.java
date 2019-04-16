@@ -5,7 +5,7 @@ package de.unijena.bioinf.ms.io;
  * 07.10.16.
  */
 
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 
 import javax.swing.*;

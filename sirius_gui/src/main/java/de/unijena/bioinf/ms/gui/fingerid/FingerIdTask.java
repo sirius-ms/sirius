@@ -20,15 +20,15 @@ package de.unijena.bioinf.ms.gui.fingerid;
 
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.SiriusResultElement;
+import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
 
 public class FingerIdTask {
 
     public final ExperimentResultBean experiment;
-    public final SiriusResultElement result;
+    public final IdentificationResultBean result;
     public SearchableDatabase db;
 
-    public FingerIdTask(SearchableDatabase db, ExperimentResultBean experiment, SiriusResultElement result) {
+    public FingerIdTask(SearchableDatabase db, ExperimentResultBean experiment, IdentificationResultBean result) {
         this.experiment = experiment;
         this.result = result;
         this.db = db;

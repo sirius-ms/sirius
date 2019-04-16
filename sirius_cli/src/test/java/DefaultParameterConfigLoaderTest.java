@@ -1,9 +1,8 @@
-import de.unijena.bioinf.ms.cli.parameters.RootOptionsCLI;
-import de.unijena.bioinf.ms.cli.parameters.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.parameters.RootOptionsCLI;
+import de.unijena.bioinf.ms.frontend.parameters.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
-import org.apache.commons.configuration2.CombinedConfiguration;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import org.junit.Test;
 import picocli.CommandLine;
 

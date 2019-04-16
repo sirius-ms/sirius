@@ -13,7 +13,7 @@ import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.SiriusResultElement;
+import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
 import de.unijena.bioinf.ms.gui.table.*;
 
 import javax.swing.*;
@@ -29,12 +29,12 @@ import java.util.Map;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaListDetailView extends ActionListDetailView<SiriusResultElement, ExperimentResultBean, FormulaList> {
+public class FormulaListDetailView extends ActionListDetailView<IdentificationResultBean, ExperimentResultBean, FormulaList> {
     //    private static final int[] BAR_COLS = {2, 3, 4};
-    private final ActionTable<SiriusResultElement> table;
-    private final ConnectedSelection<SiriusResultElement> selectionConnection; //this object synchronizes selection models and is not obsolete
+    private final ActionTable<IdentificationResultBean> table;
+    private final ConnectedSelection<IdentificationResultBean> selectionConnection; //this object synchronizes selection models and is not obsolete
 
-    private SortedList<SiriusResultElement> sortedSource;
+    private SortedList<IdentificationResultBean> sortedSource;
     private final SiriusResultTableFormat tableFormat;
 
     public FormulaListDetailView(final FormulaList source) {
@@ -109,14 +109,14 @@ public class FormulaListDetailView extends ActionListDetailView<SiriusResultElem
     }
 
     @Override
-    protected EventList<MatcherEditor<SiriusResultElement>> getSearchFieldMatchers() {
+    protected EventList<MatcherEditor<IdentificationResultBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
-                (MatcherEditor<SiriusResultElement>) new StringMatcherEditor<>(tableFormat, searchField.textField)
+                (MatcherEditor<IdentificationResultBean>) new StringMatcherEditor<>(tableFormat, searchField.textField)
         );
     }
 
     @Override
-    protected FilterList<SiriusResultElement> configureFiltering(EventList<SiriusResultElement> source) {
+    protected FilterList<IdentificationResultBean> configureFiltering(EventList<IdentificationResultBean> source) {
         sortedSource = new SortedList<>(source);
         return super.configureFiltering(sortedSource);
     }
