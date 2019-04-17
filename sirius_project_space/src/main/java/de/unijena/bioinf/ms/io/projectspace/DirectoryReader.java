@@ -121,10 +121,10 @@ public class DirectoryReader implements ProjectReader {
 
         final ExperimentResult expResult;
         if (input.getSource() != null && input.getName() != null) {
-            expResult = new ExperimentResult(input, new ArrayList<>());
+            expResult = new ExperimentResult(input);
         } else {
             //fallback for older versions
-            expResult = new ExperimentResult(input, new ArrayList<>());
+            expResult = new ExperimentResult(input);
             if (input.getName() == null) {
                 String[] nameSplit = directory.split("_");
                 ((MutableMs2Experiment) input).setName(nameSplit.length > 2 ? nameSplit[2] : "unknown");

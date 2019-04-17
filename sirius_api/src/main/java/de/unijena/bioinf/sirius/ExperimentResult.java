@@ -2,39 +2,48 @@ package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ms.annotations.Annotated;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.List;
 
 public class ExperimentResult implements Annotated<ResultAnnotation> {
     public static enum ErrorCause {TIMEOUT, NORESULTS, ERROR, NOERROR};
 
     protected Ms2Experiment experiment;
-    protected List<IdentificationResult> results;
     protected ErrorCause error;
     protected String errorMessage;
     private final Annotations<ResultAnnotation> annotations = new Annotations<>();
 
 
-    public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results) {
+    public ExperimentResult(Ms2Experiment experiment) {
         this.experiment = experiment;
-        this.results = results;
         this.error = ErrorCause.NOERROR;
     }
 
-    @Deprecated
-    public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results, String errorString) {
-        this(experiment,results);
-        this.error = ErrorCause.valueOf(errorString);
-        if (error==null) error = ErrorCause.ERROR;
+    public ExperimentResult(@NotNull Ms2Experiment experiment, @Nullable IdentificationResults results) {
+        this(experiment);
+        if (results != null)
+            setAnnotation(IdentificationResults.class, results);
     }
 
-    public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results, ErrorCause error) {
+
+    public ExperimentResult(@NotNull Ms2Experiment experiment, @Nullable Iterable<IdentificationResult> results) {
+        this(experiment, results != null ? new IdentificationResults(results) : null);
+    }
+
+
+    @Deprecated
+    public ExperimentResult(@NotNull Ms2Experiment experiment, @Nullable IdentificationResults results, @Nullable String errorString) {
+        this(experiment, results, (errorString == null) ? ErrorCause.ERROR : ErrorCause.valueOf(errorString));
+    }
+
+    public ExperimentResult(@NotNull Ms2Experiment experiment, @Nullable IdentificationResults results, @NotNull ErrorCause error) {
         this(experiment,results);
         this.error = error;
     }
 
-    public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results, ErrorCause error, String errorMessage) {
+    public ExperimentResult(@NotNull Ms2Experiment experiment, @Nullable IdentificationResults results, @NotNull ErrorCause error, @Nullable String errorMessage) {
         this(experiment,results);
         this.error = error;
         this.errorMessage = errorMessage;
@@ -72,8 +81,8 @@ public class ExperimentResult implements Annotated<ResultAnnotation> {
         return experiment;
     }
 
-    public List<IdentificationResult> getResults() {
-        return results;
+    public IdentificationResults getResults() {
+        return getAnnotation(IdentificationResults.class);
     }
 
     private static String simplify(String name) {
@@ -81,6 +90,7 @@ public class ExperimentResult implements Annotated<ResultAnnotation> {
             name = name.substring(0,48);
         return name.replaceAll("[^A-Za-z0-9,\\-]+", "");
     }
+
     private static String simplifyURL(String filename) {
         filename = new File(filename).getName();
         int i = Math.min(48,filename.lastIndexOf('.'));
