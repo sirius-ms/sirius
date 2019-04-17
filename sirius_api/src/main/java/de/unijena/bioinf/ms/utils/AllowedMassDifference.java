@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.utils;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformation;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 
@@ -27,6 +28,12 @@ public interface AllowedMassDifference {
     public boolean isAllowed(double mz1, double mz2, Deviation deviation);
 
 
+    /**
+     * get all considered biotransformations
+     * @return
+     */
+    public MolecularFormula[] getPossibleMassDifferenceExplanations();
+
     public static AllowedMassDifference onlyAllowDirectMatches() {
         return new DirectMatch();
     }
@@ -44,6 +51,14 @@ public interface AllowedMassDifference {
     }
 
 
+    /**
+     * allow same mz and given biotransformations
+     * @return
+     */
+    public static AllowedMassDifference allowDirectMatchesAndBiotransformations(MolecularFormula[] biotransformations) {
+        return new AllowTransformations(biotransformations);
+    }
+
     public class DirectMatch implements AllowedMassDifference {
 
         @Override
@@ -59,6 +74,13 @@ public interface AllowedMassDifference {
                 return deviation.inErrorWindow(mz2, mz1);
             }
 
+        }
+
+
+        @Override
+        public MolecularFormula[] getPossibleMassDifferenceExplanations() {
+            //only direct matches
+            return new MolecularFormula[]{MolecularFormula.emptyFormula()};
         }
 
     }
@@ -80,11 +102,16 @@ public interface AllowedMassDifference {
             return Math.abs(mz1-mz2)<=maxDiff+deviation.absoluteFor(Math.max(mz1, mz2));
         }
 
+        @Override
+        public MolecularFormula[] getPossibleMassDifferenceExplanations() {
+            //no biotransformations directly considered
+            return new MolecularFormula[]{MolecularFormula.emptyFormula()};
+        }
     }
 
     public class AllowTransformations implements AllowedMassDifference {
 
-        private BioTransformation[] transformations;
+        private MolecularFormula[] transformations;
         private double maxtransformation;
 
         public AllowTransformations() {
@@ -92,11 +119,20 @@ public interface AllowedMassDifference {
             for (BioTransformation transformation : BioTransformation.values()) {
                 if (!transformation.isConditional()) notConditional.add(transformation);
             }
-            transformations = notConditional.toArray(new BioTransformation[0]);
+            transformations = notConditional.stream().map(BioTransformation::getFormula).toArray(l->new MolecularFormula[l]);
             maxtransformation = 0;
-            for (BioTransformation transformation : transformations) {
+            for (MolecularFormula transformation : transformations) {
                 //todo formula is difference??!!?
-                maxtransformation = Math.max(maxtransformation, transformation.getFormula().getMass());
+                maxtransformation = Math.max(maxtransformation, transformation.getMass());
+            }
+        }
+
+        public AllowTransformations(MolecularFormula[] biotransformations) {
+            transformations = biotransformations.clone();
+            maxtransformation = 0;
+            for (MolecularFormula transformation : transformations) {
+                //todo formula is difference??!!?
+                maxtransformation = Math.max(maxtransformation, transformation.getMass());
             }
         }
 
@@ -116,13 +152,24 @@ public interface AllowedMassDifference {
                 max = mz1;
             }
             if (deviation.inErrorWindow(min, max)) return true;
-            for (BioTransformation transformation : transformations) {
+            for (MolecularFormula transformation : transformations) {
                 //todo optimize speed
-                if (deviation.inErrorWindow(min+transformation.getFormula().getMass(), max)){
+                if (deviation.inErrorWindow(min+transformation.getMass(), max)){
                     return true;
                 }
             }
             return false;
+        }
+
+        @Override
+        public MolecularFormula[] getPossibleMassDifferenceExplanations() {
+            MolecularFormula[] transformationsPlusEmpty = new MolecularFormula[transformations.length+1];
+            transformationsPlusEmpty[0] = MolecularFormula.emptyFormula();
+            for (int i = 0; i < transformations.length; i++) {
+                transformationsPlusEmpty[i+1] = transformations[i];
+
+            }
+            return transformationsPlusEmpty;
         }
 
     }
