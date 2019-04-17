@@ -29,7 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
 
-public class IdentificationResult implements Cloneable, Comparable<IdentificationResult>, Annotated<DataAnnotation> {
+public final class IdentificationResult implements Cloneable, Comparable<IdentificationResult>, Annotated<DataAnnotation> {
 
     protected FTree tree;
     protected MolecularFormula formula;
