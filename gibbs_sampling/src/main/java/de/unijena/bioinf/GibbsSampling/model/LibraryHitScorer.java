@@ -107,26 +107,4 @@ public class LibraryHitScorer implements NodeScorer<FragmentsCandidate> {
         return lambda * transformedCos / (1.0D - transformedCos);
     }
 
-    public static void main(String... args) {
-
-        double[] lambdas = new double[]{1,10,100};
-
-        for (double lambda : lambdas) {
-            System.out.println("lambda "+lambda);
-
-            double lowestCosine = 0.5;
-            LibraryHitScorer scorer = new LibraryHitScorer(lambda, lowestCosine, new HashSet<>());
-
-            double[] arr = new double[]{0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99, 1.0};
-
-
-            for (double d : arr) {
-//                System.out.println(d+"\t"+scorer.normalizedLogScore(d)+"\t"+Math.exp(scorer.normalizedLogScore(d)));
-                System.out.println(d+"\t"+scorer.normalizedLogScore(d)+"\t"+Math.exp(scorer.normalizedLogScore(d))+"\t"+Math.log(scorer.normalizedLogScore(d)));
-            }
-
-        }
-
-
-    }
 }
