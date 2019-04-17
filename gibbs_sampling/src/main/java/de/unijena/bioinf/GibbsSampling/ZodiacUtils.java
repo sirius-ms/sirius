@@ -322,9 +322,10 @@ public class ZodiacUtils {
             LibraryHitInfo sharePeaksCol = new LibraryHitInfo("SharedPeaks", false, "Infinity");
             LibraryHitInfo qualityCol = new LibraryHitInfo("Quality", false, "Unknown");
             LibraryHitInfo mfCol = new LibraryHitInfo("molecularFormula", false, null);
+            LibraryHitInfo libMzCol = new LibraryHitInfo("libraryMz", false, null);
 
             LibraryHitInfo[] columnsOfInterest = new LibraryHitInfo[]{
-                    idCol, inchiCol, smilesCol, adductCol, cosineCol, sharePeaksCol, qualityCol, mfCol
+                    idCol, inchiCol, smilesCol, adductCol, cosineCol, sharePeaksCol, qualityCol, mfCol, libMzCol
             };
             for (int i = 0; i < columnsOfInterest.length; i++) {
                 LibraryHitInfo libraryHitInfo = columnsOfInterest[i];
@@ -405,14 +406,29 @@ public class ZodiacUtils {
                         qualityString = qualityCol.fallBack;
                     }
 
+                    String libMzString = libMzCol.getInfo(cols);
+                    if (libMzString==null || qualityString.replace(" ","").length()==0){
+                        logger.warn("Cannot parse library mz. "+idHeader+" "+featureId);
+                        libMzString = libMzCol.fallBack;
+                    }
+
+
                     final String structure = (isInchi(inchiString) ? inchiString : smilesString);
                     final PrecursorIonType ionType = adductString==null?null:PeriodicTable.getInstance().ionByName(adductString);
                     final double cosine = Double.parseDouble(cosineString);
                     final int sharedPeaks = parseIntegerOrThrow(sharePeaksString);
                     LibraryHitQuality quality = LibraryHitQuality.valueOf(qualityString);
                     if (quality==null) quality = LibraryHitQuality.Unknown;
+                    double libMz;
+                    if (libMzString != null) libMz = Double.parseDouble(libMzString);
+                    else if (ionType!=null) libMz = ionType.neutralMassToPrecursorMass(formula.getMass());
+                    else{
+                        libMz = Double.NaN;
+                        logger.warn("Cannot infer library mz. Skip "+idHeader+" "+featureId);
+                        continue;
+                    }
 
-                    LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
+                    LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality, libMz);
                     libraryHits.add(libraryHit);
                 } catch (Exception e) {
                     logger.error("Cannot parse library hit. Reason: "+ e.getMessage(),e);
@@ -546,7 +562,7 @@ public class ZodiacUtils {
                     final double cosine = Double.parseDouble(cols[indices[4]]);
                     final int sharedPeaks = parseIntegerOrThrow(cols[indices[5]]);
                     final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
-                    LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
+                    LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality, ionType.neutralMassToPrecursorMass(formula.getMass()));
                     libraryHits.add(libraryHit);
                 } catch (Exception e) {
                     logger.error("Cannot parse library hit. Reason: "+ e.getMessage(),e);
@@ -632,7 +648,7 @@ public class ZodiacUtils {
                     final double cosine = Double.parseDouble(cols[indices[4]]);
                     final int sharedPeaks = parseIntegerOrThrow(cols[indices[5]]);
                     final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
-                    LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
+                    LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality, ionType.neutralMassToPrecursorMass(formula.getMass()));
                     libraryHits.add(libraryHit);
                 } catch (Exception e) {
                     logger.error("Cannot parse library hit. Reason: "+ e.getMessage(),e);
@@ -746,7 +762,7 @@ public class ZodiacUtils {
                     final double cosine = Double.parseDouble(cols[indices[4]]);
                     final int sharedPeaks = parseIntegerOrThrow(cols[indices[5]]);
                     final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
-                    LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
+                    LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality, ionType.neutralMassToPrecursorMass(formula.getMass()));
                     libraryHits.add(libraryHit);
                 } catch (Exception e) {
                     logger.error("Cannot parse library hit. Reason: "+ e.getMessage(),e);

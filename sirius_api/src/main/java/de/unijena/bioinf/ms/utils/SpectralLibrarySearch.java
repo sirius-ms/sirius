@@ -211,8 +211,7 @@ public class SpectralLibrarySearch {
         if (deviation.inErrorWindow(libraryMz, compoundMass)) return libraryPrecursorMF;
 
         List<MolecularFormula> possibleTransf = new ArrayList<>();
-        for (BioTransformation transformation : BioTransformation.values()) {
-            if (transformation.isConditional()) continue;//don't use conditional transformations
+        for (MolecularFormula transformation : allowedMassDifference.getPossibleMassDifferenceExplanations()) {
             MolecularFormula transformedMF = explainMassDiffWithTransformation(libraryMz, libraryPrecursorMF, compoundMass, transformation, deviation);
             if (transformedMF!=null) possibleTransf.add(transformedMF);
         }
@@ -226,7 +225,7 @@ public class SpectralLibrarySearch {
         return possibleTransf.get(0);
     }
 
-    private MolecularFormula explainMassDiffWithTransformation(double libMz, MolecularFormula libFormula, double compoundMz, BioTransformation transformation, Deviation deviation){
+    private MolecularFormula explainMassDiffWithTransformation(double libMz, MolecularFormula libFormula, double compoundMz, MolecularFormula transformation, Deviation deviation){
         double min,max;
         if (libMz<compoundMz){
             min = libMz;
@@ -236,11 +235,11 @@ public class SpectralLibrarySearch {
             max = libMz;
         }
 
-        if (deviation.inErrorWindow(min+transformation.getFormula().getMass(), max)){
+        if (deviation.inErrorWindow(min+transformation.getMass(), max)){
             //todo ignore condition or don't?
-            if (libMz<compoundMz) return libFormula.add(transformation.getFormula());
+            if (libMz<compoundMz) return libFormula.add(transformation);
             else {
-                MolecularFormula withoutTransf = libFormula.subtract(transformation.getFormula());
+                MolecularFormula withoutTransf = libFormula.subtract(transformation);
                 if (withoutTransf.isAllPositiveOrZero()) return withoutTransf;
                 else return null;
             }
