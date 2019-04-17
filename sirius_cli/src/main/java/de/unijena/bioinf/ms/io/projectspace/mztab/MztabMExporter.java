@@ -18,6 +18,7 @@ import de.unijena.bioinf.ms.io.projectspace.FingerIdLocations;
 import de.unijena.bioinf.ms.io.projectspace.SiriusLocations;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.IdentificationResults;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import uk.ac.ebi.pride.jmztab2.model.MZTabConstants;
@@ -78,7 +79,7 @@ public class MztabMExporter {
         write(writer, mztab, validate);
     }
 
-    public void addExperiment(@NotNull final ExperimentResult er, @NotNull final List<IdentificationResult> results) {
+    public void addExperiment(@NotNull final ExperimentResult er, @NotNull final IdentificationResults results) {
         Scored<FingerprintCandidate> bestHit = null;
         IdentificationResult bestHitSource = null;
 

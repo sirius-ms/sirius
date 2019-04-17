@@ -35,7 +35,7 @@ dependencies {
 
 }
 
-mainClassName = 'de.unijena.bioinf.ms.cli.SiriusCLIApplication'
+mainClassName = 'de.unijena.bioinf.ms.frontend.SiriusCLIApplication'
 project.ext.set("type", ['console'])
 
 

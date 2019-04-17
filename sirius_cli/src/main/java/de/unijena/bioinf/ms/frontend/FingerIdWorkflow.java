@@ -114,7 +114,7 @@ public class FingerIdWorkflow implements Workflow<Instance> {
 
 
     protected ExperimentResult handleJobs(BufferedJJobSubmitter<Instance>.JobContainer jc) throws IOException {
-        //todo add a getJobByIntanceOf method?!
+        /*//todo add a getJobByIntanceOf method?!
         //sirius
         ExperimentResultJJob j = (ExperimentResultJJob) jc.getJob(SiriusInstanceProcessor.ExperimentResultForSiriusJJob.class);
         System.out.println("Sirius results for: '" + jc.sourceInstance.file.getName() + "', " + jc.sourceInstance.experiment.getName());
@@ -164,7 +164,8 @@ public class FingerIdWorkflow implements Workflow<Instance> {
         }
 
         if (experimentResult!=null) writeResults(experimentResult);
-        return experimentResult;
+        return experimentResult;*/
+        return null;
     }
 
     protected void writeResults(ExperimentResult experimentResult) throws IOException {

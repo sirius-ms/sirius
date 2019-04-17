@@ -89,7 +89,7 @@ public class InputIterator implements Iterator<Ms2Experiment> {
         public ExperimentResult next() {
             Ms2Experiment n = InputIterator.this.next();
             if (n == null) return null;
-            return new ExperimentResult(n, new ArrayList<>());//todo precise array with default value??
+            return new ExperimentResult(n);
         }
     }
 

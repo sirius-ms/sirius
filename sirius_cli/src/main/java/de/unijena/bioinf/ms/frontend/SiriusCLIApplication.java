@@ -1,12 +1,11 @@
 package de.unijena.bioinf.ms.frontend;
 
 import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.net.ProxyManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.net.ProxyManager;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 
 
 public class SiriusCLIApplication {
@@ -25,15 +24,15 @@ public class SiriusCLIApplication {
 
         try {
             run(args);
-        } catch (Exception e) {
-            LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unknown Error!", e);
+        } catch (Throwable e) {
+            LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unexpected Error!", e);
         } finally {
             ApplicationCore.cite();
             System.exit(0);
         }
     }
 
-    public static void run(String[] args) throws IOException, ExecutionException {
+    public static void run(String[] args) throws IOException {
         CLIRun cliRun = new CLIRun();
         cliRun.parseArgs(args);
         cliRun.compute();

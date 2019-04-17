@@ -12,6 +12,7 @@ import de.unijena.bioinf.ms.frontend.parameters.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.jobs.ExperimentResultJJob;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.IdentificationResults;
 import de.unijena.bioinf.sirius.Sirius;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,7 +104,7 @@ public class SiriusInstanceProcessor implements InstanceProcessor<ExperimentResu
     @Override
     public void output(ExperimentResult experimentResult) {
         //sirius output
-        List<IdentificationResult> results = experimentResult.getResults();
+        IdentificationResults results = experimentResult.getResults();
         if (results != null) {
             int rank = 1;
             int n = Math.max(1, (int) Math.ceil(Math.log10(results.size())));
