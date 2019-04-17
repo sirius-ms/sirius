@@ -7,6 +7,7 @@ import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.IdentificationResults;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -14,7 +15,10 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public class CanopusResultSerializer implements MetaDataSerializer, SummaryWriter {
     protected final Canopus canopus;
@@ -27,7 +31,7 @@ public class CanopusResultSerializer implements MetaDataSerializer, SummaryWrite
     @Override
     public void read(@NotNull ExperimentResult expResult, @NotNull DirectoryReader reader, @NotNull Set<String> names) throws IOException {
         final DirectoryReader.ReadingEnvironment env = reader.env;
-        final List<IdentificationResult> results = expResult.getResults();
+        final IdentificationResults results = expResult.getResults();
 
         if (!env.list().contains(FingerIdLocations.CANOPUS_FINGERPRINT.directory)) return;
 
@@ -64,7 +68,7 @@ public class CanopusResultSerializer implements MetaDataSerializer, SummaryWrite
 
     @Override
     public void write(@NotNull ExperimentResult input, @NotNull DirectoryWriter writer) throws IOException {
-        final List<IdentificationResult> results = input.getResults();
+        final IdentificationResults results = input.getResults();
 
         if (writer.isAllowed(FingerIdResult.CANDIDATE_LISTS) && hasCanopus(results)) {
             writer.env.enterDirectory(FingerIdLocations.CANOPUS_FINGERPRINT.directory);
@@ -85,8 +89,11 @@ public class CanopusResultSerializer implements MetaDataSerializer, SummaryWrite
 
     }
 
-    private boolean hasCanopus(List<IdentificationResult> results) {
-        return results.stream().anyMatch(this::hasCanopusResult);
+    private boolean hasCanopus(Iterable<IdentificationResult> results) {
+        for (IdentificationResult result : results)
+            if (hasCanopusResult(result))
+                return true;
+        return false;
     }
 
     private boolean hasCanopusResult(IdentificationResult result) {
@@ -103,7 +110,7 @@ public class CanopusResultSerializer implements MetaDataSerializer, SummaryWrite
         FingerprintVersion canopusVersion = null;
 
         for (ExperimentResult expResult : experiments) {
-            final List<IdentificationResult> results = expResult.getResults();
+            final IdentificationResults results = expResult.getResults();
             if (writer.isAllowed(FingerIdResult.CANDIDATE_LISTS) && hasCanopus(results)) {
                 for (IdentificationResult result : results) {
                     if (hasCanopusResult(result)) {

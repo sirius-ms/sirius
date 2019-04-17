@@ -13,6 +13,7 @@ import de.unijena.bioinf.fingerid.webapi.VersionsInfo;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.IdentificationResults;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
     @Override
     public void read(@NotNull final ExperimentResult result, @NotNull final DirectoryReader reader, @NotNull Set<String> names) throws IOException {
         final DirectoryReader.ReadingEnvironment env = reader.env;
-        final List<IdentificationResult> results = result.getResults();
+        final IdentificationResults results = result.getResults();
 
         if (!new HashSet<>(env.list()).contains(FingerIdLocations.FINGERID_CANDIDATES.directory)) return;
 
@@ -127,7 +128,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
     @Override
     public void write(@NotNull final ExperimentResult input, @NotNull final DirectoryWriter writer) throws IOException {
         final DirectoryWriter.WritingEnvironment W = writer.env;
-        final List<IdentificationResult> results = input.getResults();
+        final IdentificationResults results = input.getResults();
 
         if (writer.isAllowed(FingerIdResult.CANDIDATE_LISTS) && hasFingerId(results)) {
             // now write CSI:FingerID candidates
@@ -184,10 +185,9 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
         return r;
     }
 
-    private boolean hasFingerId(List<IdentificationResult> results) {
-        for (IdentificationResult r : results) {
+    private boolean hasFingerId(Iterable<IdentificationResult> results) {
+        for (IdentificationResult r : results)
             if (r.hasAnnotation(FingerIdResult.class)) return true;
-        }
         return false;
     }
 
@@ -212,7 +212,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
             final List<Scored<String>> topHits = new ArrayList<>();
             if (writer.isAllowed(FingerIdResult.CANDIDATE_LISTS)) {
                 for (ExperimentResult experimentResult : experiments) {
-                    final List<IdentificationResult> results = experimentResult.getResults();
+                    final IdentificationResults results = experimentResult.getResults();
                     if (hasFingerId(results)) {
                         final List<FingerIdResult> frs = results.stream().map((r) -> r.getAnnotation(FingerIdResult.class))
                                 .filter(Objects::nonNull).collect(Collectors.toList());
