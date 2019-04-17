@@ -10,6 +10,7 @@ import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.jjobs.MasterJJob;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.IdentificationResults;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -187,7 +188,7 @@ public class Zodiac {
         //todo add score to FTree not IdentificationResult?!?!!?!?!
         Map<String, CompoundResult<FragmentsCandidate>> idToCompoundResult = createInstanceMap(result);//contains all compounds (even all clustered)
         for (ExperimentResult experimentResult : experimentResults) {
-            List<IdentificationResult> identificationResults = experimentResult.getResults();
+            IdentificationResults identificationResults = experimentResult.getResults();
             if (identificationResults.size()==0) continue;
 
             Ms2Experiment experiment = experimentResult.getExperiment();
@@ -269,7 +270,7 @@ public class Zodiac {
         return indexMap;
     }
 
-    private Map<MolecularFormula, IdentificationResult> createIdentificationResultMap(List<IdentificationResult> result) {
+    private Map<MolecularFormula, IdentificationResult> createIdentificationResultMap(IdentificationResults result) {
         Map<MolecularFormula, IdentificationResult> resultMap = new HashMap<>(result.size(), 0.75f);
         for (IdentificationResult identificationResult : result) {
             final MolecularFormula mf = identificationResult.getMolecularFormula();

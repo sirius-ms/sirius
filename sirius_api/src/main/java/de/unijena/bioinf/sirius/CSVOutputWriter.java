@@ -8,7 +8,7 @@ import java.util.List;
 
 public class CSVOutputWriter {
 
-    public static void writeHits(Writer w, List<IdentificationResult> results) throws IOException {
+    public static void writeHits(Writer w, Iterable<IdentificationResult> results) throws IOException {
         w.write("formula\tadduct\trank\tscore\ttreeScore\tisoScore\texplainedPeaks\texplainedIntensity\n");
         for (IdentificationResult r : results) {
             PrecursorIonType ion = r.getPrecursorIonType();

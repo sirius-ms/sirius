@@ -8,10 +8,12 @@ import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
 import de.unijena.bioinf.sirius.CSVOutputWriter;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.IdentificationResults;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -24,7 +26,7 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
     //API Methods
     @Override
     public void read(@NotNull final ExperimentResult result, @NotNull final DirectoryReader reader, @NotNull final Set<String> names) throws IOException {
-        final List<IdentificationResult> results = result.getResults();
+        final List<IdentificationResult> results = new ArrayList<>();
 
         // read trees
         if (names.contains(SiriusLocations.SIRIUS_TREES_JSON.directory)) {
@@ -45,6 +47,7 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
             reader.env.leaveDirectory();
         }
         results.sort(Comparator.comparingInt(IdentificationResult::getRank));
+        result.setAnnotation(IdentificationResults.class, new IdentificationResults(results));
     }
 
 
@@ -58,7 +61,7 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
 
     //helper methods
 
-    protected void writeIdentificationResults(List<IdentificationResult> results, DirectoryWriter writer) throws IOException {
+    protected void writeIdentificationResults(IdentificationResults results, DirectoryWriter writer) throws IOException {
         // JSON and DOT
         if (writer.isAllowed(OutputOptions.TREES_DOT) || writer.isAllowed(OutputOptions.TREES_JSON)) {
             writer.env.enterDirectory(SiriusLocations.SIRIUS_TREES_DOT.directory);
@@ -75,13 +78,13 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
         writeFormulaSummary(results, writer);
     }
 
-    private void writeFormulaSummary(final List<IdentificationResult> results, DirectoryWriter writer) throws IOException {
+    private void writeFormulaSummary(final Iterable<IdentificationResult> results, DirectoryWriter writer) throws IOException {
         writer.write(SiriusLocations.SIRIUS_SUMMARY.fileName(),
                 w -> CSVOutputWriter.writeHits(w, results)
         );
     }
 
-    protected void writeRecalibratedSpectra(List<IdentificationResult> results, DirectoryWriter writer) throws IOException {
+    protected void writeRecalibratedSpectra(Iterable<IdentificationResult> results, DirectoryWriter writer) throws IOException {
         for (IdentificationResult result : results) {
             writeRecalibratedSpectrum(result, writer);
         }
@@ -93,7 +96,7 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
         );
     }
 
-    protected void writeTrees(List<IdentificationResult> results, DirectoryWriter writer) throws IOException {
+    protected void writeTrees(Iterable<IdentificationResult> results, DirectoryWriter writer) throws IOException {
         for (IdentificationResult result : results) {
             writeJSONTree(result, writer);
             writeDOTTree(result, writer);
