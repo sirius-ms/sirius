@@ -52,6 +52,57 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
 
     @Override
     protected void transferAnotationsFromGraphToTree(ProcessedInput input, FGraph graph, FTree tree, IntergraphMapping graph2treeFragments) {
+
+        // we set:
+        // - Ms2IsotopePattern to monoisotopic node
+        // - IsotopeMarker to each artificial loss and node (for easy deletion later)
+
+        // two possibilities
+        // 1.) A node has an isotope pattern but no artificial egdes. Easy case, just transfer annotations
+        // 2.) A node has isotope children. So set the annotations right
+
+        final FragmentAnnotation<Ms2IsotopePattern> ano = graph.getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
+        if (ano!=null) {
+            final PeakAnnotation<ExtractedMs2IsotopePattern> peakPat = input.getPeakAnnotationOrThrow(ExtractedMs2IsotopePattern.class);
+            final FragmentAnnotation<IsotopicMarker> markerTree = tree.getOrCreateFragmentAnnotation(IsotopicMarker.class);
+            final LossAnnotation<IsotopicMarker> markerTreeLoss = tree.getOrCreateLossAnnotation(IsotopicMarker.class);
+            final FragmentAnnotation<IsotopicMarker> markerGraph = graph.getOrCreateFragmentAnnotation(IsotopicMarker.class);
+            final LossAnnotation<IsotopicScore> scoreMarker = graph.getLossAnnotationOrNull(IsotopicScore.class);
+            final FragmentAnnotation<Ms2IsotopePattern> isoPatternAno = tree.getOrCreateFragmentAnnotation(Ms2IsotopePattern.class);
+            // first find all artifical edges
+            for (Fragment f : tree) {
+                final Fragment g = graph2treeFragments.mapRightToLeft(f);
+                if (f.isLeaf() && markerGraph.get(g,IsotopicMarker::isNot).isIsotope()) {
+                    final IsotopicScore score = scoreMarker.get(g.getIncomingEdge());
+                    double iscore = 0d;
+                    // get monoisotopic node
+                    Fragment mono = f;
+                    while (markerGraph.get(graph2treeFragments.mapRightToLeft(mono),IsotopicMarker::isNot).isIsotope()) {
+                        markerTree.set(mono,IsotopicMarker.is());
+                        iscore += mono.getIncomingEdge().getWeight();
+                        markerTreeLoss.set(mono.getIncomingEdge(),IsotopicMarker.is());
+                        mono = mono.getParent();
+                    }
+                    final Fragment monoG = graph2treeFragments.mapRightToLeft(mono);
+                    if (ano.get(monoG)!=null) iscore += ano.get(monoG).getScore();
+                    // set isotope pattern
+                    final ExtractedMs2IsotopePattern extr = peakPat.get(input.getMergedPeaks().get(mono.getPeakId()));
+                    isoPatternAno.set(mono, extr.done(score.patternLength, iscore));
+                }
+            }
+
+            // find all isotope patterns without artificial edges
+            for (Fragment f : tree) {
+                final Fragment g = graph2treeFragments.mapRightToLeft(f);
+                if (isoPatternAno.get(f)==null && ano.get(g)!=null) {
+                    Ms2IsotopePattern pat = ano.get(g);
+                    isoPatternAno.set(f, pat);
+                }
+            }
+        }
+    }
+
+    protected void transferAnotationsFromGraphToTree2(ProcessedInput input, FGraph graph, FTree tree, IntergraphMapping graph2treeFragments) {
         // we have to transfer the isotope score, such that we can later recalculate it...?
 
         // add isotope pattern to node
@@ -118,21 +169,31 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
     protected void releaseTreeToUser(ProcessedInput input, FGraph graph, FTree tree) {
         final LossAnnotation<IsotopicMarker> m = tree.getLossAnnotationOrNull(IsotopicMarker.class);
         final FragmentAnnotation<Ms2IsotopePattern> mm = tree.getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
+        double additionalScore = 0d;
         if (m!=null) {
             final List<Fragment> fs = new ArrayList<>(tree.getFragmentsWithoutRoot());
             for (Fragment f : fs) {
                 if (f.getVertexId()<0)
                     continue; // already deleted
-                if (m.get(f.getIncomingEdge())!=null && m.get(f.getIncomingEdge()).isIsotope()) {
+                if (m.get(f.getIncomingEdge(),IsotopicMarker::isNot).isIsotope()) {
                     final Fragment s = f.getIncomingEdge().getSource();
-                    if (s.getInDegree()>0 && (m.get(s.getIncomingEdge())==null || !m.get(s.getIncomingEdge()).isIsotope())) {
+                    if (s.getInDegree()==0 || !(m.get(s.getIncomingEdge(), IsotopicMarker::isNot).isIsotope())) {
+                        // collect iso scores
+                        Loss l = f.getIncomingEdge();
+                        double isoScore = l.getWeight();
+                        while (!l.getTarget().isLeaf()) {
+                            l = l.getTarget().getOutgoingEdge(0);
+                            isoScore += l.getWeight();
+                        }
+                        // delete all edges below s
                         tree.deleteSubtree(f);
-                        s.getIncomingEdge().setWeight(s.getIncomingEdge().getWeight()+mm.get(s).getScore());
+                        s.getIncomingEdge().setWeight(s.getIncomingEdge().getWeight()+isoScore);
 
                     }
                 }
             }
         }
+        tree.setTreeWeight(tree.getTreeWeight());
 
     }
 
@@ -242,9 +303,11 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
          *
          */
         public void introduceIsotopeLosses() {
-            final MolecularFormula root = graph.getRoot().getOutgoingEdge(0).getTarget().getFormula();
+            Fragment rootNode = graph.getRoot().getOutgoingEdge(0).getTarget();
+            final MolecularFormula root = rootNode.getFormula();
             final PeakAnnotation<ExtractedMs2IsotopePattern> patterns = input.getOrCreatePeakAnnotation(ExtractedMs2IsotopePattern.class);
             TIntIntHashMap peakid2color = null;
+            final ExtractedMs2IsotopePattern rootPattern = patterns.get(input.getParentPeak());
 
             // isotopic marker is set on each artificial edge and note
             // we need this for special operations in reduction or heuristics =/
@@ -256,14 +319,14 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
             final FragmentAnnotation<Ms2IsotopePattern> otherMarker = graph.getOrCreateFragmentAnnotation(Ms2IsotopePattern.class);
             final LossAnnotation<IsotopicScore> edgeMarker = graph.getOrCreateLossAnnotation(IsotopicScore.class);
             for (Fragment f : graph.getFragmentsWithoutRoot()) {
-                if (f.getFormula().equals(root))
+                if (f.getFormula().equals(root) || marker.get(f,IsotopicMarker::isNot).isIsotope())
                     continue;
                 final ExtractedMs2IsotopePattern iso = patterns.get(input.getMergedPeaks().get(f.getPeakId()));
-                if (iso==null || iso.pattern.isEmpty())
+                if (iso==null || iso.pattern.size()<=1)
                     continue;
 
-                final double[] scoredPattern = computeAndScorePattern(f, iso, root, f.getFormula(), f.getIonization());
-                if (scoredPattern[scoredPattern.length-1] > 1) {
+                final double[] scoredPattern = computeAndScorePattern(f, iso, root, f.getFormula(), f.getIonization(), rootPattern);
+                if (scoredPattern.length > 1 && scoredPattern[scoredPattern.length-1] > 0) {
                     if (peakid2color==null) peakid2color = buildIdColorMap();
                     // add isotope edges with corresponding loss
                     Fragment predecessor = f;
@@ -318,11 +381,12 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
             return map;
         }
 
-        private double[] computeAndScorePattern(Fragment fragment, ExtractedMs2IsotopePattern iso, MolecularFormula root, MolecularFormula formula, Ionization ion) {
+        private double[] computeAndScorePattern(Fragment fragment, ExtractedMs2IsotopePattern iso, MolecularFormula root, MolecularFormula formula, Ionization ion, ExtractedMs2IsotopePattern rootPattern) {
             Normalization max = Normalization.Max(1d);
             final FragmentIsotopeGenerator fiso = new FragmentIsotopeGenerator();
-            final SimpleSpectrum simulated = Spectrums.getNormalizedSpectrum(fiso.simulateFragmentPatternWithImperfectFilter(iso.pattern, fragment.getFormula(), root.subtract(formula), ion),max);
-            final SimpleSpectrum measured = Spectrums.getNormalizedSpectrum(iso.pattern, max);
+            fiso.setMaximalNumberOfPeaks(Math.min(rootPattern.pattern.size(), iso.pattern.size()));
+            final SimpleSpectrum simulated = Spectrums.subspectrum(Spectrums.getNormalizedSpectrum(fiso.simulateFragmentPatternWithImperfectFilter(rootPattern.pattern, fragment.getFormula(), root.subtract(formula), ion),max),0, iso.pattern.size()) ;
+            final SimpleSpectrum measured = Spectrums.subspectrum(Spectrums.getNormalizedSpectrum(iso.pattern, max), 0, simulated.size());
             // TODO: we want to remove all these constants from the profile.json anyways
             // everything which is configurable should be added to the config
             PiecewiseLinearFunctionIntensityDependency dependency = new PiecewiseLinearFunctionIntensityDependency(
@@ -342,7 +406,7 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
             final ProcessedPeak peak = input.getMergedPeaks().get(fragment.getPeakId());
             final double basePeak = 1d/peak.getRelativeIntensity();
             double missingPeak  = 0d;
-            for (int k=simulated.size()-1; k > measured.size(); --k) {
+            for (int k=simulated.size()-1; k >= 0; --k) {
                 if (scores.length > k) scores[k] -= missingPeak;
                 missingPeak += (simulated.getIntensityAt(k)/basePeak)*lambda;
             }
@@ -373,7 +437,7 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
             // first check if we find an isotope pattern for the parent peak
             ProcessedPeak parent = input.getParentPeak();
             final SimpleSpectrum spec = findPatternInMostIntensiveScan(input, parent);
-            if (spec.isEmpty()) {
+            if (spec.size()<=1) {
                 // we are done
                 return false;
             }
@@ -381,17 +445,22 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
 
             // now check for each peak if we find an isotope pattern
             boolean atLeastOne = false;
+            double highestIsotopicIntensity = 0d;
+            double highestNonIsotopicIntensity = 0d;
             for (ProcessedPeak peak : input.getMergedPeaks()) {
                 if (peak == parent)
                     continue;
                 final SimpleSpectrum isoSpec = findPatternInMostIntensiveScan(input, peak);
-                if (!isoSpec.isEmpty()) {
+                if (isoSpec.size()>1) {
                     ano.set(peak, new ExtractedMs2IsotopePattern(isoSpec,getPeakIds(input, isoSpec)));
                     atLeastOne = true;
+                    highestIsotopicIntensity = Math.max(highestIsotopicIntensity, peak.getRelativeIntensity());
+                } else {
+                    highestNonIsotopicIntensity = Math.max(highestNonIsotopicIntensity, peak.getRelativeIntensity());
                 }
             }
-
-            return atLeastOne;
+            // there should be no peak with no isotope pattern which is more intensive than peaks with isotope pattern
+            return atLeastOne && highestIsotopicIntensity> highestNonIsotopicIntensity;
         }
 
         public SimpleSpectrum findPatternInMostIntensiveScan(ProcessedInput input, ProcessedPeak peak) {
@@ -405,7 +474,7 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
             final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
             final double abs = allowedDev.absoluteFor(targetMz);
             double from = targetMz-abs;
-            double to = targetMz + 10;
+            double to = targetMz + 4;
             for (int k=0; k < spectrum.size(); ++k) {
                 final double mz  = spectrum.getMzAt(k);
                 if (mz >= from && mz < to) buf.addPeak(mz, spectrum.getIntensityAt(k));
@@ -423,7 +492,7 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
                 final double mz = buf.getMzAt(peakIndex);
                 if (mz >= from && mz < to) {
                     merge.addPeak(mz, buf.getIntensityAt(peakIndex));
-                } else {
+                } else if (mz > to) {
                     pattern.addPeak(merge(merge));
                     merge.clear();
                     ++isotopeIndex;
@@ -433,7 +502,7 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
                     to = nextMz.upperEndpoint() + abs;
                     if (mz >= from && mz < to) {
                         merge.addPeak(mz, buf.getIntensityAt(peakIndex));
-                    } else break;
+                    } else if (mz > to) break;
 
                 }
             }

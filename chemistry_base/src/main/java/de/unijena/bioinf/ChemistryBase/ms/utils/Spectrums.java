@@ -1440,7 +1440,7 @@ public class Spectrums {
         list[b] = z;
     }
 
-    private static class AlreadyOrderedSpectrum<T extends Peak> implements OrderedSpectrum, Spectrum<T> {
+    private static class AlreadyOrderedSpectrum<T extends Peak> implements OrderedSpectrum<T> {
 
         private final Spectrum<T> delegate;
 
@@ -1474,7 +1474,11 @@ public class Spectrums {
         }
     }
 
-    private static <T extends Peak, S extends Spectrum<T>> AlreadyOrderedSpectrum<T> getAlreadyOrderedSpectrum(S spec) {
+    /**
+     * Can be used (but is not encouraged!) when you are 100% sure that your spectrum is ordered and just
+     * want to cast it to an OrderedSpectrum
+     */
+    public static <T extends Peak, S extends Spectrum<T>> AlreadyOrderedSpectrum<T> getAlreadyOrderedSpectrum(S spec) {
         return new AlreadyOrderedSpectrum<>(spec);
     }
 

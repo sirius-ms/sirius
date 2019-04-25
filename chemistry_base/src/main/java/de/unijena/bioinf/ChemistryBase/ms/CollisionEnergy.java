@@ -43,7 +43,7 @@ public class CollisionEnergy {
     public static CollisionEnergy fromString(String value) {
         value = value.trim().toLowerCase();
         if (value.isEmpty() || value.equals("none")) return NONE;
-        int ev =  value.indexOf("eV");
+        int ev =  value.indexOf("ev");
         if (ev > 0) value = value.substring(0,ev);
         final int k = value.indexOf('-');
         if (k > 0) {

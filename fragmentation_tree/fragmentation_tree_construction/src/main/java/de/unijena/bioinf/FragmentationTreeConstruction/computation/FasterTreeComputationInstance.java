@@ -331,11 +331,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         protected ExactResult compute() throws Exception {
             final ProcessedInput input = template.input==null ? pinput : template.input;
             FGraph graph = analyzer.buildGraph(input, template.decomposition);
-            final FTree tree = analyzer.getTreeBuilder().computeTree().withMultithreading(1).withTimeLimit(Math.min(restTime, secondsPerTree)).withMinimalScore(template.score - 1e-3)/*.withTemplate(template.tree)*/.solve(pinput, graph).tree;
-            analyzer.makeTreeReleaseReady(input, graph, tree);
-            recalculateScore(input, tree, "ExactJob");
+            final TreeBuilder.Result tree = analyzer.getTreeBuilder().computeTree().withMultithreading(1).withTimeLimit(Math.min(restTime, secondsPerTree)).withMinimalScore(template.score - 1e-3)/*.withTemplate(template.tree)*/.solve(pinput, graph);
+            analyzer.makeTreeReleaseReady(input, graph, tree.tree, tree.mapping);
+            recalculateScore(input, tree.tree, "ExactJob");
             tick();
-            return new ExactResult(template.input==null ? null : template.input, template.decomposition, null, tree, tree.getTreeWeight());
+            return new ExactResult(template.input==null ? null : template.input, template.decomposition, null, tree.tree, tree.tree.getTreeWeight());
         }
     }
 
@@ -349,11 +349,13 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         @Override
         protected ExactResult compute() throws Exception {
             FGraph graph = analyzer.buildGraph(pinput, template.decomposition);
-            final FTree tree = template.tree;
-            analyzer.makeTreeReleaseReady(pinput, graph, tree);
+            // TODO: we recompute the tree. Is that really a good idea?
+            // Find a better solution
+            final TreeBuilder.Result r = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(template.tree).solve(pinput, graph);
+            analyzer.makeTreeReleaseReady(pinput, graph, r.tree,r.mapping);
             tick();
-            recalculateScore(pinput, tree, "annotation");
-            return new ExactResult(template.decomposition, null, tree, tree.getTreeWeight());
+            recalculateScore(pinput, r.tree, "annotation");
+            return new ExactResult(template.decomposition, null, r.tree, r.tree.getTreeWeight());
         }
     }
 
@@ -426,29 +428,29 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         analyzer.performPeakScoring(pin);
         FGraph graph = analyzer.buildGraph(pin, decomp);
         graph.addAnnotation(SpectralRecalibration.class, rec);
-        final FTree recal = tb.computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).solve(pin, graph).tree;
-        final FTree finalTree;
-        if (recal.getTreeWeight() >= tree.getTreeWeight()) {
-            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(recal).withMinimalScore(recal.getTreeWeight() - 1e-3).solve(pin, graph).tree;
-            if (finalTree==null){
+        final TreeBuilder.Result recal = tb.computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).solve(pin, graph);
+        final TreeBuilder.Result finalTree;
+        if (recal.tree.getTreeWeight() >= tree.getTreeWeight()) {
+            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(recal.tree).withMinimalScore(recal.tree.getTreeWeight() - 1e-3).solve(pin, graph);
+            if (finalTree.tree==null){
                 throw new RuntimeException("Recalibrated tree is null for "+input.getExperimentInformation().getName()+". Error in ILP?");
             }
-            finalTree.setAnnotation(SpectralRecalibration.class, rec);
-            analyzer.makeTreeReleaseReady(pin, graph, finalTree);
+            finalTree.tree.setAnnotation(SpectralRecalibration.class, rec);
+            analyzer.makeTreeReleaseReady(pin, graph, finalTree.tree, finalTree.mapping);
         } else {
             pin.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
             final FGraph origGraph = origGraphOrNull==null ? analyzer.buildGraph(pinput, decomp) : origGraphOrNull;
-            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(tree).withMinimalScore(tree.getTreeWeight() - 1e-3).solve(pin, origGraph).tree;
-            finalTree.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
-            analyzer.makeTreeReleaseReady(pin, origGraph, finalTree);
+            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(tree).withMinimalScore(tree.getTreeWeight() - 1e-3).solve(pin, origGraph);
+            finalTree.tree.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
+            analyzer.makeTreeReleaseReady(pin, origGraph, finalTree.tree, finalTree.mapping);
         }
-        recalculateScore(pin, finalTree, "recalibrate");
+        recalculateScore(pin, finalTree.tree, "recalibrate");
         assert finalTree!=null;
         tick();
         if (pin.getAnnotation(DecompositionList.class).getDecompositions().size() <= 0) {
             System.err.println("WTF?");
         }
-        return new ExactResult(pin, pin.getAnnotation(DecompositionList.class).getDecompositions().get(0), null, finalTree, finalTree.getTreeWeight());
+        return new ExactResult(pin, pin.getAnnotation(DecompositionList.class).getDecompositions().get(0), null, finalTree.tree, finalTree.tree.getTreeWeight());
     }
 
 

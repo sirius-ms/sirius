@@ -40,15 +40,13 @@ public final class AdductSwitchPlugin extends SiriusPlugin {
 
     private static class AllowAdductSwitch implements LossValidator{
         private Ionization sodium, hplus;
-        private Element F,Cl,Br,I;
+        private final Element N, P;
         public AllowAdductSwitch() {
             sodium = PrecursorIonType.getPrecursorIonType("[M+Na]+").getIonization();
             hplus=PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization();
             final PeriodicTable pt = PeriodicTable.getInstance();
-            F = pt.getByName("F");
-            Cl = pt.getByName("Cl");
-            Br = pt.getByName("Br");
-            I = pt.getByName("I");
+            N = pt.getByName("N");
+            P = pt.getByName("P");
 
 
         }
@@ -58,7 +56,7 @@ public final class AdductSwitchPlugin extends SiriusPlugin {
             if (a.getIonization().equals(hplus) && b.getIonization().equals(sodium)) return true;
             if (a.getIonization().equals(sodium) && b.getIonization().equals(hplus)) {
                 final MolecularFormula difference = a.getFormula().subtract(b.getFormula());
-                if ((difference.numberOfOxygens()>0) || (difference.numberOf(F)>0) || (difference.numberOf(Cl)>0) || (difference.numberOf(Br)>0) || (difference.numberOf(I)>0)) return false;
+                if ((difference.numberOfOxygens()>0) || (difference.numberOf(N)>0) || difference.numberOf(P)>0) return false;
                 return true;
             }
             return false;
