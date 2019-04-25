@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.data.DataSource;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
@@ -39,6 +40,13 @@ public class Ms2Validator extends Ms1Validator {
         }
     }
 
+    private static String nameOf(MutableMs2Experiment exp) {
+        DataSource s = exp.getAnnotation(DataSource.class);
+        if (s==null) s = new DataSource(exp.getSource());
+        if (s.getUrl()==null) return exp.getName();
+        else return s.getUrl().getFile();
+    }
+
 
     private static Pattern P_LAYER = Pattern.compile("/p([+-])(\\d+)");
     private void checkInchi(Warning warn, boolean repair, MutableMs2Experiment input) {
@@ -63,10 +71,10 @@ public class Ms2Validator extends Ms1Validator {
                 }
             }
 
-            warn.warn("InChI has different molecular formula than input formula (" + inchi.extractFormula() + " vs. " + input.getMolecularFormula() + ")");
+            warn.warn(nameOf(input) + ": InChI has different molecular formula than input formula (" + inchi.extractFormula() + " vs. " + input.getMolecularFormula() + ")");
         }
         if (input.getMoleculeNeutralMass() > 0 && Math.abs(formula.getMass()-input.getMoleculeNeutralMass()) > 0.01) {
-            warn.warn("neutral mass does not match to InChI formula (" + input.getMoleculeNeutralMass() + " Da vs. exact mass " + formula.getMass() + ") ");
+            warn.warn(nameOf(input) + ": neutral mass does not match to InChI formula (" + input.getMoleculeNeutralMass() + " Da vs. exact mass " + formula.getMass() + ") ");
         }
         if (repair) {
             if (input.getMolecularFormula()==null) input.setMolecularFormula(formula);
@@ -77,7 +85,7 @@ public class Ms2Validator extends Ms1Validator {
         if (input.getPrecursorIonType().equals(precursorIonType)) return;
         else if (repair || input.getPrecursorIonType().isIonizationUnknown()) {
             if (!input.getPrecursorIonType().isIonizationUnknown())
-                warn.warn("Set ion type to " + precursorIonType.toString());
+                warn.warn(nameOf(input) + ": Set ion type to " + precursorIonType.toString());
             input.setPrecursorIonType(precursorIonType);
         } else throw new InvalidException("PrecursorIonType is expected to be " + precursorIonType.toString() + " but " + input.getPrecursorIonType() + " is given.");
     }
@@ -88,7 +96,7 @@ public class Ms2Validator extends Ms1Validator {
         while (iter.hasNext()) {
             final Ms2Spectrum spec = iter.next();
             if (spec.size() == 0) {
-                warn.warn("Empty Spectrum at collision energy: " + spec.getCollisionEnergy());
+                warn.warn(nameOf(input) + ": Empty Spectrum at collision energy: " + spec.getCollisionEnergy());
                 iter.remove();
             }
         }
@@ -110,10 +118,10 @@ public class Ms2Validator extends Ms1Validator {
             if (Math.abs(input.getPrecursorIonType().neutralMassToPrecursorMass(neutralmass)-input.getIonMass()) > absError) {
                 final PrecursorIonType iontype = PeriodicTable.getInstance().ionByMass(modification, absError, input.getPrecursorIonType().getCharge());
                 if (iontype != null) {
-                    throwOrWarn(warn, true, "PrecursorIonType is inconsistent with the data (" + input.getPrecursorIonType().toString() + " but " + iontype.toString() + " is estimated after looking at the data)");
+                    throwOrWarn(warn, true, nameOf(input) + ": PrecursorIonType is inconsistent with the data (" + input.getPrecursorIonType().toString() + " but " + iontype.toString() + " is estimated after looking at the data)");
                     input.setPrecursorIonType(iontype);
                 } else {
-                    throwOrWarn(warn, true, "PrecursorIonType is inconsistent with the data (" + input.getPrecursorIonType().toString() + " with m/z " + input.getPrecursorIonType().getModificationMass() + " does not match ion mass m/z = " + input.getIonMass() + " and neutral mass m/z = " + neutralmass + ")" );
+                    throwOrWarn(warn, true, nameOf(input) + ": PrecursorIonType is inconsistent with the data (" + input.getPrecursorIonType().toString() + " with m/z " + input.getPrecursorIonType().getModificationMass() + " does not match ion mass m/z = " + input.getIonMass() + " and neutral mass m/z = " + neutralmass + ")" );
                     input.setPrecursorIonType(PeriodicTable.getInstance().getUnknownPrecursorIonType(input.getPrecursorIonType().getCharge()));
                 }
             }
@@ -168,7 +176,7 @@ public class Ms2Validator extends Ms1Validator {
             double modificationMass = input.getIonMass() - (input.getMolecularFormula() != null ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass());
             PrecursorIonType ion = PeriodicTable.getInstance().ionByMass(modificationMass, absError, input.getPrecursorIonType().getCharge());
             if (ion != null) {
-                warn.warn("Set ion to " + ion.toString());
+                warn.warn(nameOf(input) + ": Set ion to " + ion.toString());
                 input.setPrecursorIonType(ion);
             } else {
                 searchForIon(warn, input);
@@ -188,7 +196,7 @@ public class Ms2Validator extends Ms1Validator {
         for (Spectrum<? extends Peak> spec : spectra) {
             final int peak = Spectrums.search(spec, mz, dev);
             if (peak >= 0) {
-                warn.warn("Set ion to " + mhp.toString());
+                warn.warn(nameOf(input) + ": Set ion to " + mhp.toString());
                 input.setPrecursorIonType(mhp);
                 input.setIonMass(spec.getMzAt(peak));
                 return;
@@ -199,7 +207,7 @@ public class Ms2Validator extends Ms1Validator {
         for (Spectrum<? extends Peak> spec : spectra) {
             for (PrecursorIonType ion : ions) {
                 if (Spectrums.search(spec, ion.neutralMassToPrecursorMass(neutral), dev) >= 0) {
-                    warn.warn("Set ion to " + ion.toString());
+                    warn.warn(nameOf(input) + ": Set ion to " + ion.toString());
                     input.setPrecursorIonType(ion);
                     return;
                 }
@@ -254,7 +262,7 @@ public class Ms2Validator extends Ms1Validator {
                                     if (p.getIntensity() > parent.getIntensity()) parent = p;
                                 } else if (p.getMass() > parent.getMass()) parent = p;
                             }
-                        warn.warn("No ion mass is given. Choose m/z = " + parent.getMass() + " as parent peak.");
+                        warn.warn(nameOf(input) + ": No ion mass is given. Choose m/z = " + parent.getMass() + " as parent peak.");
                         input.setIonMass(parent.getMass());
                     } else {
                         // take peak with highest intensity
@@ -265,14 +273,14 @@ public class Ms2Validator extends Ms1Validator {
                             --index;
                         }
                         // hopefully, this is the correct isotope peak
-                        warn.warn("Predict ion mass from MS1: " + ms1.getMzAt(index));
+                        warn.warn(nameOf(input) + ": Predict ion mass from MS1: " + ms1.getMzAt(index));
                         input.setIonMass(ms1.getMzAt(index));
                     }
                 }
             } else {
                 final double neutralMass = (input.getMolecularFormula()!=null ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass());
                 if (neutralMass <= 0) {
-                    throwOrWarn(warn, false, "Neither ionmass nor neutral mass nor molecular formula are given. Cannot determine parent peak!");
+                    throwOrWarn(warn, false, nameOf(input) + ": Neither ionmass nor neutral mass nor molecular formula are given. Cannot determine parent peak!");
                 }
                 final double parentMz = input.getPrecursorIonType().neutralMassToPrecursorMass(neutralMass);
                 input.setIonMass(parentMz);

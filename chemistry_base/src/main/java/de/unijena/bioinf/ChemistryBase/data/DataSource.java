@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.data;
 
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 
 import java.io.File;
@@ -8,7 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 
-public class DataSource implements DataAnnotation, TreeAnnotation {
+public class DataSource implements DataAnnotation, TreeAnnotation, Ms2ExperimentAnnotation {
 
     private final URL url;
 

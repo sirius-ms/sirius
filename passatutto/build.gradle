@@ -1,0 +1,5 @@
+dependencies {
+    compile project(':chemistry_base')
+    compile project(':preprocessing')
+    compile project(':sirius_api')
+}

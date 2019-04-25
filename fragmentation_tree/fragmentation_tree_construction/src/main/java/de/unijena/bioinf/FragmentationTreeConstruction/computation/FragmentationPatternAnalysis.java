@@ -1083,8 +1083,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     /**
      * is called if the tree should be reported to the user, BEFORE recalculating the scores
      */
-    public void makeTreeReleaseReady(ProcessedInput input, FGraph graph, FTree tree) {
-        final IntergraphMapping graphFragmentMap = IntergraphMapping.map(graph,tree);
+    public void makeTreeReleaseReady(ProcessedInput input, FGraph graph, FTree tree, IntergraphMapping graphFragmentMap) {
         addPeakAnnotationToTree(input, graph, tree, graphFragmentMap);
         final LossAnnotation<LossType> lossType = tree.addLossAnnotation(LossType.class, LossType::regular);
         for (Loss l : tree.losses()) {

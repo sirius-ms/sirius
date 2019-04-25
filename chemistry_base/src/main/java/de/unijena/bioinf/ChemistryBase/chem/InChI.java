@@ -63,7 +63,7 @@ public class InChI implements Ms2ExperimentAnnotation {
         if (o == null || getClass() != o.getClass()) return false;
 
         InChI inChI = (InChI) o;
-
+        if (in3D==null) return ((InChI) o).in3D==null;
         if (!in3D.equals(inChI.in3D)) return false;
         return !(key != null ? !key.equals(inChI.key) : inChI.key != null);
 
