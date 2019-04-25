@@ -1,10 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -17,13 +14,20 @@ public abstract class AbstractHeuristic {
     protected final List<Loss> selectedEdges;
     protected final int ncolors;
 
+    protected final IntergraphMapping.Builder mapping;
+
     public AbstractHeuristic(FGraph graph) {
         this.ncolors = graph.maxColor()+1;
         this.graph = graph;
         this.selectedEdges = new ArrayList<>(ncolors);
+        this.mapping = IntergraphMapping.build();
     }
 
     public abstract FTree solve();
+
+    public IntergraphMapping.Builder getGraphMappingBuilder() {
+        return mapping;
+    }
 
     protected FTree buildSolution(boolean prune) {
         if (selectedEdges.size()==0) {
@@ -35,18 +39,19 @@ public abstract class AbstractHeuristic {
             }
             final FTree t = new FTree(bestFrag.getFormula(), bestFrag.getIonization());
             t.setTreeWeight(bestFrag.getIncomingEdge().getWeight());
+            mapping.mapLeftToRight(bestFrag, t.getRoot());
             return t;
         }
         selectedEdges.sort(Comparator.comparingInt((l)->l.getSource().getColor()));
         final FTree tree = new FTree(selectedEdges.get(0).getTarget().getFormula(), selectedEdges.get(0).getTarget().getIonization());
-        final HashMap<MolecularFormula, Fragment> fragmentsByFormula = new HashMap<>(selectedEdges.size());
-        fragmentsByFormula.put(tree.getRoot().getFormula(), tree.getRoot());
+        mapping.mapLeftToRight(selectedEdges.get(0).getTarget(), tree.getRoot());
+        //final HashMap<MolecularFormula, Fragment> fragmentsByFormula = new HashMap<>(selectedEdges.size());
         for (int i=1; i < selectedEdges.size(); ++i) {
             final Loss l = selectedEdges.get(i);
-            Fragment parent = fragmentsByFormula.get(l.getSource().getFormula());
+            Fragment parent = mapping.getMapping().get(l.getSource());
             final Fragment f = tree.addFragment(parent, l.getTarget());
+            mapping.mapLeftToRight(l.getTarget(), f);
             f.getIncomingEdge().setWeight(l.getWeight());
-            fragmentsByFormula.put(f.getFormula(), f);
         }
         if (prune) prune(tree, tree.getRoot());
         double score = selectedEdges.get(0).getWeight();

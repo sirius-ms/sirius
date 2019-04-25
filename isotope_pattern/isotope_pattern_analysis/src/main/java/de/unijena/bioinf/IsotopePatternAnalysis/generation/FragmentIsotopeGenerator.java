@@ -216,8 +216,8 @@ public class FragmentIsotopeGenerator extends FastIsotopePatternGenerator {
         final SimpleSpectrum lossPattern = generator.simulatePattern(loss, ion);
 
         final double[][] matrix = new double[n][n];
-        for (int i=0; i < fragmentPattern.size(); ++i) {
-            for (int j=0; j < lossPattern.size(); ++j) {
+        for (int i=0; i < Math.min(n,fragmentPattern.size()); ++i) {
+            for (int j=0; j < Math.min(n,lossPattern.size()); ++j) {
                 matrix[i][j] = fragmentPattern.getIntensityAt(i)*lossPattern.getIntensityAt(j);
             }
         }
@@ -236,7 +236,7 @@ public class FragmentIsotopeGenerator extends FastIsotopePatternGenerator {
         }
         // fix fragment pattern
         final SimpleMutableSpectrum buf = new SimpleMutableSpectrum(fragmentPattern.size());
-        for (int i=0; i < n; ++i) {
+        for (int i=0; i < Math.min(fragmentPattern.size(), n); ++i) {
             double intensity = 0d;
             for (int j=0; j < n; ++j) {
                 intensity += matrix[i][j];

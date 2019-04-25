@@ -25,7 +25,7 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
 
     private LossSizeScorer lossSizeScorer;
 
-    private Element Fluor,Cl,Br,I;
+    private Element P, N;
 
     public AdductSwitchLossScorer(LossSizeScorer lossSizeScorer) {
         this(DEFAULT_NA_H_SWITCH_SCORE, lossSizeScorer);
@@ -35,10 +35,8 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
         this.naHSwitchScore = naHSwitchScore;
         this.lossSizeScorer = lossSizeScorer;
         PeriodicTable T = PeriodicTable.getInstance();
-        Fluor = T.getByName("F");
-        Cl = T.getByName("Cl");
-        Br = T.getByName("Br");
-        I = T.getByName("I");
+        P = T.getByName("P");
+        N = T.getByName("N");
     }
 
     @Override
@@ -70,7 +68,7 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
 
             final double correctLossSize = lossSizeScorer.score(F);
 
-            final double lossScore = (F.numberOfOxygens()>0 || F.numberOf(Fluor)>0 || F.numberOf(Cl)>0 || F.numberOf(Br)>0 || F.numberOf(I)>0) ? DEFAULT_NA_H_SWITCH_SCORE : Double.NEGATIVE_INFINITY;//allowedLosses.contains(loss.getFormula()) ? -2 : Double.NEGATIVE_INFINITY;
+            final double lossScore = (F.numberOfOxygens()>0 || F.numberOf(P)>0 || F.numberOf(N)>0) ? DEFAULT_NA_H_SWITCH_SCORE : Double.NEGATIVE_INFINITY;//allowedLosses.contains(loss.getFormula()) ? -2 : Double.NEGATIVE_INFINITY;
 
             return lossScore - wrongLossSize + correctLossSize;
         }

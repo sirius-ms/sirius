@@ -15,6 +15,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.Abst
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GrbSolver;
 import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
+import de.unijena.bioinf.babelms.MsIO;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.mgf.MgfParser;
@@ -35,10 +36,7 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -260,7 +258,6 @@ public class TestSirius {
 
     }
 
-
     @Test
     public void testIsotopesInMs2() {
         final MutableMs2Spectrum msms1 = new MutableMs2Spectrum(new SimpleSpectrum(
@@ -277,17 +274,32 @@ public class TestSirius {
                 new double[]{53.0384,54.0338,55.0178,55.0540,56.0492,60.0442,63.0227,63.9946,65.0383,66.0417,67.0414,67.0539,68.0492,69.0332,69.0570,69.0696,70.0648,71.0601,72.0441,74.9993,75.9945,76.9786,77.0383,78.0102,78.9942,79.0539,80.0492,80.0572,81.0332,81.0570,81.0696,82.0648,83.0488,83.0726,84.0805,85.0838,86.0597,87.0676,88.9787,89.0150,90.0102,91.0540,92.0573,93.0570,93.0695,94.0648,95.0488,95.0601,95.0727,96.0441,96.0680,96.0805,97.0520,97.0646,97.0757,97.0883,98.0598,98.0836,98.0962,99.0676,99.0914,100.0948,101.0150,102.0103,104.0259,105.0446,106.0052,106.0649,107.0490,107.0728,108.0806,109.0646,109.0758,109.0884,110.0599,110.0679,110.0837,111.0261,111.0915,112.0756,113.0834,114.0103,115.0308,116.0260,117.0101,119.0603,120.0574,120.0636,123.0916,124.0756,124.0993,125.0151,125.0834,125.1072,126.0912,127.0182,127.0308,127.0945,132.0210,132.0574,139.0211,140.0707,142.0417,143.0259,144.0573,145.0413,145.0609,155.0160,159.0682,160.0522,162.0678,196.9667}, new double[]{4.50,3.20,1.90,15.78,39.66,2.10,2.20,1.30,97.10,2.60,6.69,44.26,10.89,1.70,3.60,3.60,40.56,3.50,1.40,8.69,1.20,29.77,4.40,6.89,3.30,69.83,32.47,2.00,6.19,5.99,143.36,248.35,2.50,16.58,154.35,3.60,1.30,3.90,1.10,4.90,3.00,999.00,34.07,15.48,2.80,16.18,4.20,9.69,8.59,2.80,4.90,21.28,4.10,2.90,2.30,5.89,93.11,23.38,8.59,10.49,40.46,1.00,2.20,1.70,1.20,5.09,2.60,56.54,1.70,9.49,72.43,55.44,3.10,11.99,18.88,1.90,2.10,3.30,4.00,7.69,13.39,2.80,2.80,20.08,3.40,459.64,3.10,15.58,28.27,11.99,10.49,2.10,33.27,7.79,393.71,4.50,2.40,14.29,3.40,6.29,18.58,2.70,31.87,1.10,46.65,11.89,1.20,32.07,13.39,16.68,14.09,1.30}
         ), 351.1137, new CollisionEnergy(40,40), 2 );
 
+        final MutableMs2Spectrum fakePattern = new MutableMs2Spectrum(new SimpleSpectrum(
+                new double[]{91.05422664409053, 92.05761222837592}, new double[]{1000, 300}
+        ), 351.1137, new CollisionEnergy(50,50), 2 );
+
 
         final MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.setPrecursorIonType(PrecursorIonType.getPrecursorIonType("[M+H]+"));
         exp.setIonMass(351.1137);
-        exp.setMs2Spectra(new ArrayList<>(Arrays.asList(msms1,msms2,msms3,msms4)));
+        exp.setMs2Spectra(new ArrayList<>(Arrays.asList(msms1,msms2,msms3,msms4,fakePattern)));
 
         //sirius.getMs2Analyzer().registerPlugin(new IsotopePatternInMs2Plugin());
 
         IdentificationResult result = sirius.compute(exp, MolecularFormula.parse("C14H23ClN2O4S"));
+        final FragmentAnnotation<Ms2IsotopePattern> iso = result.getTree().getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
+        assertNotNull(iso);
+        int peaksWithIsotopes = 0;
+        for (Fragment f : result.getTree()) {
+            if (iso.get(f)!=null && iso.get(f).getPeaks().length>1) {
+                ++peaksWithIsotopes;
+            }
+            if (f.getFormula().toString().equals("C7H6")) {
+                assertTrue("Fake isotope pattern should be not recognized as such.", iso.get(f)==null || iso.get(f).getPeaks().length==1);
+            }
+        }
+        assertTrue("tree should be annotated with isotope peaks", peaksWithIsotopes>1);
 
-        System.out.println(new FTJsonWriter().treeToJsonString(result.getTree()));
     }
 
 }
