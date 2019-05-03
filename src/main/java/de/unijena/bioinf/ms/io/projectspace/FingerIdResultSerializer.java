@@ -70,7 +70,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                             fpc.setSmiles(tabs[6]);
                             final List<DBLink> links = new ArrayList<>();
                             for (String pubchemId : tabs[8].split(";")) {
-                                links.add(new DBLink(DatasourceService.Sources.PUBCHEM.name, pubchemId));
+                                links.add(new DBLink(DatasourceService.Source.PUBCHEM.realName, pubchemId));
                             }
                             for (String dbPair : tabs[9].split(";")) {
                                 final Matcher m = DBPAT.matcher(dbPair);

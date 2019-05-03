@@ -76,7 +76,7 @@ public class CSVExporter {
             if (Double.isNaN(r.getCandidate().getXlogp())) writer.write("\"\"");
             else writer.write(String.valueOf(r.getCandidate().getXlogp()));
             writer.write('\t');
-            list(writer, dbMap.get(DatasourceService.Sources.PUBCHEM.name));
+            list(writer, dbMap.get(DatasourceService.Source.PUBCHEM.realName));
             writer.write('\t');
             links(writer, dbMap);
             writer.write('\n');
