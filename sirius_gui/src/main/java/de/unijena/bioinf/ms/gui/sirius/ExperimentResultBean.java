@@ -33,6 +33,7 @@ public class ExperimentResultBean extends AbstractEDTBean implements PropertyCha
 
     //Here are fields to view the SiriusResultElement
     private volatile List<IdentificationResultBean> results;
+
     private volatile IdentificationResultBean bestHit;
     private volatile int bestHitIndex = 0;
 
