@@ -417,23 +417,23 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     @Override
     public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            final DatasourceService.Sources[] sources = DatasourceService.Sources.values();
+            final DatasourceService.Source[] sources = DatasourceService.Source.values();
             final PreparedStatement[] statements = new PreparedStatement[sources.length];
             int k = 0;
-            for (DatasourceService.Sources source : sources) {
+            for (DatasourceService.Source source : sources) {
                 statements[k++] = source.sqlQuery == null ? null : c.connection.prepareStatement(source.sqlQuery);
             }
             final ArrayList<DBLink> buffer = new ArrayList<>();
             for (CompoundCandidate candidate : sublist) {
                 for (int i = 0; i < sources.length; ++i) {
-                    final DatasourceService.Sources source = sources[i];
-                    if (/* legacy mode */ source == DatasourceService.Sources.PUBCHEM || ((candidate.getBitset() & source.flag)) != 0) {
+                    final DatasourceService.Source source = sources[i];
+                    if (/* legacy mode */ source == DatasourceService.Source.PUBCHEM || ((candidate.getBitset() & source.flag)) != 0) {
                         final PreparedStatement statement = statements[i];
                         if (statement != null) {
                             statement.setString(1, candidate.getInchiKey2D());
                             try (final ResultSet set = statement.executeQuery()) {
                                 while (set.next()) {
-                                    buffer.add(new DBLink(source.name, set.getString(1)));
+                                    buffer.add(new DBLink(source.realName, set.getString(1)));
                                 }
                             }
                         }

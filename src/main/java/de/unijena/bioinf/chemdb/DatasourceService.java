@@ -42,7 +42,7 @@ public class DatasourceService {
         BIOFLAG = bioflag;
     }
 
-    public enum Sources {
+    public enum Source {
 
         PUBCHEM("PubChem", 2,   "SELECT compound_id FROM ref.pubchem WHERE inchi_key_1 = ?", "https://pubchem.ncbi.nlm.nih.gov/compound/%s"),
         MESH("MeSH", 4,         "SELECT compound_id FROM ref.mesh WHERE inchi_key_1 = ?", "http://www.ncbi.nlm.nih.gov/mesh/%s"),
@@ -50,7 +50,7 @@ public class DatasourceService {
         KNAPSACK("KNApSAcK",16, "SELECT knapsack_id FROM ref.knapsack WHERE inchi_key_1 = ?", "http://kanaya.naist.jp/knapsack_jsp/information.jsp?word=C%08d"),
         CHEBI("CHEBI",32,       "SELECT chebi_id FROM ref.chebi WHERE inchi_key_1 = ?", "https://www.ebi.ac.uk/chebi/searchId.do?chebiId=%s"),
         PUBMED("PubMed", 64,    null,null),
-        BIO("biological", 128,  null,null, 0),
+        BIO("Bio Database", 128, null, null, 0),
         KEGG("KEGG", 256,       "SELECT kegg_id FROM ref.kegg WHERE inchi_key_1 = ?", "http://www.kegg.jp/dbget-bin/www_bget?cpd:%s"),
         HSDB("HSDB", 512,       "SELECT cas FROM ref.hsdb WHERE inchi_key_1 = ?", null),
         MACONDA("Maconda", 1024,"SELECT maconda_id FROM ref.maconda WHERE inchi_key_1 = ?", "http://www.maconda.bham.ac.uk/contaminant.php?id=%d"),
@@ -67,16 +67,17 @@ public class DatasourceService {
 
 
         public final long flag;
-        public final String name;
+        public final String realName;
         public final String sqlQuery;
         public final long searchFlag;
         public final String URI;
 
-        Sources(String name, long flag, String sqlQuery, String uri) {
-            this(name,flag,sqlQuery,uri,flag);
+        Source(String realName, long flag, String sqlQuery, String uri) {
+            this(realName, flag, sqlQuery, uri, flag);
         }
-        Sources(String name, long flag, String sqlQuery, String uri, long searchFlag) {
-            this.name = name;
+
+        Source(String realName, long flag, String sqlQuery, String uri, long searchFlag) {
+            this.realName = realName;
             this.flag = flag;
             this.sqlQuery = sqlQuery;
             this.URI = uri;
@@ -84,6 +85,8 @@ public class DatasourceService {
         }
 
         protected static Pattern NUMPAT = Pattern.compile("%(?:[0-9 ,+\\-]*)d");
+
+
         public String getLink(String id) {
             if (this.URI==null) return null;
             if (NUMPAT.matcher(URI).find()) {
@@ -93,11 +96,14 @@ public class DatasourceService {
             }
         }
 
+        public boolean isBio() {
+            return DatasourceService.isBio(flag);
+        }
     }
 
-    private static final Map<String, String> SOURCES_ALIAS_MAP = new ConcurrentHashMap<>();
+    private static final Map<String, Source> SOURCES_ALIAS_MAP = new ConcurrentHashMap<>();
 
-    public static Map<String, String> getSourcesAliasMap() {
+    public static Map<String, Source> getSourcesAliasMap() {
         return Collections.unmodifiableMap(SOURCES_ALIAS_MAP);
     }
 
@@ -106,21 +112,32 @@ public class DatasourceService {
     }
 
     static {
-        for (Sources value : Sources.values())
-            SOURCES_ALIAS_MAP.put(value.name.toLowerCase(), value.name);
-
-        SOURCES_ALIAS_MAP.put("biocyc", Sources.METACYC.name);
-        SOURCES_ALIAS_MAP.put("bio", Sources.BIO.name);
-        SOURCES_ALIAS_MAP.put("unpd", Sources.UNDP.name);
+        for (Source value : Source.values()) {
+            SOURCES_ALIAS_MAP.put(value.realName.toLowerCase(), value);
+            SOURCES_ALIAS_MAP.put(value.name().toLowerCase(), value);
+        }
     }
 
-    public static String cleanSourceName(@NotNull final String name) {
+    public static Source getSourceFromName(@NotNull final String name) {
         return SOURCES_ALIAS_MAP.get(name.toLowerCase());
     }
 
-    public static boolean containsSource(@NotNull final String name) {
-        return cleanSourceName(name) != null;
+    public static String getRealSourceName(@NotNull final String name) {
+        final Source source = getSourceFromName(name);
+        if (source == null) return null;
+        return source.realName;
     }
+
+    public static boolean containsSource(@NotNull final String name) {
+        return getSourceFromName(name) != null;
+    }
+
+    public static long getDBFlagFromName(String dbName) {
+        Source s = DatasourceService.getSourceFromName(dbName);
+        if (s != null) return s.searchFlag;
+        return 0L;
+    }
+
 
     public static boolean isBio(long flags) {
         return (flags & BIOFLAG) != 0;
@@ -148,17 +165,14 @@ public class DatasourceService {
     }
 
     public static Set<String> getDataSourcesFromBitFlags(Set<String> set, long flags) {
-        for (Sources s : Sources.values()) {
+        for (Source s : Source.values()) {
             if ((flags & s.flag) == s.flag) {
-                set.add(s.name);
+                set.add(s.realName);
             }
         }
         return set;
     }
 
-    public static DatasourceService.Sources getFromName(@NotNull final String name) {
-        final String cleanName = cleanSourceName(name);
-        if (cleanName == null) return null;
-        return Sources.valueOf(cleanName);
-    }
+
+
 }
