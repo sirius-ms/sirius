@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.frontend.parameters;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.ms.MsFileConfig;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
@@ -33,6 +34,9 @@ public class AddConfigsJob extends InstanceJob {
         //fill all annotations
         exp.setAnnotation(FinalConfig.class, new FinalConfig(baseConfig));
         exp.addAnnotationsFrom(baseConfig, Ms2ExperimentAnnotation.class);
+
+        //reduce basic list of possible Adducts to charge
+        exp.getAnnotation(PossibleAdducts.class).keepOnly(exp.getPrecursorIonType().getCharge());
 
         return expRes;
     }
