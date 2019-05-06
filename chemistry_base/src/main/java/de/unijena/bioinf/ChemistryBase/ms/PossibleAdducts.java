@@ -62,15 +62,15 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Ms2Exp
     }
 
     public void keepOnlyPositive() {
-        value.removeIf(it -> it.getCharge() < 1);
+        value.removeIf(it -> it.getCharge() > 1);
     }
 
     public void keepOnlyNegative() {
         value.removeIf(it -> it.getCharge() < 1);
     }
 
-    public void keepOnly(int charge) {
-        value.removeIf(it -> it.getCharge() != 1);
+    public void keepOnly(final int charge) {
+        value.removeIf(it -> it.getCharge() != charge);
     }
 
     public Set<IonMode> getIonModes() {
