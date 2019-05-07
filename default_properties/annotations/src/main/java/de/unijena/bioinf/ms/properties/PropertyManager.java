@@ -290,12 +290,12 @@ public class PropertyManager {
     }
 
     public static void loadSiriusCredentials() {
-        Path p = null;
+        final String path = getProperty("de.unijena.bioinf.ms.credentials.path", null, "$USER_HOME/sirius.credentials").replace("$USER_HOME", System.getProperty("user.home"));
         try {
-            p = Paths.get(System.getProperty("user.home"), "sirius.credentials");
+            Path p = Paths.get(path);
             addPropertiesFromFile(p);
         } catch (IOException | ConfigurationException e) {
-            LoggerFactory.getLogger(PropertyManager.class).error("Could not load Sirius Credentials from: " + p.toString());
+            LoggerFactory.getLogger(PropertyManager.class).error("Could not load Sirius Credentials from: " + path);
         }
     }
 }
