@@ -36,8 +36,7 @@ public class ToolChainWorkflow implements Workflow {
     @Override
     public void run() {
         try {
-//            final Map<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> parameterInstancesCache =
-//                    parameters.createInstancesWithDefaults(Ms2ExperimentAnnotation.class); //todo cache instances???
+            //todo cache instances???
             final List<InstanceJob.Factory> instanceJobChain = new ArrayList<>(toolchain.size());
             //job factory for job that add config annotations to an instance
             instanceJobChain.add(() -> new AddConfigsJob(parameters));
