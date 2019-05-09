@@ -132,9 +132,8 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         // as long as we do not find good quality results
         final boolean useHeuristic = pinput.getParentPeak().getMass() > 300;
         final ExactResult[] results = estimateTreeSizeAndRecalibration(decompositions, useHeuristic);
-        final List<FTree> trees = new ArrayList<>(results.length);
-        for (ExactResult r : results) trees.add(resolve(r.tree));
-        //trees.forEach(this::recalculateScore);
+        //we do not resolve here anymore -> because we need unresolved trees to expand adducts for fingerid
+        final List<FTree> trees = Arrays.stream(results).map(r -> r.tree).collect(Collectors.toList());
         return new FinalResult(trees);
     }
 
@@ -300,13 +299,6 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
             return list;
         }
-    }
-
-    protected FTree resolve(FTree tree) {
-        if (pinput.getExperimentInformation().getPrecursorIonType().isIonizationUnknown())
-            return tree;
-        else
-            return new IonTreeUtils().treeToNeutralTree(tree, pinput.getExperimentInformation().getPrecursorIonType());
     }
 
     @NotNull

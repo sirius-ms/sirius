@@ -18,16 +18,13 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.ft.*;
-import de.unijena.bioinf.ms.annotations.Annotated;
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
+import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
 public final class IdentificationResult implements Cloneable, Comparable<IdentificationResult>, Annotated<DataAnnotation> {
 
@@ -79,31 +76,6 @@ public final class IdentificationResult implements Cloneable, Comparable<Identif
                 this.formula = tree.getAnnotationOrThrow(PrecursorIonType.class).measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
             }
         }
-    }
-
-    @Deprecated
-    public IdentificationResult transform(PrecursorIonType ionType) {
-        final FTree tree = new FTree(getRawTree());
-        final PrecursorIonType currentIonType = tree.getAnnotationOrThrow(PrecursorIonType.class);
-        if (!currentIonType.hasNeitherAdductNorInsource() || ionType.getCharge() != currentIonType.getCharge()) {
-            if (currentIonType.equals(ionType)) return this;
-            else
-                throw new RuntimeException("Tree is not compatible with precursor ion type " + ionType.toString() + ": " + tree.getRoot().getFormula() + " with " + currentIonType.toString());
-        }
-        if (!currentIonType.getIonization().equals(ionType.getIonization())) {
-            final boolean invalidIonization;
-            if (ionType.isIntrinsicalCharged()) {
-                final PeriodicTable T = PeriodicTable.getInstance();
-                if ((ionType.getCharge() > 0 && currentIonType.getIonization().equals(T.getProtonation())) || (ionType.getCharge() < 0 && currentIonType.getIonization().equals(T.getDeprotonation()))) {
-                    invalidIonization = false;
-                } else invalidIonization = true;
-
-            } else invalidIonization = true;
-            if (invalidIonization)
-                throw new RuntimeException("Tree is not compatible with precursor ion type " + ionType.getIonization().toString() + ": " + tree.getRoot().getFormula() + " with " + currentIonType.getIonization().toString());
-        }
-        tree.setAnnotation(PrecursorIonType.class, ionType);
-        return new IdentificationResult(new IonTreeUtils().treeToNeutralTree(tree), rank);
     }
 
     public int getRank() {
