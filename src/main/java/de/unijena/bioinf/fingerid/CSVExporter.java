@@ -32,6 +32,7 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CSVExporter {
 
@@ -76,7 +77,7 @@ public class CSVExporter {
             if (Double.isNaN(r.getCandidate().getXlogp())) writer.write("\"\"");
             else writer.write(String.valueOf(r.getCandidate().getXlogp()));
             writer.write('\t');
-            list(writer, dbMap.get(DatasourceService.Source.PUBCHEM.realName));
+            list(writer, dbMap.get(DatasourceService.Source.PUBCHEM.realName).stream().filter(Objects::nonNull).collect(Collectors.toList())); //is this a hack or ok?
             writer.write('\t');
             links(writer, dbMap);
             writer.write('\n');
@@ -85,6 +86,7 @@ public class CSVExporter {
 
 
     public static void list(Writer writer, Collection<String> pubchemIds) throws IOException {
+
         if (pubchemIds == null || pubchemIds.size() == 0) {
             writer.write("\"\"");
         } else {
