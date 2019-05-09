@@ -131,7 +131,7 @@ public class MztabMExporter {
 
 
                 List<String> ids = Arrays.stream(bestHit.getCandidate().getLinks())
-                        .filter(dbLink -> dbLink.name.equals(DatasourceService.Sources.PUBCHEM.name)).map(dbLink -> dbLink.id).collect(Collectors.toList());
+                        .filter(dbLink -> dbLink.name.equals(DatasourceService.Source.PUBCHEM.realName)).map(dbLink -> dbLink.id).collect(Collectors.toList());
 
                 smlItem.setDatabaseIdentifier(
                         ids.stream().map(dbLink -> "CID:" + dbLink)
@@ -139,7 +139,7 @@ public class MztabMExporter {
                 );
 
                 smlItem.setUri(
-                        ids.stream().map(DatasourceService.Sources.PUBCHEM::getLink)
+                        ids.stream().map(DatasourceService.Source.PUBCHEM::getLink)
                                 .collect(Collectors.toList())
                 );
 
