@@ -417,7 +417,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     @Override
     public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            final DatasourceService.Source[] sources = DatasourceService.Source.values();
+            final DatasourceService.Source[] sources = DatasourceService.Source.valuesNoALL();
             final PreparedStatement[] statements = new PreparedStatement[sources.length];
             int k = 0;
             for (DatasourceService.Source source : sources) {

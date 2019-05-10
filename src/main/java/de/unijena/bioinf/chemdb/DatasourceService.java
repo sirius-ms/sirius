@@ -49,7 +49,7 @@ public class DatasourceService {
         KNAPSACK("KNApSAcK",16, "SELECT knapsack_id FROM ref.knapsack WHERE inchi_key_1 = ?", "http://kanaya.naist.jp/knapsack_jsp/information.jsp?word=C%08d"),
         CHEBI("CHEBI",32,       "SELECT chebi_id FROM ref.chebi WHERE inchi_key_1 = ?", "https://www.ebi.ac.uk/chebi/searchId.do?chebiId=%s"),
         PUBMED("PubMed", 64,    null,null),
-        BIO("Bio Database", 128, null, null, 0),
+        BIO("Bio Database", 128, null, null, 0, false),
         KEGG("KEGG", 256,       "SELECT kegg_id FROM ref.kegg WHERE inchi_key_1 = ?", "http://www.kegg.jp/dbget-bin/www_bget?cpd:%s"),
         HSDB("HSDB", 512,       "SELECT cas FROM ref.hsdb WHERE inchi_key_1 = ?", null),
         MACONDA("Maconda", 1024,"SELECT maconda_id FROM ref.maconda WHERE inchi_key_1 = ?", "http://www.maconda.bham.ac.uk/contaminant.php?id=%d"),
@@ -60,9 +60,9 @@ public class DatasourceService {
         UNDP("Natural Products", 32768, "SELECT undp_id FROM ref.undp WHERE inchi_key_1 = ?", null),
         PLANTCYC("Plantcyc", 131072, "SELECT unique_id FROM ref.plantcyc WHERE inchi_key_1 = ?", "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s"),
         YMDB("YMDB", 65536,         "SELECT ymdb_id FROM ref.ymdb WHERE inchi_key_1 = ?", "http://www.ymdb.ca/compounds/YMDB%d05"),
-        KEGGMINE("KEGG Mine", 8589934592L, null,null, 8589934592L | 256L ),
-        ECOCYCMINE("EcoCyc Mine", 17179869184L, null,null, 17179869184L | 2048L),
-        YMDBMINE("YMDB Mine", 34359738368L, null,null, 34359738368L | 65536L);
+        KEGGMINE("KEGG Mine", 8589934592L, null, null, 8589934592L | 256L, true),
+        ECOCYCMINE("EcoCyc Mine", 17179869184L, null, null, 17179869184L | 2048L, true),
+        YMDBMINE("YMDB Mine", 34359738368L, null, null, 34359738368L | 65536L, true);
 
 
         public final long flag;
@@ -70,17 +70,19 @@ public class DatasourceService {
         public final String sqlQuery;
         public final long searchFlag;
         public final String URI;
+        public final boolean mines;
 
         Source(String realName, long flag, String sqlQuery, String uri) {
-            this(realName, flag, sqlQuery, uri, flag);
+            this(realName, flag, sqlQuery, uri, flag, false);
         }
 
-        Source(String realName, long flag, String sqlQuery, String uri, long searchFlag) {
+        Source(String realName, long flag, String sqlQuery, String uri, long searchFlag, boolean mines) {
             this.realName = realName;
             this.flag = flag;
             this.sqlQuery = sqlQuery;
             this.URI = uri;
             this.searchFlag = searchFlag;
+            this.mines = mines;
         }
 
         protected static Pattern NUMPAT = Pattern.compile("%(?:[0-9 ,+\\-]*)d");
@@ -97,6 +99,14 @@ public class DatasourceService {
 
         public boolean isBio() {
             return DatasourceService.isBio(flag);
+        }
+
+        public static Source[] valuesNoALL() {
+            return Arrays.stream(values()).filter(it -> it != ALL).toArray(Source[]::new);
+        }
+
+        public static Source[] valuesNoALLNoMINES() {
+            return Arrays.stream(values()).filter(it -> it != ALL && !it.mines).toArray(Source[]::new);
         }
     }
 
@@ -164,7 +174,7 @@ public class DatasourceService {
     }
 
     public static Set<String> getDataSourcesFromBitFlags(Set<String> set, long flags) {
-        for (Source s : Source.values()) {
+        for (Source s : Source.valuesNoALL()) {
             if ((flags & s.flag) == s.flag) {
                 set.add(s.realName);
             }
