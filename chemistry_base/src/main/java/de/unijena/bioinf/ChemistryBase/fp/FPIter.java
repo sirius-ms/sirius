@@ -97,6 +97,12 @@ public abstract class FPIter implements Iterable<FPIter>, Iterator<FPIter> {
     public abstract int getIndex();
     public abstract MolecularProperty getMolecularProperty();
 
+    /**
+     * Return a new iterator which points at index or on the first
+     * index which is not larger than index.
+     */
+    public abstract FPIter jumpTo(int index);
+
     public abstract FPIter clone();
 
 }

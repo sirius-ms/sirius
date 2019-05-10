@@ -20,60 +20,61 @@ package de.unijena.bioinf.ChemistryBase.algorithm;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.function.IntFunction;
 
 /**
  * A fixed size queue of double values. Inserting a new value into a full queue will lead to a removal of the smallest element
  */
-public final class BoundedDoubleQueue implements Iterable<Double> {
+public final class BoundedQueue<T> implements Iterable<T> {
 
-    private final double[] values;
+    private final T[] values;
     private int length;
+    private final Comparator<T> comparator;
 
-    public BoundedDoubleQueue(int size) {
-        this.values = new double[size];
-        Arrays.fill(values, Double.NEGATIVE_INFINITY);
+    public BoundedQueue(int size, IntFunction<T[]> generator, Comparator<T> comparator) {
+        this.values = generator.apply(size);
         this.length = 0;
+        this.comparator = comparator;
     }
 
     public int length() {
         return length;
     }
 
-    public double min() {
-        return values[0];
+    public T min() {
+        return (T)values[0];
     }
 
-    public double max() {
-        return values[length-1];
+    public T max() {
+        return (T)values[length-1];
     }
 
-    public boolean add(double value) {
-        if (value < values[0]) return false;
-        final int index = (length <= 5) ? linearSearch(value) : binarySearch(value);
+    public boolean add(T value) {
         if (length < values.length) {
-            if (index < length) System.arraycopy(values, index, values, index+1, length-index);
-            values[index] = value;
-            ++length;
+            values[length++] = value;
+            Arrays.sort(values, 0, length, comparator);
             return true;
-        } else {
-            if (index > 0) {
-                if (index > 1) System.arraycopy(values, 1, values, 0, index-1);
-                values[index-1] = value;
-                return true;
-            } else return false;
         }
+        if (comparator.compare(value, values[0]) < 0) return false;
+        final int index = (length <= 5) ? linearSearch(value) : binarySearch(value);
+        if (index > 0) {
+            if (index > 1) System.arraycopy(values, 1, values, 0, index-1);
+            values[index-1] = value;
+            return true;
+        } else return false;
     }
 
-    private int binarySearch(double value) {
-        final int index = Arrays.binarySearch(values, 0, length, value);
+    private int binarySearch(T value) {
+        final int index = Arrays.binarySearch(values, 0, length, value, comparator);
         if (index >= 0) return index;
         else return (-index-1);
     }
 
-    private int linearSearch(double value) {
+    private int linearSearch(T value) {
         for (int i=0; i < length; ++i) {
-            if (values[i] > value) {
+            if (comparator.compare(values[i],value)>0) {
                 return i;
             }
         }
@@ -82,11 +83,11 @@ public final class BoundedDoubleQueue implements Iterable<Double> {
 
     @NotNull
     @Override
-    public Iterator<Double> iterator() {
+    public Iterator<T> iterator() {
         return Arrays.stream(values).iterator();
     }
 
-    public double[] toArray() {
+    public T[] toArray() {
         return values.clone();
     }
 }

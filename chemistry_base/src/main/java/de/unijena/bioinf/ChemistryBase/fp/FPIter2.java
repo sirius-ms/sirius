@@ -21,4 +21,6 @@ public interface FPIter2 extends Iterable<FPIter2>, Iterator<FPIter2> {
 
     MolecularProperty getMolecularProperty();
 
+    public abstract FPIter2 jumpTo(int index);
+
 }
