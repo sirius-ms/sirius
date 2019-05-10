@@ -104,7 +104,10 @@ public class SmartsMapper {
     }
 
     public HijackedSmarts hijack(String smarts) {
-        return new HijackedSmarts(smarts);
+        return hijack(smarts,HijackingType.ATOM_WILDCARD);
+    }
+    public HijackedSmarts hijack(String smarts, HijackingType type) {
+        return new HijackedSmarts(smarts,type);
     }
 
     public static class Occurence {
@@ -143,6 +146,11 @@ public class SmartsMapper {
 
     private final static Function<IAtom, String> defaultFormatter = (a)->a.isAromatic() ? a.getSymbol().toLowerCase() : a.getSymbol();
 
+    public static enum HijackingType {
+        ALL_ATOMS,
+        ATOM_WILDCARD;
+    }
+
     public class HijackedSmarts {
         private final static int ELEM_OFFSET = 200;
         private final String originalSmarts;
@@ -152,9 +160,9 @@ public class SmartsMapper {
         private int[] strOffsets, strLenghts;
         private final TIntIntHashMap atomid2occurence;
 
-        private HijackedSmarts(String orig) {
+        private HijackedSmarts(String orig, HijackingType type) {
             this.originalSmarts = orig;
-            this.hijackedSmarts = flaggify(originalSmarts);
+            this.hijackedSmarts = flaggify(originalSmarts, type);
             this.query = SMARTSParser.parse(hijackedSmarts, SilentChemObjectBuilder.getInstance());
             this.atomid2occurence = makeMapping();
         }
@@ -228,6 +236,28 @@ public class SmartsMapper {
             return list;
         }
 
+        public TIntIntHashMap mapBetween(IAtomContainer A, IAtomContainer B) {
+            List<List<Occurence>> matchesA = match(A);
+            List<List<Occurence>> matchesB = match(B);
+            if (matchesA.isEmpty() || matchesB.isEmpty())
+                return null;
+            List<Occurence> a = matchesA.get(0);
+            List<Occurence> b = matchesB.get(0);
+            final TIntIntHashMap map = new TIntIntHashMap(A.getAtomCount(), 0.75f, -1,-1), atomi = new TIntIntHashMap(A.getAtomCount(), 0.75f, -1,-1), atomj = new TIntIntHashMap(A.getAtomCount(), 0.75f, -1,-1);
+            for (Occurence o : a) {
+                atomi.put(o.index, o.atomIndex);
+            }
+            for (Occurence o : b) {
+                atomj.put(o.index, o.atomIndex);
+            }
+            for (int o : atomi.keys()) {
+                if (atomj.get(o)>=0) {
+                    map.put(atomi.get(o), atomj.get(o));
+                }
+            }
+            return map;
+        }
+
         private TIntIntHashMap makeMapping() {
             final TIntIntHashMap mapping = new TIntIntHashMap();
             for (int k=0; k < query.getAtomCount(); ++k) {
@@ -248,10 +278,15 @@ public class SmartsMapper {
             return mapping;
         }
 
-        private String flaggify(String smarts) {
+        private String flaggify(String smarts, HijackingType type) {
             final TIntArrayList tps = new TIntArrayList(), offs = new TIntArrayList(), lngs = new TIntArrayList();
             int k=ELEM_OFFSET;
-            final Matcher m = Pattern.compile("\\[?(!#1|\\*)\\]?").matcher(smarts);
+            final Matcher m ;
+            if (type==HijackingType.ATOM_WILDCARD) {
+                m =Pattern.compile("\\[?(!#1|\\*)\\]?").matcher(smarts);
+            } else {
+                m =Pattern.compile("\\[([^\\]]+)\\]|([A-Za-z])").matcher(smarts);
+            }
             boolean result = m.find();
             if (result) {
                 StringBuffer sb = new StringBuffer();
@@ -264,7 +299,8 @@ public class SmartsMapper {
                             offs.add(m.start()); lngs.add(m.group(0).length());
                         }
                     }
-                    m.appendReplacement(sb, "[" + m.group(1) + ";!#" + k + "]");
+                    final String s = m.group(1)!=null ? m.group(1) : m.group(2);
+                    m.appendReplacement(sb, "[" + s + ";!#" + k + "]");
                     tps.add(HIJACK_ATOM_WILDCARDS);
                     ++k;
                     result = m.find();
