@@ -11,7 +11,7 @@ import java.io.IOException;
 
 
 /**
- * This is out Commandline tool
+ * This is our Commandline tool
  * <p>
  * Here we parse parameters, configure technical stuff,
  * read input, merge workspace, configure Algorithms/Workflows and wirte output.
