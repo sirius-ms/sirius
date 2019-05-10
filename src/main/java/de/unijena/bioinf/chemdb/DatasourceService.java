@@ -31,7 +31,6 @@ import java.util.regex.Pattern;
  * bitsets into names.
  */
 public class DatasourceService {
-
     public final static long BIOFLAG; // 4294967292
 
     static {
@@ -43,7 +42,7 @@ public class DatasourceService {
     }
 
     public enum Source {
-
+        ALL("all", 0, null, null),
         PUBCHEM("PubChem", 2,   "SELECT compound_id FROM ref.pubchem WHERE inchi_key_1 = ?", "https://pubchem.ncbi.nlm.nih.gov/compound/%s"),
         MESH("MeSH", 4,         "SELECT compound_id FROM ref.mesh WHERE inchi_key_1 = ?", "http://www.ncbi.nlm.nih.gov/mesh/%s"),
         HMDB("HMDB", 8,         "SELECT hmdb_id FROM ref.hmdb WHERE inchi_key_1 = ?", "http://www.hmdb.ca/metabolites/%s"),
@@ -57,7 +56,7 @@ public class DatasourceService {
         METACYC("Biocyc", 2048,"SELECT unique_id FROM ref.biocyc WHERE inchi_key_1 = ?", "http://biocyc.org/compound?orgid=META&id=%s"),
         GNPS("GNPS", 4096,      "SELECT id FROM ref.gnps WHERE inchi_key_1 = ?", "https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID=%s"),
         ZINCBIO("ZINC bio", 8192,"SELECT zinc_id FROM ref.zincbio WHERE inchi_key_1 = ?", "http://zinc.docking.org/substance/%s"),
-        TRAIN("training set", 16384, null,null),
+        TRAIN("Training Set", 16384, null, null),
         UNDP("Natural Products", 32768, "SELECT undp_id FROM ref.undp WHERE inchi_key_1 = ?", null),
         PLANTCYC("Plantcyc", 131072, "SELECT unique_id FROM ref.plantcyc WHERE inchi_key_1 = ?", "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s"),
         YMDB("YMDB", 65536,         "SELECT ymdb_id FROM ref.ymdb WHERE inchi_key_1 = ?", "http://www.ymdb.ca/compounds/YMDB%d05"),
@@ -132,7 +131,7 @@ public class DatasourceService {
         return getSourceFromName(name) != null;
     }
 
-    public static long getDBFlagFromName(String dbName) {
+    public static long getDBFlagFromName(@NotNull String dbName) {
         Source s = DatasourceService.getSourceFromName(dbName);
         if (s != null) return s.searchFlag;
         return 0L;
