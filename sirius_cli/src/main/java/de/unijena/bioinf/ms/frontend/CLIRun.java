@@ -35,8 +35,10 @@ public class CLIRun extends ApplicationCore {
         flow.run();
     }
 
-    public void parseArgs(String[] args) throws IOException {
+    /*Returns true if a workflow was parsed*/
+    public boolean parseArgs(String[] args) throws IOException {
         final WorkflowBuilder<RootOptionsCLI> builder = new WorkflowBuilder<>(new RootOptionsCLI());
         flow = new CommandLine(builder.rootSpec).parseWithHandler(builder.makeParseResultHandler(), args);
+        return flow != null; //todo maybe workflow validation would be nice here???
     }
 }
