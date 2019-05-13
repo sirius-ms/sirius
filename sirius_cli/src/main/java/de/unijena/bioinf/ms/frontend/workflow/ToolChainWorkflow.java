@@ -20,14 +20,15 @@ public class ToolChainWorkflow implements Workflow {
     protected final ParameterConfig parameters;
     protected final SiriusProjectSpace project;
 
-    private Iterator<ExperimentResult> inputIterator;
+    private Iterator<ExperimentResult> currentIterator;
+    private Iterable<ExperimentResult> iteratorSource;
     protected List<Object> toolchain;
 
     protected int initialInstanceNum, maxBufferSize = 0;
 
     public ToolChainWorkflow(SiriusProjectSpace projectSpace, Iterator<ExperimentResult> inputIterator, ParameterConfig parameters, List<Object> toolchain) {
         this.project = projectSpace;
-        this.inputIterator = inputIterator;
+        this.currentIterator = inputIterator;
 
         this.parameters = parameters;
         this.toolchain = toolchain;
@@ -47,9 +48,10 @@ public class ToolChainWorkflow implements Workflow {
                     instanceJobChain.add((InstanceJob.Factory) o);
                 } else if (o instanceof DataSetJob.Factory) {
                     final DataSetJob dataSetJob = ((DataSetJob.Factory) o).makeJob();
-                    final WorkflowJobSubmitter submitter = new WorkflowJobSubmitter(inputIterator, project, instanceJobChain, dataSetJob);
+                    final WorkflowJobSubmitter submitter = new WorkflowJobSubmitter(currentIterator, project, instanceJobChain, dataSetJob);
                     submitter.start(initialInstanceNum, maxBufferSize);
-                    inputIterator = submitter.jobManager().submitJob(dataSetJob).awaitResult().iterator();
+                    iteratorSource = submitter.jobManager().submitJob(dataSetJob).awaitResult();
+                    currentIterator = iteratorSource.iterator();
                     instanceJobChain.clear();
                 } else {
                     throw new IllegalArgumentException("Illegal job Type submitted. Only InstanceJobs and DataSetJobs are allowed");
@@ -58,14 +60,15 @@ public class ToolChainWorkflow implements Workflow {
 
             if (!instanceJobChain.isEmpty()) {
                 CollectorJob collector = new CollectorJob();
-                final WorkflowJobSubmitter submitter = new WorkflowJobSubmitter(inputIterator, project, instanceJobChain, collector);
+                final WorkflowJobSubmitter submitter = new WorkflowJobSubmitter(currentIterator, project, instanceJobChain, collector);
                 submitter.start(initialInstanceNum, maxBufferSize);
-                inputIterator = submitter.jobManager().submitJob(collector).awaitResult().iterator();
+                iteratorSource = submitter.jobManager().submitJob(collector).awaitResult();
+                currentIterator = iteratorSource.iterator();
             }
             System.out.println("workflow finished");
 
             try {
-                project.writeSummaries(() -> inputIterator, (cur, max, mess) -> System.out.println((((((double) cur) / (double) max)) * 100d) + "% " + mess));
+                project.writeSummaries(iteratorSource, (cur, max, mess) -> System.out.println((((((double) cur) / (double) max)) * 100d) + "% " + mess));
                 project.close();
             } catch (IOException e) {
                 LOG.error("Error when closing workspace. Workspace summaries may be incomplete");

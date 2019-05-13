@@ -34,8 +34,7 @@ public class SiriusCLIApplication {
 
     public static void run(String[] args) throws IOException {
         CLIRun cliRun = new CLIRun();
-        cliRun.parseArgs(args);
-        cliRun.compute();
-        System.out.println("DONE!");
+        if (cliRun.parseArgs(args))
+            cliRun.compute();
     }
 }

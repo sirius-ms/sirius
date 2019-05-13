@@ -158,7 +158,7 @@ distributions {
             }
         }
     })
-    distribute.dependsOn 'downloadOpenmsScript'
+//    distribute.dependsOn 'downloadOpenmsScript'
     distribute.dependsOn "${n}DistZip"
     getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
     getTasks().findByPath("${n}DistZip").dependsOn 'createAllExecutables'
