@@ -62,8 +62,12 @@ public class InputIterator implements Iterator<Ms2Experiment> {
                 } else return null;
             } else {
                 MutableMs2Experiment experiment = Sirius.makeMutable(currentExperimentIterator.next());
-                instances.add(experiment);
-                return currentExperimentIterator;
+                if (experiment.getIonMass() > maxMz){
+                    LOG.info("Skipping instance with mass: " + experiment.getIonMass() + " > " + maxMz);
+                }else {
+                    instances.add(experiment);
+                    return currentExperimentIterator;
+                }
             }
         }
     }
