@@ -29,12 +29,24 @@ public abstract class InstanceJob extends BasicDependentJJob<ExperimentResult> {
     }
 
     protected ExperimentResult awaitInput() throws ExecutionException {
-        if (input != null)
+        if (input != null) {
             return input;
-        if (inputProvidingJob != null)
-            return inputProvidingJob.awaitResult();
+        }
+        if (inputProvidingJob != null) {
+            input = inputProvidingJob.awaitResult();
+            return input;
+        }
 
         throw new ExecutionException(new IllegalArgumentException("Neither an input nor an input providing job was provided"));
+    }
+
+
+    protected ExperimentResult getInput() {
+        return input;
+    }
+
+    protected JJob<ExperimentResult> getInputProvidingJob() {
+        return inputProvidingJob;
     }
 
 
