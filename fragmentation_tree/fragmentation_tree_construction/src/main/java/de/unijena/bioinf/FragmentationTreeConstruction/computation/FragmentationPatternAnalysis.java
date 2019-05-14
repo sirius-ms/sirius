@@ -976,7 +976,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     public static String getScoringMethodName(Object instance) {
-        Class<? extends Object> someClass = instance.getClass();
+        Class<? extends Object> someClass = instance instanceof Class ? (Class<? extends Object>)instance : instance.getClass();
         if (someClass.isAnnotationPresent(Called.class)) {
             return someClass.getAnnotation(Called.class).value();
         } else return parameterHelper.toClassName(someClass);
