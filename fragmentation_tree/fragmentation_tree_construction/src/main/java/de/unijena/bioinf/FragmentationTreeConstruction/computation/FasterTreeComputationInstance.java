@@ -423,9 +423,12 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         final TreeBuilder.Result recal = tb.computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).solve(pin, graph);
         final TreeBuilder.Result finalTree;
         if (recal.tree.getTreeWeight() >= tree.getTreeWeight()) {
-            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(recal.tree).withMinimalScore(recal.tree.getTreeWeight() - 1e-3).solve(pin, graph);
+            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(recal.tree)/*.withMinimalScore(recal.tree.getTreeWeight() - 1e-3)*/.solve(pin, graph);
             if (finalTree.tree==null){
-                throw new RuntimeException("Recalibrated tree is null for "+input.getExperimentInformation().getName()+". Error in ILP?");
+                // TODO: why is tree score != ILP score? Or is this an error in ILP?
+                // check that
+                TreeBuilder.Result solve = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(recal.tree).solve(pin, graph);
+                throw new RuntimeException("Recalibrated tree is null for "+input.getExperimentInformation().getName()+". Error in ILP? Without score constraint the result is = optimal = " + solve.isOptimal + ", score = " + solve.tree.getTreeWeight() + " with score of uncalibrated tree is " + recal.tree.getTreeWeight());
             }
             finalTree.tree.setAnnotation(SpectralRecalibration.class, rec);
             analyzer.makeTreeReleaseReady(pin, graph, finalTree.tree, finalTree.mapping);

@@ -34,15 +34,17 @@ public class TreeStatisticPlugin extends SiriusPlugin {
             color.set(f.getColor());
         }
 
+        final double baseIntensity = input.getMergedPeaks().stream().mapToDouble(x->x.getRelativeIntensity()).max().orElse(1d);
+
         double totalIntensityOfExplainablePeaks=0d, totalIntensityOfPeaks=0d;
         for (int k=0; k < input.getMergedPeaks().size(); ++k) {
             if (color.get(k)) {
-                totalIntensityOfExplainablePeaks += input.getMergedPeaks().get(k).getRelativeIntensity();
+                totalIntensityOfExplainablePeaks += input.getMergedPeaks().get(k).getRelativeIntensity()/baseIntensity;
             }
-            totalIntensityOfPeaks += input.getMergedPeaks().get(k).getRelativeIntensity();
+            totalIntensityOfPeaks += input.getMergedPeaks().get(k).getRelativeIntensity()/baseIntensity;
         }
 
-        graph.addAnnotation(RememberNumberOfAnnotatablePeaks.class, new RememberNumberOfAnnotatablePeaks(totalIntensityOfExplainablePeaks, totalIntensityOfPeaks));
+        graph.addAnnotation(RememberNumberOfAnnotatablePeaks.class, new RememberNumberOfAnnotatablePeaks(totalIntensityOfExplainablePeaks, totalIntensityOfPeaks,baseIntensity));
     }
 
     @Override
@@ -53,20 +55,22 @@ public class TreeStatisticPlugin extends SiriusPlugin {
     private TreeStatistics makeTreeStatistics(ProcessedInput input, FGraph graph, FTree tree) {
         final RememberNumberOfAnnotatablePeaks x = graph.getAnnotation(RememberNumberOfAnnotatablePeaks.class);
         double treeIntensity = 0d;
+        final double baseIntensity = x.baseIntensity;
         final FragmentAnnotation<AnnotatedPeak> ano = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
         for (Fragment f : tree) {
-            treeIntensity += ano.get(f).getRelativeIntensity();
+            treeIntensity += ano.get(f).getRelativeIntensity()/baseIntensity;
         }
 
         return new TreeStatistics(treeIntensity, treeIntensity / x.totalIntensityOfExplainablePeaks, treeIntensity / x.totalIntensityOfPeaks);
     }
 
     private static class RememberNumberOfAnnotatablePeaks implements DataAnnotation  {
-        private final double totalIntensityOfExplainablePeaks, totalIntensityOfPeaks;
+        private final double totalIntensityOfExplainablePeaks, totalIntensityOfPeaks, baseIntensity;
 
-        public RememberNumberOfAnnotatablePeaks(double totalIntensityOfExplainablePeaks, double totalIntensityOfPeaks) {
+        public RememberNumberOfAnnotatablePeaks(double totalIntensityOfExplainablePeaks, double totalIntensityOfPeaks, double baseIntensity) {
             this.totalIntensityOfExplainablePeaks = totalIntensityOfExplainablePeaks;
             this.totalIntensityOfPeaks = totalIntensityOfPeaks;
+            this.baseIntensity = baseIntensity;
         }
     }
 
