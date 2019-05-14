@@ -58,7 +58,7 @@ public class FTDotWriter {
         if (!(writer instanceof BufferedWriter)) writer=new BufferedWriter(writer);
         writer.write("strict digraph {\n");
         final FragmentAnnotation<AnnotatedPeak> peakAno = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
-        final LossAnnotation<LossType> lossType = tree.getLossAnnotationOrNull(LossType.class);
+        final LossAnnotation<LossType> lossType = tree.getOrCreateLossAnnotation(LossType.class);
 
         final boolean hasScores;
         final FragmentAnnotation<Score> fscore = tree.getFragmentAnnotationOrNull(Score.class);
@@ -133,7 +133,7 @@ public class FTDotWriter {
             writer.write(" [label=");
             writer.write(htmlStart());
             writer.write(htmlFormula(l.getFormula()));
-            if (lossType.get(l).isInSource()) {
+            if (lossType.get(l,LossType::regular).isInSource()) {
                 writer.write(htmlNewline());
                 writer.write("(in-source)");
             }
