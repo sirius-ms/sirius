@@ -42,7 +42,7 @@ public abstract class ApplicationCore {
 
     public static final Path WORKSPACE;
     public static final WebAPI WEB_API;
-    public static final Canopus CANOPUS;
+    public static final Canopus CANOPUS = null;
 
 
     //creating
@@ -247,14 +247,14 @@ public abstract class ApplicationCore {
             DEFAULT_LOGGER.info("Web API initialized.");
 
             //todo get canopus from server or from jar.
-            Canopus c = null;
+            /*Canopus c = null;
             try {
                 c = Canopus.loadFromFile(new File("/home/fleisch/work/sirius_testing/canopus/canopus_fp.data"));
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
                 CANOPUS = c;
-            }
+            }*/
         } catch (Throwable e) {
             System.err.println("Application Core STATIC Block Error!");
             e.printStackTrace(System.err);
