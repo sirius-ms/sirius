@@ -43,30 +43,15 @@ public class DefaultParameterConfigLoader {
                     .description((descr != null) ? descr.replaceAll(System.lineSeparator()," ").replaceAll("#\\s*","") : "")
                     .hasInitialValue(false);
 
-            if (value.contains(",")) {
-                pSpec.type(List.class)
-                        .splitRegex(",")
-                        .setter(new CommandLine.Model.ISetter() {
-                            @Override
-                            public <T> T set(T value) throws Exception {
-                                final String v = String.join(",", (List<String>) value);
-                                LOG.debug("Changing DEFAULT:" + key + " -> " + v);
-                                config.changeConfig(key, v);
-                                return value;
-                            }
-                        });
-
-            } else {
-                pSpec.type(String.class)
-                        .setter(new CommandLine.Model.ISetter() {
-                            @Override
-                            public <T> T set(T value) throws Exception {
-                                LOG.debug("Changing DEFAULT:" + key + " -> " + value);
-                                config.changeConfig(key, String.valueOf(value));
-                                return value;
-                            }
-                        });
-            }
+                    pSpec.type(String.class)
+                            .setter(new CommandLine.Model.ISetter() {
+                                @Override
+                                public <T> T set(T value) throws Exception {
+                                    LOG.debug("Changing DEFAULT:" + key + " -> " + value);
+                                    config.changeConfig(key, String.valueOf(value).replaceAll("\\s", ""));
+                                    return value;
+                                }
+                            });
             return pSpec.build();
         }).collect(Collectors.toMap(it -> it.names()[0].replaceFirst("--", ""), it -> it));
     }
@@ -91,7 +76,7 @@ public class DefaultParameterConfigLoader {
     }
 
     public void changeOption(String optionName, List<String> value) throws Exception {
-        options.get(optionName).setter().set(value);
+        options.get(optionName).setter().set(value.stream().collect(Collectors.joining(",")));
     }
 
     @CommandLine.Command(name = "config", description = "Override all possible default configurations of this toolbox from the command line.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)

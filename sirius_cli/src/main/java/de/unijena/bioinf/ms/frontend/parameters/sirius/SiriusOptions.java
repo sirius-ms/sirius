@@ -94,13 +94,13 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
 
     // Elements
     @Option(names = {"-e", "--elements-considered"}, description = "Set the allowed elements for rare element detection. Write SBrClBSe to allow the elements S,Br,Cl,B and Se.")
-    public void setDetectableElements(List<String> elements) throws Exception {
+    public void setDetectableElements(String elements) throws Exception {
         defaultConfigOptions.changeOption("FormulaSettings.detectable", elements);
         defaultConfigOptions.changeOption("FormulaSettings.fallback", elements);
     }
 
     @Option(names = {"-E", "--elements-enforced"}, description = "Enforce elements for molecular formula determination. Write CHNOPSCl to allow the elements C, H, N, O, P, S and Cl. Add numbers in brackets to restrict the minimal and maximal allowed occurrence of these elements: CHNOP[5]S[8]Cl[1-2]. When one number is given then it is interpreted as upper bound. Default is CHNOP")
-    public void setEnforcedElements(List<String> elements) throws Exception {
+    public void setEnforcedElements(String elements) throws Exception {
         defaultConfigOptions.changeOption("FormulaSettings.enforced", elements);
     }
 
