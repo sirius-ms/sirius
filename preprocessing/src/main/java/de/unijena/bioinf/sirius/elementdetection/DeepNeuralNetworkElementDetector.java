@@ -3,6 +3,7 @@ package de.unijena.bioinf.sirius.elementdetection;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ms.annotations.Provides;
 import de.unijena.bioinf.ms.annotations.Requires;
@@ -25,9 +26,11 @@ public class DeepNeuralNetworkElementDetector implements ElementDetection {
     @Override
     @Nullable
     public FormulaConstraints detect(ProcessedInput processedInput) {
+        final FormulaSettings settings = processedInput.getAnnotationOrDefault(FormulaSettings.class);
         SimpleSpectrum ms1 = processedInput.getAnnotationOrThrow(Ms1IsotopePattern.class).getSpectrum();
-        if (ms1.size()<=2) return null;
-        return dnnRegressionPredictor.predictConstraints(ms1);
+        if (ms1.size()<=2) return settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet());
+        final FormulaConstraints constraints = dnnRegressionPredictor.predictConstraints(ms1);
+        return settings.getEnforcedAlphabet().getExtendedConstraints(settings.getAutoDetectionElements().toArray(new Element[0])).intersection(constraints);
     }
 
     @Override
