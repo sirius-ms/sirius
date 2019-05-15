@@ -158,7 +158,7 @@ public class RootOptionsCLI implements RootOptions {
         return new MetaDataSerializer[]{
                 new IdentificationResultSerializer()
                 , new FingerIdResultSerializer(ApplicationCore.WEB_API)
-                , new CanopusResultSerializer(ApplicationCore.CANOPUS)
+//                , new CanopusResultSerializer(ApplicationCore.CANOPUS)
         };
     }
 

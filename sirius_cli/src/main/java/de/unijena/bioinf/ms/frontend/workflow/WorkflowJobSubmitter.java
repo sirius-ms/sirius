@@ -31,12 +31,12 @@ class WorkflowJobSubmitter extends BufferedJJobSubmitter<ExperimentResult> {
     }
 
     @Override
-    protected void submitJobs(final JobContainer watcher) {
-        ExperimentResult instance = watcher.sourceInstance;
+    protected void submitJobs(final JobContainer instanceProvider) {
+        ExperimentResult instance = instanceProvider.sourceInstance;
         JJob<ExperimentResult> jobToWaitOn = (DymmyExpResultJob) () -> instance;
         for (InstanceJob.Factory task : tasks) {
             jobToWaitOn = task.createToolJob(jobToWaitOn);
-            submitJob(jobToWaitOn, watcher);
+            submitJob(jobToWaitOn, instanceProvider);
         }
         if (dependJob != null)
             dependJob.addInputProvidingJob(jobToWaitOn);
