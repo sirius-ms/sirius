@@ -45,10 +45,13 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
 
         // begin ugly
         if (readFingerprints == null) {
-            reader.env.leaveDirectory();
-            Map<String, String> versionInfo = reader.env.readKeyValueFile(FingerIdLocations.SIRIUS_VERSION_FILE.fileName());
-            readFingerprints = isFingerIdCompatible(versionInfo.get("csi:fingerid"));
-            reader.env.enterDirectory(result.getAnnotation(ExperimentDirectory.class).getDirectoryName());
+            try {
+                reader.env.leaveDirectory();
+                Map<String, String> versionInfo = reader.env.readKeyValueFile(FingerIdLocations.SIRIUS_VERSION_FILE.fileName());
+                readFingerprints = isFingerIdCompatible(versionInfo.get("csi:fingerid"));
+            } finally {
+                reader.env.enterDirectory(result.getAnnotation(ExperimentDirectory.class).getDirectoryName());
+            }
         }
         // ugly end
 
@@ -97,30 +100,33 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
         if (!readFingerprints) return;
 
         for (IdentificationResult r : results) {
-            env.enterDirectory(FingerIdLocations.FINGERID_FINGERPRINT.directory);
+            try {
+                env.enterDirectory(FingerIdLocations.FINGERID_FINGERPRINT.directory);
 
-            if (r.hasAnnotation(FingerIdResult.class)) {
-                final FingerIdResult fingerIdResult = r.getAnnotation(FingerIdResult.class);
+                if (r.hasAnnotation(FingerIdResult.class)) {
+                    final FingerIdResult fingerIdResult = r.getAnnotation(FingerIdResult.class);
 
-                //read fingerprint
-                try {
-                    fingerIdResult.setPredictedFingerprint(env.read(FingerIdLocations.FINGERID_FINGERPRINT.fileName(r), w -> {
-                        return new ProbabilityFingerprint(
-                                api.getFingerprintMaskedVersion(result.getExperiment().getPrecursorIonType().getCharge()), new BufferedReader(w).lines().mapToDouble(Double::valueOf).toArray());
-                    }));
-                } catch (IllegalArgumentException e) {
-                    LoggerFactory.getLogger(getClass()).warn("Fingerprint version of the imported data is imcompatible with the current version. " +
-                            "Fingerpringerprint has to be recomputed!", e);
+                    //read fingerprint
+                    try {
+                        fingerIdResult.setPredictedFingerprint(env.read(FingerIdLocations.FINGERID_FINGERPRINT.fileName(r), w -> {
+                            return new ProbabilityFingerprint(
+                                    api.getFingerprintMaskedVersion(result.getExperiment().getPrecursorIonType().getCharge()), new BufferedReader(w).lines().mapToDouble(Double::valueOf).toArray());
+                        }));
+                    } catch (IllegalArgumentException e) {
+                        LoggerFactory.getLogger(getClass()).warn("Fingerprint version of the imported data is imcompatible with the current version. " +
+                                "Fingerpringerprint has to be recomputed!", e);
+                    }
+
+
+                    //read fingerprint meta data
+                    Map<String, String> expInfo = env.readKeyValueFile(FingerIdLocations.FINGERID_FINGERPRINT_INFO.fileName(r));
+                    //readConfidence
+                    if (expInfo.containsKey("csi_confidence"))
+                        fingerIdResult.setConfidence(Double.valueOf(expInfo.get("csi_confidence")));
                 }
-
-
-                //read fingerprint meta data
-                Map<String, String> expInfo = env.readKeyValueFile(FingerIdLocations.FINGERID_FINGERPRINT_INFO.fileName(r));
-                //readConfidence
-                if (expInfo.containsKey("csi_confidence"))
-                    fingerIdResult.setConfidence(Double.valueOf(expInfo.get("csi_confidence")));
+            } finally {
+                env.leaveDirectory();
             }
-            env.leaveDirectory();
         }
     }
 
@@ -130,36 +136,43 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
         final DirectoryWriter.WritingEnvironment W = writer.env;
         final IdentificationResults results = input.getResults();
 
-        if (writer.isAllowed(FingerIdResult.CANDIDATE_LISTS) && hasFingerId(results)) {
+        if (writer.isAllowed(FingerIdResult.CANDIDATE_LISTS) && results != null && hasFingerId(results)) {
             // now write CSI:FingerID candidates
-            W.enterDirectory(FingerIdLocations.FINGERID_CANDIDATES.directory);
-            final List<FingerIdResult> frs = new ArrayList<>();
-            for (IdentificationResult result : results) {
-                final FingerIdResult f = result.getAnnotation(FingerIdResult.class);
-                if (f != null) {
-                    frs.add(f);
-                    writeFingerIdResult(result, f, writer);
+            final List<FingerIdResult> frs;
+            try {
+                W.enterDirectory(FingerIdLocations.FINGERID_CANDIDATES.directory);
+                frs = new ArrayList<>();
+                for (IdentificationResult result : results) {
+                    final FingerIdResult f = result.getAnnotation(FingerIdResult.class);
+                    if (f != null) {
+                        frs.add(f);
+                        writeFingerIdResult(result, f, writer);
+                    }
                 }
+            } finally {
+                W.leaveDirectory();
             }
-            W.leaveDirectory();
 
 
             // now write CSI:FingerID fingerprints
-            W.enterDirectory(FingerIdLocations.FINGERID_FINGERPRINT.directory);
-            for (IdentificationResult result : results) {
-                final FingerIdResult f = result.getAnnotation(FingerIdResult.class);
-                if (f != null && f.getPredictedFingerprint() != null) {
-                    writeFingerprint(result, f.getPredictedFingerprint(), writer);
+            try {
+                W.enterDirectory(FingerIdLocations.FINGERID_FINGERPRINT.directory);
+                for (IdentificationResult result : results) {
+                    final FingerIdResult f = result.getAnnotation(FingerIdResult.class);
+                    if (f != null && f.getPredictedFingerprint() != null) {
+                        writeFingerprint(result, f.getPredictedFingerprint(), writer);
 
-                    //write additional information
-                    writer.write(FingerIdLocations.FINGERID_FINGERPRINT_INFO.fileName(result), w -> {
-                        w.write("confidence\t" + f.getConfidence());
-                        w.write(System.lineSeparator());
-                        w.flush();
-                    });
+                        //write additional information
+                        writer.write(FingerIdLocations.FINGERID_FINGERPRINT_INFO.fileName(result), w -> {
+                            w.write("confidence\t" + f.getConfidence());
+                            w.write(System.lineSeparator());
+                            w.flush();
+                        });
+                    }
                 }
+            } finally {
+                W.leaveDirectory();
             }
-            W.leaveDirectory();
 
 
             // and CSI:FingerID summary
@@ -186,6 +199,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
     }
 
     private boolean hasFingerId(Iterable<IdentificationResult> results) {
+
         for (IdentificationResult r : results)
             if (r.hasAnnotation(FingerIdResult.class)) return true;
         return false;

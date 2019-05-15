@@ -33,14 +33,17 @@ public class CanopusResultSerializer implements MetaDataSerializer, SummaryWrite
         final DirectoryReader.ReadingEnvironment env = reader.env;
         final IdentificationResults results = expResult.getResults();
 
-        if (!env.list().contains(FingerIdLocations.CANOPUS_FINGERPRINT.directory)) return;
+        if (!env.list().contains(FingerIdLocations.CANOPUS_FINGERPRINT.directory) || results == null) return;
 
         // begin ugly
         if (readFingerprints == null) {
-            reader.env.leaveDirectory();
-            Map<String, String> versionInfo = reader.env.readKeyValueFile(FingerIdLocations.SIRIUS_VERSION_FILE.fileName());
-            readFingerprints = FingerIdResultSerializer.isFingerIdCompatible(versionInfo.get("csi:fingerid"));
-            reader.env.enterDirectory(expResult.getAnnotation(ExperimentDirectory.class).getDirectoryName());
+            try {
+                reader.env.leaveDirectory();
+                Map<String, String> versionInfo = reader.env.readKeyValueFile(FingerIdLocations.SIRIUS_VERSION_FILE.fileName());
+                readFingerprints = FingerIdResultSerializer.isFingerIdCompatible(versionInfo.get("csi:fingerid"));
+            } finally {
+                reader.env.enterDirectory(expResult.getAnnotation(ExperimentDirectory.class).getDirectoryName());
+            }
         }
         // ugly end
 
@@ -71,12 +74,15 @@ public class CanopusResultSerializer implements MetaDataSerializer, SummaryWrite
         final IdentificationResults results = input.getResults();
 
         if (writer.isAllowed(FingerIdResult.CANDIDATE_LISTS) && hasCanopus(results)) {
-            writer.env.enterDirectory(FingerIdLocations.CANOPUS_FINGERPRINT.directory);
-            for (IdentificationResult result : results) {
-                if (hasCanopusResult(result))
-                    writeCanopus(result, result.getAnnotation(CanopusResult.class), writer);
+            try {
+                writer.env.enterDirectory(FingerIdLocations.CANOPUS_FINGERPRINT.directory);
+                for (IdentificationResult result : results) {
+                    if (hasCanopusResult(result))
+                        writeCanopus(result, result.getAnnotation(CanopusResult.class), writer);
+                }
+            } finally {
+                writer.env.leaveDirectory();
             }
-            writer.env.leaveDirectory();
         }
     }
 
