@@ -2,11 +2,14 @@ package de.unijena.bioinf.babelms;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
+import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -39,6 +42,12 @@ public class MsIO {
 
     public static CloseableIterator<Ms2Experiment> readExperimentFromFile(File file) throws IOException {
         return new MsExperimentParser().getParser(file).parseFromFileIterator(file);
+    }
+
+    public static FTree readTreeFromFile(File file) throws IOException {
+        try (BufferedReader br = FileUtils.getReader(file)) {
+            return new FTJsonReader().parse(br, file.toURI().toURL());
+        }
     }
 
     public static String getJSONTree(final @NotNull FTree tree) {
