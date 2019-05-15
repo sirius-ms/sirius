@@ -107,33 +107,36 @@ public class DirectoryReader implements ProjectReader {
 
     public ExperimentResult parseExperiment(final ExperimentDirectory expDir) throws IOException {
         final String directory = expDir.getDirectoryName();
-        env.enterDirectory(directory);
-        final HashSet<String> names = new HashSet<>(env.list());
-
-        // read spectrum
-        final Ms2Experiment input;
-        if (names.contains(SiriusLocations.SIRIUS_SPECTRA.fileName())) {
-            input = parseSpectrum(expDir);
-
-        } else
-            throw new IOException("Invalid Experiment directory. No spectrum.ms found! Your workspace seems to be corrupted.");
-
-
         final ExperimentResult expResult;
-        if (input.getSource() != null && input.getName() != null) {
-            expResult = new ExperimentResult(input);
-        } else {
-            //fallback for older versions
-            expResult = new ExperimentResult(input);
-            if (input.getName() == null) {
-                String[] nameSplit = directory.split("_");
-                ((MutableMs2Experiment) input).setName(nameSplit.length > 2 ? nameSplit[2] : "unknown");
-            }
-        }
-        expResult.setAnnotation(ExperimentDirectory.class, expDir);
+        try {
+            env.enterDirectory(directory);
+            final HashSet<String> names = new HashSet<>(env.list());
 
-        readAndAddMetaData(expResult, names);
-        env.leaveDirectory();
+            // read spectrum
+            final Ms2Experiment input;
+            if (names.contains(SiriusLocations.SIRIUS_SPECTRA.fileName())) {
+                input = parseSpectrum(expDir);
+
+            } else
+                throw new IOException("Invalid Experiment directory. No spectrum.ms found! Your workspace seems to be corrupted.");
+
+
+            if (input.getSource() != null && input.getName() != null) {
+                expResult = new ExperimentResult(input);
+            } else {
+                //fallback for older versions
+                expResult = new ExperimentResult(input);
+                if (input.getName() == null) {
+                    String[] nameSplit = directory.split("_");
+                    ((MutableMs2Experiment) input).setName(nameSplit.length > 2 ? nameSplit[2] : "unknown");
+                }
+            }
+            expResult.setAnnotation(ExperimentDirectory.class, expDir);
+
+            readAndAddMetaData(expResult, names);
+        } finally {
+            env.leaveDirectory();
+        }
 
         return expResult;
     }

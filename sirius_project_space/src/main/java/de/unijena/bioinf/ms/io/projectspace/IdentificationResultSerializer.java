@@ -30,21 +30,24 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
 
         // read trees
         if (names.contains(SiriusLocations.SIRIUS_TREES_JSON.directory)) {
-            reader.env.enterDirectory(SiriusLocations.SIRIUS_TREES_JSON.directory);
-            final List<String> trs = reader.env.list();
-            trs.removeIf(s -> !RESULT_PATTERN.matcher(s).matches());
+            try {
+                reader.env.enterDirectory(SiriusLocations.SIRIUS_TREES_JSON.directory);
+                final List<String> trs = reader.env.list();
+                trs.removeIf(s -> !RESULT_PATTERN.matcher(s).matches());
 
-            for (final String s : trs) {
-                Matcher m = RESULT_PATTERN.matcher(s);
-                m.matches();
-                final int rank = Integer.parseInt(m.group(1));
-                final FTree tree = reader.env.read(s, r ->
-                        new FTJsonReader().parse(new BufferedReader(r), reader.env.absolutePath(result.getAnnotationOrThrow(ExperimentDirectory.class).getDirectoryName() + "/"
-                                + SiriusLocations.SIRIUS_TREES_JSON.directory + "/" + s))
-                );
-                results.add(new IdentificationResult(tree, rank));
+                for (final String s : trs) {
+                    Matcher m = RESULT_PATTERN.matcher(s);
+                    m.matches();
+                    final int rank = Integer.parseInt(m.group(1));
+                    final FTree tree = reader.env.read(s, r ->
+                            new FTJsonReader().parse(new BufferedReader(r), reader.env.absolutePath(result.getAnnotationOrThrow(ExperimentDirectory.class).getDirectoryName() + "/"
+                                    + SiriusLocations.SIRIUS_TREES_JSON.directory + "/" + s))
+                    );
+                    results.add(new IdentificationResult(tree, rank));
+                }
+            } finally {
+                reader.env.leaveDirectory();
             }
-            reader.env.leaveDirectory();
         }
         results.sort(Comparator.comparingInt(IdentificationResult::getRank));
         result.setAnnotation(IdentificationResults.class, new IdentificationResults(results));
@@ -64,15 +67,21 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
     protected void writeIdentificationResults(IdentificationResults results, DirectoryWriter writer) throws IOException {
         // JSON and DOT
         if (writer.isAllowed(OutputOptions.TREES_DOT) || writer.isAllowed(OutputOptions.TREES_JSON)) {
-            writer.env.enterDirectory(SiriusLocations.SIRIUS_TREES_DOT.directory);
-            writeTrees(results, writer);
-            writer.env.leaveDirectory();
+            try {
+                writer.env.enterDirectory(SiriusLocations.SIRIUS_TREES_DOT.directory);
+                writeTrees(results, writer);
+            } finally {
+                writer.env.leaveDirectory();
+            }
         }
         // CSV
         if (writer.isAllowed(OutputOptions.ANNOTATED_SPECTRA)) {
-            writer.env.enterDirectory(SiriusLocations.SIRIUS_ANNOTATED_SPECTRA.directory);
-            writeRecalibratedSpectra(results, writer);
-            writer.env.leaveDirectory();
+            try {
+                writer.env.enterDirectory(SiriusLocations.SIRIUS_ANNOTATED_SPECTRA.directory);
+                writeRecalibratedSpectra(results, writer);
+            } finally {
+                writer.env.leaveDirectory();
+            }
         }
         // formula summary
         writeFormulaSummary(results, writer);

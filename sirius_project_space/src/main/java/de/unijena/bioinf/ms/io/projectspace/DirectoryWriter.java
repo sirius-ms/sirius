@@ -152,21 +152,24 @@ public class DirectoryWriter implements ProjectWriter {
     public void writeExperiment(ExperimentResult result) throws IOException {
         ExperimentDirectory expDir = result.getAnnotation(ExperimentDirectory.class);
         if (expDir == null) throw new IOException("Given experiment result has no ExperimentDirectory Annotation");
-        env.enterDirectory(expDir.getDirectoryName(), true);
+        try {
+            env.enterDirectory(expDir.getDirectoryName(), true);
 
-        // ms file
-        if (isAllowed(OutputOptions.INPUT)) {
-            writeMsFile(result);
-            writeConfigFile(result);
+            // ms file
+            if (isAllowed(OutputOptions.INPUT)) {
+                writeMsFile(result);
+                writeConfigFile(result);
+            }
+
+            // write index file
+            writeIndex(result);
+
+            // write metaData
+            writeMetaData(result);
+
+        } finally {
+            env.leaveDirectory();
         }
-
-        // write index file
-        writeIndex(result);
-
-        // write metaData
-        writeMetaData(result);
-
-        env.leaveDirectory();
         env.updateProgress(result.getAnnotation(ExperimentDirectory.class).getDirectoryName() + "\t" + errorCode(result) + "\n");
     }
 
