@@ -83,7 +83,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         if (fc==null) {
             pinput.setAnnotation(FormulaConstraints.class, settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()));
         } else {
-            pinput.setAnnotation(FormulaConstraints.class, settings.getEnforcedAlphabet().getExtendedConstraints(fc));
+            pinput.setAnnotation(FormulaConstraints.class, fc);
         }
     }
 
