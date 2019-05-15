@@ -63,7 +63,8 @@ public class FTJsonReader implements Parser<FTree> {
         final JSONDocumentType JSONdoc = new JSONDocumentType();
         final JsonParser r = new JsonParser();
         final JsonObject json = r.parse(jsonString).getAsJsonObject();
-
+        double score = 0d;
+        double scoreBoost = 0d;
         final JsonArray fragments = json.getAsJsonArray("fragments");
         final HashMap<MolecularFormula, FragmentInfo> fragmentByFormulaMap = new HashMap<>(fragments.size());
         final TIntObjectHashMap<FragmentInfo> fragmentByIdMap = new TIntObjectHashMap<>();
@@ -137,7 +138,7 @@ public class FTJsonReader implements Parser<FTree> {
                 treeFragmentIdToIdMap.put(v.getVertexId(), childId);
                 stack.push(v);
                 if (incomingLossMap.get(child).has("score"))
-                    v.getIncomingEdge().setWeight(incomingLossMap.get(child).get("score").getAsDouble());
+                    v.getIncomingEdge().setWeight(incomingLossMap.get(child).get("score").getAsDouble() + child.jsonObject.get("score").getAsDouble());
             }
         }
 
@@ -167,8 +168,11 @@ public class FTJsonReader implements Parser<FTree> {
                     tree.setAnnotation(descriptor.getAnnotationClass(), annotation);
                 }
             }
+            if (treeAnnotations.has("nodeBoost")) {
+                scoreBoost = treeAnnotations.get("nodeBoost").getAsDouble();
+            }
         }
-
+        double rootScore = 0d;
         for (Fragment f : tree.getFragments()) {
 //            final Object[] objects = fragmentByFormulaMap.get(f.getFormula());
 //            final JsonObject jsonfragment = (JsonObject)objects[0];
@@ -182,6 +186,13 @@ public class FTJsonReader implements Parser<FTree> {
                 if (annotation != null) {
                     FragmentAnnotation<DataAnnotation> fano = tree.getOrCreateFragmentAnnotation(descriptor.getAnnotationClass());
                     fano.set(f, annotation);
+                }
+            }
+
+            if (jsonfragment.has("score")) {
+                score += (jsonfragment.get("score").getAsDouble() - scoreBoost);
+                if (f.getFormula().equals(root.formula)) {
+                    rootScore = score;
                 }
             }
         }
@@ -198,10 +209,14 @@ public class FTJsonReader implements Parser<FTree> {
                     lano.set(l, annotation);
                 }
             }
+            if (jsonloss.has("score"))
+                score += jsonloss.get("score").getAsDouble();
         }
 
         if (source != null) tree.setAnnotation(DataSource.class, new DataSource(source));
         tree.normalizeStructure();
+        tree.setTreeWeight(score);
+        tree.setRootScore(rootScore);
         return tree;
     }
 
