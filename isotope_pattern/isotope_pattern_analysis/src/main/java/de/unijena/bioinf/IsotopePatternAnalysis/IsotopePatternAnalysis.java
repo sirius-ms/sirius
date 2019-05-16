@@ -49,7 +49,6 @@ public class IsotopePatternAnalysis implements Parameterized {
     private static final boolean USE_ALWAYS_THE_COMPLETE_PATTERN = false;
 
     private List<IsotopePatternScorer> isotopePatternScorers;
-    private double cutoff;
     private double intensityOffset;
     private DecomposerCache decomposer;
     private IsotopicDistribution isotopicDistribution;
@@ -63,8 +62,6 @@ public class IsotopePatternAnalysis implements Parameterized {
                 getIsotopePatternScorers().add((IsotopePatternScorer) helper.unwrap(document, scorers.next()));
             }
         }
-        if (document.hasKeyInDictionary(dictionary, "cutoff"))
-            setCutoff(document.getDoubleFromDictionary(dictionary, "cutoff"));
         if (document.hasKeyInDictionary(dictionary, "intensityOffset"))
             setIntensityOffset(document.getDoubleFromDictionary(dictionary, "intensityOffset"));
         if (document.hasKeyInDictionary(dictionary, "isotopes"))
@@ -73,7 +70,6 @@ public class IsotopePatternAnalysis implements Parameterized {
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        document.addToDictionary(dictionary, "cutoff", cutoff);
         // export isotope distribution for relevant elements
         final ChemicalAlphabet alphabet = ChemicalAlphabet.getExtendedAlphabet();
         final IsotopicDistribution dist = isotopicDistribution.subset(alphabet.getElements());
@@ -109,7 +105,6 @@ public class IsotopePatternAnalysis implements Parameterized {
         this.isotopePatternScorers = new ArrayList<IsotopePatternScorer>();
         this.decomposer = new DecomposerCache();
         this.isotopicDistribution = PeriodicTable.getInstance().getDistribution();
-        this.cutoff = 0.01d;
         this.intensityOffset = 0d;
         this.patternGenerator = new FastIsotopePatternGenerator(isotopicDistribution, Normalization.Max(1d));
     }
@@ -257,6 +252,7 @@ public class IsotopePatternAnalysis implements Parameterized {
     }
 
     public List<IsotopePattern> scoreFormulas(SimpleSpectrum extractedSpectrum, List<MolecularFormula> formulas, Ms2Experiment experiment, PrecursorIonType ion) {
+        final double cutoff = experiment.getAnnotationOrDefault(IsotopicIntensitySettings.class).minimalIntensityToConsider;
         final SimpleMutableSpectrum spec = new SimpleMutableSpectrum(extractedSpectrum);
         normalize(spec, Normalization.Sum(1d));
         if (intensityOffset != 0d) {
@@ -317,14 +313,6 @@ public class IsotopePatternAnalysis implements Parameterized {
 
     public void setIsotopePatternScorers(List<IsotopePatternScorer> isotopePatternScorers) {
         this.isotopePatternScorers = isotopePatternScorers;
-    }
-
-    public double getCutoff() {
-        return cutoff;
-    }
-
-    public void setCutoff(double cutoff) {
-        this.cutoff = cutoff;
     }
 
     public DecomposerCache getDecomposer() {
