@@ -22,7 +22,7 @@ public class ScoringHelper {
     }
 
     public double getTreeScore() {
-        return tree.getTreeWeight();
+        return tree.getTreeWeight() - getIsotopeMs1Score();
     }
 
     public double getIsotopeMs1Score() {

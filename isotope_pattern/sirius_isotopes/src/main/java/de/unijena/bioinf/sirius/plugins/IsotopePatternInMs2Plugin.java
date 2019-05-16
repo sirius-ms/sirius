@@ -434,9 +434,19 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
         private final TargetedIsotopePatternDetection patternDetector = new TargetedIsotopePatternDetection();
         public boolean detectAndSetAnnotations(ProcessedInput input, Ms2Experiment experiment) {
             final PeakAnnotation<ExtractedMs2IsotopePattern> ano = input.getOrCreatePeakAnnotation(ExtractedMs2IsotopePattern.class);
+
+            // first check if we find an isotope pattern in MS1
+            int maxNumberOfPeaks = 5;
+            Ms1IsotopePattern ms1IsotopePattern = input.getAnnotation(Ms1IsotopePattern.class, Ms1IsotopePattern::none);
+            if (ms1IsotopePattern.getPeaks().length>1) {
+                // as the Ms1 scan is usually cleaned up via correlation analysis, we should trust it more than the
+                // MS2 isotope pattern. We will not trust any peak behind
+                maxNumberOfPeaks = ms1IsotopePattern.getPeaks().length;
+            }
+
             // first check if we find an isotope pattern for the parent peak
             ProcessedPeak parent = input.getParentPeak();
-            final SimpleSpectrum spec = findPatternInMostIntensiveScan(input, parent);
+            final SimpleSpectrum spec = Spectrums.subspectrum(findPatternInMostIntensiveScan(input, parent), 0, maxNumberOfPeaks);
             if (spec.size()<=1) {
                 // we are done
                 return false;
@@ -450,7 +460,7 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
             for (ProcessedPeak peak : input.getMergedPeaks()) {
                 if (peak == parent)
                     continue;
-                final SimpleSpectrum isoSpec = findPatternInMostIntensiveScan(input, peak);
+                final SimpleSpectrum isoSpec = Spectrums.subspectrum(findPatternInMostIntensiveScan(input, peak), 0, maxNumberOfPeaks);
                 if (isoSpec.size()>1) {
                     ano.set(peak, new ExtractedMs2IsotopePattern(isoSpec,getPeakIds(input, isoSpec)));
                     atLeastOne = true;
