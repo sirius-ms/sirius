@@ -22,6 +22,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.IsotopePatternAnalysis.IsotopicIntensitySettings;
 
 /**
  * Models isotope intensity deviations as normal distributions of absolute and relative errors
@@ -30,57 +31,17 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
 
     public boolean LOGODDS = true;
-
-
-
-    public static void main(String[] args) {
-        final double sigmaA = 0.02, sigmaR = 0.08;
-        final double theoreticalIntensity = 0.4;
-        for (double measuredIntensity : new double[]{0.01, 0.1, 0.2, 0.3, 0.35, 0.4, 0.45, 0.5, 0.6,0.7,0.9}) {
-            final double delta = measuredIntensity-theoreticalIntensity;
-
-            final double peakPropbability = Math.exp(-(delta*delta)/(2*(sigmaA*sigmaA + theoreticalIntensity*theoreticalIntensity*sigmaR*sigmaR)))/(2*Math.PI*theoreticalIntensity*sigmaR*sigmaA);
-            final double sigma = theoreticalIntensity+ theoreticalIntensity*sigmaR + sigmaA;
-            final double sigmaDelta = sigma-theoreticalIntensity;
-            final double score = Math.log(peakPropbability);
-            final double normscore = Math.log(Math.exp(-(sigmaDelta*sigmaDelta)/(2*(sigmaA*sigmaA + theoreticalIntensity*theoreticalIntensity*sigmaR*sigmaR)))/(2*Math.PI*theoreticalIntensity*sigmaR*sigmaA));
-            System.out.println("y = " + measuredIntensity  + ", delta = " + delta + ", density = " + peakPropbability + ", score = " + score + ", normscore = " + (score-normscore));
-        }
-    }
-
-    private static final double SQRT2PI = Math.sqrt(2 * Math.PI);
-
-
-    protected double sigmaA, sigmaR;
-
-    public NormalDistributedIntensityScorer(double sigmaR, double sigmaA) {
-        this.sigmaA = sigmaA;
-        this.sigmaR = sigmaR;
-    }
+   private static final double SQRT2PI = Math.sqrt(2 * Math.PI);
 
     public NormalDistributedIntensityScorer() {
-        this.sigmaA = 0.03;
-        this.sigmaR = 0.1;
-    }
-
-    public double getSigmaA() {
-        return sigmaA;
-    }
-
-    public void setSigmaA(double sigmaA) {
-        this.sigmaA = sigmaA;
-    }
-
-    public double getSigmaR() {
-        return sigmaR;
-    }
-
-    public void setSigmaR(double sigmaR) {
-        this.sigmaR = sigmaR;
     }
 
     @Override
     public void score(double[] scores, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment) {
+        final IsotopicIntensitySettings settings = experiment.getAnnotationOrDefault(IsotopicIntensitySettings.class);
+        final double sigmaA = settings.absoluteIntensityError;
+        final double sigmaR = settings.relativeIntensityError;
+
         if (usedNormalization.getBase() != 1 || usedNormalization.getMode() != NormalizationMode.MAX) {
             measuredSpectrum = Spectrums.getNormalizedSpectrum(measuredSpectrum, Normalization.Max(1));
             theoreticalSpectrum = Spectrums.getNormalizedSpectrum(theoreticalSpectrum, Normalization.Max(1));
@@ -104,7 +65,7 @@ public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
             scores[i] += score;
         }
     }
-
+/*
     public void score2(double[] scores, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment) {
         if (usedNormalization.getBase() != 1 || usedNormalization.getMode() != NormalizationMode.MAX) {
             measuredSpectrum = Spectrums.getNormalizedSpectrum(measuredSpectrum, Normalization.Max(1));
@@ -129,16 +90,13 @@ public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
             scores[i] += score;
         }
     }
+    */
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        sigmaR = document.getDoubleFromDictionary(dictionary, "relative_error");
-        sigmaA = document.getDoubleFromDictionary(dictionary, "absolute_error");
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        document.addToDictionary(dictionary, "relative_error", sigmaR);
-        document.addToDictionary(dictionary, "absolute_error", sigmaA);
     }
 }

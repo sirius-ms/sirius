@@ -21,3 +21,4 @@ FormulaSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings
 PossibleAdducts=de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts
 NumberOfCandidates=de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates
 
+ms1=de.unijena.bioinf.IsotopePatternAnalysis.IsotopicIntensitySettings
