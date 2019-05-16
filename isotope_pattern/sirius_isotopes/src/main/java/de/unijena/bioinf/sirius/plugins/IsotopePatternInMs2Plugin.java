@@ -394,7 +394,7 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
             );
             final MassDifferenceDeviationScorer massdifScorer = new MassDifferenceDeviationScorer(dependency);
             final MassDeviationScorer massScorer = new MassDeviationScorer(dependency);
-            final NormalDistributedIntensityScorer normal = new NormalDistributedIntensityScorer(0.08, 0.02);
+            final NormalDistributedIntensityScorer normal = new NormalDistributedIntensityScorer();
 
             final double[] scores = new double[measured.size()];
             massdifScorer.score(scores, measured, simulated, max, input.getExperimentInformation());
