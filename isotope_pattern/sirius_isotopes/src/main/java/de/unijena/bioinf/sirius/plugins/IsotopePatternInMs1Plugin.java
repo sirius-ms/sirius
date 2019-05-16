@@ -9,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IntergraphMapping;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.SiriusPlugin;
@@ -48,6 +49,7 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
         final IsotopePattern pattern = graph.getAnnotation(IsotopePattern.class);
         if (pattern!=null) {
             tree.setAnnotation(IsotopePattern.class, pattern);
+            tree.getOrCreateFragmentAnnotation(Ms1IsotopePattern.class).set(tree.getRoot(), new Ms1IsotopePattern(pattern.getPattern(), pattern.getScore()));
         }
     }
 
