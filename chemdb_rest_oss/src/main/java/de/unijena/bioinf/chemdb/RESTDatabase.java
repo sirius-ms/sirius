@@ -11,6 +11,7 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -184,6 +185,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
             String biof = bioFilter == BioFilter.ONLY_BIO ? "bio/" : (bioFilter == BioFilter.ONLY_NONBIO) ? "not-bio/" : null;
             if (biof == null) throw new IllegalArgumentException();
             get = new HttpGet(getFingerIdURI("/webapi/compounds/" + biof + formula.toString() + ".json").build());
+            get.setConfig(RequestConfig.custom().setConnectTimeout(60000).build());
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
