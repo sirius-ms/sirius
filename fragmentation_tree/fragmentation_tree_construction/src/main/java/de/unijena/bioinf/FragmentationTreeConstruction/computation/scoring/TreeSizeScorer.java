@@ -27,7 +27,7 @@ import de.unijena.bioinf.sirius.ProcessedPeak;
 
 import java.util.List;
 
-public class TreeSizeScorer implements PeakScorer {
+public class TreeSizeScorer implements PeakScorer{
 
 
     public final static class TreeSizeBonus implements DataAnnotation {
@@ -76,8 +76,9 @@ public class TreeSizeScorer implements PeakScorer {
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
         Beautified beauty = input.getAnnotation(Beautified.class, Beautified::ugly);
         final double bonus = beauty.isBeautiful() ? beauty.getNodeBoost() : input.getAnnotation(TreeSizeBonus.class, () -> defaultBonus).score;
+        final double penalty = beauty!=null ? beauty.getBeautificationPenalty()/peaks.size() : 0d;
         for (int i=0; i < peaks.size(); ++i) {
-            scores[i] += bonus;
+            scores[i] += bonus - penalty;
         }
     }
 
