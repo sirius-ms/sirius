@@ -7,7 +7,10 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 import gnu.trove.list.array.TIntArrayList;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 class DefaultDescriptors {
 
@@ -89,7 +92,12 @@ class DefaultDescriptors {
         @Override
         public <G, D, L> Beautified read(DataDocument<G, D, L> document, D dictionary) {
             if (document.hasKeyInDictionary(dictionary,"nodeBoost")) {
-                return Beautified.beautified(document.getDoubleFromDictionary(dictionary, "nodeBoost"));
+                double nodeBoost = document.getDoubleFromDictionary(dictionary, "nodeBoost");
+                double beautificationPenalty = 0d;
+                if (document.hasKeyInDictionary(dictionary, "beautificationPenalty")) {
+                    beautificationPenalty = document.getDoubleFromDictionary(dictionary, "beautificationPenalty");
+                }
+                return Beautified.beautified(nodeBoost, beautificationPenalty);
             } else {
                 return Beautified.ugly();
             }

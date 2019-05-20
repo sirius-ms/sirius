@@ -4,7 +4,10 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIon;
-import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Beautified;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
@@ -140,11 +143,13 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     protected void recalculateScore(ProcessedInput input, FTree tree, String prefix) {
         double oldScore = tree.getTreeWeight();
         double newScore = analyzer.recalculateScores(input, tree);
+        /*
         if (Math.abs(newScore - oldScore) > 0.1) {
 
             final double treeSize = tree.numberOfVertices()==1 ? 0 : tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(tree.numberOfVertices() - 1)).get("TreeSizeScorer");
             this.LOG().warn(prefix + ": Score of " + tree.getRoot().getFormula() + " differs significantly from recalculated score: " + oldScore + " vs " + newScore + " with tree size is " + pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, () -> new TreeSizeScorer.TreeSizeBonus(-0.5d)).score + " and root score is " + tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(0)).sum() + " and " + treeSize + " sort key is score " + tree.getTreeWeight() + " and filename is " + String.valueOf(pinput.getExperimentInformation().getSource()));
         }
+        */
     }
 
     public ExactResult[] estimateTreeSizeAndRecalibration(List<Decomposition> decompositions, boolean useHeuristic) throws ExecutionException {
@@ -217,15 +222,17 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             recalibrationJobs.add(recalibrationJob);
         }
         final ExactResult[] exact = extractExactResults(recalibrationJobs.stream().map(this::takeResultAndCheckTime).sorted(Collections.reverseOrder()).collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization).toArray(new ExactResult[0]);
-
+        final double[] originalScores = new double[exact.length];
+        for (int k=0; k < exact.length; ++k) originalScores[k] = exact[k].score;
         final ExactJob[] beautify = new ExactJob[exact.length];
         final TIntArrayList beautifyTodo = new TIntArrayList();
+
         while (tss!=null) {
             beautifyTodo.resetQuick();
             for (int k=0; k < exact.length; ++k) {
-                if (!exact[k].tree.hasAnnotation(Beautified.class)) {
+                if (!exact[k].tree.getAnnotation(Beautified.class, Beautified::ugly).isBeautiful()) {
                     if ((treeSize >= MAX_TREESIZE || inc >= MAX_TREESIZE_INCREASE )|| isHighQuality(exact[k])) {
-                        setBeautiful(exact[k], treeSize, originalTreeSize);
+                        setBeautiful(exact[k], treeSize, originalTreeSize, originalScores[k]);
                     } else {
                         beautifyTodo.add(k);
                     }
@@ -237,7 +244,12 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             tss.fastReplace(pinput, new TreeSizeScorer.TreeSizeBonus(treeSize));
             for (int j=0; j < beautifyTodo.size(); ++j) {
                 final int K = beautifyTodo.getQuick(j);
-                if (exact[K].input!=null) tss.fastReplace(exact[K].input, new TreeSizeScorer.TreeSizeBonus(treeSize));
+                if (exact[K].input!=null) {
+                    tss.fastReplace(exact[K].input, new TreeSizeScorer.TreeSizeBonus(treeSize));
+                    exact[K].input.setAnnotation(Beautified.class, Beautified.inProcess(inc));
+                } else {
+                    pinput.setAnnotation(Beautified.class, Beautified.inProcess(inc));
+                }
                 beautify[K] = submitSubJob(new ExactJob(exact[K]));
             }
             for (int j=0; j < beautifyTodo.size(); ++j) {
@@ -246,6 +258,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             }
         }
         revertTreeSizeIncrease(exact, originalTreeSize);
+
         return exact;
     }
 
@@ -253,17 +266,14 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         pinput.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(orig));
         for (ExactResult r : exact) {
             if (r.input!=null) r.input.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(orig));
-            final double penalty = (r.tree.getAnnotation(Beautified.class).getNodeBoost());
-            r.tree.setTreeWeight(r.tree.getTreeWeight() - r.tree.numberOfEdges() * penalty);
-            for (Loss l : r.tree.losses()) {
-                l.setWeight(l.getWeight() - penalty); // TODO: check if tree size is added to ALL nodes
-            }
+            final double penalty = (r.tree.getAnnotation(Beautified.class).getBeautificationPenalty());
+            r.tree.setTreeWeight(r.tree.getTreeWeight()-penalty);
             recalculateScore(r.input==null ? pinput : r.input, r.tree, "final");
         }
     }
 
-    private void setBeautiful(ExactResult t,double maxTreeSize, double originalTreeSize) {
-        t.tree.setAnnotation(Beautified.class, Beautified.beautified(maxTreeSize-originalTreeSize));
+    private void setBeautiful(ExactResult t, double maxTreeSize, double originalTreeSize, double originalScore) {
+        t.tree.setAnnotation(Beautified.class, Beautified.beautified(maxTreeSize-originalTreeSize, t.score-originalScore));
     }
 
     private List<ExactResult> extractExactResults(List<ExactResult> results, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
@@ -323,7 +333,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         protected ExactResult compute() throws Exception {
             final ProcessedInput input = template.input==null ? pinput : template.input;
             FGraph graph = analyzer.buildGraph(input, template.decomposition);
-            final TreeBuilder.Result tree = analyzer.getTreeBuilder().computeTree().withMultithreading(1).withTimeLimit(Math.min(restTime, secondsPerTree)).withMinimalScore(template.score - 1e-3)/*.withTemplate(template.tree)*/.solve(pinput, graph);
+            final TreeBuilder.Result tree = analyzer.getTreeBuilder().computeTree().withMultithreading(1).withTimeLimit(Math.min(restTime, secondsPerTree))/*.withMinimalScore(template.score - 1e-3).withTemplate(template.tree)*/.solve(pinput, graph);
             analyzer.makeTreeReleaseReady(input, graph, tree.tree, tree.mapping);
             recalculateScore(input, tree.tree, "ExactJob");
             tick();
@@ -435,7 +445,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         } else {
             pin.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
             final FGraph origGraph = origGraphOrNull==null ? analyzer.buildGraph(pinput, decomp) : origGraphOrNull;
-            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(tree).withMinimalScore(tree.getTreeWeight() - 1e-3).solve(pin, origGraph);
+            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree))/*.withTemplate(tree).withMinimalScore(tree.getTreeWeight() - 1e-3)*/.solve(pin, origGraph);
             finalTree.tree.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
             analyzer.makeTreeReleaseReady(pin, origGraph, finalTree.tree, finalTree.mapping);
         }
