@@ -2,10 +2,6 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 
-import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * This annotation is used when a tree is "beautiful" ;)
  * either it explains enough peaks or we already maxed out its tree size score
@@ -15,62 +11,50 @@ import java.util.regex.Pattern;
  */
 public final class Beautified implements TreeAnnotation  {
 
-
-    private static Pattern BEAUTIFICATION_PATTERN = Pattern.compile("beautiful \\((\\S+)\\)");
-    public static Beautified fromString(String s) {
-        if (s.equals("nope")) return IS_UGGLY;
-        else {
-            final Matcher m = BEAUTIFICATION_PATTERN.matcher(s);
-            if (!m.find()) throw new IllegalArgumentException("Malformed string: '" + s + "'");
-            return new Beautified(true, Double.parseDouble(m.group(1)));
-        }
-    }
-
-    public String toString() {
-        if (!beautiful) return "nope";
-        else return "beautiful";
+    public static enum State {
+        UGLY, IN_PROCESS, BEAUTIFIED
     }
 
     public double getNodeBoost() {
         return nodeBoost;
     }
 
+    public double getBeautificationPenalty() {
+        return beautificationPenalty;
+    }
 
-    public final static Beautified IS_UGGLY = new Beautified(false,0d);
+    public final static Beautified IS_UGGLY = new Beautified(State.UGLY,0d,0d);
 
-    protected final boolean beautiful;
+    protected final State state;
     protected final double nodeBoost;
+    // difference between score of beautified instance and original instance
+    protected final double beautificationPenalty;
 
     public static final String PENALTY_KEY = "BeautificationPenalty";
 
-    private Beautified(boolean beautiful, double nodeBoost) {
-        this.beautiful = beautiful;
+    private Beautified(State state, double nodeBoost, double beautificationPenalty) {
+        this.state = state;
         this.nodeBoost = nodeBoost;
+        this.beautificationPenalty = beautificationPenalty;
     }
 
     public static Beautified ugly() {
         return IS_UGGLY;
     }
 
-    public static Beautified beautified(double nodeBoost) {
-        return new Beautified(true, nodeBoost);
+    public static Beautified beautified(double nodeBoost, double beautificationPenalty) {
+        return new Beautified(State.BEAUTIFIED, nodeBoost, beautificationPenalty);
+    }
+    public static Beautified inProcess(double nodeBoost) {
+        return new Beautified(State.IN_PROCESS, nodeBoost, 0d);
     }
 
     public boolean isBeautiful() {
-        return beautiful;
+        return state==State.BEAUTIFIED;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Beautified that = (Beautified) o;
-        return beautiful == that.beautiful &&
-                Double.compare(that.nodeBoost, nodeBoost) == 0;
+    public boolean isInProcess() {
+        return state == State.IN_PROCESS;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(beautiful, nodeBoost);
-    }
 }

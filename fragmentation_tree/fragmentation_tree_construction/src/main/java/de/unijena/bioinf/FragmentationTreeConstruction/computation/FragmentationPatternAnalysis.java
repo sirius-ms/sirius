@@ -50,7 +50,6 @@ import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.map.hash.TObjectLongHashMap;
 import gnu.trove.procedure.TLongProcedure;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -967,7 +966,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             lossScore += s.sum();
             scoreSum += lossScore;
             if (Math.abs(lossScore-l.getWeight()) > 1e-4) {
-                LoggerFactory.getLogger(FragmentationPatternAnalysis.class).warn("Score difference: loss " + l.toString() + " (" + l.getSource().getFormula().toString() + " -> " + l.getTarget().getFormula().toString() + ") should have score " + lossScore + " but edge is weighted with " + l.getWeight() + ", loss is " + lAno.get(l) + " and fragment is " + fAno.get(l.getTarget()));
+                //LoggerFactory.getLogger(FragmentationPatternAnalysis.class).warn("Score difference: loss " + l.toString() + " (" + l.getSource().getFormula().toString() + " -> " + l.getTarget().getFormula().toString() + ") should have score " + lossScore + " but edge is weighted with " + l.getWeight() + ", loss is " + lAno.get(l) + " and fragment is " + fAno.get(l.getTarget()));
             }
         }
         scoreSum += fAno.get(root).sum();
