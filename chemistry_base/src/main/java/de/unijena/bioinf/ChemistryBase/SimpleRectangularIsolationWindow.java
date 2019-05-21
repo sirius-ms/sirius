@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ChemistryBase;
 
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Dataset;
 
 //todo we need a nice isolation window annotationwith defaults???
 //@DefaultProperty(propertyParent = "IsolationWindow")
@@ -38,7 +39,7 @@ public class SimpleRectangularIsolationWindow extends IsolationWindow {
     }
 
     @Override
-    protected void estimateDistribution(IsotopeRatioInformation intensityRatios) {
+    protected void estimateDistribution(IsotopeRatioInformation intensityRatios, Ms2Dataset dataset) {
         throw new NoSuchMethodError("This SimpleRectangularIsolationWindow is immutable.");
     }
 

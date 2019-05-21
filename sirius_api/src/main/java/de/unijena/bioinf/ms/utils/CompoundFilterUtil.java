@@ -66,6 +66,51 @@ public class CompoundFilterUtil {
         return filtered;
     }
 
+    public List<Ms2Experiment> removeIsotopesFromMs2(List<Ms2Experiment> experiments, Deviation isotopeDifferenceDeviatio){
+        return removeIsotopesFromMs2(experiments, isotopeDifferenceDeviatio, 1, 2, 4, ChemicalAlphabet.getExtendedAlphabet());
+    }
+
+    /**
+     *
+     * @param experiments
+     * @param maxIntensityRatioAt0
+     * @param maxIntensityRatioAt1000
+     * @param maxNumberOfIsotopePeaks
+     * @param alphabet this is used to estimate mz difference between isotope peak.
+     * @return
+     */
+    public List<Ms2Experiment> removeIsotopesFromMs2(List<Ms2Experiment> experiments, Deviation isotopeDifferenceDeviation, double maxIntensityRatioAt0, double maxIntensityRatioAt1000, int maxNumberOfIsotopePeaks, ChemicalAlphabet alphabet){
+        List<Ms2Experiment> filtered = new ArrayList<>();
+        for (Ms2Experiment experiment : experiments) {
+            MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
+            if (mutableMs2Experiment.getMs2Spectra()!=null) {
+                List<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
+                for (MutableMs2Spectrum spectrum : mutableMs2Experiment.getMs2Spectra()) {
+                    MutableMs2Spectrum s = new MutableMs2Spectrum(spectrum);
+                    Spectrums.filterIsotpePeaks(s, isotopeDifferenceDeviation, maxIntensityRatioAt0, maxIntensityRatioAt1000, maxNumberOfIsotopePeaks, alphabet);
+                    ms2Spectra.add(s);
+                }
+                mutableMs2Experiment.setMs2Spectra(ms2Spectra);
+            }
+
+            //remove empty spectra. they are not imported/exported and create issues with mapping
+            Iterator<SimpleSpectrum> ms1Iterator = mutableMs2Experiment.getMs1Spectra().iterator();
+            Iterator<MutableMs2Spectrum> ms2Iterator = mutableMs2Experiment.getMs2Spectra().iterator();
+            while (ms1Iterator.hasNext()) {
+                SimpleSpectrum ms1 = ms1Iterator.next();
+                MutableMs2Spectrum ms2 = ms2Iterator.next();
+                if (ms2.size()==0){
+                    ms1Iterator.remove();
+                    ms2Iterator.remove();
+                }
+            }
+
+            filtered.add(mutableMs2Experiment);
+        }
+
+        return filtered;
+    }
+
     /**
      *
      * @param experiments
@@ -100,7 +145,74 @@ public class CompoundFilterUtil {
     }
 
 
+    /**
+     * remove ms1 and corresponding ms2 spectra without ms1 precursor peak. e.g. after applying baseline. Or remove spectra wiht precursor intensity below some relative/abs intensity.
+     * @return
+     */
+    public List<Ms2Experiment> removeLowIntensityPrecursorSpectra(List<Ms2Experiment> experiments, double minRelIntensity, double minAbsIntensity, Deviation window) throws InvalidInputData {
+        List<Ms2Experiment> filtered = new ArrayList<>();
+        for (Ms2Experiment experiment : experiments) {
+            MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
+            if (experiment.getMs1Spectra().size() == experiment.getMs2Spectra().size()){
+                Iterator<SimpleSpectrum> ms1Iterator = mutableMs2Experiment.getMs1Spectra().iterator();
+                Iterator<MutableMs2Spectrum> ms2Iterator = mutableMs2Experiment.getMs2Spectra().iterator();
+                while (ms1Iterator.hasNext()) {
+                    SimpleSpectrum ms1 = ms1Iterator.next();
+                    MutableMs2Spectrum ms2 = ms2Iterator.next();
+                    if (ms1.size()==0){
+                        ms1Iterator.remove();
+                        ms2Iterator.remove();
+                        continue;
+                    }
+                    int peakIdx = Spectrums.mostIntensivePeakWithin(ms1, experiment.getIonMass(), window);
+                    if (peakIdx<0){
+                        ms1Iterator.remove();
+                        ms2Iterator.remove();
+                    } else {
+                        double intensity = ms1.getIntensityAt(peakIdx);
+                        double maxInt = Spectrums.getMaximalIntensity(ms1);
+                        if (maxInt==0d || intensity<minAbsIntensity || intensity/maxInt<minRelIntensity){
+                            ms1Iterator.remove();
+                            ms2Iterator.remove();
+                        }
+                    }
+                }
+            } else {
+                throw new InvalidInputData("Different number of MS1 and MS2. No direct mapping possible for "+experiment.getName());
+            }
 
+            filtered.add(mutableMs2Experiment);
+        }
+        return filtered;
+    }
+
+    /**
+     * @return
+     */
+    public List<Ms2Experiment> removeMS2WithLowTotalIonCount(List<Ms2Experiment> experiments, double minTIC) throws InvalidInputData {
+        List<Ms2Experiment> filtered = new ArrayList<>();
+        for (Ms2Experiment experiment : experiments) {
+            MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
+            if (experiment.getMs1Spectra().size() == experiment.getMs2Spectra().size()){
+                Iterator<SimpleSpectrum> ms1Iterator = mutableMs2Experiment.getMs1Spectra().iterator();
+                Iterator<MutableMs2Spectrum> ms2Iterator = mutableMs2Experiment.getMs2Spectra().iterator();
+                while (ms1Iterator.hasNext()) {
+                    SimpleSpectrum ms1 = ms1Iterator.next();
+                    MutableMs2Spectrum ms2 = ms2Iterator.next();
+                    if (ms2.size()==0 || Spectrums.getTotalIonCount(ms2)<minTIC){
+                        ms1Iterator.remove();
+                        ms2Iterator.remove();
+                        continue;
+                    }
+                }
+            } else {
+                throw new InvalidInputData("Different number of MS1 and MS2. No direct mapping possible for "+experiment.getName());
+            }
+
+            filtered.add(mutableMs2Experiment);
+        }
+        return filtered;
+    }
 
 
     ///// filter compounds /////////
@@ -121,11 +233,57 @@ public class CompoundFilterUtil {
         return filtered;
     }
 
+    /**
+     * filters compounds which leave LC very early/late.
+     * @param experiments
+     * @return
+     */
+    public List<Ms2Experiment> filterByRetentionTime(List<Ms2Experiment> experiments, double startRT, double endRT) {
+        List<Ms2Experiment> filtered = new ArrayList<>();
+        for (Ms2Experiment experiment : experiments) {
+            if (experiment.hasAnnotation(RetentionTime.class)){
+                double rt = experiment.getAnnotation(RetentionTime.class).getMiddleTime();
+                if (rt>=startRT && rt<=endRT) filtered.add(experiment);
+            }else {
+                //take if no rt availabe
+                filtered.add(experiment);
+            }
+        }
+        return filtered;
+    }
+
+    /**
+     * this looks at the merged spectrum first. So if openMS says intensity 0, we throw it away. If no merged spectrum, use normal ms1
+     * @param experiments
+     * @param findPrecursorInMs1Deviation
+     * @return
+     */
     public List<Ms2Experiment> filterZeroIntensityFeatures(List<Ms2Experiment> experiments, Deviation findPrecursorInMs1Deviation) {
         List<Ms2Experiment> filtered = new ArrayList<>();
         for (Ms2Experiment experiment : experiments) {
             double compoundsIntensity = getFeatureIntensity(experiment, findPrecursorInMs1Deviation);
             if (compoundsIntensity!=0d) filtered.add(experiment);
+        }
+        return filtered;
+    }
+
+
+
+    /**
+     * @return
+     */
+    public List<Ms2Experiment> filterBySumOfMS2TICs(List<Ms2Experiment> experiments, double minTIC) {
+        List<Ms2Experiment> filtered = new ArrayList<>();
+        for (Ms2Experiment experiment : experiments) {
+            MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
+            double totalTIC = 0d;
+            for (Ms2Spectrum<Peak> ms2 : experiment.getMs2Spectra()) {
+                totalTIC += Spectrums.getTotalIonCount(ms2);
+            }
+
+            if (totalTIC>=minTIC){
+                filtered.add(mutableMs2Experiment);
+            }
         }
         return filtered;
     }

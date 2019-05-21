@@ -287,6 +287,7 @@ public class Zodiac {
         for (ExperimentResult result : experimentResults) {
             List<FTree> trees = new ArrayList<>();
             for (IdentificationResult identificationResult : result.getResults()) {
+//                trees.add(identificationResult.getRawTree()); //changed do we want to include H2O and similar in-source losses? What about adducts?
                 trees.add(identificationResult.getResolvedTree()); //todo use rawTree or resolvedTree?!
             }
 
