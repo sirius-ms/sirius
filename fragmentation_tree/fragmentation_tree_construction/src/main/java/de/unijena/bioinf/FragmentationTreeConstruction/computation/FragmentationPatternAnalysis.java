@@ -41,7 +41,6 @@ import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.ms.annotations.Provides;
 import de.unijena.bioinf.ms.annotations.Requires;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.PeakAnnotation;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
@@ -104,8 +103,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private GraphBuilder graphBuilder;
     private TreeBuilder treeBuilder;
     private GraphReduction reduction;
-    //private IsotopePatternInMs2Scorer isoInMs2Scorer;
-    private IsotopeInMs2Handling isotopeInMs2Handling;
 
     private static ParameterHelper parameterHelper = ParameterHelper.getParameterHelper();
 
@@ -520,7 +517,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.lossScorers = new ArrayList<>();
         this.fragmentScorers = new ArrayList<>();
         this.generalGraphScorers = new ArrayList<>();
-        isotopeInMs2Handling = PropertyManager.DEFAULTS.createInstanceWithDefaults(IsotopeInMs2Handling.class);
         this.reduction = new SimpleReduction();
     }
 
@@ -1084,34 +1080,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return !loss.isArtificial();
     }
 
-    public boolean isScoringIsotopes(ProcessedInput input) {
-        final boolean isBrukerMaxis = input.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown).hasIsotopesInMs2();
-        switch (isotopeInMs2Handling) {
-            case IGNORE: return false;
-            case IF_NECESSARY:
-                IsolationWindow isolationWindow = input.getAnnotation(IsolationWindow.class, null);
-                if (isolationWindow!=null && isolationWindow.getRightBorder()>0.9){
-                    //isolation window includes the +1 peak
-                    return true;
-                }
-            case BRUKER_IF_NECESSARY:
-                throw new UnsupportedOperationException("Not supported yet");
-            case BRUKER_ONLY:
-                if (!isBrukerMaxis) return false;
-            case ALWAYS:
-            default:
-        }
-        return true;
-    }
 
     private void addSyntheticParent(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks, double parentmass) {
         final ProcessedPeak syntheticParent = new ProcessedPeak();
         syntheticParent.setMass(parentmass);
         processedPeaks.add(syntheticParent);
-    }
-
-    public void setIsotopeHandling(IsotopeInMs2Handling handling) {
-        this.isotopeInMs2Handling = handling;
     }
 
     /*
