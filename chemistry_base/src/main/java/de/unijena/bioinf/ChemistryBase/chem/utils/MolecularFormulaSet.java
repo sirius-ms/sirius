@@ -108,7 +108,7 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
             for (String f : str.split(";")) {
                 try {
                     set.uncompressed.add(MolecularFormula.parse(f));
-                } catch (UnkownElementException e) {
+                } catch (UnknownElementException e) {
                     LoggerFactory.getLogger(MolecularFormulaSet.class).warn("Could not parse formula: " + f + "Skipping this Entry!", e);
                 }
             }

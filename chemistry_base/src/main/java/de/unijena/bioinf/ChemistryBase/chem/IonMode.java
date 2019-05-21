@@ -17,7 +17,7 @@
  */
 package de.unijena.bioinf.ChemistryBase.chem;
 
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,7 +36,7 @@ public class IonMode extends Ionization {
 		PrecursorIonType precursorIonType = null;
 		try {
 			precursorIonType = PeriodicTable.getInstance().ionByName(value);
-		} catch (UnkownElementException e) {
+		} catch (UnknownElementException e) {
 			throw new IllegalArgumentException("Unknown ion mode '" + value + "'!", e);
 		}
 

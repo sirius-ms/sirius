@@ -2,7 +2,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.*;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
@@ -27,7 +27,7 @@ public class StrangeElementFragmentScorer implements DecompositionScorer<Element
         for (int i=0, n = document.sizeOfList(dd); i  < n; ++i) {
             try {
                 knownFragments.add(MolecularFormula.parse(document.getStringFromList(dd, i)));
-            } catch (UnkownElementException e) {
+            } catch (UnknownElementException e) {
                 LoggerFactory.getLogger(CommonFragmentsScore.class).warn("Cannot parse Formula. Skipping!", e);
             }
         }

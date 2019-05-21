@@ -20,7 +20,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
 import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ElementMap;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -59,7 +59,7 @@ public class ChemicalAlphabet implements Iterable<Element> {
         this.maxLen = alpha.maxLen;
     }
 
-    public static ChemicalAlphabet fromString(String value) throws UnkownElementException {
+    public static ChemicalAlphabet fromString(String value) throws UnknownElementException {
         if (value.indexOf(',')>0) {
             final PeriodicTable T = PeriodicTable.getInstance();
             return new ChemicalAlphabet(Arrays.stream(value.split(",")).map(s->T.getByName(s)).toArray(Element[]::new));
