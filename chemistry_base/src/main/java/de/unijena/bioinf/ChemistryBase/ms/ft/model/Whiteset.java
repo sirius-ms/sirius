@@ -2,7 +2,7 @@ package de.unijena.bioinf.ChemistryBase.ms.ft.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import gnu.trove.set.hash.TCustomHashSet;
@@ -30,7 +30,7 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         return of(formulas.stream().map(s -> {
             try {
                 return MolecularFormula.parse(s);
-            } catch (UnkownElementException e) {
+            } catch (UnknownElementException e) {
                 LoggerFactory.getLogger(Whiteset.class).warn("Could not par Formula String: " + s + " Skipping this Entry!");
                 return null;
             }

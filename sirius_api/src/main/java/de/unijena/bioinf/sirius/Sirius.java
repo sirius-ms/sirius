@@ -18,7 +18,7 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformation;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformer;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
@@ -367,7 +367,7 @@ public class Sirius {
      * @param name name of the ionization
      * @return adduct object
      */
-    public PrecursorIonType getPrecursorIonType(String name) throws UnkownElementException {
+    public PrecursorIonType getPrecursorIonType(String name) throws UnknownElementException {
         return table.ionByName(name);
     }
 
@@ -411,7 +411,7 @@ public class Sirius {
      * @param f molecular formula (e.g. in Hill notation)
      * @return immutable molecular formula object
      */
-    public MolecularFormula parseFormula(String f) throws UnkownElementException {
+    public MolecularFormula parseFormula(String f) throws UnknownElementException {
         return MolecularFormula.parse(f);
     }
 

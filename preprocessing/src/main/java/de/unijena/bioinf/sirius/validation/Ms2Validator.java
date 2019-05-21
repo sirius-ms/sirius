@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
@@ -85,7 +85,7 @@ public class Ms2Validator extends Ms1Validator {
                 if (input.getMolecularFormula() == null) input.setMolecularFormula(formula);
             }
 
-        } catch (UnkownElementException e) {
+        } catch (UnknownElementException e) {
             warn.warn("Formula of Inchi is Not parsable! " + e.getMessage());
         }
     }

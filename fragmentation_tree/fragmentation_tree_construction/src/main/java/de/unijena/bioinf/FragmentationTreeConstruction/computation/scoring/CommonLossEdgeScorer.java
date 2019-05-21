@@ -20,7 +20,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
@@ -195,7 +195,7 @@ public class CommonLossEdgeScorer implements LossScorer {
             final Map.Entry<String, G> entry = iter.next();
             try {
                 commonLosses.put(MolecularFormula.parse(entry.getKey()), document.getDouble(entry.getValue()));
-            } catch (UnkownElementException e) {
+            } catch (UnknownElementException e) {
                 LoggerFactory.getLogger(CommonFragmentsScore.class).warn("Cannot parse Formula. Skipping!", e);
             }
         }

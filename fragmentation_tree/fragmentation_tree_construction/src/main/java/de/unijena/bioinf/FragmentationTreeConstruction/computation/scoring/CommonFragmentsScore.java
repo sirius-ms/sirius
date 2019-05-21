@@ -23,7 +23,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
@@ -82,7 +82,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
             final double score = ((Number)values[i+1]).doubleValue();
             try {
                 map.put(MolecularFormula.parse(formula), score);
-            } catch (UnkownElementException e) {
+            } catch (UnknownElementException e) {
                 LoggerFactory.getLogger(CommonFragmentsScore.class).warn("Cannot parse Formula. Skipping!", e);
             }
         }
@@ -199,7 +199,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
             final Map.Entry<String,G> entry = iter.next();
             try {
                 commonFragments.put(MolecularFormula.parse(entry.getKey()), document.getDouble(entry.getValue()));
-            } catch (UnkownElementException e) {
+            } catch (UnknownElementException e) {
                 LoggerFactory.getLogger(getClass()).warn("Cannot parse Formula. Skipping!", e);
             }
         }
@@ -288,7 +288,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
             while (iter.hasNext()) {
                 try {
                     losses.add(MolecularFormula.parse(document.getString(iter.next())));
-                } catch (UnkownElementException e) {
+                } catch (UnknownElementException e) {
                     LoggerFactory.getLogger(getClass()).warn("Cannot parse Formula. Skipping!", e);
                 }
             }
