@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.plugins;
 
 import com.google.common.collect.Range;
+import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
@@ -10,6 +11,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.SiriusPlugin;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.FragmentScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.FragmentIsotopeGenerator;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MassDeviationScorer;
@@ -33,6 +35,7 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
     @Override
     public void initializePlugin(PluginInitializer initializer) {
         initializer.addLossScorer(new Ms2IsotopePatternScorer());
+        initializer.addFragmentScorer(new Ms2IsotopePatternScorer());
     }
 
     @Override
@@ -233,19 +236,26 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
         }
     }
 
-    public static class Ms2IsotopePatternScorer implements LossScorer<Ms2IsotopePatternScorer.Prepared> {
+    @Called("MS2-Isotopes")
+    public static class Ms2IsotopePatternScorer implements LossScorer<Ms2IsotopePatternScorer.Prepared>, FragmentScorer<Ms2IsotopePatternScorer.Prepared> {
         @Override
         public Ms2IsotopePatternScorer.Prepared prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
             return new Prepared(graph.getLossAnnotationOrNull(IsotopicScore.class), graph.getFragmentAnnotationOrNull(Ms2IsotopePattern.class));
         }
 
         @Override
+        public double score(Fragment fragment, ProcessedPeak correspondingPeak, boolean isRoot, Prepared precomputed) {
+            double score = 0d;Ms2IsotopePattern f;
+            if (precomputed.pattern!=null && (f=precomputed.pattern.get(fragment))!=null) {
+                score += f.getScore();
+            }
+            return score;
+        }
+
+        @Override
         public double score(Loss loss, ProcessedInput input, Ms2IsotopePatternScorer.Prepared precomputed) {
             IsotopicScore s;Ms2IsotopePattern f;
             double score = 0d;
-            if (precomputed.pattern!=null && (f=precomputed.pattern.get(loss.getTarget()))!=null) {
-                score += f.getScore();
-            }
             if (precomputed.isotopicScoreLossAnnotation!=null && (s=precomputed.isotopicScoreLossAnnotation.get(loss))!=null) {
                 score += s.score;
             }
@@ -397,8 +407,9 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
             final NormalDistributedIntensityScorer normal = new NormalDistributedIntensityScorer();
 
             final double[] scores = new double[measured.size()];
-            massdifScorer.score(scores, measured, simulated, max, input.getExperimentInformation());
             massScorer.score(scores, measured,simulated,max,input.getExperimentInformation());
+            scores[0] = 0d; // do not double-score the isotope peaks
+            massdifScorer.score(scores, measured, simulated, max, input.getExperimentInformation());
             normal.score(scores,measured,simulated,max,input.getExperimentInformation());
 
             // add missing peak scorer, but for relative intensity to base peak
@@ -503,6 +514,8 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
                 if (mz >= from && mz < to) {
                     merge.addPeak(mz, buf.getIntensityAt(peakIndex));
                 } else if (mz > to) {
+                    if (merge.isEmpty())
+                        break; // we do not find the isotope pattern. So far we do not allow gaps.
                     pattern.addPeak(merge(merge));
                     merge.clear();
                     ++isotopeIndex;

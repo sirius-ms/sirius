@@ -190,7 +190,7 @@ public class FTJsonReader implements Parser<FTree> {
             }
 
             if (jsonfragment.has("score")) {
-                score += (jsonfragment.get("score").getAsDouble() - scoreBoost);
+                score += (jsonfragment.get("score").getAsDouble());
                 if (f.getFormula().equals(root.formula)) {
                     rootScore = score;
                 }
