@@ -65,7 +65,7 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
                 final Whiteset whiteset = input.getAnnotation(Whiteset.class);
                 if (whiteset==null || whiteset.getFormulas().isEmpty()) {
                     input.setAnnotation(Whiteset.class, Whiteset.of(formulas));
-                } else {
+                } else if (whiteset.getFormulas().size() > 1){ // necessary, otherwise we remove formulas which are enforded
                     input.setAnnotation(Whiteset.class, whiteset.intersection(formulas));
                 }
 
@@ -103,7 +103,7 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
 //            if (!precomputed.ionType.isIonizationUnknown())
 //                formula = precomputed.ionType.precursorIonToNeutralMolecule(formula);
             if (precomputed.pattern!=null && precomputed.pattern.getExplanations().get(formula)!=null) {
-                return precomputed.weight.getMultiplier() * precomputed.pattern.getExplanations().get(formula).getScore();
+                return precomputed.weight.getMultiplier() * Math.max(0d, precomputed.pattern.getExplanations().get(formula).getScore());
             } else return 0d;
         }
 

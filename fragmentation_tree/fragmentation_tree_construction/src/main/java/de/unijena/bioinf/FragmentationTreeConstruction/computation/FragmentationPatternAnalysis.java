@@ -97,6 +97,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private List<LossScorer> lossScorers;
     private List<PeakPairScorer> peakPairScorers;
     private List<PeakScorer> fragmentPeakScorers;
+
+    private List<FragmentScorer<?>> fragmentScorers;
+    private List<GeneralGraphScorer> generalGraphScorers;
+
     private GraphBuilder graphBuilder;
     private TreeBuilder treeBuilder;
     private GraphReduction reduction;
@@ -453,6 +457,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.setFragmentPeakScorers(peakScorers);
         analysis.setPeakPairScorers(peakPairScorers);
 
+        analysis.generalGraphScorers = new ArrayList<>();
+        analysis.fragmentScorers = new ArrayList<>();
+
+
         return analysis;
     }
 
@@ -510,6 +518,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.fragmentPeakScorers = new ArrayList<>();
         this.graphBuilder = new SubFormulaGraphBuilder();
         this.lossScorers = new ArrayList<>();
+        this.fragmentScorers = new ArrayList<>();
+        this.generalGraphScorers = new ArrayList<>();
         isotopeInMs2Handling = PropertyManager.DEFAULTS.createInstanceWithDefaults(IsotopeInMs2Handling.class);
         this.reduction = new SimpleReduction();
     }
@@ -867,6 +877,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final List<ProcessedPeak> peaks = input.getMergedPeaks();
         final Object[] preparedLoss = new Object[lossScorers.size()];
         final Object[] preparedFrag = new Object[decompositionScorers.size()];
+        final Object[] preparedFragScores = new Object[fragmentScorers.size()];
         final PrecursorIonType ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
         final String[] fragmentScores;
         final String[] lossScores;
@@ -883,6 +894,12 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 fragScores.add(fragmentHeader.define(getScoringMethodName(peakScorer)));
                 preparedFrag[i++] = peakScorer.prepare(input);
             }
+            i=0;
+            for (FragmentScorer<?> fragmentScorer : fragmentScorers) {
+                fragScores.add(fragmentHeader.define(getScoringMethodName(fragmentScorer)));
+                preparedFragScores[i++] = fragmentScorer.prepare(input, tree);
+            }
+
             fragmentScores = fragScores.toArray(new String[fragScores.size()]);
         }
         {
@@ -901,6 +918,12 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             final ArrayList<String> fragScores = new ArrayList<String>();
             for (DecompositionScorer peakScorer : this.rootScorers) {
                 fragScores.add(rootHeader.define(getScoringMethodName(peakScorer)));
+            }
+            for (FragmentScorer<?> fragmentScorer : fragmentScorers) {
+                fragScores.add(fragmentHeader.define(getScoringMethodName(fragmentScorer)));
+            }
+            for (GeneralGraphScorer generalGraphScorer : this.generalGraphScorers) {
+                fragScores.add(rootHeader.define(getScoringMethodName(generalGraphScorer)));
             }
             rootScores = fragScores.toArray(new String[fragScores.size()]);
         }
@@ -939,6 +962,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             for (int i=0; i < decompositionScorers.size(); ++i) {
                 fscore.set(fragmentScores[k++], ((DecompositionScorer<Object>) decompositionScorers.get(i)).score(v.getFormula(),v.getIonization(), peaks.get(v.getPeakId()), input, preparedFrag[i]));
             }
+            for (int i=0; i < fragmentScorers.size(); ++i) {
+                fscore.set(fragmentScores[k++], ((FragmentScorer<Object>)fragmentScorers.get(i)).score(v, peaks.get(v.getPeakId()), false, preparedFragScores[i]));
+            }
 
             fAno.set(v, fscore.done());
         }
@@ -948,11 +974,23 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             root = root.getChildren(0);
         }
         final Score.ScoreAssigner rootScore = rootHeader.score();
+        int rootscoreIndex = 0;
         for (int k=0; k < rootScorers.size(); ++k) {
             final Object prepared = rootScorers.get(k).prepare(input);
             final double score = ((DecompositionScorer<Object>)rootScorers.get(k)).score(root.getFormula(),root.getIonization(), peaks.get(root.getPeakId()), input, prepared);
-            rootScore.set(rootScores[k], score);
+            rootScore.set(rootScores[rootscoreIndex++], score);
         }
+        for (int k=0; k < fragmentScorers.size(); ++k) {
+            final Object prepared = preparedFragScores[k];
+            final double score = ((FragmentScorer<Object>)fragmentScorers.get(k)).score(root, peaks.get(root.getPeakId()), true, prepared);
+            rootScore.set(rootScores[rootscoreIndex++], score);
+        }
+        for (int k=0; k < generalGraphScorers.size(); ++k) {
+            final double score =generalGraphScorers.get(k).score(tree, input);
+            rootScore.set(rootScores[rootscoreIndex++], score);
+        }
+
+
         fAno.set(root, rootScore.done());
 
         // check scoreSum
@@ -989,6 +1027,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final double[][] peakPairScores = scoring.getPeakPairScores();
         final LossScorer[] lossScorers = this.lossScorers.toArray(new LossScorer[this.lossScorers.size()]);
         final Object[] precomputeds = new Object[lossScorers.length];
+        final Object[] precomputedForFragmentScorer = new Object[fragmentScorers.size()];
+        for (int k=0; k < fragmentScorers.size(); ++k) {
+            precomputedForFragmentScorer[k] = fragmentScorers.get(k).prepare(input,graph);
+        }
         final FragmentAnnotation<Decomposition> decompositionFragmentAnnotation = graph.getFragmentAnnotationOrThrow(Decomposition.class);
         //final FragmentAnnotation<ProcessedPeak> peakAno = graph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
         for (int i = 0; i < precomputeds.length; ++i) precomputeds[i] = lossScorers[i].prepare(input,graph);
@@ -1015,11 +1057,25 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                         score += lossScorers[i].score(loss, input, precomputeds[i]);
                 }
             }
+            // add score of the fragment
+            ProcessedPeak correspondingPeak = input.getMergedPeaks().get(v.getPeakId());
+            for (int k=0; k < fragmentScorers.size(); ++k) {
+                final FragmentScorer<Object> scorer = (FragmentScorer<Object>)fragmentScorers.get(k);
+                score += scorer.score(v, correspondingPeak, v.isRoot(), precomputedForFragmentScorer[k]);
+            }
             if (Double.isInfinite(score)) {
                 System.err.println("check");
             }
             assert !Double.isInfinite(score);
             loss.setWeight(score);
+        }
+        // add graph scores
+        for (GeneralGraphScorer gen : generalGraphScorers) {
+            double score = gen.score(graph, input);
+            for (int l=0; l < graph.getRoot().getOutDegree(); ++l) {
+                Loss outgoingEdge = graph.getRoot().getOutgoingEdge(l);
+                outgoingEdge.setWeight(outgoingEdge.getWeight()+score);
+            }
         }
         return graph;
     }
@@ -1144,6 +1200,22 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
     public void setRepairInput(boolean repairInput) {
         this.repairInput = repairInput;
+    }
+
+    public List<FragmentScorer<?>> getFragmentScorers() {
+        return fragmentScorers;
+    }
+
+    public void setFragmentScorers(List<FragmentScorer<?>> fragmentScorers) {
+        this.fragmentScorers = fragmentScorers;
+    }
+
+    public List<GeneralGraphScorer> getGeneralGraphScorers() {
+        return generalGraphScorers;
+    }
+
+    public void setGeneralGraphScorers(List<GeneralGraphScorer> generalGraphScorers) {
+        this.generalGraphScorers = generalGraphScorers;
     }
 
     public List<DecompositionScorer<?>> getDecompositionScorers() {

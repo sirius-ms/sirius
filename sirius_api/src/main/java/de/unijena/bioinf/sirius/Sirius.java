@@ -39,10 +39,7 @@ import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.sirius.plugins.AdductSwitchPlugin;
-import de.unijena.bioinf.sirius.plugins.IsotopePatternInMs1Plugin;
-import de.unijena.bioinf.sirius.plugins.IsotopePatternInMs2Plugin;
-import de.unijena.bioinf.sirius.plugins.TreeStatisticPlugin;
+import de.unijena.bioinf.sirius.plugins.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -73,6 +70,7 @@ public class Sirius {
     }
 
     private void addDefaultPlugins() {
+        this.getMs2Analyzer().registerPlugin(new DefaultPlugin());
         this.getMs2Analyzer().registerPlugin(new TreeStatisticPlugin());
         this.getMs2Analyzer().registerPlugin(new AdductSwitchPlugin());
         this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin());
