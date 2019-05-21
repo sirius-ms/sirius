@@ -275,7 +275,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
                     continue;
                 }
                 addCommonIonType(type);
-            } catch (UnkownElementException e) {
+            } catch (UnknownElementException e) {
                 LoggerFactory.getLogger(getClass()).warn("Positive IonIonType with contains unknown Elements: " + pos + " Skipping this Entry!", e);
             }
         }
@@ -291,7 +291,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
                     continue;
                 }
                 addCommonIonType(type);
-            } catch (UnkownElementException e) {
+            } catch (UnknownElementException e) {
                 LoggerFactory.getLogger(getClass()).warn("Negative IonIonType with contains unknown Elements: " + neg + " Skipping this Entry!", e);
 
             }
@@ -314,7 +314,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
     protected Pattern MULTIMERE_PATTERN = Pattern.compile("\\d+M([+-]|\\])");
 
-    private PrecursorIonType parseIonType(String name) throws UnkownElementException {
+    private PrecursorIonType parseIonType(String name) throws UnknownElementException {
         if (MULTIMERE_PATTERN.matcher(name).find())
             throw new IllegalArgumentException("Do not support multiplier before a molecular formula: '" + name + "'");
         // tokenize String
@@ -693,7 +693,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         return addCommonIonType(ionType.toString(), ionType);
     }
 
-    public boolean addCommonIonType(String name) throws UnkownElementException {
+    public boolean addCommonIonType(String name) throws UnknownElementException {
         return addCommonIonType(ionByName(name));
     }
 
@@ -1001,7 +1001,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * <p>
      * [M+H]+
      */
-    public PrecursorIonType ionByName(String name) throws UnkownElementException {
+    public PrecursorIonType ionByName(String name) throws UnknownElementException {
         PrecursorIonType re = ionByNameFromTableOrNull(name);
         return re != null ? re : parseIonType(name);
     }
@@ -1009,7 +1009,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     public PrecursorIonType ionByNameOrThrow(String name) {
         try {
             return ionByName(name);
-        } catch (UnkownElementException e) {
+        } catch (UnknownElementException e) {
             throw new IllegalArgumentException("Could not parse IonType: " + name, e);
         }
     }
@@ -1017,7 +1017,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     public PrecursorIonType ionByNameOrNull(String name) {
         try {
             return ionByName(name);
-        } catch (UnkownElementException e) {
+        } catch (UnknownElementException e) {
             LoggerFactory.getLogger(MolecularFormula.class).warn("Cannot parse Formula `" + name + "`.", e);
             return null;
         }
@@ -1168,7 +1168,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * @param formula
      * @param visitor
      */
-    public void parse(String formula, FormulaVisitor<?> visitor) throws UnkownElementException {
+    public void parse(String formula, FormulaVisitor<?> visitor) throws UnknownElementException {
         if (formula.indexOf('(') < 0) {
             parseUnstackedFormula(formula, visitor);
         } else {
@@ -1176,7 +1176,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         }
     }
 
-    private void parseStackedFormula(String formula, FormulaVisitor<?> visitor) throws UnkownElementException {
+    private void parseStackedFormula(String formula, FormulaVisitor<?> visitor) throws UnknownElementException {
         final Matcher matcher = pattern.matcher(formula);
         final ArrayDeque<ElementStack> stack = new ArrayDeque<ElementStack>();
         while (matcher.find()) {
@@ -1209,7 +1209,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
                     final String elementAmount = matcher.group(2);
                     final Element element = getByName(elementName);
                     if (element == null)
-                        throw new UnkownElementException("\"" + elementName + "\" could not be found in periodic table!");
+                        throw new UnknownElementException("\"" + elementName + "\" could not be found in periodic table!");
                     final int amount = elementAmount != null && elementAmount.length() > 0 ?
                             Integer.parseInt(elementAmount) : 1;
                     if (last == null) {
@@ -1225,7 +1225,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         }
     }
 
-    private void parseUnstackedFormula(String formula, FormulaVisitor<?> visitor) throws UnkownElementException {
+    private void parseUnstackedFormula(String formula, FormulaVisitor<?> visitor) throws UnknownElementException {
         final int multiplier;
         if (formula.isEmpty()) return;
         if (Character.isDigit(formula.charAt(0))) {
@@ -1240,7 +1240,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             final String elementAmount = matcher.group(2);
             final Element element = getByName(elementName);
             if (element == null)
-                throw new UnkownElementException("\"" + elementName + "\" could not be found in periodic table!");
+                throw new UnknownElementException("\"" + elementName + "\" could not be found in periodic table!");
 
             final int amount = multiplier * (elementAmount != null && elementAmount.length() > 0 ?
                     Integer.parseInt(elementAmount) : 1);

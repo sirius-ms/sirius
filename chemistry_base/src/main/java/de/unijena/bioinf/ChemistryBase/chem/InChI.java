@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.util.regex.Matcher;
@@ -22,12 +22,12 @@ public class InChI implements Ms2ExperimentAnnotation {
     public MolecularFormula extractFormulaOrThrow() {
         try {
             return extractFormula();
-        } catch (UnkownElementException e) {
+        } catch (UnknownElementException e) {
             throw new RuntimeException("Cannot extract molecular formula from InChi: " + toString(), e);
         }
     }
 
-    public MolecularFormula extractFormula() throws UnkownElementException {
+    public MolecularFormula extractFormula() throws UnknownElementException {
         int a=0;
         int b=0;
         for (a=0; a < in2D.length(); ++a) {

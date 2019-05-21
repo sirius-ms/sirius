@@ -18,7 +18,7 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         if (Hydrogen == null) {
             try {
                 Hydrogen = parse("H");
-            } catch (UnkownElementException e) {
+            } catch (UnknownElementException e) {
                 new RuntimeException();
             }
         }
@@ -141,14 +141,14 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
      * Modifiers as iondetection or isotopes are not recognized. For example "Fe+3" or "13C" are no valid
      * molecular formulas.
      */
-    public static MolecularFormula parse(String text) throws UnkownElementException {
+    public static MolecularFormula parse(String text) throws UnknownElementException {
         return parse(text, PeriodicTable.getInstance());
     }
 
     public static MolecularFormula parseOrThrow(String text) {
         try {
             return parse(text);
-        } catch (UnkownElementException e) {
+        } catch (UnknownElementException e) {
             throw new RuntimeException();
         }
     }
@@ -156,7 +156,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     public static MolecularFormula parseOrNull(@NotNull final String textFormula) {
         try {
             return parse(textFormula);
-        } catch (UnkownElementException e) {
+        } catch (UnknownElementException e) {
             LoggerFactory.getLogger(MolecularFormula.class).warn("Cannot parse Formula `" + textFormula + "`.", e);
             return null;
         }
@@ -172,14 +172,14 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
             if (executeOrSkip != null)
                 executeOrSkip.accept(formula);
             return true;
-        } catch (UnkownElementException e) {
+        } catch (UnknownElementException e) {
             LoggerFactory.getLogger(MolecularFormula.class).warn("Cannot parse Formula `" + textFormula + "`. Skipping this entry!", e);
         }
         return false;
     }
 
 
-    static MolecularFormula parse(String text, PeriodicTable pt) throws UnkownElementException {
+    static MolecularFormula parse(String text, PeriodicTable pt) throws UnknownElementException {
         final ArrayList<Pair> pairs = new ArrayList<Pair>();
         pt.parse(text, (element, amount) -> {
             pairs.add(new Pair(element, amount));
