@@ -64,7 +64,7 @@ public class CSVExporter {
             writer.write('\t');
             writer.write(r.getCandidate().getInchi().in2D);
             writer.write('\t');
-            writer.write(r.getCandidate().getInchi().extractFormula().toString());
+            writer.write(r.getCandidate().getInchi().extractFormulaOrThrow().toString());
             writer.write('\t');
             writer.write(String.valueOf(++rank));
             writer.write('\t');
