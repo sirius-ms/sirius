@@ -40,8 +40,8 @@ public class Main {
     public static void main(String[] args) {
         try {
 
-            MolecularFormula f = MolecularFormula.parse("C37H55N5O8S");
-            Ionization ion = PeriodicTable.getInstance().ionByName("[M+H]+").getIonization();
+            MolecularFormula f = MolecularFormula.parseOrThrow("C37H55N5O8S");
+            Ionization ion = PeriodicTable.getInstance().ionByNameOrThrow("[M+H]+").getIonization();
             final FinestructurePatternGenerator gen = new FinestructurePatternGenerator();
             gen.setResolution(1000);
             gen.setMaximalNumberOfPeaks(4);
@@ -66,7 +66,7 @@ public class Main {
         final Normalization norm = Normalization.Sum(1d);
         while ((line = r.readLine()) != null) {
             if (line.startsWith("C")) {
-                formulas.add(MolecularFormula.parse(line.trim()));
+                formulas.add(MolecularFormula.parseOrThrow(line.trim()));
                 if (current != null) spectra.add(Spectrums.getNormalizedSpectrum(current, norm));
                 current = new SimpleMutableSpectrum();
             } else if (line.length() > 0) {
@@ -82,7 +82,7 @@ public class Main {
         gen2.setMaximalNumberOfPeaks(8);
         gen2.setMinimalProbabilityThreshold(1e-8);
         gen2.setResolution(1000);
-        final Ionization hplus = PeriodicTable.getInstance().ionByName("[M+H]+").getIonization();
+        final Ionization hplus = PeriodicTable.getInstance().ionByNameOrThrow("[M+H]+").getIonization();
 
         double[] avg1sum = new double[3];
         double[] avg2sum = new double[3];

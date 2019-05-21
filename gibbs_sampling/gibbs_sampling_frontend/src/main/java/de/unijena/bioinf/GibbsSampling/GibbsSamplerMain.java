@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
 import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -407,7 +408,7 @@ public class GibbsSamplerMain {
                 if (formula.equals(dummy)){
                     mf = DummyFragmentCandidate.dummy;
                 } else {
-                    mf = MolecularFormula.parse(formula);
+                    mf = MolecularFormula.parseOrNull(formula);
                 }
                 PrecursorIonType ionization = PrecursorIonType.getPrecursorIonType(cols[i+1]);
                 double score = Double.parseDouble(cols[i+2]);
@@ -1833,9 +1834,9 @@ public class GibbsSamplerMain {
             }
 
             final Ms2Experiment experiment = candidatesList.get(0).getExperiment();
-            final MolecularFormula formula = MolecularFormula.parse(cols[indices[1]]);
+            final MolecularFormula formula = MolecularFormula.parseOrThrow(cols[indices[1]]);
             final String structure = cols[indices[2]];
-            final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(cols[indices[3]]);
+            final PrecursorIonType ionType = PeriodicTable.getInstance().ionByNameOrThrow(cols[indices[3]]);
             final double cosine = Double.parseDouble(cols[indices[4]]);
             final int sharedPeaks = Integer.parseInt(cols[indices[5]]);
             final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
@@ -2029,7 +2030,11 @@ public class GibbsSamplerMain {
 
         MolecularFormula formula = null;
         if (inchi!=null && isInchi(inchi)){
-            formula = new InChI(null, inchi).extractFormula();
+            try {
+                formula = new InChI(null, inchi).extractFormula();
+            } catch (UnkownElementException e) {
+                e.printStackTrace();
+            }
         }
 
         if (formula==null){
@@ -2038,7 +2043,7 @@ public class GibbsSamplerMain {
                 final IAtomContainer c = parser.parseSmiles(smiles);
                 String formulaString = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(c));
                 formula = MolecularFormula.parse(formulaString);
-            } catch (CDKException e) {
+            } catch (CDKException | UnkownElementException e) {
                 return null;
             }
         }
@@ -2325,9 +2330,9 @@ public class GibbsSamplerMain {
     private static Reaction parseReactionString(String string) {
         String[] reactants = string.split("->");
         if(reactants.length == 1) {
-            return new SimpleReaction(MolecularFormula.parse(reactants[0]));
+            return new SimpleReaction(MolecularFormula.parseOrThrow(reactants[0]));
         } else if(reactants.length == 2) {
-            return new Transformation(MolecularFormula.parse(reactants[0]), MolecularFormula.parse(reactants[1]));
+            return new Transformation(MolecularFormula.parseOrThrow(reactants[0]), MolecularFormula.parseOrThrow(reactants[1]));
         } else {
             throw new RuntimeException("Error parsing reaction");
         }
