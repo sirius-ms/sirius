@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
@@ -52,32 +53,40 @@ public class Ms2Validator extends Ms1Validator {
     private void checkInchi(Warning warn, boolean repair, MutableMs2Experiment input) {
         final InChI inchi = input.getAnnotation(InChI.class);
         if (inchi==null || inchi.in3D == null) return;
-        final MolecularFormula formula = inchi.extractFormula();
-        if (input.getMolecularFormula() != null && !input.getMolecularFormula().equals(formula)) {
-            // check for p layer
-            final Matcher m = P_LAYER.matcher(inchi.in3D);
-            if (m.find()) {
-                MolecularFormula difference = MolecularFormula.parse("H");
-                difference = difference.multiply(Integer.parseInt(m.group(2)));
-                if (m.group(1).equals("-")) difference = difference.negate();
-                if (formula.add(difference).equals(input.getMolecularFormula())) {
-                    // everything is alright!
-                    if (m.group(1).equals("+")) {
-                        ensureIonType(input, PrecursorIonType.getPrecursorIonType("[M]+"), warn, repair);
-                    } else {
-                        ensureIonType(input, PrecursorIonType.getPrecursorIonType("[M]-"), warn, repair);
+
+        final MolecularFormula formula;
+        try {
+            formula = inchi.extractFormula();
+            if (input.getMolecularFormula() != null && !input.getMolecularFormula().equals(formula)) {
+                // check for p layer
+                final Matcher m = P_LAYER.matcher(inchi.in3D);
+                if (m.find()) {
+                    MolecularFormula difference = MolecularFormula.parseOrThrow("H");
+                    difference = difference.multiply(Integer.parseInt(m.group(2)));
+                    if (m.group(1).equals("-")) difference = difference.negate();
+                    if (formula.add(difference).equals(input.getMolecularFormula())) {
+                        // everything is alright!
+                        if (m.group(1).equals("+")) {
+                            ensureIonType(input, PrecursorIonType.getPrecursorIonType("[M]+"), warn, repair);
+                        } else {
+                            ensureIonType(input, PrecursorIonType.getPrecursorIonType("[M]-"), warn, repair);
+                        }
+                        return;
                     }
-                    return;
                 }
+
+                warn.warn(nameOf(input) + ": InChI has different molecular formula than input formula (" + inchi.extractFormula() + " vs. " + input.getMolecularFormula() + ")");
             }
 
-            warn.warn(nameOf(input) + ": InChI has different molecular formula than input formula (" + inchi.extractFormula() + " vs. " + input.getMolecularFormula() + ")");
-        }
-        if (input.getMoleculeNeutralMass() > 0 && Math.abs(formula.getMass()-input.getMoleculeNeutralMass()) > 0.01) {
-            warn.warn(nameOf(input) + ": neutral mass does not match to InChI formula (" + input.getMoleculeNeutralMass() + " Da vs. exact mass " + formula.getMass() + ") ");
-        }
-        if (repair) {
-            if (input.getMolecularFormula()==null) input.setMolecularFormula(formula);
+            if (input.getMoleculeNeutralMass() > 0 && Math.abs(formula.getMass() - input.getMoleculeNeutralMass()) > 0.01) {
+                warn.warn(nameOf(input) + ": neutral mass does not match to InChI formula (" + input.getMoleculeNeutralMass() + " Da vs. exact mass " + formula.getMass() + ") ");
+            }
+            if (repair) {
+                if (input.getMolecularFormula() == null) input.setMolecularFormula(formula);
+            }
+
+        } catch (UnkownElementException e) {
+            warn.warn("Formula of Inchi is Not parsable! " + e.getMessage());
         }
     }
 
@@ -190,7 +199,7 @@ public class Ms2Validator extends Ms1Validator {
         for (Ms2Spectrum<? extends Peak> ms2 : input.getMs2Spectra()) spectra.add(ms2);
         // TODO: negative iondetection
         // search for [M+H]+
-        final PrecursorIonType mhp = PeriodicTable.getInstance().ionByName("[M+H]+");
+        final PrecursorIonType mhp = PeriodicTable.getInstance().ionByNameOrThrow("[M+H]+");
         final double mz = mhp.neutralMassToPrecursorMass(neutral);
         final Deviation dev = new Deviation(20);
         for (Spectrum<? extends Peak> spec : spectra) {

@@ -73,7 +73,7 @@ public class FTJsonReader implements Parser<FTree> {
         for (int k = 0; k < fragments.size(); ++k) {
             final JsonObject fragment = fragments.get(k).getAsJsonObject();
             final int id = Integer.parseInt(fragment.get("id").getAsString());
-            final MolecularFormula vertex = MolecularFormula.parse(fragment.get("molecularFormula").getAsString());
+            final MolecularFormula vertex = MolecularFormula.parseOrNull(fragment.get("molecularFormula").getAsString());
             final Ionization vertexIon = PrecursorIonType.getPrecursorIonType(fragment.get("ion").getAsString()).getIonization();
 //            fragmentByFormulaMap.put(vertex, new Object[]{fragment, vertexIon});
             fragmentByFormulaMap.put(vertex, new FragmentInfo(id, vertex, vertexIon, fragment));
@@ -113,8 +113,8 @@ public class FTJsonReader implements Parser<FTree> {
 
             if (!byId) {
                 //this is for backwards compatibility, from now on we use ids to map
-                final MolecularFormula a = MolecularFormula.parse(loss.get("source").getAsString()),
-                        b = MolecularFormula.parse(loss.get("target").getAsString());
+                final MolecularFormula a = MolecularFormula.parseOrNull(loss.get("source").getAsString()),
+                        b = MolecularFormula.parseOrNull(loss.get("target").getAsString());
 
                 final FragmentInfo bInfo = fragmentByFormulaMap.get(b);
                 edges.put(fragmentByFormulaMap.get(a).id, bInfo.id);
@@ -233,7 +233,7 @@ public class FTJsonReader implements Parser<FTree> {
         }
 
         //this is for backwards compatibility, from now on we use ids to map
-        final MolecularFormula f = MolecularFormula.parse(rootElement.getAsString());
+        final MolecularFormula f = MolecularFormula.parseOrThrow(rootElement.getAsString());
         final FragmentInfo rInfo = fragmentByFormulaMap.get(f);
         if (rInfo==null) throw new RuntimeException("Cannot determine root fragment");
 
