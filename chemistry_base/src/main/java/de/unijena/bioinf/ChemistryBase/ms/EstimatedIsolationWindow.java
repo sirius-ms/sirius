@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import de.unijena.bioinf.ChemistryBase.exceptions.InsufficientDataException;
+
 import java.util.Arrays;
 
 /**
@@ -79,15 +81,32 @@ public class EstimatedIsolationWindow extends IsolationWindow {
     }
 
     @Override
-    protected void estimateDistribution(IsotopeRatioInformation isotopeRatioInformation) {
+    protected void estimateDistribution(IsotopeRatioInformation isotopeRatioInformation, Ms2Dataset ms2Dataset) throws InsufficientDataException {
         double[] positions = isotopeRatioInformation.getPositionsWithMedianIntensity();
         Arrays.sort(positions);
+        if (Arrays.binarySearch(positions, 0.0)<0){
+            //does not contain position 0.0
+            throw new InsufficientDataException("No data for monoisotopic peak position.");
+        } else {
+            int minNumberOfExamples = (int)Math.round(0.05*numberOfMs1(ms2Dataset));
+            if (isotopeRatioInformation.getExampleSize(0.0)<minNumberOfExamples){
+                throw new InsufficientDataException("No data for monoisotopic peak position. Less than 5% of MS2 spectra seem to provide data for estimation.");
+            }
+        }
         relMz = new double[positions.length];
         filterRatio = new double[positions.length];
         for (int i = 0; i < positions.length; i++) {
             filterRatio[i] = isotopeRatioInformation.getMedianIntensityRatio(positions[i]);
             relMz[i] = isotopeRatioInformation.getMedianRelMz(positions[i]);
         }
+    }
+
+    private int numberOfMs1(Ms2Dataset dataset){
+        int count = 0;
+        for (Ms2Experiment experiment : dataset) {
+            count += experiment.getMs1Spectra().size();
+        }
+        return count;
     }
 
     @Override
