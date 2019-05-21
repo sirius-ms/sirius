@@ -44,7 +44,7 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
         return null;
     }
 
-    private HashSet<MolecularFormula> allowedLosses = new HashSet<>(Arrays.asList(MolecularFormula.parse("C2H2O"), MolecularFormula.parse("CO"), MolecularFormula.parse("C2H4O2"), MolecularFormula.parse("CO2")));
+//    private HashSet<MolecularFormula> allowedLosses = new HashSet<>(Arrays.asList(MolecularFormula.parse("C2H2O"), MolecularFormula.parse("CO"), MolecularFormula.parse("C2H4O2"), MolecularFormula.parse("CO2")));
 
     @Override
     public double score(Loss loss, ProcessedInput input, Object precomputed) {
