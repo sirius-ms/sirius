@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils;
 
-public class FormulaParsingException extends RuntimeException {
+public class FormulaParsingException extends Exception {
     public FormulaParsingException() {
     }
 
