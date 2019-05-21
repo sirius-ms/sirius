@@ -1,7 +1,7 @@
 package de.unijena.bioinf.GibbsSampling;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
@@ -699,7 +699,7 @@ public class ZodiacUtils {
         if (inchi!=null && isInchi(inchi)){
             try {
                 formula = new InChI(null, inchi).extractFormula();
-            } catch (UnkownElementException e) {
+            } catch (UnknownElementException e) {
                 e.printStackTrace();
             }
         }
@@ -710,7 +710,7 @@ public class ZodiacUtils {
                 final IAtomContainer c = parser.parseSmiles(smiles);
                 String formulaString = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(c));
                 formula = MolecularFormula.parse(formulaString);
-            } catch (CDKException | UnkownElementException e) {
+            } catch (CDKException | UnknownElementException e) {
                 return null;
             }
         }
