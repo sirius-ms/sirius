@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 
 /**
@@ -44,7 +44,7 @@ public class PrecursorIonType implements TreeAnnotation {
     public static PrecursorIonType getPrecursorIonType(String name) {
         try {
             return PeriodicTable.getInstance().ionByName(name);
-        } catch (UnkownElementException e) {
+        } catch (UnknownElementException e) {
             throw new IllegalArgumentException("Illegal IonType: " + name, e);
         }
     }
