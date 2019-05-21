@@ -156,11 +156,9 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         try (CloseableHttpResponse response = client.execute(get)) {
             JsonParser parser = new JsonParser();
             JsonElement elem = parser.parse(new InputStreamReader(response.getEntity().getContent(), Charset.forName("UTF-8")));
-            for (Map.Entry<String, JsonElement> pair : elem.getAsJsonObject().entrySet()) {
-                for (Map.Entry<String, JsonElement> e : pair.getValue().getAsJsonObject().entrySet()) {
-                    candidates.add(new FormulaCandidate(MolecularFormula.parse(e.getKey()), ionType, e.getValue().getAsInt()));
-                }
-            }
+            for (Map.Entry<String, JsonElement> pair : elem.getAsJsonObject().entrySet())
+                for (Map.Entry<String, JsonElement> e : pair.getValue().getAsJsonObject().entrySet())
+                    MolecularFormula.parseAndExecute(e.getKey(), form -> candidates.add(new FormulaCandidate(form, ionType, e.getValue().getAsInt())));
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }

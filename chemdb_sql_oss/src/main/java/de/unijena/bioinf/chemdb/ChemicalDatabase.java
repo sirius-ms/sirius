@@ -197,7 +197,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
             for (FormulaCandidate fc : intrinsical) {
                 map.put(fc.formula, fc);
             }
-            final MolecularFormula hydrogen = MolecularFormula.parse("H");
+            final MolecularFormula hydrogen = MolecularFormula.parseOrThrow("H");
             for (FormulaCandidate fc : protonated) {
                 final MolecularFormula intrinsic = ionType.getCharge() > 0 ? fc.formula.subtract(hydrogen) : fc.formula.add(hydrogen);
                 map.put(intrinsic, new FormulaCandidate(intrinsic, ionType, fc.bitset));
@@ -222,7 +222,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
                 final boolean isPubchemOnly = !DatasourceService.isBio(flag);
                 if (bioFilter == BioFilter.ONLY_BIO && isPubchemOnly) continue;
                 if (bioFilter == BioFilter.ONLY_NONBIO && !isPubchemOnly) continue;
-                final FormulaCandidate fc = new FormulaCandidate(MolecularFormula.parse(set.getString(1)), ionType, set.getLong(2));
+                final FormulaCandidate fc = new FormulaCandidate(MolecularFormula.parseOrThrow(set.getString(1)), ionType, set.getLong(2));
                 list.add(fc);
             }
         } catch (SQLException e) {

@@ -26,7 +26,7 @@ public class InMemoryChemicalDatabase extends AbstractChemicalDatabase {
 
     public void addCandidate(FingerprintCandidate fc) {
         if (candidatePerKey.put(fc.getInchiKey2D(), fc)==null) {
-            final MolecularFormula formula = fc.getInchi().extractFormula();
+            final MolecularFormula formula = fc.getInchi().extractFormulaOrThrow();
             if (!candidatesPerFormula.containsKey(formula)) {
                 candidatesPerFormula.put(formula, new ArrayList<FingerprintCandidate>());
                 this.formulas = Arrays.copyOf(formulas, formulas.length+1);
@@ -46,7 +46,7 @@ public class InMemoryChemicalDatabase extends AbstractChemicalDatabase {
         this.fingerprintCandidates = new ArrayList<>(candidatePerKey.values());
         this.candidatesPerFormula = new HashMap<>();
         for (FingerprintCandidate fc : this.fingerprintCandidates) {
-            final MolecularFormula formula = fc.getInchi().extractFormula();
+            final MolecularFormula formula = fc.getInchi().extractFormulaOrThrow();
             if (!candidatesPerFormula.containsKey(formula)) {
                 candidatesPerFormula.put(formula, new ArrayList<FingerprintCandidate>());
             }

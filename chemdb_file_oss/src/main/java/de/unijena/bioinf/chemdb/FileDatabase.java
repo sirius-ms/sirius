@@ -43,7 +43,7 @@ public class FileDatabase extends AbstractChemicalDatabase {
                 continue;
             }
             // remember file
-            formulas.put(MolecularFormula.parse(realName), f);
+            MolecularFormula.parseAndExecute(realName, formula -> formulas.put(formula, f));
         }
         this.formulasOrderedByMass = formulas.keySet().toArray(new MolecularFormula[formulas.size()]);
         Arrays.sort(formulasOrderedByMass);
