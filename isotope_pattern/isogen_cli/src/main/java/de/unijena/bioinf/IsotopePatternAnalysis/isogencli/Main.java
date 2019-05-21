@@ -81,7 +81,7 @@ public class Main {
                     PeriodicTable.getInstance().setDistribution(distribution);
                 }
 
-                final MolecularFormula formula = MolecularFormula.parse(options.getMolecularFormula());
+                final MolecularFormula formula = MolecularFormula.parseOrThrow(options.getMolecularFormula());
                 final Normalization normalization = new Normalization(NormalizationMode.valueOf(options.getNormalization().toUpperCase()),
                         options.getScalingFactor());
                 final String ionizationMode = options.getIonizationMode() == null ? null : options.getIonizationMode().trim();
@@ -119,7 +119,7 @@ public class Main {
                             }
                         };
                     } else {
-                        final Ionization ion = PeriodicTable.getInstance().ionByName(ionizationMode).getIonization();
+                        final Ionization ion = PeriodicTable.getInstance().ionByNameOrNull(ionizationMode).getIonization();
                         if (ion == null) {
                             System.err.println("Unknown ion type " + ionizationMode);
                             System.err.println("Please set ionization explicitely: isogen -i \"[M+<mass>]<charge>+\"");

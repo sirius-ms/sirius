@@ -88,7 +88,7 @@ public class FTDotReader implements Parser<FTree> {
             final String label = properties.remove("label");
             final String[] infos = label.split("\\\\n");
             String[] fpart = infos[0].split(" ", 2);
-            this.formula = MolecularFormula.parse(fpart[0]);
+            this.formula = MolecularFormula.parseOrNull(fpart[0]);
             this.ion = PrecursorIonType.getPrecursorIonType("[M " + fpart[1].substring(0,fpart[1].length()-1) + "]" + fpart[1].charAt(fpart[1].length()-1)).getIonization();
             {
                 final Matcher m = PEAK_PATTERN.matcher(infos[1]);

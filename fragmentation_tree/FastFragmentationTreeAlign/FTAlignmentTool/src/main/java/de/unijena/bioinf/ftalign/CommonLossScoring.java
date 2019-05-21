@@ -37,7 +37,7 @@ public class CommonLossScoring extends StandardScoring {
     public CommonLossScoring(boolean useFragment) {
         super(useFragment);
         this.commonLosses = new HashSet<MolecularFormula>();
-        for (String l : LOSSES) commonLosses.add(MolecularFormula.parse(l));
+        for (String l : LOSSES) commonLosses.add(MolecularFormula.parseOrThrow(l));
     }
 
     @Override
