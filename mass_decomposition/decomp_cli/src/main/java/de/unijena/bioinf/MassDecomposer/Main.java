@@ -106,7 +106,7 @@ public class Main {
         final double mass;
         final double mz = options.getMass();
         final String ion = options.getIonization();
-        final PrecursorIonType ionization = ion == null ? null/*PeriodicTable.getInstance().ionByName("[M+H]+") */ : PeriodicTable.getInstance().ionByName(ion);
+        final PrecursorIonType ionization = ion == null ? null/*PeriodicTable.getInstance().ionByName("[M+H]+") */ : PeriodicTable.getInstance().ionByNameOrNull(ion);
         /*
         if (ionization == null) {
             System.err.println("Unknown ion '" + ion + "'");
@@ -129,7 +129,7 @@ public class Main {
         Map<Element, Interval> boundary = options.getAlphabet().getBoundary();
         final String parentFormula = options.getParentFormula();
         if (parentFormula != null) {
-            final MolecularFormula formula = MolecularFormula.parse(parentFormula);
+            final MolecularFormula formula = MolecularFormula.parseOrThrow(parentFormula);
             for (Element e : alphabet.getElements()) {
                 Interval i = boundary.get(e);
                 if (i == null) {

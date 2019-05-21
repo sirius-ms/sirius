@@ -37,10 +37,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -508,9 +505,9 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
         private MolecularFormula[] parseFormulas(String formulas) {
             if (formulas.contains(",")) {
-                return Arrays.stream(formulas.split(",")).map(s -> MolecularFormula.parse(s)).toArray(MolecularFormula[]::new);
+                return Arrays.stream(formulas.split(",")).map(MolecularFormula::parseOrNull).filter(Objects::nonNull).toArray(MolecularFormula[]::new);
             } else {
-                return new MolecularFormula[]{MolecularFormula.parse(formulas)};
+                return new MolecularFormula[]{MolecularFormula.parseOrNull(formulas)};
             }
         }
 
@@ -552,7 +549,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 final AdductSettings s = this.experiment.getAnnotationOrDefault(AdductSettings.class);
                 annotations.put(AdductSettings.class, s.withEnforced(ionTypeSet));*/
             } else {
-                final PrecursorIonType ion = PeriodicTable.getInstance().ionByName(ions.trim());
+                final PrecursorIonType ion = PeriodicTable.getInstance().ionByNameOrNull(ions.trim());
                 if (ion == null) {
                     warn("Unknown ionization: '" + ions + "'");
                     return;

@@ -53,7 +53,7 @@ public class WeightingReader {
             if (h.find()) {
                 final String f = h.group(1);
                 if (f.equals("*")) defaultScore=Double.parseDouble(h.group(2));
-                else map.put(MolecularFormula.parse(f), Double.parseDouble(h.group(2)));
+                else MolecularFormula.parseAndExecute(f, formula -> map.put(formula, Double.parseDouble(h.group(2))));
             }
         }
         while (reader.ready()) {
@@ -63,7 +63,7 @@ public class WeightingReader {
             if (m.find()) {
                 final String f = m.group(1);
                 if (f.equals("*")) defaultScore=Double.parseDouble(m.group(2));
-                else map.put(MolecularFormula.parse(f), Double.parseDouble(m.group(2)));
+                else  MolecularFormula.parseAndExecute(f, fomula -> map.put(fomula, Double.parseDouble(m.group(2))));
             } else throw new IOException("No valid csv file");
         }
         if (Double.isNaN(defaultScore)) throw new IOException("Can't find default score for unseen losses. Please provide a row '*,<score>'");

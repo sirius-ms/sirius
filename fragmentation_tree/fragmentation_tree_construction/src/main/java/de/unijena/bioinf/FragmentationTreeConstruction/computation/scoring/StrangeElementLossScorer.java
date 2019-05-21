@@ -71,7 +71,7 @@ public class StrangeElementLossScorer implements LossScorer {
         final Element H = t.getByName("H");
         final Element N = t.getByName("N");
         final Element O = t.getByName("O");
-        final MolecularFormula hydrogen = MolecularFormula.parse("H");
+        final MolecularFormula hydrogen = MolecularFormula.parseOrThrow("H");
         for (Element e : input.getExperimentInformation()
                 .getAnnotationOrDefault(FormulaConstraints.class).getChemicalAlphabet().getElements()) {
             if (e == C || e == H || e == N || e == O) continue;
@@ -114,7 +114,9 @@ public class StrangeElementLossScorer implements LossScorer {
         final L list = document.getListFromDictionary(dictionary, "losses");
         final int n = document.sizeOfList(list);
         this.lossList = new HashSet<MolecularFormula>((int) (n * 1.5));
-        for (int i = 0; i < n; ++i) addLoss((MolecularFormula.parse(document.getStringFromList(list, i))));
+        for (int i = 0; i < n; ++i)
+            MolecularFormula.parseAndExecute(document.getStringFromList(list, i), this::addLoss);
+
         this.score = document.getDoubleFromDictionary(dictionary, "score");
 
     }

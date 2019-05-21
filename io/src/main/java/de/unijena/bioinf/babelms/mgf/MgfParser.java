@@ -154,7 +154,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     else ion = PrecursorIonType.unknown(1);
                 } else {
                     try {
-                        ion = PeriodicTable.getInstance().ionByName(value);
+                        ion = PeriodicTable.getInstance().ionByNameOrNull(value);
                         if (ion == null) {
                             LoggerFactory.getLogger(this.getClass()).error("Unknown ion '" + value + "'");
                             if (!ignoreUnsupportedIonTypes) throw new IOException("Unknown ion '" + value + "'");

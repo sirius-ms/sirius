@@ -124,9 +124,9 @@ class DefaultDescriptors {
         @Override
         public <G, D, L> Ionization read(DataDocument<G, D, L> document, D dictionary) {
             if (document.hasKeyInDictionary(dictionary,"ion")) {
-                return PeriodicTable.getInstance().ionByName(document.getStringFromDictionary(dictionary, "ion")).getIonization();
+                return PeriodicTable.getInstance().ionByNameOrNull(document.getStringFromDictionary(dictionary, "ion")).getIonization();
             } else {
-                return PeriodicTable.getInstance().ionByName(document.getStringFromDictionary(dictionary, "precursorIonType")).getIonization();
+                return PeriodicTable.getInstance().ionByNameOrNull(document.getStringFromDictionary(dictionary, "precursorIonType")).getIonization();
             }
         }
 
@@ -155,7 +155,7 @@ class DefaultDescriptors {
                 final D ad = document.getDictionaryFromDictionary(dictionary, "adductLoss");
                 final String adduct = document.getStringFromDictionary(ad, "adduct");
                 final String orig = document.getStringFromDictionary(ad, "modifiedMolecularFormula");
-                return LossType.adductLoss(MolecularFormula.parse(adduct), MolecularFormula.parse(orig));
+                return LossType.adductLoss(MolecularFormula.parseOrThrow(adduct), MolecularFormula.parseOrThrow(orig));
             } else return LossType.regular();
         }
 
@@ -193,7 +193,7 @@ class DefaultDescriptors {
         @Override
         public <G, D, L> ImplicitAdduct read(DataDocument<G, D, L> document, D dictionary) {
             if (document.hasKeyInDictionary(dictionary,"implicitAdduct")) {
-                return new ImplicitAdduct(MolecularFormula.parse(document.getStringFromDictionary(dictionary, "implicitAdduct")));
+                return new ImplicitAdduct(MolecularFormula.parseOrThrow(document.getStringFromDictionary(dictionary, "implicitAdduct")));
             } else return ImplicitAdduct.none();
         }
 
@@ -285,7 +285,7 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> PrecursorIonType read(DataDocument<G, D, L> document, D dictionary) {
-            return PeriodicTable.getInstance().ionByName(document.getStringFromDictionary(dictionary, keywordName));
+            return PeriodicTable.getInstance().ionByNameOrNull(document.getStringFromDictionary(dictionary, keywordName));
         }
 
         @Override
@@ -603,13 +603,13 @@ class DefaultDescriptors {
             if (!(document.hasKeyInDictionary(dictionary, "mz") && document.hasKeyInDictionary(dictionary, "relativeIntensity") && document.hasKeyInDictionary(dictionary, "molecularFormula") && document.hasKeyInDictionary(dictionary, "ion"))) {
                 return null;
             }
-            final MolecularFormula formula = MolecularFormula.parse(document.getStringFromDictionary(dictionary, "molecularFormula"));
+            final MolecularFormula formula = MolecularFormula.parseOrNull(document.getStringFromDictionary(dictionary, "molecularFormula"));
             final double mass = document.getDoubleFromDictionary(dictionary, "mz");
             final double relativeIntensity = document.hasKeyInDictionary(dictionary, "relativeIntensity") ?
                     document.getDoubleFromDictionary(dictionary, "relativeIntensity") : 0d;
             final double recalibratedMass = (document.hasKeyInDictionary(dictionary, "recalibratedMass")) ?
                     document.getDoubleFromDictionary(dictionary, "recalibratedMass") : 0d;
-            final Ionization ion = PeriodicTable.getInstance().ionByName(document.getStringFromDictionary(dictionary, "ion")).getIonization();
+            final Ionization ion = PeriodicTable.getInstance().ionByNameOrNull(document.getStringFromDictionary(dictionary, "ion")).getIonization();
 
             final ArrayList<CollisionEnergy> energies = new ArrayList<CollisionEnergy>();
 

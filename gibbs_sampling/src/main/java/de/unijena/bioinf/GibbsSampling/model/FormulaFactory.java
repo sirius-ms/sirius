@@ -26,7 +26,7 @@ public class FormulaFactory {
     public MolecularFormula getFormula(String formulaString){
         MolecularFormula mf = formulaMap.get(formulaString);
         if (mf ==null) {
-            mf = MolecularFormula.parse(formulaString);
+            mf = MolecularFormula.parseOrThrow(formulaString);
             formulaMap.put(formulaString, mf);
         }
         return mf;
