@@ -18,5 +18,5 @@ public interface EdgeScorer<C extends Candidate<?>> {
 
     void clean();
 
-    double[] normalization(C[][] var1);
+    double[] normalization(C[][] var1, double minimum_number_matched_peaks_losses);
 }

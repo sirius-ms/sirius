@@ -200,7 +200,7 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
         this.edgeScorer.clean();
     }
 
-    public double[] normalization(C[][] candidates) {
+    public double[] normalization(C[][] candidates, double minimum_number_matched_peaks_losses) {
         return new double[0];
     }
 }
