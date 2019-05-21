@@ -40,6 +40,7 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.plugins.*;
+import de.unijena.bioinf.treemotifs.model.TreeMotifPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -75,6 +76,9 @@ public class Sirius {
         this.getMs2Analyzer().registerPlugin(new AdductSwitchPlugin());
         this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin());
         this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs2Plugin());
+
+
+        this.getMs2Analyzer().registerPlugin(new TreeMotifPlugin());
     }
 
     public Sirius(@NotNull Profile profile, @NotNull PeriodicTable table) {
