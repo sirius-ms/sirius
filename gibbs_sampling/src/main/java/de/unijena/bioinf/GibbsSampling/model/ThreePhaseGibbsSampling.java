@@ -1,7 +1,6 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.jjobs.JobManager;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntIntMap;
