@@ -18,6 +18,7 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformation;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformer;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
@@ -356,11 +357,11 @@ public class Sirius {
      *
      * @param name name of the ionization
      * @return adduct object
-     */
+     *//*
     @Deprecated
     public Ionization getIonization(String name) {
         return getPrecursorIonType(name).getIonization();
-    }
+    }*/
 
     /**
      * Lookup the ionization name and returns the corresponding ionization object or null if no ionization with this name is registered. The name of an ionization has the syntax [M+ADDUCT]CHARGE, for example [M+H]+ or [M-H]-.
@@ -368,7 +369,7 @@ public class Sirius {
      * @param name name of the ionization
      * @return adduct object
      */
-    public PrecursorIonType getPrecursorIonType(String name) {
+    public PrecursorIonType getPrecursorIonType(String name) throws UnkownElementException {
         return table.ionByName(name);
     }
 
@@ -412,7 +413,7 @@ public class Sirius {
      * @param f molecular formula (e.g. in Hill notation)
      * @return immutable molecular formula object
      */
-    public MolecularFormula parseFormula(String f) {
+    public MolecularFormula parseFormula(String f) throws UnkownElementException {
         return MolecularFormula.parse(f);
     }
 

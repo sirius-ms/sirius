@@ -213,15 +213,15 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         final ArrayList<PrecursorIonType> likely = new ArrayList<PrecursorIonType>();
 
         if (charge > 0) {
-            likely.add(ionByName("[M+H]+"));
-            likely.add(ionByName("[M]+"));
-            likely.add(ionByName("[M+H-H2O]+"));
-            likely.add(ionByName("[M+Na]+"));
+            likely.add(ionByNameOrThrow("[M+H]+"));
+            likely.add(ionByNameOrThrow("[M]+"));
+            likely.add(ionByNameOrThrow("[M+H-H2O]+"));
+            likely.add(ionByNameOrThrow("[M+Na]+"));
             for (PrecursorIonType i : likely) ions.remove(i);
             likely.addAll(ions);
         } else if (charge < 0) {
-            likely.add(ionByName("[M-H]-"));
-            likely.add(ionByName("[M]-"));
+            likely.add(ionByNameOrThrow("[M-H]-"));
+            likely.add(ionByNameOrThrow("[M]-"));
             for (PrecursorIonType i : likely) ions.remove(i);
             likely.addAll(ions);
         }
@@ -237,20 +237,20 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         this.POSITIVE_IONIZATION = new Charge(1);
         this.NEGATIVE_IONIZATION = new Charge(-1);
         this.UNKNOWN_IONIZATION = new Charge(0); //lets use zero for unknown
-        PROTONATION = new IonMode(1, "[M + H]+", MolecularFormula.parse("H"));
-        DEPROTONATION = new IonMode(-1, "[M - H]-", MolecularFormula.parse("H").negate());
+        PROTONATION = new IonMode(1, "[M + H]+", MolecularFormula.parseOrThrow("H"));
+        DEPROTONATION = new IonMode(-1, "[M - H]-", MolecularFormula.parseOrThrow("H").negate());
         this.UNKNOWN_NEGATIVE_IONTYPE = new PrecursorIonType(NEGATIVE_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
         this.UNKNOWN_POSITIVE_IONTYPE = new PrecursorIonType(POSITIVE_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
         this.UNKNOWN_IONTYPE = new PrecursorIonType(UNKNOWN_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
 
         this.POSITIVE_ION_MODES = new IonMode[]{
-                new IonMode(1, "[M + K]+", MolecularFormula.parse("K")),
-                new IonMode(1, "[M + Na]+", MolecularFormula.parse("Na")),
+                new IonMode(1, "[M + K]+", MolecularFormula.parseOrThrow("K")),
+                new IonMode(1, "[M + Na]+", MolecularFormula.parseOrThrow("Na")),
                 PROTONATION
         };
         this.NEGATIVE_ION_MODES = new IonMode[]{
-                new IonMode(-1, "[M + Cl]-", MolecularFormula.parse("Cl")),
-                new IonMode(-1, "[M + Br]-", MolecularFormula.parse("Br")),
+                new IonMode(-1, "[M + Cl]-", MolecularFormula.parseOrThrow("Cl")),
+                new IonMode(-1, "[M + Br]-", MolecularFormula.parseOrThrow("Br")),
                 DEPROTONATION
         };
         this.INTRINSICALLY_CHARGED_NEGATIVE = new PrecursorIonType(DEPROTONATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.INTRINSICAL_CHARGED);
@@ -268,23 +268,38 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         String ss = PropertyManager.getProperty("de.unijena.bioinf.sirius.chem.adducts.positive");
         final String[] adductsPositive = ss.split(",");
         for (String pos : adductsPositive) {
-            PrecursorIonType type = ionByName(pos);
-            assert type.getIonization().getCharge() > 0;
-            addCommonIonType(type);
+            try {
+                PrecursorIonType type = ionByName(pos);
+                if (type.getIonization().getCharge() <= 0) {
+                    LoggerFactory.getLogger(getClass()).warn("Positive IonType with wrong charge: " + pos + " Skipping this Entry!");
+                    continue;
+                }
+                addCommonIonType(type);
+            } catch (UnkownElementException e) {
+                LoggerFactory.getLogger(getClass()).warn("Positive IonIonType with contains unknown Elements: " + pos + " Skipping this Entry!", e);
+            }
         }
 
 
         //create negatives
         final String[] adductsNegative = PropertyManager.getProperty("de.unijena.bioinf.sirius.chem.adducts.negative").split(",");
         for (String neg : adductsNegative) {
-            PrecursorIonType type = ionByName(neg);
-            assert type.getIonization().getCharge() < 0;
-            addCommonIonType(type);
+            try {
+                PrecursorIonType type = ionByName(neg);
+                if (type.getIonization().getCharge() >= 0) {
+                    LoggerFactory.getLogger(getClass()).warn("Negative IonType with wrong charge: " + neg + " Skipping this Entry!");
+                    continue;
+                }
+                addCommonIonType(type);
+            } catch (UnkownElementException e) {
+                LoggerFactory.getLogger(getClass()).warn("Negative IonIonType with contains unknown Elements: " + neg + " Skipping this Entry!", e);
+
+            }
         }
 
         // add common misspelled aliases...
-        final PrecursorIonType hplus = ionByName("[M+H]+");
-        final PrecursorIonType hminus = ionByName("[M-H]-");
+        final PrecursorIonType hplus = ionByNameOrThrow("[M+H]+");
+        final PrecursorIonType hminus = ionByNameOrThrow("[M-H]-");
         PROTONATION_PRECURSOR = hplus;
         DEPROTONATION_PRECURSOR = hminus;
         knownIonTypes.put("M+H", hplus);
@@ -293,13 +308,13 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         knownIonTypes.put("M-H", hminus);
         knownIonTypes.put("M-H-", hminus);
         knownIonTypes.put("[M-H]", hminus);
-        knownIonTypes.put("M+", ionByName("[M]+"));
-        knownIonTypes.put("M-", ionByName("[M]-"));
+        knownIonTypes.put("M+", ionByNameOrThrow("[M]+"));
+        knownIonTypes.put("M-", ionByNameOrThrow("[M]-"));
     }
 
     protected Pattern MULTIMERE_PATTERN = Pattern.compile("\\d+M([+-]|\\])");
 
-    private PrecursorIonType parseIonType(String name) {
+    private PrecursorIonType parseIonType(String name) throws UnkownElementException {
         if (MULTIMERE_PATTERN.matcher(name).find())
             throw new IllegalArgumentException("Do not support multiplier before a molecular formula: '" + name + "'");
         // tokenize String
@@ -658,7 +673,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
         //check if the ionisation is already in knownIonTypes and add it if not
         final String ionName = canonicalizeIonName(ionType.getIonization().getName());
-        addCommonIonType(ionName, ionByName(ionName));
+        addCommonIonType(ionName, ionByNameOrThrow(ionName));
 
         //add adduct to list of adducts with common ionisation
         Set<PrecursorIonType> adducts = ionizationToAdduct.get(ionName);
@@ -678,7 +693,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         return addCommonIonType(ionType.toString(), ionType);
     }
 
-    public boolean addCommonIonType(String name) {
+    public boolean addCommonIonType(String name) throws UnkownElementException {
         return addCommonIonType(ionByName(name));
     }
 
@@ -815,7 +830,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * @return the set of different Ionization types
      */
     public Set<PrecursorIonType> getIonizations() {
-        return ionizationToAdduct.keySet().stream().map(this::ionByName).collect(Collectors.toSet());
+        return ionizationToAdduct.keySet().stream().map(this::ionByNameOrThrow).collect(Collectors.toSet());
     }
 
     public Set<PrecursorIonType> getIonizations(final int charge) {
@@ -859,7 +874,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         Set<PrecursorIonType> positives = new HashSet<>();
         for (String ionType : ionizationToAdduct.keySet()) {
             if (knownIonTypes.get(ionType).getIonization().getCharge() > 0)
-                positives.add(ionByName(ionType));
+                positives.add(ionByNameOrThrow(ionType));
         }
         return positives;
     }
@@ -884,7 +899,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         Set<PrecursorIonType> negatives = new HashSet<>();
         for (String ionType : ionizationToAdduct.keySet()) {
             if (knownIonTypes.get(ionType).getIonization().getCharge() < 0)
-                negatives.add(ionByName(ionType));
+                negatives.add(ionByNameOrThrow(ionType));
         }
         return negatives;
     }
@@ -986,10 +1001,28 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * <p>
      * [M+H]+
      */
-    public PrecursorIonType ionByName(String name) {
+    public PrecursorIonType ionByName(String name) throws UnkownElementException {
         PrecursorIonType re = ionByNameFromTableOrNull(name);
         return re != null ? re : parseIonType(name);
     }
+
+    public PrecursorIonType ionByNameOrThrow(String name) {
+        try {
+            return ionByName(name);
+        } catch (UnkownElementException e) {
+            throw new IllegalArgumentException("Could not parse IonType: " + name, e);
+        }
+    }
+
+    public PrecursorIonType ionByNameOrNull(String name) {
+        try {
+            return ionByName(name);
+        } catch (UnkownElementException e) {
+            LoggerFactory.getLogger(MolecularFormula.class).warn("Cannot parse Formula `" + name + "`.", e);
+            return null;
+        }
+    }
+
 
     public boolean hasIon(String name) {
         return ionByNameFromTableOrNull(name) != null;
@@ -1135,7 +1168,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * @param formula
      * @param visitor
      */
-    public void parse(String formula, FormulaVisitor<?> visitor) {
+    public void parse(String formula, FormulaVisitor<?> visitor) throws UnkownElementException {
         if (formula.indexOf('(') < 0) {
             parseUnstackedFormula(formula, visitor);
         } else {
@@ -1143,7 +1176,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         }
     }
 
-    private void parseStackedFormula(String formula, FormulaVisitor<?> visitor) {
+    private void parseStackedFormula(String formula, FormulaVisitor<?> visitor) throws UnkownElementException {
         final Matcher matcher = pattern.matcher(formula);
         final ArrayDeque<ElementStack> stack = new ArrayDeque<ElementStack>();
         while (matcher.find()) {
@@ -1175,6 +1208,8 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
                     final String elementName = matcher.group(1);
                     final String elementAmount = matcher.group(2);
                     final Element element = getByName(elementName);
+                    if (element == null)
+                        throw new UnkownElementException("\"" + elementName + "\" could not be found in periodic table!");
                     final int amount = elementAmount != null && elementAmount.length() > 0 ?
                             Integer.parseInt(elementAmount) : 1;
                     if (last == null) {
@@ -1190,7 +1225,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         }
     }
 
-    private void parseUnstackedFormula(String formula, FormulaVisitor<?> visitor) {
+    private void parseUnstackedFormula(String formula, FormulaVisitor<?> visitor) throws UnkownElementException {
         final int multiplier;
         if (formula.isEmpty()) return;
         if (Character.isDigit(formula.charAt(0))) {
@@ -1204,6 +1239,9 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             final String elementName = matcher.group(1);
             final String elementAmount = matcher.group(2);
             final Element element = getByName(elementName);
+            if (element == null)
+                throw new UnkownElementException("\"" + elementName + "\" could not be found in periodic table!");
+
             final int amount = multiplier * (elementAmount != null && elementAmount.length() > 0 ?
                     Integer.parseInt(elementAmount) : 1);
             visitor.visit(element, amount);

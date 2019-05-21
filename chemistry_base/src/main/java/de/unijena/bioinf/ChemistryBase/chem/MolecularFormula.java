@@ -18,8 +18,13 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * Basic class for molecular formulas.
@@ -38,7 +43,13 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     private static MolecularFormula Hydrogen;
 
     public static MolecularFormula getHydrogen() {
-        if (Hydrogen==null) Hydrogen = parse("H");
+        if (Hydrogen == null) {
+            try {
+                Hydrogen = parse("H");
+            } catch (UnkownElementException e) {
+                new RuntimeException();
+            }
+        }
         return Hydrogen;
 
     }
@@ -130,18 +141,49 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
      * Modifiers as iondetection or isotopes are not recognized. For example "Fe+3" or "13C" are no valid
      * molecular formulas.
      */
-    public static MolecularFormula parse(String text) {
+    public static MolecularFormula parse(String text) throws UnkownElementException {
         return parse(text, PeriodicTable.getInstance());
     }
 
-    static MolecularFormula parse(String text, PeriodicTable pt) {
+    public static MolecularFormula parseOrThrow(String text) {
+        try {
+            return parse(text);
+        } catch (UnkownElementException e) {
+            throw new RuntimeException();
+        }
+    }
+
+    public static MolecularFormula parseOrNull(@NotNull final String textFormula) {
+        try {
+            return parse(textFormula);
+        } catch (UnkownElementException e) {
+            LoggerFactory.getLogger(MolecularFormula.class).warn("Cannot parse Formula `" + textFormula + "`.", e);
+            return null;
+        }
+    }
+
+
+    /**
+     * parse and execuutes return false if parsing failed and no execution happend
+     */
+    public static boolean parseAndExecute(@NotNull final String textFormula, @Nullable Consumer<MolecularFormula> executeOrSkip) {
+        try {
+            final MolecularFormula formula = parse(textFormula);
+            if (executeOrSkip != null)
+                executeOrSkip.accept(formula);
+            return true;
+        } catch (UnkownElementException e) {
+            LoggerFactory.getLogger(MolecularFormula.class).warn("Cannot parse Formula `" + textFormula + "`. Skipping this entry!", e);
+        }
+        return false;
+    }
+
+
+    static MolecularFormula parse(String text, PeriodicTable pt) throws UnkownElementException {
         final ArrayList<Pair> pairs = new ArrayList<Pair>();
-        pt.parse(text, new FormulaVisitor<Object>() {
-            @Override
-            public Object visit(Element element, int amount) {
-                pairs.add(new Pair(element, amount));
-                return null;
-            }
+        pt.parse(text, (element, amount) -> {
+            pairs.add(new Pair(element, amount));
+            return null;
         });
         final BitSet bitset = new BitSet(pairs.size());
         for (Pair e : pairs) bitset.set(e.element.getId());

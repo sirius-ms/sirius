@@ -1,6 +1,7 @@
 package de.unijena.bioinf.GibbsSampling;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
@@ -99,9 +100,9 @@ public class ZodiacUtils {
     private static Reaction parseReactionString(String string) {
         String[] reactants = string.split("->");
         if(reactants.length == 1) {
-            return new SimpleReaction(MolecularFormula.parse(reactants[0]));
+            return new SimpleReaction(MolecularFormula.parseOrThrow(reactants[0]));
         } else if(reactants.length == 2) {
-            return new Transformation(MolecularFormula.parse(reactants[0]), MolecularFormula.parse(reactants[1]));
+            return new Transformation(MolecularFormula.parseOrThrow(reactants[0]), MolecularFormula.parseOrThrow(reactants[1]));
         } else {
             throw new RuntimeException("Error parsing reaction");
         }
@@ -696,7 +697,11 @@ public class ZodiacUtils {
 
         MolecularFormula formula = null;
         if (inchi!=null && isInchi(inchi)){
-            formula = new InChI(null, inchi).extractFormula();
+            try {
+                formula = new InChI(null, inchi).extractFormula();
+            } catch (UnkownElementException e) {
+                e.printStackTrace();
+            }
         }
 
         if (formula==null && smiles.length()>0){
@@ -705,7 +710,7 @@ public class ZodiacUtils {
                 final IAtomContainer c = parser.parseSmiles(smiles);
                 String formulaString = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(c));
                 formula = MolecularFormula.parse(formulaString);
-            } catch (CDKException e) {
+            } catch (CDKException | UnkownElementException e) {
                 return null;
             }
         }

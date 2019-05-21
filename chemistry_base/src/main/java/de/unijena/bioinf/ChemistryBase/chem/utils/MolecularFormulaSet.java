@@ -25,6 +25,7 @@ import gnu.trove.list.array.TByteArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.set.hash.TLongHashSet;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -104,7 +105,13 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
                 if (buffer[lastSignificantByte] != 0) break;
             }
             final String str = new String(buffer, 0, lastSignificantByte + 1, ASCII);
-            for (String f : str.split(";")) set.uncompressed.add(MolecularFormula.parse(f));
+            for (String f : str.split(";")) {
+                try {
+                    set.uncompressed.add(MolecularFormula.parse(f));
+                } catch (UnkownElementException e) {
+                    LoggerFactory.getLogger(MolecularFormulaSet.class).warn("Could not parse formula: " + f + "Skipping this Entry!", e);
+                }
+            }
         }
         return set;
     }

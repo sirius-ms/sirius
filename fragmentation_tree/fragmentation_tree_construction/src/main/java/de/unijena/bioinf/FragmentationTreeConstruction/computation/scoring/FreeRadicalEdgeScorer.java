@@ -58,11 +58,11 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
 
     public static FreeRadicalEdgeScorer getRadicalScorerWithDefaultSet(double knownRadicalScore, double generalRadicalScore, double normalization) {
         final MolecularFormula[] formulas = new MolecularFormula[]{
-                MolecularFormula.parse("H"), MolecularFormula.parse("O"), MolecularFormula.parse("OH"),
-                MolecularFormula.parse("CH3"), MolecularFormula.parse("CH3O"),
-                MolecularFormula.parse("C3H7"), MolecularFormula.parse("C4H9"),
-                MolecularFormula.parse("C6H5O"), MolecularFormula.parse("C6H5"), MolecularFormula.parse("C6H6N"), MolecularFormula.parse("I"),
-                MolecularFormula.parse("NO"), MolecularFormula.parse("NO2"), MolecularFormula.parse("Br"), MolecularFormula.parse("Cl")
+                MolecularFormula.parseOrThrow("H"), MolecularFormula.parseOrThrow("O"), MolecularFormula.parseOrThrow("OH"),
+                MolecularFormula.parseOrThrow("CH3"), MolecularFormula.parseOrThrow("CH3O"),
+                MolecularFormula.parseOrThrow("C3H7"), MolecularFormula.parseOrThrow("C4H9"),
+                MolecularFormula.parseOrThrow("C6H5O"), MolecularFormula.parseOrThrow("C6H5"), MolecularFormula.parseOrThrow("C6H6N"), MolecularFormula.parseOrThrow("I"),
+                MolecularFormula.parseOrThrow("NO"), MolecularFormula.parseOrThrow("NO2"), MolecularFormula.parseOrThrow("Br"), MolecularFormula.parseOrThrow("Cl")
         };
         final HashMap<MolecularFormula, Double> radicals = new HashMap<MolecularFormula, Double>(formulas.length * 2);
         for (MolecularFormula formula : formulas) {
@@ -118,7 +118,7 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
         final D dict = document.getDictionaryFromDictionary(dictionary, "commonRadicals");
         for (String key : document.keySetOfDictionary(dict)) {
             final double value = document.getDoubleFromDictionary(dict, key);
-            addRadical(MolecularFormula.parse(key), value);
+            MolecularFormula.parseAndExecute(key, f -> addRadical(f, value));
         }
         setGeneralRadicalScore(document.getDoubleFromDictionary(dictionary, "radicalPenalty"));
         setNormalization(document.getDoubleFromDictionary(dictionary, "normalization"));

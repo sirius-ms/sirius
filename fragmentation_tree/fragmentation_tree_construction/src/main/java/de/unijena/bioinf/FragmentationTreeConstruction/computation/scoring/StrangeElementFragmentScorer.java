@@ -2,9 +2,11 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,7 +25,11 @@ public class StrangeElementFragmentScorer implements DecompositionScorer<Element
         this.knownFragments = new HashSet<>();
         final L dd = document.getListFromDictionary(dictionary, "whiteset");
         for (int i=0, n = document.sizeOfList(dd); i  < n; ++i) {
-            knownFragments.add(MolecularFormula.parse(document.getStringFromList(dd, i)));
+            try {
+                knownFragments.add(MolecularFormula.parse(document.getStringFromList(dd, i)));
+            } catch (UnkownElementException e) {
+                LoggerFactory.getLogger(CommonFragmentsScore.class).warn("Cannot parse Formula. Skipping!", e);
+            }
         }
     }
 

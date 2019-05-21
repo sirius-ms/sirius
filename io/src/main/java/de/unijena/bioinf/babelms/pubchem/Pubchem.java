@@ -44,7 +44,7 @@ public class Pubchem implements CompoundQuery {
     public static void main(String[] args) {
         final Pubchem pubchem = new Pubchem();
         final Set<MolecularFormula> formulas = pubchem.findMolecularFormulasByMass(
-                PeriodicTable.getInstance().ionByName("[M+H]+").precursorMassToNeutralMass(314.1364), new Deviation(15, 0.0025));
+                PeriodicTable.getInstance().ionByNameOrThrow("[M+H]+").precursorMassToNeutralMass(314.1364), new Deviation(15, 0.0025));
         //formulas.addAll(new ChemSpider().findMolecularFormulasByMass(194.080376, new Deviation(5)));
         //System.out.println(formulas.size());
         //System.out.println(formulas);
@@ -98,9 +98,8 @@ public class Pubchem implements CompoundQuery {
         if (formulaIndex<0) throw new RuntimeException("Unexpected result:\n" + csv );
         for (int k=1; k < rows.length; ++k) {
             final String[] row = rows[k].split(",");
-            formulas.add(MolecularFormula.parse(row[formulaIndex].substring(1,row[formulaIndex].length()-1)));
+            MolecularFormula.parseAndExecute(row[formulaIndex].substring(1, row[formulaIndex].length() - 1), formulas::add);
         }
-        //System.err.println(); System.err.flush();
         return formulas;
     }
 

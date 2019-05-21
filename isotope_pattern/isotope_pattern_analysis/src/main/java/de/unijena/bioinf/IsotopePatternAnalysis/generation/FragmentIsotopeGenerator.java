@@ -23,14 +23,11 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Precursor;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import gnu.trove.list.array.TDoubleArrayList;
-
-import java.util.Random;
 
 public class FragmentIsotopeGenerator extends FastIsotopePatternGenerator {
 
@@ -105,8 +102,8 @@ public class FragmentIsotopeGenerator extends FastIsotopePatternGenerator {
 
         final SimpleSpectrum spec = new SimpleSpectrum(mzvalues.toArray(),intvalues.toArray());
                 //new SimpleSpectrum(new double[]{269.1108,270.1138,271.106}, new double[]{999.0,205.39,2.4});
-        final MolecularFormula A = MolecularFormula.parse("C13H14BrN3O");
-        final MolecularFormula B = MolecularFormula.parse("C5H7N");
+        final MolecularFormula A = MolecularFormula.parseOrThrow("C13H14BrN3O");
+        final MolecularFormula B = MolecularFormula.parseOrThrow("C5H7N");
 
         final double MAX = 999;
 
