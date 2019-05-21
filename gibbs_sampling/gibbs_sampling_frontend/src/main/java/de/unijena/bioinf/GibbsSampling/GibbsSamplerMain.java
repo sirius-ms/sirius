@@ -6,7 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnkownElementException;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -30,8 +30,8 @@ import de.unijena.bioinf.ms.io.projectspace.SiriusFileReader;
 import de.unijena.bioinf.ms.io.projectspace.SiriusZipFileReader;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Ms2RunPreprocessor;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
+import de.unijena.bioinf.sirius.Ms2RunPreprocessor;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TCharSet;
@@ -2032,7 +2032,7 @@ public class GibbsSamplerMain {
         if (inchi!=null && isInchi(inchi)){
             try {
                 formula = new InChI(null, inchi).extractFormula();
-            } catch (UnkownElementException e) {
+            } catch (UnknownElementException e) {
                 e.printStackTrace();
             }
         }
@@ -2043,7 +2043,7 @@ public class GibbsSamplerMain {
                 final IAtomContainer c = parser.parseSmiles(smiles);
                 String formulaString = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(c));
                 formula = MolecularFormula.parse(formulaString);
-            } catch (CDKException | UnkownElementException e) {
+            } catch (CDKException | UnknownElementException e) {
                 return null;
             }
         }
