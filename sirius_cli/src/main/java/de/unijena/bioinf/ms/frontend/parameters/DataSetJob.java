@@ -17,7 +17,7 @@ public abstract class DataSetJob extends BasicDependentJJob<Iterable<ExperimentR
     private List<ExperimentResult> successfulInstances = null;
 
     public DataSetJob() {
-        super(JobType.SCHEDULER);
+        super(JobType.SCHEDULER, ReqJobFailBehaviour.WARN);
     }
 
     public void addInputProvidingJobs(Iterable<JJob<ExperimentResult>> providingJobs) {
