@@ -198,8 +198,8 @@ public class IsotopePatternAnalysis implements Parameterized {
             for (IonMode ionMode : ionModes.getIonModes()) {
                 List<MolecularFormula> formulas = decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(ionMode.subtractFromMass(pattern.getPeaks()[0].getMass()), massDev.allowedMassDeviation, constraints);
                 PrecursorIonType precursorIonType = input.getExperimentInformation().getPrecursorIonType();
-                if (!precursorIonType.isIonizationUnknown() && !precursorIonType.isPlainProtonationOrDeprotonation()) {
-                    formulas=formulas.stream().filter(f->precursorIonType.precursorIonToNeutralMolecule(f).isAllPositiveOrZero()).collect(Collectors.toList());
+                if (!precursorIonType.hasNeitherAdductNorInsource()) {
+                    formulas=formulas.stream().filter(f->precursorIonType.measuredNeutralMoleculeToNeutralMolecule(f).isAllPositiveOrZero()).collect(Collectors.toList());
                 }
                 for (IsotopePattern pat : scoreFormulas(spec, formulas, input.getExperimentInformation(), PrecursorIonType.getPrecursorIonType(ionMode))) {
                     explanations.put(pat.getCandidate(), pat);

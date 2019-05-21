@@ -6,9 +6,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IntergraphMapping;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.LossValidator;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.annotations.DecompositionList;
@@ -61,6 +59,14 @@ public abstract class SiriusPlugin {
 
         PluginInitializer(FragmentationPatternAnalysis analysis) {
             this.analysis = analysis;
+        }
+
+        public void addGeneralGraphScorer(GeneralGraphScorer scorer) {
+            analysis.getGeneralGraphScorers().add(scorer);
+        }
+
+        public <T> void addFragmentScorer(FragmentScorer<T> scorer) {
+            analysis.getFragmentScorers().add(scorer);
         }
 
         public <T> void addLossScorer(LossScorer<T> scorer) {

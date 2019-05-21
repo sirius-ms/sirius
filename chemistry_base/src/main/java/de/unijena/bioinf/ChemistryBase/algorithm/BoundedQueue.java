@@ -84,10 +84,15 @@ public final class BoundedQueue<T> implements Iterable<T> {
     @NotNull
     @Override
     public Iterator<T> iterator() {
-        return Arrays.stream(values).iterator();
+        if (length >= values.length)
+            return Arrays.stream(values).iterator();
+        else return Arrays.stream(values).limit(length).iterator();
     }
 
     public T[] toArray() {
-        return values.clone();
+        if (length>=values.length)
+            return values.clone();
+        else
+            return Arrays.copyOf(values, length);
     }
 }
