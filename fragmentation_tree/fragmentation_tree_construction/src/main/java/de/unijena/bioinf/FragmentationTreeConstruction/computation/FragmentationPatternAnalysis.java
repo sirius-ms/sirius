@@ -920,7 +920,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 fragScores.add(rootHeader.define(getScoringMethodName(peakScorer)));
             }
             for (FragmentScorer<?> fragmentScorer : fragmentScorers) {
-                fragScores.add(fragmentHeader.define(getScoringMethodName(fragmentScorer)));
+                fragScores.add(rootHeader.define(getScoringMethodName(fragmentScorer)));
             }
             for (GeneralGraphScorer generalGraphScorer : this.generalGraphScorers) {
                 fragScores.add(rootHeader.define(getScoringMethodName(generalGraphScorer)));
