@@ -14,35 +14,42 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 /**
  * Created by martin on 27.06.18.
  */
-public class PredictionQualityFeatures implements FeatureCreator{
+public class PredictorQualityFeatures implements FeatureCreator{
 
 
     PredictionPerformance[] statistics;
+
     @Override
     public void prepare(PredictionPerformance[] statistics) {
         this.statistics=statistics;
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
 
-        double[] qualityReturn = new double[1];
+    PredictionPerformance.averageF1(statistics);
+    int f1Below33=0;
+    int f1Below66=0;
+    int f1Below80=0;
 
-        double quality=0;
-        double[] prob_fpt= query.toProbabilityArray();
-
-        for(int i=0;i<prob_fpt.length;i++){
-            quality+=(Math.max(1-prob_fpt[i],prob_fpt[i])*statistics[i].getF());
-
-
+    for (int i=0;i<statistics.length;i++){
+        if(statistics[i].getF()>0 && statistics[i].getF()<=0.33){
+            f1Below33+=1;
 
         }
+        if(statistics[i].getF()>0.33 && statistics[i].getF()<=0.66){
 
-        qualityReturn[0]=quality;
+            f1Below66+=1;
 
+        }
+        if(statistics[i].getF()>0.66 && statistics[i].getF()<=0.8){
 
+            f1Below80+=1;
+        }
 
-        return qualityReturn;
+    }
+    return null;
+
     }
 
     @Override
@@ -51,7 +58,7 @@ public class PredictionQualityFeatures implements FeatureCreator{
     }
 
     @Override
-    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return false;
     }
 
@@ -64,8 +71,8 @@ public class PredictionQualityFeatures implements FeatureCreator{
     public String[] getFeatureNames() {
 
 
-        String[] name = new String[1];
-        name[0] = "PredicitionQuality";
+        String[] name = new String[getFeatureSize()];
+        name[0] = "AverageF1";
         return name;
     }
 

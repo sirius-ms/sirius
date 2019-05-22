@@ -11,6 +11,7 @@ import org.libsvm.SVM;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -34,9 +35,12 @@ LibLinearImpl imp;
 
 
 
-    public TrainedSVM trainLinearSVMWithCV(double[][] featureMatrix,double[] labels){
+    public TrainedSVM trainLinearSVMWithCV(double[][] featureMatrix,double[] labels)throws IOException{
 
-        int folds = 5;
+        FileWriter write_features= new FileWriter("/vol/clusterdata/fingerid_martin/exp2_nfp/features.csv");
+
+
+        int folds = 10;
 
         this.featureMatrix=featureMatrix;
         this.labels=labels;
@@ -121,6 +125,20 @@ LibLinearImpl imp;
 
           }
 
+          for(int a=0;a<featuresFinalTest.length;a++){
+              write_features.write(labelsFinalTrain[a]+" ");
+              for(int b=0;b<featuresFinalTest[a].length;b++) {
+                  if (!(b+1==featuresFinalTest[a].length))
+                  write_features.write(featuresFinalTest[a][b]+" ");
+                  else{
+                  write_features.write(featuresFinalTest[a][b]+" ");
+                  }
+              }
+              write_features.write("\n");
+
+          }
+          write_features.write("\n");
+          write_features.close();
 
 
 
@@ -289,7 +307,7 @@ LibLinearImpl imp;
             para.C = c_values[i];
             para.kernel_type = 0;
             para.eps = 0.0001;
-            para.weight = new double[]{1, negative_examples / positive_examples};
+            para.weight = new double[]{1, 1};
             para.weight_label = new int[]{-1, 1};
 
 
@@ -323,6 +341,7 @@ LibLinearImpl imp;
 
 
             Stats stats = new Stats(scores,testLabelToBool);
+
 
             //writeBogusScores(scores, testLabelToBool);
 
@@ -546,8 +565,8 @@ LibLinearImpl imp;
     public void writeScores(double[] scores, boolean[] labels){
 
 try {
-    FileWriter write_true = new FileWriter("/vol/clusterdata/fingerid_martin/exp2/scores_true.txt");
-    FileWriter write_bogus = new FileWriter("/vol/clusterdata/fingerid_martin/exp2/scores_bogus.txt");
+    FileWriter write_true = new FileWriter("/vol/clusterdata/fingerid_martin/exp2_nfp/scores_true.txt");
+    FileWriter write_bogus = new FileWriter("/vol/clusterdata/fingerid_martin/exp2_nfp/scores_bogus.txt");
 
 
     for(int i=0;i<scores.length;i++){
