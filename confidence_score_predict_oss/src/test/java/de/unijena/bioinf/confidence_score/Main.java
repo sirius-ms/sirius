@@ -26,7 +26,7 @@ public class Main {
 
                 Sirius sirius = new Sirius();
 
-                Ms2Experiment exp = sirius.parseExperiment(file).next();
+                Ms2Experiment exp = MsIO.readExperimentFromFile(file).next();
 
 
                 final SpectralPreprocessor.Preprocessed pre;
