@@ -25,7 +25,7 @@ public class PredictorQualityFeatures implements FeatureCreator{
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
 
     PredictionPerformance.averageF1(statistics);
     int f1Below33=0;
@@ -58,7 +58,7 @@ public class PredictorQualityFeatures implements FeatureCreator{
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return false;
     }
 
