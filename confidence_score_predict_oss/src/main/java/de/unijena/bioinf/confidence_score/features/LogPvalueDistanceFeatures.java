@@ -83,11 +83,11 @@ public class LogPvalueDistanceFeatures implements FeatureCreator {
 
         for (int j = 0; j < distances.length; j++) {
 
-            if(putils.computePvalueScore(rankedCandidatesOrig, rankedCandidates[0]) - putils.computePvalueScore(rankedCandidatesOrig,rankedCandidates[distances[j]])==0){
-                scores[pos++]=0;
+            if(putils.computePvalueScore(rankedCandidatesOrig, rankedCandidates[0],flags) - putils.computePvalueScore(rankedCandidatesOrig,rankedCandidates[distances[j]],flags)==0){
+                scores[pos++]=-20;
             }else{
 
-            scores[pos++] = Math.log(Math.abs(putils.computePvalueScore(rankedCandidatesOrig, rankedCandidates[0]) - putils.computePvalueScore(rankedCandidatesOrig,rankedCandidates[distances[j]])));
+            scores[pos++] = Math.log(Math.abs(putils.computePvalueScore(rankedCandidatesOrig, rankedCandidates[0],flags) - putils.computePvalueScore(rankedCandidatesOrig,rankedCandidates[distances[j]],flags)));
         }
         }
 

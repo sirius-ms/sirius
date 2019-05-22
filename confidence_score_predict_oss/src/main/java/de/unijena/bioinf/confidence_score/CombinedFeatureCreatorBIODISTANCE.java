@@ -33,35 +33,35 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
         long all=0;
         long bio=4294967292L;
 
+        //CombinedFeatureCreatorALL conf_score_all = new CombinedFeatureCreatorALL(scored_array,scored_array_covscore,performance,covscore);
+        //conf_score_all.prepare(performance);
+
+
+
+
         ArrayList<FeatureCreator> creators = new ArrayList<>(Arrays.asList(new PlattFeatures(), new LogPvalueDistanceFeatures(scored_array,all,1),
                 new LogDistanceFeatures(scored_array,all,1),
                 new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,all),
-                new PvalueFeatures(scored_array,all), new LogPvalueFeatures(scored_array,all),
-                new PvalueFeatures(scored_array_covscore,all), new LogPvalueFeatures(scored_array_covscore,all),
+                 new LogPvalueFeatures(scored_array,all),
+                 new LogPvalueFeatures(scored_array_covscore,all),
                 new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array[0],covscore.getScoring(),all),
-                new FptLengthFeature(),
                 new TreeFeatures(), new PredictionQualityFeatures(),
                 new TanimotoDistanceFeatures(scored_array,all,1), new TanimotoToPredFeatures(scored_array,all),
                 new FptLengthDiffFeatures(scored_array),
                 new ScoreDiffScorerFeatures(scored_array[0],scored_array_covscore[0],covscore.getScoring()),
                 new ScoreFeatures(covscore.getScoring(),scored_array,all),
                 new ScoreFeatures(covscore.getScoring(),scored_array_covscore,all),
+               // new AllConfidenceScoreFeatures(all_confidence),
 
 
                 new LogDistanceFeatures(scored_array,bio,1),
                 new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,bio),
-                new PvalueFeatures(scored_array,bio), new LogPvalueFeatures(scored_array,bio),
-                new PvalueFeatures(scored_array_covscore,bio), new LogPvalueFeatures(scored_array_covscore,bio),
+                 new LogPvalueFeatures(scored_array,bio),
+                 new LogPvalueFeatures(scored_array_covscore,bio),
                 new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array[0],covscore.getScoring(),bio),
                 new TanimotoDistanceFeatures(scored_array,bio,1), new TanimotoToPredFeatures(scored_array,bio),
                 new ScoreFeatures(covscore.getScoring(),scored_array,bio),
                 new ScoreFeatures(covscore.getScoring(),scored_array_covscore,bio)
-
-
-
-
-
-
 
 
 

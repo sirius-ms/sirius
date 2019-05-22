@@ -194,6 +194,7 @@ public class SVMUtils {
 
                 if(scales.deviations[i]==0){
                     System.out.println("?");
+                    System.out.println(i);
                 }
 
                 element[i] = (element[i] - scales.medians[i]) / scales.deviations[i];
