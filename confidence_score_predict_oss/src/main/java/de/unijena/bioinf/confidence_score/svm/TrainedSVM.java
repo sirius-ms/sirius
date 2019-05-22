@@ -1,12 +1,13 @@
 package de.unijena.bioinf.confidence_score.svm;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import org.apache.commons.math3.distribution.LogNormalDistribution;
-import org.json.JSONArray;
+import org.jetbrains.annotations.NotNull;
 
 import javax.json.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 
 /**
  * Created by martin on 27.06.18.
@@ -21,32 +22,33 @@ public class TrainedSVM {
     public int score_shift;
 
 
-
-    public TrainedSVM(SVMScales scales,double[] weights, String[] names){
-        this.weights=weights;
-        this.scales=scales;
-        this.names=names;
-
-
-
+    public TrainedSVM(SVMScales scales, double[] weights, String[] names) {
+        this.weights = weights;
+        this.scales = scales;
+        this.names = names;
     }
 
-    public TrainedSVM(File file){
+    public TrainedSVM(String json) {
+        import_parameters(json);
+    }
+
+    public TrainedSVM(JsonObject json) {
+        import_parameters(json);
+    }
+
+    public TrainedSVM(File file) throws IOException {
         import_parameters(file);
-
-
     }
 
 
-
-    public void exportAsJSON(File file){
+    public void exportAsJSON(File file) {
 
 
         //TODO: false score distribution in here?
 
         JsonObjectBuilder json = Json.createObjectBuilder();
 
-        for(int i=0;i<weights.length;i++) {
+        for (int i = 0; i < weights.length; i++) {
 
             JsonArrayBuilder json_array = Json.createArrayBuilder();
 
@@ -58,20 +60,19 @@ public class TrainedSVM {
             json_array.add(scales.max_feature_values[i]);
 
 
-            json.add("feature "+i, json_array.build());
+            json.add("feature " + i, json_array.build());
 
         }
 
 
-        JsonArrayBuilder sigmoid_array =  Json.createArrayBuilder();
-
+        JsonArrayBuilder sigmoid_array = Json.createArrayBuilder();
 
 
         sigmoid_array.add(probAB[0]);
         sigmoid_array.add(probAB[1]);
 
 
-        json.add("sigmoid",sigmoid_array.build());
+        json.add("sigmoid", sigmoid_array.build());
 
         javax.json.JsonObject json_obj = json.build();
 
@@ -81,101 +82,46 @@ public class TrainedSVM {
             JsonWriter write_json = Json.createWriter(FileUtils.getWriter(file));
             write_json.writeObject(json_obj);
             write_json.close();
-        }catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
 
-
-
     }
 
-    public void import_parameters(File file){
+    public void import_parameters(File file) throws IOException {
+        import_parameters(FileUtils.getReader(file));
+    }
 
-
-        try {
-
-
-            JsonReader parse_json_marvin = Json.createReader(FileUtils.getReader(file));
-            javax.json.JsonObject object_marvin = parse_json_marvin.readObject();
+    public void import_parameters(Reader reader) {
+        JsonReader parse_json_marvin = Json.createReader(reader);
+        JsonObject object_marvin = parse_json_marvin.readObject();
             parse_json_marvin.close();
 
-            names= new String[object_marvin.keySet().size()];
-            weights= new double[names.length];
-
-
-
-            double[] medians = new double[names.length];
-            double[] devs =  new double[names.length];
-            double[] mins = new double[names.length];
-            double[] maxs =  new double[names.length];
-
-            int counter=0;
-
-            for (String key : object_marvin.keySet()){
-
-                JsonArray curr =  object_marvin.getJsonArray(key);
-
-                if(key.contains("feature")) {
-
-
-                    names[counter] = curr.get(0).toString();
-                    weights[counter] = Double.parseDouble(curr.get(1).toString());
-                    medians[counter] = Double.parseDouble(curr.get(2).toString());
-                    devs[counter] = Double.parseDouble(curr.get(3).toString());
-                    mins[counter] = Double.parseDouble(curr.get(4).toString());
-                    maxs[counter] = Double.parseDouble(curr.get(5).toString());
-
-                    counter++;
-
-                }
-
-                if(key.contains("sigmoid")){
-                    probAB = new double[2];
-
-                    probAB[0]= Double.parseDouble(curr.get(0).toString());
-                    probAB[1]=Double.parseDouble(curr.get(1).toString());
-
-
-
-                }
-
-
-
-
-
-
-
-            }
-
-            scales= new SVMScales(medians,devs,mins,maxs);
-
-
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-
-
+        import_parameters(object_marvin);
     }
 
-    public void import_parameters(JsonObject jsonObject){
-        names= new String[jsonObject.keySet().size()];
-        weights= new double[names.length];
-        probAB = new double[2];
+    public void import_parameters(@NotNull String json) {
+        import_parameters(new StringReader(json));
+    }
 
+
+    private void import_parameters(JsonObject jsonObject) {
+        names = new String[jsonObject.keySet().size()];
+        weights = new double[names.length];
 
         double[] medians = new double[names.length];
-        double[] devs =  new double[names.length];
+        double[] devs = new double[names.length];
         double[] mins = new double[names.length];
-        double[] maxs =  new double[names.length];
+        double[] maxs = new double[names.length];
 
-        int counter=0;
+        int counter = 0;
 
-        for (String key : jsonObject.keySet()){
+        for (String key : jsonObject.keySet()) {
 
-            JsonArray curr =  jsonObject.getJsonArray(key);
+            JsonArray curr = jsonObject.getJsonArray(key);
 
-            if(key.contains("feature")) {
+            if (key.contains("feature")) {
 
 
                 names[counter] = curr.get(0).toString();
@@ -189,31 +135,20 @@ public class TrainedSVM {
 
             }
 
-            if(key.contains("sigmoid")){
+            if (key.contains("sigmoid")) {
+                probAB = new double[2];
 
-                probAB[0]= Double.parseDouble(curr.get(0).toString());
-                probAB[1]=Double.parseDouble(curr.get(1).toString());
-
+                probAB[0] = Double.parseDouble(curr.get(0).toString());
+                probAB[1] = Double.parseDouble(curr.get(1).toString());
 
 
             }
 
 
-
-
-
-
-
         }
 
-        scales= new SVMScales(medians,devs,mins,maxs);
-
-
-
-
-
-
-}
+        scales = new SVMScales(medians, devs, mins, maxs);
+    }
 
 
 }
