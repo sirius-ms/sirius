@@ -17,10 +17,10 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 public class PredictionQualityFeatures implements FeatureCreator{
 
 
-
+    PredictionPerformance[] statistics;
     @Override
     public void prepare(PredictionPerformance[] statistics) {
-
+        this.statistics=statistics;
     }
 
     @Override
@@ -32,13 +32,10 @@ public class PredictionQualityFeatures implements FeatureCreator{
         double[] prob_fpt= query.getFingerprint().toProbabilityArray();
 
         for(int i=0;i<prob_fpt.length;i++){
-            quality+=Math.max(1-prob_fpt[i],prob_fpt[i]);
+            quality+=(Math.max(1-prob_fpt[i],prob_fpt[i])*statistics[i].getF());
 
-            //this penalizes predictions close to 0.5 stronger because they
 
-            if(prob_fpt[i]>0.4 && prob_fpt[i]<0.6){
-                quality-=1;
-            }
+
         }
 
         qualityReturn[0]=quality;

@@ -252,16 +252,30 @@ return null;
 
         Utils utils = new Utils();
         double biosize= utils.condense_candidates_by_flag(candidates,flag).length;
+        if(biosize==1)System.out.println("why 1: "+candidates.length);
         double pvalue=0;
+
+        //remove best scoring hit from candidates (current)
+
+
+
+
 
         double[] scored_array= new double[candidates.length-1];
 
         ArrayList<Double> tosortlist = new ArrayList<>();
 
-        for(int i=1;i<candidates.length;i++){
-            tosortlist.add(Math.log(candidates[i].getScore()+score_shift));
+        int dupe_counter=0;
+
+        for(int i=0;i<candidates.length;i++){
+            if(!(candidates[i].getScore()==current.getScore() && candidates[i].getCandidate().getInchiKey2D().equals(current.getCandidate().getInchiKey2D()))) {
+                tosortlist.add(Math.log(candidates[i].getScore() + score_shift));
+            }else {
+                dupe_counter+=1;
+            }
         }
 
+        if(dupe_counter>=2)System.out.println("WARNING DUPLICATES");
         Collections.sort(tosortlist);
         for(int i=0;i<tosortlist.size();i++){
             scored_array[i]=tosortlist.get(i);
@@ -274,7 +288,7 @@ return null;
 
         for(int i=0;i<scored_array.length;i++){
 
-            NormalDistribution dist = new NormalDistribution(Math.log(candidates[i+1].getScore()+score_shift),bandwidth);
+            NormalDistribution dist = new NormalDistribution(scored_array[i],bandwidth);
 
             pvalue+=1-dist.cumulativeProbability(Math.log(current.getScore()+score_shift));
 
@@ -286,12 +300,12 @@ return null;
 
 
 
-        System.out.println("pvalues: "+pvalue+" --- "+(double)biosize*pvalue+ " --- "+ (-Math.expm1(biosize* Math.log1p(-pvalue)))+"\n");
+        //System.out.println("pvalues: "+pvalue+" --- "+(double)biosize/candidates.length*pvalue+ " --- "+ (-Math.expm1(biosize* Math.log1p(-pvalue)))+" - "+biosize);
 
 
 
-        //return (biosize*pvalue);
-        return -Math.expm1(biosize* Math.log1p(-pvalue));
+        return ((biosize/candidates.length)*pvalue);
+        //return -Math.expm1(biosize* Math.log1p(-pvalue));
     }
 
 

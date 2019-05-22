@@ -29,7 +29,7 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
     private int featureCount;
     private double[] computed_features;
 
-    public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, CovarianceScoring covscore){
+    public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, CovarianceScoring covscore,double all_confidence,boolean same){
         long all=0;
         long bio=4294967292L;
 
@@ -41,6 +41,7 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
 
         ArrayList<FeatureCreator> creators = new ArrayList<>(Arrays.asList(new PlattFeatures(), new LogPvalueDistanceFeatures(scored_array,all,1),
                 new LogDistanceFeatures(scored_array,all,1),
+                new DistanceFeatures(scored_array,all,1),
                 new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,all),
                  new LogPvalueFeatures(scored_array,all),
                  new LogPvalueFeatures(scored_array_covscore,all),
@@ -51,10 +52,10 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
                 new ScoreDiffScorerFeatures(scored_array[0],scored_array_covscore[0],covscore.getScoring()),
                 new ScoreFeatures(covscore.getScoring(),scored_array,all),
                 new ScoreFeatures(covscore.getScoring(),scored_array_covscore,all),
-               // new AllConfidenceScoreFeatures(all_confidence),
 
-
+                new AllConfidenceScoreFeatures(all_confidence,same),
                 new LogDistanceFeatures(scored_array,bio,1),
+                new DistanceFeatures(scored_array,bio,1),
                 new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,bio),
                  new LogPvalueFeatures(scored_array,bio),
                  new LogPvalueFeatures(scored_array_covscore,bio),

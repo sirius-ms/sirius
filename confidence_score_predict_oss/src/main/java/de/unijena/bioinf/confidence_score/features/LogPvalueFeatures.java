@@ -49,7 +49,7 @@ public class LogPvalueFeatures implements FeatureCreator {
 
 
 
-        double pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0],utils2.condense_candidates_by_flag(rankedCandidates,this.flags).length);
+        double pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0],flags);
 
 
 

@@ -29,7 +29,7 @@ public class CombinedFeatureCreatorBIONODISTANCE extends CombinedFeatureCreator 
     private int featureCount;
     private double[] computed_features;
 
-    public CombinedFeatureCreatorBIONODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, CovarianceScoring covscore){
+    public CombinedFeatureCreatorBIONODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, CovarianceScoring covscore,double all_confidence,boolean same){
         long all=0;
         long bio=4294967292L;
 
@@ -45,6 +45,7 @@ public class CombinedFeatureCreatorBIONODISTANCE extends CombinedFeatureCreator 
                 new ScoreDiffScorerFeatures(scored_array[0],scored_array_covscore[0],covscore.getScoring()),
                 new ScoreFeatures(covscore.getScoring(),scored_array,all),
                 new ScoreFeatures(covscore.getScoring(),scored_array_covscore,all),
+                new AllConfidenceScoreFeatures(all_confidence,same),
 
 
                 new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,bio),

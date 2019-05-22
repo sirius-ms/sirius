@@ -24,12 +24,13 @@ public class AllConfidenceScoreFeatures implements FeatureCreator {
     Scored<FingerprintCandidate>[] rankedCandidates;
     long flags;
     double conf;
-
-    public AllConfidenceScoreFeatures(double conf){
+    boolean same;
+    public AllConfidenceScoreFeatures(double conf,boolean same){
         this.rankedCandidates=rankedCandidates;
-        names = new String[]{"AllConfScore"};
+        names = new String[]{"AllConfScore","same"};
         this.scoring=scoring;
         this.conf=conf;
+        this.same=same;
     }
 
 
@@ -44,16 +45,19 @@ public class AllConfidenceScoreFeatures implements FeatureCreator {
     public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult,long flags) {
 
 
-        final double[] scores = new double[1];
+        final double[] scores = new double[2];
 
         scores[0] = conf;
+        if(same)
+        scores[1] = 1;
+        else scores[1]=0;
 
         return scores;
     }
 
     @Override
     public int getFeatureSize() {
-        return 1;
+        return 2;
     }
 
     @Override
