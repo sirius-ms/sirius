@@ -147,7 +147,7 @@ public class ConfidenceScoreComputor {
 
             }else {
                 if(utils.condense_candidates_by_flag(ranked_candidates_covscore,flags).length>0) {
-                    comb = new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, performances, covscore);
+                  //  comb = new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, performances, covscore);
                     distanceType = "noDistance";
 
                     svm= trainedSVMs.get("fe"+ce+"_"+dbType+"_"+distanceType+".svm");
