@@ -3,25 +3,15 @@ package de.unijena.bioinf.confidence_score.features;
 import Tools.ExpectationMaximization1D;
 import Tools.KMeans;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.Utils;
-import de.unijena.bioinf.sirius.IdentificationResult;
 import jMEF.MixtureModel;
 import jMEF.PVector;
-import jMEF.Parameter;
-import org.apache.commons.math3.distribution.ExponentialDistribution;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.ParetoDistribution;
 import umontreal.ssj.probdist.EmpiricalDist;
 import umontreal.ssj.randvar.KernelDensityGen;
-import umontreal.ssj.randvar.NormalGen;
-import umontreal.ssj.rng.F2NL607;
-import umontreal.ssj.rng.RandomStream;
-import umontreal.ssj.rng.RandomStreamBase;
-import umontreal.ssj.rng.RandomStreamFactory;
-
 
 import java.io.BufferedWriter;
 import java.io.File;
