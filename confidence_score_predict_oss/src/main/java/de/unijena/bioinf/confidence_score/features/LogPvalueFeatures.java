@@ -44,18 +44,38 @@ public class LogPvalueFeatures implements FeatureCreator {
 
         if(this.flags==-1)this.flags=flags;
 
-        if(utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0])==0){
-            System.out.println("0 pvalue?");
+        double pvalue= utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0],flags);
+
+
+
+
+        double pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0],utils2.condense_candidates_by_flag(rankedCandidates,this.flags).length);
+
+
+
+        if(pvalue==0){
+            return_value[0]=-20;
+
+        }else {
+            return_value[0]  = Math.log(pvalue);
+
         }
 
-        return_value[0]  = Math.log(utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0]));
+        if(pvalue_kde==0){
+            return_value[1]=-20;
+
+        }else {
+            return_value[1]= Math.log(pvalue_kde);
+        }
+
+
 
         return return_value;
     }
 
     @Override
     public int getFeatureSize() {
-        return 1;
+        return 2;
     }
 
     @Override
@@ -70,8 +90,9 @@ public class LogPvalueFeatures implements FeatureCreator {
 
     @Override
     public String[] getFeatureNames() {
-        String[] name = new String[1];
+        String[] name = new String[2];
         name[0]="LogpvalueScore";
+        name[1]="LogPvalueScoreKDE";
         return name;
     }
 

@@ -46,7 +46,7 @@ public class PvalueFeatures implements FeatureCreator {
         Utils utils2 = new Utils();
 
 
-        return_value[0]  = utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0]);
+        return_value[0]  = utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0],flags);
 
         return return_value;
     }
