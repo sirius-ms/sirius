@@ -110,26 +110,6 @@ public class RootOptionsCLI implements RootOptions {
         return projectSpaceToWriteOn;
     }
 
-
-       /*public WorkflowConfiguration self() throws Exception {
-        //init buffer sizes
-        initBuffers();
-
-        //make a project space
-        SiriusProjectSpace it = configureProjectSpace();
-        //read new input if available
-
-            return null;
-        //todo how to handle merge of new input and already existing workspace???
-
-        *//*final Iterator<ExperimentResult> inputIterator = (input == null || input.isEmpty())
-                ? projectSpace.parseExperimentIterator()
-                : new InputIterator(input, maxMz).asExpResultIterator();*//*
-
-//        final Iterator<ExperimentResult> inputIterator = projectSpace.parseExperimentIterator();
-//        return new IO(projectSpace, inputIterator);
-    }*/
-
     protected SiriusProjectSpace configureProjectSpace() throws IOException {
         SiriusProjectSpace space;
         if (inputProjectSpaceLocations == null || inputProjectSpaceLocations.isEmpty()) {
@@ -155,11 +135,12 @@ public class RootOptionsCLI implements RootOptions {
     protected MetaDataSerializer[] makeSerializerArray() {
         //todo check weather Canopus and WebService is available
         // this should be collected from the different subtool
+        // we should be able to import and export the data even if
+        // the calculators are not available -> e.g. web connection!
         return new MetaDataSerializer[]{
                 new IdentificationResultSerializer()
                 , new FingerIdResultSerializer(ApplicationCore.WEB_API)
 //                , new CanopusResultSerializer(ApplicationCore.CANOPUS)
         };
     }
-
 }
