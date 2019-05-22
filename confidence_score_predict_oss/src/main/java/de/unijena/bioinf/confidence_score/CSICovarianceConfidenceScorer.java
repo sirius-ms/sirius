@@ -88,9 +88,10 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
 
         if((flags&4294967292L)!=0 && flags!=2){
             if(ranked_candidates_covscore.length>1) {
-                comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, csiFingerIdScoring.getPerfomances(), covarianceScoring);
+                //todo @Martin Attention Attention!
+//                comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, csiFingerIdScoring.getPerfomances(), covarianceScoring);
             }else {
-                comb = new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, csiFingerIdScoring.getPerfomances(), covarianceScoring);
+//                comb = new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, csiFingerIdScoring.getPerfomances(), covarianceScoring);
                 distanceType="noDistance";
             }
         }
