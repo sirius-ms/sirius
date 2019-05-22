@@ -7,8 +7,5 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 public interface ConfidenceScorer {
-
-    double computeConfidence(Ms2Experiment exp, Scored<FingerprintCandidate>[] allCandidates, Scored<FingerprintCandidate>[] filteredCandidates, ProbabilityFingerprint query, IdentificationResult idResult);
-
-
+    double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult, Scored<FingerprintCandidate>[] allCandidates, Scored<FingerprintCandidate>[] filteredCandidates, ProbabilityFingerprint query, final long filterFlag);
 }
