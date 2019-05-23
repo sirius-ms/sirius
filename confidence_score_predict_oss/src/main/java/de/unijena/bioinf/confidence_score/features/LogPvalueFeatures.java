@@ -17,39 +17,37 @@ import de.unijena.bioinf.sirius.IdentificationResult;
  */
 public class LogPvalueFeatures implements FeatureCreator {
     Scored<FingerprintCandidate>[] rankedCandidates;
-    long flags=-1;
+    Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
 
     }
 
-    public LogPvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates){
+    public LogPvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
         this.rankedCandidates=rankedCandidates;
+        this.rankedCandidates_filtered=rankedCandidates_filtered;
     }
 
-    public LogPvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates,long flags){
-        this.rankedCandidates=rankedCandidates;
-        this.flags=flags;
-    }
+
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
         double[] return_value =  new double[1];
 
 
         PvalueScoreUtils utils= new PvalueScoreUtils();
 
-        Utils utils2 = new Utils();
-
-        if(this.flags==-1)this.flags=flags;
-
-        double pvalue= utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0],flags);
 
 
 
 
-        double pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0],flags);
+        double pvalue= utils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[0]);
+
+
+
+
+        double pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[0]);
 
 
 

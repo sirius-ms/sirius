@@ -22,19 +22,17 @@ public class ScoreFeatures implements FeatureCreator {
     private PredictionPerformance[] statistics;
     private Utils utils;
     Scored<FingerprintCandidate>[] rankedCandidates;
-    long flags;
+    Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
-    public ScoreFeatures(FingerblastScoring scoring, Scored<FingerprintCandidate>[] rankedCandidates){
+
+    public ScoreFeatures(FingerblastScoring scoring, Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
         this.rankedCandidates=rankedCandidates;
         names = new String[]{scoring.toString()};
         this.scoring=scoring;
+        this.rankedCandidates_filtered=rankedCandidates_filtered;
     }
-    public ScoreFeatures(FingerblastScoring scoring, Scored<FingerprintCandidate>[] rankedCandidates, long flags){
-        this.rankedCandidates=rankedCandidates;
-        names = new String[]{scoring.toString()};
-        this.scoring=scoring;
-        this.flags=flags;
-    }
+
+
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
@@ -42,16 +40,12 @@ public class ScoreFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult,long flags) {
-
-        utils= new Utils();
-        if(this.flags==-1)this.flags=flags;
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
 
-        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,this.flags);
 
 
-        final FingerprintCandidate topHit = rankedCandidates[0].getCandidate();
+        final FingerprintCandidate topHit = rankedCandidates_filtered[0].getCandidate();
         final double[] scores = new double[1];
 
         scoring.prepare(query);

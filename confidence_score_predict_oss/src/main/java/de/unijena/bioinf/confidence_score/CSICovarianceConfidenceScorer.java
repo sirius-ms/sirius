@@ -76,18 +76,23 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
 
         final CombinedFeatureCreatorALL pubchemConfidence = new CombinedFeatureCreatorALL(ranked_candidates_csiscore, ranked_candidates_covscore, csiFingerIdScoring.getPerfomances(), covarianceScoring);
         pubchemConfidence.prepare(csiFingerIdScoring.getPerfomances());
-        final double[] pubchemConfidenceFeatures = pubchemConfidence.computeFeatures(query, idResult, filterFlag);
+        final double[] pubchemConfidenceFeatures = pubchemConfidence.computeFeatures(query, idResult);
         final boolean sameTopHit = ranked_candidates_covscore[0] == ranked_candidates_covscore_filtered[0];
-        final double pubchemConf = calculateConfidence();
+        final double pubchemConf = calculateConfidence(pubchemConfidence,pubchemConfidenceFeatures,"All","",ce);
 
         final CombinedFeatureCreator comb;
         final String distanceType;
             if(ranked_candidates_covscore.length>1) {
-                comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, csiFingerIdScoring.getPerfomances(), covarianceScoring);
+                comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore,ranked_candidates_csiscore_filtered,ranked_candidates_covscore_filtered, csiFingerIdScoring.getPerfomances(), covarianceScoring,pubchemConf,sameTopHit);
+                distanceType="dist";
+
             }else {
-                comb = new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, csiFingerIdScoring.getPerfomances(), covarianceScoring);
-                distanceType="noDistance";
+                comb = new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, ranked_candidates_csiscore_filtered,ranked_candidates_covscore_filtered,csiFingerIdScoring.getPerfomances(), covarianceScoring,pubchemConf,sameTopHit);
+                distanceType="NoDist";
             }
+            comb.prepare(csiFingerIdScoring.getPerfomances());
+            final double[] bioConfidenceFeatures = comb.computeFeatures(query, idResult);
+            return calculateConfidence(comb,bioConfidenceFeatures,"Bio",distanceType,ce);
 
 
 
