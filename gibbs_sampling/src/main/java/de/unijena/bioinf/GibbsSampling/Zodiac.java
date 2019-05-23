@@ -7,6 +7,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.ZodiacScore;
 import de.unijena.bioinf.GibbsSampling.model.*;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.MasterJJob;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -61,6 +63,36 @@ public class Zodiac {
         this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, clusterCompounds, runTwoStep, null);
     }
 
+    public JJob<ZodiacResultsWithClusters> makeComputeJob(final int iterationSteps, final int burnIn, final int repetitions) {
+        return new BasicMasterJJob<ZodiacResultsWithClusters>(JJob.JobType.CPU) {
+            @Override
+            protected ZodiacResultsWithClusters compute() throws Exception {
+                init();
+                if (ids.length<=1) {
+                    Log.error("Cannot run ZODIAC. SIRIUS input consists of " + ids.length + " instances. More are needed for running a network analysis.");
+                    return null;
+                }
+                GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, FragmentsCandidate.class);
+
+                submitSubJob(graphBuilder);
+
+                Graph<FragmentsCandidate> graph = graphBuilder.takeResult();
+                Graph.validateAndThrowError(graph, Log);
+
+
+                GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel<>(graph, repetitions);
+                gibbsParallel.setIterationSteps(iterationSteps, burnIn);
+
+                submitSubJob(gibbsParallel);
+                CompoundResult<FragmentsCandidate>[] results = gibbsParallel.takeResult();
+
+                addZodiacScoreToIdentificationResult(results, experimentResults);
+
+                return includedAllClusterInstances(new ZodiacResult<>(ids, graph, results));
+            }
+        };
+    }
+
     public ZodiacResultsWithClusters compute(int iterationSteps, int burnIn, int repetitions) throws ExecutionException {
         init();
         if (ids.length==0){
@@ -72,16 +104,18 @@ public class Zodiac {
         }
 
         ZodiacResult<FragmentsCandidate> zodiacResult;
-        if (runTwoStep){
+        //if (runTwoStep){
+            /*
             TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, repetitions, FragmentsCandidate.class);
             twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnIn);
             if (masterJJob!=null) masterJJob.submitSubJob(twoPhaseGibbsSampling);
             else SiriusJobs.getGlobalJobManager().submitJob(twoPhaseGibbsSampling);
 
             zodiacResult = twoPhaseGibbsSampling.awaitResult();
-        } else {
+            */
+        //} else {
             zodiacResult = runOneStepZodiacOnly(iterationSteps, burnIn, repetitions);
-        }
+        //}
 
         CompoundResult<FragmentsCandidate>[] result = zodiacResult.getResults();
 
@@ -287,6 +321,7 @@ public class Zodiac {
         for (ExperimentResult result : experimentResults) {
             List<FTree> trees = new ArrayList<>();
             for (IdentificationResult identificationResult : result.getResults()) {
+//                trees.add(identificationResult.getRawTree()); //changed do we want to include H2O and similar in-source losses? What about adducts?
                 trees.add(identificationResult.getResolvedTree()); //todo use rawTree or resolvedTree?!
             }
 

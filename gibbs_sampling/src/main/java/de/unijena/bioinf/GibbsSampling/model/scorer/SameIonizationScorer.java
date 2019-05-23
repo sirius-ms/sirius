@@ -53,7 +53,7 @@ public class SameIonizationScorer implements EdgeScorer<FragmentsCandidate> {
     }
 
     @Override
-    public double[] normalization(FragmentsCandidate[][] var1) {
+    public double[] normalization(FragmentsCandidate[][] var1, double minimum_number_matched_peaks_losses) {
         //todo not used?
         double[] norm = new double[var1.length];
         Arrays.fill(norm, 1d);
