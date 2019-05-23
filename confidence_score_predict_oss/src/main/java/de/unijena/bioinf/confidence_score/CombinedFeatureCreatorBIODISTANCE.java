@@ -29,6 +29,8 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
     private int featureCount;
     private double[] computed_features;
 
+    //all confidence means the pubchem confidence score for this input. Has to be always computet
+    // same is the tophit in pubchem the same as in the reduced db.
     public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, CovarianceScoring covscore, double all_confidence, boolean same){
         long all=0;
         long bio=4294967292L;
