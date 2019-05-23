@@ -17,13 +17,15 @@
  */
 package de.unijena.bioinf.sirius;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
-import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -237,6 +239,36 @@ public class ProcessedInput implements Cloneable, Annotated<DataAnnotation> {
         for (int k=0; k < mergedPeaks.size(); ++k) {
             mergedPeaks.get(k).setIndex(k);
         }
+    }
+
+    /**
+     * Try to assign each node in the tree to exactly one peak in the spectrum. Update peakId information in
+     * tree nodes to match the merged peaks
+     */
+    public void mapTreeToInput(FTree tree) {
+        final Deviation dev = new Deviation(5);
+        final ArrayList<ProcessedPeak> copy = new ArrayList<>(mergedPeaks);
+        copy.sort(Comparator.comparingDouble(Peak::getMass));
+        final Spectrum<ProcessedPeak> wrapper = Spectrums.getAlreadyOrderedSpectrum(Spectrums.wrap(copy));
+        final FragmentAnnotation<AnnotatedPeak> peakAno = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
+        for (Fragment f : tree) {
+            AnnotatedPeak peak = peakAno.get(f);
+            int i = Spectrums.mostIntensivePeakWithin(wrapper, peak.getMass(), dev);
+            if (i < 0) {
+                if (!peak.isMeasured()) {
+                    continue;
+                } else {
+                    // strange... repeat with higher mass dev
+                    i = Spectrums.mostIntensivePeakWithin(wrapper, peak.getMass(), dev.multiply(2));
+                    if (i < 0) {
+                        LoggerFactory.getLogger(ProcessedInput.class).error("Cannot map fragment " + f.getFormula() + " with mass " + peak.getMass() + " to spectrum " + this);
+                        continue;
+                    }
+                }
+            }
+            f.setPeakId(i);
+        }
+
     }
 
 
