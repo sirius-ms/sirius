@@ -21,7 +21,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
     public static FragmentsCandidate newInstance(FTree tree, Ms2Experiment experiment){
 
         FragmentsAndLosses fragmentsAndLosses = getFragments(tree, experiment);
-        double score = (tree.getAnnotationOrThrow(TreeScoring.class)).getOverallScore();
+        double score = tree.getTreeWeight();
         MolecularFormula formula = tree.getRoot().getFormula();
         PrecursorIonType ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
 
@@ -73,7 +73,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
         List<FragmentsCandidate> candidates = new ArrayList<>();
         for (FTree tree : trees) {
             FragmentsAndLosses fragmentsAndLosses = getFragments(tree, peakToIdx, experiment);
-            double score = (tree.getAnnotationOrThrow(TreeScoring.class)).getOverallScore();
+            double score = tree.getTreeWeight();
             MolecularFormula formula = tree.getRoot().getFormula();
             PrecursorIonType ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
 

@@ -1,6 +1,7 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntIntMap;
@@ -54,7 +55,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
         firstRoundCompoundsIdx = new TIntArrayList();
         for (int i = 0; i < possibleFormulas.length; i++) {
             C[] poss = possibleFormulas[i];
-            if (poss.length>0 && CompoundQuality.isNotBadQuality(poss[0].getExperiment())){
+            if (poss.length>0 && poss[0].getExperiment().getAnnotationOrDefault(CompoundQuality.class).is(CompoundQuality.CompoundQualityFlag.Good)){
                 firstRoundCompoundsIdx.add(i);
             }
             if (cClass==null && poss.length>0) cClass = (Class<C>)poss[0].getClass();
