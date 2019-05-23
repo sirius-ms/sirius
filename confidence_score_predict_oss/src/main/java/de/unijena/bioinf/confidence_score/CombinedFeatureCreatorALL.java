@@ -25,7 +25,7 @@ public class CombinedFeatureCreatorALL extends CombinedFeatureCreator{
     private int featureCount;
     private double[] computed_features;
 
-
+    //Scorer for pubchem list (unfiltered)
     public CombinedFeatureCreatorALL(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, CovarianceScoring covscore){
 
         long all =0;
@@ -45,20 +45,13 @@ public class CombinedFeatureCreatorALL extends CombinedFeatureCreator{
                 new ScoreFeatures(covscore.getScoring(),scored_array_covscore,all)));
 
 
-        int count=0;
+        featureCount=0;
         featureCreators = new FeatureCreator[creators.size()];
 
         for(int i=0;i< creators.size();i++){
-
             featureCreators[i]=creators.get(i);
-            count+=creators.get(i).getFeatureSize();
+            featureCount+=creators.get(i).getFeatureSize();
         }
-
-
-        featureCount=count;
-
-
-
     }
 
 
