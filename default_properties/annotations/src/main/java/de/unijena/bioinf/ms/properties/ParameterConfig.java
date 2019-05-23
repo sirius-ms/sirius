@@ -195,7 +195,7 @@ public final class ParameterConfig {
             key = ks.split("[.]")[0];
             final String value = classesConfig.getString(key);
             if (value == null)
-                throw new NullPointerException("No Class value found for given key.");
+                throw new NullPointerException("No Class value found for given key '" + String.valueOf(key) + "'");
             Class<?> clazz = Class.forName(value);
             return clazz;
         } catch (Throwable e) {
