@@ -42,7 +42,7 @@ public class ScoreDiffScorerFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
         double[] distance = new double[1];
 
         scoring.prepare(query);

@@ -34,24 +34,20 @@ public class TanimotoDistanceFeatures implements FeatureCreator {
     private PredictionPerformance[] statistics;
     private Utils utils;
     Scored<FingerprintCandidate>[] rankedCandidates;
+    Scored<FingerprintCandidate>[] rankedCandidates_filtered;
     long flags=-1;
 
 
-    public TanimotoDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,int... distances){
+    public TanimotoDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered,int... distances){
 
         this.distances=distances;
         feature_size=distances.length;
         this.rankedCandidates=rankedCandidates;
+        this.rankedCandidates_filtered=rankedCandidates_filtered;
 
     }
 
-    public TanimotoDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,long flags,int... distances){
 
-        this.distances=distances;
-        feature_size=distances.length;
-        this.rankedCandidates=rankedCandidates;
-        this.flags=flags;
-    }
 
 
 
@@ -61,13 +57,10 @@ public class TanimotoDistanceFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
 
-        utils= new Utils();
-        if(this.flags==-1)this.flags=flags;
 
-        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,this.flags);
 
 
 
@@ -75,13 +68,13 @@ public class TanimotoDistanceFeatures implements FeatureCreator {
 
 
 
-        final double topHit = rankedCandidates[0].getScore();
+        final double topHit = rankedCandidates_filtered[0].getScore();
         int pos = 0;
 
 
         for (int j = 0; j < distances.length; j++) {
 
-            scores[pos++] = rankedCandidates[0].getCandidate().getFingerprint().tanimoto(rankedCandidates[distances[j]].getCandidate().getFingerprint());
+            scores[pos++] = rankedCandidates_filtered[0].getCandidate().getFingerprint().tanimoto(rankedCandidates_filtered[distances[j]].getCandidate().getFingerprint());
         }
 
         assert pos == scores.length;

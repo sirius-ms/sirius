@@ -18,7 +18,7 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
 
     Scored<FingerprintCandidate>[] rankedCands;
-
+    Scored<FingerprintCandidate>[] rankedCands_filtered;
     Scored<FingerprintCandidate> best_hit_scorer;
 
     FingerblastScoring scoring;
@@ -28,23 +28,17 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
     /**
      * rescores the best hit of a scorer with a different scorer, than calculates pvalue and compares it to the best hit of the 2nd scorer
      */
-    public PvalueScoreDiffScorerFeatures(Scored<FingerprintCandidate>[] rankedCands, Scored<FingerprintCandidate> hit, FingerblastScoring scoring){
+    public PvalueScoreDiffScorerFeatures(Scored<FingerprintCandidate>[] rankedCands, Scored<FingerprintCandidate>[] rankedCands_filtered,Scored<FingerprintCandidate> hit, FingerblastScoring scoring){
         this.rankedCands=rankedCands;
         this.best_hit_scorer=hit;
+        this.rankedCands_filtered=rankedCands_filtered;
 
         this.scoring=scoring;
 
 
     }
 
-    public PvalueScoreDiffScorerFeatures(Scored<FingerprintCandidate>[] rankedCands, Scored<FingerprintCandidate> hit, FingerblastScoring scoring, long flags){
-        this.rankedCands=rankedCands;
-        this.best_hit_scorer=hit;
-        this.flags=flags;
-        this.scoring=scoring;
 
-
-    }
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
@@ -52,7 +46,7 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
         double[] pvalueScore = new double[2];
 
 
@@ -65,7 +59,7 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
 
         PvalueScoreUtils utils = new PvalueScoreUtils();
 
-        pvalueScore[0] = utils.computePvalueScore(rankedCands,current,flags);
+        pvalueScore[0] = utils.computePvalueScore(rankedCands,rankedCands_filtered,current);
 
         if (pvalueScore[0]==0){
             pvalueScore[1]=-20;

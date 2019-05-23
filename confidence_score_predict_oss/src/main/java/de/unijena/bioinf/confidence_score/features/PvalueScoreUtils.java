@@ -33,7 +33,7 @@ public class PvalueScoreUtils {
     }
 
 
-    public double computePvalueScore(Scored<FingerprintCandidate>[] ranked_candidates, Scored<FingerprintCandidate> current_candidate, long flag){
+    public double computePvalueScore(Scored<FingerprintCandidate>[] ranked_candidates, Scored<FingerprintCandidate>[] ranked_candidates_filtered, Scored<FingerprintCandidate> current_candidate){
 
 
        // double pvalue=compute_pvalue_with_KDE(ranked_candidates,current_candidate);
@@ -98,7 +98,7 @@ public class PvalueScoreUtils {
         Utils utils = new Utils();
 
 
-        double score = p_value_lognormal * utils.condense_candidates_by_flag(ranked_candidates,flag).length;
+        double score = p_value_lognormal * ranked_candidates_filtered.length;
 
 
         //sort list back to original state
@@ -238,10 +238,10 @@ return null;
 
     }
 
-    public double compute_pvalue_with_KDE(Scored<FingerprintCandidate>[] candidates, Scored<FingerprintCandidate> current, long flag){
+    public double compute_pvalue_with_KDE(Scored<FingerprintCandidate>[] candidates,Scored<FingerprintCandidate>[] candidates_filtered, Scored<FingerprintCandidate> current){
 
         Utils utils = new Utils();
-        double biosize= utils.condense_candidates_by_flag(candidates,flag).length;
+        double biosize= candidates_filtered.length;
         if(biosize==1)System.out.println("why 1: "+candidates.length);
         double pvalue=0;
 

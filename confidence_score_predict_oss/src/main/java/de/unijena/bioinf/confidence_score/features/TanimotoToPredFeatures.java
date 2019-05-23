@@ -33,26 +33,20 @@ public class TanimotoToPredFeatures implements FeatureCreator {
     private PredictionPerformance[] statistics;
     private Utils utils;
     Scored<FingerprintCandidate>[] rankedCandidates;
-    long flags=-1;
+    Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
 
-    public TanimotoToPredFeatures(Scored<FingerprintCandidate>[] rankedCandidates){
 
-
-        feature_size=1;
-        this.rankedCandidates=rankedCandidates;
-
-    }
-
-
-    public TanimotoToPredFeatures(Scored<FingerprintCandidate>[] rankedCandidates, long flags){
+    public TanimotoToPredFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
 
 
         feature_size=1;
         this.rankedCandidates=rankedCandidates;
-        this.flags=flags;
+        this.rankedCandidates_filtered=rankedCandidates_filtered;
 
     }
+
+
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {this.statistics=statistics;
@@ -60,14 +54,9 @@ public class TanimotoToPredFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
 
-        utils= new Utils();
-
-        if(this.flags==-1)this.flags=flags;
-
-        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,this.flags);
 
 
 
@@ -75,11 +64,11 @@ public class TanimotoToPredFeatures implements FeatureCreator {
 
 
 
-        final double topHit = rankedCandidates[0].getScore();
+        final double topHit = rankedCandidates_filtered[0].getScore();
 
 
 
-            scores[0] = rankedCandidates[0].getCandidate().getFingerprint().tanimoto(query.asDeterministic());
+            scores[0] = rankedCandidates_filtered[0].getCandidate().getFingerprint().tanimoto(query.asDeterministic());
 
 
         return scores;

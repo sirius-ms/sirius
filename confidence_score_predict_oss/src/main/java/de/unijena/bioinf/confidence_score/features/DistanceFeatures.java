@@ -34,23 +34,16 @@ public class DistanceFeatures implements FeatureCreator {
     private PredictionPerformance[] statistics;
     private Utils utils;
     Scored<FingerprintCandidate>[] rankedCandidates;
+    Scored<FingerprintCandidate>[] rankedCandidates_filtered;
     long flags=-1;
 
 
-    public DistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,int... distances){
+    public DistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered,int... distances){
 
         this.distances=distances;
         feature_size=distances.length;
         this.rankedCandidates=rankedCandidates;
-
-    }
-
-    public DistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,long flags,int... distances){
-
-        this.distances=distances;
-        feature_size=distances.length;
-        this.rankedCandidates=rankedCandidates;
-        this.flags=flags;
+        this.rankedCandidates_filtered=rankedCandidates_filtered;
 
     }
 
@@ -61,32 +54,23 @@ public class DistanceFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
-
-
-        utils= new Utils();
-
-        if(this.flags==-1)this.flags=flags;
-
-
-        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,this.flags);
-
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
 
         double[] scores =  new double[feature_size];
 
 
 
-        final double topHit = rankedCandidates[0].getScore();
+        final double topHit = rankedCandidates_filtered[0].getScore();
         int pos = 0;
 
 
             for (int j = 0; j < distances.length; j++) {
-                while (rankedCandidates[distances[j]].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates[0].getCandidate().getFingerprint().toOneZeroString())){
+                while (rankedCandidates_filtered[distances[j]].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
                     j++;
                 }
 
-                scores[pos++] = topHit - rankedCandidates[distances[j]].getScore();
+                scores[pos++] = topHit - rankedCandidates_filtered[distances[j]].getScore();
             }
 
         assert pos == scores.length;

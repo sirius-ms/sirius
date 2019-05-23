@@ -35,24 +35,18 @@ public class LogPvalueDistanceFeatures implements FeatureCreator {
     private Utils utils;
     long flags=-1;
     Scored<FingerprintCandidate>[] rankedCandidates;
+    Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
 
-    public LogPvalueDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,int... distances){
-
-        this.distances=distances;
-        feature_size=distances.length;
-        this.rankedCandidates=rankedCandidates;
-
-    }
-
-    public LogPvalueDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,long flags,int... distances){
+    public LogPvalueDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered,int... distances){
 
         this.distances=distances;
         feature_size=distances.length;
         this.rankedCandidates=rankedCandidates;
-        this.flags=flags;
+        this.rankedCandidates_filtered=rankedCandidates_filtered;
 
     }
+
 
 
     @Override
@@ -61,17 +55,14 @@ public class LogPvalueDistanceFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
 
         utils= new Utils();
-        if(this.flags==-1)this.flags=flags;
 
         PvalueScoreUtils putils = new PvalueScoreUtils();
 
-        Scored<FingerprintCandidate>[] rankedCandidatesOrig =rankedCandidates.clone();
 
-        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,this.flags);
 
 
 
@@ -83,11 +74,11 @@ public class LogPvalueDistanceFeatures implements FeatureCreator {
 
         for (int j = 0; j < distances.length; j++) {
 
-            if(putils.computePvalueScore(rankedCandidatesOrig, rankedCandidates[0],flags) - putils.computePvalueScore(rankedCandidatesOrig,rankedCandidates[distances[j]],flags)==0){
+            if(putils.computePvalueScore(rankedCandidates, rankedCandidates_filtered,rankedCandidates_filtered[0]) - putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[distances[j]])==0){
                 scores[pos++]=-20;
             }else{
 
-            scores[pos++] = Math.log(Math.abs(putils.computePvalueScore(rankedCandidatesOrig, rankedCandidates[0],flags) - putils.computePvalueScore(rankedCandidatesOrig,rankedCandidates[distances[j]],flags)));
+            scores[pos++] = Math.log(Math.abs(putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered, rankedCandidates_filtered[0]) - putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates[distances[j]])));
         }
         }
 
