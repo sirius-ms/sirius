@@ -22,7 +22,7 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
     Scored<FingerprintCandidate> best_hit_scorer;
 
     FingerblastScoring scoring;
-    long flags=-1;
+
 
 
     /**
@@ -50,7 +50,7 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
         double[] pvalueScore = new double[2];
 
 
-        if(this.flags==-1)this.flags=flags;
+
         scoring.prepare(query);
 
         double score = scoring.score(query,best_hit_scorer.getCandidate().getFingerprint());
