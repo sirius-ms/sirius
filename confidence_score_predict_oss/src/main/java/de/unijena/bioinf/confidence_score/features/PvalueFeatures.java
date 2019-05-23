@@ -17,36 +17,34 @@ import de.unijena.bioinf.sirius.IdentificationResult;
  */
 public class PvalueFeatures implements FeatureCreator {
     Scored<FingerprintCandidate>[] rankedCandidates;
-    long flags=-1;
+    Scored<FingerprintCandidate>[] rankedCandidates_filtered;
+
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
 
     }
 
-    public PvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates){
+    public PvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
         this.rankedCandidates=rankedCandidates;
+        this.rankedCandidates_filtered=rankedCandidates_filtered;
     }
 
-    public PvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates, long flags){
-        this.rankedCandidates=rankedCandidates;
-        this.flags=flags;
-    }
 
 
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
         double[] return_value =  new double[1];
 
 
-        if(this.flags==-1)this.flags=flags;
+
         PvalueScoreUtils utils= new PvalueScoreUtils();
 
-        Utils utils2 = new Utils();
 
 
-        return_value[0]  = utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0],flags);
+
+        return_value[0]  = utils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[0]);
 
         return return_value;
     }
