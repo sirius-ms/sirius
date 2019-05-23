@@ -24,7 +24,7 @@ public class FptLengthFeature implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
         double[] length =  new double[1];
 
         length[0]= query.asDeterministic().cardinality();

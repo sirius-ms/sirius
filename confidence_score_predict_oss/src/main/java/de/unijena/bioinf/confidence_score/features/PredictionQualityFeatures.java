@@ -24,7 +24,7 @@ public class PredictionQualityFeatures implements FeatureCreator{
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
         double[] qualityReturn = new double[1];
 
