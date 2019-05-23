@@ -7,6 +7,9 @@ dependencies {
     //compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
     compile group: "info.picocli", name: "picocli", version: "$picocli_version"
     compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
+
+    compile group: "de.unijena.bioinf.ms", name: "tree_motif_search", version: "$siriusVersion"
+
     compile group: "de.unijena.bioinf.ms", name: "sirius_project_space", version: "$siriusVersion"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.1'
