@@ -237,10 +237,6 @@ public class Sirius {
         experiment.setAnnotation(FormulaSettings.class, settings);
     }
 
-    public static void setIsolationWindow(@NotNull MutableMs2Experiment experiment, IsolationWindow isolationWindow) {
-        experiment.setAnnotation(IsolationWindow.class, isolationWindow);
-    }
-
     public static void setTimeout(@NotNull MutableMs2Experiment experiment, int timeoutPerInstanceInSeconds,
                                   int timeoutPerDecompositionInSeconds) {
         experiment.setAnnotation(Timeout.class, Timeout.newTimeout(timeoutPerInstanceInSeconds, timeoutPerDecompositionInSeconds));
