@@ -20,7 +20,7 @@ public class TreeFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult,long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
 
         double[] scores= new double[4];
         TreeStatistics current_tree_scores =  idresult.getRawTree().getAnnotationOrThrow(TreeStatistics.class);
