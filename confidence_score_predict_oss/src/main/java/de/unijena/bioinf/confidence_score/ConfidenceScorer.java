@@ -7,13 +7,15 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 public interface ConfidenceScorer {
-    String NO_DISATANCE_ID = "noDistance";
-    String DISATANCE_ID = "distance";
+    String NO_DISATANCE_ID = "NoDist";
+    String DISATANCE_ID = "dist";
 
-//    String DB_ALL_ID = "";
-//    String DB_BIO_ID = "";
+    String DB_ALL_ID = "All";
+    String DB_BIO_ID = "Bio";
 
     String CE_NOTHING = "nothing";
     String CE_RAMP = "ramp";
-    double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult, Scored<FingerprintCandidate>[] allCandidates, Scored<FingerprintCandidate>[] filteredCandidates, ProbabilityFingerprint query, final long filterFlag);
+
+
+    double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult, Scored<FingerprintCandidate>[] ranked_candidates_covscore, Scored<FingerprintCandidate>[] ranked_candidates_csiscore, Scored<FingerprintCandidate>[] ranked_candidates_covscore_filtered, Scored<FingerprintCandidate>[] ranked_candidates_csiscore_filtered, ProbabilityFingerprint query);
 }

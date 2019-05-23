@@ -14,7 +14,6 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -28,12 +27,12 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
 
 
     public CSICovarianceConfidenceScorer(@NotNull Map<String, TrainedSVM> trainedsvms, @NotNull CovarianceScoring covarianceScoring, @NotNull CSIFingerIdScoring csiFingerIDScoring) {
-        this.trainedSVMs=trainedsvms;
+        this.trainedSVMs = trainedsvms;
         this.covarianceScoring = covarianceScoring;
         this.csiFingerIdScoring = csiFingerIDScoring;
     }
 
-    @Override
+    /*@Override
     public double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult, Scored<FingerprintCandidate>[] allCandidates, Scored<FingerprintCandidate>[] filteredCandidates, ProbabilityFingerprint query, final long filterFlag) {
         //todo fleisch -> scoring method as input and rescore only the missing one
         //final long filterFlag
@@ -50,8 +49,9 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         Arrays.sort(ranked_candidates_csiscore);
         Arrays.sort(ranked_candidates_covscore);
         return 0;
-    }
+    }*/
 
+    @Override
     public double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult, Scored<FingerprintCandidate>[] ranked_candidates_covscore, Scored<FingerprintCandidate>[] ranked_candidates_csiscore, Scored<FingerprintCandidate>[] ranked_candidates_covscore_filtered, Scored<FingerprintCandidate>[] ranked_candidates_csiscore_filtered, ProbabilityFingerprint query) {
         if (ranked_candidates_covscore.length != ranked_candidates_csiscore.length)
             throw new IllegalArgumentException("Covariance scored candidate list has different length from fingerid scored candidates list!");
@@ -64,48 +64,45 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
 
         //find collision energy in spectrum
         String ce = CE_NOTHING;
-        for(Ms2Spectrum spec : exp.getMs2Spectra()){
+        for (Ms2Spectrum spec : exp.getMs2Spectra()) {
             if (ce.equals(CE_NOTHING)) {
                 ce = spec.getCollisionEnergy().toString();
-            }else if (!ce.equals(spec.getCollisionEnergy().toString()) || spec.getCollisionEnergy().getMaxEnergy()!=spec.getCollisionEnergy().getMinEnergy()){
+            } else if (!ce.equals(spec.getCollisionEnergy().toString()) || spec.getCollisionEnergy().getMaxEnergy() != spec.getCollisionEnergy().getMinEnergy()) {
                 ce = CE_RAMP;
                 break;
             }
         }
 
-
+        //calculate score for pubChem lists
         final CombinedFeatureCreatorALL pubchemConfidence = new CombinedFeatureCreatorALL(ranked_candidates_csiscore, ranked_candidates_covscore, csiFingerIdScoring.getPerfomances(), covarianceScoring);
         pubchemConfidence.prepare(csiFingerIdScoring.getPerfomances());
         final double[] pubchemConfidenceFeatures = pubchemConfidence.computeFeatures(query, idResult);
         final boolean sameTopHit = ranked_candidates_covscore[0] == ranked_candidates_covscore_filtered[0];
-        final double pubchemConf = calculateConfidence(pubchemConfidence,pubchemConfidenceFeatures,"All","",ce);
+        final double pubchemConf = calculateConfidence(pubchemConfidenceFeatures, DB_ALL_ID, "", ce);
 
+        //calculate score for filtered lists
         final CombinedFeatureCreator comb;
         final String distanceType;
-            if(ranked_candidates_covscore.length>1) {
-                comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore,ranked_candidates_csiscore_filtered,ranked_candidates_covscore_filtered, csiFingerIdScoring.getPerfomances(), covarianceScoring,pubchemConf,sameTopHit);
-                distanceType="dist";
+        if (ranked_candidates_covscore_filtered.length > 1) {
+            comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, ranked_candidates_csiscore_filtered, ranked_candidates_covscore_filtered, csiFingerIdScoring.getPerfomances(), covarianceScoring, pubchemConf, sameTopHit);
+            distanceType = NO_DISATANCE_ID;
 
-            }else {
-                comb = new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, ranked_candidates_csiscore_filtered,ranked_candidates_covscore_filtered,csiFingerIdScoring.getPerfomances(), covarianceScoring,pubchemConf,sameTopHit);
-                distanceType="NoDist";
-            }
-            comb.prepare(csiFingerIdScoring.getPerfomances());
-            final double[] bioConfidenceFeatures = comb.computeFeatures(query, idResult);
-            return calculateConfidence(comb,bioConfidenceFeatures,"Bio",distanceType,ce);
+        } else {
+            comb = new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, ranked_candidates_csiscore_filtered, ranked_candidates_covscore_filtered, csiFingerIdScoring.getPerfomances(), covarianceScoring, pubchemConf, sameTopHit);
+            distanceType = DISATANCE_ID;
+        }
 
-
-
+        comb.prepare(csiFingerIdScoring.getPerfomances());
+        final double[] bioConfidenceFeatures = comb.computeFeatures(query, idResult);
+        return calculateConfidence(bioConfidenceFeatures, DB_BIO_ID, distanceType, ce);
     }
 
-    private double calculateConfidence(CombinedFeatureCreator comb, double[] feature, String dbType, String distanceType, String collsionEnergy) {
-        TrainedSVM svm = trainedSVMs.get(dbType + "" + distanceType + "" + collsionEnergy); //todo there should be global variable or enums for these identifiers.
-        double[][] featureMatrix = new double[1][feature.length];
+    private double calculateConfidence(@NotNull double[] feature, @NotNull String dbType, @NotNull String distanceType, @NotNull String collisionEnergy) {
+        final TrainedSVM svm = trainedSVMs.get(dbType + distanceType + collisionEnergy);
+        final double[][] featureMatrix = new double[1][feature.length];
         featureMatrix[0] = feature;
-        SVMPredict predict = new SVMPredict();
         SVMUtils.standardize_features(featureMatrix, svm.scales);
         SVMUtils.normalize_features(featureMatrix, svm.scales);
-        return predict.predict_confidence(featureMatrix, svm)[0];
-
+        return new SVMPredict().predict_confidence(featureMatrix, svm)[0];
     }
 }
