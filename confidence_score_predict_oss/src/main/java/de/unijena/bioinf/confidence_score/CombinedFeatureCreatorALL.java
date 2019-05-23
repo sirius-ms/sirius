@@ -30,19 +30,19 @@ public class CombinedFeatureCreatorALL extends CombinedFeatureCreator{
 
         long all =0;
 
-        ArrayList<FeatureCreator> creators = new ArrayList<>(Arrays.asList(new PlattFeatures(), new LogPvalueDistanceFeatures(scored_array,all,1),
-                new LogDistanceFeatures(scored_array,all,1),
-                new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,all),
-                new LogPvalueFeatures(scored_array,all),
-                new LogPvalueFeatures(scored_array_covscore,all),
-                new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array[0],covscore.getScoring(),all),
+        ArrayList<FeatureCreator> creators = new ArrayList<>(Arrays.asList(new PlattFeatures(), new LogPvalueDistanceFeatures(scored_array,scored_array,1),
+                new LogDistanceFeatures(scored_array,scored_array,1),
+                new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array),
+                new LogPvalueFeatures(scored_array,scored_array),
+                new LogPvalueFeatures(scored_array_covscore,scored_array_covscore),
+                new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore,scored_array[0],covscore.getScoring()),
                 new FptLengthFeature(),
                 new TreeFeatures(), new PredictionQualityFeatures(),
-                new TanimotoDistanceFeatures(scored_array,all,1), new TanimotoToPredFeatures(scored_array,all),
+                new TanimotoDistanceFeatures(scored_array,scored_array,1), new TanimotoToPredFeatures(scored_array,scored_array),
                 new FptLengthDiffFeatures(scored_array),
                 new ScoreDiffScorerFeatures(scored_array[0],scored_array_covscore[0],covscore.getScoring()),
-                new ScoreFeatures(covscore.getScoring(),scored_array,all),
-                new ScoreFeatures(covscore.getScoring(),scored_array_covscore,all)));
+                new ScoreFeatures(covscore.getScoring(),scored_array,scored_array),
+                new ScoreFeatures(covscore.getScoring(),scored_array_covscore,scored_array_covscore)));
 
 
         featureCount=0;
@@ -64,11 +64,11 @@ public class CombinedFeatureCreatorALL extends CombinedFeatureCreator{
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
         computed_features= new double[getFeatureSize()];
         int pos = 0;
         for (FeatureCreator featureCreator : featureCreators) {
-            final double[] currentScores = featureCreator.computeFeatures(query,idresult,flags);
+            final double[] currentScores = featureCreator.computeFeatures(query,idresult);
             for (int i = 0; i < currentScores.length; i++) computed_features[pos++] = currentScores[i];
         }
         return computed_features;
