@@ -49,6 +49,7 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         }
         Arrays.sort(ranked_candidates_csiscore);
         Arrays.sort(ranked_candidates_covscore);
+        return 0;
     }
 
     public double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult, Scored<FingerprintCandidate>[] ranked_candidates_covscore, Scored<FingerprintCandidate>[] ranked_candidates_csiscore, Scored<FingerprintCandidate>[] ranked_candidates_covscore_filtered, Scored<FingerprintCandidate>[] ranked_candidates_csiscore_filtered, ProbabilityFingerprint query) {
@@ -77,6 +78,7 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         pubchemConfidence.prepare(csiFingerIdScoring.getPerfomances());
         final double[] pubchemConfidenceFeatures = pubchemConfidence.computeFeatures(query, idResult, filterFlag);
         final boolean sameTopHit = ranked_candidates_covscore[0] == ranked_candidates_covscore_filtered[0];
+        final double pubchemConf = calculateConfidence();
 
         final CombinedFeatureCreator comb;
         final String distanceType;
