@@ -35,24 +35,19 @@ public class PvalueDistanceFeatures implements FeatureCreator {
     private Utils utils;
     long flags=-1;
     Scored<FingerprintCandidate>[] rankedCandidates;
+    Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
 
-    public PvalueDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,int... distances){
-
-        this.distances=distances;
-        feature_size=distances.length;
-        this.rankedCandidates=rankedCandidates;
-
-    }
-
-    public PvalueDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,long flags,int... distances){
+    public PvalueDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered,int... distances){
 
         this.distances=distances;
         feature_size=distances.length;
         this.rankedCandidates=rankedCandidates;
-        this.flags=flags;
+        this.rankedCandidates=rankedCandidates_filtered;
 
     }
+
+
 
 
     @Override
@@ -61,17 +56,11 @@ public class PvalueDistanceFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
 
-        utils= new Utils();
+
         PvalueScoreUtils putils = new PvalueScoreUtils();
-
-        if(this.flags==-1)this.flags=flags;
-        Scored<FingerprintCandidate>[] rankedCandidatesOrig =rankedCandidates.clone();
-
-        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,this.flags);
-
 
 
         double[] scores =  new double[feature_size];
@@ -82,7 +71,7 @@ public class PvalueDistanceFeatures implements FeatureCreator {
 
         for (int j = 0; j < distances.length; j++) {
 
-            scores[pos++] = putils.computePvalueScore(rankedCandidatesOrig, rankedCandidates[0],flags) - putils.computePvalueScore(rankedCandidatesOrig,rankedCandidates[distances[j]],flags);
+            scores[pos++] = putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered, rankedCandidates_filtered[0]) - putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[distances[j]]);
         }
 
         assert pos == scores.length;
