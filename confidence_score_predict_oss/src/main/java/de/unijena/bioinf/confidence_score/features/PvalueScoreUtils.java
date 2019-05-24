@@ -4,7 +4,6 @@ import Tools.ExpectationMaximization1D;
 import Tools.KMeans;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.confidence_score.Utils;
 import jMEF.MixtureModel;
 import jMEF.PVector;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
@@ -94,9 +93,6 @@ public class PvalueScoreUtils {
         double p_value_lognormal = 1 - dist.cumulativeProbability(current_candidate.getScore() + score_shift);
         //TODO: This is a whacky fix
         if (p_value_lognormal == 0) p_value_lognormal = 0.00000000000001;
-
-        Utils utils = new Utils();
-
 
         double score = p_value_lognormal * ranked_candidates_filtered.length;
 
@@ -240,7 +236,6 @@ return null;
 
     public double compute_pvalue_with_KDE(Scored<FingerprintCandidate>[] candidates,Scored<FingerprintCandidate>[] candidates_filtered, Scored<FingerprintCandidate> current){
 
-        Utils utils = new Utils();
         double biosize= candidates_filtered.length;
         if(biosize==1)System.out.println("why 1: "+candidates.length);
         double pvalue=0;

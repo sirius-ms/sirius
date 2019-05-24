@@ -6,6 +6,9 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public interface ConfidenceScorer {
     String NO_DISATANCE_ID = "NoDist";
     String DISATANCE_ID = "dist";

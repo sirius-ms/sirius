@@ -9,18 +9,13 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.confidence_score.Utils;
-import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
-import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
  * Created by martin on 20.06.18.
  */
 public class LogDistanceFeatures implements FeatureCreator {
-    private Utils utils;
     private int[] distances;
-    long flags=-1;
     private int feature_size;
     private PredictionPerformance[] statistics;
     Scored<FingerprintCandidate>[] rankedCandidates;

@@ -49,9 +49,9 @@ public class Main {
 
                 scored_array = scored_list.toArray(scored_array);
 
-                Utils utils = new Utils();
 
-                Scored<FingerprintCandidate>[] condesnsed = utils.condense_candidates_by_flag(scored_array, 2);
+
+                Scored<FingerprintCandidate>[] condesnsed = Utils.condenseCandidatesByFlag(scored_array, 2);
 
          *//*       CombinedFeatureCreator comb = new CombinedFeatureCreator(new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(prediction.getFingerid().getPredictionPerformances()).getScoring()),
                         new DistanceFeatures(1, 2), new LogDistanceFeatures(1, 2));
