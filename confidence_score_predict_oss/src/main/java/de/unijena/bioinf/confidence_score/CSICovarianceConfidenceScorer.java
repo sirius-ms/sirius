@@ -28,8 +28,8 @@ import java.util.stream.Collectors;
  * Created by martin on 20.06.18.
  */
 public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
-    public static final String NO_DISATANCE_ID = "Nodist";
-    public static final String DISATANCE_ID = "dist";
+    public static final String NO_DISTANCE_ID = "Nodist";
+    public static final String DISTANCE_ID = "dist";
 
     public static final String DB_ALL_ID = "All";
     public static final String DB_BIO_ID = "Bio";
@@ -144,11 +144,11 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         final String distanceType;
         if (ranked_candidates_covscore_filtered.length > 1) {
             comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, ranked_candidates_csiscore_filtered, ranked_candidates_covscore_filtered, csiFingerIdScoring.getPerfomances(), covarianceScoring, pubchemConf, sameTopHit);
-            distanceType = NO_DISATANCE_ID;
+            distanceType = DISTANCE_ID;
 
         } else {
             comb = new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, ranked_candidates_csiscore_filtered, ranked_candidates_covscore_filtered, csiFingerIdScoring.getPerfomances(), covarianceScoring, pubchemConf, sameTopHit);
-            distanceType = DISATANCE_ID;
+            distanceType = NO_DISTANCE_ID;
         }
 
         comb.prepare(csiFingerIdScoring.getPerfomances());
