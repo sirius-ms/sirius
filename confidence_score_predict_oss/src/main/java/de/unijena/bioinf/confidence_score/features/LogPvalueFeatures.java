@@ -32,7 +32,7 @@ public class LogPvalueFeatures implements FeatureCreator {
 
     @Override
     public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
-        double[] return_value =  new double[1];
+        double[] return_value =  new double[2];
 
 
         PvalueScoreUtils utils= new PvalueScoreUtils();
