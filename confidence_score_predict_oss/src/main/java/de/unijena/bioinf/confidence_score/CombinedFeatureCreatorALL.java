@@ -26,7 +26,7 @@ public class CombinedFeatureCreatorALL extends CombinedFeatureCreator{
     private double[] computed_features;
 
     //Scorer for pubchem list (unfiltered)
-    public CombinedFeatureCreatorALL(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, CovarianceScoring covscore){
+    public CombinedFeatureCreatorALL(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, CovarianceScoring.Scorer covscore){
 
         long all =0;
 
@@ -35,14 +35,14 @@ public class CombinedFeatureCreatorALL extends CombinedFeatureCreator{
                 new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array),
                 new LogPvalueFeatures(scored_array,scored_array),
                 new LogPvalueFeatures(scored_array_covscore,scored_array_covscore),
-                new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore,scored_array[0],covscore.getScoring()),
+                new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore,scored_array[0],covscore),
                 new FptLengthFeature(),
                 new TreeFeatures(), new PredictionQualityFeatures(),
                 new TanimotoDistanceFeatures(scored_array,scored_array,1), new TanimotoToPredFeatures(scored_array,scored_array),
                 new FptLengthDiffFeatures(scored_array),
-                new ScoreDiffScorerFeatures(scored_array[0],scored_array_covscore[0],covscore.getScoring()),
-                new ScoreFeatures(covscore.getScoring(),scored_array,scored_array),
-                new ScoreFeatures(covscore.getScoring(),scored_array_covscore,scored_array_covscore)));
+                new ScoreDiffScorerFeatures(scored_array[0],scored_array_covscore[0],covscore),
+                new ScoreFeatures(covscore,scored_array,scored_array),
+                new ScoreFeatures(covscore,scored_array_covscore,scored_array_covscore)));
 
 
         featureCount=0;

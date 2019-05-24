@@ -2,8 +2,10 @@ package de.unijena.bioinf.confidence_score;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.svm.SVMPredict;
 import de.unijena.bioinf.confidence_score.svm.SVMUtils;
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -25,31 +28,61 @@ import java.util.stream.Collectors;
  * Created by martin on 20.06.18.
  */
 public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
+    public static final String NO_DISATANCE_ID = "Nodist";
+    public static final String DISATANCE_ID = "dist";
+
+    public static final String DB_ALL_ID = "All";
+    public static final String DB_BIO_ID = "Bio";
+
+    public static final String CE_LOW = "feLow";
+    public static final String CE_MED = "feMed";
+    public static final String CE_HIGH = "feHi";
+    public static final String CE_RAMP = "feRAMP";
+
 
     private final Map<String, TrainedSVM> trainedSVMs;
-    private final CovarianceScoring covarianceScoring;
+    private final CovarianceScoring.Scorer covarianceScoring;
     private final CSIFingerIdScoring csiFingerIdScoring;
+    private Class<? extends FingerblastScoring> scoringOfInput;
 
 
-    public CSICovarianceConfidenceScorer(@NotNull Map<String, TrainedSVM> trainedsvms, @NotNull CovarianceScoring covarianceScoring, @NotNull CSIFingerIdScoring csiFingerIDScoring) {
+    /*public CSICovarianceConfidenceScorer(@NotNull Map<String, TrainedSVM> trainedsvms, @NotNull CovarianceScoring covarianceScoring, @NotNull CSIFingerIdScoring csiFingerIDScoring) {
+
+    }*/
+
+    public CSICovarianceConfidenceScorer(@NotNull Map<String, TrainedSVM> trainedsvms, @NotNull CovarianceScoring.Scorer covarianceScoring, @NotNull CSIFingerIdScoring csiFingerIDScoring, Class<? extends FingerblastScoring> scoringOfInput) {
         this.trainedSVMs = trainedsvms;
         this.covarianceScoring = covarianceScoring;
         this.csiFingerIdScoring = csiFingerIDScoring;
+        this.scoringOfInput = scoringOfInput;
     }
 
-    public double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult, Scored<FingerprintCandidate>[] allCandidates, Scored<FingerprintCandidate>[] filteredCandidates, Class<? extends FingerblastScoring> scoringMethod, ProbabilityFingerprint query) {
-        return computeConfidence(exp, idResult, allCandidates, Arrays.stream(filteredCandidates).map(Scored::getCandidate).collect(Collectors.toSet()), scoringMethod, query);
+    public Class<? extends FingerblastScoring> getScoringOfInput() {
+        return scoringOfInput;
+    }
+
+    public void setScoringOfInput(Class<? extends FingerblastScoring> scoringOfInput) {
+        this.scoringOfInput = scoringOfInput;
+    }
+
+    public double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult, Scored<FingerprintCandidate>[] allCandidates, Scored<FingerprintCandidate>[] filteredCandidates, ProbabilityFingerprint query) {
+        return computeConfidence(exp, idResult, allCandidates, Arrays.stream(filteredCandidates).map(Scored::getCandidate).collect(Collectors.toSet()), query);
     }
 
 
-    public double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult, Scored<FingerprintCandidate>[] allCandidates, long dbFilterFlag, Class<? extends FingerblastScoring> scoringMethod, ProbabilityFingerprint query) {
-        return computeConfidence(exp, idResult, allCandidates, scoringMethod, query, it -> (it.getBitset() & dbFilterFlag) != 0);
+    public double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult, Scored<FingerprintCandidate>[] allCandidates, long dbFilterFlag, ProbabilityFingerprint query) {
+        return computeConfidence(exp, idResult, allCandidates, query, it -> (it.getBitset() & dbFilterFlag) != 0);
     }
 
-    public double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult, Scored<FingerprintCandidate>[] allCandidates, Set<FingerprintCandidate> candidateFilter, Class<? extends FingerblastScoring> scoringMethod, ProbabilityFingerprint query) {
-        return computeConfidence(exp, idResult, allCandidates, scoringMethod, query, candidateFilter::contains);
+    public double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult, Scored<FingerprintCandidate>[] allCandidates, Set<FingerprintCandidate> candidateFilter, ProbabilityFingerprint query) {
+        return computeConfidence(exp, idResult, allCandidates, query, candidateFilter::contains);
     }
 
+    @Override
+    public double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult, Scored<FingerprintCandidate>[] allCandidates, ProbabilityFingerprint query, @NotNull final Predicate<FingerprintCandidate> filter) {
+        return computeConfidence(exp, idResult, allCandidates, scoringOfInput, query, filter);
+
+    }
 
     public double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult, Scored<FingerprintCandidate>[] allCandidates, Class<? extends FingerblastScoring> scoringMethod, ProbabilityFingerprint query, @NotNull final Predicate<FingerprintCandidate> filter) {
         //re-scoring the candidates?
@@ -77,7 +110,7 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         } else { //no scoring given that is useful for the confidence computation, recalculate all.
             rankedCandidatesCovscore = new Scored[allCandidates.length];
             for (int i = 0; i < allCandidates.length; i++)
-                rankedCandidatesCovscore[i] = new Scored<>(allCandidates[i].getCandidate(), covarianceScoring.getScoring().score(query, allCandidates[i].getCandidate().getFingerprint()));
+                rankedCandidatesCovscore[i] = new Scored<>(allCandidates[i].getCandidate(), covarianceScoring.score(query, allCandidates[i].getCandidate().getFingerprint()));
         }
         Arrays.sort(rankedCandidatesCovscore);
         rankedCandidatesCovscoreFiltered = Arrays.stream(rankedCandidatesCovscore).filter(it -> filter.test(it.getCandidate()))
@@ -86,7 +119,6 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         return computeConfidence(exp, idResult, rankedCandidatesCovscore, rankedCandidatesCSIscore, rankedCandidatesCovscoreFiltered, rankedCandidatesCSIscoreFiltered, query);
     }
 
-    @Override
     public double computeConfidence(final Ms2Experiment exp, final IdentificationResult idResult,
                                     Scored<FingerprintCandidate>[] ranked_candidates_covscore, Scored<FingerprintCandidate>[] ranked_candidates_csiscore, Scored<FingerprintCandidate>[] ranked_candidates_covscore_filtered, Scored<FingerprintCandidate>[] ranked_candidates_csiscore_filtered, ProbabilityFingerprint query) {
 
@@ -98,17 +130,7 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
             return Double.NaN;
         }
 
-
-        //find collision energy in spectrum
-        String ce = CE_NOTHING;
-        for (Ms2Spectrum spec : exp.getMs2Spectra()) {
-            if (ce.equals(CE_NOTHING)) {
-                ce = spec.getCollisionEnergy().toString();
-            } else if (!ce.equals(spec.getCollisionEnergy().toString()) || spec.getCollisionEnergy().getMaxEnergy() != spec.getCollisionEnergy().getMinEnergy()) {
-                ce = CE_RAMP;
-                break;
-            }
-        }
+        final String ce = makeCeString(exp.getMs2Spectra());
 
         //calculate score for pubChem lists
         final CombinedFeatureCreatorALL pubchemConfidence = new CombinedFeatureCreatorALL(ranked_candidates_csiscore, ranked_candidates_covscore, csiFingerIdScoring.getPerfomances(), covarianceScoring);
@@ -135,11 +157,34 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
     }
 
     private double calculateConfidence(@NotNull double[] feature, @NotNull String dbType, @NotNull String distanceType, @NotNull String collisionEnergy) {
-        final TrainedSVM svm = trainedSVMs.get(dbType + distanceType + collisionEnergy);
+        final String id = collisionEnergy + "_" + dbType + distanceType + ".svm";
+        final TrainedSVM svm = trainedSVMs.get(id);
+        if (svm == null)
+            throw new IllegalArgumentException("Could not found confidence svm with ID: \"" + id + "\"");
         final double[][] featureMatrix = new double[1][feature.length];
         featureMatrix[0] = feature;
         SVMUtils.standardize_features(featureMatrix, svm.scales);
         SVMUtils.normalize_features(featureMatrix, svm.scales);
         return new SVMPredict().predict_confidence(featureMatrix, svm)[0];
+    }
+
+    public static String makeCeString(@NotNull final List<Ms2Spectrum<Peak>> spectra) {
+        //find collision energy in spectrum
+        double ceMin = Double.MAX_VALUE;
+        double ceMax = Double.MIN_VALUE;
+        for (Ms2Spectrum spec : spectra) {
+            CollisionEnergy ce = spec.getCollisionEnergy();
+            if (ce == null) return CE_RAMP;
+            ceMax = Math.max(ceMax, ce.getMaxEnergy());
+            ceMin = Math.min(ceMin, ce.getMinEnergy());
+            if (ceMin != ceMax) return CE_RAMP;
+        }
+
+        if (ceMin <= 15) //10
+            return CE_LOW;
+        else if (ceMin <= 30) //20
+            return CE_MED;
+        else
+            return CE_HIGH; //40
     }
 }

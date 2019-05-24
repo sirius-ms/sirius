@@ -1,9 +1,7 @@
 package de.unijena.bioinf.confidence_score;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
-import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
@@ -15,8 +13,6 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created by martin on 06.08.18.
@@ -31,7 +27,7 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
 
     //all confidence means the pubchem confidence score for this input. Has to be always computet
     // same is the tophit in pubchem the same as in the reduced db.
-    public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered,Scored<FingerprintCandidate>[] scored_array_covscore_filtered,PredictionPerformance[] performance, CovarianceScoring covscore, double all_confidence, boolean same){
+    public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered,Scored<FingerprintCandidate>[] scored_array_covscore_filtered,PredictionPerformance[] performance, CovarianceScoring.Scorer covscore, double all_confidence, boolean same){
 
 
         //CombinedFeatureCreatorALL conf_score_all = new CombinedFeatureCreatorALL(scored_array,scored_array_covscore,performance,covscore);
@@ -47,13 +43,13 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
                 new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array),
                  new LogPvalueFeatures(scored_array,scored_array),
                  new LogPvalueFeatures(scored_array_covscore,scored_array_covscore_filtered),
-                new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore_filtered,scored_array[0],covscore.getScoring()),
+                new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore_filtered,scored_array[0],covscore),
                 new TreeFeatures(), new PredictionQualityFeatures(),
                 new TanimotoDistanceFeatures(scored_array,scored_array,1), new TanimotoToPredFeatures(scored_array,scored_array),
                 new FptLengthDiffFeatures(scored_array),
-                new ScoreDiffScorerFeatures(scored_array[0],scored_array_covscore[0],covscore.getScoring()),
-                new ScoreFeatures(covscore.getScoring(),scored_array,scored_array),
-                new ScoreFeatures(covscore.getScoring(),scored_array_covscore,scored_array_covscore),
+                new ScoreDiffScorerFeatures(scored_array[0],scored_array_covscore[0],covscore),
+                new ScoreFeatures(covscore,scored_array,scored_array),
+                new ScoreFeatures(covscore,scored_array_covscore,scored_array_covscore),
 
                 //these are bio features and can have a filtered list as input
                 new AllConfidenceScoreFeatures(all_confidence,same),
@@ -62,10 +58,10 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
                 new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
                  new LogPvalueFeatures(scored_array,scored_array_filtered),
                  new LogPvalueFeatures(scored_array_covscore,scored_array_covscore_filtered),
-                new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore_filtered,scored_array[0],covscore.getScoring()),
+                new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore_filtered,scored_array[0],covscore),
                 new TanimotoDistanceFeatures(scored_array,scored_array_filtered,1), new TanimotoToPredFeatures(scored_array,scored_array_filtered),
-                new ScoreFeatures(covscore.getScoring(),scored_array,scored_array_filtered),
-                new ScoreFeatures(covscore.getScoring(),scored_array_covscore,scored_array_covscore_filtered)
+                new ScoreFeatures(covscore,scored_array,scored_array_filtered),
+                new ScoreFeatures(covscore,scored_array_covscore,scored_array_covscore_filtered)
 
 
 
