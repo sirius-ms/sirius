@@ -352,11 +352,11 @@ public class CovarianceScoring implements FingerblastScoringMethod {
     }
 
 
-    public FingerblastScoring getScoring() {
+    public Scorer getScoring() {
         return new Scorer();
     }
 
-    public FingerblastScoring getScoring(PredictionPerformance[] performances) {
+    public Scorer getScoring(PredictionPerformance[] performances) {
         return new Scorer();
     }
 
