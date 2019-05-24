@@ -1,6 +1,9 @@
 package de.unijena.bioinf.sirius;
 
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.sirius.merging.HighIntensityMsMsMerger;
 import de.unijena.bioinf.sirius.merging.Ms2Merger;
 import de.unijena.bioinf.sirius.peakprocessor.MergedSpectrumProcessor;
@@ -37,7 +40,19 @@ public class Ms2Preprocessor extends Ms1Preprocessor {
         mergePeaks(processedInput);
         renormalizeSpectrum(processedInput);
         postProcessMsMs(processedInput);
+        replacePrecursorPeakByIsotopePeak(processedInput);
         return processedInput;
+    }
+
+    private void replacePrecursorPeakByIsotopePeak(ProcessedInput input) {
+        Ms1IsotopePattern annotation = input.getAnnotation(Ms1IsotopePattern.class, Ms1IsotopePattern::none);
+        if (!annotation.isEmpty()) {
+
+            int i = Spectrums.mostIntensivePeakWithin(annotation.getSpectrum(), input.getParentPeak().getMass(), new Deviation(20, 0.1));
+            if (i>=0) {
+                input.getParentPeak().setMass(annotation.getSpectrum().getMzAt(i));
+            }
+        }
     }
 
     private void renormalizeSpectrum(ProcessedInput processedInput) {

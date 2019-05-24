@@ -24,7 +24,11 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
@@ -34,39 +38,45 @@ import org.apache.commons.math3.special.Erf;
  * @author Kai Dührkop
  */
 @Called("Mass Deviation")
-public class MassDeviationVertexScorer implements DecompositionScorer<SpectralRecalibration> {
+public class MassDeviationVertexScorer implements DecompositionScorer<MassDeviationVertexScorer.Prepared> {
     private final static double sqrt2 = Math.sqrt(2);
 
-    private Deviation standardDeviation = null;
     private boolean useOriginalMz = false;
 
     public MassDeviationVertexScorer() {
     }
 
     @Override
-    public SpectralRecalibration prepare(ProcessedInput input) {
-        return input.getAnnotation(SpectralRecalibration.class,SpectralRecalibration::none);
-    }
-
-    public Deviation getStandardDeviation() {
-        return standardDeviation;
-    }
-
-    public void setStandardDeviation(Deviation standardDeviation) {
-        this.standardDeviation = standardDeviation;
+    public Prepared prepare(ProcessedInput input) {
+        final Ms1IsotopePattern ms1 = input.getAnnotation(Ms1IsotopePattern.class, Ms1IsotopePattern::none);
+        int k = Spectrums.mostIntensivePeakWithin(ms1.getSpectrum(), input.getParentPeak().getMass(), input.getAnnotation(MS1MassDeviation.class).allowedMassDeviation);
+        SpectralRecalibration rec = input.getAnnotation(SpectralRecalibration.class, SpectralRecalibration::none);
+        if (k >= 0)
+            return new Prepared(rec, ms1, ms1.getSpectrum().getPeakAt(k));
+        else return new Prepared(rec,null,null);
     }
 
     @Override
-    public double score(MolecularFormula formula, Ionization ion,ProcessedPeak peak, ProcessedInput input, SpectralRecalibration rec) {
+    public double score(MolecularFormula formula, Ionization ion,ProcessedPeak peak, ProcessedInput input, Prepared prep) {
         if (peak.getOriginalPeaks().isEmpty())
             return 0d; // don't score synthetic peaks
+        if (peak==input.getParentPeak()) {
+            // score parent peak with MS1 instead
+            final double realMass = prep.parentPeakFromMs1.getMass();
+            final Deviation dev = input.getAnnotation(MS1MassDeviation.class).standardMassDeviation;
+            return score(formula, ion, realMass, dev);
+        } else {
+            final double realMass = useOriginalMz ? peak.getMass() : prep.recalibration.recalibrate(peak);
+            final Deviation dev = input.getExperimentInformation().getAnnotationOrDefault(MS2MassDeviation.class).standardMassDeviation;
+            return score(formula,ion,realMass,dev);
+        }
+    }
+
+    public double score(MolecularFormula formula, Ionization ion,double realMass, Deviation dev) {
         final double theoreticalMass = ion.addToMass(formula.getMass());
-        final double realMass = useOriginalMz ? peak.getMass() : rec.recalibrate(peak);
-        final Deviation dev = standardDeviation != null
-                ? standardDeviation
-                : input.getExperimentInformation().getAnnotationOrDefault(MS2MassDeviation.class).standardMassDeviation;
         final double sd = dev.absoluteFor(realMass);
         return Math.log(Erf.erfc(Math.abs(realMass-theoreticalMass)/(sd * sqrt2)));
+
     }
 
     public NormalDistribution getDistribution(double peakMz, double peakIntensity, ProcessedInput input) {
@@ -76,17 +86,23 @@ public class MassDeviationVertexScorer implements DecompositionScorer<SpectralRe
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        if (document.hasKeyInDictionary(dictionary, "standardDeviation")) {
-            this.standardDeviation = Deviation.fromString(document.getStringFromDictionary(dictionary, "standardDeviation"));
-        }
         if (document.hasKeyInDictionary(dictionary, "useOriginalMz")) this.useOriginalMz = document.getBooleanFromDictionary(dictionary, "useOriginalMz");
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        if (standardDeviation != null) {
-            document.addToDictionary(dictionary, "standardDeviation", standardDeviation.toString());
-        }
         document.addToDictionary(dictionary, "useOriginalMz", useOriginalMz);
+    }
+
+    protected static class Prepared {
+        private final SpectralRecalibration recalibration;
+        private final Ms1IsotopePattern isotopePattern;
+        private final Peak parentPeakFromMs1;
+
+        public Prepared(SpectralRecalibration recalibration, Ms1IsotopePattern isotopePattern, Peak peak) {
+            this.recalibration = recalibration;
+            this.isotopePattern = isotopePattern;
+            this.parentPeakFromMs1 = peak;
+        }
     }
 }
