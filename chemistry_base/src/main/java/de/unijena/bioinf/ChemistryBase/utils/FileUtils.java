@@ -256,11 +256,11 @@ public class FileUtils {
         }
     }
 
-    private static BufferedReader makeBufferedReader(Reader r) {
+    public static BufferedReader ensureBuffering(Reader r) {
         if (r instanceof BufferedReader) return (BufferedReader)r;
         else return new BufferedReader(r, getRecommendetBufferSize());
     }
-    private static InputStream ensureBuffering(InputStream r) {
+    public static InputStream ensureBuffering(InputStream r) {
         if (r instanceof BufferedInputStream || r instanceof GZIPInputStream || r instanceof InflaterInputStream)
             return r;
         else return new BufferedInputStream(r, getRecommendetBufferSize());

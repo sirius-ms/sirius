@@ -17,6 +17,8 @@
  */
 package de.unijena.bioinf.babelms;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+
 import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
@@ -37,7 +39,7 @@ public class GenericParser<T> implements Parser<T> {
     }
 
     public <S extends T> S parse(InputStream input) throws IOException {
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+        final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(input));
         return parse(reader);
     }
 
@@ -52,7 +54,7 @@ public class GenericParser<T> implements Parser<T> {
     }
 
     public <S extends T> CloseableIterator<S> parseIterator(InputStream input, URL source) throws IOException {
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+        final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(input));
         return parseIterator(reader);
     }
 
@@ -102,7 +104,7 @@ public class GenericParser<T> implements Parser<T> {
     }
 
     public <S extends T> CloseableIterator<S> parseFromFileIterator(File file) throws IOException {
-        final BufferedReader r = new BufferedReader(new FileReader(file));
+        final BufferedReader r = FileUtils.ensureBuffering(new FileReader(file));
         return parseIterator(r, file.toURI().toURL());
     }
 
@@ -111,7 +113,7 @@ public class GenericParser<T> implements Parser<T> {
         BufferedReader reader = null;
         final URL source = file.toURI().toURL();
         try {
-            reader = new BufferedReader(new FileReader(file));
+            reader = FileUtils.ensureBuffering(new FileReader(file));
             final ArrayList<S> list = new ArrayList<S>();
             S elem = parse(reader,source);
             while (elem!=null) {
@@ -132,7 +134,7 @@ public class GenericParser<T> implements Parser<T> {
         BufferedReader reader = null;
         final URL source = file.toURI().toURL();
         try {
-            reader = new BufferedReader(new FileReader(file));
+            reader = FileUtils.ensureBuffering(new FileReader(file));
             return parse(reader,source);
         } catch (IOException e) {
             final IOException newOne = new IOException("Error while parsing " + file.getName(), e);

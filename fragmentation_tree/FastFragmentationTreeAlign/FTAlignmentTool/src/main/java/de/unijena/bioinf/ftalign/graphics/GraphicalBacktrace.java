@@ -19,6 +19,7 @@ package de.unijena.bioinf.ftalign.graphics;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ftalign.analyse.FTDataElement;
 import de.unijena.bioinf.treealign.AbstractBacktrace;
 
@@ -77,7 +78,7 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
 
 
         try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(left.getSource().getFile()));
+            BufferedReader bufferedReader = FileUtils.ensureBuffering(new FileReader(left.getSource().getFile()));
             String line;
             while (bufferedReader.ready()) {
                 line = bufferedReader.readLine();
@@ -98,7 +99,7 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
                 }
 
             }
-            bufferedReader = new BufferedReader(new FileReader(right.getSource().getFile()));
+            bufferedReader = FileUtils.ensureBuffering(new FileReader(right.getSource().getFile()));
             while (bufferedReader.ready()) {
                 line = bufferedReader.readLine();
                 if (!line.contains("->")) {

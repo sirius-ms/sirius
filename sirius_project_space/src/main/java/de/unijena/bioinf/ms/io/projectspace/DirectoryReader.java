@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.io.projectspace;
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -68,7 +69,7 @@ public class DirectoryReader implements ProjectReader {
         default <T> T read(@NotNull String name, @NotNull Do<T> f) throws IOException {
             final InputStream stream = openFile(name);
             try {
-                final BufferedReader inReader = new BufferedReader(new InputStreamReader(stream));
+                final BufferedReader inReader = FileUtils.ensureBuffering(new InputStreamReader(stream));
                 try {
                     return f.run(new DirectoryReader.DoNotCloseReader(inReader));
                 } catch (IOException e) {
@@ -85,7 +86,7 @@ public class DirectoryReader implements ProjectReader {
                 return Collections.emptyMap();
 
             return read(name, w -> {
-                return new BufferedReader(w).lines().filter(l -> l != null && !l.isEmpty()).map(l -> l.split("\t")).collect(Collectors.toMap(k -> k[0], v -> v[1]));
+                return FileUtils.ensureBuffering(w).lines().filter(l -> l != null && !l.isEmpty()).map(l -> l.split("\t")).collect(Collectors.toMap(k -> k[0], v -> v[1]));
             });
 
         }
@@ -165,7 +166,7 @@ public class DirectoryReader implements ProjectReader {
         final ParameterConfig baseConfig = psConfig != null ? psConfig.config : PropertyManager.DEFAULTS;
 
         final Ms2Experiment exp = env.read(SiriusLocations.SIRIUS_SPECTRA.fileName(), r ->
-                new JenaMsParser().parse(new BufferedReader(r), env.currentAbsolutePath(SiriusLocations.SIRIUS_SPECTRA.fileName()), baseConfig)
+                new JenaMsParser().parse(FileUtils.ensureBuffering(r), env.currentAbsolutePath(SiriusLocations.SIRIUS_SPECTRA.fileName()), baseConfig)
         );
 
         if (psConfig != null)
@@ -179,7 +180,7 @@ public class DirectoryReader implements ProjectReader {
             Integer index = null;
             try {
                 index = env.read(SiriusLocations.SIRIUS_EXP_INFO_FILE.fileName(), r ->
-                        new BufferedReader(r).lines().filter(l -> l.split("\t")[0].equals("index")).findFirst().map(l -> Integer.valueOf(l.split("\t")[1])).orElse(null)
+                        FileUtils.ensureBuffering(r).lines().filter(l -> l.split("\t")[0].equals("index")).findFirst().map(l -> Integer.valueOf(l.split("\t")[1])).orElse(null)
                 );
             } catch (IOException e) {
                 LOG.warn("Cannot parse index from index file. Cause: " + e.getMessage());

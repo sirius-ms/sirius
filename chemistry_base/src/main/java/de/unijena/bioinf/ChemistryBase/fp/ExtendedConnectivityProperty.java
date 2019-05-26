@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.fp;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.io.BufferedReader;
@@ -57,7 +58,7 @@ public final class ExtendedConnectivityProperty extends MolecularProperty {
     private final static int[] HASHS;
     static {
         TIntArrayList hashCodes = new TIntArrayList();
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(ExtendedConnectivityProperty.class.getResourceAsStream("/fingerprints/ecfp.txt")));
+        BufferedReader bufferedReader = FileUtils.ensureBuffering(new InputStreamReader(ExtendedConnectivityProperty.class.getResourceAsStream("/fingerprints/ecfp.txt")));
         String line;
         try {
             while ((line = bufferedReader.readLine()) != null)

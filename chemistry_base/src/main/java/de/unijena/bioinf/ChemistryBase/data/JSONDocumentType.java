@@ -19,6 +19,7 @@ package de.unijena.bioinf.ChemistryBase.data;
 
 import com.google.gson.*;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
 import java.io.*;
 import java.math.BigDecimal;
@@ -61,7 +62,7 @@ public class JSONDocumentType extends DataDocument<JsonElement, JsonObject, Json
         // 1. check for resource with same name
         final InputStream stream = JSONDocumentType.class.getResourceAsStream(cpName);
         if (stream != null) {
-            final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+            final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(stream));
             try {
                 final JsonObject obj = JSONDocumentType.read(reader);
                 return obj;
