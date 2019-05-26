@@ -9,6 +9,7 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.beans.PropertyEditor;
@@ -179,7 +180,7 @@ public final class ParameterConfig {
             else
                 localConfig().setProperty(key, backup);
 
-            throw new IllegalDefaultPropertyKeyException("Default value change finished with errors! Rollback previous default value for key " + key + " if possible.", e);
+            throw new RuntimeException(new IllegalDefaultPropertyKeyException("Default value change finished with errors! Rollback previous default value for key " + key + " if possible.", e));
         }
     }
 
@@ -189,13 +190,21 @@ public final class ParameterConfig {
     }
 
 
-    public Class<?> getClassFromKey(@NotNull String key) {
+    public Class<?> getClassFromKeyAndThrow(@NotNull String key) {
+        try {
+            return getClassFromKey(key);
+        } catch (IllegalDefaultPropertyKeyException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Class<?> getClassFromKey(@NotNull String key) throws IllegalDefaultPropertyKeyException {
         try {
             final String ks = shortKey(key);
             key = ks.split("[.]")[0];
             final String value = classesConfig.getString(key);
             if (value == null)
-                throw new NullPointerException("No Class value found for given key '" + String.valueOf(key) + "'");
+                throw new NullPointerException("No Class value found for given key '" + key + "'");
             Class<?> clazz = Class.forName(value);
             return clazz;
         } catch (Throwable e) {
@@ -204,7 +213,7 @@ public final class ParameterConfig {
     }
 
     public Object createInstanceWithDefaults(String key) {
-        Class<?> clazz = getClassFromKey(key);
+        Class<?> clazz = getClassFromKeyAndThrow(key);
         return createInstanceWithDefaults(clazz);
     }
 
@@ -280,27 +289,33 @@ public final class ParameterConfig {
         }
     }
 
-    public <A> Map<Class<A>, A> createInstancesWithDefaults(Class<A> annotationType) {
-        return Collections.unmodifiableMap(createInstancesWithDefaults(getConfigKeys(), annotationType));
+    public <A> Map<Class<A>, A> createInstancesWithDefaults(Class<A> annotationType, boolean skipIllegalKeys) {
+        return Collections.unmodifiableMap(createInstancesWithDefaults(getConfigKeys(), annotationType, skipIllegalKeys));
     }
 
 
-    public <A> Map<Class<A>, A> createInstancesWithModifiedDefaults(Class<A> annotationType) {
-        return Collections.unmodifiableMap(createInstancesWithDefaults(getModifiedConfigKeys(), annotationType));
+    public <A> Map<Class<A>, A> createInstancesWithModifiedDefaults(Class<A> annotationType, boolean skipIllegalKeys) {
+        return Collections.unmodifiableMap(createInstancesWithDefaults(getModifiedConfigKeys(), annotationType, skipIllegalKeys));
     }
 
-    private <A> Map<Class<A>, A> createInstancesWithDefaults(Iterator<String> keys, Class<A> annotationType) {
+    private <A> Map<Class<A>, A> createInstancesWithDefaults(Iterator<String> keys, Class<A> annotationType, boolean skipIllegalKeys) {
         Map<Class<A>, A> defaultInstances = new ConcurrentHashMap<>();
         keys.forEachRemaining(classKey -> {
-            Class<?> cls = getClassFromKey(classKey);
-            if (cls == null)
-                throw new IllegalArgumentException("Could not found a class for key: " + classKey);
-            if (annotationType.isAssignableFrom(cls)) {
-                A instance = (A) createInstanceWithDefaults(cls);
-                if (instance == null)
-                    throw new IllegalArgumentException("Could not create instance for: " + cls.getName());
+            try {
+                Class<?> cls = getClassFromKey(classKey);
+                if (cls == null)
+                    throw new IllegalArgumentException("Could not found a class for key: " + classKey);
+                if (annotationType.isAssignableFrom(cls)) {
+                    A instance = (A) createInstanceWithDefaults(cls);
+                    if (instance == null)
+                        throw new IllegalArgumentException("Could not create instance for: " + cls.getName());
 
-                defaultInstances.put((Class<A>) cls, instance);
+                    defaultInstances.put((Class<A>) cls, instance);
+                }
+            } catch (IllegalDefaultPropertyKeyException e) {
+                if (skipIllegalKeys)
+                    LoggerFactory.getLogger(getClass()).warn("\" " + classKey + "\" is not a valid DefaultPropertyKey and will be IGNORED!");
+                else throw new RuntimeException(e);
             }
         });
         return defaultInstances;
