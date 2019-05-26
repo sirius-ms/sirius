@@ -403,7 +403,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
             //add config annotations that have been set within the file
             exp.setAnnotation(MsFileConfig.class, new MsFileConfig(config)); //set map for reconstructability
-            exp.setAnnotationsFrom(config.createInstancesWithModifiedDefaults(Ms2ExperimentAnnotation.class));
+            exp.setAnnotationsFrom(config.createInstancesWithModifiedDefaults(Ms2ExperimentAnnotation.class, true));
 
             //add additional fields
             if (fields != null) exp.setAnnotation(AdditionalFields.class, fields);
