@@ -17,6 +17,8 @@
  */
 package de.unijena.bioinf.ftalign;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+
 import java.io.*;
 import java.net.URL;
 import java.util.regex.Matcher;
@@ -48,7 +50,7 @@ public class CSVReader {
     reads csv files with , as separator and " as quotation
      */
     public static void read(final InputStream stream, final CSVHandler handler) throws IOException {
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+        final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(stream));
         final Pattern REGEXP;
         {   final String quo = Pattern.quote(String.valueOf(QUOTATION));
             final String sep = Pattern.quote(String.valueOf(SEPARATOR));

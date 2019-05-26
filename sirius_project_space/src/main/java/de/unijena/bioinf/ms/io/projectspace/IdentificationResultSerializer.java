@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.io.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -11,7 +12,6 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.IdentificationResults;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -40,7 +40,7 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
                     m.matches();
                     final int rank = Integer.parseInt(m.group(1));
                     final FTree tree = reader.env.read(s, r ->
-                            new FTJsonReader().parse(new BufferedReader(r), reader.env.absolutePath(result.getAnnotationOrThrow(ExperimentDirectory.class).getDirectoryName() + "/"
+                            new FTJsonReader().parse(FileUtils.ensureBuffering(r), reader.env.absolutePath(result.getAnnotationOrThrow(ExperimentDirectory.class).getDirectoryName() + "/"
                                     + SiriusLocations.SIRIUS_TREES_JSON.directory + "/" + s))
                     );
                     results.add(new IdentificationResult(tree, rank));

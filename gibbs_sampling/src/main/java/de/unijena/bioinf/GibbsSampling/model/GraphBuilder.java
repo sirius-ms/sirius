@@ -4,19 +4,19 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionFix;
-import de.unijena.bioinf.jjobs.*;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.procedure.TDoubleProcedure;
 import gnu.trove.set.hash.TIntHashSet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
 public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<C>> implements JobProgressEventListener{
@@ -53,7 +53,10 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
     }
 
     public static <C extends Candidate<?>> GraphBuilder<C> createGraphBuilder(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds, Class<C> cClass){
+        final long t1 = System.currentTimeMillis();
         Graph<C> graph = createGraph(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, fixedCompounds);
+        final long t2 = System.currentTimeMillis();
+        System.out.println("Building the graph took " + ((t2-t1)/1000d) + " seconds.");
         return new GraphBuilder<C>(graph, edgeScorers, edgeFilter, cClass);
     }
 

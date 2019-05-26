@@ -323,7 +323,7 @@ public class FileDrop {
 
                                     Reader reader = flavors[zz].getReaderForText(tr);
 
-                                    BufferedReader br = new BufferedReader(reader);
+                                    BufferedReader br = FileUtils.ensureBuffering(reader);
 
                                     if (listener != null)
                                         listener.filesDropped(createFileArray(br, out));

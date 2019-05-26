@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.FastIsotopePatternGenerator;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.FinestructurePatternGenerator;
 
@@ -58,7 +59,7 @@ public class Main {
 
     public static void test() throws IOException {
         final File f = new File("/home/kaidu/data/ms/saarbruecken/spectra.txt");
-        final BufferedReader r = new BufferedReader(new FileReader(f));
+        final BufferedReader r = FileUtils.ensureBuffering(new FileReader(f));
         String line = null;
         final List<MolecularFormula> formulas = new ArrayList<MolecularFormula>();
         final List<SimpleSpectrum> spectra = new ArrayList<SimpleSpectrum>();
