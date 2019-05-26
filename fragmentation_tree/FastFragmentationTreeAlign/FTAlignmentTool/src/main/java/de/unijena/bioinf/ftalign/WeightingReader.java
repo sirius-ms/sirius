@@ -19,6 +19,7 @@ package de.unijena.bioinf.ftalign;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.counting.Weighting;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
@@ -44,7 +45,7 @@ public class WeightingReader {
     public Weighting<Fragment> parseCSV(Reader csvReader) throws IOException {
         final TObjectDoubleHashMap<MolecularFormula> map = new TObjectDoubleHashMap<MolecularFormula>();
         double defaultScore = Double.NaN;
-        final BufferedReader reader = new BufferedReader(csvReader);
+        final BufferedReader reader = FileUtils.ensureBuffering(csvReader);
         {
             final String line = reader.readLine();
             if (line == null) return new LossWeighting(map, 1);

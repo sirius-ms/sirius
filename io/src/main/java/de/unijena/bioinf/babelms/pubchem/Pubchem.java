@@ -20,6 +20,7 @@ package de.unijena.bioinf.babelms.pubchem;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.chemdb.CompoundQuery;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -132,7 +133,7 @@ public class Pubchem implements CompoundQuery {
             try {
                 stream = connection.getInputStream();
             } catch (IOException e) {
-                final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+                final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(connection.getErrorStream()));
                 final StringBuilder buffer = new StringBuilder(256);
                 while (true) {
                     final String line = reader.readLine();
@@ -142,7 +143,7 @@ public class Pubchem implements CompoundQuery {
                 System.err.println(buffer.toString());
                 throw new RuntimeException(e);
             }
-            final BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
+            final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(stream, "UTF-8"));
             final StringBuilder buffer = new StringBuilder(256);
             while (true) {
                 final String line = reader.readLine();

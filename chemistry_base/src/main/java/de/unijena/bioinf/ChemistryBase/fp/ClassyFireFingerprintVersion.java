@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.fp;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import gnu.trove.map.hash.TIntIntHashMap;
 
 import java.io.*;
@@ -44,7 +45,7 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
             if (csvFile.getName().endsWith(".gz")) {
                 fr = new GZIPInputStream(fr);
             }
-            final BufferedReader br = new BufferedReader(new InputStreamReader(fr));
+            final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(fr));
             String line;
             while ((line=br.readLine())!=null) {
                 String[] tbs = line.split("\t", 4);

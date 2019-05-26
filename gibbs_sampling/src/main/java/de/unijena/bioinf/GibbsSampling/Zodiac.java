@@ -67,19 +67,29 @@ public class Zodiac {
         return new BasicMasterJJob<ZodiacResultsWithClusters>(JJob.JobType.CPU) {
             @Override
             protected ZodiacResultsWithClusters compute() throws Exception {
+                System.out.println("Step 2: Initialization of ZODIAC.");
+                final long t1 = System.currentTimeMillis();
                 init();
+                final long t2 = System.currentTimeMillis();
+                System.out.println("Step 2 took " + ((t2-t1)/1000d) + " seconds" );
                 if (ids.length<=1) {
                     Log.error("Cannot run ZODIAC. SIRIUS input consists of " + ids.length + " instances. More are needed for running a network analysis.");
                     return null;
                 }
+
+                long t3 = System.currentTimeMillis();
+                System.out.println("Step 3: Graph building.");
                 GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, FragmentsCandidate.class);
 
                 submitSubJob(graphBuilder);
 
                 Graph<FragmentsCandidate> graph = graphBuilder.takeResult();
                 Graph.validateAndThrowError(graph, Log);
+                long t4 = System.currentTimeMillis();
+                System.out.println("Step 3 took " + ((t4-t3)/1000d) + " seconds" );
 
-
+                System.out.println("Step 4: Gibbs Sampling.");
+                final long t5 = System.currentTimeMillis();
                 GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel<>(graph, repetitions);
                 gibbsParallel.setIterationSteps(iterationSteps, burnIn);
 
@@ -87,7 +97,8 @@ public class Zodiac {
                 CompoundResult<FragmentsCandidate>[] results = gibbsParallel.takeResult();
 
                 addZodiacScoreToIdentificationResult(results, experimentResults);
-
+                final long t6 = System.currentTimeMillis();
+                System.out.println("Step 4 took " + ((t6-t5)/1000d) + " seconds" );
                 return includedAllClusterInstances(new ZodiacResult<>(ids, graph, results));
             }
         };

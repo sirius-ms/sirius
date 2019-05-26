@@ -72,9 +72,9 @@ public class FragmentationTreeDatabase implements Serializable {
         for (String fragTreeStr : fileList) {
             if (fragTreeStr.endsWith(".dot")) {
                 if (session.getParameters().makeVerboseOutput) System.err.println("Reading "+fragTreeStr);
-                fragTree = FragmentationTree.readFromDot(new BufferedReader(new FileReader(directory.getPath() + "/"+ fragTreeStr)), fragTreeStr, session);
+                fragTree = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader(directory.getPath() + "/"+ fragTreeStr)), fragTreeStr, session);
             } else if (fragTreeStr.endsWith(".cml")) {
-                fragTree = FragmentationTree.readFromCml(new BufferedReader(new FileReader(directory.getPath() + "/"+ fragTreeStr)), fragTreeStr, session);
+                fragTree = FragmentationTree.readFromCml(FileUtils.ensureBuffering(new FileReader(directory.getPath() + "/"+ fragTreeStr)), fragTreeStr, session);
             } else fragTree = null;
             //TODO selection of large trees
             if (fragTree != null /*&& fragTree.size() > 5*/) {
@@ -136,8 +136,8 @@ public class FragmentationTreeDatabase implements Serializable {
         Parameters params = session.getParameters();
         FragmentationTree queryFragTree = null;
         String fileLastPart = file.substring(file.lastIndexOf(File.separatorChar)+1);
-        if (file.endsWith(".dot")) queryFragTree = FragmentationTree.readFromDot(new BufferedReader(new FileReader(file)), fileLastPart, session);
-        else if (file.endsWith(".cml")) queryFragTree = FragmentationTree.readFromCml(new BufferedReader(new FileReader(file)), fileLastPart, session);
+        if (file.endsWith(".dot")) queryFragTree = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader(file)), fileLastPart, session);
+        else if (file.endsWith(".cml")) queryFragTree = FragmentationTree.readFromCml(FileUtils.ensureBuffering(new FileReader(file)), fileLastPart, session);
         if (queryFragTree == null) { return null; }
         queryFragTree.setType(file.substring(file.lastIndexOf("/") + 1, file.lastIndexOf("/") + 2));
         queryFragTree.setId(file.substring(file.lastIndexOf("/") + 1));

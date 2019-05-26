@@ -2,6 +2,7 @@ package de.unijena.bioinf.ChemistryBase.fp;
 
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -174,7 +175,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 /*
     private static void loadFingerprintDescriptors() throws IOException {
         final PeriodicTable T = PeriodicTable.getInstance();
-        final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/index_fingerprints.txt")));
+        final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/index_fingerprints.txt")));
         String line = null;
         final ArrayList<MolecularProperty> properties = new ArrayList<>();
         while ((line = r.readLine()) != null) {
@@ -223,7 +224,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
     private static void loadFingerprintDescriptors() throws IOException {
         final PeriodicTable T = PeriodicTable.getInstance();
         final ArrayList<MolecularProperty> properties = new ArrayList<>();
-        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/index_fingerprints.txt")))) {
+        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/index_fingerprints.txt")))) {
             String line = null;
             while ((line = r.readLine()) != null) {
                 final String[] parts = line.split("\t#");
@@ -264,13 +265,13 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         }
 
         // MINED FINGERPRINTS
-        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/biosmarts.txt")))) {
+        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/biosmarts.txt")))) {
             String line = null;
             while ((line = r.readLine()) != null) {
                 properties.add(new SubstructureProperty(line));
             }
         }
-        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/ringsystems.txt")))) {
+        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/ringsystems.txt")))) {
             String line = null;
             while ((line = r.readLine()) != null) {
                 properties.add(new SubstructureProperty(line));
@@ -278,7 +279,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         }
 
         // SHORTEST PATH FINGERPRINTS
-        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/shortest_paths.txt")))) {
+        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/shortest_paths.txt")))) {
             String line = null;
             while ((line = r.readLine()) != null) {
                 properties.add(new ShortestPathProperty(line));
@@ -286,7 +287,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         }
 
         // CLASSYFIRE PROPERTIES
-        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/classyfire_smarts.txt")))) {
+        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/classyfire_smarts.txt")))) {
             String line = null;
             while ((line = r.readLine()) != null) {
                 String[] pts = line.split("\t#");

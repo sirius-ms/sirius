@@ -38,8 +38,8 @@ public class Sim2Dist {
 		String output2 = "/home/m3rafl/data/tandem_ms_data/10x10compounds/alignScores/OrbiNewAAOldNorm2+.csv";
 		int minimalSize = 2;
 		
-		BufferedReader br = new BufferedReader(new FileReader(input));
-		BufferedReader cpdReader = new BufferedReader(new FileReader(compoundFile));
+		BufferedReader br = FileUtils.ensureBuffering(new FileReader(input));
+		BufferedReader cpdReader = FileUtils.ensureBuffering(new FileReader(compoundFile));
 		//BufferedWriter out = new BufferedWriter(new FileWriter(output));
 		BufferedWriter out2 = new BufferedWriter(new FileWriter(output2));
 		
@@ -177,7 +177,7 @@ public class Sim2Dist {
 		String input = "/home/m3rafl/data/tandem_ms_data/AdditionalInfos/AgilentGreedyScores.csv";
 		String output = "/home/m3rafl/data/tandem_ms_data/AdditionalInfos/AgilentGreedyDist.csv";
 		
-		BufferedReader br = new BufferedReader(new FileReader(input));
+		BufferedReader br = FileUtils.ensureBuffering(new FileReader(input));
 		BufferedWriter out = new BufferedWriter(new FileWriter(output));
 		
 		List<List<Double>> matrix = new ArrayList<List<Double>>(100);
