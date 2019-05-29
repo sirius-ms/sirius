@@ -58,14 +58,15 @@ public class DistanceFeatures implements FeatureCreator {
 
         final double topHit = rankedCandidates_filtered[0].getScore();
         int pos = 0;
+        int additional_shift=0;
 
 
             for (int j = 0; j < distances.length; j++) {
-                while (rankedCandidates_filtered[distances[j]].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
-                    j++;
+                while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
+                    additional_shift+=1;
                 }
 
-                scores[pos++] = topHit - rankedCandidates_filtered[distances[j]].getScore();
+                scores[pos++] = topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore();
             }
 
         assert pos == scores.length;
