@@ -248,6 +248,9 @@ return null;
 
         double[] scored_array= new double[candidates.length-1];
 
+        if (scored_array.length < 5)
+            return 100;
+
         ArrayList<Double> tosortlist = new ArrayList<>();
 
         int dupe_counter=0;
