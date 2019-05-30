@@ -3,7 +3,6 @@ package de.unijena.bioinf.confidence_score;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
@@ -16,7 +15,7 @@ public class Utils {
     }
 
     public static Scored<FingerprintCandidate>[] condenseCandidatesByFlag(Scored<FingerprintCandidate>[] candidates, long flags) {
-        if (flags == 0)
+        /*if (flags == 0)
             return candidates;
 
 
@@ -33,12 +32,12 @@ public class Utils {
 
         condensed = new Scored[condensed_as_list.size()];
 
-        condensed=  condensed_as_list.toArray(condensed);
+        condensed=  condensed_as_list.toArray(condensed);*/
 
 
-        return condensed;
+//        return condensed;
 
         //TODO @Markus cleanup reverted weil error
-       // return Arrays.stream(candidates).map(Scored::getCandidate).filter(getCandidateByFlagFilter(flags)::test).toArray(Scored[]::new);
+        return Arrays.stream(candidates).filter(s -> getCandidateByFlagFilter(flags).test(s.getCandidate())).toArray(Scored[]::new);
     }
 }
