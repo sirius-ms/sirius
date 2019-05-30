@@ -198,7 +198,11 @@ public class SiriusProjectSpace implements ProjectSpace {
             if (forceRewrite) {
                 expDir.setRewrite(true);
             } else {
-                addID(expDir);
+                try {
+                    addID(expDir);
+                } catch (IOException e) {//should not be possible in practice
+                    throw new RuntimeException("Duplicate experiment ID/Name when reading Workspace. This looks like a BUG!", e);
+                }
             }
 
             currentMaxIndex = Math.max(currentMaxIndex, expDir.getIndex());
@@ -250,8 +254,15 @@ public class SiriusProjectSpace implements ProjectSpace {
         return dir;
     }
 
-    private ExperimentDirectory addID(ExperimentDirectory expDir) {
-        return experimentIDs.put(expDir.getDirectoryName(), expDir);
+    // return true if id was newly  added to the map
+    private boolean addID(ExperimentDirectory expDir) throws IOException {
+        ExperimentDirectory old = experimentIDs.putIfAbsent(expDir.getDirectoryName(), expDir);
+        if (old != null && old != expDir)
+            throw new IOException(
+                    "Duplicate Experiment ID/Name: " + old.getDirectoryName() +
+                            " Either your naming scheme doe not create unique experiment names " +
+                            "or some project merging or renaming results in a naming conflict");
+        return old == null;
     }
 
     private ExperimentDirectory removeID(ExperimentDirectory expDir) {
@@ -387,18 +398,13 @@ public class SiriusProjectSpace implements ProjectSpace {
 
         if (!nuName.equals(expDir.getDirectoryName())) { //rewrite with new name and delete old
             //check if new name conflicts with old name
-            if (experimentIDs.containsKey(nuName))
-                throw new IOException(
-                        "Duplicate Experiment name. " +
-                                "Either your naming scheme doe not create unique experiment names " +
-                                "or some project merging or renaming results in a naming conflict");
-
             final ExperimentDirectory deleteKey = new ExperimentDirectory(expDir.getDirectoryName());
             expDir.setDirectoryName(nuName);
             addID(expDir);
             writer.writeExperiment(result);
             deleteExperiment(deleteKey);
         } else { //override old
+            addID(expDir);
             writer.writeExperiment(result);
         }
         changed.set(true);
