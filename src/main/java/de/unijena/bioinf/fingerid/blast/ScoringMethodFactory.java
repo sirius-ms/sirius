@@ -7,28 +7,36 @@ import de.unijena.bioinf.ChemistryBase.fp.*;
  */
 public class ScoringMethodFactory {
 
-    public static CSIFingerIdScoringMethod getCSIFingerIdScoringMethod(PredictionPerformance[] performances){
+    public static CSIFingerIdScoringMethod getCSIFingerIdScoringMethod(PredictionPerformance[] performances) {
         return new CSIFingerIdScoringMethod(performances);
     }
 
-    public static ProbabilityEstimateScoringMethod getProbabilityEstimateScoringMethod(PredictionPerformance[] performances){
+    public static ProbabilityEstimateScoringMethod getProbabilityEstimateScoringMethod(PredictionPerformance[] performances) {
         return new ProbabilityEstimateScoringMethod(performances);
     }
 
-    public static SimpleMaximumLikelihoodScoringMethod getSimpleMaximumLikelihoodScoringMethod(PredictionPerformance[] performances){
+    public static SimpleMaximumLikelihoodScoringMethod getSimpleMaximumLikelihoodScoringMethod(PredictionPerformance[] performances) {
         return new SimpleMaximumLikelihoodScoringMethod(performances);
     }
-    public static UnitScoringMethod getUnitScoring(PredictionPerformance[] performances){
+
+    public static UnitScoringMethod getUnitScoring(PredictionPerformance[] performances) {
         return new UnitScoringMethod(performances);
     }
-    public static AccuracyScoringMethod getAccuracyScoring(PredictionPerformance[] performances){
+
+    public static AccuracyScoringMethod getAccuracyScoring(PredictionPerformance[] performances) {
         return new AccuracyScoringMethod(performances);
     }
-    public static TanimotoScoringMethod getTanimotoScoring(PredictionPerformance[] performances){
+
+    public static TanimotoScoringMethod getTanimotoScoring(PredictionPerformance[] performances) {
         return new TanimotoScoringMethod(performances);
     }
-    public static ProbabilisticTanimotoScoringMethod getProbabilisticTanimotoScoring(PredictionPerformance[] performances){
+
+    public static ProbabilisticTanimotoScoringMethod getProbabilisticTanimotoScoring(PredictionPerformance[] performances) {
         return new ProbabilisticTanimotoScoringMethod(performances);
+    }
+
+    public static CovarianceScoringMethod getCovarianceScoring(int[][] covTreeEdges, double[][] covariances, FingerprintVersion fpVersion, double alpha) {
+        return new CovarianceScoringMethod(covTreeEdges, covariances, fpVersion, alpha);
     }
 
 
@@ -43,6 +51,10 @@ public class ScoringMethodFactory {
         public CSIFingerIdScoring getScoring() {
             return new CSIFingerIdScoring(performances);
         }
+
+        public PredictionPerformance[] getPerformances() {
+            return performances;
+        }
     }
 
     public static class ProbabilityEstimateScoringMethod implements FingerblastScoringMethod {
@@ -56,6 +68,10 @@ public class ScoringMethodFactory {
         public ProbabilityEstimateScoring getScoring() {
             return new ProbabilityEstimateScoring(performances);
         }
+
+        public PredictionPerformance[] getPerformances() {
+            return performances;
+        }
     }
 
     public static class SimpleMaximumLikelihoodScoringMethod implements FingerblastScoringMethod {
@@ -68,6 +84,10 @@ public class ScoringMethodFactory {
         @Override
         public SimpleMaximumLikelihoodScoring getScoring() {
             return new SimpleMaximumLikelihoodScoring(performances);
+        }
+
+        public PredictionPerformance[] getPerformances() {
+            return performances;
         }
     }
 
@@ -112,10 +132,15 @@ public class ScoringMethodFactory {
         public void setMinSamples(double minSamples) {
             this.minSamples = minSamples;
         }
+
+        public PredictionPerformance[] getPerformances() {
+            return performances;
+        }
     }
 
     public static class UnitScoringMethod implements FingerblastScoringMethod {
         private final PredictionPerformance[] performances;
+
         public UnitScoringMethod(PredictionPerformance[] performances) {
             this.performances = performances;
         }
@@ -138,9 +163,14 @@ public class ScoringMethodFactory {
             };
         }
 
+        public PredictionPerformance[] getPerformances() {
+            return performances;
+        }
     }
+
     public static class AccuracyScoringMethod implements FingerblastScoringMethod {
         private final PredictionPerformance[] performances;
+
         public AccuracyScoringMethod(PredictionPerformance[] performances) {
             this.performances = performances;
         }
@@ -157,7 +187,7 @@ public class ScoringMethodFactory {
                             if (fp.isLeftSet() == fp.isRightSet()) {
                                 score += Math.log(performances[index].getAccuracy());
                             } else {
-                                score += Math.log(1d-performances[index].getAccuracy());
+                                score += Math.log(1d - performances[index].getAccuracy());
                             }
                         }
                         ++index;
@@ -166,10 +196,15 @@ public class ScoringMethodFactory {
                 }
             };
         }
+
+        public PredictionPerformance[] getPerformances() {
+            return performances;
+        }
     }
 
     public static class TanimotoScoringMethod implements FingerblastScoringMethod {
         private final PredictionPerformance[] performances;
+
         public TanimotoScoringMethod(PredictionPerformance[] performances) {
             this.performances = performances;
         }
@@ -179,13 +214,19 @@ public class ScoringMethodFactory {
             return new LegacyScorer(performances) {
                 @Override
                 public double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry) {
-                    return Tanimoto.tanimoto(fingerprint,databaseEntry);
+                    return Tanimoto.tanimoto(fingerprint, databaseEntry);
                 }
             };
         }
+
+        public PredictionPerformance[] getPerformances() {
+            return performances;
+        }
     }
+
     public static class ProbabilisticTanimotoScoringMethod implements FingerblastScoringMethod {
         private final PredictionPerformance[] performances;
+
         public ProbabilisticTanimotoScoringMethod(PredictionPerformance[] performances) {
             this.performances = performances;
         }
@@ -195,9 +236,13 @@ public class ScoringMethodFactory {
             return new LegacyScorer(performances) {
                 @Override
                 public double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry) {
-                    return Tanimoto.probabilisticTanimoto(fingerprint,databaseEntry).expectationValue();
+                    return Tanimoto.probabilisticTanimoto(fingerprint, databaseEntry).expectationValue();
                 }
             };
+        }
+
+        public PredictionPerformance[] getPerformances() {
+            return performances;
         }
     }
 

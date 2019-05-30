@@ -37,7 +37,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class CovarianceScoring implements FingerblastScoringMethod {
+public class CovarianceScoringMethod implements FingerblastScoringMethod {
 
 
     protected final TIntObjectHashMap<CorrelationTreeNode> nodes;
@@ -48,6 +48,68 @@ public class CovarianceScoring implements FingerblastScoringMethod {
 
     protected File file;
 
+
+    // static helper methods
+    protected static double laplaceSmoothing(double probability, double alpha) {
+        return (probability + alpha) / (1d + 2d * alpha);
+    }
+
+    public static double getCovarianceScoringAlpha(PredictionPerformance[] performances) {
+        return 1d / performances[0].withPseudoCount(0.25).numberOfSamplesWithPseudocounts();
+    }
+
+    private static final String SEP = "\t";
+
+
+    public static CovarianceScoringMethod readScoring(InputStream stream, Charset charset, FingerprintVersion fpVersion, PredictionPerformance[] performances) throws IOException {
+        return readScoring(stream, charset, fpVersion, getCovarianceScoringAlpha(performances));
+    }
+
+    public static CovarianceScoringMethod readScoring(InputStream stream, Charset charset, FingerprintVersion fpVersion, double alpha) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(stream, charset));
+
+        final List<String> lines = new ArrayList<>();
+        String l;
+        while ((l = reader.readLine()) != null) lines.add(l);
+
+        final int[][] edges = new int[lines.size()][];
+        final double[][] covariances = new double[lines.size()][];
+        int pos = 0;
+        for (String line : lines) {
+            if (line.length() == 0) continue;
+            String[] col = line.split(SEP);
+            edges[pos] = new int[]{Integer.parseInt(col[0]), Integer.parseInt(col[1])};
+            covariances[pos] = new double[]{Double.parseDouble(col[2]), Double.parseDouble(col[3]), Double.parseDouble(col[4]), Double.parseDouble(col[5])};
+            pos++;
+        }
+        return new CovarianceScoringMethod(edges, covariances, fpVersion, alpha);
+    }
+
+    public static CovarianceScoringMethod readScoringFromFile(Path treeFile, FingerprintVersion fpVersion, double alpha) throws IOException {
+        return readScoring(Files.newInputStream(treeFile), Charset.forName("UTF-8"), fpVersion, alpha);
+    }
+
+    private static Pattern EdgePattern = Pattern.compile("(\\d+)\\s*->\\s*(\\d+)\\s*");
+
+    public static int[][] parseTreeFromDotFile(Path dotFile) throws IOException {
+        List<int[]> edges = new ArrayList<>();
+        try (final BufferedReader br = Files.newBufferedReader(dotFile, Charset.forName("UTF-8"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                final Matcher m = EdgePattern.matcher(line);
+                if (m.find()) {
+                    final int u = Integer.parseInt(m.group(1));
+                    final int v = Integer.parseInt(m.group(2));
+                    edges.add(new int[]{u, v});
+                }
+            }
+        }
+        return edges.toArray(new int[0][]);
+    }
+
+
+
+
     /**
      *
      * @param covTreeEdges array of edges int[k][0] -- int[k][1], using absolute indices
@@ -55,7 +117,7 @@ public class CovarianceScoring implements FingerblastScoringMethod {
      * @param fpVersion corresponding {@link FingerprintVersion}
      * @param alpha alpha used for laplace smoothing
      */
-    public CovarianceScoring(int[][] covTreeEdges, double[][] covariances, FingerprintVersion fpVersion, double alpha){
+    public CovarianceScoringMethod(int[][] covTreeEdges, double[][] covariances, FingerprintVersion fpVersion, double alpha) {
         this.fpVersion = fpVersion;
         this.nodes = parseTree(covTreeEdges, fpVersion);
         List<CorrelationTreeNode> fs = new ArrayList<>(10);
@@ -75,11 +137,11 @@ public class CovarianceScoring implements FingerblastScoringMethod {
         this.alpha = alpha;
     }
 
-    public CovarianceScoring(PredictionPerformance[] performances, ProbabilityFingerprint[] predicted, Fingerprint[] correct, File dotFile) throws IOException {
+    public CovarianceScoringMethod(PredictionPerformance[] performances, ProbabilityFingerprint[] predicted, Fingerprint[] correct, File dotFile) throws IOException {
         this(performances, predicted, correct, dotFile.toPath());
     }
 
-    public CovarianceScoring(PredictionPerformance[] performances, ProbabilityFingerprint[] predicted, Fingerprint[] correct, Path dotFilePath) throws IOException {
+    public CovarianceScoringMethod(PredictionPerformance[] performances, ProbabilityFingerprint[] predicted, Fingerprint[] correct, Path dotFilePath) throws IOException {
         this.fpVersion = predicted[0].getFingerprintVersion();
         this.nodes = parseTreeFile(dotFilePath, predicted[0].getFingerprintVersion());
         List<CorrelationTreeNode> fs = new ArrayList<>(10);
@@ -92,10 +154,10 @@ public class CovarianceScoring implements FingerblastScoringMethod {
         this.forests = fs.toArray(new CorrelationTreeNode[fs.size()]);
         makeStatistics(predicted, correct);
 
-        this.alpha = 1d/performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts();
+        this.alpha = getCovarianceScoringAlpha(performances);
     }
 
-    public CovarianceScoring(PredictionPerformance[] performances, ProbabilityFingerprint[] predicted, Fingerprint[] correct, int[][] covTreeEdges) {
+    public CovarianceScoringMethod(PredictionPerformance[] performances, ProbabilityFingerprint[] predicted, Fingerprint[] correct, int[][] covTreeEdges) {
         this.fpVersion = predicted[0].getFingerprintVersion();
 
         this.nodes = parseTree(covTreeEdges, fpVersion);
@@ -108,54 +170,10 @@ public class CovarianceScoring implements FingerblastScoringMethod {
         }
         this.forests = fs.toArray(new CorrelationTreeNode[fs.size()]);
         makeStatistics(predicted, correct);
-        this.alpha = 1d/performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts();
+        this.alpha = getCovarianceScoringAlpha(performances);
     }
 
-    private static final String SEP = "\t";
 
-    public void  writeTreeWithCovToFile(Path outputFile) throws IOException{
-        try(BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset())) {
-            for (CorrelationTreeNode node : nodeList) {
-                if (node.parent==null) continue;
-                int parent = fpVersion.getAbsoluteIndexOf(node.parent.fingerprintIndex);
-                int child = fpVersion.getAbsoluteIndexOf(node.fingerprintIndex);
-
-                StringBuilder builder = new StringBuilder();
-                builder.append(String.valueOf(parent)); builder.append(SEP);
-                builder.append(String.valueOf(child)); builder.append(SEP);
-                builder.append(String.valueOf(node.getCovariance(true,true))); builder.append(SEP);
-                builder.append(String.valueOf(node.getCovariance(true,false))); builder.append(SEP);
-                builder.append(String.valueOf(node.getCovariance(false,true))); builder.append(SEP);
-                builder.append(String.valueOf(node.getCovariance(false,false)));
-                builder.append("\n");
-                writer.write(builder.toString());
-            }
-        }
-    }
-
-    public static CovarianceScoring readScoring(InputStream stream, Charset charset, FingerprintVersion fpVersion, double alpha) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(stream, charset));
-
-        final List<String> lines = new ArrayList<>();
-        String l;
-        while ((l=reader.readLine())!=null) lines.add(l);
-
-        final int[][] edges = new int[lines.size()][];
-        final double[][] covariances = new double[lines.size()][];
-        int pos = 0;
-        for (String line : lines) {
-            if (line.length()==0) continue;
-            String[] col = line.split(SEP);
-            edges[pos] = new int[]{Integer.parseInt(col[0]), Integer.parseInt(col[1])};
-            covariances[pos] = new double[]{Double.parseDouble(col[2]), Double.parseDouble(col[3]), Double.parseDouble(col[4]), Double.parseDouble(col[5])};
-            pos++;
-        }
-        return new CovarianceScoring(edges, covariances, fpVersion, alpha);
-    }
-
-    public static CovarianceScoring readScoringFromFile(Path treeFile, FingerprintVersion fpVersion, double alpha) throws IOException {
-        return readScoring(Files.newInputStream(treeFile), Charset.forName("UTF-8"), fpVersion, alpha);
-    }
 
     protected void makeStatistics(ProbabilityFingerprint[] predicted, Fingerprint[] correct) {
         for (int i = 0; i < predicted.length; i++) {
@@ -189,7 +207,31 @@ public class CovarianceScoring implements FingerblastScoringMethod {
         return forests.length;
     }
 
-    private static Pattern EdgePattern = Pattern.compile("(\\d+)\\s*->\\s*(\\d+)\\s*");
+
+    public void writeTreeWithCovToFile(Path outputFile) throws IOException {
+        try (BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset())) {
+            for (CorrelationTreeNode node : nodeList) {
+                if (node.parent == null) continue;
+                int parent = fpVersion.getAbsoluteIndexOf(node.parent.fingerprintIndex);
+                int child = fpVersion.getAbsoluteIndexOf(node.fingerprintIndex);
+
+                StringBuilder builder = new StringBuilder();
+                builder.append(String.valueOf(parent));
+                builder.append(SEP);
+                builder.append(String.valueOf(child));
+                builder.append(SEP);
+                builder.append(String.valueOf(node.getCovariance(true, true)));
+                builder.append(SEP);
+                builder.append(String.valueOf(node.getCovariance(true, false)));
+                builder.append(SEP);
+                builder.append(String.valueOf(node.getCovariance(false, true)));
+                builder.append(SEP);
+                builder.append(String.valueOf(node.getCovariance(false, false)));
+                builder.append("\n");
+                writer.write(builder.toString());
+            }
+        }
+    }
 
 
     /*
@@ -199,21 +241,7 @@ public class CovarianceScoring implements FingerblastScoringMethod {
         return parseTree(parseTreeFromDotFile(dotFile), fpVersion);
     }
 
-    public static int[][] parseTreeFromDotFile(Path dotFile) throws IOException {
-        List<int[]> edges = new ArrayList<>();
-        try (final BufferedReader br = Files.newBufferedReader(dotFile, Charset.forName("UTF-8"))) {
-            String line;
-            while ((line=br.readLine())!=null) {
-                final Matcher m = EdgePattern.matcher(line);
-                if (m.find()) {
-                    final int u = Integer.parseInt(m.group(1));
-                    final int v = Integer.parseInt(m.group(2));
-                    edges.add(new int[]{u,v});
-                }
-            }
-        }
-        return edges.toArray(new int[0][]);
-    }
+
 
     /*
     parse molecular property ree from a array of edges.
@@ -280,9 +308,10 @@ public class CovarianceScoring implements FingerblastScoringMethod {
         return new CorrelationTreeNode(fingerprintIndex);
     }
 
-    private static int RootT=0,RootF=1,ChildT=0,ChildF=1;
 
+    private static int RootT=0,RootF=1,ChildT=0,ChildF=1;
     protected class CorrelationTreeNode{
+
         protected CorrelationTreeNode parent;
         protected List<CorrelationTreeNode> children;
         protected int fingerprintIndex;
@@ -352,16 +381,16 @@ public class CovarianceScoring implements FingerblastScoringMethod {
     }
 
 
-    public Scorer getScoring() {
-        return new Scorer();
+    public Scoring getScoring() {
+        return new Scoring();
     }
 
-    public Scorer getScoring(PredictionPerformance[] performances) {
-        return new Scorer();
+    public Scoring getScoring(PredictionPerformance[] performances) {
+        return new Scoring();
     }
 
 
-    public class Scorer  implements FingerblastScoring {
+    public class Scoring implements FingerblastScoring {
         protected double[][][] abcdMatrixByNodeIdxAndCandidateProperties;
 
 
@@ -376,7 +405,7 @@ public class CovarianceScoring implements FingerblastScoringMethod {
 
         private double threshold, minSamples;
 
-        public Scorer(){
+        public Scoring() {
             this.threshold = 0;
             minSamples = 0;
         }
@@ -584,9 +613,5 @@ public class CovarianceScoring implements FingerblastScoringMethod {
             a/=norm; b/=norm; c/=norm; d/=norm;
             return new double[]{a,b,c,d};
         }
-    }
-
-    protected static double laplaceSmoothing(double probability, double alpha) {
-        return (probability + alpha) / (1d + 2d * alpha);
     }
 }

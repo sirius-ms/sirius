@@ -119,7 +119,7 @@ public class BayesnetScoring {
         }
     }
 
-    public static CovarianceScoring readScoring(InputStream stream, Charset charset, FingerprintVersion fpVersion, double alpha) throws IOException {
+    public static CovarianceScoringMethod readScoring(InputStream stream, Charset charset, FingerprintVersion fpVersion, double alpha) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(stream, charset));
 
         final List<String> lines = new ArrayList<>();
@@ -136,10 +136,10 @@ public class BayesnetScoring {
             covariances[pos] = new double[]{Double.parseDouble(col[2]), Double.parseDouble(col[3]), Double.parseDouble(col[4]), Double.parseDouble(col[5])};
             pos++;
         }
-        return new CovarianceScoring(edges, covariances, fpVersion, alpha);
+        return new CovarianceScoringMethod(edges, covariances, fpVersion, alpha);
     }
 
-    public static CovarianceScoring readScoringFromFile(Path treeFile, FingerprintVersion fpVersion, double alpha) throws IOException {
+    public static CovarianceScoringMethod readScoringFromFile(Path treeFile, FingerprintVersion fpVersion, double alpha) throws IOException {
         return readScoring(Files.newInputStream(treeFile), Charset.forName("UTF-8"), fpVersion, alpha);
     }
 
