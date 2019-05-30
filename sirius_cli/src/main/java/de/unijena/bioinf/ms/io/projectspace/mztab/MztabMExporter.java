@@ -209,9 +209,7 @@ public class MztabMExporter {
 
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_SCORE, String.valueOf(bestHit.getScore())));
 //        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_CONFIDENCE, null));
-
-        smeItem.addIdConfidenceMeasureItem(null);//todo add configdence score
-
+        smeItem.addIdConfidenceMeasureItem(bestHitSource.getAnnotation(FingerIdResult.class).getConfidence());
 
 //        smeItem.addOptItem(SiriusMZTabParameter.newOptColumnParameter(SiriusMZTabParameter.FINGERID_TANIMOTO_SIMILARITY, bestHit.getCandidate()));
         final ExperimentDirectory erDir = er.getAnnotation(ExperimentDirectory.class);
