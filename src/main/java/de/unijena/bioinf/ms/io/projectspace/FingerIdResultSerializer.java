@@ -7,6 +7,7 @@ import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.CSVExporter;
+import de.unijena.bioinf.fingerid.ConfidenceResult;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.fingerid.webapi.VersionsInfo;
@@ -87,7 +88,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                             fpc.setLinks(links.toArray(new DBLink[links.size()]));
                             fpcs.add(new Scored<>(fpc, Double.parseDouble(tabs[4])));
                         }
-                        return new FingerIdResult(fpcs, 0, null, null);
+                        return new FingerIdResult(fpcs,  null, null);
                     }));
                 }
             }
@@ -122,7 +123,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                     Map<String, String> expInfo = env.readKeyValueFile(FingerIdLocations.FINGERID_FINGERPRINT_INFO.fileName(r));
                     //readConfidence
                     if (expInfo.containsKey("csi_confidence"))
-                        fingerIdResult.setConfidence(Double.valueOf(expInfo.get("csi_confidence")));
+                        fingerIdResult.setAnnotation(ConfidenceResult.class, new ConfidenceResult(Double.valueOf(expInfo.get("csi_confidence"))));
                 }
             } finally {
                 env.leaveDirectory();
