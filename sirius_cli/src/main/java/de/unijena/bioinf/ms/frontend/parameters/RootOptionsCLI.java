@@ -125,6 +125,7 @@ public class RootOptionsCLI implements RootOptions {
                     }
                     , makeSerializerArray());
         }
+
         space.registerSummaryWriter(new MztabSummaryWriter());
 
         return space;
