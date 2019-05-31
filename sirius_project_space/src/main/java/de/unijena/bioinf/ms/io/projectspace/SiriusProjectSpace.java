@@ -14,7 +14,9 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -73,9 +75,31 @@ public class SiriusProjectSpace implements ProjectSpace {
         projectSpace.copyToZip(zipFile);
     }
 
+    /**
+     * Check for a compressed project-space by file ending
+     */
     public static boolean isCompressedProjectSpaceName(String fileName) {
         final String lowercaseName = fileName.toLowerCase();
         return lowercaseName.endsWith(".workspace") || lowercaseName.endsWith(".zip") || lowercaseName.endsWith(".sirius");
+    }
+
+    /**
+     * Just a quick check to discriminate a project-space for an arbitrary folder
+     * */
+    public static boolean isSiriusWorkspaceDirectory(File f) {
+        final File fv = new File(f, "version.txt");
+        if (!fv.exists()) return false;
+        try (final BufferedReader br = new BufferedReader(new FileReader(fv), 512)) {
+            String line = br.readLine();
+            if (line == null) return false;
+            line = line.toUpperCase();
+            if (line.startsWith("SIRIUS")) return true;
+            else return false;
+        } catch (IOException e) {
+            // not critical: if file cannot be read, it is not a valid workspace
+            LOG.error(e.getMessage(), e);
+            return false;
+        }
     }
     //endregion
 
