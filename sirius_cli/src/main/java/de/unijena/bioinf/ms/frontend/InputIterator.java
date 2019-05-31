@@ -16,6 +16,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
+/**
+ * File based input Iterator that allows to iterate over the {@Ms2Experiment}s parsed from
+ * multiple files (also different types) that are supported by the @{MsExperimentParser}.
+ * */
 public class InputIterator implements Iterator<Ms2Experiment> {
     private static final Logger LOG = LoggerFactory.getLogger(InputIterator.class);
     private final ArrayDeque<Ms2Experiment> instances = new ArrayDeque<>();

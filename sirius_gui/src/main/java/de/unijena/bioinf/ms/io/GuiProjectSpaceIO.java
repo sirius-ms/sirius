@@ -279,7 +279,7 @@ public class GuiProjectSpaceIO {
     public static List<File> resolveFileList(List<File> files) {
         final ArrayList<File> filelist = new ArrayList<>();
         for (File f : files) {
-            if (f.isDirectory() && !isSiriusWorkspaceDirectory(f)) {
+            if (f.isDirectory() && !SiriusProjectSpace.isSiriusWorkspaceDirectory(f)) {
                 final File[] fl = f.listFiles();
                 if (fl != null) {
                     for (File g : fl)
@@ -292,21 +292,7 @@ public class GuiProjectSpaceIO {
         return filelist;
     }
 
-    public static boolean isSiriusWorkspaceDirectory(File f) {
-        final File fv = new File(f, "version.txt");
-        if (!fv.exists()) return false;
-        try (final BufferedReader br = new BufferedReader(new FileReader(fv), 512)) {
-            String line = br.readLine();
-            if (line == null) return false;
-            line = line.toUpperCase();
-            if (line.startsWith("SIRIUS")) return true;
-            else return false;
-        } catch (IOException e) {
-            // not critical: if file cannot be read, it is not a valid workspace
-            LoggerFactory.getLogger(GuiProjectSpaceIO.class).error(e.getMessage(), e);
-            return false;
-        }
-    }
+
 
     public static class SiriusSaveFileFilter extends FileFilter {
         @Override

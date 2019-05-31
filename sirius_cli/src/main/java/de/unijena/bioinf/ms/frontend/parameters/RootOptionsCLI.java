@@ -1,8 +1,14 @@
 package de.unijena.bioinf.ms.frontend.parameters;
 
+import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.ms.frontend.InputIterator;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.io.projectspace.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.sirius.ExperimentResult;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -10,7 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.ParseException;
-import java.util.List;
+import java.util.*;
 
 /**
  * This is for not algorithm related parameters.
@@ -23,6 +29,12 @@ import java.util.List;
  * */
 @CommandLine.Command(name = "night-sky", aliases = {"ns"/*, "sirius"*/}, defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
 public class RootOptionsCLI implements RootOptions {
+    public static final Logger LOG = LoggerFactory.getLogger(RootOptionsCLI.class);
+
+    public enum InputType {PROJECT, SIRIUS, MZML}
+
+    ;
+
 
     // region Options: Quality
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -88,11 +100,9 @@ public class RootOptionsCLI implements RootOptions {
     @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius", order = 70)
     public Files workspace; //todo change in application core
 
-    @Option(names = {"--project-space", "-p"}, description = "Specify project-space to read from and also write to if nothing else is specified. For compression use the File ending .zip or .sirius", order = 70)
-    public File projectSpaceLocation;
+    @Option(names = "--maxmz", description = "Just consider compounds with a precursor mz lower or equal this maximum mz. All other compounds in the input file are ignored.", order = 100)
+    public Double maxMz = Double.POSITIVE_INFINITY;
 
-    @Option(names = {"--input-project-space"}, description = "Specify different project-space(s) for reading than for writing. For compression use the File ending .zip or .sirius", order = 80)
-    public List<File> inputProjectSpaceLocations;
 
     @Option(names = "--naming-convention", description = "Specify a format for compounds' output directories. Default %%index_%%filename_%%compoundname", order = 90)
     public void setProjectSpaceFilenameFormatter(String projectSpaceFilenameFormatter) throws ParseException {
@@ -101,36 +111,120 @@ public class RootOptionsCLI implements RootOptions {
 
     public FilenameFormatter projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
 
+    @Option(names = {"--output", "--project-space", "-o", "-p"}, description = "Specify project-space to read from and also write to if nothing else is specified. For compression use the File ending .zip or .sirius", order = 70)
+    public File projectSpaceLocation;
+
+    @Option(names = {"--input", "-i" }, description = "Input for the analysis. Ths can be either preprocessed mass spectra in .ms or .mgf file format, " +
+            "LC/MS runs in .mzml format or already existing SIRIUS project-space(s) (uncompressed/compressed).", order = 80, required = true)
+    // we differentiate between contiunuing a project-space and starting from mzml or  already processed ms/mgf file.
+    // If multiple files match the priority is project-space,  ms/mgf,  mzml
+    public void setInput(List<File> files) {
+        if (files == null || files.isEmpty()) return;
+
+        final List<File> projectSpaces = new ArrayList<>();
+        final List<File> siriusInfiles = new ArrayList<>();
+        final List<File> mzMLInfiles = new ArrayList<>();
+
+        expandInput(files, mzMLInfiles, siriusInfiles, projectSpaces);
+    }
+
+    private void expandInput(@NotNull List<File> files, @NotNull final List<File> mzMLInfiles, @NotNull List<File> siriusInfiles, @NotNull List<File> projectSpaces) {
+        for (File g : files) {
+            if (g.isDirectory()) {
+                // check whether it is a workspace or a gerneric directory with som other input
+                if (SiriusProjectSpace.isSiriusWorkspaceDirectory(g)) {
+                    projectSpaces.add(g);
+                } else {
+                    File[] ins = g.listFiles(pathname -> pathname.isFile());
+                    if (ins != null) {
+                        Arrays.sort(ins, Comparator.comparing(File::getName));
+                        expandInput(Arrays.asList(ins), mzMLInfiles, siriusInfiles, projectSpaces);
+                    }
+                }
+            } else {
+                //check whether files are lcms runs copressed project-spaces or stadard ms/mgf files
+                final String name = g.getName();
+                if (MsExperimentParser.isSupportedFileName(name)) {
+                    siriusInfiles.add(g);
+                } else if (SiriusProjectSpace.isCompressedProjectSpaceName(name)) {
+                    projectSpaces.add(g);
+                } else if (name.toLowerCase().endsWith(".mzml")) {
+                    //todo add mzML support?
+                    LOG.warn("Mzml file found. This format is currently not supported but support is planned for future releases. File is skipped.");
+                } else {
+                    LOG.warn("File with the name \"" + name + "\" is not in a supported format or has a wrong file extension. File is skipped");
+                }
+            }
+        }
+
+        if (!projectSpaces.isEmpty()) {
+            if (siriusInfiles.isEmpty() || mzMLInfiles.isEmpty())
+                LOG.warn("Multiple input types found: Only the project-space data ist used as input.");
+            input = projectSpaces;
+            type = InputType.PROJECT;
+        } else if (!siriusInfiles.isEmpty()) {
+            if (mzMLInfiles.isEmpty())
+                LOG.warn("Multiple input types found: Only the .ms/.mgf data is used as input.");
+            input = siriusInfiles;
+            type = InputType.SIRIUS;
+        } else if (!mzMLInfiles.isEmpty()) {
+            input = mzMLInfiles;
+            type = InputType.MZML;
+        } else {
+            throw new IllegalArgumentException("No valid input data is found. Please give you input in a supported format.");
+        }
+    }
+
+    List<File> input = null;
+    InputType type = null;
+
+    //endregion
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     private SiriusProjectSpace projectSpaceToWriteOn = null;
     @Override
     public SiriusProjectSpace getProjectSpace() throws IOException {
-        if (projectSpaceToWriteOn == null) {
-            projectSpaceToWriteOn = configureProjectSpace();
-        }
+        if (projectSpaceToWriteOn == null)
+            configureProjectSpace();
+
         return projectSpaceToWriteOn;
     }
 
-    protected SiriusProjectSpace configureProjectSpace() throws IOException {
-        SiriusProjectSpace space;
-        if (inputProjectSpaceLocations == null || inputProjectSpaceLocations.isEmpty()) {
-            space = SiriusProjectSpace.create(projectSpaceFilenameFormatter, projectSpaceLocation,
+    @Override
+    public Iterator<ExperimentResult> newInputExperimentIterator() throws IOException {
+        if (projectSpaceToWriteOn == null)
+            configureProjectSpace();
+
+        switch (type) {
+            case PROJECT:
+                return projectSpaceToWriteOn.parseExperimentIterator();
+            case SIRIUS:
+                return new InputIterator(input, maxMz).asExpResultIterator();
+            case MZML:
+                throw new IllegalArgumentException("MZML input is not yet supported! This should not be possible. BUG?");
+        }
+        throw new IllegalArgumentException("Illegal Input type: " + type);
+    }
+
+
+    protected void configureProjectSpace() throws IOException {
+        if (type == InputType.PROJECT) {
+            projectSpaceToWriteOn = SiriusProjectSpace.create(projectSpaceLocation, input, projectSpaceFilenameFormatter,
                     (currentProgress, maxProgress, Message) -> {
                         System.out.println("Creating Project Space: " + (((((double) currentProgress) / (double) maxProgress)) * 100d) + "%");
                     }
                     , makeSerializerArray());
         } else {
-            space = SiriusProjectSpace.create(projectSpaceLocation, inputProjectSpaceLocations, projectSpaceFilenameFormatter,
+            projectSpaceToWriteOn = SiriusProjectSpace.create(projectSpaceFilenameFormatter, projectSpaceLocation,
                     (currentProgress, maxProgress, Message) -> {
                         System.out.println("Creating Project Space: " + (((((double) currentProgress) / (double) maxProgress)) * 100d) + "%");
                     }
                     , makeSerializerArray());
+
         }
-
-        space.registerSummaryWriter(new MztabSummaryWriter());
-
-        return space;
+        projectSpaceToWriteOn.registerSummaryWriter(new MztabSummaryWriter());
     }
-
 
 
     protected MetaDataSerializer[] makeSerializerArray() {

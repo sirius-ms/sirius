@@ -4,13 +4,14 @@ import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
 
 import java.io.IOException;
 
-public interface RootOptions {
+public interface RootOptions extends InputProvider {
 
     Integer getMaxInstanceBuffer();
 
     Integer getInitialInstanceBuffer();
 
     SiriusProjectSpace getProjectSpace() throws IOException;
+
 
 
     /*final class IO {
