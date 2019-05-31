@@ -4,7 +4,6 @@ import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import picocli.CommandLine;
 
-import java.io.IOException;
 import java.util.Iterator;
 //todo move to GUI?
 //maypbe define API in interface and make a abstract basic root cli
@@ -35,7 +34,7 @@ public class RootOptionsGUI implements RootOptions, InputProvider {
     }
 
     @Override
-    public SiriusProjectSpace getProjectSpace() throws IOException {
+    public SiriusProjectSpace getProjectSpace() {
         return projectSpace;
     }
 

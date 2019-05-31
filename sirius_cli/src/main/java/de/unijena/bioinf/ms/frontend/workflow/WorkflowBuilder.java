@@ -67,7 +67,6 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
         rootSpec = forAnnotatedObjectWithSubCommands(this.rootOptions, customDBOptions, configSpec, siriusSpec, zodiacSpec, fingeridSpec, canopusOptions);
     }
 
-
     protected CommandLine.Model.CommandSpec forAnnotatedObjectWithSubCommands(Object parent, Object... subsToolInExecutionOrder) {
         final CommandLine.Model.CommandSpec parentSpec = parent instanceof CommandLine.Model.CommandSpec
                 ? (CommandLine.Model.CommandSpec) parent
@@ -97,14 +96,8 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
 
 
             //get project space from root cli
-            final SiriusProjectSpace space;
-            final Iterator<ExperimentResult> input;
-            try {
-                space = ((RootOptions) parseResult.commandSpec().commandLine().getCommand()).getProjectSpace();
-                input = ((RootOptions) parseResult.commandSpec().commandLine().getCommand()).newInputExperimentIterator();
-            } catch (IOException e) {
-                throw new CommandLine.ExecutionException(parseResult.commandSpec().commandLine(), "Could not Instantiate Sirius Project Space", e);
-            }
+            final SiriusProjectSpace space = ((RootOptions) parseResult.commandSpec().commandLine().getCommand()).getProjectSpace();
+            final Iterator<ExperimentResult> input = ((RootOptions) parseResult.commandSpec().commandLine().getCommand()).newInputExperimentIterator();
 
             List<Object> toolchain = new ArrayList<>();
             // look for an alternative input in the first subtool that is not the CONFIG subtool.
@@ -159,6 +152,4 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
             return this;
         }
     }
-
-
 }
