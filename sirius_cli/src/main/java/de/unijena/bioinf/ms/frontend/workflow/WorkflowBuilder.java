@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
-import de.unijena.bioinf.ms.frontend.parameters.InputProvider;
 import de.unijena.bioinf.ms.frontend.parameters.RootOptions;
 import de.unijena.bioinf.ms.frontend.parameters.RootOptionsCLI;
 import de.unijena.bioinf.ms.frontend.parameters.SingeltonTool;
@@ -22,6 +21,21 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+/**
+ * This class is used to create a toolchain workflow to be executed
+ * in a CLI run Based on the given Parameters given by the User.
+ * <p>
+ * All possible SubToolOption  of the SIRIUS CLi need to be added to this class
+ * to be part of an automated execution.
+ * <p>
+ * In the Constructor it needs to be defined how the different Subtools depend on each other and
+ * in which order they have to be executed.
+ * <p>
+ * This class is also intended to be used from the GUI but with a different {@RootOtion) class.
+ * <p>
+ * Buy using this class we do not need to write new Workflows every time we add a new tool.
+ * We just have to define its parameters in h
+ */
 public class WorkflowBuilder<R extends RootOptionsCLI> {
 
     //root
@@ -44,6 +58,7 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
     public WorkflowBuilder(@NotNull R rootOptions) throws IOException {
         this.rootOptions = rootOptions;
 
+        // define execution order and dependencies of different Subtools
         CommandLine.Model.CommandSpec fingeridSpec = forAnnotatedObjectWithSubCommands(fingeridOptions, canopusOptions);
         CommandLine.Model.CommandSpec zodiacSpec = forAnnotatedObjectWithSubCommands(zodiacOptions, fingeridSpec);
         CommandLine.Model.CommandSpec siriusSpec = forAnnotatedObjectWithSubCommands(siriusOptions, zodiacSpec, fingeridSpec);
@@ -83,16 +98,16 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
 
             //get project space from root cli
             final SiriusProjectSpace space;
-
+            final Iterator<ExperimentResult> input;
             try {
                 space = ((RootOptions) parseResult.commandSpec().commandLine().getCommand()).getProjectSpace();
+                input = ((RootOptions) parseResult.commandSpec().commandLine().getCommand()).newInputExperimentIterator();
             } catch (IOException e) {
                 throw new CommandLine.ExecutionException(parseResult.commandSpec().commandLine(), "Could not Instantiate Sirius Project Space", e);
             }
 
-            Iterator<ExperimentResult> input = space.parseExperimentIterator();
             List<Object> toolchain = new ArrayList<>();
-            // look for an alternative input in the first subtool, that is not the CONFIG tool.
+            // look for an alternative input in the first subtool that is not the CONFIG subtool.
             if (parseResult.hasSubcommand()) {
                 parseResult = parseResult.subcommand();
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof DefaultParameterConfigLoader.ConfigOptions)
@@ -101,8 +116,6 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
                     return ((SingeltonTool) parseResult.commandSpec().commandLine().getCommand()).getSingeltonWorkflow();
 
                 execute(parseResult.commandSpec().commandLine(), toolchain);
-                if (parseResult.commandSpec().commandLine().getCommand() instanceof InputProvider)
-                    input = ((InputProvider) parseResult.commandSpec().commandLine().getCommand()).newInputExperimentIterator();
             } else {
                 return () -> LoggerFactory.getLogger(getClass()).warn("No execution steps have been Specified!");
 

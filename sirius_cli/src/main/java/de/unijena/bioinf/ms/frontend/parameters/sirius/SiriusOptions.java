@@ -43,7 +43,7 @@ import java.util.concurrent.Callable;
 
 //todo got descriprions from defaultConfigOptions
 @Command(name = "sirius", aliases = {"S"}, description = "Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true, sortOptions = false)
-public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubToolJob>>, InputProvider {
+public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
     protected final SiriusCachedFactory siriusProvider = new SiriusCachedFactory();
 
@@ -168,36 +168,6 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
 
     @Option(names = "--disable-fast-mode", hidden = true)
     public boolean disableFastMode;
-
-    @Option(names = "--maxmz", description = "Just consider compounds with a precursor mz lower or equal this maximum mz. All other compounds in the input file are ignored.", order = 100)
-    public Double maxMz = Double.POSITIVE_INFINITY;
-
-
-    @CommandLine.Parameters(description = "Input spectra in .ms or .mgf file format", type = File.class)
-    public void setInput(List<File> files) {
-        if (files == null || files.isEmpty()) return;
-
-        final List<File> infiles = new ArrayList<>();
-        for (File g : files) {
-            if (g.isDirectory()) {
-                File[] ins = g.listFiles(pathname -> pathname.isFile());
-                if (ins != null) {
-                    Arrays.sort(ins, Comparator.comparing(File::getName));
-                    infiles.addAll(Arrays.asList(ins));
-                }
-            } else {
-                infiles.add(g);
-            }
-        }
-        input = infiles;
-    }
-
-    public List<File> input = null;
-
-    @Override
-    public Iterator<ExperimentResult> newInputExperimentIterator() {
-        return new InputIterator(input, maxMz).asExpResultIterator();
-    }
 
 
     // region Options: SINGLE_COMPOUND_MODE
