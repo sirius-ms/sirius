@@ -126,6 +126,23 @@ public class RootOptionsCLI implements RootOptions {
         final List<File> mzMLInfiles = new ArrayList<>();
 
         expandInput(files, mzMLInfiles, siriusInfiles, projectSpaces);
+
+        if (!projectSpaces.isEmpty()) {
+            if (siriusInfiles.isEmpty() || mzMLInfiles.isEmpty())
+                LOG.warn("Multiple input types found: Only the project-space data ist used as input.");
+            input = projectSpaces;
+            type = InputType.PROJECT;
+        } else if (!siriusInfiles.isEmpty()) {
+            if (!mzMLInfiles.isEmpty())
+                LOG.warn("Multiple input types found: Only the .ms/.mgf data is used as input.");
+            input = siriusInfiles;
+            type = InputType.SIRIUS;
+        } else if (!mzMLInfiles.isEmpty()) {
+            input = mzMLInfiles;
+            type = InputType.MZML;
+        } else {
+            throw new CommandLine.PicocliException("No valid input data is found. Please give you input in a supported format.");
+        }
     }
 
     private void expandInput(@NotNull List<File> files, @NotNull final List<File> mzMLInfiles, @NotNull List<File> siriusInfiles, @NotNull List<File> projectSpaces) {
@@ -156,23 +173,6 @@ public class RootOptionsCLI implements RootOptions {
                 }
             }
         }
-
-        if (!projectSpaces.isEmpty()) {
-            if (siriusInfiles.isEmpty() || mzMLInfiles.isEmpty())
-                LOG.warn("Multiple input types found: Only the project-space data ist used as input.");
-            input = projectSpaces;
-            type = InputType.PROJECT;
-        } else if (!siriusInfiles.isEmpty()) {
-            if (mzMLInfiles.isEmpty())
-                LOG.warn("Multiple input types found: Only the .ms/.mgf data is used as input.");
-            input = siriusInfiles;
-            type = InputType.SIRIUS;
-        } else if (!mzMLInfiles.isEmpty()) {
-            input = mzMLInfiles;
-            type = InputType.MZML;
-        } else {
-            throw new IllegalArgumentException("No valid input data is found. Please give you input in a supported format.");
-        }
     }
 
     List<File> input = null;
@@ -184,7 +184,7 @@ public class RootOptionsCLI implements RootOptions {
 
     private SiriusProjectSpace projectSpaceToWriteOn = null;
     @Override
-    public SiriusProjectSpace getProjectSpace() throws IOException {
+    public SiriusProjectSpace getProjectSpace() {
         if (projectSpaceToWriteOn == null)
             configureProjectSpace();
 
@@ -192,7 +192,7 @@ public class RootOptionsCLI implements RootOptions {
     }
 
     @Override
-    public Iterator<ExperimentResult> newInputExperimentIterator() throws IOException {
+    public Iterator<ExperimentResult> newInputExperimentIterator() {
         if (projectSpaceToWriteOn == null)
             configureProjectSpace();
 
@@ -202,28 +202,42 @@ public class RootOptionsCLI implements RootOptions {
             case SIRIUS:
                 return new InputIterator(input, maxMz).asExpResultIterator();
             case MZML:
-                throw new IllegalArgumentException("MZML input is not yet supported! This should not be possible. BUG?");
+                throw new CommandLine.PicocliException("MZML input is not yet supported! This should not be possible. BUG?");
         }
-        throw new IllegalArgumentException("Illegal Input type: " + type);
+        throw new CommandLine.PicocliException("Illegal Input type: " + type);
     }
 
 
-    protected void configureProjectSpace() throws IOException {
-        if (type == InputType.PROJECT) {
-            projectSpaceToWriteOn = SiriusProjectSpace.create(projectSpaceLocation, input, projectSpaceFilenameFormatter,
-                    (currentProgress, maxProgress, Message) -> {
-                        System.out.println("Creating Project Space: " + (((((double) currentProgress) / (double) maxProgress)) * 100d) + "%");
-                    }
-                    , makeSerializerArray());
-        } else {
-            projectSpaceToWriteOn = SiriusProjectSpace.create(projectSpaceFilenameFormatter, projectSpaceLocation,
-                    (currentProgress, maxProgress, Message) -> {
-                        System.out.println("Creating Project Space: " + (((((double) currentProgress) / (double) maxProgress)) * 100d) + "%");
-                    }
-                    , makeSerializerArray());
+    protected void configureProjectSpace() {
+        try {
+            if (type == InputType.PROJECT) {
+                if (projectSpaceLocation == null) {
+                    if (input.size() == 1)
+                        projectSpaceLocation = input.get(0);
+                    else
+                        throw new CommandLine.PicocliException("No output location given. Can only be avoided if a singe project-space it the input");
+                }
 
+                projectSpaceToWriteOn = SiriusProjectSpace.create(projectSpaceLocation, input, projectSpaceFilenameFormatter,
+                        (currentProgress, maxProgress, Message) -> {
+                            System.out.println("Creating Project Space: " + (((((double) currentProgress) / (double) maxProgress)) * 100d) + "%");
+                        }
+                        , makeSerializerArray());
+            } else {
+                projectSpaceToWriteOn = SiriusProjectSpace.create(projectSpaceFilenameFormatter, projectSpaceLocation,
+                        (currentProgress, maxProgress, Message) -> {
+                            System.out.println("Creating Project Space: " + (((((double) currentProgress) / (double) maxProgress)) * 100d) + "%");
+                        }
+                        , makeSerializerArray());
+
+                if (projectSpaceToWriteOn.getNumberOfWrittenExperiments() > 0)
+                    throw new CommandLine.PicocliException("Output workspace is not empty and cannot be merged with non workspace inputs.");
+
+            }
+            projectSpaceToWriteOn.registerSummaryWriter(new MztabSummaryWriter());
+        } catch (IOException e) {
+            throw new CommandLine.PicocliException("Could not initialize workspace!", e);
         }
-        projectSpaceToWriteOn.registerSummaryWriter(new MztabSummaryWriter());
     }
 
 

@@ -10,7 +10,7 @@ public interface RootOptions extends InputProvider {
 
     Integer getInitialInstanceBuffer();
 
-    SiriusProjectSpace getProjectSpace() throws IOException;
+    SiriusProjectSpace getProjectSpace();
 
 
 
