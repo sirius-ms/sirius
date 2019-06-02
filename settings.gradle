@@ -24,5 +24,6 @@ include ':sirius_api'
 include ':gibbs_sampling'
 include 'passatutto'
 include ':utils'
+include ':lcms'
 include ':sirius_project_space'
 

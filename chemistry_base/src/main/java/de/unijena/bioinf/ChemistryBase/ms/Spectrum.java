@@ -69,4 +69,5 @@ public interface Spectrum<T extends Peak> extends Iterable<T>, Cloneable {
         }
         return max;
     }
+
 }

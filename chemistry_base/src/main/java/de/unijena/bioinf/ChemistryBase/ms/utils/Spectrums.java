@@ -19,6 +19,7 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Range;
+import de.unijena.bioinf.ChemistryBase.algorithm.BoundedQueue;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
@@ -712,6 +713,55 @@ public class Spectrums {
     private final static SimpleSpectrum EMPTY_SPEC = new SimpleSpectrum(new double[0], new double[0]);
     public static SimpleSpectrum empty() {
         return EMPTY_SPEC;
+    }
+
+    public static <P extends Peak,S extends Spectrum<P>>double calculateTIC(S spec) {
+        double intens = 0d;
+        for (int k=0; k < spec.size(); ++k) {
+            intens += spec.getIntensityAt(k);
+        }
+        return intens;
+    }
+
+    public static <P extends Peak,S extends Spectrum<P>> double calculateTIC(S spec, double intensityBaseLine) {
+        double intens = 0d;
+        for (int k=0; k < spec.size(); ++k) {
+            if (spec.getIntensityAt(k) > intensityBaseLine)
+                intens += spec.getIntensityAt(k);
+        }
+        return intens;
+    }
+
+    public static <P extends Peak,S extends Spectrum<P>> SimpleSpectrum extractMostIntensivePeaks(S spectrum, int numberOfPeaksPerMassWindow, double slidingWindowWidth) {
+        final Spectrum<Peak> spec = getMassOrderedSpectrum(spectrum);
+        final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
+        final BoundedQueue<Integer> queue = new BoundedQueue<>(numberOfPeaksPerMassWindow, Integer[]::new, Comparator.comparingDouble(spec::getIntensityAt));
+        final BitSet deleted = new BitSet(spec.size());
+        queue.setCallbackForRemoval(deleted::set);
+        int start = 0;
+        int end = 0;
+        double windowOffset = spec.getMzAt(0);
+        for (; end < spec.size(); ++end) {
+            if (spec.getMzAt(end)-windowOffset > slidingWindowWidth)
+                break;
+        }
+        for (int i=start; i < end; ++i) queue.add(i);
+        // now slide window over the specrum
+        final double maxMz = spec.getMzAt(spec.size()-1);
+        while (windowOffset+slidingWindowWidth < maxMz) {
+            ++start;
+            windowOffset = spec.getMzAt(start);
+            for (; end < spec.size(); ++end) {
+                if (spec.getMzAt(end)-windowOffset > slidingWindowWidth)
+                    break;
+                queue.add(end);
+            }
+        }
+        for (int k=0; k < spec.size(); ++k) {
+            if (!deleted.get(k))
+                buf.addPeak(spec.getMzAt(k), spec.getIntensityAt(k));
+        }
+        return new SimpleSpectrum(buf);
     }
 
 

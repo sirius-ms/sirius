@@ -32,11 +32,21 @@ public final class BoundedQueue<T> implements Iterable<T> {
     private final T[] values;
     private int length;
     private final Comparator<T> comparator;
+    private Callback<T> callbackForRemoval;
 
     public BoundedQueue(int size, IntFunction<T[]> generator, Comparator<T> comparator) {
         this.values = generator.apply(size);
         this.length = 0;
         this.comparator = comparator;
+        this.callbackForRemoval = null;
+    }
+
+    public Callback<T> getCallbackForRemoval() {
+        return callbackForRemoval;
+    }
+
+    public void setCallbackForRemoval(Callback<T> callbackForRemoval) {
+        this.callbackForRemoval = callbackForRemoval;
     }
 
     public int length() {
@@ -58,6 +68,7 @@ public final class BoundedQueue<T> implements Iterable<T> {
             return true;
         }
         if (comparator.compare(value, values[0]) < 0) return false;
+        if (callbackForRemoval!=null) callbackForRemoval.call(values[0]);
         final int index = (length <= 5) ? linearSearch(value) : binarySearch(value);
         if (index > 0) {
             if (index > 1) System.arraycopy(values, 1, values, 0, index-1);
@@ -94,5 +105,9 @@ public final class BoundedQueue<T> implements Iterable<T> {
             return values.clone();
         else
             return Arrays.copyOf(values, length);
+    }
+
+    public static interface Callback<T> {
+        public void call(T value);
     }
 }
