@@ -35,7 +35,7 @@ public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectr
 		return EMPTY;
 	}
 
-	protected final int hash;
+	protected int hash = 0;
 	
 	public SimpleSpectrum(double[] masses, double[] intensities) {
 		this(new ArrayWrapperSpectrum(masses, intensities));
@@ -43,7 +43,6 @@ public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectr
 	
 	public <T extends Peak, S extends Spectrum<T>> SimpleSpectrum(S s) {
 		super(orderedSpectrum(s));
-		this.hash = Arrays.hashCode(this.masses) ^ Arrays.hashCode(this.intensities);
 	}
 
 	@Override
@@ -64,6 +63,9 @@ public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectr
 	
 	@Override
 	public int hashCode() {
+		if (hash!=0) return hash;
+		this.hash = Arrays.hashCode(this.masses) ^ Arrays.hashCode(this.intensities);
+		if (hash==0) hash=1;
 		return hash;
 	}
 
