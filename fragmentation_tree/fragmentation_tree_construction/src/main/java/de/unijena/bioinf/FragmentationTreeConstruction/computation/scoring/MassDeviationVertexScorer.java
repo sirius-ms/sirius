@@ -49,7 +49,7 @@ public class MassDeviationVertexScorer implements DecompositionScorer<MassDeviat
     @Override
     public Prepared prepare(ProcessedInput input) {
         final Ms1IsotopePattern ms1 = input.getAnnotation(Ms1IsotopePattern.class, Ms1IsotopePattern::none);
-        int k = Spectrums.mostIntensivePeakWithin(ms1.getSpectrum(), input.getParentPeak().getMass(), input.getAnnotation(MS1MassDeviation.class).allowedMassDeviation);
+        int k = Spectrums.mostIntensivePeakWithin(ms1.getSpectrum(), input.getParentPeak().getMass(), input.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation);
         SpectralRecalibration rec = input.getAnnotation(SpectralRecalibration.class, SpectralRecalibration::none);
         if (k >= 0)
             return new Prepared(rec, ms1, ms1.getSpectrum().getPeakAt(k));
@@ -60,10 +60,10 @@ public class MassDeviationVertexScorer implements DecompositionScorer<MassDeviat
     public double score(MolecularFormula formula, Ionization ion,ProcessedPeak peak, ProcessedInput input, Prepared prep) {
         if (peak.getOriginalPeaks().isEmpty())
             return 0d; // don't score synthetic peaks
-        if (peak==input.getParentPeak()) {
+        if (peak==input.getParentPeak() && prep.parentPeakFromMs1!=null) {
             // score parent peak with MS1 instead
             final double realMass = prep.parentPeakFromMs1.getMass();
-            final Deviation dev = input.getAnnotation(MS1MassDeviation.class).standardMassDeviation;
+            final Deviation dev = input.getAnnotationOrDefault(MS1MassDeviation.class).standardMassDeviation;
             return score(formula, ion, realMass, dev);
         } else {
             final double realMass = useOriginalMz ? peak.getMass() : prep.recalibration.recalibrate(peak);
