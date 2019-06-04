@@ -175,11 +175,24 @@ public interface Annotated<A extends DataAnnotation> {
 
     /**
      * Add all annotations of type Class<A> from the given config. Overrides existing.
+     * Missing keys will be skipped with warning.
      *
      * @param config from which the annotations will be add
+     * @param clz type of the annotations that will be parsed
      */
     default void setAnnotationsFrom(ParameterConfig config, Class<A> clz) {
-        config.createInstancesWithDefaults(clz).forEach(this::setAnnotation);
+        setAnnotationsFrom(config, clz, true);
+    }
+
+    /**
+     * Add all annotations of type Class<A> from the given config. Overrides existing.
+     *
+     * @param config from which the annotations will be add
+     * @param clz type of the annotations that will be parsed
+     * @param skipMissingKeys specify how to handle missing keys*
+     */
+    default void setAnnotationsFrom(ParameterConfig config, Class<A> clz, boolean skipMissingKeys) {
+        config.createInstancesWithDefaults(clz, skipMissingKeys).forEach(this::setAnnotation);
     }
 
     /**
@@ -206,11 +219,24 @@ public interface Annotated<A extends DataAnnotation> {
 
     /**
      * Add all annotations of type Class<A> from the given config if they do  NOT already exist.
+     * Missing keys will be skipped with warning.
      *
      * @param config from which the annotations will be add
+     * @param clz type of the annotations that will be parsed
      */
     default void addAnnotationsFrom(ParameterConfig config, Class<A> clz) {
-        config.createInstancesWithDefaults(clz).forEach(this::addAnnotationIfAbsend);
+        addAnnotationsFrom(config, clz, true);
+    }
+
+    /**
+     * Add all annotations of type Class<A> from the given config if they do  NOT already exist.
+     *
+     * @param config from which the annotations will be add
+     * @param clz type of the annotations that will be parsed
+     * @param skipMissingKeys specify how to handle missing keys
+     */
+    default void addAnnotationsFrom(ParameterConfig config, Class<A> clz, boolean skipMissingKeys) {
+        config.createInstancesWithDefaults(clz, skipMissingKeys).forEach(this::addAnnotationIfAbsend);
     }
 
 

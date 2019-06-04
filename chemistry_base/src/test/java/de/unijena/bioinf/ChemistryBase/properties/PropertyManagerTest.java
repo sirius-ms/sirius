@@ -7,9 +7,9 @@ import static org.junit.Assert.assertEquals;
 
 public class PropertyManagerTest {
 
-    @Test
+    /*@Test
     public void testManager() {
         assertEquals("SUCCESSFUL",
                 PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.test"));
-    }
+    }*/
 }
