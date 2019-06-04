@@ -10,32 +10,19 @@ import java.util.Optional;
 
 public class ChromatogramBuilder {
 
-    protected final LCMSRun lcms;
-    protected final NoiseModel noiseModel;
-    protected final SpectrumStorage storage;
+    protected final ProcessedSample sample;
     protected final Deviation dev;
+    protected final ChromatogramCache cache;
 
-    protected ChromatogramCache cache;
 
-
-    public ChromatogramBuilder(LCMSRun run, NoiseModel noiseModel, SpectrumStorage storage) {
-        this.lcms = run;
-        this.noiseModel = noiseModel;
-        this.storage = storage;
+    public ChromatogramBuilder(ProcessedSample sample) {
+        this.sample = sample;
         this.dev = new Deviation(10);
-        cache = null;
-    }
-
-    public ChromatogramCache getCache() {
-        return cache;
-    }
-
-    public void setCache(ChromatogramCache cache) {
-        this.cache = cache;
+        this.cache = new ChromatogramCache();
     }
 
     public Optional<ChromatographicPeak> detectExact(Scan startingPoint, double mz) {
-        final SimpleSpectrum spectrum = storage.getScan(startingPoint);
+        final SimpleSpectrum spectrum = sample.storage.getScan(startingPoint);
         int i = Spectrums.binarySearch(spectrum, mz, dev);
         if (i>=0) {
             return buildTrace(spectrum, new ScanPoint(startingPoint, spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
@@ -45,7 +32,7 @@ public class ChromatogramBuilder {
     }
 
     public Optional<ChromatographicPeak> detect(Scan startingPoint, double mz) {
-        final SimpleSpectrum spectrum = storage.getScan(startingPoint);
+        final SimpleSpectrum spectrum = sample.storage.getScan(startingPoint);
         int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, dev);
         if (i>=0) {
             return buildTrace(spectrum, new ScanPoint(startingPoint, spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
@@ -55,18 +42,16 @@ public class ChromatogramBuilder {
     }
 
     private Optional<ChromatographicPeak> buildTrace(SimpleSpectrum spectrum, ScanPoint scanPoint) {
-        if (cache!=null) {
-            Optional<ChromatographicPeak> peak = cache.retrieve(scanPoint);
-            if (peak.isPresent()) {
-                return peak;
-            }
+        Optional<ChromatographicPeak> peak = cache.retrieve(scanPoint);
+        if (peak.isPresent()) {
+            return peak;
         }
         final MutableChromatographicPeak rightTrace = new MutableChromatographicPeak();
         final MutableChromatographicPeak leftTrace = new MutableChromatographicPeak();
         rightTrace.extendRight(scanPoint);
         leftTrace.extendRight(scanPoint);
         // extend to the right
-        for (Scan scan  : lcms.getScansAfter(scanPoint.getScanNumber()).values()) {
+        for (Scan scan  : sample.run.getScansAfter(scanPoint.getScanNumber()).values()) {
             if (!scan.isMsMs()) {
                 if (tryToExtend(rightTrace, scan)) {
                     // go on!
@@ -77,7 +62,7 @@ public class ChromatogramBuilder {
             }
         }
         // extend to the left
-        for (Scan scan  : lcms.getScansBefore(scanPoint.getScanNumber()).values()) {
+        for (Scan scan  : sample.run.getScansBefore(scanPoint.getScanNumber()).values()) {
             if (!scan.isMsMs()) {
                 if (tryToExtend(leftTrace, scan)) {
                     // go on!
@@ -135,7 +120,7 @@ public class ChromatogramBuilder {
                 int end = k + 25;
                 if (end + 25 > peak.numberOfScans()) end = peak.numberOfScans();
                 int middle = start + (end - start) / 2;
-                double noiseLevel = noiseModel.getNoiseLevel(peak.getScanNumberAt(middle), peak.getMzAt(middle));
+                double noiseLevel = sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(middle), peak.getMzAt(middle));
                 for (int i=start; i < end; ++i) {
                     if (i>0) medianSlope.add(Math.abs(peak.getIntensityAt(i) - peak.getIntensityAt(i - 1)));
                     intensityQuantile.add(peak.getIntensityAt(i));
@@ -149,7 +134,7 @@ public class ChromatogramBuilder {
             }
         } else {
             for (int i=0; i < peak.numberOfScans(); ++i) {
-                noiseLevels[i] = (float)noiseModel.getNoiseLevel(peak.getScanNumberAt(i), peak.getMzAt(i));
+                noiseLevels[i] = (float)sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(i), peak.getMzAt(i));
             }
         }
 
@@ -202,12 +187,12 @@ public class ChromatogramBuilder {
 
     private boolean tryToExtend(MutableChromatographicPeak trace, Scan scan) {
         final ScanPoint previous = trace.getRightEdge();
-        final SimpleSpectrum spec = storage.getScan(scan);
+        final SimpleSpectrum spec = sample.storage.getScan(scan);
         final double mz = previous.getMass();
         final double intensity = previous.getIntensity();
         final double mzStd = Math.pow(dev.absoluteFor(mz)/2d,2);
         final double intVar = 1d;
-        final double noiseLevel = noiseModel.getNoiseLevel(scan.getScanNumber(),mz);
+        final double noiseLevel = sample.ms1NoiseModel.getNoiseLevel(scan.getScanNumber(),mz);
         final int start = Spectrums.indexOfFirstPeakWithin(spec, mz, dev);
         if (start < 0) return false;
         int end;
