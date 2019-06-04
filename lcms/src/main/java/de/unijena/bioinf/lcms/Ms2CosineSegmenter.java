@@ -22,29 +22,27 @@ import java.util.stream.Collectors;
 
 public class Ms2CosineSegmenter {
 
-    protected LCMSProccessingInstance instance;
     protected CosineQueryUtils cosine;
 
-    public Ms2CosineSegmenter(LCMSProccessingInstance instance) {
-        this.instance = instance;
+    public Ms2CosineSegmenter() {
         cosine = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20)));
     }
 
-    public List<FragmentedIon> process() {
+    public List<FragmentedIon> extractMsMSAndSegmentChromatograms(ProcessedSample sample) {
         final ArrayList<FragmentedIon> ions = new ArrayList<>();
         // group all MSMS scans into chromatographic peaks
         final HashMap<MutableChromatographicPeak, ArrayList<Scan>> scansPerPeak = new HashMap<>();
         Scan lastMs1 = null;
-        for (Scan s : instance.getLcms()) {
+        for (Scan s : sample.run) {
             if (s.isMsMs()) {
                 if (s.getPrecursor().getScanNumber()>0) {
-                    lastMs1 = instance.getLcms().getScanByNumber(s.getPrecursor().getScanNumber()).filter(x -> !x.isMsMs()).orElse(lastMs1);
+                    lastMs1 = sample.run.getScanByNumber(s.getPrecursor().getScanNumber()).filter(x -> !x.isMsMs()).orElse(lastMs1);
                 }
                 if (lastMs1==null) {
                     LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("MS2 scan without preceeding MS1 scan is not supported yet.");
                     continue;
                 }
-                instance.getBuilder().detect(lastMs1, s.getPrecursor().getMass()).ifPresent(peak->scansPerPeak.computeIfAbsent(peak.mutate(),x->new ArrayList<Scan>()).add(s));
+                sample.builder.detect(lastMs1, s.getPrecursor().getMass()).ifPresent(peak->scansPerPeak.computeIfAbsent(peak.mutate(),x->new ArrayList<Scan>()).add(s));
             } else {
                 lastMs1 = s;
             }
@@ -90,9 +88,9 @@ public class Ms2CosineSegmenter {
             final MergedSpectrum[] spectraPerSegment = new MergedSpectrum[segmentIds.length];
             int k=0;
             for (int segmentId : segmentIds) {
-                CosineQuery[] cos = perSegment.get(segmentId).stream().map(this::prepareForCosine).filter(Objects::nonNull).toArray(CosineQuery[]::new);
+                CosineQuery[] cos = perSegment.get(segmentId).stream().map(x->prepareForCosine(sample,x)).filter(Objects::nonNull).toArray(CosineQuery[]::new);
                 if (cos.length==0) continue;
-                MergedSpectrum mergedPeaks = (cos.length==1) ? cos[0].originalSpectrum : mergeViaClustering(cos);
+                MergedSpectrum mergedPeaks = (cos.length==1) ? cos[0].originalSpectrum : mergeViaClustering(sample,cos);
                 spectraPerSegment[k] = mergedPeaks;
                 ++k;
             }
@@ -107,8 +105,8 @@ public class Ms2CosineSegmenter {
                     j = i;
                     continue;
                 }
-                CosineQuery queryLeft = prepareForCosine(merged);
-                CosineQuery queryRight = prepareForCosine(spectraPerSegment[i]);
+                CosineQuery queryLeft = prepareForCosine(sample, merged);
+                CosineQuery queryRight = prepareForCosine(sample, spectraPerSegment[i]);
                 SpectralSimilarity cosine = queryLeft.cosine(queryRight);
                 final MutableChromatographicPeak mutableChromatographicPeak = entry.getKey().mutate();
                 if (cosine.similarity >= 0.75 && cosine.shardPeaks >= 4) {
@@ -148,13 +146,15 @@ public class Ms2CosineSegmenter {
         return ions;
 
     }
-    private CosineQuery prepareForCosine(Scan scan) {
-        return prepareForCosine(new MergedSpectrum(scan, instance.getStorage().getScan(scan), scan.getPrecursor()));
+    private CosineQuery prepareForCosine(ProcessedSample sample, Scan scan) {
+        return prepareForCosine(sample, new MergedSpectrum(scan, sample.storage.getScan(scan), scan.getPrecursor()));
     }
-    private CosineQuery prepareForCosine(MergedSpectrum orig) {
+    private CosineQuery prepareForCosine(ProcessedSample sample, MergedSpectrum orig) {
         final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum(orig);
         Spectrums.cutByMassThreshold(buffer,orig.getPrecursor().getMass()-20);
-        Spectrums.applyBaseline(buffer, 2*instance.getNoiseModelMs2().getNoiseLevel(orig.getScans().get(0).getScanNumber(), orig.getScans().get(0).getPrecursor().getMass()));
+        final double noiseLevel = 2 * sample.ms2NoiseModel.getNoiseLevel(orig.getScans().get(0).getScanNumber(), orig.getScans().get(0).getPrecursor().getMass());
+        Spectrums.applyBaseline(buffer, noiseLevel);
+        orig.setNoiseLevel(noiseLevel);
         if (buffer.isEmpty()) return null;
         final SimpleSpectrum spec = Spectrums.extractMostIntensivePeaks(buffer,6,100);
         return new CosineQuery(orig, spec);
@@ -177,7 +177,7 @@ public class Ms2CosineSegmenter {
         }
     }
 
-    public MergedSpectrum mergeViaClustering(CosineQuery[] cosines) {
+    public MergedSpectrum mergeViaClustering(ProcessedSample sample, CosineQuery[] cosines) {
 
         final double[][] matrix = new double[cosines.length][cosines.length];
         for (int i=0; i < matrix.length; ++i) {
@@ -203,7 +203,7 @@ public class Ms2CosineSegmenter {
                 break outerLoop;
             } else {
                 MergedSpectrum merged = merge(cosines[maxI].originalSpectrum, cosines[maxJ].originalSpectrum);
-                cosines[maxI] = prepareForCosine(merged);
+                cosines[maxI] = prepareForCosine(sample, merged);
                 --n;
                 for (int k=0; k <= n; ++k) {
                     if (indizes[k]==maxJ) {
@@ -281,7 +281,9 @@ public class Ms2CosineSegmenter {
         orderedByMz.addAll(append);
         final ArrayList<Scan> scans = new ArrayList<>(left.getScans());
         scans.addAll(right.getScans());
-        return new MergedSpectrum(left.getPrecursor(), orderedByMz, scans);
+        MergedSpectrum mergedPeaks = new MergedSpectrum(left.getPrecursor(), orderedByMz, scans);
+        mergedPeaks.setNoiseLevel(Math.max(left.getNoiseLevel(), right.getNoiseLevel()));
+        return mergedPeaks;
     }
 
 

@@ -1,6 +1,9 @@
 package de.unijena.bioinf.lcms;
 
-import de.unijena.bioinf.model.lcms.*;
+import de.unijena.bioinf.model.lcms.ChromatographicPeak;
+import de.unijena.bioinf.model.lcms.CorrelatedIon;
+import de.unijena.bioinf.model.lcms.FragmentedIon;
+import de.unijena.bioinf.model.lcms.ScanPoint;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -11,12 +14,6 @@ import java.util.ListIterator;
  * Iterates over all fragment ions and annotated peaks. Check if two ions are adduct or insource fragments of each other
  */
 public class IonIdentityNetwork {
-
-    protected final LCMSProccessingInstance instance;
-
-    public IonIdentityNetwork(LCMSProccessingInstance instance) {
-        this.instance = instance;
-    }
 
     public List<FragmentedIon> filterByIonIdentity(List<FragmentedIon> ions) {
         final BitSet delete = new BitSet(ions.size());

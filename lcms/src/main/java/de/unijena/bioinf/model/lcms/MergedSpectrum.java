@@ -14,6 +14,7 @@ public class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implements Orde
 
     protected Precursor precursor;
     protected List<Scan> scans;
+    protected double noiseLevel;
 
     public MergedSpectrum(Scan scan, Spectrum<? extends Peak> spectrum, Precursor precursor) {
         super(new ArrayList<>());
@@ -31,6 +32,14 @@ public class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implements Orde
         this.peaks.sort(Comparator.comparingDouble(Peak::getMass));
         this.scans = scans;
         this.precursor=precursor;
+    }
+
+    public double getNoiseLevel() {
+        return noiseLevel;
+    }
+
+    public void setNoiseLevel(double noiseLevel) {
+        this.noiseLevel = noiseLevel;
     }
 
     public List<Scan> getScans() {

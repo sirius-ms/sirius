@@ -25,6 +25,10 @@ public class LCMSRun implements Annotated<DataAnnotation>, Iterable<Scan>  {
         this.annotations = new Annotated.Annotations();
     }
 
+    public Collection<Scan> getScans() {
+        return scans.values();
+    }
+
     public NavigableMap<Integer, Scan> getScansFrom(int from) {
         return scans.headMap(from,true).descendingMap();
     }
