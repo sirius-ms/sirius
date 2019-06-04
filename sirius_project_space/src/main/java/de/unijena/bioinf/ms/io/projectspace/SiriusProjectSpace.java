@@ -14,7 +14,9 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -73,9 +75,31 @@ public class SiriusProjectSpace implements ProjectSpace {
         projectSpace.copyToZip(zipFile);
     }
 
+    /**
+     * Check for a compressed project-space by file ending
+     */
     public static boolean isCompressedProjectSpaceName(String fileName) {
         final String lowercaseName = fileName.toLowerCase();
         return lowercaseName.endsWith(".workspace") || lowercaseName.endsWith(".zip") || lowercaseName.endsWith(".sirius");
+    }
+
+    /**
+     * Just a quick check to discriminate a project-space for an arbitrary folder
+     * */
+    public static boolean isSiriusWorkspaceDirectory(File f) {
+        final File fv = new File(f, "version.txt");
+        if (!fv.exists()) return false;
+        try (final BufferedReader br = new BufferedReader(new FileReader(fv), 512)) {
+            String line = br.readLine();
+            if (line == null) return false;
+            line = line.toUpperCase();
+            if (line.startsWith("SIRIUS")) return true;
+            else return false;
+        } catch (IOException e) {
+            // not critical: if file cannot be read, it is not a valid workspace
+            LOG.error(e.getMessage(), e);
+            return false;
+        }
     }
     //endregion
 
@@ -198,7 +222,11 @@ public class SiriusProjectSpace implements ProjectSpace {
             if (forceRewrite) {
                 expDir.setRewrite(true);
             } else {
-                addID(expDir);
+                try {
+                    addID(expDir);
+                } catch (IOException e) {//should not be possible in practice
+                    throw new RuntimeException("Duplicate experiment ID/Name when reading Workspace. This looks like a BUG!", e);
+                }
             }
 
             currentMaxIndex = Math.max(currentMaxIndex, expDir.getIndex());
@@ -250,8 +278,15 @@ public class SiriusProjectSpace implements ProjectSpace {
         return dir;
     }
 
-    private ExperimentDirectory addID(ExperimentDirectory expDir) {
-        return experimentIDs.put(expDir.getDirectoryName(), expDir);
+    // return true if id was newly  added to the map
+    private boolean addID(ExperimentDirectory expDir) throws IOException {
+        ExperimentDirectory old = experimentIDs.putIfAbsent(expDir.getDirectoryName(), expDir);
+        if (old != null && old != expDir)
+            throw new IOException(
+                    "Duplicate Experiment ID/Name: " + old.getDirectoryName() +
+                            " Either your naming scheme doe not create unique experiment names " +
+                            "or some project merging or renaming results in a naming conflict");
+        return old == null;
     }
 
     private ExperimentDirectory removeID(ExperimentDirectory expDir) {
@@ -387,18 +422,13 @@ public class SiriusProjectSpace implements ProjectSpace {
 
         if (!nuName.equals(expDir.getDirectoryName())) { //rewrite with new name and delete old
             //check if new name conflicts with old name
-            if (experimentIDs.containsKey(nuName))
-                throw new IOException(
-                        "Duplicate Experiment name. " +
-                                "Either your naming scheme doe not create unique experiment names " +
-                                "or some project merging or renaming results in a naming conflict");
-
             final ExperimentDirectory deleteKey = new ExperimentDirectory(expDir.getDirectoryName());
             expDir.setDirectoryName(nuName);
             addID(expDir);
             writer.writeExperiment(result);
             deleteExperiment(deleteKey);
         } else { //override old
+            addID(expDir);
             writer.writeExperiment(result);
         }
         changed.set(true);
