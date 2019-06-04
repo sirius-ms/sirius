@@ -43,6 +43,10 @@ public class FragmentedIon extends IonGroup {
         return msms;
     }
 
+    public double getMass() {
+        return peak.getMzAt(segment.apex);
+    }
+
     public ChromatographicPeak.Segment getSegment() {
         return segment;
     }

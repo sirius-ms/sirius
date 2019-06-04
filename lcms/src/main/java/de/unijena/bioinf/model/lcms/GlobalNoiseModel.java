@@ -4,7 +4,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.Random;
-import java.util.function.Predicate;
 
 /**
  * Sample datapoints from scans.
@@ -14,13 +13,11 @@ public class GlobalNoiseModel implements NoiseModel {
 
     private final double noiseLevel, signalLevel;
 
-    public GlobalNoiseModel(LCMSRun lcmsRun, SpectrumStorage storage, double percentile, Predicate<Scan> useScan) {
+    public GlobalNoiseModel(SpectrumStorage storage, Iterable<Scan> scans, double percentile) {
         final TDoubleArrayList intensities = new TDoubleArrayList();
         final TDoubleArrayList noiseLevels = new TDoubleArrayList();
         final Random r = new Random();
-        for (Scan scan : lcmsRun) {
-            if (!useScan.test(scan))
-                continue;
+        for (Scan scan : scans) {
             final SimpleSpectrum ms = storage.getScan(scan);
             if (ms.size() <= 60) {
                 // seems to be prefiltered.
