@@ -1,6 +1,8 @@
 package de.unijena.bioinf.GibbsSampling;
 
-public class ZodiacScore {
+import de.unijena.bioinf.sirius.ResultAnnotation;
+
+public class ZodiacScore implements ResultAnnotation  {
 
     public final double score;
 
