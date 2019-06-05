@@ -54,11 +54,12 @@ public class SiriusProjectSpace implements ProjectSpace {
         }, metaDataSerializers);
     }
 
-    public static SiriusProjectSpace create(@NotNull final File rootOutPath, @NotNull final Collection<File> rootInputPaths, @Nullable final FilenameFormatter filenameFormatter, @NotNull ProgressListener progress, MetaDataSerializer... metaDataSerializers) throws IOException {
+    public static SiriusProjectSpace create(@NotNull final File rootOutPath, @NotNull Collection<File> rootInputPaths, @Nullable final FilenameFormatter filenameFormatter, @NotNull ProgressListener progress, MetaDataSerializer... metaDataSerializers) throws IOException {
         final SiriusProjectSpace merged = new SiriusProjectSpace(rootOutPath, filenameFormatter, metaDataSerializers);
         final TIntSet ids = new TIntHashSet();
         merged.loadIntoProjectSpace(merged.reader, ids, false, progress);//todo correct progress stack
-        rootInputPaths.remove(rootOutPath);
+        final String absPath = rootOutPath.getAbsolutePath();
+        rootInputPaths = rootInputPaths.stream().filter(p -> p.getAbsolutePath().equals(absPath)).collect(Collectors.toSet());
         merged.load(progress, ids, rootInputPaths);
         return merged;
     }
