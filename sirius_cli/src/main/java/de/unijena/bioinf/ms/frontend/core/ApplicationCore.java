@@ -5,6 +5,7 @@ package de.unijena.bioinf.ms.frontend.core;
  * 19.09.16.
  */
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
@@ -180,7 +181,7 @@ public abstract class ApplicationCore {
             if (Files.notExists(customProfileFile)) {
                 try (InputStream stream = ApplicationCore.class.getResourceAsStream("/custom.config")) {
                     List<String> lines =
-                            new BufferedReader(new InputStreamReader(stream,
+                            FileUtils.ensureBuffering(new InputStreamReader(stream,
                                     StandardCharsets.UTF_8)).lines().map(line -> line.startsWith("#") ? line : "#" + line).collect(Collectors.toList());
                     Files.write(customProfileFile, lines);
                 } catch (IOException e) {

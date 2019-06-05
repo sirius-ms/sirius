@@ -22,7 +22,7 @@ public class CSVFormatReader implements SpectraReader {
 	@Override
 	public boolean isCompatible(File f) {
 		int columnNumber = -1;
-		try(BufferedReader reader = new BufferedReader(new FileReader(f))){
+		try(BufferedReader reader = FileUtils.ensureBuffering(new FileReader(f))){
 			String temp = null;
 			int rowCounter=0; //lese max 5 Zeilen ein
 			while((temp = reader.readLine()) != null){
@@ -63,7 +63,7 @@ public class CSVFormatReader implements SpectraReader {
 	@SuppressWarnings("unused")
 	public List<TDoubleArrayList> readCSV(File f){
 		List<TDoubleArrayList> data = new ArrayList<TDoubleArrayList>();
-		try(BufferedReader reader = new BufferedReader(new FileReader(f))){
+		try(BufferedReader reader = FileUtils.ensureBuffering(new FileReader(f))){
 			String temp = null;
 			while((temp = reader.readLine()) != null){
 				temp = temp.trim();

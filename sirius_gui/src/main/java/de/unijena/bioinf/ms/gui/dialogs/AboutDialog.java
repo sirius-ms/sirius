@@ -48,7 +48,7 @@ public class AboutDialog extends JDialog{
         try {
             final String htmlText;
             {
-                final BufferedReader br = new BufferedReader(new InputStreamReader(AboutDialog.class.getResourceAsStream("/sirius/about.html")));
+                final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(AboutDialog.class.getResourceAsStream("/sirius/about.html")));
                 final StringBuilder buf = new StringBuilder();
                 String line;
                 while ((line=br.readLine())!=null) buf.append(line).append('\n');
