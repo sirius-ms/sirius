@@ -22,8 +22,10 @@ include ':io'
 include ':tree_motif_search'
 include ':sirius_api'
 include ':gibbs_sampling'
+    include ':gibbs_sampling:zodiac_project_space'
 include 'passatutto'
 include ':utils'
 include ':lcms'
 include ':sirius_project_space'
+
 

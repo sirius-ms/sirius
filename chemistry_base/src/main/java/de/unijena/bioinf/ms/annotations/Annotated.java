@@ -247,7 +247,7 @@ public interface Annotated<A extends DataAnnotation> {
     }
 
     default <T extends A> void addAnnotationChangeListener(Class<T> annotationToListenOn, PropertyChangeListener listener) {
-        annotations().annotationChangeSupport.addPropertyChangeListener(DataAnnotation.getIdientifier(annotationToListenOn), listener);
+        annotations().annotationChangeSupport.addPropertyChangeListener(DataAnnotation.getIdentifier(annotationToListenOn), listener);
     }
 
     default void removeAnnotationChangeListener(PropertyChangeListener listener) {
@@ -255,14 +255,14 @@ public interface Annotated<A extends DataAnnotation> {
     }
 
     default <T extends A> PropertyChangeListener[] getAnnotationChangeListeners(Class<T> annotationToListenOn) {
-        return annotations().annotationChangeSupport.getPropertyChangeListeners(DataAnnotation.getIdientifier(annotationToListenOn));
+        return annotations().annotationChangeSupport.getPropertyChangeListeners(DataAnnotation.getIdentifier(annotationToListenOn));
     }
 
     default <T extends A> T fireAnnotationChange(T oldValue, T newValue) {
         if (oldValue != null) {
-            annotations().annotationChangeSupport.firePropertyChange(oldValue.getIdientifier(), oldValue, newValue);
+            annotations().annotationChangeSupport.firePropertyChange(oldValue.getIdentifier(), oldValue, newValue);
         } else if (newValue != null) {
-            annotations().annotationChangeSupport.firePropertyChange(newValue.getIdientifier(), oldValue, newValue);
+            annotations().annotationChangeSupport.firePropertyChange(newValue.getIdentifier(), oldValue, newValue);
         }
         return newValue;
     }
