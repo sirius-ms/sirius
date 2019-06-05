@@ -1,5 +1,7 @@
 package de.unijena.bioinf.sirius;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -8,6 +10,14 @@ import java.util.stream.Stream;
 
 public class IdentificationResults implements ResultAnnotation, Iterable<IdentificationResult> {
     private final List<IdentificationResult> results;
+
+    public Optional<IdentificationResult> getResultFor(MolecularFormula formula, PrecursorIonType ionType) {
+        for (IdentificationResult ir : results) {
+            if (ir.getMolecularFormula().equals(formula) && ir.getPrecursorIonType().equals(ionType))
+                return Optional.of(ir);
+        }
+        return Optional.empty();
+    }
 
     public IdentificationResults(@NotNull Iterable<IdentificationResult> c) {
         results = new ArrayList<>();
