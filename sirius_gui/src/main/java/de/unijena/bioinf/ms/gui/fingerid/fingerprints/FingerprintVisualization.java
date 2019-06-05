@@ -206,7 +206,7 @@ class FingerprintVisualization {
     protected static FingerprintVisualization[] read() throws IOException {
         final CdkFingerprintVersion cdk = CdkFingerprintVersion.getComplete();
         final FingerprintVisualization[] viz = new FingerprintVisualization[cdk.size()];
-        try (final BufferedReader br = new BufferedReader(new InputStreamReader(FingerprintVisualization.class.getResourceAsStream("/sirius/feature_examples.tsv")))) {
+        try (final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(FingerprintVisualization.class.getResourceAsStream("/sirius/feature_examples.tsv")))) {
             String line;
             while ((line=br.readLine())!=null) {
                 String[] tabs = line.split("\t");

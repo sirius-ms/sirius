@@ -27,7 +27,7 @@ public class DataFormatIdentifier {
 
 class MGFCompatibilityValidator{
 	public boolean isCompatible(File f){
-		try(BufferedReader reader = new BufferedReader(new FileReader(f))){
+		try(BufferedReader reader = FileUtils.ensureBuffering(new FileReader(f))){
 			String temp = null;
 			while((temp = reader.readLine()) != null){
 				temp = temp.trim();

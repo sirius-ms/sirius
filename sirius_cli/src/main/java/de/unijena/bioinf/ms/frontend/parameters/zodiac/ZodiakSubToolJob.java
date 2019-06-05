@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.GibbsSampling.Zodiac;
+import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.GibbsSampling.model.distributions.LogNormalDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
@@ -25,10 +26,12 @@ public class ZodiakSubToolJob extends DataSetJob {
 
     @Override
     protected Iterable<ExperimentResult> compute() throws Exception {
+        System.out.println("Step 1: Parse input.");
+        final long t1 = System.currentTimeMillis();
         List<ExperimentResult> exps = awaitInputs();
         System.out.println("I am Zodiac and run on all instances: " + exps.stream().map(ExperimentResult::getSimplyfiedExperimentName).collect(Collectors.joining(",")));
-
-
+        final long t2 = System.currentTimeMillis();
+        System.out.println("Step 1 took " + ((t2-t1)/1000) + " seconds.");
         final HashMap<String, ExperimentResult> stupidLookupMap = new HashMap<>();
         for (ExperimentResult ir : exps) {
             stupidLookupMap.put(ir.getExperiment().getName(), ir);
@@ -40,6 +43,12 @@ public class ZodiakSubToolJob extends DataSetJob {
         SiriusJobs.getGlobalJobManager().submitJob(zodiacJob);
         ZodiacResultsWithClusters results = zodiacJob.takeResult();
 
+        for (CompoundResult<FragmentsCandidate> result : results.getResults()) {
+            for (Scored<FragmentsCandidate> candidate : result.getCandidates()) {
+                stupidLookupMap.get(result.getId()).getResults().getResultFor(candidate.getCandidate().getFormula(), candidate.getCandidate().getIonType()).ifPresent(x->x.setAnnotation(ZodiacScore.class, new ZodiacScore(candidate.getScore())));
+            }
+        }
+/*
         // first write everything in a file....
         try (final BufferedWriter bw = FileUtils.getWriter(new File("zodiac.csv"))) {
             for (CompoundResult<FragmentsCandidate> result : results.getResults()) {
@@ -51,6 +60,8 @@ public class ZodiakSubToolJob extends DataSetJob {
                 }
             }
         }
+        */
+
 
 
         return exps;

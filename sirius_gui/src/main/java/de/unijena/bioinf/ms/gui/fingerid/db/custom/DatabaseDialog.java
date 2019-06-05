@@ -498,7 +498,7 @@ public class DatabaseDialog extends JDialog {
                                     }
                                 }
                                 if (isCsv) {
-                                    try (final BufferedReader br = new BufferedReader(new FileReader((File) s))) {
+                                    try (final BufferedReader br = FileUtils.ensureBuffering(new FileReader((File) s))) {
                                         final List<String> inchiOrSmiles = new ArrayList<>();
                                         final List<String> ids = new ArrayList<>();
                                         String line;
@@ -575,7 +575,7 @@ public class DatabaseDialog extends JDialog {
                     if (rf.createReader(br) != null) return null;
                 }
 
-                try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+                try (BufferedReader br = FileUtils.ensureBuffering(new FileReader(f))) {
                     final ArrayList<String> lines = new ArrayList<>();
                     // parse 10 lines
                     String line;
