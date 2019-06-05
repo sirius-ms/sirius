@@ -32,7 +32,6 @@ public class ExperimentResult implements Annotated<ResultAnnotation> {
         this(experiment, results != null ? new IdentificationResults(results) : null);
     }
 
-
     @Deprecated
     public ExperimentResult(@NotNull Ms2Experiment experiment, @Nullable IdentificationResults results, @Nullable String errorString) {
         this(experiment, results, (errorString == null) ? ErrorCause.ERROR : ErrorCause.valueOf(errorString));
