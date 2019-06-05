@@ -12,6 +12,7 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.1'
     compile group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
+    compile group: "de.unijena.bioinf.ms", name: "zodiac_project_space", version: "$siriusVersion"
     compile group: 'de.unijena.bioinf.utils', name: 'error-reporter', version: "$error_reporter_version"
     compile group: 'com.google.classpath-explorer', name: 'classpath-explorer', version: '1.0'
 
