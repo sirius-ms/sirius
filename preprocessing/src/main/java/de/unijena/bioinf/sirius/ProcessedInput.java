@@ -87,12 +87,8 @@ public class ProcessedInput implements Cloneable, Annotated<DataAnnotation> {
         this.mergedPeaks = new ArrayList<>();
         this.annotations = new Annotations<>();
         setAnnotation(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown));
-        this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
-        final Iterator<Map.Entry<Class<Ms2ExperimentAnnotation>,Ms2ExperimentAnnotation>> anos = experiment.forEachAnnotation();
-        while (anos.hasNext()) {
-            final Map.Entry<Class<Ms2ExperimentAnnotation>,Ms2ExperimentAnnotation> entry = anos.next();
-            setAnnotation(entry.getKey(), entry.getValue());
-        }
+        this.peakAnnotations = new HashMap<>();
+        experiment.forEachAnnotation(this::setAnnotation);
     }
 
     public ProcessedInput(MutableMs2Experiment experiment, Ms2Experiment originalExperiment,
@@ -103,7 +99,7 @@ public class ProcessedInput implements Cloneable, Annotated<DataAnnotation> {
         this.parentPeak = parentPeak;
         this.annotations = new Annotations<>();
        setAnnotation(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown));
-        this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
+        this.peakAnnotations = new HashMap<>();
     }
 
     /*

@@ -19,9 +19,17 @@ public class IdentificationResults implements ResultAnnotation, Iterable<Identif
         return Optional.empty();
     }
 
+
     public IdentificationResults(@NotNull Iterable<IdentificationResult> c) {
         results = new ArrayList<>();
         c.forEach(results::add);
+    }
+
+    public void setRankingScoreType(@NotNull final Class<? extends ResultScore> scoreType) {
+        results.forEach(r -> r.setRankingScore(scoreType));
+        Collections.sort(results);
+        int rank = 1;
+        for (IdentificationResult result : results) result.rank = rank++;
     }
 
     public IdentificationResult[] toArray() {

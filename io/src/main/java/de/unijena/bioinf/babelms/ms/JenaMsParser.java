@@ -50,7 +50,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParser(p.toFile());
         Ms2Experiment experiment = parser.parseFromFile(p.toFile()).get(0);
         System.out.println(experiment.getMolecularFormula());
-        Iterator<Map.Entry<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation>> iterator = experiment.forEachAnnotation();
+        Iterator<Map.Entry<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation>> iterator = experiment.annotationIterator();
         while (iterator.hasNext()) {
             Map.Entry<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> next = iterator.next();
             Ms2ExperimentAnnotation annotation = next.getValue();

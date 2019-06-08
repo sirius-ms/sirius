@@ -30,8 +30,10 @@ public final class IdentificationResult implements Cloneable, Comparable<Identif
 
     protected FTree tree;
     protected MolecularFormula formula;
-    protected int rank;
-    protected double score;
+
+    protected int rank = -1;
+    protected ResultScore rankScore;
+
     private final Annotated.Annotations<DataAnnotation> annotations = new Annotated.Annotations<>();
 
     @Override
@@ -44,7 +46,7 @@ public final class IdentificationResult implements Cloneable, Comparable<Identif
         this.rank = ir.rank;
         this.tree = ir.tree;
         this.formula = ir.formula;
-        this.score = ir.score;
+        this.rankScore = ir.rankScore;
     }
 
     public PrecursorIonType getPrecursorIonType() {
@@ -60,7 +62,10 @@ public final class IdentificationResult implements Cloneable, Comparable<Identif
 
     public IdentificationResult(FTree tree, int rank) {
         this.tree = tree;
-        this.score = tree == null ? 0d : tree.getTreeWeight();
+        if (tree != null) {
+            rankScore = new SiriusScore(tree.getTreeWeight());
+            setAnnotation(SiriusScore.class, (SiriusScore) rankScore);
+        }
         this.rank = rank;
 
         if (tree != null) {
@@ -78,17 +83,49 @@ public final class IdentificationResult implements Cloneable, Comparable<Identif
         }
     }
 
-    public int getRank() {
-        return rank;
-    }
-
     public MolecularFormula getMolecularFormula() {
         return formula;
     }
 
-    public double getScore() {
-        return score;
+    public int getRank() {
+        return rank;
     }
+
+    public <T extends ResultScore> boolean setRankingScore(Class<T> scoreType) {
+        final ResultScore old = rankScore;
+        rankScore = getAnnotation(scoreType);
+        rank = -1;
+        return rankScore != old;
+    }
+
+    public double getRankingScore() {
+        return rankScore == null ? 0d : rankScore.score();
+    }
+
+    public ResultScore rankingScore() {
+        return rankScore;
+    }
+
+
+    public <T extends ResultScore> T getScoreObject(Class<T> scoreType) {
+        return getAnnotation(scoreType);
+    }
+
+    public <T extends ResultScore> double getScore(Class<T> scoreType) {
+        final T s = getScoreObject(scoreType);
+        return s == null ? 0d : s.score();
+    }
+
+
+    public double getTreeScore() {
+        return new ScoringHelper(tree).getTreeScore();
+    }
+
+
+    public double getIsotopeScore() {
+        return new ScoringHelper(tree).getIsotopeMs1Score();
+    }
+
 
     /**
      * true if a beautiful (bigger, better explaining spectrum) tree is available
@@ -136,24 +173,15 @@ public final class IdentificationResult implements Cloneable, Comparable<Identif
 //        }
     }
 
-    public double getTreeScore() {
-        return new ScoringHelper(tree).getTreeScore();
-    }
-
-
-    public double getIsotopeScore() {
-        return new ScoringHelper(tree).getIsotopeMs1Score();
-    }
-
     public IdentificationResult clone() {
         final IdentificationResult r = new IdentificationResult(new FTree(tree), rank);
-        r.score = score;
+        r.setAnnotationsFrom(this);
         return r;
     }
 
 
     public String toString() {
-        return formula + " with score " + getScore() + " at rank " + rank;
+        return formula + " with score " + getRankingScore() + " at rank " + rank;
     }
 
     public double getExplainedPeaksRatio() {
@@ -175,7 +203,9 @@ public final class IdentificationResult implements Cloneable, Comparable<Identif
 
     @Override
     public int compareTo(IdentificationResult o) {
-        if (rank == o.rank) return Double.compare(o.score, score);
+        if (rank == o.rank)
+            return Double.compare(o.getRankingScore(), getRankingScore());
+
         else return Integer.compare(rank, o.rank);
     }
 }
