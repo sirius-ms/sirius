@@ -409,12 +409,16 @@ public class SiriusProjectSpace implements ProjectSpace {
     @Override
     public synchronized boolean deleteExperiment(ExperimentDirectory id) throws IOException {
         if (removeID(id) != null) {
-            writer.deleteExperiment(id);
+            deleteExperimentUnchecked(id);
             return true;
         }
         return false;
-
     }
+
+    private void deleteExperimentUnchecked(ExperimentDirectory id) throws IOException {
+        writer.deleteExperiment(id);
+    }
+
 
     @Override
     public synchronized void writeExperiment(final @NotNull ExperimentResult result) throws IOException {
@@ -536,9 +540,9 @@ public class SiriusProjectSpace implements ProjectSpace {
         }
     }
 
-
+//todo modification should be possible
     public class ExperimentIterator implements Iterator<ExperimentResult> {
-        private final Iterator<ExperimentDirectory> baseIter = experimentIDs.values().iterator();
+        private final Iterator<ExperimentDirectory> baseIter = new IdIterator();
         private ExperimentDirectory current;
 
         @Override

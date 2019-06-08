@@ -1,13 +1,16 @@
 package de.unijena.bioinf.GibbsSampling;
 
-import de.unijena.bioinf.sirius.ResultAnnotation;
+import de.unijena.bioinf.sirius.ResultScore;
 
-public class ZodiacScore implements ResultAnnotation  {
+public class ZodiacScore extends ResultScore {
     public static ZodiacScore NaN = new ZodiacScore(Double.NaN);
 
-    public final double score;
-
     public ZodiacScore(double score) {
-        this.score = score;
+        super(score);
+    }
+
+    @Override
+    public String name() {
+        return "zodiacScore";
     }
 }
