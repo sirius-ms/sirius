@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public interface Annotated<A extends DataAnnotation> {
@@ -19,7 +20,11 @@ public interface Annotated<A extends DataAnnotation> {
     /**
      * @return an iterator over all map
      */
-    default Iterator<Map.Entry<Class<A>, A>> forEachAnnotation() {
+    default void forEachAnnotation(BiConsumer<? super Class<A>, ? super A> action) {
+        annotations().forEach(action);
+    }
+
+    default Iterator<Map.Entry<Class<A>, A>> annotationIterator() {
         return annotations().map.entrySet().iterator();
     }
 
@@ -157,7 +162,7 @@ public interface Annotated<A extends DataAnnotation> {
      * @param annotated annotations to add
      */
     default void setAnnotationsFrom(Annotated<A> annotated) {
-        final Iterator<Map.Entry<Class<A>, A>> iter = annotated.forEachAnnotation();
+        final Iterator<Map.Entry<Class<A>, A>> iter = annotated.annotationIterator();
         while (iter.hasNext()) {
             final Map.Entry<Class<A>, A> v = iter.next();
             setAnnotation(v.getKey(), v.getValue());
@@ -201,7 +206,7 @@ public interface Annotated<A extends DataAnnotation> {
      * @param annotated annotations to add
      */
     default void addAnnotationsFrom(Annotated<A> annotated) {
-        final Iterator<Map.Entry<Class<A>, A>> iter = annotated.forEachAnnotation();
+        final Iterator<Map.Entry<Class<A>, A>> iter = annotated.annotationIterator();
         while (iter.hasNext()) {
             final Map.Entry<Class<A>, A> v = iter.next();
             addAnnotationIfAbsend(v.getKey(), v.getValue());
