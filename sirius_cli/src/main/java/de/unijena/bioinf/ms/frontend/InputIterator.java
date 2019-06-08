@@ -26,14 +26,20 @@ public class InputIterator implements Iterator<Ms2Experiment> {
     private final Iterator<File> fileIter;
     private final double maxMz;
     private final MsExperimentParser parser = new MsExperimentParser();
+    private final boolean ignoreFormula;
 
     File currentFile;
     Iterator<Ms2Experiment> currentExperimentIterator;
 
     public InputIterator(Collection<File> input, double maxMz) {
+        this(input,maxMz,false);
+    }
+
+    public InputIterator(Collection<File> input, double maxMz, boolean ignoreFormula) {
         fileIter = input.iterator();
         this.maxMz = maxMz;
         currentExperimentIterator = fetchNext();
+        this.ignoreFormula = ignoreFormula;
     }
 
 
@@ -66,11 +72,14 @@ public class InputIterator implements Iterator<Ms2Experiment> {
                 } else return null;
             } else {
                 MutableMs2Experiment experiment = Sirius.makeMutable(currentExperimentIterator.next());
+
                 if (experiment.getIonMass() > maxMz){
                     LOG.info("Skipping instance"+ experiment.getName() +"with mass: " + experiment.getIonMass() + " > " + maxMz);
                 }else if (experiment.getMolecularFormula() != null && experiment.getMolecularFormula().numberOf("D") > 0) {
                     LOG.warn("Deuterium Formula found in: " + experiment.getName() + " Instance will be Ignored: ");
                 }else {
+                    if (ignoreFormula)
+                        experiment.setMolecularFormula(null);
                     instances.add(experiment);
                     return currentExperimentIterator;
                 }

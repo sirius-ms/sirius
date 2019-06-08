@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
+import de.unijena.bioinf.ChemistryBase.ms.MsFileSource;
 import de.unijena.bioinf.ms.frontend.parameters.AddConfigsJob;
 import de.unijena.bioinf.ms.frontend.parameters.DataSetJob;
 import de.unijena.bioinf.ms.frontend.parameters.InstanceJob;
@@ -50,6 +51,14 @@ public class ToolChainWorkflow implements Workflow {
                     final WorkflowJobSubmitter submitter = new WorkflowJobSubmitter(iteratorSource.iterator(), project, instanceJobChain, dataSetJob);
                     submitter.start(initialInstanceNum, maxBufferSize);
                     iteratorSource = submitter.jobManager().submitJob(dataSetJob).awaitResult();
+                    iteratorSource.forEach(it -> {
+                        try {
+                            project.writeExperiment(it);
+                        } catch (IOException e) {
+                            LoggerFactory.getLogger(getClass()).error("Error writing instance: " + it.getExperiment().getAnnotation(MsFileSource.class));
+                        }
+                    });
+
                     instanceJobChain.clear();
                 } else {
                     throw new IllegalArgumentException("Illegal job Type submitted. Only InstanceJobs and DataSetJobs are allowed");

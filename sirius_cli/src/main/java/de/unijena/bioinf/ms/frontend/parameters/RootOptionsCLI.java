@@ -145,6 +145,7 @@ public class RootOptionsCLI implements RootOptions {
         }
     }
 
+
     private void expandInput(@NotNull List<File> files, @NotNull final List<File> mzMLInfiles, @NotNull List<File> siriusInfiles, @NotNull List<File> projectSpaces) {
         for (File g : files) {
             if (g.isDirectory()) {
@@ -178,6 +179,9 @@ public class RootOptionsCLI implements RootOptions {
     List<File> input = null;
     InputType type = null;
 
+
+    @Option(names = {"--ignore-formula" }, description = "ignore given molecular formula in .ms or .mgf file format, ")
+    private boolean ignoreFormula = false;
     //endregion
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -200,7 +204,7 @@ public class RootOptionsCLI implements RootOptions {
             case PROJECT:
                 return projectSpaceToWriteOn.parseExperimentIterator();
             case SIRIUS:
-                return new InputIterator(input, maxMz).asExpResultIterator();
+                return new InputIterator(input, maxMz, ignoreFormula).asExpResultIterator();
             case MZML:
                 throw new CommandLine.PicocliException("MZML input is not yet supported! This should not be possible. BUG?");
         }

@@ -45,10 +45,9 @@ class WorkflowJobSubmitter extends BufferedJJobSubmitter<ExperimentResult> {
     @Override // this is handled in main thread
     protected void handleResults(JobContainer watcher) {
         try {
-            //todo do need any postprocessing here?
             projectSpace.writeExperiment(watcher.sourceInstance);
         } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).error("Error processing instance: " + watcher.sourceInstance.getExperiment().getAnnotation(MsFileSource.class));
+            LoggerFactory.getLogger(getClass()).error("Error writing instance: " + watcher.sourceInstance.getExperiment().getAnnotation(MsFileSource.class));
         }
     }
 

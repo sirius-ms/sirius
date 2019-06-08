@@ -19,6 +19,7 @@ import de.unijena.bioinf.ms.io.projectspace.SiriusLocations;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.IdentificationResults;
+import de.unijena.bioinf.sirius.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import uk.ac.ebi.pride.jmztab2.model.MZTabConstants;
@@ -182,7 +183,7 @@ public class MztabMExporter {
         smeItem.setRank(bestHitSource.getRank());
         smeItem.setEvidenceInputId(makeMassIdentifier(er, bestHitSource));
 
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_SCORE, String.valueOf(bestHitSource.getScore())));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_SCORE, String.valueOf(bestHitSource.getScore(SiriusScore.class))));
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_ISOTOPE_SCORE, String.valueOf(bestHitSource.getIsotopeScore())));
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_TREE_SCORE, String.valueOf(bestHitSource.getTreeScore())));
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_EXPL_INTENSITY_RATIO, String.valueOf(bestHitSource.getExplainedIntensityRatio())));

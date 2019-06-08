@@ -48,22 +48,8 @@ public class ZodiakSubToolJob extends DataSetJob {
                 stupidLookupMap.get(result.getId()).getResults().getResultFor(candidate.getCandidate().getFormula(), candidate.getCandidate().getIonType()).ifPresent(x->x.setAnnotation(ZodiacScore.class, new ZodiacScore(candidate.getScore())));
             }
         }
-/*
-        // first write everything in a file....
-        try (final BufferedWriter bw = FileUtils.getWriter(new File("zodiac.csv"))) {
-            for (CompoundResult<FragmentsCandidate> result : results.getResults()) {
-                for (Scored<FragmentsCandidate> candidate : result.getCandidates()) {
-                    String row = result.getId() + "\t" + candidate.getCandidate().getFormula() + "\t" + candidate.getScore();
-                    System.out.println(row);
-                    bw.write(row);
-                    bw.newLine();
-                }
-            }
-        }
-        */
 
-
-
+        exps.stream().map(ExperimentResult::getResults).forEach(r -> r.setRankingScoreType(ZodiacScore.class));
         return exps;
     }
 }
