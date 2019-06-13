@@ -5,22 +5,27 @@ StructureSearchDB=de.unijena.bioinf.fingerid.db.annotation.StructureSearchDB
 
 AlgorithmProfile=de.unijena.bioinf.sirius.Profile
 
+experimentalMotifDb=de.unijena.bioinf.treemotifs.model.MotifDbFile
+
 IsotopeHandlingMs2=de.unijena.bioinf.FragmentationTreeConstruction.computation.IsotopeInMs2Handling
+
+ms1=de.unijena.bioinf.IsotopePatternAnalysis.IsotopicIntensitySettings
 
 StructurePredictors=de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation
 
 NoiseThresholdSettings=de.unijena.bioinf.sirius.annotations.NoiseThresholdSettings
 
-PossibleAdductSwitches=de.unijena.bioinf.ChemistryBase.ms.PossibleAdductSwitches
-IsotopeSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeSettings
 MS1MassDeviation=de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation
 MS2MassDeviation=de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation
 MedianNoiseIntensity=de.unijena.bioinf.ChemistryBase.ms.MedianNoiseIntensity
-NumberOfCandidatesPerIon=de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIon
 Timeout=de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout
 AdductSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings
+PossibleAdducts=de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts
+CompoundQuality=de.unijena.bioinf.ChemistryBase.ms.CompoundQuality
+PossibleAdductSwitches=de.unijena.bioinf.ChemistryBase.ms.PossibleAdductSwitches
+IsotopeSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeSettings
+NumberOfCandidatesPerIon=de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIon
 ForbidRecalibration=de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration
 FormulaSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings
-PossibleAdducts=de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts
 NumberOfCandidates=de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates
 
