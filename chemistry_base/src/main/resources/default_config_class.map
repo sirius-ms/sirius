@@ -25,4 +25,4 @@ ms1=de.unijena.bioinf.IsotopePatternAnalysis.IsotopicIntensitySettings
 CompoundQuality=de.unijena.bioinf.ChemistryBase.ms.CompoundQuality
 
 
-experimental=de.unijena.bioinf.treemotifs.model.MotifDbFile
+experimentalMotifDb=de.unijena.bioinf.treemotifs.model.MotifDbFile
