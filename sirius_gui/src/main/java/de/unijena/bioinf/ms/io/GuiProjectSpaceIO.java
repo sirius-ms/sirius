@@ -21,11 +21,12 @@ package de.unijena.bioinf.ms.io;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpaceIO;
 import de.unijena.bioinf.fingerid.CSVExporter;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.io.projectspace.GuiProjectSpace;
-import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.babelms.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -79,7 +80,7 @@ public class GuiProjectSpaceIO {
 
     public static void exportAsProjectSpace(File file) throws IOException {
         GuiProjectSpace.PS.writeSummary(); //this also writes chaged compounds first
-        SiriusProjectSpace.exortToZip(GuiProjectSpace.PS.projectSpace, file);
+        SiriusProjectSpaceIO.exortToZip(GuiProjectSpace.PS.projectSpace, file);
     }
 
     public static void exportAsCSV() {
@@ -279,7 +280,7 @@ public class GuiProjectSpaceIO {
     public static List<File> resolveFileList(List<File> files) {
         final ArrayList<File> filelist = new ArrayList<>();
         for (File f : files) {
-            if (f.isDirectory() && !SiriusProjectSpace.isSiriusWorkspaceDirectory(f)) {
+            if (f.isDirectory() && !SiriusProjectSpaceIO.isSiriusWorkspaceDirectory(f)) {
                 final File[] fl = f.listFiles();
                 if (fl != null) {
                     for (File g : fl)
@@ -299,7 +300,7 @@ public class GuiProjectSpaceIO {
         public boolean accept(File f) {
             if (f.isDirectory()) return true;
             String name = f.getName();
-            return SiriusProjectSpace.isCompressedProjectSpaceName(name);
+            return SiriusProjectSpaceIO.isCompressedProjectSpaceName(name);
         }
 
         @Override

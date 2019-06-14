@@ -5,14 +5,16 @@ import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.ChemistryBase.SimpleRectangularIsolationWindow;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.DataWriter;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.mgf.MgfWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
-import de.unijena.bioinf.ms.io.projectspace.FilenameFormatter;
-import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.ms.io.projectspace.StandardMSFilenameFormatter;
+import de.unijena.bioinf.babelms.projectspace.FilenameFormatter;
+import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpaceIO;
+import de.unijena.bioinf.babelms.projectspace.StandardMSFilenameFormatter;
 import de.unijena.bioinf.sirius.Ms2RunPreprocessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -535,7 +537,7 @@ public class UtilsCLI {
         } else {
             try {
                 //todo meta data serializer and summary writer
-                SiriusProjectSpace.create(output.toFile(), inputFiles, filenameFormatter).close();
+                SiriusProjectSpaceIO.create(output.toFile(), inputFiles, filenameFormatter).close();
 
             } catch (IOException e) {
                 Log.error("Error when collecting workspaces");

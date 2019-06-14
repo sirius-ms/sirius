@@ -4,7 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ms.io.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.babelms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
 
 import javax.swing.*;

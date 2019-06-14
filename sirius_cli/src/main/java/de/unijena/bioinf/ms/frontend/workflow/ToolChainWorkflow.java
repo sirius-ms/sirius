@@ -4,7 +4,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MsFileSource;
 import de.unijena.bioinf.ms.frontend.parameters.AddConfigsJob;
 import de.unijena.bioinf.ms.frontend.parameters.DataSetJob;
 import de.unijena.bioinf.ms.frontend.parameters.InstanceJob;
-import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.slf4j.Logger;

@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.frontend.parameters;
 
-import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import picocli.CommandLine;
 

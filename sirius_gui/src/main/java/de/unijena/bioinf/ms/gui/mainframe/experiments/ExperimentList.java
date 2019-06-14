@@ -13,7 +13,7 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
-import de.unijena.bioinf.ms.io.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.babelms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
 import de.unijena.bioinf.ms.gui.utils.SearchTextField;
 

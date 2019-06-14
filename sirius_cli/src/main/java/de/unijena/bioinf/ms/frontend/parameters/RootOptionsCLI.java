@@ -1,9 +1,9 @@
 package de.unijena.bioinf.ms.frontend.parameters;
 
 import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.ms.frontend.InputIterator;
+import de.unijena.bioinf.babelms.SiriusInputIterator;
+import de.unijena.bioinf.babelms.projectspace.*;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.io.projectspace.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
@@ -32,9 +32,6 @@ public class RootOptionsCLI implements RootOptions {
     public static final Logger LOG = LoggerFactory.getLogger(RootOptionsCLI.class);
 
     public enum InputType {PROJECT, SIRIUS, MZML}
-
-    ;
-
 
     // region Options: Quality
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -150,7 +147,7 @@ public class RootOptionsCLI implements RootOptions {
         for (File g : files) {
             if (g.isDirectory()) {
                 // check whether it is a workspace or a gerneric directory with som other input
-                if (SiriusProjectSpace.isSiriusWorkspaceDirectory(g)) {
+                if (SiriusProjectSpaceIO.isSiriusWorkspaceDirectory(g)) {
                     projectSpaces.add(g);
                 } else {
                     File[] ins = g.listFiles(pathname -> pathname.isFile());
@@ -164,7 +161,7 @@ public class RootOptionsCLI implements RootOptions {
                 final String name = g.getName();
                 if (MsExperimentParser.isSupportedFileName(name)) {
                     siriusInfiles.add(g);
-                } else if (SiriusProjectSpace.isCompressedProjectSpaceName(name)) {
+                } else if (SiriusProjectSpaceIO.isCompressedProjectSpaceName(name)) {
                     projectSpaces.add(g);
                 } else if (name.toLowerCase().endsWith(".mzml")) {
                     //todo add mzML support?
@@ -204,7 +201,7 @@ public class RootOptionsCLI implements RootOptions {
             case PROJECT:
                 return projectSpaceToWriteOn.parseExperimentIterator();
             case SIRIUS:
-                return new InputIterator(input, maxMz, ignoreFormula).asExpResultIterator();
+                return new SiriusInputIterator(input, maxMz, ignoreFormula).asExpResultIterator();
             case MZML:
                 throw new CommandLine.PicocliException("MZML input is not yet supported! This should not be possible. BUG?");
         }
@@ -222,13 +219,13 @@ public class RootOptionsCLI implements RootOptions {
                         throw new CommandLine.PicocliException("No output location given. Can only be avoided if a singe project-space it the input");
                 }
 
-                projectSpaceToWriteOn = SiriusProjectSpace.create(projectSpaceLocation, input, projectSpaceFilenameFormatter,
+                projectSpaceToWriteOn = SiriusProjectSpaceIO.create(projectSpaceLocation, input, projectSpaceFilenameFormatter,
                         (currentProgress, maxProgress, Message) -> {
                             System.out.println("Creating Project Space: " + (((((double) currentProgress) / (double) maxProgress)) * 100d) + "%");
                         }
                         , makeSerializerArray());
             } else {
-                projectSpaceToWriteOn = SiriusProjectSpace.create(projectSpaceFilenameFormatter, projectSpaceLocation,
+                projectSpaceToWriteOn = SiriusProjectSpaceIO.create(projectSpaceFilenameFormatter, projectSpaceLocation,
                         (currentProgress, maxProgress, Message) -> {
                             System.out.println("Creating Project Space: " + (((((double) currentProgress) / (double) maxProgress)) * 100d) + "%");
                         }

@@ -1,6 +1,6 @@
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
-import de.unijena.bioinf.ms.io.projectspace.*;
+import de.unijena.bioinf.babelms.projectspace.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 
@@ -27,8 +27,8 @@ public class ProjectSpaceTest {
 
         final WebAPI api = ApplicationCore.WEB_API;
         final Canopus canopus = Canopus.loadFromFile(new File("/home/fleisch/work/sirius_testing/canopus/canopus_fp.data"));
-//        SiriusProjectSpace space = SiriusProjectSpace.create(null, rootZip,
-        SiriusProjectSpace space = SiriusProjectSpace.create(rootZip, Arrays.asList(root1,root3,root2), null,
+//        SiriusProjectSpace space = SiriusProjectSpaceIO.create(null, rootZip,
+        SiriusProjectSpace space = SiriusProjectSpaceIO.create(rootZip, Arrays.asList(root1,root3,root2), null,
                 (cur,max,mess) ->{System.out.println((((((double)cur)/(double)max)) * 100d) + "%");},
                 new IdentificationResultSerializer(), new FingerIdResultSerializer(api), new CanopusResultSerializer(canopus));
         space.registerSummaryWriter(new MztabSummaryWriter());

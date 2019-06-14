@@ -1,6 +1,6 @@
-package de.unijena.bioinf.ms.io.projectspace;
+package de.unijena.bioinf.babelms.projectspace;
 
-import de.unijena.bioinf.ms.io.projectspace.mztab.MztabMExporter;
+import de.unijena.bioinf.babelms.projectspace.mztab.MztabMExporter;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.slf4j.LoggerFactory;
 

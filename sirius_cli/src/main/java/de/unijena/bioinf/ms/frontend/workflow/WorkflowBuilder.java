@@ -9,7 +9,7 @@ import de.unijena.bioinf.ms.frontend.parameters.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.parameters.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.frontend.parameters.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.frontend.parameters.zodiac.ZodiacOptions;
-import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;

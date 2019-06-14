@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.ms.MsFileConfig;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
-import de.unijena.bioinf.ms.io.projectspace.ProjectSpaceConfig;
+import de.unijena.bioinf.babelms.projectspace.ProjectSpaceConfig;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.sirius.ExperimentResult;
 

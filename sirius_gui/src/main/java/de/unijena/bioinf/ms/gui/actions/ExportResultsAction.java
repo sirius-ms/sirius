@@ -8,7 +8,7 @@ package de.unijena.bioinf.ms.gui.actions;
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.io.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.babelms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.io.GuiProjectSpaceIO;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
