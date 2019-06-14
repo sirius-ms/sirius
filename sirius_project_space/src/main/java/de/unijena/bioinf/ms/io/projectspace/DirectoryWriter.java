@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.io.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
@@ -212,7 +212,11 @@ public class DirectoryWriter implements ProjectWriter {
         final Ms2Experiment experiment = er.getExperiment();
         if (experiment != null) {
             if (experiment.hasAnnotation(FinalConfig.class)) {
+                //config after everything is merged
                 write(SiriusLocations.SIRIUS_COMPOUND_CONFIG.fileName(), experiment.getAnnotation(FinalConfig.class).config::write);
+            } else if (experiment.hasAnnotation(ProjectSpaceConfig.class)) {
+                //config annotated from another workspace when copying or merging project-spaces
+                write(SiriusLocations.SIRIUS_COMPOUND_CONFIG.fileName(), experiment.getAnnotation(ProjectSpaceConfig.class).config::write);
             }
         }
     }
