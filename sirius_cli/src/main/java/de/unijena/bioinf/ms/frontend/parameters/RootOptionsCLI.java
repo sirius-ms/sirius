@@ -252,7 +252,7 @@ public class RootOptionsCLI implements RootOptions {
         // the calculators are not available -> e.g. web connection!
         return new MetaDataSerializer[]{
                 new IdentificationResultSerializer()
-                , new ZoadiacResultSerializer()
+                , new ZodiacResultSerializer()
                 , new FingerIdResultSerializer(ApplicationCore.WEB_API)
 //                , new CanopusResultSerializer(ApplicationCore.CANOPUS)
         };
