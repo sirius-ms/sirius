@@ -7,7 +7,7 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.frontend.parameters.DataSetJob;
 import de.unijena.bioinf.ms.frontend.parameters.InstanceJob;
-import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

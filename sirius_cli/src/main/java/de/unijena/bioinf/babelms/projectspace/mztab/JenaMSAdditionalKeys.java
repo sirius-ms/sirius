@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.io.projectspace.mztab;
+package de.unijena.bioinf.babelms.projectspace.mztab;
 
 public class JenaMSAdditionalKeys {
     //all lower case keys

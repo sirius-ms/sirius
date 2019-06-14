@@ -5,13 +5,14 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.babelms.projectspace.ExperimentDirectory;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace.create;
 
 public class GuiProjectSpace {
     public static final GuiProjectSpace PS;
