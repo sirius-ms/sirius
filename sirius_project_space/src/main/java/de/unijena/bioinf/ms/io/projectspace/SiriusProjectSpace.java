@@ -59,7 +59,7 @@ public class SiriusProjectSpace implements ProjectSpace {
         final TIntSet ids = new TIntHashSet();
         merged.loadIntoProjectSpace(merged.reader, ids, false, progress);//todo correct progress stack
         final String absPath = rootOutPath.getAbsolutePath();
-        rootInputPaths = rootInputPaths.stream().filter(p -> p.getAbsolutePath().equals(absPath)).collect(Collectors.toSet());
+        rootInputPaths = rootInputPaths.stream().filter(p -> !p.getAbsolutePath().equals(absPath)).collect(Collectors.toSet());
         merged.load(progress, ids, rootInputPaths);
         return merged;
     }
@@ -195,7 +195,7 @@ public class SiriusProjectSpace implements ProjectSpace {
         }
 
         envs.forEach(env ->
-                loadIntoProjectSpace(new DirectoryReader(env), ids, true, listener));
+                loadIntoProjectSpace(new DirectoryReader(env, reader.metaDataReader), ids, true, listener));
     }
 
     private ArrayList<ExperimentDirectory> loadIntoProjectSpace(@NotNull ProgressListener listener) {
