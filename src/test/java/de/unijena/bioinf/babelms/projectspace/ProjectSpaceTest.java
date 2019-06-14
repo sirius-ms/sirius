@@ -1,16 +1,11 @@
-package de.unijena.bioinf.ms.projectspace;
+package de.unijena.bioinf.babelms.projectspace;
 
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
-import de.unijena.bioinf.ms.io.projectspace.CanopusResultSerializer;
-import de.unijena.bioinf.ms.io.projectspace.FingerIdResultSerializer;
-import de.unijena.bioinf.ms.io.projectspace.IdentificationResultSerializer;
-import de.unijena.bioinf.ms.io.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Properties;
 
 public class ProjectSpaceTest {
 
@@ -27,7 +22,7 @@ public class ProjectSpaceTest {
 
         final WebAPI api = new WebAPI();
         final Canopus canopus =  Canopus.loadFromFile(new File("/home/fleisch/work/sirius_testing/canopus/canopus_fp.data"));
-        SiriusProjectSpace space = SiriusProjectSpace.create(null, root,
+        SiriusProjectSpace space = SiriusProjectSpaceIO.create(null, root,
                 new IdentificationResultSerializer(), new FingerIdResultSerializer(api), new CanopusResultSerializer(canopus));
         space.writeSummaries(space.parseExperiments()); //this can be cached
         space.close();

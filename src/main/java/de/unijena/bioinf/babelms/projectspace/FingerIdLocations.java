@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.io.projectspace;
+package de.unijena.bioinf.babelms.projectspace;
 
 public interface FingerIdLocations extends SiriusLocations {
     Location FINGERID_FINGERPRINT = new Location("fingerprints", null, ".fpt");

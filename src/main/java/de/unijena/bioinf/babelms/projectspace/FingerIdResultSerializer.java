@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.io.projectspace;
+package de.unijena.bioinf.babelms.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
