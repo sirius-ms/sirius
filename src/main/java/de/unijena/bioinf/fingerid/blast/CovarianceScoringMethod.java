@@ -61,32 +61,36 @@ public class CovarianceScoringMethod implements FingerblastScoringMethod {
     private static final String SEP = "\t";
 
 
-    public static CovarianceScoringMethod readScoring(InputStream stream, Charset charset, FingerprintVersion fpVersion, PredictionPerformance[] performances) throws IOException {
-        return readScoring(stream, charset, fpVersion, getCovarianceScoringAlpha(performances));
+    public static CovarianceScoringMethod readScoring(Reader reader, FingerprintVersion fpVersion, PredictionPerformance[] performances) throws IOException {
+        return readScoring(reader, fpVersion, getCovarianceScoringAlpha(performances));
     }
 
-    public static CovarianceScoringMethod readScoring(InputStream stream, Charset charset, FingerprintVersion fpVersion, double alpha) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(stream, charset));
+    public static CovarianceScoringMethod readScoring(InputStream stream, Charset charset, FingerprintVersion fpVersion, PredictionPerformance[] performances) throws IOException {
+        return readScoring(new InputStreamReader(stream, charset), fpVersion, getCovarianceScoringAlpha(performances));
+    }
 
-        final List<String> lines = new ArrayList<>();
-        String l;
-        while ((l = reader.readLine()) != null) lines.add(l);
+    public static CovarianceScoringMethod readScoring(Reader reader, FingerprintVersion fpVersion, double alpha) throws IOException {
+        try (BufferedReader bufferedReader = new BufferedReader(reader)) {
+            final List<String> lines = new ArrayList<>();
+            String l;
+            while ((l = bufferedReader.readLine()) != null) lines.add(l);
 
-        final int[][] edges = new int[lines.size()][];
-        final double[][] covariances = new double[lines.size()][];
-        int pos = 0;
-        for (String line : lines) {
-            if (line.length() == 0) continue;
-            String[] col = line.split(SEP);
-            edges[pos] = new int[]{Integer.parseInt(col[0]), Integer.parseInt(col[1])};
-            covariances[pos] = new double[]{Double.parseDouble(col[2]), Double.parseDouble(col[3]), Double.parseDouble(col[4]), Double.parseDouble(col[5])};
-            pos++;
+            final int[][] edges = new int[lines.size()][];
+            final double[][] covariances = new double[lines.size()][];
+            int pos = 0;
+            for (String line : lines) {
+                if (line.length() == 0) continue;
+                String[] col = line.split(SEP);
+                edges[pos] = new int[]{Integer.parseInt(col[0]), Integer.parseInt(col[1])};
+                covariances[pos] = new double[]{Double.parseDouble(col[2]), Double.parseDouble(col[3]), Double.parseDouble(col[4]), Double.parseDouble(col[5])};
+                pos++;
+            }
+            return new CovarianceScoringMethod(edges, covariances, fpVersion, alpha);
         }
-        return new CovarianceScoringMethod(edges, covariances, fpVersion, alpha);
     }
 
     public static CovarianceScoringMethod readScoringFromFile(Path treeFile, FingerprintVersion fpVersion, double alpha) throws IOException {
-        return readScoring(Files.newInputStream(treeFile), Charset.forName("UTF-8"), fpVersion, alpha);
+        return readScoring(new InputStreamReader(Files.newInputStream(treeFile), Charset.forName("UTF-8")), fpVersion, alpha);
     }
 
     private static Pattern EdgePattern = Pattern.compile("(\\d+)\\s*->\\s*(\\d+)\\s*");
