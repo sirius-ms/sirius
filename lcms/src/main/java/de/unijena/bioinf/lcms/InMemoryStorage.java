@@ -1,6 +1,7 @@
-package de.unijena.bioinf.model.lcms;
+package de.unijena.bioinf.lcms;
 
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.model.lcms.Scan;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
 /**
@@ -8,7 +9,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
  */
 public class InMemoryStorage implements SpectrumStorage {
 
-    private final TIntObjectHashMap<SimpleSpectrum> scan2spectrum;
+    protected final TIntObjectHashMap<SimpleSpectrum> scan2spectrum;
 
     public InMemoryStorage() {
         this.scan2spectrum = new TIntObjectHashMap<>();

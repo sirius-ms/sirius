@@ -41,6 +41,9 @@ public class Spectrums {
     public static Spectrum<Peak> wrap(double[] mz, double[] intensities) {
         return new ArrayWrapperSpectrum(mz, intensities);
     }
+    public static Spectrum<Peak> wrap(float[] mz, float[] intensities) {
+        return new ArrayWrapperSpectrum.Float(mz, intensities);
+    }
 
     public static <P extends Peak> Spectrum<P> wrap(final List<P> peaks) {
         return new Spectrum<P>() {
@@ -733,6 +736,7 @@ public class Spectrums {
     }
 
     public static <P extends Peak,S extends Spectrum<P>> SimpleSpectrum extractMostIntensivePeaks(S spectrum, int numberOfPeaksPerMassWindow, double slidingWindowWidth) {
+        if (spectrum.isEmpty()) return Spectrums.empty();
         final Spectrum<Peak> spec = getMassOrderedSpectrum(spectrum);
         final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
         final BoundedQueue<Integer> queue = new BoundedQueue<>(numberOfPeaksPerMassWindow, Integer[]::new, Comparator.comparingDouble(spec::getIntensityAt));

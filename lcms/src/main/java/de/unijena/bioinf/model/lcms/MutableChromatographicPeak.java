@@ -136,7 +136,7 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
 
     @Override
     public String toString() {
-        return "m/z = " + getMzAt(segments.first().apex) + ", retention time = " + getLeftEdge().getRetentionTime() + " ... " + getRightEdge().getRetentionTime() + " ms, scans = " + getLeftEdge().getScanNumber() + " ... " + getRightEdge().getScanNumber() + ", " + numberOfScans() + " scans in total with " + segments.size() + " segments.";
+        return "m/z = " + getMzAt(segments.first().apex) + ", retention time = " + String.format(Locale.US,"%.2f - %.2f min", getLeftEdge().getRetentionTime()/60000d, getRightEdge().getRetentionTime()/60000d) + " scans = " + getLeftEdge().getScanNumber() + " ... " + getRightEdge().getScanNumber() + ", " + numberOfScans() + " scans in total with " + segments.size() + " segments.";
     }
 
     public void setCorrelationToOtherPeak(ChromatographicPeak other, double correlation, int start, int end) {

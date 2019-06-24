@@ -3,6 +3,7 @@ package de.unijena.bioinf.lcms;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.model.lcms.*;
@@ -14,13 +15,13 @@ import java.util.List;
 import java.util.Optional;
 
 public class CorrelatedPeakDetector {
-
+    protected static final double MZ_ISO_ERRT = 0.002;
     protected static final Range<Double>[] ISO_RANGES = new Range[]{
-            Range.closed(0.99664664 - 0.002, 1.00342764 + 0.002),
-            Range.closed(1.99653883209004 - 0.002, 2.0067426280592295 + 0.002),
-            Range.closed(2.9950584 - 0.002, 3.00995027 + 0.002),
-            Range.closed(3.99359037 - 0.002, 4.01300058 + 0.002),
-            Range.closed(4.9937908 - 0.002, 5.01572941 + 0.002)
+            Range.closed(0.99664664 - MZ_ISO_ERRT, 1.00342764 + MZ_ISO_ERRT),
+            Range.closed(1.99653883209004 - MZ_ISO_ERRT, 2.0067426280592295 + MZ_ISO_ERRT),
+            Range.closed(2.9950584 - MZ_ISO_ERRT, 3.00995027 + MZ_ISO_ERRT),
+            Range.closed(3.99359037 - MZ_ISO_ERRT, 4.01300058 + MZ_ISO_ERRT),
+            Range.closed(4.9937908 - MZ_ISO_ERRT, 5.01572941 + MZ_ISO_ERRT)
     };
 
     public boolean doIAmAnIsotope(ProcessedSample sample,FragmentedIon ion, TDoubleArrayList alreadyAnnotatedMzs) {
@@ -43,19 +44,48 @@ public class CorrelatedPeakDetector {
         if (!peakBeforeChr.isPresent()) return false;
         Optional<ChromatographicPeak.Segment> segmentForScanId = peakBeforeChr.get().getSegmentForScanId(ms1Scan.getScanNumber());
         if (!segmentForScanId.isPresent()) return false;
-        List<CorrelationGroup> correlationGroups = detectIsotopesFor(sample, peakBeforeChr.get(), segmentForScanId.get(), ion.getChargeState());
+        if (segmentForScanId.get().getApexScanNumber()!=ion.getSegment().getApexScanNumber()) {
+            // we don't trust this peak...
+            return false;
+        }
+        List<CorrelationGroup> correlationGroups = new ArrayList<>();
+        detectIsotopesFor(sample, peakBeforeChr.get(), segmentForScanId.get(), ion.getChargeState(), correlationGroups);
         for (CorrelationGroup g : correlationGroups) {
             int scanNumber = g.getRight().findScanNumber(ms1Scan.getScanNumber());
             if (scanNumber >= 0 && g.getCorrelation() >= 0.95 && Math.abs(g.getRight().getMzAt(scanNumber) - ionPeak.getMass())<1e-8) {
-                System.out.println(ion + " :: IS AN ISOTOPE!!! ");
-                System.out.println(g.getLeft().getScanPointAt(g.getLeft().findScanNumber(ms1Scan.getScanNumber())));
+                final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
                 for (CorrelationGroup h : correlationGroups) {
-                    System.out.println(h.getRight().getScanPointAt(h.getRight().findScanNumber(ms1Scan.getScanNumber())) + " " + h);
+                    int sc = h.getRight().findScanNumber(ms1Scan.getScanNumber());
+                    if (sc >= 0) {
+                        buffer.addPeak(h.getRight().getScanPointAt(sc));
+                    }
                 }
-                return true;
+                if (isIsotopePattern(new SimpleSpectrum(buffer))) {
+                    //System.out.println(ion + " :: IS AN ISOTOPE!!! ");
+                    //System.out.println(g.getLeft().getScanPointAt(g.getLeft().findScanNumber(ms1Scan.getScanNumber())));
+                    for (CorrelationGroup h : correlationGroups) {
+                        final int scanNumber1 = h.getRight().findScanNumber(segmentForScanId.get().getApexScanNumber());
+                        //System.out.println(h.getRight().getScanPointAt(scanNumber1) + " " + h);
+                    }
+                    return true;
+                }
             }
         }
         return false;
+    }
+
+    private boolean isIsotopePattern(SimpleSpectrum spectrum) {
+        if (spectrum.size() < 2) return false;
+        // 1. contains strange elements?
+        // TODO: add DNN here
+        // 2. is super large mass?
+        if (spectrum.getMzAt(0) > 1200 && spectrum.getIntensityAt(1)/spectrum.getIntensityAt(0) > 1.25)
+            return false;
+        // 3. otherwise, has to be monotonic
+        if (spectrum.getIntensityAt(1)/spectrum.getIntensityAt(0) > 0.66)
+            return false;
+
+        return true;
     }
 
     /**
@@ -67,7 +97,7 @@ public class CorrelatedPeakDetector {
         // ensure that we do not double-annotate a peak
         final TDoubleArrayList alreadyAnnotatedMzs = new TDoubleArrayList();
         // 1. detect isotopes of main feature
-        detectIsotopesAndChargeStateFor(sample, ion, alreadyAnnotatedMzs);
+        detectIsotopesAndSetChargeStateFor(sample, ion, alreadyAnnotatedMzs);
 
         // do I am an isotope peak myself?
         if (doIAmAnIsotope(sample, ion, alreadyAnnotatedMzs)) {
@@ -77,7 +107,7 @@ public class CorrelatedPeakDetector {
         // 2. detect adducts and in-source fragments
         detectAdductsAndInSourceFor(sample, ion,alreadyAnnotatedMzs);
         // 3. detect isotopes of adducts/in-source fragments
-        detectInSourceFragmentsFor(sample, ion,alreadyAnnotatedMzs);
+        if (ion.getMsMs()!=null) detectInSourceFragmentsFor(sample, ion,alreadyAnnotatedMzs);
         return true;
 
     }
@@ -108,21 +138,19 @@ public class CorrelatedPeakDetector {
                         CorrelationGroup correlate = correlate(ion.getPeak(), ion.getSegment(), detection.get());
                         if (correlate==null) continue;
                         if (correlate.getCorrelation() >= 0.95) {
-                            ion.getInSourceFragments().add(new CorrelatedIon(correlate, ionWithIsotopes(sample, correlate.getRight(), correlate.getRightSegment(), ion.getChargeState())));
-                            System.out.println(ion + " :: Found IN-SOURCE FRAGMENT with delta m/z = " + (ion.getMsMs().getPrecursor().getMass() - peak)  + ", " + correlate );
-                            System.out.println("Add insource " + correlate.getRight().getScanPointForScanId(ms1Scan.getScanNumber()).getMass());
-                            List<CorrelationGroup> isos = detectIsotopesFor(sample, correlate.getRight(), correlate.getRightSegment(), 1);
+                            final IonGroup ion1 = ionWithIsotopes(sample, correlate.getRight(), correlate.getRightSegment(), ion.getChargeState(),alreadyAnnotatedMzs);
+                            if (ion1==null) continue;
+                            ion.getInSourceFragments().add(new CorrelatedIon(correlate, ion1));
+                            //System.out.println(ion + " :: Found IN-SOURCE FRAGMENT with delta m/z = " + (ion.getMsMs().getPrecursor().getMass() - peak)  + ", " + correlate );
+                            //System.out.println("Add insource " + correlate.getRight().getScanPointForScanId(ms1Scan.getScanNumber()).getMass());
+                            List<CorrelationGroup> isos = new ArrayList<>();
+                            detectIsotopesFor(sample, correlate.getRight(), correlate.getRightSegment(), ion.getChargeState(), isos);
                             alreadyAnnotatedMzs.add(ms1.getMzAt(l));
                             for (CorrelationGroup isotopePeak : isos) {
-                                final ScanPoint scanPointForScanId = isotopePeak.getRight().getScanPointForScanId(ms1Scan.getScanNumber());
-                                if (scanPointForScanId == null){
-                                    System.err.println("CHECK BUG!");
-                                    continue;
-                                }
-                                alreadyAnnotatedMzs.add(scanPointForScanId.getMass());
-                                System.out.println("Add insource isotope " + scanPointForScanId.getMass());
+                                alreadyAnnotatedMzs.add(isotopePeak.getRight().getMzAt(isotopePeak.getRightSegment().getApexIndex()));
+                                //System.out.println("Add insource isotope " + scanPointForScanId.getMass());
                             }
-                            System.out.println(Arrays.toString(alreadyAnnotatedMzs.toArray()));
+                            //System.out.println(Arrays.toString(alreadyAnnotatedMzs.toArray()));
                         }
                     }
                 }
@@ -161,59 +189,80 @@ public class CorrelatedPeakDetector {
                             continue;
                         // add ion as possibleIonType. But first make correlation analysis
                         CorrelationGroup correlate = correlate(ion.getPeak(), ion.getSegment(), detect.get());
-                        if (correlate != null && correlate.getCorrelation() >= 0.9) {
-                            adducts.add(new CorrelatedIon(correlate, ionWithIsotopes(sample, correlate.getRight(), correlate.getRightSegment(), ion.getChargeState())));
+                        if (correlate != null && correlate.getCorrelation() >= 0.9 && correlate.getKullbackLeibler() <= 0.5 && correlate.getNumberOfCorrelatedPeaks() >= 4) {
+                            final IonGroup ion1 = ionWithIsotopes(sample, correlate.getRight(), correlate.getRightSegment(), ion.getChargeState(), alreadyAnnotatedMzs);
+                            if (ion1==null) continue;
+                            adducts.add(new CorrelatedIon(correlate, ion1));
                             detectedIonTypes.add(ionType);
-                            System.out.println(ion.toString() + " :: Found " + ionType.toString() + " -> " + other.toString() + " with correlation " + correlate);
+                            //System.out.println(ion.toString() + " :: Found " + ionType.toString() + " -> " + other.toString() + " with correlation " + correlate);
                             alreadyAnnotatedMzs.add(peakMass);
+                            correlate.setAnnotation(ionType.toString());
                         } else {
                             possibleIonTypes.add(ionType);
-                            System.out.println(ion.toString() + " :: There might be " + ionType.toString() + " -> " + other.toString()+ ". Correlate:  " + String.valueOf(correlate));
+                            //System.out.println(ion.toString() + " :: There might be " + ionType.toString() + " -> " + other.toString()+ ". Correlate:  " + String.valueOf(correlate));
                         }
                     }
                 }
             }
         }
-        if (detectedIonTypes.size()==0)
-            System.out.println(ion.toString() + " :: NO adducts found.");
+        //if (detectedIonTypes.size()==0)
+        //    System.out.println(ion.toString() + " :: NO adducts found.");
         ion.getAdducts().addAll(adducts);
+
+        if (detectedIonTypes.size()==1) {
+            ion.setDetectedIonType(detectedIonTypes.get(0));
+        }
 
     }
 
-    public void detectIsotopesAndChargeStateFor(ProcessedSample sample, FragmentedIon ion, TDoubleArrayList alreadyAnnotatedMzs) {
+    public void detectIsotopesAndSetChargeStateFor(ProcessedSample sample, IonGroup ion, TDoubleArrayList alreadyAnnotatedMzs) {
         final Scan ms1Scan = sample.run.getScanByNumber(ion.getSegment().getApexScanNumber()).get();
         // try different chare states
+        List<CorrelationGroup> bestPattern = new ArrayList<>();
+        int bestChargeState = 0;
+        double bestScore = Double.NEGATIVE_INFINITY;
         for (int charge = 1; charge < 4; ++charge) {
-            final List<CorrelationGroup> isoPeaks = detectIsotopesFor(sample, ion.getPeak(), ion.getSegment(), charge);
-            if (isoPeaks.size() > 0) {
-                for (CorrelationGroup isotopePeak : isoPeaks) {
-                    alreadyAnnotatedMzs.add(isotopePeak.getRight().getScanPointForScanId(ms1Scan.getScanNumber()).getMass());
-                }
-                ion.setChargeState(charge);
-                ion.addIsotopes(isoPeaks);
-                System.out.println(ion +  " Found " + isoPeaks.size() + " isotopes with correlations " + isoPeaks.stream().mapToDouble(CorrelationGroup::getCorrelation).min().getAsDouble() + " .. " + isoPeaks.stream().mapToDouble(CorrelationGroup::getCorrelation).max().getAsDouble());
-                return;
+            final List<CorrelationGroup> isoPeaks = new ArrayList<>();
+            double score = detectIsotopesFor(sample, ion.getPeak(), ion.getSegment(), charge, isoPeaks);
+            if (score > bestScore) {
+                bestChargeState =charge;
+                bestPattern = isoPeaks;
+                bestScore = score;
+            }
+        }
+        if (bestPattern.size() > 0) {
+            for (CorrelationGroup isotopePeak : bestPattern) {
+                alreadyAnnotatedMzs.add(isotopePeak.getRight().getScanPointForScanId(ms1Scan.getScanNumber()).getMass());
+            }
+            ion.setChargeState(bestChargeState);
+            ion.addIsotopes(bestPattern);
+            System.out.println(ion +  " Found " + bestPattern.size() + " isotopes with correlations " + bestPattern.stream().mapToDouble(CorrelationGroup::getCorrelation).min().getAsDouble() + " .. " + bestPattern.stream().mapToDouble(CorrelationGroup::getCorrelation).max().getAsDouble());
+            for (CorrelationGroup g : bestPattern) {
+                System.out.println(g.getRight().getScanPointAt(g.getRightSegment().getApexIndex()));
             }
         }
     }
 
-    public IonGroup ionWithIsotopes(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge) {
-        return new IonGroup(peak,detectIsotopesFor(sample, peak,segment,charge));
+    public IonGroup ionWithIsotopes(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge, TDoubleArrayList alreadyAnnotatedMzs) {
+        IonGroup ion = new IonGroup(peak, segment, new ArrayList<>());
+        detectIsotopesAndSetChargeStateFor(sample,ion,alreadyAnnotatedMzs);
+        if (ion.getChargeState() == charge || ion.getChargeState()==0) return ion;
+        else return null;
     }
 
 
-    public List<CorrelationGroup> detectIsotopesFor(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge) {
+    public double detectIsotopesFor(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge, List<CorrelationGroup> isoPeaks) {
 
         Scan scan = sample.run.getScanByNumber(segment.getApexScanNumber()).get();
         final SimpleSpectrum spectrum = sample.storage.getScan(scan);
-        final List<CorrelationGroup> isoPeaks = new ArrayList<>();
         final double mz = peak.getMzAt(segment.getApexIndex());
+        double score = 0d;
         forEachIsotopePeak:
         for (int k = 0; k < ISO_RANGES.length; ++k) {
             // try to detect +k isotope peak
-            final double maxMz = mz + ISO_RANGES[k].upperEndpoint();
-            final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].lowerEndpoint(), maxMz);
-            if ( a < 0) continue;
+            final double maxMz = mz + ISO_RANGES[k].upperEndpoint()/charge;
+            final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].lowerEndpoint()/charge, maxMz);
+            if ( a < 0) break forEachIsotopePeak;
             int nsize = isoPeaks.size();
             for (int i=a; i < spectrum.size(); ++i) {
                 if (spectrum.getMzAt(i) > maxMz)
@@ -222,9 +271,10 @@ public class CorrelatedPeakDetector {
             }
             if (isoPeaks.size() <= nsize) {
                 break forEachIsotopePeak;
-            }
+            } else score += 1;
         }
-        return isoPeaks;
+        if (isoPeaks.isEmpty()) return Double.NEGATIVE_INFINITY;
+        else return score;
     }
 
 
@@ -269,14 +319,49 @@ public class CorrelatedPeakDetector {
         final Range<Integer> t25 = smallSegment.calculateFWHM(0.15d);
 
 
-        for (int i = t25.lowerEndpoint(); i < t25.upperEndpoint(); ++i) {
+        for (int i = t25.lowerEndpoint(); i <= t25.upperEndpoint(); ++i) {
             int j = large.findScanNumber(small.getScanNumberAt(i));
             if (j >= 0) a.add(large.getIntensityAt(j));
             else a.add(0d);
             b.add(small.getIntensityAt(i));
         }
         final double correlation = pearson(a,b,a.size());
-        return new CorrelationGroup(large,small,largeSegment,smallSegment,t25.upperEndpoint()-t25.lowerEndpoint(), correlation);
+        final double kl = kullbackLeibler(a,b, a.size());
+        return new CorrelationGroup(large,small,largeSegment,smallSegment,t25.lowerEndpoint(), t25.upperEndpoint(), correlation, kl);
+    }
+
+    private double cosine(TDoubleArrayList a, TDoubleArrayList b) {
+        double[] x = normalized(a);
+        double[] y = normalized(b);
+        double cosine = 0d, l=0d, r=0d;
+        for (int k=0; k < a.size(); ++k) {
+            cosine += x[k]*y[k];
+            l += x[k]*x[k];
+            r += y[k]*y[k];
+        }
+        return cosine/Math.sqrt(l*r);
+    }
+
+    private double kullbackLeibler(TDoubleArrayList a, TDoubleArrayList b, int size) {
+        double[] x =normalized(a);
+        double[] y = normalized(b);
+        double l=0d, r=0d;
+        for (int k=0; k < size; ++k) {
+            double lx = Math.log(x[k]), ly = Math.log(y[k]);
+            l += x[k] * (lx-ly);
+            r += y[k] * (ly-lx);
+        }
+        return l+r;
+    }
+
+    private double[] normalized(TDoubleArrayList a) {
+        final double[] b = a.toArray();
+        if (b.length<1) return b;
+        double sum = a.sum();
+        for (int k=0; k < b.length; ++k) {
+            b[k] /= sum;
+        }
+        return b;
     }
 
 
