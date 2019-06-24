@@ -8,4 +8,8 @@ public class SpectralSimilarity {
         this.similarity = similarity;
         this.shardPeaks = shardPeaks;
     }
+
+    @Override
+    public String toString() {
+        return "cosine = " + similarity + ", " + shardPeaks + " shared peaks.";}
 }

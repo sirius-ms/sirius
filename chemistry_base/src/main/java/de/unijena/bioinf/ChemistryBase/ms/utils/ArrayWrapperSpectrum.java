@@ -121,4 +121,97 @@ public class ArrayWrapperSpectrum extends AbstractSpectrum<Peak> implements Muta
         ints[index2] = in;
     }
 
+
+    public static class Float extends AbstractSpectrum<Peak> implements MutableSpectrum<Peak> {
+        private final float[] mzs, ints;
+
+        public <P extends Peak, S extends Spectrum<P>> Float(S s) {
+            super(s);
+
+            this.mzs = new float[s.size()];
+            this.ints = new float[s.size()];
+
+            for (int i = 0; i < s.size(); ++i) {
+                mzs[i] = (float)s.getMzAt(i);
+                ints[i] = (float)s.getIntensityAt(i);
+            }
+        }
+
+        public Float(float[] mzs, float[] ints) {
+            super();
+            if (mzs.length != ints.length) throw new IllegalArgumentException("Size of masses and intensities differs");
+            this.mzs = mzs;
+            this.ints = ints;
+        }
+
+        public float[] getMzs() {
+            return mzs;
+        }
+
+        public float[] getInts() {
+            return ints;
+        }
+
+        @Override
+        public double getMzAt(int index) {
+            return mzs[index];
+        }
+
+        @Override
+        public double getIntensityAt(int index) {
+            return ints[index];
+        }
+
+        @Override
+        public Peak getPeakAt(int index) {
+            return new Peak(mzs[index], ints[index]);
+        }
+
+        @Override
+        public int size() {
+            return mzs.length;
+        }
+
+        @Override
+        public void addPeak(Peak peak) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void addPeak(double mz, double intensity) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setPeakAt(int index, Peak peak) {
+            mzs[index] = (float)peak.getMass();
+            ints[index] = (float)peak.getIntensity();
+        }
+
+        @Override
+        public Peak removePeakAt(int index) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setMzAt(int index, double mz) {
+            mzs[index] = (float)mz;
+        }
+
+        @Override
+        public void setIntensityAt(int index, double intensity) {
+            ints[index] = (float)intensity;
+        }
+
+        @Override
+        public void swap(int index1, int index2) {
+            final float mz = mzs[index1];
+            final float in = ints[index1];
+            mzs[index1] = mzs[index2];
+            ints[index1] = ints[index2];
+            mzs[index2] = mz;
+            ints[index2] = in;
+        }
+    }
+
 }
