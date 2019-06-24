@@ -20,6 +20,7 @@ package de.unijena.bioinf.babelms.ms;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.data.Tagging;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.babelms.DataWriter;
@@ -29,6 +30,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class JenaMsWriter implements DataWriter<Ms2Experiment> {
     @Override
@@ -52,6 +54,10 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         writer.write(">instrumentation " + instrumentation.description());
         writer.newLine();
         writeIfAvailable(writer, ">source", data.getSource());
+        if (!data.getAnnotation(Tagging.class,Tagging::none).isEmpty()) {
+            writer.write(">tags " + data.getAnnotation(Tagging.class,Tagging::none).stream().collect(Collectors.joining(",")));
+            writer.newLine();
+        }
         writeIfAvailable(writer, ">quality", data.getAnnotation(CompoundQuality.class));
         final RetentionTime retentionTime = data.getAnnotation(RetentionTime.class);
         if (retentionTime != null) {
@@ -61,6 +67,9 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
                 write(writer, ">rt_end", String.valueOf(retentionTime.getEndTime()) + "s");
             }
         }
+
+        if (data.getAnnotation(Quantification.class,()->null)!=null)
+            writeIfAvailable(writer, ">quantification", data.getAnnotation(Quantification.class).toString());
 
         //write original config to file
         if (data.hasAnnotation(MsFileConfig.class)) {

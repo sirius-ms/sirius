@@ -1,8 +1,8 @@
 package de.unijena.bioinf.io.lcms;
 
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
+import de.unijena.bioinf.lcms.SpectrumStorage;
 import de.unijena.bioinf.model.lcms.LCMSRun;
-import de.unijena.bioinf.model.lcms.SpectrumStorage;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;

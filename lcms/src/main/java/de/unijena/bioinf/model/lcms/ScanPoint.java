@@ -29,7 +29,7 @@ public class ScanPoint extends Peak {
     }
 
     public String toString() {
-        return String.format(Locale.US, "m/z = %.5f, intensity = %.1f, scanID = %d", mass,intensity,scanNumber);
+        return String.format(Locale.US, "m/z = %.5f, intensity = %.1f, scanID = %d, rt = %.2f", mass,intensity,scanNumber, retentionTime/60000d);
     }
 
     @Override

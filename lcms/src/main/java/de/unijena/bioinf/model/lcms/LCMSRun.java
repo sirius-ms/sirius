@@ -1,16 +1,19 @@
 package de.unijena.bioinf.model.lcms;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.*;
 
 public class LCMSRun implements Annotated<DataAnnotation>, Iterable<Scan>  {
 
     protected DataSource source;
+    protected String identifier;
     protected MsInstrumentation instrument;
     protected EnumSet<MsDataProcessing> processings;
     protected TreeMap<Integer, Scan> scans;
@@ -23,6 +26,19 @@ public class LCMSRun implements Annotated<DataAnnotation>, Iterable<Scan>  {
         this.processings = EnumSet.noneOf(MsDataProcessing.class);
         this.scans = new TreeMap<>();
         this.annotations = new Annotated.Annotations();
+        String name = new File(source.getUrl().getFile()).getName();
+        int li = name.lastIndexOf('.');
+        if (li>=0) name = name.substring(0,li);
+        this.identifier = name;
+    }
+
+
+    public Range<Integer> scanRange() {
+        return Range.closed(scans.firstKey(), scans.lastKey());
+    }
+
+    public DataSource getSource() {
+        return source;
     }
 
     public Collection<Scan> getScans() {
@@ -69,9 +85,17 @@ public class LCMSRun implements Annotated<DataAnnotation>, Iterable<Scan>  {
         return scan==null ? Optional.empty() : Optional.of(scan);
     }
 
+    public String getIdentifier() {
+        return identifier;
+    }
+
     @NotNull
     @Override
     public Iterator<Scan> iterator() {
         return scans.values().iterator();
+    }
+
+    public Range<Long> retentionTimeRange() {
+        return Range.closed(scans.firstEntry().getValue().getRetentionTime(), scans.lastEntry().getValue().getRetentionTime());
     }
 }

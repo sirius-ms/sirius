@@ -71,7 +71,7 @@ public class TreeMotifPlugin extends SiriusPlugin {
 
                 final TreeMotifDB db = treeMotifDB.get(motifDB);
                 if (db!=null) {
-                    MotifMatch motifMatch = db.searchInLibraryTopK(tree, 10);
+                    MotifMatch motifMatch = tree.numberOfVertices()>=5 ? db.searchInLibraryTopK(tree, 10) : null;
                     if (motifMatch!=null) {
                         System.out.println("Add " + (motifMatch.getTotalProbability()) + " to total score for " + tree.getRoot().getFormula() + " ( " +  motifMatch.matchingFragments.length + " frags and " + motifMatch.matchingRootLosses.length + " losses ) with sets are " + Arrays.toString(db.getMatchingFragments(motifMatch)) + " and " + Arrays.toString(db.getMatchingRootLosses(motifMatch)));
                         tree.setTreeWeight(tree.getTreeWeight() + motifMatch.getTotalProbability());

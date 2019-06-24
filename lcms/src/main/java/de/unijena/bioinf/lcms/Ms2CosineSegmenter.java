@@ -64,7 +64,7 @@ public class Ms2CosineSegmenter {
 
         final TIntObjectHashMap<ArrayList<Scan>> perSegment = new TIntObjectHashMap<>();
         for (Map.Entry<MutableChromatographicPeak, ArrayList<Scan>> entry : scansPerPeak.entrySet()) {
-            System.out.println(entry.getKey().getSegments().size() + " segments and " + entry.getValue().size() + " MS/MS");
+            System.out.println(entry.getKey().getSegments().size() + " segments and " + entry.getValue().size() + " MS/MS for Scans " + Arrays.toString(entry.getValue().stream().mapToInt(Scan::getScanNumber).toArray()));
             perSegment.clear();
             for (Scan s : entry.getValue()) {
                 final Optional<ChromatographicPeak.Segment> segment = entry.getKey().getSegmentForScanId(s.getScanNumber());
@@ -86,16 +86,17 @@ public class Ms2CosineSegmenter {
             final int[] segmentIds = perSegment.keys();
             Arrays.sort(segmentIds);
             final MergedSpectrum[] spectraPerSegment = new MergedSpectrum[segmentIds.length];
-            int k=0;
+            int k=-1;
             for (int segmentId : segmentIds) {
+                ++k;
                 CosineQuery[] cos = perSegment.get(segmentId).stream().map(x->prepareForCosine(sample,x)).filter(Objects::nonNull).toArray(CosineQuery[]::new);
                 if (cos.length==0) continue;
                 MergedSpectrum mergedPeaks = (cos.length==1) ? cos[0].originalSpectrum : mergeViaClustering(sample,cos);
                 spectraPerSegment[k] = mergedPeaks;
-                ++k;
             }
 
             // merge across segment ids
+            HashSet<ChromatographicPeak.Segment> SEGS = new HashSet<>();
             MergedSpectrum merged = null;
             int j=-1;
             for (int i=0; i < segmentIds.length; ++i) {
@@ -116,7 +117,12 @@ public class Ms2CosineSegmenter {
                     long gap = entry.getKey().getRetentionTimeAt(right.getFwhmStartIndex()) - entry.getKey().getRetentionTimeAt(left.getFwhmEndIndex());
                     if (gap > medianWidth) {
                         // do not merge
+                        System.out.println("Do not merge " + queryLeft.originalSpectrum.getPrecursor().getMass() + " " + mutableChromatographicPeak.getIntensityAt(left.getApexIndex()) + " with " + mutableChromatographicPeak.getIntensityAt(right.getApexIndex()) + " with cosine "+ cosine.similarity + " (" + cosine.shardPeaks + " peaks), due to gap above " + medianWidth);
                         ions.add(new FragmentedIon(merged, entry.getKey(), left));
+                        if (!SEGS.add(left))
+                            System.out.println("=/");
+                        merged = spectraPerSegment[i];
+                        j=i;
                     } else {
                         merged = merge(merged, spectraPerSegment[i]);
                         mutableChromatographicPeak.joinAllSegmentsWithinScanIds(segmentIds[j], segmentIds[i]);
@@ -128,14 +134,18 @@ public class Ms2CosineSegmenter {
                         System.out.println("Split segments");
                         final ChromatographicPeak.Segment left = mutableChromatographicPeak.getSegmentForScanId(segmentIds[j]).get();
                         ions.add(new FragmentedIon(merged, entry.getKey(), left));
+                        if (!SEGS.add(left))
+                            System.out.println("=/");
                         merged = spectraPerSegment[i];
                         j = i;
                     }
                 }
             }
-            if (j>=0) {
+            if (merged!=null) {
                 final ChromatographicPeak.Segment left = entry.getKey().getSegmentForScanId(segmentIds[j]).get();
                 ions.add(new FragmentedIon(merged, entry.getKey(), left));
+                if (!SEGS.add(left))
+                    System.out.println("=/");
             }
             // compute cosine between segments. Check if the cosine is low -> than its probably a different compound
             System.out.println(ions.size());
@@ -231,7 +241,7 @@ public class Ms2CosineSegmenter {
     }
 
 
-    private static MergedSpectrum merge(MergedSpectrum left, MergedSpectrum right) {
+    public static MergedSpectrum merge(MergedSpectrum left, MergedSpectrum right) {
         // we assume a rather large deviation as signal peaks should be contained in more than one
         // measurement
         final List<MergedPeak> orderedByMz = new ArrayList<>(left.size());

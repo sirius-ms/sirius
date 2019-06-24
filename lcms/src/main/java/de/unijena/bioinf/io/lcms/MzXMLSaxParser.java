@@ -2,6 +2,7 @@ package de.unijena.bioinf.io.lcms;
 
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.lcms.SpectrumStorage;
 import de.unijena.bioinf.model.lcms.*;
 import gnu.trove.list.array.TByteArrayList;
 import org.xml.sax.Attributes;
@@ -255,11 +256,13 @@ class MzXMLSaxParser extends DefaultHandler {
                 }
             } else if (elementName.equals("scan")) {
                 final SimpleSpectrum spectrum = new SimpleSpectrum(mzArray, intensityArray);
+                double TIC = 0d;
+                for (double value : intensityArray) TIC += value;
                 Precursor prec;
                 if (msLevel>1) {
                     prec = new Precursor(precursorScanNumber,precursorMz,precursorIntensity,charge,isolationWindowWidth);
                 } else prec = null;
-                final Scan scan = new Scan(scanNumber,polarity,retentionTime,prec);
+                final Scan scan = new Scan(scanNumber,polarity,retentionTime,spectrum.size(), TIC, prec);
                 storage.add(scan, spectrum);
                 lcms.addScan(scan);
                 listen(false);

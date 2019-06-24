@@ -1,5 +1,7 @@
 dependencies {
     compile project(':chemistry_base')
+    compile "org.apache.commons:commons-math3:$math3_version"
+    compile group: 'de.unijena.bioinf.ms', name: 'Recalibration', version: '1.0'
     testCompile project(':io')
     compile project(':spectral_alignment')
 }
