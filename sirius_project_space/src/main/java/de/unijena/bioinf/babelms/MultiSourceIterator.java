@@ -1,10 +1,10 @@
 package de.unijena.bioinf.babelms;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.sirius.ExperimentResult;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * concatenate multiple experiment iterators to one.
@@ -47,6 +47,6 @@ public class MultiSourceIterator implements Iterator<ExperimentResult> {
     public ExperimentResult next() {
         if (hasNext())
             return currentIterator.next();
-        return null;
+        throw new NoSuchElementException("No Elements Left in MultiSource iterator!");
     }
 }
