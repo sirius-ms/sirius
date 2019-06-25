@@ -275,15 +275,17 @@ public class RootOptionsCLI implements RootOptions {
 
 
     protected MetaDataSerializer[] makeSerializerArray() {
-        //todo check weather Canopus and WebService is available
-        // this should be collected from the different subtool
+
+        //TODO this should be collected from the different subtool clis
         // we should be able to import and export the data even if
         // the calculators are not available -> e.g. web connection!
-        return new MetaDataSerializer[]{
-                new IdentificationResultSerializer()
-                , new ZodiacResultSerializer()
-                , new FingerIdResultSerializer(ApplicationCore.WEB_API)
-//                , new CanopusResultSerializer(ApplicationCore.CANOPUS)
-        };
+        List<MetaDataSerializer> al = new ArrayList<>();
+        al.add(new IdentificationResultSerializer());
+        al.add(new ZodiacResultSerializer());
+        al.add(new FingerIdResultSerializer(ApplicationCore.WEB_API));
+        if (ApplicationCore.CANOPUS != null)
+            al.add(new CanopusResultSerializer(ApplicationCore.CANOPUS));
+
+        return al.toArray(new MetaDataSerializer[0]);
     }
 }
