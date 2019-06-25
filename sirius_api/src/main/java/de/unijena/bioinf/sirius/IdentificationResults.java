@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+//todo maybe we shoud ensure that this lis is alwasys sorted
 public class IdentificationResults implements ResultAnnotation, Iterable<IdentificationResult> {
     private final List<IdentificationResult> results;
 
@@ -135,6 +136,10 @@ public class IdentificationResults implements ResultAnnotation, Iterable<Identif
 
     public IdentificationResult get(int index) {
         return results.get(index);
+    }
+
+    public IdentificationResult getBest() {
+        return get(0);
     }
 
     public int indexOf(IdentificationResult o) {
