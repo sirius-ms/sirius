@@ -22,18 +22,28 @@ public class Scan {
      */
     private final Precursor precursor;
 
-    public Scan(int scanNumber, Polarity polarity, long retentionTime) {
-        this.scanNumber = scanNumber;
-        this.retentionTime = retentionTime;
-        this.precursor = null;
-        this.polarity = polarity;
+    private final double TIC;
+    private final int numberOfPeaks;
+
+    public Scan(int scanNumber, Polarity polarity, long retentionTime, int numberOfPeaks, double TIC) {
+        this(scanNumber,polarity,retentionTime,numberOfPeaks,TIC,null);
     }
 
-    public Scan(int scanNumber, Polarity polarity, long retentionTime, Precursor precursor) {
+    public Scan(int scanNumber, Polarity polarity, long retentionTime, int numberOfPeaks,  double TIC, Precursor precursor) {
         this.scanNumber = scanNumber;
         this.retentionTime = retentionTime;
         this.precursor = precursor;
         this.polarity = polarity;
+        this.TIC = TIC;
+        this.numberOfPeaks = numberOfPeaks;
+    }
+
+    public int getNumberOfPeaks() {
+        return numberOfPeaks;
+    }
+
+    public double getTIC() {
+        return TIC;
     }
 
     public int getScanNumber() {

@@ -77,12 +77,22 @@ public interface ChromatographicPeak {
             this.fwhmStart = fwhm.lowerEndpoint();
         }
 
+        public ChromatographicPeak getPeak() {
+            return peak;
+        }
+
         public String toString() {
-            return "Segment(" + peak.getScanNumberAt(startIndex) + " ... " + peak.getScanNumberAt(endIndex) + "), " + (endIndex-startIndex) + " spans over " + retentionTimeWidth()/1000d + " seconds.";
+            return "Segment(" + peak.getScanNumberAt(startIndex) + " ... " + peak.getScanNumberAt(endIndex) + "), " + (endIndex-startIndex+1) + " spans from " + (retentiomTimeSpan().lowerEndpoint()/60000d) + " .. " + (retentiomTimeSpan().upperEndpoint()/60000d)  +  " min over " + retentionTimeWidth()/1000d + " seconds.";
         }
 
         public long fwhm() {
             return peak.getRetentionTimeAt(fwhmEnd)-peak.getRetentionTimeAt(fwhmStart);
+        }
+        public long fwhm(double percentile) {
+            Range<Integer> r = calculateFWHM(percentile);
+            if (r.lowerEndpoint().equals(r.upperEndpoint()))
+                return (peak.getRetentionTimeAt(Math.min(endIndex, r.upperEndpoint()+1) - Math.max(startIndex,r.lowerEndpoint()-1)));
+            return peak.getRetentionTimeAt(r.upperEndpoint())-peak.getRetentionTimeAt(r.lowerEndpoint());
         }
 
         public int getFwhmStartIndex() {

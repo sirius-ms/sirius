@@ -1,4 +1,4 @@
-package de.unijena.bioinf.model.lcms;
+package de.unijena.bioinf.lcms.noise;
 
 public interface NoiseModel {
 

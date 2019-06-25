@@ -18,6 +18,7 @@
 package de.unijena.bioinf.babelms.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.data.Tagging;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
@@ -110,10 +111,13 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private int lineNumber;
         private String compoundName = null;
         private Whiteset formulas;
+        private List<String> tags;
 
         private int charge = 0;
         private SPECTRUM_TYPE spectrumType = SPECTRUM_TYPE.UNKNOWN;
         private PrecursorIonType ionization;
+
+        private Quantification quant;
 
         private CollisionEnergy currentEnergy;
         private double tic = 0, parentMass = 0, retentionTime = 0, retentionTimeStart = Double.NaN, retentionTimeEnd = Double.NaN;
@@ -145,8 +149,10 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             ionization = null;
             spectrumType = SPECTRUM_TYPE.UNKNOWN;
             charge = 0;
+            quant = null;
             formulas = null;
             compoundName = name;
+            this.tags = new ArrayList<>();
             instrumentation = MsInstrumentation.Unknown;
 //            annotations = new HashMap<>();
 //            treeTimeout = 0d;
@@ -272,6 +278,10 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 if (value.startsWith("InChI=")) {
                     inchi = value.trim();
                 }
+            } else if (optionName.toLowerCase().startsWith("tag")) {
+                tags.addAll(Arrays.asList(value.split(",")));
+            } else if (optionName.equalsIgnoreCase("quantification")) {
+                quant = Quantification.fromString(value);
             } else if (optionName.equalsIgnoreCase("inchikey")) {
                 inchikey = value.trim();
             } else if (optionName.equalsIgnoreCase("smarts") || optionName.equalsIgnoreCase("smiles")) {
@@ -386,6 +396,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             exp.setMs1Spectra(ms1spectra);
             exp.setMs2Spectra(ms2spectra);
 
+            exp.setAnnotation(Tagging.class, new Tagging(tags.toArray(new String[0])));
+
             if (mergedMs1 != null) exp.setMergedMs1Spectrum(mergedMs1);
             exp.setAnnotation(MsFileSource.class, source);
             if (externalSource != null)
@@ -404,6 +416,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             //add config annotations that have been set within the file
             exp.setAnnotation(MsFileConfig.class, new MsFileConfig(config)); //set map for reconstructability
             exp.setAnnotationsFrom(config.createInstancesWithModifiedDefaults(Ms2ExperimentAnnotation.class, true));
+
+            if (quant!=null) exp.setAnnotation(Quantification.class, quant);
 
             //add additional fields
             if (fields != null) exp.setAnnotation(AdditionalFields.class, fields);

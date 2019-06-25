@@ -35,7 +35,7 @@ public class CompoundQuality implements Ms2ExperimentAnnotation  {
     }
 
     public CompoundQuality() {
-        this.flags = EnumSet.of(CompoundQualityFlag.Good);
+        this.flags = EnumSet.of(CompoundQualityFlag.UNKNOWN);
     }
 
     public CompoundQuality(CompoundQualityFlag first, CompoundQualityFlag... other) {
@@ -55,7 +55,7 @@ public class CompoundQuality implements Ms2ExperimentAnnotation  {
     }
 
     public static enum CompoundQualityFlag {
-        Good, LowIntensity, NoMS1Peak, FewPeaks, Chimeric, NotMonoisotopicPeak, PoorlyExplained;
+        Good, LowIntensity, NoMS1Peak, FewPeaks, Chimeric, NotMonoisotopicPeak, PoorlyExplained, UNKNOWN;
     }
 
     public String toString() {
