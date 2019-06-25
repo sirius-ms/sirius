@@ -3,16 +3,24 @@ package de.unijena.bioinf.model.lcms;
 public class CorrelationGroup {
     protected ChromatographicPeak left, right;
     protected ChromatographicPeak.Segment leftSegment, rightSegment;
-    protected int numberOfCorrelatedPeaks;
-    protected double correlation;
+    protected int start, end;
+    protected double correlation, kl;
 
-    public CorrelationGroup(ChromatographicPeak left, ChromatographicPeak right, ChromatographicPeak.Segment leftSegment, ChromatographicPeak.Segment rightSegment, int numberOfCorrelatedPeaks, double correlation) {
+    protected String annotation;
+
+    public CorrelationGroup(ChromatographicPeak left, ChromatographicPeak right, ChromatographicPeak.Segment leftSegment, ChromatographicPeak.Segment rightSegment, int start, int end, double correlation, double kl) {
         this.left = left;
         this.right = right;
         this.leftSegment = leftSegment;
         this.rightSegment = rightSegment;
         this.correlation = correlation;
-        this.numberOfCorrelatedPeaks = numberOfCorrelatedPeaks;
+        this.kl = kl;
+        this.start = start;
+        this.end = end;
+    }
+
+    public double getKullbackLeibler() {
+        return kl;
     }
 
     public ChromatographicPeak getLeft() {
@@ -32,7 +40,7 @@ public class CorrelationGroup {
     }
 
     public int getNumberOfCorrelatedPeaks() {
-        return numberOfCorrelatedPeaks;
+        return end-start+1;
     }
 
     public double getCorrelation() {
@@ -40,11 +48,19 @@ public class CorrelationGroup {
     }
 
     public CorrelationGroup invert() {
-        return new CorrelationGroup(right,left,rightSegment,leftSegment,numberOfCorrelatedPeaks, correlation);
+        return new CorrelationGroup(right,left,rightSegment,leftSegment,start,end, correlation,kl);
+    }
+
+    public String getAnnotation() {
+        return annotation;
+    }
+
+    public void setAnnotation(String annotation) {
+        this.annotation = annotation;
     }
 
     @Override
     public String toString() {
-        return numberOfCorrelatedPeaks + " peaks with correlation = " + correlation;
+        return getNumberOfCorrelatedPeaks() + " peaks with correlation = " + correlation;
     }
 }

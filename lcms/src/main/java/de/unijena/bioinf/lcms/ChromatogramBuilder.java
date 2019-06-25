@@ -1,5 +1,6 @@
 package de.unijena.bioinf.lcms;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -17,7 +18,7 @@ public class ChromatogramBuilder {
 
     public ChromatogramBuilder(ProcessedSample sample) {
         this.sample = sample;
-        this.dev = new Deviation(10);
+        this.dev = new Deviation(15);
         this.cache = new ChromatogramCache();
     }
 
@@ -29,6 +30,26 @@ public class ChromatogramBuilder {
         } else {
             return Optional.empty(); // no chromatographic peak detected
         }
+    }
+
+    public Optional<ChromatographicPeak> detect(Range<Integer> scanRange, double mz) {
+        // pick most intensive peak in scan range
+        ScanPoint best = null;
+        SimpleSpectrum bestSpec = null;
+        for (Scan s : sample.run.getScans(scanRange.lowerEndpoint(), scanRange.upperEndpoint()).values()) {
+            if (!s.isMsMs() && scanRange.contains(s.getScanNumber())) {
+                final SimpleSpectrum spectrum = sample.storage.getScan(s);
+                int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, dev);
+                if (i>=0) {
+                    if (best==null || spectrum.getIntensityAt(i) > best.getIntensity()) {
+                        best = new ScanPoint(s, spectrum.getMzAt(i), spectrum.getIntensityAt(i));
+                        bestSpec = spectrum;
+                    }
+                }
+            }
+        }
+        if (best==null) return Optional.empty();
+        return buildTrace(bestSpec, best);
     }
 
     public Optional<ChromatographicPeak> detect(Scan startingPoint, double mz) {
@@ -73,6 +94,9 @@ public class ChromatogramBuilder {
             }
         }
         MutableChromatographicPeak concat = MutableChromatographicPeak.concat(leftTrace, rightTrace);
+
+        // make statistics about deviations within
+
         Extrema extrema = detectExtrema(concat);
 
         for (int k=0, n=extrema.numberOfExtrema(); k < n; ++k) {
@@ -92,7 +116,6 @@ public class ChromatogramBuilder {
         }
 
         if (concat.segments.size()==0) {
-            System.err.println("Noisy chromatogram.");
             return Optional.empty(); // just noise
         }
 
@@ -117,20 +140,20 @@ public class ChromatogramBuilder {
                 medianSlope.resetQuick();
                 intensityQuantile.resetQuick();
                 int start = k;
-                int end = k + 25;
-                if (end + 25 > peak.numberOfScans()) end = peak.numberOfScans();
+                int end = k + 10;
+                if (end + 10 > peak.numberOfScans()) end = peak.numberOfScans();
                 int middle = start + (end - start) / 2;
-                double noiseLevel = sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(middle), peak.getMzAt(middle));
+                double noiseLevel = 2*sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(middle), peak.getMzAt(middle));
                 for (int i=start; i < end; ++i) {
                     if (i>0) medianSlope.add(Math.abs(peak.getIntensityAt(i) - peak.getIntensityAt(i - 1)));
                     intensityQuantile.add(peak.getIntensityAt(i));
                 }
                 medianSlope.sort();
                 intensityQuantile.sort();
-                noiseLevel = Math.max(noiseLevel, medianSlope.getQuick((int)(medianSlope.size()*0.75)));
-                noiseLevel = Math.max(noiseLevel, intensityQuantile.getQuick((int)(intensityQuantile.size()*0.05))/2d);
+                noiseLevel = Math.max(noiseLevel, medianSlope.getQuick((int)(medianSlope.size()*0.33)));
+                noiseLevel = Math.max(noiseLevel, intensityQuantile.getQuick((int)(intensityQuantile.size()*0.1))/2d);
                 for (int i=start; i < end; ++i) noiseLevels[i] = (float)noiseLevel;
-                k+=end;
+                k=end;
             }
         } else {
             for (int i=0; i < peak.numberOfScans(); ++i) {
@@ -173,6 +196,9 @@ public class ChromatogramBuilder {
         if (extrema.isMinimum(0) || !extrema.valid()) {
             System.err.println("Strange");
         }
+
+        /*
+
         // we expect a small number of extrema:
         for (int k=2; k < 20; ++k) {
             assert extrema.valid();
@@ -181,6 +207,10 @@ public class ChromatogramBuilder {
                     break;
             } else break;
         }
+
+        // no smoothing now
+        */
+
         return extrema;
 
     }
