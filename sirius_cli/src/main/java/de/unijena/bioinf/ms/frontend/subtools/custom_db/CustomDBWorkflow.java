@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.frontend.parameters.custom_db;
+package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 

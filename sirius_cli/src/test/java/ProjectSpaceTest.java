@@ -32,7 +32,7 @@ public class ProjectSpaceTest {
                 (cur,max,mess) ->{System.out.println((((((double)cur)/(double)max)) * 100d) + "%");},
                 new IdentificationResultSerializer(), new FingerIdResultSerializer(api), new CanopusResultSerializer(canopus));
         space.registerSummaryWriter(new MztabSummaryWriter());
-        space.writeSummaries(space.parseExperiments(), (cur, max, mess) -> System.out.println((((((double) cur) / (double) max)) * 100d) + "% " + mess));
+        space.writeSummaries((cur, max, mess) -> System.out.println((((((double) cur) / (double) max)) * 100d) + "% " + mess));
         space.close();
         System.out.println("done!");
     }

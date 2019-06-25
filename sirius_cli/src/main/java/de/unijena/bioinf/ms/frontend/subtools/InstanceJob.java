@@ -1,8 +1,11 @@
-package de.unijena.bioinf.ms.frontend.parameters;
+package de.unijena.bioinf.ms.frontend.subtools;
 
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.jjobs.BasicDependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.properties.RecomputeResults;
 import de.unijena.bioinf.sirius.ExperimentResult;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ExecutionException;
 
@@ -14,7 +17,7 @@ import java.util.concurrent.ExecutionException;
  * NOT necessary and NOT recommended.
  */
 
-public abstract class InstanceJob extends BasicDependentJJob<ExperimentResult> {
+public abstract class InstanceJob extends BasicDependentJJob<ExperimentResult> implements SubToolJob {
     private JJob<ExperimentResult> inputProvidingJob = null;
     private ExperimentResult input = null;
 
@@ -29,12 +32,11 @@ public abstract class InstanceJob extends BasicDependentJJob<ExperimentResult> {
     }
 
     protected ExperimentResult awaitInput() throws ExecutionException {
-        if (input != null) {
+        if (input != null)
             return input;
-        }
+
         if (inputProvidingJob != null) {
-            input = inputProvidingJob.awaitResult();
-            return input;
+            return inputProvidingJob.awaitResult();
         }
 
         throw new ExecutionException(new IllegalArgumentException("Neither an input nor an input providing job was provided"));
@@ -48,6 +50,15 @@ public abstract class InstanceJob extends BasicDependentJJob<ExperimentResult> {
     protected JJob<ExperimentResult> getInputProvidingJob() {
         return inputProvidingJob;
     }
+
+    @Override
+    protected ExperimentResult compute() throws Exception {
+        input = awaitInput();
+        computeAndAnnotateResult(input);
+        return input;
+    }
+
+    protected abstract void computeAndAnnotateResult(final @NotNull ExperimentResult expRes) throws Exception;
 
 
     @FunctionalInterface

@@ -1,14 +1,14 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
-import de.unijena.bioinf.ms.frontend.parameters.RootOptions;
-import de.unijena.bioinf.ms.frontend.parameters.RootOptionsCLI;
-import de.unijena.bioinf.ms.frontend.parameters.SingeltonTool;
-import de.unijena.bioinf.ms.frontend.parameters.canopus.CanopusOptions;
-import de.unijena.bioinf.ms.frontend.parameters.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.parameters.custom_db.CustomDBOptions;
-import de.unijena.bioinf.ms.frontend.parameters.fingerid.FingerIdOptions;
-import de.unijena.bioinf.ms.frontend.parameters.sirius.SiriusOptions;
-import de.unijena.bioinf.ms.frontend.parameters.zodiac.ZodiacOptions;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
+import de.unijena.bioinf.ms.frontend.subtools.SingeltonTool;
+import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
+import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
+import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
     public final R rootOptions;
 
     //global configs (subtool)
-    DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
+    DefaultParameterConfigLoader configOptionLoader;
 
     //singelton tools
     public final CustomDBOptions customDBOptions = new CustomDBOptions();
@@ -56,7 +56,13 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
 
 
     public WorkflowBuilder(@NotNull R rootOptions) throws IOException {
+        this(rootOptions,new DefaultParameterConfigLoader());
+    }
+
+    public WorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader) throws IOException {
         this.rootOptions = rootOptions;
+
+        this.configOptionLoader = configOptionLoader;
 
         // define execution order and dependencies of different Subtools
         CommandLine.Model.CommandSpec fingeridSpec = forAnnotatedObjectWithSubCommands(fingeridOptions, canopusOptions);

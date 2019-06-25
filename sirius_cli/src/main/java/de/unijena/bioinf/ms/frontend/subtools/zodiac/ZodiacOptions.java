@@ -1,11 +1,12 @@
-package de.unijena.bioinf.ms.frontend.parameters.zodiac;
+package de.unijena.bioinf.ms.frontend.subtools.zodiac;
 
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
-import de.unijena.bioinf.ms.frontend.parameters.DataSetJob;
-import de.unijena.bioinf.ms.frontend.parameters.Provide;
-import de.unijena.bioinf.ms.frontend.parameters.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
+import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+
 
 import java.util.concurrent.Callable;
 
@@ -17,12 +18,15 @@ import java.util.concurrent.Callable;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "zodiac", aliases = {"Z"}, description = "Identify Molecular formulas of all compounds in a dataset together using ZODIAC.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
-public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiakSubToolJob>> {
+public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiacSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
     public ZodiacOptions(DefaultParameterConfigLoader defaultConfigOptions) {
         this.defaultConfigOptions = defaultConfigOptions;
     }
+
+
+
     @Option(
             names = {"--lowest-cosine"},
             description = "Below this cosine threshold a spectral library hit does not give any score bonus."
@@ -118,7 +122,7 @@ public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiakSubToolJ
     public Double medianNoiseIntensity;
 
     @Override
-    public DataSetJob.Factory<ZodiakSubToolJob> call() throws Exception {
-        return ZodiakSubToolJob::new;
+    public DataSetJob.Factory<ZodiacSubToolJob> call() throws Exception {
+        return ZodiacSubToolJob::new;
     }
 }

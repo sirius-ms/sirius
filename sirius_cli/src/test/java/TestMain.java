@@ -1,11 +1,14 @@
-import de.unijena.bioinf.ms.frontend.parameters.RootOptionsCLI;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import picocli.CommandLine;
 
+import java.io.IOException;
+
 public class TestMain {
-    public static void main(String[] args){
+    public static void main(String[] args) throws IOException {
         String t = ApplicationCore.VERSION_STRING();
-        RootOptionsCLI basicOptions = new RootOptionsCLI();
+        RootOptionsCLI basicOptions = new RootOptionsCLI(new DefaultParameterConfigLoader());
         final CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.forAnnotatedObject(basicOptions);
 //        spec.addMixin("SIRIUS", CommandLine.Model.CommandSpec.forAnnotatedObject(siriusOptions));
 //        spec.addMixin("Zodiac", CommandLine.Model.CommandSpec.forAnnotatedObject(zodiacOptions));

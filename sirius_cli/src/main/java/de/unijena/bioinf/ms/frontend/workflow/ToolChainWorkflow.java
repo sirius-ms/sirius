@@ -1,12 +1,14 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.ChemistryBase.ms.MsFileSource;
-import de.unijena.bioinf.ms.frontend.parameters.AddConfigsJob;
-import de.unijena.bioinf.ms.frontend.parameters.DataSetJob;
-import de.unijena.bioinf.ms.frontend.parameters.InstanceJob;
 import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.ms.frontend.subtools.AddConfigsJob;
+import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
+import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.ms.properties.RecomputeResults;
 import de.unijena.bioinf.sirius.ExperimentResult;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +39,6 @@ public class ToolChainWorkflow implements Workflow {
     @Override
     public void run() {
         try {
-            //todo cache instances???
             final List<InstanceJob.Factory> instanceJobChain = new ArrayList<>(toolchain.size());
             //job factory for job that add config annotations to an instance
             instanceJobChain.add(() -> new AddConfigsJob(parameters));
@@ -51,6 +52,7 @@ public class ToolChainWorkflow implements Workflow {
                     final WorkflowJobSubmitter submitter = new WorkflowJobSubmitter(iteratorSource.iterator(), project, instanceJobChain, dataSetJob);
                     submitter.start(initialInstanceNum, maxBufferSize);
                     iteratorSource = submitter.jobManager().submitJob(dataSetJob).awaitResult();
+                    // writing each experiment to add results to projectSpace
                     iteratorSource.forEach(it -> {
                         try {
                             project.writeExperiment(it);
@@ -74,8 +76,10 @@ public class ToolChainWorkflow implements Workflow {
             System.out.println("workflow finished");
 
             try {
-                //use all experients in workspace to create summaries
-                project.writeSummaries(project.parseExperiments(), (cur, max, mess) -> System.out.println((((((double) cur) / (double) max)) * 100d) + "% " + mess));
+                //remove recompute annotation since it should be cli only option
+                iteratorSource.forEach(it -> it.getExperiment().setAnnotation(RecomputeResults.class,null));
+                //use all experiments in workspace to create summaries
+                project.writeSummaries(iteratorSource, (cur, max, mess) -> System.out.println((((((double) cur) / (double) max)) * 100d) + "% " + mess));
                 project.close();
             } catch (IOException e) {
                 LOG.error("Error when closing workspace. Workspace summaries may be incomplete");
@@ -89,5 +93,4 @@ public class ToolChainWorkflow implements Workflow {
         this.initialInstanceNum = initialInstanceNum;
         this.maxBufferSize = maxBufferSize;
     }
-
 }

@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.frontend.parameters;
+package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.sirius.ExperimentResult;
