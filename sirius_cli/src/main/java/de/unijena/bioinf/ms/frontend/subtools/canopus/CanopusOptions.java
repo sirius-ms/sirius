@@ -1,10 +1,11 @@
-package de.unijena.bioinf.ms.frontend.parameters.canopus;
+package de.unijena.bioinf.ms.frontend.subtools.canopus;
 
-import de.unijena.bioinf.ms.frontend.parameters.InstanceJob;
-import de.unijena.bioinf.ms.frontend.parameters.Provide;
-import de.unijena.bioinf.ms.frontend.parameters.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
+import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+
 
 import java.io.File;
 import java.util.concurrent.Callable;
@@ -23,6 +24,8 @@ public class CanopusOptions implements Callable<InstanceJob.Factory<CanopusSubTo
     public CanopusOptions(DefaultParameterConfigLoader defaultConfigOptions) {
         this.defaultConfigOptions = defaultConfigOptions;
     }
+
+
     @Option(names = {"--experimental-canopus"}, hidden = true) //experimental/temporary/internal
     public File experimentalCanopus;
 

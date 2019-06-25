@@ -1,8 +1,8 @@
-package de.unijena.bioinf.ms.frontend.parameters.fingerid;
+package de.unijena.bioinf.ms.frontend.subtools.fingerid;
 
-import de.unijena.bioinf.ms.frontend.parameters.InstanceJob;
-import de.unijena.bioinf.ms.frontend.parameters.Provide;
-import de.unijena.bioinf.ms.frontend.parameters.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
+import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -25,6 +25,8 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
         this.defaultConfigOptions = defaultConfigOptions;
     }
 
+
+
     @Option(names = {"--info", "--webservice-info"}, description = "information about connection of CSI:FingerID Webservice")
     public boolean fingeridInfo;
 
@@ -43,11 +45,6 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
     public void setNumberOfCandidates(String value) throws Exception {
         defaultConfigOptions.changeOption("NumberOfStructureCandidates", value);
     }
-
-    /*
-    @Option(description = "output predicted fingerprint")
-    public File getPredict();
-    */
 
 
     @Override

@@ -15,18 +15,18 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.unijena.bioinf.ms.frontend.parameters.sirius;
+package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
-import de.unijena.bioinf.ms.frontend.parameters.InstanceJob;
-import de.unijena.bioinf.ms.frontend.parameters.Provide;
-import de.unijena.bioinf.ms.frontend.parameters.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
+import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.io.File;
-import java.util.*;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**

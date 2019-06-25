@@ -373,9 +373,11 @@ public class MztabMExporter {
     }
 
     protected String makeMassIdentifier(ExperimentResult ex, IdentificationResult result) {
-        return ex.getAnnotation(ExperimentDirectory.class).getDirectoryName() + ":" + ex.getExperiment().getIonMass() + ":" + SiriusLocations.simplify(result.getPrecursorIonType().withoutAdduct());
+        try {
+            return ex.getAnnotation(ExperimentDirectory.class).getDirectoryName() + ":" + ex.getExperiment().getIonMass() + ":" + SiriusLocations.simplify(result.getPrecursorIonType().withoutAdduct());
+        } catch (Exception e) {
+            System.out.println("Instance was not written?????????? -> " + ex.getExperiment().getName());
+            throw e;
+        }
     }
-
-
-
 }

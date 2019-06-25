@@ -1,13 +1,14 @@
-package de.unijena.bioinf.ms.frontend.parameters;
+package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.ms.MsFileConfig;
-import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.babelms.projectspace.ProjectSpaceConfig;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.sirius.ExperimentResult;
+import org.jetbrains.annotations.NotNull;
 
 public class AddConfigsJob extends InstanceJob {
     private ParameterConfig cliConfig;
@@ -17,8 +18,7 @@ public class AddConfigsJob extends InstanceJob {
     }
 
     @Override
-    protected ExperimentResult compute() throws Exception {
-        final ExperimentResult expRes = awaitInput();
+    protected void computeAndAnnotateResult(final @NotNull ExperimentResult expRes) throws Exception {
         final Ms2Experiment exp = expRes.getExperiment();
 
 
@@ -37,7 +37,5 @@ public class AddConfigsJob extends InstanceJob {
 
         //reduce basic list of possible Adducts to charge
         exp.getAnnotation(PossibleAdducts.class).keepOnly(exp.getPrecursorIonType().getCharge());
-
-        return expRes;
     }
 }

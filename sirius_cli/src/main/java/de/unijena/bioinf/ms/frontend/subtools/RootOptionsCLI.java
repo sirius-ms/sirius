@@ -1,9 +1,10 @@
-package de.unijena.bioinf.ms.frontend.parameters;
+package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.SiriusInputIterator;
 import de.unijena.bioinf.babelms.projectspace.*;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,13 @@ public class RootOptionsCLI implements RootOptions {
     public static final Logger LOG = LoggerFactory.getLogger(RootOptionsCLI.class);
 
     public enum InputType {PROJECT, SIRIUS, MZML}
+
+    protected final DefaultParameterConfigLoader defaultConfigOptions;
+
+    public RootOptionsCLI(@NotNull DefaultParameterConfigLoader defaultConfigOptions) {
+        this.defaultConfigOptions = defaultConfigOptions;
+    }
+
 
     // region Options: Quality
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,13 +116,24 @@ public class RootOptionsCLI implements RootOptions {
 
     public FilenameFormatter projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
 
+    @Option(names = "--recompute", description = "Recompute ALL results of ALL SubTools that are already present. By defaults already present results of an instance will be preserved and the instance will be skipped for the corresponding Task/Tool", order = 95, defaultValue = "FALSE")
+    public void setRecompute(boolean recompute) throws Exception {
+        try {
+            defaultConfigOptions.changeOption("RecomputeResults", String.valueOf((recompute)));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
     @Option(names = {"--output", "--project-space", "-o", "-p"}, description = "Specify project-space to read from and also write to if nothing else is specified. For compression use the File ending .zip or .sirius", order = 70)
     public File projectSpaceLocation;
 
     @Option(names = {"--input", "-i" }, description = "Input for the analysis. Ths can be either preprocessed mass spectra in .ms or .mgf file format, " +
-            "LC/MS runs in .mzml format or already existing SIRIUS project-space(s) (uncompressed/compressed).", order = 80, required = true)
+            "LC/MS runs in .mzml format or already existing SIRIUS project-space(s) (uncompressed/compressed).", order = 80)
     // we differentiate between contiunuing a project-space and starting from mzml or  already processed ms/mgf file.
-    // If multiple files match the priority is project-space,  ms/mgf,  mzml
+    // If multiple files match the priobtrrity is project-space,  ms/mgf,  mzml
     public void setInput(List<File> files) {
         if (files == null || files.isEmpty()) return;
 
@@ -197,13 +216,23 @@ public class RootOptionsCLI implements RootOptions {
         if (projectSpaceToWriteOn == null)
             configureProjectSpace();
 
-        switch (type) {
-            case PROJECT:
-                return projectSpaceToWriteOn.parseExperimentIterator();
-            case SIRIUS:
-                return new SiriusInputIterator(input, maxMz, ignoreFormula).asExpResultIterator();
-            case MZML:
-                throw new CommandLine.PicocliException("MZML input is not yet supported! This should not be possible. BUG?");
+
+        if (type != null && input != null) {
+            switch (type) {
+                case PROJECT:
+                    return projectSpaceToWriteOn.parseExperimentIterator();
+                case SIRIUS:
+                    if (projectSpaceToWriteOn.getNumberOfWrittenExperiments() > 0)
+                        return SiriusProjectSpaceIO.readInputAndProjectSpace(input, projectSpaceToWriteOn, maxMz, ignoreFormula);
+                    else
+                        return new SiriusInputIterator(input, maxMz, ignoreFormula).asExpResultIterator();
+                case MZML:
+                    //todo implement
+                    throw new CommandLine.PicocliException("MZML input is not yet supported! This should not be possible. BUG?");
+            }
+        } else if (projectSpaceToWriteOn != null && projectSpaceToWriteOn.getNumberOfWrittenExperiments() > 0) {
+            LOG.info("No Input given but output Project-Space is not empty and will be used as Input instead!");
+            return projectSpaceToWriteOn.parseExperimentIterator();
         }
         throw new CommandLine.PicocliException("Illegal Input type: " + type);
     }
@@ -224,6 +253,9 @@ public class RootOptionsCLI implements RootOptions {
                             System.out.println("Creating Project Space: " + (((((double) currentProgress) / (double) maxProgress)) * 100d) + "%");
                         }
                         , makeSerializerArray());
+            } else if (type == InputType.MZML) {
+                //todo implement
+                throw new CommandLine.PicocliException("MZML input is not yet supported! This should not be possible. BUG?");
             } else {
                 projectSpaceToWriteOn = SiriusProjectSpaceIO.create(projectSpaceFilenameFormatter, projectSpaceLocation,
                         (currentProgress, maxProgress, Message) -> {
@@ -232,9 +264,9 @@ public class RootOptionsCLI implements RootOptions {
                         , makeSerializerArray());
 
                 if (projectSpaceToWriteOn.getNumberOfWrittenExperiments() > 0)
-                    throw new CommandLine.PicocliException("Output workspace is not empty and cannot be merged with non workspace inputs.");
-
+                    LOG.info("Output Project-Space is not empty. It will be merged with the provided input!");
             }
+
             projectSpaceToWriteOn.registerSummaryWriter(new MztabSummaryWriter());
         } catch (IOException e) {
             throw new CommandLine.PicocliException("Could not initialize workspace!", e);

@@ -1,8 +1,9 @@
-package de.unijena.bioinf.ms.frontend.parameters;
+package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.jjobs.BasicDependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.ExperimentResult;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -11,7 +12,7 @@ import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-public abstract class DataSetJob extends BasicDependentJJob<Iterable<ExperimentResult>> {
+public abstract class DataSetJob extends BasicDependentJJob<Iterable<ExperimentResult>> implements SubToolJob {
     private LinkedHashSet<JJob<ExperimentResult>> inputProvidingJobs = new LinkedHashSet<>();
     private List<JJob<ExperimentResult>> failedInstances = null;
     private List<ExperimentResult> successfulInstances = null;
@@ -29,11 +30,10 @@ public abstract class DataSetJob extends BasicDependentJJob<Iterable<ExperimentR
         inputProvidingJobs.add(providingJob);
     }
 
-    protected List<ExperimentResult> awaitInputs() {
+    protected void awaitInputs() {
         //It is important that we skip failing jobs here and remove the instances from the analysis.
-
         if (successfulInstances != null)
-            return successfulInstances;
+            return;
 
         failedInstances = new ArrayList<>();
         successfulInstances = inputProvidingJobs.stream().map(job -> {
@@ -45,9 +45,18 @@ public abstract class DataSetJob extends BasicDependentJJob<Iterable<ExperimentR
                 return null;
             }
         }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
 
+    @Override
+    protected Iterable<ExperimentResult> compute() throws Exception {
+        awaitInputs();
+        computeAndAnnotateResult(successfulInstances);
         return successfulInstances;
     }
+
+
+
+    protected abstract void computeAndAnnotateResult(final @NotNull List<ExperimentResult> expRes) throws Exception;
 
     public List<JJob<ExperimentResult>> getFailedInstances() {
         return failedInstances;

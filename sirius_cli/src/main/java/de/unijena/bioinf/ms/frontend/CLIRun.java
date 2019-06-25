@@ -1,7 +1,8 @@
 package de.unijena.bioinf.ms.frontend;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.parameters.RootOptionsCLI;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
+import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,9 @@ public class CLIRun extends ApplicationCore {
 
     /*Returns true if a workflow was parsed*/
     public boolean parseArgs(String[] args) throws IOException {
-        final WorkflowBuilder<RootOptionsCLI> builder = new WorkflowBuilder<>(new RootOptionsCLI());
+        final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
+        final WorkflowBuilder<RootOptionsCLI> builder = new WorkflowBuilder<>(new RootOptionsCLI(configOptionLoader), configOptionLoader);
+
         flow = new CommandLine(builder.rootSpec).parseWithHandler(builder.makeParseResultHandler(), args);
         return flow != null; //todo maybe workflow validation would be nice here???
     }

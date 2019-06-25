@@ -1,5 +1,5 @@
-import de.unijena.bioinf.ms.frontend.parameters.RootOptionsCLI;
-import de.unijena.bioinf.ms.frontend.parameters.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
+import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -26,7 +26,7 @@ public class DefaultParameterConfigLoaderTest {
         }
         final DefaultParameterConfigLoader builder = new DefaultParameterConfigLoader();
         final List<CommandLine.Model.OptionSpec> options = new ArrayList<>(builder.getOptions().values());
-        final CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.forAnnotatedObject(new RootOptionsCLI());
+        final CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.forAnnotatedObject(new RootOptionsCLI(builder));
         for (CommandLine.Model.OptionSpec option : options) {
             spec.addOption(option);
         }

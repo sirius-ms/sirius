@@ -1,6 +1,6 @@
-package de.unijena.bioinf.ms.frontend.parameters.config;
+package de.unijena.bioinf.ms.frontend.subtools.config;
 
-import de.unijena.bioinf.ms.frontend.parameters.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.Logger;
