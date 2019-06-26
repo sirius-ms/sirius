@@ -370,12 +370,42 @@ public class SiriusProjectSpace implements ProjectSpace {
         changed.set(true);
     }
 
-    @Override
-    public synchronized void writeSummaries(@NotNull final Iterable<ExperimentResult> resultsToSummarize) {
-        writeSummaries(resultsToSummarize, (a, b, c) -> {
-        });
+    /**
+     * Writes summary with experiment parser iterator as input and
+     * without reporting progress.
+     */
+    public synchronized void writeSummaries() {
+        writeSummaries(this::parseExperimentIterator);
     }
 
+
+
+    /**
+     * Writes summary with experiment parser iterator as input.
+     * @param progress progress listener to process progress notifications.
+     */
+    public synchronized void writeSummaries(ProgressListener progress) {
+        writeSummaries(this::parseExperimentIterator);
+    }
+
+    /**
+     * Writes summaries without reporting the progress
+     * @param resultsToSummarize list of experiments that are part of the project-space
+     */
+    @Override
+    public synchronized void writeSummaries(@NotNull final Iterable<ExperimentResult> resultsToSummarize) {
+        writeSummaries(resultsToSummarize, (a, b, c) -> {});
+    }
+
+    /**
+     * Writes summaries based of the given {@link ExperimentResult}s to the project-space.
+     * These are usually the experiments that are part of the project-space anyways.
+     * But giving them as parameters allows to read them from som kind of cache instead of
+     * parsing them from disk by using the {@link ExperimentIterator}
+     *
+     * @param resultsToSummarize list of experiments that are part of the project-space
+     * @param progress progress listener to process progress notifications.
+     */
     public synchronized void writeSummaries(@NotNull final Iterable<ExperimentResult> resultsToSummarize, ProgressListener progress) {
         if (!changed.get())
             return;
@@ -421,7 +451,12 @@ public class SiriusProjectSpace implements ProjectSpace {
         return versionInfo.put(key, value.replaceAll("\t", " "));
     }
 
-
+    /**
+     * Closes the project-space (reader and writer) and writes the compressed representation
+     * if needed.
+     *
+     * @throws IOException if reader and writer fail to close or the zip cannot be written
+     */
     @Override
     public void close() throws IOException {
         reader.close();
@@ -431,12 +466,21 @@ public class SiriusProjectSpace implements ProjectSpace {
     }
 
 
+    /**
+     * Returns iterator that parses the returned {@link ExperimentResult} from disk
+     * if {@code ExperimentIterator.next} is called.
+     *
+     * @return Iterator over all {@link ExperimentResult}s within the project-space
+     */
     @NotNull
     @Override
     public Iterator<ExperimentResult> parseExperimentIterator() {
         return new ExperimentIterator();
     }
 
+    /**
+     * @return Iterator over all keys ({@link ExperimentDirectory}) within the project-space
+     */
     @NotNull
     @Override
     public Iterator<ExperimentDirectory> iterator() {
@@ -445,8 +489,14 @@ public class SiriusProjectSpace implements ProjectSpace {
     //endregion
 
     //internal classes
+
+    /**
+     * Iterator over the currently in the project-space available {@link ExperimentDirectory} keys.
+     * It will not notice changes made on the Set of {@link ExperimentDirectory} keys done
+     * by other threads.
+     */
     public class IdIterator implements Iterator<ExperimentDirectory> {
-        private final Iterator<ExperimentDirectory> baseIter = experimentIDs.values().iterator();
+        private final Iterator<ExperimentDirectory> baseIter = new ArrayList<>(experimentIDs.values()).iterator();
         private ExperimentDirectory current;
 
         @Override
@@ -471,10 +521,14 @@ public class SiriusProjectSpace implements ProjectSpace {
         }
     }
 
-//todo modification should be possible
+    /**
+     * Iterator over the {@link ExperimentResult}s currently in the project-space based on
+     * available {@link ExperimentDirectory} keys.
+     * It will not notice changes made on the Set of {@link ExperimentDirectory} keys done
+     * by other threads. It simply uses the {@link IdIterator} under the hood.
+     */
     public class ExperimentIterator implements Iterator<ExperimentResult> {
         private final Iterator<ExperimentDirectory> baseIter = new IdIterator();
-        private ExperimentDirectory current;
 
         @Override
         public boolean hasNext() {
@@ -485,8 +539,7 @@ public class SiriusProjectSpace implements ProjectSpace {
         public ExperimentResult next() {
             if (!hasNext()) throw new NoSuchElementException();
             try {
-                current = baseIter.next();
-                return parseExperiment(current);
+                return parseExperiment(baseIter.next());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -494,11 +547,7 @@ public class SiriusProjectSpace implements ProjectSpace {
 
         @Override
         public void remove() {
-            try {
-                deleteExperiment(current);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            baseIter.remove();
         }
     }
 }

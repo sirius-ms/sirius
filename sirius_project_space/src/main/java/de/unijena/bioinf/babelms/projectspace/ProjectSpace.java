@@ -40,10 +40,5 @@ public interface ProjectSpace extends ProjectWriter, ProjectReader {
 
 
     @NotNull
-    default Iterable<ExperimentResult> parseExperiments() {
-        return this::parseExperimentIterator;
-    }
-
-    @NotNull
     Iterator<ExperimentResult> parseExperimentIterator();
 }
