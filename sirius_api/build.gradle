@@ -8,7 +8,5 @@ dependencies {
     compile project(':utils')
     compile project(':spectral_alignment')
     compile project(':tree_motif_search')
-
     testCompile project(':io')
-    testCompile group: 'org.slf4j', name: 'slf4j-jdk14', version: '1.7.21'
 }

@@ -4,6 +4,7 @@ plugins {
     id "com.jfrog.artifactory" version "4.9.3"
 }
 
+
 //Global Properties
 ext {
     logger.lifecycle('reading gradle properties file...')
@@ -76,8 +77,13 @@ allprojects {
         compile 'com.google.guava:guava:18.0'
         compile 'org.apache.commons:commons-lang3:3.8.1'
         compile 'commons-io:commons-io:2.6'
-        
-        
+        compile group: 'de.unijena.bioinf', name: 'jjobs-core', version:"$jjobs_version"
+        compile group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
+
+
+
+        testCompile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+        testCompile group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
 
