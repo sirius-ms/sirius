@@ -38,7 +38,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
         super(owner, true);
         setTitle("Settings");
         setLayout(new BorderLayout());
-        nuProps = SiriusProperties.SIRIUS_PROPERTIES_FILE().getCopyOfPersistentProperties();
+        nuProps = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
 
 //=============NORTH =================
         JPanel header = new DialogHaeder(Icons.GEAR_64);

@@ -17,8 +17,6 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 
 	private static Logger logger = LoggerFactory.getLogger(MSViewerPanel.class);
 
-//	private String label;
-
 	private MSViewerDataModel dataModel;
 
 	private boolean overviewMode;

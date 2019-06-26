@@ -28,7 +28,6 @@ public enum SiriusActions {
     EDIT_EXP(EditExperimentAction.class),
     DELETE_EXP(DeleteExperimentAction.class),
 
-    EXPORT_RESULTS(ExportResultsAction.class),
     SAVE_WS(SaveWorkspaceAction.class),
     LOAD_WS(LoadWorkspaceAction.class),
 

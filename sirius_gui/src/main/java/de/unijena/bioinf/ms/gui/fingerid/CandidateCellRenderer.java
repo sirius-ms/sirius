@@ -214,7 +214,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         private Color color() {
             CustomDataSourceService.Source s = CustomDataSourceService.getSourceFromName(label.name);
             if (s.isCustomSource()) return Colors.DB_CUSTOM;
-            if (s.name().equals(DatasourceService.Sources.TRAIN.name)) return Colors.DB_TRAINING;
+            if (s.name().equals(DatasourceService.Source.TRAIN.realName)) return Colors.DB_TRAINING;
             return label.values.length == 0 ? Colors.DB_UNLINKED : Colors.DB_LINKED;
         }
 

@@ -143,7 +143,7 @@ public class ProxySettingsPanel extends TwoCloumnPanel implements ActionListener
 
                 JFrame frame = new JFrame("Testing");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.add(new ProxySettingsPanel(SiriusProperties.SIRIUS_PROPERTIES_FILE().getCopyOfPersistentProperties()));
+                frame.add(new ProxySettingsPanel(SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties()));
                 frame.pack();
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);

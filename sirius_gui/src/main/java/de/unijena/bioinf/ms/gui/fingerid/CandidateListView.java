@@ -15,7 +15,7 @@ import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
-import de.unijena.bioinf.ms.io.filefilter.SupportedExportCSVFormatsFilter;
+import de.unijena.bioinf.babelms.filefilter.SupportedExportCSVFormatsFilter;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.table.ActionListDetailView;
 import de.unijena.bioinf.ms.gui.table.FilterRangeSlider;

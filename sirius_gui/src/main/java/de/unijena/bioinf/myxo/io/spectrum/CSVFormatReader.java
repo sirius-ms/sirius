@@ -1,5 +1,6 @@
 package de.unijena.bioinf.myxo.io.spectrum;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.io.BufferedReader;

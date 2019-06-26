@@ -8,8 +8,6 @@ public interface MSViewerPanelListener {
 
 	void peaksMarkedPerDrag(List<Integer> indices);
 
-//	public void peaksSelected(List<Integer> indices);
-
 	void markingsRemoved();
 
 }

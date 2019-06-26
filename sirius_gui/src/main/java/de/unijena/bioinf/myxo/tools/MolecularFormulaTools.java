@@ -1,6 +1,7 @@
 package de.unijena.bioinf.myxo.tools;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
 import java.io.*;
 import java.util.*;

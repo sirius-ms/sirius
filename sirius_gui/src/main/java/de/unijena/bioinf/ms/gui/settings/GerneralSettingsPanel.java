@@ -6,7 +6,7 @@ package de.unijena.bioinf.ms.gui.settings;
  */
 
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
-import de.unijena.bioinf.ms.io.FileChooserPanel;
+import de.unijena.bioinf.babelms.FileChooserPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;

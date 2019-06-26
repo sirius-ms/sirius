@@ -2,14 +2,15 @@ package de.unijena.bioinf.ms.gui.mainframe;
 
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpaceIO;
 import de.unijena.bioinf.ms.gui.compute.CSIFingerIDComputation;
 import de.unijena.bioinf.babelms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.dialogs.DragAndDropOpenDialog;
 import de.unijena.bioinf.ms.gui.dialogs.DragAndDropOpenDialogReturnValue;
-import de.unijena.bioinf.ms.io.GuiProjectSpaceIO;
-import de.unijena.bioinf.ms.io.load.LoadController;
+import de.unijena.bioinf.babelms.GuiProjectSpaceIO;
+import de.unijena.bioinf.babelms.load.LoadController;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentList;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListView;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.FilterableExperimentListPanel;
@@ -182,7 +183,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         final Iterator<File> rawFileIterator = rawFiles.iterator();
         while (rawFileIterator.hasNext()) {
             final File f = rawFileIterator.next();
-            if (f.getName().toLowerCase().endsWith(".sirius") || (f.isDirectory() && GuiProjectSpaceIO.isSiriusWorkspaceDirectory(f))) {
+            if (f.getName().toLowerCase().endsWith(".sirius") || (f.isDirectory() && SiriusProjectSpaceIO.isSiriusWorkspaceDirectory(f))) {
                 siriusFiles.add(f);
                 rawFileIterator.remove();
             }

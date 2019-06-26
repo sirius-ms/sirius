@@ -27,15 +27,15 @@ public class ErrorReportSettingsPanel extends TwoCloumnPanel implements Settings
         super();
         this.props = properties;
 
-        String email = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
+        String email = PropertyManager.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
         if (email != null && !email.isEmpty())
             emailField = new JTextField(email);
         else
             emailField = new JTextField();
         add(new JLabel("Contact email adress: "), emailField);
 
-        hardwareInfo = new JCheckBox("Send hardware and OS information?", Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo")));
-        uesrCopy = new JCheckBox("Send a copy to my mail address?", Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail")));
+        hardwareInfo = new JCheckBox("Send hardware and OS information?", Boolean.valueOf(PropertyManager.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo")));
+        uesrCopy = new JCheckBox("Send a copy to my mail address?", Boolean.valueOf(PropertyManager.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail")));
         add(hardwareInfo, SMALL_GAP, false);
         add(uesrCopy);
     }

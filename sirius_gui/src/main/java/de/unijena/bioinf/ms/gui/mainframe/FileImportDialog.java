@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.gui.mainframe;
 
-import de.unijena.bioinf.ms.io.DataFormat;
-import de.unijena.bioinf.ms.io.DataFormatIdentifier;
+import de.unijena.bioinf.babelms.DataFormat;
+import de.unijena.bioinf.babelms.DataFormatIdentifier;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 
 import javax.swing.*;
