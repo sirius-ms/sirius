@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.fingerid.webapi.News;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,7 +11,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * Created by Marcus Ludwig on 25.01.17.
@@ -59,8 +59,7 @@ public class NewsDialog extends JDialog implements ActionListener {
         if (e.getSource()==ok){
             //remember displayed news
             final String property = News.PROPERTY_KEY;
-            Properties properties = SiriusProperties.SIRIUS_PROPERTIES_FILE().getCopyOfPersistentProperties();
-            StringBuilder knownNews = new StringBuilder(properties.getProperty(property, ""));
+            StringBuilder knownNews = new StringBuilder(PropertyManager.getProperty(property, null, ""));
             for (News news : newsList) {
                 knownNews.append(","+news.getId());
             }

@@ -40,7 +40,7 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
     private JButton close, send;
 
     private ErrorReportSettingsPanel expandPanel;
-    private final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().getCopyOfPersistentProperties();
+    private final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
 
     public ErrorReportDialog(Frame owner, String errorMessage) {
         super(owner, true, ExtentionPos.SOUTH);
@@ -124,9 +124,9 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
                     expandPanel.saveProperties();
                     SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperties(props);
 
-                    boolean senMail = Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail"));
-                    String mail = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
-                    boolean systemInfo = Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo"));
+                    boolean senMail = Boolean.valueOf(PropertyManager.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail"));
+                    String mail = PropertyManager.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
+                    boolean systemInfo = Boolean.valueOf(PropertyManager.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo"));
                     ErrorReporter repoter = new FingerIDWebErrorReporter(new SiriusDefaultErrorReport(subject, textarea.getText(), mail, systemInfo));
                     repoter.getReport().setSendReportToUser(senMail);
                     repoter.call();

@@ -7,7 +7,7 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.babelms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.io.load.LoadController;
+import de.unijena.bioinf.babelms.load.LoadController;
 import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
 
 import javax.swing.*;

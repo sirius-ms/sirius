@@ -5,13 +5,13 @@ package de.unijena.bioinf.ms.gui.dialogs;
  * 13.10.16.
  */
 
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.errorReport.FingerIDWebErrorReporter;
 import de.unijena.bioinf.ms.gui.errorReport.SiriusDefaultErrorReport;
-import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.settings.ErrorReportSettingsPanel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -35,7 +35,7 @@ public class BugReportDialog extends JDialog {
     private final JComboBox<String> report;
     private static String[] reportTypes = {ErrorReport.TYPES[1], ErrorReport.TYPES[2]};
 
-    private final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().getCopyOfPersistentProperties();
+    private final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
 
     public BugReportDialog(Frame owner) {
         super(owner, true);
@@ -93,9 +93,9 @@ public class BugReportDialog extends JDialog {
                         reportSettings.saveProperties();
                         SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperties(props);
 
-                        boolean senMail = Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail"));
-                        String mail = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
-                        boolean systemInfo = Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo"));
+                        boolean senMail = Boolean.valueOf(PropertyManager.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail"));
+                        String mail = PropertyManager.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
+                        boolean systemInfo = Boolean.valueOf(PropertyManager.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo"));
                         SiriusDefaultErrorReport r = new SiriusDefaultErrorReport(subjectField.getText(), textarea.getText(), mail, systemInfo);
                         ErrorReporter repoter = new FingerIDWebErrorReporter(r);
                         repoter.getReport().setSendReportToUser(senMail);

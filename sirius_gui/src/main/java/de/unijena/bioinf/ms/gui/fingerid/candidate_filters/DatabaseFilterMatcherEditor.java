@@ -15,12 +15,7 @@ public class DatabaseFilterMatcherEditor extends AbstractMatcherEditor<Fingerpri
     Map<String, CustomDataSourceService.Source> SOURCE_MAP = CustomDataSourceService.SOURCE_MAP;
 
     public DatabaseFilterMatcherEditor(DBFilterPanel panel) {
-        panel.addFilterChangeListener(new DBFilterPanel.FilterChangeListener() {
-            @Override
-            public void fireFilterChanged(long filterSet) {
-                fireChanged(new DatabaseMatcher(filterSet));
-            }
-        });
+        panel.addFilterChangeListener(filterSet -> fireChanged(new DatabaseMatcher(filterSet)));
 
     }
 

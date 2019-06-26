@@ -56,7 +56,7 @@ public class ExperimentEditPanel extends JPanel {
     public PrecursorIonType getSelectedIonization() {
         String item = (String) ionizationCB.getSelectedItem();
         if (item != null)
-            return PeriodicTable.getInstance().ionByName(item);
+            return PeriodicTable.getInstance().ionByNameOrThrow(item);
         return PeriodicTable.getInstance().getUnknownPrecursorIonType(1);
     }
 
@@ -76,7 +76,7 @@ public class ExperimentEditPanel extends JPanel {
         String formulaString = formulaTF.getText();
         if (formulaString == null || formulaString.isEmpty())
             return true;
-        MolecularFormula mf = MolecularFormula.parse(formulaString);
+        MolecularFormula mf = MolecularFormula.parseOrNull(formulaString);
 
         return mf != null && !mf.equals(MolecularFormula.emptyFormula());
     }
@@ -85,6 +85,6 @@ public class ExperimentEditPanel extends JPanel {
         String formulaString = formulaTF.getText();
         if (formulaString == null || formulaString.isEmpty())
             return null;
-        return MolecularFormula.parse(formulaString);
+        return MolecularFormula.parseOrNull(formulaString);
     }
 }

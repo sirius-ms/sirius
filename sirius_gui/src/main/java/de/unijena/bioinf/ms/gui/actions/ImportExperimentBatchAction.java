@@ -9,8 +9,8 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.io.filefilter.SupportedBatchDataFormatFilter;
-import de.unijena.bioinf.ms.io.GuiProjectSpaceIO;
+import de.unijena.bioinf.babelms.filefilter.SupportedBatchDataFormatFilter;
+import de.unijena.bioinf.babelms.GuiProjectSpaceIO;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
