@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Arrays;
@@ -53,10 +54,11 @@ public class CanopusResultSerializer implements MetaDataSerializer, SummaryWrite
             env.enterDirectory(FingerIdLocations.CANOPUS_FINGERPRINT.directory);
             for (IdentificationResult result : results) {
                 try {
-                    result.setAnnotation(CanopusResult.class, new CanopusResult(env.read(FingerIdLocations.CANOPUS_FINGERPRINT.fileName(result), w -> {
-                        return new ProbabilityFingerprint(canopus.getCanopusMask(), new BufferedReader(w).lines().mapToDouble(Double::valueOf).toArray());
-                    })));
-
+                    final String fpFileName = FingerIdLocations.CANOPUS_FINGERPRINT.fileName(result);
+                    if (env.containsFile(fpFileName)) {
+                        result.setAnnotation(CanopusResult.class, new CanopusResult(env.read(fpFileName, w ->
+                                new ProbabilityFingerprint(canopus.getCanopusMask(), new BufferedReader(w).lines().mapToDouble(Double::valueOf).toArray()))));
+                    }
                 } catch (IllegalArgumentException e) {
                     LoggerFactory.getLogger(getClass()).warn("CanopusFingerprint version of the imported data is imcompatible with the current version. " +
                             "CanopusFingerprint has to be recomputed!", e);
