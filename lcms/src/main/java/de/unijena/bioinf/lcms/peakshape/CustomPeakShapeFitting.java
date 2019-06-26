@@ -27,11 +27,13 @@ public class CustomPeakShapeFitting implements PeakShapeFitting<CustomPeakShape>
     }
 
     private double checkPeakWidth(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment) {
-        return new NormalDistribution(1d, 10d).getErrorProbability(segment.fwhm(0.1)/sample.getMeanPeakWidth());
+        final double ratio = segment.fwhm(0.2)/peak.getIntensityAt(segment.getApexIndex());
+        if (ratio <= sample.getMeanPeakWidthToHeightRatio()) return 1d;
+        return new NormalDistribution(sample.getMeanPeakWidthToHeightRatio(), sample.getMeanPeakWidthToHeightStd()*sample.getMeanPeakWidthToHeightStd()).getErrorProbability(ratio);
     }
 
     private double checkLength(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment) {
-        final Range<Integer> integerRange = segment.calculateFWHM(0.1);
+        final Range<Integer> integerRange = segment.calculateFWHM(0.15);
         int ndatapointsLeft = segment.getApexIndex() - integerRange.lowerEndpoint() + 1;
         int ndatapointsRight = integerRange.upperEndpoint() - segment.getApexIndex() + 1;
         final NormalDistribution distribution = new NormalDistribution(3, 9);
@@ -47,7 +49,7 @@ public class CustomPeakShapeFitting implements PeakShapeFitting<CustomPeakShape>
 
     private double checkMonotonicity(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment) {
         double monotonicIntensity = 0d, nonMonotonicIntensity = 0d;
-        Range<Integer> r = segment.calculateFWHM(0.1);
+        Range<Integer> r = segment.calculateFWHM(0.15);
         for (int k=r.lowerEndpoint()+1; k <= segment.getApexIndex(); ++k) {
             final double i2 = peak.getIntensityAt(k);
             final double i1 = peak.getIntensityAt(k-1);

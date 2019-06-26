@@ -1,6 +1,5 @@
 package de.unijena.bioinf.lcms;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.math.MathUtils;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -18,7 +17,6 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Ms2CosineSegmenter {
 
@@ -56,21 +54,19 @@ public class Ms2CosineSegmenter {
         }
         medianWidthOfPeaks.sort();
         final long medianWidth = medianWidthOfPeaks.getQuick(medianWidthOfPeaks.size()/2);
-        System.out.println(medianWidth);
-
         // now iterate over all MSMS and group them by segments:
 
         int numberOfScansOutside = 0, numberOfMultiple = 0, numberOfInside = 0;
 
         final TIntObjectHashMap<ArrayList<Scan>> perSegment = new TIntObjectHashMap<>();
         for (Map.Entry<MutableChromatographicPeak, ArrayList<Scan>> entry : scansPerPeak.entrySet()) {
-            System.out.println(entry.getKey().getSegments().size() + " segments and " + entry.getValue().size() + " MS/MS for Scans " + Arrays.toString(entry.getValue().stream().mapToInt(Scan::getScanNumber).toArray()));
+            //System.out.println(entry.getKey().getSegments().size() + " segments and " + entry.getValue().size() + " MS/MS for Scans " + Arrays.toString(entry.getValue().stream().mapToInt(Scan::getScanNumber).toArray()));
             perSegment.clear();
             for (Scan s : entry.getValue()) {
                 final Optional<ChromatographicPeak.Segment> segment = entry.getKey().getSegmentForScanId(s.getScanNumber());
                 if (!segment.isPresent()) {
                     LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("MS2 scan outside of an segment of an chromatographic peak");
-                    System.err.println("MS2 scan outside of an segment of an chromatographic peak: " + s.getScanNumber() + " is not in " + entry.getKey().getSegments().stream().map(x-> Range.closed(x.getStartScanNumber(), x.getEndScanNumber())).collect(Collectors.toList()).toString());
+                    //System.err.println("MS2 scan outside of an segment of an chromatographic peak: " + s.getScanNumber() + " is not in " + entry.getKey().getSegments().stream().map(x-> Range.closed(x.getStartScanNumber(), x.getEndScanNumber())).collect(Collectors.toList()).toString());
                     ++numberOfScansOutside;
                 } else {
                     ++numberOfInside;
@@ -117,7 +113,7 @@ public class Ms2CosineSegmenter {
                     long gap = entry.getKey().getRetentionTimeAt(right.getFwhmStartIndex()) - entry.getKey().getRetentionTimeAt(left.getFwhmEndIndex());
                     if (gap > medianWidth) {
                         // do not merge
-                        System.out.println("Do not merge " + queryLeft.originalSpectrum.getPrecursor().getMass() + " " + mutableChromatographicPeak.getIntensityAt(left.getApexIndex()) + " with " + mutableChromatographicPeak.getIntensityAt(right.getApexIndex()) + " with cosine "+ cosine.similarity + " (" + cosine.shardPeaks + " peaks), due to gap above " + medianWidth);
+                        //System.out.println("Do not merge " + queryLeft.originalSpectrum.getPrecursor().getMass() + " " + mutableChromatographicPeak.getIntensityAt(left.getApexIndex()) + " with " + mutableChromatographicPeak.getIntensityAt(right.getApexIndex()) + " with cosine "+ cosine.similarity + " (" + cosine.shardPeaks + " peaks), due to gap above " + medianWidth);
                         ions.add(new FragmentedIon(merged, entry.getKey(), left));
                         if (!SEGS.add(left))
                             System.out.println("=/");
@@ -129,9 +125,9 @@ public class Ms2CosineSegmenter {
                     }
                 } else if (cosine.similarity < 0.75) {
                     if (queryLeft.spectrum.size() <= 3 || queryRight.spectrum.size() <= 3) {
-                        System.out.println("Low quality MSMS");
+                        //System.out.println("Low quality MSMS");
                     } else if (cosine.shardPeaks < Math.min(queryLeft.spectrum.size(),queryRight.spectrum.size())*0.33) {
-                        System.out.println("Split segments");
+                        //System.out.println("Split segments");
                         final ChromatographicPeak.Segment left = mutableChromatographicPeak.getSegmentForScanId(segmentIds[j]).get();
                         ions.add(new FragmentedIon(merged, entry.getKey(), left));
                         if (!SEGS.add(left))
@@ -148,7 +144,7 @@ public class Ms2CosineSegmenter {
                     System.out.println("=/");
             }
             // compute cosine between segments. Check if the cosine is low -> than its probably a different compound
-            System.out.println(ions.size());
+            //System.out.println(ions.size());
         }
 
         System.out.println("Number of scans outside = " + numberOfScansOutside + ", number of scans inside = " + numberOfInside + ", number of multiplies = " + numberOfMultiple);

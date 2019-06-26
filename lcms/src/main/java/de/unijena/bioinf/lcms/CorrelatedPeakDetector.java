@@ -236,9 +236,9 @@ public class CorrelatedPeakDetector {
             }
             ion.setChargeState(bestChargeState);
             ion.addIsotopes(bestPattern);
-            System.out.println(ion +  " Found " + bestPattern.size() + " isotopes with correlations " + bestPattern.stream().mapToDouble(CorrelationGroup::getCorrelation).min().getAsDouble() + " .. " + bestPattern.stream().mapToDouble(CorrelationGroup::getCorrelation).max().getAsDouble());
+            //System.out.println(ion +  " Found " + bestPattern.size() + " isotopes with correlations " + bestPattern.stream().mapToDouble(CorrelationGroup::getCorrelation).min().getAsDouble() + " .. " + bestPattern.stream().mapToDouble(CorrelationGroup::getCorrelation).max().getAsDouble());
             for (CorrelationGroup g : bestPattern) {
-                System.out.println(g.getRight().getScanPointAt(g.getRightSegment().getApexIndex()));
+                //System.out.println(g.getRight().getScanPointAt(g.getRightSegment().getApexIndex()));
             }
         }
     }
