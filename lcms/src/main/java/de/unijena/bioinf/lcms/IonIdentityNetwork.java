@@ -31,7 +31,7 @@ public class IonIdentityNetwork {
                         if (isSame(left, adduct.correlation.getRight(), adduct.correlation.getRightSegment())) {
                             delete.set(i);
                             iter.set(new CorrelatedIon(adduct.correlation, left));
-                            System.out.println(left + " is an adduct of " + right + ", see: " + adduct);
+                            //System.out.println(left + " is an adduct of " + right + ", see: " + adduct);
                             continue foreachIon;
                         }
                     }
@@ -40,7 +40,7 @@ public class IonIdentityNetwork {
                         CorrelatedIon adduct = iter.next();
                         if (isSame(left, adduct.correlation.getRight(),adduct.correlation.getRightSegment())) {
                             delete.set(i);
-                            System.out.println(left + " is an adduct of " + right + ", see: " + adduct);
+                            //System.out.println(left + " is an adduct of " + right + ", see: " + adduct);
                             iter.set(new CorrelatedIon(adduct.correlation, left));
                             continue foreachIon;
                         }

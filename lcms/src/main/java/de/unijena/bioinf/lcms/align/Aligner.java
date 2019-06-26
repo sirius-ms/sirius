@@ -7,6 +7,9 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.Ms2CosineSegmenter;
 import de.unijena.bioinf.lcms.ProcessedSample;
@@ -107,95 +110,116 @@ public class Aligner {
         for (ProcessedSample s : samples) {
             final ArrayList<FragmentedIon> ions = new ArrayList<>(s.ions);
             ions.sort(Comparator.comparingLong(FragmentedIon::getRetentionTime));
-            for (int k=1, n=s.ions.size(); k < n; ++k) {
-                distances.add(s.getRecalibratedRT(ions.get(k).getRetentionTime())-s.getRecalibratedRT(ions.get(k-1).getRetentionTime()));
+            for (int k=5, n=s.ions.size(); k < n; ++k) {
+                for (int j=1; j < 5; ++j) {
+                    distances.add(s.getRecalibratedRT(ions.get(k).getRetentionTime())-s.getRecalibratedRT(ions.get(k-j).getRetentionTime()));
+                }
             }
         }
         distances.sort();
-        return distances.getQuick(distances.size()/2);
+        final double error = distances.getQuick(distances.size() / 2);
+        if (error <= 0) {
+            System.out.println(Arrays.toString(distances.toArray()));
+            System.exit(0);
+        }
+        return error;
     }
 
-    public Cluster recalibrateRetentionTimes(List<ProcessedSample> samples, Cluster cluster, double errorTerm) {
-        double avgError = 0d;
-        TObjectIntHashMap<ProcessedSample> alignmentSize = new TObjectIntHashMap<>();
-        int naligns = 0;
-        for (AlignedFeatures f : cluster.features) {
-            if (f.features.size()>1) {
-                for (Map.Entry<ProcessedSample, FragmentedIon> g : f.features.entrySet()) {
-                    alignmentSize.adjustOrPutValue(g.getKey(),1,1);
-                    ++naligns;
-                    avgError += Math.abs(g.getKey().getRecalibratedRT(g.getValue().getRetentionTime())-f.rt);
-                }
-            }
-        }
-        final int[] medianAlignedFeatures = alignmentSize.values();
-        Arrays.sort(medianAlignedFeatures);
-        int medianAlignedFeature = medianAlignedFeatures[medianAlignedFeatures.length/2];
-        avgError /= naligns;
-        final double averageError = avgError;
+    public BasicJJob<Cluster> recalibrateRetentionTimes(List<ProcessedSample> samples, Cluster cluster, double errorTerm) {
+        return new BasicMasterJJob<Cluster>(JJob.JobType.CPU){
 
-        double minimumTime = 0d, maximumTime = Double.NEGATIVE_INFINITY;
-        for (ProcessedSample s : samples) {
-            maximumTime = Math.max(maximumTime, s.ions.stream().mapToLong(x->x.getRetentionTime()).max().orElse(1l));
-        }
-        maximumTime += 10*errorTerm;
-
-
-        for (ProcessedSample s : samples) {
-            final SimpleMutableSpectrum buff = new SimpleMutableSpectrum();
-            buff.addPeak(minimumTime, minimumTime);
-            buff.addPeak(maximumTime,maximumTime);
-            // add anchors
-
-            for (AlignedFeatures f : cluster.features) {
-                if (f.features.size()>1 && f.features.containsKey(s)) {
-                    buff.addPeak(f.features.get(s).getRetentionTime(), f.rt);
-                }
-            }
-            buff.addPeak(1d,1d);
-            if (buff.size() >= 22) {
-                Spectrums.sortSpectrumByMass(buff);
-                for (int k=1; k < buff.size(); ++k) {
-                    if (buff.getMzAt(k)-buff.getMzAt(k-1) <= 0) {
-                        double intens = buff.getIntensityAt(k);
-                        buff.removePeakAt(k);
-                        --k;
-                        buff.setIntensityAt(k, (buff.getIntensityAt(k)+intens)/2d);
-
+            @Override
+            protected Cluster compute() throws Exception {
+                double avgError = 0d;
+                TObjectIntHashMap<ProcessedSample> alignmentSize = new TObjectIntHashMap<>();
+                int naligns = 0;
+                for (AlignedFeatures f : cluster.features) {
+                    if (f.features.size()>1) {
+                        for (Map.Entry<ProcessedSample, FragmentedIon> g : f.features.entrySet()) {
+                            alignmentSize.adjustOrPutValue(g.getKey(),1,1);
+                            ++naligns;
+                            avgError += Math.abs(g.getKey().getRecalibratedRT(g.getValue().getRetentionTime())-f.rt);
+                        }
                     }
                 }
-                final double[] X = Spectrums.copyMasses(buff);
-                final double[] Y = Spectrums.copyIntensities(buff);
-                s.setRecalibrationFunction(new LoessInterpolator().interpolate(X, Y));
-                //s.setRecalibrationFunction(MzRecalibration.getMedianLinearRecalibration(X, Y));
-                System.out.println(s.getRecalibrationFunction());
-                //s.setRecalibrationFunction(new RecalibrationFunction(MzRecalibration.getMedianLinearRecalibration(X.toArray(), Y.toArray()).getCoefficients()));
-                System.out.println(s.run.getSource() + " :: " + s.getRecalibrationFunction());
-            } else {
-                System.out.println("Not enough aligned features to recalibrate " + s.run.getSource());
-                s.setRecalibrationFunction(new Identity());
-                s.setAnnotation(AlignmentQuality.class, new AlignmentQuality(buff.size()-2, medianAlignedFeature));
-            }
-        }
-        // get average error
-        avgError = 0d;
-        naligns = 0;
-        for (AlignedFeatures f : cluster.features) {
-            if (f.features.size()>1) {
-                for (Map.Entry<ProcessedSample, FragmentedIon> g : f.features.entrySet()) {
-                    ++naligns;
-                    avgError += Math.abs(g.getKey().getRecalibratedRT(g.getValue().getRetentionTime())-f.rt);
+                final int[] medianAlignedFeatures = alignmentSize.values();
+                Arrays.sort(medianAlignedFeatures);
+                int medianAlignedFeature = medianAlignedFeatures[medianAlignedFeatures.length/2];
+                avgError /= naligns;
+                final double averageError = avgError;
+
+                double minimumTime = 0d, maximumTime = Double.NEGATIVE_INFINITY;
+                for (ProcessedSample s : samples) {
+                    maximumTime = Math.max(maximumTime, s.ions.stream().mapToLong(x->x.getRetentionTime()).max().orElse(1l));
                 }
+                maximumTime += 10*errorTerm;
+
+                final double MinimumTime = minimumTime; final double MaximumTime = maximumTime;
+
+                for (ProcessedSample s : samples) {
+                    submitSubJob(new BasicJJob() {
+                        @Override
+                        protected Object compute() throws Exception {
+                            final SimpleMutableSpectrum buff = new SimpleMutableSpectrum();
+                            buff.addPeak(MinimumTime, MinimumTime);
+                            buff.addPeak(MaximumTime,MaximumTime);
+                            // add anchors
+
+                            for (AlignedFeatures f : cluster.features) {
+                                if (f.features.size()>1 && f.features.containsKey(s)) {
+                                    buff.addPeak(f.features.get(s).getRetentionTime(), f.rt);
+                                }
+                            }
+                            buff.addPeak(1d,1d);
+                            if (buff.size() >= 22) {
+                                Spectrums.sortSpectrumByMass(buff);
+                                for (int k=1; k < buff.size(); ++k) {
+                                    if (buff.getMzAt(k)-buff.getMzAt(k-1) <= 0) {
+                                        double intens = buff.getIntensityAt(k);
+                                        buff.removePeakAt(k);
+                                        --k;
+                                        buff.setIntensityAt(k, (buff.getIntensityAt(k)+intens)/2d);
+
+                                    }
+                                }
+                                final double[] X = Spectrums.copyMasses(buff);
+                                final double[] Y = Spectrums.copyIntensities(buff);
+                                s.setRecalibrationFunction(new LoessInterpolator().interpolate(X, Y));
+                                System.out.println(s.run.getSource() + " :: " + s.getRecalibrationFunction());
+                            } else {
+                                System.out.println("Not enough aligned features to recalibrate " + s.run.getSource());
+                                s.setRecalibrationFunction(new Identity());
+                                s.setAnnotation(AlignmentQuality.class, new AlignmentQuality(buff.size()-2, medianAlignedFeature));
+                            }
+                            return "";
+                        }
+                    });
+                }
+                awaitAllSubJobs();
+                // get average error
+                avgError = 0d;
+                naligns = 0;
+                for (AlignedFeatures f : cluster.features) {
+                    if (f.features.size()>1) {
+                        for (Map.Entry<ProcessedSample, FragmentedIon> g : f.features.entrySet()) {
+                            ++naligns;
+                            avgError += Math.abs(g.getKey().getRecalibratedRT(g.getValue().getRetentionTime())-f.rt);
+                        }
+                    }
+                }
+                avgError /= naligns;
+                return cluster;
             }
-        }
-        avgError /= naligns;
-        return cluster;
-        //return new double[]{averageError, avgError};
+        };
 
     }
 
     public Cluster upgma(List<ProcessedSample> samples, double errorTerm, boolean useAllFeatures) {
         return new UPGMA(errorTerm, useAllFeatures).cluster(samples);
+    }
+
+    public BasicJJob<Cluster> upgmaInParallel(List<ProcessedSample> samples, double errorTerm, boolean useAllFeatures) {
+        return new UPGMA(errorTerm, useAllFeatures).makeParallelClusterJobs(samples);
     }
 
 
@@ -291,6 +315,27 @@ public class Aligner {
 
 
     public static boolean IS_REALIGN = false;
+    public BasicJJob<Cluster> makeRealignJob(Cluster cluster, double errorTerm) {
+        return new BasicMasterJJob<Cluster>(JJob.JobType.CPU) {
+            @Override
+            protected Cluster compute() throws Exception {
+                Cluster left = cluster.left;
+                Cluster right = cluster.right;
+                if (left == null || right == null)  {
+                    // cluster is a leaf
+                    return new Cluster(cluster.mergedSamples.iterator().next(), true);
+                } else {
+                    final BasicJJob<Cluster> L = makeRealignJob(left,errorTerm);
+                    final BasicJJob<Cluster> R = makeRealignJob(right,errorTerm);
+                    submitSubJob(L);
+                    submitSubJob(R);
+                    // cluster is an inner node
+                    return align(L.takeResult(), R.takeResult(), errorTerm, true);
+                }
+            }
+        };
+    }
+
     public Cluster realign(Cluster cluster, double errorTerm) {
         Cluster left = cluster.left;
         Cluster right = cluster.right;
@@ -388,7 +433,7 @@ public class Aligner {
                 alignedRight.set(a.j);
             }
         }
-        System.out.println("Average score = " + totalScore / alignedFeatures.size());
+        //System.out.println("Average score = " + (alignedFeatures.isEmpty() ? 0.0 : (totalScore / alignedFeatures.size())) + " for " + left.mergedSamples.toString() + " WITH " + right.mergedSamples.toString());
         alignedFeatures.addAll(unaligned);
         return new Cluster(alignedFeatures.toArray(new AlignedFeatures[0]), totalScore, left,right);
 
@@ -512,7 +557,6 @@ public class Aligner {
     private void computePairwiseCosine(SparseScoreMatrix scores, List<AlignedFeatures> left, List<AlignedFeatures> right, float errorTerm, boolean useAll) {
         final Deviation dev = new Deviation(20);
 
-        final double gamma = 1d / (2d * errorTerm * errorTerm);
         final CosineQueryUtils utils = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(dev));
         final List<CosineQuerySpectrum> ll = new ArrayList<>(), rr = new ArrayList<>();
         for (AlignedFeatures l : left) {
@@ -542,7 +586,8 @@ public class Aligner {
             for (int j=0; j < right.size(); ++j) {
                 final AlignedFeatures r = right.get(j);
                 if (dev.inErrorWindow(l.getMass(), r.getMass()) && Math.abs(l.rt-r.rt) < 4*errorTerm && l.chargeStateIsNotDifferent(r)) {
-
+                    double error = errorTerm*0.66;
+                    final double gamma = 1d / (2d * (error*error + (l.rtVariance+r.rtVariance)/2d));
                     float peakShapeScore = 0f;
                     int n = 0;
                     for (FragmentedIon ia : l.features.values()) {
@@ -563,7 +608,7 @@ public class Aligner {
                         h*=h;
                         double w = Math.log(l.peakWidth / r.peakWidth);
                         w *= w;
-                        peakHeightScore = Math.max(1e-3, Math.exp(-1.5*h*w));
+                        peakHeightScore = Math.max(0.05, Math.exp(-1.5*h*w));
                         //System.out.println(peakHeightScore + " <- " + l.peakHeight + " vs " + r.peakHeight + ",\t " + l.peakWidth +" vs" + r.peakWidth);
                     }
                     peakShapeScore *= peakHeightScore;
@@ -573,22 +618,24 @@ public class Aligner {
                         if ((spectralSimilarity.similarity < 0.5 || spectralSimilarity.shardPeaks < 3)) {
                             // prefer to not align features with low cosine
                             if (l.representativeScan.getQuality().betterThan(Quality.DECENT) || r.representativeScan.getQuality().betterThan(Quality.DECENT)) {
-                                System.out.println(l + " with " + r + " are rejected due to COSINE of " + spectralSimilarity);
+                                //System.out.println(l + " with " + r + " are rejected due to COSINE of " + spectralSimilarity);
                                 // do not align both scans if they are good quality
                             } else {
-                                scores.add(i,j,peakShapeScore * (float)( Math.exp(-2*gamma*((l.rt-r.rt)*(l.rt-r.rt))) * 0.25d ));
+                                float value = peakShapeScore * (float)( Math.exp(-2*gamma*((l.rt-r.rt)*(l.rt-r.rt))) * 0.25d );
+                                if (value >= 1e-4)
+                                    scores.add(i,j,value);
                             }
                         } else {
                             float value = peakShapeScore *  (float)((spectralSimilarity.similarity + spectralSimilarity.shardPeaks/10d) * Math.exp(-gamma*((l.rt-r.rt)*(l.rt-r.rt))));
                             //System.err.println(spectralSimilarity.similarity + " cosine, " + spectralSimilarity.shardPeaks + " peaks for " + (l.rt/60000d) + " vs " + (r.rt/60000d) + ", and " + l.mass + " vs " + r.mass + ", rt score = " +  Math.exp(-gamma*((l.rt-r.rt)*(l.rt-r.rt))) + ", final score = " + value);
 
-                            if (value >= 1e-8) {
+                            if (value >= 1e-4) {
                                 scores.add(i,j,value);
                             }
                         }
                     } else if (useAll) {
-                        float value = peakShapeScore * (float)( Math.exp(-gamma*((l.rt-r.rt)*(l.rt-r.rt))) * 0.5d );
-                        if (value >= 1e-8) {
+                        float value = peakShapeScore * (float)( Math.exp(-gamma*((l.rt-r.rt)*(l.rt-r.rt))) * 0.25d );
+                        if (value >= 1e-4) {
                             scores.add(i,j,value);
                         }
                     }

@@ -24,20 +24,18 @@ public abstract class HierarchicalClustering<Taxon, InnerNode, PreMerge> {
                     protected InnerNode compute() throws Exception {
                         return createLeaf(x);
                     }
-                })).map(x->x.takeResult()).collect(Collectors.toList());
+                })).map(JJob::takeResult).collect(Collectors.toList());
                 final double[][] M = new double[n][n];
                 for (int i=0; i < n; ++i) {
                     for (int j=0; j < i; ++j) {
                         final int I=i, J=j;
-                        if (I != J) {
-                            submitSubJob(new BasicJJob<PreMerge>() {
-                                @Override
-                                protected PreMerge compute() throws Exception {
-                                    N[I][J] = N[J][I] = preMerge(clusters.get(I), clusters.get(J));
-                                    return N[I][J];
-                                }
-                            });
-                        }
+                        submitSubJob(new BasicJJob<PreMerge>() {
+                            @Override
+                            protected PreMerge compute() throws Exception {
+                                N[I][J] = N[J][I] = preMerge(clusters.get(I), clusters.get(J));
+                                return N[I][J];
+                            }
+                        });
                     }
                 }
                 awaitAllSubJobs();
@@ -45,22 +43,20 @@ public abstract class HierarchicalClustering<Taxon, InnerNode, PreMerge> {
                 for (int i=0; i < n; ++i) {
                     for (int j=0; j < i; ++j) {
                         final int I=i, J=j;
-                        if (I!=J) {
-                            submitSubJob(new BasicJJob<Double>() {
-                                @Override
-                                protected Double compute() throws Exception {
-                                    M[I][J] = M[J][I] = getScore(N[I][J], clusters.get(I), clusters.get(J));
-                                    return M[I][J];
-                                }
-                            });
-                        }
+                        submitSubJob(new BasicJJob<Double>() {
+                            @Override
+                            protected Double compute() throws Exception {
+                                M[I][J] = M[J][I] = getScore(N[I][J], clusters.get(I), clusters.get(J));
+                                return M[I][J];
+                            }
+                        });
                     }
                 }
                 awaitAllSubJobs();
                 final int[] indizes = new int[n];
                 for (int k=0; k < indizes.length; ++k)
                     indizes[k] = k;
-                return upgma(clusters, M, N, n, indizes);
+                return upgmaJob(this, clusters, M, N, n, indizes);
             }
         };
     }
@@ -109,6 +105,56 @@ public abstract class HierarchicalClustering<Taxon, InnerNode, PreMerge> {
                 final int index = indizes[j];
                 if (index != newIndex) {
                     N[newIndex][index] = N[index][newIndex] = preMerge(newNode, clusters.get(index));
+                    M[newIndex][index] = M[index][newIndex] = getScore(N[newIndex][index], newNode, clusters.get(index));
+                }
+            }
+            for (int k=0; k < N.length; ++k) N[k][deleteIndex] = null;
+            Arrays.fill(N[deleteIndex], null);
+        }
+        return clusters.get(indizes[0]);
+    }
+
+    private InnerNode upgmaJob(BasicMasterJJob<InnerNode> masterJob, List<InnerNode> clusters, double[][] M, PreMerge[][] N, int size, int[] indizes)  {
+        BasicJJob<PreMerge>[] recalculations = (BasicJJob<PreMerge>[]) new BasicJJob[N.length];
+        int n = size;
+        while (n > 1) {
+            double maximum = Double.NEGATIVE_INFINITY;
+            int bestI=0, bestJ=0;
+            for (int i=0; i < n; ++i) {
+                for (int j=0; j < i; ++j) {
+                    final int I = indizes[i];
+                    final int J = indizes[j];
+                    if (I != J && M[I][J] > maximum) {
+                        maximum = M[I][J];
+                        bestI = i;
+                        bestJ = j;
+                    }
+                }
+            }
+            // cluster!
+            final InnerNode newNode = merge(N[indizes[bestI]][indizes[bestJ]], clusters.get(indizes[bestI]), clusters.get(indizes[bestJ]), maximum);
+            // replace old
+            final int deleteIndex = indizes[bestJ];
+            final int newIndex = indizes[bestI];
+            indizes[bestJ] = indizes[--n];
+            clusters.set(newIndex, newNode);
+            // recalculate distances
+
+            for (int j=0; j < n; ++j) {
+                final int index = indizes[j];
+                if (index != newIndex) {
+                    recalculations[index] = masterJob.submitSubJob(new BasicJJob<PreMerge>() {
+                        @Override
+                        protected PreMerge compute() throws Exception {
+                            return preMerge(newNode,clusters.get(index));
+                        }
+                    });
+                }
+            }
+            for (int j=0; j < n; ++j) {
+                final int index = indizes[j];
+                if (index != newIndex) {
+                    N[newIndex][index] = N[index][newIndex] = recalculations[index].takeResult();
                     M[newIndex][index] = M[index][newIndex] = getScore(N[newIndex][index], newNode, clusters.get(index));
                 }
             }
