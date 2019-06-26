@@ -68,7 +68,7 @@ public class SiriusProjectSpaceIO {
 
 
     //region Read/Write
-    public static Iterator<ExperimentResult> readInputAndProjectSpac(@NotNull Collection<File> siriusInput, SiriusProjectSpace space, double maxMz, boolean ignoreFormula) {
+    public static Iterator<ExperimentResult> readInputAndProjectSpace(@NotNull Collection<File> siriusInput, SiriusProjectSpace space, double maxMz, boolean ignoreFormula) {
         return readInputAndProjectSpace(siriusInput, Collections.singleton(space), maxMz, ignoreFormula);
     }
 

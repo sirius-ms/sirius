@@ -1,5 +1,7 @@
 package de.unijena.bioinf.babelms.projectspace;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -43,6 +45,11 @@ public class SiriusFileReader implements DirectoryReader.ReadingEnvironment {
     public InputStream openFile(String name) throws IOException {
         currentStream = new FileInputStream(new File(current, name));
         return currentStream;
+    }
+
+    @Override
+    public boolean containsFile(@NotNull String fileName) {
+        return new File(current, fileName).isFile();
     }
 
     @Override
