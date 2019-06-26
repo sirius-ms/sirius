@@ -18,27 +18,27 @@ public class TransformerTest {
     @Test
     public void simpleTest(){
 
-        List<MolecularFormula> transformation = BioTransformer.transform(MolecularFormula.parse("C3H6O2"), BioTransformation.C2H2);
+        List<MolecularFormula> transformation = BioTransformer.transform(MolecularFormula.parseOrThrow("C3H6O2"), BioTransformation.C2H2);
         assertNotNull(transformation);
         assertFalse(transformation.isEmpty());
         System.out.println(transformation);
 
-        transformation = BioTransformer.transform(MolecularFormula.parse("CH6O2"), BioTransformation.C2H2);
+        transformation = BioTransformer.transform(MolecularFormula.parseOrThrow("CH6O2"), BioTransformation.C2H2);
         assertNotNull(transformation);
         assertFalse(transformation.isEmpty());
         System.out.println(transformation);
 
-        transformation = BioTransformer.transform(MolecularFormula.parse("C6SO3H"), BioTransformation.SH);
+        transformation = BioTransformer.transform(MolecularFormula.parseOrThrow("C6SO3H"), BioTransformation.SH);
         assertNotNull(transformation);
         assertFalse(transformation.isEmpty());
         System.out.println(transformation);
 
-        transformation = BioTransformer.transform(MolecularFormula.parse("C6HS"), BioTransformation.SH);
+        transformation = BioTransformer.transform(MolecularFormula.parseOrThrow("C6HS"), BioTransformation.SH);
         assertNotNull(transformation);
         assertFalse(transformation.isEmpty());
         System.out.println(transformation);
 
-        transformation = BioTransformer.getAllTransformations(MolecularFormula.parse("C3H6O2"));
+        transformation = BioTransformer.getAllTransformations(MolecularFormula.parseOrThrow("C3H6O2"));
         assertNotNull(transformation);
         assertFalse(transformation.isEmpty());
         System.out.println(transformation);

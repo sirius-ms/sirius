@@ -52,6 +52,8 @@ public class DirectoryReader implements ProjectReader {
 
         void close() throws IOException;
 
+        boolean containsFile(@NotNull String fileName);
+
         default boolean containsFile(@NotNull String dirName, @NotNull String fileName) throws IOException {
             if (!isDirectory(dirName)) return false;
             try {

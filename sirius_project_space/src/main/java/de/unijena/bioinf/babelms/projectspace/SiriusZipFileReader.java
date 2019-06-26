@@ -1,5 +1,7 @@
 package de.unijena.bioinf.babelms.projectspace;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -77,6 +79,11 @@ public class SiriusZipFileReader implements DirectoryReader.ReadingEnvironment {
     public InputStream openFile(String name) throws IOException {
         currentStream = zipFile.getInputStream(zipFile.getEntry(join(stack.subList(1,stack.size()), name)));
         return currentStream;
+    }
+
+    @Override
+    public boolean containsFile(@NotNull String fileName) {
+        return zipFile.getEntry(join(stack.subList(1, stack.size()), fileName)) != null;
     }
 
     @Override
