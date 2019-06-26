@@ -15,7 +15,7 @@ public class AlignedFeatures {
 
     protected Map<ProcessedSample, FragmentedIon> features;
     protected double mass, rt;
-    protected double rtLeft,rtRight;
+    protected double rtLeft,rtRight, rtVariance;
     protected MergedSpectrum representativeScan;
     protected int chargeState;
 
@@ -33,17 +33,22 @@ public class AlignedFeatures {
     }
 
     private void calculate() {
-        double avgPeakWidth = 0d, avgPeakHeight = 0d;
+        double avgPeakWidth = 0d, avgPeakHeight = 0d, rtVariance = 0d;
         int n=0;
-        for (FragmentedIon f : features.values()) {
+        for (Map.Entry<ProcessedSample, FragmentedIon> entry : features.entrySet()) {
+            final FragmentedIon f = entry.getValue();
             avgPeakWidth += f.getSegment().fwhm();
             avgPeakHeight += f.getIntensity();
+            double r = entry.getKey().getRecalibratedRT(f.getRetentionTime())-rt;
+            rtVariance += r*r;
             ++n;
         }
         avgPeakWidth /= n;
         avgPeakHeight /= n;
+        rtVariance /= n;
         this.peakHeight = avgPeakHeight;
         this.peakWidth = avgPeakWidth;
+        this.rtVariance = n <= 3 ? 0 : rtVariance;
 
 
     }
@@ -56,6 +61,7 @@ public class AlignedFeatures {
         this.chargeState = ion.getChargeState();
         this.peakHeight = ion.getIntensity();
         this.peakWidth = ion.getSegment().fwhm();
+        this.rtVariance = 0d;
     }
 
     public double getMass() {

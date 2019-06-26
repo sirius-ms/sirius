@@ -25,8 +25,9 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
     public final ChromatogramCache chromatogramCache;
     public final SpectrumStorage storage;
     public final ChromatogramBuilder builder;
+    protected double meanPeakWidthToHeightRatioStd;
 
-    protected double meanPeakWidth;
+    protected double meanPeakWidth, meanPeakWidthToHeightRatio;
 
     protected final Annotations<DataAnnotation> annotations;
     protected UnivariateFunction recalibrationFunction;
@@ -151,6 +152,13 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
 
     public double getMeanPeakWidth() {
         return meanPeakWidth;
+    }
+
+    public double getMeanPeakWidthToHeightRatio() {
+        return meanPeakWidthToHeightRatio;
+    }
+    public double getMeanPeakWidthToHeightStd() {
+        return meanPeakWidthToHeightRatio;
     }
 
     @Override

@@ -196,7 +196,9 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
 
         final File mzxmlFile = new File(
                 //"/home/kaidu/analysis/example");
-                "/home/kaidu/analysis/canopus/agp_julia/peak/High_plant");
+                //"/home/kaidu/analysis/canopus/mice/raw/subset"
+                "/home/kaidu/analysis/example"
+                );
         MemoryFileStorage storage= null;
         try {
             final LCMSProccessingInstance i = new LCMSProccessingInstance();
