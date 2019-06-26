@@ -250,7 +250,7 @@ public abstract class ApplicationCore {
 
             Canopus c = null;
             try {
-                Path cfile = WORKSPACE.resolve("canopus_fp.data");
+                Path cfile = WORKSPACE.resolve("canopus.data");
                 if (Files.isRegularFile(cfile)){
                     DEFAULT_LOGGER.info("Loading Canopus from local file...");
                     c = Canopus.loadFromFile(cfile.toFile());
