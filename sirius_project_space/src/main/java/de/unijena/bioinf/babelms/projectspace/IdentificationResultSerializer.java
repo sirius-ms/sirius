@@ -74,7 +74,8 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
                 writer.env.leaveDirectory();
             }
         }
-        // CSV
+
+        //SPECTRA
         if (writer.isAllowed(OutputOptions.ANNOTATED_SPECTRA)) {
             try {
                 writer.env.enterDirectory(SiriusLocations.SIRIUS_ANNOTATED_SPECTRA.directory);
@@ -83,7 +84,7 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
                 writer.env.leaveDirectory();
             }
         }
-        // formula summary
+        // // CSV (formula summary)
         writeFormulaSummary(results, writer);
     }
 

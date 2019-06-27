@@ -5,10 +5,9 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,11 +71,24 @@ public class MutableMs2Experiment implements Ms2Experiment {
     @Override
     @Nullable
     public URL getSource() {
+        final SourceLocation s = getSourceAnnotation();
+        return s != null ? s.value : null;
+    }
+
+    @Nullable
+    public SourceLocation getSourceAnnotation() {
         if (hasAnnotation(SpectrumFileSource.class))
-            return getAnnotation(SpectrumFileSource.class).value;
+            return getAnnotation(SpectrumFileSource.class);
         if (hasAnnotation(MsFileSource.class))
-            return getAnnotation(MsFileSource.class).value;
+            return getAnnotation(MsFileSource.class);
         return null;
+    }
+
+    public void setSource(@NotNull SourceLocation sourcelocation) {
+        if (sourcelocation instanceof SpectrumFileSource)
+            setAnnotation(SpectrumFileSource.class, (SpectrumFileSource) sourcelocation);
+        else if (sourcelocation instanceof MsFileSource)
+            setAnnotation(MsFileSource.class, (MsFileSource) sourcelocation);
     }
 
     @Override
