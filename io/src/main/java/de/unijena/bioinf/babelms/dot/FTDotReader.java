@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.data.DataSource;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
@@ -93,7 +94,7 @@ public class FTDotReader implements Parser<FTree> {
             {
                 final Matcher m = PEAK_PATTERN.matcher(infos[1]);
                 m.find();
-                this.peak = new Peak(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)) / 100d);
+                this.peak = new SimplePeak(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)) / 100d);
             }
             for (int x = 2; x < infos.length; ++x) {
                 final String info = infos[x];

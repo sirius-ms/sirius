@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.NormalizationMode;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -116,7 +117,7 @@ public class FinestructureGenerator {
                 @Override
                 public Peak next() {
                     Iterator.this.next();
-                    return new Peak(getMass(), getAbundance());
+                    return new SimplePeak(getMass(), getAbundance());
                 }
 
                 @Override
@@ -269,7 +270,7 @@ public class FinestructureGenerator {
         }
 
         public Peak getPeak() {
-            return new Peak(getMass(), getAbundance());
+            return new SimplePeak(getMass(), getAbundance());
         }
 
         public double getMass() {

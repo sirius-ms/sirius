@@ -18,6 +18,8 @@ public class MemoryFileStorage implements SpectrumStorage {
     private MappedByteBuffer buffer;
     private InMemoryStorage tempStorage;
     protected boolean dirty = false;
+    private FileChannel writableChannel;
+    private int totalSize;
 
     public MemoryFileStorage() throws IOException {
         this.offsets = new TIntIntHashMap();
@@ -35,8 +37,11 @@ public class MemoryFileStorage implements SpectrumStorage {
                 totalSize += s.size();
             }
             final int bytes = totalSize * 8 + tempStorage.scan2spectrum.size() * 4;
-            final FileChannel writableChannel = FileChannel.open(File.createTempFile("sirius_spectrum", ".binary").toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
-            this.buffer = writableChannel.map(FileChannel.MapMode.PRIVATE, 0, bytes);
+            if (writableChannel!=null) {
+                writableChannel.close();
+            }
+            writableChannel = FileChannel.open(File.createTempFile("sirius_spectrum", ".binary").toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.DELETE_ON_CLOSE);
+            this.buffer = writableChannel.map(FileChannel.MapMode.READ_WRITE, 0, bytes);
             tempStorage.scan2spectrum.forEachEntry((i, s) -> {
                 offsets.put(i, buffer.position());
                 buffer.putInt(s.size());
@@ -48,10 +53,16 @@ public class MemoryFileStorage implements SpectrumStorage {
                 }
                 return true;
             });
+            this.totalSize = buffer.position();
             this.buffer.rewind();
         }
         this.tempStorage = null;
         this.dirty = false;
+    }
+
+    public void dropBuffer() {
+        buffer.force();
+        this.buffer = null;
     }
 
     @Override
@@ -74,6 +85,13 @@ public class MemoryFileStorage implements SpectrumStorage {
     private synchronized SimpleSpectrum readFromMemory(Scan scan) {
         final int offset = offsets.get(scan.getScanNumber());
         if (offset < 0) return null;
+        if (buffer==null) {
+            try {
+                buffer = writableChannel.map(FileChannel.MapMode.PRIVATE, 0, totalSize);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         buffer.position(offset);
         final int size = buffer.getInt();
         final FloatBuffer floats = buffer.asFloatBuffer();

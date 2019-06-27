@@ -5,12 +5,14 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import java.util.Locale;
 import java.util.Objects;
 
-public class ScanPoint extends Peak {
+public class ScanPoint implements Peak {
     private final int scanNumber;
     private final long retentionTime;
+    private final float mass, intensity;
 
     public ScanPoint(int scanNumber, long retentionTime, double mz, double intensity) {
-        super(mz, intensity);
+        this.mass = (float)mz;
+        this.intensity = (float)intensity;
         this.scanNumber = scanNumber;
         this.retentionTime = retentionTime;
     }
@@ -44,5 +46,15 @@ public class ScanPoint extends Peak {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), scanNumber);
+    }
+
+    @Override
+    public double getMass() {
+        return mass;
+    }
+
+    @Override
+    public double getIntensity() {
+        return intensity;
     }
 }

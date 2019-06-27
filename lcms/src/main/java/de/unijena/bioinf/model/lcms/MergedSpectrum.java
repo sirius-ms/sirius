@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implements OrderedSpectrum<MergedPeak> {
+public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implements OrderedSpectrum<MergedPeak> {
 
     protected Precursor precursor;
     protected List<Scan> scans;
@@ -61,12 +61,20 @@ public class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implements Orde
 
     public SimpleSpectrum finishMerging() {
         final int n = scans.size();
+        int mostIntensive = scans.stream().max(Comparator.comparingDouble(Scan::getTIC)).map(x->x.getScanNumber()).orElse(-1);
         if (n >= 5) {
             int min = (int)Math.ceil(n*0.2);
             final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
             for (MergedPeak p : peaks) {
                 if (p.getSourcePeaks().length >= min) {
                     buf.addPeak(p);
+                } else {
+                    for (ScanPoint q : p.getSourcePeaks()) {
+                        if (q.getScanNumber()==mostIntensive) {
+                            buf.addPeak(p);
+                            break;
+                        }
+                    }
                 }
             }
             Spectrums.applyBaseline(buf, noiseLevel);

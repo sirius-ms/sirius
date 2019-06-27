@@ -79,7 +79,7 @@ public class Spectrums {
         return map(spectrum, new Transformation<P, Peak>() {
             @Override
             public Peak transform(P input) {
-                return new Peak(ionization.subtractFromMass(input.getMass()), input.getIntensity());
+                return new SimplePeak(ionization.subtractFromMass(input.getMass()), input.getIntensity());
             }
         });
     }
@@ -89,7 +89,7 @@ public class Spectrums {
         return map(spectrum, new Transformation<P, Peak>() {
             @Override
             public Peak transform(P input) {
-                return new Peak(ionization.precursorMassToNeutralMass(input.getMass()), input.getIntensity());
+                return new SimplePeak(ionization.precursorMassToNeutralMass(input.getMass()), input.getIntensity());
             }
         });
     }
@@ -901,7 +901,7 @@ public class Spectrums {
         final int n = spectrum.size();
         final ArrayList<Peak> peaks = new ArrayList<Peak>(n);
         for (int i = 0; i < n; ++i) {
-            peaks.add(new Peak(spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
+            peaks.add(new SimplePeak(spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
         }
         return peaks;
     }
