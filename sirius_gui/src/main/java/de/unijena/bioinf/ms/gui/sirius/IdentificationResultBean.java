@@ -6,11 +6,15 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.jjobs.JobStateEvent;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.fingerid.FingerIdResultBean;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.sirius.IdentificationResults;
+import de.unijena.bioinf.sirius.ResultAnnotation;
+import de.unijena.bioinf.sirius.SiriusScore;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -19,21 +23,23 @@ import java.util.regex.Pattern;
 /**
  * this is the view for SiriusResultElement.class
  */
-public class IdentificationResultBean extends AbstractEDTBean implements Comparable<IdentificationResultBean>, PropertyChangeListener {
+public class IdentificationResultBean extends AbstractEDTBean implements Comparable<IdentificationResultBean>, PropertyChangeListener, ResultAnnotation {
     //the results data structure
     private IdentificationResult identificationResult;
 
-    private boolean bestHit = false;
     private TreeNode tree; //just a gui tree.
 
-    protected volatile FingerIdResultBean fingerIdData;
+    //todo best hit property change
 
+    // computing state
     private volatile ComputingStatus fingerIdComputeState = ComputingStatus.UNCOMPUTED;
+    private volatile ComputingStatus canopusComputeState = ComputingStatus.UNCOMPUTED;
+
 
     public IdentificationResultBean(IdentificationResult result) {
-        this.tree = null;
-        this.identificationResult = result;
-        this.fingerIdData = null;
+        identificationResult = result;
+        identificationResult.setAnnotation(IdentificationResultBean.class, this);
+        tree = null;
     }
 
     public IdentificationResult getResult() {
@@ -45,27 +51,19 @@ public class IdentificationResultBean extends AbstractEDTBean implements Compara
     }
 
     public FingerIdResultBean getFingerIdData() {
-        return fingerIdData;
+        return identificationResult.getAnnotation(FingerIdResult.class).getAnnotation(FingerIdResultBean.class);
     }
 
-    public void setFingerIdData(FingerIdResult resultToWrap) {
-        this.identificationResult.setAnnotation(FingerIdResult.class, resultToWrap);
-        makeFingerIdData();
-    }
-
-    public void makeFingerIdData() {
-        if (!identificationResult.hasAnnotation(FingerIdResult.class))
-            throw new IllegalArgumentException("No FingeridResult present to use as soource for FingerIdData");
-        this.fingerIdData = new FingerIdResultBean(identificationResult.getAnnotation(FingerIdResult.class));
-
+    public FingerIdResultBean getCanopusData() {
+        throw new UnsupportedOperationException();
     }
 
     public int getRank() {
         return identificationResult.getRank();
     }
 
-    public double getScore() {
-        return identificationResult.getScore();
+    public double getSiriusScore() {
+        return identificationResult.getScore(SiriusScore.class);
     }
 
     public PrecursorIonType getPrecursorIonType() {
@@ -99,13 +97,23 @@ public class IdentificationResultBean extends AbstractEDTBean implements Compara
     }
 
     public boolean isBestHit() {
-        return bestHit;
+        return identificationResult.getRank() == 1;
     }
 
-    public void setBestHit(final boolean bestHit) {
-        final boolean old = this.bestHit;
-        this.bestHit = bestHit;
-        firePropertyChange("best_hit", old, bestHit);
+    public double getExplainedPeaksRatio() {
+        return identificationResult.getExplainedPeaksRatio();
+    }
+
+    public double getNumOfExplainedPeaks() {
+        return identificationResult.getNumOfExplainedPeaks();
+    }
+
+    public double getExplainedIntensityRatio() {
+        return identificationResult.getExplainedIntensityRatio();
+    }
+
+    public double getNumberOfExplainablePeaks() {
+        return identificationResult.getNumberOfExplainablePeaks();
     }
 
     @Override
@@ -131,19 +139,30 @@ public class IdentificationResultBean extends AbstractEDTBean implements Compara
         }
     }
 
-    public double getExplainedPeaksRatio() {
-        return identificationResult.getExplainedPeaksRatio();
+
+
+
+    //todo run via propterty change
+    private void makeFingerIdData() {
+        if (!identificationResult.hasAnnotation(FingerIdResult.class))
+            throw new IllegalArgumentException("No FingeridResult present to use as soource for FingerIdData");
+        new FingerIdResultBean(identificationResult.getAnnotation(FingerIdResult.class));
     }
 
-    public double getNumOfExplainedPeaks() {
-        return identificationResult.getNumOfExplainedPeaks();
-    }
+    //todo  compute states need to be observable
+    private void configureListeners() {
+        identificationResult.addAnnotationChangeListener(evt -> {
+            if (evt.getPropertyName().equals(DataAnnotation.getIdentifier(FingerIdResult.class)))
+                makeFingerIdData();
 
-    public double getExplainedIntensityRatio() {
-        return identificationResult.getExplainedIntensityRatio();
-    }
+            firePropertyChange(evt);
+        });
 
-    public double getNumberOfExplainablePeaks() {
-        return identificationResult.getNumberOfExplainablePeaks();
+        identificationResult.addAnnotationChangeListener(evt -> {
+            if (evt.getPropertyName().equals(DataAnnotation.getIdentifier(FingerIdResult.class)))
+                makeFingerIdData();
+
+            firePropertyChange(evt);
+        });
     }
 }

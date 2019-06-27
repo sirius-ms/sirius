@@ -4,18 +4,23 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.jjobs.JobStateEvent;
 import de.unijena.bioinf.babelms.projectspace.ExperimentDirectory;
 import de.unijena.bioinf.babelms.projectspace.GuiProjectSpace;
-import de.unijena.bioinf.sirius.ExperimentResult;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.jjobs.JobStateEvent;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.SiriusIdentificationGuiJob;
+import de.unijena.bioinf.sirius.ExperimentResult;
+import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.IdentificationResults;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,44 +30,41 @@ import java.util.List;
  * be updated in the EDT. Some operations may NOT be Thread save, so you may have
  * to care about Synchronization.
  */
-public class ExperimentResultBean extends AbstractEDTBean implements PropertyChangeListener {
-    private static final String GUI_NAME_PROPERTY = "guiName";
+public class ExperimentResultBean extends AbstractEDTBean implements PropertyChangeListener, DataAnnotation {
+    //the ms experiment we use for computationz
+    private final ExperimentResult experimentResult;
 
-    //the ms experiment we use for computation
-    private ExperimentResult experimentResult;
+    // Here are fields to view the Identifications results
+    private volatile ResultsListView results = new ResultsListView(null);
 
-    //Here are fields to view the SiriusResultElement
-    private volatile List<IdentificationResultBean> results;
 
-    private volatile IdentificationResultBean bestHit;
-    private volatile int bestHitIndex = 0;
-
-    private volatile ComputingStatus siriusComputeState = ComputingStatus.UNCOMPUTED;
-
-    private volatile int nameIndex = 0;
-
+    //todo best hit property change is needed.
+    // e.g. if the scoring changes from sirius to zodiac
+    //todo make compute state nice
 
     public ExperimentResultBean(MutableMs2Experiment source) {
         this(source, new ArrayList<>());
     }
 
-    public ExperimentResultBean(MutableMs2Experiment source, List<IdentificationResult> results) {
+    public ExperimentResultBean(MutableMs2Experiment source, Iterable<IdentificationResult> results) {
         this(new ExperimentResult(source, results));
     }
 
     public ExperimentResultBean(ExperimentResult expResult) {
         this.experimentResult = expResult;
-        bestHit = null;
-        results = SiriusResultElementConverter.convertResults(experimentResult.getResults());
-        if (getResults().size() > 0) siriusComputeState = ComputingStatus.COMPUTED;
+        configureListeners();
+        if (experimentResult.hasAnnotation(IdentificationResults.class)) {
+            setRawResults(experimentResult.getResults());
+            setSiriusComputeState(ComputingStatus.COMPUTED);
+        } else {
+            setSiriusComputeState(ComputingStatus.UNCOMPUTED);
+        }
     }
 
     public IdentificationResultBean getBestHit() {
-        return bestHit;
-    }
-
-    public int getBestHitIndex() {
-        return bestHitIndex;
+        if (experimentResult.hasResults())
+            return experimentResult.getResults().getBest().getAnnotation(IdentificationResultBean.class);
+        return null;
     }
 
     public String getName() {
@@ -70,11 +72,7 @@ public class ExperimentResultBean extends AbstractEDTBean implements PropertyCha
     }
 
     public String getGUIName() {
-        return makeGUIName(getName(), getNameIndex());
-    }
-
-    public int getNameIndex() {
-        return nameIndex;
+        return getName() + " (" + getProjectSpaceID().getIndex() + ")";
     }
 
     public List<SimpleSpectrum> getMs1Spectra() {
@@ -94,6 +92,8 @@ public class ExperimentResultBean extends AbstractEDTBean implements PropertyCha
     }
 
     public List<IdentificationResultBean> getResults() {
+        if (results == null)
+            return Collections.emptyList();
         return results;
     }
 
@@ -101,44 +101,37 @@ public class ExperimentResultBean extends AbstractEDTBean implements PropertyCha
         return getMs2Experiment().getIonMass();
     }
 
-    public ExperimentDirectory getIdentifier(){
+    public ExperimentDirectory getProjectSpaceID() {
         return getExperimentResult().getAnnotation(ExperimentDirectory.class);
     }
 
+
+
+
+    public ComputingStatus getSiriusComputeState() {
+        return experimentResult.getAnnotation(ComputingStatus.class);
+    }
+
     public boolean isComputed() {
-        return siriusComputeState == ComputingStatus.COMPUTED;
+        return getSiriusComputeState() == ComputingStatus.COMPUTED;
     }
 
     public boolean isComputing() {
-        return siriusComputeState == ComputingStatus.COMPUTING;
+        return getSiriusComputeState() == ComputingStatus.COMPUTING;
     }
 
     public boolean isUncomputed() {
-        return siriusComputeState == ComputingStatus.UNCOMPUTED;
-    }
-
-    public ComputingStatus getSiriusComputeState() {
-        return siriusComputeState;
+        return getSiriusComputeState() == ComputingStatus.UNCOMPUTED;
     }
 
     public boolean isFailed() {
-        return this.siriusComputeState == ComputingStatus.FAILED;
+        return getSiriusComputeState() == ComputingStatus.FAILED;
     }
 
     public boolean isQueued() {
-        return siriusComputeState == ComputingStatus.QUEUED;
+        return getSiriusComputeState() == ComputingStatus.QUEUED;
     }
 
-
-    public void setRawResults(Iterable<IdentificationResult> results) {
-        setResults(SiriusResultElementConverter.convertResults(results));
-    }
-
-    public void setResults(List<IdentificationResultBean> myxoresults) {
-        List<IdentificationResultBean> old = this.results;
-        this.results = myxoresults;
-        firePropertyChange("results_updated", old, this.results);
-    }
 
     public void setName(String name) {
         final String old = getMs2Experiment().getName();
@@ -146,28 +139,6 @@ public class ExperimentResultBean extends AbstractEDTBean implements PropertyCha
         GuiProjectSpace.PS.changeName(this, old);
     }
 
-    public void setNameIndex(int nameIndex) {
-        this.nameIndex = nameIndex;
-        firePropertyChange(GUI_NAME_PROPERTY, null, getGUIName());
-    }
-
-    public void setBestHit(final IdentificationResultBean bestHit) {
-        if (bestHit == null) {
-            if (this.bestHit != null)
-                this.bestHit.setBestHit(false);
-            this.bestHit = bestHit;
-            bestHitIndex = 0;
-            return;
-        }
-
-        if (this.bestHit != bestHit) {
-            if (this.bestHit != null)
-                this.bestHit.setBestHit(false);
-            this.bestHit = bestHit;
-            this.bestHit.setBestHit(true);
-            bestHitIndex = getResults().indexOf(bestHit);
-        }
-    }
 
     public void setIonization(PrecursorIonType ionization) {
         PrecursorIonType old = getMs2Experiment().getPrecursorIonType();
@@ -181,12 +152,6 @@ public class ExperimentResultBean extends AbstractEDTBean implements PropertyCha
         firePropertyChange("ionMass", old, getMs2Experiment().getIonMass());
     }
 
-
-    public synchronized void setSiriusComputeState(ComputingStatus st) {
-        ComputingStatus oldST = this.siriusComputeState;
-        this.siriusComputeState = st;
-        firePropertyChange("siriusComputeState", oldST, this.siriusComputeState);
-    }
 
     //this can be use to initiate an arbitrary update event, e.g. to initialize a view
     public void fireUpdateEvent() {
@@ -210,9 +175,61 @@ public class ExperimentResultBean extends AbstractEDTBean implements PropertyCha
         }
     }
 
-    private static String makeGUIName(String name, int nameIndex) {
-        if (nameIndex <= 1)
-            return name;
-        return name + " (" + nameIndex + ")";
+
+    private void configureListeners() {
+        experimentResult.addAnnotationChangeListener(evt -> {
+            if (evt.getPropertyName().equals(DataAnnotation.getIdentifier(IdentificationResults.class)))
+                setRawResults((IdentificationResults) evt.getNewValue());
+
+            firePropertyChange(evt);
+        });
+    }
+
+    private class ResultsListView extends AbstractList<IdentificationResultBean> {
+        private IdentificationResults rawResults;
+        private ComputingStatus compStatus;
+
+        private ResultsListView() {
+            this(null);
+        }
+
+        private ResultsListView(IdentificationResults rawResults) {
+            setRawResults(rawResults);
+        }
+
+        @Override
+        public IdentificationResultBean get(int index) {
+            if (rawResults == null) throw new ArrayIndexOutOfBoundsException(index);
+            return unWrap(rawResults.get(index));
+        }
+
+        @Override
+        public int size() {
+            if (rawResults == null) return 0;
+            return rawResults.size();
+        }
+
+        public IdentificationResultBean getBest() {
+            if (rawResults == null) return null;
+            return unWrap(rawResults.getBest());
+        }
+
+        private IdentificationResultBean unWrap(final @NotNull IdentificationResult ir) {
+            return ir.getAnnotationOrThrow(IdentificationResultBean.class);
+        }
+
+        private void setRawResults(IdentificationResults rawResults) {
+            if (this.rawResults != null)
+                this.rawResults.forEach(it -> it.setAnnotation(IdentificationResultBean.class,null));
+
+            this.rawResults = rawResults;
+
+            if (this.rawResults != null)
+                this.rawResults.forEach(IdentificationResultBean::new);
+        }
+
+        public synchronized void setSiriusComputeState(ComputingStatus st) {
+            getExperimentResult().setAnnotation(ComputingStatus.class, st);
+        }
     }
 }

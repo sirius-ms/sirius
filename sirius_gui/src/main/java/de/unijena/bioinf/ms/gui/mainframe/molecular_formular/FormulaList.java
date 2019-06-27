@@ -97,7 +97,7 @@ public class FormulaList extends ActionList<IdentificationResultBean, Experiment
             int i = 0;
             for (IdentificationResultBean element : r) {
                 elementList.add(element);
-                scores[i] = element.getScore();
+                scores[i] = element.getSiriusScore();
                 iScores[i] = element.getResult().getIsotopeScore();
                 tScores[i++] = element.getResult().getTreeScore();
             }

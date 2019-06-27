@@ -90,10 +90,10 @@ public class CSIFingerIDComputation {
         final IdentificationResultBean top = results.get(0);
         if (top.getResult().getResolvedTree().numberOfEdges() > 0)
             elements.add(top);
-        final double threshold = calculateThreshold(top.getScore());
+        final double threshold = calculateThreshold(top.getSiriusScore());
         for (int k = 1; k < results.size(); ++k) {
             IdentificationResultBean e = results.get(k);
-            if (e.getScore() < threshold) break;
+            if (e.getSiriusScore() < threshold) break;
             if (e.getResult().getResolvedTree().numberOfEdges() > 0)
                 elements.add(e);
         }

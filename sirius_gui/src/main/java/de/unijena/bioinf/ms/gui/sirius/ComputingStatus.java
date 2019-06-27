@@ -18,7 +18,9 @@
 
 package de.unijena.bioinf.ms.gui.sirius;
 
-public enum ComputingStatus {
+import de.unijena.bioinf.sirius.ResultAnnotation;
+
+public enum ComputingStatus implements ResultAnnotation {
 
     UNCOMPUTED, COMPUTING, COMPUTED, QUEUED, FAILED
 
