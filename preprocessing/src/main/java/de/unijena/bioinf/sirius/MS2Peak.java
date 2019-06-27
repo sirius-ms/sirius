@@ -18,14 +18,14 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 
 import java.util.Comparator;
 
 /**
  * @author Kai Dührkop
  */
-public class MS2Peak extends Peak {
+public class MS2Peak extends SimplePeak {
 
     private final Ms2Spectrum spectrum;
 

@@ -138,8 +138,8 @@ public class IdentificationResults implements ResultAnnotation, Iterable<Identif
         return results.get(index);
     }
 
-    public IdentificationResult getBest() {
-        return get(0);
+    public Optional<IdentificationResult> getBest() {
+        return isEmpty() ? Optional.empty() : Optional.of(get(0));
     }
 
     public int indexOf(IdentificationResult o) {

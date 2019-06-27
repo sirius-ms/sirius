@@ -3,7 +3,7 @@ package de.unijena.bioinf.lcms.align;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.model.lcms.FragmentedIon;
-import de.unijena.bioinf.model.lcms.MergedSpectrum;
+import de.unijena.bioinf.model.lcms.Scan;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.Collections;
@@ -16,20 +16,24 @@ public class AlignedFeatures {
     protected Map<ProcessedSample, FragmentedIon> features;
     protected double mass, rt;
     protected double rtLeft,rtRight, rtVariance;
-    protected MergedSpectrum representativeScan;
+    protected ProcessedSample representativeFeature;
     protected int chargeState;
 
     protected double peakHeight, peakWidth;
 
-    AlignedFeatures(double mass, double rt, MergedSpectrum representativeScan, Map<ProcessedSample, FragmentedIon> features, double rtLeft, double rtRight) {
+    AlignedFeatures(double mass, double rt, ProcessedSample representativeFeature, Map<ProcessedSample, FragmentedIon> features, double rtLeft, double rtRight) {
         this.features = features;
         this.mass = mass;
         this.rt = rt;
-        this.representativeScan = representativeScan;
+        this.representativeFeature = representativeFeature;
         this.rtLeft = rtLeft;
         this.rtRight = rtRight;
         this.chargeState = features.values().stream().mapToInt(x->x.getChargeState()).max().orElse(0);
         calculate();
+    }
+
+    public FragmentedIon getRepresentativeIon() {
+        return representativeFeature==null ? null : features.get(representativeFeature);
     }
 
     private void calculate() {
@@ -57,7 +61,7 @@ public class AlignedFeatures {
         this.features = new HashMap<>(Collections.singletonMap(sample, ion));
         this.mass = ion.getMass();
         this.rt = rt;
-        this.representativeScan = ion.getMsMs();
+        this.representativeFeature = sample;
         this.chargeState = ion.getChargeState();
         this.peakHeight = ion.getIntensity();
         this.peakWidth = ion.getSegment().fwhm();
@@ -104,6 +108,10 @@ public class AlignedFeatures {
         for (Map.Entry<ProcessedSample, FragmentedIon> f :  other.features.entrySet()) {
             rts.add(f.getKey().getRecalibratedRT(f.getValue().getRetentionTime()));
         }
-        return new AlignedFeatures(Statistics.robustAverage(masses.toArray()), Statistics.robustAverage(rts.toArray()), representativeScan == null ? null : (other.representativeScan == null ? representativeScan : (representativeScan.totalTic() > other.representativeScan.totalTic() ? representativeScan : other.representativeScan)), copy, rt, other.rt);
+        Scan l = representativeFeature == null ? null : features.get(representativeFeature).getMsMsScan();
+        Scan r = other.representativeFeature == null ? null : other.features.get(other.representativeFeature).getMsMsScan();
+        double ltic = l==null ? 0 : l.getTIC();
+        double rtic = r==null ? 0 : r.getTIC();
+        return new AlignedFeatures(Statistics.robustAverage(masses.toArray()), Statistics.robustAverage(rts.toArray()), ltic>rtic? representativeFeature : other.representativeFeature , copy, rt, other.rt);
     }
 }

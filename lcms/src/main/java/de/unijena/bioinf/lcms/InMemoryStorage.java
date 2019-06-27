@@ -16,7 +16,7 @@ public class InMemoryStorage implements SpectrumStorage {
     }
 
     @Override
-    public void add(Scan scan, SimpleSpectrum spectrum) {
+    public synchronized void add(Scan scan, SimpleSpectrum spectrum) {
         scan2spectrum.put(scan.getScanNumber(), spectrum);
     }
 

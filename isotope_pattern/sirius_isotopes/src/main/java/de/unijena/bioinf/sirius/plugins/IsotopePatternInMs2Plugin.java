@@ -561,7 +561,7 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
                 mz += buf.getMzAt(k)*buf.getIntensityAt(k);
                 intens += buf.getIntensityAt(k);
             }
-            return new Peak(mz / intens, intens);
+            return new SimplePeak(mz / intens, intens);
         }
 
     }

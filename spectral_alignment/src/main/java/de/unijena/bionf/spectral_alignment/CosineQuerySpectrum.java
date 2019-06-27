@@ -1,11 +1,15 @@
 package de.unijena.bionf.spectral_alignment;
 
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import org.jetbrains.annotations.NotNull;
 
-public class CosineQuerySpectrum {
+import java.util.Iterator;
+
+public class CosineQuerySpectrum implements Spectrum<Peak> {
     final OrderedSpectrum<Peak> spectrum;
     final SimpleSpectrum inverseSpectrum;
     final double selfSimilarity;
@@ -21,11 +25,39 @@ public class CosineQuerySpectrum {
 
     }
 
+    @Override
+    public double getMzAt(int index) {
+        return spectrum.getMzAt(index);
+    }
+
+    @Override
+    public double getIntensityAt(int index) {
+        return spectrum.getIntensityAt(index);
+    }
+
+    @Override
+    public Peak getPeakAt(int index) {
+        return spectrum.getPeakAt(index);
+    }
+
+    public int size() {
+        return spectrum.size();
+    }
 
     protected static CosineQuerySpectrum newInstance(OrderedSpectrum<Peak> spectrum, double precursorMz, AbstractSpectralAlignment spectralAlignment) {
         SimpleSpectrum inverseSpectrum = Spectrums.getInversedSpectrum(spectrum, precursorMz);
         double selfSimilarity = spectralAlignment.score(spectrum, spectrum).similarity;
         double selfSimilarityLosses = spectralAlignment.score(inverseSpectrum, inverseSpectrum).similarity;
         return new CosineQuerySpectrum(spectrum, precursorMz, inverseSpectrum, selfSimilarity, selfSimilarityLosses);
+    }
+    protected static CosineQuerySpectrum newInstanceWithoutLoss(OrderedSpectrum<Peak> spectrum, double precursorMz, AbstractSpectralAlignment spectralAlignment) {
+        double selfSimilarity = spectralAlignment.score(spectrum, spectrum).similarity;
+        return new CosineQuerySpectrum(spectrum, precursorMz, null, selfSimilarity, 0d);
+    }
+
+    @NotNull
+    @Override
+    public Iterator<Peak> iterator() {
+        return spectrum.iterator();
     }
 }

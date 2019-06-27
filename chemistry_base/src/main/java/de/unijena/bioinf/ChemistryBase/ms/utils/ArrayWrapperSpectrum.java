@@ -19,6 +19,7 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 
 import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 
 /**
@@ -72,7 +73,7 @@ public class ArrayWrapperSpectrum extends AbstractSpectrum<Peak> implements Muta
 
     @Override
     public Peak getPeakAt(int index) {
-        return new Peak(mzs[index], ints[index]);
+        return new SimplePeak(mzs[index], ints[index]);
     }
 
     @Override
@@ -164,7 +165,7 @@ public class ArrayWrapperSpectrum extends AbstractSpectrum<Peak> implements Muta
 
         @Override
         public Peak getPeakAt(int index) {
-            return new Peak(mzs[index], ints[index]);
+            return new SimplePeak(mzs[index], ints[index]);
         }
 
         @Override

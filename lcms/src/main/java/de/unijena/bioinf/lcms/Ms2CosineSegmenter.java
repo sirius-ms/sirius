@@ -26,7 +26,7 @@ public class Ms2CosineSegmenter {
         cosine = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20)));
     }
 
-    public List<FragmentedIon> extractMsMSAndSegmentChromatograms(ProcessedSample sample) {
+    public List<FragmentedIon> extractMsMSAndSegmentChromatograms(LCMSProccessingInstance instance, ProcessedSample sample) {
         final ArrayList<FragmentedIon> ions = new ArrayList<>();
         // group all MSMS scans into chromatographic peaks
         final HashMap<MutableChromatographicPeak, ArrayList<Scan>> scansPerPeak = new HashMap<>();
@@ -114,7 +114,7 @@ public class Ms2CosineSegmenter {
                     if (gap > medianWidth) {
                         // do not merge
                         //System.out.println("Do not merge " + queryLeft.originalSpectrum.getPrecursor().getMass() + " " + mutableChromatographicPeak.getIntensityAt(left.getApexIndex()) + " with " + mutableChromatographicPeak.getIntensityAt(right.getApexIndex()) + " with cosine "+ cosine.similarity + " (" + cosine.shardPeaks + " peaks), due to gap above " + medianWidth);
-                        ions.add(new FragmentedIon(merged, entry.getKey(), left));
+                        ions.add(instance.createMs2Ion(sample,merged, entry.getKey(), left));
                         if (!SEGS.add(left))
                             System.out.println("=/");
                         merged = spectraPerSegment[i];
@@ -129,7 +129,7 @@ public class Ms2CosineSegmenter {
                     } else if (cosine.shardPeaks < Math.min(queryLeft.spectrum.size(),queryRight.spectrum.size())*0.33) {
                         //System.out.println("Split segments");
                         final ChromatographicPeak.Segment left = mutableChromatographicPeak.getSegmentForScanId(segmentIds[j]).get();
-                        ions.add(new FragmentedIon(merged, entry.getKey(), left));
+                        ions.add(instance.createMs2Ion(sample, merged, entry.getKey(), left));
                         if (!SEGS.add(left))
                             System.out.println("=/");
                         merged = spectraPerSegment[i];
@@ -139,7 +139,7 @@ public class Ms2CosineSegmenter {
             }
             if (merged!=null) {
                 final ChromatographicPeak.Segment left = entry.getKey().getSegmentForScanId(segmentIds[j]).get();
-                ions.add(new FragmentedIon(merged, entry.getKey(), left));
+                ions.add(instance.createMs2Ion(sample,merged, entry.getKey(), left));
                 if (!SEGS.add(left))
                     System.out.println("=/");
             }

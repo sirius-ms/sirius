@@ -3,23 +3,29 @@ package de.unijena.bioinf.model.lcms;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
 import de.unijena.bioinf.lcms.quality.Quality;
+import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class FragmentedIon extends IonGroup {
 
-    protected final MergedSpectrum msms;
+    protected final CosineQuerySpectrum msms;
+    protected final Scan ms2Scan;
     protected final List<CorrelatedIon> adducts, inSourceFragments;
     protected PrecursorIonType detectedIonType;
     protected PeakShape peakShape;
+    protected Quality ms2Quality;
 
-    public FragmentedIon(MergedSpectrum msms, ChromatographicPeak chromatographicPeak, ChromatographicPeak.Segment segment) {
+    public FragmentedIon(Scan ms2Scan, CosineQuerySpectrum msms, Quality ms2Quality, ChromatographicPeak chromatographicPeak, ChromatographicPeak.Segment segment) {
         super(chromatographicPeak, segment, new ArrayList<>());
         this.msms = msms;
+        this.ms2Scan = ms2Scan;
         this.adducts = new ArrayList<>();
         this.inSourceFragments = new ArrayList<>();
+        this.ms2Quality = ms2Quality;
     }
+
 /*
     public double comparePeakWidthSmallToLarge(FragmentedIon other) {
 
@@ -49,11 +55,6 @@ public class FragmentedIon extends IonGroup {
         return peakShape;
     }
 
-    public Quality getMsMsQuality() {
-        if (msms==null) return Quality.UNUSABLE;
-        return msms.getQuality();
-    }
-
     public PrecursorIonType getDetectedIonType() {
         return detectedIonType;
     }
@@ -70,10 +71,6 @@ public class FragmentedIon extends IonGroup {
         return inSourceFragments;
     }
 
-    public MergedSpectrum getMsMs() {
-        return msms;
-    }
-
     public double getMass() {
         return peak.getMzAt(segment.apex);
     }
@@ -84,10 +81,22 @@ public class FragmentedIon extends IonGroup {
     }
 
     public String toString() {
-        return "MS/MS("+chargeState+") m/z = " + (msms==null ? "GAP FILLED" : msms.getPrecursor().getMass()) + ", apex = " + peak.getRetentionTimeAt(segment.getApexIndex())/60000d + " min";
+        return "MS/MS("+chargeState+") m/z = " + (msms==null ? "GAP FILLED" : ms2Scan.getPrecursor().getMass()) + ", apex = " + peak.getRetentionTimeAt(segment.getApexIndex())/60000d + " min";
     }
 
     public double getIntensity() {
         return peak.getIntensityAt(segment.apex);
+    }
+
+    public Quality getMsMsQuality() {
+        return ms2Quality;
+    }
+
+    public CosineQuerySpectrum getMsMs() {
+        return msms;
+    }
+
+    public Scan getMsMsScan() {
+        return ms2Scan;
     }
 }

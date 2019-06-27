@@ -3,8 +3,10 @@ package de.unijena.bioinf.lcms;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.align.AlignedFeatures;
@@ -15,23 +17,46 @@ import de.unijena.bioinf.lcms.noise.NoiseStatistics;
 import de.unijena.bioinf.lcms.peakshape.CustomPeakShape;
 import de.unijena.bioinf.lcms.peakshape.CustomPeakShapeFitting;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
-import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
+import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
+import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import gnu.trove.list.array.TDoubleArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class LCMSProccessingInstance {
 
     protected HashMap<ProcessedSample, SpectrumStorage> storages;
     protected List<ProcessedSample> samples;
+    protected MemoryFileStorage ms2Storage;
+    protected AtomicInteger numberOfMs2Scans = new AtomicInteger();
 
     public LCMSProccessingInstance() {
         this.samples = new ArrayList<>();
+        try {
+            this.ms2Storage = new MemoryFileStorage();
+        } catch (IOException e) {
+            throw new RuntimeException();
+        }
         this.storages = new HashMap<ProcessedSample, SpectrumStorage>();
 
+    }
+
+    public MemoryFileStorage getMs2Storage() {
+        return ms2Storage;
+    }
+
+    public FragmentedIon createMs2Ion(ProcessedSample sample, MergedSpectrum merged, MutableChromatographicPeak peak, ChromatographicPeak.Segment segment) {
+        final int id = numberOfMs2Scans.incrementAndGet();
+        final SimpleSpectrum spec = merged.finishMerging();
+        final SimpleSpectrum spec2 = Spectrums.extractMostIntensivePeaks(spec, 8, 100);
+        final Scan scan = new Scan(id, merged.getScans().get(0).getPolarity(), peak.getRetentionTimeAt(segment.getApexIndex()), spec.size(), Spectrums.calculateTIC(spec), merged.getPrecursor());
+        ms2Storage.add(scan, spec);
+        return new FragmentedIon(scan, new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20))).createQueryWithIntensityTransformationNoLoss(spec2, merged.getPrecursor().getMass(), true), merged.getQuality(), peak, segment);
     }
 
 
@@ -102,7 +127,7 @@ public class LCMSProccessingInstance {
             fitPeakShape(sample,ion);
 
 
-        final Feature feature = new Feature(sample.run, ionMass, intensity, trace.toArray(new ScanPoint[0]), correlatedFeatures.toArray(new SimpleSpectrum[0]), gapFilled ? new SimpleSpectrum[0] : new SimpleSpectrum[]{ion.getMsMs().finishMerging()}, ionType, sample.recalibrationFunction,
+        final Feature feature = new Feature(sample.run, ionMass, intensity, trace.toArray(new ScanPoint[0]), correlatedFeatures.toArray(new SimpleSpectrum[0]), gapFilled ? new SimpleSpectrum[0] : new SimpleSpectrum[]{ms2Storage.getScan(ion.getMsMsScan())}, ionType, sample.recalibrationFunction,
                 ion.getPeakShape().getPeakShapeQuality(), ion.getMsQuality(), ion.getMsMsQuality()
 
                 );
@@ -139,7 +164,7 @@ public class LCMSProccessingInstance {
     }
 
     public void detectFeatures(ProcessedSample sample) {
-        final List<FragmentedIon> ions = new Ms2CosineSegmenter().extractMsMSAndSegmentChromatograms(sample);
+        final List<FragmentedIon> ions = new Ms2CosineSegmenter().extractMsMSAndSegmentChromatograms(this, sample);
         ////
         sample.ions.clear(); sample.ions.addAll(ions);
         assert checkForDuplicates(sample);
@@ -155,7 +180,6 @@ public class LCMSProccessingInstance {
         sample.ions.clear();
         sample.ions.addAll(new IonIdentityNetwork().filterByIonIdentity(ions));
         assert checkForDuplicates(sample);
-        sample.ions.forEach(x->x.getMsMs().applyNoiseFiltering());
         TDoubleArrayList peakWidths = new TDoubleArrayList(),peakWidthsToHeight = new TDoubleArrayList();
         for (FragmentedIon f : sample.ions) {
             final long fwhm = f.getSegment().fwhm(0.2);
@@ -201,62 +225,50 @@ public class LCMSProccessingInstance {
     public Cluster alignAndGapFilling() {
         JobManager manager = SiriusJobs.getGlobalJobManager();
         boolean similarRt = true;
+        int numberOfUnalignedIons = 0;
         double maxRt = samples.stream().mapToDouble(x->x.maxRT).max().getAsDouble();
         for (ProcessedSample s : samples) {
             s.maxRT = maxRt;
+            numberOfUnalignedIons += s.ions.size();
         }
         double error = new Aligner(false).estimateErrorTerm(samples);
         System.out.println("ERROR = " + error);
 
         final double initialError = error;
         int n=0;
-        if (false) {
-            final HashSet<ChromatographicPeak.Segment> segs = new HashSet<>();
-            for (ProcessedSample sample : samples) {
-                // add all segments as ions for alignment
-                segs.clear();
-                sample.ions.forEach(x->x.getPeak().getSegments().forEach(segs::add));
-                for (FragmentedIon ion : sample.ions) {
-                    for (ChromatographicPeak.Segment s : ion.getPeak().getSegments()) {
-                        if (s != ion.getSegment() && s.getIntensity() >= ion.getIntensity()) {
-                            segs.add(s);
-                        }
-                    }
-                }
-                sample.ions.forEach(x->segs.remove(x.getSegment()));
-                for (ChromatographicPeak.Segment s : segs) {
-                    final PeakShape shape = new CustomPeakShapeFitting().fit(sample,s.getPeak(),s);
-                    if (shape.getPeakShapeQuality().betterThan(Quality.BAD)) {
-                        final GapFilledIon ion = new GapFilledIon(s.getPeak(),s,null);
-                        if (ion.getIntensity() >= sample.ms1NoiseModel.getSignalLevel(s.getApexScanNumber(), ion.getMass())) {
-                            ion.setPeakShape(shape);
-                            sample.otherIons.add(ion);
-                            ++n;
-                        }
-                    }
-                }
-            }
-        }
-        System.out.println("added " + n + " ions in total");
+        System.out.println("Start with " + numberOfUnalignedIons + " unaligned ions.");
+        System.out.println("Remove lonely features");System.out.flush();
+        int deleted = new Aligner(false).prealignAndFeatureCutoff(samples, 5*error, 1);
+        System.out.println("Remove " + deleted + " features that do not align well. Keep " + (numberOfUnalignedIons-deleted) + " features." );
 
+
+        System.out.println("Start Align #1");System.out.flush();
         BasicJJob<Cluster> clusterJob = new Aligner(false).upgmaInParallel(samples,5*error,true);//new Aligner().recalibrateRetentionTimes(this.samples);
         manager.submitJob(clusterJob);
         Cluster cluster = clusterJob.takeResult();
+        double numberOfFeatures = cluster.getFeatures().length;
+        cluster = cluster.deleteRowsWithNoIsotopes();
+        double numberOfFeatures2 = cluster.getFeatures().length;
+        System.out.println("Remove " + (100d - 100d*numberOfFeatures2/numberOfFeatures ) +  " % of the data due to low quality. There are" + cluster.getFeatures().length + " features in total."); System.out.flush();
         error = cluster.estimateError();
         final double errorFromClustering = error;
-        System.out.println("Start Gap Filling #1");
+        System.out.println("Start Gap Filling #1");System.out.flush();
         clusterJob = new GapFilling().gapFillingInParallel(this, cluster.deleteRowsWithNoMsMs(), error,cluster.estimatePeakShapeError(), true);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult();
+        System.out.println("Start Realign #2");System.out.flush();
         clusterJob = new Aligner(false).makeRealignJob(cluster, error);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult();
+        System.out.println("Recalibrate");System.out.flush();
         manager.submitJob(new Aligner(false).recalibrateRetentionTimes(samples, cluster, error)).takeResult();
         error = cluster.estimateError();
         final double errorDueToRecalibration = error;
+        System.out.println("Start Realign #3");System.out.flush();
         clusterJob = new Aligner(false).upgmaInParallel(samples,error,true);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult().deleteRowsWithNoMsMs();
+        System.out.println("Start Gapfilling #2");System.out.flush();
         clusterJob = new GapFilling().gapFillingInParallel(this, cluster, error, cluster.estimatePeakShapeError(), false);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult();
@@ -268,9 +280,9 @@ public class LCMSProccessingInstance {
         System.out.println("After Recalibration: " + errorDueToRecalibration);
         System.out.println("After Gap-Filling: " + finalError);
         System.out.println("PeakShape Error: " + cluster.estimatePeakShapeError());
-
+        System.out.println("Start Realign #4"); System.out.flush();
         cluster = manager.submitJob(new Aligner(false).makeRealignJob(cluster,error)).takeResult().deleteRowsWithNoMsMs();
-
+        System.out.println("Done."); System.out.flush();
         return cluster;
 
 
@@ -308,5 +320,9 @@ public class LCMSProccessingInstance {
 
     public List<ProcessedSample> getSamples() {
         return samples;
+    }
+
+    public SimpleSpectrum getMs2(Scan msMsScan) {
+        return ms2Storage.getScan(msMsScan);
     }
 }

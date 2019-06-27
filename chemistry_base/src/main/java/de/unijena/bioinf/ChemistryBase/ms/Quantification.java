@@ -33,11 +33,11 @@ public class Quantification implements Ms2ExperimentAnnotation {
     }
 
     public static Quantification fromString(String s) {
-        final Pattern pat = Pattern.compile("\"([^\"]+)\":\\((\\S+)\\);");
+        final Pattern pat = Pattern.compile("\"([^\"]+)\":\\((\\d+(?:\\.\\d+)?)\\);");
         final Matcher m = pat.matcher(s+";");
         final TObjectDoubleHashMap<String> map = new TObjectDoubleHashMap<>();
         while (m.find()) {
-            map.put(m.group(1), Double.parseDouble(m.group(1)));
+            map.put(m.group(1), Double.parseDouble(m.group(2)));
         }
         return new Quantification(map);
     }

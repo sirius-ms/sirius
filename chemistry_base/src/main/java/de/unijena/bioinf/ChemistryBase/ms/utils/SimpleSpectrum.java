@@ -19,6 +19,7 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 
 import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 
 import java.util.Arrays;
@@ -57,7 +58,7 @@ public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectr
 	
 	@Override
 	public Peak getPeakAt(int index) {
-		return new Peak(masses[index], intensities[index]);
+		return new SimplePeak(masses[index], intensities[index]);
 	}
 	
 	

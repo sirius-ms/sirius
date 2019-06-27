@@ -313,7 +313,7 @@ class DefaultDescriptors {
             final L mzs = document.getListFromDictionary(isotopes, "mz"), ints = document.getListFromDictionary(isotopes, "relInt");
             if (mzs==null || ints==null) return null;
             for (int k=0, n=Math.min(document.sizeOfList(mzs), document.sizeOfList(ints)); k < n; ++k) {
-                peaks.add(new Peak(document.getDoubleFromList(mzs, k), document.getDoubleFromList(ints, k)));
+                peaks.add(new SimplePeak(document.getDoubleFromList(mzs, k), document.getDoubleFromList(ints, k)));
             }
 
             double score = document.hasKeyInDictionary(isotopes, "score") ? document.getDoubleFromDictionary(isotopes, "score") : 0d;
@@ -355,7 +355,7 @@ class DefaultDescriptors {
             final L mzs = document.getListFromDictionary(isotopes, "mz"), ints = document.getListFromDictionary(isotopes, "relInt");
             if (mzs==null || ints==null) return null;
             for (int k=0, n=Math.min(document.sizeOfList(mzs), document.sizeOfList(ints)); k < n; ++k) {
-                peaks.add(new Peak(document.getDoubleFromList(mzs, k), document.getDoubleFromList(ints, k)));
+                peaks.add(new SimplePeak(document.getDoubleFromList(mzs, k), document.getDoubleFromList(ints, k)));
             }
 
             double score = document.hasKeyInDictionary(isotopes, "score") ? document.getDoubleFromDictionary(isotopes, "score") : 0d;
@@ -576,7 +576,7 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> Peak read(DataDocument<G, D, L> document, D dictionary) {
-            return new Peak(document.getDoubleFromDictionary(dictionary, "mz"), document.hasKeyInDictionary(dictionary,"relativeIntensity") ? document.getDoubleFromDictionary(dictionary, "relativeIntensity") : document.getDoubleFromDictionary(dictionary, "intensity"));
+            return new SimplePeak(document.getDoubleFromDictionary(dictionary, "mz"), document.hasKeyInDictionary(dictionary,"relativeIntensity") ? document.getDoubleFromDictionary(dictionary, "relativeIntensity") : document.getDoubleFromDictionary(dictionary, "intensity"));
         }
 
         @Override
@@ -633,7 +633,7 @@ class DefaultDescriptors {
                         specIds.add((int)document.getIntFromDictionary(peakData, "spectrum"));
                     }
 
-                    originalPeaks.add(new Peak(document.getDoubleFromDictionary(peakData, "mz"), intensity));
+                    originalPeaks.add(new SimplePeak(document.getDoubleFromDictionary(peakData, "mz"), intensity));
                 }
             }
 

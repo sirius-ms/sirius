@@ -195,22 +195,27 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
     public static void main(String[] args) {
 
         final File mzxmlFile = new File(
-                //"/home/kaidu/analysis/example");
-                //"/home/kaidu/analysis/canopus/mice/raw/subset"
-                "/home/kaidu/analysis/example"
+                //"/home/kaidu/analysis/example"
+                "/home/kaidu/analysis/canopus/mice/raw/3D_Mouse_GF_SPF/GF1"
+                //"/home/kaidu/analysis/example"
                 );
         MemoryFileStorage storage= null;
         try {
             final LCMSProccessingInstance i = new LCMSProccessingInstance();
+            i.getMs2Storage().keepInMemory();
             for (File f : mzxmlFile.listFiles()) {
                 storage = new MemoryFileStorage();
                 final LCMSRun parse = new MzXMLParser().parse(f, storage);
                 final ProcessedSample sample = i.addSample(parse, storage);
                 i.detectFeatures(sample);
                 storage.backOnDisc();
+                storage.dropBuffer();
             }
+            i.getMs2Storage().backOnDisc();
+            i.getMs2Storage().dropBuffer();
+
             Cluster c = i.alignAndGapFilling();
-            System.out.println("Gapfilling Done.");
+            System.out.println("Gapfilling Done."); System.out.flush();
 
             final List<String> sampleNames = new ArrayList<>();
             addOrderedSampleNames(c, sampleNames);

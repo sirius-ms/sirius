@@ -3,6 +3,8 @@ package de.unijena.bioinf.lcms;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -114,11 +116,11 @@ public class CorrelatedPeakDetector {
 
     private void detectInSourceFragmentsFor(ProcessedSample sample, FragmentedIon ion, TDoubleArrayList alreadyAnnotatedMzs) {
         final Deviation dev = new Deviation(20);
-        final MergedSpectrum spectrum = ion.getMsMs();
+        final Spectrum<Peak> spectrum = ion.getMsMs();
         Scan ms1Scan = sample.run.getScanByNumber(ion.getSegment().getApexScanNumber()).get();
         final SimpleSpectrum ms1 = sample.storage.getScan(ms1Scan);
         final double basePeak = Spectrums.getMaximalIntensity(spectrum);
-        double precursor = ion.getMsMs().getPrecursor().getMass();
+        double precursor = ion.getMsMsScan().getPrecursor().getMass();
         for (int k=0; k < spectrum.size(); ++k) {
             if (spectrum.getMzAt(k) >= (precursor-2))
                 continue;

@@ -54,7 +54,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                     ProcessedPeak e = new ProcessedPeak();
                     e.setCollisionEnergy(CollisionEnergy.mergeAll(annotatedPeak.getCollisionEnergies()));
                     e.setIndex(input.getMergedPeaks().size());
-                    e.setIntensity(annotatedPeak.getRelativeIntensity());
+                    e.setRelativeIntensity(annotatedPeak.getRelativeIntensity());
                     e.setMass(annotatedPeak.getMass());
                     f.setPeakId(input.getMergedPeaks().size());
                     input.getMergedPeaks().add(e);

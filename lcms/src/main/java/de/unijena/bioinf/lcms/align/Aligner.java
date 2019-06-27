@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms.align;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.HierarchicalClustering;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -11,12 +12,11 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
-import de.unijena.bioinf.lcms.Ms2CosineSegmenter;
+import de.unijena.bioinf.lcms.LoessFunction;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.quality.AlignmentQuality;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
-import de.unijena.bioinf.recal.MzRecalibration;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
@@ -28,7 +28,6 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TLongFloatHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.set.hash.TLongHashSet;
-import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
 import org.apache.commons.math3.analysis.interpolation.LoessInterpolator;
 import org.jetbrains.annotations.NotNull;
@@ -38,9 +37,12 @@ import java.util.*;
 public class Aligner {
 
     private boolean dynamicTimeWarping;
+    // if we have aligned more than X samples, we remove rows which do not align well
+    private int cutoffForFilterHeuristic;
 
     public Aligner(boolean dynamicTimeWarping) {
         this.dynamicTimeWarping = dynamicTimeWarping;
+        this.cutoffForFilterHeuristic = 50;
     }
 
     public ConsensusFeature[] makeFeatureTable(LCMSProccessingInstance instance, Cluster cluster) {
@@ -63,7 +65,7 @@ public class Aligner {
 
             });
             double totalInt = 0d;
-            MergedSpectrum merged = null;
+            SimpleSpectrum merged = null;
             final Set<PrecursorIonType> ionTypes = new HashSet<>();
             PrecursorIonType ionType=null;
             for (ProcessedSample sample : samples) {
@@ -75,8 +77,8 @@ public class Aligner {
                 features.add(e);
                 totalInt += e.getIntensity();
 
-                if (merged==null) merged = ion.getMsMs();
-                else if (ion.getMsMs()!=null) merged = Ms2CosineSegmenter.merge(merged, ion.getMsMs());
+                if (merged==null && ion.getMsMsScan()!=null) merged = instance.getMs2(ion.getMsMsScan());
+                else if (ion.getMsMsScan()!=null) merged = Spectrums.mergeSpectra(new Deviation(15), true, true, merged, instance.getMs2(ion.getMsMsScan()));
 
                 for (SimpleSpectrum coel : e.getCorrelatedFeatures()) {
                     final int mz0 = (int)Math.round(coel.getMzAt(0));
@@ -97,7 +99,7 @@ public class Aligner {
 
             retentionTimes.sort();
             final long medianRet = retentionTimes.get(retentionTimes.size()/2);
-            final ConsensusFeature F = new ConsensusFeature(++featureID, features.toArray(new Feature[0]), coeluted.values(new SimpleSpectrum[0]), new SimpleSpectrum[]{merged.finishMerging()}, ionType, medianRet, mass, totalInt);
+            final ConsensusFeature F = new ConsensusFeature(++featureID, features.toArray(new Feature[0]), coeluted.values(new SimpleSpectrum[0]), new SimpleSpectrum[]{merged}, ionType, medianRet, mass, totalInt);
             consensusFeatures.add(F);
         }
 
@@ -144,7 +146,7 @@ public class Aligner {
                 }
                 final int[] medianAlignedFeatures = alignmentSize.values();
                 Arrays.sort(medianAlignedFeatures);
-                int medianAlignedFeature = medianAlignedFeatures[medianAlignedFeatures.length/2];
+                int medianAlignedFeature = medianAlignedFeatures.length==0 ? 0 : medianAlignedFeatures[medianAlignedFeatures.length/2];
                 avgError /= naligns;
                 final double averageError = avgError;
 
@@ -184,7 +186,7 @@ public class Aligner {
                                 }
                                 final double[] X = Spectrums.copyMasses(buff);
                                 final double[] Y = Spectrums.copyIntensities(buff);
-                                s.setRecalibrationFunction(new LoessInterpolator().interpolate(X, Y));
+                                s.setRecalibrationFunction(new LoessFunction(new LoessInterpolator().interpolate(X, Y)));
                                 System.out.println(s.run.getSource() + " :: " + s.getRecalibrationFunction());
                             } else {
                                 System.out.println("Not enough aligned features to recalibrate " + s.run.getSource());
@@ -226,6 +228,7 @@ public class Aligner {
     private class UPGMA extends HierarchicalClustering<ProcessedSample, Cluster, Cluster> {
         private final double errorTerm;
         private final boolean useAllFeatures;
+        private boolean firstTime = true;
         public UPGMA(double errorTerm, boolean useAllFeatures) {
             this.errorTerm = errorTerm;
             this.useAllFeatures = useAllFeatures;
@@ -238,13 +241,12 @@ public class Aligner {
 
         @Override
         public Cluster merge(Cluster cluster, Cluster left, Cluster right, double score) {
-            System.out.println("MERGE { " + left + " } WITH { " + right + " } TO { " + cluster + " }");
             return cluster;
         }
 
         @Override
         public Cluster preMerge(Cluster left, Cluster right) {
-            return align(left,right, errorTerm, useAllFeatures);
+            return align(left,right, errorTerm, useAllFeatures, true);
         }
 
         @Override
@@ -252,67 +254,6 @@ public class Aligner {
             return preMerged.score;
         }
     }
-    private class UPGMARecalibration extends HierarchicalClustering<ProcessedSample, Cluster, Cluster> {
-        private final double errorTerm;
-        public UPGMARecalibration(double errorTerm) {
-            this.errorTerm = errorTerm;
-        }
-
-        @Override
-        public Cluster createLeaf(ProcessedSample entry) {
-            return new Cluster(entry, false);
-        }
-
-        @Override
-        public Cluster merge(Cluster cluster, Cluster left, Cluster right, double score) {
-            System.out.println("MERGE { " + left + " } WITH { " + right + " } TO { " + cluster + " }");
-            return cluster;
-        }
-
-        @Override
-        public Cluster preMerge(Cluster left, Cluster right) {
-            Cluster c = align(left,right, errorTerm*10, false);
-            UnivariateFunction f = recalibrateCluster(c);
-            for (AlignedFeatures g : left.features) {
-                g.rt = f.value(g.rt);
-            }
-            Cluster d = align(left, right, errorTerm, true);
-            System.err.println("Score before alignment: " + c.score + ", with " + c.features.length + " features. And after alignment " + d.score + ", with " + d.features.length + " features. " + left.features.length + " and " + right.features.length + " are original feature size. Recalibration function is " + f.toString());
-            return d;
-        }
-
-        private UnivariateFunction recalibrateCluster(Cluster cluster) {
-            final SimpleMutableSpectrum buff = new SimpleMutableSpectrum();
-
-            for (AlignedFeatures f : cluster.features) {
-                if (f.rtLeft>0 && f.rtRight>0) {
-                    buff.addPeak(f.rtLeft, f.rtRight);
-                }
-            }
-            if (buff.size() >= 20) {
-                Spectrums.sortSpectrumByMass(buff);
-                for (int k = 1; k < buff.size(); ++k) {
-                    if (buff.getMzAt(k) - buff.getMzAt(k - 1) <= 0) {
-                        double intens = buff.getIntensityAt(k);
-                        buff.removePeakAt(k);
-                        --k;
-                        buff.setIntensityAt(k, (buff.getIntensityAt(k) + intens) / 2d);
-
-                    }
-                }
-                final double[] X = Spectrums.copyMasses(buff);
-                final double[] Y = Spectrums.copyIntensities(buff);
-                //s.setRecalibrationFunction(new LoessInterpolator().interpolate(X, Y));
-                return MzRecalibration.getMedianLinearRecalibration(X, Y);
-            } else return new Identity();
-        }
-
-        @Override
-        public double getScore(Cluster preMerged, Cluster left, Cluster right) {
-            return preMerged.score;
-        }
-    }
-
 
     public static boolean IS_REALIGN = false;
     public BasicJJob<Cluster> makeRealignJob(Cluster cluster, double errorTerm) {
@@ -330,7 +271,7 @@ public class Aligner {
                     submitSubJob(L);
                     submitSubJob(R);
                     // cluster is an inner node
-                    return align(L.takeResult(), R.takeResult(), errorTerm, true);
+                    return align(L.takeResult(), R.takeResult(), errorTerm, true, true);
                 }
             }
         };
@@ -351,20 +292,15 @@ public class Aligner {
                 System.out.println("##############################");
             }
             // cluster is an inner node
-            return align(L, R, errorTerm, true);
+            return align(L, R, errorTerm, true, true);
         }
     }
 
-    public Cluster align(Cluster leftNode, Cluster rightNode, double errorTerm, boolean useAll) {
+    public Cluster align(Cluster leftNode, Cluster rightNode, double errorTerm, boolean useAll, boolean addUnaligned) {
         final HashSet<AlignedFeatures> allFeatures = new HashSet<>();
-        allFeatures.addAll(Arrays.asList(leftNode.features));
-        allFeatures.addAll(Arrays.asList(rightNode.features));
-        {
-            if (allFeatures.size() != leftNode.features.length + rightNode.features.length) {
-                final HashSet<AlignedFeatures> WTF = new HashSet(Arrays.asList(leftNode.features));
-                WTF.retainAll(Arrays.asList(rightNode.features));
-                System.out.println("WTF?");
-            }
+        if (addUnaligned) {
+            allFeatures.addAll(Arrays.asList(leftNode.features));
+            allFeatures.addAll(Arrays.asList(rightNode.features));
         }
         // first make a pool of m/z values we want to align
         final TLongHashSet mzLeft = new TLongHashSet(), mzRight = new TLongHashSet();
@@ -402,13 +338,13 @@ public class Aligner {
                 ionsRight.add(l);
         }
         if (dynamicTimeWarping) {
-            return alignMatchingListDynamicTimeWarping(leftNode,rightNode,ionsLeft,ionsRight, allFeatures, (float)errorTerm, useAll);
+            return alignMatchingListDynamicTimeWarping(leftNode,rightNode,ionsLeft,ionsRight, allFeatures, (float)errorTerm, useAll, !addUnaligned);
         } else {
-            return alignMatchingListBipartite(leftNode,rightNode,ionsLeft,ionsRight, allFeatures, (float)errorTerm, useAll);
+            return alignMatchingListBipartite(leftNode,rightNode,ionsLeft,ionsRight, allFeatures, (float)errorTerm, useAll, !addUnaligned);
         }
     }
 
-    protected Cluster alignMatchingListBipartite(Cluster left, Cluster right, List<AlignedFeatures> leftFeatures, List<AlignedFeatures> rightFeatures, Set<AlignedFeatures> unaligned, float errorTerm, boolean useAll) {
+    protected Cluster alignMatchingListBipartite(Cluster left, Cluster right, List<AlignedFeatures> leftFeatures, List<AlignedFeatures> rightFeatures, Set<AlignedFeatures> unaligned, float errorTerm, boolean useAll, boolean keepIntermediates) {
         final SparseScoreMatrix scores = new SparseScoreMatrix(Float.NEGATIVE_INFINITY);
         computePairwiseCosine(scores, leftFeatures, rightFeatures, errorTerm, useAll);
         final TreeSet<ScoredAligned> set = new TreeSet<>();
@@ -425,7 +361,6 @@ public class Aligner {
             if (!alignedLeft.get(a.i) && !alignedRight.get(a.j)) {
                 final AlignedFeatures l = leftFeatures.get(a.i);
                 final AlignedFeatures r = rightFeatures.get(a.j);
-                if (IS_REALIGN) System.out.println(a.score);
                 unaligned.remove(l); unaligned.remove(r);
                 alignedFeatures.add(l.merge(r));
                 totalScore += a.score;
@@ -435,7 +370,7 @@ public class Aligner {
         }
         //System.out.println("Average score = " + (alignedFeatures.isEmpty() ? 0.0 : (totalScore / alignedFeatures.size())) + " for " + left.mergedSamples.toString() + " WITH " + right.mergedSamples.toString());
         alignedFeatures.addAll(unaligned);
-        return new Cluster(alignedFeatures.toArray(new AlignedFeatures[0]), totalScore, left,right);
+        return new Cluster(alignedFeatures.toArray(new AlignedFeatures[0]), totalScore, left,right, keepIntermediates);
 
     }
 
@@ -458,7 +393,7 @@ public class Aligner {
         }
     }
 
-    protected Cluster alignMatchingListDynamicTimeWarping(Cluster left, Cluster right, List<AlignedFeatures> leftFeatures, List<AlignedFeatures> rightFeatures, Set<AlignedFeatures> unaligned, float errorTerm, boolean useAll) {
+    protected Cluster alignMatchingListDynamicTimeWarping(Cluster left, Cluster right, List<AlignedFeatures> leftFeatures, List<AlignedFeatures> rightFeatures, Set<AlignedFeatures> unaligned, float errorTerm, boolean useAll, boolean keepIntermediates) {
         final double gamma = 1/(2d*errorTerm*errorTerm);
         final SparseScoreMatrix scores = new SparseScoreMatrix(Float.NEGATIVE_INFINITY);
         computePairwiseCosine(scores, leftFeatures, rightFeatures, errorTerm, useAll);
@@ -478,9 +413,8 @@ public class Aligner {
         }
         final ArrayList<AlignedFeatures> backtracked = new ArrayList<>();
         float score = backtrack(D, leftFeatures, rightFeatures, backtracked, unaligned);
-        System.out.println(backtracked.size() + " aligned features with score " + score + ". " + left.features.length + " and " + right.features.length + " features before alignment. " + unaligned.size() + "Features were not aligned.");
         backtracked.addAll(unaligned);
-        return new Cluster(backtracked.toArray(new AlignedFeatures[0]), score, left, right );
+        return new Cluster(backtracked.toArray(new AlignedFeatures[0]), score, left, right,  keepIntermediates);
     }
 
     protected float backtrack(float[][] scores, List<AlignedFeatures> left, List<AlignedFeatures> right, List<AlignedFeatures> backtracked, Set<AlignedFeatures> unaligned) {
@@ -524,20 +458,6 @@ public class Aligner {
         Collections.reverse(aligned);
     }
 
-    private SpectralSimilarity cosine(AlignedFeatures left, AlignedFeatures right) {
-        SimpleMutableSpectrum buf = new SimpleMutableSpectrum(left.representativeScan);
-        Spectrums.cutByMassThreshold(buf, left.getMass()-20d);
-        Spectrums.applyBaseline(buf, left.representativeScan.getNoiseLevel());
-        final SimpleSpectrum spectrumLeft = Spectrums.extractMostIntensivePeaks(buf, 8, 100);
-        buf = new SimpleMutableSpectrum(right.representativeScan);
-        Spectrums.cutByMassThreshold(buf, right.getMass()-20d);
-        Spectrums.applyBaseline(buf, right.representativeScan.getNoiseLevel());
-        final SimpleSpectrum spectrumRight = Spectrums.extractMostIntensivePeaks(buf, 8, 100);
-        final CosineQueryUtils utils = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(15)));
-        SpectralSimilarity spectralSimilarity = utils.cosineProduct(utils.createQuery(spectrumLeft, left.getMass()), utils.createQuery(spectrumRight, right.getMass()));
-        return spectralSimilarity;
-    }
-
     private void computePairwiseCosine2(SparseScoreMatrix scores, List<AlignedFeatures> left, List<AlignedFeatures> right, float errorTerm, boolean useAll ) {
         final Deviation dev = new Deviation(30);
         final double gamma = 1d / (2d * errorTerm * errorTerm);
@@ -555,31 +475,20 @@ public class Aligner {
     }
 
     private void computePairwiseCosine(SparseScoreMatrix scores, List<AlignedFeatures> left, List<AlignedFeatures> right, float errorTerm, boolean useAll) {
+        final double SCORE_THRESHOLD = 1e-8;
         final Deviation dev = new Deviation(20);
 
         final CosineQueryUtils utils = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(dev));
         final List<CosineQuerySpectrum> ll = new ArrayList<>(), rr = new ArrayList<>();
         for (AlignedFeatures l : left) {
-            if (l.representativeScan==null || l.representativeScan.getQuality().notBetterThan(Quality.BAD)) {
+            if (l.representativeFeature==null || l.getRepresentativeIon().getMsMsQuality().notBetterThan(Quality.BAD) || l.getRepresentativeIon().getMsMs().size() < 5) {
                 ll.add(null);
-                continue;
-            }
-            final SimpleMutableSpectrum buf = new SimpleMutableSpectrum(l.representativeScan);
-            Spectrums.cutByMassThreshold(buf, l.getMass()-20d);
-            Spectrums.applyBaseline(buf, l.representativeScan.getNoiseLevel());
-            final SimpleSpectrum spectrum = Spectrums.extractMostIntensivePeaks(buf, 8, 100);
-            ll.add(spectrum.size()>=5 ? utils.createQuery(spectrum, l.getMass()) : null);
+            } else ll.add(l.getRepresentativeIon().getMsMs());
         }
         for (AlignedFeatures r : right) {
-            if (r.representativeScan==null  || r.representativeScan.getQuality().notBetterThan(Quality.BAD)) {
+            if (r.representativeFeature==null || r.getRepresentativeIon().getMsMsQuality().notBetterThan(Quality.BAD) || r.getRepresentativeIon().getMsMs().size() < 5) {
                 rr.add(null);
-                continue;
-            }
-            final SimpleMutableSpectrum buf = new SimpleMutableSpectrum(r.representativeScan);
-            Spectrums.cutByMassThreshold(buf, r.getMass()-20d);
-            Spectrums.applyBaseline(buf, r.representativeScan.getNoiseLevel());
-            final SimpleSpectrum spectrum = Spectrums.extractMostIntensivePeaks(buf, 8, 100);
-            rr.add(spectrum.size()>=5 ? utils.createQueryWithIntensityTransformation(spectrum, r.getMass(),true) : null);
+            } else rr.add(r.getRepresentativeIon().getMsMs());
         }
         for (int i=0; i < left.size(); ++i) {
             final AlignedFeatures l = left.get(i);
@@ -617,25 +526,25 @@ public class Aligner {
                         SpectralSimilarity spectralSimilarity = utils.cosineProduct(ll.get(i), rr.get(j));
                         if ((spectralSimilarity.similarity < 0.5 || spectralSimilarity.shardPeaks < 3)) {
                             // prefer to not align features with low cosine
-                            if (l.representativeScan.getQuality().betterThan(Quality.DECENT) || r.representativeScan.getQuality().betterThan(Quality.DECENT)) {
+                            if (l.getRepresentativeIon().getMsMsQuality().betterThan(Quality.DECENT) || r.getRepresentativeIon().getMsMsQuality().betterThan(Quality.DECENT)) {
                                 //System.out.println(l + " with " + r + " are rejected due to COSINE of " + spectralSimilarity);
                                 // do not align both scans if they are good quality
                             } else {
                                 float value = peakShapeScore * (float)( Math.exp(-2*gamma*((l.rt-r.rt)*(l.rt-r.rt))) * 0.25d );
-                                if (value >= 1e-4)
+                                if (value >= SCORE_THRESHOLD)
                                     scores.add(i,j,value);
                             }
                         } else {
                             float value = peakShapeScore *  (float)((spectralSimilarity.similarity + spectralSimilarity.shardPeaks/10d) * Math.exp(-gamma*((l.rt-r.rt)*(l.rt-r.rt))));
                             //System.err.println(spectralSimilarity.similarity + " cosine, " + spectralSimilarity.shardPeaks + " peaks for " + (l.rt/60000d) + " vs " + (r.rt/60000d) + ", and " + l.mass + " vs " + r.mass + ", rt score = " +  Math.exp(-gamma*((l.rt-r.rt)*(l.rt-r.rt))) + ", final score = " + value);
 
-                            if (value >= 1e-4) {
+                            if (value >= SCORE_THRESHOLD) {
                                 scores.add(i,j,value);
                             }
                         }
                     } else if (useAll) {
                         float value = peakShapeScore * (float)( Math.exp(-gamma*((l.rt-r.rt)*(l.rt-r.rt))) * 0.25d );
-                        if (value >= 1e-4) {
+                        if (value >= SCORE_THRESHOLD) {
                             scores.add(i,j,value);
                         }
                     }
@@ -689,5 +598,62 @@ public class Aligner {
         }
 
     }
+
+    public int prealignAndFeatureCutoff(List<ProcessedSample> samples, double errorTerm, int threshold) {
+        final BasicMasterJJob<Cluster> upgma2BasicJJob = new UPGMA2(errorTerm,false).makeParallelClusterJobs(samples);
+        final Cluster cluster = SiriusJobs.getGlobalJobManager().submitJob(upgma2BasicJJob).takeResult();
+        final TObjectIntHashMap<FragmentedIon> counter = new TObjectIntHashMap<>();
+        count(cluster,counter);
+        // now remove all features that belong to less than threshold samples
+        int before=0,after=0;
+        for (ProcessedSample sample : samples) {
+            before += sample.ions.size();
+            sample.ions.removeIf(ion->counter.get(ion) < threshold);
+            after += sample.ions.size();
+        }
+        return before-after;
+
+    }
+
+    private void count(Cluster cluster, TObjectIntHashMap<FragmentedIon> counter) {
+        for (AlignedFeatures f : cluster.getFeatures()) {
+            for (FragmentedIon i : f.getFeatures().values())
+                counter.adjustOrPutValue(i,1,1);
+        }
+        if (!cluster.left.isLeaf()) count(cluster.left,counter);
+        if (!cluster.right.isLeaf()) count(cluster.right,counter);
+    }
+
+
+    private class UPGMA2 extends HierarchicalClustering<ProcessedSample, Cluster, Cluster> {
+        private final double errorTerm;
+        private final boolean useAllFeatures;
+        private boolean firstTime = true;
+        public UPGMA2(double errorTerm, boolean useAllFeatures) {
+            this.errorTerm = errorTerm;
+            this.useAllFeatures = useAllFeatures;
+        }
+
+        @Override
+        public Cluster createLeaf(ProcessedSample entry) {
+            return new Cluster(entry, useAllFeatures);
+        }
+
+        @Override
+        public Cluster merge(Cluster cluster, Cluster left, Cluster right, double score) {
+            return cluster;
+        }
+
+        @Override
+        public Cluster preMerge(Cluster left, Cluster right) {
+            return align(left,right, errorTerm, useAllFeatures, false);
+        }
+
+        @Override
+        public double getScore(Cluster preMerged, Cluster left, Cluster right) {
+            return preMerged.score;
+        }
+    }
+
 
 }

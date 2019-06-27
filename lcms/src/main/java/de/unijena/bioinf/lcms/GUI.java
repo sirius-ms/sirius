@@ -216,6 +216,7 @@ public class GUI extends JFrame implements KeyListener  {
             }
 
             // draw MS/MS
+            /*
             for (Scan s : ion.getMsMs().getScans())  {
                 final long retentionTime = s.getRetentionTime();
                 double prec = s.getPrecursor().getIntensity();
@@ -229,6 +230,7 @@ public class GUI extends JFrame implements KeyListener  {
                 g.fillOval((int)posX-5, 700 - ((int)posY-5), 10, 10);
 
             }
+            */
             g.setColor(Color.BLACK);
             g.setFont(medium);
             g.drawString(ion.getSegment().toString(), 50,800);
