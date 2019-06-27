@@ -284,8 +284,12 @@ public class PropertyManager {
     }
 
     public static Properties asProperties() {
+        return asProperties(PROPERTIES);
+    }
+
+    public static Properties asProperties(Configuration config) {
         final Properties p = new Properties();
-        getPropertyKeys().forEachRemaining(k -> p.put(k, PROPERTIES.getString(k)));
+        config.getKeys().forEachRemaining(k -> p.put(k, config.getString(k)));
         return p;
     }
 

@@ -84,6 +84,10 @@ public class ExperimentResult implements Annotated<ResultAnnotation> {
         return getAnnotation(IdentificationResults.class);
     }
 
+    public boolean hasResults() {
+        return hasAnnotation(IdentificationResults.class);
+    }
+
     private static String simplify(String name) {
         if (name.length()>64)
             name = name.substring(0,48);
