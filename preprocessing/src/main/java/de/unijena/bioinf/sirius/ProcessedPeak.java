@@ -23,10 +23,11 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class ProcessedPeak extends Peak {
+public class ProcessedPeak implements Peak {
 
     private final static Object[] EMPTY_ARRAY = new Object[0];
 
@@ -34,11 +35,12 @@ public class ProcessedPeak extends Peak {
     private List<MS2Peak> originalPeaks;
     private double relativeIntensity;
     private CollisionEnergy collisionEnergy;
+    private double mass;
 
     private Object[] annotations;
 
     public ProcessedPeak() {
-        super(0, 0);
+        this.mass = 0;
         this.annotations = EMPTY_ARRAY;
         this.index = 0;
         this.originalPeaks = Collections.emptyList();
@@ -66,7 +68,7 @@ public class ProcessedPeak extends Peak {
         for (MS2Peak peak : originalPeaks) {
             energies[k] = peak.getSpectrum().getCollisionEnergy();
             if (energies[k]==null) energies[k] = CollisionEnergy.none();
-            opeaks[k] = new Peak(peak);
+            opeaks[k] = new SimplePeak(peak);
             spectrumIds[k] = ((MutableMs2Spectrum)peak.getSpectrum()).getScanNumber();
             ++k;
         }
@@ -76,7 +78,6 @@ public class ProcessedPeak extends Peak {
     public ProcessedPeak(MS2Peak peak) {
         this();
         this.mass = peak.getMz();
-        this.intensity = peak.getIntensity();
         this.originalPeaks = Collections.singletonList(peak);
         this.collisionEnergy = peak.getSpectrum().getCollisionEnergy();
     }
@@ -86,7 +87,6 @@ public class ProcessedPeak extends Peak {
         this.index = peak.getIndex();
         this.originalPeaks = peak.getOriginalPeaks();
         this.mass = peak.getMass();
-        this.intensity = peak.getIntensity();
         this.relativeIntensity = peak.getRelativeIntensity();
         this.collisionEnergy = peak.getCollisionEnergy();
         this.annotations = peak.annotations.clone();
@@ -110,10 +110,6 @@ public class ProcessedPeak extends Peak {
 
     public void setMass(double mz) {
         this.mass = mz;
-    }
-
-    public void setIntensity(double intensity) {
-        this.intensity = intensity;
     }
 
     public void setRelativeIntensity(double relativeIntensity) {
@@ -143,8 +139,13 @@ public class ProcessedPeak extends Peak {
         return Collections.unmodifiableList(originalPeaks);
     }
 
+    @Override
+    public double getMass() {
+        return mass;
+    }
+
     public double getIntensity() {
-        return intensity;
+        return relativeIntensity;
     }
 
     public double getRelativeIntensity() {
@@ -171,6 +172,11 @@ public class ProcessedPeak extends Peak {
      void setAnnotationCapacity(int capacity) {
          if (annotations.length < capacity) annotations = Arrays.copyOf(annotations, capacity+1);
      }
+
+    @Override
+    public int compareTo(@NotNull Peak o) {
+        return Double.compare(mass,o.getMass());
+    }
 
     public static class MassComparator implements Comparator<ProcessedPeak> {
 

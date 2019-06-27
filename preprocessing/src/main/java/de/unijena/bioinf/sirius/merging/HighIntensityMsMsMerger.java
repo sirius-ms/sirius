@@ -158,7 +158,6 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
             originalPeaks[u-startIndex] = peaks[u];
         }
         newPeak.setRelativeIntensity(global);
-        newPeak.setIntensity(global);
         newPeak.setOriginalPeaks(Arrays.asList(originalPeaks));
         newPeak.setCollisionEnergy(energy);
         peakList.add(newPeak);

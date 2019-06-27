@@ -41,17 +41,21 @@ public class GapFilling {
 
         for (AlignedFeatures f : cluster.features) {
             // most abundant ion
-            FragmentedIon mostAbundant = f.features.values().stream().filter(x->x.getClass().equals(FragmentedIon.class)).max(Comparator.comparingDouble(FragmentedIon::getIntensity)).get();
-            if (onlyGoodShapes && mostAbundant.getPeakShape().getPeakShapeQuality().notBetterThan(Quality.BAD))
+            FragmentedIon mostAbundant = f.representativeFeature!=null ? f.getFeatures().get(f.representativeFeature) : null;
+            if (onlyGoodShapes && (mostAbundant==null || mostAbundant.getPeakShape().getPeakShapeQuality().notBetterThan(Quality.BAD)))
                 continue;
             if (onlyGoodShapes && mostAbundant.getIsotopes().size()<=1)
                 continue;
             if (f.features.containsKey(sample) && !(f.features.get(sample) instanceof GapFilledIon)) {
                 // no need for gap filling
             } else {
+                final HashMap<ProcessedSample, FragmentedIon> ions;
+                synchronized (f.features) {
+                    ions = new HashMap<>(f.features);
+                }
                 final double retentionTimeTolerance = rtError;
-
-                final double[] rets = f.features.entrySet().stream().filter(x->!(x instanceof GapFilledIon)).mapToDouble(e -> e.getKey().getRecalibratedRT(e.getValue().getRetentionTime())).toArray();
+                final double[] rets;
+                rets = ions.entrySet().stream().filter(x -> !(x instanceof GapFilledIon)).mapToDouble(e -> e.getKey().getRecalibratedRT(e.getValue().getRetentionTime())).toArray();
                 Arrays.sort(rets);
                 double lowest = rets[(int)(0.25*rets.length)] - retentionTimeTolerance;
                 double highest = rets[(int)(0.75*rets.length)] + retentionTimeTolerance;
@@ -95,7 +99,7 @@ public class GapFilling {
                                     }
 
                                     double avgError = 0d; int n=0;
-                                    for (FragmentedIon ion : f.features.values()) {
+                                    for (FragmentedIon ion : ions.values()) {
                                         if (!(ion instanceof GapFilledIon)) {
                                             avgError += ion.comparePeakWidthSmallToLarge(pseudoIon);
                                             ++n;
@@ -109,15 +113,19 @@ public class GapFilling {
                                     }
 
                                     sample.gapFilledIons.add(pseudoIon);
-                                    FragmentedIon ion = f.features.get(sample);
-                                    if (ion==null) {
-                                        f.features.put(sample, pseudoIon);
-                                    } else {
-                                        // we do not really know which one is correct. Hopefully, alignments will figure it out
-                                        if ( Math.abs(ion.getRetentionTime() - middle) > Math.abs(pseudoIon.getRetentionTime() - middle)) {
-                                            f.features.put(sample,pseudoIon);
+
+                                    FragmentedIon ion = ions.get(sample);
+                                    synchronized (f.features) {
+                                        if (ion == null) {
+                                            f.features.put(sample, pseudoIon);
+                                        } else {
+                                            // we do not really know which one is correct. Hopefully, alignments will figure it out
+                                            if (Math.abs(ion.getRetentionTime() - middle) > Math.abs(pseudoIon.getRetentionTime() - middle)) {
+                                                f.features.put(sample, pseudoIon);
+                                            }
                                         }
                                     }
+
                                     segments.add(seg);
                                     break outerLoop;
                                 }

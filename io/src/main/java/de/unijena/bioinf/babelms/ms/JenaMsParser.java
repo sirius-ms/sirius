@@ -484,7 +484,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private void parsePeak(String line) throws IOException {
             final Matcher m = PEAK_PATTERN.matcher(line);
             if (m.find()) {
-                currentSpectrum.addPeak(new Peak(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2))));
+                currentSpectrum.addPeak(new SimplePeak(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2))));
             } else {
                 error("Cannot parse peak '" + line + "'");
             }

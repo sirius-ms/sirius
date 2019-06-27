@@ -202,6 +202,7 @@ public class Tanimoto {
                 for (int Q=0; Q <= NPOS; ++Q) {
                     final int R = 2*NPOS - Q;
                     if (R < NPOS) break;
+                    if (R >= N) continue;
                     norm += m[R-NPOS]*p[Q];
                     exp += (m[R-NPOS] * p[Q] * ((double)Q)/R);
                 }
@@ -209,6 +210,7 @@ public class Tanimoto {
                 for (int Q=0; Q <= NPOS; ++Q) {
                     final int R = 2*NPOS - Q;
                     if(R < NPOS) break;
+                    if (R >= N) continue;
                     var += (m[R-NPOS] * p[Q] * ((double)Q*Q)/((double)R*R));
                 }
                 if (norm > 0)  var /= norm;

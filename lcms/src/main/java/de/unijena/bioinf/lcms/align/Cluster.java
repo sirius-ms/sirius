@@ -17,15 +17,31 @@ public class Cluster {
     protected Cluster left, right;
     protected HashSet<ProcessedSample> mergedSamples;
 
-    public Cluster(AlignedFeatures[] features, double score, Cluster left, Cluster right) {
+    public Cluster(AlignedFeatures[] features, double score, Cluster left, Cluster right, boolean keepIntermediates) {
         this.features = features.clone();
         Arrays.sort(this.features, Comparator.comparingDouble(AlignedFeatures::getRetentionTime));
         this.score = score;
-        this.left = left;
-        this.right = right;
+        this.left = keepIntermediates ? left : left.header();
+        this.right = keepIntermediates ? right : right.header();
         this.mergedSamples = new HashSet<>();
         mergedSamples.addAll(left.mergedSamples);
         mergedSamples.addAll(right.mergedSamples);
+    }
+
+    private Cluster header() {
+        return new Cluster(new AlignedFeatures[0], score, left, right, mergedSamples);
+    }
+
+    public boolean isLeaf() {
+        return left==null && right==null;
+    }
+
+    private Cluster(AlignedFeatures[] features, double score, Cluster left, Cluster right, HashSet<ProcessedSample> mergedSamples) {
+        this.features = features;
+        this.score = score;
+        this.left = left;
+        this.right = right;
+        this.mergedSamples = mergedSamples;
     }
 
     public AlignedFeatures[] getFeatures() {
@@ -73,6 +89,28 @@ public class Cluster {
         return mergedSamples.stream().map(x->x.run.getIdentifier()).collect(Collectors.joining(",")) + " :: " + score;
     }
 
+    public Cluster deleteRowsWithNoIsotopes() {
+        final ArrayList<AlignedFeatures> alf = new ArrayList<>();
+        outerloop:
+        for (AlignedFeatures f : this.features) {
+            for (FragmentedIon ion : f.features.values()) {
+                if (!(ion.getIsotopes().isEmpty())) {
+                    alf.add(f);
+                    continue outerloop;
+                }
+            }
+        }
+        Set<FragmentedIon> alignedFeatures = new HashSet<>();
+        for (AlignedFeatures f : alf)
+            for (FragmentedIon i : f.getFeatures().values())
+                alignedFeatures.add(i);
+        for (ProcessedSample s : getMergedSamples()) {
+            s.gapFilledIons.removeIf(x->!alignedFeatures.contains(x));
+            s.ions.removeIf(x->!alignedFeatures.contains(x));
+        }
+        return new Cluster(alf.toArray(new AlignedFeatures[0]), score, left, right,mergedSamples);
+    }
+
     public Cluster deleteRowsWithNoMsMs() {
         final ArrayList<AlignedFeatures> alf = new ArrayList<>();
         outerloop:
@@ -83,17 +121,24 @@ public class Cluster {
                     continue outerloop;
                 }
             }
-            for (Map.Entry<ProcessedSample, FragmentedIon> entry : f.features.entrySet()) {
-                entry.getKey().gapFilledIons.remove(entry.getValue());
-            }
         }
-        return new Cluster(alf.toArray(new AlignedFeatures[0]), score, left, right);
+        Set<FragmentedIon> alignedFeatures = new HashSet<>();
+        for (AlignedFeatures f : alf)
+            for (FragmentedIon i : f.getFeatures().values())
+                alignedFeatures.add(i);
+        for (ProcessedSample s : getMergedSamples()) {
+            s.gapFilledIons.removeIf(x->!alignedFeatures.contains(x));
+            s.ions.removeIf(x->!alignedFeatures.contains(x));
+        }
+        return new Cluster(alf.toArray(new AlignedFeatures[0]), score, left, right,mergedSamples);
     }
 
     public double estimateError() {
         final TDoubleArrayList values = new TDoubleArrayList();
-
+        final int thr = Math.max(2,Math.min(10,(int)Math.ceil(this.mergedSamples.size()*0.2)));
         for (AlignedFeatures f : features) {
+            if (f.getFeatures().size() < thr)
+                continue;
             final ArrayList<ProcessedSample> xs = new ArrayList<>(f.features.keySet());
             for (int i=0; i < xs.size(); ++i) {
                 for (int j=0; j < i; ++j) {
