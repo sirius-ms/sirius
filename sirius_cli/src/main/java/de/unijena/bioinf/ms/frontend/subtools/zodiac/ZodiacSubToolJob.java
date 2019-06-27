@@ -27,7 +27,7 @@ public class ZodiacSubToolJob extends DataSetJob {
             if (!expRes.hasAnnotation(IdentificationResults.class))
                 throw new IllegalArgumentException("Instance \"" + expRes.getExperiment().getName() + "\" does not contain SIRIUS results!");
 
-        if (exps.stream().anyMatch(it -> !it.getResults().getBest().hasAnnotation(ZodiacScore.class) || isRecompute(it))) {
+        if (exps.stream().anyMatch(it -> isRecompute(it) || !it.getResults().getBest().map(x->x.hasAnnotation(ZodiacScore.class)).orElse(false))) {
             System.out.println("I am Zodiac and run on all instances: " + exps.stream().map(ExperimentResult::getSimplyfiedExperimentName).collect(Collectors.joining(",")));
             final Map<String, ExperimentResult> stupidLookupMap =
                     exps.stream().collect(Collectors.toMap(ir -> ir.getExperiment().getName(), ir -> ir));
