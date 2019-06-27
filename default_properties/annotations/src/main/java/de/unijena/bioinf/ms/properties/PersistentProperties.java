@@ -81,4 +81,8 @@ public final class PersistentProperties {
         }
     }
 
+    public Properties asProperties(){
+        return PropertyManager.asProperties(config);
+    }
+
 }
