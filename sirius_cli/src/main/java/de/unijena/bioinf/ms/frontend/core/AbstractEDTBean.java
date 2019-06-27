@@ -1,5 +1,8 @@
 package de.unijena.bioinf.ms.frontend.core;
 
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.sirius.ResultAnnotation;
+
 import javax.swing.event.SwingPropertyChangeSupport;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -209,6 +212,10 @@ public abstract class AbstractEDTBean {
         pcs.addPropertyChangeListener(propertyName, listener);
     }
 
+    public final void addPropertyChangeListener(Class<? extends DataAnnotation> property, PropertyChangeListener listener) {
+        addPropertyChangeListener(DataAnnotation.getIdentifier(property), listener);
+    }
+
     /**
      * Remove a PropertyChangeListener for a specific property.
      * If <code>listener</code> was added more than once to the same event
@@ -224,6 +231,10 @@ public abstract class AbstractEDTBean {
      */
     public final void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
         pcs.removePropertyChangeListener(propertyName, listener);
+    }
+
+    public final void removePropertyChangeListener(Class<? extends DataAnnotation> property, PropertyChangeListener listener) {
+        removePropertyChangeListener(DataAnnotation.getIdentifier(property), listener);
     }
 
     /**

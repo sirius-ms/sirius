@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
 
 /**
@@ -33,7 +34,7 @@ import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
  * be updated in the EDT. Some operations may NOT be Thread save, so you may have
  * to care about Synchronization.
  */
-public class FingerIdResultBean extends AbstractEDTBean {
+public class FingerIdResultBean extends AbstractEDTBean implements DataAnnotation {
 
     protected final FingerIdResult result;
 

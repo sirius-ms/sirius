@@ -128,7 +128,7 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         g2.setFont(propertyFont);
         g2.drawString("Score:", 10, 35);
         g2.setFont(valueFont);
-        g2.drawString(String.format("%.2f",(Math.exp(sre.getScore()) / stats.getExpScoreSum()*100d)) + "%", 15 + scoreLength, 35);
+        g2.drawString(String.format("%.2f",(Math.exp(sre.getSiriusScore()) / stats.getExpScoreSum()*100d)) + "%", 15 + scoreLength, 35);
 //
         if (sre != null && sre.getFingerIdComputeState() != null) {
             g.setFont(statusFont);
@@ -154,7 +154,7 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         }
 
         @Override
-        public double getScore() {
+        public double getSiriusScore() {
             return 9000;
         }
 

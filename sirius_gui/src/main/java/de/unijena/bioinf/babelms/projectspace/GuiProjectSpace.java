@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-
+//todo this naming shit is no longer needed with the ne project space of the CLI:
 public class GuiProjectSpace {
     public static final GuiProjectSpace PS;
 
@@ -136,7 +136,7 @@ public class GuiProjectSpace {
         for (ExperimentResultBean ec : containers) {
             NAMES.remove(ec.getGUIName());
             try {
-                projectSpace.deleteExperiment(ec.getIdentifier());
+                projectSpace.deleteExperiment(ec.getProjectSpaceID());
             } catch (IOException e) {
                 LoggerFactory.getLogger(getClass()).warn("Could not delete Compound: " + ec.getGUIName(), e);
             }
