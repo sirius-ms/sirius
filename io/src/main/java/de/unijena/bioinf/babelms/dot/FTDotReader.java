@@ -51,7 +51,7 @@ public class FTDotReader implements Parser<FTree> {
     public FTree parse(BufferedReader reader, URL source) throws IOException {
         final Graph g = DotParser.parseGraph(reader);
         final FragmentPropertySet rootSet = new FragmentPropertySet(g.getRoot().getProperties());
-        final FTree tree = new FTree(rootSet.formula, PrecursorIonType.unknown().getIonization());
+        final FTree tree = new FTree(rootSet.formula, rootSet.ion);
         final FragmentAnnotation<AnnotatedPeak> peakAno = tree.addFragmentAnnotation(AnnotatedPeak.class);
 
         Peak peak = rootSet.peak;
