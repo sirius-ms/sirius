@@ -49,10 +49,10 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
     public final CustomDBOptions customDBOptions = new CustomDBOptions();
 
     //toolchain subtools
-    public final SiriusOptions siriusOptions = new SiriusOptions(configOptionLoader);
-    public final ZodiacOptions zodiacOptions = new ZodiacOptions(configOptionLoader);
-    public final FingerIdOptions fingeridOptions = new FingerIdOptions(configOptionLoader);
-    public final CanopusOptions canopusOptions = new CanopusOptions(configOptionLoader);
+    public final SiriusOptions siriusOptions;
+    public final ZodiacOptions zodiacOptions;
+    public final FingerIdOptions fingeridOptions;
+    public final CanopusOptions canopusOptions;
 
 
     public WorkflowBuilder(@NotNull R rootOptions) throws IOException {
@@ -63,6 +63,12 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
         this.rootOptions = rootOptions;
 
         this.configOptionLoader = configOptionLoader;
+
+        siriusOptions = new SiriusOptions(configOptionLoader);
+        zodiacOptions = new ZodiacOptions(configOptionLoader);
+        fingeridOptions = new FingerIdOptions(configOptionLoader);
+        canopusOptions = new CanopusOptions(configOptionLoader);
+
 
         // define execution order and dependencies of different Subtools
         CommandLine.Model.CommandSpec fingeridSpec = forAnnotatedObjectWithSubCommands(fingeridOptions, canopusOptions);

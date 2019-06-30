@@ -24,8 +24,8 @@ public class FingeridSubToolJob extends InstanceJob {
         if (!expRes.hasAnnotation(IdentificationResults.class))
             throw new IllegalArgumentException("No formula identification. Cannot Run CSI:FingerID without formula identifications. You may want to run the SIRIUS SubTool first.");
 
-        if (!isRecompute(expRes) && expRes.getAnnotation(IdentificationResults.class).getBest().map(x->x.hasAnnotation(FingerIdResult.class)).orElse(false)){
-            LOG().info("Skipping CSI:FingerID for Instance \"" + expRes.getExperiment().getName() + "\" because results already exist.");
+        if (!isRecompute(expRes) && expRes.getAnnotation(IdentificationResults.class).getBest().map(x->x.hasAnnotation(FingerIdResult.class)).orElse(true)){
+            LOG().info("Skipping CSI:FingerID for Instance \"" + expRes.getExperiment().getName() + "\" because results already exist or result list is empty.");
             return;
         }
 
