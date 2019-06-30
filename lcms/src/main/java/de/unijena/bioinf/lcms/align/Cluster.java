@@ -36,7 +36,7 @@ public class Cluster {
         return left==null && right==null;
     }
 
-    private Cluster(AlignedFeatures[] features, double score, Cluster left, Cluster right, HashSet<ProcessedSample> mergedSamples) {
+    public Cluster(AlignedFeatures[] features, double score, Cluster left, Cluster right, HashSet<ProcessedSample> mergedSamples) {
         this.features = features;
         this.score = score;
         this.left = left;
@@ -166,5 +166,23 @@ public class Cluster {
             }
         }
         return Statistics.robustAverage(values.toArray());
+    }
+
+    public Cluster deleteRowsWithTooFewEntries(int threshold) {
+        final ArrayList<AlignedFeatures> alf = new ArrayList<>();
+        outerloop:
+        for (AlignedFeatures f : this.features) {
+            if (f.features.size() >= threshold)
+                alf.add(f);
+        }
+        Set<FragmentedIon> alignedFeatures = new HashSet<>();
+        for (AlignedFeatures f : alf)
+            for (FragmentedIon i : f.getFeatures().values())
+                alignedFeatures.add(i);
+        for (ProcessedSample s : getMergedSamples()) {
+            s.gapFilledIons.removeIf(x->!alignedFeatures.contains(x));
+            s.ions.removeIf(x->!alignedFeatures.contains(x));
+        }
+        return new Cluster(alf.toArray(new AlignedFeatures[0]), score, left, right,mergedSamples);
     }
 }

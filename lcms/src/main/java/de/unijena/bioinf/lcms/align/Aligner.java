@@ -86,7 +86,7 @@ public class Aligner {
                 }
                 if (!e.getIonType().isIonizationUnknown())
                     ionTypes.add(e.getIonType());
-                ionType = e.getIonType();
+                ionType = PrecursorIonType.unknown(e.getIonType().getCharge());
             }
 
 
@@ -612,7 +612,73 @@ public class Aligner {
             after += sample.ions.size();
         }
         return before-after;
+    }
+    public BasicMasterJJob<Integer> prealignAndFeatureCutoff2(List<ProcessedSample> samples,double rtCutoff, int threshold) {
 
+        final TIntObjectHashMap<List<FragmentedIon>>[] mass2msms = new TIntObjectHashMap[samples.size()];
+        for (int k=0; k < samples.size(); ++k) {
+            TIntObjectHashMap<List<FragmentedIon>> mass2msm = new TIntObjectHashMap<List<FragmentedIon>>();
+            mass2msms[k] = mass2msm;
+            for (FragmentedIon f : samples.get(k).ions) {
+                final int low = (int)Math.floor(f.getMass()*10), high = (int)Math.ceil(f.getMass()*10);
+                if (!mass2msm.containsKey(low)) mass2msm.put(low,new ArrayList<>());
+                mass2msm.get(low).add(f);
+                if (high!=low) {
+                    if (!mass2msm.containsKey(high)) mass2msm.put(high, new ArrayList<>());
+                    mass2msm.get(high).add(f);
+                }
+            }
+        }
+
+        return new BasicMasterJJob<Integer>(JJob.JobType.SCHEDULER) {
+            @Override
+            protected Integer compute() throws Exception {
+                for (int i=0; i < samples.size(); ++i) {
+                    final int I = i;
+                    final ProcessedSample S = samples.get(i);
+                    submitSubJob(new BasicJJob<Object>() {
+                        @Override
+                        protected Object compute() throws Exception {
+                            final CosineQueryUtils utils = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(15)));
+                            final HashSet<FragmentedIon> set = new HashSet<>();
+                            for (int j=0; j < S.ions.size(); ++j) {
+                                FragmentedIon f = S.ions.get(j);
+                                final int low = (int)Math.floor(f.getMass()*10);
+                                final int high = (int)Math.ceil(f.getMass()*10);
+                                for (int k=I+1; k < samples.size(); ++k) {
+                                    set.clear();
+                                    List<FragmentedIon> c = mass2msms[k].get(low);
+                                    if (c!=null) set.addAll(c);
+                                    c = mass2msms[k].get(high);
+                                    if (c!=null) set.addAll(c);
+                                    for (FragmentedIon g : set) {
+                                        if (new Deviation(15).inErrorWindow(f.getMass(), g.getMass())) {
+                                            final SpectralSimilarity cosineScore = utils.cosineProduct(f.getMsMs(), g.getMsMs());
+                                            final double rtDiff = Math.abs(f.getRetentionTime() - g.getRetentionTime());
+                                            if (rtDiff <= rtCutoff && cosineScore.similarity >= 0.5 && cosineScore.shardPeaks >= 3) {
+                                                f.incrementAlignments();
+                                                g.incrementAlignments();
+                                            }
+                                        }
+
+                                    }
+                                }
+                            }
+                            return "";
+                        }
+                    });
+                }
+                awaitAllSubJobs();
+                // now remove all features that belong to less than threshold samples
+                int before=0,after=0;
+                for (ProcessedSample sample : samples) {
+                    before += sample.ions.size();
+                    sample.ions.removeIf(ion->ion.alignmentCount() < threshold);
+                    after += sample.ions.size();
+                }
+                return before-after;
+            }
+        };
     }
 
     private void count(Cluster cluster, TObjectIntHashMap<FragmentedIon> counter) {

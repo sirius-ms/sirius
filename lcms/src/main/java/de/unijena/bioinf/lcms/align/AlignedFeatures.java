@@ -87,6 +87,9 @@ public class AlignedFeatures {
     }
 
 
+    public boolean chargeStateIsNotDifferent(int other) {
+        return chargeState == 0 || other==0 || other==chargeState;
+    }
     public boolean chargeStateIsNotDifferent(AlignedFeatures other) {
         return chargeState == 0 || other.chargeState==0 || other.chargeState==chargeState;
     }
@@ -102,10 +105,10 @@ public class AlignedFeatures {
         }
         copy.putAll(other.features);
         TDoubleArrayList masses = new TDoubleArrayList(), rts = new TDoubleArrayList();
-        for (FragmentedIon f : features.values()) {
+        for (FragmentedIon f : copy.values()) {
             masses.add(f.getMass());
         }
-        for (Map.Entry<ProcessedSample, FragmentedIon> f :  other.features.entrySet()) {
+        for (Map.Entry<ProcessedSample, FragmentedIon> f :  copy.entrySet()) {
             rts.add(f.getKey().getRecalibratedRT(f.getValue().getRetentionTime()));
         }
         Scan l = representativeFeature == null ? null : features.get(representativeFeature).getMsMsScan();
@@ -113,5 +116,23 @@ public class AlignedFeatures {
         double ltic = l==null ? 0 : l.getTIC();
         double rtic = r==null ? 0 : r.getTIC();
         return new AlignedFeatures(Statistics.robustAverage(masses.toArray()), Statistics.robustAverage(rts.toArray()), ltic>rtic? representativeFeature : other.representativeFeature , copy, rt, other.rt);
+    }
+    public AlignedFeatures merge(ProcessedSample otherSample, FragmentedIon other) {
+        if (!chargeStateIsNotDifferent(other.getChargeState()))
+            throw new RuntimeException("Cannot merge ions with different charge state!");
+        final HashMap<ProcessedSample, FragmentedIon> copy = new HashMap<>(features);
+        copy.put(otherSample, other);
+        TDoubleArrayList masses = new TDoubleArrayList(), rts = new TDoubleArrayList();
+        for (FragmentedIon f : copy.values()) {
+            masses.add(f.getMass());
+        }
+        for (Map.Entry<ProcessedSample, FragmentedIon> f :  copy.entrySet()) {
+            rts.add(f.getKey().getRecalibratedRT(f.getValue().getRetentionTime()));
+        }
+        Scan l = representativeFeature == null ? null : features.get(representativeFeature).getMsMsScan();
+        Scan r = other.getMsMs()== null ? null : other.getMsMsScan();
+        double ltic = l==null ? 0 : l.getTIC();
+        double rtic = r==null ? 0 : r.getTIC();
+        return new AlignedFeatures(Statistics.robustAverage(masses.toArray()), Statistics.robustAverage(rts.toArray()), ltic>rtic? representativeFeature : otherSample , copy, rt, otherSample.getRecalibratedRT(other.getRetentionTime()));
     }
 }

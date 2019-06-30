@@ -1,3 +1,4 @@
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
@@ -193,6 +194,9 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
     }
 
     public static void main(String[] args) {
+        System.out.println(PrecursorIonType.unknown(0));
+        System.out.println(PrecursorIonType.getPrecursorIonType("[M + ?]").toString());
+        System.exit(0);
 
         final File mzxmlFile = new File(
                 //"/home/kaidu/analysis/example"

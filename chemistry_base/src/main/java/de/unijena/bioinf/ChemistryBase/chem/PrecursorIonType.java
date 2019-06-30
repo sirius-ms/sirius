@@ -57,10 +57,6 @@ public class PrecursorIonType implements TreeAnnotation {
         return PeriodicTable.getInstance().getUnknownPrecursorIonType(charge);
     }
 
-    public static PrecursorIonType unknown() {
-        return PeriodicTable.getInstance().unknownPrecursorIonType();
-    }
-
     public static PrecursorIonType unknownPositive() {
         return PeriodicTable.getInstance().unknownPositivePrecursorIonType();
     }
