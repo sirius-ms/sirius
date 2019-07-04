@@ -538,6 +538,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
             this.host = host;
             this.username = username;
             this.password = password;
+
         }
 
         @Override
