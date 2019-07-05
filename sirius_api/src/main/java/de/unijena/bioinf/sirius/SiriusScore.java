@@ -8,6 +8,11 @@ public class SiriusScore extends ResultScore {
     }
 
     @Override
+    public boolean isLogarithmic() {
+        return true;
+    }
+
+    @Override
     public String name() {
         return "siriusScore";
     }
