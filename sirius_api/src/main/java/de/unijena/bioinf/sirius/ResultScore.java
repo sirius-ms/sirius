@@ -10,6 +10,8 @@ public abstract class ResultScore implements Score, ResultAnnotation {
         this.score = score;
     }
 
+    public abstract boolean isLogarithmic();
+
     @Override
     public double score() {
         return score;

@@ -1,11 +1,18 @@
 package de.unijena.bioinf.model.lcms;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.apache.commons.math3.analysis.UnivariateFunction;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class Feature implements Annotated<DataAnnotation> {
 
@@ -85,5 +92,31 @@ public class Feature implements Annotated<DataAnnotation> {
     @Override
     public Annotations<DataAnnotation> annotations() {
         return annotations;
+    }
+
+    public Ms2Experiment toMsExperiment() {
+        final MutableMs2Experiment exp = new MutableMs2Experiment();
+        int apex = 0;
+        for (int k=0; k < trace.length; ++k) {
+            if (trace[k].getIntensity()>trace[apex].getIntensity())
+                apex = k;
+        }
+        exp.setName("Scan_" + String.valueOf(trace[apex].getScanNumber()));
+        exp.setPrecursorIonType(ionType);
+        exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(getCorrelatedFeatures()));
+        final ArrayList<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
+        for (SimpleSpectrum s : getMs2Spectra()) {
+            ms2Spectra.add(new MutableMs2Spectrum(s, mz, CollisionEnergy.none(), 2));
+        }
+        exp.setMs2Spectra(ms2Spectra);
+        exp.setIonMass(mz);
+        exp.setAnnotation(RetentionTime.class, new RetentionTime(trace[0].getRetentionTime(), trace[trace.length-1].getRetentionTime(), trace[apex].getRetentionTime()));
+
+        final TObjectDoubleHashMap<String> map = new TObjectDoubleHashMap<>();
+        exp.setAnnotation(Quantification.class, new Quantification(Collections.singletonMap(origin.identifier, intensity)));
+        if (getMs2Quality().betterThan(Quality.DECENT) && getMs1Quality().betterThan(Quality.DECENT) && getPeakShapeQuality().betterThan(Quality.DECENT))
+            exp.setAnnotation(CompoundQuality.class, new CompoundQuality(CompoundQuality.CompoundQualityFlag.Good));
+
+        return exp;
     }
 }
