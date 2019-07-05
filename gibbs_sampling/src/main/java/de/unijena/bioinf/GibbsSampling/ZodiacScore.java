@@ -10,6 +10,11 @@ public class ZodiacScore extends ResultScore {
     }
 
     @Override
+    public boolean isLogarithmic() {
+        return false;
+    }
+
+    @Override
     public String name() {
         return "zodiacScore";
     }

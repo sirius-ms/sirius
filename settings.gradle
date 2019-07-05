@@ -26,6 +26,7 @@ include ':gibbs_sampling'
 include 'passatutto'
 include ':utils'
 include ':lcms'
+    include ':lcms:mzml-converter'
 include ':sirius_project_space'
 
 
