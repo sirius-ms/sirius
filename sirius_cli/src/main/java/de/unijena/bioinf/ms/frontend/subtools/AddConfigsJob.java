@@ -7,6 +7,7 @@ import de.unijena.bioinf.babelms.ms.MsFileConfig;
 import de.unijena.bioinf.babelms.projectspace.ProjectSpaceConfig;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
 
