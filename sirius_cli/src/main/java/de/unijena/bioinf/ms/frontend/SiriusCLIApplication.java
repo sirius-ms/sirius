@@ -15,6 +15,7 @@ public class SiriusCLIApplication {
             ApplicationCore.DEFAULT_LOGGER.info("CLI shut down hook: SIRIUS is cleaning up threads and shuts down...");
             try {
                 JobManager.shutDownNowAllInstances();
+                ApplicationCore.WEB_API.unregisterClientAndDeleteJobsFromServer();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
