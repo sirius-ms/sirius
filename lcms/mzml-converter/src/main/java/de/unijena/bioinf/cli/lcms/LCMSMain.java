@@ -28,7 +28,8 @@ public class LCMSMain {
                 instance.detectFeatures(sample);
                 for (FragmentedIon ion : sample.ions) {
                     Feature feature = instance.makeFeature(sample, ion, false);
-                    bw.write(feature.toMsExperiment());
+//todo @Kai not compileable
+                    //                    bw.write(feature.toMsExperiment());
 
                 }
             } catch (IOException e) {
