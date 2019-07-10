@@ -8,11 +8,16 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.SearchStructureByFormula;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.utils.clustering.Partition;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Fingerblast {
 
@@ -67,5 +72,16 @@ public class Fingerblast {
         return results;
     }
 
+    public static List<JJob<List<Scored<FingerprintCandidate>>>> makeScoringJobs(@NotNull final FingerblastScoringMethod scoringMethod, @NotNull final List<FingerprintCandidate> candidates, @NotNull final ProbabilityFingerprint fingerprint) {
+        final List<List<FingerprintCandidate>> inputs = Partition.ofNumber(candidates, PropertyManager.getNumberOfThreads());
 
+        return inputs.stream().map(can ->
+                new BasicJJob<List<Scored<FingerprintCandidate>>>(JJob.JobType.CPU) {
+                    @Override
+                    protected List<Scored<FingerprintCandidate>> compute() throws Exception {
+                        return score(scoringMethod, can, fingerprint);
+                    }
+                }
+        ).collect(Collectors.toList());
+    }
 }
