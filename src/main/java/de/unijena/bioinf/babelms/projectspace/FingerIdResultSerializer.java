@@ -4,7 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.chemdb.DBLink;
-import de.unijena.bioinf.chemdb.DatasourceService;
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.CSVExporter;
 import de.unijena.bioinf.fingerid.ConfidenceResult;
@@ -74,7 +74,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
                             fpc.setSmiles(tabs[6]);
                             final List<DBLink> links = new ArrayList<>();
                             for (String pubchemId : tabs[8].split(";")) {
-                                links.add(new DBLink(DatasourceService.Source.PUBCHEM.realName, pubchemId));
+                                links.add(new DBLink(DataSource.PUBCHEM.realName, pubchemId));
                             }
                             for (String dbPair : tabs[9].split(";")) {
                                 final Matcher m = DBPAT.matcher(dbPair);

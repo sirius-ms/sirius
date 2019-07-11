@@ -22,7 +22,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.chemdb.DatasourceService;
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 
 import java.io.BufferedWriter;
@@ -77,7 +77,7 @@ public class CSVExporter {
             if (Double.isNaN(r.getCandidate().getXlogp())) writer.write("\"\"");
             else writer.write(String.valueOf(r.getCandidate().getXlogp()));
             writer.write('\t');
-            list(writer, dbMap.get(DatasourceService.Source.PUBCHEM.realName).stream().filter(Objects::nonNull).collect(Collectors.toList())); //is this a hack or ok?
+            list(writer, dbMap.get(DataSource.PUBCHEM.realName).stream().filter(Objects::nonNull).collect(Collectors.toList())); //is this a hack or ok?
             writer.write('\t');
             links(writer, dbMap);
             writer.write('\n');
