@@ -36,6 +36,9 @@ public class ToolChainWorkflow implements Workflow {
         this.toolchain = toolchain;
     }
 
+
+    //todo allow dataset jobs da do not have to put all exps into memory
+    //todo low io mode: if instance buffer is infinity we do never have to read instances from disk (write only)
     @Override
     public void run() {
         try {
@@ -52,7 +55,9 @@ public class ToolChainWorkflow implements Workflow {
                     final WorkflowJobSubmitter submitter = new WorkflowJobSubmitter(iteratorSource.iterator(), project, instanceJobChain, dataSetJob);
                     submitter.start(initialInstanceNum, maxBufferSize);
                     iteratorSource = submitter.jobManager().submitJob(dataSetJob).awaitResult();
+
                     // writing each experiment to add results to projectSpace
+                    // for instance jobs this is done by the buffer
                     iteratorSource.forEach(it -> {
                         try {
                             project.writeExperiment(it);
@@ -67,13 +72,14 @@ public class ToolChainWorkflow implements Workflow {
                 }
             }
 
+            // we have no dataset job that ends the chain, so we have to collect resuts from
+            // disk to not waste memory -> otherwise the whole buffer thing is useless.
             if (!instanceJobChain.isEmpty()) {
-                CollectorJob collector = new CollectorJob();
-                final WorkflowJobSubmitter submitter = new WorkflowJobSubmitter(iteratorSource.iterator(), project, instanceJobChain, collector);
+                final WorkflowJobSubmitter submitter = new WorkflowJobSubmitter(iteratorSource.iterator(), project, instanceJobChain,null);
                 submitter.start(initialInstanceNum, maxBufferSize);
-                iteratorSource = submitter.jobManager().submitJob(collector).awaitResult();
+                iteratorSource = project::parseExperimentIterator;
             }
-            System.out.println("workflow finished");
+            LOG.info("Workflow has been finished! Writing Project-Space summaries...");
 
             try {
                 //remove recompute annotation since it should be cli only option
@@ -81,6 +87,8 @@ public class ToolChainWorkflow implements Workflow {
                 //use all experiments in workspace to create summaries
                 project.writeSummaries(iteratorSource, (cur, max, mess) -> System.out.println((((((double) cur) / (double) max)) * 100d) + "% " + mess));
                 project.close();
+                LOG.info("Project-Space successfully written!");
+
             } catch (IOException e) {
                 LOG.error("Error when closing workspace. Workspace summaries may be incomplete");
             }
