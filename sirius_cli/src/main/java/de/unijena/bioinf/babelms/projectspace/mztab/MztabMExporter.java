@@ -10,6 +10,7 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
@@ -132,7 +133,7 @@ public class MztabMExporter {
 
 
                 List<String> ids = Arrays.stream(bestHit.getCandidate().getLinks())
-                        .filter(dbLink -> dbLink.name.equals(DatasourceService.Source.PUBCHEM.realName)).map(dbLink -> dbLink.id).collect(Collectors.toList());
+                        .filter(dbLink -> dbLink.name.equals(DataSource.PUBCHEM.realName)).map(dbLink -> dbLink.id).collect(Collectors.toList());
 
                 smlItem.setDatabaseIdentifier(
                         ids.stream().map(dbLink -> "CID:" + dbLink)
@@ -140,7 +141,7 @@ public class MztabMExporter {
                 );
 
                 smlItem.setUri(
-                        ids.stream().map(DatasourceService.Source.PUBCHEM::getLink)
+                        ids.stream().map(DataSource.PUBCHEM::getLink)
                                 .collect(Collectors.toList())
                 );
 
