@@ -219,7 +219,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         try (final ResultSet set = statement.executeQuery()) {
             while (set.next()) {
                 final long flag = set.getLong(2);
-                final boolean isPubchemOnly = !DatasourceService.isBio(flag);
+                final boolean isPubchemOnly = !DataSource.isBio(flag);
                 if (bioFilter == BioFilter.ONLY_BIO && isPubchemOnly) continue;
                 if (bioFilter == BioFilter.ONLY_NONBIO && !isPubchemOnly) continue;
                 final FormulaCandidate fc = new FormulaCandidate(MolecularFormula.parseOrThrow(set.getString(1)), ionType, set.getLong(2));
@@ -251,7 +251,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         final boolean enforceBio = bioFilter == BioFilter.ONLY_BIO;
         final PreparedStatement statement;
         if (enforceBio) {
-            final long bioflag = DatasourceService.BIOFLAG;
+            final long bioflag = DataSource.BIOFLAG();
             statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM " + STRUCTURES_TABLE + " WHERE formula = ? AND (flags & " + bioflag + " ) != 0");
         } else {
             statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM " + STRUCTURES_TABLE + " WHERE formula = ?");
@@ -417,17 +417,17 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     @Override
     public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            final DatasourceService.Source[] sources = DatasourceService.Source.valuesNoALL();
+            final DataSource[] sources = DataSource.valuesNoALL();
             final PreparedStatement[] statements = new PreparedStatement[sources.length];
             int k = 0;
-            for (DatasourceService.Source source : sources) {
+            for (DataSource source : sources) {
                 statements[k++] = source.sqlQuery == null ? null : c.connection.prepareStatement(source.sqlQuery);
             }
             final ArrayList<DBLink> buffer = new ArrayList<>();
             for (CompoundCandidate candidate : sublist) {
                 for (int i = 0; i < sources.length; ++i) {
-                    final DatasourceService.Source source = sources[i];
-                    if (/* legacy mode */ source == DatasourceService.Source.PUBCHEM || ((candidate.getBitset() & source.flag)) != 0) {
+                    final DataSource source = sources[i];
+                    if (/* legacy mode */ source == DataSource.PUBCHEM || ((candidate.getBitset() & source.flag)) != 0) {
                         final PreparedStatement statement = statements[i];
                         if (statement != null) {
                             statement.setString(1, candidate.getInchiKey2D());
