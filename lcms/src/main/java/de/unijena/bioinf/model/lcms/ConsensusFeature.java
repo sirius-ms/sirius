@@ -11,6 +11,7 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class ConsensusFeature implements Annotated<DataAnnotation> {
 
@@ -19,16 +20,18 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
     protected final SimpleSpectrum[] coelutedPeaks;
     protected final SimpleSpectrum[] ms2;
     protected final long averageRetentionTime;
+    protected final CollisionEnergy collisionEnergy;
     protected final double averageMass, totalIntensity;
     protected final PrecursorIonType ionType;
     protected Annotated.Annotations<DataAnnotation> annotations = new Annotated.Annotations<>();
 
-    public ConsensusFeature(int featureId, Feature[] features, SimpleSpectrum[] coelutedPeaks, SimpleSpectrum[] ms2, PrecursorIonType ionType,  long averageRetentionTime, double averageMass, double totalIntensity) {
+    public ConsensusFeature(int featureId, Feature[] features, SimpleSpectrum[] coelutedPeaks, SimpleSpectrum[] ms2, PrecursorIonType ionType,  long averageRetentionTime,CollisionEnergy collisionEnergy ,double averageMass, double totalIntensity) {
         this.featureId = featureId;
         this.features = features;
         this.coelutedPeaks = coelutedPeaks;
         this.ms2 = ms2;
         this.averageRetentionTime = averageRetentionTime;
+        this.collisionEnergy=collisionEnergy;
         this.averageMass = averageMass;
         this.totalIntensity = totalIntensity;
         this.ionType = ionType;
@@ -74,7 +77,7 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
         exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(coelutedPeaks));
         final ArrayList<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
         for (SimpleSpectrum s : ms2) {
-            ms2Spectra.add(new MutableMs2Spectrum(s, averageMass, CollisionEnergy.none(), 2));
+            ms2Spectra.add(new MutableMs2Spectrum(s, averageMass, collisionEnergy, 2));
         }
         exp.setMs2Spectra(ms2Spectra);
         exp.setIonMass(averageMass);
