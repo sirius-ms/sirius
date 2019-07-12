@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.SiriusInputIterator;
 import de.unijena.bioinf.babelms.projectspace.*;
@@ -92,7 +93,7 @@ public class RootOptionsCLI implements RootOptions {
 
     private void initBuffers(){
         if (initialInstanceBuffer == null)
-            initialInstanceBuffer = PropertyManager.getNumberOfCores() * 5;
+            initialInstanceBuffer = SiriusJobs.getGlobalJobManager().getCPUThreads();
         if (maxInstanceBuffer == null)
             maxInstanceBuffer = initialInstanceBuffer * 2;
     }

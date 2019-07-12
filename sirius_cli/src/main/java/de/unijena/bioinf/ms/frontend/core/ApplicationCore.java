@@ -46,11 +46,12 @@ public abstract class ApplicationCore {
     public static final Canopus CANOPUS;
 
 
+
     //creating
     static {
         try {
-            System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties"
-            );
+//            System.setProperty("de.unijena.bioinf.jjobs.DEBUG", "true");
+            System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
 
             final String version = PropertyManager.getProperty("de.unijena.bioinf.sirius.version");
             final String build = PropertyManager.getProperty("de.unijena.bioinf.sirius.build");
