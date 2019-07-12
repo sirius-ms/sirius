@@ -262,7 +262,7 @@ class MzXMLSaxParser extends DefaultHandler {
                 if (msLevel>1) {
                     prec = new Precursor(precursorScanNumber,precursorMz,precursorIntensity,charge,isolationWindowWidth);
                 } else prec = null;
-                final Scan scan = new Scan(scanNumber,polarity,retentionTime,spectrum.size(), TIC, prec);
+                final Scan scan = new Scan(scanNumber,polarity,retentionTime,collisionEnergy,spectrum.size(), TIC, prec);
                 storage.add(scan, spectrum);
                 lcms.addScan(scan);
                 listen(false);

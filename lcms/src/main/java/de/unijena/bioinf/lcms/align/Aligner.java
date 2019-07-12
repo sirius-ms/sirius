@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.HierarchicalClustering;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -53,6 +54,7 @@ public class Aligner {
         for (AlignedFeatures f : allFeatures) {
             final double mass = f.getMass();
             final TLongArrayList retentionTimes = new TLongArrayList();
+            final TDoubleArrayList collision_energies = new TDoubleArrayList();
             final ArrayList<Feature> features = new ArrayList<>();
             final ArrayList<MergedSpectrum> mergedSpectra = new ArrayList<>();
             final TIntObjectHashMap<SimpleSpectrum> coeluted = new TIntObjectHashMap<>();
@@ -73,6 +75,8 @@ public class Aligner {
                 if (Math.abs(ion.getChargeState())>1)
                     continue; // multiple charged ions are not allowed
                 retentionTimes.add(ion.getRetentionTime());
+                if (ion.getMsMsScan()!=null)collision_energies.add(ion.getMsMsScan().getCollisionEnergy());
+
                 final Feature e = instance.makeFeature(sample, ion, ion instanceof GapFilledIon);
                 features.add(e);
                 totalInt += e.getIntensity();
@@ -99,7 +103,17 @@ public class Aligner {
 
             retentionTimes.sort();
             final long medianRet = retentionTimes.get(retentionTimes.size()/2);
-            final ConsensusFeature F = new ConsensusFeature(++featureID, features.toArray(new Feature[0]), coeluted.values(new SimpleSpectrum[0]), new SimpleSpectrum[]{merged}, ionType, medianRet, mass, totalInt);
+            //collision energies
+            collision_energies.sort();
+            double lowestNonZero=0;
+            for(int i=0;i<collision_energies.size();i++){
+                if (collision_energies.get(i)>lowestNonZero) {
+                    lowestNonZero = collision_energies.get(i);
+                    break;
+                }
+            }
+            double highest = collision_energies.get(collision_energies.size()-1);
+            final ConsensusFeature F = new ConsensusFeature(++featureID, features.toArray(new Feature[0]), coeluted.values(new SimpleSpectrum[0]), new SimpleSpectrum[]{merged}, ionType, medianRet, new CollisionEnergy(lowestNonZero,highest),mass, totalInt);
             consensusFeatures.add(F);
         }
 

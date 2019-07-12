@@ -51,7 +51,7 @@ public class LCMSProccessingInstance {
         final int id = numberOfMs2Scans.incrementAndGet();
         final SimpleSpectrum spec = merged.finishMerging();
         final SimpleSpectrum spec2 = Spectrums.extractMostIntensivePeaks(spec, 8, 100);
-        final Scan scan = new Scan(id, merged.getScans().get(0).getPolarity(), peak.getRetentionTimeAt(segment.getApexIndex()), spec.size(), Spectrums.calculateTIC(spec), merged.getPrecursor());
+        final Scan scan = new Scan(id, merged.getScans().get(0).getPolarity(),peak.getRetentionTimeAt(segment.getApexIndex()), merged.getScans().get(0).getCollisionEnergy(),spec.size(), Spectrums.calculateTIC(spec), merged.getPrecursor());
         ms2Storage.add(scan, spec);
         return new FragmentedIon(scan, new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20))).createQueryWithIntensityTransformationNoLoss(spec2, merged.getPrecursor().getMass(), true), merged.getQuality(), peak, segment);
     }
