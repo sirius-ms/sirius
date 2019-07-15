@@ -28,7 +28,7 @@ plugins {
 ext {
     //version for external libraries
     slf4j_version = '1.7.25'
-    jjobs_version = '0.9.8'
+    jjobs_version = '0.9.9-SNAPSHOT'
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
 
@@ -341,6 +341,7 @@ subprojects {
     /*################### Linux release Stuff ################### */
     startScripts {
         applicationName = "${project.appName}"
+        defaultJvmOpts = ['-XX:+UseG1GC','-XX:+UseStringDeduplication']
         doLast {
             def siriusLibPath = '$GUROBI_HOME/lib:$CPLEX_HOME/bin/x86-64_linux:$CPLEX_HOME/bin/x86-64_osx:$CPLEX_HOME/bin/x64_win64:$CPLEX_HOME/bin/x86_win32:$APP_HOME/lib'
             def lines = unixScript.text.split(System.lineSeparator())
@@ -349,9 +350,13 @@ subprojects {
                 if (lines[i].startsWith('CLASSPATH=')) {
                     lines[i] = lines[i].replace('CLASSPATH=', "CLASSPATH=\"${runtimeClasspath}:") + '"'
                 }
+
                 if (lines[i].startsWith('DEFAULT_JVM_OPTS=""')) {
                     insertIndex = i - 1
                     lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\"" + '"')
+                }else if(lines[i].startsWith('DEFAULT_JVM_OPTS=\'')){
+                    insertIndex = i - 1
+                    lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=\'', "DEFAULT_JVM_OPTS=\'\"-Djava.library.path=\\\"${siriusLibPath}\\\""  + '" ')
                 }
             }
             lines = (lines as List).plus(insertIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
