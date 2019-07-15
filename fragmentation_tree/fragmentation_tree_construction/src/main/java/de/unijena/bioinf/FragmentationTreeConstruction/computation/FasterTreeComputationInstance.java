@@ -360,15 +360,16 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
     protected class TreeComputationJob extends BasicJJob<ExactResult> {
 
-        protected final TreeBuilder treeBuilder;
-        protected final DoubleEndWeightedQueue2<ExactResult> graphCache;
-        protected final Decomposition decomposition;
+        private TreeBuilder treeBuilder;
+        private DoubleEndWeightedQueue2<ExactResult> graphCache;
+        private Decomposition decomposition;
 
         public TreeComputationJob(TreeBuilder treeBuilder, DoubleEndWeightedQueue2<ExactResult> graphCache, Decomposition decomposition) {
             this.treeBuilder = treeBuilder;
             this.graphCache = graphCache;
             this.decomposition = decomposition;
         }
+
 
         @Override
         protected ExactResult compute() throws Exception {
@@ -390,7 +391,17 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             tick();
             return er;
         }
+
+        @Override
+        protected void cleanup() {
+            super.cleanup();
+            this.treeBuilder = null;
+            this.graphCache = null;
+            this.decomposition = null;
+        }
     }
+
+
 
     private void checkTimeout() {
         final long time = System.currentTimeMillis();
