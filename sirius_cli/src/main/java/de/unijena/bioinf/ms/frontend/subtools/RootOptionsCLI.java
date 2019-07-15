@@ -94,8 +94,16 @@ public class RootOptionsCLI implements RootOptions {
     private void initBuffers(){
         if (initialInstanceBuffer == null)
             initialInstanceBuffer = SiriusJobs.getGlobalJobManager().getCPUThreads();
-        if (maxInstanceBuffer == null)
+
+        if (maxInstanceBuffer == null) {
             maxInstanceBuffer = initialInstanceBuffer * 2;
+        } else {
+            if (initialInstanceBuffer <= 0) {
+                maxInstanceBuffer = initialInstanceBuffer; //this means infinity
+            } else {
+                maxInstanceBuffer = Math.max(initialInstanceBuffer, maxInstanceBuffer);
+            }
+        }
     }
 
     //endregion

@@ -44,4 +44,9 @@ public class CLIRun extends ApplicationCore {
         flow = new CommandLine(builder.rootSpec).parseWithHandler(builder.makeParseResultHandler(), args);
         return flow != null; //todo maybe workflow validation would be nice here???
     }
+
+    public void cancel() {
+        if (flow != null)
+            flow.cancel();
+    }
 }
