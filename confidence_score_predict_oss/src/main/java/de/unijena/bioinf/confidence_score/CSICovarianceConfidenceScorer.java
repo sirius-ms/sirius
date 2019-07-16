@@ -48,10 +48,6 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
     private Class<? extends FingerblastScoringMethod> scoringOfInput;
 
 
-    /*public CSICovarianceConfidenceScorer(@NotNull Map<String, TrainedSVM> trainedsvms, @NotNull CovarianceScoring covarianceScoring, @NotNull CSIFingerIdScoring csiFingerIDScoring) {
-
-    }*/
-
     public CSICovarianceConfidenceScorer(@NotNull Map<String, TrainedSVM> trainedsvms, @NotNull CovarianceScoringMethod covarianceScoringMethod, @NotNull ScoringMethodFactory.CSIFingerIdScoringMethod csiFingerIDScoringMethod, Class<? extends FingerblastScoringMethod> scoringOfInput) {
         this.trainedSVMs = trainedsvms;
         this.covarianceScoringMethod = covarianceScoringMethod;
@@ -133,8 +129,11 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         if (ranked_candidates_covscore.length != ranked_candidates_csiscore.length)
             throw new IllegalArgumentException("Covariance scored candidate list has different length from fingerid scored candidates list!");
 
-        if (ranked_candidates_covscore.length <= 1 || ranked_candidates_covscore_filtered.length <= 1) {
-            LoggerFactory.getLogger(getClass()).warn("Cannot calculate confidence with only one hit in structure database! Returning NaN.");
+        if (ranked_candidates_covscore.length <= 1) {
+            LoggerFactory.getLogger(getClass()).warn("Cannot calculate confidence with only ONE hit or less in PubChem database! Returning NaN.");
+            return Double.NaN;
+        } else if (ranked_candidates_covscore_filtered.length == 0) {
+            LoggerFactory.getLogger(getClass()).warn("Cannot calculate confidence with NO hit in \"filtered\" structure database! Returning NaN.");
             return Double.NaN;
         }
 
@@ -153,7 +152,6 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         if (ranked_candidates_covscore_filtered.length > 1) {
             comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, ranked_candidates_csiscore_filtered, ranked_candidates_covscore_filtered, csiPerformances, covarianceScoring, pubchemConf, sameTopHit);
             distanceType = DISTANCE_ID;
-
         } else {
             comb = new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, ranked_candidates_csiscore_filtered, ranked_candidates_covscore_filtered, csiPerformances, covarianceScoring, pubchemConf, sameTopHit);
             distanceType = NO_DISTANCE_ID;
