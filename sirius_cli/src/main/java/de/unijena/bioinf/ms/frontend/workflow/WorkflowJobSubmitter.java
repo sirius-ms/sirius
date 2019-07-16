@@ -2,12 +2,12 @@ package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.MsFileSource;
+import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
-import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,7 @@ class WorkflowJobSubmitter extends BufferedJJobSubmitter<ExperimentResult> {
             submitJob(jobToWaitOn, instanceProvider);
         }
         if (dependJob != null)
-            dependJob.addInputProvidingJob(jobToWaitOn);
+            dependJob.addRequiredJob(jobToWaitOn);
     }
 
     @Override // this is handled in main thread
