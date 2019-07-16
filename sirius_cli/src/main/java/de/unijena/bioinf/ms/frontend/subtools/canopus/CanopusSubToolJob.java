@@ -45,4 +45,6 @@ public class CanopusSubToolJob extends InstanceJob {
                 .setFingerprint(ir.getAnnotation(FingerIdResult.class).getPredictedFingerprint());
         return SiriusJobs.getGlobalJobManager().submitJob(canopusJob);
     }
+
+
 }
