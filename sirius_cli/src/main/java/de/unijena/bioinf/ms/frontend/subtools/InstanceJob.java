@@ -1,13 +1,9 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.jjobs.BasicDependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.ms.properties.RecomputeResults;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.concurrent.ExecutionException;
 
 /**
  * This is a job for Scheduling an workflow synchronization
@@ -18,54 +14,48 @@ import java.util.concurrent.ExecutionException;
  */
 
 public abstract class InstanceJob extends BasicDependentJJob<ExperimentResult> implements SubToolJob {
-    private JJob<ExperimentResult> inputProvidingJob = null;
     private ExperimentResult input = null;
 
     public InstanceJob() {
         super(JobType.SCHEDULER);
     }
 
-
-    public void setInputProvidingJob(JJob<ExperimentResult> inputProvidingJob) {
-        addRequiredJob(inputProvidingJob);
-        this.inputProvidingJob = inputProvidingJob;
-    }
-
-    protected ExperimentResult awaitInput() throws ExecutionException {
-        if (input != null)
-            return input;
-
-        if (inputProvidingJob != null) {
-            return inputProvidingJob.awaitResult();
+    @Override
+    public synchronized void handleFinishedRequiredJob(JJob required) {
+        if (input == null) {
+            final Object r = required.result();
+            if (r instanceof ExperimentResult)
+                input = (ExperimentResult) r;
         }
-
-        throw new ExecutionException(new IllegalArgumentException("Neither an input nor an input providing job was provided"));
     }
 
-
-    protected ExperimentResult getInput() {
-        return input;
-    }
-
-    protected JJob<ExperimentResult> getInputProvidingJob() {
-        return inputProvidingJob;
-    }
 
     @Override
     protected ExperimentResult compute() throws Exception {
-        input = awaitInput();
+        checkInput();
         computeAndAnnotateResult(input);
         return input;
+    }
+
+    protected void checkInput() {
+        if (input == null)
+            throw new IllegalArgumentException("No Input given!");
     }
 
     protected abstract void computeAndAnnotateResult(final @NotNull ExperimentResult expRes) throws Exception;
 
 
+    /*@Override
+    protected void cleanup() {
+        super.cleanup();
+        input = null;
+    }*/
+
     @FunctionalInterface
     public interface Factory<T extends InstanceJob> {
         default T createToolJob(JJob<ExperimentResult> inputProvidingJob) {
             final T job = makeJob();
-            job.setInputProvidingJob(inputProvidingJob);
+            job.addRequiredJob(inputProvidingJob);
             return job;
         }
 

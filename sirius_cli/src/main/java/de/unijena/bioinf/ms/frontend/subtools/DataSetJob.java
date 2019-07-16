@@ -6,59 +6,48 @@ import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 public abstract class DataSetJob extends BasicDependentJJob<Iterable<ExperimentResult>> implements SubToolJob {
-    private LinkedHashSet<JJob<ExperimentResult>> inputProvidingJobs = new LinkedHashSet<>();
-    private List<JJob<ExperimentResult>> failedInstances = null;
-    private List<ExperimentResult> successfulInstances = null;
+    private List<JJob> failedInstances = new ArrayList<>();
+    private List<ExperimentResult> successfulInstances = new ArrayList<>();
 
     public DataSetJob() {
         super(JobType.SCHEDULER, ReqJobFailBehaviour.WARN);
     }
 
-    public void addInputProvidingJobs(Iterable<JJob<ExperimentResult>> providingJobs) {
-        providingJobs.forEach(this::addInputProvidingJob);
-    }
-
-    public void addInputProvidingJob(JJob<ExperimentResult> providingJob) {
-        addRequiredJob(providingJob);
-        inputProvidingJobs.add(providingJob);
-    }
-
-    protected void awaitInputs() {
-        //It is important that we skip failing jobs here and remove the instances from the analysis.
-        if (successfulInstances != null)
-            return;
-
-        failedInstances = new ArrayList<>();
-        successfulInstances = inputProvidingJobs.stream().map(job -> {
-            try {
-                return job.awaitResult();
-            } catch (ExecutionException e) {
-                LOG().error("Dependent Instance Job failed: " + job.getClass().getSimpleName(), e);
-                failedInstances.add(job);
-                return null;
-            }
-        }).filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
     @Override
     protected Iterable<ExperimentResult> compute() throws Exception {
-        awaitInputs();
+        checkInputs();
         computeAndAnnotateResult(successfulInstances);
         return successfulInstances;
     }
 
+    protected void checkInputs() {
+        if (successfulInstances == null || successfulInstances.isEmpty())
+            throw new IllegalArgumentException("No Input found, all dependend Jobs are failed");
+        if (!failedInstances.isEmpty())
+            LOG().warn("There are " + failedInstances.size() + "failed InputProvidingJobs!");
+    }
+
+    @Override
+    protected void cleanup() {
+        super.cleanup();
+        failedInstances = null;
+    }
+
+    @Override
+    public synchronized void handleFinishedRequiredJob(JJob required) {
+        final Object r = required.result();
+        if (r instanceof ExperimentResult)
+            successfulInstances.add((ExperimentResult) r);
+
+    }
 
 
     protected abstract void computeAndAnnotateResult(final @NotNull List<ExperimentResult> expRes) throws Exception;
 
-    public List<JJob<ExperimentResult>> getFailedInstances() {
+    public List<JJob> getFailedInstances() {
         return failedInstances;
     }
 
@@ -70,7 +59,7 @@ public abstract class DataSetJob extends BasicDependentJJob<Iterable<ExperimentR
     public interface Factory<T extends DataSetJob> {
         default T createToolJob(Iterable<JJob<ExperimentResult>> dataSet) {
             final T job = makeJob();
-            job.addInputProvidingJobs(dataSet);
+            dataSet.forEach(job::addRequiredJob);
             return job;
         }
 

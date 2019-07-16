@@ -10,7 +10,6 @@ import java.util.concurrent.ExecutionException;
 @FunctionalInterface
 public interface DymmyExpResultJob extends JJob<ExperimentResult> {
 
-    ExperimentResult provideExperiment();
 
     @Override
     default void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -64,7 +63,7 @@ public interface DymmyExpResultJob extends JJob<ExperimentResult> {
 
     @Override
     default ExperimentResult awaitResult() throws ExecutionException {
-        return provideExperiment();
+        return result();
     }
 
 
@@ -75,6 +74,6 @@ public interface DymmyExpResultJob extends JJob<ExperimentResult> {
 
     @Override
     default ExperimentResult call() throws Exception {
-        return provideExperiment();
+        return result();
     }
 }
