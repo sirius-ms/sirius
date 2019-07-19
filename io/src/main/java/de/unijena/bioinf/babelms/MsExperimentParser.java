@@ -20,6 +20,7 @@ package de.unijena.bioinf.babelms;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.mgf.MgfParser;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
+import de.unijena.bioinf.babelms.mzml.MzmlExperimentParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -66,6 +67,7 @@ public class MsExperimentParser {
         endings.put(".ms", JenaMsParser.class);
         endings.put(".mgf", MgfParser.class);
         endings.put(".zip", ZippedSpectraParser.class);
+        endings.put(".mzxml", MzmlExperimentParser.class);
         return endings;
     }
 }

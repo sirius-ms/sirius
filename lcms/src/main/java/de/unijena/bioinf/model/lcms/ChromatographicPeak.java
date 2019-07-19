@@ -94,8 +94,12 @@ public interface ChromatographicPeak {
         }
         public long fwhm(double percentile) {
             Range<Integer> r = calculateFWHM(percentile);
-            if (r.lowerEndpoint().equals(r.upperEndpoint()))
-                return (peak.getRetentionTimeAt(Math.min(endIndex, r.upperEndpoint()+1) - Math.max(startIndex,r.lowerEndpoint()-1)));
+            if (r.lowerEndpoint().equals(r.upperEndpoint())) {
+                int a = Math.min(endIndex, r.upperEndpoint() + 1);
+                int b = Math.max(startIndex, r.lowerEndpoint() - 1);
+                return Math.min(peak.getRetentionTimeAt(r.upperEndpoint())-peak.getRetentionTimeAt(a),
+                        peak.getRetentionTimeAt(b)-peak.getRetentionTimeAt(r.lowerEndpoint()));
+            }
             return peak.getRetentionTimeAt(r.upperEndpoint())-peak.getRetentionTimeAt(r.lowerEndpoint());
         }
 
@@ -121,6 +125,7 @@ public interface ChromatographicPeak {
                     break;
             }
             --j;
+            if (i>j) return Range.closed(apex,apex);
             return Range.closed(i,j);
         }
 

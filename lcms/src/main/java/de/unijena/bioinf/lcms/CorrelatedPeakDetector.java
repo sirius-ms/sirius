@@ -236,8 +236,11 @@ public class CorrelatedPeakDetector {
             for (CorrelationGroup isotopePeak : bestPattern) {
                 alreadyAnnotatedMzs.add(isotopePeak.getRight().getScanPointForScanId(ms1Scan.getScanNumber()).getMass());
             }
-            ion.setChargeState(bestChargeState);
-            ion.addIsotopes(bestPattern);
+            // do not trust a single isotope peak charge state...
+            if (bestChargeState == 1 || bestPattern.size()>1 ) {
+                ion.setChargeState(bestChargeState);
+                ion.addIsotopes(bestPattern);
+            }
             //System.out.println(ion +  " Found " + bestPattern.size() + " isotopes with correlations " + bestPattern.stream().mapToDouble(CorrelationGroup::getCorrelation).min().getAsDouble() + " .. " + bestPattern.stream().mapToDouble(CorrelationGroup::getCorrelation).max().getAsDouble());
             for (CorrelationGroup g : bestPattern) {
                 //System.out.println(g.getRight().getScanPointAt(g.getRightSegment().getApexIndex()));

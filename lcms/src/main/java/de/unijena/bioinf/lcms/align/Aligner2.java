@@ -168,7 +168,7 @@ public class Aligner2 {
                 finalScore = peakShapeScore*peakHeightScore*retentionTimeScore*0.5d;
             } else {
                 //System.out.println("REJECT ALIGNMENT OF " + f + " WITH " + ion + " WITH COSINE " + cosineScore);
-                finalScore = peakShapeScore*peakHeightScore*retentionTimeScore*0.1d;
+                finalScore = peakShapeScore*peakHeightScore*retentionTimeScore*retentionTimeScore*0.5d;
             }
         } else {
             finalScore = peakShapeScore*peakHeightScore*retentionTimeScore;

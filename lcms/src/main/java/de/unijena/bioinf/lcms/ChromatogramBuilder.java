@@ -18,7 +18,7 @@ public class ChromatogramBuilder {
 
     public ChromatogramBuilder(ProcessedSample sample) {
         this.sample = sample;
-        this.dev = new Deviation(15);
+        this.dev = new Deviation(20);
         this.cache = new ChromatogramCache();
     }
 

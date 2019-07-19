@@ -6,4 +6,6 @@ dependencies {
     compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
     compile project(':chemistry_base')
     compile project(':preprocessing')
+    compile project(':lcms')
+
 }
