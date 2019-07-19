@@ -243,7 +243,7 @@ public class Ms2CosineSegmenter {
         final List<MergedPeak> orderedByMz = new ArrayList<>(left.size());
         for (MergedPeak l : left) orderedByMz.add(l);
         final List<MergedPeak> append = new ArrayList<>();
-        final Deviation deviation = new Deviation(20);
+        final Deviation deviation = new Deviation(20,0.05);
         final Spectrum<MergedPeak> orderedByInt;
         {
             final List<MergedPeak> peaks = new ArrayList<>(right.size());

@@ -101,7 +101,7 @@ public class Feature implements Annotated<DataAnnotation> {
             if (trace[k].getIntensity()>trace[apex].getIntensity())
                 apex = k;
         }
-        exp.setName("Scan_" + String.valueOf(trace[apex].getScanNumber()));
+        exp.setName(String.valueOf(trace[apex].getScanNumber()));
         exp.setPrecursorIonType(ionType);
         exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(getCorrelatedFeatures()));
         final ArrayList<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();

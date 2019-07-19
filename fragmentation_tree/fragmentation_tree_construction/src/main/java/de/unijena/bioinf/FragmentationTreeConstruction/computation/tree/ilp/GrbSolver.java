@@ -196,6 +196,7 @@ public class GrbSolver extends AbstractSolver{
             env.set(GRB.IntParam.OutputFlag, 0);
             return env;
         } catch (GRBException e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }

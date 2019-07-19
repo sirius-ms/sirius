@@ -450,6 +450,15 @@ public class Spectrums {
             msms.removePeakAt(i);
         }
     }
+    public static <P extends Peak, S extends Spectrum<P>>  SimpleSpectrum getBaselined(S msms, double intensityThreshold) {
+        final SimpleMutableSpectrum buf = new SimpleMutableSpectrum(msms.size());
+        for (int k=0; k < msms.size(); ++k) {
+            if (msms.getIntensityAt(k)>intensityThreshold) {
+                buf.addPeak(msms.getMzAt(k), msms.getIntensityAt(k));
+            }
+        }
+        return new SimpleSpectrum(buf);
+    }
 
     public static <P extends Peak, S extends MutableSpectrum<P>> void filterIsotpePeaks(S spec, Deviation deviation) {
         filterIsotpePeaks(spec, deviation, 0.2, 0.55, 3, new ChemicalAlphabet()); //a fixed 0.45 ratio would filter about 95% of CHONPS in 100-800Da

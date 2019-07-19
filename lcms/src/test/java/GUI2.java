@@ -1,4 +1,3 @@
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
@@ -194,14 +193,12 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
     }
 
     public static void main(String[] args) {
-        System.out.println(PrecursorIonType.unknown(0));
-        System.out.println(PrecursorIonType.getPrecursorIonType("[M + ?]").toString());
-        System.exit(0);
 
         final File mzxmlFile = new File(
                 //"/home/kaidu/analysis/example"
-                "/home/kaidu/analysis/canopus/mice/raw/3D_Mouse_GF_SPF/GF1"
+                //"/home/kaidu/analysis/canopus/mice/raw/cecum"
                 //"/home/kaidu/analysis/example"
+                "/home/kaidu/data/raw/BBS"
                 );
         MemoryFileStorage storage= null;
         try {
@@ -251,7 +248,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
 
     private static void addOrderedSampleNames(Cluster c, List<String> sampleNames) {
         if (c.getLeft()==null && c.getRight()==null) {
-            sampleNames.addAll(c.getMergedSamples().stream().map(x->x.run.getIdentifier()).collect(Collectors.toList()));
+            sampleNames.addAll(c.getMergedSamples().stream().map(x->x.run.getIdentifier()).sorted().collect(Collectors.toList()));
         } else {
             addOrderedSampleNames(c.getLeft(), sampleNames);
             addOrderedSampleNames(c.getRight(),sampleNames);
