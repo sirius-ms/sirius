@@ -3,13 +3,13 @@ package de.unijena.bioinf.io.lcms;
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
 import de.unijena.bioinf.lcms.SpectrumStorage;
 import de.unijena.bioinf.model.lcms.LCMSRun;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 
 public class MzXMLParser {
 
@@ -23,11 +23,10 @@ public class MzXMLParser {
         return run;
     }
 
-    // TODO: has to be buffered?
-    public LCMSRun parse(InputStream inputStream, SpectrumStorage storage) throws IOException {
-        final LCMSRun run = new LCMSRun(null);
+    public LCMSRun parse(DataSource source, InputSource input, SpectrumStorage storage) throws IOException {
+        final LCMSRun run = new LCMSRun(source);
         try {
-            SAXParserFactory.newInstance().newSAXParser().parse(inputStream,new MzXMLSaxParser(run, storage));
+            SAXParserFactory.newInstance().newSAXParser().parse(input,new MzXMLSaxParser(run, storage));
         } catch (SAXException|ParserConfigurationException e) {
             throw new IOException(e);
         }

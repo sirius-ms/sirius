@@ -112,6 +112,7 @@ public class Aligner {
                     break;
                 }
             }
+
             double highest = collision_energies.get(collision_energies.size()-1);
             final ConsensusFeature F = new ConsensusFeature(++featureID, features.toArray(new Feature[0]), coeluted.values(new SimpleSpectrum[0]), new SimpleSpectrum[]{merged}, ionType, medianRet, new CollisionEnergy(lowestNonZero,highest),mass, totalInt);
             consensusFeatures.add(F);
