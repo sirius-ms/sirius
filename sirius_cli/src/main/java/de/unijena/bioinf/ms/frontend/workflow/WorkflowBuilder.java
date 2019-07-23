@@ -7,6 +7,8 @@ import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
+import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoSubToolJob;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
@@ -53,6 +55,7 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
     public final ZodiacOptions zodiacOptions;
     public final FingerIdOptions fingeridOptions;
     public final CanopusOptions canopusOptions;
+    public final PassatuttoOptions passatuttoOptions;
 
 
     public WorkflowBuilder(@NotNull R rootOptions) throws IOException {
@@ -68,15 +71,17 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
         zodiacOptions = new ZodiacOptions(configOptionLoader);
         fingeridOptions = new FingerIdOptions(configOptionLoader);
         canopusOptions = new CanopusOptions(configOptionLoader);
+        passatuttoOptions = new PassatuttoOptions(configOptionLoader);
 
 
         // define execution order and dependencies of different Subtools
         CommandLine.Model.CommandSpec fingeridSpec = forAnnotatedObjectWithSubCommands(fingeridOptions, canopusOptions);
-        CommandLine.Model.CommandSpec zodiacSpec = forAnnotatedObjectWithSubCommands(zodiacOptions, fingeridSpec);
-        CommandLine.Model.CommandSpec siriusSpec = forAnnotatedObjectWithSubCommands(siriusOptions, zodiacSpec, fingeridSpec);
+        CommandLine.Model.CommandSpec passatuttoSpec =  forAnnotatedObjectWithSubCommands(passatuttoOptions, fingeridSpec);
+        CommandLine.Model.CommandSpec zodiacSpec = forAnnotatedObjectWithSubCommands(zodiacOptions, passatuttoSpec, fingeridSpec);
+        CommandLine.Model.CommandSpec siriusSpec = forAnnotatedObjectWithSubCommands(siriusOptions, zodiacSpec, passatuttoSpec, fingeridSpec);
 
-        CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), customDBOptions, siriusSpec, zodiacSpec, fingeridSpec, canopusOptions);
-        rootSpec = forAnnotatedObjectWithSubCommands(this.rootOptions, customDBOptions, configSpec, siriusSpec, zodiacSpec, fingeridSpec, canopusOptions);
+        CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), customDBOptions, siriusSpec, zodiacSpec,passatuttoSpec, fingeridSpec, canopusOptions);
+        rootSpec = forAnnotatedObjectWithSubCommands(this.rootOptions, customDBOptions, configSpec, siriusSpec, zodiacSpec,passatuttoSpec, fingeridSpec, canopusOptions);
     }
 
     protected CommandLine.Model.CommandSpec forAnnotatedObjectWithSubCommands(Object parent, Object... subsToolInExecutionOrder) {
