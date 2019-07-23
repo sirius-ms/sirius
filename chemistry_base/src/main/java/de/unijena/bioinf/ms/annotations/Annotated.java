@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public interface Annotated<A extends DataAnnotation> {
@@ -58,7 +57,7 @@ public interface Annotated<A extends DataAnnotation> {
     /**
      * @return annotation value for the given class/key or the given default value
      */
-    default <T extends A> T getAnnotation(Class<T> klass, Supplier<T> defaultValueSupplier) {
+    default <T extends A> T getAnnotation(Class<T> klass, @NotNull  Supplier<T> defaultValueSupplier) {
         final T val = getAnnotation(klass);
         if (val == null) return defaultValueSupplier.get();
         else return val;

@@ -9,10 +9,10 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.SiriusPlugin;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.GeneralGraphScorer;
 import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 import de.unijena.bioinf.sirius.ProcessedInput;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class TreeMotifPlugin extends SiriusPlugin {
@@ -61,6 +61,7 @@ public class TreeMotifPlugin extends SiriusPlugin {
                         try {
                             if (!x.exists() || !x.isFile())
                                 return null;
+                            LoggerFactory.getLogger(TreeMotifPlugin.class).warn("Load motif plugin");
                             return TreeMotifDB.readFromFile(x);
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -73,7 +74,7 @@ public class TreeMotifPlugin extends SiriusPlugin {
                 if (db!=null) {
                     MotifMatch motifMatch = tree.numberOfVertices()>=5 ? db.searchInLibraryTopK(tree, 10) : null;
                     if (motifMatch!=null) {
-                        System.out.println("Add " + (motifMatch.getTotalProbability()) + " to total score for " + tree.getRoot().getFormula() + " ( " +  motifMatch.matchingFragments.length + " frags and " + motifMatch.matchingRootLosses.length + " losses ) with sets are " + Arrays.toString(db.getMatchingFragments(motifMatch)) + " and " + Arrays.toString(db.getMatchingRootLosses(motifMatch)));
+                        //System.out.println("Add " + (motifMatch.getTotalProbability()) + " to total score for " + tree.getRoot().getFormula() + " ( " +  motifMatch.matchingFragments.length + " frags and " + motifMatch.matchingRootLosses.length + " losses ) with sets are " + Arrays.toString(db.getMatchingFragments(motifMatch)) + " and " + Arrays.toString(db.getMatchingRootLosses(motifMatch)));
                         tree.setTreeWeight(tree.getTreeWeight() + motifMatch.getTotalProbability());
                         tree.setAnnotation(TreeMotifAnnotation.class, new TreeMotifAnnotation(motifMatch.getTotalProbability()));
                     }

@@ -120,6 +120,8 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
     @Override
     protected FinalResult compute() throws Exception {
+        final long t = System.nanoTime();
+        System.out.println(new Date() + "\t-> I am Sirius, computing trees for Experiment " + pinput.getExperimentInformation().getName());
         configureProgress(0, 2, 1);
         score();
         startTime = System.currentTimeMillis();
@@ -134,6 +136,9 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         final ExactResult[] results = estimateTreeSizeAndRecalibration(decompositions, useHeuristic);
         //we do not resolve here anymore -> because we need unresolved trees to expand adducts for fingerid
         final List<FTree> trees = Arrays.stream(results).map(r -> r.tree).collect(Collectors.toList());
+        final long t2 = System.nanoTime();
+        final int timeInSeconds = (int)Math.round((t2-t)*1e-9);
+        System.out.println(new Date() + "\t-> I am Sirius, finished with computing trees for Experiment " + pinput.getExperimentInformation().getName() +" which took " + (timeInSeconds) + " seconds.");
         return new FinalResult(trees);
     }
 
@@ -350,7 +355,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             FGraph graph = analyzer.buildGraph(pinput, template.decomposition);
             // TODO: we recompute the tree. Is that really a good idea?
             // Find a better solution
-            final TreeBuilder.Result r = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(template.tree).solve(pinput, graph);
+            final TreeBuilder.Result r = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree))/*.withTemplate(template.tree)*/.solve(pinput, graph);
             analyzer.makeTreeReleaseReady(pinput, graph, r.tree,r.mapping);
             tick();
             recalculateScore(pinput, r.tree, "annotation");
@@ -441,11 +446,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         final TreeBuilder.Result recal = tb.computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).solve(pin, graph);
         final TreeBuilder.Result finalTree;
         if (recal.tree.getTreeWeight() >= tree.getTreeWeight()) {
-            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(recal.tree)/*.withMinimalScore(recal.tree.getTreeWeight() - 1e-3)*/.solve(pin, graph);
+            finalTree = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree))/*.withTemplate(recal.tree)/*.withMinimalScore(recal.tree.getTreeWeight() - 1e-3)*/.solve(pin, graph);
             if (finalTree.tree==null){
                 // TODO: why is tree score != ILP score? Or is this an error in ILP?
                 // check that
-                TreeBuilder.Result solve = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).withTemplate(recal.tree).solve(pin, graph);
+                TreeBuilder.Result solve = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree))/*.withTemplate(recal.tree)*/.solve(pin, graph);
                 throw new RuntimeException("Recalibrated tree is null for "+input.getExperimentInformation().getName()+". Error in ILP? Without score constraint the result is = optimal = " + solve.isOptimal + ", score = " + solve.tree.getTreeWeight() + " with score of uncalibrated tree is " + recal.tree.getTreeWeight());
             }
             finalTree.tree.setAnnotation(SpectralRecalibration.class, rec);
