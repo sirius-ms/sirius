@@ -7,7 +7,7 @@ public interface SiriusLocations {
     //experiment level
     Location SIRIUS_TREES_JSON = new Location("trees", null, ".json");
     Location SIRIUS_TREES_DOT = new Location("trees", null, ".dot");
-    Location SIRIUS_ANNOTATED_SPECTRA = new Location("spectra", null, ".ms");
+    Location SIRIUS_ANNOTATED_SPECTRA = new Location("spectra", null, ".tsv");
     Location SIRIUS_SPECTRA = new Location(null, "spectrum", ".ms");
     Location SIRIUS_COMPOUND_CONFIG = new Location(null, "compound", ".config");
     Location SIRIUS_WORKSPACE_CONFIG = new Location(null, "computation", ".config");
