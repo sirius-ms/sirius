@@ -14,6 +14,7 @@ import de.unijena.bioinf.sirius.IdentificationResults;
 import de.unijena.bioinf.sirius.Sirius;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Date;
 import java.util.List;
 
 public class SiriusSubToolJob extends InstanceJob {
@@ -27,7 +28,7 @@ public class SiriusSubToolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull ExperimentResult expRes) throws Exception {
         final Ms2Experiment exp = expRes.getExperiment();
-        System.out.println("I am Sirius on Experiment " + expRes.getSimplyfiedExperimentName());
+        System.out.println(new Date() + "\t-> I am Sirius, start computing Experiment " + expRes.getSimplyfiedExperimentName());
 
 
         if (!expRes.hasAnnotation(IdentificationResults.class) || isRecompute(expRes)) {
@@ -59,6 +60,7 @@ public class SiriusSubToolJob extends InstanceJob {
 
             //annotate result
             expRes.setAnnotation(IdentificationResults.class, new IdentificationResults(results));
+            System.out.println(new Date() + "\t-> I am Sirius, finish with Experiment " + expRes.getSimplyfiedExperimentName());
         } else {
             LOG().info("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
             System.out.println("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
