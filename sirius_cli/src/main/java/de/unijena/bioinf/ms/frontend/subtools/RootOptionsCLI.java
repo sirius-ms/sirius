@@ -294,6 +294,7 @@ public class RootOptionsCLI implements RootOptions {
         al.add(new FingerIdResultSerializer(ApplicationCore.WEB_API));
         if (ApplicationCore.CANOPUS != null)
             al.add(new CanopusResultSerializer(ApplicationCore.CANOPUS));
+        al.add(new PassatuttoSerializer());
 
         return al.toArray(new MetaDataSerializer[0]);
     }
