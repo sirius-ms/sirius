@@ -351,16 +351,10 @@ subprojects {
                 if (lines[i].startsWith('CLASSPATH=')) {
                     lines[i] = lines[i].replace('CLASSPATH=', "CLASSPATH=\"${runtimeClasspath}:") + '"'
                 }
-//                insertIndex = i - 1
-
                 if (lines[i].startsWith('DEFAULT_JVM_OPTS=""')) {
                     insertIndex = i - 1
                     lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\" -XX:+UseG1GC -XX:+UseStringDeduplication\"")
-//                    lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\"" + '"')
-                }/*else if(lines[i].startsWith('DEFAULT_JVM_OPTS=\'')){
-                    insertIndex = i - 1
-                    lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=\'', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\"" + '")
-                }*/
+                }
             }
             lines = (lines as List).plus(insertIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
             lines = (lines as List).plus(insertIndex + 1, "export DYLD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH\"")
