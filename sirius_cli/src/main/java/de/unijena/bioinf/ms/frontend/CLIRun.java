@@ -15,7 +15,7 @@ import java.io.IOException;
  * This is our Commandline tool
  * <p>
  * Here we parse parameters, configure technical stuff,
- * read input, merge workspace, configure Algorithms/Workflows and wirte output.
+ * read input, merge workspace, configure Algorithms/Workflows and write output.
  * <p>
  * Basic Idea:
  * <p>
@@ -28,6 +28,7 @@ import java.io.IOException;
 public class CLIRun extends ApplicationCore {
     protected final static Logger logger = LoggerFactory.getLogger(CLIRun.class);
     private de.unijena.bioinf.ms.frontend.workflow.Workflow flow;
+    private WorkflowBuilder<RootOptionsCLI> builder;
 
 
     public void compute() {
@@ -39,7 +40,10 @@ public class CLIRun extends ApplicationCore {
     /*Returns true if a workflow was parsed*/
     public boolean parseArgs(String[] args) throws IOException {
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-        final WorkflowBuilder<RootOptionsCLI> builder = new WorkflowBuilder<>(new RootOptionsCLI(configOptionLoader), configOptionLoader);
+        builder = new WorkflowBuilder<>(new RootOptionsCLI(configOptionLoader), configOptionLoader);
+
+        if (args == null || args.length < 1)
+            args = new String[]{"--help"};
 
         flow = new CommandLine(builder.rootSpec).parseWithHandler(builder.makeParseResultHandler(), args);
         return flow != null; //todo maybe workflow validation would be nice here???
