@@ -66,7 +66,7 @@ ext {
     })
     System.properties.putAll(props)
 
-    // edit all these verions in sirius_cli/src/main/resources/....build.properties
+    // edit all these versions in sirius_cli/src/main/resources/....build.properties
     appName = System.properties.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
     buildNumber = System.properties.getProperty('de.unijena.bioinf.sirius.build')
     println(buildNumber)
@@ -363,6 +363,53 @@ subprojects {
     }
 }
 
+allprojects{
+    task sourceJar(type: Jar) {
+    group = 'build'
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        group = 'documentation'
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from project.components.java
+                //adding submodules to pom
+                pom.withXml {
+                    if (!project.subprojects.isEmpty()) {
+                        def modlules = asNode().appendNode('modules', '')
+                        project.subprojects.each {
+                            new Node(modlules, 'module', it.name)
+                        }
+                    }
+                }
+                setArtifacts([])
+            }
+            sirius(MavenPublication) {
+                artifactId = "$name"
+                groupId = "$group"
+
+                pom.withXml {}
+                artifact source: pdfDokuArtifact
+            }
+            manual(MavenPublication) {
+                artifactId = "manual"
+                groupId = "${group}.${project.appName}"
+                version = 'current'
+
+                pom.withXml {}
+                artifact source: pdfDokuArtifact, classifier: 'sirius'
+            }
+        }
+    }
+}
+
 task refreshDownloadLinks {
     project.ext.set("webPath", getBuildDir().toPath().resolve('tmp/webSite/').toFile())
     group = 'publishing'
@@ -453,22 +500,20 @@ task refreshReadMe {
 //refreshReadMe.dependsOn downloadChangelog
 refreshReadMe.dependsOn refreshDownloadLinks
 
-publishing {
-    publications {
-        sirius(MavenPublication) {
-            artifactId = "$name"
-            groupId = "$group"
 
-            pom.withXml {}
-            artifact source: pdfDokuArtifact
-        }
-        manual(MavenPublication) {
-            artifactId = "manual"
-            groupId = "${group}.${project.appName}"
-            version = 'current'
-
-            pom.withXml {}
-            artifact source: pdfDokuArtifact, classifier: 'sirius'
+def javaProjects() {
+    subprojects.findAll { new File(it.projectDir, 'src').directory }
+}
+configure(javaProjects()) {
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+//                from project.components.java
+                if (version.toString().endsWith('-SNAPSHOT'))
+                    setArtifacts([jar, sourceJar])
+                else
+                    setArtifacts([jar, sourceJar, javadocJar])
+            }
         }
     }
 }
@@ -484,11 +529,31 @@ artifactory {
         }
         defaults {
             //Publish every distribution to Artifactory
+//            publications('mavenJava')
             publications("sirius")
             publications("manual")
         }
     }
 }
+
+//artifactoryPublish.skip = true
+/*artifactory {
+    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
+    publish {
+        repository {
+            if (version.toString().endsWith('-SNAPSHOT'))
+                repoKey = 'libs-snapshot-local'
+            else
+                repoKey = 'libs-release-local'
+
+            username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
+            password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
+        }
+        defaults {
+            publications('mavenJava')
+        }
+    }
+}*/
 
 artifactoryPublish.dependsOn 'refreshDownloadLinks'
 artifactoryPublish.dependsOn 'refreshReadMe'

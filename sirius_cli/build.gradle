@@ -4,20 +4,16 @@ import org.apache.commons.configuration.PropertiesConfigurationLayout
 import java.util.stream.Collectors
 
 dependencies {
-    //compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
     compile group: "info.picocli", name: "picocli", version: "$picocli_version"
+    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+
+    //internal
+    compile group: 'de.unijena.bioinf.utils', name: 'error-reporter', version: "$error_reporter_version"
+    compile group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
+    compile group: "de.unijena.bioinf.ms", name: "zodiac_project_space", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "tree_motif_search", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "sirius_project_space", version: "$siriusVersion"
-    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.1'
-    compile group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
-    compile group: "de.unijena.bioinf.ms", name: "zodiac_project_space", version: "$siriusVersion"
-    compile group: 'de.unijena.bioinf.utils', name: 'error-reporter', version: "$error_reporter_version"
-    compile group: 'com.google.classpath-explorer', name: 'classpath-explorer', version: '1.0'
-
-    //internal
-    //compile group: "de.unijena.bioinf.ms", name: "fingerid_utils", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "passatutto", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "passatutto_project_space", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "fingerid_db_oss", version: "$fingeridVersion"
@@ -34,9 +30,9 @@ dependencies {
     //cdk
     compile "org.openscience.cdk:cdk-silent:$cdk_version"
 
+    //mztabm
     compile group: 'de.isas.mztab', name: 'jmztabm-api', version: "$mztabm_version"
     compile group: 'de.isas.mztab', name: 'jmztabm-io', version: "$mztabm_version"
-
 }
 
 mainClassName = 'de.unijena.bioinf.ms.frontend.SiriusCLIApplication'
