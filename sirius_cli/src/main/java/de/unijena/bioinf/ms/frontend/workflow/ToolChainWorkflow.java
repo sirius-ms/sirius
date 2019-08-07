@@ -5,7 +5,7 @@ import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.ms.frontend.subtools.AddConfigsJob;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
-import de.unijena.bioinf.ms.frontend.subtools.input_provider.InputProvider;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.RecomputeResults;
 import de.unijena.bioinf.sirius.ExperimentResult;
@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,7 +22,7 @@ public class ToolChainWorkflow implements Workflow {
     protected final static Logger LOG = LoggerFactory.getLogger(ToolChainWorkflow.class);
     protected final ParameterConfig parameters;
     protected final SiriusProjectSpace project;
-    protected final InputProvider inputProvider;
+    private final PreprocessingJob preprocessingJob;
 
     protected List<Object> toolchain;
     protected int initialInstanceNum, maxBufferSize = 0;
@@ -31,9 +30,9 @@ public class ToolChainWorkflow implements Workflow {
     private final AtomicBoolean canceled = new AtomicBoolean(false);
     WorkflowJobSubmitter submitter = null;
 
-    public ToolChainWorkflow(SiriusProjectSpace projectSpace, InputProvider inputProvider, ParameterConfig parameters, List<Object> toolchain) {
+    public ToolChainWorkflow(SiriusProjectSpace projectSpace, PreprocessingJob preprocessingJob, ParameterConfig parameters, List<Object> toolchain) {
         this.project = projectSpace;
-        this.inputProvider = inputProvider;
+        this.preprocessingJob = preprocessingJob;
         this.parameters = parameters;
         this.toolchain = toolchain;
     }
@@ -55,11 +54,12 @@ public class ToolChainWorkflow implements Workflow {
     public void run() {
         try {
             checkForCancellation();
-            Iterable<ExperimentResult> iteratorSource = inputProvider::newInputExperimentIterator;
+            // prepare input
+            Iterable<ExperimentResult> iteratorSource = submitter.jobManager().submitJob(preprocessingJob).awaitResult();
+            // build toolchain
             final List<InstanceJob.Factory> instanceJobChain = new ArrayList<>(toolchain.size());
             //job factory for job that add config annotations to an instance
             instanceJobChain.add(() -> new AddConfigsJob(parameters));
-
             //other jobs
             for (Object o : toolchain) {
                 checkForCancellation();
