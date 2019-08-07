@@ -1,14 +1,17 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.ms.frontend.subtools.input_provider.InputProvider;
 
-public interface RootOptions extends InputProvider {
+public interface RootOptions {
 
     Integer getMaxInstanceBuffer();
 
     Integer getInitialInstanceBuffer();
 
     SiriusProjectSpace getProjectSpace();
+
+    InputProvider getInputProvider();
 
 
 

@@ -5,6 +5,7 @@ import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.ms.frontend.subtools.AddConfigsJob;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
+import de.unijena.bioinf.ms.frontend.subtools.input_provider.InputProvider;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.RecomputeResults;
 import de.unijena.bioinf.sirius.ExperimentResult;
@@ -22,19 +23,17 @@ public class ToolChainWorkflow implements Workflow {
     protected final static Logger LOG = LoggerFactory.getLogger(ToolChainWorkflow.class);
     protected final ParameterConfig parameters;
     protected final SiriusProjectSpace project;
+    protected final InputProvider inputProvider;
 
-    private Iterable<ExperimentResult> iteratorSource;
     protected List<Object> toolchain;
-
     protected int initialInstanceNum, maxBufferSize = 0;
 
     private final AtomicBoolean canceled = new AtomicBoolean(false);
     WorkflowJobSubmitter submitter = null;
 
-    public ToolChainWorkflow(SiriusProjectSpace projectSpace, Iterator<ExperimentResult> inputIterator, ParameterConfig parameters, List<Object> toolchain) {
+    public ToolChainWorkflow(SiriusProjectSpace projectSpace, InputProvider inputProvider, ParameterConfig parameters, List<Object> toolchain) {
         this.project = projectSpace;
-        this.iteratorSource = () -> inputIterator;
-
+        this.inputProvider = inputProvider;
         this.parameters = parameters;
         this.toolchain = toolchain;
     }
@@ -56,6 +55,7 @@ public class ToolChainWorkflow implements Workflow {
     public void run() {
         try {
             checkForCancellation();
+            Iterable<ExperimentResult> iteratorSource = inputProvider::newInputExperimentIterator;
             final List<InstanceJob.Factory> instanceJobChain = new ArrayList<>(toolchain.size());
             //job factory for job that add config annotations to an instance
             instanceJobChain.add(() -> new AddConfigsJob(parameters));

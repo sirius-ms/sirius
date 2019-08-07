@@ -1,7 +1,9 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.ms.frontend.subtools.input_provider.InputProvider;
 import de.unijena.bioinf.sirius.ExperimentResult;
+import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
 import java.util.Iterator;
@@ -38,6 +40,12 @@ public class RootOptionsGUI implements RootOptions, InputProvider {
         return projectSpace;
     }
 
+    @Override
+    public InputProvider getInputProvider() {
+        return null;
+    }
+
+    @NotNull
     @Override
     public Iterator<ExperimentResult> newInputExperimentIterator() {
         return inputIterator;
