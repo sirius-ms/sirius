@@ -1,7 +1,6 @@
 package de.unijena.bioinf.babelms.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.sirius.ExperimentResult;
@@ -43,6 +42,7 @@ public class PassatuttoSerializer implements MetaDataSerializer {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                /*
                 if (decoy.getDecoyTree()!=null) {
                     try (final BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(writer.env.openFile(SiriusLocations.makeFileName(result) + ".dot")))){
                         new FTDotWriter(true,true).writeTree(bw, decoy.getDecoyTree());
@@ -50,6 +50,8 @@ public class PassatuttoSerializer implements MetaDataSerializer {
                         e.printStackTrace();
                     }
                 }
+
+                 */
 
             });
         } finally {
