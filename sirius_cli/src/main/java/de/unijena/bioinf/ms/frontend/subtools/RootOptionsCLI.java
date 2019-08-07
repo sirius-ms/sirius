@@ -196,8 +196,8 @@ public class RootOptionsCLI implements RootOptions {
                 } else if (SiriusProjectSpaceIO.isCompressedProjectSpaceName(name)) {
                     projectSpaces.add(g);
                 } else if (name.toLowerCase().endsWith(".mzml")) {
-                    //todo add mzML support?
-                    LOG.warn("Mzml file found. This format is currently not supported but support is planned for future releases. File is skipped.");
+                    //todo remove after mzML support is implemented?
+                    LOG.warn("Mzml file found. This format is currently not supported but support is planned for future releases. File is skipped. REMOVE ME AFTER IMPLEMENTATION");
                 } else {
                     LOG.warn("File with the name \"" + name + "\" is not in a supported format or has a wrong file extension. File is skipped");
                 }
@@ -239,7 +239,7 @@ public class RootOptionsCLI implements RootOptions {
                     else
                         return () -> new SiriusInputIterator(input, maxMz, ignoreFormula).asExpResultIterator();
                 case MZML:
-                    return new MzmlInputProvider(input);
+                    return new MzmlInputProvider(input, projectSpaceToWriteOn);
             }
         } else if (projectSpaceToWriteOn != null && projectSpaceToWriteOn.getNumberOfWrittenExperiments() > 0) {
             LOG.info("No Input given but output Project-Space is not empty and will be used as Input instead!");
