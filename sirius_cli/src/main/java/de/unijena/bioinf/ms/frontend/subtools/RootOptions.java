@@ -1,9 +1,14 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
-import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.ms.frontend.subtools.input_provider.InputProvider;
+//import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 
-public interface RootOptions {
+import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.ms.frontend.PreprocessingTool;
+
+import java.io.File;
+import java.util.List;
+
+public interface RootOptions extends PreprocessingTool {
 
     Integer getMaxInstanceBuffer();
 
@@ -11,17 +16,5 @@ public interface RootOptions {
 
     SiriusProjectSpace getProjectSpace();
 
-    InputProvider getInputProvider();
-
-
-
-    /*final class IO {
-        public final SiriusProjectSpace projectSpace;
-        public final Iterator<ExperimentResult> inputIterator;
-
-        public IO(SiriusProjectSpace projectSpace, Iterator<ExperimentResult> inputIterator) {
-            this.projectSpace = projectSpace;
-            this.inputIterator = inputIterator;
-        }
-    }*/
+    List<File> getInput();
 }

@@ -1,17 +1,18 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.ms.frontend.subtools.input_provider.InputProvider;
 import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
+import java.io.File;
 import java.util.Iterator;
+import java.util.List;
 //todo move to GUI?
 //maypbe define API in interface and make a abstract basic root cli
 
 @CommandLine.Command
-public class RootOptionsGUI implements RootOptions, InputProvider {
+public class RootOptionsGUI implements RootOptions {
     //input an project-space
     private final SiriusProjectSpace projectSpace;
     private final Iterator<ExperimentResult> inputIterator;
@@ -41,13 +42,12 @@ public class RootOptionsGUI implements RootOptions, InputProvider {
     }
 
     @Override
-    public InputProvider getInputProvider() {
+    public List<File> getInput() {
         return null;
     }
 
-    @NotNull
     @Override
-    public Iterator<ExperimentResult> newInputExperimentIterator() {
-        return inputIterator;
+    public PreprocessingJob makePreprocessingJob(List<File> input, SiriusProjectSpace space) {
+        return null;
     }
 }

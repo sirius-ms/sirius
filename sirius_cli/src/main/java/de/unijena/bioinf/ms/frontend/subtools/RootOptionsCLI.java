@@ -6,9 +6,8 @@ import de.unijena.bioinf.babelms.SiriusInputIterator;
 import de.unijena.bioinf.babelms.projectspace.*;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.input_provider.InputProvider;
-import de.unijena.bioinf.ms.frontend.subtools.input_provider.MzmlInputProvider;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +36,7 @@ import java.util.List;
 public class RootOptionsCLI implements RootOptions {
     public static final Logger LOG = LoggerFactory.getLogger(RootOptionsCLI.class);
 
-    public enum InputType {PROJECT, SIRIUS, MZML}
+    public enum InputType {PROJECT, SIRIUS/*, MZML*/}
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
@@ -152,30 +151,24 @@ public class RootOptionsCLI implements RootOptions {
 
         final List<File> projectSpaces = new ArrayList<>();
         final List<File> siriusInfiles = new ArrayList<>();
-        final List<File> mzMLInfiles = new ArrayList<>();
 
-        expandInput(files, mzMLInfiles, siriusInfiles, projectSpaces);
+        expandInput(files, siriusInfiles, projectSpaces);
 
         if (!projectSpaces.isEmpty()) {
-            if (siriusInfiles.isEmpty() || mzMLInfiles.isEmpty())
+            if (siriusInfiles.isEmpty())
                 LOG.warn("Multiple input types found: Only the project-space data ist used as input.");
             input = projectSpaces;
             type = InputType.PROJECT;
         } else if (!siriusInfiles.isEmpty()) {
-            if (!mzMLInfiles.isEmpty())
-                LOG.warn("Multiple input types found: Only the .ms/.mgf data is used as input.");
             input = siriusInfiles;
             type = InputType.SIRIUS;
-        } else if (!mzMLInfiles.isEmpty()) {
-            input = mzMLInfiles;
-            type = InputType.MZML;
         } else {
             throw new CommandLine.PicocliException("No valid input data is found. Please give you input in a supported format.");
         }
     }
 
 
-    private void expandInput(@NotNull List<File> files, @NotNull final List<File> mzMLInfiles, @NotNull List<File> siriusInfiles, @NotNull List<File> projectSpaces) {
+    private void expandInput(@NotNull List<File> files, @NotNull List<File> siriusInfiles, @NotNull List<File> projectSpaces) {
         for (File g : files) {
             if (g.isDirectory()) {
                 // check whether it is a workspace or a gerneric directory with som other input
@@ -185,7 +178,7 @@ public class RootOptionsCLI implements RootOptions {
                     File[] ins = g.listFiles(pathname -> pathname.isFile());
                     if (ins != null) {
                         Arrays.sort(ins, Comparator.comparing(File::getName));
-                        expandInput(Arrays.asList(ins), mzMLInfiles, siriusInfiles, projectSpaces);
+                        expandInput(Arrays.asList(ins), siriusInfiles, projectSpaces);
                     }
                 }
             } else {
@@ -195,10 +188,6 @@ public class RootOptionsCLI implements RootOptions {
                     siriusInfiles.add(g);
                 } else if (SiriusProjectSpaceIO.isCompressedProjectSpaceName(name)) {
                     projectSpaces.add(g);
-                } else if (name.toLowerCase().endsWith(".mzml")) {
-                    //todo remove after mzML support is implemented?
-                    LOG.warn("Mzml file found. This format is currently not supported but support is planned for future releases. File is skipped. REMOVE ME AFTER IMPLEMENTATION");
-//                    mzMLInfiles.add(g);
                 } else {
                     LOG.warn("File with the name \"" + name + "\" is not in a supported format or has a wrong file extension. File is skipped");
                 }
@@ -207,6 +196,12 @@ public class RootOptionsCLI implements RootOptions {
     }
 
     List<File> input = null;
+
+    @Override
+    public List<File> getInput() {
+        return input;
+    }
+
     InputType type = null;
 
 
@@ -225,28 +220,29 @@ public class RootOptionsCLI implements RootOptions {
         return projectSpaceToWriteOn;
     }
 
-    @Override
-    public InputProvider getInputProvider() {
-        if (projectSpaceToWriteOn == null)
-            configureProjectSpace();
 
-        if (type != null && input != null) {
-            switch (type) {
-                case PROJECT:
-                    return () -> projectSpaceToWriteOn.parseExperimentIterator();
-                case SIRIUS:
-                    if (projectSpaceToWriteOn.getNumberOfWrittenExperiments() > 0)
-                        return () -> SiriusProjectSpaceIO.readInputAndProjectSpace(input, projectSpaceToWriteOn, maxMz, ignoreFormula);
-                    else
-                        return () -> new SiriusInputIterator(input, maxMz, ignoreFormula).asExpResultIterator();
-                case MZML:
-                    return new MzmlInputProvider(input, projectSpaceToWriteOn);
+    @Override
+    public PreprocessingJob makePreprocessingJob(List<File> input, SiriusProjectSpace space) {
+        return new PreprocessingJob(getInput(), getProjectSpace()) {
+            @Override
+            protected Iterable<ExperimentResult> compute() throws Exception {
+                if (type != null && input != null) {
+                    switch (type) {
+                        case PROJECT:
+                            return () -> space.parseExperimentIterator();
+                        case SIRIUS:
+                            if (space.getNumberOfWrittenExperiments() > 0)
+                                return () -> SiriusProjectSpaceIO.readInputAndProjectSpace(input, space, maxMz, ignoreFormula);
+                            else
+                                return () -> new SiriusInputIterator(input, maxMz, ignoreFormula).asExpResultIterator();
+                    }
+                } else if (space != null && space.getNumberOfWrittenExperiments() > 0) {
+                    LOG.info("No Input given but output Project-Space is not empty and will be used as Input instead!");
+                    return () -> space.parseExperimentIterator();
+                }
+                throw new CommandLine.PicocliException("Illegal Input type: " + type);
             }
-        } else if (projectSpaceToWriteOn != null && projectSpaceToWriteOn.getNumberOfWrittenExperiments() > 0) {
-            LOG.info("No Input given but output Project-Space is not empty and will be used as Input instead!");
-            return () -> projectSpaceToWriteOn.parseExperimentIterator();
-        }
-        throw new CommandLine.PicocliException("Illegal Input type: " + type);
+        };
     }
 
 
@@ -265,9 +261,6 @@ public class RootOptionsCLI implements RootOptions {
                             System.out.println("Creating Project Space: " + (((((double) currentProgress) / (double) maxProgress)) * 100d) + "%");
                         }
                         , makeSerializerArray());
-            } else if (type == InputType.MZML) {
-                //todo implement
-                throw new CommandLine.PicocliException("MZML input is not yet supported! This should not be possible. BUG?");
             } else {
                 projectSpaceToWriteOn = SiriusProjectSpaceIO.create(projectSpaceFilenameFormatter, projectSpaceLocation,
                         (currentProgress, maxProgress, Message) -> {
