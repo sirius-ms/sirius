@@ -320,7 +320,8 @@ subprojects {
 
     /*################### Windows release Stuff ################### */
     launch4j {
-        icon = file('../dist/sirius.ico')
+
+        icon = getRootProject().getRootDir().toPath().resolve('dist/sirius.ico').toFile()
         copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
         companyName = "Friedrich-Schiller-University Jena"
         version = project.version
@@ -363,17 +364,36 @@ subprojects {
     }
 }
 
-allprojects{
-    task sourceJar(type: Jar) {
+
+
+task sourceJar(type: Jar) {
     group = 'build'
     classifier = 'sources'
     from sourceSets.main.allSource
 }
 
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        group = 'documentation'
-        classifier = 'javadoc'
-        from javadoc.destinationDir
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    group = 'documentation'
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+def javaProjects() {
+    subprojects.findAll {new File(it.projectDir, 'src').directory }
+}
+
+allprojects{
+    configure(javaProjects()) {
+        publishing {
+            publications {
+                mavenJava(MavenPublication) {
+                    if (version.toString().endsWith('-SNAPSHOT'))
+                        setArtifacts([jar, sourceJar])
+                    else
+                        setArtifacts([jar, sourceJar, javadocJar])
+                }
+            }
+        }
     }
 
     publishing {
@@ -499,25 +519,6 @@ task refreshReadMe {
 }
 //refreshReadMe.dependsOn downloadChangelog
 refreshReadMe.dependsOn refreshDownloadLinks
-
-
-def javaProjects() {
-    subprojects.findAll { new File(it.projectDir, 'src').directory }
-}
-configure(javaProjects()) {
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-//                from project.components.java
-                if (version.toString().endsWith('-SNAPSHOT'))
-                    setArtifacts([jar, sourceJar])
-                else
-                    setArtifacts([jar, sourceJar, javadocJar])
-            }
-        }
-    }
-}
-
 // publication artifactory
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
@@ -529,31 +530,11 @@ artifactory {
         }
         defaults {
             //Publish every distribution to Artifactory
-//            publications('mavenJava')
             publications("sirius")
             publications("manual")
         }
     }
 }
-
-//artifactoryPublish.skip = true
-/*artifactory {
-    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
-    publish {
-        repository {
-            if (version.toString().endsWith('-SNAPSHOT'))
-                repoKey = 'libs-snapshot-local'
-            else
-                repoKey = 'libs-release-local'
-
-            username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
-            password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
-        }
-        defaults {
-            publications('mavenJava')
-        }
-    }
-}*/
 
 artifactoryPublish.dependsOn 'refreshDownloadLinks'
 artifactoryPublish.dependsOn 'refreshReadMe'
