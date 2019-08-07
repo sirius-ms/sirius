@@ -8,6 +8,7 @@ import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
@@ -47,6 +48,9 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
     //singelton tools
     public final CustomDBOptions customDBOptions = new CustomDBOptions();
 
+    //external preprocessing
+    public final LcmsAlignOptions lcmsAlignOptions = new LcmsAlignOptions();
+
     //toolchain subtools
     public final SiriusOptions siriusOptions;
     public final ZodiacOptions zodiacOptions;
@@ -76,9 +80,10 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
         CommandLine.Model.CommandSpec passatuttoSpec =  forAnnotatedObjectWithSubCommands(passatuttoOptions, fingeridSpec);
         CommandLine.Model.CommandSpec zodiacSpec = forAnnotatedObjectWithSubCommands(zodiacOptions, passatuttoSpec, fingeridSpec);
         CommandLine.Model.CommandSpec siriusSpec = forAnnotatedObjectWithSubCommands(siriusOptions, zodiacSpec, passatuttoSpec, fingeridSpec);
+        CommandLine.Model.CommandSpec lcmsAlignSpec = forAnnotatedObjectWithSubCommands(lcmsAlignOptions, siriusSpec);
 
-        CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), customDBOptions, siriusSpec, zodiacSpec,passatuttoSpec, fingeridSpec, canopusOptions);
-        rootSpec = forAnnotatedObjectWithSubCommands(this.rootOptions, customDBOptions, configSpec, siriusSpec, zodiacSpec,passatuttoSpec, fingeridSpec, canopusOptions);
+        CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), customDBOptions, lcmsAlignSpec, siriusSpec, zodiacSpec,passatuttoSpec, fingeridSpec, canopusOptions);
+        rootSpec = forAnnotatedObjectWithSubCommands(this.rootOptions, customDBOptions, configSpec, lcmsAlignSpec, siriusSpec, zodiacSpec,passatuttoSpec, fingeridSpec, canopusOptions);
     }
 
     protected CommandLine.Model.CommandSpec forAnnotatedObjectWithSubCommands(Object parent, Object... subsToolInExecutionOrder) {
