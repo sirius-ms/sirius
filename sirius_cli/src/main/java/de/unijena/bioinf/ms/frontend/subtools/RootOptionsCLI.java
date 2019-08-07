@@ -198,6 +198,7 @@ public class RootOptionsCLI implements RootOptions {
                 } else if (name.toLowerCase().endsWith(".mzml")) {
                     //todo remove after mzML support is implemented?
                     LOG.warn("Mzml file found. This format is currently not supported but support is planned for future releases. File is skipped. REMOVE ME AFTER IMPLEMENTATION");
+//                    mzMLInfiles.add(g);
                 } else {
                     LOG.warn("File with the name \"" + name + "\" is not in a supported format or has a wrong file extension. File is skipped");
                 }
