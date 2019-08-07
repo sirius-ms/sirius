@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
+import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
 import de.unijena.bioinf.ms.frontend.subtools.SingeltonTool;
@@ -7,19 +8,16 @@ import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.input_provider.InputProvider;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
-import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoSubToolJob;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
-import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -114,7 +112,7 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
 
             //get project space from root cli
             final SiriusProjectSpace space = ((RootOptions) parseResult.commandSpec().commandLine().getCommand()).getProjectSpace();
-            final Iterator<ExperimentResult> input = ((RootOptions) parseResult.commandSpec().commandLine().getCommand()).newInputExperimentIterator();
+            final InputProvider inputProv = ((RootOptions) parseResult.commandSpec().commandLine().getCommand()).getInputProvider();
 
             List<Object> toolchain = new ArrayList<>();
             // look for an alternative input in the first subtool that is not the CONFIG subtool.
@@ -136,7 +134,7 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
                 execute(parseResult.commandSpec().commandLine(), toolchain);
             }
 
-            final ToolChainWorkflow wf = new ToolChainWorkflow(space, input, configOptionLoader.config, toolchain);
+            final ToolChainWorkflow wf = new ToolChainWorkflow(space, inputProv, configOptionLoader.config, toolchain);
             wf.setInstanceBuffer(rootOptions.getInitialInstanceBuffer(), rootOptions.getMaxInstanceBuffer());
 
             return returnResultOrExit(wf);

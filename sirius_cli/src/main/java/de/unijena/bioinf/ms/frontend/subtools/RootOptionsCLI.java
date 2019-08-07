@@ -6,8 +6,9 @@ import de.unijena.bioinf.babelms.SiriusInputIterator;
 import de.unijena.bioinf.babelms.projectspace.*;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.input_provider.InputProvider;
+import de.unijena.bioinf.ms.frontend.subtools.input_provider.MzmlInputProvider;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * This is for not algorithm related parameters.
@@ -221,27 +225,25 @@ public class RootOptionsCLI implements RootOptions {
     }
 
     @Override
-    public Iterator<ExperimentResult> newInputExperimentIterator() {
+    public InputProvider getInputProvider() {
         if (projectSpaceToWriteOn == null)
             configureProjectSpace();
-
 
         if (type != null && input != null) {
             switch (type) {
                 case PROJECT:
-                    return projectSpaceToWriteOn.parseExperimentIterator();
+                    return () -> projectSpaceToWriteOn.parseExperimentIterator();
                 case SIRIUS:
                     if (projectSpaceToWriteOn.getNumberOfWrittenExperiments() > 0)
-                        return SiriusProjectSpaceIO.readInputAndProjectSpace(input, projectSpaceToWriteOn, maxMz, ignoreFormula);
+                        return () -> SiriusProjectSpaceIO.readInputAndProjectSpace(input, projectSpaceToWriteOn, maxMz, ignoreFormula);
                     else
-                        return new SiriusInputIterator(input, maxMz, ignoreFormula).asExpResultIterator();
+                        return () -> new SiriusInputIterator(input, maxMz, ignoreFormula).asExpResultIterator();
                 case MZML:
-                    //todo implement
-                    throw new CommandLine.PicocliException("MZML input is not yet supported! This should not be possible. BUG?");
+                    return new MzmlInputProvider(input);
             }
         } else if (projectSpaceToWriteOn != null && projectSpaceToWriteOn.getNumberOfWrittenExperiments() > 0) {
             LOG.info("No Input given but output Project-Space is not empty and will be used as Input instead!");
-            return projectSpaceToWriteOn.parseExperimentIterator();
+            return () -> projectSpaceToWriteOn.parseExperimentIterator();
         }
         throw new CommandLine.PicocliException("Illegal Input type: " + type);
     }
