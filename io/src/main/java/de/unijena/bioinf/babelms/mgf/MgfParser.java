@@ -46,6 +46,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         private HashMap<String, String> fields;
         private String inchi, smiles, name;
         private RetentionTime retentionTime;
+        private MolecularFormula formula;
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
         private SpecType type;
 
@@ -59,6 +60,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             this.featureId = s.featureId;
             this.retentionTime = s.retentionTime;
             this.type = s.type;
+            this.formula = null;
         }
 
         public MgfSpec() {
@@ -133,6 +135,10 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         break;
                     }
                 }
+            } else if (keyword.contains("FORMULA")) {
+                spec.formula = MolecularFormula.parseOrNull(value);
+                if (spec.formula==null)
+                    LoggerFactory.getLogger(MgfParser.class).warn("Cannot parse molecular formula '" + value + "'. Ignore field.");
             } else if (keyword.equals("CHARGE")) {
                 final Matcher m = CHARGE_PATTERN.matcher(value);
                 m.find();
@@ -342,6 +348,9 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 } else {
                     exp.setAnnotation(RetentionTime.class, spec.retentionTime);
                 }
+            }
+            if (spec.formula != null) {
+                exp.setMolecularFormula(spec.formula);
             }
             if (spec.instrumentation != null) {
                 if (exp.hasAnnotation(MsInstrumentation.class)) {

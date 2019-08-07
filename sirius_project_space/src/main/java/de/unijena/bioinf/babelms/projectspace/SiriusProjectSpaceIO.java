@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -23,6 +24,11 @@ import java.util.stream.Collectors;
 public class SiriusProjectSpaceIO {
     protected static final Logger LOG = LoggerFactory.getLogger(SiriusProjectSpace.class);
 
+    public static @NotNull SiriusProjectSpace createTemporary(@Nullable FilenameFormatter filenameFormatter, MetaDataSerializer... metaDataSerializers) throws IOException {
+        final File temporaryRoot = Files.createTempDirectory("siriusProjectSpace" ).toFile();
+        temporaryRoot.mkdirs();
+        return new SiriusProjectSpace(temporaryRoot, true, filenameFormatter, metaDataSerializers);
+    }
 
     //region create Project Spaces
     public static @NotNull SiriusProjectSpace create(@Nullable FilenameFormatter filenameFormatter, @NotNull final File projectSpaceRoot, MetaDataSerializer... metaDataSerializers) throws IOException {
@@ -31,7 +37,7 @@ public class SiriusProjectSpaceIO {
     }
 
     public static @NotNull SiriusProjectSpace create(@Nullable FilenameFormatter filenameFormatter, @NotNull final File projectSpaceRoot, @NotNull ProgressListener progress, MetaDataSerializer... metaDataSerializers) throws IOException {
-        SiriusProjectSpace space = new SiriusProjectSpace(projectSpaceRoot, filenameFormatter, metaDataSerializers);
+        SiriusProjectSpace space = new SiriusProjectSpace(projectSpaceRoot, false, filenameFormatter, metaDataSerializers);
         space.loadIntoProjectSpace(progress);
         return space;
     }
@@ -42,7 +48,7 @@ public class SiriusProjectSpaceIO {
     }
 
     public static SiriusProjectSpace create(@NotNull final File rootOutPath, @NotNull Collection<File> rootInputPaths, @Nullable final FilenameFormatter filenameFormatter, @NotNull ProgressListener progress, MetaDataSerializer... metaDataSerializers) throws IOException {
-        final SiriusProjectSpace merged = new SiriusProjectSpace(rootOutPath, filenameFormatter, metaDataSerializers);
+        final SiriusProjectSpace merged = new SiriusProjectSpace(rootOutPath, false, filenameFormatter, metaDataSerializers);
         final TIntSet ids = new TIntHashSet();
         merged.loadIntoProjectSpace(merged.reader, ids, false, progress);//todo correct progress stack
         final String absPath = rootOutPath.getAbsolutePath();
@@ -58,7 +64,7 @@ public class SiriusProjectSpaceIO {
     }
 
     public static @NotNull SiriusProjectSpace create(@Nullable Iterable<ExperimentResult> toInsert, @Nullable FilenameFormatter filenameFormatter, @NotNull final File projectSpaceRoot, @NotNull ProgressListener progress, MetaDataSerializer... metaDataSerializers) throws IOException {
-        SiriusProjectSpace space = new SiriusProjectSpace(projectSpaceRoot, filenameFormatter, metaDataSerializers);
+        SiriusProjectSpace space = new SiriusProjectSpace(projectSpaceRoot, false, filenameFormatter, metaDataSerializers);
         space.loadIntoProjectSpace(progress);
         if (toInsert != null)
             writeExperimentsToProjectSapce(toInsert.iterator(), space);
