@@ -36,6 +36,7 @@ public class SiriusProjectSpace implements ProjectSpace {
     protected static final Logger LOG = LoggerFactory.getLogger(SiriusProjectSpace.class);
 
     //region Internal Fields
+    protected final boolean temporaryProjectSpace;
     private final LinkedHashMap<String, ExperimentDirectory> experimentIDs = new LinkedHashMap<>();
     protected final List<SummaryWriter> summaryWriters = new ArrayList<>();
     protected final Map<String, String> versionInfo = new HashMap<>();
@@ -52,8 +53,9 @@ public class SiriusProjectSpace implements ProjectSpace {
     //endregion
 
     //loads existing project-space from reader and uses given writer
-    protected SiriusProjectSpace(@NotNull File root, @Nullable FilenameFormatter filenameFormatter, MetaDataSerializer... metaDataSerializers) throws IOException {
+    protected SiriusProjectSpace(@NotNull File root, boolean temporaryProjectSpace, @Nullable FilenameFormatter filenameFormatter, MetaDataSerializer... metaDataSerializers) throws IOException {
         rootPath = root;
+        this.temporaryProjectSpace = temporaryProjectSpace;
         if (rootPath.isFile()) {
             if (SiriusProjectSpaceIO.isCompressedProjectSpaceName(rootPath.getName().toLowerCase())) {
                 zipRoot = rootPath;
@@ -268,6 +270,10 @@ public class SiriusProjectSpace implements ProjectSpace {
         });
 
         return sums;
+    }
+
+    public File getRootPath() {
+        return rootPath;
     }
 
     private void extractZip() throws IOException {
@@ -549,5 +555,21 @@ public class SiriusProjectSpace implements ProjectSpace {
         public void remove() {
             baseIter.remove();
         }
+    }
+
+    public boolean isTemporary() {
+        return temporaryProjectSpace;
+    }
+
+    public ExperimentDirectory lookupId(String id) {
+        return experimentIDs.get(id);
+    }
+
+    public void deleteAll() throws IOException{
+        for (ExperimentDirectory dir : this.experimentIDs.values().toArray(new ExperimentDirectory[0])) {
+            deleteExperimentUnchecked(dir);
+        }
+        // TODO: delete summary files
+        // TODO: delete directory
     }
 }
