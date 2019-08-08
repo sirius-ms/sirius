@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Arrays;
@@ -74,6 +73,7 @@ public class CanopusResultSerializer implements MetaDataSerializer, SummaryWrite
     @Override
     public void write(@NotNull ExperimentResult input, @NotNull DirectoryWriter writer) throws IOException {
         final IdentificationResults results = input.getResults();
+        if (results==null) return;
 
         if (writer.isAllowed(FingerIdResult.CANDIDATE_LISTS) && hasCanopus(results)) {
             try {
