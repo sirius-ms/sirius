@@ -561,8 +561,8 @@ public class SiriusProjectSpace implements ProjectSpace {
         return temporaryProjectSpace;
     }
 
-    public ExperimentDirectory lookupId(String id) {
-        return experimentIDs.get(id);
+    public Optional<ExperimentDirectory> lookupId(String id) {
+        return Optional.ofNullable(experimentIDs.get(id));
     }
 
     public void deleteAll() throws IOException{
