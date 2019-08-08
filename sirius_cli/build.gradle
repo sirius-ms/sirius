@@ -1,5 +1,6 @@
 dependencies {
     compile group: "info.picocli", name: "picocli", version: "$picocli_version"
+    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
     //internal
     compile group: 'de.unijena.bioinf.utils', name: 'error-reporter', version: "$error_reporter_version"
     compile group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
