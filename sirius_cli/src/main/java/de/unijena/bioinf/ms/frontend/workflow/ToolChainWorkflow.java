@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.MsFileSource;
 import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.ms.frontend.subtools.AddConfigsJob;
@@ -55,7 +56,7 @@ public class ToolChainWorkflow implements Workflow {
         try {
             checkForCancellation();
             // prepare input
-            Iterable<ExperimentResult> iteratorSource = submitter.jobManager().submitJob(preprocessingJob).awaitResult();
+            Iterable<ExperimentResult> iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
             // build toolchain
             final List<InstanceJob.Factory> instanceJobChain = new ArrayList<>(toolchain.size());
             //job factory for job that add config annotations to an instance
