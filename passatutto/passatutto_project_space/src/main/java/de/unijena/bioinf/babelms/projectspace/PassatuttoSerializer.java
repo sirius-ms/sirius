@@ -19,6 +19,7 @@ public class PassatuttoSerializer implements MetaDataSerializer {
 
     @Override
     public void write(@NotNull ExperimentResult input, @NotNull DirectoryWriter writer) throws IOException {
+        if (input.getResults()==null) return;
         writer.env.enterDirectory("decoys");
         try {
             input.getResults().stream().filter(r->r.getAnnotation(Decoy.class,()->null)!=null).forEach(result->{
