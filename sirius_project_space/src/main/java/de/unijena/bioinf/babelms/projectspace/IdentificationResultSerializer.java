@@ -26,10 +26,10 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
     //API Methods
     @Override
     public void read(@NotNull final ExperimentResult result, @NotNull final DirectoryReader reader, @NotNull final Set<String> names) throws IOException {
-        final List<IdentificationResult> results = new ArrayList<>();
 
         // read trees
         if (names.contains(SiriusLocations.SIRIUS_TREES_JSON.directory)) {
+            final List<IdentificationResult> results = new ArrayList<>();
             try {
                 reader.env.enterDirectory(SiriusLocations.SIRIUS_TREES_JSON.directory);
                 final List<String> trs = reader.env.list();
@@ -48,9 +48,10 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
             } finally {
                 reader.env.leaveDirectory();
             }
+            results.sort(Comparator.comparingInt(IdentificationResult::getRank));
+            result.setAnnotation(IdentificationResults.class, new IdentificationResults(results));
         }
-        results.sort(Comparator.comparingInt(IdentificationResult::getRank));
-        result.setAnnotation(IdentificationResults.class, new IdentificationResults(results));
+
     }
 
 

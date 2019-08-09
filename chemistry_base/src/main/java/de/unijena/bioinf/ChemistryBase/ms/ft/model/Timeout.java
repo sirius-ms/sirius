@@ -25,7 +25,7 @@ public class Timeout implements Ms2ExperimentAnnotation {
             @DefaultProperty(propertyKey = "secondsPerInstance") int secondsPerInstance,
             @DefaultProperty(propertyKey = "secondsPerTree") int secondsPerTree
     ) {
-        return new Timeout(secondsPerInstance, secondsPerTree);
+        return newTimeout(secondsPerInstance, secondsPerTree);
     }
 
     public static Timeout newTimeout(int numberOfSecondsPerInstance, int numberOfSecondsPerDecomposition) {
@@ -39,8 +39,8 @@ public class Timeout implements Ms2ExperimentAnnotation {
     private Timeout(int numberOfSecondsPerInstance, int numberOfSecondsPerDecomposition) {
         if (numberOfSecondsPerDecomposition != Integer.MAX_VALUE && numberOfSecondsPerDecomposition > numberOfSecondsPerInstance)
             throw new IllegalArgumentException("Timeout for single decomposition is larger than for the whole instance: number of seconds per instance = " + numberOfSecondsPerInstance + ", number of seconds per decomposition = " + numberOfSecondsPerDecomposition);
-        this.numberOfSecondsPerInstance = numberOfSecondsPerInstance <= 0 ? Integer.MAX_VALUE : numberOfSecondsPerInstance;
-        this.numberOfSecondsPerDecomposition = numberOfSecondsPerDecomposition <= 0 ? Integer.MAX_VALUE : numberOfSecondsPerDecomposition;
+        this.numberOfSecondsPerInstance = numberOfSecondsPerInstance;
+        this.numberOfSecondsPerDecomposition = numberOfSecondsPerDecomposition;
     }
 
     public boolean hasTimeout() {

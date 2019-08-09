@@ -146,16 +146,16 @@ public class DirectoryReader implements ProjectReader {
 
     private ProjectSpaceConfig parseConfig(@NotNull final String name) {
         ParameterConfig config = null;
-
-        try {
-            config = PropertyManager.DEFAULTS.newIndependentInstance(
-                    env.openFile(SiriusLocations.SIRIUS_COMPOUND_CONFIG.fileName()),
-                    "PROJECT_SPACE:" + name
-            );
-        } catch (ConfigurationException | IOException e) {
-            LOG.warn("Could not parse CONFIG for Experiment: " + name + ".", e);
+        if (env.containsFile(name)) {
+            try {
+                config = PropertyManager.DEFAULTS.newIndependentInstance(
+                        env.openFile(SiriusLocations.SIRIUS_COMPOUND_CONFIG.fileName()),
+                        "PROJECT_SPACE:" + name
+                );
+            } catch (ConfigurationException | IOException e) {
+                LOG.warn("Could not parse CONFIG for Experiment: " + name + ".", e);
+            }
         }
-
 
         if (config != null && !config.getModifiedConfigs().isEmpty())
             return new ProjectSpaceConfig(config);
