@@ -42,7 +42,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
         final DirectoryReader.ReadingEnvironment env = reader.env;
         final IdentificationResults results = result.getResults();
 
-        if (!new HashSet<>(env.list()).contains(FingerIdLocations.FINGERID_CANDIDATES.directory)) return;
+        if (results == null || !new HashSet<>(env.list()).contains(FingerIdLocations.FINGERID_CANDIDATES.directory)) return;
 
         // begin ugly
         if (readFingerprints == null) {
