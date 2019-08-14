@@ -193,8 +193,8 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         try (CloseableHttpResponse response = client.execute(get)) {
 
             final File tempFile = File.createTempFile("sirius_formula",".json.gz", output.getParentFile());
-            try (final FileOutputStream fout = new FileOutputStream(tempFile)) {
-                try (MultiplexerFileAndIO io = new MultiplexerFileAndIO(response.getEntity().getContent(), new GZIPOutputStream(fout))) {
+            try (final GZIPOutputStream fout = new GZIPOutputStream(new FileOutputStream(tempFile))) {
+                try (MultiplexerFileAndIO io = new MultiplexerFileAndIO(response.getEntity().getContent(), fout)) {
                     try (CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new InputStreamReader(io))) {
                         while (fciter.hasNext())
                             compounds.add(fciter.next());
