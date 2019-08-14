@@ -183,7 +183,8 @@ public class RESTDatabase extends AbstractChemicalDatabase {
             String biof = bioFilter == BioFilter.ONLY_BIO ? "bio/" : (bioFilter == BioFilter.ONLY_NONBIO) ? "not-bio/" : null;
             if (biof == null) throw new IllegalArgumentException();
             get = new HttpGet(getFingerIdURI("/webapi/compounds/" + biof + formula.toString() + ".json").build());
-            get.setConfig(RequestConfig.custom().setConnectTimeout(60000).build());
+            get.setConfig(RequestConfig.custom().setConnectTimeout(60000).setContentCompressionEnabled(true).build());
+
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
@@ -191,7 +192,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         final ArrayList<FingerprintCandidate> compounds = new ArrayList<>(100);
         try (CloseableHttpResponse response = client.execute(get)) {
 
-            final File tempFile = File.createTempFile("sirius_formula",".json", output.getParentFile());
+            final File tempFile = File.createTempFile("sirius_formula",".json.gz", output.getParentFile());
             try (final FileOutputStream fout = new FileOutputStream(tempFile)) {
                 try (MultiplexerFileAndIO io = new MultiplexerFileAndIO(response.getEntity().getContent(), new GZIPOutputStream(fout))) {
                     try (CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new InputStreamReader(io))) {
