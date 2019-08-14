@@ -177,7 +177,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         return candidates;
     }
 
-    private synchronized List<FingerprintCandidate> requestFormula(File output, MolecularFormula formula, BioFilter bioFilter) throws IOException {
+    private List<FingerprintCandidate> requestFormula(File output, MolecularFormula formula, BioFilter bioFilter) throws IOException {
         final HttpGet get;
         try {
             String biof = bioFilter == BioFilter.ONLY_BIO ? "bio/" : (bioFilter == BioFilter.ONLY_NONBIO) ? "not-bio/" : null;
@@ -190,11 +190,19 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         output.getParentFile().mkdirs();
         final ArrayList<FingerprintCandidate> compounds = new ArrayList<>(100);
         try (CloseableHttpResponse response = client.execute(get)) {
-            try (MultiplexerFileAndIO io = new MultiplexerFileAndIO(response.getEntity().getContent(), new GZIPOutputStream(new FileOutputStream(output)))) {
-                try (CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new InputStreamReader(io))) {
-                    while (fciter.hasNext())
-                        compounds.add(fciter.next());
+
+            final File tempFile = File.createTempFile("sirius_formula",".json", output.getParentFile());
+            try (final FileOutputStream fout = new FileOutputStream(tempFile)) {
+                try (MultiplexerFileAndIO io = new MultiplexerFileAndIO(response.getEntity().getContent(), new GZIPOutputStream(fout))) {
+                    try (CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new InputStreamReader(io))) {
+                        while (fciter.hasNext())
+                            compounds.add(fciter.next());
+                    }
                 }
+            }
+            // move tempFile
+            if (!tempFile.exists()) {
+                tempFile.renameTo(output);
             }
         }
         return compounds;
