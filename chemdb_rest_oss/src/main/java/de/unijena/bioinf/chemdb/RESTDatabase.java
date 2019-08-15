@@ -194,30 +194,18 @@ public class RESTDatabase extends AbstractChemicalDatabase {
 
             final File tempFile = File.createTempFile("sirius_formula",".json.gz", output.getParentFile());
             try (final GZIPOutputStream fout = new GZIPOutputStream(new FileOutputStream(tempFile))) {
-                StringBuilder buf = new StringBuilder();
-                try (final BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent()))) {
-                    String line;
-                    while ((line=br.readLine())!=null) {
-                        buf.append(line);buf.append('\n');
-                    }
-                }
-                fout.write(buf.toString().getBytes());
-                try (CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new StringReader(buf.toString()))) {
-                    while (fciter.hasNext())
-                        compounds.add(fciter.next());
-                }
-                /*
                 try (MultiplexerFileAndIO io = new MultiplexerFileAndIO(response.getEntity().getContent(), fout)) {
                     try (CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new InputStreamReader(io))) {
                         while (fciter.hasNext())
                             compounds.add(fciter.next());
                     }
                 }
-                 */
             }
             // move tempFile
             if (!tempFile.exists()) {
-                tempFile.renameTo(output);
+                if (!tempFile.renameTo(output)) {
+                    tempFile.delete();
+                }
             }
         }
         return compounds;
