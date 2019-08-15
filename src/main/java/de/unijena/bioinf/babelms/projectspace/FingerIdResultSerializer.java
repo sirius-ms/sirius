@@ -137,7 +137,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
         final DirectoryWriter.WritingEnvironment W = writer.env;
         final IdentificationResults results = input.getResults();
 
-        if (writer.isAllowed(FingerIdResult.CANDIDATE_LISTS) && results != null && hasFingerId(results)) {
+        if (writer.isAllowed(FingerIdResult.CANDIDATE_LISTS) && hasFingerId(results)) {
             // now write CSI:FingerID candidates
             final List<FingerIdResult> frs;
             try {
@@ -199,8 +199,9 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
         return r;
     }
 
-    private boolean hasFingerId(Iterable<IdentificationResult> results) {
-
+    private boolean hasFingerId(@Nullable Iterable<IdentificationResult> results) {
+        if (results == null )
+            return false;
         for (IdentificationResult r : results)
             if (r.hasAnnotation(FingerIdResult.class)) return true;
         return false;
