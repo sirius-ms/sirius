@@ -29,7 +29,7 @@ public class ToolChainWorkflow implements Workflow {
     protected int initialInstanceNum, maxBufferSize = 0;
 
     private final AtomicBoolean canceled = new AtomicBoolean(false);
-    WorkflowJobSubmitter submitter = null;
+    private InstanceBuffer submitter = null;
 
     public ToolChainWorkflow(SiriusProjectSpace projectSpace, PreprocessingJob preprocessingJob, ParameterConfig parameters, List<Object> toolchain) {
         this.project = projectSpace;
@@ -68,9 +68,9 @@ public class ToolChainWorkflow implements Workflow {
                     instanceJobChain.add((InstanceJob.Factory) o);
                 } else if (o instanceof DataSetJob.Factory) {
                     final DataSetJob dataSetJob = ((DataSetJob.Factory) o).makeJob();
-                    submitter = new WorkflowJobSubmitter(iteratorSource.iterator(), project, instanceJobChain, dataSetJob);
-                    submitter.start(initialInstanceNum, maxBufferSize);
-                    iteratorSource = submitter.jobManager().submitJob(dataSetJob).awaitResult();
+                    submitter = new SimpleInstanceBuffer(maxBufferSize, iteratorSource.iterator(), instanceJobChain, dataSetJob, project);
+                    submitter.start();
+                    iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(dataSetJob).awaitResult();
 
                     checkForCancellation();
                     // writing each experiment to add results to projectSpace
@@ -93,8 +93,8 @@ public class ToolChainWorkflow implements Workflow {
             // disk to not waste memory -> otherwise the whole buffer thing is useless.
             checkForCancellation();
             if (!instanceJobChain.isEmpty()) {
-                submitter = new WorkflowJobSubmitter(iteratorSource.iterator(), project, instanceJobChain, null);
-                submitter.start(initialInstanceNum, maxBufferSize);
+                submitter = new SimpleInstanceBuffer(maxBufferSize, iteratorSource.iterator(), instanceJobChain, null, project);
+                submitter.start();
                 iteratorSource = project::parseExperimentIterator;
             }
             LOG.info("Workflow has been finished! Writing Project-Space summaries...");

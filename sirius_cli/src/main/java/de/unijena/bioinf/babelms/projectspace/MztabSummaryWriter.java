@@ -10,8 +10,11 @@ public class MztabSummaryWriter implements SummaryWriter {
     @Override
     public void writeSummary(Iterable<ExperimentResult> experiments, DirectoryWriter writer) {
         MztabMExporter mztabMExporter = new MztabMExporter();
+
         for (ExperimentResult er : experiments)
-            mztabMExporter.addExperiment(er, er.getResults());
+            if (er.hasResults())
+                mztabMExporter.addExperiment(er, er.getResults());
+
         try {
             writer.write(FingerIdLocations.WORKSPACE_SUMMARY.fileName(), mztabMExporter::write);
         } catch (IOException e) {

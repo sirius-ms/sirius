@@ -17,13 +17,13 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
-class WorkflowJobSubmitter extends BufferedJJobSubmitter<ExperimentResult> {
+class ExtendableInstanceBuffer extends BufferedJJobSubmitter<ExperimentResult> {
     private final List<InstanceJob.Factory> tasks;
     private final DataSetJob dependJob;
     private final SiriusProjectSpace projectSpace;
 
 
-    public WorkflowJobSubmitter(@NotNull Iterator<ExperimentResult> instances, @NotNull SiriusProjectSpace space, @NotNull List<InstanceJob.Factory> tasks, @Nullable DataSetJob dependJob) {
+    public ExtendableInstanceBuffer(@NotNull Iterator<ExperimentResult> instances, @NotNull SiriusProjectSpace space, @NotNull List<InstanceJob.Factory> tasks, @Nullable DataSetJob dependJob) {
         super(instances);
         this.projectSpace = space;
         this.tasks = tasks;
