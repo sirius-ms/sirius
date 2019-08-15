@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @SupportedAnnotationTypes("de.unijena.bioinf.ms.properties.DefaultProperty")
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedSourceVersion(SourceVersion.RELEASE_11)
 public class PropertyAnnotationProcessor extends AbstractProcessor {
 
     @Override
