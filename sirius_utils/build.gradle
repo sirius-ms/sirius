@@ -1,0 +1,43 @@
+
+dependencies {
+    //project
+    compile project(':sirius_cli')
+
+//    compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
+
+
+    compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
+    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+
+    compile group: 'uk.ac.ebi.jmzml', name: 'jmzml', version: "1.7.4"
+}
+
+repositories {
+    maven {
+        url "http://repo.spring.io/plugins-release/" //org.antlr:com.springsource.antlr
+    }
+
+}
+
+
+
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+//sourceCompatibility = 1.8
+//targetCompatibility = 1.8
+
+mainClassName = "de.unijena.bioinf.ms.utils.UtilsCLI"
+project.ext.set("type", ['console'])
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+shadowJar {
+    baseName = 'sirius-utils'
+    classifier = null
+    version = null
+}
+
+

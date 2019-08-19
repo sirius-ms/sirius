@@ -10,17 +10,13 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.ChimericAnnotator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.LowIntensityAnnotator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.NoMs1PeakAnnotator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.QualityAnnotator;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.*;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.GibbsSampling.ZodiacUtils;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.GibbsSampling.model.distributions.*;
-import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
-import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
+import de.unijena.bioinf.GibbsSampling.model.scorer.*;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -40,6 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResult> {
     protected static Logger LOG = LoggerFactory.getLogger(ZodiacInstanceProcessor.class);
@@ -47,7 +44,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
     protected FilenameFormatter filenameFormatter;
 
     private ScoreProbabilityDistribution probabilityDistribution;
-    private List<LibraryHit> anchors;
+
     @Override
     public boolean setup() {
 
@@ -138,56 +135,39 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
     //////////////////////////////////////////////////////////////////////////////////////////
 
 
-    protected List<ExperimentResult> updateQuality(List<ExperimentResult> experimentResults, Path originalMsInformation, double isolationWindowWidth, double isolationWindowShift, Path outputDir) throws IOException {
-        final MsExperimentParser parser = new MsExperimentParser();
-        List<Ms2Experiment> rawExperiments = parser.getParser(originalMsInformation.toFile()).parseFromFile(originalMsInformation.toFile());
-        Map<String, List<Ms2Experiment>> nameToExperiment = new HashMap<>();
-        for (Ms2Experiment rawExperiment : rawExperiments) {
-            String name = rawExperiment.getName();
-            List<Ms2Experiment> experimentList = nameToExperiment.get(name);
-            if (experimentList==null){
-                //should always be the case?
-                experimentList = new ArrayList<>();
-                nameToExperiment.put(name, experimentList);
-            }
-            experimentList.add(rawExperiment);
-        }
-
+    protected List<ExperimentResult> updateQuality(List<ExperimentResult> experimentResults, double isolationWindowWidth, double isolationWindowShift, Path outputDir) throws IOException {
         List<Ms2Experiment> allExperiments = new ArrayList<>();
         for (ExperimentResult result : experimentResults) {
-            MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(result.getExperiment());
-            String name = mutableMs2Experiment.getName();
-            List<Ms2Experiment> experimentList = nameToExperiment.get(name);
-            Ms2Experiment experiment2 = null;
-            if (experimentList.size()==1){
-                experiment2 = experimentList.get(0);
-            } else if (experimentList.size()>1){
-                for (Ms2Experiment experiment : experimentList) {
-                    if (Math.abs(mutableMs2Experiment.getIonMass()-experiment.getIonMass())<1e-15){
-                        experiment2 = experiment;
-                        break;
-                    }
-                }
-            }
-            if (experiment2==null){
-                LOG.error("cannot find original MS data for compound in sirius workspace: "+mutableMs2Experiment.getName());
-            } else {
-                mutableMs2Experiment.setMergedMs1Spectrum(experiment2.getMergedMs1Spectrum());
-                mutableMs2Experiment.setMs1Spectra(experiment2.getMs1Spectra());
-                mutableMs2Experiment.setMs2Spectra(experiment2.getMs2Spectra());
-            }
-            allExperiments.add(mutableMs2Experiment);
-
+            allExperiments.add(result.getExperiment());
         }
         Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
         Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
 
+        if (options.getMedianNoiseIntensity()!=null) {
+            double medianNoiseInt = options.getMedianNoiseIntensity();
+            DatasetStatistics datasetStatistics= preprocessor.makeStatistics(dataset);
+            double minMs1Intensity = datasetStatistics.getMinMs1Intensity();
+            double maxMs1Intensity = datasetStatistics.getMaxMs1Intensity();
+            double minMs2Intensity = datasetStatistics.getMinMs2Intensity();
+            double maxMs2Intensity = datasetStatistics.getMaxMs2Intensity();
+            double minMs2NoiseIntensity = medianNoiseInt;
+            double maxMs2NoiseIntensity = medianNoiseInt;
+            double meanMs2NoiseIntensity = medianNoiseInt;
+            double medianMs2NoiseIntensity = medianNoiseInt;
+            FixedDatasetStatistics fixedDatasetStatistics = new FixedDatasetStatistics(minMs1Intensity, maxMs1Intensity, minMs2Intensity, maxMs2Intensity, minMs2NoiseIntensity, maxMs2NoiseIntensity, meanMs2NoiseIntensity, medianMs2NoiseIntensity);
+            ((MutableMs2Dataset) dataset).setDatasetStatistics(fixedDatasetStatistics);
+        }
+
         List<QualityAnnotator> qualityAnnotators = new ArrayList<>();
         qualityAnnotators.add(new NoMs1PeakAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION));
-//        qualityAnnotators.add(new FewPeaksAnnotator(Ms2DatasetPreprocessor.MIN_NUMBER_OF_PEAKS));
+        qualityAnnotators.add(new FewPeaksAnnotator(Ms2DatasetPreprocessor.MIN_NUMBER_OF_PEAKS));
         qualityAnnotators.add(new LowIntensityAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, 0.01, Double.NaN));
+//        qualityAnnotators.add(new NotMonoisotopicAnnotatorUsingIPA(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION));
         double max2ndMostIntenseRatio = 0.33;
-        double maxSummedIntensitiesRatio = 1.0;
+//        double maxSummedIntensitiesRatio = 1.0;
+        //changed
+//        double maxSummedIntensitiesRatio = 0.66;
+        double maxSummedIntensitiesRatio = 0.5;
         qualityAnnotators.add(new ChimericAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, max2ndMostIntenseRatio, maxSummedIntensitiesRatio));
 
         preprocessor.setQualityAnnotators(qualityAnnotators);
@@ -213,10 +193,12 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             }
 
 
-            if (!atLeastOneTreeExplainsSomeIntensity(trees, 0.5)){
+//            if (!atLeastOneTreeExplainsSomeIntensity(trees, 0.5)){
+            //changed
+            if (!atLeastOneTreeExplainsSomeIntensity(trees, 0.8)){
                 CompoundQuality.setProperty(experiment, SpectrumProperty.PoorlyExplained);
             }
-            if (!atLeastOneTreeExplainsSomePeaks(trees, 3)){
+            if (!atLeastOneTreeExplainsSomePeaks(trees, 5)){ //changed from 3
                 CompoundQuality.setProperty(experiment, SpectrumProperty.PoorlyExplained);
             }
 
@@ -266,6 +248,24 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
     //////////////////////////////////////////////////////////////////////////////////////////
 
     public ZodiacJJob makeZodiacJob(List<ExperimentResult> experimentResults){
+        List<LibraryHit> anchors;
+        Path libraryHitsFile = (options.getLibraryHitsFile() == null ? null : Paths.get(options.getLibraryHitsFile()));
+        try {
+            anchors = (libraryHitsFile == null) ? null : ZodiacUtils.parseLibraryHits(libraryHitsFile, experimentResults, LOG); //GNPS and in-house format
+        } catch (IOException e) {
+            LOG.error("Cannot load library hits from file.", e);
+            return null;
+        }
+        return makeZodiacJob(experimentResults, anchors);
+    }
+
+    /**
+     *
+     * @param experimentResults
+     * @param anchors may be null
+     * @return
+     */
+    public ZodiacJJob makeZodiacJob(List<ExperimentResult> experimentResults, List<LibraryHit> anchors){
         //todo problem with name/id simplification
         //todo force name = id
         int maxCandidates = (options.getNumberOfCandidates() == null ? Integer.MAX_VALUE : options.getNumberOfCandidates());
@@ -278,22 +278,88 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
 
 
 
-        Path libraryHitsFile = (options.getLibraryHitsFile() == null ? null : Paths.get(options.getLibraryHitsFile()));
-        try {
-            anchors = (libraryHitsFile == null) ? null : ZodiacUtils.parseLibraryHits(libraryHitsFile, experimentResults, LOG); //only specific GNPS format
-        } catch (IOException e) {
-            LOG.error("Cannot load library hits from file.", e);
-            return null;
+        if (options.isAllAnchorsHaveGoodQuality()){
+            //todo this is a hack to use all library hits
+            //lots of copy to ensure the "good quality" properties don't get passed to the next run.
+            experimentResults = experimentResults.stream().map(e-> new ExperimentResult(new MutableMs2Experiment(e.getExperiment()), e.getResults())).collect(Collectors.toList());
+            for (LibraryHit anchor : anchors) {
+                for (ExperimentResult experimentResult : experimentResults) {
+                    if (anchor.getQueryExperiment().getName().equals(experimentResult.getExperiment().getName())){
+                        for (IdentificationResult result : experimentResult.getResults()) {
+                            if (anchor.getMolecularFormula().subtract(result.getMolecularFormula()).equals(MolecularFormula.emptyFormula())){
+                                experimentResult.getExperiment().setAnnotation(CompoundQuality.class, null);
+                                CompoundQuality.setProperty(experimentResult.getExperiment(), SpectrumProperty.Good);
+                            }
+
+                        }
+                    }
+                }
+            }
         }
 
 
+        if (options.isFixAnchors()){
+            //todo inefficient, just for eval?
+            //remove additional candidates for compounds with anchors.
+//            experimentResults = experimentResults.stream().map(e-> new ExperimentResult(new MutableMs2Experiment(e.getExperiment()), e.getResults())).collect(Collectors.toList());
+            List<ExperimentResult> newExperimentResults = new ArrayList<>();
+
+            Map<String, LibraryHit> anchorsMap = new HashMap<>();
+            for (LibraryHit anchor : anchors) {
+                if (anchorsMap.get(anchor.getQueryExperiment().getName())!=null) {
+                    throw new IllegalArgumentException("multiple anchors for the same compounds id");
+                }
+                anchorsMap.put(anchor.getQueryExperiment().getName(), anchor);
+            }
+            for (ExperimentResult experimentResult : experimentResults) {
+                String expName = experimentResult.getExperiment().getName();
+                LibraryHit anchor = anchorsMap.get(expName);
+                if (anchor!=null && anchor.getQueryExperiment().getName().equals(experimentResult.getExperiment().getName())){
+                    IdentificationResult agreeingWithAnchor = null;
+                    for (IdentificationResult result : experimentResult.getResults()) {
+                        if (anchor.getMolecularFormula().subtract(result.getMolecularFormula()).equals(MolecularFormula.emptyFormula())){
+                            agreeingWithAnchor = result;
+                            break;
+                        }
+                    }
+                    if (agreeingWithAnchor==null) {
+                        LOG.warn("anchor MF not contained in candidate list: "+anchor.getMolecularFormula()+" for "+experimentResult.getExperiment().getName());
+                        newExperimentResults.add(experimentResult);
+                    } else {
+                        ExperimentResult newResult = new ExperimentResult(experimentResult.getExperiment(), Collections.singletonList(agreeingWithAnchor), experimentResult.getExperimentSource(), experimentResult.getExperimentName());
+                        newExperimentResults.add(newResult);
+
+                    }
+                } else {
+                    newExperimentResults.add(experimentResult);
+                }
+            }
+
+            experimentResults = newExperimentResults;
+
+
+        }
+
+        if (options.isRunGoodQualityOnly()) {
+            //todo inefficient, just for eval?
+            List<ExperimentResult> newExperimentResults = new ArrayList<>();
+
+            for (ExperimentResult experimentResult : experimentResults) {
+                if (CompoundQuality.isNotBadQuality(experimentResult.getExperiment())){
+                    newExperimentResults.add(experimentResult);
+                }
+            }
+            LOG.info("run with good quality compounds only: "+newExperimentResults.size()+" out of "+experimentResults.size());
+            experimentResults = newExperimentResults;
+        }
 
         //todo init here (not setup) and not in setup because it might store infos after one run!?
         NodeScorer[] nodeScorers;
-        boolean useLibraryHits = (anchors != null);
+        boolean useLibraryHits = (anchors != null && !options.isFixAnchors());
         double libraryLambda = options.getLibraryScoreLambda();//todo which lambda to use!?
         double lowestCosine = options.getLowestCosine();
         if (useLibraryHits) {
+            LOG.info("use library hits as anchors.");
             Reaction[] reactions = ZodiacUtils.parseReactions(1);
             Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
             for (Reaction reaction : reactions) {
@@ -324,14 +390,26 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
 
         double minimumOverlap = 0.0D;
         ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer;
-        if (options.isEstimateDistribution()) {
-            commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
+        CommonFragmentAndLossScorer c;
+//        if (options.isUseTreeScoresForScoring()){
+//            c = new CommonFragmentAndLossWithTreeScoresScorer(minimumOverlap);
+        //changed
+        if (options.isUsePeakIntensityForScoring()){
+//            c = new CommonFragmentAndLossScorerNoiseIntensityWeighted(minimumOverlap, options.getMedianNoiseIntensity());
+            c = new CommonFragmentAndLossScorerNoiseIntensityWeighted(minimumOverlap);
         } else {
-            commonFragmentAndLossScorer = new ScoreProbabilityDistributionFix(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
+            c = new CommonFragmentAndLossScorer(minimumOverlap);
+        }
+        if (options.isEstimateDistribution()) {
+            commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(c, probabilityDistribution, options.getThresholdFilter());
+        } else {
+            commonFragmentAndLossScorer = new ScoreProbabilityDistributionFix(c, probabilityDistribution, options.getThresholdFilter());
         }
 
-        EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
+//        SameIonizationScorer sameIonizationScorer = new SameIonizationScorer();
+//        EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer, sameIonizationScorer};
 
+        EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
 
         ZodiacJJob zodiacJJob = new ZodiacJJob(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, options.getIterationSteps(), options.getBurnInSteps(), options.getSeparateRuns(), options.isClusterCompounds(), !options.isOnlyOneStepZodiac());
 
@@ -360,15 +438,49 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         writeSpectra(ids, result, experimentResultMap, outputPath, filenameFormatter);
     }
 
+    public void writeCrossvalidationAnchors(List<LibraryHit>[] libraryBatches) throws IOException {
+        Path outputPath = Paths.get(options.getOutput());
+        Path libraryHitsCVPath = outputPath.resolve("anchors_crossvalidation.csv");
+
+        BufferedWriter writer = Files.newBufferedWriter(libraryHitsCVPath, Charset.defaultCharset());
+        writer.write("batch" + SEP + "queryId" + SEP + "libraryPrecursorMass" + SEP + "queryPrecursorMass" + SEP + "queryEstimatedFormula" + SEP + "libraryStructure" + SEP + "libraryAdduct" + SEP + "cosine" + SEP + "sharePeaks");
+        for (int i = 0; i < libraryBatches.length; i++) {
+            List<LibraryHit> libraryBatch = libraryBatches[i];
+            for (LibraryHit libraryHit : libraryBatch) {
+                writer.newLine();
+                StringJoiner joiner = new StringJoiner(SEP);
+                joiner.add(Integer.toString(i));
+                joiner.add(libraryHit.getQueryExperiment().getName());
+                joiner.add(Double.toString(libraryHit.getPrecursorMz()));
+                joiner.add(Double.toString(libraryHit.getQueryExperiment().getIonMass()));
+                joiner.add(libraryHit.getMolecularFormula().formatByHill());
+                joiner.add(libraryHit.getStructure()==null?"":libraryHit.getStructure());
+                joiner.add(libraryHit.getIonType()==null?"":libraryHit.getIonType().toString());
+                joiner.add(Double.toString(libraryHit.getCosine()));
+                joiner.add(Integer.toString(libraryHit.getSharedPeaks()));
+                writer.write(joiner.toString());
+            }
+        }
+        writer.close();
+    }
+
+    public void writeResultsWithoutClusters(List<ExperimentResult> input, String[] zodiacIds, CompoundResult<FragmentsCandidate>[] zodiacResults) throws IOException {
+        Path outputPath = Paths.get(options.getOutput());
+
+        Map<String, ExperimentResult> experimentResultMap = createMap(input);
+        Scored<IdentificationResult>[] bestInitial = bestInitial(zodiacIds, experimentResultMap);
+        writeZodiacOutput(zodiacIds, bestInitial, zodiacResults, outputPath.resolve("zodiac_summary.csv"));
+        writeSpectra(zodiacIds, zodiacResults, experimentResultMap, outputPath, filenameFormatter);
+    }
+
     private final static int NUMBER_OF_HITS = Integer.MAX_VALUE;
     private final static String SEP = "\t";
     public static void writeZodiacOutput(String[] ids, Scored<IdentificationResult>[] initial, CompoundResult<FragmentsCandidate>[] result, Path outputPath) throws IOException {
         BufferedWriter writer = Files.newBufferedWriter(outputPath, Charset.defaultCharset());
-        writer.write("id" + SEP + "quality" + SEP + "precursorMass"+ SEP + "ionsByMs1" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "connectedCompounds" + SEP + "biggestTreeSize" + SEP + "maxExplainedIntensity" + SEP + "ZodiacMF" + SEP + "ZodiacMFIon"+ SEP + "ZodiacScore" + SEP + "treeSize");
-
+        writer.write("id" + SEP + "quality" + SEP + "precursorMass"+ SEP + "ionsByMs1" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "numberOfCandidates" + SEP + "hasDummy" + SEP + "connectedCompounds" + SEP + "biggestTreeSize" + SEP + "maxExplainedIntensity" + SEP + "ZodiacMF" + SEP + "ZodiacMFIon"+ SEP + "ZodiacScore" + SEP + "treeSize" + SEP + "explainedIntensity");
         int maxCandidates = maxNumberOfCandidates(result);
         for (int i = 2; i <= maxCandidates; i++) {
-            writer.write(SEP + "ZodiacMF" + String.valueOf(i) + SEP + "ZodiacMFIon" + String.valueOf(i) + SEP + "ZodiacScore" + String.valueOf(i) + SEP + "treeSize" + String.valueOf(i) );
+            writer.write(SEP + "ZodiacMF" + String.valueOf(i) + SEP + "ZodiacMFIon" + String.valueOf(i) + SEP + "ZodiacScore" + String.valueOf(i) + SEP + "treeSize" + String.valueOf(i) + SEP + "explainedIntensity" + String.valueOf(i));
         }
 
         for (int i = 0; i < ids.length; i++) {
@@ -377,8 +489,8 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
 
             if (!id.equals(id2)) throw new RuntimeException("different ids: "+id+" vs "+id2);
 
-            final String siriusMF = initial[i].getCandidate().getMolecularFormula().formatByHill();
-            final double siriusScore = initial[i].getScore();
+            final String siriusMF = initial[i]==null?null:initial[i].getCandidate().getMolecularFormula().formatByHill();
+            final double siriusScore = initial[i]==null?Double.NaN:initial[i].getScore();
 
             int connections = result[i].getAnnotationOrThrow(Connectivity.class).getNumberOfConnectedCompounds();
             String summeryLine = createSummaryLine(id, siriusMF, siriusScore, connections, result[i].getCandidates());
@@ -406,14 +518,18 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         if (result.length>0){
             Ms2Experiment experiment = result[0].getCandidate().getExperiment();
             //TODO hack: this don't have to be the ions used for SIRIUS computation in the first place!
-            PrecursorIonType[] ms1IonModes = getIonsFromMs1Hack(experiment, sirius);
+            Sirius.GuessIonizationFromMs1Result guessIonization = getIonsFromMs1Hack(experiment, sirius);
+            PrecursorIonType[] ms1IonModes = guessIonization.getGuessedIonTypes();
             if (ms1IonModes!=null && ms1IonModes.length>=1){
                 ionsByMs1 = ms1IonModes[0].toString();
                 for (int i = 1; i < ms1IonModes.length; i++) {
-                    ionsByMs1 += ms1IonModes[i].toString();
-
+                    ionsByMs1 += ","+ms1IonModes[i].toString();
                 }
+            } else {
+                ionsByMs1 = "None";
             }
+
+            ionsByMs1 += ":"+guessIonization.getGuessingSource();
 
             CompoundQuality compoundQuality = experiment.getAnnotation(CompoundQuality.class, null);
             precursorMass = experiment.getIonMass();
@@ -422,9 +538,13 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
 
         int biggestTreeSize = -1;
         double maxExplainedIntensity = 0;
+        boolean hasDummy = false;
         for (Scored<FragmentsCandidate> scoredCandidate : result) {
             FragmentsCandidate candidate = scoredCandidate.getCandidate();
-            if (DummyFragmentCandidate.isDummy(candidate)) continue;
+            if (DummyFragmentCandidate.isDummy(candidate)){
+                hasDummy = true;
+                continue;
+            }
             final int treeSize = candidate.getFragments().length;
             final FTree tree = candidate.getAnnotation(FTree.class);
             final double intensity = tree.getAnnotationOrThrow(TreeScoring.class).getExplainedIntensity();
@@ -445,6 +565,10 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         builder.append(SEP);
         builder.append(Double.toString(siriusScore));
         builder.append(SEP);
+        builder.append(String.valueOf(result.length)); //numberOfCandidates
+        builder.append(SEP);
+        builder.append(String.valueOf(hasDummy));
+        builder.append(SEP);
         builder.append(numberConnections);
         builder.append(SEP);
         builder.append(biggestTreeSize);
@@ -459,11 +583,14 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             final String mf = candidate.getFormula().formatByHill();
             final String ion = candidate.getIonType().toString();
             final double score = currentResult.getScore();
-            final double treeSize;
+            final double treeSize, explIntensity;
             if (DummyFragmentCandidate.isDummy(candidate)){
                 treeSize = -1;
+                explIntensity = -1;
             } else {
                 treeSize = currentResult.getCandidate().getFragments().length;//number of fragments = treeSize
+                final FTree tree = candidate.getAnnotation(FTree.class);
+                explIntensity = tree.getAnnotationOrThrow(TreeScoring.class).getExplainedIntensity();
             }
 
 //            if (score <= 0) break; //don't write MF with 0 probability
@@ -476,11 +603,13 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             builder.append(Double.toString(score));
             builder.append(SEP);
             builder.append(Double.toString(treeSize));
+            builder.append(SEP);
+            builder.append(Double.toString(explIntensity));
         }
         return builder.toString();
     }
 
-    private static PrecursorIonType[] getIonsFromMs1Hack(Ms2Experiment experiment, Sirius sirius){
+    private static Sirius.GuessIonizationFromMs1Result getIonsFromMs1Hack(Ms2Experiment experiment, Sirius sirius){
         MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
         PossibleAdducts pa =  new PossibleAdducts(Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(mutableMs2Experiment.getPrecursorIonType().getCharge()), PrecursorIonType.class));
 
@@ -489,8 +618,7 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
         for (Ionization ion : ionModes) {
             allowedIonModes.add(PrecursorIonType.getPrecursorIonType(ion));
         }
-        PrecursorIonType[] ms1IonModes = sirius.guessIonization(mutableMs2Experiment, allowedIonModes.toArray(new PrecursorIonType[0]));
-        return ms1IonModes;
+        return sirius.guessIonization(mutableMs2Experiment, allowedIonModes.toArray(new PrecursorIonType[0]));
     }
 
     public Scored<IdentificationResult>[] bestInitial(String[] ids, Map<String, ExperimentResult> experimentResultMap){
@@ -499,6 +627,10 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
             String id = ids[i];
             ExperimentResult result = experimentResultMap.get(id);
 
+            if (result.getResults().size()==0){
+                best[i] = null;
+                continue;
+            }
 
             //normalize
             double max = Double.NEGATIVE_INFINITY;
@@ -530,7 +662,8 @@ public class ZodiacInstanceProcessor implements InstanceProcessor<ExperimentResu
     public Map<String, ExperimentResult> createMap(List<ExperimentResult> experimentResults){
         Map<String, ExperimentResult> map = new HashMap<>();
         for (ExperimentResult experimentResult : experimentResults) {
-            map.put(experimentResult.getExperimentName(), experimentResult);
+            //todo use something else as id since name does not have to be unique
+            map.put(experimentResult.getExperiment().getName(), experimentResult);
         }
         return map;
     }

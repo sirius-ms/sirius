@@ -32,6 +32,7 @@ public interface ZodiacOptions {
     String getSirius();
 
     //todo @Marcus for the future this should ne replaced with the sirius input property if possible
+    @Deprecated
     @Option(
             longName = {"spectra"},
             description = "The file of spectra (.mgf) which was used to compute the trees",
@@ -159,10 +160,95 @@ public interface ZodiacOptions {
     boolean isOnlyComputeStats();
 
     @Option(
+            longName = {"ms2-median-noise"},
+            description = "Set MS2 median noise intensity - else it is estimated. This is used to count the number of MS2 peaks to gauge spectrum quality.",
+            defaultToNull = true
+    )
+    Double getMedianNoiseIntensity();
+
+    @Option(
             longName = {"ignore-spectra-quality"},
             description = "As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining."
     )
     boolean isOnlyOneStepZodiac();
+
+//    @Option(
+//            longName = {"tree-scores"},
+//            description = "Use the probabilistic scores from fragmentation trees instead of count scoring."
+//    )
+//    boolean isUseTreeScoresForScoring();
+//
+    @Option(
+            longName = {"intensity-scores"},
+            description = "Use the probabilistic peak is no noise scores."
+    )
+    boolean isUsePeakIntensityForScoring();
+
+
+    @Option(
+            longName = {"cross-validation"},
+            description = "Doing a cross validation on the library anchors. Expects the number of folds as input.",
+            defaultToNull = true,
+            hidden = true
+    )
+    Integer getCrossvalidationNumberOfFolds();
+
+//some evaluation parameters
+    @Option(
+            longName = {"compound-disjoint-cv"},
+            description = "Doing a compound structure disjoint cross validation and not a library structure disjoint evaluation.",
+            hidden = true
+    )
+    boolean isCompoundDisjointCV();
+
+    @Option(
+            longName = {"random-cv"},
+            description = "Randomly put library hits into bins.",
+            hidden = true
+    )
+    boolean isRandomCV();
+
+    @Option(
+            longName = {"mf-disjoint-cv"},
+            description = "Cross validation on the estimated molecular formulas of compounds with anchors.",
+            hidden = true
+    )
+    boolean isMFDisjointCV();
+
+
+    @Option(
+            longName = {"all-anchors-good-hack"},
+            description = "Treat all compounds with library anchor as 'Good quality' which means they are always used for ZODIAC optimization",
+            hidden = true
+    )
+    boolean isAllAnchorsHaveGoodQuality();
+
+    @Option(
+            longName = {"exclude-bad-quality-anchors-hack"},
+            description = "Exclude all compounds with library anchors with 'Bad quality'. This has influence on the cross-validation bins.",
+            hidden = true
+    )
+    boolean isExcludeBadQualityAnchors();
+
+    @Option(
+            longName = {"fix-anchors"},
+            description = "For anchors: remove all other candidates and do not additionally score agreeing MF.",
+            hidden = true
+    )
+    boolean isFixAnchors();
+
+    @Option(
+            longName = {"run-good-quality-only"},
+            description = "do not run another round of Gibbs sampling for the bad quality spectra."
+    )
+    boolean isRunGoodQualityOnly();
+
+
+    @Option(
+            longName = {"compute-compounds-without-library-hits"},
+            description = "In cross-validation: also compute and output results for compounds without library hit."
+    )
+    boolean isComputeResultsForCompoundsWithoutLibraryHits();
 
     @Option(shortName = "h", longName = "help", helpRequest = true)
     boolean isHelp();

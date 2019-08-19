@@ -218,8 +218,12 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         sirius.setIsotopeMode(i.experiment, options.getIsotopes());
         if (whiteset != null) sirius.setFormulaSearchList(i.experiment, whiteset);
 
-        job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
+        job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates(), getNumberOfCandidatesPerIonization()));
         return job;
+    }
+
+    private Integer getNumberOfCandidatesPerIonization() {
+        return options.getNumberOfCandidatesPerIonization() != null ? options.getNumberOfCandidatesPerIonization() : -1;
     }
 
     /*

@@ -461,7 +461,7 @@ public class Zodiac {
         for (Ionization ion : ionModes) {
             allowedIonModes.add(PrecursorIonType.getPrecursorIonType(ion));
         }
-        PrecursorIonType[] ms1IonModes = sirius.guessIonization(mutableMs2Experiment, allowedIonModes.toArray(new PrecursorIonType[0]));
+        PrecursorIonType[] ms1IonModes = sirius.guessIonization(mutableMs2Experiment, allowedIonModes.toArray(new PrecursorIonType[0])).getGuessedIonTypes();
         return ms1IonModes;
     }
 
