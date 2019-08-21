@@ -1,5 +1,6 @@
 package de.unijena.bioinf.babelms.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
@@ -26,6 +27,16 @@ import java.util.stream.Collectors;
 public class DirectoryReader implements ProjectReader {
     protected static final Logger LOG = LoggerFactory.getLogger(DirectoryReader.class);
     private final static Pattern INDEX_PATTERN = Pattern.compile("^(\\d+)_");
+
+    protected HashMap<String, MolecularFormula> formulaCache = new HashMap<>();
+
+    public HashMap<String, MolecularFormula> getFormulaCache() {
+        return formulaCache;
+    }
+
+    public void clearCache() {
+        formulaCache = new HashMap<>();
+    }
 
     public interface ReadingEnvironment {
 
