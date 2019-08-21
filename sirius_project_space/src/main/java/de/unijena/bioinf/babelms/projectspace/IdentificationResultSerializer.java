@@ -1,5 +1,6 @@
 package de.unijena.bioinf.babelms.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
@@ -13,10 +14,7 @@ import de.unijena.bioinf.sirius.IdentificationResults;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,7 +24,7 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
     //API Methods
     @Override
     public void read(@NotNull final ExperimentResult result, @NotNull final DirectoryReader reader, @NotNull final Set<String> names) throws IOException {
-
+        final HashMap<String, MolecularFormula> cache = reader.formulaCache;
         // read trees
         if (names.contains(SiriusLocations.SIRIUS_TREES_JSON.directory)) {
             final List<IdentificationResult> results = new ArrayList<>();
@@ -40,7 +38,7 @@ public class IdentificationResultSerializer implements MetaDataSerializer {
                     m.matches();
                     final int rank = Integer.parseInt(m.group(1));
                     final FTree tree = reader.env.read(s, r ->
-                            new FTJsonReader().parse(FileUtils.ensureBuffering(r), reader.env.absolutePath(result.getAnnotationOrThrow(ExperimentDirectory.class).getDirectoryName() + "/"
+                            new FTJsonReader(cache).parse(FileUtils.ensureBuffering(r), reader.env.absolutePath(result.getAnnotationOrThrow(ExperimentDirectory.class).getDirectoryName() + "/"
                                     + SiriusLocations.SIRIUS_TREES_JSON.directory + "/" + s))
                     );
                     results.add(new IdentificationResult(tree, rank));

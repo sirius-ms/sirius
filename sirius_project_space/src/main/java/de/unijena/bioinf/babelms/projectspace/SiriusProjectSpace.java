@@ -202,6 +202,8 @@ public class SiriusProjectSpace implements ProjectSpace {
             }
         });
 
+        reader.clearCache();
+
         return expDirs;
     }
 
