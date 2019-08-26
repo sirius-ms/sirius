@@ -52,6 +52,8 @@ public class Aligner {
         Arrays.sort(allFeatures, Comparator.comparingDouble(u -> u.rt));
         int featureID = 0;
         for (AlignedFeatures f : allFeatures) {
+            if (Math.abs(f.chargeState)>1)
+                continue; // ignore multiple charged compounds
             final double mass = f.getMass();
             final TLongArrayList retentionTimes = new TLongArrayList();
             final TDoubleArrayList collision_energies = new TDoubleArrayList();
@@ -122,19 +124,25 @@ public class Aligner {
     }
 
     public double estimateErrorTerm(List<ProcessedSample> samples) {
-        // start with the median distance of consecutive features as initial error term
+        // start with the 15% percentile distance of consecutive features with same mz as initial error term
         TDoubleArrayList distances = new TDoubleArrayList();
         for (ProcessedSample s : samples) {
-            final ArrayList<FragmentedIon> ions = new ArrayList<>(s.ions);
-            ions.sort(Comparator.comparingLong(FragmentedIon::getRetentionTime));
-            for (int k=5, n=s.ions.size(); k < n; ++k) {
-                for (int j=1; j < 5; ++j) {
-                    distances.add(s.getRecalibratedRT(ions.get(k).getRetentionTime())-s.getRecalibratedRT(ions.get(k-j).getRetentionTime()));
+            // binned ions
+            final TIntObjectHashMap<List<FragmentedIon>> binnedIons = new TIntObjectHashMap<>();
+            for (FragmentedIon f : s.ions) {
+                int m = (int)Math.round(f.getMass()*100);
+                if (!binnedIons.containsKey(m)) binnedIons.put(m, new ArrayList<>());
+                binnedIons.get(m).add(f);
+            }
+            binnedIons.forEachValue(x->{x.sort(Comparator.comparingDouble(y->y.getRetentionTime())); return true;});
+            for (List<FragmentedIon> ionList : binnedIons.valueCollection()) {
+                for (int j=1; j < ionList.size(); ++j) {
+                    distances.add(ionList.get(j).getRetentionTime()-ionList.get(j-1).getRetentionTime());
                 }
             }
         }
         distances.sort();
-        final double error = distances.getQuick(distances.size() / 2);
+        final double error = distances.getQuick((int)Math.floor(distances.size() * 0.15));
         if (error <= 0) {
             System.out.println(Arrays.toString(distances.toArray()));
             System.exit(0);

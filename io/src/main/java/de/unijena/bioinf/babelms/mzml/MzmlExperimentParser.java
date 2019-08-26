@@ -1,5 +1,6 @@
 package de.unijena.bioinf.babelms.mzml;
 
+import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.Parser;
@@ -34,7 +35,7 @@ public class MzmlExperimentParser implements Parser<Ms2Experiment> {
             LCMSRun run = parser.parse(new DataSource(source), new InputSource(reader), inMemoryStorage);
             sample = instance.addSample(run, inMemoryStorage);
             instance.detectFeatures(sample);
-            ions = sample.ions.iterator();
+            ions = Iterators.filter(sample.ions.iterator(), i->Math.abs(i.getChargeState())<=1);
         }
 
         if (ions.hasNext()) {

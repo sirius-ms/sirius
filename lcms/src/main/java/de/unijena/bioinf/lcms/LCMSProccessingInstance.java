@@ -53,7 +53,7 @@ public class LCMSProccessingInstance {
         final SimpleSpectrum spec2 = Spectrums.extractMostIntensivePeaks(spec, 8, 100);
         final Scan scan = new Scan(id, merged.getScans().get(0).getPolarity(),peak.getRetentionTimeAt(segment.getApexIndex()), merged.getScans().get(0).getCollisionEnergy(),spec.size(), Spectrums.calculateTIC(spec), merged.getPrecursor());
         ms2Storage.add(scan, spec);
-        return new FragmentedIon(scan, new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20))).createQueryWithIntensityTransformationNoLoss(spec2, merged.getPrecursor().getMass(), true), merged.getQuality(), peak, segment);
+        return new FragmentedIon(merged.getScans().get(0).getPolarity(), scan, new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20))).createQueryWithIntensityTransformationNoLoss(spec2, merged.getPrecursor().getMass(), true), merged.getQuality(), peak, segment);
     }
 
 
@@ -82,7 +82,7 @@ public class LCMSProccessingInstance {
             if (ion.getMsMsScan()!=null && ion.getMsMsScan().getPolarity()!=null) {
                 charge = ion.getMsMsScan().getPolarity().charge;
             } else {
-                LoggerFactory.getLogger(LCMSProccessingInstance.class).warn("Unknown polarity. Set polarity to POSITIVE");
+                //LoggerFactory.getLogger(LCMSProccessingInstance.class).warn("Unknown polarity. Set polarity to POSITIVE");
                 charge = 1;
             }
         }

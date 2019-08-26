@@ -135,24 +135,34 @@ public class Cluster {
 
     public double estimateError() {
         final TDoubleArrayList values = new TDoubleArrayList();
+        final TDoubleArrayList buf = new TDoubleArrayList();
         final int thr = Math.max(2,Math.min(10,(int)Math.ceil(this.mergedSamples.size()*0.2)));
+        int count=0;
         for (AlignedFeatures f : features) {
-            if (f.getFeatures().size() < thr)
-                continue;
             final ArrayList<ProcessedSample> xs = new ArrayList<>(f.features.keySet());
             for (int i=0; i < xs.size(); ++i) {
-                for (int j=0; j < i; ++j) {
-                    values.add(Math.pow(xs.get(i).getRecalibratedRT(f.features.get(xs.get(i)).getRetentionTime()) - xs.get(j).getRecalibratedRT(f.features.get(xs.get(j)).getRetentionTime()), 2));
+                if (f.features.get(xs.get(i)).getPeakShape().getPeakShapeQuality().betterThan(Quality.BAD)) {
+                    for (int j=0; j < i; ++j) {
+                        if (f.features.get(xs.get(j)).getPeakShape().getPeakShapeQuality().betterThan(Quality.BAD)) {
+                            buf.add(Math.abs(xs.get(i).getRecalibratedRT(f.features.get(xs.get(i)).getRetentionTime()) - xs.get(j).getRecalibratedRT(f.features.get(xs.get(j)).getRetentionTime())));
+                        }
+                    }
                 }
             }
+            if (buf.size()>=thr) {
+                values.addAll(buf);
+                ++count;
+            }
+            buf.clear();
         }
         values.sort();
         double mean = 0d;
-        int k=(int)(values.size()*0.25), n =(int)(values.size()*0.75);
-        for (int i=0; i < n; ++i) {
+        int k=(int)(values.size()*0.25), n =(int)(values.size()*0.95);
+        for (int i=k; i < n; ++i) {
             mean += values.getQuick(i);
         }
-        return Math.sqrt(mean/(n-k));
+        System.out.println("USED " + count + " features for error estimation. Mean error is " + (mean/(n-k)));
+        return (mean/(n-k));
     }
     public double estimatePeakShapeError() {
         final TDoubleArrayList values = new TDoubleArrayList();

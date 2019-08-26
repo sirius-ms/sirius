@@ -17,15 +17,21 @@ public class FragmentedIon extends IonGroup {
     protected PeakShape peakShape;
     protected int alignments=0; // internal counter
     protected Quality ms2Quality;
+    protected Polarity polarity;
 
-    public FragmentedIon(Scan ms2Scan, CosineQuerySpectrum msms, Quality ms2Quality, ChromatographicPeak chromatographicPeak,ChromatographicPeak.Segment segment) {
+    public FragmentedIon(Polarity polarity, Scan ms2Scan, CosineQuerySpectrum msms, Quality ms2Quality, ChromatographicPeak chromatographicPeak,ChromatographicPeak.Segment segment) {
         super(chromatographicPeak, segment, new ArrayList<>());
+        this.polarity = polarity;
         this.msms = msms;
         this.ms2Scan = ms2Scan;
         this.adducts = new ArrayList<>();
         this.inSourceFragments = new ArrayList<>();
         this.ms2Quality = ms2Quality;
 
+    }
+
+    public int getPolarity() {
+        return polarity.charge;
     }
 
     public synchronized void incrementAlignments() {

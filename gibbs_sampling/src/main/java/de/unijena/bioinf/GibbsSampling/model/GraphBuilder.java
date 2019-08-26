@@ -162,6 +162,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
         size = graph.getSize();
         step = Math.max(size/20, 1);
         updateProgress(0, size,0, "Computing edges");
+        final List<BasicJJob> subJobs = new ArrayList<>();
         for(int i = 0; i < size; ++i) {
             final int final_i = i;
             final C candidate = graph.getPossibleFormulas1D(i).getCandidate();
@@ -197,11 +198,11 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
 
             job.addPropertyChangeListener(this);
-            submitSubJob(job);
+            subJobs.add(submitSubJob(job));
         }
 
-        awaitAllSubJobs();
-
+        //awaitAllSubJobs();
+        for (BasicJJob job : subJobs) job.takeResult();
     }
 
 
