@@ -132,8 +132,8 @@ public class CanopusResultSerializer implements MetaDataSerializer, SummaryWrite
                         }
                         for (FPIter iter : r.getCanopusFingerprint()) {
                             float prob = (float) iter.getProbability();
-                            if (prob < 0.1f) prob = 0f;
-                            if (prob > 0.9f) prob = 1f;
+                            if (prob < 0.01f) prob = 0f;
+                            if (prob > 0.99f) prob = 1f;
                             if (prob > 0f)
                                 canopusSummary.adjustOrPutValue(iter.getIndex(), prob, prob);
                         }
@@ -155,7 +155,7 @@ public class CanopusResultSerializer implements MetaDataSerializer, SummaryWrite
                 int k = 0;
                 for (int index : indizes) {
                     final ClassyfireProperty prop = (ClassyfireProperty) finalCanopusVersion.getMolecularProperty(index);
-                    w.write(String.format(Locale.US, "%d\tCHEMONT:%07d\t%s\t%.1f\t%s\n", k, prop.getChemOntId(), prop.getName(), canopusSummary.get(index), prop.getDescription()));
+                    w.write(String.format(Locale.US, "%d\tCHEMONT:%07d\t%s\t%.1f\t%s\n", k++, prop.getChemOntId(), prop.getName(), canopusSummary.get(index), prop.getDescription()));
                 }
             });
 
