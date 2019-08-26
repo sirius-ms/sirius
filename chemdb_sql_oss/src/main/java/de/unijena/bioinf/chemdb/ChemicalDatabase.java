@@ -156,6 +156,15 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         return 0;
     }
 
+    public void checkConnections(int secondsBetweenEachCheck) throws SQLException {
+        try {
+            this.connection.testConnectionsAfter(secondsBetweenEachCheck);
+        } catch (IOException e) {
+            throw new SQLException(e);
+        }
+    }
+
+
     /**
      * Search for molecular formulas in the database
      *
