@@ -33,7 +33,8 @@ public class CanopusSubToolJob extends InstanceJob {
 
         // check for valid input
         if (res.size() < 1)
-            throw new IllegalArgumentException("No FingerID Result available for compound class prediction");
+            return; // nothing to do
+            //throw new IllegalArgumentException("No FingerID Result available for compound class prediction");
 
         // submit canopus jobs for Identification results that contain CSI:FingerID results
         res.stream().map(this::buildAndSubmit).forEach(CanopusJJob::takeAndAnnotateResult);
