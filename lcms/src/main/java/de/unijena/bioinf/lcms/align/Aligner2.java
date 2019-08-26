@@ -136,11 +136,21 @@ public class Aligner2 {
 
     private float getScore(AlignedFeatures f, ProcessedSample s, FragmentedIon ion) {
         final double rightRt = s.getRecalibratedRT(ion.getRetentionTime());
-        if (!dev.inErrorWindow(f.getMass(),ion.getMass()) || !f.chargeStateIsNotDifferent(ion.getChargeState()) || Math.abs(f.rt - rightRt) > 5*retentionTimeError)
+        if (!dev.inErrorWindow(f.getMass(),ion.getMass()) || !f.chargeStateIsNotDifferent(ion.getChargeState()) || Math.abs(f.rt - rightRt) > 8*retentionTimeError)
             return 0f;
 
         double peakShapeScore  = 0d;
         double peakHeightScore = 0d;
+
+        double maxSigInt = 0d;
+        for (Map.Entry<ProcessedSample,FragmentedIon> x : f.features.entrySet()) {
+            maxSigInt+=x.getKey().ms1NoiseModel.getSignalLevel(x.getValue().getSegment().getApexScanNumber(),x.getValue().getMass());
+        }
+        maxSigInt /= f.features.size();
+        maxSigInt *= 100;
+
+        double intensityScore = 0d;
+
         for (FragmentedIon ia : f.features.values()) {
             peakShapeScore += ia.comparePeakWidthSmallToLarge(ion);
             double h = Math.log(f.peakHeight / ion.getIntensity());
@@ -148,7 +158,11 @@ public class Aligner2 {
             double w = Math.log(f.peakWidth / ion.getSegment().fwhm());
             w *= w;
             peakHeightScore += Math.max(0.05, Math.exp(-1.5*h*w));
+
+            intensityScore += (Math.min(maxSigInt,ia.getIntensity())/maxSigInt) * (Math.min(maxSigInt,ion.getIntensity()))/maxSigInt;
         }
+        intensityScore /= f.features.size();
+
         peakHeightScore /= f.features.size();
         peakShapeScore /= f.features.size();
         if (peakShapeScore >= 1) {
@@ -158,12 +172,14 @@ public class Aligner2 {
         final double gamma = 1d/(2*retentionTimeError*retentionTimeError);
         final double retentionTimeScore = Math.exp(-gamma * (f.rt - rightRt)*(f.rt - rightRt));
 
-        final double finalScore;
+        double finalScore;
         if (f.getRepresentativeIon()!=null && f.getRepresentativeIon().getMsMs()!=null && ion.getMsMs()!=null) {
             SpectralSimilarity cosineScore = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(dev)).cosineProduct(f.getRepresentativeIon().getMsMs(), ion.getMsMs());
 
-            if (cosineScore.shardPeaks>=3 && cosineScore.similarity>=0.5) {
-                finalScore = peakShapeScore*peakHeightScore*retentionTimeScore*(cosineScore.similarity + cosineScore.shardPeaks/6d);
+            if (cosineScore.shardPeaks>=4 && cosineScore.similarity>=0.7) {
+                double xscore = peakShapeScore*peakHeightScore*retentionTimeScore*(cosineScore.similarity + cosineScore.shardPeaks/6d);
+                if (cosineScore.similarity >= 0.75) finalScore = xscore + 1d;
+                else finalScore = xscore;
             } else if (f.getRepresentativeIon().getMsMsQuality().notBetterThan(Quality.BAD) || ion.getMsMsQuality().notBetterThan(Quality.BAD)) {
                 finalScore = peakShapeScore*peakHeightScore*retentionTimeScore*0.5d;
             } else {
@@ -173,9 +189,8 @@ public class Aligner2 {
         } else {
             finalScore = peakShapeScore*peakHeightScore*retentionTimeScore;
         }
-        if (peakShapeScore>0 && peakHeightScore>0 && retentionTimeScore>0 && finalScore==0) {
-            System.err.println("Aha");
-        }
+        if (finalScore < 1e-10) return 0f;
+        finalScore += intensityScore;
         return (float)finalScore;
     }
 
