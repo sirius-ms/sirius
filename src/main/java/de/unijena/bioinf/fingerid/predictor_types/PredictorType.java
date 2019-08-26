@@ -14,7 +14,6 @@ public enum PredictorType {
     CSI_FINGERID_NEGATIVE(false), //CSI for negative ionization
     IOKR_NEGATIVE(false);
 
-
     private final boolean positive;
 
     PredictorType(boolean isPositive) {
