@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms;
 
 import com.google.common.collect.Range;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -170,11 +171,23 @@ public class CorrelatedPeakDetector {
     }
 
     private void detectAdductsAndInSourceFor(ProcessedSample sample, FragmentedIon ion, TDoubleArrayList alreadyAnnotatedMzs) {
-        final List<PrecursorIonType> adductTypes = new ArrayList<>(Arrays.asList(
-                PrecursorIonType.fromString("[M+Na]+"),
-        PrecursorIonType.fromString("[M+K]+"),
-                PrecursorIonType.fromString("[M+H]+")
-        ));
+        final List<PrecursorIonType> adductTypes;
+        if (ion.getPolarity() >= 0) {
+            adductTypes = new ArrayList<>(Arrays.asList(
+                    PrecursorIonType.fromString("[M+Na]+"),
+                    PrecursorIonType.fromString("[M+K]+"),
+                    PrecursorIonType.fromString("[M+H]+"),
+                    PrecursorIonType.fromString("[M-H2O+H]+"),
+                    PrecursorIonType.fromString("[M+NH3+H]+")
+            ));
+        } else {
+            adductTypes = new ArrayList<>(Arrays.asList(
+                    PrecursorIonType.fromString("[M-H]-"),
+                    PrecursorIonType.fromString("[M+Cl]-"),
+                    PrecursorIonType.fromString("[M+Br]-"),
+                    PrecursorIonType.fromString("[M-H2O-H]-")
+            ));
+        }
 
         final ArrayList<PrecursorIonType> detectedIonTypes = new ArrayList<>(), possibleIonTypes = new ArrayList<>();
         final ArrayList<CorrelatedIon> adducts = new ArrayList<>();

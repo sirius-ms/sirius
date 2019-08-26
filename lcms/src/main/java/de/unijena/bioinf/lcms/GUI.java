@@ -11,6 +11,7 @@ import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.Locale;
 
 public class GUI extends JFrame implements KeyListener  {
@@ -25,7 +26,12 @@ public class GUI extends JFrame implements KeyListener  {
         instance = i;
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new BorderLayout());
-        specViewer = new SpecViewer(sample.ions.get(0));
+        sample.ions.sort(Comparator.comparingDouble(FragmentedIon::getMass));
+        for (offset=0; offset < sample.ions.size(); ++offset) {
+            if (sample.ions.get(offset).getMass()>=625)
+                break;
+        }
+        specViewer = new SpecViewer(sample.ions.get(offset));
         this.sample = sample;
         getContentPane().add(specViewer,BorderLayout.CENTER);
         addKeyListener(this);
@@ -36,7 +42,7 @@ public class GUI extends JFrame implements KeyListener  {
 
     public static void main(String[] args) {
 
-        final File mzxmlFile = new File("/home/kaidu/analysis/large.mzXML");
+        final File mzxmlFile = new File("/home/kaidu/data/raw/stroma_subset/Stromatolite_Tissue_36_pos.mzXML");
         InMemoryStorage storage= new InMemoryStorage();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         try {
@@ -234,6 +240,7 @@ public class GUI extends JFrame implements KeyListener  {
             g.setColor(Color.BLACK);
             g.setFont(medium);
             g.drawString(ion.getSegment().toString(), 50,800);
+            g.drawString(String.valueOf(ion.getMass()), 50, 850);
 
             // draw correlated peaks
             for (CorrelationGroup c : ion.getIsotopes()) {
@@ -282,7 +289,7 @@ public class GUI extends JFrame implements KeyListener  {
             final GaussianShape shapeGauss = new GaussianFitting().fit(sample, ion.getPeak(), ion.getSegment());
             final LaplaceShape shapeLaplace = new LaplaceFitting().fit(sample, ion.getPeak(), ion.getSegment());
             final PeakShape shape = shapeGauss.getScore()>shapeLaplace.getScore() ? shapeGauss : shapeLaplace;
-            {
+            if (false){
                 g.setColor(Color.ORANGE);
                 int xxP = 0; int yyP = (int)Math.round(shape.expectedIntensityAt(start)/deltaInt);
                 for (long k=start+1; k < end; k += deltaRT) {

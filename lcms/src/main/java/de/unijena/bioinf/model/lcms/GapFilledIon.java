@@ -6,8 +6,8 @@ public class GapFilledIon extends FragmentedIon {
 
     FragmentedIon original;
 
-    public GapFilledIon(ChromatographicPeak chromatographicPeak, ChromatographicPeak.Segment segment, FragmentedIon original) {
-        super(null,null, Quality.UNUSABLE, chromatographicPeak, segment);
+    public GapFilledIon(Polarity polarity, ChromatographicPeak chromatographicPeak, ChromatographicPeak.Segment segment, FragmentedIon original) {
+        super(polarity, null,null, Quality.UNUSABLE, chromatographicPeak, segment);
         this.original = original;
     }
 }

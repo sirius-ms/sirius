@@ -31,6 +31,7 @@ import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -42,6 +43,20 @@ public class FTJsonReader implements Parser<FTree> {
     /*
     TODO: currently, only Peak and Ionization are parsed from input
      */
+
+    protected final HashMap<String, MolecularFormula> formulaCache;
+
+    public FTJsonReader() {
+        this.formulaCache = new HashMap<>();
+    }
+
+    public FTJsonReader(@Nullable  HashMap<String, MolecularFormula> formulaCache) {
+        this.formulaCache = formulaCache==null ? new HashMap<>()  : formulaCache;
+    }
+
+    public MolecularFormula formula(String formula) {
+        return formulaCache.computeIfAbsent(formula, MolecularFormula::parseOrThrow);
+    }
 
     @Deprecated
     public FTree parse(BufferedReader reader) throws IOException {
@@ -73,7 +88,7 @@ public class FTJsonReader implements Parser<FTree> {
         for (int k = 0; k < fragments.size(); ++k) {
             final JsonObject fragment = fragments.get(k).getAsJsonObject();
             final int id = Integer.parseInt(fragment.get("id").getAsString());
-            final MolecularFormula vertex = MolecularFormula.parseOrNull(fragment.get("molecularFormula").getAsString());
+            final MolecularFormula vertex = formula(fragment.get("molecularFormula").getAsString());
             final Ionization vertexIon = PrecursorIonType.getPrecursorIonType(fragment.get("ion").getAsString()).getIonization();
 //            fragmentByFormulaMap.put(vertex, new Object[]{fragment, vertexIon});
             fragmentByFormulaMap.put(vertex, new FragmentInfo(id, vertex, vertexIon, fragment));
@@ -113,8 +128,8 @@ public class FTJsonReader implements Parser<FTree> {
 
             if (!byId) {
                 //this is for backwards compatibility, from now on we use ids to map
-                final MolecularFormula a = MolecularFormula.parseOrNull(loss.get("source").getAsString()),
-                        b = MolecularFormula.parseOrNull(loss.get("target").getAsString());
+                final MolecularFormula a = formula(loss.get("source").getAsString()),
+                        b = formula(loss.get("target").getAsString());
 
                 final FragmentInfo bInfo = fragmentByFormulaMap.get(b);
                 edges.put(fragmentByFormulaMap.get(a).id, bInfo.id);
@@ -233,7 +248,7 @@ public class FTJsonReader implements Parser<FTree> {
         }
 
         //this is for backwards compatibility, from now on we use ids to map
-        final MolecularFormula f = MolecularFormula.parseOrThrow(rootElement.getAsString());
+        final MolecularFormula f = formula(rootElement.getAsString());
         final FragmentInfo rInfo = fragmentByFormulaMap.get(f);
         if (rInfo==null) throw new RuntimeException("Cannot determine root fragment");
 

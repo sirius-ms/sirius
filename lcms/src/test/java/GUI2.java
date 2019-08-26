@@ -10,12 +10,10 @@ import de.unijena.bioinf.lcms.debuggui.Gradient;
 import de.unijena.bioinf.lcms.peakshape.GaussianShape;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
 import de.unijena.bioinf.lcms.quality.Quality;
-import de.unijena.bioinf.model.lcms.ConsensusFeature;
-import de.unijena.bioinf.model.lcms.Feature;
-import de.unijena.bioinf.model.lcms.LCMSRun;
-import de.unijena.bioinf.model.lcms.ScanPoint;
+import de.unijena.bioinf.model.lcms.*;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
@@ -56,7 +54,15 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
         final JPanel stack = new JPanel();
         stack.setLayout(new BorderLayout());
         getContentPane().add(stack, BorderLayout.SOUTH);
-        specViewer = new SpecViewer(samples, consensusFeatures[0], maxIntens);
+        double noise = 0d; int count=0;
+        for (ProcessedSample s : lcms.getSamples()) {
+            for (FragmentedIon ion : s.ions) {
+                noise += s.ms1NoiseModel.getNoiseLevel(ion.getPeak().getScanPointAt(ion.getSegment().getApexIndex()).getScanNumber(), ion.getMass());
+                ++count;
+            }
+        }
+        noise /= count;
+        specViewer = new SpecViewer(samples, consensusFeatures[0], maxIntens, noise);
         getContentPane().add(specViewer,BorderLayout.CENTER);
         getContentPane().add(new JButton(new AbstractAction("->") {
             @Override
@@ -76,11 +82,32 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
             public void actionPerformed(ActionEvent e) {
                 specViewer.recalibrate = !specViewer.recalibrate;
                 specViewer.repaint();
-                if (specViewer.recalibrate) toggleRec.setName("Disable Recalibration");
-                else toggleRec.setName("Enable Recalibration");
+                String name = (specViewer.recalibrate) ? "Disable Recalibration" : "Enable Recalibration";
+                toggleRec.setName(name);
+                this.putValue(Action.NAME, name);
+                toggleRec.repaint();
             }
         });
-        stack.add(toggleRec, BorderLayout.WEST);
+
+        final JButton toggleDebug = new JButton();
+        toggleDebug.setAction(new AbstractAction("Show surrounding trace") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                specViewer.showDebugLines = !specViewer.showDebugLines;
+                specViewer.repaint();
+                String name = (specViewer.recalibrate) ? "Hide surrounding trace" : "Show surrounding trace";
+                toggleDebug.setName(name);
+                this.putValue(Action.NAME, name);
+                toggleDebug.repaint();
+            }
+        });
+
+        final JPanel pn = new JPanel();
+        pn.setLayout(new BoxLayout(pn, BoxLayout.Y_AXIS));
+        stack.add(pn, BorderLayout.WEST);
+
+        pn.add(toggleRec);
+        pn.add(toggleDebug);
 
         final JButton export = new JButton(new AbstractAction("Copy") {
             @Override
@@ -198,17 +225,30 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                 //"/home/kaidu/analysis/example"
                 //"/home/kaidu/analysis/canopus/mice/raw/cecum"
                 //"/home/kaidu/analysis/example"
-                "/home/kaidu/data/raw/BBS"
+                "/home/kaidu/analysis/canopus/arabidobsis"
                 );
         MemoryFileStorage storage= null;
         try {
             final LCMSProccessingInstance i = new LCMSProccessingInstance();
             i.getMs2Storage().keepInMemory();
             for (File f : mzxmlFile.listFiles()) {
+                if (!f.getName().endsWith(".mzXML"))
+                    continue;
                 storage = new MemoryFileStorage();
                 final LCMSRun parse = new MzXMLParser().parse(f, storage);
                 final ProcessedSample sample = i.addSample(parse, storage);
                 i.detectFeatures(sample);
+                int c1=0, c2=0,c3=0;
+                for (FragmentedIon ion : sample.ions) {
+                    if (ion.getPeakShape().getPeakShapeQuality().betterThan(Quality.UNUSABLE))
+                        ++c1;
+                    if (ion.getPeakShape().getPeakShapeQuality().betterThan(Quality.BAD))
+                        ++c2;
+                    if (ion.getPeakShape().getPeakShapeQuality().betterThan(Quality.DECENT))
+                        ++c3;
+                }
+                System.out.println(sample.ions.size() + " ions, with " + c1 +  " have a bad but defined peak shape and " +c2 + " even have a decent peak shape. " + c3 + " ions have a good peak shape."  );
+
                 storage.backOnDisc();
                 storage.dropBuffer();
             }
@@ -222,7 +262,8 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
             addOrderedSampleNames(c, sampleNames);
 
             final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(c);
-
+            for (ProcessedSample s : i.getSamples()) s.storage.close();
+            i.getMs2Storage().close();
             System.out.println("Done.");
             System.out.println(consensusFeatures.length + " features in total");
             int good = 0;
@@ -264,11 +305,12 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
     protected class SpecViewer extends Canvas implements MouseMotionListener {
         ConsensusFeature feature;
         List<String> lcmsRuns;
-        double maxIntensity;
+        double maxIntensity,ms1NoiseIntensity;
         Rectangle[] rect2Feature;
         int highlighted = -1;
-        public SpecViewer(List<String> runs, ConsensusFeature feature, double maxIntensity) {
+        public SpecViewer(List<String> runs, ConsensusFeature feature, double maxIntensity, double ms1NoiseIntensity) {
             this.feature = feature;
+            this.ms1NoiseIntensity = ms1NoiseIntensity;
             this.lcmsRuns = runs;
             this.maxIntensity = maxIntensity;
             rect2Feature = new Rectangle[lcmsRuns.size()];
@@ -283,7 +325,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
         protected Font small = new Font("Helvetica",Font.PLAIN, 16);
         protected Font medium = new Font("Helvetica",Font.PLAIN, 24);
 
-        boolean recalibrate = false;
+        boolean recalibrate = false, showDebugLines=true;
 
         final BasicStroke dashed =
                 new BasicStroke(2.0f,
@@ -378,7 +420,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                 if (shape.isEmpty()) shape.add(Quality.UNUSABLE);
                 g.setColor(Color.BLACK);
                 g.fillOval(1000,0,25,25);
-                g.setColor(quality2Color(shape.get((int)(shape.size()*0.75d))));
+                g.setColor(quality2Color(shape.get((int)(shape.size()*0.9d))));
                 g.fillArc(1000, 0, 25, 25, 0, 120);
                 g.setColor(quality2Color(ms1.get((int)(ms1.size()*0.9d))));
                 g.fillArc(1000, 0, 25, 25, 120, 120);
@@ -392,9 +434,10 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
             // draw noise line
             {
                 final Stroke def = g.getStroke();
+                final double noiseLine = ms1NoiseIntensity*10;
                 g.setStroke(dashed);
                 g.setColor(Color.BLACK);
-                g.drawLine(0, (int)(700 - (1000d/deltaInt)), (int)Math.ceil((end-start)/deltaRT), (int)(700-(1000d/deltaInt)) );
+                g.drawLine(0, (int)(700 - (noiseLine/deltaInt)), (int)Math.ceil((end-start)/deltaRT), (int)(700-(noiseLine/deltaInt)) );
                 g.setStroke(def);
             }
 
@@ -430,6 +473,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                     int xx = (int)Math.round(((recalibrate ? f.getRtRecalibration().value(trace[k].getRetentionTime()) : trace[k].getRetentionTime())-start)/deltaRT);
                     int yy = (int)Math.round(trace[k].getIntensity()/deltaInt);
                     if (trace[k].getScanNumber() <= beginTrace || trace[k].getScanNumber() > endTrace) {
+                        if (!showDebugLines) continue;
                         g.setStroke(dashed);
                         g.drawOval((int)xx-5, 700 - ((int)yy+5), 10, 10);
                     } else {

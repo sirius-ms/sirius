@@ -102,4 +102,11 @@ public class MemoryFileStorage implements SpectrumStorage {
         if (tempStorage!=null) tempStorage.add(scan, spectrum);
         return spectrum;
     }
+
+    @Override
+    public void close() throws IOException {
+        writableChannel.close();
+        buffer=null;
+        writableChannel=null;
+    }
 }

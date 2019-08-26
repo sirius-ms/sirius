@@ -10,10 +10,7 @@ import de.unijena.bioinf.lcms.MemoryFileStorage;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
 import de.unijena.bioinf.lcms.quality.Quality;
-import de.unijena.bioinf.model.lcms.ChromatographicPeak;
-import de.unijena.bioinf.model.lcms.FragmentedIon;
-import de.unijena.bioinf.model.lcms.GapFilledIon;
-import de.unijena.bioinf.model.lcms.Scan;
+import de.unijena.bioinf.model.lcms.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -86,7 +83,7 @@ public class GapFilling {
                             if (tolerance.contains(peakRt)) {
                                 if (segments.contains(seg))
                                     continue ; // we already know this ion
-                                final GapFilledIon pseudoIon = new GapFilledIon(peak.get(), seg, mostAbundant);
+                                final GapFilledIon pseudoIon = new GapFilledIon(sample.run.getScanByNumber(seg.getPeak().getScanPointAt(seg.getApexIndex()).getScanNumber()).map(x->x.getPolarity()).orElse(Polarity.UNKNOWN),  peak.get(), seg, mostAbundant);
                                 // search for isotopes
                                 if (new CorrelatedPeakDetector().detectCorrelatedPeaks(sample, pseudoIon)) {
 
@@ -111,7 +108,7 @@ public class GapFilling {
                                         //System.err.println("REJECTED DUE TO PEAK SHAPE OF " + avgError);
                                         continue;
                                     }
-
+                                    pseudoIon.setPeakShape(instance.fitPeakShape(sample, pseudoIon));
                                     sample.gapFilledIons.add(pseudoIon);
 
                                     FragmentedIon ion = ions.get(sample);
