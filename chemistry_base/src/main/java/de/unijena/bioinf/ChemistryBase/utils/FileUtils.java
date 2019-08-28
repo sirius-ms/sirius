@@ -12,9 +12,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.InflaterInputStream;
@@ -480,6 +478,41 @@ public class FileUtils {
             }
             writer.write('\n');
         }
+    }
+
+    /**
+     * read the first nlines lines from file. Keep buffersize low.
+     * If less than nlines lines exist in file, fill them with empty strings
+     */
+    public static String[] head(File file, int nlines) throws IOException {
+        String[] lines = new String[nlines];
+        int k=0;
+        try (final BufferedReader br = new BufferedReader(new FileReader(file),40*nlines)) {
+            while (k < nlines) {
+                String l = lines[k++] = br.readLine();
+                if (l==null) {
+                    Arrays.fill(lines,k,lines.length,"");
+                    return lines;
+                }
+            }
+        }
+        return lines;
+    }
+
+    public static Map<String,String> readKeyValues(File file) throws IOException {
+        try (final BufferedReader br = getReader(file)) {
+            return readKeyValues(br);
+        }
+    }
+
+    public static Map<String,String> readKeyValues(BufferedReader reader) throws IOException {
+        final HashMap<String,String> keyValues = new HashMap<>();
+        String line;
+        while ((line=reader.readLine())!=null) {
+            String[] kv = line.split("\\s+",2);
+            keyValues.put(kv[0],kv[1]);
+        }
+        return keyValues;
     }
 
     public static void writeIntVector(Writer writer, int[] vector) throws IOException {

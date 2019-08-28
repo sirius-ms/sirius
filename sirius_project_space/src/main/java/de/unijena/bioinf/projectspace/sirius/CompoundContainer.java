@@ -2,9 +2,9 @@ package de.unijena.bioinf.projectspace.sirius;
 
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.ProjectReader;
+import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.ProjectSpaceContainer;
-import de.unijena.bioinf.projectspace.ProjectWriter;
 
 import java.util.ArrayList;
 import java.util.List;
