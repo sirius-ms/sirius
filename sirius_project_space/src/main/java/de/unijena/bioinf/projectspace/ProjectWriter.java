@@ -1,29 +1,27 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
-public interface ProjectWriter {
+public interface ProjectWriter extends ProjectIO {
 
-    public List<String> glob(String globPath);
+    public void textFile(String relativePath, IOFunctions.IOConsumer<BufferedWriter> func)  throws IOException;
+    public void binaryFile(String relativePath, IOFunctions.IOConsumer<BufferedOutputStream> func)  throws IOException;
 
-    public void inDirectory(String relativePath, Consumer<ProjectReader> reader);
-    public void textFile(String relativePath, Consumer<BufferedWriter> func);
-    public void binaryFile(String relativePath, Consumer<BufferedOutputStream> func);
+    public void delete(String relativePath)  throws IOException;
 
-    public void delete(String relativePath);
-
-    public static interface ForContainer extends ProjectWriter {
-        public void writeAllComponents(ClassValueProducer producer);
-        public void deleteAllComponents(ClassValueProducer producer);
+    public static interface ForContainer<S extends ProjectSpaceContainerId,T extends ProjectSpaceContainer<S>> {
+        public void writeAllComponents(ProjectWriter writer, T container, IOFunctions.ClassValueProducer producer)  throws IOException;
     }
 
-    public static interface ClassValueProducer {
-        public <T extends DataAnnotation> T apply(Class<T> klass);
+    public static interface DeleteContainer<S extends ProjectSpaceContainerId> {
+        public void deleteAllComponents(ProjectWriter writer, S containerId) throws IOException;
     }
-
 }

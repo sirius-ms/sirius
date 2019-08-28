@@ -1,10 +1,11 @@
-package de.unijena.bioinf.projectspace.sirius;
+package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.ProjectSpaceContainerId;
 
-public class FormulaResultId extends ProjectSpaceContainerId {
+public final class FormulaResultId extends ProjectSpaceContainerId {
 
     private CompoundContainerId parentId;
     private MolecularFormula formula;
@@ -16,6 +17,18 @@ public class FormulaResultId extends ProjectSpaceContainerId {
         this.formula = formula;
         this.ionType = ionType;
         this.rank = rank;
+    }
+
+    public MolecularFormula getFormula() {
+        return formula;
+    }
+
+    public PrecursorIonType getIonType() {
+        return ionType;
+    }
+
+    public int getRank() {
+        return rank;
     }
 
     public String fileName(String extension) {
