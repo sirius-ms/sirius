@@ -4,6 +4,7 @@ import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.FormulaResultId;
+import de.unijena.bioinf.projectspace.FormulaScore;
 import de.unijena.bioinf.projectspace.ProjectSpaceContainer;
 
 import java.util.ArrayList;
@@ -16,14 +17,22 @@ public class CompoundContainer extends ProjectSpaceContainer<CompoundContainerId
     private final List<FormulaResultId> results;
     private final CompoundContainerId id;
 
-    public CompoundContainer(CompoundContainerId id) {
+    // necessary information
+    private Class<? extends FormulaScore> rankingScore;
+
+    public CompoundContainer(CompoundContainerId id, Class<? extends FormulaScore> resultScore) {
         this.annotations = new Annotations<>();
         this.results = new ArrayList<>();
         this.id = id;
+        this.rankingScore = resultScore;
     }
 
     public List<FormulaResultId> getResults() {
         return results;
+    }
+
+    public Class<? extends FormulaScore> getRankingScore() {
+        return rankingScore;
     }
 
     @Override

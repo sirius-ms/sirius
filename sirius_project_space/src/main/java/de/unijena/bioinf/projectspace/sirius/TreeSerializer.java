@@ -28,7 +28,7 @@ public class TreeSerializer implements ComponentSerializer<FormulaResultId, Form
     }
 
     @Override
-    public void delete(ProjectWriter writer, FormulaResultId id, FormulaResult container, FTree component) throws IOException {
+    public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
         writer.inDirectory("trees", ()->{
             writer.delete(id.fileName("json"));
             return true;

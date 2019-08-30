@@ -113,7 +113,7 @@ public class SiriusProjectSpace {
         }
     }
 
-    public void updateFormulaResult(FormulaResult result, Class<?> components) throws IOException {
+    public void updateFormulaResult(FormulaResult result, Class<?>... components) throws IOException {
         CompoundContainerId parentId = result.getId().getParentId();
         parentId.containerLock.lock();
         try {
@@ -142,7 +142,7 @@ public class SiriusProjectSpace {
         }
     }
 
-    public void updateCompound(CompoundContainer result, Class<?> components) throws IOException {
+    public void updateCompound(CompoundContainer result, Class<?>... components) throws IOException {
         final CompoundContainerId id = result.getId();
         id.containerLock.lock();
         try {

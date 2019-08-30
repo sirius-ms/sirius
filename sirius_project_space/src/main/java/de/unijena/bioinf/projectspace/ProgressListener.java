@@ -1,4 +1,4 @@
-package de.unijena.bioinf.babelms.projectspace;
+package de.unijena.bioinf.projectspace;
 
 import org.jetbrains.annotations.NotNull;
 
