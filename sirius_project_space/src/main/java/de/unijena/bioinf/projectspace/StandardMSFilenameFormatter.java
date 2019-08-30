@@ -1,4 +1,4 @@
-package de.unijena.bioinf.babelms.projectspace;
+package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;

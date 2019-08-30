@@ -7,6 +7,7 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
@@ -14,6 +15,8 @@ public interface ProjectWriter extends ProjectIO {
 
     public void textFile(String relativePath, IOFunctions.IOConsumer<BufferedWriter> func)  throws IOException;
     public void binaryFile(String relativePath, IOFunctions.IOConsumer<BufferedOutputStream> func)  throws IOException;
+
+    public void keyValues(String relativePath, Map<?,?> map) throws IOException;
 
     public void delete(String relativePath)  throws IOException;
 

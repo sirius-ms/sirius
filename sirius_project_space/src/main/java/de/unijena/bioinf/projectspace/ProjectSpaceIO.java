@@ -1,7 +1,6 @@
 package de.unijena.bioinf.projectspace;
 
 import com.google.common.io.Files;
-import de.unijena.bioinf.babelms.projectspace.ProjectSpace;
 
 import java.io.File;
 import java.io.IOException;

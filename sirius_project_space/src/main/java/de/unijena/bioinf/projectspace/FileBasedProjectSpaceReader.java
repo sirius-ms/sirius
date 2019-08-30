@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class FileBasedProjectSpaceReader implements ProjectReader {
 
@@ -33,6 +34,11 @@ public class FileBasedProjectSpaceReader implements ProjectReader {
         try (final BufferedInputStream stream = FileUtils.getIn(new File(dir, relativePath))) {
             return func.apply(stream);
         }
+    }
+
+    @Override
+    public Map<String, String> keyValues(String relativePath) throws IOException {
+        return FileUtils.readKeyValues(new File(dir,relativePath));
     }
 
     @Override

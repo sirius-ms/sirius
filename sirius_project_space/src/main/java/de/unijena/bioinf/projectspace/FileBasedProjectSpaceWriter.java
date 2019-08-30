@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class FileBasedProjectSpaceWriter implements ProjectWriter {
 
@@ -55,6 +56,17 @@ public class FileBasedProjectSpaceWriter implements ProjectWriter {
     public void binaryFile(String relativePath, IOFunctions.IOConsumer<BufferedOutputStream> func) throws IOException {
         try (final BufferedOutputStream stream = FileUtils.getOut(new File(dir, relativePath))) {
             func.consume(stream);
+        }
+    }
+
+    @Override
+    public void keyValues(String relativePath, Map<?, ?> map) throws IOException {
+        try (final BufferedWriter stream = FileUtils.getWriter(new File(dir, relativePath))) {
+            for (Map.Entry<?,?> entry : map.entrySet()) {
+                stream.write(String.valueOf(entry.getKey()));
+                stream.write('\t');
+                stream.write(String.valueOf(entry.getValue()));
+            }
         }
     }
 

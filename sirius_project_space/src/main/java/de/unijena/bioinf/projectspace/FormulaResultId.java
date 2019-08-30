@@ -2,21 +2,21 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.ProjectSpaceContainerId;
 
 public final class FormulaResultId extends ProjectSpaceContainerId {
 
     private CompoundContainerId parentId;
+    private Class<? extends FormulaScore> rankingScore;
     private MolecularFormula formula;
     private PrecursorIonType ionType;
     private int rank;
 
-    public FormulaResultId(CompoundContainerId parentId, MolecularFormula formula, PrecursorIonType ionType, int rank) {
+    public FormulaResultId(CompoundContainerId parentId, MolecularFormula formula, PrecursorIonType ionType, int rank, Class<? extends FormulaScore> resultScore) {
         this.parentId = parentId;
         this.formula = formula;
         this.ionType = ionType;
         this.rank = rank;
+        this.rankingScore = resultScore;
     }
 
     public MolecularFormula getFormula() {

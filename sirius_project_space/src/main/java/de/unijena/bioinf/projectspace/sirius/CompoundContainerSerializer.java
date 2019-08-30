@@ -7,6 +7,7 @@ import de.unijena.bioinf.projectspace.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,10 +23,11 @@ public class CompoundContainerSerializer implements ContainerSerializer<Compound
     @Override
     public CompoundContainer readFromProjectSpace(ProjectReader reader, ProjectReader.ForContainer<CompoundContainerId, CompoundContainer> containerSerializer, CompoundContainerId id) throws IOException {
         return reader.inDirectory(id.getDirectoryName(), ()->{
-            final CompoundContainer container = new CompoundContainer(id);
+            Map<String, String> info = reader.keyValues(SiriusLocations.COMPOUND_INFO);
+            final CompoundContainer container = new CompoundContainer(id, new FormulaScoring().resolve(info.get("rankingScore")));
             for (String file : reader.glob("trees/*.json")) {
                 Matcher matcher = resultPattern.matcher(new File(file).getName());
-                container.getResults().add(new FormulaResultId(id, MolecularFormula.parseOrThrow(matcher.group(2)), PrecursorIonType.fromString(matcher.group(3)), Integer.parseInt(matcher.group(1))));
+                container.getResults().add(new FormulaResultId(id, MolecularFormula.parseOrThrow(matcher.group(2)), PrecursorIonType.fromString(matcher.group(3)), Integer.parseInt(matcher.group(1)), container.getRankingScore()));
             }
             container.getResults().sort(Comparator.comparingInt(FormulaResultId::getRank));
             containerSerializer.readAllComponents(reader, container, container::get);
