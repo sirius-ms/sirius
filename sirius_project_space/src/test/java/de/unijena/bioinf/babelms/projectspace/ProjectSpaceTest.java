@@ -1,8 +1,8 @@
 package de.unijena.bioinf.babelms.projectspace;
 
-import de.unijena.bioinf.babelms.projectspace.IdentificationResultSerializer;
-import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceIO;
+import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,12 +16,12 @@ public class ProjectSpaceTest {
         PropertyManager.setProperty("de.unijena.bioinf.sirius.build", "666");
         PropertyManager.setProperty("de.unijena.bioinf.fingerid.version", "1.2.0-SNAPSHOT");
         PropertyManager.setProperty("de.unijena.bioinf.sirius.fingerID.cache", "/home/fleisch/.sirius/csi_fingerid_cache");
-
+/*
         File root = new File("/home/fleisch/work/sirius_testing/ws (copy)");
         if (args.length > 0)
             root = new File(args[0]);
 
-        SiriusProjectSpace space = SiriusProjectSpaceIO.create(null, root, (cur, max, mess) -> {
+        SiriusProjectSpace space = ProjectSpaceIO.(null, root, (cur, max, mess) -> {
                     System.out.println((((((double) cur) / (double) max)) * 100d) + "%");
                 },
                 new IdentificationResultSerializer());
@@ -29,6 +29,6 @@ public class ProjectSpaceTest {
         space.writeSummaries(space.parseExperiments(), (cur, max, mess) -> System.out.println((((((double) cur) / (double) max)) * 100d) + "% " + mess));
         space.close();
         System.out.println("done!");
-
+    */
     }
 }

@@ -1,0 +1,17 @@
+package de.unijena.bioinf.projectspace.sirius;
+
+import de.unijena.bioinf.projectspace.FormulaResultId;
+import de.unijena.bioinf.projectspace.Locations;
+
+import java.util.function.Function;
+
+public class SiriusLocations extends Locations {
+
+    public final static String MS2_EXPERIMENT = "spectrum.ms",
+                        COMPOUND_INFO = "experiment.info";
+
+    public final static Function<FormulaResultId,String>
+                        TREES = (id)->"trees/" + id.fileName("json"),
+                        SCORES = (id)->"scores/" + id.fileName("info");
+
+}

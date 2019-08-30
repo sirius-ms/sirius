@@ -24,7 +24,7 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
     }
 
     @Override
-    public void delete(ProjectWriter writer, CompoundContainerId id, CompoundContainer container, Ms2Experiment component) throws IOException {
+    public void delete(ProjectWriter writer, CompoundContainerId id) throws IOException {
         writer.delete(id.getDirectoryName() + "/spectrum.ms");
     }
 }
