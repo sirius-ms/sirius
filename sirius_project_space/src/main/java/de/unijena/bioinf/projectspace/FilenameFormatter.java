@@ -1,12 +1,9 @@
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.sirius.ExperimentResult;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 
-public interface FilenameFormatter {
+import java.util.function.Function;
 
-
-    public String formatName(ExperimentResult experimentResult, int index);
-
+public interface FilenameFormatter extends Function<Ms2Experiment, String> {
     public String getFormatExpression();
-
 }

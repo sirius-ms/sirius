@@ -1,12 +1,13 @@
-package de.unijena.bioinf.sirius;
+package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Score;
+import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 
-public abstract class ResultScore implements Score, ResultAnnotation {
+public abstract class FTScore implements Score, TreeAnnotation {
 
     public final double score;
 
-    protected ResultScore(double score) {
+    protected FTScore(double score) {
         this.score = score;
     }
 
