@@ -1,15 +1,24 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
-import de.unijena.bioinf.ms.annotations.TreeAnnotation;
+public class ZodiacScore extends FTScore {
+    public static ZodiacScore NaN = new ZodiacScore(Double.NaN);
 
-public class ZodiacScore implements TreeAnnotation {
-    private final double probability;
 
     public ZodiacScore(double probability) {
-        this.probability = probability;
+        super(probability);
     }
 
     public double getProbability() {
-        return probability;
+        return score();
+    }
+
+    @Override
+    public boolean isLogarithmic() {
+        return false;
+    }
+
+    @Override
+    public String name() {
+        return "zodiacScore";
     }
 }

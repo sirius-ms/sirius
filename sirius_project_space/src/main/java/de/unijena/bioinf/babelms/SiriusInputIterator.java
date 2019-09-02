@@ -2,7 +2,9 @@ package de.unijena.bioinf.babelms;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.sirius.ExperimentResult;
+import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.projectspace.StandardMSFilenameFormatter;
+import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.sirius.Sirius;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +14,7 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.function.Function;
 
 /**
  * File based input Iterator that allows to iterate over the {@see de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment}s parsed from
@@ -25,15 +28,19 @@ public class SiriusInputIterator implements Iterator<Ms2Experiment> {
     private final MsExperimentParser parser = new MsExperimentParser();
     private final boolean ignoreFormula;
 
+    private final SiriusProjectSpace space;
+    private Function<Ms2Experiment,String> nameFormatter = new StandardMSFilenameFormatter();
+
     File currentFile;
     Iterator<Ms2Experiment> currentExperimentIterator;
 
-    public SiriusInputIterator(Collection<File> input, double maxMz) {
-        this(input,maxMz,false);
+    public SiriusInputIterator(Collection<File> input, SiriusProjectSpace out, double maxMz) {
+        this(input, out, maxMz, false);
     }
 
-    public SiriusInputIterator(Collection<File> input, double maxMz, boolean ignoreFormula) {
+    public SiriusInputIterator(Collection<File> input, SiriusProjectSpace out, double maxMz, boolean ignoreFormula) {
         fileIter = input.iterator();
+        space = out;
         this.maxMz = maxMz;
         currentExperimentIterator = fetchNext();
         this.ignoreFormula = ignoreFormula;
@@ -89,12 +96,12 @@ public class SiriusInputIterator implements Iterator<Ms2Experiment> {
         throw new UnsupportedOperationException();
     }
 
-    public Iterator<ExperimentResult> asExpResultIterator() {
-        return new ExperimentReultIterator();
+    public Iterator<CompoundContainer> asExpResultIterator() {
+        return new ExperimentResultIterator();
     }
 
 
-    private class ExperimentReultIterator implements Iterator<ExperimentResult> {
+    private class ExperimentResultIterator implements Iterator<CompoundContainer> {
 
         @Override
         public boolean hasNext() {
@@ -102,10 +109,22 @@ public class SiriusInputIterator implements Iterator<Ms2Experiment> {
         }
 
         @Override
-        public ExperimentResult next() {
+        public CompoundContainer next() {
             Ms2Experiment n = SiriusInputIterator.this.next();
             if (n == null) return null;
-            return new ExperimentResult(n);
+
+            final String name = nameFormatter.apply(n);
+
+            //todo I am not sure if this optional stuff is super useful
+            return space.newCompoundWithUniqueIndex(name, (idx)-> idx + "_" + name).map(c -> {
+                c.addAnnotation(Ms2Experiment.class, n);
+                try {
+                    space.updateCompound(c, Ms2Experiment.class);
+                } catch (IOException e) {
+                    LOG.error("Could not save Ms2Experiment to Project-Space", e);
+                }
+                return c;
+            }).orElse(null);
         }
     }
 

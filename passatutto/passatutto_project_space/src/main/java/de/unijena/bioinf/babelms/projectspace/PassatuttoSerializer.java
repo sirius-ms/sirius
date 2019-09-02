@@ -8,14 +8,8 @@ import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.ProjectReader;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
-import de.unijena.bioinf.sirius.ExperimentResult;
-import de.unijena.bioinf.sirius.IdentificationResults;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.Set;
 
 public class PassatuttoSerializer implements ComponentSerializer<FormulaResultId, FormulaResult,Decoy> {
 

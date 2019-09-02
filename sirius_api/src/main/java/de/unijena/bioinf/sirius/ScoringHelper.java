@@ -17,6 +17,14 @@ public class ScoringHelper {
         this.lossScoring = tree.getOrCreateLossAnnotation(Score.class);
     }
 
+    public SiriusScore getSiriusScore(){
+        return new SiriusScore(tree.getTreeWeight());
+    }
+
+    public ZodiacScore getZodiacScore(){
+        return tree.getAnnotationOrNull(ZodiacScore.class);
+    }
+
     public double getRootScore() {
         return tree.getRootScore();
     }

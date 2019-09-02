@@ -71,7 +71,18 @@ public class SiriusProjectSpace {
         return Optional.ofNullable(ids.get(dirName));
     }
 
-    public Optional<CompoundContainerId> newCompoundWithUniqueIndex(String compoundName, IntFunction<String> index2dirName) {
+    public Optional<CompoundContainer> newCompoundWithUniqueIndex(String compoundName, IntFunction<String> index2dirName) {
+        return newUniqueCompoundIndex(compoundName, index2dirName)
+                .map(idd -> {
+                    try {
+                        return getCompound(idd);
+                    } catch (IOException e) {
+                        return null;
+                    }
+                });
+    }
+
+    public Optional<CompoundContainerId> newUniqueCompoundIndex(String compoundName, IntFunction<String> index2dirName) {
         int index = compoundCounter.getAndIncrement();
         String dirName = index2dirName.apply(index);
         return tryCreateCompoundContainer(dirName,compoundName,index);

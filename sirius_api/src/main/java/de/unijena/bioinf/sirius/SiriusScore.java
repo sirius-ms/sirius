@@ -1,6 +1,8 @@
 package de.unijena.bioinf.sirius;
 
-public class SiriusScore extends ResultScore {
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTScore;
+
+public class SiriusScore extends FTScore {
     public static SiriusScore NaN = new SiriusScore(Double.NaN);
 
     public SiriusScore(double score) {

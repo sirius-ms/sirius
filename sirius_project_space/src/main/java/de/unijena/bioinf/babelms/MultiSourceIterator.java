@@ -1,6 +1,7 @@
 package de.unijena.bioinf.babelms;
 
-import de.unijena.bioinf.sirius.ExperimentResult;
+
+import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -10,21 +11,21 @@ import java.util.NoSuchElementException;
  * concatenate multiple experiment iterators to one.
  * Useful to combine new input files with an existing workspaces
  */
-public class MultiSourceIterator implements Iterator<ExperimentResult> {
-    private final Iterator<Iterator<ExperimentResult>> iterators;
-    private Iterator<ExperimentResult> currentIterator;
+public class MultiSourceIterator implements Iterator<CompoundContainer> {
+    private final Iterator<Iterator<CompoundContainer>> iterators;
+    private Iterator<CompoundContainer> currentIterator;
 
-    public MultiSourceIterator(Iterator<Iterator<ExperimentResult>> iterators) {
+    public MultiSourceIterator(Iterator<Iterator<CompoundContainer>> iterators) {
         this.iterators = iterators;
         if (this.iterators.hasNext())
             currentIterator = this.iterators.next();
     }
 
-    public MultiSourceIterator(Iterable<Iterator<ExperimentResult>> iterators) {
+    public MultiSourceIterator(Iterable<Iterator<CompoundContainer>> iterators) {
         this(iterators.iterator());
     }
 
-    public MultiSourceIterator(Iterator<ExperimentResult>... iterators) {
+    public MultiSourceIterator(Iterator<CompoundContainer>... iterators) {
         this(Arrays.asList(iterators));
     }
 
@@ -44,7 +45,7 @@ public class MultiSourceIterator implements Iterator<ExperimentResult> {
     }
 
     @Override
-    public ExperimentResult next() {
+    public CompoundContainer next() {
         if (hasNext())
             return currentIterator.next();
         throw new NoSuchElementException("No Elements Left in MultiSource iterator!");
