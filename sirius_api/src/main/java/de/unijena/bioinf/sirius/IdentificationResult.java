@@ -61,8 +61,8 @@ public final class IdentificationResult implements Cloneable, Comparable<Identif
 
     public IdentificationResult(FTree tree, int rank) {
         this.tree = tree;
-        if (tree != null) {
-            rankScore = new SiriusScore(tree.getTreeWeight());
+        if (this.tree != null) {
+            rankScore = new ScoringHelper(this.tree).getSiriusScore();
 //            setAnnotation(SiriusScore.class, (SiriusScore) rankScore);
         }
         this.rank = rank;
@@ -177,9 +177,7 @@ public final class IdentificationResult implements Cloneable, Comparable<Identif
     }
 
     public IdentificationResult clone() {
-        final IdentificationResult r = new IdentificationResult(new FTree(tree), rank);
-//        r.setAnnotationsFrom(this);
-        return r;
+        return new IdentificationResult(new FTree(tree), rank);
     }
 
 
@@ -197,7 +195,6 @@ public final class IdentificationResult implements Cloneable, Comparable<Identif
 
     public double getExplainedIntensityRatio() {
         return tree.getAnnotation(TreeStatistics.class).getExplainedIntensity();
-
     }
 
     public double getNumberOfExplainablePeaks() {

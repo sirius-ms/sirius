@@ -2,9 +2,9 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.sirius.ExperimentResult;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,9 +19,8 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
     private FormatString[] formatStrings;
 
     public StandardMSFilenameFormatter() {
-        this.unparsedFormatString = "%index_%source_%name";
+        this.unparsedFormatString = "%source_%name";
         formatStrings = new FormatString[]{
-                new IndexFormat(), new FixedString("_"),
                 new FilenameFormat(), new FixedString("_"),
                 new NameFormat()
         };
@@ -68,10 +67,6 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
                 case "source":
                     formatStrings.add(new FilenameFormat());
                     break;
-                case "index":
-                case "idx":
-                    formatStrings.add(new IndexFormat());
-                    break;
                 default:
                     formatStrings.add(new AnnotationString(keyword));
                     LoggerFactory.getLogger(StandardMSFilenameFormatter.class).warn("File formatting string contains non-default annotations '"+keyword+"'. If your input file does not contain this annotation this will result in errors.");
@@ -85,38 +80,38 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
     }
 
     @Override
-    public String formatName(ExperimentResult experimentResult, int index) {
+    public String apply(Ms2Experiment experimentResult) {
         StringBuilder builder = new StringBuilder();
         for (FormatString formatString : formatStrings) {
-            builder.append(formatString.format(experimentResult, index));
+            builder.append(formatString.format(experimentResult));
         }
         return builder.toString();
     }
 
     private interface FormatString {
-        String format(ExperimentResult experimentResult, int index);
+        String format(Ms2Experiment experimentResult);
     }
 
     private class NameFormat implements FormatString {
         @Override
-        public String format(ExperimentResult experimentResult, int index) {
-            return experimentResult.getSimplyfiedExperimentName();
+        public String format(Ms2Experiment experimentResult) {
+            return simplify(experimentResult.getName());
         }
     }
 
     private class FilenameFormat implements FormatString {
         @Override
-        public String format(ExperimentResult experimentResult, int index) {
-            return experimentResult.getSimplyfiedExperimentSource();
+        public String format(Ms2Experiment experimentResult) {
+            return simplifyURL(experimentResult.getSource().getFile());
         }
     }
 
-    private class IndexFormat implements FormatString {
+    /*private class IndexFormat implements FormatString {
         @Override
-        public String format(ExperimentResult experimentResult, int index) {
+        public String format(Ms2Experiment experimentResult, int index) {
             return String.valueOf(index);
         }
-    }
+    }*/
 
     private class FixedString implements FormatString {
         private String string;
@@ -126,7 +121,7 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
         }
 
         @Override
-        public String format(ExperimentResult experimentResult, int index) {
+        public String format(Ms2Experiment experimentResult) {
             return string;
         }
     }
@@ -139,19 +134,32 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
         }
 
         @Override
-        public String format(ExperimentResult experimentResult, int index) {
-            Ms2Experiment experiment = experimentResult.getExperiment();
+        public String format(Ms2Experiment experiment) {
+
             Map<String, String> map = experiment.getAnnotation(AdditionalFields.class);
             if (map==null){
-                throw new RuntimeException("Cannot format compound file name for "+experiment.getName()+": no annotations given.");
+                throw new RuntimeException("Cannot format compound file name for " + experiment.getName() + ": no annotations given.");
             }
             String value  = map.get(annotation);
             if (value==null){
-                throw new RuntimeException("Cannot format compound file name for "+experiment.getName()+": annotation '"+annotation+"' unknown.");
+                throw new RuntimeException("Cannot format compound file name for " + experiment.getName() + ": annotation '" + annotation + "' unknown.");
             }
             return value;
         }
     }
+
+    private static String simplify(String name) {
+        if (name.length() > 64)
+            name = name.substring(0, 48);
+        return name.replaceAll("[^A-Za-z0-9,\\-]+", "");
+    }
+
+    private static String simplifyURL(String filename) {
+        filename = new File(filename).getName();
+        int i = Math.min(48, filename.lastIndexOf('.'));
+        return filename.substring(0, i);
+    }
+
 
     @Override
     public String getFormatExpression() {

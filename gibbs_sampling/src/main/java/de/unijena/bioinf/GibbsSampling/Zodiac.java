@@ -10,17 +10,18 @@ import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.MasterJJob;
-import de.unijena.bioinf.sirius.IdentificationResult;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Zodiac {
     private final Logger Log;
-    Map<Ms2Experiment> experimentResults;
+    Map<Ms2Experiment, List<FTree>> experimentResults;
     List<LibraryHit> anchors;
     NodeScorer[] nodeScorers;
     EdgeScorer<FragmentsCandidate>[] edgeScorers;
@@ -36,13 +37,25 @@ public class Zodiac {
 
     Map<String, String[]> representativeToCluster;
 
-    public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds, MasterJJob masterJJob) throws ExecutionException {
-        this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, clusterCompounds, true, masterJJob);
+    public Zodiac(List<Ms2Experiment> experiments, List<List<FTree>> trees, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds, MasterJJob masterJJob) throws ExecutionException {
+        this(experiments, trees, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, clusterCompounds, true, masterJJob);
     }
 
-    public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds, boolean runTwoStep , MasterJJob masterJJob) throws ExecutionException {
+    public Zodiac(List<Ms2Experiment> experiments, List<List<FTree>> trees, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds) throws ExecutionException {
+        this(experiments, trees, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, clusterCompounds, true, null);
+    }
+
+    public Zodiac(List<Ms2Experiment> experiments, List<List<FTree>> trees, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds, boolean runTwoStep) throws ExecutionException {
+        this(experiments, trees, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, clusterCompounds, runTwoStep, null);
+    }
+
+    public Zodiac(List<Ms2Experiment> experiments, List<List<FTree>> trees, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds, boolean runTwoStep, MasterJJob masterJJob) throws ExecutionException {
+        this(IntStream.range(0, experiments.size()).boxed().collect(Collectors.toMap(experiments::get, trees::get)), anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, clusterCompounds, runTwoStep, masterJJob);
+    }
+
+    public Zodiac(Map<Ms2Experiment, List<FTree>> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds, boolean runTwoStep, MasterJJob masterJJob) throws ExecutionException {
         this.experimentResults = experimentResults;
-        this.anchors = anchors==null?Collections.emptyList():anchors;
+        this.anchors = anchors == null ? Collections.emptyList() : anchors;
         this.nodeScorers = nodeScorers;
         this.edgeScorers = edgeScorers;
         this.edgeFilter = edgeFilter;
@@ -50,15 +63,7 @@ public class Zodiac {
         this.masterJJob = masterJJob;
         this.clusterCompounds = clusterCompounds;
         this.runTwoStep = runTwoStep;
-        this.Log = masterJJob!=null?masterJJob.LOG():LoggerFactory.getLogger(Zodiac.class);
-    }
-
-    public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds) throws ExecutionException {
-        this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, clusterCompounds, true, null);
-    }
-
-    public Zodiac(List<ExperimentResult> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds, boolean runTwoStep) throws ExecutionException {
-        this(experimentResults, anchors, nodeScorers, edgeScorers, edgeFilter, maxCandidates, clusterCompounds, runTwoStep, null);
+        this.Log = masterJJob != null ? masterJJob.LOG() : LoggerFactory.getLogger(Zodiac.class);
     }
 
     public JJob<ZodiacResultsWithClusters> makeComputeJob(final int iterationSteps, final int burnIn, final int repetitions) {
@@ -227,14 +232,14 @@ public class Zodiac {
     }
 
 
-    private void addZodiacScoreToIdentificationResult(CompoundResult<FragmentsCandidate>[] result, List<ExperimentResult> experimentResults){
+    private void addZodiacScoreToIdentificationResult(CompoundResult<FragmentsCandidate>[] result, Map<Ms2Experiment, List<FTree>> experimentResults) {
         //todo add score to FTree not IdentificationResult?!?!!?!?!
         Map<String, CompoundResult<FragmentsCandidate>> idToCompoundResult = createInstanceMap(result);//contains all compounds (even all clustered)
-        for (ExperimentResult experimentResult : experimentResults) {
-            IdentificationResults identificationResults = experimentResult.getResults();
-            if (identificationResults.size()==0) continue;
+        for (Map.Entry<Ms2Experiment, List<FTree>> experimentResult : experimentResults.entrySet()) {
+//            IdentificationResults identificationResults = experimentResult.getResults();
+            if (experimentResult.getValue().size() == 0) continue;
 
-            Ms2Experiment experiment = experimentResult.getExperiment();
+            Ms2Experiment experiment = experimentResult.getKey();
             String id = experiment.getName();
             CompoundResult<FragmentsCandidate> compoundResult = idToCompoundResult.get(id);
             if (compoundResult==null){
@@ -243,13 +248,13 @@ public class Zodiac {
                 continue;
             }
             Scored<FragmentsCandidate>[] zodiacResults = compoundResult.getCandidates();
-            Map<MolecularFormula, IdentificationResult> idResultMap = createIdentificationResultMap(identificationResults);
+            Map<MolecularFormula, FTree> idResultMap = createIdentificationResultMap(experimentResult.getValue());
             for (Scored<FragmentsCandidate> zodiacResult : zodiacResults) {
                 if (zodiacResult.getCandidate() instanceof DummyFragmentCandidate) continue;
                 ZodiacScore zodiacScore = new ZodiacScore(zodiacResult.getScore());
                 MolecularFormula mf = zodiacResult.getCandidate().getFormula();
-                IdentificationResult identificationResult = idResultMap.get(mf);
-                if (identificationResult==null){
+                FTree ftree = idResultMap.get(mf);
+                if (ftree == null) {
                     //formula not found: might happen for clustered compounds
 //                    if (zodiacScore.getProbability()>0){
 //                        Log.warn("could not match Zodiac result to Sirius results");
@@ -263,8 +268,7 @@ public class Zodiac {
                                 "You might increase the number of SIRIUS output candidates or disable clustering in ZODIAC. Compound id: "+id);
                     }
                 } else {
-                    identificationResult.setAnnotation(ZodiacScore.class, zodiacScore);
-                    identificationResult.getResolvedTree().setAnnotation(ZodiacScore.class, zodiacScore);
+                    ftree.setAnnotation(ZodiacScore.class, zodiacScore);
                 }
             }
         }
@@ -313,10 +317,10 @@ public class Zodiac {
         return indexMap;
     }
 
-    private Map<MolecularFormula, IdentificationResult> createIdentificationResultMap(IdentificationResults result) {
-        Map<MolecularFormula, IdentificationResult> resultMap = new HashMap<>(result.size(), 0.75f);
-        for (IdentificationResult identificationResult : result) {
-            final MolecularFormula mf = identificationResult.getMolecularFormula();
+    private Map<MolecularFormula, FTree> createIdentificationResultMap(List<FTree> result) {
+        Map<MolecularFormula, FTree> resultMap = new HashMap<>(result.size(), 0.75f);
+        for (FTree identificationResult : result) {
+            final MolecularFormula mf = identificationResult.getRoot().getFormula();
             assert !resultMap.containsKey(mf);
             resultMap.put(mf, identificationResult);
         }
@@ -327,15 +331,15 @@ public class Zodiac {
     private void init(){
         Map<String, List<FragmentsCandidate>> candidatesMap = new HashMap<>();
         Set<String> experimentIDSet = new HashSet<>();
-        for (ExperimentResult result : experimentResults) {
-            List<FTree> trees = new ArrayList<>();
-            for (IdentificationResult identificationResult : result.getResults()) {
+        for (Map.Entry<Ms2Experiment, List<FTree>> result : experimentResults.entrySet()) {
+            Ms2Experiment experiment = result.getKey();
+            List<FTree> trees = new ArrayList<>(result.getValue());
+            /*for (IdentificationResult identificationResult : result.getResults()) {
 //                trees.add(identificationResult.getRawTree()); //changed do we want to include H2O and similar in-source losses? What about adducts?
                 trees.add(identificationResult.getResolvedTree()); //todo use rawTree or resolvedTree?!
-            }
+            }*/
 
 
-            Ms2Experiment experiment = result.getExperiment();
             List<FragmentsCandidate> candidates = FragmentsCandidate.createAllCandidateInstances(trees, experiment);
 
             Collections.sort(candidates);
@@ -453,10 +457,4 @@ public class Zodiac {
         }
         return instanceToCluster;
     }
-
-
-    public List<ExperimentResult> getAnnotatedExperimentResults(){
-        return experimentResults;
-    }
-
 }
