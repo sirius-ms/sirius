@@ -10,9 +10,7 @@ import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.MasterJJob;
-import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.IdentificationResults;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +20,7 @@ import java.util.concurrent.ExecutionException;
 
 public class Zodiac {
     private final Logger Log;
-    List<ExperimentResult> experimentResults;
+    Map<Ms2Experiment> experimentResults;
     List<LibraryHit> anchors;
     NodeScorer[] nodeScorers;
     EdgeScorer<FragmentsCandidate>[] edgeScorers;
