@@ -2,7 +2,7 @@ package de.unijena.bioinf.confidence_score.features;
 
 import Tools.ExpectationMaximization1D;
 import Tools.KMeans;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import jMEF.MixtureModel;
 import jMEF.PVector;

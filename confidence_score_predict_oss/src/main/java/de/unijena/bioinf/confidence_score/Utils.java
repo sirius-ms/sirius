@@ -1,6 +1,6 @@
 package de.unijena.bioinf.confidence_score;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 
 import java.util.Arrays;
