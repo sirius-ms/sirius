@@ -5,9 +5,12 @@ import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.sirius.ExperimentResult;
+import de.unijena.bioinf.projectspace.ComponentSerializer;
+import de.unijena.bioinf.projectspace.FormulaResultId;
+import de.unijena.bioinf.projectspace.ProjectReader;
+import de.unijena.bioinf.projectspace.ProjectWriter;
+import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.IdentificationResults;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -20,15 +23,34 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-public class CanopusResultSerializer implements MetaDataSerializer, SummaryWriter {
+public class CanopusResultSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, CanopusResult> {
     protected final Canopus canopus;
 
     public CanopusResultSerializer(Canopus canopus) {
         this.canopus = canopus;
     }
 
-    protected Boolean readFingerprints = null;
+
     @Override
+    public CanopusResult read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
+        return null;
+    }
+
+    @Override
+    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, CanopusResult component) throws IOException {
+
+    }
+
+    @Override
+    public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
+
+    }
+
+
+
+    protected Boolean readFingerprints = null;
+
+   /* @Override
     public void read(@NotNull ExperimentResult expResult, @NotNull DirectoryReader reader, @NotNull Set<String> names) throws IOException {
         final DirectoryReader.ReadingEnvironment env = reader.env;
         final IdentificationResults results = expResult.getResults();
@@ -160,10 +182,10 @@ public class CanopusResultSerializer implements MetaDataSerializer, SummaryWrite
             });
 
             //todo reenable canopus html summary?
-            /*writer.write("summary_canopus.html", w -> {
+            *//*writer.write("summary_canopus.html", w -> {
                 final String html = FileUtils.read(FileUtils.resource(FingerIdResultWriter.class, "/sirius/canopus.html.gz"));
                 html.replace("null;//{{INSERT JSON DATA HERE}}//", json);
-            });*/
+            });*//*
 
             //write index
             writeCanopusIndex(FingerIdLocations.CANOPUS_FINGERPRINT_INDEX.fileName(), canopusVersion, writer);
@@ -200,5 +222,7 @@ public class CanopusResultSerializer implements MetaDataSerializer, SummaryWrite
                 w.write('\n');
             }
         });
-    }
+    }*/
+
+
 }

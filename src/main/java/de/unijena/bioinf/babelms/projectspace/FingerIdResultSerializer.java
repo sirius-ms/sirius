@@ -1,6 +1,6 @@
 package de.unijena.bioinf.babelms.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.chemdb.DBLink;
@@ -12,9 +12,12 @@ import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.fingerid.webapi.VersionsInfo;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
-import de.unijena.bioinf.sirius.ExperimentResult;
+import de.unijena.bioinf.projectspace.ComponentSerializer;
+import de.unijena.bioinf.projectspace.FormulaResultId;
+import de.unijena.bioinf.projectspace.ProjectReader;
+import de.unijena.bioinf.projectspace.ProjectWriter;
+import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.IdentificationResults;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +31,23 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWriter {
+public class FingerIdResultSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FingerIdResult> {
     private static Pattern DBPAT = Pattern.compile("([^(])+\\(([^)]+)\\)");
+
+    @Override
+    public FingerIdResult read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
+        return null;
+    }
+
+    @Override
+    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, FingerIdResult component) throws IOException {
+
+    }
+
+    @Override
+    public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
+
+    }
 
     protected final WebAPI api;
     public FingerIdResultSerializer(WebAPI api) {
@@ -37,7 +55,7 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
     }
 
     protected Boolean readFingerprints = null;
-    @Override
+    /*@Override
     public void read(@NotNull final ExperimentResult result, @NotNull final DirectoryReader reader, @NotNull Set<String> names) throws IOException {
         final DirectoryReader.ReadingEnvironment env = reader.env;
         final IdentificationResults results = result.getResults();
@@ -297,4 +315,6 @@ public class FingerIdResultSerializer implements MetaDataSerializer, SummaryWrit
     public Map<String, String> getVersionInfo() {
         return Collections.singletonMap("csi:fingerid", FingerIDProperties.fingeridVersion());
     }
+*/
+
 }
