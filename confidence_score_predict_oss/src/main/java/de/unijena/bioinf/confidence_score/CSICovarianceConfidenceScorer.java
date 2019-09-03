@@ -1,6 +1,6 @@
 package de.unijena.bioinf.confidence_score;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
@@ -19,10 +19,7 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -96,7 +93,7 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
             for (int i = 0; i < allCandidates.length; i++)
                 rankedCandidatesCSIscore[i] = new Scored<>(allCandidates[i].getCandidate(), csiFingerIdScoring.score(query, allCandidates[i].getCandidate().getFingerprint()));
         }
-        Arrays.sort(rankedCandidatesCSIscore, Scored.desc());
+        Arrays.sort(rankedCandidatesCSIscore, Comparator.reverseOrder());
         rankedCandidatesCSIscoreFiltered = Arrays.stream(rankedCandidatesCSIscore).filter(it -> filter.test(it.getCandidate()))
                 .toArray(Scored[]::new);
 
@@ -113,7 +110,7 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
             for (int i = 0; i < allCandidates.length; i++)
                 rankedCandidatesCovscore[i] = new Scored<>(allCandidates[i].getCandidate(), covarianceScoring.score(query, allCandidates[i].getCandidate().getFingerprint()));
         }
-        Arrays.sort(rankedCandidatesCovscore, Scored.desc());
+        Arrays.sort(rankedCandidatesCovscore, Comparator.reverseOrder());
         rankedCandidatesCovscoreFiltered = Arrays.stream(rankedCandidatesCovscore).filter(it -> filter.test(it.getCandidate()))
                 .toArray(Scored[]::new);
 

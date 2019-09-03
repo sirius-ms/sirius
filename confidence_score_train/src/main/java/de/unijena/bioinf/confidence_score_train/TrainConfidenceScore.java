@@ -1,6 +1,6 @@
 package de.unijena.bioinf.confidence_score_train;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.confidence_score.CombinedFeatureCreator;
 import de.unijena.bioinf.confidence_score.features.PvalueScoreUtils;
 import de.unijena.bioinf.confidence_score.svm.*;
