@@ -1,6 +1,6 @@
 package de.unijena.bioinf.sirius.validation;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
@@ -171,7 +171,7 @@ public class Ms2Validator extends Ms1Validator {
                         }
                     }
                 }
-                Collections.sort(scoredIonTypes,Scored.<PrecursorIonType>desc());
+                scoredIonTypes.sort(Comparator.reverseOrder());
                 if (scoredIonTypes.size()>0) {
                     final PrecursorIonType ion = scoredIonTypes.get(0).getCandidate();
                     input.setPrecursorIonType(ion);

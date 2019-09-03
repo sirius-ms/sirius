@@ -1,6 +1,4 @@
-package de.unijena.bioinf.projectspace.sirius;
-
-import de.unijena.bioinf.projectspace.FormulaScore;
+package de.unijena.bioinf.sirius.scores;
 
 public final class TreeScore extends FormulaScore {
 

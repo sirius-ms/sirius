@@ -17,6 +17,7 @@
  */
 package de.unijena.bioinf.sirius;
 
+@Deprecated
 public interface Progress {
 
     class Quiet implements Progress {

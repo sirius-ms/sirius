@@ -17,118 +17,72 @@
  */
 package de.unijena.bioinf.sirius;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
-import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
+import de.unijena.bioinf.sirius.scores.FormulaScore;
 
-//todo cleanup
-public final class IdentificationResult implements Cloneable, Comparable<IdentificationResult>/*, Annotated<DataAnnotation>*/ {
+//this is basically just a scored tree
+//todo if the rank is used pretty offen, we can add it again
+public final class IdentificationResult<S extends FormulaScore> extends SScored<FTree, S> implements Cloneable {
 
-    protected FTree tree;
-//    protected MolecularFormula formula;
+//    protected FTree tree;
+//    protected int rank = -1;
 
-    protected int rank = -1;
-    protected SiriusScore rankScore;
+    public static <S extends FormulaScore> IdentificationResult<S> withPrecursorIonType(IdentificationResult<S> ir, PrecursorIonType ionType) {
+        return new IdentificationResult<>(new IonTreeUtils().treeToNeutralTree(ir.getCandidate(), ionType), ir.getScoreObject());
+    }
 
-//    private final Annotated.Annotations<DataAnnotation> annotations = new Annotated.Annotations<>();
+    public IdentificationResult(IdentificationResult<S> ir) {
+        this(ir.getCandidate(), ir.getScoreObject());
+    }
 
-   /* @Override
-    public Annotations<DataAnnotation> annotations() {
-        return annotations;
-    }*/
+    public IdentificationResult(FTree tree, S score) {
+        super(tree, score);
+    }
 
-    public IdentificationResult(IdentificationResult ir) {
-//        setAnnotationsFrom(ir);
-        this.rank = ir.rank;
-        this.tree = ir.tree;
-//        this.formula = ir.formula;
-        this.rankScore = ir.rankScore;
+    public MolecularFormula getMolecularFormula() {
+        return getTree().getRoot().getFormula();
     }
 
     public PrecursorIonType getPrecursorIonType() {
         return getResolvedTree().getAnnotationOrThrow(PrecursorIonType.class);
     }
 
-    public static IdentificationResult withPrecursorIonType(IdentificationResult ir, PrecursorIonType ionType) {
-        IdentificationResult r = new IdentificationResult(ir);
-        r.tree = new IonTreeUtils().treeToNeutralTree(ir.tree, ionType);
-//        r.formula = ionType.measuredNeutralMoleculeToNeutralMolecule(ir.formula);
-        return r;
-    }
-
-    public IdentificationResult(FTree tree, int rank) {
-        this.tree = tree;
-        if (this.tree != null) {
-            rankScore = new ScoringHelper(this.tree).getSiriusScore();
-//            setAnnotation(SiriusScore.class, (SiriusScore) rankScore);
-        }
-        this.rank = rank;
-
-       /* if (tree != null) {
-            tree.normalizeStructure();
-            this.formula = tree.getRoot().getFormula();
-
-            final IonTreeUtils.Type type = tree.getAnnotationOrNull(IonTreeUtils.Type.class);
-            if (type == IonTreeUtils.Type.RESOLVED) {
-                this.formula = tree.getRoot().getFormula();
-            } else if (type == IonTreeUtils.Type.IONIZED) {
-                this.formula = tree.getAnnotationOrThrow(PrecursorIonType.class).precursorIonToNeutralMolecule(tree.getRoot().getFormula());
-            } else {
-                this.formula = tree.getAnnotationOrThrow(PrecursorIonType.class).measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
-            }
-        }*/
-    }
-
-    public MolecularFormula getMolecularFormula() {
-        return tree.getRoot().getFormula();
-    }
-
-    public int getRank() {
+    /*public int getRank() {
         return rank;
-    }
-
-    /*public <T extends ResultScore> boolean setRankingScore(Class<T> scoreType) {
-        final ResultScore old = rankScore;
-        rankScore = getAnnotation(scoreType);
-        rank = -1;
-        return rankScore != old;
-    }
-
-    public double getRankingScore() {
-        return rankScore == null ? 0d : rankScore.score();
-    }
-
-    public ResultScore rankingScore() {
-        return rankScore;
-    }
-
-
-    public <T extends ResultScore> T getScoreObject(Class<T> scoreType) {
-        return getAnnotation(scoreType);
-    }
-
-    public <T extends ResultScore> double getScore(Class<T> scoreType) {
-        final T s = getScoreObject(scoreType);
-        return s == null ? 0d : s.score();
     }*/
 
-    public double getScore() {
-        return rankScore == null ? 0d : rankScore.score();
+    /*public double getScore() {
+        return FTreeMetricsHelper.getSiriusScore(tree);
+    }*/
+
+    public FTree getTree() {
+        return getCandidate();
     }
 
-
-    public double getTreeScore() {
-        return new ScoringHelper(tree).getTreeScore();
+    @Deprecated
+    public FTree getRawTree() {
+        return getTree();
     }
 
-
-    public double getIsotopeScore() {
-        return new ScoringHelper(tree).getIsotopeMs1Score();
+    //this is also called neutralizedTree
+    @Deprecated
+    public FTree getResolvedTree() {
+        return getTree();
     }
 
+    @Deprecated
+    public FTree getStandardTree() {
+        return getTree();
+    }
+
+    @Deprecated
+    public FTree getBeautifulTree() {
+        return getTree();
+    }
 
     /**
      * true if a beautiful (bigger, better explaining spectrum) tree is available
@@ -140,32 +94,7 @@ public final class IdentificationResult implements Cloneable, Comparable<Identif
         return true;
     }
 
-    public FTree getTree() {
-        return tree;
-    }
-
-    @Deprecated
-    public FTree getRawTree() {
-        return tree;
-    }
-
-    //this is also called neutralizedTree
-    @Deprecated
-    public FTree getResolvedTree() {
-        return tree;
-    }
-
-    @Deprecated
-    public FTree getStandardTree() {
-        return tree;
-    }
-
-    @Deprecated
-    public FTree getBeautifulTree() {
-        return tree;
-    }
-
-    private void copyAnnotations(FTree tree, FTree beautifulTree) {
+    /*private void copyAnnotations(FTree tree, FTree beautifulTree) {
         //todo do this for all annotations?
         UnconsideredCandidatesUpperBound upperBound = tree.getAnnotationOrNull(UnconsideredCandidatesUpperBound.class);
         if (upperBound == null) return;
@@ -174,38 +103,24 @@ public final class IdentificationResult implements Cloneable, Comparable<Identif
         beautifulTree.clearAnnotation(UnconsideredCandidatesUpperBound.class);
         beautifulTree.setAnnotation(UnconsideredCandidatesUpperBound.class, upperBound);
 //        }
-    }
+    }*/
 
-    public IdentificationResult clone() {
-        return new IdentificationResult(new FTree(tree), rank);
+    public IdentificationResult<S> clone() {
+        return new IdentificationResult<>(new FTree(getTree()), getScoreObject());
     }
 
 
     public String toString() {
-        return getMolecularFormula() + " with score " + getScore() + " at rank " + rank;
+        return getMolecularFormula() + " with score " + getScore();
     }
 
-    public double getExplainedPeaksRatio() {
-        return tree.getAnnotation(TreeStatistics.class).getRatioOfExplainedPeaks();
-    }
 
-    public double getNumOfExplainedPeaks() {
-        return tree.numberOfVertices();
-    }
 
-    public double getExplainedIntensityRatio() {
-        return tree.getAnnotation(TreeStatistics.class).getExplainedIntensity();
-    }
-
-    public double getNumberOfExplainablePeaks() {
-        return getNumOfExplainedPeaks() / getExplainedPeaksRatio();
-    }
-
-    @Override
+    /*@Override
     public int compareTo(IdentificationResult o) {
-        if (rank == o.rank)
+//        if (rank == o.rank)
             return Double.compare(o.getScore(), getScore());
 
-        else return Integer.compare(rank, o.rank);
-    }
+//        else return Integer.compare(rank, o.rank);
+    }*/
 }

@@ -4,8 +4,8 @@ import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.FormulaScore;
 import de.unijena.bioinf.projectspace.ProjectSpaceContainer;
+import de.unijena.bioinf.sirius.scores.FormulaScore;
 
 import java.util.ArrayList;
 import java.util.List;
