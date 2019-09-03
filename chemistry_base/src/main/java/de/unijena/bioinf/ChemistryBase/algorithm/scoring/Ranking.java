@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ChemistryBase.algorithm;
+package de.unijena.bioinf.ChemistryBase.algorithm.scoring;
 
 import com.google.common.base.Equivalence;
 import com.google.common.base.Predicate;

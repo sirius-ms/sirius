@@ -1,15 +1,15 @@
 package de.unijena.bioinf.GibbsSampling;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.ZodiacScore;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.MasterJJob;
+import de.unijena.bioinf.sirius.IdentificationResult;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,9 @@ import java.util.stream.IntStream;
 
 public class Zodiac {
     private final Logger Log;
-    Map<Ms2Experiment, List<FTree>> experimentResults;
+    Map<Ms2Experiment, List<FTree>> siriusScoredTrees;
+    Map<Ms2Experiment, List<IdentificationResult<ZodiacScore>>> zodiacScoredTrees; //todo should this be part of the ZodiacResult?
+
     List<LibraryHit> anchors;
     NodeScorer[] nodeScorers;
     EdgeScorer<FragmentsCandidate>[] edgeScorers;
@@ -54,7 +56,7 @@ public class Zodiac {
     }
 
     public Zodiac(Map<Ms2Experiment, List<FTree>> experimentResults, List<LibraryHit> anchors, NodeScorer[] nodeScorers, EdgeScorer<FragmentsCandidate>[] edgeScorers, EdgeFilter edgeFilter, int maxCandidates, boolean clusterCompounds, boolean runTwoStep, MasterJJob masterJJob) throws ExecutionException {
-        this.experimentResults = experimentResults;
+        this.siriusScoredTrees = experimentResults;
         this.anchors = anchors == null ? Collections.emptyList() : anchors;
         this.nodeScorers = nodeScorers;
         this.edgeScorers = edgeScorers;
@@ -99,7 +101,7 @@ public class Zodiac {
                 submitSubJob(gibbsParallel);
                 CompoundResult<FragmentsCandidate>[] results = gibbsParallel.takeResult();
 
-                addZodiacScoreToIdentificationResult(results, experimentResults);
+                zodiacScoredTrees = mapZodiacScoresToFTrees(results);
                 final long t6 = System.currentTimeMillis();
                 System.out.println("Step 4 took " + ((t6-t5)/1000d) + " seconds" );
                 return includedAllClusterInstances(new ZodiacResult<>(ids, graph, results));
@@ -131,9 +133,9 @@ public class Zodiac {
             zodiacResult = runOneStepZodiacOnly(iterationSteps, burnIn, repetitions);
         //}
 
-        CompoundResult<FragmentsCandidate>[] result = zodiacResult.getResults();
+//        CompoundResult<FragmentsCandidate>[] result = zodiacResult.getResults();
 
-        addZodiacScoreToIdentificationResult(result, experimentResults);
+        zodiacScoredTrees = mapZodiacScoresToFTrees(zodiacResult.getResults());
 
         if (clusterCompounds) zodiacResult = includedAllClusterInstances(zodiacResult);
         else zodiacResult = new ZodiacResultsWithClusters(ids, zodiacResult.getGraph(), zodiacResult.getResults(), getSelfMapping(ids));
@@ -232,11 +234,11 @@ public class Zodiac {
     }
 
 
-    private void addZodiacScoreToIdentificationResult(CompoundResult<FragmentsCandidate>[] result, Map<Ms2Experiment, List<FTree>> experimentResults) {
-        //todo add score to FTree not IdentificationResult?!?!!?!?!
-        Map<String, CompoundResult<FragmentsCandidate>> idToCompoundResult = createInstanceMap(result);//contains all compounds (even all clustered)
-        for (Map.Entry<Ms2Experiment, List<FTree>> experimentResult : experimentResults.entrySet()) {
-//            IdentificationResults identificationResults = experimentResult.getResults();
+    private Map<Ms2Experiment, List<IdentificationResult<ZodiacScore>>> mapZodiacScoresToFTrees(CompoundResult<FragmentsCandidate>[] result) {
+        final Map<String, CompoundResult<FragmentsCandidate>> idToCompoundResult = createInstanceMap(result);//contains all compounds (even all clustered)
+        final Map<Ms2Experiment, List<IdentificationResult<ZodiacScore>>> zodiacScoredTrees = new HashMap<>(siriusScoredTrees.size());
+
+        for (Map.Entry<Ms2Experiment, List<FTree>> experimentResult : siriusScoredTrees.entrySet()) {
             if (experimentResult.getValue().size() == 0) continue;
 
             Ms2Experiment experiment = experimentResult.getKey();
@@ -251,7 +253,7 @@ public class Zodiac {
             Map<MolecularFormula, FTree> idResultMap = createIdentificationResultMap(experimentResult.getValue());
             for (Scored<FragmentsCandidate> zodiacResult : zodiacResults) {
                 if (zodiacResult.getCandidate() instanceof DummyFragmentCandidate) continue;
-                ZodiacScore zodiacScore = new ZodiacScore(zodiacResult.getScore());
+                final ZodiacScore zodiacScore = new ZodiacScore(zodiacResult.getScore());
                 MolecularFormula mf = zodiacResult.getCandidate().getFormula();
                 FTree ftree = idResultMap.get(mf);
                 if (ftree == null) {
@@ -259,19 +261,22 @@ public class Zodiac {
 //                    if (zodiacScore.getProbability()>0){
 //                        Log.warn("could not match Zodiac result to Sirius results");
 //                    }
-
-                    if (zodiacScore.getProbability()>0 && clusterCompounds && representativeToCluster.containsKey(id)){
+                    if (zodiacScore.score() > 0 && clusterCompounds && representativeToCluster.containsKey(id)) {
                         Log.error("Zodiac results and Sirius results contain different molecular formula candiates for compoumound "+id+".");
-                    } else if (zodiacScore.getProbability()>0.01){
+                    } else if (zodiacScore.score() > 0.01) {
                         Log.warn("A high scoring ZODIAC molecular formula candidate is not contained in SIRIUS top hits.\n" +
                                 "This might occur if clustered commpounds possess different SIRIUS molecular formula candidates.\n" +
                                 "You might increase the number of SIRIUS output candidates or disable clustering in ZODIAC. Compound id: "+id);
                     }
                 } else {
-                    ftree.setAnnotation(ZodiacScore.class, zodiacScore);
+                    zodiacScoredTrees.computeIfAbsent(experimentResult.getKey(), (key) -> new ArrayList<>(experimentResult.getValue().size()))
+                            .add(new IdentificationResult<>(ftree, zodiacScore));
                 }
             }
         }
+
+        zodiacScoredTrees.forEach((k, v) -> Collections.sort(v));
+        return zodiacScoredTrees;
     }
 
     private Map<String, CompoundResult<FragmentsCandidate>> createInstanceMap(CompoundResult<FragmentsCandidate>[] result) {
@@ -331,7 +336,7 @@ public class Zodiac {
     private void init(){
         Map<String, List<FragmentsCandidate>> candidatesMap = new HashMap<>();
         Set<String> experimentIDSet = new HashSet<>();
-        for (Map.Entry<Ms2Experiment, List<FTree>> result : experimentResults.entrySet()) {
+        for (Map.Entry<Ms2Experiment, List<FTree>> result : siriusScoredTrees.entrySet()) {
             Ms2Experiment experiment = result.getKey();
             List<FTree> trees = new ArrayList<>(result.getValue());
             /*for (IdentificationResult identificationResult : result.getResults()) {
@@ -383,7 +388,7 @@ public class Zodiac {
         if (clusterCompounds){
             representativeToCluster = ZodiacUtils.clusterCompounds(candidatesMap,Log);
             candidatesMap = ZodiacUtils.mergeCluster(candidatesMap, representativeToCluster);
-            Log.info("Generated " + candidatesMap.size()+" compound clusters from "+experimentResults.size()+" compounds.");
+            Log.info("Generated " + candidatesMap.size() + " compound clusters from " + siriusScoredTrees.size() + " compounds.");
         }
 
 
@@ -435,6 +440,9 @@ public class Zodiac {
         }
     }
 
+    public Map<Ms2Experiment, List<IdentificationResult<ZodiacScore>>> getZodiacScoredTrees() {
+        return zodiacScoredTrees;
+    }
 
     /**
      * A map of each cluster's representative to the cluster itself

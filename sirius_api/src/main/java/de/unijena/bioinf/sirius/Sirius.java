@@ -40,6 +40,7 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.plugins.*;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.treemotifs.model.TreeMotifPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -136,7 +137,7 @@ public class Sirius {
      * @param experiment input data
      * @return the top tree
      */
-    public List<IdentificationResult> identify(Ms2Experiment experiment) {
+    public List<IdentificationResult<SiriusScore>> identify(Ms2Experiment experiment) {
         return SiriusJobs.getGlobalJobManager().submitJob(makeIdentificationJob(experiment)).takeResult();
     }
 
@@ -150,7 +151,7 @@ public class Sirius {
         final MutableMs2Experiment copy = new MutableMs2Experiment(experiment);
         copy.setMolecularFormula(formula);
         copy.setAnnotation(Whiteset.class, Whiteset.of(formula));
-        final List<IdentificationResult> irs = identify(copy);
+        final List<IdentificationResult<SiriusScore>> irs = identify(copy);
         if (irs.isEmpty()) return null;
         else return irs.get(0);
     }
@@ -608,7 +609,7 @@ public class Sirius {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////CLASSES/////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    public class SiriusIdentificationJob extends BasicMasterJJob<List<IdentificationResult>> {
+    public class SiriusIdentificationJob extends BasicMasterJJob<List<IdentificationResult<SiriusScore>>> {
         private final Ms2Experiment experiment;
 
         public SiriusIdentificationJob(Ms2Experiment experiment) {
@@ -617,7 +618,7 @@ public class Sirius {
         }
 
         @Override
-        protected List<IdentificationResult> compute() throws Exception {
+        protected List<IdentificationResult<SiriusScore>> compute() throws Exception {
             final ProcessedInput input = preprocessForMs2Analysis(experiment);
             if (experiment.getAnnotationOrDefault(IsotopeSettings.class).isEnabled())
                 profile.isotopePatternAnalysis.computeAndScoreIsotopePattern(input);
@@ -626,17 +627,15 @@ public class Sirius {
             submitSubJob(instance);
             FasterTreeComputationInstance.FinalResult fr = instance.awaitResult();
 
-            List<IdentificationResult> r = createIdentificationResults(fr, instance);//postprocess results
+            List<IdentificationResult<SiriusScore>> r = createIdentificationResults(fr, instance);//postprocess results
             return r;
         }
 
-        private List<IdentificationResult> createIdentificationResults(FasterTreeComputationInstance.FinalResult fr, FasterTreeComputationInstance computationInstance) {
+        private List<IdentificationResult<SiriusScore>> createIdentificationResults(FasterTreeComputationInstance.FinalResult fr, FasterTreeComputationInstance computationInstance) {
 
-            final List<IdentificationResult> irs = new ArrayList<>();
-            int k = 0;
+            final List<IdentificationResult<SiriusScore>> irs = new ArrayList<>();
             for (FTree tree : fr.getResults()) {
-                IdentificationResult result = new IdentificationResult(tree, ++k);
-                irs.add(result);
+                irs.add(new IdentificationResult<>(tree, new SiriusScore(FTreeMetricsHelper.getSiriusScore(tree))));
             }
             return irs;
         }

@@ -2,6 +2,7 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.sirius.scores.FormulaScore;
 
 public final class FormulaResultId extends ProjectSpaceContainerId {
 
