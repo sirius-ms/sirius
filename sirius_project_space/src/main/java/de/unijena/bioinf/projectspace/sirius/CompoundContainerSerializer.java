@@ -1,8 +1,10 @@
 package de.unijena.bioinf.projectspace.sirius;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.sirius.scores.FormulaScore;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,7 +26,7 @@ public class CompoundContainerSerializer implements ContainerSerializer<Compound
     public CompoundContainer readFromProjectSpace(ProjectReader reader, ProjectReader.ForContainer<CompoundContainerId, CompoundContainer> containerSerializer, CompoundContainerId id) throws IOException {
         return reader.inDirectory(id.getDirectoryName(), ()->{
             Map<String, String> info = reader.keyValues(SiriusLocations.COMPOUND_INFO);
-            final CompoundContainer container = new CompoundContainer(id, new FormulaScoring().resolve(info.get("rankingScore")));
+            final CompoundContainer container = new CompoundContainer(id, (Class<? extends FormulaScore>) Score.resolve(info.get("rankingScore")));
             for (String file : reader.glob("trees/*.json")) {
                 Matcher matcher = resultPattern.matcher(new File(file).getName());
                 container.getResults().add(new FormulaResultId(id, MolecularFormula.parseOrThrow(matcher.group(2)), PrecursorIonType.fromString(matcher.group(3)), Integer.parseInt(matcher.group(1)), container.getRankingScore()));

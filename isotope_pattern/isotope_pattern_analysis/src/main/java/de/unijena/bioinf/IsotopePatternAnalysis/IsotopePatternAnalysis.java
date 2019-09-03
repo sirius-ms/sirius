@@ -20,7 +20,6 @@ package de.unijena.bioinf.IsotopePatternAnalysis;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
@@ -237,7 +236,7 @@ public class IsotopePatternAnalysis implements Parameterized {
                         decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(ion.subtractFromMass(pattern.getMzAt(0)), deviation.allowedMassDeviation, constraints);
                 ionFormulas.addAll(scoreFormulas(pattern, formulas, experiment, PrecursorIonType.getPrecursorIonType(ion)));
             }
-            Collections.sort(ionFormulas, Scored.<MolecularFormula>desc());
+            ionFormulas.sort(Comparator.reverseOrder());
             return ionFormulas;
         } else {
             // use given ionization
@@ -302,7 +301,7 @@ public class IsotopePatternAnalysis implements Parameterized {
             }
             patterns.add(new IsotopePattern(formula, scoreBuffer[optScoreIndex], allPatternVariants[optScoreIndex]));
         }
-        Collections.sort(patterns, Scored.<MolecularFormula>desc());
+        patterns.sort(Comparator.reverseOrder());
         return patterns;
     }
 

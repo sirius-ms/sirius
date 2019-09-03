@@ -275,9 +275,6 @@ public interface Annotated<A extends DataAnnotation> {
         return annotations().annotationChangeSupport.hasListeners(propertyName);
     }
 
-
-
-
     /**
      * This allows us to hide the annotation map from the outside
      * but inject it from the class that implements the interface.
@@ -317,6 +314,11 @@ public interface Annotated<A extends DataAnnotation> {
         public Iterator<Class<Annotation>> iterator() {
             return map.keySet().iterator();
         }
+
+        public Iterator<Annotation> valueIterator() {
+            return map.values().iterator();
+        }
+
 
         public void forEach(BiConsumer<? super Class<Annotation>, ? super Annotation> action) {
             map.forEach(action);

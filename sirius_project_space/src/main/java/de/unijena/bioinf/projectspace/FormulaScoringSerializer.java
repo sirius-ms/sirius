@@ -1,11 +1,12 @@
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.sirius.scores.FormulaScore;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 public class FormulaScoringSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FormulaScoring> {
@@ -14,9 +15,9 @@ public class FormulaScoringSerializer implements ComponentSerializer<FormulaResu
         final Map<String,String> kv = reader.keyValues(SiriusLocations.SCORES.apply(id));
         final FormulaScoring scoring = new FormulaScoring();
         for (String key : kv.keySet()) {
-            final Class<? extends FormulaScore> s = scoring.resolve(key);
+            final Class<? extends FormulaScore> s = (Class<? extends FormulaScore>) Score.resolve(key);
             final double value = Double.parseDouble(kv.get(key));
-            scoring.set(s,value);
+            scoring.addAnnotation(s, value);
         }
         return scoring;
     }
@@ -25,7 +26,7 @@ public class FormulaScoringSerializer implements ComponentSerializer<FormulaResu
     public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, FormulaScoring component) throws IOException {
         final HashMap<String,String> values = new HashMap<>();
         for (FormulaScore score : component) {
-            values.put(component.simplify(score.getClass()), String.valueOf(score.score));
+            values.put(Score.simplify(score.getClass()), String.valueOf(score.score()));
         }
         writer.keyValues(SiriusLocations.SCORES.apply(id), values);
     }

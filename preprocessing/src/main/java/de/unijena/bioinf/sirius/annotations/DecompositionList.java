@@ -19,7 +19,7 @@ package de.unijena.bioinf.sirius.annotations;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
