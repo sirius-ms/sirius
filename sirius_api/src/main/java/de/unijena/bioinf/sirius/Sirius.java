@@ -44,10 +44,7 @@ import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.treemotifs.model.TreeMotifPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 
 //todo we should cleanup the api methods, proof which should be private and which are no longer needed, or at least change them, so that they use the identification job
@@ -637,6 +634,7 @@ public class Sirius {
             for (FTree tree : fr.getResults()) {
                 irs.add(new IdentificationResult<>(tree, new SiriusScore(FTreeMetricsHelper.getSiriusScore(tree))));
             }
+            irs.sort(Comparator.reverseOrder());
             return irs;
         }
 
