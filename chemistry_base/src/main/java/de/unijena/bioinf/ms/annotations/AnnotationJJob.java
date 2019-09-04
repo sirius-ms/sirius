@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.jobs;
+package de.unijena.bioinf.ms.annotations;
 
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.Annotated;
