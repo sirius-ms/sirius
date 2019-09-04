@@ -1,5 +1,6 @@
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 
@@ -20,7 +21,14 @@ public interface ProjectReader extends ProjectIO {
     public <A> A textFile(String relativePath, IOFunctions.IOFunction<BufferedReader, A> func)  throws IOException;
     public <A> A binaryFile(String relativePath, IOFunctions.IOFunction<BufferedInputStream, A> func)  throws IOException;
 
-    public Map<String,String> keyValues(String relativePath) throws IOException;
+    /*
+    This methods might be redundant (as they are just special textfiles) but we might later use different ways to serialize key/value or
+    tables, e.g. when using databases
+     */
+    public default Map<String,String> keyValues(String relativePath) throws IOException {
+        return textFile(relativePath, (r)-> FileUtils.readKeyValues(r));
+    }
+    public void table(String relativePath, boolean skipHeader, Consumer<String[]> f) throws IOException;
 
 
     public static interface ForContainer<S extends ProjectSpaceContainerId,T extends ProjectSpaceContainer<S>> {

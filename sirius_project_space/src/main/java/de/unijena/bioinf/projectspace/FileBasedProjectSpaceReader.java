@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class FileBasedProjectSpaceReader implements ProjectReader {
 
@@ -39,6 +40,18 @@ public class FileBasedProjectSpaceReader implements ProjectReader {
     @Override
     public Map<String, String> keyValues(String relativePath) throws IOException {
         return FileUtils.readKeyValues(new File(dir,relativePath));
+    }
+
+    @Override
+    public void table(String relativePath, boolean skipHeader, Consumer<String[]> f) throws IOException {
+        try (final BufferedReader br = FileUtils.getReader(new File(dir,relativePath))) {
+            String line;
+            if (skipHeader)
+                line = br.readLine();
+            while ((line=br.readLine())!=null) {
+                f.accept(line.split("\t"));
+            }
+        }
     }
 
     @Override

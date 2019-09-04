@@ -1,6 +1,8 @@
 package de.unijena.bioinf.projectspace;
 
+import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.FileSystems;
@@ -9,6 +11,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class FileBasedProjectSpaceWriter implements ProjectWriter {
 
@@ -66,6 +70,21 @@ public class FileBasedProjectSpaceWriter implements ProjectWriter {
                 stream.write(String.valueOf(entry.getKey()));
                 stream.write('\t');
                 stream.write(String.valueOf(entry.getValue()));
+            }
+        }
+    }
+
+    @Override
+    public void table(String relativePath, @Nullable  String[] header, Iterable<String[]> rows) throws IOException {
+        try (final BufferedWriter bw = FileUtils.getWriter(new File(dir,relativePath))) {
+            String line;
+            if (header!=null) {
+                bw.write(Joiner.on('\t').join(header));
+                bw.newLine();
+            }
+            for (String[] row : rows) {
+                bw.write(Joiner.on('\t').join(row));
+                bw.newLine();
             }
         }
     }
