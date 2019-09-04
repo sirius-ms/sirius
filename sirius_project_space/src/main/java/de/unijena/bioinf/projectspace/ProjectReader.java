@@ -24,7 +24,7 @@ public interface ProjectReader extends ProjectIO {
 
 
     public static interface ForContainer<S extends ProjectSpaceContainerId,T extends ProjectSpaceContainer<S>> {
-        public void readAllComponents(ProjectReader writer, T container, IOFunctions.ClassValueProducer producer)  throws IOException;
+        public void readAllComponents(ProjectReader reader, T container, IOFunctions.ClassValueConsumer consumer)  throws IOException;
     }
 
 }

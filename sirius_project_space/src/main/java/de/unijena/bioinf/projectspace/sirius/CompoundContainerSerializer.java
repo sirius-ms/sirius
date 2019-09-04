@@ -17,7 +17,11 @@ public class CompoundContainerSerializer implements ContainerSerializer<Compound
 
     @Override
     public void writeToProjectSpace(ProjectWriter writer, ProjectWriter.ForContainer containerSerializer, CompoundContainerId id, CompoundContainer container) throws IOException {
-        // nothing to do
+        // ensure that we are in the right directory
+        writer.inDirectory(id.getDirectoryName(), ()->{
+            containerSerializer.writeAllComponents(writer,container,container::get);
+            return true;
+        });
     }
 
     private final static Pattern resultPattern = Pattern.compile("(\\d+)_([^_]+)_(.+)\\.json");
@@ -32,7 +36,7 @@ public class CompoundContainerSerializer implements ContainerSerializer<Compound
                 container.getResults().add(new FormulaResultId(id, MolecularFormula.parseOrThrow(matcher.group(2)), PrecursorIonType.fromString(matcher.group(3)), Integer.parseInt(matcher.group(1)), container.getRankingScore()));
             }
             container.getResults().sort(Comparator.comparingInt(FormulaResultId::getRank));
-            containerSerializer.readAllComponents(reader, container, container::get);
+            containerSerializer.readAllComponents(reader, container, container::set);
             return container;
         });
     }
