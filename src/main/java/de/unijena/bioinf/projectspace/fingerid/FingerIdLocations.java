@@ -8,5 +8,6 @@ import java.util.function.Function;
 public class FingerIdLocations {
 
     public static Function<FormulaResultId,String> FingerBlastResults = (f)->"fingerid/%s" + f.fileName("csv");
+    public static Function<FormulaResultId,String> CanopusResults = (f)->"canopus/%s" + f.fileName("fpt");
 
 }

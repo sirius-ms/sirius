@@ -2,10 +2,7 @@ package de.unijena.bioinf.projectspace.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.chemdb.DBLink;
-import de.unijena.bioinf.chemdb.DatasourceService;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.chemdb.PubmedLinks;
+import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.projectspace.ComponentSerializer;
 import de.unijena.bioinf.projectspace.FormulaResultId;
@@ -27,7 +24,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
     @Override
     public FingerblastResult read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         final Pattern dblinkPat = Pattern.compile("^.+?: \\(.+\\)$");
-        final ArrayList<Scored<FingerprintCandidate>> results = new ArrayList<>();
+        final ArrayList<Scored<? extends CompoundCandidate>> results = new ArrayList<>();
         reader.table(FingerIdLocations.FingerBlastResults.apply(id),true,(row)->{
             final double score = Double.parseDouble(row[4]);
             final InChI inchi = new InChI(row[0], row[1]);
@@ -57,7 +54,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
             }
             candidate.setLinks(links.toArray(DBLink[]::new));
             candidate.setBitset(bitset);
-            results.add(new Scored<FingerprintCandidate>(candidate, score));
+            results.add(new Scored<CompoundCandidate>(candidate, score));
         });
         return new FingerblastResult(results);
     }
@@ -70,7 +67,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
         final String[] row = header.clone();
         final int[] ranking = new int[]{0};
         writer.table(FingerIdLocations.FingerBlastResults.apply(id), header, component.getResults().stream().map((hit)->{
-            FingerprintCandidate c = hit.getCandidate();
+            CompoundCandidate c = hit.getCandidate();
             row[0] = c.getInchiKey2D();
             row[1] = c.getInchi().in2D;
             row[2] = id.getFormula().toString();
