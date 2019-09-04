@@ -8,6 +8,7 @@ import gnu.trove.procedure.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
