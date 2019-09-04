@@ -2,7 +2,7 @@ package de.unijena.bioinf.passatutto;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.sirius.ResultAnnotation;
+import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 
 public class Decoy implements ResultAnnotation {
 
