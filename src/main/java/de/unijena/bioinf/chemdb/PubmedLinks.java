@@ -1,6 +1,8 @@
 package de.unijena.bioinf.chemdb;
 
+import gnu.trove.impl.hash.TIntHash;
 import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -12,6 +14,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.PrimitiveIterator;
+import java.util.stream.Collectors;
 
 public class PubmedLinks implements Comparable<PubmedLinks>, Iterable<Integer> {
     public static final PubmedLinks EMPTY_LINKS = new PubmedLinks() {
@@ -85,6 +88,14 @@ public class PubmedLinks implements Comparable<PubmedLinks>, Iterable<Integer> {
 
     @Override
     public String toString() {
-        return String.valueOf(getNumberOfPubmedIDs());
+        return Arrays.stream(this.ids).mapToObj(String::valueOf).collect(Collectors.joining(","));
+    }
+
+    public static PubmedLinks fromString(String idList) {
+        final TIntHashSet ids = new TIntHashSet();
+        for (String num : idList.split(",")) {
+            ids.add(Integer.parseInt(num));
+        }
+        return new PubmedLinks(ids);
     }
 }
