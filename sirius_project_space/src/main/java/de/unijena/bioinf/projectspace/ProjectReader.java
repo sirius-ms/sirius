@@ -28,6 +28,20 @@ public interface ProjectReader extends ProjectIO {
     public default Map<String,String> keyValues(String relativePath) throws IOException {
         return textFile(relativePath, (r)-> FileUtils.readKeyValues(r));
     }
+
+    public default int[] intVector(String relativePath) throws IOException {
+        return textFile(relativePath, FileUtils::readAsIntVector);
+    }
+    public default double[] doubleVector(String relativePath) throws IOException {
+        return textFile(relativePath, FileUtils::readAsDoubleVector);
+    }
+    public default int[][] intMatrix(String relativePath) throws IOException {
+        return textFile(relativePath, FileUtils::readAsIntMatrix);
+    }
+    public default double[][] doubleMatrix(String relativePath) throws IOException {
+        return textFile(relativePath, FileUtils::readAsDoubleMatrix);
+    }
+
     public void table(String relativePath, boolean skipHeader, Consumer<String[]> f) throws IOException;
 
 
