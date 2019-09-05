@@ -17,14 +17,15 @@ public interface Score<T extends Score> extends DataAnnotation, Comparable<T> {
 
     //todo this does not allow to define new scores within external packages?!
     static Class<? extends Score> resolve(String name) {
-        {
-            try {
-                if (name.startsWith("de.unijena.bioinf"))
-                    return (Class<? extends Score>)Class.forName(name);
-                else return (Class<? extends Score>)Class.forName("de.unijena.bioinf." + name );
-            } catch (ClassNotFoundException e) {
-                throw new IllegalArgumentException();
-            }
+        if (name == null || name.isEmpty())
+            return null;
+
+        try {
+            if (name.startsWith("de.unijena.bioinf"))
+                return (Class<? extends Score>) Class.forName(name);
+            else return (Class<? extends Score>) Class.forName("de.unijena.bioinf." + name);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException();
         }
     }
 

@@ -14,12 +14,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class StandardMSFilenameFormatter implements FilenameFormatter {
-
+    public static final ConfigAnnotation DEFAULT_EXPRESSION = new ConfigAnnotation("%source_%name");
     private String formatExpression;
     private FormatString[] formatStrings;
 
     public StandardMSFilenameFormatter() {
-        this.formatExpression = "%source_%name";
+        this.formatExpression = DEFAULT_EXPRESSION.formatExpression;
         formatStrings = new FormatString[]{
                 new FilenameFormat(), new FixedString("_"),
                 new NameFormat()

@@ -3,6 +3,7 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +52,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         ids.clear();
         int maxIndex = 0;
         for (File dir : root.listFiles()) {
-            final File expInfo = new File(dir, ProjectSpaceConfiguration.EXPERIMENT_FILE_NAME);
+            final File expInfo = new File(dir, SiriusLocations.COMPOUND_INFO);
             if (dir.isDirectory() && expInfo.exists()) {
                 final Map<String,String> keyValues = FileUtils.readKeyValues(expInfo);
                 int index = Integer.parseInt(keyValues.getOrDefault("index","0"));
