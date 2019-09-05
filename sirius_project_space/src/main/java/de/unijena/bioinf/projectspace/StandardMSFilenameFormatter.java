@@ -15,11 +15,11 @@ import java.util.regex.Pattern;
 
 public class StandardMSFilenameFormatter implements FilenameFormatter {
 
-    private String unparsedFormatString;
+    private String formatExpression;
     private FormatString[] formatStrings;
 
     public StandardMSFilenameFormatter() {
-        this.unparsedFormatString = "%source_%name";
+        this.formatExpression = "%source_%name";
         formatStrings = new FormatString[]{
                 new FilenameFormat(), new FixedString("_"),
                 new NameFormat()
@@ -27,8 +27,8 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
     }
 
     public StandardMSFilenameFormatter(String formatString) throws ParseException {
-        this.unparsedFormatString = formatString;
-        formatStrings = parseFormat(unparsedFormatString);
+        this.formatExpression = formatString;
+        formatStrings = parseFormat(formatExpression);
     }
 
     private static final Pattern NormalCharactersString = Pattern.compile("([A-Za-z]+)(.*)");
@@ -163,6 +163,6 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
 
     @Override
     public String getFormatExpression() {
-        return unparsedFormatString;
+        return formatExpression;
     }
 }
