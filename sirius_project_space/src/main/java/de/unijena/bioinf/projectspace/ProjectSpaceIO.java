@@ -1,11 +1,16 @@
 package de.unijena.bioinf.projectspace;
 
 import com.google.common.io.Files;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 public class ProjectSpaceIO {
+    private static final Logger LOG = LoggerFactory.getLogger(ProjectSpaceIO.class);
 
     protected final ProjectSpaceConfiguration configuration;
 
@@ -34,5 +39,40 @@ public class ProjectSpaceIO {
         space.open();
         return space;
     }
+
+
+    /**
+     * Check for a compressed project-space by file ending
+     */
+    public static boolean isCompressedProjectSpace(File file) {
+        if (!file.isFile()) return false;
+        final String lowercaseName = file.getName().toLowerCase();
+        return lowercaseName.endsWith(".workspace") || lowercaseName.endsWith(".zip") || lowercaseName.endsWith(".sirius");
+    }
+
+    /**
+     * Just a quick check to discriminate a project-space for an arbitrary folder
+     */
+    public static boolean isExistingProjectspaceDirectory(@NotNull File f) {
+        if (!f.exists() || Objects.requireNonNull(f.list()).length == 0)
+            return false;
+
+        if (!new File(f, ProjectSpaceConfiguration.EXPERIMENT_FILE_NAME).exists())
+            return false;
+
+        try {
+            try (SiriusProjectSpace space = new SiriusProjectSpace(new ProjectSpaceConfiguration(), f)) {
+                space.open();
+                return true;
+            } catch (IOException ignored) {
+                return false;
+            }
+        } catch (Exception e) {
+            // not critical: if file cannot be read, it is not a valid workspace
+            LOG.error("Workspace check failed! This is not a valid Project-Space!", e);
+            return false;
+        }
+    }
+
 
 }
