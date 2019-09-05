@@ -14,7 +14,8 @@ public class CanopusSerializer implements ComponentSerializer<FormulaResultId, F
     @Override
     public CanopusResult read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         final double[] probabilities = reader.doubleVector(FingerIdLocations.CanopusResults.apply(id));
-        return new CanopusResult(new ProbabilityFingerprint())
+        return null; // todo not compileable
+        // new CanopusResult(new ProbabilityFingerprint());
     }
 
     @Override

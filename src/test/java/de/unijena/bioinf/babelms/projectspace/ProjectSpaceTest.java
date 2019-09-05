@@ -1,15 +1,8 @@
 package de.unijena.bioinf.babelms.projectspace;
 
-import de.unijena.bioinf.canopus.Canopus;
-import de.unijena.bioinf.fingerid.webapi.WebAPI;
-import de.unijena.bioinf.ms.properties.PropertyManager;
-
-import java.io.File;
-import java.io.IOException;
-
 public class ProjectSpaceTest {
 
-    public static void main(String[] args) throws IOException {
+    /*public static void main(String[] args) throws IOException {
         PropertyManager.setProperty("de.unijena.bioinf.fingerid.web.host","https://www.csi-fingerid.uni-jena.de");
         PropertyManager.setProperty("de.unijena.bioinf.fingerid.db.date","2017-08-28");
         PropertyManager.setProperty("de.unijena.bioinf.sirius.version","4.1.0-SNAPSHOT");
@@ -27,5 +20,5 @@ public class ProjectSpaceTest {
         space.writeSummaries(); //this can be cached
         space.close();
         System.out.println("done!");
-    }
+    }*/
 }
