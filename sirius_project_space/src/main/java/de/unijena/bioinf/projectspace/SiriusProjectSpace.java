@@ -25,6 +25,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     protected final ConcurrentHashMap<String, CompoundContainerId> ids;
     protected final ProjectSpaceConfiguration configuration;
     protected final AtomicInteger compoundCounter;
+    private final ConcurrentHashMap<Class<? extends ProjectSpaceProperty>, ProjectSpaceProperty> projectSpaceProperties;
 
     protected ConcurrentLinkedQueue<ProjectSpaceListener> projectSpaceListeners;
 
@@ -34,6 +35,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         this.root = root;
         this.compoundCounter = new AtomicInteger(-1);
         this.projectSpaceListeners = new ConcurrentLinkedQueue<>();
+        this.projectSpaceProperties = new ConcurrentHashMap<>();
     }
 
     public void addProjectSpaceListener(ProjectSpaceListener listener) {
@@ -247,5 +249,13 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     public int size() {
         return compoundCounter.get();
+    }
+
+    public <T extends ProjectSpaceProperty> T getProjectSpaceProperty(Class<T> key) {
+        return (T) projectSpaceProperties.get(key);
+    }
+
+    public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
+        return (T) projectSpaceProperties.put(key, value);
     }
 }
