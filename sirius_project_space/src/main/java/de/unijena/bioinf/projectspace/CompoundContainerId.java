@@ -1,7 +1,5 @@
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.projectspace.ProjectSpaceContainerId;
-
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -39,4 +37,10 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         this.compoundName = newName;
     }
 
+    @Override
+    public String toString() {
+        return compoundIndex
+                + "_" + compoundName
+                + "_" + directoryName;
+    }
 }

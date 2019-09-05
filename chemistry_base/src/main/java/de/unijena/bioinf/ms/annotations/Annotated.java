@@ -32,6 +32,7 @@ public interface Annotated<A extends DataAnnotation> {
      * @return annotation value for the given class/key
      * @throws NullPointerException if there is no entry for this key
      */
+    @NotNull
     default <T extends A> T getAnnotationOrThrow(Class<T> klass) {
         return getAnnotationOrThrow(klass, new NullPointerException("No annotation for key: " + klass.getName()));
     }
@@ -41,6 +42,7 @@ public interface Annotated<A extends DataAnnotation> {
      * @return annotation value for the given class/key
      * @throws RuntimeException of your choice (@param ex)
      */
+    @NotNull
     default <T extends A> T getAnnotationOrThrow(Class<T> klass, RuntimeException ex) {
         final T val = getAnnotation(klass);
         if (val == null) throw ex;
