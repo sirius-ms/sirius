@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Objects;
 
 public class ProjectSpaceIO {
     private static final Logger LOG = LoggerFactory.getLogger(ProjectSpaceIO.class);
@@ -54,10 +53,7 @@ public class ProjectSpaceIO {
      * Just a quick check to discriminate a project-space for an arbitrary folder
      */
     public static boolean isExistingProjectspaceDirectory(@NotNull File f) {
-        if (!f.exists() || Objects.requireNonNull(f.list()).length == 0)
-            return false;
-
-        if (!new File(f, ProjectSpaceConfiguration.EXPERIMENT_FILE_NAME).exists())
+        if (!f.exists() || f.list().length == 0)
             return false;
 
         try {
