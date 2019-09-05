@@ -3,12 +3,14 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,7 +18,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntFunction;
 
-public class SiriusProjectSpace {
+public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCloseable {
+
 
     protected final File root;
     protected final ConcurrentHashMap<String, CompoundContainerId> ids;
@@ -46,7 +49,7 @@ public class SiriusProjectSpace {
         ids.clear();
         int maxIndex = 0;
         for (File dir : root.listFiles()) {
-            final File expInfo = new File(dir, "experiment.info");
+            final File expInfo = new File(dir, ProjectSpaceConfiguration.EXPERIMENT_FILE_NAME);
             if (dir.isDirectory() && expInfo.exists()) {
                 final Map<String,String> keyValues = FileUtils.readKeyValues(expInfo);
                 int index = Integer.parseInt(keyValues.getOrDefault("index","0"));
@@ -61,7 +64,7 @@ public class SiriusProjectSpace {
         fireProjectSpaceChange(ProjectSpaceEvent.OPENED);
     }
 
-    protected synchronized void close() throws IOException {
+    public synchronized void close() throws IOException {
         this.ids.clear();
         fireProjectSpaceChange(ProjectSpaceEvent.CLOSED);
     }
@@ -236,4 +239,13 @@ public class SiriusProjectSpace {
         },containerId);
     }
 
+    @NotNull
+    @Override
+    public Iterator<CompoundContainerId> iterator() {
+        return ids.values().iterator();
+    }
+
+    public int size() {
+        return compoundCounter.get();
+    }
 }
