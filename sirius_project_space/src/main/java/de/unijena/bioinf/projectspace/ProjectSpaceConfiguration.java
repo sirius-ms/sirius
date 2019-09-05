@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 
 public class ProjectSpaceConfiguration {
-    public static final String EXPERIMENT_FILE_NAME = "experiment.info";
-
     private final HashMap<Class, ComponentSerializer> componentSerializers;
     private final HashMap<Class, ContainerSerializer> containerSerializers;
     private final HashMap<Class, List<Class>> containerComponents;
