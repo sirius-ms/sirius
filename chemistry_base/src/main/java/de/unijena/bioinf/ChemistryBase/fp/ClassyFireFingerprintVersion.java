@@ -12,6 +12,10 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
     protected ClassyfireProperty[] properties;
     protected TIntIntHashMap chemOntIdToIndex;
 
+    public static ClassyFireFingerprintVersion loadDefault() {
+        return null;
+    }
+
     public ClassyFireFingerprintVersion(ClassyfireProperty[] classyfireProperties) {
         this.properties = classyfireProperties;
         this.chemOntIdToIndex = new TIntIntHashMap(classyfireProperties.length);

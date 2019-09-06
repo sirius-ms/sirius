@@ -14,13 +14,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class FileBasedProjectSpaceReader implements ProjectReader {
 
     private File dir;
+    private final Function<Class<ProjectSpaceProperty>,ProjectSpaceProperty> propertyGetter;
 
-    FileBasedProjectSpaceReader(File dir) {
+    FileBasedProjectSpaceReader(File dir, Function<Class<ProjectSpaceProperty>,ProjectSpaceProperty> propertyGetter) {
         this.dir = dir;
+        this.propertyGetter = propertyGetter;
     }
 
     @Override
@@ -35,6 +38,11 @@ public class FileBasedProjectSpaceReader implements ProjectReader {
         try (final BufferedInputStream stream = FileUtils.getIn(new File(dir, relativePath))) {
             return func.apply(stream);
         }
+    }
+
+    @Override
+    public <A extends ProjectSpaceProperty> A getProjectSpaceProperty(Class<A> klass) {
+        return (A)propertyGetter.apply((Class<ProjectSpaceProperty>)klass);
     }
 
     @Override
@@ -62,6 +70,11 @@ public class FileBasedProjectSpaceReader implements ProjectReader {
             content.add(p.relativize(r).toString());
         }
         return content;
+    }
+
+    @Override
+    public boolean exists(String relativePath) throws IOException {
+        return new File(dir,relativePath).exists();
     }
 
     @Override

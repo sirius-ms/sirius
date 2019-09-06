@@ -12,14 +12,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class FileBasedProjectSpaceWriter implements ProjectWriter {
 
     private File dir;
+    private final Function<Class<ProjectSpaceProperty>,ProjectSpaceProperty> propertyGetter;
 
-    FileBasedProjectSpaceWriter(File dir) {
+    FileBasedProjectSpaceWriter(File dir, Function<Class<ProjectSpaceProperty>,ProjectSpaceProperty> propertyGetter) {
         this.dir = dir;
+        this.propertyGetter = propertyGetter;
+    }
+
+    @Override
+    public <A extends ProjectSpaceProperty> A getProjectSpaceProperty(Class<A> klass) {
+        return (A)propertyGetter.apply((Class<ProjectSpaceProperty>)klass);
+    }
+
+    @Override
+    public boolean exists(String relativePath) throws IOException {
+        return new File(dir,relativePath).exists();
     }
 
     @Override
