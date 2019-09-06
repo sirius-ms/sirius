@@ -12,14 +12,12 @@ import de.unijena.bioinf.sirius.scores.FormulaScore;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -153,26 +151,27 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     // shorthand methods
-    public <T extends FormulaScore> List<SScored<FormulaResult, T>> getFormulaResultsOrderedBy(Collection<FormulaResultId> results, Class<T> score, Class<?>... components) {
+    public <T extends FormulaScore> List<SScored<FormulaResult, T>> getFormulaResultsOrderedBy(CompoundContainerId cid, Class<T> score, Class<?>... components) throws IOException {
+        return getFormulaResultsOrderedBy(getCompound(cid).getResults(), score, components);
+    }
+
+    public <T extends FormulaScore> List<SScored<FormulaResult, T>> getFormulaResultsOrderedBy(Collection<FormulaResultId> results, Class<T> score, Class<?>... components) throws IOException {
         ArrayList<Class<?>> comps = new ArrayList<>(components.length + 1);
         comps.addAll(Arrays.asList(components));
         if (!comps.contains(FormulaScoring.class))
             comps.add(FormulaScoring.class);
 
+        //not steam because IOExceptions
+        List<FormulaResult> res = new ArrayList<>(results.size());
+        for (FormulaResultId fid : results)
+            res.add(getFormulaResult(fid, comps.toArray(Class[]::new)));
 
-        return results.stream().map(fid -> {
-            FormulaResult fr = null;
-            try {
-                fr = getFormulaResult(fid, comps.toArray(Class[]::new));
-            } catch (IOException e) {
-                throw new RuntimeException("Formula Result not Found", e);
-            }
-
+        return res.stream().map(fr -> {
             try {
                 T fs = fr.getAnnotationOrThrow(FormulaScoring.class).getAnnotationOrThrow(score);
                 return new SScored<>(fr, fs);
             } catch (Exception e) {
-                LoggerFactory.getLogger(getClass()).warn("Error when loading Scores of '" + fid + "' from Project Space! Score might be NaN");
+                LoggerFactory.getLogger(getClass()).warn("Error when loading Scores of '" + fr.getId() + "' from Project Space! Score might be NaN");
                 try {
                     return new SScored<>(fr, score.getConstructor(double.class).newInstance(Double.NaN));
                 } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
