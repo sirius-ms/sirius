@@ -13,18 +13,24 @@ import java.io.IOException;
 public class CanopusSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, CanopusResult> {
     @Override
     public CanopusResult read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
-        final double[] probabilities = reader.doubleVector(FingerIdLocations.CanopusResults.apply(id));
-        return null; // todo not compileable
-        // new CanopusResult(new ProbabilityFingerprint());
+        String loc = FingerIdLocations.CanopusResults.apply(id);
+        if (!reader.exists(loc)) return null;
+        final CanopusClientData canopusClientData = reader.getProjectSpaceProperty(CanopusClientData.class);
+        final double[] probabilities = reader.doubleVector(loc);
+        final ProbabilityFingerprint probabilityFingerprint = new ProbabilityFingerprint(canopusClientData.maskedFingerprintVersion, probabilities);
+        return new CanopusResult(probabilityFingerprint);
     }
 
     @Override
     public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, CanopusResult component) throws IOException {
-
+        writer.inDirectory(FingerIdLocations.CanopusDir, ()->{
+           writer.doubleVector(id.fileName("fpt"), component.getCanopusFingerprint().toProbabilityArray());
+            return true;
+        });
     }
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
-
+        writer.delete(FingerIdLocations.CanopusResults.apply(id));
     }
 }
