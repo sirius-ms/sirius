@@ -11,6 +11,10 @@ public interface ProjectIO {
 
     public List<String> glob(String globPath) throws IOException;
 
+    public boolean exists(String relativePath) throws IOException;
+
+    public <A extends ProjectSpaceProperty> A getProjectSpaceProperty(Class<A> klass);
+
     public <T> T  inDirectory(String relativePath, IOFunctions.IOCallable<T> reader) throws IOException;
 
     public default URL asURL(String path) {
