@@ -13,7 +13,7 @@ public class CanopusClientSerializer  implements ComponentSerializer<ProjectSpac
     @Override
     public CanopusClientData read(ProjectReader reader, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container) throws IOException {
         final ArrayList<PredictionPerformance> performances = new ArrayList<>();
-        final ClassyFireFingerprintVersion V = ClassyFireFingerprintVersion.loadDefault();
+        final ClassyFireFingerprintVersion V = ClassyFireFingerprintVersion.getDefault();
         final MaskedFingerprintVersion.Builder builder = MaskedFingerprintVersion.buildMaskFor(V);
         builder.disableAll();
         reader.table("canopus.csv", true, (row)->{
