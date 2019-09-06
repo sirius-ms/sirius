@@ -27,7 +27,7 @@ public class CompoundContainer extends ProjectSpaceContainer<CompoundContainerId
     }
 
     public Set<FormulaResultId> getResults() {
-        return Collections.unmodifiableSet(results);
+        return results;
     }
 
 //    public Class<? extends FormulaScore> getRankingScore() {

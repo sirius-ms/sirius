@@ -103,7 +103,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return newFormulaResultWithUniqueId(getCompound(id), tree).map(FormulaResult::getId);
     }
 
-    public Optional<FormulaResult> newFormulaResultWithUniqueId(@NotNull CompoundContainer container, @NotNull FTree tree) {
+    public Optional<FormulaResult> newFormulaResultWithUniqueId(@NotNull final CompoundContainer container, @NotNull final FTree tree) {
         if (!containsCompoud(container.getId()))
             throw new IllegalArgumentException("Compound is not part of the project Space! ID: " + container.getId());
 
@@ -120,6 +120,9 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             LoggerFactory.getLogger(getClass()).error("Could not create FormulaResult from FTree!", e);
             return Optional.empty();
         }
+
+        //modify input container
+        container.getResults().add(r.getId());
         return Optional.of(r);
     }
 
