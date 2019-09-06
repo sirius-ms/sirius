@@ -1,23 +1,28 @@
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
+import de.unijena.bioinf.sirius.FTreeMetricsHelper;
+import de.unijena.bioinf.sirius.scores.FormulaScore;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 
 public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCloseable {
 
@@ -77,8 +82,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return Optional.ofNullable(ids.get(dirName));
     }
 
-    public Optional<CompoundContainer> newCompoundWithUniqueIndex(String compoundName, IntFunction<String> index2dirName) {
-        return newUniqueCompoundIndex(compoundName, index2dirName)
+    public Optional<CompoundContainer> newCompoundWithUniqueId(String compoundName, IntFunction<String> index2dirName) {
+        return newUniqueCompoundId(compoundName, index2dirName)
                 .map(idd -> {
                     try {
                         return getCompound(idd);
@@ -88,14 +93,38 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 });
     }
 
-    public Optional<CompoundContainerId> newUniqueCompoundIndex(String compoundName, IntFunction<String> index2dirName) {
+    public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName) {
         int index = compoundCounter.getAndIncrement();
         String dirName = index2dirName.apply(index);
         return tryCreateCompoundContainer(dirName,compoundName,index);
     }
 
+    public Optional<FormulaResultId> newUniqueFormulaResultId(@NotNull CompoundContainerId id, @NotNull FTree tree) throws IOException {
+        return newUniqueFormulaResultId(getCompound(id), tree).map(FormulaResult::getId);
+    }
+
+    public Optional<FormulaResult> newUniqueFormulaResultId(@NotNull CompoundContainer container, @NotNull FTree tree) {
+        if (!containsCompoud(container.getId()))
+            throw new IllegalArgumentException("Compound is not part of the project Space! ID: " + container.getId());
+
+        final FormulaResultId fid = new FormulaResultId(container.getId(), tree.getRoot().getFormula(), tree.getAnnotationOrThrow(PrecursorIonType.class));
+        if (container.contains(fid))
+            return Optional.empty(); //todo how to handle this?
+
+        final FormulaResult r = new FormulaResult(fid);
+        r.setAnnotation(FTree.class, tree);
+        r.setAnnotation(FormulaScoring.class, new FormulaScoring(FTreeMetricsHelper.getScoresFromTree(tree)));
+        try {
+            updateFormulaResult(r, FTree.class, FormulaScoring.class);
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).error("Could not create FormulaResult from FTree!", e);
+            return Optional.empty();
+        }
+        return Optional.of(r);
+    }
+
     protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex) {
-        if (ids.contains(directoryName)) return Optional.empty();
+        if (containsCompoud(directoryName)) return Optional.empty();
         synchronized (ids) {
             if (new File(root, directoryName).exists())
                 return Optional.empty();
@@ -111,7 +140,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
                 return Optional.of(id);
             } catch (IOException e) {
-                LoggerFactory.getLogger(SiriusProjectSpace.class).error("cannot create directory " + directoryName, e);
+                LoggerFactory.getLogger(getClass()).error("cannot create directory " + directoryName, e);
                 ids.remove(id.getDirectoryName());
                 return Optional.empty();
             }
@@ -119,6 +148,34 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     // shorthand methods
+    public <T extends FormulaScore> List<SScored<FormulaResult, T>> getResultsOrderedBy(Collection<FormulaResultId> results, Class<T> score, Class<?>... components) {
+        ArrayList<Class<?>> comps = new ArrayList<>(components.length + 1);
+        comps.addAll(Arrays.asList(components));
+        if (!comps.contains(FormulaScoring.class))
+            comps.add(FormulaScoring.class);
+
+
+        return results.stream().map(fid -> {
+            FormulaResult fr = null;
+            try {
+                fr = getFormulaResult(fid, comps.toArray(Class[]::new));
+            } catch (IOException e) {
+                throw new RuntimeException("Formula Result not Found", e);
+            }
+
+            try {
+                T fs = fr.getAnnotationOrThrow(FormulaScoring.class).getAnnotationOrThrow(score);
+                return new SScored<>(fr, fs);
+            } catch (Exception e) {
+                LoggerFactory.getLogger(getClass()).warn("Error when loading Scores of '" + fid + "' from Project Space! Score might be NaN");
+                try {
+                    return new SScored<>(fr, score.getConstructor(double.class).newInstance(Double.NaN));
+                } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
+                    throw new RuntimeException("Error when Instantiating Score class: " + score.getName(), e);
+                }
+            }
+        }).sorted().collect(Collectors.toList());
+    }
 
     public FormulaResult getFormulaResult(FormulaResultId id, Class<?>... components) throws IOException {
         CompoundContainerId parentId = id.getParentId();
@@ -149,6 +206,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             parentId.containerLock.unlock();
         }
     }
+
 
     public CompoundContainer getCompound(CompoundContainerId id, Class<?>... components) throws IOException {
         id.containerLock.lock();
@@ -258,5 +316,13 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
         return (T) projectSpaceProperties.put(key, value);
+    }
+
+    public boolean containsCompoud(String dirName) {
+        return findCompound(dirName).isPresent();
+    }
+
+    public boolean containsCompoud(CompoundContainerId id) {
+        return containsCompoud(id.getDirectoryName());
     }
 }

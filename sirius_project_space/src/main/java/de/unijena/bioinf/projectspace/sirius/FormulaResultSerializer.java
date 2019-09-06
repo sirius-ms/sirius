@@ -11,7 +11,7 @@ public class FormulaResultSerializer implements ContainerSerializer<FormulaResul
     @Override
     public void writeToProjectSpace(ProjectWriter writer, ProjectWriter.ForContainer<FormulaResultId, FormulaResult> containerSerializer, FormulaResultId id, FormulaResult container) throws IOException {
         writer.inDirectory(id.getParentId().getDirectoryName(), ()->{
-            containerSerializer.writeAllComponents(writer,container,container::get);
+            containerSerializer.writeAllComponents(writer, container, container::getAnnotation);
             return true;
         });
     }
@@ -20,7 +20,7 @@ public class FormulaResultSerializer implements ContainerSerializer<FormulaResul
     public FormulaResult readFromProjectSpace(ProjectReader reader, ProjectReader.ForContainer<FormulaResultId, FormulaResult> containerSerializer, FormulaResultId id) throws IOException {
         return reader.inDirectory(id.getParentId().getDirectoryName(), ()->{
             final FormulaResult formulaResult = new FormulaResult(id);
-            containerSerializer.readAllComponents(reader,formulaResult,formulaResult::set);
+            containerSerializer.readAllComponents(reader, formulaResult, formulaResult::setAnnotation);
             return formulaResult;
         });
     }

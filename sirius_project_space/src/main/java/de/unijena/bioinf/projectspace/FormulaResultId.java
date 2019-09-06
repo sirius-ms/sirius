@@ -2,22 +2,23 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.sirius.scores.FormulaScore;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public final class FormulaResultId extends ProjectSpaceContainerId {
 
-    private CompoundContainerId parentId;
-    private Class<? extends FormulaScore> rankingScore;
-    private MolecularFormula formula;
-    private PrecursorIonType ionType;
-    private int rank;
+    private final CompoundContainerId parentId;
+    private final String fileName;
 
-    public FormulaResultId(CompoundContainerId parentId, MolecularFormula formula, PrecursorIonType ionType, int rank, Class<? extends FormulaScore> resultScore) {
+    private final MolecularFormula formula;
+    private final PrecursorIonType ionType;
+
+    public FormulaResultId(@NotNull CompoundContainerId parentId, @NotNull MolecularFormula formula, @NotNull PrecursorIonType ionType) {
         this.parentId = parentId;
         this.formula = formula;
         this.ionType = ionType;
-        this.rank = rank;
-        this.rankingScore = resultScore;
+        this.fileName = /*rank + "_" + */ formula + "_" + ionType.toString().replace(" ", "");
     }
 
     public MolecularFormula getFormula() {
@@ -28,15 +29,34 @@ public final class FormulaResultId extends ProjectSpaceContainerId {
         return ionType;
     }
 
-    public int getRank() {
-        return rank;
+    public String fileName() {
+        return fileName;
     }
 
-    public String fileName(String extension) {
-        return rank + "_" + formula + "_" + ionType.toString().replace(" ","") + "." + extension;
+    public String fileName(@NotNull String extension) {
+        return fileName + "." + extension;
     }
 
     public CompoundContainerId getParentId() {
         return parentId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FormulaResultId that = (FormulaResultId) o;
+        return parentId.getDirectoryName().equals(that.parentId.getDirectoryName()) &&
+                fileName.equals(that.fileName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(parentId.getDirectoryName(), fileName);
+    }
+
+    @Override
+    public String toString() {
+        return getParentId().getDirectoryName() + "/" + fileName();
     }
 }

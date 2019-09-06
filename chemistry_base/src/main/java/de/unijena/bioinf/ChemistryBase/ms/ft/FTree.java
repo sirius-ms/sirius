@@ -20,10 +20,11 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.graphUtils.tree.*;
+import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 
 import java.util.*;
 
-public class FTree extends AbstractFragmentationGraph {
+public class FTree extends AbstractFragmentationGraph implements ResultAnnotation {
 
     protected Fragment root;
 

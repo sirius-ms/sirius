@@ -3,7 +3,14 @@ package de.unijena.bioinf.sirius;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.sirius.plugins.IsotopePatternInMs1Plugin;
+import de.unijena.bioinf.sirius.scores.FormulaScore;
+import de.unijena.bioinf.sirius.scores.IsotopeScore;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
+import de.unijena.bioinf.sirius.scores.TreeScore;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class FTreeMetricsHelper {
     protected final FTree tree;
@@ -60,5 +67,14 @@ public class FTreeMetricsHelper {
 
     public static double getNumberOfExplainablePeaks(@NotNull FTree tree) {
         return getNumOfExplainedPeaks(tree) / getExplainedPeaksRatio(tree);
+    }
+
+    public static Set<FormulaScore> getScoresFromTree(@NotNull final FTree tree) {
+        final FTreeMetricsHelper helper = new FTreeMetricsHelper(tree);
+        final Set<FormulaScore> scores = new HashSet<>(3);
+        scores.add(new SiriusScore(helper.getSiriusScore()));
+        scores.add(new IsotopeScore(helper.getIsotopeMs1Score()));
+        scores.add(new TreeScore(helper.getTreeScore()));
+        return scores;
     }
 }

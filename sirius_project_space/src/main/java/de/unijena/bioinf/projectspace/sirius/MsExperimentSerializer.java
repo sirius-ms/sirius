@@ -15,16 +15,16 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
 
     @Override
     public Ms2Experiment read(ProjectReader reader, CompoundContainerId id, CompoundContainer container) throws IOException {
-        return reader.textFile("spectrum.ms", (b)->new JenaMsParser().parse(b, new File(id.getDirectoryName(),"spectrum.ms").toURI().toURL()));
+        return reader.textFile(SiriusLocations.MS2_EXPERIMENT, (b) -> new JenaMsParser().parse(b, new File(id.getDirectoryName(), SiriusLocations.MS2_EXPERIMENT).toURI().toURL()));
     }
 
     @Override
     public void write(ProjectWriter writer, CompoundContainerId id, CompoundContainer container, Ms2Experiment component) throws IOException {
-        writer.textFile("spectrum.ms", (w)->new JenaMsWriter().write(w, component));
+        writer.textFile(SiriusLocations.MS2_EXPERIMENT, (w) -> new JenaMsWriter().write(w, component));
     }
 
     @Override
     public void delete(ProjectWriter writer, CompoundContainerId id) throws IOException {
-        writer.delete(id.getDirectoryName() + "/spectrum.ms");
+        writer.delete(id.getDirectoryName() + "/" + SiriusLocations.MS2_EXPERIMENT);
     }
 }

@@ -7,11 +7,12 @@ import java.util.function.Function;
 
 public class SiriusLocations extends Locations {
 
-    public final static String MS2_EXPERIMENT = "spectrum.ms",
-                        COMPOUND_INFO = "experiment.info";
+    public final static String
+            MS2_EXPERIMENT = "spectrum.ms",
+            COMPOUND_INFO = "experiment.info";
+//            RESULT_RANKING = "ranking.info";
 
-    public final static Function<FormulaResultId,String>
-                        TREES = (id)->"trees/" + id.fileName("json"),
-                        SCORES = (id)->"scores/" + id.fileName("info");
-
+    public final static Function<FormulaResultId, String>
+            TREES = (id) -> "trees/" + id.fileName("json"),
+            SCORES = (id) -> "scores/" + id.fileName("info");
 }

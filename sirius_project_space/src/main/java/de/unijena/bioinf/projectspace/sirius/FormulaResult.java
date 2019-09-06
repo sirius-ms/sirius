@@ -1,11 +1,11 @@
 package de.unijena.bioinf.projectspace.sirius;
 
-import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.ProjectSpaceContainer;
 
-public class FormulaResult extends ProjectSpaceContainer<FormulaResultId> implements Annotated<DataAnnotation> {
+public class FormulaResult extends ProjectSpaceContainer<FormulaResultId> {
 
     private final Annotations<DataAnnotation> annotations;
     private final FormulaResultId formulaResultId;
@@ -18,16 +18,6 @@ public class FormulaResult extends ProjectSpaceContainer<FormulaResultId> implem
     @Override
     public Annotations<DataAnnotation> annotations() {
         return annotations;
-    }
-
-    @Override
-    protected <T extends DataAnnotation> T get(Class<T> klassname) {
-        return getAnnotation(klassname);
-    }
-
-    @Override
-    protected <T extends DataAnnotation> void set(Class<T> klassname, T value) {
-        setAnnotation(klassname,value);
     }
 
     @Override

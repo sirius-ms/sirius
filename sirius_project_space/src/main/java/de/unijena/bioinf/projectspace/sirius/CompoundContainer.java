@@ -1,49 +1,38 @@
 package de.unijena.bioinf.projectspace.sirius;
 
-import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.ProjectSpaceContainer;
-import de.unijena.bioinf.sirius.scores.FormulaScore;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class CompoundContainer extends ProjectSpaceContainer<CompoundContainerId> implements Annotated<DataAnnotation> {
+public class CompoundContainer extends ProjectSpaceContainer<CompoundContainerId> {
 
     private final Annotations<DataAnnotation> annotations;
 
-    private final List<FormulaResultId> results;
+    protected final Set<FormulaResultId> results;
     private final CompoundContainerId id;
 
     // necessary information
-    private Class<? extends FormulaScore> rankingScore;
+//    private Class<? extends FormulaScore> rankingScore;
 
-    public CompoundContainer(CompoundContainerId id, Class<? extends FormulaScore> resultScore) {
+    public CompoundContainer(CompoundContainerId id/*, Class<? extends FormulaScore> resultScore*/) {
         this.annotations = new Annotations<>();
-        this.results = new ArrayList<>();
+        this.results = Collections.newSetFromMap(new ConcurrentHashMap<>());
         this.id = id;
-        this.rankingScore = resultScore;
+//        this.rankingScore = resultScore;
     }
 
-    public List<FormulaResultId> getResults() {
-        return results;
+    public Set<FormulaResultId> getResults() {
+        return Collections.unmodifiableSet(results);
     }
 
-    public Class<? extends FormulaScore> getRankingScore() {
-        return rankingScore;
-    }
-
-    @Override
-    protected <T extends DataAnnotation> T get(Class<T> klassname) {
-        return getAnnotation(klassname);
-    }
-
-    @Override
-    protected <T extends DataAnnotation> void set(Class<T> klassname, T value) {
-        setAnnotation(klassname,value);
-    }
+//    public Class<? extends FormulaScore> getRankingScore() {
+//        return rankingScore;
+//    }
 
     @Override
     public CompoundContainerId getId() {
@@ -53,5 +42,11 @@ public class CompoundContainer extends ProjectSpaceContainer<CompoundContainerId
     @Override
     public Annotations<DataAnnotation> annotations() {
         return annotations;
+    }
+
+    public boolean contains(FormulaResultId fid) {
+        if (!fid.getParentId().getDirectoryName().equals(getId().getDirectoryName()))
+            return false;
+        return false;
     }
 }
