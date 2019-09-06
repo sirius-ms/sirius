@@ -243,6 +243,7 @@ public final class ParameterConfig {
         else parent = sourceParent.substring(0, sourceParent.length() - 1); //remove dot
 
         try {
+            //search if an from String method exists
             Method method = getFromStringMethod(klass);
             if (method != null) {
                 return parseProperty(klass, null, null, parent);
@@ -286,6 +287,8 @@ public final class ParameterConfig {
         } catch (NoSuchMethodException e) {
             throw new IllegalArgumentException("Method does not contain a non parameter Constructor", e);
 
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException("Could not instantiate Class object by its name!", e);
         }
     }
 
@@ -344,7 +347,7 @@ public final class ParameterConfig {
     }
 
 
-    private <C> C getDefaultInstanceFromProvider(final Method providerMethod, String parent, String sourceParent) throws InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+    private <C> C getDefaultInstanceFromProvider(final Method providerMethod, String parent, String sourceParent) throws InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException, ClassNotFoundException {
         final Parameter[] parameters = providerMethod.getParameters();
         final Object[] args = new Object[parameters.length];
 
@@ -374,7 +377,7 @@ public final class ParameterConfig {
     }
 
 
-    private <C> C setDefaultValue(C instance, Field field, String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+    private <C> C setDefaultValue(C instance, Field field, String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException, ClassNotFoundException {
         final boolean accessible = field.isAccessible();
         try {
             final Object objectValue;
@@ -392,7 +395,7 @@ public final class ParameterConfig {
         }
     }
 
-    private <T> T parseProperty(@NotNull Class<T> type, @Nullable Type generic, @Nullable String fieldName, @NotNull String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+    private <T> T parseProperty(@NotNull Class<T> type, @Nullable Type generic, @Nullable String fieldName, @NotNull String propertyName) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException, ClassNotFoundException {
         String stringValue = config.getString(propertyName);
         if (stringValue == null && fieldName != null && !propertyName.endsWith(fieldName))
             stringValue = config.getString(propertyName + "." + fieldName);
@@ -421,7 +424,7 @@ public final class ParameterConfig {
                 .findFirst().orElse(null);
     }
 
-    public static <T> T convertStringToType(@NotNull Class<T> fType, Type generic, @NotNull String stringValue) throws InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+    public static <T> T convertStringToType(@NotNull Class<T> fType, Type generic, @NotNull String stringValue) throws InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException, ClassNotFoundException {
         T objectValue = null;
         final Method fromString = getFromStringMethod(fType);
         if (fromString != null) {
@@ -443,6 +446,8 @@ public final class ParameterConfig {
                 ((Collection) objectValue).addAll(Arrays.asList(objectValueAsArray));
             } else if (fType.isEnum()) {
                 objectValue = (T) Enum.valueOf((Class<Enum>) fType, stringValue.toUpperCase());
+            } else if (Class.class.isAssignableFrom(fType)) {
+                Class.forName(stringValue);
             } else {
                 throw new IllegalArgumentException("Class of type " + fType.toString() + "cannot be instantiated from String values. For non standard classes you need to define an \"fromString\" Method.");
             }
@@ -475,7 +480,7 @@ public final class ParameterConfig {
         return (T) editor.getValue();
     }
 
-    public static <T> T[] convertToCollection(@NotNull Class<T> targetElementType, @NotNull String values) throws InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+    public static <T> T[] convertToCollection(@NotNull Class<T> targetElementType, @NotNull String values) throws InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException, ClassNotFoundException {
         TypeVariable<Class<T>> generic = targetElementType.getTypeParameters() != null && targetElementType.getTypeParameters().length > 0
                 ? targetElementType.getTypeParameters()[0]
                 : null;

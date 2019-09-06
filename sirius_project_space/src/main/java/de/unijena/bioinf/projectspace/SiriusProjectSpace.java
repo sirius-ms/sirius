@@ -151,7 +151,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     // shorthand methods
-    public <T extends FormulaScore> List<SScored<FormulaResult, T>> getResultsOrderedBy(Collection<FormulaResultId> results, Class<T> score, Class<?>... components) {
+    public <T extends FormulaScore> List<SScored<FormulaResult, T>> getFormulaResultsOrderedBy(Collection<FormulaResultId> results, Class<T> score, Class<?>... components) {
         ArrayList<Class<?>> comps = new ArrayList<>(components.length + 1);
         comps.addAll(Arrays.asList(components));
         if (!comps.contains(FormulaScoring.class))
