@@ -9,10 +9,21 @@ public class ProjectSpaceConfiguration {
     private final HashMap<Class, ContainerSerializer> containerSerializers;
     private final HashMap<Class, List<Class>> containerComponents;
 
+    private final HashMap<Class, ComponentSerializer> projectSpacePropertySerializers;
+
     public ProjectSpaceConfiguration() {
         this.componentSerializers = new HashMap<>();
         this.containerSerializers = new HashMap<>();
         this.containerComponents = new HashMap<>();
+        this.projectSpacePropertySerializers = new HashMap<>();
+    }
+
+    public <T extends ProjectSpaceProperty> void defineProjectSpaceProperty(Class<T> propertyClass, ComponentSerializer<ProjectSpaceContainerId,ProjectSpaceContainer<ProjectSpaceContainerId>, T> serializer) {
+        this.projectSpacePropertySerializers.put(propertyClass, serializer);
+    }
+
+    public <T extends ProjectSpaceProperty> ComponentSerializer<ProjectSpaceContainerId,ProjectSpaceContainer<ProjectSpaceContainerId>, T>  getProjectSpacePropertySerializer(Class<T> propertyClass) {
+        return projectSpacePropertySerializers.get(propertyClass);
     }
 
     public <ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>>
