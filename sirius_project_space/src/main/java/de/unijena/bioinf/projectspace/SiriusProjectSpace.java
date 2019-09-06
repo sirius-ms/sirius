@@ -12,12 +12,14 @@ import de.unijena.bioinf.sirius.scores.FormulaScore;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -314,11 +316,33 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     public <T extends ProjectSpaceProperty> T getProjectSpaceProperty(Class<T> key) {
-        return (T) projectSpaceProperties.get(key);
+        T property = (T) projectSpaceProperties.get(key);
+        if (property==null) {
+            synchronized (projectSpaceProperties) {
+                property = (T) projectSpaceProperties.get(key);
+                if (property!=null) return property;
+                try {
+                    T read = configuration.getProjectSpacePropertySerializer(key).read(new FileBasedProjectSpaceReader(root, this::getProjectSpaceProperty), null, null);
+                    projectSpaceProperties.put(key, read);
+                    return read;
+                } catch (IOException e) {
+                    LoggerFactory.getLogger(SiriusProjectSpace.class).error(e.getMessage(), e);
+                    return null;
+                }
+
+            }
+        } else return property;
     }
 
     public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
-        return (T) projectSpaceProperties.put(key, value);
+        synchronized (projectSpaceProperties) {
+            try {
+                configuration.getProjectSpacePropertySerializer(key).write(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), null, null, value);
+            } catch (IOException e) {
+                LoggerFactory.getLogger(SiriusProjectSpace.class).error(e.getMessage(), e);
+            }
+            return (T) projectSpaceProperties.put(key, value);
+        }
     }
 
     public boolean containsCompoud(String dirName) {
