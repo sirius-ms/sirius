@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.frontend.core;
 
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.sirius.ResultAnnotation;
+import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 
 import javax.swing.event.SwingPropertyChangeSupport;
 import java.beans.PropertyChangeEvent;

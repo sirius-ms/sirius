@@ -5,13 +5,14 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.fingerid.FormulaWhiteListJob;
-import de.unijena.bioinf.fingerid.db.annotation.FormulaSearchDB;
+import de.unijena.bioinf.fingerid.db.annotations.FormulaSearchDB;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
-import de.unijena.bioinf.sirius.ExperimentResult;
+import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.IdentificationResults;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
@@ -26,13 +27,14 @@ public class SiriusSubToolJob extends InstanceJob {
 
 
     @Override
-    protected void computeAndAnnotateResult(final @NotNull ExperimentResult expRes) throws Exception {
-        final Ms2Experiment exp = expRes.getExperiment();
-        System.out.println(new Date() + "\t-> I am Sirius, start computing Experiment " + expRes.getSimplyfiedExperimentName());
+    protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
+        final Ms2Experiment exp = inst.getExperiment();
+        final CompoundContainer ioC = inst.getProjectSpace().getCompound(inst.getID());
+        System.out.println(new Date() + "\t-> I am Sirius, start computing Experiment " + inst.getID());
 
 
-        if (!expRes.hasAnnotation(IdentificationResults.class) || isRecompute(expRes)) {
-            invalidateResults(expRes);
+        if (!ioC.getResults().isEmpty() || isRecompute(inst)) {
+            invalidateResults(inst);
             
             // set whiteSet or merge with whiteSet from db search if available
             Whiteset wSet = null;
@@ -56,11 +58,13 @@ public class SiriusSubToolJob extends InstanceJob {
             exp.setAnnotation(Whiteset.class, wSet);
 
             final Sirius sirius = cliOptions.siriusProvider.sirius(exp.getAnnotation(FinalConfig.class).config.getConfigValue("AlgorithmProfile"));
-            List<IdentificationResult> results = SiriusJobs.getGlobalJobManager().submitJob(sirius.makeIdentificationJob(exp)).awaitResult();
+            List<IdentificationResult<SiriusScore>> results = SiriusJobs.getGlobalJobManager().submitJob(sirius.makeIdentificationJob(exp)).awaitResult();
 
-            //annotate result
-            expRes.setAnnotation(IdentificationResults.class, new IdentificationResults(results));
-            System.out.println(new Date() + "\t-> I am Sirius, finish with Experiment " + expRes.getSimplyfiedExperimentName());
+            //write results to project space
+            for (IdentificationResult<SiriusScore> result : results)
+                inst.getProjectSpace().newFormulaResultWithUniqueId(ioC, result.getTree());
+
+            System.out.println(new Date() + "\t-> I am Sirius, finish with Experiment " + inst.getID());
         } else {
             LOG().info("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
             System.out.println("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");

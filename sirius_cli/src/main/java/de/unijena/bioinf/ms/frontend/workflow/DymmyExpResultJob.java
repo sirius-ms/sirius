@@ -1,14 +1,14 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.sirius.ExperimentResult;
+import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.util.concurrent.ExecutionException;
 
 @FunctionalInterface
-public interface DymmyExpResultJob extends JJob<ExperimentResult> {
+public interface DymmyExpResultJob extends JJob<Instance> {
 
 
     @Override
@@ -32,7 +32,7 @@ public interface DymmyExpResultJob extends JJob<ExperimentResult> {
     }
 
     @Override
-    default JJob<ExperimentResult> asType(JobType jobType) {
+    default JJob<Instance> asType(JobType jobType) {
         return this;
     }
 
@@ -62,7 +62,7 @@ public interface DymmyExpResultJob extends JJob<ExperimentResult> {
     }
 
     @Override
-    default ExperimentResult awaitResult() throws ExecutionException {
+    default Instance awaitResult() throws ExecutionException {
         return result();
     }
 
@@ -73,7 +73,7 @@ public interface DymmyExpResultJob extends JJob<ExperimentResult> {
     }
 
     @Override
-    default ExperimentResult call() throws Exception {
+    default Instance call() throws Exception {
         return result();
     }
 }

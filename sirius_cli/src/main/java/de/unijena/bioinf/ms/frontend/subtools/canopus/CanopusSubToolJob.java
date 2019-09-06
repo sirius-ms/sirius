@@ -5,8 +5,8 @@ import de.unijena.bioinf.fingerid.CanopusJJob;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
-import de.unijena.bioinf.sirius.ExperimentResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public class CanopusSubToolJob extends InstanceJob {
 
     @Override
-    protected void computeAndAnnotateResult(final @NotNull ExperimentResult expRes) throws Exception {
+    protected void computeAndAnnotateResult(final @NotNull Instance expRes) throws Exception {
         System.out.println("I am Canopus on Experiment " + expRes.getSimplyfiedExperimentName());
         // check if we need to skip
         if (!isRecompute(expRes) && expRes.getResults().stream().anyMatch((it -> it.hasAnnotation(CanopusResult.class)))) {

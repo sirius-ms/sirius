@@ -1,16 +1,13 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.babelms.MS2ExpInputIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.babelms.SiriusInputIterator;
-import de.unijena.bioinf.babelms.projectspace.*;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.babelms.MultiSourceIterator;
+import de.unijena.bioinf.babelms.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.FilenameFormatter;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.projectspace.StandardMSFilenameFormatter;
-import de.unijena.bioinf.sirius.ExperimentResult;
+import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +36,7 @@ import java.util.List;
 public class RootOptionsCLI implements RootOptions {
     public static final Logger LOG = LoggerFactory.getLogger(RootOptionsCLI.class);
 
-    public enum InputType {PROJECT, SIRIUS/*, MZML*/}
+    public enum InputType {PROJECT, SIRIUS}
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
@@ -129,7 +126,7 @@ public class RootOptionsCLI implements RootOptions {
         this.projectSpaceFilenameFormatter = new StandardMSFilenameFormatter(projectSpaceFilenameFormatter);
     }
 
-    public FilenameFormatter projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
+    public FilenameFormatter projectSpaceFilenameFormatter = null;
 
     @Option(names = "--recompute", description = "Recompute ALL results of ALL SubTools that are already present. By defaults already present results of an instance will be preserved and the instance will be skipped for the corresponding Task/Tool", order = 95, defaultValue = "FALSE")
     public void setRecompute(boolean recompute) throws Exception {
@@ -158,7 +155,7 @@ public class RootOptionsCLI implements RootOptions {
         expandInput(files, siriusInfiles, projectSpaces);
 
         if (!projectSpaces.isEmpty()) {
-            if (siriusInfiles.isEmpty())
+            if (!siriusInfiles.isEmpty())
                 LOG.warn("Multiple input types found: Only the project-space data ist used as input.");
             input = projectSpaces;
             type = InputType.PROJECT;
@@ -174,8 +171,8 @@ public class RootOptionsCLI implements RootOptions {
     private void expandInput(@NotNull List<File> files, @NotNull List<File> siriusInfiles, @NotNull List<File> projectSpaces) {
         for (File g : files) {
             if (g.isDirectory()) {
-                // check whether it is a workspace or a gerneric directory with som other input
-                if (SiriusProjectSpaceIO.isSiriusWorkspaceDirectory(g)) {
+                // check whether it is a workspace or a gerneric directory with some other input
+                if (ProjectSpaceIO.isExistingProjectspaceDirectory(g)) {
                     projectSpaces.add(g);
                 } else {
                     File[] ins = g.listFiles(pathname -> pathname.isFile());
@@ -189,7 +186,8 @@ public class RootOptionsCLI implements RootOptions {
                 final String name = g.getName();
                 if (MsExperimentParser.isSupportedFileName(name)) {
                     siriusInfiles.add(g);
-                } else if (SiriusProjectSpaceIO.isCompressedProjectSpaceName(name)) {
+                } else if (ProjectSpaceIO.isCompressedProjectSpace(g)) {
+                    //compressed spaces are read only and cann be handled as simple input
                     projectSpaces.add(g);
                 } else {
                     LOG.warn("File with the name \"" + name + "\" is not in a supported format or has a wrong file extension. File is skipped");
@@ -214,9 +212,9 @@ public class RootOptionsCLI implements RootOptions {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    private SiriusProjectSpace projectSpaceToWriteOn = null;
+    private ProjectSpaceManager projectSpaceToWriteOn = null;
     @Override
-    public SiriusProjectSpace getProjectSpace() {
+    public ProjectSpaceManager getProjectSpace() {
         if (projectSpaceToWriteOn == null)
             configureProjectSpace();
 
@@ -225,23 +223,25 @@ public class RootOptionsCLI implements RootOptions {
 
 
     @Override
-    public PreprocessingJob makePreprocessingJob(List<File> input, SiriusProjectSpace space) {
+    public PreprocessingJob makePreprocessingJob(List<File> input, ProjectSpaceManager space) {
         return new PreprocessingJob(getInput(), getProjectSpace()) {
             @Override
-            protected Iterable<ExperimentResult> compute() throws Exception {
+            protected Iterable<Instance> compute() {
+                //todo handle compressed stuff
+                //todo check if output space needs to be added to input
                 if (type != null && input != null) {
                     switch (type) {
                         case PROJECT:
-                            return () -> space.parseExperimentIterator();
+                            return space;
                         case SIRIUS:
-                            if (space.getNumberOfWrittenExperiments() > 0)
-                                return () -> SiriusProjectSpaceIO.readInputAndProjectSpace(input, space, maxMz, ignoreFormula);
+                            if (space.projectSpace().size() > 0)
+                                return () -> new MultiSourceIterator(Arrays.asList(space.iterator(), new MS2ExpInputIterator(input, maxMz, ignoreFormula).asInstanceIterator(space)));
                             else
-                                return () -> new SiriusInputIterator(input, maxMz, ignoreFormula).asExpResultIterator();
+                                return () -> new MS2ExpInputIterator(input, maxMz, ignoreFormula).asInstanceIterator(space);
                     }
-                } else if (space != null && space.getNumberOfWrittenExperiments() > 0) {
+                } else if (space != null && space.projectSpace().size() > 0) {
                     LOG.info("No Input given but output Project-Space is not empty and will be used as Input instead!");
-                    return () -> space.parseExperimentIterator();
+                    return space;
                 }
                 throw new CommandLine.PicocliException("Illegal Input type: " + type);
             }
@@ -251,38 +251,48 @@ public class RootOptionsCLI implements RootOptions {
 
     protected void configureProjectSpace() {
         try {
-            if (type == InputType.PROJECT) {
-                if (projectSpaceLocation == null) {
-                    if (input.size() == 1)
-                        projectSpaceLocation = input.get(0);
-                    else
-                        throw new CommandLine.PicocliException("No output location given. Can only be avoided if a singe project-space it the input");
-                }
-
-                projectSpaceToWriteOn = SiriusProjectSpaceIO.create(projectSpaceLocation, input, projectSpaceFilenameFormatter,
-                        (currentProgress, maxProgress, Message) -> {
-                            System.out.println("Creating Project Space: " + (((((double) currentProgress) / (double) maxProgress)) * 100d) + "%");
-                        }
-                        , makeSerializerArray());
-            } else {
-                projectSpaceToWriteOn = SiriusProjectSpaceIO.create(projectSpaceFilenameFormatter, projectSpaceLocation,
-                        (currentProgress, maxProgress, Message) -> {
-                            System.out.println("Creating Project Space: " + (((((double) currentProgress) / (double) maxProgress)) * 100d) + "%");
-                        }
-                        , makeSerializerArray());
-
-                if (projectSpaceToWriteOn.getNumberOfWrittenExperiments() > 0)
-                    LOG.info("Output Project-Space is not empty. It will be merged with the provided input!");
+            if (projectSpaceLocation == null) {
+                if (type == InputType.PROJECT && input.size() == 1 && !ProjectSpaceIO.isCompressedProjectSpace(input.get(0))) {
+                    projectSpaceLocation = input.get(0);
+                } else
+                    throw new CommandLine.PicocliException("No output location given. Can only be avoided if a single (non compressed) project-space is the input");
             }
 
-            projectSpaceToWriteOn.registerSummaryWriter(new MztabSummaryWriter());
+            if (!projectSpaceLocation.exists()) {
+                if (!projectSpaceLocation.mkdir())
+                    throw new IOException("Could not create new directory for project-space'" + projectSpaceLocation + "'");
+            }
+
+            final SiriusProjectSpace psTmp = new ProjectSpaceIO(makeProjectSpaceConfig()).openExistingProjectSpace(projectSpaceLocation);
+
+            //check for formatter
+            if (projectSpaceFilenameFormatter == null) {
+                try {
+                    projectSpaceFilenameFormatter = new StandardMSFilenameFormatter(psTmp.getProjectSpaceProperty(FilenameFormatter.ConfigAnnotation.class).formatExpression);
+                } catch (ParseException e) {
+                    LOG.warn("Could not Parse filenameformatter -> Using default");
+                    projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
+                }
+                //todo when do we write this?
+                psTmp.setProjectSpaceProperty(FilenameFormatter.ConfigAnnotation.class, new FilenameFormatter.ConfigAnnotation(projectSpaceFilenameFormatter));
+            }
+
+            projectSpaceToWriteOn = new ProjectSpaceManager(psTmp, projectSpaceFilenameFormatter);
+
         } catch (IOException e) {
             throw new CommandLine.PicocliException("Could not initialize workspace!", e);
         }
     }
 
 
-    protected MetaDataSerializer[] makeSerializerArray() {
+    protected ProjectSpaceConfiguration makeProjectSpaceConfig() {
+        final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
+        //todo configer Space
+        System.out.println("Projectspace has no modules, Result will be empty");
+        return config;
+    }
+
+    /*protected MetaDataSerializer[] makeSerializerArray() {
 
         //TODO this should be collected from the different subtool clis
         // we should be able to import and export the data even if
@@ -296,5 +306,5 @@ public class RootOptionsCLI implements RootOptions {
         al.add(new PassatuttoSerializer());
 
         return al.toArray(new MetaDataSerializer[0]);
-    }
+    }*/
 }
