@@ -2,6 +2,7 @@ package de.unijena.bioinf.ChemistryBase.fp;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import gnu.trove.map.hash.TIntIntHashMap;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.TreeMap;
@@ -12,8 +13,19 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
     protected ClassyfireProperty[] properties;
     protected TIntIntHashMap chemOntIdToIndex;
 
-    public static ClassyFireFingerprintVersion loadDefault() {
-        return null;
+    private static final ClassyFireFingerprintVersion DEFAULT;
+    static {
+        ClassyFireFingerprintVersion f;
+        try {
+             f = loadClassyfire(new BufferedInputStream(new GZIPInputStream(ClassyFireFingerprintVersion.class.getResourceAsStream("/fingerprints/chemont.csv.gz"))));
+        } catch (IOException e) {
+            LoggerFactory.getLogger(ClassyFireFingerprintVersion.class).error(e.getMessage(),e);
+            f = null;
+        }
+        DEFAULT = f;
+    };
+    public static ClassyFireFingerprintVersion getDefault() {
+        return DEFAULT;
     }
 
     public ClassyFireFingerprintVersion(ClassyfireProperty[] classyfireProperties) {
@@ -42,13 +54,13 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
     }
 
     public static ClassyFireFingerprintVersion loadClassyfire(File csvFile) throws IOException {
+        return loadClassyfire(FileUtils.getIn(csvFile));
+    }
+
+    public static ClassyFireFingerprintVersion loadClassyfire(BufferedInputStream stream) throws IOException {
         final TreeMap<Integer, ClassyfireProperty> properties = new TreeMap<>();
-        InputStream fr = null;
+        InputStream fr = stream;
         try {
-            fr = new FileInputStream(csvFile);
-            if (csvFile.getName().endsWith(".gz")) {
-                fr = new GZIPInputStream(fr);
-            }
             final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(fr));
             String line;
             while ((line=br.readLine())!=null) {
