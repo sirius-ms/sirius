@@ -1,17 +1,17 @@
 package de.unijena.bioinf.babelms.projectspace;
 
 import de.unijena.bioinf.babelms.projectspace.mztab.MztabMExporter;
-import de.unijena.bioinf.sirius.ExperimentResult;
+
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 public class MztabSummaryWriter implements SummaryWriter {
     @Override
-    public void writeSummary(Iterable<ExperimentResult> experiments, DirectoryWriter writer) {
+    public void writeSummary(Iterable<Instance> experiments, DirectoryWriter writer) {
         MztabMExporter mztabMExporter = new MztabMExporter();
 
-        for (ExperimentResult er : experiments)
+        for (Instance er : experiments)
             if (er.hasResults())
                 mztabMExporter.addExperiment(er, er.getResults());
 

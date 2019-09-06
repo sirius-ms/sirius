@@ -1,6 +1,7 @@
-package de.unijena.bioinf.ms.properties;
+package de.unijena.bioinf.ms.annotaions;
 
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.DefaultProperty;
 
 @DefaultProperty
 public class RecomputeResults implements Ms2ExperimentAnnotation {

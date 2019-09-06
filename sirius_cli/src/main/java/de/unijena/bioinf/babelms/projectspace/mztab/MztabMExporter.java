@@ -5,7 +5,7 @@ import de.isas.mztab2.io.SiriusMZTabParameter;
 import de.isas.mztab2.io.SiriusWorkspaceMzTabNonValidatingWriter;
 import de.isas.mztab2.io.SiriusWorkspaceMzTabValidatingWriter;
 import de.isas.mztab2.model.*;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedSpectrum;
@@ -17,7 +17,7 @@ import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.babelms.projectspace.ExperimentDirectory;
 import de.unijena.bioinf.babelms.projectspace.FingerIdLocations;
 import de.unijena.bioinf.babelms.projectspace.SiriusLocations;
-import de.unijena.bioinf.sirius.ExperimentResult;
+
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.IdentificationResults;
 import de.unijena.bioinf.sirius.SiriusScore;
@@ -81,7 +81,7 @@ public class MztabMExporter {
         write(writer, mztab, validate);
     }
 
-    public void addExperiment(@NotNull final ExperimentResult er, @NotNull final IdentificationResults results) {
+    public void addExperiment(@NotNull final Instance er, @NotNull final IdentificationResults results) {
         Scored<FingerprintCandidate> bestHit = null;
         IdentificationResult bestHitSource = null;
 
@@ -90,7 +90,7 @@ public class MztabMExporter {
             final FingerIdResult r = result.getAnnotation(FingerIdResult.class);
 
             if (r != null && r.getCandidates() != null) {
-                final Scored<FingerprintCandidate> localBest = r.getCandidates().stream().min(Scored.desc()).orElse(null);
+                final Scored<FingerprintCandidate> localBest = r.getCandidates().stream().min(Comparator.reverseOrder()).orElse(null);
 
                 if (localBest != null) {
                     if (bestHit == null || localBest.getScore() > bestHit.getScore()) {
@@ -164,7 +164,7 @@ public class MztabMExporter {
     }
 
 
-    private SmallMoleculeEvidence buildSiriusSMEItem(@NotNull final ExperimentResult er, @NotNull final IdentificationResult bestHitSource, @NotNull final SmallMoleculeFeature smfItem) {
+    private SmallMoleculeEvidence buildSiriusSMEItem(@NotNull final Instance er, @NotNull final IdentificationResult bestHitSource, @NotNull final SmallMoleculeFeature smfItem) {
         SmallMoleculeEvidence smeItem = buildSMEItem(smfItem);
 
         smeItem.setMsLevel(MZTabParameter.newInstance(MZTabParameter.MS_LEVEL).value("2"));
@@ -177,7 +177,7 @@ public class MztabMExporter {
         return smeItem;
     }
 
-    private SmallMoleculeEvidence buildSiriusFormulaIDSMEItem(@NotNull final ExperimentResult er, @NotNull final IdentificationResult bestHitSource, @NotNull final SmallMoleculeFeature smfItem) {
+    private SmallMoleculeEvidence buildSiriusFormulaIDSMEItem(@NotNull final Instance er, @NotNull final IdentificationResult bestHitSource, @NotNull final SmallMoleculeFeature smfItem) {
         SmallMoleculeEvidence smeItem = buildSiriusSMEItem(er, bestHitSource, smfItem);
 
         smeItem.setIdentificationMethod(SiriusMZTabParameter.SOFTWARE_SIRIUS);
@@ -199,7 +199,7 @@ public class MztabMExporter {
         return smeItem;
     }
 
-    private SmallMoleculeEvidence buildFingerIDSMEItem(@NotNull final ExperimentResult er, @NotNull final IdentificationResult bestHitSource, @NotNull final Scored<FingerprintCandidate> bestHit, @NotNull final SmallMoleculeFeature smfItem) {
+    private SmallMoleculeEvidence buildFingerIDSMEItem(@NotNull final Instance er, @NotNull final IdentificationResult bestHitSource, @NotNull final Scored<FingerprintCandidate> bestHit, @NotNull final SmallMoleculeFeature smfItem) {
         SmallMoleculeEvidence smeItem = buildSiriusSMEItem(er, bestHitSource, smfItem);
         smeItem.setIdentificationMethod(SiriusMZTabParameter.SOFTWARE_FINGER_ID);
         smeItem.setRank(1); //todo make exported result user definable in gui
@@ -222,7 +222,7 @@ public class MztabMExporter {
         return smeItem;
     }
 
-    private SmallMoleculeEvidence buildSpectralLibSMEItem(@NotNull ExperimentResult er, final IdentificationResult bestHitSource, final Scored<FingerprintCandidate> bestHit, final SmallMoleculeFeature smfItem) {
+    private SmallMoleculeEvidence buildSpectralLibSMEItem(@NotNull Instance er, final IdentificationResult bestHitSource, final Scored<FingerprintCandidate> bestHit, final SmallMoleculeFeature smfItem) {
         SmallMoleculeEvidence smeItem = buildSMEItem(smfItem);
         //todo implement if available through zodiac
         return smeItem;
@@ -236,7 +236,7 @@ public class MztabMExporter {
         return smeItem;
     }
 
-    private SmallMoleculeFeature buildSMFItem(@NotNull ExperimentResult er, @NotNull final IdentificationResult bestHitSource, @NotNull final SmallMoleculeSummary smlItem) {
+    private SmallMoleculeFeature buildSMFItem(@NotNull Instance er, @NotNull final IdentificationResult bestHitSource, @NotNull final SmallMoleculeSummary smlItem) {
         final SmallMoleculeFeature smfItem = new SmallMoleculeFeature();
         smfItem.setSmfId(++smfID);
         smfItem.smeIdRefAmbiguityCode(2); //todo 3 is needed if we also want to add multiple candidates
@@ -270,7 +270,7 @@ public class MztabMExporter {
         mztab.getMetadata().setMzTabID(ID); //todo add workspace file parameterName here
     }
 
-    private SmallMoleculeSummary buildSMLItem(@NotNull ExperimentResult er, @NotNull IdentificationResult bestHitSource, @Nullable Scored<FingerprintCandidate> bestHit) {
+    private SmallMoleculeSummary buildSMLItem(@NotNull Instance er, @NotNull IdentificationResult bestHitSource, @Nullable Scored<FingerprintCandidate> bestHit) {
         final SmallMoleculeSummary smlItem = new SmallMoleculeSummary();
         smlItem.setSmlId(++smlID);
         smlItem.adductIons(Collections.singletonList(bestHitSource.getPrecursorIonType().toString()));
@@ -315,7 +315,7 @@ public class MztabMExporter {
         return mtd;
     }
 
-    public List<SpectraRef> extractReferencesAnRuns(@NotNull ExperimentResult re) {
+    public List<SpectraRef> extractReferencesAnRuns(@NotNull Instance re) {
         List<Spectrum> specs = new ArrayList<>(re.getExperiment().getMs2Spectra().size() + re.getExperiment().getMs1Spectra().size());
         specs.addAll(re.getExperiment().getMs1Spectra());
         specs.addAll(re.getExperiment().getMs2Spectra());
@@ -369,11 +369,11 @@ public class MztabMExporter {
         }).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    protected static String makeFormulaIdentifier(ExperimentResult ex, IdentificationResult result) {
+    protected static String makeFormulaIdentifier(Instance ex, IdentificationResult result) {
         return ex.getAnnotation(ExperimentDirectory.class).getDirectoryName() + ":" + result.getMolecularFormula() + ":" + SiriusLocations.simplify(result.getPrecursorIonType());
     }
 
-    protected String makeMassIdentifier(ExperimentResult ex, IdentificationResult result) {
+    protected String makeMassIdentifier(Instance ex, IdentificationResult result) {
         try {
             return ex.getAnnotation(ExperimentDirectory.class).getDirectoryName() + ":" + ex.getExperiment().getIonMass() + ":" + SiriusLocations.simplify(result.getPrecursorIonType().withoutAdduct());
         } catch (Exception e) {

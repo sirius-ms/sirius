@@ -2,22 +2,21 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.jjobs.BasicDependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class DataSetJob extends BasicDependentJJob<Iterable<ExperimentResult>> implements SubToolJob {
+public abstract class DataSetJob extends BasicDependentJJob<Iterable<Instance>> implements SubToolJob {
     private List<JJob> failedInstances = new ArrayList<>();
-    private List<ExperimentResult> successfulInstances = new ArrayList<>();
+    private List<Instance> successfulInstances = new ArrayList<>();
 
     public DataSetJob() {
         super(JobType.SCHEDULER, ReqJobFailBehaviour.WARN);
     }
 
     @Override
-    protected Iterable<ExperimentResult> compute() throws Exception {
+    protected Iterable<Instance> compute() throws Exception {
         checkInputs();
         computeAndAnnotateResult(successfulInstances);
         return successfulInstances;
@@ -39,13 +38,13 @@ public abstract class DataSetJob extends BasicDependentJJob<Iterable<ExperimentR
     @Override
     public synchronized void handleFinishedRequiredJob(JJob required) {
         final Object r = required.result();
-        if (r instanceof ExperimentResult)
-            successfulInstances.add((ExperimentResult) r);
+        if (r instanceof Instance)
+            successfulInstances.add((Instance) r);
 
     }
 
 
-    protected abstract void computeAndAnnotateResult(final @NotNull List<ExperimentResult> expRes) throws Exception;
+    protected abstract void computeAndAnnotateResult(final @NotNull List<Instance> expRes) throws Exception;
 
     public List<JJob> getFailedInstances() {
         return failedInstances;
@@ -57,7 +56,7 @@ public abstract class DataSetJob extends BasicDependentJJob<Iterable<ExperimentR
 
     @FunctionalInterface
     public interface Factory<T extends DataSetJob> {
-        default T createToolJob(Iterable<JJob<ExperimentResult>> dataSet) {
+        default T createToolJob(Iterable<JJob<Instance>> dataSet) {
             final T job = makeJob();
             dataSet.forEach(job::addRequiredJob);
             return job;

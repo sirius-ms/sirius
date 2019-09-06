@@ -2,7 +2,6 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.jjobs.BasicDependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.sirius.ExperimentResult;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
  * NOT necessary and NOT recommended.
  */
 
-public abstract class InstanceJob extends BasicDependentJJob<ExperimentResult> implements SubToolJob {
-    private ExperimentResult input = null;
+public abstract class InstanceJob extends BasicDependentJJob<Instance> implements SubToolJob {
+    private Instance input = null;
 
     public InstanceJob() {
         super(JobType.SCHEDULER);
@@ -24,14 +23,14 @@ public abstract class InstanceJob extends BasicDependentJJob<ExperimentResult> i
     public synchronized void handleFinishedRequiredJob(JJob required) {
         if (input == null) {
             final Object r = required.result();
-            if (r instanceof ExperimentResult)
-                input = (ExperimentResult) r;
+            if (r instanceof Instance)
+                input = (Instance) r;
         }
     }
 
 
     @Override
-    protected ExperimentResult compute() throws Exception {
+    protected Instance compute() throws Exception {
         checkInput();
         computeAndAnnotateResult(input);
         return input;
@@ -42,7 +41,7 @@ public abstract class InstanceJob extends BasicDependentJJob<ExperimentResult> i
             throw new IllegalArgumentException("No Input given!");
     }
 
-    protected abstract void computeAndAnnotateResult(final @NotNull ExperimentResult expRes) throws Exception;
+    protected abstract void computeAndAnnotateResult(final @NotNull Instance expRes) throws Exception;
 
 
     /*@Override
@@ -53,7 +52,7 @@ public abstract class InstanceJob extends BasicDependentJJob<ExperimentResult> i
 
     @FunctionalInterface
     public interface Factory<T extends InstanceJob> {
-        default T createToolJob(JJob<ExperimentResult> inputProvidingJob) {
+        default T createToolJob(JJob<Instance> inputProvidingJob) {
             final T job = makeJob();
             job.addRequiredJob(inputProvidingJob);
             return job;
