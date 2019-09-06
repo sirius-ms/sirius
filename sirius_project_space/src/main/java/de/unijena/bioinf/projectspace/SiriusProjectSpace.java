@@ -270,7 +270,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
     Container getContainer(Class<Container> klass, Id id, Class<?>... components) throws IOException {
         // read container
-        final Container container = configuration.getContainerSerializer(klass).readFromProjectSpace(new FileBasedProjectSpaceReader(root), (r,c, f)->{
+        final Container container = configuration.getContainerSerializer(klass).readFromProjectSpace(new FileBasedProjectSpaceReader(root, this::getProjectSpaceProperty), (r,c, f)->{
             // read components
             for (Class k : components) {
                 configuration.getComponentSerializer(klass, k).read(r, id, c);
@@ -282,7 +282,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
     void updateContainer(Class<Container> klass, Container container, Class<?>... components) throws IOException {
         // write container
-        configuration.getContainerSerializer(klass).writeToProjectSpace(new FileBasedProjectSpaceWriter(root), (r,c, f)->{
+        configuration.getContainerSerializer(klass).writeToProjectSpace(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), (r,c, f)->{
             // write components
             for (Class k : components) {
                 configuration.getComponentSerializer(klass, k).write(r, container.getId(), container, c);
@@ -292,7 +292,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
     void deleteContainer(Class<Container> klass, Id containerId) throws IOException {
-        configuration.getContainerSerializer(klass).deleteFromProjectSpace(new FileBasedProjectSpaceWriter(root), (r,id)->{
+        configuration.getContainerSerializer(klass).deleteFromProjectSpace(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), (r,id)->{
             // write components
             for (Class k : configuration.getAllComponentsForContainer(klass)) {
                 configuration.getComponentSerializer(klass, k).delete(r, id);
