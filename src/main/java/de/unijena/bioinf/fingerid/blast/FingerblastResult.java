@@ -13,15 +13,15 @@ import java.util.List;
  * - used database
  * - used scoring method
  */
-public class FingerblastResult implements ResultAnnotation {
+public class FingerblastResult<C extends CompoundCandidate> implements ResultAnnotation {
 
-    protected final List<Scored<? extends CompoundCandidate>> results;
+    protected final List<Scored<C>> results;
 
-    public FingerblastResult(List<Scored<? extends CompoundCandidate>> results) {
+    public FingerblastResult(List<Scored<C>> results) {
         this.results = results;
     }
 
-    public List<Scored<? extends CompoundCandidate>> getResults() {
+    public List<Scored<C>> getResults() {
         return results;
     }
 }
