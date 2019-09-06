@@ -1,5 +1,7 @@
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ms.annotations.ResultAnnotation;
+
 import java.io.IOException;
 
 public interface ComponentSerializer<A extends ProjectSpaceContainerId, B extends ProjectSpaceContainer<A>, C> {

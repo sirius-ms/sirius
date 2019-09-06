@@ -1,11 +1,13 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.sirius.scores.FormulaScore;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * contains any score associated with a molecular formula. This includes:
@@ -21,13 +23,19 @@ import java.util.Iterator;
  * - constructor with single double parameter
  * - final
  */
-public class FormulaScoring implements Iterable<FormulaScore>, Annotated<FormulaScore> {
+public class FormulaScoring implements Iterable<FormulaScore>, Annotated<FormulaScore>, DataAnnotation {
 
     private final Annotations<FormulaScore> scores;
+
+    public FormulaScoring(Set<FormulaScore> scores) {
+        this();
+        scores.forEach(score -> setAnnotation((Class<FormulaScore>) score.getClass(), score));
+    }
 
     public FormulaScoring() {
         this.scores = new Annotations<>();
     }
+
 
     public <T extends FormulaScore> void addAnnotation(Class<T> klass, double value) {
         try {

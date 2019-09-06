@@ -5,8 +5,15 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
 import java.util.Objects;
 
 public abstract class FormulaScore extends Score.AbstDoubleScore<FormulaScore> {
+    public static final FormulaScore NaN = new FormulaScore(Double.NaN) {
+        @Override
+        public ScoreType getScoreType() {
+            return ScoreType.NaN;
+        }
+    };
+
     public enum ScoreType {
-        Probabilistic, Logarithmic;
+        Probabilistic, Logarithmic, NaN;
     }
 
     public FormulaScore(double score) {

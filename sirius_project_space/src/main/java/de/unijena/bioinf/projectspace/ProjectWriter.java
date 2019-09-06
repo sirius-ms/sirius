@@ -1,17 +1,11 @@
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public interface ProjectWriter extends ProjectIO {
 
