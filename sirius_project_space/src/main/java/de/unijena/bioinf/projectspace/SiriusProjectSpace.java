@@ -100,10 +100,10 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     public Optional<FormulaResultId> newUniqueFormulaResultId(@NotNull CompoundContainerId id, @NotNull FTree tree) throws IOException {
-        return newUniqueFormulaResultId(getCompound(id), tree).map(FormulaResult::getId);
+        return newFormulaResultWithUniqueId(getCompound(id), tree).map(FormulaResult::getId);
     }
 
-    public Optional<FormulaResult> newUniqueFormulaResultId(@NotNull CompoundContainer container, @NotNull FTree tree) {
+    public Optional<FormulaResult> newFormulaResultWithUniqueId(@NotNull CompoundContainer container, @NotNull FTree tree) {
         if (!containsCompoud(container.getId()))
             throw new IllegalArgumentException("Compound is not part of the project Space! ID: " + container.getId());
 
