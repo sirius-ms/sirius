@@ -22,7 +22,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
-import de.unijena.bioinf.sirius.scores.FormulaScore;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 
 //this is basically just a scored tree
 //todo if the rank is used pretty offen, we can add it again

@@ -1,6 +1,4 @@
-package de.unijena.bioinf.sirius.scores;
-
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
+package de.unijena.bioinf.ChemistryBase.algorithm.scoring;
 
 import java.util.Objects;
 

@@ -8,7 +8,7 @@ import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
-import de.unijena.bioinf.sirius.scores.FormulaScore;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 

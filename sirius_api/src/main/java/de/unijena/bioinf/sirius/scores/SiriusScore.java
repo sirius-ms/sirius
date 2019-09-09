@@ -1,5 +1,7 @@
 package de.unijena.bioinf.sirius.scores;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
+
 public class SiriusScore extends FormulaScore {
 
     public SiriusScore(double score) {
