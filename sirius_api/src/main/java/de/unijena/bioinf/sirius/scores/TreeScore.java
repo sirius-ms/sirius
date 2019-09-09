@@ -1,5 +1,7 @@
 package de.unijena.bioinf.sirius.scores;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
+
 public final class TreeScore extends FormulaScore {
 
     public TreeScore(double score) {

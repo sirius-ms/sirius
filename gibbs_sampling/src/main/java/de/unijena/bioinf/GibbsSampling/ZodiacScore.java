@@ -1,6 +1,6 @@
 package de.unijena.bioinf.GibbsSampling;
 
-import de.unijena.bioinf.sirius.scores.FormulaScore;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 
 public class ZodiacScore extends FormulaScore {
 
