@@ -23,4 +23,8 @@ public class FingerblastResult implements ResultAnnotation {
     public List<Scored<CompoundCandidate>> getResults() {
         return results;
     }
+
+    public TopFingerblastScore getTopHitScore() {
+        return new TopFingerblastScore(results.get(0).getScore());
+    }
 }
