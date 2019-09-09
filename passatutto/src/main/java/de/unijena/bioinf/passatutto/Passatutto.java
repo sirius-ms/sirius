@@ -10,11 +10,11 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.jjobs.BasicJJob;
 
 public class Passatutto {
 
-    public Decoy createDecoyByRerootingTree(FTree inputTree, PrecursorIonType adduct) {
-
+    public static Decoy createDecoyByRerootingTree(FTree inputTree, PrecursorIonType adduct) {
         final FTree decoyTree = new RerootingTreeMethod().randomlySelectRerootedTree(inputTree).tree;
         updatePeaks(decoyTree);
         final SimpleSpectrum spec = tree2spectrum(decoyTree, adduct);
@@ -22,7 +22,7 @@ public class Passatutto {
 
     }
 
-    private void updatePeaks(FTree decoyTree) {
+    private static void updatePeaks(FTree decoyTree) {
         final FragmentAnnotation<AnnotatedPeak> pk = decoyTree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
         final FragmentAnnotation<Peak> pk2 = decoyTree.getOrCreateFragmentAnnotation(Peak.class);
         for (Fragment f : decoyTree) {
@@ -34,7 +34,7 @@ public class Passatutto {
         }
     }
 
-    private SimpleSpectrum tree2spectrum(FTree decoyTree, PrecursorIonType adduct) {
+    private static SimpleSpectrum tree2spectrum(FTree decoyTree, PrecursorIonType adduct) {
         final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
         final FragmentAnnotation<AnnotatedPeak> ano = decoyTree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
         for (Fragment f : decoyTree) {
@@ -45,4 +45,25 @@ public class Passatutto {
     }
 
 
+    public static JJob makePassatuttoJob(FTree inputTree, PrecursorIonType adduct) {
+        return new Passatutto.JJob(inputTree, adduct);
+    }
+
+
+    public static class JJob extends BasicJJob<Decoy> {
+
+        final FTree inputTree;
+        final PrecursorIonType adduct;
+
+        public JJob(FTree inputTree, PrecursorIonType adduct) {
+            super(JobType.CPU);
+            this.inputTree = inputTree;
+            this.adduct = adduct;
+        }
+
+        @Override
+        protected Decoy compute() throws Exception {
+            return createDecoyByRerootingTree(inputTree, adduct);
+        }
+    }
 }

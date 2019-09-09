@@ -9,7 +9,6 @@ import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.MasterJJob;
-import de.unijena.bioinf.sirius.IdentificationResult;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +21,7 @@ import java.util.stream.IntStream;
 public class Zodiac {
     private final Logger Log;
     Map<Ms2Experiment, List<FTree>> siriusScoredTrees;
-    Map<Ms2Experiment, List<IdentificationResult<ZodiacScore>>> zodiacScoredTrees; //todo should this be part of the ZodiacResult?
+    Map<Ms2Experiment, Map<FTree, ZodiacScore>> zodiacScoredTrees; //todo should this be part of the ZodiacResult?
 
     List<LibraryHit> anchors;
     NodeScorer[] nodeScorers;
@@ -234,9 +233,9 @@ public class Zodiac {
     }
 
 
-    private Map<Ms2Experiment, List<IdentificationResult<ZodiacScore>>> mapZodiacScoresToFTrees(CompoundResult<FragmentsCandidate>[] result) {
+    private Map<Ms2Experiment, Map<FTree, ZodiacScore>> mapZodiacScoresToFTrees(CompoundResult<FragmentsCandidate>[] result) {
         final Map<String, CompoundResult<FragmentsCandidate>> idToCompoundResult = createInstanceMap(result);//contains all compounds (even all clustered)
-        final Map<Ms2Experiment, List<IdentificationResult<ZodiacScore>>> zodiacScoredTrees = new HashMap<>(siriusScoredTrees.size());
+        final Map<Ms2Experiment, Map<FTree, ZodiacScore>> zodiacScoredTrees = new HashMap<>(siriusScoredTrees.size());
 
         for (Map.Entry<Ms2Experiment, List<FTree>> experimentResult : siriusScoredTrees.entrySet()) {
             if (experimentResult.getValue().size() == 0) continue;
@@ -269,13 +268,11 @@ public class Zodiac {
                                 "You might increase the number of SIRIUS output candidates or disable clustering in ZODIAC. Compound id: "+id);
                     }
                 } else {
-                    zodiacScoredTrees.computeIfAbsent(experimentResult.getKey(), (key) -> new ArrayList<>(experimentResult.getValue().size()))
-                            .add(new IdentificationResult<>(ftree, zodiacScore));
+                    zodiacScoredTrees.computeIfAbsent(experimentResult.getKey(), (key) -> new HashMap<>(experimentResult.getValue().size()))
+                            .put(ftree, zodiacScore);
                 }
             }
         }
-
-        zodiacScoredTrees.forEach((k, v) -> Collections.sort(v));
         return zodiacScoredTrees;
     }
 
@@ -440,7 +437,7 @@ public class Zodiac {
         }
     }
 
-    public Map<Ms2Experiment, List<IdentificationResult<ZodiacScore>>> getZodiacScoredTrees() {
+    public Map<Ms2Experiment, Map<FTree, ZodiacScore>> getZodiacScoredTrees() {
         return zodiacScoredTrees;
     }
 
