@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.SearchStructureByFormula;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -15,7 +16,6 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,7 +69,7 @@ public class Fingerblast {
             final Fingerprint fpm = (mask==null || fp.getFingerprint().getFingerprintVersion().equals(mask)) ? fp.getFingerprint() : mask.mask(fp.getFingerprint());
             results.add(new Scored<>(new FingerprintCandidate(fp, fpm), scorer.score(fingerprint, fpm)));
         }
-        Collections.sort(results, Comparator.reverseOrder());
+        results.sort(Comparator.reverseOrder());
         return results;
     }
 

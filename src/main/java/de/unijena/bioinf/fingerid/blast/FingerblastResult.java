@@ -2,7 +2,6 @@ package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 
 import java.util.List;
@@ -13,15 +12,15 @@ import java.util.List;
  * - used database
  * - used scoring method
  */
-public class FingerblastResult<C extends CompoundCandidate> implements ResultAnnotation {
+public class FingerblastResult implements ResultAnnotation {
 
-    protected final List<Scored<C>> results;
+    protected final List<Scored<CompoundCandidate>> results;
 
-    public FingerblastResult(List<Scored<C>> results) {
+    public FingerblastResult(List<Scored<CompoundCandidate>> results) {
         this.results = results;
     }
 
-    public List<Scored<C>> getResults() {
+    public List<Scored<CompoundCandidate>> getResults() {
         return results;
     }
 }
