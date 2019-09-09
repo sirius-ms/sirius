@@ -1,23 +1,22 @@
 package de.unijena.bioinf.ms.frontend.subtools.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.fingerid.CSIPredictor;
-import de.unijena.bioinf.fingerid.FingerIDJJob;
-import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultRankingScore;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
+import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.scores.FormulaScore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
@@ -29,16 +28,14 @@ public class FingeridSubToolJob extends InstanceJob {
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        List<? extends SScored<FormulaResult, ? extends FormulaScore>> formRes = inst.getProjectSpace()
-                .getFormulaResultsOrderedBy(inst.getID(),
-                        inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).value,
-                        FormulaScoring.class, FTree.class, FingerIdResult.class, FingerblastResult.class);
+        List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults = inst.loadFormulaResults(
+                FormulaScoring.class, FTree.class, FingerprintResult.class, FingerblastResult.class);
 
-//        if (!inst.hasAnnotation(IdentificationResults.class))
-//            throw new IllegalArgumentException("No formula identification. Cannot Run CSI:FingerID without formula identifications. You may want to run the SIRIUS SubTool first.");
+        if (formulaResults == null || formulaResults.isEmpty())
+            throw new IllegalArgumentException("No formula identification. Cannot Run CSI:FingerID without formula identifications. You may want to run the SIRIUS SubTool first.");
 
-        if (!isRecompute(inst) && formRes.stream().findFirst().map(SScored::getCandidate)
-                .map(c -> c.hasAnnotation(FingerIdResult.class) && c.hasAnnotation(FingerblastResult.class)).orElse(true)) {
+        if (!isRecompute(inst) && formulaResults.stream().findFirst().map(SScored::getCandidate)
+                .map(c -> c.hasAnnotation(FingerprintResult.class) && c.hasAnnotation(FingerblastResult.class)).orElse(true)) {
             LOG().info("Skipping CSI:FingerID for Instance \"" + inst.getExperiment().getName() + "\" because results already exist or result list is empty.");
             return;
         }
@@ -53,8 +50,43 @@ public class FingeridSubToolJob extends InstanceJob {
         EnumSet<PredictorType> predictors = type.toPredictors(inst.getExperiment().getPrecursorIonType().getCharge());
         final @NotNull CSIPredictor csi = (CSIPredictor) ApplicationCore.WEB_API.getPredictorFromType(predictors.iterator().next());
         final FingerIDJJob job = csi.makeFingerIDJJob(inst.getExperiment(),
-                formRes.stream().map(res -> new IdentificationResult<>(res.getCandidate().getAnnotation(FTree.class),res.getScoreObject()))
+                formulaResults.stream().map(res -> new IdentificationResult<>(res.getCandidate().getAnnotation(FTree.class), res.getScoreObject()))
                         .collect(Collectors.toList()));
-        Map<IdentificationResult, FingerIdResult> result = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+
+
+        // do computation and await results
+        List<FingerIdResult> result = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+
+        final Map<FTree, FormulaResult> formulaResultsMap = formulaResults.stream().collect(Collectors.toMap(r -> r.getCandidate().getAnnotation(FTree.class), SScored::getCandidate));
+
+        // add new id results to projectspace and mal.
+        final CompoundContainer ioC = inst.loadCompoundContainer();
+        for (IdentificationResult idr : job.getAddedIdentificationResults())
+            inst.getProjectSpace().newFormulaResultWithUniqueId(ioC, idr.getTree())
+                    .ifPresent(fr -> formulaResultsMap.put(fr.getAnnotation(FTree.class), fr));
+
+        assert formulaResultsMap.size() == result.size();
+
+        for (FingerIdResult structRes : result) {
+
+            final FormulaResult formRes = formulaResultsMap.get(structRes.sourceTree);
+            // annotate results
+
+            assert structRes.sourceTree == formRes.getAnnotation(FTree.class);
+
+            formRes.setAnnotation(FingerprintResult.class, structRes.getAnnotation(FingerprintResult.class));
+            formRes.setAnnotation(FingerblastResult.class, structRes.getAnnotation(FingerblastResult.class));
+
+            formRes.getAnnotation(FormulaScoring.class).setAnnotation(TopFingerblastScore.class, structRes.getAnnotation(FingerblastResult.class).getTopHitScore());
+            formRes.getAnnotation(FormulaScoring.class).setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).score);
+
+            //setRanking score
+            inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(TopFingerblastScore.class));
+            // write results back to project space
+            inst.updateFormulaResult(formRes,
+                    FormulaScoring.class, FingerprintResult.class, FingerblastResult.class);
+
+
+        }
     }
 }

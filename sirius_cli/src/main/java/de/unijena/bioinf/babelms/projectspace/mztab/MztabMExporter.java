@@ -1,3 +1,4 @@
+/*
 package de.unijena.bioinf.babelms.projectspace.mztab;
 
 import de.isas.mztab2.io.MZTabParameter;
@@ -382,3 +383,4 @@ public class MztabMExporter {
         }
     }
 }
+*/

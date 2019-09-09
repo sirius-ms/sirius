@@ -7,15 +7,14 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.MemoryFileStorage;
 import de.unijena.bioinf.lcms.ProcessedSample;
-import de.unijena.bioinf.lcms.align.Cluster;
 import de.unijena.bioinf.model.lcms.ConsensusFeature;
 import de.unijena.bioinf.model.lcms.LCMSRun;
-import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class LcmsAlignSubToolJob extends PreprocessingJob {
@@ -25,15 +24,11 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
     }
 
     @Override
-    protected Iterable<Instance> compute() throws Exception {
-        /*if (input.size() < 2)*/
-        //todo check if the files are really mzml files
-
-
+    protected ProjectSpaceManager compute() throws Exception {
         final ArrayList<BasicJJob> jobs = new ArrayList<>();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         for (File f : input) {
-            jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<Object>() {
+            jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<>() {
                 @Override
                 protected Object compute() throws Exception {
                     try {
@@ -53,11 +48,11 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
         for (BasicJJob j : jobs) j.takeResult();
         i.getMs2Storage().backOnDisc();
         i.getMs2Storage().dropBuffer();
-        Cluster c = i.alignAndGapFilling();
+        final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(i.alignAndGapFilling());
         LOG().info("Gapfilling Done.");
-        final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(c);
-        for (ConsensusFeature cons : consensusFeatures)
-            space.writeExperiment(new Instance(cons.toMs2Experiment()));
-        return () -> space.parseExperimentIterator();
+
+        //save to project space
+        Arrays.stream(consensusFeatures).forEach(cons -> space.newUniqueCompoundId(cons.toMs2Experiment()));
+        return space;
     }
 }

@@ -1,16 +1,20 @@
 package de.unijena.bioinf.ms.frontend.subtools.zodiac;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.GibbsSampling.Zodiac;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.GibbsSampling.model.distributions.LogNormalDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorerNoiseIntensityWeighted;
-import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.fingerid.annotations.FormulaResultRankingScore;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
+import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -21,31 +25,46 @@ import java.util.stream.Collectors;
 public class ZodiacSubToolJob extends DataSetJob {
 
     @Override
-    protected void computeAndAnnotateResult(final @NotNull List<Instance> exps) throws Exception {
-        for (Instance expRes : exps)
-            if (!expRes.hasAnnotation(IdentificationResults.class))
-                throw new IllegalArgumentException("Instance \"" + expRes.getExperiment().getName() + "\" does not contain SIRIUS results!");
+    protected void computeAndAnnotateResult(final @NotNull List<Instance> instances) throws Exception {
+        final Map<Ms2Experiment, List<FormulaResult>> input = instances.stream().collect(Collectors.toMap(
+                Instance::getExperiment,
+                in -> in.loadFormulaResults(FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList())
+        ));
 
-        if (exps.stream().anyMatch(it -> isRecompute(it) || !it.getResults().getBest().map(x->x.hasAnnotation(ZodiacScore.class)).orElse(false))) {
-            System.out.println("I am Zodiac and run on all instances: " + exps.stream().map(Instance::getSimplyfiedExperimentName).collect(Collectors.joining(",")));
+        if (instances.stream().anyMatch(it -> isRecompute(it) || !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class))) {
+            System.out.println("I am Zodiac and run on all instances: " + instances.stream().map(Instance::toString).collect(Collectors.joining(",")));
             final Map<String, Instance> stupidLookupMap =
-                    exps.stream().collect(Collectors.toMap(ir -> ir.getExperiment().getName(), ir -> ir));
+                    instances.stream().collect(Collectors.toMap(ir -> ir.getExperiment().getName(), ir -> ir));
 
-            Zodiac zodiac = new Zodiac(exps, Collections.emptyList(), new NodeScorer[]{new StandardNodeScorer(true, 1d)}, new EdgeScorer[]{new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorerNoiseIntensityWeighted(0d), new LogNormalDistribution(true), 0.95d)}, new EdgeThresholdMinConnectionsFilter(0.95d, 10, 10), 50, true);
+            Zodiac zodiac = new Zodiac(input.keySet().stream().collect(Collectors.toMap(k -> k, k -> input.get(k).stream().map(r -> r.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList()))),
+                    Collections.emptyList(),
+                    new NodeScorer[]{new StandardNodeScorer(true, 1d)},
+                    new EdgeScorer[]{new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorerNoiseIntensityWeighted(0d), new LogNormalDistribution(true), 0.95d)},
+                    new EdgeThresholdMinConnectionsFilter(0.95d, 10, 10),
+                    50, true, true, null
+            );
 
-            final JJob<ZodiacResultsWithClusters> zodiacJob = zodiac.makeComputeJob(10000, 10, 10);
-            SiriusJobs.getGlobalJobManager().submitJob(zodiacJob);
-            ZodiacResultsWithClusters results = zodiacJob.takeResult();
 
-            for (CompoundResult<FragmentsCandidate> result : results.getResults()) {
-                for (Scored<FragmentsCandidate> candidate : result.getCandidates()) {
-                    stupidLookupMap.get(result.getId()).getResults().getResultFor(candidate.getCandidate().getFormula(), candidate.getCandidate().getIonType()).ifPresent(x -> x.setAnnotation(ZodiacScore.class, new ZodiacScore(candidate.getScore())));
-                }
-            }
+            final ZodiacResultsWithClusters clsuterResults = SiriusJobs.getGlobalJobManager().submitJob(
+                    zodiac.makeComputeJob(10000, 10, 10))
+                    .awaitResult();
+            final Map<Ms2Experiment, Map<FTree, ZodiacScore>> scoreResults = zodiac.getZodiacScoredTrees();
 
-            exps.stream().map(Instance::getResults).forEach(r -> r.setRankingScoreType(ZodiacScore.class));
 
-            exps.forEach(this::invalidateResults);
+            //add score and set new Ranking score
+            instances.forEach(inst -> {
+                final Map<FTree, ZodiacScore> sTress = scoreResults.get(inst.getExperiment());
+                final List<FormulaResult> formulaResults = input.get(inst.getExperiment());
+                formulaResults.forEach(fr -> fr.getAnnotationOrThrow(FormulaScoring.class)
+                        .setAnnotation(ZodiacScore.class,
+                                sTress.get(fr.getAnnotationOrThrow(FTree.class))
+                        ));
+
+                inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(ZodiacScore.class));
+                //todo how to write experiment efficiantly without cache -> should be persistents
+            });
+
+            instances.forEach(this::invalidateResults);
         }
     }
 }

@@ -41,6 +41,13 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     }
 
     @NotNull
+    public CompoundContainerId newUniqueCompoundId(Ms2Experiment inputExperient) {
+        final String name = nameFormatter().apply(inputExperient);
+        return projectSpace().newUniqueCompoundId(name, (idx) -> idx + "_" + name)
+                .orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
+    }
+
+    @NotNull
     @Override
     public Iterator<Instance> iterator() {
         return new Iterator<>() {
