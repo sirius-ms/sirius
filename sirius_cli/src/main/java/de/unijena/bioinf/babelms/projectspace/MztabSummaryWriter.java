@@ -1,3 +1,4 @@
+/*
 package de.unijena.bioinf.babelms.projectspace;
 
 import de.unijena.bioinf.babelms.projectspace.mztab.MztabMExporter;
@@ -22,3 +23,4 @@ public class MztabSummaryWriter implements SummaryWriter {
         }
     }
 }
+*/

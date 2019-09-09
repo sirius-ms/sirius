@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.fingerid.FormulaWhiteListJob;
+import de.unijena.bioinf.fingerid.annotations.FormulaResultRankingScore;
 import de.unijena.bioinf.fingerid.db.annotations.FormulaSearchDB;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
@@ -29,7 +30,7 @@ public class SiriusSubToolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         final Ms2Experiment exp = inst.getExperiment();
-        final CompoundContainer ioC = inst.getProjectSpace().getCompound(inst.getID());
+        final CompoundContainer ioC = inst.loadCompoundContainer();
         System.out.println(new Date() + "\t-> I am Sirius, start computing Experiment " + inst.getID());
 
 
@@ -63,6 +64,9 @@ public class SiriusSubToolJob extends InstanceJob {
             //write results to project space
             for (IdentificationResult<SiriusScore> result : results)
                 inst.getProjectSpace().newFormulaResultWithUniqueId(ioC, result.getTree());
+
+            // set sirius to ranking score
+            inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(SiriusScore.class));
 
             System.out.println(new Date() + "\t-> I am Sirius, finish with Experiment " + inst.getID());
         } else {
