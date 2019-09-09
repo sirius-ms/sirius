@@ -9,11 +9,9 @@ import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.ProjectReader;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,7 +22,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
     @Override
     public FingerblastResult read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         final Pattern dblinkPat = Pattern.compile("^.+?: \\(.+\\)$");
-        final ArrayList<Scored<? extends CompoundCandidate>> results = new ArrayList<>();
+        final ArrayList<Scored<CompoundCandidate>> results = new ArrayList<>();
         reader.table(FingerIdLocations.FingerBlastResults.apply(id),true,(row)->{
             final double score = Double.parseDouble(row[4]);
             final InChI inchi = new InChI(row[0], row[1]);

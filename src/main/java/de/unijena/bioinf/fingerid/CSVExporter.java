@@ -22,6 +22,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 
@@ -53,11 +54,11 @@ public class CSVExporter {
 
     public void exportFingerIdResults(Writer writer, Iterable<FingerIdResult> results) throws IOException {
         writer.write("inchikey2D\tinchi\tmolecularFormula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
-        final ArrayList<Scored<FingerprintCandidate>> candidates = new ArrayList<>();
+        final ArrayList<Scored<CompoundCandidate>> candidates = new ArrayList<>();
         for (FingerIdResult r : results) candidates.addAll(r.getCandidates());
         candidates.sort(Comparator.reverseOrder());
         int rank = 0;
-        for (Scored<FingerprintCandidate> r : candidates) {
+        for (Scored<CompoundCandidate> r : candidates) {
             final Multimap<String, String> dbMap = r.getCandidate().getLinkedDatabases();
 
             writer.write(r.getCandidate().getInchiKey2D());
