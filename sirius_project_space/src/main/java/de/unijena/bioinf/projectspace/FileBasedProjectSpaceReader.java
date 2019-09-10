@@ -6,8 +6,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -90,7 +88,7 @@ public class FileBasedProjectSpaceReader implements ProjectReader {
     }
 
     @Override
-    public Path asPath(String path) {
-        return FileSystems.getDefault().getPath(path);
+    public Path asPath(String relativePath) {
+        return dir.toPath().resolve(relativePath);
     }
 }
