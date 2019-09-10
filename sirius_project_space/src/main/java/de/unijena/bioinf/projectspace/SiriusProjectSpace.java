@@ -1,5 +1,6 @@
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -8,7 +9,6 @@ import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -63,11 +63,11 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 int index = Integer.parseInt(keyValues.getOrDefault("index","0"));
                 String name = keyValues.getOrDefault("name", "");
                 String dirName = dir.getName();
-                ids.put(dirName, new CompoundContainerId(dirName,name, index));
-                maxIndex = Math.max(index,maxIndex);
+                ids.put(dirName, new CompoundContainerId(dirName, name, index));
+                maxIndex = Math.max(index, maxIndex);
             }
         }
-        ++maxIndex;
+
         this.compoundCounter.set(maxIndex);
         fireProjectSpaceChange(ProjectSpaceEvent.OPENED);
     }
@@ -286,10 +286,11 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
     void updateContainer(Class<Container> klass, Container container, Class<?>... components) throws IOException {
         // write container
-        configuration.getContainerSerializer(klass).writeToProjectSpace(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), (r,c, f)->{
+        configuration.getContainerSerializer(klass).writeToProjectSpace(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), (r, c, f) -> {
             // write components
             for (Class k : components) {
-                configuration.getComponentSerializer(klass, k).write(r, container.getId(), container, c);
+                configuration.getComponentSerializer(klass, k)
+                        .write(r, container.getId(), container, c.getAnnotation(k));
             }
         },container.getId(),container);
     }
@@ -322,7 +323,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 if (property!=null) return property;
                 try {
                     T read = configuration.getProjectSpacePropertySerializer(key).read(new FileBasedProjectSpaceReader(root, this::getProjectSpaceProperty), null, null);
-                    projectSpaceProperties.put(key, read);
+                    if (read != null)
+                        projectSpaceProperties.put(key, read);
                     return read;
                 } catch (IOException e) {
                     LoggerFactory.getLogger(SiriusProjectSpace.class).error(e.getMessage(), e);

@@ -2,20 +2,47 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.function.Function;
 
 public interface FilenameFormatter extends Function<Ms2Experiment, String> {
     String getFormatExpression();
 
-    class ConfigAnnotation implements ProjectSpaceProperty {
+    class PSProperty implements ProjectSpaceProperty {
         public final String formatExpression;
 
-        public ConfigAnnotation(FilenameFormatter formatter) {
+        public PSProperty(FilenameFormatter formatter) {
             formatExpression = formatter.getFormatExpression();
         }
 
-        public ConfigAnnotation(String formatExpression) {
+        public PSProperty(String formatExpression) {
             this.formatExpression = formatExpression;
+        }
+    }
+
+    class PSPropertySerializer implements ComponentSerializer<ProjectSpaceContainerId, ProjectSpaceContainer<ProjectSpaceContainerId>, PSProperty> {
+        public static final String FILENAME = ".format";
+
+        @Override
+        public PSProperty read(ProjectReader reader, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container) throws IOException {
+            if (reader.exists(FILENAME))
+                return Files.lines(reader.asPath(FILENAME)).findFirst().map(PSProperty::new).orElse(null);
+            return null;
+        }
+
+        @Override
+        public void write(ProjectWriter writer, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container, PSProperty component) throws IOException {
+            if (component != null) {
+                if (writer.exists(FILENAME))
+                    writer.delete(FILENAME);
+                writer.textFile(FILENAME, bf -> bf.write(component.formatExpression));
+            }
+        }
+
+        @Override
+        public void delete(ProjectWriter writer, ProjectSpaceContainerId id) throws IOException {
+            writer.delete(FILENAME);
         }
     }
 }

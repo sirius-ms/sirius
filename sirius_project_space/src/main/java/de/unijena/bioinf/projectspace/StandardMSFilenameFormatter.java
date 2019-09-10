@@ -14,7 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class StandardMSFilenameFormatter implements FilenameFormatter {
-    public static final ConfigAnnotation DEFAULT_EXPRESSION = new ConfigAnnotation("%source_%name");
+    public static final PSProperty DEFAULT_EXPRESSION = new PSProperty("%source_%name");
     private String formatExpression;
     private FormatString[] formatStrings;
 
