@@ -59,7 +59,7 @@ public class ProjectSpaceIO {
         try {
             try (SiriusProjectSpace space = new SiriusProjectSpace(new ProjectSpaceConfiguration(), f)) {
                 space.open();
-                return true;
+                return space.size() > 0;
             } catch (IOException ignored) {
                 return false;
             }
