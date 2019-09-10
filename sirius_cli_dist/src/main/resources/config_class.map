@@ -1,7 +1,10 @@
-FormulaIdentificationsThreshold=de.unijena.bioinf.fingerid.FormulaIdentificationsThreshold
-NumberOfStructureCandidates=de.unijena.bioinf.fingerid.NumberOfStructureCandidates
-FormulaSearchDB=de.unijena.bioinf.fingerid.db.annotation.FormulaSearchDB
-StructureSearchDB=de.unijena.bioinf.fingerid.db.annotation.StructureSearchDB
+RecomputeResults=de.unijena.bioinf.ms.annotaions.RecomputeResults
+
+FormulaResultRankingScore=de.unijena.bioinf.fingerid.annotations.FormulaResultRankingScore
+NumberOfStructureCandidates=de.unijena.bioinf.fingerid.annotations.NumberOfStructureCandidates
+FormulaSearchDB=de.unijena.bioinf.fingerid.db.annotations.FormulaSearchDB
+StructureSearchDB=de.unijena.bioinf.fingerid.db.annotations.StructureSearchDB
+FormulaResultThreshold=de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold
 
 AlgorithmProfile=de.unijena.bioinf.sirius.Profile
 

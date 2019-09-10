@@ -113,6 +113,7 @@ allprojects {
     }
 
     dependencies {
+        annotationProcessor "de.unijena.bioinf.ms:processor:$siriusVersion"
         compile 'net.sf.trove4j:trove4j:3.0.3'
         compile 'com.google.guava:guava:18.0'
         compile "org.jetbrains:annotations:$jetbrains_version"

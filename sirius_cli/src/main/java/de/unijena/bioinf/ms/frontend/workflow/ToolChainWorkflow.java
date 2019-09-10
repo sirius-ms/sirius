@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.frontend.workflow;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.babelms.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.*;
+import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.annotaions.RecomputeResults;
 import org.slf4j.Logger;

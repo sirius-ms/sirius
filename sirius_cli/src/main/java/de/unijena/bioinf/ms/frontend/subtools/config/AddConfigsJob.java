@@ -1,10 +1,12 @@
-package de.unijena.bioinf.ms.frontend.subtools;
+package de.unijena.bioinf.ms.frontend.subtools.config;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.ms.MsFileConfig;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.frontend.subtools.Instance;
+import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.ProjectSpaceConfig;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +21,6 @@ public class AddConfigsJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance expRes) throws Exception {
         final Ms2Experiment exp = expRes.getExperiment();
-
 
         ParameterConfig baseConfig;
         if (exp.hasAnnotation(ProjectSpaceConfig.class)) //override defaults
