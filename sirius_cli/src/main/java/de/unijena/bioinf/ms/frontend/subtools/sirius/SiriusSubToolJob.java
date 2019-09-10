@@ -34,7 +34,7 @@ public class SiriusSubToolJob extends InstanceJob {
         System.out.println(new Date() + "\t-> I am Sirius, start computing Experiment " + inst.getID());
 
 
-        if (!ioC.getResults().isEmpty() || isRecompute(inst)) {
+        if (ioC.getResults().isEmpty() || isRecompute(inst)) {
             invalidateResults(inst);
             
             // set whiteSet or merge with whiteSet from db search if available

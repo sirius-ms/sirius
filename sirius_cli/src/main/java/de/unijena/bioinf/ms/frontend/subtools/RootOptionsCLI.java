@@ -1,13 +1,23 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.MS2ExpInputIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.MultiSourceIterator;
 import de.unijena.bioinf.babelms.ProjectSpaceManager;
+import de.unijena.bioinf.fingerid.CanopusResult;
+import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.fingerid.CanopusSerializer;
+import de.unijena.bioinf.projectspace.fingerid.FingerblastResultSerializer;
+import de.unijena.bioinf.projectspace.fingerid.FingerprintSerializer;
+import de.unijena.bioinf.projectspace.sirius.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,13 +35,13 @@ import java.util.List;
 
 /**
  * This is for not algorithm related parameters.
- *
+ * <p>
  * That means parameters that do not influence computation and do not
  * need to be Annotated to the MS2Experiment, e.g. standard commandline
  * stuff, technical parameters (cores) or input/output.
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
- * */
+ */
 @CommandLine.Command(name = "night-sky", aliases = {"ns"/*, "sirius"*/}, defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
 public class RootOptionsCLI implements RootOptions {
     public static final Logger LOG = LoggerFactory.getLogger(RootOptionsCLI.class);
@@ -49,7 +59,7 @@ public class RootOptionsCLI implements RootOptions {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //todo think how to implement this into the cli???
     // I think a subtool that can be called multiple times could be cool???
-    @Option(names = "--noise", description = "Median intensity of noise peaks", order = 10,  hidden = true)
+    @Option(names = "--noise", description = "Median intensity of noise peaks", order = 10, hidden = true)
     public Double medianNoise;
 
     @Option(names = {"--assess-data-quality"}, description = "produce stats on quality of spectra and estimate isolation window. Needs to read all data at once.", order = 20, hidden = true)
@@ -70,7 +80,7 @@ public class RootOptionsCLI implements RootOptions {
 
     // region Options: Technical
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    @Option(names = {"--processors", "--cores"}, description = "Number of cpu cores to use. If not specified Sirius uses all available cores.", order =50)
+    @Option(names = {"--processors", "--cores"}, description = "Number of cpu cores to use. If not specified Sirius uses all available cores.", order = 50)
     public void setNumOfCores(int numOfCores) {
         PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(numOfCores));
     }
@@ -94,7 +104,7 @@ public class RootOptionsCLI implements RootOptions {
         return initialInstanceBuffer;
     }
 
-    private void initBuffers(){
+    private void initBuffers() {
         if (initialInstanceBuffer == null)
             initialInstanceBuffer = SiriusJobs.getGlobalJobManager().getCPUThreads();
 
@@ -138,11 +148,10 @@ public class RootOptionsCLI implements RootOptions {
     }
 
 
-
     @Option(names = {"--output", "--project-space", "-o", "-p"}, description = "Specify project-space to read from and also write to if nothing else is specified. For compression use the File ending .zip or .sirius", order = 70)
     public File projectSpaceLocation;
 
-    @Option(names = {"--input", "-i" }, description = "Input for the analysis. Ths can be either preprocessed mass spectra in .ms or .mgf file format, " +
+    @Option(names = {"--input", "-i"}, description = "Input for the analysis. Ths can be either preprocessed mass spectra in .ms or .mgf file format, " +
             "LC/MS runs in .mzml format or already existing SIRIUS project-space(s) (uncompressed/compressed).", order = 80)
     // we differentiate between contiunuing a project-space and starting from mzml or  already processed ms/mgf file.
     // If multiple files match the priobtrrity is project-space,  ms/mgf,  mzml
@@ -158,10 +167,10 @@ public class RootOptionsCLI implements RootOptions {
             if (!siriusInfiles.isEmpty())
                 LOG.warn("Multiple input types found: Only the project-space data ist used as input.");
             input = projectSpaces;
-            type = InputType.PROJECT;
+            inputType = InputType.PROJECT;
         } else if (!siriusInfiles.isEmpty()) {
             input = siriusInfiles;
-            type = InputType.SIRIUS;
+            inputType = InputType.SIRIUS;
         } else {
             throw new CommandLine.PicocliException("No valid input data is found. Please give you input in a supported format.");
         }
@@ -187,7 +196,7 @@ public class RootOptionsCLI implements RootOptions {
                 if (MsExperimentParser.isSupportedFileName(name)) {
                     siriusInfiles.add(g);
                 } else if (ProjectSpaceIO.isCompressedProjectSpace(g)) {
-                    //compressed spaces are read only and cann be handled as simple input
+                    //compressed spaces are read only and can be handled as simple input
                     projectSpaces.add(g);
                 } else {
                     LOG.warn("File with the name \"" + name + "\" is not in a supported format or has a wrong file extension. File is skipped");
@@ -203,16 +212,17 @@ public class RootOptionsCLI implements RootOptions {
         return input;
     }
 
-    InputType type = null;
+    InputType inputType = null;
 
 
-    @Option(names = {"--ignore-formula" }, description = "ignore given molecular formula in .ms or .mgf file format, ")
+    @Option(names = {"--ignore-formula"}, description = "ignore given molecular formula in .ms or .mgf file format, ")
     private boolean ignoreFormula = false;
     //endregion
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     private ProjectSpaceManager projectSpaceToWriteOn = null;
+
     @Override
     public ProjectSpaceManager getProjectSpace() {
         if (projectSpaceToWriteOn == null)
@@ -229,8 +239,8 @@ public class RootOptionsCLI implements RootOptions {
             protected Iterable<Instance> compute() {
                 //todo handle compressed stuff
                 //todo check if output space needs to be added to input
-                if (type != null && input != null) {
-                    switch (type) {
+                if (inputType != null && input != null) {
+                    switch (inputType) {
                         case PROJECT:
                             return space;
                         case SIRIUS:
@@ -243,7 +253,7 @@ public class RootOptionsCLI implements RootOptions {
                     LOG.info("No Input given but output Project-Space is not empty and will be used as Input instead!");
                     return space;
                 }
-                throw new CommandLine.PicocliException("Illegal Input type: " + type);
+                throw new CommandLine.PicocliException("Illegal Input type: " + inputType);
             }
         };
     }
@@ -252,7 +262,7 @@ public class RootOptionsCLI implements RootOptions {
     protected void configureProjectSpace() {
         try {
             if (projectSpaceLocation == null) {
-                if (type == InputType.PROJECT && input.size() == 1 && !ProjectSpaceIO.isCompressedProjectSpace(input.get(0))) {
+                if (inputType == InputType.PROJECT && input.size() == 1 && !ProjectSpaceIO.isCompressedProjectSpace(input.get(0))) {
                     projectSpaceLocation = input.get(0);
                 } else
                     throw new CommandLine.PicocliException("No output location given. Can only be avoided if a single (non compressed) project-space is the input");
@@ -268,13 +278,14 @@ public class RootOptionsCLI implements RootOptions {
             //check for formatter
             if (projectSpaceFilenameFormatter == null) {
                 try {
-                    projectSpaceFilenameFormatter = new StandardMSFilenameFormatter(psTmp.getProjectSpaceProperty(FilenameFormatter.ConfigAnnotation.class).formatExpression);
+                    FilenameFormatter.PSProperty tmp = psTmp.getProjectSpaceProperty(FilenameFormatter.PSProperty.class);
+                    projectSpaceFilenameFormatter = tmp != null ? new StandardMSFilenameFormatter(tmp.formatExpression) : new StandardMSFilenameFormatter();
                 } catch (ParseException e) {
                     LOG.warn("Could not Parse filenameformatter -> Using default");
                     projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
                 }
                 //todo when do we write this?
-                psTmp.setProjectSpaceProperty(FilenameFormatter.ConfigAnnotation.class, new FilenameFormatter.ConfigAnnotation(projectSpaceFilenameFormatter));
+                psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(projectSpaceFilenameFormatter));
             }
 
             projectSpaceToWriteOn = new ProjectSpaceManager(psTmp, projectSpaceFilenameFormatter);
@@ -287,8 +298,21 @@ public class RootOptionsCLI implements RootOptions {
 
     protected ProjectSpaceConfiguration makeProjectSpaceConfig() {
         final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
-        //todo configer Space
-        System.out.println("Projectspace has no modules, Result will be empty");
+        //configure ProjectspaceProperties
+        config.defineProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSPropertySerializer());
+        //configure compound container
+        config.registerContainer(CompoundContainer.class, new CompoundContainerSerializer());
+//        config.registerComponent(CompoundContainer.class, Spectrum.class, new MsExperimentSerializer());
+        config.registerComponent(CompoundContainer.class, Ms2Experiment.class, new MsExperimentSerializer());
+        //configure formula result
+        config.registerContainer(FormulaResult.class, new FormulaResultSerializer());
+        config.registerComponent(FormulaResult.class, FTree.class, new TreeSerializer());
+        config.registerComponent(FormulaResult.class, FormulaScoring.class, new FormulaScoringSerializer());
+        //fingerid components
+        config.registerComponent(FormulaResult.class, FingerprintResult.class, new FingerprintSerializer());
+        config.registerComponent(FormulaResult.class, FingerblastResult.class, new FingerblastResultSerializer());
+        //canopus
+        config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());
         return config;
     }
 
