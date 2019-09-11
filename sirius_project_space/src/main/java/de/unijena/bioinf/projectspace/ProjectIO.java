@@ -9,7 +9,13 @@ import java.util.List;
 
 public interface ProjectIO {
 
-    public List<String> glob(String globPath) throws IOException;
+    /**
+     * Returns a list of all files in the current directory, filtered by the given globPattern
+     * @param globPattern a glob-like pattern for the file. Does not support sub-directories!!!
+     * @return list of files in the current directory that match globPattern
+     * @throws IOException
+     */
+    public List<String> list(String globPattern) throws IOException;
 
     public boolean exists(String relativePath) throws IOException;
 

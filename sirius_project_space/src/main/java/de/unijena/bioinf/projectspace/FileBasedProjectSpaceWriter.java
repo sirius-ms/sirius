@@ -15,53 +15,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public class FileBasedProjectSpaceWriter implements ProjectWriter {
+public class FileBasedProjectSpaceWriter extends FileBasedProjectSpaceIO implements ProjectWriter {
 
-    private File dir;
-    private final Function<Class<ProjectSpaceProperty>,ProjectSpaceProperty> propertyGetter;
-
-    FileBasedProjectSpaceWriter(File dir, Function<Class<ProjectSpaceProperty>,ProjectSpaceProperty> propertyGetter) {
-        this.dir = dir;
-        this.propertyGetter = propertyGetter;
-    }
-
-    @Override
-    public <A extends ProjectSpaceProperty> A getProjectSpaceProperty(Class<A> klass) {
-        return (A)propertyGetter.apply((Class<ProjectSpaceProperty>)klass);
-    }
-
-    @Override
-    public boolean exists(String relativePath) throws IOException {
-        return new File(dir,relativePath).exists();
-    }
-
-    @Override
-    public List<String> glob(String globPath) throws IOException {
-        final ArrayList<String> content = new ArrayList<>();
-        Path r = dir.toPath();
-        for (Path p : Files.newDirectoryStream(r, globPath)) {
-            content.add(p.relativize(r).toString());
-        }
-        return content;
-    }
-
-    @Override
-    public <T> T inDirectory(String relativePath, IOFunctions.IOCallable<T> reader)  throws IOException {
-        final File newDir = new File(dir, relativePath);
-        newDir.mkdirs();
-
-        final File oldDir = dir;
-        try {
-            dir = newDir;
-            return reader.call();
-        } finally {
-            dir = oldDir;
-        }
-    }
-
-    @Override
-    public Path asPath(String relativePath) {
-        return resolveFilePath(relativePath).toPath();
+    public FileBasedProjectSpaceWriter(File dir, Function<Class<ProjectSpaceProperty>, ProjectSpaceProperty> propertyGetter) {
+        super(dir, propertyGetter);
     }
 
     @Override
