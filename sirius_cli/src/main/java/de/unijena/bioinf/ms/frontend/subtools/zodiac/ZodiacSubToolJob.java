@@ -14,7 +14,6 @@ import de.unijena.bioinf.fingerid.annotations.FormulaResultRankingScore;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.projectspace.FormulaScoring;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -71,6 +70,7 @@ public class ZodiacSubToolJob extends DataSetJob {
                 });
 
                 inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(ZodiacScore.class));
+                inst.updateExperiment();
                 //todo how to write experiment efficiantly without cache -> should be persistents
                 // TODO: how to write scoring? it is part of the config of an Ms2Experiment.
 

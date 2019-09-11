@@ -9,6 +9,7 @@ import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.ProjectSpaceConfig;
+import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import org.jetbrains.annotations.NotNull;
 
 public class AddConfigsJob extends InstanceJob {
@@ -19,8 +20,8 @@ public class AddConfigsJob extends InstanceJob {
     }
 
     @Override
-    protected void computeAndAnnotateResult(final @NotNull Instance expRes) throws Exception {
-        final Ms2Experiment exp = expRes.getExperiment();
+    protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
+        final Ms2Experiment exp = inst.getExperiment();
 
         ParameterConfig baseConfig;
         if (exp.hasAnnotation(ProjectSpaceConfig.class)) //override defaults
@@ -37,5 +38,7 @@ public class AddConfigsJob extends InstanceJob {
 
         //reduce basic list of possible Adducts to charge
         exp.getAnnotation(PossibleAdducts.class).keepOnly(exp.getPrecursorIonType().getCharge());
+
+        inst.updateExperiment();
     }
 }

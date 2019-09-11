@@ -67,6 +67,7 @@ public class SiriusSubToolJob extends InstanceJob {
 
             // set sirius to ranking score
             inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(SiriusScore.class));
+            inst.updateExperiment();
 
             System.out.println(new Date() + "\t-> I am Sirius, finish with Experiment " + inst.getID());
         } else {

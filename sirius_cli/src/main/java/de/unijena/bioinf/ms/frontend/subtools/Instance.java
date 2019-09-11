@@ -98,4 +98,10 @@ public class Instance {
             throw new RuntimeException(e);
         }
     }
+
+    public void updateExperiment() {
+        CompoundContainer c = loadCompoundContainer();
+        c.setAnnotation(Ms2Experiment.class, inputExperient);
+        updateCompound(c, Ms2Experiment.class);
+    }
 }
