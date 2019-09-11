@@ -60,8 +60,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         for (File dir : root.listFiles()) {
             final File expInfo = new File(dir, SiriusLocations.COMPOUND_INFO);
             if (dir.isDirectory() && expInfo.exists()) {
-                final Map<String,String> keyValues = FileUtils.readKeyValues(expInfo);
-                int index = Integer.parseInt(keyValues.getOrDefault("index","0"));
+                final Map<String, String> keyValues = FileUtils.readKeyValues(expInfo);
+                int index = Integer.parseInt(keyValues.getOrDefault("index", "0"));
                 String name = keyValues.getOrDefault("name", "");
                 String dirName = dir.getName();
                 ids.put(dirName, new CompoundContainerId(dirName, name, index));
@@ -97,7 +97,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName) {
         int index = compoundCounter.getAndIncrement();
         String dirName = index2dirName.apply(index);
-        return tryCreateCompoundContainer(dirName,compoundName,index);
+        return tryCreateCompoundContainer(dirName, compoundName, index);
     }
 
     public Optional<FormulaResultId> newUniqueFormulaResultId(@NotNull CompoundContainerId id, @NotNull FTree tree) throws IOException {
@@ -133,13 +133,15 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             if (new File(root, directoryName).exists())
                 return Optional.empty();
             CompoundContainerId id = new CompoundContainerId(directoryName, compoundName, compoundIndex);
-            if (ids.put(directoryName, id)!=null)
+            if (ids.put(directoryName, id) != null)
                 return Optional.empty();
             try {
-                Files.createDirectory(new File(root,directoryName).toPath());
-                try (final BufferedWriter bw = FileUtils.getWriter(new File(new File(root,id.getDirectoryName()), "experiment.info"))) {
-                    bw.write("index\t"+id.getCompoundIndex()); bw.newLine();
-                    bw.write("name\t"+id.getCompoundName()); bw.newLine();
+                Files.createDirectory(new File(root, directoryName).toPath());
+                try (final BufferedWriter bw = FileUtils.getWriter(new File(new File(root, id.getDirectoryName()), "experiment.info"))) {
+                    bw.write("index\t" + id.getCompoundIndex());
+                    bw.newLine();
+                    bw.write("name\t" + id.getCompoundName());
+                    bw.newLine();
                 }
                 fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
                 return Optional.of(id);
@@ -152,12 +154,12 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     // shorthand methods
-    public <T extends FormulaScore> List<SScored<FormulaResult, T>> getFormulaResultsOrderedBy(CompoundContainerId cid, Class<T> score, Class<?>... components) throws IOException {
+    public <T extends FormulaScore> List<SScored<FormulaResult, T>> getFormulaResultsOrderedBy(CompoundContainerId cid, Class<T> score, Class<? extends DataAnnotation>... components) throws IOException {
         return getFormulaResultsOrderedBy(getCompound(cid).getResults(), score, components);
     }
 
-    public <T extends FormulaScore> List<SScored<FormulaResult, T>> getFormulaResultsOrderedBy(Collection<FormulaResultId> results, Class<T> score, Class<?>... components) throws IOException {
-        ArrayList<Class<?>> comps = new ArrayList<>(components.length + 1);
+    public <T extends FormulaScore> List<SScored<FormulaResult, T>> getFormulaResultsOrderedBy(Collection<FormulaResultId> results, Class<T> score, Class<? extends DataAnnotation>... components) throws IOException {
+        ArrayList<Class<? extends DataAnnotation>> comps = new ArrayList<>(components.length + 1);
         comps.addAll(Arrays.asList(components));
         if (!comps.contains(FormulaScoring.class))
             comps.add(FormulaScoring.class);
@@ -182,21 +184,22 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }).sorted().collect(Collectors.toList());
     }
 
-    public FormulaResult getFormulaResult(FormulaResultId id, Class<?>... components) throws IOException {
+    public FormulaResult getFormulaResult(FormulaResultId id, Class<? extends DataAnnotation>... components) throws IOException {
         CompoundContainerId parentId = id.getParentId();
         parentId.containerLock.lock();
         try {
             return getContainer(FormulaResult.class, id, components);
         } finally {
-            parentId.containerLock.unlock();;
+            parentId.containerLock.unlock();
+            ;
         }
     }
 
-    public void updateFormulaResult(FormulaResult result, Class<?>... components) throws IOException {
+    public void updateFormulaResult(FormulaResult result, Class<? extends DataAnnotation>... components) throws IOException {
         CompoundContainerId parentId = result.getId().getParentId();
         parentId.containerLock.lock();
         try {
-            updateContainer(FormulaResult.class,result,components);
+            updateContainer(FormulaResult.class, result, components);
         } finally {
             parentId.containerLock.unlock();
         }
@@ -206,14 +209,14 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         CompoundContainerId parentId = resultId.getParentId();
         parentId.containerLock.lock();
         try {
-            deleteContainer(FormulaResult.class,resultId);
+            deleteContainer(FormulaResult.class, resultId);
         } finally {
             parentId.containerLock.unlock();
         }
     }
 
 
-    public CompoundContainer getCompound(CompoundContainerId id, Class<?>... components) throws IOException {
+    public CompoundContainer getCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) throws IOException {
         id.containerLock.lock();
         try {
             return getContainer(CompoundContainer.class, id, components);
@@ -222,11 +225,11 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    public void updateCompound(CompoundContainer result, Class<?>... components) throws IOException {
+    public void updateCompound(CompoundContainer result, Class<? extends DataAnnotation>... components) throws IOException {
         final CompoundContainerId id = result.getId();
         id.containerLock.lock();
         try {
-            updateContainer(CompoundContainer.class,result,components);
+            updateContainer(CompoundContainer.class, result, components);
         } finally {
             id.containerLock.unlock();
         }
@@ -235,7 +238,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public void deleteCompound(CompoundContainerId resultId) throws IOException {
         resultId.containerLock.lock();
         try {
-            deleteContainer(CompoundContainer.class,resultId);
+            deleteContainer(CompoundContainer.class, resultId);
             fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
         } finally {
             resultId.containerLock.unlock();
@@ -273,19 +276,20 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
 
     <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
-    Container getContainer(Class<Container> klass, Id id, Class<?>... components) throws IOException {
+    Container getContainer(Class<Container> klass, Id id, Class<? extends DataAnnotation>... components) throws IOException {
         // read container
-        final Container container = configuration.getContainerSerializer(klass).readFromProjectSpace(new FileBasedProjectSpaceReader(root, this::getProjectSpaceProperty), (r,c, f)->{
+        final Container container = configuration.getContainerSerializer(klass).readFromProjectSpace(new FileBasedProjectSpaceReader(root, this::getProjectSpaceProperty), (r, c, f) -> {
             // read components
             for (Class k : components) {
-                f.apply((Class<DataAnnotation>)k, (DataAnnotation)configuration.getComponentSerializer(klass, k).read(r, id, c));
+//                c.setAnnotation(k, (DataAnnotation) configuration.getComponentSerializer(klass, k).read(r, id, c));
+                f.apply((Class<DataAnnotation>) k, (DataAnnotation) configuration.getComponentSerializer(klass, k).read(r, id, c));
             }
         }, id);
         return container;
     }
 
     <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
-    void updateContainer(Class<Container> klass, Container container, Class<?>... components) throws IOException {
+    void updateContainer(Class<Container> klass, Container container, Class<? extends DataAnnotation>... components) throws IOException {
         // write container
         configuration.getContainerSerializer(klass).writeToProjectSpace(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), (r, c, f) -> {
             // write components
@@ -293,17 +297,17 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 configuration.getComponentSerializer(klass, k)
                         .write(r, container.getId(), container, f.apply(k));
             }
-        },container.getId(),container);
+        }, container.getId(), container);
     }
 
     <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
     void deleteContainer(Class<Container> klass, Id containerId) throws IOException {
-        configuration.getContainerSerializer(klass).deleteFromProjectSpace(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), (r,id)->{
+        configuration.getContainerSerializer(klass).deleteFromProjectSpace(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), (r, id) -> {
             // write components
             for (Class k : configuration.getAllComponentsForContainer(klass)) {
                 configuration.getComponentSerializer(klass, k).delete(r, id);
             }
-        },containerId);
+        }, containerId);
     }
 
     @NotNull
@@ -318,10 +322,10 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     public <T extends ProjectSpaceProperty> T getProjectSpaceProperty(Class<T> key) {
         T property = (T) projectSpaceProperties.get(key);
-        if (property==null) {
+        if (property == null) {
             synchronized (projectSpaceProperties) {
                 property = (T) projectSpaceProperties.get(key);
-                if (property!=null) return property;
+                if (property != null) return property;
                 try {
                     T read = configuration.getProjectSpacePropertySerializer(key).read(new FileBasedProjectSpaceReader(root, this::getProjectSpaceProperty), null, null);
                     if (read != null)

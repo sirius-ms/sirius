@@ -2,13 +2,9 @@ package de.unijena.bioinf.projectspace.sirius;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.projectspace.*;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CompoundContainerSerializer implements ContainerSerializer<CompoundContainerId, CompoundContainer> {
@@ -29,14 +25,16 @@ public class CompoundContainerSerializer implements ContainerSerializer<Compound
         return reader.inDirectory(id.getDirectoryName(), ()->{
 //            Map<String, String> info = reader.keyValues(SiriusLocations.COMPOUND_INFO);
             final CompoundContainer container = new CompoundContainer(id/*, (Class<? extends FormulaScore>) Score.resolve(info.get("rankingScore"))*/);
-            reader.inDirectory("trees", ()->{
-                for (String file : reader.list("*.json")) {
-                    final String name = file.substring(0, file.length()-".json".length());
-                    String[] pt = name.split("_");
-                    container.results.add(new FormulaResultId(id, MolecularFormula.parseOrThrow(pt[0]), PrecursorIonType.fromString(pt[1])));
-                }
-                return true;
-            });
+            if (reader.exists("trees")) {
+                reader.inDirectory("trees", () -> {
+                    for (String file : reader.list("*.json")) {
+                        final String name = file.substring(0, file.length() - ".json".length());
+                        String[] pt = name.split("_");
+                        container.results.add(new FormulaResultId(id, MolecularFormula.parseOrThrow(pt[0]), PrecursorIonType.fromString(pt[1])));
+                    }
+                    return true;
+                });
+            }
 
             containerSerializer.readAllComponents(reader, container, container::setAnnotation);
             return container;
