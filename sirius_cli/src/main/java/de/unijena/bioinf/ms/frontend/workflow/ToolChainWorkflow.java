@@ -99,7 +99,8 @@ public class ToolChainWorkflow implements Workflow {
             checkForCancellation();
             try {
                 //remove recompute annotation since it should be cli only option
-                iteratorSource.forEach(it -> it.getExperiment().setAnnotation(RecomputeResults.class,null));
+                System.out.println("Summaries are currently disabled!");
+//                iteratorSource.forEach(it -> it.getExperiment().setAnnotation(RecomputeResults.class,null));
                 //use all experiments in workspace to create summaries
                 //todo write summaries
 //                project.writeSummaries(iteratorSource, (cur, max, mess) -> System.out.println((((((double) cur) / (double) max)) * 100d) + "% " + mess));
