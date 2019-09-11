@@ -12,6 +12,7 @@ import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,6 +32,7 @@ public class Instance {
             try {
                 this.inputExperient = spaceManager.projectSpace().getCompound(projectSpaceID, Ms2Experiment.class).getAnnotationOrThrow(Ms2Experiment.class);
             } catch (IOException e) {
+                LoggerFactory.getLogger(Instance.class).error("Could not create read Input Experiment from Project Space.", e);
                 throw new RuntimeException("Could not create read Input Experiment from Project Space.");
             }
         } else {
