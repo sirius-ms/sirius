@@ -14,9 +14,12 @@ import de.unijena.bioinf.fingerid.annotations.FormulaResultRankingScore;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -55,13 +58,23 @@ public class ZodiacSubToolJob extends DataSetJob {
             instances.forEach(inst -> {
                 final Map<FTree, ZodiacScore> sTress = scoreResults.get(inst.getExperiment());
                 final List<FormulaResult> formulaResults = input.get(inst.getExperiment());
-                formulaResults.forEach(fr -> fr.getAnnotationOrThrow(FormulaScoring.class)
-                        .setAnnotation(ZodiacScore.class,
-                                sTress.get(fr.getAnnotationOrThrow(FTree.class))
-                        ));
+                formulaResults.forEach(fr -> {
+                    FormulaScoring scoring = fr.getAnnotationOrThrow(FormulaScoring.class);
+                    scoring.setAnnotation(ZodiacScore.class,
+                            sTress.get(fr.getAnnotationOrThrow(FTree.class))
+                    );
+                    try {
+                        inst.getProjectSpace().updateFormulaResult(fr, FormulaScoring.class);
+                    } catch (IOException e) {
+                        LoggerFactory.getLogger(ZodiacSubToolJob.class).error(e.getMessage(), e);
+                    }
+                });
 
                 inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(ZodiacScore.class));
                 //todo how to write experiment efficiantly without cache -> should be persistents
+                // TODO: how to write scoring? it is part of the config of an Ms2Experiment.
+
+
             });
 
             instances.forEach(this::invalidateResults);
