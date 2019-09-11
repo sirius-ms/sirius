@@ -11,6 +11,6 @@ public class TopFingerblastScore extends FormulaScore {
 
     @Override
     public ScoreType getScoreType() {
-        return ScoreType.Probabilistic; //todo @Kai correct?
+        return ScoreType.Logarithmic; //todo @Kai correct?
     }
 }
