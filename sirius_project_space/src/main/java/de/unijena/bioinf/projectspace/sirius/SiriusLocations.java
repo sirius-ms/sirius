@@ -9,7 +9,8 @@ public class SiriusLocations extends Locations {
 
     public final static String
             MS2_EXPERIMENT = "spectrum.ms",
-            COMPOUND_INFO = "experiment.info";
+            COMPOUND_INFO = "compound.info",
+            COMPOUND_CONFIG = "compound.config";
 //            RESULT_RANKING = "ranking.info";
 
     public final static Function<FormulaResultId, String>
