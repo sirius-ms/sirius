@@ -1,5 +1,7 @@
 package de.unijena.bioinf.projectspace;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,14 +41,20 @@ public class ProjectSpaceConfiguration {
 
     @SuppressWarnings("unchecked")
     public <ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>>
-    ContainerSerializer<ID,Container> getContainerSerializer(Class<Container> klass) {
-        return (ContainerSerializer<ID,Container>)containerSerializers.get(klass);
+    @NotNull  ContainerSerializer<ID,Container> getContainerSerializer(Class<Container> klass) {
+        final ContainerSerializer containerSerializer = containerSerializers.get(klass);
+        if (containerSerializer==null)
+            throw new IllegalArgumentException("No container of class '" + klass.getSimpleName() + "' registered");
+        return (ContainerSerializer<ID,Container>) containerSerializer;
     }
 
     @SuppressWarnings("unchecked")
     public <ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>, Component>
-    ComponentSerializer<ID,Container,Component> getComponentSerializer(Class<Container> klass, Class<Component> componentClass) {
-        return (ComponentSerializer<ID,Container,Component>)componentSerializers.get(componentClass);
+    @NotNull ComponentSerializer<ID,Container,Component> getComponentSerializer(Class<Container> klass, Class<Component> componentClass) {
+        final ComponentSerializer componentSerializer = componentSerializers.get(componentClass);
+        if (componentSerializer==null)
+            throw new IllegalArgumentException("No component of class '" + componentClass.getSimpleName() + "' registered.");
+        return (ComponentSerializer<ID,Container,Component>) componentSerializer;
     }
 
     public <T extends ProjectSpaceContainer<?>>
