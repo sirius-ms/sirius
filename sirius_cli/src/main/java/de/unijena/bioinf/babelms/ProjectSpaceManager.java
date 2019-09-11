@@ -5,9 +5,12 @@ import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.projectspace.StandardMSFilenameFormatter;
+import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.function.Function;
 
@@ -41,10 +44,18 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     }
 
     @NotNull
-    public CompoundContainerId newUniqueCompoundId(Ms2Experiment inputExperient) {
-        final String name = nameFormatter().apply(inputExperient);
-        return projectSpace().newUniqueCompoundId(name, (idx) -> idx + "_" + name)
-                .orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
+    public CompoundContainerId newUniqueCompoundId(Ms2Experiment inputExperiment) {
+        final String name = nameFormatter().apply(inputExperiment);
+        try {
+            final CompoundContainerId id = projectSpace().newUniqueCompoundId(name, (idx) -> idx + "_" + name).orElseThrow(()->new RuntimeException("Could not create an project space ID for the Instance" ));
+            final CompoundContainer container = projectSpace().getCompound(id);
+            container.setAnnotation(Ms2Experiment.class, inputExperiment);
+            projectSpace().updateCompound(container, Ms2Experiment.class);
+            return id;
+        } catch (IOException e) {
+            LoggerFactory.getLogger(ProjectSpaceManager.class).error("Could not create an project space ID for the Instance", e);
+            throw new RuntimeException("Could not create an project space ID for the Instance");
+        }
     }
 
     @NotNull
