@@ -447,7 +447,7 @@ public final class ParameterConfig {
             } else if (fType.isEnum()) {
                 objectValue = (T) Enum.valueOf((Class<Enum>) fType, stringValue.toUpperCase());
             } else if (Class.class.isAssignableFrom(fType)) {
-                Class.forName(stringValue);
+                objectValue = (T) Class.forName(stringValue);
             } else {
                 throw new IllegalArgumentException("Class of type " + fType.toString() + "cannot be instantiated from String values. For non standard classes you need to define an \"fromString\" Method.");
             }
