@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
@@ -277,7 +278,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         final Container container = configuration.getContainerSerializer(klass).readFromProjectSpace(new FileBasedProjectSpaceReader(root, this::getProjectSpaceProperty), (r,c, f)->{
             // read components
             for (Class k : components) {
-                configuration.getComponentSerializer(klass, k).read(r, id, c);
+                f.apply((Class<DataAnnotation>)k, (DataAnnotation)configuration.getComponentSerializer(klass, k).read(r, id, c));
             }
         }, id);
         return container;
@@ -290,7 +291,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             // write components
             for (Class k : components) {
                 configuration.getComponentSerializer(klass, k)
-                        .write(r, container.getId(), container, c.getAnnotation(k));
+                        .write(r, container.getId(), container, f.apply(k));
             }
         },container.getId(),container);
     }
