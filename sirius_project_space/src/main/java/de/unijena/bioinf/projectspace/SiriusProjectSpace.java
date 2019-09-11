@@ -137,7 +137,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 return Optional.empty();
             try {
                 Files.createDirectory(new File(root, directoryName).toPath());
-                try (final BufferedWriter bw = FileUtils.getWriter(new File(new File(root, id.getDirectoryName()), "experiment.info"))) {
+                try (final BufferedWriter bw = FileUtils.getWriter(new File(new File(root, id.getDirectoryName()), SiriusLocations.COMPOUND_INFO))) {
                     bw.write("index\t" + id.getCompoundIndex());
                     bw.newLine();
                     bw.write("name\t" + id.getCompoundName());

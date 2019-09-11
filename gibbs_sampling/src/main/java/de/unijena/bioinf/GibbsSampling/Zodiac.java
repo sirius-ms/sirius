@@ -431,8 +431,6 @@ public class Zodiac {
                     Log.info("Compound " + id + " has library hit. Candidate MF is " + candidate.getFormula() + ". Library hit is " + correctMF+".");
                 }
                 candidate.setInTrainingSet(true);
-
-
             }
         }
     }
