@@ -43,7 +43,10 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         return nameFormatter;
     }
 
-    @NotNull
+
+    //todo lets write the experiment if the configuration merging is done (Add configs jobs)
+    // todo just to save soe io
+    /*@NotNull
     public CompoundContainerId newUniqueCompoundId(Ms2Experiment inputExperiment) {
         final String name = nameFormatter().apply(inputExperiment);
         try {
@@ -56,7 +59,15 @@ public class ProjectSpaceManager implements Iterable<Instance> {
             LoggerFactory.getLogger(ProjectSpaceManager.class).error("Could not create an project space ID for the Instance", e);
             throw new RuntimeException("Could not create an project space ID for the Instance");
         }
+    }*/
+
+    @NotNull
+    public CompoundContainerId newUniqueCompoundId(Ms2Experiment inputExperient) {
+        final String name = nameFormatter().apply(inputExperient);
+        return projectSpace().newUniqueCompoundId(name, (idx) -> idx + "_" + name)
+                .orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
     }
+
 
     @NotNull
     @Override
