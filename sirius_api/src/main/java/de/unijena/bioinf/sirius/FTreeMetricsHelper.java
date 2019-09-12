@@ -16,11 +16,14 @@ public class FTreeMetricsHelper {
     protected final FTree tree;
     protected final FragmentAnnotation<Score> fragmentScoring;
     protected final LossAnnotation<Score> lossScoring;
+    protected final Fragment measuredIonRoot;
 
     public FTreeMetricsHelper(FTree tree) {
         this.tree = tree;
         this.fragmentScoring = tree.getOrCreateFragmentAnnotation(Score.class);
         this.lossScoring = tree.getOrCreateLossAnnotation(Score.class);
+        final LossAnnotation<LossType> l = tree.getLossAnnotationOrNull(LossType.class);
+        this.measuredIonRoot = l==null ? tree.getRoot() : getMeasuredIonRoot(l, tree.getRoot());
     }
 
 
@@ -33,13 +36,7 @@ public class FTreeMetricsHelper {
     }
 
     public double getIsotopeMs1Score() {
-            Score score = fragmentScoring.get(tree.getRoot());
-            if (score == null) {
-                LossAnnotation<LossType> l = tree.getLossAnnotationOrNull(LossType.class);
-                if (l!=null) {
-                    score = fragmentScoring.get(getMeasuredIonRoot(l,tree.getRoot()));
-                }
-            }
+            Score score = fragmentScoring.get(measuredIonRoot);
             return score.get(FragmentationPatternAnalysis.getScoringMethodName(IsotopePatternInMs1Plugin.Ms1IsotopePatternScorer.class));
     }
 
@@ -50,11 +47,11 @@ public class FTreeMetricsHelper {
     }
 
     public double getBeautificationPenalty() {
-        return fragmentScoring.get(tree.getRoot()).get(Beautified.PENALTY_KEY);
+        return fragmentScoring.get(measuredIonRoot).get(Beautified.PENALTY_KEY);
     }
 
     public double getRecalibrationPenalty() {
-        return fragmentScoring.get(tree.getRoot()).get(Recalibrated.PENALTY_KEY);
+        return fragmentScoring.get(measuredIonRoot).get(Recalibrated.PENALTY_KEY);
     }
 
 
