@@ -13,6 +13,7 @@ import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -58,13 +59,15 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
     }
 
     @Override
-    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, FingerblastResult component) throws IOException {
+    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, Optional<FingerblastResult> optFingeridResult) throws IOException {
+        final FingerblastResult fingerblastResult = optFingeridResult.orElseThrow(() -> new IllegalArgumentException("Could not find FingerIdResult to write for ID: " + id));
+
         final String[] header = new String[]{
                 "inchikey2D",	"inchi",	"molecularFormula",	"rank",	"score",	"name",	"smiles",	"xlogp",	"PubMedIds",	"links"
         };
         final String[] row = header.clone();
         final int[] ranking = new int[]{0};
-        writer.table(FingerIdLocations.FingerBlastResults.apply(id), header, component.getResults().stream().map((hit)->{
+        writer.table(FingerIdLocations.FingerBlastResults.apply(id), header, fingerblastResult.getResults().stream().map((hit) -> {
             CompoundCandidate c = hit.getCandidate();
             row[0] = c.getInchiKey2D();
             row[1] = c.getInchi().in2D;

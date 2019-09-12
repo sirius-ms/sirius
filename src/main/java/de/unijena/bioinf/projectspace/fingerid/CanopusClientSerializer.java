@@ -1,11 +1,15 @@
 package de.unijena.bioinf.projectspace.fingerid;
 
-import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.ChemistryBase.fp.ClassyFireFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.projectspace.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Optional;
 
 public class CanopusClientSerializer  implements ComponentSerializer<ProjectSpaceContainerId, ProjectSpaceContainer<ProjectSpaceContainerId>, CanopusClientData> {
 
@@ -26,12 +30,14 @@ public class CanopusClientSerializer  implements ComponentSerializer<ProjectSpac
     }
 
     @Override
-    public void write(ProjectWriter writer, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container, CanopusClientData component) throws IOException {
+    public void write(ProjectWriter writer, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container, Optional<CanopusClientData> optClientData) throws IOException {
+        final CanopusClientData canopusClientData = optClientData.orElseThrow(() -> new IllegalArgumentException("Could not find CanopusClientData to write for ID: " + id));
+
         final String[] header = new String[]{"relativeIndex", "absoluteIndex", "id", "name", "parentId", "description"};
         final String[] row = header.clone();
-        writer.table("csi_fingerid.csv", header, Arrays.stream(component.getFingerprintVersion().allowedIndizes()).mapToObj(absoluteIndex->{
-            final ClassyfireProperty property = (ClassyfireProperty) component.getFingerprintVersion().getMolecularProperty(absoluteIndex);
-            final int relativeIndex = component.getFingerprintVersion().getRelativeIndexOf(absoluteIndex);
+        writer.table("csi_fingerid.csv", header, Arrays.stream(canopusClientData.getFingerprintVersion().allowedIndizes()).mapToObj(absoluteIndex -> {
+            final ClassyfireProperty property = (ClassyfireProperty) canopusClientData.getFingerprintVersion().getMolecularProperty(absoluteIndex);
+            final int relativeIndex = canopusClientData.getFingerprintVersion().getRelativeIndexOf(absoluteIndex);
             row[0] = String.valueOf(relativeIndex);
             row[1] = String.valueOf(absoluteIndex);
             row[2] = property.getChemontIdentifier();

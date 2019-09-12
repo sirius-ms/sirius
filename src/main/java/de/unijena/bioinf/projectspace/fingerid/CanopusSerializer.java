@@ -9,22 +9,25 @@ import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class CanopusSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, CanopusResult> {
     @Override
     public CanopusResult read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         String loc = FingerIdLocations.CanopusResults.apply(id);
         if (!reader.exists(loc)) return null;
-        final CanopusClientData canopusClientData = reader.getProjectSpaceProperty(CanopusClientData.class);
+        final CanopusClientData canopusClientData = reader.getProjectSpaceProperty(CanopusClientData.class).orElseThrow();
         final double[] probabilities = reader.doubleVector(loc);
         final ProbabilityFingerprint probabilityFingerprint = new ProbabilityFingerprint(canopusClientData.maskedFingerprintVersion, probabilities);
         return new CanopusResult(probabilityFingerprint);
     }
 
     @Override
-    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, CanopusResult component) throws IOException {
+    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, Optional<CanopusResult> optCanopusResult) throws IOException {
+        final CanopusResult canopusResult = optCanopusResult.orElseThrow(() -> new IllegalArgumentException("Could not find canopusResult to write for ID: " + id));
+
         writer.inDirectory(FingerIdLocations.CanopusDir, ()->{
-           writer.doubleVector(id.fileName("fpt"), component.getCanopusFingerprint().toProbabilityArray());
+           writer.doubleVector(id.fileName("fpt"), canopusResult.getCanopusFingerprint().toProbabilityArray());
             return true;
         });
     }

@@ -1,12 +1,15 @@
 package de.unijena.bioinf.projectspace.fingerid;
 
-import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.MolecularProperty;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.projectspace.*;
-import gnu.trove.list.array.TIntArrayList;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Optional;
 
 public class CsiClientSerializer implements ComponentSerializer<ProjectSpaceContainerId, ProjectSpaceContainer<ProjectSpaceContainerId>, CSIClientData> {
     @Override
@@ -29,17 +32,19 @@ public class CsiClientSerializer implements ComponentSerializer<ProjectSpaceCont
     }
 
     @Override
-    public void write(ProjectWriter writer, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container, CSIClientData component) throws IOException {
+    public void write(ProjectWriter writer, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container, Optional<CSIClientData> optClientData) throws IOException {
+        final CSIClientData clientData = optClientData.orElseThrow(() -> new IllegalArgumentException("Could not find CSI:ClientData to write for ID: " + id));
+
         final String[] header = new String[]{"relativeIndex", "absoluteIndex", "description", "TP", "FP", "TN", "FN", "Acc", "MCC", "F1", "Recall", "Precision", "Count"};
         final String[] row = header.clone();
-        writer.table("csi_fingerid.csv", header, Arrays.stream(component.fingerprintVersion.allowedIndizes()).mapToObj(absoluteIndex->{
-            final MolecularProperty property = component.fingerprintVersion.getMolecularProperty(absoluteIndex);
-            final int relativeIndex = component.fingerprintVersion.getRelativeIndexOf(absoluteIndex);
+        writer.table("csi_fingerid.csv", header, Arrays.stream(clientData.fingerprintVersion.allowedIndizes()).mapToObj(absoluteIndex -> {
+            final MolecularProperty property = clientData.fingerprintVersion.getMolecularProperty(absoluteIndex);
+            final int relativeIndex = clientData.fingerprintVersion.getRelativeIndexOf(absoluteIndex);
             final String name = property.getDescription().replace('\t',' ');
             row[0] = String.valueOf(relativeIndex);
             row[1] = String.valueOf(absoluteIndex);
             row[2] = property.getDescription();
-            PredictionPerformance P = component.performances[relativeIndex];
+            PredictionPerformance P = clientData.performances[relativeIndex];
             row[3] = String.valueOf(P.getTp());
             row[4] = String.valueOf(P.getFp());
             row[5] = String.valueOf(P.getTn());
