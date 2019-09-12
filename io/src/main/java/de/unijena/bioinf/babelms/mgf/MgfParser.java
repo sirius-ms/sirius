@@ -344,7 +344,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             }
             if (spec.retentionTime != null) {
                 if (exp.hasAnnotation(RetentionTime.class)) {
-                    exp.setAnnotation(RetentionTime.class, exp.getAnnotation(RetentionTime.class).merge(spec.retentionTime));
+                    exp.setAnnotation(RetentionTime.class, exp.getAnnotationOrThrow(RetentionTime.class).merge(spec.retentionTime));
                 } else {
                     exp.setAnnotation(RetentionTime.class, spec.retentionTime);
                 }

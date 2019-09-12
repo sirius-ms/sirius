@@ -3,6 +3,7 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public abstract class IOFunctions {
 
@@ -27,7 +28,7 @@ public abstract class IOFunctions {
     }
 
     public static interface ClassValueProducer {
-        public <T extends DataAnnotation> T apply(Class<T> klass) throws IOException;
+        public <T extends DataAnnotation> Optional<T> apply(Class<T> klass) throws IOException;
     }
 
     public static interface ClassValueConsumer {

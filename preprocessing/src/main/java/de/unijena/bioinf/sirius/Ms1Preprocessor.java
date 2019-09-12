@@ -100,7 +100,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         }
         if (pinput.getAnnotation(PossibleAdducts.class)!=null) return;
         if (pinput.getExperimentInformation().getAnnotation(PossibleAdducts.class)!=null) {
-            pinput.setAnnotation(PossibleAdducts.class, pinput.getExperimentInformation().getAnnotation(PossibleAdducts.class));
+            pinput.setAnnotation(PossibleAdducts.class, pinput.getExperimentInformation().getAnnotationOrNull(PossibleAdducts.class));
             return;
         }
         final int charge = pinput.getExperimentInformation().getPrecursorIonType().getCharge();

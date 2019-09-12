@@ -136,8 +136,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         siriusPlugins.values().forEach(p->p.beforeDecomposing(input));
 
         final PeriodicTable PT = PeriodicTable.getInstance();
-        final Whiteset whiteset = input.getAnnotation(Whiteset.class);
-        final FormulaConstraints constraints = input.getAnnotation(FormulaConstraints.class);
+        final Whiteset whiteset = input.getAnnotationOrNull(Whiteset.class);
+        final FormulaConstraints constraints = input.getAnnotationOrNull(FormulaConstraints.class);
         final Ms2Experiment experiment = input.getExperimentInformation();
         final double parentMass;
         // if parent peak stems from MS1, use MS1 mass deviation instead
@@ -536,7 +536,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private void transferDefaultAnotationsFromGraphToTree(ProcessedInput input, FGraph graph, FTree tree, IntergraphMapping graph2tree) {
 
         // Ionization
-        tree.setAnnotation(PrecursorIonType.class, graph.getAnnotation(PrecursorIonType.class));
+        tree.setAnnotation(PrecursorIonType.class, graph.getAnnotationOrNull(PrecursorIonType.class));
 
         // Recalibration
         final SpectralRecalibration recalibration = input.getAnnotation(SpectralRecalibration.class, SpectralRecalibration::none);

@@ -281,7 +281,6 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         final Container container = configuration.getContainerSerializer(klass).readFromProjectSpace(new FileBasedProjectSpaceReader(root, this::getProjectSpaceProperty), (r, c, f) -> {
             // read components
             for (Class k : components) {
-//                c.setAnnotation(k, (DataAnnotation) configuration.getComponentSerializer(klass, k).read(r, id, c));
                 f.apply((Class<DataAnnotation>) k, (DataAnnotation) configuration.getComponentSerializer(klass, k).read(r, id, c));
             }
         }, id);
@@ -320,30 +319,32 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return compoundCounter.get();
     }
 
-    public <T extends ProjectSpaceProperty> T getProjectSpaceProperty(Class<T> key) {
+    public <T extends ProjectSpaceProperty> Optional<T> getProjectSpaceProperty(Class<T> key) {
         T property = (T) projectSpaceProperties.get(key);
         if (property == null) {
             synchronized (projectSpaceProperties) {
                 property = (T) projectSpaceProperties.get(key);
-                if (property != null) return property;
+                if (property != null) return Optional.of(property);
                 try {
                     T read = configuration.getProjectSpacePropertySerializer(key).read(new FileBasedProjectSpaceReader(root, this::getProjectSpaceProperty), null, null);
-                    if (read != null)
-                        projectSpaceProperties.put(key, read);
-                    return read;
+                    if (read == null)
+                        return Optional.empty();
+
+                    projectSpaceProperties.put(key, read);
+                    return Optional.of(read);
                 } catch (IOException e) {
                     LoggerFactory.getLogger(SiriusProjectSpace.class).error(e.getMessage(), e);
-                    return null;
+                    return Optional.empty();
                 }
 
             }
-        } else return property;
+        } else return Optional.of(property);
     }
 
     public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
         synchronized (projectSpaceProperties) {
             try {
-                configuration.getProjectSpacePropertySerializer(key).write(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), null, null, value);
+                configuration.getProjectSpacePropertySerializer(key).write(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), null, null, value != null ? Optional.of(value) : Optional.empty());
             } catch (IOException e) {
                 LoggerFactory.getLogger(SiriusProjectSpace.class).error(e.getMessage(), e);
             }

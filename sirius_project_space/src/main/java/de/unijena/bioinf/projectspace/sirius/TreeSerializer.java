@@ -9,6 +9,7 @@ import de.unijena.bioinf.projectspace.ProjectReader;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class TreeSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FTree> {
     @Override
@@ -20,7 +21,8 @@ public class TreeSerializer implements ComponentSerializer<FormulaResultId, Form
     }
 
     @Override
-    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, FTree tree) throws IOException {
+    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, Optional<FTree> optTree) throws IOException {
+        final FTree tree = optTree.orElseThrow(() -> new RuntimeException("Could not find tree for FormulaResult with ID: " + id));
         writer.inDirectory("trees", ()->{
             writer.textFile(id.fileName("json"), (w)-> new FTJsonWriter().writeTree(w,tree));
             return true;

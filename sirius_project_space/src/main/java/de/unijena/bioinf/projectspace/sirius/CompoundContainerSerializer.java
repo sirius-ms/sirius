@@ -23,8 +23,7 @@ public class CompoundContainerSerializer implements ContainerSerializer<Compound
     @Override
     public CompoundContainer readFromProjectSpace(ProjectReader reader, ProjectReader.ForContainer<CompoundContainerId, CompoundContainer> containerSerializer, CompoundContainerId id) throws IOException {
         return reader.inDirectory(id.getDirectoryName(), ()->{
-//            Map<String, String> info = reader.keyValues(SiriusLocations.COMPOUND_INFO);
-            final CompoundContainer container = new CompoundContainer(id/*, (Class<? extends FormulaScore>) Score.resolve(info.get("rankingScore"))*/);
+            final CompoundContainer container = new CompoundContainer(id);
             if (reader.exists("trees")) {
                 reader.inDirectory("trees", () -> {
                     for (String file : reader.list("*.json")) {

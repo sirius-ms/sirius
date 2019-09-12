@@ -28,7 +28,7 @@ public class TargetedIsotopePatternDetection implements IsotopePatternDetection 
         if (experiment.getMolecularFormula()!=null) {
             stdalphabet = ChemicalAlphabet.alphabetFor(processedInput.getExperimentInformation().getMolecularFormula());
         } else if (processedInput.hasAnnotation(FormulaConstraints.class)) {
-            stdalphabet = processedInput.getAnnotation(FormulaConstraints.class).getChemicalAlphabet();
+            stdalphabet = processedInput.getAnnotationOrThrow(FormulaConstraints.class).getChemicalAlphabet();
         } else {
             FormulaSettings fs = processedInput.getAnnotationOrDefault(FormulaSettings.class);
             stdalphabet = fs.getEnforcedAlphabet().getExtendedConstraints(fs.getFallbackAlphabet()).getExtendedConstraints(fs.getAutoDetectionElements().toArray(new Element[0])).getChemicalAlphabet();

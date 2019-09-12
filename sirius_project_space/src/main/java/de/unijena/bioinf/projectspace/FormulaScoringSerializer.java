@@ -1,13 +1,14 @@
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class FormulaScoringSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FormulaScoring> {
     @Override
@@ -23,9 +24,10 @@ public class FormulaScoringSerializer implements ComponentSerializer<FormulaResu
     }
 
     @Override
-    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, FormulaScoring component) throws IOException {
+    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, Optional<FormulaScoring> optScore) throws IOException {
+        final FormulaScoring scoring = optScore.orElseThrow(() -> new RuntimeException("Could not find Experiment for FormulaResult with ID: " + id));
         final HashMap<String,String> values = new HashMap<>();
-        for (FormulaScore score : component) {
+        for (FormulaScore score : scoring) {
             values.put(Score.simplify(score.getClass()), String.valueOf(score.score()));
         }
         writer.keyValues(SiriusLocations.SCORES.apply(id), values);

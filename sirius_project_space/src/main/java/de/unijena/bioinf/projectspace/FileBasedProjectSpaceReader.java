@@ -11,12 +11,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class FileBasedProjectSpaceReader extends FileBasedProjectSpaceIO implements ProjectReader {
 
-    FileBasedProjectSpaceReader(File dir, Function<Class<ProjectSpaceProperty>,ProjectSpaceProperty> propertyGetter) {
+    FileBasedProjectSpaceReader(File dir, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
         super(dir,propertyGetter);
     }
 

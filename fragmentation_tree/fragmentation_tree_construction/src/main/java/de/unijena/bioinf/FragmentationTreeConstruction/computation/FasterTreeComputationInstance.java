@@ -268,7 +268,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         //pinput.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(orig));
         for (ExactResult r : exact) {
             //if (r.input!=null) r.input.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(orig));
-            final double penalty = (r.tree.getAnnotation(Beautified.class).getBeautificationPenalty());
+            final double penalty = (r.tree.getAnnotationOrThrow(Beautified.class).getBeautificationPenalty());
             r.tree.setTreeWeight(r.tree.getTreeWeight()-penalty);
             recalculateScore(r.input==null ? pinput : r.input, r.tree, "final");
         }
@@ -305,7 +305,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             list.addAll(exractedResults);
             Collections.sort(list, Collections.reverseOrder());
             if (!list.isEmpty()) {
-                final UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = new UnconsideredCandidatesUpperBound(pinput.getAnnotation(DecompositionList.class).getDecompositions().size(), list.get(list.size()-1).score);
+                final UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = new UnconsideredCandidatesUpperBound(pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size(), list.get(list.size()-1).score);
                 list.forEach(t->t.tree.setAnnotation(UnconsideredCandidatesUpperBound.class, unconsideredCandidatesUpperBound));
             }
 
@@ -435,7 +435,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         final ProcessedInput pin = this.inputCopyForRecalibration.clone();
         pin.setAnnotation(SpectralRecalibration.class, rec);
         pin.setAnnotation(Whiteset.class, Whiteset.of(input.getExperimentInformation().getPrecursorIonType().measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula()))); // TODO: check if this works for adducts
-        pin.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class));
+        pin.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, pinput.getAnnotationOrNull(TreeSizeScorer.TreeSizeBonus.class));
         // we have to completely rescore the input...
         //final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));
         //pin.setAnnotation(DecompositionList.class, l);
@@ -465,10 +465,10 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         recalculateScore(pin, finalTree.tree, "recalibrate");
         assert finalTree!=null;
         tick();
-        if (pin.getAnnotation(DecompositionList.class).getDecompositions().size() <= 0) {
+        if (pin.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size() <= 0) {
             System.err.println("WTF?");
         }
-        return new ExactResult(pin, pin.getAnnotation(DecompositionList.class).getDecompositions().get(0), null, finalTree.tree, finalTree.tree.getTreeWeight());
+        return new ExactResult(pin, pin.getAnnotationOrThrow(DecompositionList.class).getDecompositions().get(0), null, finalTree.tree, finalTree.tree.getTreeWeight());
     }
 
 

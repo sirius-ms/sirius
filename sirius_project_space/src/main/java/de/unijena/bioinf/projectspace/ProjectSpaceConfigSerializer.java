@@ -8,6 +8,7 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class ProjectSpaceConfigSerializer implements ComponentSerializer<CompoundContainerId, CompoundContainer, ProjectSpaceConfig> {
     @Override
@@ -27,8 +28,11 @@ public class ProjectSpaceConfigSerializer implements ComponentSerializer<Compoun
     }
 
     @Override
-    public void write(ProjectWriter writer, CompoundContainerId id, CompoundContainer container, ProjectSpaceConfig component) throws IOException {
-        writer.textFile(SiriusLocations.COMPOUND_CONFIG, component.config::write);
+    public void write(ProjectWriter writer, CompoundContainerId id, CompoundContainer container, Optional<ProjectSpaceConfig> optConf) throws IOException {
+        if (optConf.isPresent())
+            writer.textFile(SiriusLocations.COMPOUND_CONFIG, optConf.get().config::write);
+        else
+            LoggerFactory.getLogger("Could not find config/parameter info for this Compound: '" + id + "'. Project-Space will not contain parameter information");
     }
 
     @Override

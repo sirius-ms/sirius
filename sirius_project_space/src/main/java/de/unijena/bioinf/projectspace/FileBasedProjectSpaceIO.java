@@ -6,22 +6,23 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class FileBasedProjectSpaceIO implements ProjectIO {
 
 
     protected File dir;
-    protected final Function<Class<ProjectSpaceProperty>,ProjectSpaceProperty> propertyGetter;
+    protected final Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter;
 
-    public FileBasedProjectSpaceIO(File dir, Function<Class<ProjectSpaceProperty>,ProjectSpaceProperty> propertyGetter) {
+    public FileBasedProjectSpaceIO(File dir, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
         this.dir = dir;
         this.propertyGetter = propertyGetter;
     }
 
     @Override
-    public <A extends ProjectSpaceProperty> A getProjectSpaceProperty(Class<A> klass) {
-        return (A)propertyGetter.apply((Class<ProjectSpaceProperty>)klass);
+    public <A extends ProjectSpaceProperty> Optional<A> getProjectSpaceProperty(Class<A> klass) {
+        return (Optional<A>)propertyGetter.apply((Class<ProjectSpaceProperty>)klass);
     }
 
 

@@ -1,9 +1,11 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Optional;
 import java.util.function.Function;
 
 public interface FilenameFormatter extends Function<Ms2Experiment, String> {
@@ -32,12 +34,15 @@ public interface FilenameFormatter extends Function<Ms2Experiment, String> {
         }
 
         @Override
-        public void write(ProjectWriter writer, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container, PSProperty component) throws IOException {
-            if (component != null) {
+        public void write(ProjectWriter writer, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container, Optional<PSProperty> optProp) throws IOException {
+            if (optProp.isPresent()) {
                 if (writer.exists(FILENAME))
                     writer.delete(FILENAME);
-                writer.textFile(FILENAME, bf -> bf.write(component.formatExpression));
+                writer.textFile(FILENAME, bf -> bf.write(optProp.get().formatExpression));
+            } else {
+                LoggerFactory.getLogger(getClass()).warn("Could not find Project Space formatting information!");
             }
+
         }
 
         @Override

@@ -41,14 +41,14 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         writeIfAvailable(writer, ">formula", data.getMolecularFormula());
         writeIf(writer, ">parentmass", String.valueOf(data.getIonMass()), data.getIonMass() != 0d);
         writeIfAvailable(writer, ">ionization", data.getPrecursorIonType().toString());
-        final InChI i = data.getAnnotation(InChI.class);
+        final InChI i = data.getAnnotationOrNull(InChI.class);
         if (i != null) {
             writeIfAvailable(writer, ">InChI", i.in2D);
             writeIfAvailable(writer, ">InChIKey", i.key);
         }
-        final Smiles sm = data.getAnnotation(Smiles.class);
+        final Smiles sm = data.getAnnotationOrNull(Smiles.class);
         writeIfAvailable(writer, ">smiles", sm == null ? null : sm.smiles);
-        final Splash splash = data.getAnnotation(Splash.class);
+        final Splash splash = data.getAnnotationOrNull(Splash.class);
         writeIfAvailable(writer, ">splash", splash == null ? null : splash.getSplash());
         final MsInstrumentation instrumentation = data.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown);
         writer.write(">instrumentation " + instrumentation.description());
@@ -59,7 +59,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
             writer.newLine();
         }
         writeIfAvailable(writer, ">quality", data.getAnnotation(CompoundQuality.class));
-        final RetentionTime retentionTime = data.getAnnotation(RetentionTime.class);
+        final RetentionTime retentionTime = data.getAnnotationOrNull(RetentionTime.class);
         if (retentionTime != null) {
             write(writer, ">rt", String.valueOf(retentionTime.getMiddleTime()) + "s");
             if (retentionTime.isInterval()) {
@@ -73,7 +73,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
 
         //write original config to file
         if (data.hasAnnotation(MsFileConfig.class)) {
-            ParameterConfig config = data.getAnnotation(MsFileConfig.class).config;
+            ParameterConfig config = data.getAnnotationOrThrow(MsFileConfig.class).config;
             Iterator<String> it = config.getModifiedConfigKeys();
             while (it.hasNext()) {
                 final String key = it.next();
@@ -126,7 +126,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
 
     private void writeSpectraLevelComments(BufferedWriter writer, Spectrum spec) throws IOException{
         if (spec instanceof AnnotatedSpectrum){
-            final AdditionalFields fields = (AdditionalFields) ((AnnotatedSpectrum) spec).getAnnotation(AdditionalFields.class);
+            final AdditionalFields fields = (AdditionalFields) ((AnnotatedSpectrum) spec).getAnnotationOrNull(AdditionalFields.class);
             if (fields != null) {
                 for (Map.Entry<String, String> e : fields.entrySet()) {
                     writer.write("##" + e.getKey() + " " + e.getValue());

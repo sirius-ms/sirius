@@ -6,6 +6,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 public interface ProjectIO {
 
@@ -19,7 +20,7 @@ public interface ProjectIO {
 
     public boolean exists(String relativePath) throws IOException;
 
-    public <A extends ProjectSpaceProperty> A getProjectSpaceProperty(Class<A> klass);
+    public <A extends ProjectSpaceProperty> Optional<A> getProjectSpaceProperty(Class<A> klass);
 
     public <T> T  inDirectory(String relativePath, IOFunctions.IOCallable<T> reader) throws IOException;
 

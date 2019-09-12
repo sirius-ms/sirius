@@ -62,23 +62,23 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
     }
 
     private Ms2Spectrum mergeMs2Spectra(Ms2Experiment experiment) {
-        if (experiment.hasAnnotation(MergedMs2Spectrum.class)) return experiment.getAnnotation(MergedMs2Spectrum.class);
+        if (experiment.hasAnnotation(MergedMs2Spectrum.class))
+            return experiment.getAnnotation(MergedMs2Spectrum.class).get();
         return new MutableMs2Spectrum(Spectrums.mergeSpectra(mergeMs2Deviation, true, true, experiment.getMs2Spectra()));
     }
 
     private List<String> createAdditionalInfo(Ms2Experiment experiment) {
         List<String> info = new ArrayList<>();
-        final InChI i = experiment.getAnnotation(InChI.class);
-        if (i != null) {
+
+        experiment.getAnnotation(InChI.class).ifPresent(i -> {
             if (i.in2D != null) info.add("INCHI=" + i.in2D);
             if (i.key != null) info.add("INCHIKEY=" + i.key);
+        });
 
-        }
-        final Smiles sm = experiment.getAnnotation(Smiles.class);
-        if (sm != null) info.add("SMILES=" + sm.smiles);
+        experiment.getAnnotation(Smiles.class).ifPresent(sm -> info.add("SMILES=" + sm.smiles));
 
-        final RetentionTime retentionTime = experiment.getAnnotation(RetentionTime.class);
-        if (retentionTime != null) info.add("RTINSECONDS=" + String.valueOf(retentionTime.getMiddleTime()));
+        experiment.getAnnotation(RetentionTime.class).ifPresent(retentionTime ->
+                info.add("RTINSECONDS=" + retentionTime.getMiddleTime()));
 
         return info;
     }

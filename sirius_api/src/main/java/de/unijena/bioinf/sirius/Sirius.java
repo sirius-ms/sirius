@@ -141,7 +141,7 @@ public class Sirius {
 
     @Deprecated
     public FormulaConstraints predictElementsFromMs1(Ms2Experiment experiment) {
-        return preprocessForMs1Analysis(experiment).getAnnotation(FormulaConstraints.class);
+        return preprocessForMs1Analysis(experiment).getAnnotationOrNull(FormulaConstraints.class);
     }
 
     public IdentificationResult compute(@NotNull Ms2Experiment experiment, MolecularFormula formula) {

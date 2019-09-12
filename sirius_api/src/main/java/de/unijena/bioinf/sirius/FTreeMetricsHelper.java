@@ -54,7 +54,7 @@ public class FTreeMetricsHelper {
     }
 
     public static double getExplainedPeaksRatio(@NotNull FTree tree) {
-        return tree.getAnnotation(TreeStatistics.class).getRatioOfExplainedPeaks();
+        return tree.getAnnotationOrThrow(TreeStatistics.class).getRatioOfExplainedPeaks();
     }
 
     public static double getNumOfExplainedPeaks(@NotNull FTree tree) {
@@ -62,7 +62,7 @@ public class FTreeMetricsHelper {
     }
 
     public static double getExplainedIntensityRatio(@NotNull FTree tree) {
-        return tree.getAnnotation(TreeStatistics.class).getExplainedIntensity();
+        return tree.getAnnotationOrThrow(TreeStatistics.class).getExplainedIntensity();
     }
 
     public static double getNumberOfExplainablePeaks(@NotNull FTree tree) {

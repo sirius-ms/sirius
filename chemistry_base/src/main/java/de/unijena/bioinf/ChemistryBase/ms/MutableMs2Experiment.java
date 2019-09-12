@@ -78,9 +78,9 @@ public class MutableMs2Experiment implements Ms2Experiment {
     @Nullable
     public SourceLocation getSourceAnnotation() {
         if (hasAnnotation(SpectrumFileSource.class))
-            return getAnnotation(SpectrumFileSource.class);
+            return getAnnotationOrThrow(SpectrumFileSource.class);
         if (hasAnnotation(MsFileSource.class))
-            return getAnnotation(MsFileSource.class);
+            return getAnnotationOrThrow(MsFileSource.class);
         return null;
     }
 

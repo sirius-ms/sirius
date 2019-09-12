@@ -42,8 +42,7 @@ public class Ms2Validator extends Ms1Validator {
     }
 
     private static String nameOf(MutableMs2Experiment exp) {
-        DataSource s = exp.getAnnotation(DataSource.class);
-        if (s==null) s = new DataSource(exp.getSource());
+        final DataSource s = exp.getAnnotation(DataSource.class).orElse(new DataSource(exp.getSource()));
         if (s.getUrl()==null) return exp.getName();
         else return s.getUrl().getFile();
     }
@@ -51,7 +50,7 @@ public class Ms2Validator extends Ms1Validator {
 
     private static Pattern P_LAYER = Pattern.compile("/p([+-])(\\d+)");
     private void checkInchi(Warning warn, boolean repair, MutableMs2Experiment input) {
-        final InChI inchi = input.getAnnotation(InChI.class);
+        final InChI inchi = input.getAnnotationOrNull(InChI.class);
         if (inchi==null || inchi.in3D == null) return;
 
         final MolecularFormula formula;

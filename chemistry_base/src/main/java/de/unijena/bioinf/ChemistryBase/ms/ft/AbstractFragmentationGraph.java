@@ -204,9 +204,6 @@ public abstract class AbstractFragmentationGraph implements Iterable<Fragment>, 
         return (LossAnnotation<T>) lossAnnotations.get(klass);
     }
 
-    public <T extends DataAnnotation> T getAnnotationOrNull(Class<T> klass) {
-        return hasAnnotation(klass) ? getAnnotation(klass) : null;
-    }
 
     public boolean removeFragmentAnnotation(Class<? extends DataAnnotation> klass) {
         final FragmentAnnotation<DataAnnotation> ano = fragmentAnnotations.get(klass);
