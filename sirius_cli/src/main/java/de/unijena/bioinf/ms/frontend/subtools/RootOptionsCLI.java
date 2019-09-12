@@ -2,7 +2,6 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.MS2ExpInputIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
@@ -302,7 +301,7 @@ public class RootOptionsCLI implements RootOptions {
         config.defineProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSPropertySerializer());
         //configure compound container
         config.registerContainer(CompoundContainer.class, new CompoundContainerSerializer());
-//        config.registerComponent(CompoundContainer.class, Spectrum.class, new MsExperimentSerializer());
+        config.registerComponent(CompoundContainer.class, ProjectSpaceConfig.class, new ProjectSpaceConfigSerializer());
         config.registerComponent(CompoundContainer.class, Ms2Experiment.class, new MsExperimentSerializer());
         //configure formula result
         config.registerContainer(FormulaResult.class, new FormulaResultSerializer());

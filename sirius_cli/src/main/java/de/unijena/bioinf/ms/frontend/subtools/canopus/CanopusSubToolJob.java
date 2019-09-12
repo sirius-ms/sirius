@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.fingerid.CanopusJJob;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.annotations.FormulaResultRankingScore;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
@@ -23,7 +24,9 @@ public class CanopusSubToolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         System.out.println("I am Canopus on Experiment " + inst);
-        List<? extends SScored<FormulaResult, ? extends FormulaScore>> input = inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, CanopusResult.class);
+        List<? extends SScored<FormulaResult, ? extends FormulaScore>> input = inst.loadFormulaResults(
+                inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).value,
+                FormulaScoring.class, FTree.class, FingerprintResult.class, CanopusResult.class);
 
         // check if we need to skip
         if (!isRecompute(inst) && input.stream().anyMatch((it -> it.getCandidate().hasAnnotation(CanopusResult.class)))) {

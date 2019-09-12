@@ -11,6 +11,7 @@ import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.passatutto.Passatutto;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -18,7 +19,9 @@ import java.util.List;
 public class PassatuttoSubToolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(@NotNull Instance expRes) throws Exception {
-        final List<? extends SScored<FormulaResult, ? extends FormulaScore>> intput = expRes.loadFormulaResults(FormulaScoring.class, FTree.class);
+        final List<? extends SScored<FormulaResult, ? extends FormulaScore>> intput = expRes.loadFormulaResults(
+                SiriusScore.class,
+                FormulaScoring.class, FTree.class);
         if (intput == null || intput.isEmpty())
             throw new IllegalArgumentException("No fragmentation trees are computed yet. Run SIRIUS first and provide the correct molecular formula in the input files before calling passatutto.");
 

@@ -10,6 +10,7 @@ import de.unijena.bioinf.fingerid.db.annotations.FormulaSearchDB;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
+import de.unijena.bioinf.ms.frontend.subtools.fingerid.annotations.UserFormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
@@ -36,7 +37,7 @@ public class SiriusSubToolJob extends InstanceJob {
 
         if (ioC.getResults().isEmpty() || isRecompute(inst)) {
             invalidateResults(inst);
-            
+
             // set whiteSet or merge with whiteSet from db search if available
             Whiteset wSet = null;
 
@@ -66,8 +67,11 @@ public class SiriusSubToolJob extends InstanceJob {
                 inst.getProjectSpace().newFormulaResultWithUniqueId(ioC, result.getTree());
 
             // set sirius to ranking score
-            inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(SiriusScore.class));
-            inst.updateExperiment();
+            if (exp.getAnnotation(UserFormulaResultRankingScore.class).isAuto()) {
+                inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(SiriusScore.class));
+                inst.getExperiment().getAnnotation(FinalConfig.class).config.changeConfig("FormulaResultRankingScore", SiriusScore.class.getName());
+                inst.updateConfig();
+            }
 
             System.out.println(new Date() + "\t-> I am Sirius, finish with Experiment " + inst.getID());
         } else {

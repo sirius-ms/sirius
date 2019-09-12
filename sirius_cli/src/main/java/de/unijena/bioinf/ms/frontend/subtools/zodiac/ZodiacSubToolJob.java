@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.GibbsSampling.Zodiac;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.GibbsSampling.model.*;
@@ -13,8 +14,10 @@ import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorerN
 import de.unijena.bioinf.fingerid.annotations.FormulaResultRankingScore;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
+import de.unijena.bioinf.ms.frontend.subtools.fingerid.annotations.UserFormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +33,7 @@ public class ZodiacSubToolJob extends DataSetJob {
     protected void computeAndAnnotateResult(final @NotNull List<Instance> instances) throws Exception {
         final Map<Ms2Experiment, List<FormulaResult>> input = instances.stream().collect(Collectors.toMap(
                 Instance::getExperiment,
-                in -> in.loadFormulaResults(FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList())
+                in -> in.loadFormulaResults(SiriusScore.class, FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList())
         ));
 
         if (instances.stream().anyMatch(it -> isRecompute(it) || !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class))) {
@@ -69,12 +72,12 @@ public class ZodiacSubToolJob extends DataSetJob {
                     }
                 });
 
-                inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(ZodiacScore.class));
-                inst.updateExperiment();
-                //todo how to write experiment efficiantly without cache -> should be persistents
-                // TODO: how to write scoring? it is part of the config of an Ms2Experiment.
-
-
+                // set sirius to ranking score
+                if (inst.getExperiment().getAnnotation(UserFormulaResultRankingScore.class).isAuto()) {
+                    inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(ZodiacScore.class));
+                    inst.getExperiment().getAnnotation(FinalConfig.class).config.changeConfig("FormulaResultRankingScore", ZodiacScore.class.getName());
+                    inst.updateConfig();
+                }
             });
 
             instances.forEach(this::invalidateResults);
