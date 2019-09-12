@@ -73,9 +73,9 @@ public class ZodiacSubToolJob extends DataSetJob {
                 });
 
                 // set sirius to ranking score
-                if (inst.getExperiment().getAnnotation(UserFormulaResultRankingScore.class).isAuto()) {
+                if (inst.getExperiment().getAnnotationOrThrow(UserFormulaResultRankingScore.class).isAuto()) {
                     inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(ZodiacScore.class));
-                    inst.getExperiment().getAnnotation(FinalConfig.class).config.changeConfig("FormulaResultRankingScore", ZodiacScore.class.getName());
+                    inst.getExperiment().getAnnotationOrThrow(FinalConfig.class).config.changeConfig("FormulaResultRankingScore", ZodiacScore.class.getName());
                     inst.updateConfig();
                 }
             });

@@ -13,6 +13,8 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.ProjectSpaceConfig;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
+
 public class AddConfigsJob extends InstanceJob {
     private ParameterConfig cliConfig;
 
@@ -23,29 +25,30 @@ public class AddConfigsJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         final Ms2Experiment exp = inst.getExperiment();
-        final ProjectSpaceConfig psConfig = inst.loadConfig();
+        final Optional<ProjectSpaceConfig> psConfig = inst.loadConfig();
 
 
         ParameterConfig baseConfig;
-        if (psConfig != null) //override defaults
-            baseConfig = psConfig.config.newIndependentInstance(cliConfig);
+
+        if (psConfig.isPresent()) //override defaults
+            baseConfig = psConfig.get().config.newIndependentInstance(cliConfig);
         else
             baseConfig = cliConfig;
 
         if (exp.hasAnnotation(MsFileConfig.class))
-            baseConfig = baseConfig.newIndependentInstance(exp.getAnnotation(MsFileConfig.class).config);
+            baseConfig = baseConfig.newIndependentInstance(exp.getAnnotationOrThrow(MsFileConfig.class).config);
 
         //fill all annotations
         exp.setAnnotation(FinalConfig.class, new FinalConfig(baseConfig));
         exp.addAnnotationsFrom(baseConfig, Ms2ExperimentAnnotation.class);
 
         //reduce basic list of possible Adducts to charge
-        exp.getAnnotation(PossibleAdducts.class).keepOnly(exp.getPrecursorIonType().getCharge());
+        exp.getAnnotationOrThrow(PossibleAdducts.class).keepOnly(exp.getPrecursorIonType().getCharge());
 
         // convert csi ranking score
-        if (exp.getAnnotation(UserFormulaResultRankingScore.class).isDefined()) {
-            exp.setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(exp.getAnnotation(UserFormulaResultRankingScore.class).getScoreClass()));
-            exp.getAnnotation(FinalConfig.class).config.changeConfig("FormulaResultRankingScore", exp.getAnnotation(UserFormulaResultRankingScore.class).getScoreClass().getName());
+        if (exp.getAnnotationOrThrow(UserFormulaResultRankingScore.class).isDefined()) {
+            exp.setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(exp.getAnnotationOrThrow(UserFormulaResultRankingScore.class).getScoreClass()));
+            exp.getAnnotationOrThrow(FinalConfig.class).config.changeConfig("FormulaResultRankingScore", exp.getAnnotationOrThrow(UserFormulaResultRankingScore.class).getScoreClass().getName());
         }
 
 

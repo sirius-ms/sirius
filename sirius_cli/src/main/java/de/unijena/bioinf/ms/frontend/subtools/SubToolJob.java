@@ -3,10 +3,12 @@ package de.unijena.bioinf.ms.frontend.subtools;
 import de.unijena.bioinf.ms.annotaions.RecomputeResults;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
+
 public interface SubToolJob {
     default void invalidateResults(final @NotNull Instance result) {
-        final RecomputeResults recomp = result.getExperiment().getAnnotation(RecomputeResults.class);
-        if (recomp == null || !recomp.value)
+        final Optional<RecomputeResults> recomp = result.getExperiment().getAnnotation(RecomputeResults.class);
+        if (recomp.isEmpty() || !recomp.get().value)
             result.getExperiment().setAnnotation(RecomputeResults.class, RecomputeResults.TRUE);
     }
 

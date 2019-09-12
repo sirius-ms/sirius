@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 public class Instance {
     final protected Ms2Experiment inputExperient;
@@ -66,7 +67,7 @@ public class Instance {
     }
 
 
-    public ProjectSpaceConfig loadConfig() {
+    public Optional<ProjectSpaceConfig> loadConfig() {
         return loadCompoundContainer(ProjectSpaceConfig.class).getAnnotation(ProjectSpaceConfig.class);
     }
 
@@ -112,7 +113,7 @@ public class Instance {
 
     public void updateConfig() {
         CompoundContainer c = loadCompoundContainer();
-        c.setAnnotation(ProjectSpaceConfig.class, new ProjectSpaceConfig(inputExperient.getAnnotation(FinalConfig.class).config));
+        c.setAnnotation(ProjectSpaceConfig.class, new ProjectSpaceConfig(inputExperient.getAnnotationOrThrow(FinalConfig.class).config));
         updateCompound(c, ProjectSpaceConfig.class);
     }
 }
