@@ -1,6 +1,6 @@
 RecomputeResults=de.unijena.bioinf.ms.annotaions.RecomputeResults
 
-FormulaResultRankingScore=de.unijena.bioinf.fingerid.annotations.FormulaResultRankingScore
+UserFormulaResultRankingScore=de.unijena.bioinf.ms.frontend.subtools.fingerid.annotations.UserFormulaResultRankingScore
 NumberOfStructureCandidates=de.unijena.bioinf.fingerid.annotations.NumberOfStructureCandidates
 FormulaSearchDB=de.unijena.bioinf.fingerid.db.annotations.FormulaSearchDB
 StructureSearchDB=de.unijena.bioinf.fingerid.db.annotations.StructureSearchDB
@@ -31,4 +31,5 @@ NumberOfCandidatesPerIon=de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPe
 ForbidRecalibration=de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration
 FormulaSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings
 NumberOfCandidates=de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates
+FormulaResultRankingScore=de.unijena.bioinf.fingerid.annotations.FormulaResultRankingScore
 

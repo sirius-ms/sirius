@@ -29,6 +29,7 @@ public class FingeridSubToolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults = inst.loadFormulaResults(
+                inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).value,
                 FormulaScoring.class, FTree.class, FingerprintResult.class, FingerblastResult.class);
 
         if (formulaResults == null || formulaResults.isEmpty())

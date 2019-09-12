@@ -3,10 +3,11 @@ package de.unijena.bioinf.ms.frontend.subtools;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.ProjectSpaceManager;
-import de.unijena.bioinf.fingerid.annotations.FormulaResultRankingScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.ProjectSpaceConfig;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
@@ -65,10 +66,14 @@ public class Instance {
     }
 
 
-    public List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends DataAnnotation>... components) {
+    public ProjectSpaceConfig loadConfig() {
+        return loadCompoundContainer(ProjectSpaceConfig.class).getAnnotation(ProjectSpaceConfig.class);
+    }
+
+    public List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends FormulaScore> rankingScoreType, Class<? extends DataAnnotation>... components) {
         try {
             return getProjectSpace().getFormulaResultsOrderedBy(getID(),
-                    this.getExperiment().getAnnotation(FormulaResultRankingScore.class).value,
+                    rankingScoreType,
                     components);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -103,5 +108,11 @@ public class Instance {
         CompoundContainer c = loadCompoundContainer();
         c.setAnnotation(Ms2Experiment.class, inputExperient);
         updateCompound(c, Ms2Experiment.class);
+    }
+
+    public void updateConfig() {
+        CompoundContainer c = loadCompoundContainer();
+        c.setAnnotation(ProjectSpaceConfig.class, new ProjectSpaceConfig(inputExperient.getAnnotation(FinalConfig.class).config));
+        updateCompound(c, ProjectSpaceConfig.class);
     }
 }
