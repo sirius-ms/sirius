@@ -33,7 +33,20 @@ public class FTreeMetricsHelper {
     }
 
     public double getIsotopeMs1Score() {
-        return fragmentScoring.get(tree.getRoot()).get(FragmentationPatternAnalysis.getScoringMethodName(IsotopePatternInMs1Plugin.Ms1IsotopePatternScorer.class));
+            Score score = fragmentScoring.get(tree.getRoot());
+            if (score == null) {
+                LossAnnotation<LossType> l = tree.getLossAnnotationOrNull(LossType.class);
+                if (l!=null) {
+                    score = fragmentScoring.get(getMeasuredIonRoot(l,tree.getRoot()));
+                }
+            }
+            return score.get(FragmentationPatternAnalysis.getScoringMethodName(IsotopePatternInMs1Plugin.Ms1IsotopePatternScorer.class));
+    }
+
+    // TODO: we should solve that smarter... A fragment should know if it is the measured ion. Need another annotation for that
+    private Fragment getMeasuredIonRoot(LossAnnotation<LossType> lossAno, Fragment root) {
+        if (root.isLeaf() || lossAno.get(root.getOutgoingEdge(0)).isRegular()) return root;
+        else return getMeasuredIonRoot(lossAno, root.getChildren(0));
     }
 
     public double getBeautificationPenalty() {
