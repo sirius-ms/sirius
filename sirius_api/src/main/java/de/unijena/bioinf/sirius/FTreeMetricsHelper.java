@@ -73,8 +73,15 @@ public class FTreeMetricsHelper {
         final FTreeMetricsHelper helper = new FTreeMetricsHelper(tree);
         final Set<FormulaScore> scores = new HashSet<>(3);
         scores.add(new SiriusScore(helper.getSiriusScore()));
-        scores.add(new IsotopeScore(helper.getIsotopeMs1Score()));
-        scores.add(new TreeScore(helper.getTreeScore()));
+        try {
+            scores.add(new IsotopeScore(helper.getIsotopeMs1Score()));
+            scores.add(new TreeScore(helper.getTreeScore()));
+        } catch (Throwable e) {
+            System.out.println("DEBUG: Something with this tree is wrong? Cannot calculate isotope score" + tree.getRoot().getFormula().toString());
+            e.printStackTrace();
+        }
+
+
         return scores;
     }
 }
