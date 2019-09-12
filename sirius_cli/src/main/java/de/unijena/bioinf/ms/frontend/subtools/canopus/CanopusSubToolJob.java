@@ -25,7 +25,7 @@ public class CanopusSubToolJob extends InstanceJob {
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         System.out.println("I am Canopus on Experiment " + inst);
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> input = inst.loadFormulaResults(
-                inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).value,
+                inst.getExperiment().getAnnotationOrThrow(FormulaResultRankingScore.class).value,
                 FormulaScoring.class, FTree.class, FingerprintResult.class, CanopusResult.class);
 
         // check if we need to skip
@@ -57,8 +57,8 @@ public class CanopusSubToolJob extends InstanceJob {
 
     private CanopusJJob buildAndSubmit(@NotNull final FormulaResult ir) {
         final CanopusJJob canopusJob = new CanopusJJob(ApplicationCore.CANOPUS);
-        canopusJob.setFormula(ir.getAnnotation(FTree.class).getRoot().getFormula())
-                .setFingerprint(ir.getAnnotation(FingerprintResult.class).fingerprint);
+        canopusJob.setFormula(ir.getAnnotationOrThrow(FTree.class).getRoot().getFormula())
+                .setFingerprint(ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint);
         return SiriusJobs.getGlobalJobManager().submitJob(canopusJob);
     }
 

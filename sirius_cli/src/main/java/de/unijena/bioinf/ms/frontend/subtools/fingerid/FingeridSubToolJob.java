@@ -29,7 +29,7 @@ public class FingeridSubToolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults = inst.loadFormulaResults(
-                inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).value,
+                inst.getExperiment().getAnnotationOrThrow(FormulaResultRankingScore.class).value,
                 FormulaScoring.class, FTree.class, FingerprintResult.class, FingerblastResult.class);
 
         if (formulaResults == null || formulaResults.isEmpty())
@@ -43,7 +43,8 @@ public class FingeridSubToolJob extends InstanceJob {
 
         System.out.println("I am FingerID on Experiment " + inst.getID());
         invalidateResults(inst);
-        PredictorTypeAnnotation type = inst.getExperiment().getAnnotation(PredictorTypeAnnotation.class);
+
+        PredictorTypeAnnotation type = inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class);
 
 
         //todo currently there is only csi -> change if there are multiple methods
@@ -51,20 +52,20 @@ public class FingeridSubToolJob extends InstanceJob {
         EnumSet<PredictorType> predictors = type.toPredictors(inst.getExperiment().getPrecursorIonType().getCharge());
         final @NotNull CSIPredictor csi = (CSIPredictor) ApplicationCore.WEB_API.getPredictorFromType(predictors.iterator().next());
         final FingerIDJJob job = csi.makeFingerIDJJob(inst.getExperiment(),
-                formulaResults.stream().map(res -> new IdentificationResult<>(res.getCandidate().getAnnotation(FTree.class), res.getScoreObject()))
+                formulaResults.stream().map(res -> new IdentificationResult<>(res.getCandidate().getAnnotationOrThrow(FTree.class), res.getScoreObject()))
                         .collect(Collectors.toList()));
 
 
         // do computation and await results
         List<FingerIdResult> result = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
 
-        final Map<FTree, FormulaResult> formulaResultsMap = formulaResults.stream().collect(Collectors.toMap(r -> r.getCandidate().getAnnotation(FTree.class), SScored::getCandidate));
+        final Map<FTree, FormulaResult> formulaResultsMap = formulaResults.stream().collect(Collectors.toMap(r -> r.getCandidate().getAnnotationOrThrow(FTree.class), SScored::getCandidate));
 
         // add new id results to projectspace and mal.
         final CompoundContainer ioC = inst.loadCompoundContainer();
         for (IdentificationResult idr : job.getAddedIdentificationResults())
             inst.getProjectSpace().newFormulaResultWithUniqueId(ioC, idr.getTree())
-                    .ifPresent(fr -> formulaResultsMap.put(fr.getAnnotation(FTree.class), fr));
+                    .ifPresent(fr -> formulaResultsMap.put(fr.getAnnotationOrThrow(FTree.class), fr));
 
         assert formulaResultsMap.size() == result.size();
 
@@ -73,13 +74,13 @@ public class FingeridSubToolJob extends InstanceJob {
             final FormulaResult formRes = formulaResultsMap.get(structRes.sourceTree);
             // annotate results
 
-            assert structRes.sourceTree == formRes.getAnnotation(FTree.class);
+            assert structRes.sourceTree == formRes.getAnnotationOrThrow(FTree.class);
 
-            formRes.setAnnotation(FingerprintResult.class, structRes.getAnnotation(FingerprintResult.class));
-            formRes.setAnnotation(FingerblastResult.class, structRes.getAnnotation(FingerblastResult.class));
+            formRes.setAnnotation(FingerprintResult.class, structRes.getAnnotationOrThrow(FingerprintResult.class));
+            formRes.setAnnotation(FingerblastResult.class, structRes.getAnnotationOrThrow(FingerblastResult.class));
 
-            formRes.getAnnotation(FormulaScoring.class).setAnnotation(TopFingerblastScore.class, structRes.getAnnotation(FingerblastResult.class).getTopHitScore());
-            formRes.getAnnotation(FormulaScoring.class).setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).score);
+            formRes.getAnnotationOrThrow(FormulaScoring.class).setAnnotation(TopFingerblastScore.class, structRes.getAnnotationOrThrow(FingerblastResult.class).getTopHitScore());
+            formRes.getAnnotationOrThrow(FormulaScoring.class).setAnnotation(ConfidenceScore.class, structRes.getAnnotationOrThrow(ConfidenceResult.class).score);
 
             //setRanking score
             inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(TopFingerblastScore.class));

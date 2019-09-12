@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 public class SiriusSubToolJob extends InstanceJob {
     protected final SiriusOptions cliOptions;
@@ -42,9 +43,9 @@ public class SiriusSubToolJob extends InstanceJob {
             Whiteset wSet = null;
 
             // create WhiteSet from DB if necessary
-            final FormulaSearchDB searchDB = exp.getAnnotation(FormulaSearchDB.class);
-            if (searchDB != null && searchDB.hasSearchableDB()) {
-                FormulaWhiteListJob wsJob = new FormulaWhiteListJob(ApplicationCore.WEB_API, searchDB.value, exp);
+            final Optional<FormulaSearchDB> searchDB = exp.getAnnotation(FormulaSearchDB.class);
+            if (searchDB.isPresent() && searchDB.get().hasSearchableDB()) {
+                FormulaWhiteListJob wsJob = new FormulaWhiteListJob(ApplicationCore.WEB_API, searchDB.get().value, exp);
                 wSet = SiriusJobs.getGlobalJobManager().submitJob(wsJob).awaitResult();
             }
 
@@ -59,7 +60,7 @@ public class SiriusSubToolJob extends InstanceJob {
 
             exp.setAnnotation(Whiteset.class, wSet);
 
-            final Sirius sirius = cliOptions.siriusProvider.sirius(exp.getAnnotation(FinalConfig.class).config.getConfigValue("AlgorithmProfile"));
+            final Sirius sirius = cliOptions.siriusProvider.sirius(exp.getAnnotationOrThrow(FinalConfig.class).config.getConfigValue("AlgorithmProfile"));
             List<IdentificationResult<SiriusScore>> results = SiriusJobs.getGlobalJobManager().submitJob(sirius.makeIdentificationJob(exp)).awaitResult();
 
             //write results to project space
@@ -67,9 +68,9 @@ public class SiriusSubToolJob extends InstanceJob {
                 inst.getProjectSpace().newFormulaResultWithUniqueId(ioC, result.getTree());
 
             // set sirius to ranking score
-            if (exp.getAnnotation(UserFormulaResultRankingScore.class).isAuto()) {
+            if (exp.getAnnotationOrThrow(UserFormulaResultRankingScore.class).isAuto()) {
                 inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(SiriusScore.class));
-                inst.getExperiment().getAnnotation(FinalConfig.class).config.changeConfig("FormulaResultRankingScore", SiriusScore.class.getName());
+                inst.getExperiment().getAnnotationOrThrow(FinalConfig.class).config.changeConfig("FormulaResultRankingScore", SiriusScore.class.getName());
                 inst.updateConfig();
             }
 

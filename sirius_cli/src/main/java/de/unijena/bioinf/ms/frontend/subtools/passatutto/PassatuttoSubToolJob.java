@@ -26,14 +26,12 @@ public class PassatuttoSubToolJob extends InstanceJob {
             throw new IllegalArgumentException("No fragmentation trees are computed yet. Run SIRIUS first and provide the correct molecular formula in the input files before calling passatutto.");
 
         final FormulaResult best = intput.get(0).getCandidate();
-        final FTree tree = best.getAnnotation(FTree.class);
-
-        if (tree != null) {
+        best.getAnnotation(FTree.class).ifPresent(tree -> {
             // should be a CPU job?
             final Decoy decoyByRerootingTree = SiriusJobs.getGlobalJobManager().submitJob(
                     Passatutto.makePassatuttoJob(tree, tree.getAnnotationOrThrow(PrecursorIonType.class)))
-                    .awaitResult();
+                    .takeResult();
             best.setAnnotation(Decoy.class, decoyByRerootingTree);
-        }
+        });
     }
 }

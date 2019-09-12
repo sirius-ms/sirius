@@ -277,9 +277,8 @@ public class RootOptionsCLI implements RootOptions {
             //check for formatter
             if (projectSpaceFilenameFormatter == null) {
                 try {
-                    FilenameFormatter.PSProperty tmp = psTmp.getProjectSpaceProperty(FilenameFormatter.PSProperty.class);
-                    projectSpaceFilenameFormatter = tmp != null ? new StandardMSFilenameFormatter(tmp.formatExpression) : new StandardMSFilenameFormatter();
-                } catch (ParseException e) {
+                    projectSpaceFilenameFormatter = psTmp.getProjectSpaceProperty(FilenameFormatter.PSProperty.class).map(it -> new StandardMSFilenameFormatter(it.formatExpression)).orElse(new StandardMSFilenameFormatter());
+                } catch (Exception e) {
                     LOG.warn("Could not Parse filenameformatter -> Using default");
                     projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
                 }
