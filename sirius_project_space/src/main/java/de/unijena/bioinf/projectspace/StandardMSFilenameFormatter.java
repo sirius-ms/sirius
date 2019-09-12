@@ -26,9 +26,13 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
         };
     }
 
-    public StandardMSFilenameFormatter(String formatString) throws ParseException {
+    public StandardMSFilenameFormatter(String formatString) {
         this.formatExpression = formatString;
-        formatStrings = parseFormat(formatExpression);
+        try {
+            formatStrings = parseFormat(formatExpression);
+        } catch (ParseException e) {
+            throw new IllegalArgumentException("Could not Parse format String: " + formatExpression, e);
+        }
     }
 
     private static final Pattern NormalCharactersString = Pattern.compile("([A-Za-z]+)(.*)");
@@ -136,10 +140,9 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
         @Override
         public String format(Ms2Experiment experiment) {
 
-            Map<String, String> map = experiment.getAnnotation(AdditionalFields.class);
-            if (map==null){
-                throw new RuntimeException("Cannot format compound file name for " + experiment.getName() + ": no annotations given.");
-            }
+            Map<String, String> map = experiment.getAnnotationOrThrow(AdditionalFields.class,
+                    () -> new RuntimeException("Cannot format compound file name for " + experiment.getName() + ": no annotations given."));
+
             String value  = map.get(annotation);
             if (value==null){
                 throw new RuntimeException("Cannot format compound file name for " + experiment.getName() + ": annotation '" + annotation + "' unknown.");

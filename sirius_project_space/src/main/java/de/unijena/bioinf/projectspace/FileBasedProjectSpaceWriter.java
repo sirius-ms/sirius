@@ -13,11 +13,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class FileBasedProjectSpaceWriter extends FileBasedProjectSpaceIO implements ProjectWriter {
 
-    public FileBasedProjectSpaceWriter(File dir, Function<Class<ProjectSpaceProperty>, ProjectSpaceProperty> propertyGetter) {
+    public FileBasedProjectSpaceWriter(File dir, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
         super(dir, propertyGetter);
     }
 

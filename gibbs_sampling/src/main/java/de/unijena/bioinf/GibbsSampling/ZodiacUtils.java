@@ -123,8 +123,8 @@ public class ZodiacUtils {
                 Ms2Experiment experiment1 = candidateMap.get(ids.get(0)).get(0).getExperiment();
                 Ms2Experiment experiment2 = candidates.get(0).getExperiment();
                 if (experiment1.hasAnnotation(RetentionTime.class) && experiment2.hasAnnotation(RetentionTime.class)){
-                    double time1 = experiment1.getAnnotation(RetentionTime.class).getRetentionTimeInSeconds();
-                    double time2 = experiment2.getAnnotation(RetentionTime.class).getRetentionTimeInSeconds();
+                    double time1 = experiment1.getAnnotationOrThrow(RetentionTime.class).getRetentionTimeInSeconds();
+                    double time2 = experiment2.getAnnotationOrThrow(RetentionTime.class).getRetentionTimeInSeconds();
                     if (Math.abs(time1-time2)>20) logger.warn("merged compounds retention time differs by "+(Math.abs(time1-time2)));
                 }
             }

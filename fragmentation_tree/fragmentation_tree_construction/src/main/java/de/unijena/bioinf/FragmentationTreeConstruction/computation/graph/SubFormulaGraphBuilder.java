@@ -64,7 +64,7 @@ public class SubFormulaGraphBuilder implements GraphBuilder {
             decomposition.set(f, m);
         }
         // set pseudo root
-        decomposition.set(graph.getRoot(), new Decomposition(MolecularFormula.emptyFormula(), graph.getAnnotation(PrecursorIonType.class).getIonization(), 0d));
+        decomposition.set(graph.getRoot(), new Decomposition(MolecularFormula.emptyFormula(), graph.getAnnotationOrThrow(PrecursorIonType.class).getIonization(), 0d));
         return graph;
     }
 

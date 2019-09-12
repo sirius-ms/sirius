@@ -35,7 +35,7 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
 
     @Override
     protected void transferAnotationsFromInputToGraph(ProcessedInput input, FGraph graph) {
-        final ExtractedIsotopePattern pattern = input.getAnnotation(ExtractedIsotopePattern.class);
+        final ExtractedIsotopePattern pattern = input.getAnnotationOrNull(ExtractedIsotopePattern.class);
         if (pattern!=null) {
             final IsotopePattern iso = pattern.getExplanations().get(graph.getRoot().getChildren(0).getFormula());
             if (iso!=null) {
@@ -46,26 +46,25 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
 
     @Override
     protected void transferAnotationsFromGraphToTree(ProcessedInput input, FGraph graph, FTree tree, IntergraphMapping graph2treeFragments) {
-        final IsotopePattern pattern = graph.getAnnotation(IsotopePattern.class);
-        if (pattern!=null) {
+        graph.getAnnotation(IsotopePattern.class).ifPresent(pattern -> {
             tree.setAnnotation(IsotopePattern.class, pattern);
             tree.getOrCreateFragmentAnnotation(Ms1IsotopePattern.class).set(tree.getRoot(), new Ms1IsotopePattern(pattern.getPattern(), pattern.getScore()));
-        }
+        });
     }
 
     @Override
     protected void beforeDecomposing(ProcessedInput input) {
-        if (input.getExperimentInformation().getMolecularFormula()!=null) return;
-        IsotopeSettings isotopeS = input.getAnnotation(IsotopeSettings.class);
-        if (isotopeS!=null && isotopeS.isFiltering()) {
-            final ExtractedIsotopePattern extractedIsotopePattern = input.getAnnotation(ExtractedIsotopePattern.class);
-            if (extractedIsotopePattern!=null) {
+        if (input.getExperimentInformation().getMolecularFormula() != null) return;
+        IsotopeSettings isotopeS = input.getAnnotationOrNull(IsotopeSettings.class);
+        if (isotopeS != null && isotopeS.isFiltering()) {
+            final ExtractedIsotopePattern extractedIsotopePattern = input.getAnnotationOrNull(ExtractedIsotopePattern.class);
+            if (extractedIsotopePattern != null) {
                 // find all high-scoring isotope pattern
                 final MolecularFormula[] formulas = filterFormulasByIsotopeScore(extractedIsotopePattern);
-                final Whiteset whiteset = input.getAnnotation(Whiteset.class);
-                if (whiteset==null || whiteset.getFormulas().isEmpty()) {
+                final Whiteset whiteset = input.getAnnotationOrNull(Whiteset.class);
+                if (whiteset == null || whiteset.getFormulas().isEmpty()) {
                     input.setAnnotation(Whiteset.class, Whiteset.of(formulas));
-                } else if (whiteset.getFormulas().size() > 1){ // necessary, otherwise we remove formulas which are enforded
+                } else if (whiteset.getFormulas().size() > 1) { // necessary, otherwise we remove formulas which are enforded
                     input.setAnnotation(Whiteset.class, whiteset.intersection(formulas));
                 }
 
