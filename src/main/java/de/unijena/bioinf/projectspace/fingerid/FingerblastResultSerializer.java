@@ -22,9 +22,11 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
 
     @Override
     public FingerblastResult read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
+        if (!reader.exists(FingerIdLocations.FingerBlastResults.apply(id)))
+            return null;
         final Pattern dblinkPat = Pattern.compile("^.+?: \\(.+\\)$");
         final ArrayList<Scored<CompoundCandidate>> results = new ArrayList<>();
-        reader.table(FingerIdLocations.FingerBlastResults.apply(id),true,(row)->{
+        reader.table(FingerIdLocations.FingerBlastResults.apply(id), true, (row) -> {
             final double score = Double.parseDouble(row[4]);
             final InChI inchi = new InChI(row[0], row[1]);
             final int rank = Integer.parseInt(row[3]);
@@ -47,7 +49,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
                         links.add(new DBLink(dbName, dbId.trim()));
                     }
                 } else {
-                    links.add(new DBLink(db,null));
+                    links.add(new DBLink(db, null));
                 }
                 bitset |= DatasourceService.getDBFlagFromName(db);
             }
@@ -63,7 +65,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
         final FingerblastResult fingerblastResult = optFingeridResult.orElseThrow(() -> new IllegalArgumentException("Could not find FingerIdResult to write for ID: " + id));
 
         final String[] header = new String[]{
-                "inchikey2D",	"inchi",	"molecularFormula",	"rank",	"score",	"name",	"smiles",	"xlogp",	"PubMedIds",	"links"
+                "inchikey2D", "inchi", "molecularFormula", "rank", "score", "name", "smiles", "xlogp", "PubMedIds", "links"
         };
         final String[] row = header.clone();
         final int[] ranking = new int[]{0};
@@ -77,8 +79,8 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
             row[5] = c.getName();
             row[6] = c.getSmiles();
             row[7] = Double.isNaN(c.getXlogp()) ? "" : String.valueOf(c.getXlogp());
-            row[8] = c.getPubmedIDs().toString();
-            row[9] = c.getLinkedDatabases().asMap().entrySet().stream().map((k)->k.getValue().isEmpty() ? k.getKey() : k.getKey() + ":(" + k.getValue().stream().collect(Collectors.joining(", "))+")").collect(Collectors.joining("; "));
+            row[8] = c.getPubmedIDs() != null ? c.getPubmedIDs().toString() : "";
+            row[9] = c.getLinkedDatabases().asMap().entrySet().stream().map((k) -> k.getValue().isEmpty() ? k.getKey() : k.getKey() + ":(" + k.getValue().stream().collect(Collectors.joining(", ")) + ")").collect(Collectors.joining("; "));
             return row;
         })::iterator);
     }
