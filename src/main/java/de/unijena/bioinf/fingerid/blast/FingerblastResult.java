@@ -25,6 +25,8 @@ public class FingerblastResult implements ResultAnnotation {
     }
 
     public TopFingerblastScore getTopHitScore() {
+        if (results == null || results.isEmpty())
+            return null;
         return new TopFingerblastScore(results.get(0).getScore());
     }
 }
