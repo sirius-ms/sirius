@@ -40,7 +40,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         writer.newLine();
         writeIfAvailable(writer, ">formula", data.getMolecularFormula());
         writeIf(writer, ">parentmass", String.valueOf(data.getIonMass()), data.getIonMass() != 0d);
-        writeIfAvailable(writer, ">ionization", data.getPrecursorIonType().toString());
+        writeIfAvailable(writer, ">ionization", data.getPrecursorIonType());
         final InChI i = data.getAnnotationOrNull(InChI.class);
         if (i != null) {
             writeIfAvailable(writer, ">InChI", i.in2D);
@@ -54,11 +54,12 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         writer.write(">instrumentation " + instrumentation.description());
         writer.newLine();
         writeIfAvailable(writer, ">source", data.getSource());
-        if (!data.getAnnotation(Tagging.class,Tagging::none).isEmpty()) {
-            writer.write(">tags " + data.getAnnotation(Tagging.class,Tagging::none).stream().collect(Collectors.joining(",")));
+        if (!data.getAnnotation(Tagging.class, Tagging::none).isEmpty()) {
+            writer.write(">tags " + data.getAnnotation(Tagging.class, Tagging::none).stream().collect(Collectors.joining(",")));
             writer.newLine();
         }
-        writeIfAvailable(writer, ">quality", data.getAnnotation(CompoundQuality.class));
+
+        writeIfAvailable(writer, ">quality", data.getAnnotationOrNull(CompoundQuality.class));
         final RetentionTime retentionTime = data.getAnnotationOrNull(RetentionTime.class);
         if (retentionTime != null) {
             write(writer, ">rt", String.valueOf(retentionTime.getMiddleTime()) + "s");
@@ -68,8 +69,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
             }
         }
 
-        if (data.getAnnotation(Quantification.class,()->null)!=null)
-            writeIfAvailable(writer, ">quantification", data.getAnnotation(Quantification.class).toString());
+        writeIfAvailable(writer, ">quantification", data.getAnnotationOrNull(Quantification.class));
 
         //write original config to file
         if (data.hasAnnotation(MsFileConfig.class)) {
@@ -102,8 +102,8 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
             if (isMergedSpectrum) writer.write(">ms1merged");
             else writer.write(">ms1peaks");
             writer.newLine();
-            writeSpectraLevelComments(writer,spec);
-            Spectrums.writePeaks(writer,spec);
+            writeSpectraLevelComments(writer, spec);
+            Spectrums.writePeaks(writer, spec);
             writer.newLine();
         }
     }
@@ -117,15 +117,15 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
                 writer.write(spec.getCollisionEnergy().toString());
             }
             writer.newLine();
-            writeSpectraLevelComments(writer,spec);
-            Spectrums.writePeaks(writer,spec);
+            writeSpectraLevelComments(writer, spec);
+            Spectrums.writePeaks(writer, spec);
             writer.newLine();
         }
     }
 
 
-    private void writeSpectraLevelComments(BufferedWriter writer, Spectrum spec) throws IOException{
-        if (spec instanceof AnnotatedSpectrum){
+    private void writeSpectraLevelComments(BufferedWriter writer, Spectrum spec) throws IOException {
+        if (spec instanceof AnnotatedSpectrum) {
             final AdditionalFields fields = (AdditionalFields) ((AnnotatedSpectrum) spec).getAnnotationOrNull(AdditionalFields.class);
             if (fields != null) {
                 for (Map.Entry<String, String> e : fields.entrySet()) {
