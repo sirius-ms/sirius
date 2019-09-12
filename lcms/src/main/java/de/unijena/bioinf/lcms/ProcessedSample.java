@@ -127,7 +127,7 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
         Quality best = Quality.UNUSABLE;
         for (Class<DataAnnotation> a : annotations) {
             if (a.isAssignableFrom(QualityAnnotation.class)) {
-                QualityAnnotation ano = (QualityAnnotation)getAnnotation(a);
+                QualityAnnotation ano = (QualityAnnotation) getAnnotationOrThrow(a);
                 if (ano.getQuality().betterThan(best))
                     best = ano.getQuality();
             }
@@ -138,7 +138,7 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
         Quality best = Quality.GOOD;
         for (Class<DataAnnotation> a : annotations) {
             if (a.isAssignableFrom(QualityAnnotation.class)) {
-                QualityAnnotation ano = (QualityAnnotation)getAnnotation(a);
+                QualityAnnotation ano = (QualityAnnotation) getAnnotationOrThrow(a);
                 if (best.betterThan(ano.getQuality()))
                     best = ano.getQuality();
             }

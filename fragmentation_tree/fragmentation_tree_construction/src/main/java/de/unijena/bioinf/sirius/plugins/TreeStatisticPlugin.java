@@ -53,7 +53,7 @@ public class TreeStatisticPlugin extends SiriusPlugin {
     }
 
     private TreeStatistics makeTreeStatistics(ProcessedInput input, FGraph graph, FTree tree) {
-        final RememberNumberOfAnnotatablePeaks x = graph.getAnnotation(RememberNumberOfAnnotatablePeaks.class);
+        final RememberNumberOfAnnotatablePeaks x = graph.getAnnotationOrThrow(RememberNumberOfAnnotatablePeaks.class);
         double treeIntensity = 0d;
         final double baseIntensity = x.baseIntensity;
         final FragmentAnnotation<AnnotatedPeak> ano = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);

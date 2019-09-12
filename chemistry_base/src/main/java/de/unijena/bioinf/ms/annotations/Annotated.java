@@ -8,6 +8,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -34,35 +35,37 @@ public interface Annotated<A extends DataAnnotation> {
      */
     @NotNull
     default <T extends A> T getAnnotationOrThrow(Class<T> klass) {
-        return getAnnotationOrThrow(klass, new NullPointerException("No annotation for key: " + klass.getName()));
+        return getAnnotationOrThrow(klass, () -> new NullPointerException("No annotation for key: " + klass.getName()));
     }
 
     /**
-     * @param ex exception to throw if key does not exist
+     * @param exceptionSupplier exception to throw if key does not exist
      * @return annotation value for the given class/key
      * @throws RuntimeException of your choice (@param ex)
      */
     @NotNull
-    default <T extends A> T getAnnotationOrThrow(Class<T> klass, RuntimeException ex) {
-        final T val = getAnnotation(klass);
-        if (val == null) throw ex;
-        else return val;
+    default <T extends A> T getAnnotationOrThrow(Class<T> klass, Supplier<? extends RuntimeException> exceptionSupplier) {
+        return getAnnotation(klass).orElseThrow(exceptionSupplier);
     }
 
     /**
      * @return annotation value for the given class/key or null
      */
-    default <T extends A> T getAnnotation(Class<T> klass) {
+    default <T extends A> T getAnnotationOrNull(@NotNull Class<T> klass) {
         return (T) annotations().map.get(klass);
     }
 
     /**
      * @return annotation value for the given class/key or the given default value
      */
-    default <T extends A> T getAnnotation(Class<T> klass, @NotNull  Supplier<T> defaultValueSupplier) {
-        final T val = getAnnotation(klass);
-        if (val == null) return defaultValueSupplier.get();
-        else return val;
+    default <T extends A> T getAnnotation(@NotNull Class<T> klass, @NotNull Supplier<T> defaultValueSupplier) {
+        return getAnnotation(klass).orElseGet(defaultValueSupplier);
+    }
+
+    default <T extends A> Optional<T> getAnnotation(@NotNull Class<T> klass) {
+        final T val = getAnnotationOrNull(klass);
+        if (val == null) return Optional.empty();
+        else return Optional.of(val);
     }
 
     /**
@@ -73,6 +76,7 @@ public interface Annotated<A extends DataAnnotation> {
      *
      * TODO: only Ms2Experiment has "default" annotations. So this method should removed
      */
+    @Deprecated
     default <T extends A> T getAnnotationOrDefault(Class<T> klass) {
         return getAnnotation(klass, () -> annotations().autoInstanceSupplier(klass));
     }
@@ -86,16 +90,15 @@ public interface Annotated<A extends DataAnnotation> {
 
     /**
      * Set the annotation with the given key
-     *
-     * TODO: cannot set this value to null, due to ConcurrentHashMap =/ We might want to build a workaround for that!
+     * Setting the value to null will remove the annotation (the key-value-pair from the map)
      *
      *
      * @return true if there was no previous value for this annotation
      */
     default <T extends A> boolean setAnnotation(Class<T> klass, T value) {
-        if (value==null) {
-            return annotations().map.remove(klass)!=null;
-        }
+        if (value == null)
+            return removeAnnotation(klass) != null;
+
         final T val = (T) annotations().map.put((Class<A>) klass, value);
         fireAnnotationChange(val, value);
         return val != null;
@@ -141,7 +144,7 @@ public interface Annotated<A extends DataAnnotation> {
      * @return the value associated with this key or null if there is no value for this key
      */
 
-    default <T extends A> T clearAnnotation(Class<T> klass) {
+    default <T extends A> T removeAnnotation(Class<T> klass) {
         return (T) fireAnnotationChange(annotations().map.remove(klass), null);
     }
 
@@ -151,9 +154,10 @@ public interface Annotated<A extends DataAnnotation> {
     default void clearAnnotations() {
         final Iterator<Class<A>> it = annotations().iterator();
         while (it.hasNext()) {
-            final A old = getAnnotation(it.next());
-            it.remove();
-            fireAnnotationChange(old, null);
+            getAnnotation(it.next()).ifPresent(old -> {
+                it.remove();
+                fireAnnotationChange(old, null);
+            });
         }
     }
 

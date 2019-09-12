@@ -10,6 +10,7 @@ import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class PassatuttoSerializer implements ComponentSerializer<FormulaResultId, FormulaResult,Decoy> {
 
@@ -19,7 +20,8 @@ public class PassatuttoSerializer implements ComponentSerializer<FormulaResultId
     }
 
     @Override
-    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, Decoy decoy) throws IOException {
+    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, Optional<Decoy> optDecoy) throws IOException {
+        final Decoy decoy = optDecoy.orElseThrow(() -> new RuntimeException("No decoy data found to write for ID: " + id));
         writer.textFile("decoys/" + id.fileName(".tsv"), (bw)-> {
             if (decoy.getDecoyTree() != null) {
                 new AnnotatedSpectrumWriter(AnnotatedSpectrumWriter.Fields.MZ, AnnotatedSpectrumWriter.Fields.REL_INTENSITY, AnnotatedSpectrumWriter.Fields.FORMULA, AnnotatedSpectrumWriter.Fields.ION).write(bw, decoy.getDecoyTree());

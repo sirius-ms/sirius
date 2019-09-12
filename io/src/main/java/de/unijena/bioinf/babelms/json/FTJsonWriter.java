@@ -80,7 +80,7 @@ public class FTJsonWriter {
         for (Class<DataAnnotation> anot : tree.annotations()) {
             Descriptor<DataAnnotation> d = registry.get(FTree.class, anot);
             if (d != null) {
-                d.write(JSON, ano, tree.getAnnotation(anot));
+                d.write(JSON, ano, tree.getAnnotationOrThrow(anot));
             } else {
                 hardCodedAnnotations(JSON, ano, tree);
             }
