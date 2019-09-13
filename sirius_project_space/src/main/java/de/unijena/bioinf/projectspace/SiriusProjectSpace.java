@@ -13,12 +13,14 @@ import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,6 +37,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     private final ConcurrentHashMap<Class<? extends ProjectSpaceProperty>, ProjectSpaceProperty> projectSpaceProperties;
 
     protected ConcurrentLinkedQueue<ProjectSpaceListener> projectSpaceListeners;
+    protected ConcurrentLinkedQueue<ContainerListener> compoundListeners, formulaResultListener;
 
     protected SiriusProjectSpace(ProjectSpaceConfiguration configuration, File root) {
         this.configuration = configuration;
@@ -43,10 +46,19 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         this.compoundCounter = new AtomicInteger(-1);
         this.projectSpaceListeners = new ConcurrentLinkedQueue<>();
         this.projectSpaceProperties = new ConcurrentHashMap<>();
+        this.compoundListeners = new ConcurrentLinkedQueue<>();
+        this.formulaResultListener = new ConcurrentLinkedQueue<>();
     }
 
     public void addProjectSpaceListener(ProjectSpaceListener listener) {
         projectSpaceListeners.add(listener);
+    }
+
+    public ContainerListener.PartiallyListeningFluentBuilder<CompoundContainerId,CompoundContainer> defineCompoundListener() {
+        return new ContainerListener.PartiallyListeningFluentBuilder<>(compoundListeners);
+    }
+    public ContainerListener.PartiallyListeningFluentBuilder<FormulaResultId,FormulaResult> defineFormulaResultListener() {
+        return new ContainerListener.PartiallyListeningFluentBuilder<>(formulaResultListener);
     }
 
     protected void fireProjectSpaceChange(ProjectSpaceEvent event) {
@@ -109,6 +121,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             throw new IllegalArgumentException("Compound is not part of the project Space! ID: " + container.getId());
 
         final FormulaResultId fid = new FormulaResultId(container.getId(), tree.getRoot().getFormula(), tree.getAnnotationOrThrow(PrecursorIonType.class));
+        fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.CREATED, container.getId(), container, Collections.emptySet()));
         if (container.contains(fid))
             return Optional.empty(); //todo how to handle this?
 
@@ -125,6 +138,10 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         //modify input container
         container.getResults().add(r.getId());
         return Optional.of(r);
+    }
+
+    private void fireContainerListeners(ConcurrentLinkedQueue<ContainerListener> formulaResultListener, ContainerEvent<CompoundContainerId, CompoundContainer> event) {
+        formulaResultListener.forEach(x->x.containerChanged(event));
     }
 
     protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex) {
@@ -200,6 +217,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         parentId.containerLock.lock();
         try {
             updateContainer(FormulaResult.class, result, components);
+            fireContainerListeners(formulaResultListener, new ContainerEvent(ContainerEvent.EventType.UPDATED, result.getId(),result, new HashSet<>(Arrays.asList(components))));
         } finally {
             parentId.containerLock.unlock();
         }
@@ -209,6 +227,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         CompoundContainerId parentId = resultId.getParentId();
         parentId.containerLock.lock();
         try {
+            fireContainerListeners(formulaResultListener, new ContainerEvent(ContainerEvent.EventType.DELETED, resultId,null, Collections.emptySet()));
             deleteContainer(FormulaResult.class, resultId);
         } finally {
             parentId.containerLock.unlock();
@@ -230,6 +249,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         id.containerLock.lock();
         try {
             updateContainer(CompoundContainer.class, result, components);
+            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.UPDATED, result.getId(),result, new HashSet<>(Arrays.asList(components))));
         } finally {
             id.containerLock.unlock();
         }
@@ -238,6 +258,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public void deleteCompound(CompoundContainerId resultId) throws IOException {
         resultId.containerLock.lock();
         try {
+            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.DELETED, resultId,null, Collections.emptySet()));
             deleteContainer(CompoundContainer.class, resultId);
             fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
         } finally {
