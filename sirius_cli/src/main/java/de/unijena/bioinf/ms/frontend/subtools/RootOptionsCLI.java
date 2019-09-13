@@ -7,11 +7,13 @@ import de.unijena.bioinf.babelms.MS2ExpInputIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.MultiSourceIterator;
 import de.unijena.bioinf.babelms.ProjectSpaceManager;
+import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.CanopusSerializer;
 import de.unijena.bioinf.projectspace.fingerid.FingerblastResultSerializer;
@@ -306,6 +308,8 @@ public class RootOptionsCLI implements RootOptions {
         config.registerContainer(FormulaResult.class, new FormulaResultSerializer());
         config.registerComponent(FormulaResult.class, FTree.class, new TreeSerializer());
         config.registerComponent(FormulaResult.class, FormulaScoring.class, new FormulaScoringSerializer());
+        // pssatuto components
+        config.registerComponent(FormulaResult.class, Decoy.class, new PassatuttoSerializer());
         //fingerid components
         config.registerComponent(FormulaResult.class, FingerprintResult.class, new FingerprintSerializer());
         config.registerComponent(FormulaResult.class, FingerblastResult.class, new FingerblastResultSerializer());
