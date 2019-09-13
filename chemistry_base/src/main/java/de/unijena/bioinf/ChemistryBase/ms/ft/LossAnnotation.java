@@ -18,6 +18,7 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -46,10 +47,11 @@ public final class LossAnnotation<T extends DataAnnotation> {
         else return val;
     }
 
+    @Nullable
     public T get(Loss loss) {
         final T val = (T) (loss.getAnnotation(id));
         if (val==null && nullElement!=null) {
-            T o = nullElement.get();
+            T o = nullElement.get(); //@todo kai: This thing return null by default -> is this correct?
             loss.setAnnotation(id, capa, o);
             return o;
         } else return val;
