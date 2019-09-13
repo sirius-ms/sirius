@@ -1,13 +1,14 @@
 package de.unijena.bioinf.sirius;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.sirius.plugins.IsotopePatternInMs1Plugin;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -42,8 +43,11 @@ public class FTreeMetricsHelper {
 
     // TODO: we should solve that smarter... A fragment should know if it is the measured ion. Need another annotation for that
     private Fragment getMeasuredIonRoot(LossAnnotation<LossType> lossAno, Fragment root) {
-        if (root.isLeaf() || lossAno.get(root.getOutgoingEdge(0)).isRegular()) return root;
-        else return getMeasuredIonRoot(lossAno, root.getChildren(0));
+        if (root.isLeaf()) return root;
+        final @Nullable LossType ano = lossAno.get(root.getOutgoingEdge(0));
+        //@todo kai: how to handle null here?
+        if (ano != null && ano.isRegular()) return root;
+        return getMeasuredIonRoot(lossAno, root.getChildren(0));
     }
 
     public double getBeautificationPenalty() {
@@ -87,6 +91,7 @@ public class FTreeMetricsHelper {
             scores.add(new IsotopeScore(helper.getIsotopeMs1Score()));
             scores.add(new TreeScore(helper.getTreeScore()));
         } catch (Throwable e) {
+            //todo remove debug stuff
             System.out.println("DEBUG: Something with this tree is wrong? Cannot calculate isotope score" + tree.getRoot().getFormula().toString());
             e.printStackTrace();
         }
