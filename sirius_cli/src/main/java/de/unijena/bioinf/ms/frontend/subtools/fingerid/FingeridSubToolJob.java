@@ -14,6 +14,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.fingerid.CSIClientData;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -60,6 +61,11 @@ public class FingeridSubToolJob extends InstanceJob {
         List<FingerIdResult> result = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
 
         final Map<FTree, FormulaResult> formulaResultsMap = formulaResults.stream().collect(Collectors.toMap(r -> r.getCandidate().getAnnotationOrThrow(FTree.class), SScored::getCandidate));
+
+        // add CSIClientData to PS if it is not already there
+        if (inst.getProjectSpace().getProjectSpaceProperty(CSIClientData.class).isEmpty())
+            inst.getProjectSpace().setProjectSpaceProperty(CSIClientData.class, new CSIClientData(csi));
+
 
         // add new id results to projectspace and mal.
         final CompoundContainer ioC = inst.loadCompoundContainer();

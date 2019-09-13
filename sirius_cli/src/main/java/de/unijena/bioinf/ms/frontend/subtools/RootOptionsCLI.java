@@ -15,9 +15,7 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.projectspace.*;
-import de.unijena.bioinf.projectspace.fingerid.CanopusSerializer;
-import de.unijena.bioinf.projectspace.fingerid.FingerblastResultSerializer;
-import de.unijena.bioinf.projectspace.fingerid.FingerprintSerializer;
+import de.unijena.bioinf.projectspace.fingerid.*;
 import de.unijena.bioinf.projectspace.sirius.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -308,12 +306,14 @@ public class RootOptionsCLI implements RootOptions {
         config.registerContainer(FormulaResult.class, new FormulaResultSerializer());
         config.registerComponent(FormulaResult.class, FTree.class, new TreeSerializer());
         config.registerComponent(FormulaResult.class, FormulaScoring.class, new FormulaScoringSerializer());
-        // pssatuto components
+        //pssatuto components
         config.registerComponent(FormulaResult.class, Decoy.class, new PassatuttoSerializer());
         //fingerid components
+        config.defineProjectSpaceProperty(CSIClientData.class, new CsiClientSerializer());
         config.registerComponent(FormulaResult.class, FingerprintResult.class, new FingerprintSerializer());
         config.registerComponent(FormulaResult.class, FingerblastResult.class, new FingerblastResultSerializer());
         //canopus
+        config.defineProjectSpaceProperty(CanopusClientData.class, new CanopusClientSerializer());
         config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());
         return config;
     }
