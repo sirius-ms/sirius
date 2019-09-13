@@ -18,8 +18,8 @@ import java.util.List;
 
 public class PassatuttoSubToolJob extends InstanceJob {
     @Override
-    protected void computeAndAnnotateResult(@NotNull Instance expRes) throws Exception {
-        final List<? extends SScored<FormulaResult, ? extends FormulaScore>> intput = expRes.loadFormulaResults(
+    protected void computeAndAnnotateResult(@NotNull Instance inst) throws Exception {
+        final List<? extends SScored<FormulaResult, ? extends FormulaScore>> intput = inst.loadFormulaResults(
                 SiriusScore.class,
                 FormulaScoring.class, FTree.class);
         if (intput == null || intput.isEmpty())
@@ -27,11 +27,13 @@ public class PassatuttoSubToolJob extends InstanceJob {
 
         final FormulaResult best = intput.get(0).getCandidate();
         best.getAnnotation(FTree.class).ifPresent(tree -> {
-            // should be a CPU job?
             final Decoy decoyByRerootingTree = SiriusJobs.getGlobalJobManager().submitJob(
                     Passatutto.makePassatuttoJob(tree, tree.getAnnotationOrThrow(PrecursorIonType.class)))
                     .takeResult();
             best.setAnnotation(Decoy.class, decoyByRerootingTree);
         });
+
+        //write passatuto results
+        inst.getProjectSpace().updateFormulaResult(best, Decoy.class);
     }
 }
