@@ -12,6 +12,8 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.fingerid.CSIClientData;
+import de.unijena.bioinf.projectspace.fingerid.CanopusClientData;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,6 +53,11 @@ public class CanopusSubToolJob extends InstanceJob {
 
         jobs.forEach((k, v) -> k.setAnnotation(CanopusResult.class, v.takeResult()));
 
+        // write Canopus client data
+        if (inst.getProjectSpace().getProjectSpaceProperty(CanopusClientData.class).isEmpty())
+            inst.getProjectSpace().setProjectSpaceProperty(CanopusClientData.class, new CanopusClientData(ApplicationCore.CANOPUS));
+
+        // write canopus results
         for (FormulaResult r : res)
             inst.updateFormulaResult(r, CanopusResult.class);
     }
