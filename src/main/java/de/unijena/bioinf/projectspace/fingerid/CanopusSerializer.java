@@ -16,6 +16,7 @@ public class CanopusSerializer implements ComponentSerializer<FormulaResultId, F
     public CanopusResult read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         String loc = FingerIdLocations.CanopusResults.apply(id);
         if (!reader.exists(loc)) return null;
+
         final CanopusClientData canopusClientData = reader.getProjectSpaceProperty(CanopusClientData.class).orElseThrow();
         final double[] probabilities = reader.doubleVector(loc);
         final ProbabilityFingerprint probabilityFingerprint = new ProbabilityFingerprint(canopusClientData.maskedFingerprintVersion, probabilities);

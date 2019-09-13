@@ -14,6 +14,9 @@ import java.util.Optional;
 public class CsiClientSerializer implements ComponentSerializer<ProjectSpaceContainerId, ProjectSpaceContainer<ProjectSpaceContainerId>, CSIClientData> {
     @Override
     public CSIClientData read(ProjectReader reader, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container) throws IOException {
+        if (!reader.exists("csi_fingerid.csv"))
+            return null;
+
         final ArrayList<PredictionPerformance> performances = new ArrayList<>();
         final CdkFingerprintVersion V = CdkFingerprintVersion.getDefault();
         final MaskedFingerprintVersion.Builder builder = MaskedFingerprintVersion.buildMaskFor(V);

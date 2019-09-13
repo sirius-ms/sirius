@@ -3,11 +3,9 @@ package de.unijena.bioinf.projectspace.fingerid;
 import de.unijena.bioinf.ChemistryBase.fp.ClassyFireFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.projectspace.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -16,11 +14,13 @@ public class CanopusClientSerializer  implements ComponentSerializer<ProjectSpac
 
     @Override
     public CanopusClientData read(ProjectReader reader, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container) throws IOException {
-        final ArrayList<PredictionPerformance> performances = new ArrayList<>();
         final ClassyFireFingerprintVersion V = ClassyFireFingerprintVersion.getDefault();
         final MaskedFingerprintVersion.Builder builder = MaskedFingerprintVersion.buildMaskFor(V);
         builder.disableAll();
-        reader.table("canopus.csv", true, (row)->{
+        if (!reader.exists("canopus.csv"))
+            return null;
+
+        reader.table("canopus.csv", true, (row) -> {
             final int abs = Integer.parseInt(row[1]);
             builder.enable(abs);
         });

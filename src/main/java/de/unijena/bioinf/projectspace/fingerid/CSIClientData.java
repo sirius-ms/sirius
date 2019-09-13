@@ -3,6 +3,7 @@ package de.unijena.bioinf.projectspace.fingerid;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.projectspace.ProjectSpaceProperty;
 
 /**
@@ -13,6 +14,10 @@ public class CSIClientData implements ProjectSpaceProperty  {
     protected MaskedFingerprintVersion fingerprintVersion;
     protected CdkFingerprintVersion cdkFingerprintVersion;
     protected PredictionPerformance[] performances;
+
+    public CSIClientData(CSIPredictor preictor) {
+        this(preictor.getFingerprintVersion(), preictor.getPerformances());
+    }
 
     public CSIClientData(MaskedFingerprintVersion fingerprintVersion, PredictionPerformance[] performances) {
         this.fingerprintVersion = fingerprintVersion;
