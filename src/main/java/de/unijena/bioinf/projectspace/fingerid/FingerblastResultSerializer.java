@@ -18,15 +18,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.projectspace.fingerid.FingerIdLocations.FINGERBLAST;
+
 public class FingerblastResultSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FingerblastResult> {
 
     @Override
     public FingerblastResult read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
-        if (!reader.exists(FingerIdLocations.FingerBlastResults.apply(id)))
+        if (!reader.exists(FINGERBLAST.relFilePath(id)))
             return null;
+
         final Pattern dblinkPat = Pattern.compile("^.+?: \\(.+\\)$");
         final ArrayList<Scored<CompoundCandidate>> results = new ArrayList<>();
-        reader.table(FingerIdLocations.FingerBlastResults.apply(id), true, (row) -> {
+        reader.table(FINGERBLAST.relFilePath(id), true, (row) -> {
             final double score = Double.parseDouble(row[4]);
             final InChI inchi = new InChI(row[0], row[1]);
             final int rank = Integer.parseInt(row[3]);
@@ -55,7 +58,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
             }
             candidate.setLinks(links.toArray(DBLink[]::new));
             candidate.setBitset(bitset);
-            results.add(new Scored<CompoundCandidate>(candidate, score));
+            results.add(new Scored<>(candidate, score));
         });
         return new FingerblastResult(results);
     }
@@ -69,7 +72,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
         };
         final String[] row = header.clone();
         final int[] ranking = new int[]{0};
-        writer.table(FingerIdLocations.FingerBlastResults.apply(id), header, fingerblastResult.getResults().stream().map((hit) -> {
+        writer.table(FINGERBLAST.relFilePath(id), header, fingerblastResult.getResults().stream().map((hit) -> {
             CompoundCandidate c = hit.getCandidate();
             row[0] = c.getInchiKey2D();
             row[1] = c.getInchi().in2D;
@@ -87,6 +90,6 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
-        writer.delete(FingerIdLocations.FingerBlastResults.apply(id));
+        writer.delete(FINGERBLAST.relFilePath(id));
     }
 }

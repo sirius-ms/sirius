@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
 
+import static de.unijena.bioinf.projectspace.fingerid.FingerIdLocations.CANOPUS_CLIENT_DATA;
+
 public class CanopusClientSerializer  implements ComponentSerializer<ProjectSpaceContainerId, ProjectSpaceContainer<ProjectSpaceContainerId>, CanopusClientData> {
 
 
@@ -17,10 +19,10 @@ public class CanopusClientSerializer  implements ComponentSerializer<ProjectSpac
         final ClassyFireFingerprintVersion V = ClassyFireFingerprintVersion.getDefault();
         final MaskedFingerprintVersion.Builder builder = MaskedFingerprintVersion.buildMaskFor(V);
         builder.disableAll();
-        if (!reader.exists("canopus.csv"))
+        if (!reader.exists(CANOPUS_CLIENT_DATA))
             return null;
 
-        reader.table("canopus.csv", true, (row) -> {
+        reader.table(CANOPUS_CLIENT_DATA, true, (row) -> {
             final int abs = Integer.parseInt(row[1]);
             builder.enable(abs);
         });
@@ -35,7 +37,7 @@ public class CanopusClientSerializer  implements ComponentSerializer<ProjectSpac
 
         final String[] header = new String[]{"relativeIndex", "absoluteIndex", "id", "name", "parentId", "description"};
         final String[] row = header.clone();
-        writer.table("csi_fingerid.csv", header, Arrays.stream(canopusClientData.getFingerprintVersion().allowedIndizes()).mapToObj(absoluteIndex -> {
+        writer.table(CANOPUS_CLIENT_DATA, header, Arrays.stream(canopusClientData.getFingerprintVersion().allowedIndizes()).mapToObj(absoluteIndex -> {
             final ClassyfireProperty property = (ClassyfireProperty) canopusClientData.getFingerprintVersion().getMolecularProperty(absoluteIndex);
             final int relativeIndex = canopusClientData.getFingerprintVersion().getRelativeIndexOf(absoluteIndex);
             row[0] = String.valueOf(relativeIndex);
@@ -50,6 +52,6 @@ public class CanopusClientSerializer  implements ComponentSerializer<ProjectSpac
 
     @Override
     public void delete(ProjectWriter writer, ProjectSpaceContainerId id) throws IOException {
-        writer.delete("canopus.csv");
+        writer.delete(CANOPUS_CLIENT_DATA);
     }
 }

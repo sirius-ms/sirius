@@ -11,17 +11,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
 
+import static de.unijena.bioinf.projectspace.fingerid.FingerIdLocations.FINGERID_CLIENT_DATA;
+
 public class CsiClientSerializer implements ComponentSerializer<ProjectSpaceContainerId, ProjectSpaceContainer<ProjectSpaceContainerId>, CSIClientData> {
     @Override
     public CSIClientData read(ProjectReader reader, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container) throws IOException {
-        if (!reader.exists("csi_fingerid.csv"))
+        if (!reader.exists(FINGERID_CLIENT_DATA))
             return null;
 
         final ArrayList<PredictionPerformance> performances = new ArrayList<>();
         final CdkFingerprintVersion V = CdkFingerprintVersion.getDefault();
         final MaskedFingerprintVersion.Builder builder = MaskedFingerprintVersion.buildMaskFor(V);
         builder.disableAll();
-        reader.table("csi_fingerid.csv", true, (row)->{
+        reader.table(FINGERID_CLIENT_DATA, true, (row)->{
             final int abs = Integer.parseInt(row[1]);
             builder.enable(abs);
             final PredictionPerformance performance = new PredictionPerformance(
@@ -40,7 +42,7 @@ public class CsiClientSerializer implements ComponentSerializer<ProjectSpaceCont
 
         final String[] header = new String[]{"relativeIndex", "absoluteIndex", "description", "TP", "FP", "TN", "FN", "Acc", "MCC", "F1", "Recall", "Precision", "Count"};
         final String[] row = header.clone();
-        writer.table("csi_fingerid.csv", header, Arrays.stream(clientData.fingerprintVersion.allowedIndizes()).mapToObj(absoluteIndex -> {
+        writer.table(FINGERID_CLIENT_DATA, header, Arrays.stream(clientData.fingerprintVersion.allowedIndizes()).mapToObj(absoluteIndex -> {
             final MolecularProperty property = clientData.fingerprintVersion.getMolecularProperty(absoluteIndex);
             final int relativeIndex = clientData.fingerprintVersion.getRelativeIndexOf(absoluteIndex);
             final String name = property.getDescription().replace('\t',' ');
@@ -64,6 +66,6 @@ public class CsiClientSerializer implements ComponentSerializer<ProjectSpaceCont
 
     @Override
     public void delete(ProjectWriter writer, ProjectSpaceContainerId id) throws IOException {
-        writer.delete("csi_fingerid.csv");
+        writer.delete(FINGERID_CLIENT_DATA);
     }
 }
