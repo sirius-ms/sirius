@@ -1,9 +1,5 @@
 package de.unijena.bioinf.ms.frontend.core;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 07.10.16.
- */
+
 
 import de.unijena.bioinf.babelms.utils.Base64;
 import org.slf4j.LoggerFactory;
@@ -17,9 +13,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.util.Properties;
-
-//import sun.misc.BASE64Decoder;
-//import sun.misc.BASE64Encoder;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)

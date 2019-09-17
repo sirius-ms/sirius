@@ -15,13 +15,9 @@ import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.babelms.projectspace.ExperimentDirectory;
-import de.unijena.bioinf.babelms.projectspace.FingerIdLocations;
-import de.unijena.bioinf.babelms.projectspace.SiriusLocations;
 
+import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.IdentificationResults;
-import de.unijena.bioinf.sirius.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import uk.ac.ebi.pride.jmztab2.model.MZTabConstants;
