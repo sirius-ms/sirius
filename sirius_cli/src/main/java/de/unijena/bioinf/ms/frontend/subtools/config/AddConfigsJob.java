@@ -53,7 +53,7 @@ public class AddConfigsJob extends InstanceJob {
         }
 
 
-        inst.updateExperiment();
+        inst.updateExperiment(); //todo may be not needed if wo do not write cofigs to this ms file
         inst.updateConfig();
     }
 }
