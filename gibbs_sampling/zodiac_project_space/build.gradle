@@ -1,4 +1,0 @@
-dependencies {
-    compile project(":gibbs_sampling")
-    compile project(":sirius_project_space")
-}

@@ -12,6 +12,8 @@ import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import java.io.IOException;
 import java.util.Optional;
 
+import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.DECOYS;
+
 public class PassatuttoSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, Decoy> {
 
     @Override
@@ -22,7 +24,7 @@ public class PassatuttoSerializer implements ComponentSerializer<FormulaResultId
     @Override
     public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, Optional<Decoy> optDecoy) throws IOException {
         final Decoy decoy = optDecoy.orElseThrow(() -> new RuntimeException("No decoy data found to write for ID: " + id));
-        writer.textFile("decoys/" + id.fileName(".tsv"), (bw) -> {
+        writer.textFile(DECOYS.relFilePath(id), (bw) -> {
             if (decoy.getDecoyTree() != null) {
                 new AnnotatedSpectrumWriter(AnnotatedSpectrumWriter.Fields.MZ, AnnotatedSpectrumWriter.Fields.REL_INTENSITY, AnnotatedSpectrumWriter.Fields.FORMULA, AnnotatedSpectrumWriter.Fields.ION).write(bw, decoy.getDecoyTree());
             } else {
@@ -43,6 +45,6 @@ public class PassatuttoSerializer implements ComponentSerializer<FormulaResultId
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
-        writer.delete("decoys/" + id.fileName(".tsv"));
+        writer.delete(DECOYS.relFilePath(id));
     }
 }

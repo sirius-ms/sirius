@@ -7,6 +7,8 @@ import de.unijena.bioinf.projectspace.*;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
+import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.TREES;
+
 public class CompoundContainerSerializer implements ContainerSerializer<CompoundContainerId, CompoundContainer> {
 
     @Override
@@ -24,10 +26,10 @@ public class CompoundContainerSerializer implements ContainerSerializer<Compound
     public CompoundContainer readFromProjectSpace(ProjectReader reader, ProjectReader.ForContainer<CompoundContainerId, CompoundContainer> containerSerializer, CompoundContainerId id) throws IOException {
         return reader.inDirectory(id.getDirectoryName(), ()->{
             final CompoundContainer container = new CompoundContainer(id);
-            if (reader.exists("trees")) {
-                reader.inDirectory("trees", () -> {
-                    for (String file : reader.list("*.json")) {
-                        final String name = file.substring(0, file.length() - ".json".length());
+            if (reader.exists(TREES.relDir())) {
+                reader.inDirectory(TREES.relDir(), () -> {
+                    for (String file : reader.list("*" + TREES.fileExtDot())) {
+                        final String name = file.substring(0, file.length() - TREES.fileExtDot().length());
                         String[] pt = name.split("_");
                         container.results.add(new FormulaResultId(id, MolecularFormula.parseOrThrow(pt[0]), PrecursorIonType.fromString(pt[1])));
                     }
