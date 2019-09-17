@@ -106,6 +106,8 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
     private class FilenameFormat implements FormatString {
         @Override
         public String format(Ms2Experiment experimentResult) {
+            if (experimentResult.getSource() == null)
+                return "unknown";
             return simplifyURL(experimentResult.getSource().getFile());
         }
     }
