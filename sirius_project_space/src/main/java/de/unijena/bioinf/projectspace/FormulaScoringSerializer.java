@@ -10,10 +10,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.SCORES;
+
 public class FormulaScoringSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FormulaScoring> {
     @Override
     public FormulaScoring read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
-        final Map<String,String> kv = reader.keyValues(SiriusLocations.SCORES.apply(id));
+        final Map<String,String> kv = reader.keyValues(SCORES.relFilePath(id));
         final FormulaScoring scoring = new FormulaScoring();
         for (String key : kv.keySet()) {
             final Class<? extends FormulaScore> s = (Class<? extends FormulaScore>) Score.resolve(key);
@@ -30,11 +32,11 @@ public class FormulaScoringSerializer implements ComponentSerializer<FormulaResu
         for (FormulaScore score : scoring) {
             values.put(Score.simplify(score.getClass()), String.valueOf(score.score()));
         }
-        writer.keyValues(SiriusLocations.SCORES.apply(id), values);
+        writer.keyValues(SCORES.relFilePath(id), values);
     }
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
-        writer.delete(SiriusLocations.SCORES.apply(id));
+        writer.delete(SCORES.relFilePath(id));
     }
 }
