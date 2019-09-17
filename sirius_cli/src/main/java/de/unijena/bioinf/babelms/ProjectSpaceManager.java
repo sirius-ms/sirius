@@ -44,30 +44,24 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     }
 
 
-    //todo lets write the experiment if the configuration merging is done (Add configs jobs)
-    // todo just to save soe io
-    /*@NotNull
-    public CompoundContainerId newUniqueCompoundId(Ms2Experiment inputExperiment) {
+    @NotNull
+    public CompoundContainer newCompoundWithUniqueId(Ms2Experiment inputExperiment) {
         final String name = nameFormatter().apply(inputExperiment);
         try {
-            final CompoundContainerId id = projectSpace().newUniqueCompoundId(name, (idx) -> idx + "_" + name).orElseThrow(()->new RuntimeException("Could not create an project space ID for the Instance" ));
-            final CompoundContainer container = projectSpace().getCompound(id);
+            final CompoundContainer container = projectSpace().newCompoundWithUniqueId(name, (idx) -> idx + "_" + name).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
             container.setAnnotation(Ms2Experiment.class, inputExperiment);
             projectSpace().updateCompound(container, Ms2Experiment.class);
-            return id;
+            return container;
         } catch (IOException e) {
             LoggerFactory.getLogger(ProjectSpaceManager.class).error("Could not create an project space ID for the Instance", e);
             throw new RuntimeException("Could not create an project space ID for the Instance");
         }
-    }*/
+    }
 
     @NotNull
     public CompoundContainerId newUniqueCompoundId(Ms2Experiment inputExperient) {
-        final String name = nameFormatter().apply(inputExperient);
-        return projectSpace().newUniqueCompoundId(name, (idx) -> idx + "_" + name)
-                .orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
+        return newCompoundWithUniqueId(inputExperient).getId();
     }
-
 
     @NotNull
     @Override
