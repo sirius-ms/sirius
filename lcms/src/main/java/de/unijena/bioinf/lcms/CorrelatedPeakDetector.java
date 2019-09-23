@@ -102,6 +102,9 @@ public class CorrelatedPeakDetector {
         // 1. detect isotopes of main feature
         detectIsotopesAndSetChargeStateFor(sample, ion, alreadyAnnotatedMzs);
 
+        if (ion.getChargeState() > 1)
+            System.out.println("========> Multiple charged Ion detected! Ion = " + ion.toString());
+
         // do I am an isotope peak myself?
         if (doIAmAnIsotope(sample, ion, alreadyAnnotatedMzs)) {
             return false;
@@ -232,7 +235,7 @@ public class CorrelatedPeakDetector {
 
     public void detectIsotopesAndSetChargeStateFor(ProcessedSample sample, IonGroup ion, TDoubleArrayList alreadyAnnotatedMzs) {
         final Scan ms1Scan = sample.run.getScanByNumber(ion.getSegment().getApexScanNumber()).get();
-        // try different chare states
+        // try different charge states
         List<CorrelationGroup> bestPattern = new ArrayList<>();
         int bestChargeState = 0;
         double bestScore = Double.NEGATIVE_INFINITY;
