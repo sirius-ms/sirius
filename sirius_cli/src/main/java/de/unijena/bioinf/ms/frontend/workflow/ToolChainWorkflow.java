@@ -2,10 +2,13 @@ package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.babelms.ProjectSpaceManager;
-import de.unijena.bioinf.ms.frontend.subtools.*;
+import de.unijena.bioinf.babelms.projectspace.mztab.MztabMExporter;
+import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
+import de.unijena.bioinf.ms.frontend.subtools.Instance;
+import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.ms.annotaions.RecomputeResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,17 +72,6 @@ public class ToolChainWorkflow implements Workflow {
                     iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(dataSetJob).awaitResult();
 
                     checkForCancellation();
-                    //todo we do this now directly in the jobs
-                    /*// writing each experiment to add results to projectSpace
-                    // for instance jobs this is done by the buffer
-                    iteratorSource.forEach(it -> {
-                        try {
-                            project.projectSpace().writeExperiment(it);
-                        } catch (IOException e) {
-                            LoggerFactory.getLogger(getClass()).error("Error writing instance: " + it.getExperiment().getAnnotation(MsFileSource.class));
-                        }
-                    });*/
-
                     instanceJobChain.clear();
                 } else {
                     throw new IllegalArgumentException("Illegal job Type submitted. Only InstanceJobs and DataSetJobs are allowed");
@@ -99,11 +91,11 @@ public class ToolChainWorkflow implements Workflow {
             checkForCancellation();
             try {
                 //remove recompute annotation since it should be cli only option
-                System.out.println("Summaries are currently disabled!");
+//                System.out.println("Summaries are currently disabled!");
 //                iteratorSource.forEach(it -> it.getExperiment().setAnnotation(RecomputeResults.class,null));
                 //use all experiments in workspace to create summaries
                 //todo write summaries
-//                project.writeSummaries(iteratorSource, (cur, max, mess) -> System.out.println((((((double) cur) / (double) max)) * 100d) + "% " + mess));
+                project.projectSpace().updateSummaries(new MztabMExporter());
                 project.projectSpace().close();
                 LOG.info("Project-Space successfully written!");
             } catch (IOException e) {
