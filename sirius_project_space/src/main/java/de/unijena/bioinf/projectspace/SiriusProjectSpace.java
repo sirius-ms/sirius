@@ -3,6 +3,7 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -10,17 +11,16 @@ import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -379,5 +379,19 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     public boolean containsCompoud(CompoundContainerId id) {
         return containsCompoud(id.getDirectoryName());
+    }
+
+    public void updateSummaries(Summarizer... summarizers) throws IOException {
+        Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
+        for (CompoundContainerId cid : ids.values()) {
+            Ms2Experiment ex = getCompound(cid, Ms2Experiment.class).getAnnotationOrThrow(Ms2Experiment.class);
+            //todo decide if Zodiac or Sirius?
+            List<SScored<FormulaResult, SiriusScore>> results = getFormulaResultsOrderedBy(cid, SiriusScore.class, annotations);
+            Arrays.stream(summarizers).forEach(sim -> sim.addCompound(ex, results));
+        }
+
+        //write summaries to project space
+        for (Summarizer summarizer : summarizers)
+            summarizer.writeToProjectSpace(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty));
     }
 }
