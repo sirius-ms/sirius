@@ -53,7 +53,6 @@ LibLinearImpl imp;
 
 
 
-
         utils.normalize_features(featureMatrix,scales);
 
 
@@ -138,7 +137,6 @@ LibLinearImpl imp;
 
           }
           write_features.write("\n");
-          write_features.close();
 
 
 
@@ -224,6 +222,7 @@ LibLinearImpl imp;
 
 
 
+        write_features.close();
 
 
         return trained;

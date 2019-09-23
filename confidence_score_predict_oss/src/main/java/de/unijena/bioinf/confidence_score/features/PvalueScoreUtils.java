@@ -237,19 +237,10 @@ return null;
     public double compute_pvalue_with_KDE(Scored<FingerprintCandidate>[] candidates,Scored<FingerprintCandidate>[] candidates_filtered, Scored<FingerprintCandidate> current){
 
         double biosize= candidates_filtered.length;
-        if(biosize==1)System.out.println("why 1: "+candidates.length);
         double pvalue=0;
 
         //remove best scoring hit from candidates (current)
 
-
-
-
-
-        double[] scored_array= new double[candidates.length-1];
-
-        if (scored_array.length < 5)
-            return 100;
 
         ArrayList<Double> tosortlist = new ArrayList<>();
 
@@ -262,6 +253,9 @@ return null;
                 dupe_counter+=1;
             }
         }
+        double[] scored_array= new double[tosortlist.size()];
+        if (scored_array.length < 5)
+            return 100;
 
         if(dupe_counter>=2)System.out.println("WARNING DUPLICATES");
         Collections.sort(tosortlist);

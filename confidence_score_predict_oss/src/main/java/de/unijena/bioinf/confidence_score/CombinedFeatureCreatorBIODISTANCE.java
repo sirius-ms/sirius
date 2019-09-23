@@ -42,7 +42,7 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
                 new DistanceFeatures(scored_array,scored_array,1),
                 new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array),
                  new LogPvalueFeatures(scored_array,scored_array),
-                 new LogPvalueFeatures(scored_array_covscore,scored_array_covscore_filtered),
+                 new LogPvalueFeatures(scored_array_covscore,scored_array_covscore),
                 new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore_filtered,scored_array[0],covscore),
                 new TreeFeatures(), new PredictionQualityFeatures(),
                 new TanimotoDistanceFeatures(scored_array,scored_array,1), new TanimotoToPredFeatures(scored_array,scored_array),
