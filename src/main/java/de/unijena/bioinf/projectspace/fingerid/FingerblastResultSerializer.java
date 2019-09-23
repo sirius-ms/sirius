@@ -35,7 +35,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
             final int rank = Integer.parseInt(row[3]);
             final String name = row[5], smiles = row[6];
             final double xlogp = row[7].isBlank() ? Double.NaN : Double.parseDouble(row[7]);
-            final PubmedLinks pubmedLinks = PubmedLinks.fromString(row[8]);
+//            final PubmedLinks pubmedLinks = PubmedLinks.fromString(row[8]); //todo @kai read or not read links?
             final FingerprintCandidate candidate = new FingerprintCandidate(inchi, null);
             candidate.setName(name);
             candidate.setXlogp(xlogp);
