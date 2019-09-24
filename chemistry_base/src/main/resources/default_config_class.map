@@ -29,4 +29,4 @@ experimentalMotifDb=de.unijena.bioinf.treemotifs.model.MotifDbFile
 RecomputeResults=de.unijena.bioinf.ms.annotaions.RecomputeResults
 FormulaResultThreshold=de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold
 UserFormulaResultRankingScore=de.unijena.bioinf.ms.frontend.subtools.fingerid.annotations.UserFormulaResultRankingScore
-FormulaResultRankingScore=de.unijena.bioinf.fingerid.annotations.FormulaResultRankingScore
+FormulaResultRankingScore=de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore

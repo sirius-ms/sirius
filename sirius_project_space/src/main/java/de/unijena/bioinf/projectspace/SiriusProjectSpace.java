@@ -9,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -54,10 +55,11 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         projectSpaceListeners.add(listener);
     }
 
-    public ContainerListener.PartiallyListeningFluentBuilder<CompoundContainerId,CompoundContainer> defineCompoundListener() {
+    public ContainerListener.PartiallyListeningFluentBuilder<CompoundContainerId, CompoundContainer> defineCompoundListener() {
         return new ContainerListener.PartiallyListeningFluentBuilder<>(compoundListeners);
     }
-    public ContainerListener.PartiallyListeningFluentBuilder<FormulaResultId,FormulaResult> defineFormulaResultListener() {
+
+    public ContainerListener.PartiallyListeningFluentBuilder<FormulaResultId, FormulaResult> defineFormulaResultListener() {
         return new ContainerListener.PartiallyListeningFluentBuilder<>(formulaResultListener);
     }
 
@@ -141,7 +143,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     private void fireContainerListeners(ConcurrentLinkedQueue<ContainerListener> formulaResultListener, ContainerEvent<CompoundContainerId, CompoundContainer> event) {
-        formulaResultListener.forEach(x->x.containerChanged(event));
+        formulaResultListener.forEach(x -> x.containerChanged(event));
     }
 
     protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex) {
@@ -217,7 +219,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         parentId.containerLock.lock();
         try {
             updateContainer(FormulaResult.class, result, components);
-            fireContainerListeners(formulaResultListener, new ContainerEvent(ContainerEvent.EventType.UPDATED, result.getId(),result, new HashSet<>(Arrays.asList(components))));
+            fireContainerListeners(formulaResultListener, new ContainerEvent(ContainerEvent.EventType.UPDATED, result.getId(), result, new HashSet<>(Arrays.asList(components))));
         } finally {
             parentId.containerLock.unlock();
         }
@@ -227,7 +229,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         CompoundContainerId parentId = resultId.getParentId();
         parentId.containerLock.lock();
         try {
-            fireContainerListeners(formulaResultListener, new ContainerEvent(ContainerEvent.EventType.DELETED, resultId,null, Collections.emptySet()));
+            fireContainerListeners(formulaResultListener, new ContainerEvent(ContainerEvent.EventType.DELETED, resultId, null, Collections.emptySet()));
             deleteContainer(FormulaResult.class, resultId);
         } finally {
             parentId.containerLock.unlock();
@@ -249,7 +251,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         id.containerLock.lock();
         try {
             updateContainer(CompoundContainer.class, result, components);
-            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.UPDATED, result.getId(),result, new HashSet<>(Arrays.asList(components))));
+            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.UPDATED, result.getId(), result, new HashSet<>(Arrays.asList(components))));
         } finally {
             id.containerLock.unlock();
         }
@@ -258,7 +260,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public void deleteCompound(CompoundContainerId resultId) throws IOException {
         resultId.containerLock.lock();
         try {
-            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.DELETED, resultId,null, Collections.emptySet()));
+            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.DELETED, resultId, null, Collections.emptySet()));
             deleteContainer(CompoundContainer.class, resultId);
             fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
         } finally {
@@ -384,14 +386,16 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public void updateSummaries(Summarizer... summarizers) throws IOException {
         Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
         for (CompoundContainerId cid : ids.values()) {
-            Ms2Experiment ex = getCompound(cid, Ms2Experiment.class).getAnnotationOrThrow(Ms2Experiment.class);
-            //todo decide if Zodiac or Sirius?
-            List<SScored<FormulaResult, SiriusScore>> results = getFormulaResultsOrderedBy(cid, SiriusScore.class, annotations);
-            Arrays.stream(summarizers).forEach(sim -> sim.addCompound(ex, results));
+            CompoundContainer c = getCompound(cid, Ms2Experiment.class);
+            Ms2Experiment ex = c.getAnnotationOrThrow(Ms2Experiment.class);
+            final Class<? extends FormulaScore> rankingScore = ex.getAnnotation(FormulaResultRankingScore.class).orElse(new FormulaResultRankingScore(SiriusScore.class)).value;
+            List<SScored<FormulaResult, SiriusScore>> results = getFormulaResultsOrderedBy(cid, rankingScore, annotations);
+            for (Summarizer sim : summarizers)
+                sim.addWriteCompoundSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), c, results);
         }
 
         //write summaries to project space
         for (Summarizer summarizer : summarizers)
-            summarizer.writeToProjectSpace(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty));
+            summarizer.writeProjectSpaceSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty));
     }
 }
