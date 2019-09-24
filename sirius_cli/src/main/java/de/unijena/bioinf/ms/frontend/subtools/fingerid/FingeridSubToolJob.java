@@ -5,7 +5,6 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.fingerid.*;
-import de.unijena.bioinf.fingerid.annotations.FormulaResultRankingScore;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
@@ -17,6 +16,7 @@ import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.fingerid.CSIClientData;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jetbrains.annotations.NotNull;
 

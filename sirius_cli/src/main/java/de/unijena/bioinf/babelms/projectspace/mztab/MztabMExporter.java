@@ -27,6 +27,7 @@ import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.Summarizer;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdLocations;
+import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -93,17 +94,8 @@ public class MztabMExporter implements Summarizer {
     }
 
     @Override
-    public void writeToProjectSpace(ProjectWriter writer) throws IOException {
-        writer.textFile(SummaryLocations.MZTAB_SUMMARY, this::write);
-    }
-
-    @Override
-    public Set<Class<? extends DataAnnotation>> requiredFormulaResultAnnotations() {
-        return new HashSet<>(Arrays.asList(FormulaScoring.class, FTree.class, FingerblastResult.class));
-    }
-
-    @Override
-    public void addCompound(@NotNull final Ms2Experiment exp, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) {
+    public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer c, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) throws IOException {
+        final @NotNull Ms2Experiment exp = c.getAnnotationOrThrow(Ms2Experiment.class);
         if (results != null && !results.isEmpty()) {
             FormulaResult bestHitSource = results.get(0).getCandidate();
             final FormulaScoring bestHitScores = bestHitSource.getAnnotationOrThrow(FormulaScoring.class);
@@ -177,6 +169,17 @@ public class MztabMExporter implements Summarizer {
             mztab.getMetadata().setMsRun(new ArrayList<>(pathToRun.values()));
         }
     }
+
+    @Override
+    public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
+        writer.textFile(SummaryLocations.MZTAB_SUMMARY, this::write);
+    }
+
+    @Override
+    public List<Class<? extends DataAnnotation>> requiredFormulaResultAnnotations() {
+        return Arrays.asList(FormulaScoring.class, FTree.class, FingerblastResult.class);
+    }
+
 
 
     private SmallMoleculeEvidence buildSiriusSMEItem(@NotNull final Ms2Experiment er, @NotNull final FormulaResult bestHitSource, @NotNull final SmallMoleculeFeature smfItem) {
