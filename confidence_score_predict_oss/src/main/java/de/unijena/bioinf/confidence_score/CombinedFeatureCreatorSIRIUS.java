@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.confidence_score.features.SIRIUSTreeScoreFeatures;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +22,7 @@ public class CombinedFeatureCreatorSIRIUS extends CombinedFeatureCreator{
     private int featureCount;
     private double[] computed_features;
 
-    public CombinedFeatureCreatorSIRIUS(List<IdentificationResult> idlist, Ms2Experiment exp) {
+    public CombinedFeatureCreatorSIRIUS(List<IdentificationResult<SiriusScore>> idlist, Ms2Experiment exp) {
 
         ArrayList<FeatureCreator> creators = new ArrayList<>(Arrays.asList(new SIRIUSTreeScoreFeatures(idlist,exp)
 
