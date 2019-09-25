@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
@@ -90,10 +90,10 @@ public class CSIFingerIDComputation {
         final IdentificationResultBean top = results.get(0);
         if (top.getResult().getResolvedTree().numberOfEdges() > 0)
             elements.add(top);
-        final double threshold = calculateThreshold(top.getSiriusScore());
+        final double threshold = calculateThreshold(top.getScore());
         for (int k = 1; k < results.size(); ++k) {
             IdentificationResultBean e = results.get(k);
-            if (e.getSiriusScore() < threshold) break;
+            if (e.getScore() < threshold) break;
             if (e.getResult().getResolvedTree().numberOfEdges() > 0)
                 elements.add(e);
         }

@@ -18,7 +18,7 @@
 
 package de.unijena.bioinf.ms.gui.sirius;
 
-import de.unijena.bioinf.sirius.ResultAnnotation;
+import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 
 public enum ComputingStatus implements ResultAnnotation {
 

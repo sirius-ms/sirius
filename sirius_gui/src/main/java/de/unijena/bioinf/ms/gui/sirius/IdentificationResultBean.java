@@ -13,7 +13,7 @@ import de.unijena.bioinf.ms.gui.fingerid.FingerIdResultBean;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.IdentificationResults;
-import de.unijena.bioinf.sirius.ResultAnnotation;
+import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 import de.unijena.bioinf.sirius.SiriusScore;
 
 import java.beans.PropertyChangeEvent;
