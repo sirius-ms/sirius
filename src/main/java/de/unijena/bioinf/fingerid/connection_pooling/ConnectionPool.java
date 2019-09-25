@@ -62,6 +62,8 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
     protected final ReentrantLock connectionLock;
     protected final AtomicInteger waitingThreads;
 
+    protected volatile long lastConnectionCheck;
+
     private final Set<Thread> threads = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     public ConnectionPool(Connection<T> connector, int capacity) {
@@ -75,6 +77,23 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
         this.noOpenConnections = connectionLock.newCondition();
         this.waitingThreads = new AtomicInteger(0);
         this.sharedCounter = new AtomicInteger(1);
+        this.lastConnectionCheck = System.currentTimeMillis();
+    }
+
+    /**
+     * if since the last time this method was called numberOfSeconds seconds are passed, close all idling connections.
+     */
+    public void testConnectionsAfter(int numberOfSeconds) throws IOException {
+        final long time = System.currentTimeMillis();
+        final long check = time - numberOfSeconds;
+        if (lastConnectionCheck < check) {
+            synchronized (this) { // prevent that closeAllIdlingConnections is called by many threads in parallel
+                if (lastConnectionCheck < time) {
+                    closeAllIdlingConnections();
+                    lastConnectionCheck = System.currentTimeMillis();
+                }
+            }
+        }
     }
 
     protected int getSize() {

@@ -2,12 +2,19 @@ package de.unijena.bioinf.fingerid.predictor_types;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.DefaultProperty;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.stream.Collectors;
+
+/**
+ * Defines default PredictorTypes that can be used for Structure prediction.
+ * Currently CSI_FINGERID is the ONLY valid option.
+* */
 
 public enum UserDefineablePredictorType {
     CSI_FINGERID(PredictorType.CSI_FINGERID_POSITIVE, PredictorType.CSI_FINGERID_NEGATIVE),//CSI for negative ionization
@@ -22,13 +29,27 @@ public enum UserDefineablePredictorType {
     }
 
     public PredictorType toPredictorType(@NotNull PrecursorIonType ion) {
-        return toPredictorType(ion.getIonization());
+        return toPredictorType(ion.getCharge());
     }
 
     public PredictorType toPredictorType(@NotNull Ionization ion) {
-        if (ion.getCharge() < 0)
+        return toPredictorType(ion.getCharge());
+    }
+
+    public PredictorType toPredictorType(final int charge) {
+        if (charge < 0)
             return negative;
-        return positive;
+        if (charge > 0)
+            return positive;
+        throw new IllegalArgumentException("Uncharged is not allowed!");
+    }
+
+    public boolean contains(@NotNull final PredictorType type) {
+        return positive == type || negative == type;
+    }
+
+    public EnumSet<PredictorType> asEnumSet() {
+        return EnumSet.of(positive, negative);
     }
 
     public static EnumSet<PredictorType> toPredictorTypes(@NotNull final PrecursorIonType ion, @NotNull UserDefineablePredictorType... types) {
