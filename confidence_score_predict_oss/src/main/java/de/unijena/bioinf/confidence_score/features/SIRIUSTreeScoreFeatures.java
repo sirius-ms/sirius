@@ -10,8 +10,9 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CommonLossEdgeScorer;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
+import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import org.openscience.cdk.config.Elements;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 
 import java.util.List;
 
@@ -20,10 +21,10 @@ import java.util.List;
  */
 public class SIRIUSTreeScoreFeatures implements FeatureCreator {
 
-    List<IdentificationResult> idlist;
+    List<IdentificationResult<SiriusScore>> idlist;
     Ms2Experiment exp;
 
-    public SIRIUSTreeScoreFeatures(List<IdentificationResult> idlist, Ms2Experiment exp){
+    public SIRIUSTreeScoreFeatures(List<IdentificationResult<SiriusScore>> idlist, Ms2Experiment exp){
         this.idlist=idlist;
         this.exp=exp;
     }
@@ -34,20 +35,23 @@ public class SIRIUSTreeScoreFeatures implements FeatureCreator {
 
     @Override
     public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
+        FTreeMetricsHelper metricsIdRes = new FTreeMetricsHelper(idresult.getTree());
+        FTreeMetricsHelper metrics0 = new FTreeMetricsHelper(idlist.get(0).getTree());
+        FTreeMetricsHelper metrics1 = new FTreeMetricsHelper(idlist.get(1).getTree());
+        FTreeMetricsHelper metrics2 = new FTreeMetricsHelper(idlist.get(2).getTree());
+
         double[] scores = new double[]{
-                idresult.getExplainedIntensityRatio(),
-
-
-        idresult.getIsotopeScore(),
-                Math.abs(idlist.get(0).getIsotopeScore()-idlist.get(1).getIsotopeScore()),
-        idresult.getExplainedPeaksRatio(),
-        idresult.getNumberOfExplainablePeaks(),
-        idresult.getNumOfExplainedPeaks(),
-        idresult.getTreeScore(),
-                Math.abs(idlist.get(0).getTreeScore()-idlist.get(1).getTreeScore()),
-                Math.abs(idlist.get(0).getTreeScore()-idlist.get(2).getTreeScore()),
-                Math.log(Math.abs(idlist.get(0).getTreeScore()-idlist.get(1).getTreeScore())),
-                Math.log(Math.abs(idlist.get(0).getTreeScore()-idlist.get(2).getTreeScore())),
+                metricsIdRes.getExplainedIntensityRatio(),
+                metricsIdRes.getIsotopeMs1Score(),
+                Math.abs(metrics0.getIsotopeMs1Score() - metrics1.getIsotopeMs1Score()),
+                metricsIdRes.getExplainedPeaksRatio(),
+                metricsIdRes.getNumberOfExplainablePeaks(),
+                metricsIdRes.getNumOfExplainedPeaks(),
+                metricsIdRes.getTreeScore(),
+                Math.abs(metrics0.getTreeScore() - metrics1.getTreeScore()),
+                Math.abs(metrics0.getTreeScore() - metrics2.getTreeScore()),
+                Math.log(Math.abs(metrics0.getTreeScore() - metrics1.getTreeScore())),
+                Math.log(Math.abs(metrics0.getTreeScore() - metrics2.getTreeScore())),
                 getRareElementCounter(),
                 idresult.getMolecularFormula().getMass(),
                 idresult.getTree().numberOfVertices(),
@@ -56,10 +60,9 @@ public class SIRIUSTreeScoreFeatures implements FeatureCreator {
                 commonLossCounter()
 
 
-
         };
 
-      //  System.out.println(scores.length+" - "+scores[0]+" - "+idresult.getMolecularFormula());
+        //  System.out.println(scores.length+" - "+scores[0]+" - "+idresult.getMolecularFormula());
 
         return scores;
     }
