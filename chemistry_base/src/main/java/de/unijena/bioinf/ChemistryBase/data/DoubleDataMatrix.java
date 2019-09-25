@@ -117,7 +117,7 @@ public class DoubleDataMatrix {
             } else {
                 rows = new TreeMap<String, double[]>();
                 String[] row = iter.next();
-                // parse Header
+                // parse HeaderBuilder
                 if (header.length == row.length) {
                     // first element in header is placeholder
                     colNames = new String[row.length-1];

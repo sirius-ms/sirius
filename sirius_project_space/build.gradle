@@ -1,0 +1,6 @@
+dependencies {
+    annotationProcessor project(':default_properties:processor')
+    compile project(':io')
+    compile project(':sirius_api')
+    compile group: 'net.lingala.zip4j', name: 'zip4j', version: '1.3.2'
+}

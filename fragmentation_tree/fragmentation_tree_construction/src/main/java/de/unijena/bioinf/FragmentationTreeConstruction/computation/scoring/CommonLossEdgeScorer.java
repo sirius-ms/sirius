@@ -20,12 +20,15 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedInput;
 import gnu.trove.decorator.TObjectDoubleMapDecorator;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.procedure.TObjectDoubleProcedure;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -96,7 +99,7 @@ public class CommonLossEdgeScorer implements LossScorer {
     public static CommonLossEdgeScorer getLossSizeCompensationForExpertList(LossSizeScorer lossSizeScorer, double compensation) {
         final CommonLossEdgeScorer scorer = new CommonLossEdgeScorer();
         for (String f : ales_list) {
-            final MolecularFormula m = MolecularFormula.parse(f);
+            final MolecularFormula m = MolecularFormula.parseOrThrow(f);
             scorer.addCommonLoss(m, -(lossSizeScorer.score(m) + lossSizeScorer.getNormalization()) * compensation);
         }
         return scorer;
@@ -108,7 +111,7 @@ public class CommonLossEdgeScorer implements LossScorer {
      */
     public CommonLossEdgeScorer addImplausibleLosses(double penalty) {
         for (String f : implausibleLosses) {
-            addCommonLoss(MolecularFormula.parse(f), penalty);
+            addCommonLoss(MolecularFormula.parseOrThrow(f), penalty);
         }
         return this;
     }
@@ -119,7 +122,7 @@ public class CommonLossEdgeScorer implements LossScorer {
 
 
     @Override
-    public Object prepare(ProcessedInput input) {
+    public Object prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
         getRecombinatedList();
         return null;
     }
@@ -190,7 +193,11 @@ public class CommonLossEdgeScorer implements LossScorer {
         clearLosses();
         while (iter.hasNext()) {
             final Map.Entry<String, G> entry = iter.next();
-            commonLosses.put(MolecularFormula.parse(entry.getKey()), document.getDouble(entry.getValue()));
+            try {
+                commonLosses.put(MolecularFormula.parse(entry.getKey()), document.getDouble(entry.getValue()));
+            } catch (UnknownElementException e) {
+                LoggerFactory.getLogger(CommonFragmentsScore.class).warn("Cannot parse Formula. Skipping!", e);
+            }
         }
         this.normalization = document.getDoubleFromDictionary(dictionary, "normalization");
         if (document.hasKeyInDictionary(dictionary, "recombinator"))

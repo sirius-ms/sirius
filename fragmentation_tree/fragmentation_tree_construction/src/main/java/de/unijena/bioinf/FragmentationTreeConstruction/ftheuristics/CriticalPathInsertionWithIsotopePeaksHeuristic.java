@@ -1,7 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 
 import java.util.*;
@@ -59,6 +58,7 @@ public class CriticalPathInsertionWithIsotopePeaksHeuristic extends CriticalPath
 
             final Fragment f = tree.addFragment(fragmentsByFormula.get(L.getSource().getFormula()), L.getTarget());
             f.getIncomingEdge().setWeight(L.getWeight());
+            f.setPeakId(L.getTarget().getPeakId());
             fragmentsByFormula.put(f.getFormula(), f);
             score += L.getWeight();
         }
@@ -81,8 +81,9 @@ public class CriticalPathInsertionWithIsotopePeaksHeuristic extends CriticalPath
                 for (int i=0;i<xs.size(); ++i) {
                     double weight = xs.get(i).getWeight();
                     score += weight;
-                    init = tree.addFragment(init, MolecularFormula.emptyFormula(), PrecursorIonType.unknown().getIonization());
+                    init = tree.addFragment(init, MolecularFormula.emptyFormula(), graph.getRoot().getIonization());
                     init.getIncomingEdge().setWeight(weight);
+                    init.setPeakId(xs.get(i).getTarget().getPeakId());
                 }
             }
         }

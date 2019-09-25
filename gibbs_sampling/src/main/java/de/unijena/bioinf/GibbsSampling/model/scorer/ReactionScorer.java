@@ -90,7 +90,7 @@ public class ReactionScorer implements EdgeScorer {
     public void clean() {
     }
 
-    public double[] normalization(Candidate[][] candidates) {
+    public double[] normalization(Candidate[][] candidates, double minimum_number_matched_peaks_losses) {
         return null;
     }
 }

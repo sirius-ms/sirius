@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,7 +34,7 @@ public class IsotopicDistributionJSONFile extends DistributionReader {
 
     public IsotopicDistribution read(Reader json) throws IOException {
         final IsotopicDistribution dist = new IsotopicDistribution(PeriodicTable.getInstance());
-        final BufferedReader reader = new BufferedReader(json);
+        final BufferedReader reader = FileUtils.ensureBuffering(json);
         final JsonParser jreader = new JsonParser();
         JsonObject jobj = jreader.parse(reader).getAsJsonObject();
         for (Map.Entry<String, JsonElement> entry : jobj.entrySet()) {

@@ -19,17 +19,19 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A Ms2Experiment is a MS/MS measurement of a *single* compound. If there are multiple compounds measured in your
  * spectrum, clean up and separate them into multiple Ms2Experiment instances, too!
  */
-public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotation> {
+public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotation>, DataAnnotation {
 
 
     URL getSource();
@@ -37,9 +39,10 @@ public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotat
     String getName();
 
     /**
+     * Either the ion/adduct type of the ion OR the charge.
      * @return the ionization type of the ion (not null)
      */
-    PrecursorIonType getPrecursorIonType();
+    @NotNull PrecursorIonType getPrecursorIonType();
 
 
     /**
@@ -88,6 +91,13 @@ public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotat
         if (!getPrecursorIonType().isIonizationUnknown() && getIonMass() > 0)
             getPrecursorIonType().precursorMassToNeutralMass(getIonMass());
         return 0;
+    }
+
+    /**
+     * @return either a mutable copy, or a reference to itself when already mutable. Use new MutableMs2Experiment to enforce a copy!
+     */
+    default MutableMs2Experiment mutate() {
+        return new MutableMs2Experiment(this);
     }
 
     /**

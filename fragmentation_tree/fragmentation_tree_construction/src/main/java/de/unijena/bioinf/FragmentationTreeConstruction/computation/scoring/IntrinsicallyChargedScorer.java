@@ -20,10 +20,9 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 
 /**
  * If the RDBE value of a molecule is a non-integer, the molecule have to be (instrinically) charged. This
@@ -39,7 +38,6 @@ public class IntrinsicallyChargedScorer implements DecompositionScorer {
 
     public IntrinsicallyChargedScorer(double penalty) {
         this.penalty = penalty;
-        final PeriodicTable table = PeriodicTable.getInstance();
     }
 
     @Override

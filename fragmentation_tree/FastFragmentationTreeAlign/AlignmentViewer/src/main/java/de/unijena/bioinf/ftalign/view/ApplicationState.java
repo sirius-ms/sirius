@@ -140,7 +140,7 @@ public class ApplicationState {
                 ++maxProgress;
             }
             for (File f : fptFiles) {
-                final BufferedReader reader = new BufferedReader(new FileReader(f));
+                final BufferedReader reader = FileUtils.ensureBuffering(new FileReader(f));
                 final BitSet bitset = new BitSet();
                 String line = reader.readLine();
                 for (int i = 0; i < line.length(); ++i) {
@@ -224,7 +224,7 @@ public class ApplicationState {
             final ISimpleChemObjectReader reader = readerFactory.createReader(in);
             if (reader==null) {
                 in.close();
-                final BufferedReader in2 = new BufferedReader(new FileReader(f));
+                final BufferedReader in2 = FileUtils.ensureBuffering(new FileReader(f));
                 final String line = in2.readLine();
                 if (line.startsWith("InChI")) {
                     final InChIGeneratorFactory factory = InChIGeneratorFactory.getInstance();

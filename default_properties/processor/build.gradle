@@ -1,0 +1,3 @@
+dependencies {
+    compile project(':default_properties:annotations')
+}
