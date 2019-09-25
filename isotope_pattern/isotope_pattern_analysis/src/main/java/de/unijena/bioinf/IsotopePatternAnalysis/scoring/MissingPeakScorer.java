@@ -14,7 +14,7 @@ public class MissingPeakScorer implements IsotopePatternScorer {
     }
 
     @Override
-    public void score(double[] scoreUptoKPeaks, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment, MeasurementProfile profile) {
+    public void score(double[] scoreUptoKPeaks, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment) {
         if (usedNormalization.getBase() != 1 || usedNormalization.getMode() != NormalizationMode.MAX) {
             theoreticalSpectrum = Spectrums.getNormalizedSpectrum(theoreticalSpectrum, Normalization.Max(1));
         }

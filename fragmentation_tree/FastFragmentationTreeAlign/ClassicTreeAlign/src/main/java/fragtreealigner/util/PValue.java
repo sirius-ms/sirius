@@ -52,7 +52,7 @@ public class PValue {
 
             //reading alignment file
 
-            BufferedReader file = new BufferedReader( new FileReader(path));
+            BufferedReader file = FileUtils.ensureBuffering( new FileReader(path));
 
             //Score, p-Value, sizeTree1, sizeTree2, numberOfMatchedLosses
 
@@ -98,7 +98,7 @@ public class PValue {
 
             //reading stats file
 
-            BufferedReader statsFile = new BufferedReader(new FileReader(statsFilePath));
+            BufferedReader statsFile = FileUtils.ensureBuffering(new FileReader(statsFilePath));
 
             //filename, loc, scale, pValue, length(values)
 

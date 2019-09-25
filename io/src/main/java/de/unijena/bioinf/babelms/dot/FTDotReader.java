@@ -17,10 +17,14 @@
  */
 package de.unijena.bioinf.babelms.dot;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.data.DataSource;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
@@ -47,31 +51,31 @@ public class FTDotReader implements Parser<FTree> {
     public FTree parse(BufferedReader reader, URL source) throws IOException {
         final Graph g = DotParser.parseGraph(reader);
         final FragmentPropertySet rootSet = new FragmentPropertySet(g.getRoot().getProperties());
-        final FTree tree = new FTree(rootSet.formula, PrecursorIonType.unknown().getIonization());
-        final FragmentAnnotation<Peak> peakAno = tree.addFragmentAnnotation(Peak.class);
-        final FragmentAnnotation<CollisionEnergy[]> cesAno = tree.addFragmentAnnotation(CollisionEnergy[].class);
-        final FragmentAnnotation<CollisionEnergy> ceAno = tree.addFragmentAnnotation(CollisionEnergy.class);
-        peakAno.set(tree.getRoot(), rootSet.peak);
-        cesAno.set(tree.getRoot(), rootSet.collisionEnergies);
-        ceAno.set(tree.getRoot(), CollisionEnergy.mergeAll(rootSet.collisionEnergies));
+        final FTree tree = new FTree(rootSet.formula, rootSet.ion);
+        final FragmentAnnotation<AnnotatedPeak> peakAno = tree.addFragmentAnnotation(AnnotatedPeak.class);
+
+        Peak peak = rootSet.peak;
+        CollisionEnergy[] energy = rootSet.collisionEnergies;
+        peakAno.set(tree.getRoot(), new AnnotatedPeak(rootSet.formula, peak.getMass(), 0d, peak.getIntensity(), rootSet.ion, new Peak[]{peak}, rootSet.collisionEnergies, null));
+
+
         new PreOrderTraversal<Vertex>(g.getRoot(), g.getTreeAdapter()).call(new PreOrderTraversal.Call<Vertex, Fragment>() {
             @Override
             public Fragment call(Fragment parentResult, Vertex node) {
                 if (parentResult == null) return tree.getRoot();
                 final FragmentPropertySet set = new FragmentPropertySet(node.getProperties());
-                final Fragment f = tree.addFragment(parentResult, set.formula, PrecursorIonType.unknown().getIonization());
-                peakAno.set(f, set.peak);
-                cesAno.set(f, set.collisionEnergies);
-                ceAno.set(f, CollisionEnergy.mergeAll(set.collisionEnergies));
+                final Fragment f = tree.addFragment(parentResult, set.formula, set.ion);
+                peakAno.set(f, new AnnotatedPeak(set.formula, set.peak.getMass(), 0d, set.peak.getIntensity(), set.ion, new Peak[]{set.peak}, set.collisionEnergies, null));
                 return f;
             }
         });
-        if (source != null) tree.setAnnotation(URL.class, source);
+        if (source != null) tree.setAnnotation(DataSource.class, new DataSource(source));
         return tree;
     }
 
     public static class FragmentPropertySet {
         private MolecularFormula formula;
+        private Ionization ion;
         private Peak peak;
         private CollisionEnergy[] collisionEnergies;
         private TObjectDoubleHashMap scores;
@@ -84,11 +88,13 @@ public class FTDotReader implements Parser<FTree> {
             this.scores = new TObjectDoubleHashMap();
             final String label = properties.remove("label");
             final String[] infos = label.split("\\\\n");
-            this.formula = MolecularFormula.parse(infos[0]);
+            String[] fpart = infos[0].split(" ", 2);
+            this.formula = MolecularFormula.parseOrNull(fpart[0]);
+            this.ion = PrecursorIonType.getPrecursorIonType("[M " + fpart[1].substring(0,fpart[1].length()-1) + "]" + fpart[1].charAt(fpart[1].length()-1)).getIonization();
             {
                 final Matcher m = PEAK_PATTERN.matcher(infos[1]);
                 m.find();
-                this.peak = new Peak(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)) / 100d);
+                this.peak = new SimplePeak(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)) / 100d);
             }
             for (int x = 2; x < infos.length; ++x) {
                 final String info = infos[x];

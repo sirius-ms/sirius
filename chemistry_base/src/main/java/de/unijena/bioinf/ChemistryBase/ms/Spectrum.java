@@ -28,10 +28,18 @@ public interface Spectrum<T extends Peak> extends Iterable<T>, Cloneable {
 
     int size();
 
+    // methods for convenience
+
+    default boolean isEmpty() {
+        return size()==0;
+    }
+
 
     /*
      * This are the only extensions we need to be Compatible with myxo viewers and stuff, i know this is not the perfect model
      * but it is painless and costs no memory for non MSn data.
+     *
+     * TODO: Kai: PLEASE remove that as soon as we get rid of this myso stuff
      */
 
     /**
@@ -61,4 +69,5 @@ public interface Spectrum<T extends Peak> extends Iterable<T>, Cloneable {
         }
         return max;
     }
+
 }

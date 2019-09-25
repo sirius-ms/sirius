@@ -6,8 +6,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class FPTest {
 
@@ -351,5 +350,170 @@ public class FPTest {
         }
 
     }
+
+    @Test
+    public void testJumpTo() {
+
+        final FingerprintVersion customFingerprintVersion = new TestVersion(30);
+
+        // single FP
+        final short[] indizes = new short[]{2,5,6,7,12,13,14,18,25,26,27};
+
+        {
+            ArrayFingerprint array = new ArrayFingerprint(customFingerprintVersion, indizes);
+            BooleanFingerprint bool = array.asBooleans();
+            ProbabilityFingerprint probs = array.asProbabilistic();
+
+            jumpExist(array.iterator());
+            jumpExist(bool.iterator());
+            jumpExist(probs.iterator());
+
+            // now test special variants
+            jumpNotSet(array.presentFingerprints());
+            jumpNotSet(bool.presentFingerprints());
+            jumpNotSet(probs.presentFingerprints());
+
+        }
+        // masked FP
+        {
+            MaskedFingerprintVersion.Builder b = MaskedFingerprintVersion.buildMaskFor(customFingerprintVersion);
+            b.enableAll();
+            b.disable(12);
+            b.disable(13);
+            b.disable(14);
+            final MaskedFingerprintVersion M = b.toMask();
+            ArrayFingerprint array = M.mask(new ArrayFingerprint(customFingerprintVersion, indizes));
+            BooleanFingerprint bool = array.asBooleans();
+            ProbabilityFingerprint probs = array.asProbabilistic();
+            jumpMask(array.iterator());
+            jumpMask(bool.iterator());
+            jumpMask(probs.iterator());
+            jumpMask2(array.presentFingerprints());
+            jumpMask2(bool.presentFingerprints());
+            jumpMask2(probs.presentFingerprints());
+        }
+        // pairwise FP
+        {
+            final short[] indizes2 = new short[]{2,6,8,13,14,17,25,28};
+            ArrayFingerprint F = new ArrayFingerprint(customFingerprintVersion, indizes);
+            ArrayFingerprint G = new ArrayFingerprint(customFingerprintVersion, indizes2);
+
+            jumpPairwise(F.foreachPair(G));
+            jumpPairwise(F.asBooleans().foreachPair(G.asBooleans()));
+            jumpPairwise(F.asProbabilistic().foreachPair(G.asProbabilistic()));
+            jumpPairwise(F.asBooleans().foreachPair(G));
+            jumpPairwise(F.foreachPair(G.asBooleans()));
+            jumpPairwise(F.asBooleans().foreachPair(G.asBooleans()));
+            jumpPairwise(F.asProbabilistic().foreachPair(G));
+            jumpPairwise(F.asBooleans().foreachPair(G.asProbabilistic()));
+
+            // intersection
+            // {2,5,6,7,12,13,14,18,25,26,27};
+            // {2,  6,     13,14,   25}
+            jumpIntersection(F.foreachIntersection(G));
+            jumpIntersection(F.asBooleans().foreachIntersection(G.asBooleans()));
+            jumpIntersection(F.asProbabilistic().foreachIntersection(G.asProbabilistic()));
+
+            // union
+            // {2,5,6,7,  12,13,14,   18,25,26,27    };
+            // {2,  6,  8,   13,14,17,   25,      28 }
+            jumpUnion(F.foreachUnion(G));
+            jumpUnion(F.asBooleans().foreachUnion(G.asBooleans()));
+            jumpUnion(F.asProbabilistic().foreachUnion(G.asProbabilistic()));
+
+        }
+
+    }
+
+    private void jumpUnion(FPIter2 f) {
+        final String klassName = "Jump did not work for " + f.getClass().getCanonicalName();
+        f=f.jumpTo(5);
+        assertEquals(klassName, 5, f.getIndex());
+        f.next();
+        assertEquals(klassName, 6, f.getIndex());
+        f=f.jumpTo(16);
+        assertEquals(klassName, 17, f.getIndex());
+        f.next();
+        assertEquals(klassName, 18, f.getIndex());
+        f.next();
+        assertEquals(klassName, 25, f.getIndex());
+    }
+
+    private void jumpIntersection(FPIter2 f) {
+        final String klassName = "Jump did not work for " + f.getClass().getCanonicalName();
+        f=f.jumpTo(5);
+        assertEquals(klassName, 6, f.getIndex() );
+        f=f.jumpTo(7);
+        assertEquals(klassName, 13, f.getIndex());
+        f=f.jumpTo(14);
+        assertEquals(klassName, 14, f.getIndex());
+    }
+
+    private void jumpPairwise(FPIter2 f) {
+        final String klassName = "Jump does not work for " + f.getClass().getSimpleName();
+        // jump to common position
+        f=f.jumpTo(6);
+        assertEquals(klassName, 6, f.getIndex());
+        assertTrue(klassName, f.isLeftSet());
+        assertTrue(klassName, f.isRightSet());
+        // jump to non-set position
+        f=f.jumpTo(9);
+        assertEquals(klassName, 9, f.getIndex());
+        assertFalse(klassName, f.isLeftSet());
+        assertFalse(klassName, f.isRightSet());
+        // jump to diverge position
+        f=f.jumpTo(12);
+        assertEquals(klassName,12,f.getIndex());
+        assertTrue(klassName,f.isLeftSet());
+        assertFalse(klassName,f.isRightSet());
+        // jump to terminal position
+        f=f.jumpTo(28);
+        assertEquals(klassName,28,f.getIndex());
+        assertFalse(klassName,f.isLeftSet());
+        assertTrue(klassName,f.isRightSet());
+    }
+
+    private void jumpMask(FPIter f) {
+        final String klassName = "Jump does not work for " + f.getClass().getSimpleName();
+        // first jump to an index which exists
+        f=f.jumpTo(13);
+        assertEquals(klassName,15, f.getIndex());
+        f=f.jumpTo(18);
+        assertEquals(klassName,18, f.getIndex());
+    }
+    private void jumpMask2(FPIter f) {
+        final String klassName = "Jump does not work for " + f.getClass().getSimpleName();
+        // first jump to an index which exists
+        f=f.jumpTo(13);
+        assertEquals(klassName,18, f.getIndex());
+    }
+    private void jumpExist(FPIter f) {
+        final String klassName = "Jump does not work for " + f.getClass().getSimpleName();
+        // first jump to an index which exists
+        f=f.jumpTo(5);
+        assertEquals(klassName,5, f.getIndex());
+        f=f.next();
+        assertEquals(klassName,6, f.getIndex());
+        f=f.jumpTo(11);
+        assertEquals(klassName,11, f.getIndex());
+        // jump to an index which is not set
+        f=f.jumpTo(23);
+        assertEquals(klassName, 23, f.getIndex());
+    }
+    private void jumpNotSet(FPIter f) {
+        final String klassName = "Jump does not work for " + f.getClass().getSimpleName();
+        f=f.jumpTo(12);
+        assertEquals(klassName,12, f.getIndex());
+        f.next();
+        assertEquals(klassName,13, f.getIndex());
+        // jump to an index which is not set
+        f=f.jumpTo(23);
+        assertEquals(klassName, 25, f.getIndex());
+        f.next();
+        f.next();
+        assertEquals(klassName, 27, f.getIndex());
+        assertFalse(f.hasNext());
+    }
+
 
 }

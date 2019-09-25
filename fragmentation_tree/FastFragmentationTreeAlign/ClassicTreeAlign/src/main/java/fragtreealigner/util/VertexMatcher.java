@@ -64,8 +64,8 @@ public class VertexMatcher {
 
 
                     try {
-                        BufferedReader f1 = new BufferedReader(new FileReader(file1));
-                        BufferedReader f2 = new BufferedReader(new FileReader(file2));
+                        BufferedReader f1 = FileUtils.ensureBuffering(new FileReader(file1));
+                        BufferedReader f2 = FileUtils.ensureBuffering(new FileReader(file2));
 
                         List<String> explanations1 = new ArrayList<String>();
                         List<String> explanations2 = new ArrayList<String>();

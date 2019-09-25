@@ -18,7 +18,7 @@
 
 package de.unijena.bioinf.ChemistryBase.chem;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 public class Smiles implements Ms2ExperimentAnnotation {
 

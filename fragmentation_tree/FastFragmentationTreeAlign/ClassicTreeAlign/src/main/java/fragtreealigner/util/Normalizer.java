@@ -58,7 +58,7 @@ public class Normalizer {
 
             //read input
 
-            BufferedReader file = new BufferedReader( new FileReader(path));
+            BufferedReader file = FileUtils.ensureBuffering( new FileReader(path));
 
             String line = file.readLine(); // first line only contains names
             String names[] = line.split("\\,");

@@ -1,10 +1,8 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
-import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedInput;
 import gurobi.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,9 +153,12 @@ public class GrbSolver extends AbstractSolver{
                 return TreeBuilder.AbortReason.NO_SOLUTION;
             default:
                 try {
-                    if (model.get(GRB.DoubleAttr.ConstrVioSum) > 0)
+                    if (model.get(GRB.DoubleAttr.ConstrVioSum) > 0) {
+                        IntergraphMapping.Builder build = IntergraphMapping.build();
+                        FTree tree = buildSolution(build);
                         logger.error("Constraint are violated. Tree-correctness: "
-                                + isComputationCorrect(buildSolution(), graph, getSolverScore()));
+                                + isComputationCorrect(tree, graph, getSolverScore(),build.done(graph,tree)));
+                    }
                     else logger.error("Unknown error. Status code is " + status);
                     return TreeBuilder.AbortReason.INFEASIBLE;
                 } catch (GRBException e) {
@@ -195,6 +196,7 @@ public class GrbSolver extends AbstractSolver{
             env.set(GRB.IntParam.OutputFlag, 0);
             return env;
         } catch (GRBException e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }

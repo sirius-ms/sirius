@@ -146,9 +146,6 @@
         "useOriginalMz": true
       },
       {
-        "$name": "AdductTypeScorer"
-      },
-      {
         "$name": "IntrinsicallyChargedScorer",
         "score": -4.605170185988091
       },
@@ -166,9 +163,6 @@
         "prior": {
           "$name": "SupportVectorMolecularFormulaScorer"
         }
-      },
-      {
-        "$name": "IsotopeMs1Scorer"
       }
     ],
     "recalibrationMethod": {
@@ -185,15 +179,6 @@
     },
     "$name": "FragmentationPatternAnalysis",
     "preProcessing": [
-      {
-        "$name": "NormalizeToSumPreprocessor",
-        "onlyForRelativeIntensities": true
-      },
-      {
-        "$name": "DynamicBaselineFilter",
-        "standardDeviation": 0.05,
-        "threshold": 0.25
-      }
     ],
     "merge": {
       "$name": "HighIntensityMerger",
@@ -738,34 +723,6 @@
       }
     ],
     "postProcessing": [
-      {
-        "$name": "NoiseThresholdFilter",
-        "threshold": 0.002
-      },
-      {
-        "limit": 60,
-        "$name": "LimitNumberOfPeaksFilter"
-      }
     ]
-  },
-  "profile": {
-    "allowedMassDeviation": "10.0 ppm (0.0025 m/z)",
-    "intensityDeviation": 0.02,
-    "standardMs2MassDeviation": "10.0 ppm (0.002 m/z)",
-    "$name": "ChemistryBase.ms.MutableMeasurementProfile",
-    "standardMs1MassDeviation": "10.0 ppm (0.001 m/z)",
-    "medianNoiseIntensity": 0.015,
-    "formulaConstraints": {
-      "$name": "ChemistryBase.chem.FormulaConstraints",
-      "upperbounds": {},
-      "alphabet": "CHNOPS",
-      "filters": [
-        {
-          "$name": "ChemistryBase.chem.utils.ValenceFilter",
-          "minValence": -0.5
-        }
-      ]
-    },
-    "standardMassDifferenceDeviation": "5.0 ppm (5.0E-4 m/z)"
   }
 }

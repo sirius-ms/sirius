@@ -265,6 +265,19 @@ public final class PredictionPerformance {
         }
     }
 
+    public double getTpRate() {
+        return (pseudoCount+tp) / (tp+fn+2*pseudoCount);
+    }
+    public double getFpRate() {
+        return (pseudoCount+fp) / (fp+tn+2*pseudoCount);
+    }
+    public double getTnRate() {
+        return (pseudoCount+tn) / (fp+tn+2*pseudoCount);
+    }
+    public double getFnRate() {
+        return (pseudoCount+fn) / (tp+fn+2*pseudoCount);
+    }
+
     public double getTp() {
         return tp;
     }

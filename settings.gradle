@@ -1,19 +1,33 @@
 rootProject.name = 'sirius'
+include ':default_properties'
+	include ':default_properties:annotations'
+	include ':default_properties:processor'
 include ':chemistry_base'
+include ':preprocessing'
+include ':spectral_alignment'
 include ':fragmentation_tree'
 	include ':fragmentation_tree:fragmentation_tree_construction'
     include ":fragmentation_tree:FastFragmentationTreeAlign"
         include ":fragmentation_tree:FastFragmentationTreeAlign:FastTreeAlign"
         include ":fragmentation_tree:FastFragmentationTreeAlign:FTAlignmentTool"
         include ":fragmentation_tree:FastFragmentationTreeAlign:FTBlast"
-        include ":fragmentation_tree:FastFragmentationTreeAlign:SpectralAlignment"
 include ':isotope_pattern'
 	include ':isotope_pattern:isotope_pattern_analysis'
     include ':isotope_pattern:isogen_cli'
+    include ':isotope_pattern:sirius_isotopes'
 include ':mass_decomposition'
     include ':mass_decomposition:decomp_cli'
     include ':mass_decomposition:mass_decomposer'
 include ':io'
+include ':tree_motif_search'
 include ':sirius_api'
 include ':gibbs_sampling'
+    include ':gibbs_sampling:zodiac_project_space'
+include 'passatutto'
+    include 'passatutto:passatutto_project_space'
 include ':utils'
+include ':lcms'
+    include ':lcms:mzml-converter'
+include ':sirius_project_space'
+
+

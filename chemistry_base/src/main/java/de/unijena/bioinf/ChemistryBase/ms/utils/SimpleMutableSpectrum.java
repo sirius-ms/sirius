@@ -18,8 +18,8 @@
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.SpectrumAnnotation;
 
 public class SimpleMutableSpectrum extends BasicMutableSpectrum<Peak> {
 
@@ -40,7 +40,7 @@ public class SimpleMutableSpectrum extends BasicMutableSpectrum<Peak> {
 
     @Override
     public Peak getPeakAt(int index) {
-        return new Peak(masses.get(index), intensities.get(index));
+        return new SimplePeak(masses.get(index), intensities.get(index));
     }
 
 }

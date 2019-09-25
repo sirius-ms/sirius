@@ -1,0 +1,8 @@
+dependencies {
+    compile project(':chemistry_base')
+    compile "org.apache.commons:commons-math3:$math3_version"
+    compile group: 'de.unijena.bioinf.ms', name: 'Recalibration', version: '1.0'
+    testCompile project(':io')
+    testCompile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+    compile project(':spectral_alignment')
+}

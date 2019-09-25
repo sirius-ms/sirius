@@ -38,7 +38,7 @@ public class ParseToAlignmentTree {
 
 
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(alignmentFile));
+            BufferedReader reader = FileUtils.ensureBuffering(new FileReader(alignmentFile));
 
             Map<String,String> nodesTree1 = new HashMap<String, String>();
             Map<String,String> nodesTree2 = new HashMap<String, String>();

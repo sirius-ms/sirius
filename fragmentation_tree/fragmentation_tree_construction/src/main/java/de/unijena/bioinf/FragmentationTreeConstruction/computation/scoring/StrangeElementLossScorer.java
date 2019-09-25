@@ -19,11 +19,13 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedInput;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -62,15 +64,16 @@ public class StrangeElementLossScorer implements LossScorer {
     }
 
     @Override
-    public Object prepare(ProcessedInput input) {
+    public Object prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
         final ArrayList<MolecularFormula> specialElements = new ArrayList<MolecularFormula>();
         final PeriodicTable t = PeriodicTable.getInstance();
         final Element C = t.getByName("C");
         final Element H = t.getByName("H");
         final Element N = t.getByName("N");
         final Element O = t.getByName("O");
-        final MolecularFormula hydrogen = MolecularFormula.parse("H");
-        for (Element e : input.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet().getElements()) {
+        final MolecularFormula hydrogen = MolecularFormula.parseOrThrow("H");
+        for (Element e : input.getExperimentInformation()
+                .getAnnotationOrDefault(FormulaConstraints.class).getChemicalAlphabet().getElements()) {
             if (e == C || e == H || e == N || e == O) continue;
             specialElements.add(MolecularFormula.singleElement(e));
         }
@@ -111,7 +114,9 @@ public class StrangeElementLossScorer implements LossScorer {
         final L list = document.getListFromDictionary(dictionary, "losses");
         final int n = document.sizeOfList(list);
         this.lossList = new HashSet<MolecularFormula>((int) (n * 1.5));
-        for (int i = 0; i < n; ++i) addLoss((MolecularFormula.parse(document.getStringFromList(list, i))));
+        for (int i = 0; i < n; ++i)
+            MolecularFormula.parseAndExecute(document.getStringFromList(list, i), this::addLoss);
+
         this.score = document.getDoubleFromDictionary(dictionary, "score");
 
     }

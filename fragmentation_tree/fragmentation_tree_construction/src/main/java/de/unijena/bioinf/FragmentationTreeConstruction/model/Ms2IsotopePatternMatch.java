@@ -1,11 +1,10 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
-import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
-public class Ms2IsotopePatternMatch {
+@Deprecated
+public class Ms2IsotopePatternMatch implements DataAnnotation {
 
     private SimpleSpectrum simulated;
     private SimpleSpectrum matched;

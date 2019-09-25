@@ -29,11 +29,10 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import gnu.trove.list.array.TDoubleArrayList;
 
-import java.util.Random;
-
 public class FragmentIsotopeGenerator extends FastIsotopePatternGenerator {
 
     public static void main(String[] args) {
+        /*
         final FastIsotopePatternGenerator isoGen = new FastIsotopePatternGenerator();
         isoGen.setMinimalProbabilityThreshold(0);
         isoGen.setMaximalNumberOfPeaks(5);
@@ -86,6 +85,38 @@ public class FragmentIsotopeGenerator extends FastIsotopePatternGenerator {
 
 
         }
+        */
+
+        final double[] values = new double[]{
+                309.0437, 127.27,
+                310.038, 999.0,
+                311.0415, 87.81,
+        };
+        final TDoubleArrayList mzvalues=new TDoubleArrayList(), intvalues = new TDoubleArrayList();
+        for (int k=0; k < values.length; k+=2) {
+            mzvalues.add(values[k]);
+            intvalues.add(values[k+1]);
+        }
+
+        final Ionization H = PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization();
+
+        final SimpleSpectrum spec = new SimpleSpectrum(mzvalues.toArray(),intvalues.toArray());
+                //new SimpleSpectrum(new double[]{269.1108,270.1138,271.106}, new double[]{999.0,205.39,2.4});
+        final MolecularFormula A = MolecularFormula.parseOrThrow("C13H14BrN3O");
+        final MolecularFormula B = MolecularFormula.parseOrThrow("C5H7N");
+
+        final double MAX = 999;
+
+        final FragmentIsotopeGenerator fiso = new FragmentIsotopeGenerator();
+        final SimpleSpectrum a = Spectrums.getNormalizedSpectrum(fiso.simulatePattern(spec, A, A.subtract(B), PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization()), Normalization.Max(MAX));
+
+
+        final SimpleSpectrum right = Spectrums.getNormalizedSpectrum(fiso.simulateFragmentPatternWithImperfectFilter(spec, B, A.subtract(B), PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization()), Normalization.Max(MAX));
+        System.out.println(right);
+        System.out.println(a);
+        System.out.println(Spectrums.getNormalizedSpectrum(new FastIsotopePatternGenerator().simulatePattern(B,PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization()), Normalization.Max(MAX)));
+
+
     }
 
     public SimpleSpectrum simulatePattern(Spectrum<Peak> ms1, MolecularFormula parent, MolecularFormula loss, Ionization ionization) {
@@ -169,5 +200,69 @@ public class FragmentIsotopeGenerator extends FastIsotopePatternGenerator {
         }
         return new SimpleSpectrum(mzs.toArray(), ints.toArray());
     }
+
+
+    public SimpleSpectrum simulateFragmentPatternWithImperfectFilter(SimpleSpectrum parentPattern, MolecularFormula fragment, MolecularFormula loss, Ionization ion) {
+        final FastIsotopePatternGenerator generator = new FastIsotopePatternGenerator(Normalization.Sum(1d));
+        final int n = parentPattern.size();
+        generator.setMaximalNumberOfPeaks(n);
+        generator.setMinimalProbabilityThreshold(0d);
+
+        parentPattern = Spectrums.getNormalizedSpectrum(parentPattern, Normalization.Sum(1d));
+        final SimpleSpectrum fragmentPattern = generator.simulatePattern(fragment, ion);
+        final SimpleSpectrum lossPattern = generator.simulatePattern(loss, ion);
+
+        final double[][] matrix = new double[n][n];
+        for (int i=0; i < Math.min(n,fragmentPattern.size()); ++i) {
+            for (int j=0; j < Math.min(n,lossPattern.size()); ++j) {
+                matrix[i][j] = fragmentPattern.getIntensityAt(i)*lossPattern.getIntensityAt(j);
+            }
+        }
+        // learn imperfect filter
+        for (int k=0; k < n; ++k) {
+            double sum = 0d;
+            for (int i=0; i <= k; ++i) {
+                final int j = k-i;
+                sum += matrix[i][j];
+            }
+            double multiplicator = parentPattern.getIntensityAt(k)/sum;
+            for (int i=0; i <= k; ++i) {
+                final int j = k-i;
+                matrix[i][j] *= multiplicator;
+            }
+        }
+        // fix fragment pattern
+        final SimpleMutableSpectrum buf = new SimpleMutableSpectrum(fragmentPattern.size());
+        for (int i=0; i < Math.min(fragmentPattern.size(), n); ++i) {
+            double intensity = 0d;
+            for (int j=0; j < n; ++j) {
+                intensity += matrix[i][j];
+            }
+            buf.addPeak(fragmentPattern.getMzAt(i), intensity);
+        }
+
+        return new SimpleSpectrum(buf);
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }

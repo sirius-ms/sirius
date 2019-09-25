@@ -20,18 +20,17 @@ package de.unijena.bioinf.babelms;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.mgf.MgfParser;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
+import de.unijena.bioinf.babelms.mzml.MzmlExperimentParser;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MsExperimentParser {
 
-    private final HashMap<String, Class<? extends Parser<Ms2Experiment>>> knownEndings;
+    private static final Map<String, Class<? extends Parser<Ms2Experiment>>> knownEndings = addKnownEndings();
 
-    public MsExperimentParser() {
-        this.knownEndings = new HashMap<String, Class<? extends Parser<Ms2Experiment>>>();
-        addKnownEndings();
-    }
 
     public GenericParser<Ms2Experiment> getParser(File f) {
         final String name = f.getName();
@@ -52,9 +51,23 @@ public class MsExperimentParser {
         }
     }
 
-    private void addKnownEndings() {
-        knownEndings.put(".ms", JenaMsParser.class);
-        knownEndings.put(".mgf", MgfParser.class);
-        knownEndings.put(".zip", ZippedSpectraParser.class);
+    public static boolean isSupportedFileName(final @NotNull String fileName) {
+        int index = fileName.lastIndexOf('.');
+        if (index < 0)
+            return false;
+        return isSupportedEnding(fileName.substring(index));
+    }
+
+    public static boolean isSupportedEnding(final @NotNull String fileEnding) {
+        return knownEndings.containsKey(fileEnding.toLowerCase());
+    }
+
+    private static Map<String, Class<? extends Parser<Ms2Experiment>>> addKnownEndings() {
+        final Map<String, Class<? extends Parser<Ms2Experiment>>> endings = new ConcurrentHashMap<>(3);
+        endings.put(".ms", JenaMsParser.class);
+        endings.put(".mgf", MgfParser.class);
+        endings.put(".zip", ZippedSpectraParser.class);
+        endings.put(".mzxml", MzmlExperimentParser.class);
+        return endings;
     }
 }

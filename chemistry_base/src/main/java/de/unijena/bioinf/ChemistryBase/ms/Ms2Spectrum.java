@@ -31,7 +31,7 @@ public interface Ms2Spectrum<P extends Peak> extends Spectrum<P> {
 
     /**
      * (OPTIONAL)
-     * @return  the total number of measured ions in the spectrum if given, otherwise 0.
+     * @return  the total number of measured iondetection in the spectrum if given, otherwise 0.
      */
     double getTotalIonCount();
 

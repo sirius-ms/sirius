@@ -20,14 +20,17 @@ package de.unijena.bioinf.babelms.ms;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.data.Tagging;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.ChemistryBase.sirius.projectspace.Index;
 import de.unijena.bioinf.babelms.DataWriter;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class JenaMsWriter implements DataWriter<Ms2Experiment> {
     @Override
@@ -37,26 +40,27 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         writer.newLine();
         writeIfAvailable(writer, ">formula", data.getMolecularFormula());
         writeIf(writer, ">parentmass", String.valueOf(data.getIonMass()), data.getIonMass() != 0d);
-        writeIfAvailable(writer, ">ionization", data.getPrecursorIonType().toString());
-        final InChI i = data.getAnnotation(InChI.class);
+        writeIfAvailable(writer, ">ionization", data.getPrecursorIonType());
+        final InChI i = data.getAnnotationOrNull(InChI.class);
         if (i != null) {
             writeIfAvailable(writer, ">InChI", i.in2D);
             writeIfAvailable(writer, ">InChIKey", i.key);
         }
-        final Smiles sm = data.getAnnotation(Smiles.class);
-        writeIfAvailable(writer, ">smarts", sm == null ? null : sm.smiles);
-        final Splash splash = data.getAnnotation(Splash.class);
+        final Smiles sm = data.getAnnotationOrNull(Smiles.class);
+        writeIfAvailable(writer, ">smiles", sm == null ? null : sm.smiles);
+        final Splash splash = data.getAnnotationOrNull(Splash.class);
         writeIfAvailable(writer, ">splash", splash == null ? null : splash.getSplash());
-        final MsInstrumentation instrumentation = data.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown);
+        final MsInstrumentation instrumentation = data.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown);
         writer.write(">instrumentation " + instrumentation.description());
         writer.newLine();
         writeIfAvailable(writer, ">source", data.getSource());
-        Index index = data.getAnnotation(Index.class);
-        if (index != null) {
-            write(writer, ">index", String.valueOf(index.index));
+        if (!data.getAnnotation(Tagging.class, Tagging::none).isEmpty()) {
+            writer.write(">tags " + data.getAnnotation(Tagging.class, Tagging::none).stream().collect(Collectors.joining(",")));
+            writer.newLine();
         }
-        writeIfAvailable(writer, ">quality", data.getAnnotation(CompoundQuality.class));
-        final RetentionTime retentionTime = data.getAnnotation(RetentionTime.class);
+
+        writeIfAvailable(writer, ">quality", data.getAnnotationOrNull(CompoundQuality.class));
+        final RetentionTime retentionTime = data.getAnnotationOrNull(RetentionTime.class);
         if (retentionTime != null) {
             write(writer, ">rt", String.valueOf(retentionTime.getMiddleTime()) + "s");
             if (retentionTime.isInterval()) {
@@ -64,7 +68,20 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
                 write(writer, ">rt_end", String.valueOf(retentionTime.getEndTime()) + "s");
             }
         }
-        final Map<String, String> arbitraryKeys = data.getAnnotation(AdditionalFields.class, new AdditionalFields());
+
+        writeIfAvailable(writer, ">quantification", data.getAnnotationOrNull(Quantification.class));
+
+        //write original config to file
+        if (data.hasAnnotation(MsFileConfig.class)) {
+            ParameterConfig config = data.getAnnotationOrThrow(MsFileConfig.class).config;
+            Iterator<String> it = config.getModifiedConfigKeys();
+            while (it.hasNext()) {
+                final String key = it.next();
+                write(writer, ">" + config.shortKey(key), config.getConfigValue(key));
+            }
+        }
+
+        final Map<String, String> arbitraryKeys = data.getAnnotation(AdditionalFields.class, AdditionalFields::new);
         for (Map.Entry<String, String> e : arbitraryKeys.entrySet()) {
             writer.write("#" + e.getKey() + " " + e.getValue());
             writer.newLine();
@@ -85,8 +102,8 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
             if (isMergedSpectrum) writer.write(">ms1merged");
             else writer.write(">ms1peaks");
             writer.newLine();
-            writeSpectraLevelComments(writer,spec);
-            Spectrums.writePeaks(writer,spec);
+            writeSpectraLevelComments(writer, spec);
+            Spectrums.writePeaks(writer, spec);
             writer.newLine();
         }
     }
@@ -100,16 +117,16 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
                 writer.write(spec.getCollisionEnergy().toString());
             }
             writer.newLine();
-            writeSpectraLevelComments(writer,spec);
-            Spectrums.writePeaks(writer,spec);
+            writeSpectraLevelComments(writer, spec);
+            Spectrums.writePeaks(writer, spec);
             writer.newLine();
         }
     }
 
 
-    private void writeSpectraLevelComments(BufferedWriter writer, Spectrum spec) throws IOException{
-        if (spec instanceof AnnotatedSpectrum){
-            final AdditionalFields fields = (AdditionalFields) ((AnnotatedSpectrum) spec).getAnnotation(AdditionalFields.class);
+    private void writeSpectraLevelComments(BufferedWriter writer, Spectrum spec) throws IOException {
+        if (spec instanceof AnnotatedSpectrum) {
+            final AdditionalFields fields = (AdditionalFields) ((AnnotatedSpectrum) spec).getAnnotationOrNull(AdditionalFields.class);
             if (fields != null) {
                 for (Map.Entry<String, String> e : fields.entrySet()) {
                     writer.write("##" + e.getKey() + " " + e.getValue());

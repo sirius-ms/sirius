@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * A queue that only keeps the n entries with largest weight
  */
-public class DoubleEndWeightedQueue2<T> implements Iterable<T> {
+class DoubleEndWeightedQueue2<T> implements Iterable<T> {
 
     protected TreeMultimap<Double, T> backingQueue;
     protected int capacity;

@@ -19,6 +19,7 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 
 import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 
 import java.util.Arrays;
@@ -27,9 +28,15 @@ import java.util.Arrays;
  * Simple implementation of an immutable Mass Spectrum.
  * Peaks are stored ordered by mass in arrays.
  */
-public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectrum{
+public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectrum<Peak>{
 
-	protected final int hash;
+	private static SimpleSpectrum EMPTY = new SimpleSpectrum(new double[0], new double[0]);
+
+	public static SimpleSpectrum empty() {
+		return EMPTY;
+	}
+
+	protected int hash = 0;
 	
 	public SimpleSpectrum(double[] masses, double[] intensities) {
 		this(new ArrayWrapperSpectrum(masses, intensities));
@@ -37,7 +44,6 @@ public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectr
 	
 	public <T extends Peak, S extends Spectrum<T>> SimpleSpectrum(S s) {
 		super(orderedSpectrum(s));
-		this.hash = Arrays.hashCode(this.masses) ^ Arrays.hashCode(this.intensities);
 	}
 
 	@Override
@@ -52,12 +58,15 @@ public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectr
 	
 	@Override
 	public Peak getPeakAt(int index) {
-		return new Peak(masses[index], intensities[index]);
+		return new SimplePeak(masses[index], intensities[index]);
 	}
 	
 	
 	@Override
 	public int hashCode() {
+		if (hash!=0) return hash;
+		this.hash = Arrays.hashCode(this.masses) ^ Arrays.hashCode(this.intensities);
+		if (hash==0) hash=1;
 		return hash;
 	}
 

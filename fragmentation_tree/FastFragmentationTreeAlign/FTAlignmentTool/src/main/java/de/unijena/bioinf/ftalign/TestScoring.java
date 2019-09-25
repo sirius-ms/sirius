@@ -78,8 +78,8 @@ public class TestScoring implements Scoring<Fragment>, SimpleEqualityScoring<Fra
     public TestScoring() {
         substMap = new HashMap<MolecularFormula, TObjectFloatHashMap<MolecularFormula>>();
         for (int i = 0; i < SUBSTITUENTS_LEFT.length; ++i) {
-            final MolecularFormula left = MolecularFormula.parse(SUBSTITUENTS_LEFT[i]);
-            final MolecularFormula right = MolecularFormula.parse(SUBSTITUENTS_RIGHT[i]);
+            final MolecularFormula left = MolecularFormula.parseOrThrow(SUBSTITUENTS_LEFT[i]);
+            final MolecularFormula right = MolecularFormula.parseOrThrow(SUBSTITUENTS_RIGHT[i]);
             final float score = SCORES[i];
             if (!substMap.containsKey(left)) substMap.put(left, new TObjectFloatHashMap<MolecularFormula>());
             if (!substMap.containsKey(right)) substMap.put(right, new TObjectFloatHashMap<MolecularFormula>());
@@ -87,12 +87,12 @@ public class TestScoring implements Scoring<Fragment>, SimpleEqualityScoring<Fra
             substMap.get(right).put(left, score);
         }
         fragmentSub = new TObjectFloatHashMap<MolecularFormula>();
-        for (String s : FRAGMENT_DIFFS) fragmentSub.put(MolecularFormula.parse(s), 4f);
+        for (String s : FRAGMENT_DIFFS) fragmentSub.put(MolecularFormula.parseOrThrow(s), 4f);
         lossFreqs = new TObjectDoubleHashMap<MolecularFormula>();
         for (int i = 0; i < LOSS_FREQUENCIES.length; ++i) {
             final double score = 4 + 2 * i;
             for (String s : LOSS_FREQUENCIES[i]) {
-                lossFreqs.put(MolecularFormula.parse(s), score);
+                lossFreqs.put(MolecularFormula.parseOrThrow(s), score);
             }
         }
     }

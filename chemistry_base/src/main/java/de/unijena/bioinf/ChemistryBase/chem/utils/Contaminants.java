@@ -12,7 +12,7 @@ public class Contaminants {
 
     static {
         for (int i=0; i < MOLECULAR_FORMULAS.length; ++i) {
-            MOLECULAR_FORMULAS[i] = MolecularFormula.parse(FORMULAS[i]);
+            MOLECULAR_FORMULAS[i] = MolecularFormula.parseOrThrow(FORMULAS[i]);
         }
     }
 

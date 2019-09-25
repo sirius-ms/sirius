@@ -20,11 +20,12 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 
 /**
  * An annotated peak after tree computation is done. Can be used as FragmentAnnotation in FTree
  */
-public final class AnnotatedPeak {
+public final class AnnotatedPeak implements TreeAnnotation  {
 
     /**
      * The molecular formula that is assigned to this peak
@@ -62,7 +63,33 @@ public final class AnnotatedPeak {
      */
     private final CollisionEnergy[] collisionEnergies;
 
-    public AnnotatedPeak(MolecularFormula getFormula, double getMass, double recalibratedMass, double relativeIntensity, Ionization ionization, Peak[] originalPeaks, CollisionEnergy[] collisionEnergies) {
+    /**
+     * The index of the MS/MS spectrum this peak is derived from
+     */
+    private final int[] spectrumIds;
+
+    private final static Peak[] NO_PEAKS = new Peak[0];
+    private final static CollisionEnergy[] NO_ENERGY = new CollisionEnergy[0];
+    private final static int[] NO_SPECTRUM = new int[0];
+
+    private final static AnnotatedPeak NO_PEAK = new AnnotatedPeak(MolecularFormula.emptyFormula(), Double.NaN, Double.NaN, 0d, null, NO_PEAKS, new CollisionEnergy[0], new int[0]);
+
+    public static AnnotatedPeak artificial(MolecularFormula formula, Ionization ionization) {
+        return artificial(formula, ionization, ionization.addToMass(formula.getMass()));
+    }
+    public static AnnotatedPeak artificial(MolecularFormula formula, Ionization ionization, double mass) {
+        return new AnnotatedPeak(formula, mass, mass, 0d, ionization, NO_PEAKS, NO_ENERGY, NO_SPECTRUM);
+    }
+
+    public static AnnotatedPeak none() {
+        return NO_PEAK;
+    }
+
+    public boolean isArtificial() {
+        return originalPeaks.length==0;
+    }
+
+    public AnnotatedPeak(MolecularFormula getFormula, double getMass, double recalibratedMass, double relativeIntensity, Ionization ionization, Peak[] originalPeaks, CollisionEnergy[] collisionEnergies, int[] spectrumIds) {
         this.molecularFormula = getFormula;
         this.mass = getMass;
         this.recalibratedMass = recalibratedMass;
@@ -70,6 +97,11 @@ public final class AnnotatedPeak {
         this.ionization = ionization;
         this.originalPeaks = originalPeaks;
         this.collisionEnergies = collisionEnergies;
+        this.spectrumIds = spectrumIds;
+    }
+
+    public int[] getSpectrumIds() {
+        return spectrumIds;
     }
 
     public MolecularFormula getMolecularFormula() {
@@ -101,11 +133,30 @@ public final class AnnotatedPeak {
     }
 
     public AnnotatedPeak withFormula(MolecularFormula newFormula) {
-        return new AnnotatedPeak(newFormula, mass, recalibratedMass, relativeIntensity, ionization, originalPeaks, collisionEnergies);
+        return new AnnotatedPeak(newFormula, mass, recalibratedMass, relativeIntensity, ionization, originalPeaks, collisionEnergies, spectrumIds);
+    }
+
+    /**
+     * @return true if peak does not correspond to a real peak in the spectrum
+     */
+    public boolean isSynthetic() {
+        return relativeIntensity <= 0d;
+    }
+
+    public boolean isMeasured() {
+        return relativeIntensity > 0d;
+    }
+
+    /**
+     *
+     * @return true if there does not exist any peak annotation
+     */
+    public boolean isNoPeak() {
+        return Double.isNaN(mass);
     }
 
     public AnnotatedPeak withIonization(Ionization ion) {
-        return new AnnotatedPeak(molecularFormula, mass, recalibratedMass, relativeIntensity, ion, originalPeaks, collisionEnergies);
+        return new AnnotatedPeak(molecularFormula, mass, recalibratedMass, relativeIntensity, ion, originalPeaks, collisionEnergies, spectrumIds);
     }
 
     public double getMaximalIntensity() {

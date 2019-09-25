@@ -17,16 +17,14 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Peak;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.sirius.MS2Peak;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.ArrayList;
@@ -218,7 +216,7 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
                 if (minEnergy[fragment]==maxEnergy[fragment] && minEnergy[fragment]==0) continue;
                 // you don't have to score pairs where the parent is smaller than the fragment, because
                 // we don't allow this in later steps --> so matrix is not symmetric
-                if (parentFragment.getMz() <= peaks.get(fragment).getMz())  {
+                if (parentFragment.getMass() <= peaks.get(fragment).getMass())  {
                     scores[parent][fragment] += Double.NEGATIVE_INFINITY;
                     assert false;
                 }

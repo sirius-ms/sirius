@@ -19,8 +19,8 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 
 import java.util.List;
 
@@ -63,7 +63,7 @@ public class FragmentSizeScorer implements PeakScorer {
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
         for (int i=0; i < peaks.size(); ++i) {
-            scores[i] += maxScore - Math.min(1,peaks.get(i).getOriginalMz()/maxSize)*maxScore;
+            scores[i] += maxScore - Math.min(1,peaks.get(i).getMass()/maxSize)*maxScore;
         }
     }
 
