@@ -1,14 +1,16 @@
 dependencies {
-    compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
-    compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
+//    annotationProcessor "de.unijena.bioinf.ms:processor:$siriusVersion"
+    compile group: "info.picocli", name: "picocli", version: "$picocli_version"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.1'
-    compile group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
-    compile group: 'de.unijena.bioinf.utils', name: 'error-reporter', version: "$error_reporter_version"
-    compile group: 'com.google.classpath-explorer', name: 'classpath-explorer', version: '1.0'
-
     //internal
-    //compile group: "de.unijena.bioinf.ms", name: "fingerid_utils", version: "$fingeridVersion"
+    compile group: 'de.unijena.bioinf.utils', name: 'error-reporter', version: "$error_reporter_version"
+    compile group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
+    compile group: "de.unijena.bioinf.ms", name: "zodiac_project_space", version: "$siriusVersion"
+    compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
+    compile group: "de.unijena.bioinf.ms", name: "tree_motif_search", version: "$siriusVersion"
+    compile group: "de.unijena.bioinf.ms", name: "sirius_project_space", version: "$siriusVersion"
+    compile group: "de.unijena.bioinf.ms", name: "passatutto", version: "$siriusVersion"
+    compile group: "de.unijena.bioinf.ms", name: "passatutto_project_space", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "fingerid_db_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "fingerprinter_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "fingerblast_oss", version: "$fingeridVersion"
@@ -17,192 +19,34 @@ dependencies {
     compile group: "de.unijena.bioinf.ms", name: "chemical_db_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "confidence_score_predict_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "canopus_predict_oss", version: "$fingeridVersion"
-    compile group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
-    compile group: "net.iharder", name: "base64", version: "2.3.8"
+    compile group: "de.unijena.bioinf.ms", name: "fingerid_client_api_oss", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "fingerid_project_space_oss", version: "$fingeridVersion"
 
     //cdk
     compile "org.openscience.cdk:cdk-silent:$cdk_version"
 
+    //mztabm
     compile group: 'de.isas.mztab', name: 'jmztabm-api', version: "$mztabm_version"
     compile group: 'de.isas.mztab', name: 'jmztabm-io', version: "$mztabm_version"
-
 }
 
-mainClassName = 'de.unijena.bioinf.ms.cli.SiriusCLIApplication'
-project.ext.set("type", ['console'])
+//artifactoryPublish.skip = true
+artifactory {
+    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
+    publish {
+        repository {
+            if (version.toString().endsWith('-SNAPSHOT'))
+                repoKey = 'libs-snapshot-local'
+            else
+                repoKey = 'libs-release-local'
 
-
-jar {
-    manifest {
-        attributes 'Main-Class': mainClassName
-    }
-}
-
-/*################### Windows release Stuff ################### */
-project.type.each{t ->
-    project.arch.each { a ->
-        tasks.create("launch4j-$t-$a", edu.sc.seis.launch4j.tasks.Launch4jLibraryTask) {
-            group = 'launch4j'
-            mainClassName = project.mainClassName
-            headerType = t
-            jreRuntimeBits = a
-            outfile = "${project.appName}-${t}-${a}.exe"
+            username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
+            password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
+        }
+        defaults {
+            publications('mavenJava')
         }
     }
 }
 
 
-
-/*################### Build distributions ################### */
-task distribute { group = 'distribution' }
-distribute.dependsOn ':buildDoku'
-
-distributions {
-    project.arch.each { ar ->
-        def n = "${project.linSuffix}${ar}"
-        create(n, {
-            baseName = "${project.appName}-$n-headless"
-            contents {
-                into('lib') {
-                    from("build/install/${project.name}/lib") {
-                        exclude libExclude
-                    }
-                    from("${project.glpkPath}/l${ar}/") {
-                        include('libglpk.so.40')
-                        include('libglpk_java.so')
-                    }
-                }
-
-                into('bin') {
-                    from("build/install/${project.name}/bin") {
-                        exclude("*.bat")
-                    }
-                    from("${project.distPath}") {
-                        exclude('sirius-gui')
-                    }
-                    from("${getRootDir()}/LICENSE.txt")
-                }
-                into('doc') {
-                    from(project.pdfManualPath)
-                }
-                into('doc/html') {
-                    from("${project.manualPath}/build/html")
-                }
-            }
-        })
-        distribute.dependsOn "${n}DistZip"
-        getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
-        getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
-    }
-
-    //crete win32And64 zip tasks
-    project.arch.each { ar ->
-        def n = "${project.winSuffix}${ar}"
-        create(n, {
-
-            baseName = "${project.appName}-$n-headless"
-            contents {
-                into('lib') {
-                    from('build/launch4j/lib') {
-                        exclude libExclude
-                    }
-                }
-                from { "${project.glpkPath}/w${ar}/" }
-                from("${project.distPath}") {
-                    exclude('sirius-gui')
-                }
-                from { "${getRootDir()}/LICENSE.txt" }
-                from('build/launch4j') {
-                    include("*-${ar}.exe")
-                }
-                into('doc') {
-                    from(project.pdfManualPath)
-                }
-                into('doc/html') {
-                    from("${project.manualPath}/build/html")
-                }
-            }
-        })
-        distribute.dependsOn "${n}DistZip"
-        getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
-        getTasks().findByPath("${n}DistZip").dependsOn 'createAllExecutables'
-        getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
-    }
-
-    //create osx zip
-    def n = "${project.macSuffix}64"
-    create(n, {
-        baseName = "${project.appName}-$n-headless"
-        contents {
-            into('lib') {
-                from("build/install/${project.name}/lib") {
-                    exclude libExclude
-                }
-                from("${project.glpkPath}/osx/")
-                exclude('*.zip')
-            }
-
-            into('bin') {
-                from("build/install/${project.name}/bin") {
-                    exclude("*.bat")
-                }
-                from("${project.distPath}") {
-                    exclude('sirius-gui')
-                }
-                from("${getRootDir()}/LICENSE.txt")
-            }
-            into('doc') {
-                from(project.pdfManualPath)
-            }
-            into('doc/html') {
-                from("${project.manualPath}/build/html")
-            }
-        }
-    })
-    distribute.dependsOn "${n}DistZip"
-    getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
-    getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
-
-    project.getTasksByName("distTar", false).each { it.setEnabled(false) }
-    project.getTasksByName("distZip", false).each { it.setEnabled(false) }
-
-    linux32DistZip.dependsOn 'installDist'
-    linux32DistTar.dependsOn 'installDist'
-    installLinux32Dist.dependsOn 'installDist'
-
-    linux64DistZip.dependsOn 'installDist'
-    linux64DistTar.dependsOn 'installDist'
-    installLinux64Dist.dependsOn 'installDist'
-
-    win32DistZip.dependsOn 'createExe'
-    win32DistTar.dependsOn 'createExe'
-    installWin32Dist.dependsOn 'createExe'
-
-    win64DistZip.dependsOn 'createExe'
-    win64DistTar.dependsOn 'createExe'
-    installWin64Dist.dependsOn 'createExe'
-
-// what should be published
-    publishing {
-        publications {
-            sirius(MavenPublication) {
-                artifactId = "${project.appName}"
-                groupId = "$group"
-
-                pom.withXml {}
-                artifact source: win64DistZip, classifier: 'win64-headless', extension: 'zip'
-                artifact source: win32DistZip, classifier: 'win32-headless', extension: 'zip'
-                artifact source: linux32DistZip, classifier: 'linux32-headless', extension: 'zip'
-                artifact source: linux64DistZip, classifier: 'linux64-headless', extension: 'zip'
-                artifact source: osx64DistZip, classifier: 'osx64-headless', extension: 'zip'
-            }
-
-        }
-    }
-    artifactoryPublish.dependsOn 'distribute'
-
-    task runCLI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
-        File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}").toFile()
-        commandLine([command.absolutePath])
-    }
-}

@@ -1,6 +1,7 @@
 package de.unijena.bioinf.myxo.tools;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
 import java.io.*;
 import java.util.*;
@@ -11,7 +12,7 @@ public class MolecularFormulaTools {
 	@SuppressWarnings("unused")
 	public static TreeSet<String> readFormulaFile(File inFile){
 		TreeSet<String> formulas = new TreeSet<String>();
-		try(BufferedReader reader= new BufferedReader(new FileReader(inFile))){
+		try(BufferedReader reader= FileUtils.ensureBuffering(new FileReader(inFile))){
 			String temp = null;
 			while((temp = reader.readLine()) != null){
 				formulas.add(temp.trim());
@@ -162,7 +163,7 @@ public class MolecularFormulaTools {
 	@SuppressWarnings("unused")
 	public static void convertFormulasToMasses(File formulaFile, File massFile){
 		
-		try(BufferedReader reader = new BufferedReader(new FileReader(formulaFile)); BufferedWriter writer=new BufferedWriter(new FileWriter(massFile))){
+		try(BufferedReader reader = FileUtils.ensureBuffering(new FileReader(formulaFile)); BufferedWriter writer=new BufferedWriter(new FileWriter(massFile))){
 			
 			List<String> formulaList = new ArrayList<String>(1000);
 

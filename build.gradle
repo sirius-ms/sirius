@@ -5,16 +5,19 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
+
 buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
+        mavenCentral()
         jcenter()
     }
     dependencies {
         classpath 'edu.sc.seis.gradle:launch4j:2.4.4'
-        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
+//        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
+//        classpath 'org.apache.commons:commons-configuration2:2.4'
+        classpath 'commons-configuration:commons-configuration:1.10'
     }
-
 }
 
 plugins {
@@ -25,7 +28,7 @@ plugins {
 ext {
     //version for external libraries
     slf4j_version = '1.7.25'
-    jjobs_version = '0.9.6'
+    jjobs_version = '0.9.10-SNAPSHOT'
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
 
@@ -33,15 +36,17 @@ ext {
     cdk_version = "2.1.1"
 
     jewelcli_version = '0.8.9'
+    picocli_version = '3.9.5'
 
     //locations of runtime libraries
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
     libExclude = ['gurobi-*.jar', 'cplex-*.jar']
 
 //    commons_email_version = '1.4'
-//    oshi_version = '3.2'
+    oshi_version = '3.13.0'
 
     error_reporter_version = "0.9.2"
+    jetbrains_version = "17.0.0"
 
     logger.lifecycle('reading gradle properties file...')
     File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
@@ -61,14 +66,13 @@ ext {
     })
     System.properties.putAll(props)
 
-    // edit all these verions in sirius_cli/src/main/resources/....build.properties
+    // edit all these versions in sirius_cli/src/main/resources/....build.properties
     appName = System.properties.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
     buildNumber = System.properties.getProperty('de.unijena.bioinf.sirius.build')
     println(buildNumber)
     siriusVersion = System.properties.getProperty('de.unijena.bioinf.sirius.version')
     fingeridVersion = System.properties.getProperty('de.unijena.bioinf.fingerid.version')
     mztabm_version = System.properties.getProperty('de.unijena.bioinf.mztabm.version')
-
 }
 
 /*################### DISTRIBUTION STUFF ################### */
@@ -86,8 +90,8 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    sourceCompatibility = 11
+    targetCompatibility = 11
 
 
     version = "$siriusVersion"
@@ -109,11 +113,33 @@ allprojects {
     }
 
     dependencies {
+        annotationProcessor "de.unijena.bioinf.ms:processor:$siriusVersion"
         compile 'net.sf.trove4j:trove4j:3.0.3'
         compile 'com.google.guava:guava:18.0'
+        compile "org.jetbrains:annotations:$jetbrains_version"
+        compile group: 'com.github.oshi', name: 'oshi-core', version: "$oshi_version"
+
 
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
+
+    sourceSets {
+        main {
+            resources {
+                srcDirs "src/main/resources", "configs"
+            }
+        }
+    }
+
+    task cleanConfig {
+        group = 'build'
+        doLast {
+            def f = file("${projectDir}/configs")
+            if (f.exists())
+                f.deleteDir()
+        }
+    }
+    clean.dependsOn cleanConfig
 }
 
 task downloadGLPK(type: Copy) {
@@ -295,7 +321,8 @@ subprojects {
 
     /*################### Windows release Stuff ################### */
     launch4j {
-        icon = file('../dist/sirius.ico')
+
+        icon = getRootProject().getRootDir().toPath().resolve('dist/sirius.ico').toFile()
         copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
         companyName = "Friedrich-Schiller-University Jena"
         version = project.version
@@ -316,8 +343,10 @@ subprojects {
     /*################### Linux release Stuff ################### */
     startScripts {
         applicationName = "${project.appName}"
+        def siriusLibPath = '$GUROBI_HOME/lib:$CPLEX_HOME/bin/x86-64_linux:$CPLEX_HOME/bin/x86-64_osx:$CPLEX_HOME/bin/x64_win64:$CPLEX_HOME/bin/x86_win32:$APP_HOME/lib'
+
+//        defaultJvmOpts = ["-Djava.library.path=\\\"${siriusLibPath}\\\" -XX:+UseG1GC -XX:+UseStringDeduplication"]
         doLast {
-            def siriusLibPath = '$GUROBI_HOME/lib:$CPLEX_HOME/bin/x86-64_linux:$CPLEX_HOME/bin/x86-64_osx:$CPLEX_HOME/bin/x64_win64:$CPLEX_HOME/bin/x86_win32:$APP_HOME/lib'
             def lines = unixScript.text.split(System.lineSeparator())
             int insertIndex = -1
             for (int i = 0; i < lines.length; i++) {
@@ -326,12 +355,78 @@ subprojects {
                 }
                 if (lines[i].startsWith('DEFAULT_JVM_OPTS=""')) {
                     insertIndex = i - 1
-                    lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\"" + '"')
+                    lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\" -XX:+UseG1GC -XX:+UseStringDeduplication\"")
                 }
             }
             lines = (lines as List).plus(insertIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
             lines = (lines as List).plus(insertIndex + 1, "export DYLD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH\"")
             unixScript.text = lines.join(System.lineSeparator())
+        }
+    }
+}
+
+
+
+task sourceJar(type: Jar) {
+    group = 'build'
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    group = 'documentation'
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+def javaProjects() {
+    subprojects.findAll {new File(it.projectDir, 'src').directory }
+}
+
+allprojects{
+    configure(javaProjects()) {
+        publishing {
+            publications {
+                mavenJava(MavenPublication) {
+                    if (version.toString().endsWith('-SNAPSHOT'))
+                        setArtifacts([jar, sourceJar])
+                    else
+                        setArtifacts([jar, sourceJar, javadocJar])
+                }
+            }
+        }
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from project.components.java
+                //adding submodules to pom
+                pom.withXml {
+                    if (!project.subprojects.isEmpty()) {
+                        def modlules = asNode().appendNode('modules', '')
+                        project.subprojects.each {
+                            new Node(modlules, 'module', it.name)
+                        }
+                    }
+                }
+                setArtifacts([])
+            }
+            sirius(MavenPublication) {
+                artifactId = "$name"
+                groupId = "$group"
+
+                pom.withXml {}
+                artifact source: pdfDokuArtifact
+            }
+            manual(MavenPublication) {
+                artifactId = "manual"
+                groupId = "${group}.${project.appName}"
+                version = 'current'
+
+                pom.withXml {}
+                artifact source: pdfDokuArtifact, classifier: 'sirius'
+            }
         }
     }
 }
@@ -425,27 +520,6 @@ task refreshReadMe {
 }
 //refreshReadMe.dependsOn downloadChangelog
 refreshReadMe.dependsOn refreshDownloadLinks
-
-publishing {
-    publications {
-        sirius(MavenPublication) {
-            artifactId = "$name"
-            groupId = "$group"
-
-            pom.withXml {}
-            artifact source: pdfDokuArtifact
-        }
-        manual(MavenPublication) {
-            artifactId = "manual"
-            groupId = "${group}.${project.appName}"
-            version = 'current'
-
-            pom.withXml {}
-            artifact source: pdfDokuArtifact, classifier: 'sirius'
-        }
-    }
-}
-
 // publication artifactory
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'

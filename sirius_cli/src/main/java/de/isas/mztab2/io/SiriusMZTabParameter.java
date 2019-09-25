@@ -5,28 +5,29 @@ import de.isas.mztab2.model.Database;
 import de.isas.mztab2.model.OptColumnMapping;
 import de.isas.mztab2.model.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import uk.ac.ebi.pride.jmztab2.model.OptColumnMappingBuilder;
 
 public enum SiriusMZTabParameter {
     //SIRIUS
-    SIRIUS_SCORE("SIRIUS:score"),
+    SIRIUS_SCORE("SIRIUS:sirius_score"),
     SIRIUS_ISOTOPE_SCORE("SIRIUS:isotope_score"),
     SIRIUS_TREE_SCORE("SIRIUS:tree_score"),
-    SIRIUS_EXPL_INTENSITY_RATIO("SIRIUS:explained_intensity_ratio"),
-    SIRIUS_EXPL_PEAKS("SIRIUS:num_explained_peaks"),
-    SIRIUS_EXPL_PEAKS_RATIO("SIRIUS:explained_peaks_ratio"),
+    ZODIAC_SCORE("SIRIUS:zodiac_score"),
+    SIRIUS_EXPL_INTENSITY("SIRIUS:explained_intensity"),
+    SIRIUS_EXPL_INTENSITY_OF_EXPLAINABLE_INTENSITY("SIRIUS:num_explained_peaks"),
+    SIRIUS_EXPL_INTENSITY_OF_TOTAL_INTENSITY("SIRIUS:explained_peaks_ratio"),
     SIRIUS_MED_ABS_MASS_DEVIATION("SIRIUS:med_abs_mass_deviation"),
 
     SIRIUS_ANNOTATED_SPECTRA_LOCATION("SIRIUS:annotated_spectra_location"),
     SIRIUS_TREE_LOCATION("SIRIUS:tree_location"),
-    SIRIUS_CANDIDATE_LOCATION("SIRIUS:candidate_location"),
+    SIRIUS_SUMMARY_LOCATION("SIRIUS:candidate_location"),
 
     //FingerID
     FINGERID_SCORE("CSI:FingerID:score"),
-    //    FINGERID_CONFIDENCE("CSI:FingerID:confidence"),
-    FINGERID_TANIMOTO_SIMILARITY("CSI:FingerID:confidence"),
+    FINGERID_CONFIDENCE("CSI:FingerID:confidence"),
+    FINGERID_TANIMOTO_SIMILARITY("CSI:FingerID:tanimoto"),
 
     FINGERID_CANDIDATE_LOCATION("CSI:FingerID:candidate_location"),
     FINGERID_FINGERPRINT_LOCATION("CSI:FingerID:fingerprint_location"),
@@ -66,7 +67,7 @@ public enum SiriusMZTabParameter {
 
 
     public final static Parameter SOFTWARE_SIRIUS = new Parameter()
-            .name(PropertyManager.getProperty("de.unijena.bioinf.utils.errorReport.softwareName", "SIRIUS"))
+            .name(PropertyManager.getProperty("de.unijena.bioinf.utils.errorReport.softwareName", null, "SIRIUS"))
             .value(PropertyManager.getProperty("de.unijena.bioinf.sirius.version"));
 
     public final static Parameter SOFTWARE_FINGER_ID = new Parameter()
