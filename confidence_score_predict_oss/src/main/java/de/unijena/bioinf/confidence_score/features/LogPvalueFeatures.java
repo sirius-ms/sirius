@@ -44,9 +44,8 @@ public class LogPvalueFeatures implements FeatureCreator {
         double pvalue= utils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[0]);
 
 
-
-
-        double pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[0]);
+        double pvalue_kde=100;
+        if(rankedCandidates.length>5) pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[0]);
 
 
 

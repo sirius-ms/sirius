@@ -28,6 +28,7 @@ public class CombinedFeatureCreatorBIONODISTANCE extends CombinedFeatureCreator 
     public CombinedFeatureCreatorBIONODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered , PredictionPerformance[] performance, CovarianceScoringMethod.Scoring covscore, double all_confidence, boolean same){
 
         ArrayList<FeatureCreator> creators = new ArrayList<>(Arrays.asList(new PlattFeatures(),
+                new LogDistanceFeatures(scored_array,scored_array,1),
                 new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array),
                new LogPvalueFeatures(scored_array,scored_array),
                 new LogPvalueFeatures(scored_array_covscore,scored_array_covscore),
