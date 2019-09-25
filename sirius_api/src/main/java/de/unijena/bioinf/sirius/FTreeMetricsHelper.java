@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 public class FTreeMetricsHelper {
@@ -27,6 +28,9 @@ public class FTreeMetricsHelper {
         this.measuredIonRoot = l==null ? tree.getRoot() : getMeasuredIonRoot(l, tree.getRoot());
     }
 
+    public Optional<TreeStatistics> asTreeStats() {
+        return tree.getAnnotation(TreeStatistics.class);
+    }
 
     public double getSiriusScore() {
         return getSiriusScore(tree);
@@ -34,6 +38,26 @@ public class FTreeMetricsHelper {
 
     public double getTreeScore() {
         return getSiriusScore() - getIsotopeMs1Score();
+    }
+
+    public double getRootScore() {
+        return getRootScore(tree);
+    }
+
+    public double getExplainedPeaksRatio() {
+        return getExplainedPeaksRatio(tree);
+    }
+
+    public double getNumOfExplainedPeaks() {
+        return getNumOfExplainedPeaks(tree);
+    }
+
+    public double getExplainedIntensityRatio() {
+        return getExplainedIntensityRatio(tree);
+    }
+
+    public double getNumberOfExplainablePeaks() {
+        return getNumberOfExplainablePeaks(tree);
     }
 
     public double getIsotopeMs1Score() {
@@ -59,6 +83,7 @@ public class FTreeMetricsHelper {
     }
 
 
+    // static helper methods
     public static double getSiriusScore(FTree tree) {
         return tree.getTreeWeight();
     }
@@ -71,10 +96,6 @@ public class FTreeMetricsHelper {
         return tree.getAnnotationOrThrow(TreeStatistics.class).getRatioOfExplainedPeaks();
     }
 
-    public static double getNumOfExplainedPeaks(@NotNull FTree tree) {
-        return tree.numberOfVertices();
-    }
-
     public static double getExplainedIntensityRatio(@NotNull FTree tree) {
         return tree.getAnnotationOrThrow(TreeStatistics.class).getExplainedIntensity();
     }
@@ -82,6 +103,14 @@ public class FTreeMetricsHelper {
     public static double getNumberOfExplainablePeaks(@NotNull FTree tree) {
         return getNumOfExplainedPeaks(tree) / getExplainedPeaksRatio(tree);
     }
+
+    public static double getNumOfExplainedPeaks(@NotNull FTree tree) {
+        return tree.numberOfVertices();
+    }
+
+
+
+
 
     public static Set<FormulaScore> getScoresFromTree(@NotNull final FTree tree) {
         final FTreeMetricsHelper helper = new FTreeMetricsHelper(tree);
