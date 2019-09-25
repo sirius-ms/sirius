@@ -3,12 +3,11 @@ package de.unijena.bioinf.ms.utils;
 import de.unijena.bioinf.ChemistryBase.SimpleRectangularIsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.*;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Ms2DatasetPreprocessor;
+import de.unijena.bioinf.sirius.Ms2RunPreprocessor;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
+import de.unijena.bioinf.sirius.ExperimentResult;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -17,17 +16,22 @@ import java.util.List;
 
 public class CompoundQualityUtils {
 
+    //todo here we need to clean up. it seams that there is no reason to copy everything since we just add
+    // annotations -> here the idea should be, adding annotations specific for a task can not interfere with
+    // other tasks and are save.
+    // copying our main/immuatble data structures make the methods almost unusable in the frontend.
+
     public List<ExperimentResult> updateQualityOfExperimentResultsAndWrite(List<ExperimentResult> experimentResults, double medianNoiseIntensity, double isolationWindowWidth, double isolationWindowShift, Path outDir) throws IOException {
         List<Ms2Experiment> experiments =  new ArrayList<>();
         for (ExperimentResult experimentResult : experimentResults) {
             experiments.add(experimentResult.getExperiment());
         }
-        Ms2Dataset dataset = estimateQuality(experiments, medianNoiseIntensity, isolationWindowWidth, isolationWindowShift);
+        Ms2Run dataset = estimateQuality(experiments, medianNoiseIntensity, isolationWindowWidth, isolationWindowShift);
         List<ExperimentResult> resultsWithUpdatedExperiments = new ArrayList<>();
         int i = 0;
         for (Ms2Experiment experiment : dataset) {
             ExperimentResult result = experimentResults.get(i++);
-            ExperimentResult updatedResult = new ExperimentResult(experiment, result.getResults(), result.getExperimentSource(), result.getExperimentName());
+            ExperimentResult updatedResult = new ExperimentResult(experiment, result.getResults(), result.getExperiment().getSource(), result.getExperiment().getName());
             resultsWithUpdatedExperiments.add(updatedResult);
         }
 
@@ -42,9 +46,9 @@ public class CompoundQualityUtils {
         return resultsWithUpdatedExperiments;
     }
 
-    public Ms2Dataset updateQualityAndWrite(List<Ms2Experiment> experiments, double medianNoiseIntensity, double isolationWindowWidth, double isolationWindowShift, Path outDir) throws IOException {
+    public Ms2Run updateQualityAndWrite(List<Ms2Experiment> experiments, double medianNoiseIntensity, double isolationWindowWidth, double isolationWindowShift, Path outDir) throws IOException {
 
-        Ms2Dataset dataset = estimateQuality(experiments, medianNoiseIntensity, isolationWindowWidth, isolationWindowShift);
+        Ms2Run dataset = estimateQuality(experiments, medianNoiseIntensity, isolationWindowWidth, isolationWindowShift);
 
         if (outDir!=null) {
             writeQualitySummary(dataset, outDir);
@@ -53,9 +57,9 @@ public class CompoundQualityUtils {
         return dataset;
     }
 
-    protected Ms2Dataset estimateQuality(List<Ms2Experiment> experiments, double medianNoiseIntensity, double isolationWindowWidth, double isolationWindowShift) throws IOException {
-        Ms2Dataset dataset = new MutableMs2Dataset(experiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
-        Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
+    protected Ms2Run estimateQuality(List<Ms2Experiment> experiments, double medianNoiseIntensity, double isolationWindowWidth, double isolationWindowShift) throws IOException {
+        Ms2Run dataset = new MutableMs2Run(experiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
+        Ms2RunPreprocessor preprocessor = new Ms2RunPreprocessor(true);
 
         if (medianNoiseIntensity>0) {
             DatasetStatistics datasetStatistics = preprocessor.makeStatistics(dataset);
@@ -68,17 +72,17 @@ public class CompoundQualityUtils {
             double meanMs2NoiseIntensity = medianNoiseIntensity;
             double medianMs2NoiseIntensity = medianNoiseIntensity;
             FixedDatasetStatistics fixedDatasetStatistics = new FixedDatasetStatistics(minMs1Intensity, maxMs1Intensity, minMs2Intensity, maxMs2Intensity, minMs2NoiseIntensity, maxMs2NoiseIntensity, meanMs2NoiseIntensity, medianMs2NoiseIntensity);
-            ((MutableMs2Dataset) dataset).setDatasetStatistics(fixedDatasetStatistics);
+            ((MutableMs2Run) dataset).setDatasetStatistics(fixedDatasetStatistics);
         }
 
         List<QualityAnnotator> qualityAnnotators = new ArrayList<>();
-        qualityAnnotators.add(new NoMs1PeakAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION));
-        qualityAnnotators.add(new FewPeaksAnnotator(Ms2DatasetPreprocessor.MIN_NUMBER_OF_PEAKS));
-        qualityAnnotators.add(new LowIntensityAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, 0.01, Double.NaN));
-//        qualityAnnotators.add(new NotMonoisotopicAnnotatorUsingIPA(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION));
+        qualityAnnotators.add(new NoMs1PeakAnnotator(Ms2RunPreprocessor.FIND_MS1_PEAK_DEVIATION));
+        qualityAnnotators.add(new FewPeaksAnnotator(Ms2RunPreprocessor.MIN_NUMBER_OF_PEAKS));
+        qualityAnnotators.add(new LowIntensityAnnotator(Ms2RunPreprocessor.FIND_MS1_PEAK_DEVIATION, 0.01, Double.NaN));
+//        qualityAnnotators.add(new NotMonoisotopicAnnotatorUsingIPA(Ms2RunPreprocessor.FIND_MS1_PEAK_DEVIATION));
         double max2ndMostIntenseRatio = 0.33;
         double maxSummedIntensitiesRatio = 1.0;
-        qualityAnnotators.add(new ChimericAnnotator(Ms2DatasetPreprocessor.FIND_MS1_PEAK_DEVIATION, max2ndMostIntenseRatio, maxSummedIntensitiesRatio));
+        qualityAnnotators.add(new ChimericAnnotator(Ms2RunPreprocessor.FIND_MS1_PEAK_DEVIATION, max2ndMostIntenseRatio, maxSummedIntensitiesRatio));
 
         preprocessor.setQualityAnnotators(qualityAnnotators);
 
@@ -86,7 +90,7 @@ public class CompoundQualityUtils {
         if (isolationWindowWidth>0){
             double right = isolationWindowWidth/2d+isolationWindowShift;
             double left = -isolationWindowWidth/2d+isolationWindowShift;
-            ((MutableMs2Dataset) dataset).setIsolationWindow(new SimpleRectangularIsolationWindow(left, right));
+            ((MutableMs2Run) dataset).setIsolationWindow(new SimpleRectangularIsolationWindow(left, right));
         }
 
         dataset = preprocessor.preprocess(dataset);
@@ -135,8 +139,8 @@ public class CompoundQualityUtils {
         return false;
     }
 
-    public void writeQualitySummary(Ms2Dataset dataset, Path outputDir) throws IOException {
-        Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(false);
+    public void writeQualitySummary(Ms2Run dataset, Path outputDir) throws IOException {
+        Ms2RunPreprocessor preprocessor = new Ms2RunPreprocessor(false);
         Path qualityPath = outputDir.resolve("spectra_quality.csv");
         SpectrumProperty[] usedProperties = CompoundQuality.getUsedProperties(dataset);
         preprocessor.writeExperimentInfos(dataset, qualityPath, usedProperties);
