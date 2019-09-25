@@ -237,7 +237,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
 
                 try {
                     if (ff == FileFormat.dot) {
-                        DotIO.writeTree(selectedFile, sre.getTreeVisualization(), sre.getSiriusScore());
+                        DotIO.writeTree(selectedFile, sre.getTreeVisualization(), sre.getScore());
                     } else if (ff == FileFormat.gif) {
                         RasterGraphicsIO.writeGIF(selectedFile, getTreeImage());
                     } else if (ff == FileFormat.jpg) {

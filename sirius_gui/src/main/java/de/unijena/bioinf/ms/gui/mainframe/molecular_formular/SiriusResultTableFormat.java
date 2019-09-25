@@ -30,7 +30,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<IdentificationRes
 
     @Override
     protected boolean isBest(IdentificationResultBean element) {
-        return stats.getMax() <= element.getSiriusScore();
+        return stats.getMax() <= element.getScore();
     }
 
     @Override
@@ -74,7 +74,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<IdentificationRes
             case 2:
                 return result.getPrecursorIonType().toString();
             case 3:
-                return result.getSiriusScore();
+                return result.getScore();
             case 4:
                 return result.getResult().getIsotopeScore();
             case 5:
