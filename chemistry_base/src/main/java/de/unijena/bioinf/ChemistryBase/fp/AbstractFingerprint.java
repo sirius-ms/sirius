@@ -117,6 +117,17 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
         }
 
         @Override
+        public FPIter2 jumpTo(int index) {
+            FPIter l2 = left.jumpTo(index);
+            FPIter r2 = right.jumpTo(index);
+            if (l2.getIndex() < r2.getIndex()) {
+                return new GeneralPairIter(l2, right.jumpTo(l2.getIndex()));
+            } else {
+                return new GeneralPairIter(l2.jumpTo(r2.getIndex()), r2);
+            }
+        }
+
+        @Override
         public Iterator<FPIter2> iterator() {
             return clone();
         }

@@ -19,6 +19,7 @@ package de.unijena.bioinf.ftalign.graphics;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ftalign.analyse.FTDataElement;
 import de.unijena.bioinf.treealign.AbstractBacktrace;
 
@@ -77,14 +78,14 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
 
 
         try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(left.getSource().getFile()));
+            BufferedReader bufferedReader = FileUtils.ensureBuffering(new FileReader(left.getSource().getFile()));
             String line;
             while (bufferedReader.ready()) {
                 line = bufferedReader.readLine();
                 if (!line.contains("->")) {
                     final Matcher m = nodePattern.matcher(line);
                     if (m.find()) {
-                        final MolecularFormula formula = MolecularFormula.parse(m.group(2));
+                        final MolecularFormula formula = MolecularFormula.parseOrThrow(m.group(2));
                         leftNodes.put(formula, m.group(1));
                         leftNodesLabel.put(formula, m.group(2));
 
@@ -92,26 +93,26 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
                 } else {
                     final Matcher m = edgePattern.matcher(line);
                     if (m.find()) {
-                        final FormulaEdge formulaEdge = new FormulaEdge(MolecularFormula.parse(m.group(1)), MolecularFormula.parse(m.group(2)));
+                        final FormulaEdge formulaEdge = new FormulaEdge(MolecularFormula.parseOrThrow(m.group(1)), MolecularFormula.parseOrThrow(m.group(2)));
                         leftEdges.put(formulaEdge, m.group(3));
                     }
                 }
 
             }
-            bufferedReader = new BufferedReader(new FileReader(right.getSource().getFile()));
+            bufferedReader = FileUtils.ensureBuffering(new FileReader(right.getSource().getFile()));
             while (bufferedReader.ready()) {
                 line = bufferedReader.readLine();
                 if (!line.contains("->")) {
                     final Matcher m = nodePattern.matcher(line);
                     if (m.find()) {
-                        final MolecularFormula formula = MolecularFormula.parse(m.group(2));
+                        final MolecularFormula formula = MolecularFormula.parseOrThrow(m.group(2));
                         rightNodes.put(formula, m.group(1));
                         rightNodesLabel.put(formula, m.group(2));
                     }
                 } else {
                     final Matcher m = edgePattern.matcher(line);
                     if (m.find()) {
-                        final FormulaEdge formulaEdge = new FormulaEdge(MolecularFormula.parse(m.group(1)), MolecularFormula.parse(m.group(2)));
+                        final FormulaEdge formulaEdge = new FormulaEdge(MolecularFormula.parseOrThrow(m.group(1)), MolecularFormula.parseOrThrow(m.group(2)));
                         ;
                         rightEdges.put(formulaEdge, m.group(3));
                     }

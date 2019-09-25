@@ -15,7 +15,7 @@ public class ScorePerPeak implements IsotopePatternScorer {
 
 
     @Override
-    public void score(double[] scoreUptoKPeaks, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment, MeasurementProfile profile) {
+    public void score(double[] scoreUptoKPeaks, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment) {
         for (int k=0; k < scoreUptoKPeaks.length; ++k) {
             if (measuredSpectrum.size() > k) scoreUptoKPeaks[k] += scorePerPeak;
         }

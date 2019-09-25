@@ -3,9 +3,11 @@ package de.unijena.bioinf.ChemistryBase.ms;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +21,6 @@ public class MutableMs2Experiment implements Ms2Experiment {
 
     private double ionMass;
     private MolecularFormula molecularFormula;
-    private URL source;
     private String name;
 
 
@@ -34,7 +35,6 @@ public class MutableMs2Experiment implements Ms2Experiment {
         this.ms1Spectra = new ArrayList<>();
         this.ms2Spectra = new ArrayList<>();
         this.annotations = new Annotations<>();
-        this.source = null;
         this.name = "";
     }
 
@@ -56,20 +56,12 @@ public class MutableMs2Experiment implements Ms2Experiment {
         this.ionMass = experiment.getIonMass();
 //        this.moleculeNeutralMass = experiment.getMoleculeNeutralMass();
         this.molecularFormula = experiment.getMolecularFormula();
-        this.source = experiment.getSource();
         this.name = experiment.getName();
     }
 
-    public void setSource(URL source) {
-        this.source = source;
-    }
-
-    public void setSource(File source) {
-        try {
-            this.source = source.toURI().toURL();
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
+    @Override
+    public MutableMs2Experiment mutate() {
+        return this;
     }
 
     public void setName(String name) {
@@ -77,8 +69,26 @@ public class MutableMs2Experiment implements Ms2Experiment {
     }
 
     @Override
+    @Nullable
     public URL getSource() {
-        return source;
+        final SourceLocation s = getSourceAnnotation();
+        return s != null ? s.value : null;
+    }
+
+    @Nullable
+    public SourceLocation getSourceAnnotation() {
+        if (hasAnnotation(SpectrumFileSource.class))
+            return getAnnotationOrThrow(SpectrumFileSource.class);
+        if (hasAnnotation(MsFileSource.class))
+            return getAnnotationOrThrow(MsFileSource.class);
+        return null;
+    }
+
+    public void setSource(@NotNull SourceLocation sourcelocation) {
+        if (sourcelocation instanceof SpectrumFileSource)
+            setAnnotation(SpectrumFileSource.class, (SpectrumFileSource) sourcelocation);
+        else if (sourcelocation instanceof MsFileSource)
+            setAnnotation(MsFileSource.class, (MsFileSource) sourcelocation);
     }
 
     @Override

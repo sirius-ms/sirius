@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.jobs;
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import org.slf4j.LoggerFactory;

@@ -22,13 +22,16 @@ import com.google.gson.*;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.data.DataSource;
+import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.descriptor.Descriptor;
 import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.map.hash.TObjectIntHashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -40,6 +43,20 @@ public class FTJsonReader implements Parser<FTree> {
     /*
     TODO: currently, only Peak and Ionization are parsed from input
      */
+
+    protected final HashMap<String, MolecularFormula> formulaCache;
+
+    public FTJsonReader() {
+        this.formulaCache = new HashMap<>();
+    }
+
+    public FTJsonReader(@Nullable  HashMap<String, MolecularFormula> formulaCache) {
+        this.formulaCache = formulaCache==null ? new HashMap<>()  : formulaCache;
+    }
+
+    public MolecularFormula formula(String formula) {
+        return formulaCache.computeIfAbsent(formula, MolecularFormula::parseOrThrow);
+    }
 
     @Deprecated
     public FTree parse(BufferedReader reader) throws IOException {
@@ -61,7 +78,8 @@ public class FTJsonReader implements Parser<FTree> {
         final JSONDocumentType JSONdoc = new JSONDocumentType();
         final JsonParser r = new JsonParser();
         final JsonObject json = r.parse(jsonString).getAsJsonObject();
-
+        double score = 0d;
+        double scoreBoost = 0d;
         final JsonArray fragments = json.getAsJsonArray("fragments");
         final HashMap<MolecularFormula, FragmentInfo> fragmentByFormulaMap = new HashMap<>(fragments.size());
         final TIntObjectHashMap<FragmentInfo> fragmentByIdMap = new TIntObjectHashMap<>();
@@ -70,7 +88,7 @@ public class FTJsonReader implements Parser<FTree> {
         for (int k = 0; k < fragments.size(); ++k) {
             final JsonObject fragment = fragments.get(k).getAsJsonObject();
             final int id = Integer.parseInt(fragment.get("id").getAsString());
-            final MolecularFormula vertex = MolecularFormula.parse(fragment.get("molecularFormula").getAsString());
+            final MolecularFormula vertex = formula(fragment.get("molecularFormula").getAsString());
             final Ionization vertexIon = PrecursorIonType.getPrecursorIonType(fragment.get("ion").getAsString()).getIonization();
 //            fragmentByFormulaMap.put(vertex, new Object[]{fragment, vertexIon});
             fragmentByFormulaMap.put(vertex, new FragmentInfo(id, vertex, vertexIon, fragment));
@@ -110,8 +128,8 @@ public class FTJsonReader implements Parser<FTree> {
 
             if (!byId) {
                 //this is for backwards compatibility, from now on we use ids to map
-                final MolecularFormula a = MolecularFormula.parse(loss.get("source").getAsString()),
-                        b = MolecularFormula.parse(loss.get("target").getAsString());
+                final MolecularFormula a = formula(loss.get("source").getAsString()),
+                        b = formula(loss.get("target").getAsString());
 
                 final FragmentInfo bInfo = fragmentByFormulaMap.get(b);
                 edges.put(fragmentByFormulaMap.get(a).id, bInfo.id);
@@ -135,7 +153,7 @@ public class FTJsonReader implements Parser<FTree> {
                 treeFragmentIdToIdMap.put(v.getVertexId(), childId);
                 stack.push(v);
                 if (incomingLossMap.get(child).has("score"))
-                    v.getIncomingEdge().setWeight(incomingLossMap.get(child).get("score").getAsDouble());
+                    v.getIncomingEdge().setWeight(incomingLossMap.get(child).get("score").getAsDouble() + child.jsonObject.get("score").getAsDouble());
             }
         }
 
@@ -159,14 +177,17 @@ public class FTJsonReader implements Parser<FTree> {
             final JsonObject treeAnnotations = json.get("annotations").getAsJsonObject();
             final String[] keywords = getKeyArray(treeAnnotations);
             final Descriptor[] descriptors = registry.getByKeywords(FTree.class, keywords);
-            for (Descriptor<Object> descriptor : descriptors) {
-                final Object annotation = descriptor.read(JSONdoc, treeAnnotations);
+            for (Descriptor<DataAnnotation> descriptor : descriptors) {
+                final DataAnnotation annotation = descriptor.read(JSONdoc, treeAnnotations);
                 if (annotation != null) {
-                    tree.addAnnotation(descriptor.getAnnotationClass(), annotation);
+                    tree.setAnnotation(descriptor.getAnnotationClass(), annotation);
                 }
             }
+            if (treeAnnotations.has("nodeBoost")) {
+                scoreBoost = treeAnnotations.get("nodeBoost").getAsDouble();
+            }
         }
-
+        double rootScore = 0d;
         for (Fragment f : tree.getFragments()) {
 //            final Object[] objects = fragmentByFormulaMap.get(f.getFormula());
 //            final JsonObject jsonfragment = (JsonObject)objects[0];
@@ -175,11 +196,18 @@ public class FTJsonReader implements Parser<FTree> {
 
             final String[] keywords = getKeyArray(jsonfragment);
             final Descriptor[] descriptors = registry.getByKeywords(Fragment.class, keywords);
-            for (Descriptor<Object> descriptor : descriptors) {
-                final Object annotation = descriptor.read(JSONdoc, jsonfragment);
+            for (Descriptor<DataAnnotation> descriptor : descriptors) {
+                final DataAnnotation annotation = descriptor.read(JSONdoc, jsonfragment);
                 if (annotation != null) {
-                    FragmentAnnotation<Object> fano = tree.getOrCreateFragmentAnnotation(descriptor.getAnnotationClass());
+                    FragmentAnnotation<DataAnnotation> fano = tree.getOrCreateFragmentAnnotation(descriptor.getAnnotationClass());
                     fano.set(f, annotation);
+                }
+            }
+
+            if (jsonfragment.has("score")) {
+                score += (jsonfragment.get("score").getAsDouble());
+                if (f.getFormula().equals(root.formula)) {
+                    rootScore = score;
                 }
             }
         }
@@ -189,16 +217,21 @@ public class FTJsonReader implements Parser<FTree> {
             final JsonObject jsonloss = incomingLossMap.get(fragmentByIdMap.get(treeFragmentIdToIdMap.get(l.getTarget().getVertexId())));
             final String[] keywords = getKeyArray(jsonloss);
             final Descriptor[] descriptors = registry.getByKeywords(Loss.class, keywords);
-            for (Descriptor<Object> descriptor : descriptors) {
-                final Object annotation = descriptor.read(JSONdoc, jsonloss);
+            for (Descriptor<DataAnnotation> descriptor : descriptors) {
+                final DataAnnotation annotation = descriptor.read(JSONdoc, jsonloss);
                 if (annotation != null) {
-                    LossAnnotation<Object> lano = tree.getOrCreateLossAnnotation(descriptor.getAnnotationClass());
+                    LossAnnotation<DataAnnotation> lano = tree.getOrCreateLossAnnotation(descriptor.getAnnotationClass());
                     lano.set(l, annotation);
                 }
             }
+            if (jsonloss.has("score"))
+                score += jsonloss.get("score").getAsDouble();
         }
 
-        if (source != null) tree.addAnnotation(URL.class, source);
+        if (source != null) tree.setAnnotation(DataSource.class, new DataSource(source));
+        tree.normalizeStructure();
+        tree.setTreeWeight(score);
+        tree.setRootScore(rootScore);
         return tree;
     }
 
@@ -215,7 +248,7 @@ public class FTJsonReader implements Parser<FTree> {
         }
 
         //this is for backwards compatibility, from now on we use ids to map
-        final MolecularFormula f = MolecularFormula.parse(rootElement.getAsString());
+        final MolecularFormula f = formula(rootElement.getAsString());
         final FragmentInfo rInfo = fragmentByFormulaMap.get(f);
         if (rInfo==null) throw new RuntimeException("Cannot determine root fragment");
 

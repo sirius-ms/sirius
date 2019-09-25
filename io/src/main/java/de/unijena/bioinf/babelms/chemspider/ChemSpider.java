@@ -91,7 +91,7 @@ public class ChemSpider implements CompoundQuery {
                         final String value = buffer.toString().trim();
                         if (value.startsWith("InChI=")) {
                             final String formula = value.split("/", 3)[1];
-                            formulas.add(MolecularFormula.parse(formula));
+                            MolecularFormula.parseAndExecute(formula, formulas::add);
                         }
                         buffer.delete(0, buffer.length());
                     }
