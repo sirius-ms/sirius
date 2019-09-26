@@ -2,14 +2,15 @@ package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.babelms.ProjectSpaceManager;
-import de.unijena.bioinf.babelms.projectspace.mztab.MztabMExporter;
+import de.unijena.bioinf.babelms.projectspace.summaries.FormulaSummaryWriter;
+import de.unijena.bioinf.babelms.projectspace.summaries.StructureSummaryWriter;
+import de.unijena.bioinf.babelms.projectspace.summaries.mztab.MztabMExporter;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.sirius.FormulaSummarizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,7 +97,8 @@ public class ToolChainWorkflow implements Workflow {
 //                iteratorSource.forEach(it -> it.getExperiment().setAnnotation(RecomputeResults.class,null));
                 //use all experiments in workspace to create summaries
                 //todo write summaries
-                project.projectSpace().updateSummaries(new FormulaSummarizer(), new MztabMExporter());
+                LOG.info("Writing summary files...");
+                project.projectSpace().updateSummaries(new FormulaSummaryWriter(), new StructureSummaryWriter(), new MztabMExporter());
                 project.projectSpace().close();
                 LOG.info("Project-Space successfully written!");
             } catch (IOException e) {
