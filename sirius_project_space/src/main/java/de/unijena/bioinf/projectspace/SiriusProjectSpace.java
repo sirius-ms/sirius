@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -49,6 +50,10 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         this.projectSpaceProperties = new ConcurrentHashMap<>();
         this.compoundListeners = new ConcurrentLinkedQueue<>();
         this.formulaResultListener = new ConcurrentLinkedQueue<>();
+    }
+
+    public Path getRootPath() {
+        return root.toPath();
     }
 
     public void addProjectSpaceListener(ProjectSpaceListener listener) {
@@ -183,7 +188,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         if (!comps.contains(FormulaScoring.class))
             comps.add(FormulaScoring.class);
 
-        //not steam because IOExceptions
+        //not stream because IOExceptions
         List<FormulaResult> res = new ArrayList<>(results.size());
         for (FormulaResultId fid : results)
             res.add(getFormulaResult(fid, comps.toArray(Class[]::new)));

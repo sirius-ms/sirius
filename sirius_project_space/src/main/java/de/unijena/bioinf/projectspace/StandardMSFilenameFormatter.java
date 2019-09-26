@@ -161,7 +161,10 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
 
     private static String simplifyURL(String filename) {
         filename = new File(filename).getName();
-        int i = Math.min(48, filename.lastIndexOf('.'));
+        int ext = filename.lastIndexOf('.');
+        if (ext<0) ext = filename.length();
+        int i = Math.min(48,ext);
+        if (i>0 && filename.charAt(i-1)=='_') --i; // remove trailing _
         return filename.substring(0, i);
     }
 
