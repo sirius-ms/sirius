@@ -1,5 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.algorithm.scoring;
 
+import org.apache.commons.logging.Log;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Objects;
 
 public abstract class FormulaScore extends Score.AbstDoubleScore<FormulaScore> {
