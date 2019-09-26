@@ -9,13 +9,11 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.Summarizer;
-import de.unijena.bioinf.sirius.scores.IsotopeScore;
-import de.unijena.bioinf.sirius.scores.TreeScore;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public class FormulaSummarizer implements Summarizer {
@@ -37,13 +35,17 @@ public class FormulaSummarizer implements Summarizer {
             writer.textFile(SiriusLocations.SIRIUS_SUMMARY, w -> {
                 final StringBuilder headerBuilder = new StringBuilder("formula\tadduct\trank\trankingScore");
 
-                List<Class<? extends FormulaScore>> types = new ArrayList<>();
-                results.get(0).getCandidate().annotations().forEach((key, value) -> {
-                    if (value instanceof FormulaScore) {
-                        types.add(((FormulaScore) value).getClass());
-                        headerBuilder.append("\t").append(value.getIdentifier());
-                    }
+                LinkedHashSet<Class<? extends FormulaScore>> types = new LinkedHashSet<>();
+                results.stream().forEach(r -> {
+                    r.getCandidate().getAnnotation(FormulaScoring.class)
+                            .ifPresent(s -> s.annotations().forEach((key, value) -> {
+                                if (value instanceof FormulaScore) {
+                                    if (types.add(value.getClass()))
+                                        headerBuilder.append("\t").append(value.name());
+                                }
+                            }));
                 });
+
 
                 headerBuilder.append("\texplainedPeaks\texplainedIntensity\n");
 
@@ -51,7 +53,7 @@ public class FormulaSummarizer implements Summarizer {
                 w.write(headerBuilder.toString());
                 int rank = 0;
                 for (SScored<FormulaResult, ? extends FormulaScore> s : results) {
-                    rank++;
+                    ;
                     FormulaResult r = s.getCandidate();
                     PrecursorIonType ion = r.getId().getIonType();
                     FormulaScoring scores = r.getAnnotationOrThrow(FormulaScoring.class);
@@ -61,20 +63,15 @@ public class FormulaSummarizer implements Summarizer {
                     w.write('\t');
                     w.write(ion != null ? ion.toString() : "?");
                     w.write('\t');
-                    w.write(rank);
+                    w.write(String.valueOf(++rank));
                     w.write('\t');
                     w.write(String.valueOf(s.getScore()));
                     w.write('\t');
-                    w.write(String.valueOf(scores.getAnnotationOrNull(TreeScore.class)));
-                    w.write('\t');
-                    w.write(String.valueOf(scores.getAnnotationOrNull(IsotopeScore.class)));
-                    w.write('\t');
                     //writing different Scores to file e.g. sirius and zodiac
                     for (Class<? extends FormulaScore> k : types) {
-                        w.write(String.valueOf(scores.getAnnotationOrThrow(k).score()));
+                        w.write(String.valueOf(scores.getAnnotation(k).map(FormulaScore::score).orElse(Double.NaN)));
                         w.write('\t');
                     }
-
                     w.write(tree != null ? String.valueOf(tree.numberOfVertices()) : "");
                     w.write('\t');
                     w.write(tree != null ? String.valueOf(tree.getAnnotationOrThrow(TreeStatistics.class).getExplainedIntensity()) : "");
