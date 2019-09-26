@@ -21,8 +21,8 @@ public class CLPModelTest {
         double[] row3 = new double[] { 3.0, 4.0 };
         model.addSparseRow(row3, new int[] { 0, 1 }, 6.0, infty);
         // solve
-        // model.setColStart(new double[]{1d, 0d});
-        assertEquals(0, model.solve());
+        model.setColStart(new double[]{1d, 0d});
+        assertEquals(CLPModel.ReturnStatus.OPTIMAL, model.solve());
         assertEquals(28d, model.getScore(), 0.001);
         double[] colSolution = model.getColSolution();
         // for (int i = 0; i < 2; ++i)
