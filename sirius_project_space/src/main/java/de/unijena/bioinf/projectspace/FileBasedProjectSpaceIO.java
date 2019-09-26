@@ -44,12 +44,12 @@ public class FileBasedProjectSpaceIO implements ProjectIO {
 
 
     @Override
-    public <T> T inDirectory(String relativePath, IOFunctions.IOCallable<T> reader)  throws IOException {
+    public <T> T inDirectory(String relativePath, IOFunctions.IOCallable<T> ioAction)  throws IOException {
         final File newDir = new File(dir, relativePath);
         final File oldDir = dir;
         try {
             dir = newDir;
-            return reader.call();
+            return ioAction.call();
         } finally {
             dir = oldDir;
         }

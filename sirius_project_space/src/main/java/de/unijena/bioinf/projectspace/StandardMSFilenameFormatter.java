@@ -112,13 +112,6 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
         }
     }
 
-    /*private class IndexFormat implements FormatString {
-        @Override
-        public String format(Ms2Experiment experimentResult, int index) {
-            return String.valueOf(index);
-        }
-    }*/
-
     private class FixedString implements FormatString {
         private String string;
 
@@ -153,13 +146,17 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
         }
     }
 
-    private static String simplify(String name) {
+    public static String simplify(String name) {
+        if (name == null)
+            return null;
         if (name.length() > 64)
             name = name.substring(0, 48);
         return name.replaceAll("[^A-Za-z0-9,\\-]+", "");
     }
 
-    private static String simplifyURL(String filename) {
+    public static String simplifyURL(String filename) {
+        if (filename == null)
+            return null;
         filename = new File(filename).getName();
         int i = Math.min(48, filename.lastIndexOf('.'));
         return filename.substring(0, i);
