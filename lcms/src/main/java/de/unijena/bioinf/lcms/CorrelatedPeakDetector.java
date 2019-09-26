@@ -12,12 +12,11 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.model.lcms.*;
 import gnu.trove.list.array.TDoubleArrayList;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class CorrelatedPeakDetector {
+
     protected static final double MZ_ISO_ERRT = 0.002;
     protected static final Range<Double>[] ISO_RANGES = new Range[]{
             Range.closed(0.99664664 - MZ_ISO_ERRT, 1.00342764 + MZ_ISO_ERRT),
@@ -27,7 +26,13 @@ public class CorrelatedPeakDetector {
             Range.closed(4.9937908 - MZ_ISO_ERRT, 5.01572941 + MZ_ISO_ERRT)
     };
 
-    public boolean doIAmAnIsotope(ProcessedSample sample,FragmentedIon ion, TDoubleArrayList alreadyAnnotatedMzs) {
+    protected Set<PrecursorIonType> detectableIonTypes;
+
+    public CorrelatedPeakDetector(Set<PrecursorIonType> detectableIonTypes) {
+        this.detectableIonTypes = detectableIonTypes;
+    }
+
+    public boolean doIAmAnIsotope(ProcessedSample sample, FragmentedIon ion, TDoubleArrayList alreadyAnnotatedMzs) {
         // we assume that the peak might be either the second or the third isotopic peak
         Scan ms1Scan = sample.run.getScanByNumber(ion.getSegment().getApexScanNumber()).get();
         final SimpleSpectrum ms1 = sample.storage.getScan(ms1Scan);
@@ -174,24 +179,7 @@ public class CorrelatedPeakDetector {
     }
 
     private void detectAdductsAndInSourceFor(ProcessedSample sample, FragmentedIon ion, TDoubleArrayList alreadyAnnotatedMzs) {
-        final List<PrecursorIonType> adductTypes;
-        if (ion.getPolarity() >= 0) {
-            adductTypes = new ArrayList<>(Arrays.asList(
-                    PrecursorIonType.fromString("[M+Na]+"),
-                    PrecursorIonType.fromString("[M+K]+"),
-                    PrecursorIonType.fromString("[M+H]+"),
-                    PrecursorIonType.fromString("[M-H2O+H]+"),
-                    PrecursorIonType.fromString("[M+NH3+H]+")
-            ));
-        } else {
-            adductTypes = new ArrayList<>(Arrays.asList(
-                    PrecursorIonType.fromString("[M-H]-"),
-                    PrecursorIonType.fromString("[M+Cl]-"),
-                    PrecursorIonType.fromString("[M+Br]-"),
-                    PrecursorIonType.fromString("[M-H2O-H]-")
-            ));
-        }
-
+        final List<PrecursorIonType> adductTypes = this.detectableIonTypes.stream().filter(x->!x.isIonizationUnknown() && (x.getCharge() * ion.getPolarity())>0).collect(Collectors.toList());
         final ArrayList<PrecursorIonType> detectedIonTypes = new ArrayList<>(), possibleIonTypes = new ArrayList<>();
         final ArrayList<CorrelatedIon> adducts = new ArrayList<>();
         ScanPoint scanPoint = ion.getPeak().getScanPointAt(ion.getSegment().getApexIndex());
@@ -230,6 +218,7 @@ public class CorrelatedPeakDetector {
         if (detectedIonTypes.size()==1) {
             ion.setDetectedIonType(detectedIonTypes.get(0));
         }
+        ion.setPossibleAdductTypes(new HashSet<>(detectedIonTypes));
 
     }
 
