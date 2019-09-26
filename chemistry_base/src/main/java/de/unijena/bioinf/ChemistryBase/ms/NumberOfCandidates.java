@@ -10,6 +10,16 @@ public class NumberOfCandidates implements Ms2ExperimentAnnotation {
     public static final NumberOfCandidates MAX_VALUE = new NumberOfCandidates(Integer.MAX_VALUE);
     public static final NumberOfCandidates ONE = new NumberOfCandidates(1);
 
+    public static NumberOfCandidates zero() {
+        return ZERO;
+    }
+    public static NumberOfCandidates one() {
+        return ONE;
+    }
+    public static NumberOfCandidates max() {
+        return MAX_VALUE;
+    }
+
     public int value;
 
 
