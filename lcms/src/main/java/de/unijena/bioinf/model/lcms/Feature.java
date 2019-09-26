@@ -13,6 +13,7 @@ import org.apache.commons.math3.analysis.UnivariateFunction;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Set;
 
 public class Feature implements Annotated<DataAnnotation> {
 
@@ -22,6 +23,7 @@ public class Feature implements Annotated<DataAnnotation> {
     protected final SimpleSpectrum[] correlatedFeatures;
     protected final SimpleSpectrum[] ms2Spectra;
     protected final PrecursorIonType ionType;
+    protected final Set<PrecursorIonType> alternativeIonTypes;
     protected final UnivariateFunction rtRecalibration;
     protected Annotated.Annotations<DataAnnotation> annotations = new Annotations<>();
 
@@ -31,7 +33,7 @@ public class Feature implements Annotated<DataAnnotation> {
     // debug
     public ScanPoint[] completeTraceDebug;
 
-    public Feature(LCMSRun origin, double mz, double intensity, ScanPoint[] trace, SimpleSpectrum[] correlatedFeatures, SimpleSpectrum[] ms2Spectra, PrecursorIonType ionType, UnivariateFunction rtRecalibration,Quality peakShapeQuality, Quality ms1Quality, Quality ms2Quality) {
+    public Feature(LCMSRun origin, double mz, double intensity, ScanPoint[] trace, SimpleSpectrum[] correlatedFeatures, SimpleSpectrum[] ms2Spectra, PrecursorIonType ionType, Set<PrecursorIonType> alternativeIonTypes, UnivariateFunction rtRecalibration,Quality peakShapeQuality, Quality ms1Quality, Quality ms2Quality) {
         this.origin = origin;
         this.mz = mz;
         this.intensity = intensity;
@@ -43,6 +45,11 @@ public class Feature implements Annotated<DataAnnotation> {
         this.peakShapeQuality = peakShapeQuality;
         this.ms1Quality = ms1Quality;
         this.ms2Quality = ms2Quality;
+        this.alternativeIonTypes = alternativeIonTypes;
+    }
+
+    public Set<PrecursorIonType> getPossibleAdductTypes() {
+        return alternativeIonTypes;
     }
 
     public Quality getPeakShapeQuality() {
@@ -89,6 +96,10 @@ public class Feature implements Annotated<DataAnnotation> {
         return ionType;
     }
 
+    public Set<PrecursorIonType> getAlternativeIonTypes() {
+        return alternativeIonTypes;
+    }
+
     @Override
     public Annotations<DataAnnotation> annotations() {
         return annotations;
@@ -103,6 +114,7 @@ public class Feature implements Annotated<DataAnnotation> {
         }
         exp.setName(String.valueOf(trace[apex].getScanNumber()));
         exp.setPrecursorIonType(ionType);
+        exp.setAnnotation(PossibleAdducts.class, new PossibleAdducts(alternativeIonTypes));
         exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(getCorrelatedFeatures()));
         final ArrayList<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
         for (SimpleSpectrum s : getMs2Spectra()) {
@@ -116,7 +128,9 @@ public class Feature implements Annotated<DataAnnotation> {
         exp.setAnnotation(Quantification.class, new Quantification(Collections.singletonMap(origin.identifier, intensity)));
         if (getMs2Quality().betterThan(Quality.DECENT) && getMs1Quality().betterThan(Quality.DECENT) && getPeakShapeQuality().betterThan(Quality.DECENT))
             exp.setAnnotation(CompoundQuality.class, new CompoundQuality(CompoundQuality.CompoundQualityFlag.Good));
-
+        exp.setSource(new SpectrumFileSource(origin.source.getUrl()));
         return exp;
     }
+
+
 }

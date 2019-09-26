@@ -25,7 +25,7 @@ ms1=de.unijena.bioinf.IsotopePatternAnalysis.IsotopicIntensitySettings
 CompoundQuality=de.unijena.bioinf.ChemistryBase.ms.CompoundQuality
 
 
-experimentalMotifDb=de.unijena.bioinf.treemotifs.model.MotifDbFile
+MotifDbFile=de.unijena.bioinf.treemotifs.model.MotifDbFile
 RecomputeResults=de.unijena.bioinf.ms.annotaions.RecomputeResults
 FormulaResultThreshold=de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold
 UserFormulaResultRankingScore=de.unijena.bioinf.ms.frontend.subtools.fingerid.annotations.UserFormulaResultRankingScore
