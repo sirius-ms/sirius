@@ -27,8 +27,9 @@ class CLPModel {
   const double *m_col_ub;
   std::vector<double> m_row_lb;
   std::vector<double> m_row_ub;
+  const double *m_col_start = nullptr;
   ObjectiveSense m_obj_sense;
-  int *m_indices;  // NOTE: remove if only sparse rows are needed
+  int *m_indices = nullptr;  // NOTE: remove if only sparse rows are needed
 
  public:
   CLPModel(int ncols, ObjectiveSense obj_sense = OBJ_MAXIMIZE);
