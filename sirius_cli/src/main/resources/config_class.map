@@ -8,7 +8,7 @@ FormulaResultThreshold=de.unijena.bioinf.fingerid.annotations.FormulaResultThres
 
 AlgorithmProfile=de.unijena.bioinf.sirius.Profile
 
-experimentalMotifDb=de.unijena.bioinf.treemotifs.model.MotifDbFile
+MotifDbFile=de.unijena.bioinf.treemotifs.model.MotifDbFile
 
 IsotopeHandlingMs2=de.unijena.bioinf.FragmentationTreeConstruction.computation.IsotopeInMs2Handling
 
