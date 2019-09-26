@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.frontend.subtools.zodiac;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.GibbsSampling.Zodiac;
@@ -38,15 +39,15 @@ public class ZodiacSubToolJob extends DataSetJob {
 
         if (instances.stream().anyMatch(it -> isRecompute(it) || !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class))) {
             System.out.println("I am Zodiac and run on all instances: " + instances.stream().map(Instance::toString).collect(Collectors.joining(",")));
-            final Map<String, Instance> stupidLookupMap =
-                    instances.stream().collect(Collectors.toMap(ir -> ir.getExperiment().getName(), ir -> ir));
+
+            int maxCandidates = input.keySet().iterator().next().getAnnotation(NumberOfCandidates.class).orElse(NumberOfCandidates.MAX_VALUE).value;
 
             Zodiac zodiac = new Zodiac(input.keySet().stream().collect(Collectors.toMap(k -> k, k -> input.get(k).stream().map(r -> r.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList()))),
                     Collections.emptyList(),
                     new NodeScorer[]{new StandardNodeScorer(true, 1d)},
                     new EdgeScorer[]{new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorerNoiseIntensityWeighted(0d), new LogNormalDistribution(true), 0.95d)},
                     new EdgeThresholdMinConnectionsFilter(0.95d, 10, 10),
-                    50, true, true, null
+                    maxCandidates, true, true, null
             );
 
 
@@ -58,6 +59,7 @@ public class ZodiacSubToolJob extends DataSetJob {
 
             //add score and set new Ranking score
             instances.forEach(inst -> {
+                System.out.println(inst.getID().getDirectoryName());
                 final Map<FTree, ZodiacScore> sTress = scoreResults.get(inst.getExperiment());
                 final List<FormulaResult> formulaResults = input.get(inst.getExperiment());
                 formulaResults.forEach(fr -> {
@@ -70,6 +72,7 @@ public class ZodiacSubToolJob extends DataSetJob {
                     } catch (IOException e) {
                         LoggerFactory.getLogger(ZodiacSubToolJob.class).error(e.getMessage(), e);
                     }
+                    System.out.println(fr.getId().getFormula().toString() + sTress.get(fr.getAnnotationOrThrow(FTree.class)));
                 });
 
                 // set sirius to ranking score
