@@ -52,7 +52,7 @@ public class TreeMotifPlugin extends SiriusPlugin {
         if (input.getAnnotation(Beautified.class, Beautified::ugly).isInProcess()) {
             return;
         }
-        String motifDBString = input.getExperimentInformation().getAnnotation(MotifDbFile.class, MotifDbFile::new).motifDB;
+        String motifDBString = input.getExperimentInformation().getAnnotation(MotifDbFile.class, MotifDbFile::new).value;
         if (motifDBString !=null) {
             final File motifDB = new File(motifDBString);
             if (treeMotifDB!=null) {

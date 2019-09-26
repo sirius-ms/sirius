@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -32,6 +33,8 @@ public class LCMSProccessingInstance {
     protected MemoryFileStorage ms2Storage;
     protected AtomicInteger numberOfMs2Scans = new AtomicInteger();
 
+    protected Set<PrecursorIonType> detectableIonTypes;
+
     public LCMSProccessingInstance() {
         this.samples = new ArrayList<>();
         try {
@@ -40,7 +43,25 @@ public class LCMSProccessingInstance {
             throw new RuntimeException();
         }
         this.storages = new HashMap<ProcessedSample, SpectrumStorage>();
+        this.detectableIonTypes = new HashSet<>(Arrays.asList(
+                PrecursorIonType.fromString("[M+Na]+"),
+                PrecursorIonType.fromString("[M+K]+"),
+                PrecursorIonType.fromString("[M+H]+"),
+                PrecursorIonType.fromString("[M-H2O+H]+"),
+                PrecursorIonType.fromString("[M+NH3+H]+"),
+                PrecursorIonType.fromString("[M-H]-"),
+                PrecursorIonType.fromString("[M+Cl]-"),
+                PrecursorIonType.fromString("[M+Br]-"),
+                PrecursorIonType.fromString("[M-H2O-H]-")
+        ));
+    }
 
+    public Set<PrecursorIonType> getDetectableIonTypes() {
+        return detectableIonTypes;
+    }
+
+    public void setDetectableIonTypes(Set<PrecursorIonType> detectableIonTypes) {
+        this.detectableIonTypes = detectableIonTypes;
     }
 
     public MemoryFileStorage getMs2Storage() {
@@ -133,7 +154,7 @@ public class LCMSProccessingInstance {
             fitPeakShape(sample,ion);
 
 
-        final Feature feature = new Feature(sample.run, ionMass, intensity, trace.toArray(new ScanPoint[0]), correlatedFeatures.toArray(new SimpleSpectrum[0]), gapFilled ? new SimpleSpectrum[0] : new SimpleSpectrum[]{ms2Storage.getScan(ion.getMsMsScan())}, ionType, sample.recalibrationFunction,
+        final Feature feature = new Feature(sample.run, ionMass, intensity, trace.toArray(new ScanPoint[0]), correlatedFeatures.toArray(new SimpleSpectrum[0]), gapFilled ? new SimpleSpectrum[0] : new SimpleSpectrum[]{ms2Storage.getScan(ion.getMsMsScan())}, ionType, ion.getPossibleAdductTypes(), sample.recalibrationFunction,
                 ion.getPeakShape().getPeakShapeQuality(), ion.getMsQuality(), ion.getMsMsQuality()
 
                 );
@@ -176,7 +197,7 @@ public class LCMSProccessingInstance {
         assert checkForDuplicates(sample);
         ////
         ListIterator<FragmentedIon> iter = ions.listIterator();
-        final CorrelatedPeakDetector detector = new CorrelatedPeakDetector();
+        final CorrelatedPeakDetector detector = new CorrelatedPeakDetector(detectableIonTypes);
         while (iter.hasNext()) {
             final FragmentedIon ion = iter.next();
             if (!detector.detectCorrelatedPeaks(sample, ion))

@@ -8,7 +8,11 @@ public interface Score<T extends Score> extends DataAnnotation, Comparable<T> {
 
     @Override
     default int compareTo(@NotNull T o) {
-        return Double.compare(score(), o.score());
+        final double a = score();
+        if (Double.isNaN(a)) return -1; // NaN should be treated as "minimum score"
+        final double b = o.score();
+        if (Double.isNaN(b)) return 1;
+        return Double.compare(a, b);
     }
 
     default String name() {
