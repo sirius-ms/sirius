@@ -85,7 +85,7 @@ public class GapFilling {
                                     continue ; // we already know this ion
                                 final GapFilledIon pseudoIon = new GapFilledIon(sample.run.getScanByNumber(seg.getPeak().getScanPointAt(seg.getApexIndex()).getScanNumber()).map(x->x.getPolarity()).orElse(Polarity.UNKNOWN),  peak.get(), seg, mostAbundant);
                                 // search for isotopes
-                                if (new CorrelatedPeakDetector().detectCorrelatedPeaks(sample, pseudoIon)) {
+                                if (new CorrelatedPeakDetector(instance.getDetectableIonTypes()).detectCorrelatedPeaks(sample, pseudoIon)) {
 
                                     if (onlyGoodShapes) {
                                         if (pseudoIon.getIsotopes().size()<=1)

@@ -6,7 +6,9 @@ import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class FragmentedIon extends IonGroup {
 
@@ -14,6 +16,7 @@ public class FragmentedIon extends IonGroup {
     protected final Scan ms2Scan;
     protected final List<CorrelatedIon> adducts, inSourceFragments;
     protected PrecursorIonType detectedIonType;
+    protected Set<PrecursorIonType> alternativeIonTypes;
     protected PeakShape peakShape;
     protected int alignments=0; // internal counter
     protected Quality ms2Quality;
@@ -27,6 +30,7 @@ public class FragmentedIon extends IonGroup {
         this.adducts = new ArrayList<>();
         this.inSourceFragments = new ArrayList<>();
         this.ms2Quality = ms2Quality;
+        this.alternativeIonTypes = Collections.emptySet();
 
     }
 
@@ -76,6 +80,14 @@ public class FragmentedIon extends IonGroup {
 
     public void setDetectedIonType(PrecursorIonType detectedIonType) {
         this.detectedIonType = detectedIonType;
+    }
+
+    public void setPossibleAdductTypes(Set<PrecursorIonType> possibleAdductTypes) {
+        this.alternativeIonTypes = possibleAdductTypes;
+    }
+
+    public Set<PrecursorIonType> getPossibleAdductTypes() {
+        return alternativeIonTypes;
     }
 
     public List<CorrelatedIon> getAdducts() {

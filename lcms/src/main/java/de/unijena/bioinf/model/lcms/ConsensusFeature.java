@@ -10,8 +10,9 @@ import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.io.File;
+import java.net.URL;
+import java.util.*;
 
 public class ConsensusFeature implements Annotated<DataAnnotation> {
 
@@ -69,6 +70,14 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
         return ionType;
     }
 
+    public Set<PrecursorIonType> getPossibleAdductTypes() {
+        final HashSet<PrecursorIonType> possibleIonTypes = new HashSet<>();
+        for (Feature f : features) {
+            possibleIonTypes.addAll(f.alternativeIonTypes);
+        }
+        return possibleIonTypes;
+    }
+
     public Ms2Experiment toMs2Experiment() {
 
         final MutableMs2Experiment exp = new MutableMs2Experiment();
@@ -95,7 +104,6 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
         exp.setAnnotation(Quantification.class, new Quantification(map));
         if (good)
             exp.setAnnotation(CompoundQuality.class, new CompoundQuality(CompoundQuality.CompoundQualityFlag.Good));
-
         return exp;
     }
 
