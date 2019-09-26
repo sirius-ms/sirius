@@ -22,7 +22,7 @@ public interface ProjectIO {
 
     public <A extends ProjectSpaceProperty> Optional<A> getProjectSpaceProperty(Class<A> klass);
 
-    public <T> T  inDirectory(String relativePath, IOFunctions.IOCallable<T> reader) throws IOException;
+    public <T> T inDirectory(String relativePath, IOFunctions.IOCallable<T> ioAction) throws IOException;
 
     public default URL asURL(String path) {
         try {
