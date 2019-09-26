@@ -15,9 +15,6 @@ CLPModel::CLPModel(int ncols, ObjectiveSense obj_sense)
   // NOTE: no logs
   m_si->setLogLevel(0);
   m_matrix = new CoinPackedMatrix(false, 0, 0);
-  // unnecessary when only using sparse rows!
-  m_indices = new int[m_ncols];
-  for (int i{0}; i < m_ncols; ++i) m_indices[i] = i;
 }
 
 CLPModel::~CLPModel() {
@@ -40,11 +37,15 @@ void CLPModel::setColBounds(const double col_lb[], const double col_ub[],
 
 void CLPModel::setColStart(const double start[], int len) {
   assert(len == m_ncols);
-  m_si->setColSolution(start);
+  m_col_start = start;
 }
 
 void CLPModel::addRow(const double row[], int len, double lb, double ub) {
   assert(len == m_ncols);
+  if (!m_indices){
+    m_indices = new int[m_ncols];
+    for (int i{0}; i < m_ncols; ++i) m_indices[i] = i;
+  }
   addSparseRow(row, m_indices, len, lb, ub);
 }
 
@@ -77,6 +78,9 @@ CLPModel::ReturnStatus CLPModel::solve() {
   m_si->setObjSense(OBJ_MAXIMIZE);
   for (int i{0}; i < m_ncols; ++i)
     m_si->setInteger(i);  // all variables are integers
+  // set col start
+  if (m_col_start)
+    m_si->setColSolution(m_col_start);
   // TODO: should this be the default/only option?
   m_si->branchAndBound();
   // TODO: can multiple of these be true? -> order
