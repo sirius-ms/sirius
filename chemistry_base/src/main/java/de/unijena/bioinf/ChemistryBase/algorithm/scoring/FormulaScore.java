@@ -35,4 +35,9 @@ public abstract class FormulaScore extends Score.AbstDoubleScore<FormulaScore> {
     public int hashCode() {
         return Objects.hash(score()) ^ getClass().hashCode();
     }
+
+    @Override
+    public String toString() {
+        return name() + ": " + score();
+    }
 }

@@ -3,6 +3,8 @@ package de.unijena.bioinf.GibbsSampling;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.GibbsSampling.model.*;
@@ -263,7 +265,8 @@ public class Zodiac {
                     if (zodiacScore.score() > 0 && clusterCompounds && representativeToCluster.containsKey(id)) {
                         Log.error("Zodiac results and Sirius results contain different molecular formula candiates for compoumound "+id+".");
                     } else if (zodiacScore.score() > 0.01) {
-                        Log.warn("A high scoring ZODIAC molecular formula candidate is not contained in SIRIUS top hits.\n" +
+                        Log.warn("Instance " + id + ": The high scoring ZODIAC molecular formula " + mf +  " with score " + zodiacScore.score() +
+                                " is not contained in SIRIUS top hits.\n" +
                                 "This might occur if clustered commpounds possess different SIRIUS molecular formula candidates.\n" +
                                 "You might increase the number of SIRIUS output candidates or disable clustering in ZODIAC. Compound id: "+id);
                     }
@@ -460,4 +463,5 @@ public class Zodiac {
         }
         return instanceToCluster;
     }
+
 }
