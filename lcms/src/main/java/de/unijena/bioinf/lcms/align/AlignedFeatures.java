@@ -1,15 +1,15 @@
 package de.unijena.bioinf.lcms.align;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.model.lcms.FragmentedIon;
 import de.unijena.bioinf.model.lcms.Scan;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 public class AlignedFeatures {
 
@@ -32,8 +32,32 @@ public class AlignedFeatures {
         calculate();
     }
 
+    public Optional<AlignedFeatures> without(Set<ProcessedSample> samples) {
+        final HashMap<ProcessedSample,FragmentedIon> newFeatures = new HashMap<>(features);
+        newFeatures.keySet().removeAll(samples);
+        if (newFeatures.isEmpty()) return Optional.empty();
+        final TDoubleArrayList mz = new TDoubleArrayList(), rt = new TDoubleArrayList();
+        final List<ProcessedSample> scans = new ArrayList<>();
+        for (ProcessedSample f: newFeatures.keySet()) {
+            final FragmentedIon i = features.get(f);
+            mz.add(i.getMass());
+            rt.add(f.getRecalibratedRT(i.getRetentionTime()));
+            if (i.getMsMs()!=null) scans.add(f);
+        }
+        return Optional.of(new AlignedFeatures(
+                Statistics.robustAverage(mz.toArray()),
+                Statistics.robustAverage(rt.toArray()),
+                scans.stream().max(Comparator.comparingDouble(s->features.get(s).getMsMsScan().getTIC())).orElse(null),
+                newFeatures,
+                rtLeft,rtRight
+        ));
+    }
+
     public FragmentedIon getRepresentativeIon() {
         return representativeFeature==null ? null : features.get(representativeFeature);
+    }
+    public ProcessedSample getRepresentativeSample() {
+        return representativeFeature;
     }
 
     private void calculate() {

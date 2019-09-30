@@ -1,5 +1,7 @@
 package de.unijena.bioinf.model.lcms;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+
 public class CorrelationGroup {
     protected ChromatographicPeak left, right;
     protected ChromatographicPeak.Segment leftSegment, rightSegment;
@@ -7,6 +9,9 @@ public class CorrelationGroup {
     protected double correlation, kl;
 
     protected String annotation;
+
+    // for adduct types
+    protected PrecursorIonType leftType, rightType;
 
     public CorrelationGroup(ChromatographicPeak left, ChromatographicPeak right, ChromatographicPeak.Segment leftSegment, ChromatographicPeak.Segment rightSegment, int start, int end, double correlation, double kl) {
         this.left = left;
@@ -57,6 +62,22 @@ public class CorrelationGroup {
 
     public void setAnnotation(String annotation) {
         this.annotation = annotation;
+    }
+
+    public PrecursorIonType getLeftType() {
+        return leftType;
+    }
+
+    public void setLeftType(PrecursorIonType leftType) {
+        this.leftType = leftType;
+    }
+
+    public PrecursorIonType getRightType() {
+        return rightType;
+    }
+
+    public void setRightType(PrecursorIonType rightType) {
+        this.rightType = rightType;
     }
 
     @Override
