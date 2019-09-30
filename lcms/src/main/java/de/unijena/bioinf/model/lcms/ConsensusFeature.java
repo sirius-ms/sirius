@@ -104,6 +104,7 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
         exp.setAnnotation(Quantification.class, new Quantification(map));
         if (good)
             exp.setAnnotation(CompoundQuality.class, new CompoundQuality(CompoundQuality.CompoundQualityFlag.Good));
+
         return exp;
     }
 

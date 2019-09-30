@@ -15,6 +15,7 @@ import java.util.ListIterator;
  */
 public class IonIdentityNetwork {
 
+
     public List<FragmentedIon> filterByIonIdentity(List<FragmentedIon> ions) {
         final BitSet delete = new BitSet(ions.size());
         foreachIon:
