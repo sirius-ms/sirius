@@ -232,8 +232,14 @@ public class LCMSProccessingInstance {
         }
         assert checkForDuplicates(sample);
         sample.ions.clear();
+        sample.ions.addAll(ions);
+        /*
+        sample.ions.clear();
         sample.ions.addAll(new IonIdentityNetwork().filterByIonIdentity(ions));
         assert checkForDuplicates(sample);
+         */
+
+
         TDoubleArrayList peakWidths = new TDoubleArrayList(),peakWidthsToHeight = new TDoubleArrayList();
         for (FragmentedIon f : sample.ions) {
             final long fwhm = f.getSegment().fwhm(0.2);
