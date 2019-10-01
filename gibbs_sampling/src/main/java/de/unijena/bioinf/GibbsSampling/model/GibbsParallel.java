@@ -130,7 +130,10 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
 
         awaitAllSubJobs();
 
+
+        long start = System.currentTimeMillis();
         combineResults();
+        LOG().debug("combined all results in: "+(System.currentTimeMillis()-start)+" ms");
 
         return createCompoundResults();
 
