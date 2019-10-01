@@ -40,7 +40,7 @@ public class MassTraceBuilder {
         ScanPoint best = null;
         SimpleSpectrum bestSpec = null;
         for (Scan s : sample.run.getScans(scanRange.lowerEndpoint(), scanRange.upperEndpoint()).values()) {
-            if (!s.isMsMs() && scanRange.contains(s.getScanNumber())) {
+            if (!s.isMsMs() && scanRange.contains(s.getIndex())) {
                 final SimpleSpectrum spectrum = sample.storage.getScan(s);
                 int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, new Deviation(15));
                 if (i>=0) {
@@ -103,7 +103,7 @@ public class MassTraceBuilder {
         final double intensity = previous.getIntensity();
         final double mzStd = Math.pow(dev.absoluteFor(mz)/2d,2);
         final double intVar = 1d;
-        final double noiseLevel = sample.ms1NoiseModel.getNoiseLevel(scan.getScanNumber(),mz);
+        final double noiseLevel = sample.ms1NoiseModel.getNoiseLevel(scan.getIndex(),mz);
         final int start = Spectrums.indexOfFirstPeakWithin(spec, mz, dev);
         if (start < 0) return false;
         int end;

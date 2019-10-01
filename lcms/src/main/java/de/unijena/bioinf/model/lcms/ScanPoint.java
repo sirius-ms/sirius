@@ -18,7 +18,7 @@ public class ScanPoint implements Peak {
     }
 
     public ScanPoint(Scan scan, double mass, double intensity) {
-        this(scan.getScanNumber(), scan.getRetentionTime(), mass, intensity);
+        this(scan.getIndex(), scan.getRetentionTime(), mass, intensity);
 
     }
 
