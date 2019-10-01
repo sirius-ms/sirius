@@ -6,15 +6,24 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidate> {
     protected TObjectIntHashMap<Ms2Experiment> idxMap;
     protected BitSet[] maybeSimilar;
-    protected TObjectDoubleHashMap<Ms2Experiment> normalizationMap;
+
     protected double threshold;
     protected  double MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 2; //changed: this is now the value which is just not good enough; 3;//changed from 3 / 5
+
+    //do not recompute when preparing with new threshold
+    protected TObjectDoubleHashMap<Ms2Experiment> normalizationMap;
+    PeakWithExplanation[][] allFragmentPeaks;
+    PeakWithExplanation[][] allLossPeaks;
+    double[] norm;
+    private double used_minimum_number_matched_peaks_losses = Double.NaN;
+
     public CommonFragmentAndLossScorer(double threshold) {
         this.threshold = threshold;
     }
@@ -24,35 +33,44 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
     }
 
     private void prepare(FragmentsCandidate[][] candidates, double minimum_number_matched_peaks_losses) {
-        double[] norm = this.normalization(candidates, minimum_number_matched_peaks_losses);
-        this.normalizationMap = new TObjectDoubleHashMap(candidates.length, 0.75F, 0.0D / 0.0);
+        LoggerFactory.getLogger(CommonFragmentAndLossScorer.class).debug("prepare.");
 
-        for(int i = 0; i < candidates.length; ++i) {
-            Ms2Experiment experiment = candidates[i][0].getExperiment();
-            this.normalizationMap.put(experiment, norm[i]);
+
+        if (normalizationMap==null & (used_minimum_number_matched_peaks_losses != minimum_number_matched_peaks_losses)){
+            long start = System.currentTimeMillis();
+            used_minimum_number_matched_peaks_losses = minimum_number_matched_peaks_losses;
+            norm = this.normalization(candidates, minimum_number_matched_peaks_losses);
+            this.normalizationMap = new TObjectDoubleHashMap(candidates.length, 0.75F, 0.0D / 0.0);
+
+            for(int i = 0; i < candidates.length; ++i) {
+                Ms2Experiment experiment = candidates[i][0].getExperiment();
+                this.normalizationMap.put(experiment, norm[i]);
+            }
+
+            this.idxMap = new TObjectIntHashMap(candidates.length);
+            this.maybeSimilar = new BitSet[candidates.length];
+            allFragmentPeaks = new PeakWithExplanation[candidates.length][];
+            allLossPeaks = new PeakWithExplanation[candidates.length][];
+
+            for(int i = 0; i < candidates.length; ++i) {
+                Ms2Experiment experiment = candidates[i][0].getExperiment();
+                FragmentsCandidate[] currentCandidates = candidates[i];
+
+                PeakWithExplanation[] fragmentPeaks = getPeaksWithExplanations(currentCandidates, true);
+                allFragmentPeaks[i] = fragmentPeaks;
+
+                PeakWithExplanation[] lossPeaks = getPeaksWithExplanations(currentCandidates, false);
+                allLossPeaks[i] = lossPeaks;
+
+                this.idxMap.put(experiment, i);
+                this.maybeSimilar[i] = new BitSet();
+
+            }
+
+            LoggerFactory.getLogger(CommonFragmentAndLossScorer.class).debug("prepare, computed maps in "+(System.currentTimeMillis()-start));
         }
 
-        this.idxMap = new TObjectIntHashMap(candidates.length);
-        this.maybeSimilar = new BitSet[candidates.length];
-        PeakWithExplanation[][] allFragmentPeaks = new PeakWithExplanation[candidates.length][];
-        PeakWithExplanation[][] allLossPeaks = new PeakWithExplanation[candidates.length][];
-
-        for(int i = 0; i < candidates.length; ++i) {
-            Ms2Experiment experiment = candidates[i][0].getExperiment();
-            FragmentsCandidate[] currentCandidates = candidates[i];
-
-            PeakWithExplanation[] fragmentPeaks = getPeaksWithExplanations(currentCandidates, true);
-            allFragmentPeaks[i] = fragmentPeaks;
-
-            PeakWithExplanation[] lossPeaks = getPeaksWithExplanations(currentCandidates, false);
-            allLossPeaks[i] = lossPeaks;
-
-            this.idxMap.put(experiment, i);
-            this.maybeSimilar[i] = new BitSet();
-
-        }
-
-
+        long start = System.currentTimeMillis();
         for(int i = 0; i < allFragmentPeaks.length; ++i) {
             for(int j = i + 1; j < allFragmentPeaks.length; ++j) {
                 final double commonL = this.scoreCommons(allFragmentPeaks[i], allFragmentPeaks[j]);
@@ -78,7 +96,10 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         for (BitSet bitSet : this.maybeSimilar) {
             sum += bitSet.cardinality();
         }
-        if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum + " | threshold was "+threshold);
+
+        LoggerFactory.getLogger(CommonFragmentAndLossScorer.class).debug("prepare, computed maybeSimilar in "+(System.currentTimeMillis()-start));
+
+        if (GibbsMFCorrectionNetwork.DEBUG) LoggerFactory.getLogger(CommonFragmentAndLossScorer.class).debug("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum + " | threshold was "+threshold);
     }
 
 //    private void prepareData(){
