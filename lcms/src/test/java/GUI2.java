@@ -1,16 +1,23 @@
+import com.google.common.base.Joiner;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
+import de.unijena.bioinf.babelms.ms.MsFileConfig;
 import de.unijena.bioinf.io.lcms.MzXMLParser;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.MemoryFileStorage;
 import de.unijena.bioinf.lcms.ProcessedSample;
+import de.unijena.bioinf.lcms.align.AlignedFeatures;
 import de.unijena.bioinf.lcms.align.Cluster;
 import de.unijena.bioinf.lcms.debuggui.Gradient;
+import de.unijena.bioinf.lcms.ionidentity.IonNetwork;
 import de.unijena.bioinf.lcms.peakshape.GaussianShape;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -147,7 +154,17 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                 try (BufferedWriter bw = FileUtils.getWriter(new File("gui2.ms"))) {
                     final JenaMsWriter writer = new JenaMsWriter();
                     for (ConsensusFeature f : features) {
-                        writer.write(bw, f.toMs2Experiment());
+                        Ms2Experiment experiment = f.toMs2Experiment();
+                        final Set<PrecursorIonType> ionTypes = f.getPossibleAdductTypes();
+                        if (!ionTypes.isEmpty()) {
+                            ParameterConfig parameterConfig = PropertyManager.DEFAULTS.newIndependentInstance("LCMS-" + experiment.getName());
+                            parameterConfig.changeConfig("AdductSettings.enforced", Joiner.on(',').join(ionTypes));
+                            parameterConfig.changeConfig("PossibleAdducts", Joiner.on(',').join(ionTypes));
+                            final MsFileConfig config = new MsFileConfig(parameterConfig);
+                            experiment.setAnnotation(MsFileConfig.class, config);
+                        }
+
+                        writer.write(bw, experiment);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -223,9 +240,9 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
 
         final File mzxmlFile = new File(
                 //"/home/kaidu/analysis/example"
-                //"/home/kaidu/analysis/canopus/mice/raw/cecum"
+                "/home/kaidu/analysis/canopus/mice/raw/cecum"
                 //"/home/kaidu/analysis/example"
-                "/home/kaidu/analysis/canopus/arabidobsis"
+                //"/home/kaidu/analysis/canopus/arabidobsis"
                 );
         MemoryFileStorage storage= null;
         try {
@@ -261,6 +278,9 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
             final List<String> sampleNames = new ArrayList<>();
             addOrderedSampleNames(c, sampleNames);
 
+            // write correlation network
+            i.detectAdductsWithGibbsSampling(c).writeToFile(i,new File("ion_network.js"));
+
             final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(c);
             for (ProcessedSample s : i.getSamples()) s.storage.close();
             i.getMs2Storage().close();
@@ -277,6 +297,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                 if (countReal >= 10) {
                     ++good;
                 }
+
             }
             System.out.println(good + " features are good.");
             new GUI2(i, sampleNames, consensusFeatures);

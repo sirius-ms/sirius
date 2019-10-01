@@ -11,6 +11,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.align.*;
+import de.unijena.bioinf.lcms.ionidentity.IonNetwork;
 import de.unijena.bioinf.lcms.noise.NoiseStatistics;
 import de.unijena.bioinf.lcms.peakshape.CustomPeakShape;
 import de.unijena.bioinf.lcms.peakshape.CustomPeakShapeFitting;
@@ -48,6 +49,8 @@ public class LCMSProccessingInstance {
                 PrecursorIonType.fromString("[M+K]+"),
                 PrecursorIonType.fromString("[M+H]+"),
                 PrecursorIonType.fromString("[M-H2O+H]+"),
+                PrecursorIonType.fromString("[M-H4O2+H]+"),
+                PrecursorIonType.fromString("[M-H2O+Na]+"),
                 PrecursorIonType.fromString("[M+NH3+H]+"),
                 PrecursorIonType.fromString("[M-H]-"),
                 PrecursorIonType.fromString("[M+Cl]-"),
@@ -78,6 +81,30 @@ public class LCMSProccessingInstance {
     }
 
 
+    /**
+     * has to be called after alignment
+     */
+    public IonNetwork detectAdductsWithGibbsSampling(Cluster alignedFeatures) {
+        final IonNetwork network = new IonNetwork();
+        for (AlignedFeatures features : alignedFeatures.getFeatures()) {
+            network.addNode(features);
+        }
+        final ArrayList<AlignedFeatures> features = new ArrayList<>();
+        network.gibbsSampling((feature,types,prob)->{
+            for (FragmentedIon ion : feature.getFeatures().values()) {
+                // we only consider adducts which are at least 1/5 as likely as the most likely option
+                final double threshold = Arrays.stream(prob).max().orElse(0d)/5d;
+                final HashSet<PrecursorIonType> set = new HashSet<>();
+                for (int k=0; k < types.length; ++k) {
+                    if (prob[k]>=threshold) set.add(types[k]);
+                }
+                ion.setPossibleAdductTypes(set);
+                if (set.size()==1) ion.setDetectedIonType(set.iterator().next());
+                else ion.setDetectedIonType(PrecursorIonType.unknown(ion.getPolarity()));
+            }
+        });
+        return network;
+    }
 
     public ProcessedSample addSample(LCMSRun run, SpectrumStorage storage) {
         final NoiseStatistics noiseStatisticsMs1 = new NoiseStatistics(20, 0.85), noiseStatisticsMs2 = new NoiseStatistics(10, 0.85);
@@ -205,8 +232,14 @@ public class LCMSProccessingInstance {
         }
         assert checkForDuplicates(sample);
         sample.ions.clear();
+        sample.ions.addAll(ions);
+        /*
+        sample.ions.clear();
         sample.ions.addAll(new IonIdentityNetwork().filterByIonIdentity(ions));
         assert checkForDuplicates(sample);
+         */
+
+
         TDoubleArrayList peakWidths = new TDoubleArrayList(),peakWidthsToHeight = new TDoubleArrayList();
         for (FragmentedIon f : sample.ions) {
             final long fwhm = f.getSegment().fwhm(0.2);

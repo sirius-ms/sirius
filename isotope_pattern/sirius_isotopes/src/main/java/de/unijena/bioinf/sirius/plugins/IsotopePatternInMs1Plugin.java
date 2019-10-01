@@ -80,8 +80,9 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
             maxScore = Math.max(pat.getScore(), maxScore);
             final int numberOfIsoPeaks = pat.getPattern().size() - 1;
             if (pat.getScore() >= 2 * numberOfIsoPeaks) {
-                isoPeaks = Math.max(pat.getPattern().size(), isoPeaks);
+                isoPeaks = Math.max(pat.getPattern().size()-1, isoPeaks);
                 scoreThresholdForFiltering = isoPeaks * 1d;
+                scoreThresholdForFiltering = Math.max(0, scoreThresholdForFiltering-1);
             }
         }
         final double SCORE_THRESHOLD = scoreThresholdForFiltering;

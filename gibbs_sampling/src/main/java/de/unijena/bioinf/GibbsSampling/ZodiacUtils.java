@@ -2,8 +2,12 @@ package de.unijena.bioinf.GibbsSampling;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TCharSet;
@@ -102,11 +106,11 @@ public class ZodiacUtils {
      * cluster spectra based on same MF and retention time information?!
      * //todo removes compounds with no candidate
      * //todo possibly also use library hits?
-     * //todo look ate topN identifications?! best hit is not restrictive enough for high mass compounds
+     * //todo look ate tclusterCompoundsopN identifications?! best hit is not restrictive enough for high mass compounds
      * @param candidateMap
      * @return mapping from cluster representative to cluster
      */
-    public static Map<String, String[]> clusterCompounds(Map<String, List<FragmentsCandidate>> candidateMap, Logger logger){
+    public static Map<String, String[]> clusterCompoundsOld(Map<String, List<FragmentsCandidate>> candidateMap, Logger logger){
         List<String> idList = new ArrayList<>(candidateMap.keySet());
 
         Map<MolecularFormula, List<String>> bestMFToId = new HashMap<>();
@@ -281,5 +285,71 @@ public class ZodiacUtils {
             if (!forbidden.contains(c)) builder.append(c);
         }
         return builder.toString();
+    }
+
+    public static Map<String, String[]> clusterCompounds(Map<String, List<FragmentsCandidate>> candidateMap, Logger logger){
+        final HashMap<String, String[]> clusters = new HashMap<>();
+        final String[] keys = candidateMap.keySet().toArray(String[]::new);
+        Arrays.sort(keys, Comparator.comparingInt(u->candidateMap.get(u).get(0).getFragments().length).reversed());
+        Deviation deviation = candidateMap.get(keys[0]).get(0).getExperiment().getAnnotation(MS1MassDeviation.class).map(x -> x.allowedMassDeviation).orElse(new Deviation(20, 0.01));
+        final HashSet<String> formulaSet = new HashSet<>();
+        final HashSet<String> alreadyClustered = new HashSet<>();
+        final ArrayList<String> cluster = new ArrayList<>();
+        System.out.println("START CLUSTERING");
+        for (int i=0; i < keys.length; ++i) {
+            final String left = keys[i];
+            if (alreadyClustered.contains(left))
+                continue;
+            else
+                alreadyClustered.add(left);
+            final List<FragmentsCandidate> L = candidateMap.get(left);
+            Ms2Experiment leftExp = L.get(0).getExperiment();
+            cluster.clear();
+            outer:
+            for (int j = i+1; j < keys.length; ++j) {
+                final String right = keys[j];
+                if (alreadyClustered.contains(right))
+                    continue outer;
+                final List<FragmentsCandidate> R = candidateMap.get(right);
+                if (deviation.inErrorWindow(leftExp.getIonMass(), R.get(0).getExperiment().getIonMass())) {
+                    int bestCount = 0;
+                    // compare molecular formulas of top 3 candidates
+                    for (int a = 0; a < Math.min(3, L.size()); ++a) {
+                        for (int b = 0; b < Math.min(3, R.size()); ++b) {
+                            if (L.get(a).getFormula().equals(R.get(b).getFormula())) {
+                                formulaSet.clear();
+                                // if at least 66% and min 3 of the nodes are the same, merge the compounds
+                                for (FragmentWithIndex f : L.get(a).getFragments()) formulaSet.add(f.mf);
+                                int count = 0;
+                                for (FragmentWithIndex f : R.get(b).getFragments()) {
+                                    if (formulaSet.contains(f.mf)) {
+                                        ++count;
+                                    }
+                                }
+                                bestCount = Math.max(count,bestCount);
+                                if (count >= 3 && count >= Math.floor(0.66 * Math.min(L.get(a).getFragments().length, R.get(b).getFragments().length))) {
+                                    // similar enough. Cluster these compounds!
+                                    cluster.add(right);
+                                    alreadyClustered.add(right); // never cluster a compound twice
+                                    System.out.println("Cluster " + left + " with " + right + " because of " + count + " common fragments");
+                                    continue outer;
+                                }
+                            }
+                        }
+                    }
+                    System.out.println("DO NOT cluster " + left + " with " + right + " because of " + bestCount + " common fragments");
+                }
+            }
+            if (cluster.size() > 0) {
+                cluster.add(left);
+                // find id with best score
+                cluster.sort(Comparator.comparingDouble(x -> -candidateMap.get(x).get(0).getScore()));
+                clusters.put(cluster.get(0), cluster.toArray(String[]::new));
+            } else {
+                clusters.put(left, new String[]{left});
+            }
+        }
+        clusters.entrySet().stream().forEach(x->System.out.println(x.getKey() + " -> " + Arrays.toString(x.getValue())));
+        return clusters;
     }
 }
