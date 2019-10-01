@@ -194,6 +194,10 @@ public class CorrelatedPeakDetector {
                             continue;
                         // add ion as possibleIonType. But first make correlation analysis
                         CorrelationGroup correlate = correlate(ion.getPeak(), ion.getSegment(), detect.get());
+                        if (correlate!=null) {
+                            correlate.setLeftType(ionType);
+                            correlate.setRightType(other);
+                        }
                         if (correlate != null && correlate.getCorrelation() >= 0.9 && correlate.getKullbackLeibler() <= 0.5 && correlate.getNumberOfCorrelatedPeaks() >= 4) {
                             final IonGroup ion1 = ionWithIsotopes(sample, correlate.getRight(), correlate.getRightSegment(), ion.getChargeState(), alreadyAnnotatedMzs);
                             if (ion1==null) continue;
@@ -310,6 +314,12 @@ public class CorrelatedPeakDetector {
             // no overlap
             return null;
         }
+
+        // there should be at least one peak after the apex
+        /*
+        if (mightBeCorrelated.getScanNumberAt(otherEnd)<=mainSegment.getApexScanNumber())
+            return null;
+        */
 
         final ChromatographicPeak.Segment otherSegment = mightBeCorrelated.createSegmentFromIndizes(otherStart,otherEnd);
 

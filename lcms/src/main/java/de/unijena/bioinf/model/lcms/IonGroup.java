@@ -70,4 +70,8 @@ public class IonGroup {
         if (isotopes.size()>=2) return Quality.DECENT;
         return Quality.BAD;
     }
+
+    public double getMass() {
+        return peak.getMzAt(getSegment().apex);
+    }
 }

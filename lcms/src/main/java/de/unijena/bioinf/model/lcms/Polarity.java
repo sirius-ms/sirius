@@ -5,6 +5,16 @@ public enum Polarity {
 
     public final int charge;
 
+    public static Polarity of(int charge) {
+        switch (charge) {
+            case 0: return UNKNOWN;
+            case 1: return POSITIVE;
+            case -1: return NEGATIVE;
+        }
+        throw new IllegalArgumentException("unknown polarity " + charge);
+
+    }
+
     Polarity(int charge) {
         this.charge = charge;
     }
