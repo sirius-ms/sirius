@@ -1,14 +1,13 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIon;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
@@ -24,6 +23,7 @@ import gnu.trove.list.array.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileWriter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -433,6 +433,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     protected ExactResult recalibrate(ProcessedInput input, TreeBuilder tb, Decomposition decomp, FTree tree, FGraph origGraphOrNull) {
         final SpectralRecalibration rec = new HypothesenDrivenRecalibration().collectPeaksFromMs2(input, tree);
         final ProcessedInput pin = this.inputCopyForRecalibration.clone();
+        pin.setAnnotation(PossibleAdducts.class, new PossibleAdducts(PrecursorIonType.getPrecursorIonType(decomp.getIon())));
         pin.setAnnotation(SpectralRecalibration.class, rec);
         pin.setAnnotation(Whiteset.class, Whiteset.of(input.getExperimentInformation().getPrecursorIonType().measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula()))); // TODO: check if this works for adducts
         pin.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, pinput.getAnnotationOrNull(TreeSizeScorer.TreeSizeBonus.class));
@@ -466,7 +467,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         assert finalTree!=null;
         tick();
         if (pin.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size() <= 0) {
-            System.err.println("WTF?");
+            System.err.println("WTF? ");
         }
         return new ExactResult(pin, pin.getAnnotationOrThrow(DecompositionList.class).getDecompositions().get(0), null, finalTree.tree, finalTree.tree.getTreeWeight());
     }
