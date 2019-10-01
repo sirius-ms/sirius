@@ -78,8 +78,8 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 
 
 
-        LOG().info("Running first round with "+firstRoundIds.length+" compounds.");
-        LOG().debug("start building graph");
+
+        LOG().debug("ZODIAC: Graph building");
         long start = System.currentTimeMillis();
         GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, cClass);
         graph = submitSubJob(graphBuilder).awaitResult();
@@ -97,7 +97,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
     @Override
     protected ZodiacResult<C> compute() throws Exception {
         if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
-
+        LOG().info("Running ZODIAC with "+firstRoundIds.length+" compounds.");
         checkForInterruption();
         init();
         Graph.validateAndThrowError(graph, LOG());
@@ -126,7 +126,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 //            gibbsParallel = new GibbsParallel<>(ids, combined, nodeScorers, edgeScorers, edgeFilter, workersCount, repetitions);
 
             //changed same as in 3phase
-            LOG().info("Score "+(ids.length-results1.length)+" low quality compounds. "+ids.length+" compounds overall.");
+            LOG().info("Running second round: Score "+(ids.length-results1.length)+" low quality compounds. "+ids.length+" compounds overall.");
             //todo rather sample everything and just use results of low quality compounds? may there arise problems? in principle should not as we still sample all compounds (even 'fixed')
             C[][] candidatesNewRound = combineNewAndOldAndSetFixedProbabilities(results1, firstRoundCompoundsIdx);
             //todo this stupid thing creates a complete new graph.
