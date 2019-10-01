@@ -8,4 +8,17 @@ public enum Polarity {
     Polarity(int charge) {
         this.charge = charge;
     }
+
+    public static Polarity fromCharge(int charge) {
+        switch (charge) {
+            case 1:
+                return POSITIVE;
+            case -1:
+                return NEGATIVE;
+            case 0:
+                return UNKNOWN;
+            default:
+                throw new IllegalArgumentException("Multi charges are not Supported!");
+        }
+    }
 }

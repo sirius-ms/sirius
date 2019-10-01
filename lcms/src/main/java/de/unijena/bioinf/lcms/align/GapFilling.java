@@ -73,7 +73,7 @@ public class GapFilling {
                     scans = new ArrayList<>(sample.findScansByRecalibratedRT(Range.closed(LOW,HIGH)).values());
                     if (scans.isEmpty())
                         continue;
-                    final Optional<ChromatographicPeak> peak = sample.builder.detect(Range.closed(scans.get(0).getScanNumber(), scans.get(scans.size()-1).getScanNumber()), f.mass); // TODO: recalibrate mass, too?
+                    final Optional<ChromatographicPeak> peak = sample.builder.detect(Range.closed(scans.get(0).getIndex(), scans.get(scans.size()-1).getIndex()), f.mass); // TODO: recalibrate mass, too?
                     if (peak.isPresent()) {
                         if (alreadyTried.contains(peak.get()))
                             continue ;

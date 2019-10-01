@@ -37,7 +37,7 @@ public class NoiseStatistics {
     }
 
     public void add(Scan scan, SimpleSpectrum spectrum) {
-        scanNumbers.add(scan.getScanNumber());
+        scanNumbers.add(scan.getIndex());
         final float nl =calculateNoiseLevel(spectrum);
         if (len < noise.length) {
             noise[len++] = nl;

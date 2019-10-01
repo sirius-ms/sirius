@@ -76,7 +76,7 @@ public class LCMSRun implements Annotated<DataAnnotation>, Iterable<Scan>  {
     }
 
     public void addScan(Scan scan) {
-        scans.put(scan.getScanNumber(), scan);
+        scans.put(scan.getIndex(), scan);
     }
 
 

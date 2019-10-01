@@ -33,8 +33,8 @@ public class Ms2CosineSegmenter {
         Scan lastMs1 = null;
         for (Scan s : sample.run) {
             if (s.isMsMs()) {
-                if (s.getPrecursor().getScanNumber()>0) {
-                    lastMs1 = sample.run.getScanByNumber(s.getPrecursor().getScanNumber()).filter(x -> !x.isMsMs()).orElse(lastMs1);
+                if (s.getPrecursor().getIndex()>0) {
+                    lastMs1 = sample.run.getScanByNumber(s.getPrecursor().getIndex()).filter(x -> !x.isMsMs()).orElse(lastMs1);
                 }
                 if (lastMs1==null) {
                     LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("MS2 scan without preceeding MS1 scan is not supported yet.");
@@ -63,7 +63,7 @@ public class Ms2CosineSegmenter {
             //System.out.println(entry.getKey().getSegments().size() + " segments and " + entry.getValue().size() + " MS/MS for Scans " + Arrays.toString(entry.getValue().stream().mapToInt(Scan::getScanNumber).toArray()));
             perSegment.clear();
             for (Scan s : entry.getValue()) {
-                final Optional<ChromatographicPeak.Segment> segment = entry.getKey().getSegmentForScanId(s.getScanNumber());
+                final Optional<ChromatographicPeak.Segment> segment = entry.getKey().getSegmentForScanId(s.getIndex());
                 if (!segment.isPresent()) {
                     LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("MS2 scan outside of an segment of an chromatographic peak");
                     //System.err.println("MS2 scan outside of an segment of an chromatographic peak: " + s.getScanNumber() + " is not in " + entry.getKey().getSegments().stream().map(x-> Range.closed(x.getStartScanNumber(), x.getEndScanNumber())).collect(Collectors.toList()).toString());
@@ -158,7 +158,7 @@ public class Ms2CosineSegmenter {
     private CosineQuery prepareForCosine(ProcessedSample sample, MergedSpectrum orig) {
         final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum(orig);
         Spectrums.cutByMassThreshold(buffer,orig.getPrecursor().getMass()-20);
-        final double noiseLevel = 2 * sample.ms2NoiseModel.getNoiseLevel(orig.getScans().get(0).getScanNumber(), orig.getScans().get(0).getPrecursor().getMass());
+        final double noiseLevel = 2 * sample.ms2NoiseModel.getNoiseLevel(orig.getScans().get(0).getIndex(), orig.getScans().get(0).getPrecursor().getMass());
         Spectrums.applyBaseline(buffer, noiseLevel);
         orig.setNoiseLevel(noiseLevel);
         if (buffer.isEmpty()) return null;
