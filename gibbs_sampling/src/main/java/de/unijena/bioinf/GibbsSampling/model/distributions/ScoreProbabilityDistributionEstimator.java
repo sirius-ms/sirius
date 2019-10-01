@@ -17,6 +17,7 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
     protected final double percentageOfEdgesBelowThreshold;
     protected double threshold;
     private static final boolean percentageWithoutZeroScores = true;
+    private static final int NUMBER_OF_SAMPLES =  100000;
 
     public ScoreProbabilityDistributionEstimator(EdgeScorer<C> edgeScorer, ScoreProbabilityDistribution distribution, double percentageOfEdgesBelowThreshold) {
         this.edgeScorer = edgeScorer;
@@ -79,13 +80,12 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
             }
             sampledScores = sampledScoresList.toArray();
         } else {
-            int numberOfSamples = 100000;
-            int numberOfTrails = numberOfSamples*20;
+            int numberOfTrails = NUMBER_OF_SAMPLES*20;
             HighQualityRandom random = new HighQualityRandom();
-            sampledScores = new double[numberOfSamples];
+            sampledScores = new double[NUMBER_OF_SAMPLES];
             int pos = 0;
             int trialCount = 0;
-            while (pos<numberOfSamples){
+            while (pos<NUMBER_OF_SAMPLES){
                 ++trialCount;
                 if (trialCount>numberOfTrails) break;;
                 int color1 = random.nextInt(candidates.length);
@@ -100,7 +100,7 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
                 if (percentageWithoutZeroScores && score<=0) continue;
                 sampledScores[pos++] = score;
             }
-            if (pos<numberOfSamples) sampledScores = Arrays.copyOf(sampledScores, pos);
+            if (pos<NUMBER_OF_SAMPLES) sampledScores = Arrays.copyOf(sampledScores, pos);
         }
         return sampledScores;
     }
