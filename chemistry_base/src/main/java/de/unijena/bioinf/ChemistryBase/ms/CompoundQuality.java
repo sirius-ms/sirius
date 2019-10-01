@@ -62,4 +62,12 @@ public class CompoundQuality implements Ms2ExperimentAnnotation  {
         return Joiner.on(',').join(flags);
     }
 
+    /**
+     *
+     * @return true if only Good flag is contained or nothing is known about quality.
+     */
+    public boolean isNotBadQuality(){
+        return flags.size()==0 || (flags.size()==1 && (flags.contains(CompoundQualityFlag.Good) || flags.contains(CompoundQualityFlag.UNKNOWN)));
+    }
+
 }
