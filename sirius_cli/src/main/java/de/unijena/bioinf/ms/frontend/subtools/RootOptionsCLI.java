@@ -151,7 +151,7 @@ public class RootOptionsCLI implements RootOptions {
     public File projectSpaceLocation;
 
     @Option(names = {"--input", "-i"}, description = "Input for the analysis. Ths can be either preprocessed mass spectra in .ms or .mgf file format, " +
-            "LC/MS runs in .mzml format or already existing SIRIUS project-space(s) (uncompressed/compressed).", order = 80)
+            "LC/MS runs in .mzML/.mzXml format or already existing SIRIUS project-space(s) (uncompressed/compressed).", order = 80)
     // we differentiate between contiunuing a project-space and starting from mzml or  already processed ms/mgf file.
     // If multiple files match the priobtrrity is project-space,  ms/mgf,  mzml
     public void setInput(List<File> files) {

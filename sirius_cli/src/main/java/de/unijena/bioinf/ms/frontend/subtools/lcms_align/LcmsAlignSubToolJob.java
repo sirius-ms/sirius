@@ -9,7 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.babelms.ProjectSpaceManager;
 import de.unijena.bioinf.babelms.ms.MsFileConfig;
-import de.unijena.bioinf.io.lcms.MzXMLParser;
+import de.unijena.bioinf.io.lcms.LCMSParsing;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.MemoryFileStorage;
@@ -22,12 +22,10 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import org.apache.commons.math3.analysis.function.Add;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -45,10 +43,10 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
         for (File f : input) {
             jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<>() {
                 @Override
-                protected Object compute() throws Exception {
+                protected Object compute() {
                     try {
                         MemoryFileStorage storage = new MemoryFileStorage();
-                        final LCMSRun parse = new MzXMLParser().parse(f, storage);
+                        final LCMSRun parse = LCMSParsing.parseRun(f, storage);
                         final ProcessedSample sample = i.addSample(parse, storage);
                         i.detectFeatures(sample);
                         storage.backOnDisc();
@@ -91,7 +89,6 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
             CompoundContainer container = new CompoundContainer(compoundContainerId);
             container.setAnnotation(Ms2Experiment.class, experiment);
             space.projectSpace().updateCompound(container, Ms2Experiment.class);
-
         }
         return space;
     }
