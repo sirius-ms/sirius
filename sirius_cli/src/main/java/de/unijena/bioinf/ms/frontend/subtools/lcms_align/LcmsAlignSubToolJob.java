@@ -14,6 +14,7 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.MemoryFileStorage;
 import de.unijena.bioinf.lcms.ProcessedSample;
+import de.unijena.bioinf.lcms.align.Cluster;
 import de.unijena.bioinf.model.lcms.ConsensusFeature;
 import de.unijena.bioinf.model.lcms.LCMSRun;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
@@ -62,7 +63,9 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
         for (BasicJJob j : jobs) j.takeResult();
         i.getMs2Storage().backOnDisc();
         i.getMs2Storage().dropBuffer();
-        final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(i.alignAndGapFilling());
+        Cluster alignment = i.alignAndGapFilling();
+        i.detectAdductsWithGibbsSampling(alignment);
+        final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(alignment);
         LOG().info("Gapfilling Done.");
 
         //save to project space
