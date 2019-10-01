@@ -61,7 +61,7 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
 
     public SimpleSpectrum finishMerging() {
         final int n = scans.size();
-        int mostIntensive = scans.stream().max(Comparator.comparingDouble(Scan::getTIC)).map(x->x.getScanNumber()).orElse(-1);
+        int mostIntensive = scans.stream().max(Comparator.comparingDouble(Scan::getTIC)).map(x->x.getIndex()).orElse(-1);
         if (n >= 5) {
             int min = (int)Math.ceil(n*0.2);
             final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();

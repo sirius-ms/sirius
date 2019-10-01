@@ -11,8 +11,9 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.IOException;
 
-public class MzXMLParser {
+public class MzXMLParser implements LCMSParser{
 
+    @Override
     public LCMSRun parse(File file, SpectrumStorage storage) throws IOException {
         final LCMSRun run = new LCMSRun(new DataSource(file));
         try {
