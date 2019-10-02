@@ -32,6 +32,8 @@ public class FormulaSummaryWriter implements Summarizer {
     public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer exp, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) throws IOException {
         if (!writer.exists(exp.getId().getDirectoryName()))
             return;
+        if (results == null || results.isEmpty())
+            return;
 
         writer.inDirectory(exp.getId().getDirectoryName(), () -> {
             writer.textFile(SummaryLocations.FORMULA_SUMMARY, w -> {
@@ -80,6 +82,7 @@ public class FormulaSummaryWriter implements Summarizer {
                     w.write('\n');
                 }
             });
+
             return true;
         });
     }

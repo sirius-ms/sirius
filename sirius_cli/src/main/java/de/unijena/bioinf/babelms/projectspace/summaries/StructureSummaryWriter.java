@@ -40,6 +40,9 @@ public class StructureSummaryWriter implements Summarizer {
         try {
             if (!writer.exists(exp.getId().getDirectoryName()))
                 return;
+            if (formulaResults == null || formulaResults.isEmpty())
+                return;
+
             writer.inDirectory(exp.getId().getDirectoryName(), () -> {
                 writer.textFile(SummaryLocations.STRUCTURE_SUMMARY, fileWriter -> {
                     for (SScored<FormulaResult, ? extends FormulaScore> results : formulaResults) {

@@ -17,9 +17,11 @@ import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
+import javax.print.DocFlavor;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class SiriusSubToolJob extends InstanceJob {
     protected final SiriusOptions cliOptions;
@@ -74,7 +76,14 @@ public class SiriusSubToolJob extends InstanceJob {
                 inst.updateConfig();
             }
 
-            System.out.println(new Date() + "\t-> I am Sirius, finish with Experiment " + inst.getID());
+
+            /*String out = "#####################################\n"
+                    + new Date() + "\t-> I am Sirius, finish with Experiment " + inst.getID() + "\n"
+                    + results.stream().map(id -> id.getMolecularFormula().toString() + " : " + id.getScore()).collect(Collectors.joining("\n"))
+                    + "\n#####################################";
+
+            System.out.println(out);*/
+
         } else {
             LOG().info("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
             System.out.println("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
