@@ -20,14 +20,15 @@ import de.unijena.bioinf.model.lcms.LCMSRun;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJob extends PreprocessingJob {
 
@@ -40,6 +41,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
         final ArrayList<BasicJJob> jobs = new ArrayList<>();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         i.setDetectableIonTypes(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
+        input = input.stream().sorted().collect(Collectors.toList());
         for (File f : input) {
             jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<>() {
                 @Override
@@ -85,10 +87,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
                 experiment.setAnnotation(MsFileConfig.class, config);
             }
 
-            CompoundContainerId compoundContainerId = space.newUniqueCompoundId(experiment);
-            CompoundContainer container = new CompoundContainer(compoundContainerId);
-            container.setAnnotation(Ms2Experiment.class, experiment);
-            space.projectSpace().updateCompound(container, Ms2Experiment.class);
+            @NotNull final CompoundContainer compoundContainer = space.newCompoundWithUniqueId(experiment);
         }
         return space;
     }
