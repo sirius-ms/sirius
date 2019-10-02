@@ -160,6 +160,14 @@ public interface ChromatographicPeak {
         public Range<Long> retentiomTimeSpan() {
             return Range.closed(peak.getRetentionTimeAt(startIndex), peak.getRetentionTimeAt(endIndex));
         }
+
+        public boolean samePeak(Segment other) {
+            return peak==other.peak && apex==other.apex;
+        }
+
+        public long getApexRt() {
+            return peak.getRetentionTimeAt(apex);
+        }
     }
 
 }
