@@ -294,7 +294,7 @@ public class FileUtils {
             if (n < line.length()) values.add(Float.parseFloat(line.substring(n,line.length())));
             if (values.size()==0) continue;
             rows.add(values.toArray());
-            values.reset();
+            values.clear();
         }
         return rows.toArray(new float[rows.size()][]);
     }
@@ -348,7 +348,7 @@ public class FileUtils {
             if (n < line.length()) values.add(Double.parseDouble(line.substring(n,line.length())));
             if (values.size()==0) continue;
             rows.add(values.toArray());
-            values.reset();
+            values.clear();
         }
         return rows.toArray(new double[rows.size()][]);
     }
@@ -402,7 +402,7 @@ public class FileUtils {
             if (n < line.length()) values.add(Integer.parseInt(line.substring(n,line.length())));
             if (values.size()==0) continue;
             rows.add(values.toArray());
-            values.reset();
+            values.clear();
         }
         return rows.toArray(new int[rows.size()][]);
     }
