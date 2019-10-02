@@ -89,6 +89,7 @@ public class LCMSProccessingInstance {
         for (AlignedFeatures features : alignedFeatures.getFeatures()) {
             network.addNode(features);
         }
+        network.addCorrelatedEdgesForAllNodes();
         final ArrayList<AlignedFeatures> features = new ArrayList<>();
         network.gibbsSampling((feature,types,prob)->{
             for (FragmentedIon ion : feature.getFeatures().values()) {

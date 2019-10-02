@@ -323,6 +323,11 @@ public class CorrelatedPeakDetector {
 
         final ChromatographicPeak.Segment otherSegment = mightBeCorrelated.createSegmentFromIndizes(otherStart,otherEnd);
 
+        // the the apex of one peak should be in the fhm of the other and vice-versa
+        if (mainSegment.getApexScanNumber() > otherSegment.getPeak().getScanNumberAt(otherSegment.getFwhmEndIndex()) || mainSegment.getApexScanNumber() < otherSegment.getPeak().getScanNumberAt(otherSegment.getFwhmStartIndex()) || otherSegment.getApexScanNumber() > mainSegment.getPeak().getScanNumberAt(mainSegment.getFwhmEndIndex()) || otherSegment.getApexScanNumber() < mainSegment.getPeak().getScanNumberAt(mainSegment.getFwhmStartIndex()) ) {
+            return null;
+        }
+
         if (main.getIntensityAt(mainSegment.getApexIndex()) > mightBeCorrelated.getIntensityAt(otherSegment.getApexIndex())) {
             return correlateBiggerToSmaller(main,mainSegment, mightBeCorrelated, otherSegment);
         } else return correlateBiggerToSmaller(mightBeCorrelated, otherSegment, main, mainSegment).invert();
