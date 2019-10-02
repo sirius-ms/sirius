@@ -286,7 +286,7 @@ public class RootOptionsCLI implements RootOptions {
                 psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(projectSpaceFilenameFormatter));
             }
 
-            projectSpaceToWriteOn = new ProjectSpaceManager(psTmp, projectSpaceFilenameFormatter);
+            projectSpaceToWriteOn = new ProjectSpaceManager(psTmp, projectSpaceFilenameFormatter, id -> id.getIonMass() <= maxMz);
 
         } catch (IOException e) {
             throw new CommandLine.PicocliException("Could not initialize workspace!", e);

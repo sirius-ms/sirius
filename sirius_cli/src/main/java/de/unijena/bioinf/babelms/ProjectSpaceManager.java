@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Manage the project space.
@@ -23,16 +24,17 @@ public class ProjectSpaceManager implements Iterable<Instance> {
 
     private final SiriusProjectSpace space;
     protected Function<Ms2Experiment, String> nameFormatter = new StandardMSFilenameFormatter();
-
+    private final Predicate<CompoundContainerId> compoundFilter;
 
     public ProjectSpaceManager(@NotNull SiriusProjectSpace space) {
-        this(space, null);
+        this(space, null, null);
     }
 
-    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter) {
+    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
         this.space = space;
         if (formatter != null)
             nameFormatter = formatter;
+        this.compoundFilter = compoundFilter;
     }
 
     public SiriusProjectSpace projectSpace() {
@@ -67,7 +69,9 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     @Override
     public Iterator<Instance> iterator() {
         return new Iterator<>() {
-            final Iterator<CompoundContainerId> it = space.iterator();
+            final Iterator<CompoundContainerId> it = compoundFilter == null
+                    ? space.iterator()
+                    : space.filteredIterator(compoundFilter);
 
             @Override
             public boolean hasNext() {
