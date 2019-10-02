@@ -1,21 +1,34 @@
 package de.unijena.bioinf.projectspace;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class CompoundContainerId extends ProjectSpaceContainerId {
+    protected Lock containerLock;
 
+    // ID defining fields
     private String directoryName;
     private String compoundName;
     private int compoundIndex;
 
-    protected Lock containerLock;
+    // fields for fast compound filtering
+    //todo we may want to use annotations here in future if we want to allow
+    // for arbitrary filtering of compounds
+    private double ionMass;
 
-    public CompoundContainerId(String directoryName, String compoundName, int compoundIndex) {
+
+    protected CompoundContainerId(String directoryName, String compoundName, int compoundIndex) {
+        this(directoryName, compoundName, compoundIndex, Double.NaN);
+    }
+
+    protected CompoundContainerId(String directoryName, String compoundName, int compoundIndex, double ionMass) {
         this.directoryName = directoryName;
         this.compoundName = compoundName;
         this.compoundIndex = compoundIndex;
         this.containerLock = new ReentrantLock();
+        this.ionMass = ionMass;
     }
 
     public String getDirectoryName() {
@@ -30,6 +43,14 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         return compoundIndex;
     }
 
+    public double getIonMass() {
+        return ionMass;
+    }
+
+    public void setIonMass(double ionMass) {
+        this.ionMass = ionMass;
+    }
+
     /**
      * This operation is only allowed to be called with careful synchronization within the project space
      */
@@ -42,5 +63,13 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         return compoundIndex
                 + "_" + compoundName
                 + "_" + directoryName;
+    }
+
+    public Map<String, String> asKeyValuePairs() {
+        Map<String, String> kv = new LinkedHashMap<>(3);
+        kv.put("index", String.valueOf(getCompoundIndex()));
+        kv.put("name", getCompoundName());
+        kv.put("ionMass", String.valueOf(ionMass));
+        return kv;
     }
 }

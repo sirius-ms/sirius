@@ -23,6 +23,11 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
     public void write(ProjectWriter writer, CompoundContainerId id, CompoundContainer container, Optional<Ms2Experiment> optEx) throws IOException {
         Ms2Experiment experiment = optEx.orElseThrow(() -> new RuntimeException("Could not find Experiment for FormulaResult with ID: " + id));
         writer.textFile(SiriusLocations.MS2_EXPERIMENT, (w) -> new JenaMsWriter().write(w, experiment));
+
+        // actualize ionMass in ID id
+        id.setIonMass(experiment.getIonMass());
+        writer.keyValues(SiriusLocations.COMPOUND_INFO, id.asKeyValuePairs());
+
     }
 
     @Override
