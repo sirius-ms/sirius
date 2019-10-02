@@ -114,7 +114,7 @@ allprojects {
 
     dependencies {
         annotationProcessor "de.unijena.bioinf.ms:processor:$siriusVersion"
-        compile 'net.sf.trove4j:trove4j:3.0.3'
+        compile 'net.sf.trove4j:core:3.1.0' //switched from 'net.sf.trove4j:trove4j:3.0.3' which seems to be buggy and no longer supported
         compile 'com.google.guava:guava:18.0'
         compile "org.jetbrains:annotations:$jetbrains_version"
         compile group: 'com.github.oshi', name: 'oshi-core', version: "$oshi_version"
