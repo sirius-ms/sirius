@@ -64,7 +64,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
         i.getMs2Storage().backOnDisc();
         i.getMs2Storage().dropBuffer();
         Cluster alignment = i.alignAndGapFilling();
-        i.detectAdductsWithGibbsSampling(alignment);
+        i.detectAdductsWithGibbsSampling(alignment).writeToFile(i, File.createTempFile("network", ".js"));
         final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(alignment);
         LOG().info("Gapfilling Done.");
 
