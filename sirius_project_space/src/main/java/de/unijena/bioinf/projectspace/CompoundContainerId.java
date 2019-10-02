@@ -61,8 +61,7 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     @Override
     public String toString() {
         return compoundIndex
-                + "_" + compoundName
-                + "_" + directoryName;
+                + "_" + compoundName + "_" + Math.round(ionMass) + "m/z";
     }
 
     public Map<String, String> asKeyValuePairs() {
