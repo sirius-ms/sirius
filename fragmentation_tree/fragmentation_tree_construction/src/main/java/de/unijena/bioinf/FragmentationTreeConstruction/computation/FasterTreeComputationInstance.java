@@ -230,7 +230,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         final TIntArrayList beautifyTodo = new TIntArrayList();
 
         while (tss!=null) {
-            beautifyTodo.resetQuick();
+            beautifyTodo.clearQuick();
             for (int k=0; k < exact.length; ++k) {
                 if (!exact[k].tree.getAnnotation(Beautified.class, Beautified::ugly).isBeautiful()) {
                     if ((treeSize >= MAX_TREESIZE || inc >= MAX_TREESIZE_INCREASE )|| isHighQuality(exact[k])) {
