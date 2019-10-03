@@ -84,7 +84,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 final int index = Integer.parseInt(keyValues.getOrDefault("index", "0"));
                 final String name = keyValues.getOrDefault("name", "");
                 final String dirName = dir.getName();
-                final double ionMass = Integer.parseInt(keyValues.getOrDefault("ionMass", String.valueOf(Double.NaN)));
+                final double ionMass = Double.parseDouble(keyValues.getOrDefault("ionMass", String.valueOf(Double.NaN)));
 
                 ids.put(dirName, new CompoundContainerId(dirName, name, index, ionMass));
                 maxIndex = Math.max(index, maxIndex);
