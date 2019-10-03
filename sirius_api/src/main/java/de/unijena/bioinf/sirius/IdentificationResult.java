@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
 //this is basically just a scored tree
 //todo if the rank is used pretty offen, we can add it again
@@ -32,7 +33,11 @@ public final class IdentificationResult<S extends FormulaScore> extends SScored<
 //    protected int rank = -1;
 
     public static <S extends FormulaScore> IdentificationResult<S> withPrecursorIonType(IdentificationResult<S> ir, PrecursorIonType ionType) {
-        return new IdentificationResult<>(new IonTreeUtils().treeToNeutralTree(ir.getCandidate(), ionType), ir.getScoreObject());
+
+        PrecursorIonType adduct = ir.getTree().getAnnotationOrNull(PrecursorIonType.class);
+        if (adduct==null || !adduct.equals(ionType))
+            return new IdentificationResult<>(new IonTreeUtils().treeToNeutralTree(ir.getCandidate(), ionType), ir.getScoreObject());
+        else return ir;
     }
 
     public IdentificationResult(IdentificationResult<S> ir) {
