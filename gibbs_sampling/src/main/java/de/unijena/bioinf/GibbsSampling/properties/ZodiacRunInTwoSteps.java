@@ -8,13 +8,13 @@ import de.unijena.bioinf.ms.properties.DefaultProperty;
  */
 @DefaultProperty
 public class ZodiacRunInTwoSteps implements Ms2ExperimentAnnotation {
-    public final boolean runTwoStep;
+    public final boolean value;
 
     private ZodiacRunInTwoSteps() {
-        runTwoStep = true;
+        value = true;
     }
 
     public ZodiacRunInTwoSteps(boolean runTwoStep) {
-        this.runTwoStep = runTwoStep;
+        this.value = runTwoStep;
     }
 }
