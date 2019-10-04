@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.frontend.subtools.zodiac;
 
-import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -8,6 +7,8 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 /**
@@ -26,103 +27,74 @@ public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiacSubToolJ
     }
 
 
+    ///////////////////////
+    //library hits     ///
+    /////////////////////
+     @Option(names = "--min-cosine", description = "Spectral library hits must have at least this cosine or higher to be considered in scoring. Value must be in [0,1].")
+    public void setMinCosine(String value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacLibraryScoring.minCosine", value);
+    }
 
-    @Option(
-            names = {"--lowest-cosine"},
-            description = "Below this cosine threshold a spectral library hit does not give any score bonus."
-    )
-    public double lowestCosine;
+    @Option(names = "--lambda", description = "Lambda used in the scoring function of spectral library hits. The higher this value the higher are librar hits weighted in ZODIAC scoring.")
+    public void setLambda(String value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacLibraryScoring.lambda", value);
+    }
 
+    public Path libraryHitsFile;
+    @Option(names = "--library-hits", description = "CSV file containing spectral library hits. Libray hits are used as anchors to improve ZODIAC scoring.")
+    public void setLibrayHits(String filePath) throws Exception {
+        libraryHitsFile = Paths.get(filePath);
+    }
 
-    @Option(
-            names = {"--lambda"},
-            description = "Lambda used in the scoring function of spectral library hits. The higher the more important are library hits. 1 is default."
-    )
-    public double libraryScoreLambda;
+    ///////////////////////
+    //number of epochs///
+    /////////////////////
+    @Option(names = "--iterations", description = "Number of epochs to run the Gibbs sampling. When multiple Markov chains are computed, all chains' iterations sum up to this value.")
+    public void setIterationSteps(String value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacEdgeFilterThresholds.iterations", value);
+    }
 
+    @Option(names = "--burn-in", description = "Number of epochs considered as 'burn-in period'.")
+    public void setBurnInSteps(String value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacEdgeFilterThresholds.burnInPeriod", value);
+    }
 
-    @Option(
-            names = {"--spectral-hits"},
-            description = "csv with spectral library hits"
-    )
-    public String libraryHitsFile;
-
-    @Option(
-            names = {"--iterations", "-i"},
-            description = "number of iterations"
-    )
-    public int iterationSteps;
-
-    @Option(
-            names = {"-b", "--burn-in"},
-            description = "number of steps to use to burn in gibbs sampler."
-    )
-    public int burnInSteps;
-
-    @Option(
-            names = {"--separateRuns"},
-            description = "number of separate runs"
-    )
-    public int separateRuns;
+    @Option(names = "--separateRuns", description = "Number of separate Gibbs sampling runs.", hidden = true)
+    public void setSeparateRuns(String value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacEdgeFilterThresholds.numberOfMarkovChains", value);
+    }
 
 
-    @Option(
-            names = {"--minLocalCandidates"},
-            description = "minimum number of candidates per compound which must have at least --minLocalConnections connections to other compounds"
-    )
-    public int localFilter;
 
-    @Option(
-            names = {"--thresholdFilter", "--thresholdfilter"},
-            description = "Defines the proportion of edges of the complete network which will be ignored. Default is 0.95 = 95%"
-    )
-    public double thresholdFilter;
+    ///////////////////////////
+    //edge filter parameters//
+    /////////////////////////
+    @Option(names = "--thresholdFilter", description = " Defines the proportion of edges of the complete network which will be ignored.")
+    public void setThresholdFilter(String value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacEdgeFilterThresholds.thresholdFilter", value);
+    }
 
-    @Option(
-            names = {"--minLocalConnections"},
-            description = ""
-    )
-    public int minLocalConnections;
+    @Option(names = "--minLocalCandidates", description = "Minimum number of candidates per compound which are forced to have at least [minLocalConnections] connections to other compounds.", hidden = true)
+    public void setMinLocalCandidates(String value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacEdgeFilterThresholds.minLocalCandidates", value);
+    }
 
-    @Option(
-            names = {"--distribution"},
-            description = "which probability distribution to assume: lognormal, exponential"
-    )
-    public EdgeScorings probabilityDistribution;
-
-    @Option(
-            names = {"--estimate-param"},
-            description = "parameters of distribution are estimated from the data. By default standard parameters are assumed."
-    )
-    public boolean estimateDistribution;
-
-    @Option(
-            names = {"--cluster"},
-            description = "cluster compounds with the same best molecular formula candidate before running ZODIAC."
-    )
-    public boolean clusterCompounds;
-
-    @Option(
-            names = {"--compute-statistics-only"},
-            description = "only compute the dataset statistics without running ZODIAC"
-    )
-    public boolean onlyComputeStats;
+    @Option(names = "--minLocalConnections", description = "Minimum number of connections per candidate which are forced for at least [minLocalCandidates] candidates to other compounds.", hidden = true)
+    public void setMinLocalConnections(String value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacEdgeFilterThresholds.minLocalConnections", value);
+    }
 
 
-    @Option(
-            names = {"--ignore-spectra-quality"},
-            description = "As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining."
-    )
-    public boolean onlyOneStepZodiac;
 
-    @Option(
-            names = {"--ms2-median-noise"},
-            description = "Set MS2 median noise intensity - else it is estimated. This is used to count the number of MS2 peaks to gauge spectrum quality."
-    )
-    public Double medianNoiseIntensity;
+    @Option(names = "--ignore-spectra-quality", description = "As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining.")
+    public void disableZodiacTwoStepApproach(boolean disable) throws Exception {
+        if (disable){
+            defaultConfigOptions.changeOption("ZodiacRunInTwoSteps", "false");
+        }
+    }
 
     @Override
     public DataSetJob.Factory<ZodiacSubToolJob> call() throws Exception {
-        return ZodiacSubToolJob::new;
+        return () -> new ZodiacSubToolJob(this);
     }
 }
