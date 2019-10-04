@@ -16,9 +16,11 @@ public class NumberOfCandidatesPerIon implements Ms2ExperimentAnnotation {
     public static final NumberOfCandidatesPerIon MAX_VALUE = new NumberOfCandidatesPerIon(Integer.MAX_VALUE);
     public static final NumberOfCandidatesPerIon ONE = new NumberOfCandidatesPerIon(1);
 
-    public int value;
+    public final int value;
 
-    public NumberOfCandidatesPerIon() {}
+    private NumberOfCandidatesPerIon() {
+       this(0);
+    }
     public NumberOfCandidatesPerIon(int value) {
         this.value = value;
     }
