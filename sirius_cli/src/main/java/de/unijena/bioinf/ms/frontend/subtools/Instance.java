@@ -125,6 +125,8 @@ public class Instance {
 
     public synchronized void updateFormulaResult(FormulaResult result, Class<? extends DataAnnotation>... components) {
         try {
+            if (!formulaResultCache.containsKey(result.getId()))
+                formulaResultCache.put(result.getId(),result);
             //refresh cache to actual object state?
             final FormulaResult rs = formulaResultCache.get(result.getId());
             updateAnnotations(rs, result, components);
