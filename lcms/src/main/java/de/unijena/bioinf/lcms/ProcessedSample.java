@@ -64,7 +64,7 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
             }
         }
         if (b == null) b = run.getScanByNumber(run.scanRange().upperEndpoint()).get();
-        return run.getScans(a.getScanNumber(), b.getScanNumber());
+        return run.getScans(a.getIndex(), b.getIndex());
     }
     public NavigableMap<Integer,Scan> findScansByRecalibratedRT(Range<Double> rt) {
         // stupid java =/
@@ -80,7 +80,7 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
         }
         if (a==null) return new TreeMap<>();
         if (b == null) b = run.getScanByNumber(run.scanRange().upperEndpoint()).get();
-        return run.getScans(a.getScanNumber(), b.getScanNumber());
+        return run.getScans(a.getIndex(), b.getIndex());
     }
 /*
     public NavigableMap<Integer,Scan> findScansByNormalizedRecalibratedRT(Range<Double> rt) {

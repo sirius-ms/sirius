@@ -20,10 +20,12 @@ package de.unijena.bioinf.babelms;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.mgf.MgfParser;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
-import de.unijena.bioinf.babelms.mzml.MzmlExperimentParser;
+import de.unijena.bioinf.babelms.mzml.MzMlExperimentParser;
+import de.unijena.bioinf.babelms.mzml.MzXmlExperimentParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,13 +42,11 @@ public class MsExperimentParser {
         final Class<? extends Parser<Ms2Experiment>> pc = knownEndings.get(extName);
         if (pc==null) return null;
         try {
-            if (pc.equals(ZippedSpectraParser.class)){
-                return (GenericParser<Ms2Experiment>)pc.newInstance();
-            }
-            return new GenericParser<Ms2Experiment>(pc.newInstance());
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
+            if (pc.equals(ZippedSpectraParser.class))
+                return (GenericParser<Ms2Experiment>) pc.getConstructor().newInstance();
+
+            return new GenericParser<>(pc.getConstructor().newInstance());
+        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
@@ -67,7 +67,8 @@ public class MsExperimentParser {
         endings.put(".ms", JenaMsParser.class);
         endings.put(".mgf", MgfParser.class);
         endings.put(".zip", ZippedSpectraParser.class);
-        endings.put(".mzxml", MzmlExperimentParser.class);
+        endings.put(".mzxml", MzXmlExperimentParser.class);
+        endings.put(".mzml", MzMlExperimentParser.class);
         return endings;
     }
 }

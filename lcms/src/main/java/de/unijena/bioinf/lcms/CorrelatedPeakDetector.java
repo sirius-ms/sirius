@@ -1,7 +1,6 @@
 package de.unijena.bioinf.lcms;
 
 import com.google.common.collect.Range;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -50,7 +49,7 @@ public class CorrelatedPeakDetector {
         }
         Optional<ChromatographicPeak> peakBeforeChr = sample.builder.detectExact(ms1Scan, ms1.getMzAt(peakBefore));
         if (!peakBeforeChr.isPresent()) return false;
-        Optional<ChromatographicPeak.Segment> segmentForScanId = peakBeforeChr.get().getSegmentForScanId(ms1Scan.getScanNumber());
+        Optional<ChromatographicPeak.Segment> segmentForScanId = peakBeforeChr.get().getSegmentForScanId(ms1Scan.getIndex());
         if (!segmentForScanId.isPresent()) return false;
         if (segmentForScanId.get().getApexScanNumber()!=ion.getSegment().getApexScanNumber()) {
             // we don't trust this peak...
@@ -59,11 +58,11 @@ public class CorrelatedPeakDetector {
         List<CorrelationGroup> correlationGroups = new ArrayList<>();
         detectIsotopesFor(sample, peakBeforeChr.get(), segmentForScanId.get(), ion.getChargeState(), correlationGroups);
         for (CorrelationGroup g : correlationGroups) {
-            int scanNumber = g.getRight().findScanNumber(ms1Scan.getScanNumber());
+            int scanNumber = g.getRight().findScanNumber(ms1Scan.getIndex());
             if (scanNumber >= 0 && g.getCorrelation() >= 0.95 && Math.abs(g.getRight().getMzAt(scanNumber) - ionPeak.getMass())<1e-8) {
                 final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
                 for (CorrelationGroup h : correlationGroups) {
-                    int sc = h.getRight().findScanNumber(ms1Scan.getScanNumber());
+                    int sc = h.getRight().findScanNumber(ms1Scan.getIndex());
                     if (sc >= 0) {
                         buffer.addPeak(h.getRight().getScanPointAt(sc));
                     }
@@ -190,7 +189,7 @@ public class CorrelatedPeakDetector {
                     final double delta = other.getModificationMass() - ionType.getModificationMass();
                     Optional<ChromatographicPeak> detect = sample.builder.detect(ms1Scan, scanPoint.getMass() + delta);
                     if (detect.isPresent()) {
-                        double peakMass = detect.get().getScanPointForScanId(ms1Scan.getScanNumber()).getMass();
+                        double peakMass = detect.get().getScanPointForScanId(ms1Scan.getIndex()).getMass();
                         if (alreadyFound(alreadyAnnotatedMzs, peakMass))
                             continue;
                         // add ion as possibleIonType. But first make correlation analysis
@@ -243,7 +242,7 @@ public class CorrelatedPeakDetector {
         }
         if (bestPattern.size() > 0) {
             for (CorrelationGroup isotopePeak : bestPattern) {
-                alreadyAnnotatedMzs.add(isotopePeak.getRight().getScanPointForScanId(ms1Scan.getScanNumber()).getMass());
+                alreadyAnnotatedMzs.add(isotopePeak.getRight().getScanPointForScanId(ms1Scan.getIndex()).getMass());
             }
             // do not trust a single isotope peak charge state...
             if (bestChargeState == 1 || bestPattern.size()>1 ) {
@@ -323,6 +322,11 @@ public class CorrelatedPeakDetector {
         */
 
         final ChromatographicPeak.Segment otherSegment = mightBeCorrelated.createSegmentFromIndizes(otherStart,otherEnd);
+
+        // the the apex of one peak should be in the fhm of the other and vice-versa
+        if (mainSegment.getApexScanNumber() > otherSegment.getPeak().getScanNumberAt(otherSegment.getFwhmEndIndex()) || mainSegment.getApexScanNumber() < otherSegment.getPeak().getScanNumberAt(otherSegment.getFwhmStartIndex()) || otherSegment.getApexScanNumber() > mainSegment.getPeak().getScanNumberAt(mainSegment.getFwhmEndIndex()) || otherSegment.getApexScanNumber() < mainSegment.getPeak().getScanNumberAt(mainSegment.getFwhmStartIndex()) ) {
+            return null;
+        }
 
         if (main.getIntensityAt(mainSegment.getApexIndex()) > mightBeCorrelated.getIntensityAt(otherSegment.getApexIndex())) {
             return correlateBiggerToSmaller(main,mainSegment, mightBeCorrelated, otherSegment);
