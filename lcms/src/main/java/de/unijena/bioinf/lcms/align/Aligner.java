@@ -76,6 +76,8 @@ public class Aligner {
                 final FragmentedIon ion = f.features.get(sample);
                 if (Math.abs(ion.getChargeState())>1)
                     continue; // multiple charged ions are not allowed
+                if (ion.getMsMs()==null)
+                    continue; // seems to be gap-filled ion
                 retentionTimes.add(ion.getRetentionTime());
                 if (ion.getMsMsScan()!=null)collision_energies.add(ion.getMsMsScan().getCollisionEnergy());
 

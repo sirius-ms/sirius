@@ -48,7 +48,7 @@ public class FileUtils {
         String line;
         final ArrayList<T> list = new ArrayList<>();
         while ((line=reader.readLine())!=null) {
-            list.add(f.apply(line.split(separator)));
+            list.add(f.apply(line.split(separator,-1)));
         }
         return list;
     }
@@ -72,7 +72,7 @@ public class FileUtils {
     public static void eachRow(BufferedReader reader, TObjectProcedure<String[]> proc) throws IOException {
         String line;
         while ((line=reader.readLine())!=null) {
-            if (!proc.execute(line.split("\t")))
+            if (!proc.execute(line.split("\t",-1)))
                 break;
         }
     }
@@ -131,7 +131,7 @@ public class FileUtils {
         ArrayList<String[]> table = new ArrayList<>();
         if (skipHeader) reader.readLine();
         while ((line=reader.readLine())!=null) {
-            table.add(line.split(colSeparator));
+            table.add(line.split(colSeparator,-1));
         }
         return table.toArray(new String[table.size()][]);
     }

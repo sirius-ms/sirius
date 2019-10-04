@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntFunction;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCloseable {
@@ -80,10 +81,12 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             final File expInfo = new File(dir, SiriusLocations.COMPOUND_INFO);
             if (dir.isDirectory() && expInfo.exists()) {
                 final Map<String, String> keyValues = FileUtils.readKeyValues(expInfo);
-                int index = Integer.parseInt(keyValues.getOrDefault("index", "0"));
-                String name = keyValues.getOrDefault("name", "");
-                String dirName = dir.getName();
-                ids.put(dirName, new CompoundContainerId(dirName, name, index));
+                final int index = Integer.parseInt(keyValues.getOrDefault("index", "0"));
+                final String name = keyValues.getOrDefault("name", "");
+                final String dirName = dir.getName();
+                final double ionMass = Double.parseDouble(keyValues.getOrDefault("ionMass", String.valueOf(Double.NaN)));
+
+                ids.put(dirName, new CompoundContainerId(dirName, name, index, ionMass));
                 maxIndex = Math.max(index, maxIndex);
             }
         }
@@ -113,10 +116,11 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 });
     }
 
+
     public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName) {
         int index = compoundCounter.getAndIncrement();
         String dirName = index2dirName.apply(index);
-        return tryCreateCompoundContainer(dirName, compoundName, index);
+        return tryCreateCompoundContainer(dirName, compoundName, index, Double.NaN);
     }
 
     public Optional<FormulaResultId> newUniqueFormulaResultId(@NotNull CompoundContainerId id, @NotNull FTree tree) throws IOException {
@@ -151,7 +155,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         formulaResultListener.forEach(x -> x.containerChanged(event));
     }
 
-    protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex) {
+    protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex, double ionMass) {
         if (containsCompoud(directoryName)) return Optional.empty();
         synchronized (ids) {
             if (new File(root, directoryName).exists())
@@ -162,10 +166,10 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             try {
                 Files.createDirectory(new File(root, directoryName).toPath());
                 try (final BufferedWriter bw = FileUtils.getWriter(new File(new File(root, id.getDirectoryName()), SiriusLocations.COMPOUND_INFO))) {
-                    bw.write("index\t" + id.getCompoundIndex());
-                    bw.newLine();
-                    bw.write("name\t" + id.getCompoundName());
-                    bw.newLine();
+                    for (Map.Entry<String, String> kv : id.asKeyValuePairs().entrySet()) {
+                        bw.write(kv.getKey() + "\t" + kv.getValue());
+                        bw.newLine();
+                    }
                 }
                 fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
                 return Optional.of(id);
@@ -341,6 +345,10 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     @Override
     public Iterator<CompoundContainerId> iterator() {
         return ids.values().iterator();
+    }
+
+    public Iterator<CompoundContainerId> filteredIterator(Predicate<CompoundContainerId> predicate) {
+        return ids.values().stream().filter(predicate).iterator();
     }
 
     public int size() {
