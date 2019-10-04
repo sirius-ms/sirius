@@ -82,7 +82,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
             public Instance next() {
                 final CompoundContainerId id = it.next();
                 if (id == null) return null;
-                return new Instance(ProjectSpaceManager.this, id);
+                return new Instance(id,ProjectSpaceManager.this);
             }
         };
     }
