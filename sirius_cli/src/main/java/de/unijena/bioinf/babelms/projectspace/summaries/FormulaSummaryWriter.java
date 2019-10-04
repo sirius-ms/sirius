@@ -32,11 +32,13 @@ public class FormulaSummaryWriter implements Summarizer {
     public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer exp, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) throws IOException {
         if (!writer.exists(exp.getId().getDirectoryName()))
             return;
+        if (results == null || results.isEmpty())
+            return;
 
         writer.inDirectory(exp.getId().getDirectoryName(), () -> {
+//            writer.delete(SummaryLocations.FORMULA_SUMMARY);
             writer.textFile(SummaryLocations.FORMULA_SUMMARY, w -> {
                 final StringBuilder headerBuilder = new StringBuilder("formula\tadduct\trank\trankingScore");
-
                 LinkedHashSet<Class<? extends FormulaScore>> types = new LinkedHashSet<>();
                 results.stream().forEach(r -> {
                     r.getCandidate().getAnnotation(FormulaScoring.class)
@@ -55,7 +57,6 @@ public class FormulaSummaryWriter implements Summarizer {
                 w.write(headerBuilder.toString());
                 int rank = 0;
                 for (SScored<FormulaResult, ? extends FormulaScore> s : results) {
-                    ;
                     FormulaResult r = s.getCandidate();
                     PrecursorIonType ion = r.getId().getIonType();
                     FormulaScoring scores = r.getAnnotationOrThrow(FormulaScoring.class);
@@ -80,6 +81,7 @@ public class FormulaSummaryWriter implements Summarizer {
                     w.write('\n');
                 }
             });
+
             return true;
         });
     }
