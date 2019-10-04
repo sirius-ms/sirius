@@ -70,4 +70,23 @@ public class CompoundQuality implements Ms2ExperimentAnnotation  {
         return flags.size()==0 || (flags.size()==1 && (flags.contains(CompoundQualityFlag.Good) || flags.contains(CompoundQualityFlag.UNKNOWN)));
     }
 
+    public CompoundQuality updateQuality(CompoundQualityFlag flag){
+        if (flag==CompoundQualityFlag.Good){
+            //quality Good overrides the rest
+            return new CompoundQuality(CompoundQualityFlag.Good);
+        } if (flag==CompoundQualityFlag.UNKNOWN){
+            //todo quality UNKNOWN overrides the rest as well?
+            return new CompoundQuality(CompoundQualityFlag.UNKNOWN);
+        } else {
+            EnumSet<CompoundQualityFlag> updatedFlags = flags.clone();
+            //remove unspecific flags
+            updatedFlags.remove(CompoundQualityFlag.Good);
+            updatedFlags.remove(CompoundQualityFlag.UNKNOWN);
+
+            updatedFlags.add(flag);
+
+            return new CompoundQuality(flags);
+        }
+    }
+
 }
