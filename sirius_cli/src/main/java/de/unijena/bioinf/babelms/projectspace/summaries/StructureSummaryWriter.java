@@ -45,15 +45,16 @@ public class StructureSummaryWriter implements Summarizer {
 
             writer.inDirectory(exp.getId().getDirectoryName(), () -> {
                 writer.textFile(SummaryLocations.STRUCTURE_SUMMARY, fileWriter -> {
+                    fileWriter.write(StructureCSVExporter.HEADER);
                     for (SScored<FormulaResult, ? extends FormulaScore> results : formulaResults) {
                         if (results.getCandidate().hasAnnotation(FingerblastResult.class)) {
                             final List<Scored<CompoundCandidate>> frs = results.getCandidate().getAnnotationOrThrow(FingerblastResult.class).getResults();
                             final StringWriter w = new StringWriter(128);
-                            new StructureCSVExporter().exportFingerIdResults(w, frs);
+                            new StructureCSVExporter().exportFingerIdResults(w, frs, false);
                             final String hits = w.toString();
+
                             // write summary file
                             fileWriter.write(hits);
-
 
                             // collect data for project wide summary
                             final double confidence = results.getCandidate().getAnnotation(FormulaScoring.class).
@@ -62,6 +63,7 @@ public class StructureSummaryWriter implements Summarizer {
 
                             final @NotNull Ms2Experiment experimentResult = exp.getAnnotationOrThrow(Ms2Experiment.class);
                             final String[] lines = hits.split("\n", 3);
+
                             if (lines.length >= 2)
                                 topHits.add(new Scored<>(StandardMSFilenameFormatter.simplifyURL(experimentResult.getSource().getFile()) + "\t" + StandardMSFilenameFormatter.simplify(experimentResult.getName()) + "\t" + confidence + "\t" + lines[1] + "\n", confidence));
                             if (header == null)

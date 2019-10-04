@@ -33,13 +33,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class StructureCSVExporter {
+    public static final String HEADER = "inchikey2D\tinchi\tmolecularFormula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n";
 
     public void exportFingerIdResults(Writer writer, FormulaResult formulaResult) throws IOException {
         exportFingerIdResults(writer,formulaResult.getAnnotationOrThrow(FingerblastResult.class).getResults());
     }
 
     public void exportFingerIdResults(Writer writer, List<Scored<CompoundCandidate>> candidates) throws IOException {
-        writer.write("inchikey2D\tinchi\tmolecularFormula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
+        exportFingerIdResults(writer, candidates, true);
+    }
+
+    public void exportFingerIdResults(Writer writer, List<Scored<CompoundCandidate>> candidates, boolean writeHeader) throws IOException {
+        if (writeHeader)
+            writer.write(HEADER);
         int rank = 0;
         for (Scored<CompoundCandidate> r : candidates) {
             final Multimap<String, String> dbMap = r.getCandidate().getLinkedDatabases();
