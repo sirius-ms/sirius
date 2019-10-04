@@ -40,10 +40,22 @@ public class CompoundQuality implements Ms2ExperimentAnnotation  {
 
     public CompoundQuality(CompoundQualityFlag first, CompoundQualityFlag... other) {
         this.flags = EnumSet.of(first, other);
+        validateInput(flags);
     }
 
     private CompoundQuality(EnumSet<CompoundQualityFlag> flags) {
         this.flags = flags;
+        validateInput(flags);
+    }
+
+    private void validateInput(EnumSet<CompoundQualityFlag> flags){
+        if (flags.size()>1){
+            if (flags.contains(CompoundQualityFlag.Good)){
+                throw new IllegalArgumentException("Compound quality flag 'Good' can only assigned to compounds without adding additional quality flags.");
+            } else if (flags.contains(CompoundQualityFlag.UNKNOWN)){
+                throw new IllegalArgumentException("Compound quality flag 'UNKNOWN' can only assigned to compounds without adding additional quality flags.");
+            }
+        }
     }
 
     public boolean is(CompoundQualityFlag flag) {
