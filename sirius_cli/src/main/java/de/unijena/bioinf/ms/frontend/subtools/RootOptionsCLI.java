@@ -5,7 +5,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.MS2ExpInputIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.babelms.MultiSourceIterator;
 import de.unijena.bioinf.babelms.ProjectSpaceManager;
 import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
 import de.unijena.bioinf.fingerid.CanopusResult;
@@ -27,10 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * This is for not algorithm related parameters.
@@ -85,7 +81,8 @@ public class RootOptionsCLI implements RootOptions {
     }
 
 
-    @Option(names = "--max-compound-buffer", description = "Maxmimal number of compounds that will be buffered in Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. For Infinite buffer size set it to 0. Default: 2 * --initial_intance_buffer", order = 60)
+//    @Option(names = "--max-compound-buffer", description = "Maxmimal number of compounds that will be buffered in Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. For Infinite buffer size set it to 0. Default: 2 * --initial_intance_buffer", order = 60, hidden = true)
+    @Option(names = "--max-compound-buffer", description = "Deprecated: This Option is deprecated and has no effect anymore.", order = 60, hidden = true)
     private Integer maxInstanceBuffer;
 
     @Override
@@ -94,7 +91,8 @@ public class RootOptionsCLI implements RootOptions {
         return maxInstanceBuffer;
     }
 
-    @Option(names = "--initial-compound-buffer", description = "Number of compounds that will be loaded initially into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores", order = 60)
+//    @Option(names = "--initial-compound-buffer", description = "Number of compounds that will be loaded initially into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores", order = 60)
+    @Option(names = {"--compound-buffer", "--initial-compound-buffer"}, description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores", order = 60)
     private Integer initialInstanceBuffer;
 
     @Override
@@ -151,7 +149,7 @@ public class RootOptionsCLI implements RootOptions {
     public File projectSpaceLocation;
 
     @Option(names = {"--input", "-i"}, description = "Input for the analysis. Ths can be either preprocessed mass spectra in .ms or .mgf file format, " +
-            "LC/MS runs in .mzml format or already existing SIRIUS project-space(s) (uncompressed/compressed).", order = 80)
+            "LC/MS runs in .mzML/.mzXml format or already existing SIRIUS project-space(s) (uncompressed/compressed).", order = 80)
     // we differentiate between contiunuing a project-space and starting from mzml or  already processed ms/mgf file.
     // If multiple files match the priobtrrity is project-space,  ms/mgf,  mzml
     public void setInput(List<File> files) {
@@ -243,10 +241,11 @@ public class RootOptionsCLI implements RootOptions {
                         case PROJECT:
                             return space;
                         case SIRIUS:
-                            if (space.projectSpace().size() > 0)
-                                return () -> new MultiSourceIterator(Arrays.asList(space.iterator(), new MS2ExpInputIterator(input, maxMz, ignoreFormula).asInstanceIterator(space)));
-                            else
-                                return () -> new MS2ExpInputIterator(input, maxMz, ignoreFormula).asInstanceIterator(space);
+                            //we decided to do maxMZ filtering after writing data to the project space
+                            final Iterator<Instance> msit = new MS2ExpInputIterator(input, Integer.MAX_VALUE, ignoreFormula).asInstanceIterator(space);
+                            while (msit.hasNext())
+                                msit.next(); //writes new instances to projectspace
+                            return space;
                     }
                 } else if (space != null && space.projectSpace().size() > 0) {
                     LOG.info("No Input given but output Project-Space is not empty and will be used as Input instead!");
@@ -286,8 +285,14 @@ public class RootOptionsCLI implements RootOptions {
                 psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(projectSpaceFilenameFormatter));
             }
 
-            projectSpaceToWriteOn = new ProjectSpaceManager(psTmp, projectSpaceFilenameFormatter);
-
+            projectSpaceToWriteOn = new ProjectSpaceManager(psTmp, projectSpaceFilenameFormatter, id -> {
+                if (id.getIonMass() <= maxMz)
+                    return true;
+                else {
+                    LOG.info("Skipping instance " + id.toString() + " with mass: " + id.getIonMass() + " > " + maxMz);
+                    return false;
+                }
+            });
         } catch (IOException e) {
             throw new CommandLine.PicocliException("Could not initialize workspace!", e);
         }

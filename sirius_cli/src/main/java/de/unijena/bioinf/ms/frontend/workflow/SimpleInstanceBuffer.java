@@ -88,7 +88,13 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
             try {
                 it.awaitResult();
             } catch (ExecutionException e) {
-                LoggerFactory.getLogger(getClass()).error("Error when executing ToolChain Job within Submitter", e);
+                if (it.getState().equals(JJob.JobState.CANCELED))
+                    LoggerFactory.getLogger(getClass()).warn("ToolChain Job '" + it.identifier() + "' was canceled on Instance '" + it.instance.getID() + "'");
+
+                if (it.getState().equals(JJob.JobState.FAILED))
+                    LoggerFactory.getLogger(getClass()).error("ToolChain Job '" + it.identifier() + "' FAILED on Instance '" + it.instance.getID() + "'", e);
+
+                LoggerFactory.getLogger(getClass()).debug("ToolChain Job '" + it.identifier() + "' finished with state '" + it.getState() + "' on instance '" + it.instance.getID() + "'", e);
             }
         });
     }

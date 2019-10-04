@@ -9,7 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.babelms.ProjectSpaceManager;
 import de.unijena.bioinf.babelms.ms.MsFileConfig;
-import de.unijena.bioinf.io.lcms.MzXMLParser;
+import de.unijena.bioinf.io.lcms.LCMSParsing;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.MemoryFileStorage;
@@ -20,16 +20,15 @@ import de.unijena.bioinf.model.lcms.LCMSRun;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import org.apache.commons.math3.analysis.function.Add;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJob extends PreprocessingJob {
 
@@ -42,13 +41,14 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
         final ArrayList<BasicJJob> jobs = new ArrayList<>();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         i.setDetectableIonTypes(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
+        input = input.stream().sorted().collect(Collectors.toList());
         for (File f : input) {
             jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<>() {
                 @Override
-                protected Object compute() throws Exception {
+                protected Object compute() {
                     try {
                         MemoryFileStorage storage = new MemoryFileStorage();
-                        final LCMSRun parse = new MzXMLParser().parse(f, storage);
+                        final LCMSRun parse = LCMSParsing.parseRun(f, storage);
                         final ProcessedSample sample = i.addSample(parse, storage);
                         i.detectFeatures(sample);
                         storage.backOnDisc();
@@ -64,7 +64,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
         i.getMs2Storage().backOnDisc();
         i.getMs2Storage().dropBuffer();
         Cluster alignment = i.alignAndGapFilling();
-        i.detectAdductsWithGibbsSampling(alignment);
+        i.detectAdductsWithGibbsSampling(alignment).writeToFile(i, File.createTempFile("network", ".js"));
         final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(alignment);
         LOG().info("Gapfilling Done.");
 
@@ -87,11 +87,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
                 experiment.setAnnotation(MsFileConfig.class, config);
             }
 
-            CompoundContainerId compoundContainerId = space.newUniqueCompoundId(experiment);
-            CompoundContainer container = new CompoundContainer(compoundContainerId);
-            container.setAnnotation(Ms2Experiment.class, experiment);
-            space.projectSpace().updateCompound(container, Ms2Experiment.class);
-
+            @NotNull final CompoundContainer compoundContainer = space.newCompoundWithUniqueId(experiment);
         }
         return space;
     }
