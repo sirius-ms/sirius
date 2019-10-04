@@ -27,6 +27,6 @@ class InstanceIteratorMS2Exp implements Iterator<Instance> {
     public Instance next() {
         Ms2Experiment input = MS2ExpInputIterator.next();
         if (input == null) return null;
-        return new Instance(input, spaceManager, spaceManager.newUniqueCompoundId(input)); //this writers
+        return new Instance(input, spaceManager); //this writers
     }
 }
