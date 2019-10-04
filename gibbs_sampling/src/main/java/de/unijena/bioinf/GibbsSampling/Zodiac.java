@@ -117,6 +117,8 @@ public class Zodiac {
                 zodiacScoredTrees = mapZodiacScoresToFTrees(zodiacResult.getResults());
                 final long t6 = System.currentTimeMillis();
                 Log.debug("Sampling step took " + ((t6-t5)/1000d) + " seconds" );
+                if (clusterCompounds) zodiacResult = includedAllClusterInstances(zodiacResult);
+                else zodiacResult = new ZodiacResultsWithClusters(ids, zodiacResult.getGraph(), zodiacResult.getResults(), getSelfMapping(ids));
                 return includedAllClusterInstances(zodiacResult);
             }
         };

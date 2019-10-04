@@ -86,7 +86,7 @@ public class CompoundQuality implements Ms2ExperimentAnnotation  {
         if (flag==CompoundQualityFlag.Good){
             //quality Good overrides the rest
             return new CompoundQuality(CompoundQualityFlag.Good);
-        } if (flag==CompoundQualityFlag.UNKNOWN){
+        } else if (flag==CompoundQualityFlag.UNKNOWN){
             //todo quality UNKNOWN overrides the rest as well?
             return new CompoundQuality(CompoundQualityFlag.UNKNOWN);
         } else {
@@ -97,7 +97,7 @@ public class CompoundQuality implements Ms2ExperimentAnnotation  {
 
             updatedFlags.add(flag);
 
-            return new CompoundQuality(flags);
+            return new CompoundQuality(updatedFlags);
         }
     }
 

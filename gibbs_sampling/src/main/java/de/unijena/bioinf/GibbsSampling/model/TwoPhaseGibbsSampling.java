@@ -66,7 +66,6 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 
 
         C[][] firstRoundPossibleFormulas;
-        String[] firstRoundIds;
         if (firstRoundCompoundsIdx.size()==possibleFormulas.length){
             firstRoundPossibleFormulas = possibleFormulas;
             firstRoundIds = ids;
@@ -100,9 +99,9 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
     @Override
     protected ZodiacResult<C> compute() throws Exception {
         if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
-        LOG().info("Running ZODIAC with "+firstRoundIds.length+" compounds.");
         checkForInterruption();
         init();
+        LOG().info("Running ZODIAC with "+firstRoundIds.length+" of "+ids.length+" compounds.");
         Graph.validateAndThrowError(graph, LOG());
         gibbsParallel = new GibbsParallel<>(graph, repetitions);
         gibbsParallel.setIterationSteps(maxSteps, burnIn);
