@@ -1,16 +1,14 @@
 package de.unijena.bioinf.model.lcms;
 
-import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-
 /**
  * A spectrum which can be tracked back to a Scan within an LCMS source file
  */
 public class Scan {
 
     /**
-     * Unique scan number
+     * Unique index usually the scanNumber or scanNumber - 1
      */
-    private final int scanNumber;
+    private final int index;
 
     /**
      * retention time in milliseconds
@@ -28,12 +26,12 @@ public class Scan {
     private final int numberOfPeaks;
     private final double collisionEnergy;
 
-    public Scan(int scanNumber, Polarity polarity, long retentionTime,double collisionEnergy, int numberOfPeaks, double TIC) {
-        this(scanNumber,polarity,retentionTime,collisionEnergy,numberOfPeaks,TIC,null);
+    public Scan(int index, Polarity polarity, long retentionTime, double collisionEnergy, int numberOfPeaks, double TIC) {
+        this(index,polarity,retentionTime,collisionEnergy,numberOfPeaks,TIC,null);
     }
 
-    public Scan(int scanNumber, Polarity polarity, long retentionTime, double collisionEnergy,int numberOfPeaks,  double TIC, Precursor precursor) {
-        this.scanNumber = scanNumber;
+    public Scan(int index, Polarity polarity, long retentionTime, double collisionEnergy, int numberOfPeaks, double TIC, Precursor precursor) {
+        this.index = index;
         this.retentionTime = retentionTime;
         this.collisionEnergy=collisionEnergy;
         this.precursor = precursor;
@@ -50,8 +48,8 @@ public class Scan {
         return TIC;
     }
 
-    public int getScanNumber() {
-        return scanNumber;
+    public int getIndex() {
+        return index;
     }
 
     public boolean isMsMs() {
@@ -74,6 +72,6 @@ public class Scan {
 
     @Override
     public String toString() {
-        return precursor!=null ? ("MS/MS " + scanNumber + ", m/z = " + precursor.getMass()) : "MS " + scanNumber;
+        return precursor!=null ? ("MS/MS " + index + ", m/z = " + precursor.getMass()) : "MS " + index;
     }
 }

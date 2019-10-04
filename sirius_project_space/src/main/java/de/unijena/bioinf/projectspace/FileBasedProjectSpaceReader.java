@@ -43,7 +43,7 @@ public class FileBasedProjectSpaceReader extends FileBasedProjectSpaceIO impleme
             if (skipHeader)
                 line = br.readLine();
             while ((line=br.readLine())!=null) {
-                f.accept(line.split("\t"));
+                f.accept(line.split("\t",-1));
             }
         }
     }

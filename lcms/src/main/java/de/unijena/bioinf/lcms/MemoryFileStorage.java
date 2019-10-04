@@ -83,7 +83,7 @@ public class MemoryFileStorage implements SpectrumStorage {
     }
 
     private synchronized SimpleSpectrum readFromMemory(Scan scan) {
-        final int offset = offsets.get(scan.getScanNumber());
+        final int offset = offsets.get(scan.getIndex());
         if (offset < 0) return null;
         if (buffer==null) {
             try {
