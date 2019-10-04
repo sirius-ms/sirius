@@ -20,10 +20,12 @@ public class NumberOfCandidates implements Ms2ExperimentAnnotation {
         return MAX_VALUE;
     }
 
-    public int value;
+    public final int value;
 
 
-    private NumberOfCandidates() {}
+    private NumberOfCandidates() {
+        this(0);
+    }
     public NumberOfCandidates(int value) {
         this.value = value;
     }
