@@ -64,15 +64,15 @@ public class ZodiacSubToolJob extends DataSetJob {
             for (Map.Entry<Ms2Experiment, List<FTree>> ms2ExperimentListEntry : ms2ExperimentToTreeCandidates.entrySet()) {
                 Ms2Experiment experiment = ms2ExperimentListEntry.getKey();
                 List<FTree> treeCandidates = ms2ExperimentListEntry.getValue();
-                boolean isPoorlyExplained = treeQualityEvaluator.makeIsAllCandidatesPoorlyExplainSpectrumJob(treeCandidates).awaitResult().booleanValue();
+                boolean isPoorlyExplained = SiriusJobs.getGlobalJobManager().submitJob(treeQualityEvaluator.makeIsAllCandidatesPoorlyExplainSpectrumJob(treeCandidates)).awaitResult().booleanValue();
                 if (isPoorlyExplained) {
                     //update if poorly explained
                     CompoundQuality quality = experiment.getAnnotationOrNull(CompoundQuality.class);
                     if (quality ==  null) {
                         quality = new CompoundQuality(CompoundQuality.CompoundQualityFlag.PoorlyExplained);
-                        experiment.removeAnnotation(CompoundQuality.class);
                     } else if (quality.isNot(CompoundQuality.CompoundQualityFlag.PoorlyExplained)) {
                         quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.PoorlyExplained);
+                        experiment.removeAnnotation(CompoundQuality.class);
                     }
                     experiment.addAnnotation(CompoundQuality.class, quality);
                 }
@@ -136,7 +136,7 @@ public class ZodiacSubToolJob extends DataSetJob {
                     nodeScorers,
                     new EdgeScorer[]{scoreProbabilityDistributionEstimator},
                     edgeFilter,
-                    maxCandidates, false, zodiacRunInTwoSteps.runTwoStep, null
+                    maxCandidates, false, zodiacRunInTwoSteps.value, null
             );
 
             //todo clustering disabled. Evaluate if it might help at any point?
