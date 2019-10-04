@@ -32,7 +32,12 @@ public abstract class InstanceJob extends BasicDependentJJob<Instance> implement
     @Override
     protected Instance compute() throws Exception {
         checkInput();
-        computeAndAnnotateResult(input);
+        try {
+            computeAndAnnotateResult(input);
+        } catch (Exception e) {
+            //just to Identify the instance that failed
+            throw new Exception(LOG().getName() + " - Instance job failed on Instance: '" + input.toString() + "'.", e);
+        }
         return input;
     }
 
