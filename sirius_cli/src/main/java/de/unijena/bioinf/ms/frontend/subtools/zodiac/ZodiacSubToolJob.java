@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.frontend.subtools.zodiac;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -18,6 +19,7 @@ import de.unijena.bioinf.ms.frontend.subtools.fingerid.annotations.UserFormulaRe
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
+import de.unijena.bioinf.quality_assessment.TreeQualityEvaluator;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -40,9 +42,30 @@ public class ZodiacSubToolJob extends DataSetJob {
         if (instances.stream().anyMatch(it -> isRecompute(it) || !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class))) {
             System.out.println("I am Zodiac and run on all instances: " + instances.stream().map(Instance::toString).collect(Collectors.joining(",")));
 
+            Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = input.keySet().stream().collect(Collectors.toMap(k -> k, k -> input.get(k).stream().map(r -> r.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList())));
+
+            //annotate compound quality
+            TreeQualityEvaluator treeQualityEvaluator = new TreeQualityEvaluator(0.8, 5);
+            for (Map.Entry<Ms2Experiment, List<FTree>> ms2ExperimentListEntry : ms2ExperimentToTreeCandidates.entrySet()) {
+                Ms2Experiment experiment = ms2ExperimentListEntry.getKey();
+                List<FTree> treeCandidates = ms2ExperimentListEntry.getValue();
+                boolean isPoorlyExplained = treeQualityEvaluator.makeIsAllCandidatesPoorlyExplainSpectrumJob(treeCandidates).awaitResult().booleanValue();
+                if (isPoorlyExplained) {
+                    //update if poorly explained
+                    CompoundQuality quality = experiment.getAnnotationOrNull(CompoundQuality.class);
+                    if (quality ==  null) {
+                        quality = new CompoundQuality(CompoundQuality.CompoundQualityFlag.PoorlyExplained);
+                        experiment.removeAnnotation(CompoundQuality.class);
+                    } else if (quality.isNot(CompoundQuality.CompoundQualityFlag.PoorlyExplained)) {
+                        quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.PoorlyExplained);
+                    }
+                    experiment.addAnnotation(CompoundQuality.class, quality);
+                }
+            }
+
             int maxCandidates = input.keySet().iterator().next().getAnnotation(NumberOfCandidates.class).orElse(NumberOfCandidates.MAX_VALUE).value;
 
-            Zodiac zodiac = new Zodiac(input.keySet().stream().collect(Collectors.toMap(k -> k, k -> input.get(k).stream().map(r -> r.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList()))),
+            Zodiac zodiac = new Zodiac(ms2ExperimentToTreeCandidates,
                     Collections.emptyList(),
                     new NodeScorer[]{new StandardNodeScorer(true, 1d)},
                     new EdgeScorer[]{new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorerNoiseIntensityWeighted(0d), new LogNormalDistribution(true), 0.95d)},
