@@ -60,6 +60,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
                 }
             }));
         }
+        MultipleSources sourcelocation = MultipleSources.leastCommonAncestor(input.toArray(File[]::new));
         for (BasicJJob j : jobs) j.takeResult();
         i.getMs2Storage().backOnDisc();
         i.getMs2Storage().dropBuffer();
@@ -73,8 +74,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
             final Ms2Experiment experiment = feature.toMs2Experiment();
 
             // set name to common prefix
-
-            MultipleSources sourcelocation = MultipleSources.leastCommonAncestor(input.toArray(File[]::new));
+            // kaidu: this is super slow, so we just ignore the filename
             experiment.setAnnotation(SpectrumFileSource.class, new SpectrumFileSource(sourcelocation.value));
 
             // if we found some adduct types in LCMS, set them into the config
@@ -89,6 +89,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
 
             @NotNull final CompoundContainer compoundContainer = space.newCompoundWithUniqueId(experiment);
         }
+        LOG().info("LCMS-Align done.");
         return space;
     }
 }
