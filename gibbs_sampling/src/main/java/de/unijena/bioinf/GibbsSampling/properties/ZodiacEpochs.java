@@ -8,18 +8,18 @@ public class ZodiacEpochs implements Ms2ExperimentAnnotation {
     /**
      * Number of epochs to run the Gibbs sampling. When multiple Markov chains are computed, all chains' iterations sum up to this value.
      */
-    @DefaultProperty public final int iterations; //20000
+    @DefaultProperty public final int iterations;
 
     /**
      * Number of epochs considered as 'burn-in period'.
      * Samples from the beginning of a Markov chain do not accurately represent the desired distribution of candidates and are not used to estimate the ZODIAC score.
      */
-    @DefaultProperty public final int burnInPeriod; //2000
+    @DefaultProperty public final int burnInPeriod;
 
     /**
      * Number of separate Gibbs sampling runs.
      */
-    @DefaultProperty public final int numberOfMarkovChains; //10
+    @DefaultProperty public final int numberOfMarkovChains;
 
 
     private ZodiacEpochs() {

@@ -216,7 +216,14 @@ public class ZodiacUtils {
         return candidateMapNew;
     }
 
-    public static void addNotExplainableDummy(Map<String, List<FragmentsCandidate>> candidateMap, int maxCandidates, Logger logger){
+    /**
+     * add dummy candidate which gains the score of all unconsidered candidates.
+     * besides, the list of candidates (without dummy) is truncated to maxCandidates
+     * @param candidateMap
+     * @param maxCandidates truncate list of candidates to this size, if positive number
+     * @param logger
+     */
+    public static void addNotExplainableDummyAndTruncateCandidateList(Map<String, List<FragmentsCandidate>> candidateMap, int maxCandidates, Logger logger){
         List<String> idList = new ArrayList<>(candidateMap.keySet());
 
         int missingCounter = 0;
@@ -235,7 +242,7 @@ public class ZodiacUtils {
             double worstScore = unconsideredCandidatesUpperBound.getLowestConsideredCandidateScore();
             int numberOfIgnored = unconsideredCandidatesUpperBound.getNumberOfUnconsideredCandidates();
 
-            if (candidates.size()>maxCandidates) {
+            if (maxCandidates>0 && candidates.size()>maxCandidates) {
                 numberOfIgnored += candidates.size()-maxCandidates;
 
                 candidates = candidates.subList(0,maxCandidates);

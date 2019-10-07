@@ -3,8 +3,6 @@ package de.unijena.bioinf.GibbsSampling;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.GibbsSampling.model.*;
@@ -396,7 +394,7 @@ public class Zodiac {
 
 
         //add dummy
-        ZodiacUtils.addNotExplainableDummy(candidatesMap, maxCandidates, Log);
+        ZodiacUtils.addNotExplainableDummyAndTruncateCandidateList(candidatesMap, maxCandidates, Log);
 
 
         //cluster compounds
