@@ -1,16 +1,19 @@
 package de.unijena.bioinf.GibbsSampling;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.GibbsSampling.model.*;
+import de.unijena.bioinf.sirius.FTreeMetricsHelper;
+import de.unijena.bioinf.sirius.Sirius;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TCharSet;
 import gnu.trove.set.hash.TCharHashSet;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -22,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -612,4 +616,191 @@ public class ZodiacUtils {
         clusters.entrySet().stream().forEach(x->System.out.println(x.getKey() + " -> " + Arrays.toString(x.getValue())));
         return clusters;
     }
+
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // write results
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    public static void writeResultSummary(Map<Ms2Experiment, Map<FTree, ZodiacScore>> zodiacScoredTrees, CompoundResult<FragmentsCandidate>[] zodiacResults, Path outputFile) throws IOException {
+        Ms2Experiment[] experimentsSortedByMass = zodiacScoredTrees.keySet().stream().sorted(Comparator.comparing(Ms2Experiment::getIonMass)).toArray(size->new Ms2Experiment[size]);
+
+        Scored<FTree>[] bestInitial = bestInitial(experimentsSortedByMass, zodiacScoredTrees);
+        writeZodiacOutput(experimentsSortedByMass, bestInitial, zodiacResults, outputFile); // outputPath.resolve("zodiac_summary.csv"));
+    }
+
+    private final static int NUMBER_OF_HITS = Integer.MAX_VALUE;
+    private final static String SEP = "\t";
+    public static void writeZodiacOutput(Ms2Experiment[] sortedExperiments, Scored<FTree>[] initial, CompoundResult<FragmentsCandidate>[] result, Path outputPath) throws IOException {
+        Map<Ms2Experiment, CompoundResult<FragmentsCandidate>> experimentToZodiacResult = new HashMap<>();
+        for (CompoundResult<FragmentsCandidate> compoundResult : result) {
+            if (compoundResult.getCandidates().length>0){
+                Ms2Experiment experiment = compoundResult.getCandidates()[0].getCandidate().getExperiment();
+                experimentToZodiacResult.put(experiment, compoundResult);
+
+            }
+        }
+
+        BufferedWriter writer = Files.newBufferedWriter(outputPath, Charset.defaultCharset());
+        writer.write("id" + SEP + "quality" + SEP + "precursorMass" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "numberOfCandidates" + SEP + "hasDummy" + SEP + "connectedCompounds" + SEP + "biggestTreeSize" + SEP + "maxExplainedIntensity" + SEP + "ZodiacMF" + SEP + "ZodiacMFIon"+ SEP + "ZodiacScore" + SEP + "treeSize" + SEP + "explainedIntensity");
+        int maxCandidates = maxNumberOfCandidates(result);
+        for (int i = 2; i <= maxCandidates; i++) {
+            writer.write(SEP + "ZodiacMF" + String.valueOf(i) + SEP + "ZodiacMFIon" + String.valueOf(i) + SEP + "ZodiacScore" + String.valueOf(i) + SEP + "treeSize" + String.valueOf(i) + SEP + "explainedIntensity" + String.valueOf(i));
+        }
+
+        for (int i = 0; i < sortedExperiments.length; i++) {
+            final Ms2Experiment experiment = sortedExperiments[i];
+            CompoundResult<FragmentsCandidate> compoundResult = experimentToZodiacResult.get(experiment);
+            if (compoundResult==null) throw new RuntimeException("could not find ZODIAC result for compound  "+experiment.getName());
+
+            final String siriusMF = initial[i]==null?null:initial[i].getCandidate().getRoot().getFormula().formatByHill();
+            final double siriusScore = initial[i]==null?Double.NaN:initial[i].getScore();
+
+            int connections = compoundResult.getAnnotationOrThrow(Connectivity.class).getNumberOfConnectedCompounds();
+            String summeryLine = createSummaryLine(experiment.getName(), siriusMF, siriusScore, connections, compoundResult.getCandidates());
+            writer.newLine();
+            writer.write(summeryLine);
+        }
+
+        writer.close();
+
+    }
+
+    private static int maxNumberOfCandidates(CompoundResult<FragmentsCandidate>[] result) {
+        int max = 1;
+        for (CompoundResult<FragmentsCandidate> fragmentsCandidateCompoundResult : result) {
+            max = Math.max(fragmentsCandidateCompoundResult.getCandidates().length, max);
+        }
+        return max;
+    }
+
+    private static String createSummaryLine(String id, String siriusMF, double siriusScore, int numberConnections, Scored<FragmentsCandidate>[] result){
+        String qualityString = "";
+        Sirius sirius = new Sirius();
+        double precursorMass = Double.NaN;
+        String ionsByMs1 = "";
+        if (result.length>0){
+            Ms2Experiment experiment = result[0].getCandidate().getExperiment();
+
+            CompoundQuality compoundQuality = experiment.getAnnotation(CompoundQuality.class, null);
+            precursorMass = experiment.getIonMass();
+            if (compoundQuality!=null) qualityString = compoundQuality.toString();
+        }
+
+        int biggestTreeSize = -1;
+        double maxExplainedIntensity = 0;
+        boolean hasDummy = false;
+        for (Scored<FragmentsCandidate> scoredCandidate : result) {
+            FragmentsCandidate candidate = scoredCandidate.getCandidate();
+            if (DummyFragmentCandidate.isDummy(candidate)){
+                hasDummy = true;
+                continue;
+            }
+            final int treeSize = candidate.getFragments().length;
+            final FTree tree = candidate.getAnnotation(FTree.class);
+            final double intensity = (new FTreeMetricsHelper(tree)).getExplainedIntensityRatio();
+            biggestTreeSize = Math.max(treeSize,biggestTreeSize);
+            maxExplainedIntensity = Math.max(maxExplainedIntensity, intensity);
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append(id);
+        builder.append(SEP);
+        builder.append(qualityString);
+        builder.append(SEP);
+        builder.append(String.valueOf(precursorMass));
+        builder.append(SEP);
+        builder.append(ionsByMs1);
+        builder.append(SEP);
+        builder.append(siriusMF);
+        builder.append(SEP);
+        builder.append(Double.toString(siriusScore));
+        builder.append(SEP);
+        builder.append(String.valueOf(result.length)); //numberOfCandidates
+        builder.append(SEP);
+        builder.append(String.valueOf(hasDummy));
+        builder.append(SEP);
+        builder.append(numberConnections);
+        builder.append(SEP);
+        builder.append(biggestTreeSize);
+        builder.append(SEP);
+        builder.append(maxExplainedIntensity);
+
+
+
+        for (int j = 0; j < Math.min(result.length, NUMBER_OF_HITS); j++) {
+            Scored<FragmentsCandidate> currentResult = result[j];
+            FragmentsCandidate candidate = currentResult.getCandidate();
+            final String mf = candidate.getFormula().formatByHill();
+            final String ion = candidate.getIonType().toString();
+            final double score = currentResult.getScore();
+            final double treeSize, explIntensity;
+            if (DummyFragmentCandidate.isDummy(candidate)){
+                treeSize = -1;
+                explIntensity = -1;
+            } else {
+                treeSize = currentResult.getCandidate().getFragments().length;//number of fragments = treeSize
+                final FTree tree = candidate.getAnnotation(FTree.class);
+                explIntensity = (new FTreeMetricsHelper(tree)).getExplainedIntensityRatio();
+            }
+
+//            if (score <= 0) break; //don't write MF with 0 probability
+
+            builder.append(SEP);
+            builder.append(mf);
+            builder.append(SEP);
+            builder.append(ion);
+            builder.append(SEP);
+            builder.append(Double.toString(score));
+            builder.append(SEP);
+            builder.append(Double.toString(treeSize));
+            builder.append(SEP);
+            builder.append(Double.toString(explIntensity));
+        }
+        return builder.toString();
+    }
+
+
+    public static Scored<FTree>[] bestInitial(Ms2Experiment[] sortedExperiments, Map<Ms2Experiment, Map<FTree, ZodiacScore>> zodiacScoredTrees){
+        Scored<FTree>[] best = new Scored[sortedExperiments.length];
+        for (int i = 0; i < sortedExperiments.length; i++) {
+            Ms2Experiment experiment = sortedExperiments[i];
+            Map<FTree, ZodiacScore> scoredTrees = zodiacScoredTrees.get(experiment);
+
+            if (scoredTrees.size()==0){
+                best[i] = null;
+                continue;
+            }
+
+            TDoubleArrayList siriusScores = new TDoubleArrayList();
+            Scored<FTree>[] siriusScoredTrees = new Scored[scoredTrees.keySet().size()];
+            int pos = 0;
+            for (FTree tree : scoredTrees.keySet()) {
+                siriusScoredTrees[pos++] = new Scored<>(tree, (new FTreeMetricsHelper(tree)).getSiriusScore());
+
+            }
+
+            Arrays.sort(siriusScoredTrees, Comparator.reverseOrder());
+            double max = siriusScoredTrees[0].getScore();
+            double maxExp = Double.NaN;
+            double sum = 0.0D;
+            //normalize
+            for (int j = 0; j < siriusScoredTrees.length; ++j) {
+                final Scored<FTree> scoredTree = siriusScoredTrees[j];
+                double expS = Math.exp(1d * (scoredTree.getScore() - max));
+                sum += expS;
+                if (j==0) maxExp = expS;
+            }
+
+            //save best with probability
+            best[i] = new Scored(siriusScoredTrees[0].getCandidate(), maxExp/sum);
+
+
+        }
+        return best;
+    }
+
 }
