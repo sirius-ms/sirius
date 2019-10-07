@@ -6,7 +6,6 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
-
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,21 +124,30 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
 
 
         @Override
-        protected CompoundContainerId compute() throws Exception {
+        protected CompoundContainerId compute() {
+            // this should always run because we ignore failling of reqiured jobs
             //this runs if all jobs of the instance are finished
             return instance.getID();
         }
 
         @Override
-        public void handleFinishedRequiredJob(JJob required) {
-            //we have to run this here to ensure that it is executed even if the required job failed
-            lock.lock();
+        protected void cleanup() {
             try {
-                runningInstances.remove(this);
-                isFull.signal(); //all not needed?
+                super.cleanup();
             } finally {
-                lock.unlock();
+                lock.lock();
+                try {
+                    runningInstances.remove(this);
+                    isFull.signal(); //all not needed?
+                } finally {
+                    lock.unlock();
+                }
             }
+        }
+
+        @Override
+        public void handleFinishedRequiredJob(JJob required) {
+
         }
     }
 }
