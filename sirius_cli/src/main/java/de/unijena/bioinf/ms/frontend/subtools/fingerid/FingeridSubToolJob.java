@@ -33,8 +33,10 @@ public class FingeridSubToolJob extends InstanceJob {
                 inst.getExperiment().getAnnotationOrThrow(FormulaResultRankingScore.class).value,
                 FormulaScoring.class, FTree.class, FingerprintResult.class, FingerblastResult.class);
 
-        if (formulaResults == null || formulaResults.isEmpty())
-            throw new IllegalArgumentException("No formula identification. Cannot Run CSI:FingerID without formula identifications. You may want to run the SIRIUS SubTool first.");
+        if (formulaResults == null || formulaResults.isEmpty()) {
+            LOG().info("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are not trees computed.");
+            return;
+        }
 
         if (!isRecompute(inst) && formulaResults.stream().findFirst().map(SScored::getCandidate)
                 .map(c -> c.hasAnnotation(FingerprintResult.class) && c.hasAnnotation(FingerblastResult.class)).orElse(true)) {
