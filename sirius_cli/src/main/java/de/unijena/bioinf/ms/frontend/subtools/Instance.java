@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.frontend.subtools;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.ProjectSpaceManager;
 import de.unijena.bioinf.ms.annotations.Annotated;
@@ -125,8 +126,10 @@ public class Instance {
 
     public synchronized void updateFormulaResult(FormulaResult result, Class<? extends DataAnnotation>... components) {
         try {
-            if (!formulaResultCache.containsKey(result.getId()))
-                formulaResultCache.put(result.getId(),result);
+            if (!formulaResultCache.containsKey(result.getId())) {
+                formulaResultCache.put(result.getId(), result);
+                compoundCache.getResults().add(result.getId());
+            }
             //refresh cache to actual object state?
             final FormulaResult rs = formulaResultCache.get(result.getId());
             updateAnnotations(rs, result, components);
@@ -192,4 +195,8 @@ public class Instance {
         }
     }
 
+    public synchronized void newFormulaResultWithUniqueId(FTree tree) {
+        getProjectSpace().newFormulaResultWithUniqueId(compoundCache, tree).
+                ifPresent(fr -> formulaResultCache.put(fr.getId(), fr));
+    }
 }

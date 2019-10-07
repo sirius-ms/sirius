@@ -93,8 +93,6 @@ public class FingeridSubToolJob extends InstanceJob {
             formRes.getAnnotationOrThrow(FormulaScoring.class).setAnnotation(ConfidenceScore.class, structRes.getAnnotationOrThrow(ConfidenceResult.class).score);
 
 //            setRanking score
-//            inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(TopFingerblastScore.class));
-            // write results back to project space
             inst.updateFormulaResult(formRes,
                     FormulaScoring.class, FingerprintResult.class, FingerblastResult.class);
         }

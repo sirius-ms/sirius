@@ -53,8 +53,9 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
 
                 checkForCancellation();
                 final Instance instance = instances.next();
-                JJob<Instance> jobToWaitOn = (DymmyExpResultJob) () -> instance;
                 final InstanceJobCollectorJob collector = new InstanceJobCollectorJob(instance);
+
+                JJob<Instance> jobToWaitOn = (DymmyExpResultJob) () -> instance;
                 for (InstanceJob.Factory task : tasks) {
                     jobToWaitOn = task.createToolJob(jobToWaitOn);
                     collector.addRequiredJob(jobToWaitOn);
@@ -120,6 +121,18 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
         public InstanceJobCollectorJob(Instance instance) {
             super(JobType.SCHEDULER,ReqJobFailBehaviour.IGNORE); //we want to ignore failing because we do not want to multiply exceptions
             this.instance = instance;
+
+            addPropertyChangeListener(evt -> {
+                if (isFinished()) {
+                    lock.lock();
+                    try {
+                        runningInstances.remove(this);
+                        isFull.signal(); //all not needed?
+                    } finally {
+                        lock.unlock();
+                    }
+                }
+            });
         }
 
 
@@ -128,21 +141,6 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
             // this should always run because we ignore failling of reqiured jobs
             //this runs if all jobs of the instance are finished
             return instance.getID();
-        }
-
-        @Override
-        protected void cleanup() {
-            try {
-                super.cleanup();
-            } finally {
-                lock.lock();
-                try {
-                    runningInstances.remove(this);
-                    isFull.signal(); //all not needed?
-                } finally {
-                    lock.unlock();
-                }
-            }
         }
 
         @Override
