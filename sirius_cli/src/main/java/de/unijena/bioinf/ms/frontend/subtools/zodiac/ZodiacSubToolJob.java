@@ -160,7 +160,6 @@ public class ZodiacSubToolJob extends DataSetJob {
                 }
                 formulaResults.forEach(fr -> {
                     FormulaScoring scoring = fr.getAnnotationOrThrow(FormulaScoring.class);
-                    double zodiacScore = sTress.get(fr.getAnnotationOrThrow(FTree.class)).score();
                     scoring.setAnnotation(ZodiacScore.class,
                             sTress.get(fr.getAnnotationOrThrow(FTree.class))
                     );
@@ -181,6 +180,10 @@ public class ZodiacSubToolJob extends DataSetJob {
             });
 
             instances.forEach(this::invalidateResults);
+
+            if (cliOptions.summaryFile != null) {
+                ZodiacUtils.writeResultSummary(scoreResults, clusterResults.getResults(), cliOptions.summaryFile);
+            }
         }
     }
 

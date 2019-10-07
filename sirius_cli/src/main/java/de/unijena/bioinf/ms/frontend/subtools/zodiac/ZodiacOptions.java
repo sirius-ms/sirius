@@ -46,7 +46,7 @@ public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiacSubToolJ
 
     public Path libraryHitsFile;
     @Option(names = "--library-hits", description = "CSV file containing spectral library hits. Libray hits are used as anchors to improve ZODIAC scoring.")
-    public void setLibrayHits(String filePath) throws Exception {
+    public void setLibraryHits(String filePath) throws Exception {
         libraryHitsFile = Paths.get(filePath);
     }
 
@@ -89,12 +89,21 @@ public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiacSubToolJ
     }
 
 
+    ///////////////////////////
+    // others               //
+    /////////////////////////
 
     @Option(names = "--ignore-spectra-quality", description = "As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining.")
     public void disableZodiacTwoStepApproach(boolean disable) throws Exception {
         if (disable){
             defaultConfigOptions.changeOption("ZodiacRunInTwoSteps", "false");
         }
+    }
+
+    public Path summaryFile;
+    @Option(names = "--summary", description = "Write a ZODIAC summary CSV file.", hidden = true)
+    public void setSummaryFile(String filePath) throws Exception {
+        summaryFile = Paths.get(filePath);
     }
 
     @Override
