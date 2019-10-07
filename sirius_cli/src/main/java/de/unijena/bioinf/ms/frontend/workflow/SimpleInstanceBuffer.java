@@ -119,7 +119,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
         final Instance instance;
 
         public InstanceJobCollectorJob(Instance instance) {
-            super(JobType.SCHEDULER);
+            super(JobType.SCHEDULER,ReqJobFailBehaviour.IGNORE); //we want to ignore failing because we do not want to multiply exceptions
             this.instance = instance;
         }
 
@@ -127,26 +127,19 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
         @Override
         protected CompoundContainerId compute() throws Exception {
             //this runs if all jobs of the instance are finished
-            checkForInterruption();
-            lock.lock();
-            try {
-                runningInstances.remove(this);
-                isFull.signal(); //all not needed?
-                return instance.getID();
-            } finally {
-                lock.unlock();
-            }
+            return instance.getID();
         }
 
         @Override
         public void handleFinishedRequiredJob(JJob required) {
-           //todo not longer needed writing is done by the jobs itself
-            /* // write results to project space.
+            //we have to run this here to ensure that it is executed even if the required job failed
+            lock.lock();
             try {
-                instance.writeExperiment(instance);
-            } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).error("Could not write results of Job with Name:" + required.LOG().getName() + ", Type: " + required.getClass().getSimpleName() + " to Project-Space", e);
-            }*/
+                runningInstances.remove(this);
+                isFull.signal(); //all not needed?
+            } finally {
+                lock.unlock();
+            }
         }
     }
 }
