@@ -15,6 +15,7 @@ import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.fingerid.CanopusClientData;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class CanopusSubToolJob extends InstanceJob {
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         System.out.println("I am Canopus on Experiment " + inst);
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> input = inst.loadFormulaResults(
-                TopFingerblastScore.class,
+                SiriusScore.class,
                 FormulaScoring.class, FingerprintResult.class, CanopusResult.class);
 
         // check if we need to skip

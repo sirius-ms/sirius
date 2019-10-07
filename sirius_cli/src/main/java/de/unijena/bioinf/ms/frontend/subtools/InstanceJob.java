@@ -42,7 +42,7 @@ public abstract class InstanceJob extends BasicDependentJJob<Instance> implement
             final Class<? extends DataAnnotation>[] ca = compoundComponentsToClear();
             if (ca != null && ca.length > 0) input.clearCompoundCache(ca);
             final Class<? extends DataAnnotation>[] ra = formulaResultComponentsToClear();
-            if (ca != null && ca.length > 0) input.clearFormulaResultsCache(ra);
+            if (ra != null && ra.length > 0) input.clearFormulaResultsCache(ra);
         }
         return input;
     }

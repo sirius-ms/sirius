@@ -67,7 +67,7 @@ public class SiriusSubToolJob extends InstanceJob {
 
             //write results to project space
             for (IdentificationResult<SiriusScore> result : results)
-                inst.getProjectSpace().newFormulaResultWithUniqueId(ioC, result.getTree());
+                inst.newFormulaResultWithUniqueId(result.getTree());
 
             // set sirius to ranking score
             if (exp.getAnnotationOrThrow(UserFormulaResultRankingScore.class).isAuto()) {
