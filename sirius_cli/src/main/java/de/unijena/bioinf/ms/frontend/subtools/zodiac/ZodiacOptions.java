@@ -27,6 +27,10 @@ public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiacSubToolJ
     }
 
 
+    @Option(names = "--considered-candidates", description = "Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC. default: all")
+    public void setNumberOfConsideredCandidates(String value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacNumberOfConsideredCandidates", value);
+    }
     ///////////////////////
     //library hits     ///
     /////////////////////
