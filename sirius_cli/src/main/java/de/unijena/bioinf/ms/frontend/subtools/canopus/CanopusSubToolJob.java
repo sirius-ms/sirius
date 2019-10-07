@@ -3,10 +3,11 @@ package de.unijena.bioinf.ms.frontend.subtools.canopus;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.fingerid.CanopusJJob;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
@@ -26,8 +27,8 @@ public class CanopusSubToolJob extends InstanceJob {
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         System.out.println("I am Canopus on Experiment " + inst);
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> input = inst.loadFormulaResults(
-                inst.getExperiment().getAnnotationOrThrow(FormulaResultRankingScore.class).value,
-                FormulaScoring.class, FTree.class, FingerprintResult.class, CanopusResult.class);
+                TopFingerblastScore.class,
+                FormulaScoring.class, FingerprintResult.class, CanopusResult.class);
 
         // check if we need to skip
         if (!isRecompute(inst) && input.stream().anyMatch((it -> it.getCandidate().hasAnnotation(CanopusResult.class)))) {
@@ -63,10 +64,13 @@ public class CanopusSubToolJob extends InstanceJob {
 
     private CanopusJJob buildAndSubmit(@NotNull final FormulaResult ir) {
         final CanopusJJob canopusJob = new CanopusJJob(ApplicationCore.CANOPUS);
-        canopusJob.setFormula(ir.getAnnotationOrThrow(FTree.class).getRoot().getFormula())
+        canopusJob.setFormula(ir.getId().getFormula())
                 .setFingerprint(ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint);
         return SiriusJobs.getGlobalJobManager().submitJob(canopusJob);
     }
 
-
+    @Override
+    protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
+        return new Class[]{CanopusResult.class};
+    }
 }
