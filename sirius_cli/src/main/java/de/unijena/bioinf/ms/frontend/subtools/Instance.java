@@ -89,7 +89,7 @@ public class Instance {
 
     public synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends FormulaScore> rankingScoreType, Class<? extends DataAnnotation>... components) {
         try {
-            if (formulaResultCache == null || !formulaResultCache.keySet().containsAll(compoundCache.getResults())) {
+            if (!formulaResultCache.keySet().containsAll(compoundCache.getResults())) {
                 final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = getProjectSpace().getFormulaResultsOrderedBy(getID(), rankingScoreType, components);
                 formulaResultCache = returnList.stream().collect(Collectors.toMap(r -> r.getCandidate().getId(), SScored::getCandidate));
                 return returnList;
@@ -136,6 +136,52 @@ public class Instance {
         }
     }
 
+    public synchronized void updateExperiment() {
+        updateCompound(compoundCache, Ms2Experiment.class);
+    }
+
+    public synchronized void updateConfig() {
+        compoundCache.setAnnotation(ProjectSpaceConfig.class, new ProjectSpaceConfig(getExperiment().getAnnotationOrThrow(FinalConfig.class).config));
+        updateCompound(compoundCache, ProjectSpaceConfig.class);
+    }
+
+    //remove from cache
+    public synchronized void clearCompoundCache() {
+        compoundCache.clearAnnotations();
+    }
+
+    public synchronized void clearCompoundCache(Class<? extends DataAnnotation>... components) {
+        if (compoundCache == null)
+            return;
+
+        for (Class<? extends DataAnnotation> component : components)
+            compoundCache.removeAnnotation(component);
+    }
+
+
+    public synchronized void clearFormulaResultsCache() {
+        formulaResultCache.clear();
+    }
+
+    public synchronized void clearFormulaResultsCache(Class<? extends DataAnnotation>... components) {
+        clearFormulaResultsCache(compoundCache.getResults(), components);
+    }
+
+    public synchronized void clearFormulaResultsCache(Collection<FormulaResultId> results, Class<? extends DataAnnotation>... components) {
+        if (components == null || components.length == 0)
+            return;
+        for (FormulaResultId result : results)
+            clearFormulaResultCache(result, components);
+    }
+
+    public synchronized void clearFormulaResultCache(FormulaResultId id, Class<? extends DataAnnotation>... components) {
+        if (formulaResultCache.containsKey(id))
+            for (Class<? extends DataAnnotation> comp : components)
+                formulaResultCache.get(id).removeAnnotation(comp);
+    }
+
+
+    // static helper methods
     private static <T extends DataAnnotation> void updateAnnotations(final Annotated<T> toRefresh, final Annotated<T> refresher, final Class<? extends DataAnnotation>... components) {
         if (toRefresh != refresher) {
             Set<Class<? extends DataAnnotation>> comps = Arrays.stream(components).collect(Collectors.toSet());
@@ -146,12 +192,4 @@ public class Instance {
         }
     }
 
-    public synchronized void updateExperiment() {
-        updateCompound(compoundCache, Ms2Experiment.class);
-    }
-
-    public synchronized void updateConfig() {
-        compoundCache.setAnnotation(ProjectSpaceConfig.class, new ProjectSpaceConfig(getExperiment().getAnnotationOrThrow(FinalConfig.class).config));
-        updateCompound(compoundCache, ProjectSpaceConfig.class);
-    }
 }
