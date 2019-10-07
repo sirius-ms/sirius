@@ -17,10 +17,7 @@ import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistr
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorerNoiseIntensityWeighted;
-import de.unijena.bioinf.GibbsSampling.properties.ZodiacEdgeFilterThresholds;
-import de.unijena.bioinf.GibbsSampling.properties.ZodiacEpochs;
-import de.unijena.bioinf.GibbsSampling.properties.ZodiacLibraryScoring;
-import de.unijena.bioinf.GibbsSampling.properties.ZodiacRunInTwoSteps;
+import de.unijena.bioinf.GibbsSampling.properties.*;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.fingerid.annotations.UserFormulaResultRankingScore;
@@ -59,7 +56,7 @@ public class ZodiacSubToolJob extends DataSetJob {
             if (input.get(instance.getExperiment()).size()==0) input.remove(instance.getExperiment());
         }
 
-        if (instances.stream().anyMatch(it -> isRecompute(it) || !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class))) {
+        if (instances.stream().anyMatch(it -> isRecompute(it) || (input.containsKey(it.getExperiment()) && !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class)))) {
             System.out.println("I am ZODIAC and run on all instances: " + instances.stream().map(Instance::toString).collect(Collectors.joining(",")));
 
             Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = input.keySet().stream().collect(Collectors.toMap(k -> k, k -> input.get(k).stream().map(r -> r.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList())));
@@ -83,11 +80,12 @@ public class ZodiacSubToolJob extends DataSetJob {
                 }
             }
 
-            int maxCandidates = input.keySet().iterator().next().getAnnotation(NumberOfCandidates.class).orElse(NumberOfCandidates.MAX_VALUE).value;
+
 
             if (instances.size()==0) return;
 
             //properties
+            int maxCandidates = instances.get(0).getExperiment().getAnnotationOrThrow(ZodiacNumberOfConsideredCandidates.class).value;
             ZodiacEpochs zodiacEpochs = instances.get(0).getExperiment().getAnnotationOrThrow(ZodiacEpochs.class);
             ZodiacEdgeFilterThresholds edgeFilterThresholds = instances.get(0).getExperiment().getAnnotationOrThrow(ZodiacEdgeFilterThresholds.class);
             ZodiacRunInTwoSteps zodiacRunInTwoSteps = instances.get(0).getExperiment().getAnnotationOrThrow(ZodiacRunInTwoSteps.class);
@@ -162,6 +160,7 @@ public class ZodiacSubToolJob extends DataSetJob {
                 }
                 formulaResults.forEach(fr -> {
                     FormulaScoring scoring = fr.getAnnotationOrThrow(FormulaScoring.class);
+                    double zodiacScore = sTress.get(fr.getAnnotationOrThrow(FTree.class)).score();
                     scoring.setAnnotation(ZodiacScore.class,
                             sTress.get(fr.getAnnotationOrThrow(FTree.class))
                     );
