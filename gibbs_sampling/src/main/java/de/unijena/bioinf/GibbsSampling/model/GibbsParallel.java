@@ -131,7 +131,6 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
             submitSubJob(gibbsNetwork);
         }
 
-        //awaitAllSubJobs did not wait!
         for (BasicJJob job : jobs) {
             job.awaitResult();
         }
