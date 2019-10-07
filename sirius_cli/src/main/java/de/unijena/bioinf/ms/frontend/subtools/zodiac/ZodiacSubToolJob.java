@@ -54,6 +54,11 @@ public class ZodiacSubToolJob extends DataSetJob {
                 in -> in.loadFormulaResults(SiriusScore.class, FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList())
         ));
 
+        for (Instance instance : instances) {
+            //remove instances from input which don't have a single FTree
+            if (input.get(instance.getExperiment()).size()==0) input.remove(instance.getExperiment());
+        }
+
         if (instances.stream().anyMatch(it -> isRecompute(it) || !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class))) {
             System.out.println("I am ZODIAC and run on all instances: " + instances.stream().map(Instance::toString).collect(Collectors.joining(",")));
 
@@ -151,6 +156,10 @@ public class ZodiacSubToolJob extends DataSetJob {
                 System.out.println(inst.getID().getDirectoryName());
                 final Map<FTree, ZodiacScore> sTress = scoreResults.get(inst.getExperiment());
                 final List<FormulaResult> formulaResults = input.get(inst.getExperiment());
+                if (formulaResults==null){
+                    //this instance was not processed by ZODIAC
+                    return;
+                }
                 formulaResults.forEach(fr -> {
                     FormulaScoring scoring = fr.getAnnotationOrThrow(FormulaScoring.class);
                     scoring.setAnnotation(ZodiacScore.class,
