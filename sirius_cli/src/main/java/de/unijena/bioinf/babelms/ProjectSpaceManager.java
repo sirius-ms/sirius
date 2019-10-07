@@ -60,10 +60,6 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         }
     }
 
-    @NotNull
-    public CompoundContainerId newUniqueCompoundId(Ms2Experiment inputExperient) {
-        return newCompoundWithUniqueId(inputExperient).getId();
-    }
 
     @NotNull
     @Override
