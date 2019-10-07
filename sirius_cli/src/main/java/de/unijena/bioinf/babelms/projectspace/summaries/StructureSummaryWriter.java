@@ -50,7 +50,7 @@ public class StructureSummaryWriter implements Summarizer {
                         if (results.getCandidate().hasAnnotation(FingerblastResult.class)) {
                             final List<Scored<CompoundCandidate>> frs = results.getCandidate().getAnnotationOrThrow(FingerblastResult.class).getResults();
                             final StringWriter w = new StringWriter(128);
-                            new StructureCSVExporter().exportFingerIdResults(w, frs, false);
+                            new StructureCSVExporter().exportFingerIdResults(w, frs, true);
                             final String hits = w.toString();
 
                             // write summary file
