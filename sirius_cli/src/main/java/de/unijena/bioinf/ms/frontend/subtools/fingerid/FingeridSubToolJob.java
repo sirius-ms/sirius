@@ -9,6 +9,7 @@ import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
@@ -91,13 +92,16 @@ public class FingeridSubToolJob extends InstanceJob {
             formRes.getAnnotationOrThrow(FormulaScoring.class).setAnnotation(TopFingerblastScore.class, structRes.getAnnotationOrThrow(FingerblastResult.class).getTopHitScore());
             formRes.getAnnotationOrThrow(FormulaScoring.class).setAnnotation(ConfidenceScore.class, structRes.getAnnotationOrThrow(ConfidenceResult.class).score);
 
-            //setRanking score
-            inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(TopFingerblastScore.class));
+//            setRanking score
+//            inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(TopFingerblastScore.class));
             // write results back to project space
             inst.updateFormulaResult(formRes,
                     FormulaScoring.class, FingerprintResult.class, FingerblastResult.class);
-
-
         }
+    }
+
+    @Override
+    protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
+        return new Class[]{FTree.class, FingerblastResult.class};
     }
 }
