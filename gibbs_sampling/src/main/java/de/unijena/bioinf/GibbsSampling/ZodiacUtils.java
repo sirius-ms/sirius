@@ -681,7 +681,6 @@ public class ZodiacUtils {
         String qualityString = "";
         Sirius sirius = new Sirius();
         double precursorMass = Double.NaN;
-        String ionsByMs1 = "";
         if (result.length>0){
             Ms2Experiment experiment = result[0].getCandidate().getExperiment();
 
@@ -712,8 +711,6 @@ public class ZodiacUtils {
         builder.append(qualityString);
         builder.append(SEP);
         builder.append(String.valueOf(precursorMass));
-        builder.append(SEP);
-        builder.append(ionsByMs1);
         builder.append(SEP);
         builder.append(siriusMF);
         builder.append(SEP);
