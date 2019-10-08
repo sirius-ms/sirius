@@ -176,8 +176,10 @@ public class RootOptionsCLI implements RootOptions {
 
     private void expandInput(@NotNull List<File> files, @NotNull List<File> siriusInfiles, @NotNull List<File> projectSpaces) {
         for (File g : files) {
-            if (!g.exists())
+            if (!g.exists()) {
                 LOG.warn("Path \"" + g.getPath() + "\" does not exist and will be skipped");
+                continue;
+            }
 
             if (g.isDirectory()) {
                 // check whether it is a workspace or a gerneric directory with some other input
