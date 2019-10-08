@@ -62,12 +62,12 @@ public class StructureSummaryWriter implements Summarizer {
                                     map(ConfidenceScore::score).orElse(Double.NaN);
 
                             final @NotNull Ms2Experiment experimentResult = exp.getAnnotationOrThrow(Ms2Experiment.class);
-                            final String[] lines = hits.split("\n", 3);
+                            final String[] lines = hits.split("\n", 2);
 
-                            if (lines.length >= 2)
-                                topHits.add(new Scored<>(StandardMSFilenameFormatter.simplifyURL(experimentResult.getSource().getFile()) + "\t" + StandardMSFilenameFormatter.simplify(experimentResult.getName()) + "\t" + confidence + "\t" + lines[1] + "\n", confidence));
+                            if (lines.length >= 1)
+                                topHits.add(new Scored<>(StandardMSFilenameFormatter.simplifyURL(experimentResult.getSource().getFile()) + "\t" + StandardMSFilenameFormatter.simplify(experimentResult.getName()) + "\t" + confidence + "\t" + lines[0] + "\n", confidence));
                             if (header == null)
-                                header = "source\texperimentName\tconfidence\t" + lines[0];
+                                header = "source\texperimentName\tconfidence\t" + StructureCSVExporter.HEADER;
                         }
                     }
                 });

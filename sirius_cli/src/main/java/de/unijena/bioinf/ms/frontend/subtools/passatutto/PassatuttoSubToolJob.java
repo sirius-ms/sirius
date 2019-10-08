@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.passatutto.Decoy;
@@ -35,5 +36,10 @@ public class PassatuttoSubToolJob extends InstanceJob {
 
         //write passatuto results
         inst.getProjectSpace().updateFormulaResult(best, Decoy.class);
+    }
+
+    @Override
+    protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
+        return new Class[]{Decoy.class};
     }
 }

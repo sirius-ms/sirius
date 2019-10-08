@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.jjobs.BasicDependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,6 +38,11 @@ public abstract class InstanceJob extends BasicDependentJJob<Instance> implement
         } catch (Exception e) {
             //just to Identify the instance that failed
             throw new Exception(LOG().getName() + " - Instance job failed on Instance: '" + input.toString() + "'.", e);
+        } finally {
+            final Class<? extends DataAnnotation>[] ca = compoundComponentsToClear();
+            if (ca != null && ca.length > 0) input.clearCompoundCache(ca);
+            final Class<? extends DataAnnotation>[] ra = formulaResultComponentsToClear();
+            if (ra != null && ra.length > 0) input.clearFormulaResultsCache(ra);
         }
         return input;
     }
@@ -46,14 +52,15 @@ public abstract class InstanceJob extends BasicDependentJJob<Instance> implement
             throw new IllegalArgumentException("No Input given!");
     }
 
+    protected Class<? extends DataAnnotation>[] compoundComponentsToClear() {
+        return null;
+    }
+
+    protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
+        return null;
+    }
+
     protected abstract void computeAndAnnotateResult(final @NotNull Instance expRes) throws Exception;
-
-
-    /*@Override
-    protected void cleanup() {
-        super.cleanup();
-        input = null;
-    }*/
 
     @FunctionalInterface
     public interface Factory<T extends InstanceJob> {

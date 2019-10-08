@@ -9,6 +9,7 @@ import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
@@ -33,8 +34,10 @@ public class FingeridSubToolJob extends InstanceJob {
                 inst.getExperiment().getAnnotationOrThrow(FormulaResultRankingScore.class).value,
                 FormulaScoring.class, FTree.class, FingerprintResult.class, FingerblastResult.class);
 
-        if (formulaResults == null || formulaResults.isEmpty())
-            throw new IllegalArgumentException("No formula identification. Cannot Run CSI:FingerID without formula identifications. You may want to run the SIRIUS SubTool first.");
+        if (formulaResults == null || formulaResults.isEmpty()) {
+            LOG().info("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are not trees computed.");
+            return;
+        }
 
         if (!isRecompute(inst) && formulaResults.stream().findFirst().map(SScored::getCandidate)
                 .map(c -> c.hasAnnotation(FingerprintResult.class) && c.hasAnnotation(FingerblastResult.class)).orElse(true)) {
@@ -89,13 +92,14 @@ public class FingeridSubToolJob extends InstanceJob {
             formRes.getAnnotationOrThrow(FormulaScoring.class).setAnnotation(TopFingerblastScore.class, structRes.getAnnotationOrThrow(FingerblastResult.class).getTopHitScore());
             formRes.getAnnotationOrThrow(FormulaScoring.class).setAnnotation(ConfidenceScore.class, structRes.getAnnotationOrThrow(ConfidenceResult.class).score);
 
-            //setRanking score
-            inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(TopFingerblastScore.class));
-            // write results back to project space
+//            setRanking score
             inst.updateFormulaResult(formRes,
                     FormulaScoring.class, FingerprintResult.class, FingerblastResult.class);
-
-
         }
+    }
+
+    @Override
+    protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
+        return new Class[]{FTree.class, FingerblastResult.class};
     }
 }

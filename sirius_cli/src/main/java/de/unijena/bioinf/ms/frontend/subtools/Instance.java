@@ -3,54 +3,57 @@ package de.unijena.bioinf.ms.frontend.subtools;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.ProjectSpaceManager;
+import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.ProjectSpaceConfig;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class Instance {
-    final protected Ms2Experiment inputExperient;
+    protected final ProjectSpaceManager spaceManager;
+    protected final CompoundContainer compoundCache;
 
-    final protected ProjectSpaceManager spaceManager;
-    final protected CompoundContainerId projectSpaceID;
+    protected Map<FormulaResultId, FormulaResult> formulaResultCache = new HashMap<>();
 
-    public Instance(@NotNull ProjectSpaceManager spaceManager, @NotNull CompoundContainerId projectSpaceID) {
-        this(null, spaceManager, projectSpaceID);
+    public Instance(@NotNull Ms2Experiment inputExperient, @NotNull ProjectSpaceManager spaceManager) {
+        this(spaceManager.newCompoundWithUniqueId(inputExperient), spaceManager);
+
     }
 
-    public Instance(@Nullable Ms2Experiment inputExperient, @NotNull ProjectSpaceManager spaceManager, @NotNull CompoundContainerId projectSpaceID) {
-        if (inputExperient == null) {
-            try {
-                this.inputExperient = spaceManager.projectSpace().getCompound(projectSpaceID, Ms2Experiment.class).getAnnotationOrThrow(Ms2Experiment.class);
-            } catch (IOException e) {
-                LoggerFactory.getLogger(Instance.class).error("Could not create read Input Experiment from Project Space.", e);
-                throw new RuntimeException("Could not create read Input Experiment from Project Space.");
-            }
-        } else {
-            this.inputExperient = inputExperient;
-        }
+    public Instance(@NotNull CompoundContainerId projectSpaceID, @NotNull ProjectSpaceManager spaceManager) {
+        this(((Supplier<CompoundContainer>) () -> {
+                    try {
+                        return spaceManager.projectSpace().getCompound(projectSpaceID, Ms2Experiment.class);
+                    } catch (IOException e) {
+                        LoggerFactory.getLogger(Instance.class).error("Could not create read Input Experiment from Project Space.");
+                        throw new RuntimeException("Could not create read Input Experiment from Project Space.", e);
+                    }
+                }).get(),
+                spaceManager
+        );
+    }
 
-        this.projectSpaceID = projectSpaceID;
+    protected Instance(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager spaceManager) {
+        this.compoundCache = compoundContainer;
         this.spaceManager = spaceManager;
     }
 
     public Ms2Experiment getExperiment() {
-        return inputExperient;
+        return compoundCache.getAnnotationOrThrow(Ms2Experiment.class); //todo decide if it shlould be allowed to be dropped from cache -> currently NOT!
     }
 
     public CompoundContainerId getID() {
-        return projectSpaceID;
+        return compoundCache.getId();
     }
 
     @Override
@@ -67,53 +70,133 @@ public class Instance {
     }
 
 
-    public Optional<ProjectSpaceConfig> loadConfig() {
+    //load from projectSpace
+    public synchronized Optional<ProjectSpaceConfig> loadConfig() {
         return loadCompoundContainer(ProjectSpaceConfig.class).getAnnotation(ProjectSpaceConfig.class);
     }
 
-    public List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends FormulaScore> rankingScoreType, Class<? extends DataAnnotation>... components) {
+    public synchronized CompoundContainer loadCompoundContainer(Class<? extends DataAnnotation>... components) {
         try {
-            return getProjectSpace().getFormulaResultsOrderedBy(getID(),
-                    rankingScoreType,
-                    components);
+            Class[] missingComps = Arrays.stream(components).filter(comp -> !compoundCache.hasAnnotation(comp)).distinct().toArray(Class[]::new);
+            if (missingComps.length > 0) { //load missing comps
+                final CompoundContainer tmpComp = getProjectSpace().getCompound(getID(), missingComps);
+                compoundCache.setAnnotationsFrom(tmpComp);
+            }
+            return compoundCache;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public CompoundContainer loadCompoundContainer(Class<? extends DataAnnotation>... components) {
+    public synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends FormulaScore> rankingScoreType, Class<? extends DataAnnotation>... components) {
         try {
-            return getProjectSpace().getCompound(getID(), components);
+            if (!formulaResultCache.keySet().containsAll(compoundCache.getResults())) {
+                final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = getProjectSpace().getFormulaResultsOrderedBy(getID(), rankingScoreType, components);
+                formulaResultCache = returnList.stream().collect(Collectors.toMap(r -> r.getCandidate().getId(), SScored::getCandidate));
+                return returnList;
+            } else {
+                Class[] missingComps = Arrays.stream(components).
+                        filter(comp -> formulaResultCache.values().stream().allMatch(r -> r.hasAnnotation(comp))).
+                        distinct().toArray(Class[]::new);
+                if (missingComps.length > 0) {
+                    final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = getProjectSpace().getFormulaResultsOrderedBy(getID(), rankingScoreType, components);
+                    returnList.stream().map(SScored::getCandidate).
+                            forEach(rs -> formulaResultCache.get(rs.getId()).setAnnotationsFrom(rs));
+                }
+
+                //return updated an sorted formula results
+                return formulaResultCache.values().stream()
+                        .map(rs -> new SScored<>(rs, rs.getAnnotationOrThrow(FormulaScoring.class).getAnnotationOrThrow(rankingScoreType)))
+                        .sorted(Collections.reverseOrder()).collect(Collectors.toList());
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void updateFormulaResult(FormulaResult result, Class<? extends DataAnnotation>... components) {
+    //write to projectSpace
+    public synchronized void updateCompound(CompoundContainer container, Class<? extends DataAnnotation>... components) {
         try {
-            getProjectSpace().updateFormulaResult(result, components);
+            updateAnnotations(compoundCache, container, components);
+            getProjectSpace().updateCompound(compoundCache, components);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void updateCompound(CompoundContainer result, Class<? extends DataAnnotation>... components) {
+    public synchronized void updateFormulaResult(FormulaResult result, Class<? extends DataAnnotation>... components) {
         try {
-            getProjectSpace().updateCompound(result, components);
+            if (!formulaResultCache.containsKey(result.getId())) {
+                formulaResultCache.put(result.getId(), result);
+                compoundCache.getResults().add(result.getId());
+            }
+            //refresh cache to actual object state?
+            final FormulaResult rs = formulaResultCache.get(result.getId());
+            updateAnnotations(rs, result, components);
+            getProjectSpace().updateFormulaResult(rs, components);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void updateExperiment() {
-        CompoundContainer c = loadCompoundContainer();
-        c.setAnnotation(Ms2Experiment.class, inputExperient);
-        updateCompound(c, Ms2Experiment.class);
+    public synchronized void updateExperiment() {
+        updateCompound(compoundCache, Ms2Experiment.class);
     }
 
-    public void updateConfig() {
-        CompoundContainer c = loadCompoundContainer();
-        c.setAnnotation(ProjectSpaceConfig.class, new ProjectSpaceConfig(inputExperient.getAnnotationOrThrow(FinalConfig.class).config));
-        updateCompound(c, ProjectSpaceConfig.class);
+    public synchronized void updateConfig() {
+        compoundCache.setAnnotation(ProjectSpaceConfig.class, new ProjectSpaceConfig(getExperiment().getAnnotationOrThrow(FinalConfig.class).config));
+        updateCompound(compoundCache, ProjectSpaceConfig.class);
+    }
+
+    //remove from cache
+    public synchronized void clearCompoundCache() {
+        compoundCache.clearAnnotations();
+    }
+
+    public synchronized void clearCompoundCache(Class<? extends DataAnnotation>... components) {
+        if (compoundCache == null)
+            return;
+
+        for (Class<? extends DataAnnotation> component : components)
+            compoundCache.removeAnnotation(component);
+    }
+
+
+    public synchronized void clearFormulaResultsCache() {
+        formulaResultCache.clear();
+    }
+
+    public synchronized void clearFormulaResultsCache(Class<? extends DataAnnotation>... components) {
+        clearFormulaResultsCache(compoundCache.getResults(), components);
+    }
+
+    public synchronized void clearFormulaResultsCache(Collection<FormulaResultId> results, Class<? extends DataAnnotation>... components) {
+        if (components == null || components.length == 0)
+            return;
+        for (FormulaResultId result : results)
+            clearFormulaResultCache(result, components);
+    }
+
+    public synchronized void clearFormulaResultCache(FormulaResultId id, Class<? extends DataAnnotation>... components) {
+        if (formulaResultCache.containsKey(id))
+            for (Class<? extends DataAnnotation> comp : components)
+                formulaResultCache.get(id).removeAnnotation(comp);
+    }
+
+
+    // static helper methods
+    private static <T extends DataAnnotation> void updateAnnotations(final Annotated<T> toRefresh, final Annotated<T> refresher, final Class<? extends DataAnnotation>... components) {
+        if (toRefresh != refresher) {
+            Set<Class<? extends DataAnnotation>> comps = Arrays.stream(components).collect(Collectors.toSet());
+            refresher.annotations().forEach((k, v) -> {
+                if (comps.contains(k))
+                    toRefresh.setAnnotation(k, v);
+            });
+        }
+    }
+
+    public synchronized void newFormulaResultWithUniqueId(FTree tree) {
+        getProjectSpace().newFormulaResultWithUniqueId(compoundCache, tree).
+                ifPresent(fr -> formulaResultCache.put(fr.getId(), fr));
     }
 }
