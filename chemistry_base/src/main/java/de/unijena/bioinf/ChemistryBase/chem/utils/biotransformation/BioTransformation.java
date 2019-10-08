@@ -117,7 +117,7 @@ public enum BioTransformation {
     BioTransformation(String chemName, String[] source) {
         this.source = source;
         this.chemName = chemName;
-        formula = MolecularFormula.parse(name());
+        formula = MolecularFormula.parseOrThrow(name());
         condition = MolecularFormula.emptyFormula();
         symmetric = true;
     }
@@ -125,16 +125,16 @@ public enum BioTransformation {
     BioTransformation(String chemName, String[] source,  String condition, boolean symmetric) {
         this.source = source;
         this.chemName = chemName;
-        this.formula = MolecularFormula.parse(name());
-        this.condition = MolecularFormula.parse(condition);
+        this.formula = MolecularFormula.parseOrThrow(name());
+        this.condition = MolecularFormula.parseOrThrow(condition);
         this.symmetric = symmetric;
     }
 
     BioTransformation(String chemName, String[] source, String formula, String condition, boolean symmetric) {
         this.source = source;
         this.chemName = chemName;
-        this.formula = MolecularFormula.parse(formula);
-        this.condition = MolecularFormula.parse(condition);
+        this.formula = MolecularFormula.parseOrThrow(formula);
+        this.condition = MolecularFormula.parseOrThrow(condition);
         this.symmetric = symmetric;
     }
 

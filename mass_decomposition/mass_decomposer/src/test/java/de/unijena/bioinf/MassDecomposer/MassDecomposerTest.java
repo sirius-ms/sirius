@@ -438,7 +438,7 @@ public class MassDecomposerTest {
         }
 
         for (String x : result3) {
-            final MolecularFormula f = MolecularFormula.parse(x);
+            final MolecularFormula f = MolecularFormula.parseOrThrow(x);
             if (!formulas.contains(f)) {
                 System.out.println(f + " with mass " + f.getMass() + " is missing!");
             }
@@ -513,7 +513,7 @@ public class MassDecomposerTest {
     public void singleElementTest(){
         final PeriodicTable table = PeriodicTable.getInstance();
         final TableSelection tableSelection = TableSelection.fromString(table, "CHNOPS");
-        final MolecularFormula mf = MolecularFormula.parse("C16");
+        final MolecularFormula mf = MolecularFormula.parseOrThrow("C16");
         final double mass = mf.getMass();
         final Deviation dev = new Deviation(100, 0.001);
         ChemicalAlphabet alphabet = new ChemicalAlphabet(tableSelection, table.getAllByName("C"));

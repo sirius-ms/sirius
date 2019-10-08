@@ -58,6 +58,13 @@ public class Loss {
         this(from, to, from.formula.subtract(to.formula), 0d);
     }
 
+    /**
+     * Artificial edges are edges which do not correspond to a fragmentation reaction
+     */
+    public boolean isArtificial() {
+        return formula.isEmpty();
+    }
+
     public boolean isDeleted() {
         return sourceEdgeOffset >= 0;
     }
@@ -86,6 +93,7 @@ public class Loss {
         this.formula = formula;
     }
 
+    // TODO: Kai: was ist das? wofür soll probability gut sein?
     public double getProbability() {
         return probability;
     }

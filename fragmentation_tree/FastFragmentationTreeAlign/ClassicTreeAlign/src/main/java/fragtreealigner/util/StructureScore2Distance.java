@@ -51,7 +51,7 @@ public class StructureScore2Distance {
 
         try {
 
-            BufferedReader compoundsFile = new BufferedReader(new FileReader(compoundsPath));
+            BufferedReader compoundsFile = FileUtils.ensureBuffering(new FileReader(compoundsPath));
 
             String line =  "";
             List<String> compoundNames = new ArrayList<String>();
@@ -73,7 +73,7 @@ public class StructureScore2Distance {
 
 
 
-            BufferedReader file = new BufferedReader( new FileReader(path));
+            BufferedReader file = FileUtils.ensureBuffering( new FileReader(path));
 
 
             line = file.readLine(); // first line only contains names

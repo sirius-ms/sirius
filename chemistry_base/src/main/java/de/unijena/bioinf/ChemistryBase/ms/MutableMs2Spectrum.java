@@ -19,98 +19,205 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Iterator;
 
 /**
- * Created by kaidu on 22.04.2015.
+ * Mutable spectrum with header information about MS/MS.
+ * Allows shallow copy which do not copy all peak data and, thus,
  */
-public class MutableMs2Spectrum extends SimpleMutableSpectrum implements Ms2Spectrum<Peak> {
+public class MutableMs2Spectrum implements Ms2Spectrum<Peak>,MutableSpectrum<Peak> {
 
-    private double precursorMz = 0d;
-    private CollisionEnergy collisionEnergy = null;
-    private double totalIoncount = 0d;
-    private Ionization ionization = null;
-    private int msLevel = 0;
-    private int scanNumber; // an arbitrary ID that is unique within the experiment object
+    public static class Header implements Cloneable {
+        private double precursorMz = 0d;
+        private CollisionEnergy collisionEnergy = null;
+        private double totalIoncount = 0d;
+        private Ionization ionization = null;
+        private int msLevel = 0;
+        private int scanNumber = -1; // an arbitrary ID that is unique within the experiment object
 
+        public Header() {
 
+        }
 
-    public MutableMs2Spectrum() {
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Header header = (Header) o;
+            return scanNumber == header.scanNumber;
+        }
 
-    }
+        @Override
+        public int hashCode() {
+            return scanNumber;
+        }
 
-    public <T extends Peak, S extends Spectrum<T>> MutableMs2Spectrum(S spec, double parentmass, CollisionEnergy energy, int mslevel) {
-        this(spec);
-        this.precursorMz = parentmass;
-        this.collisionEnergy = energy;
-        this.msLevel = mslevel;
-    }
-
-    public MutableMs2Spectrum(Spectrum<? extends Peak> spec) {
-        super(spec);
-        msLevel = spec.getMsLevel();
-        collisionEnergy = spec.getCollisionEnergy();
-
-        if (spec instanceof Ms2Spectrum) {
-            final Ms2Spectrum<Peak> ms2spec = (Ms2Spectrum<Peak>) spec;
-            precursorMz = ms2spec.getPrecursorMz();
-
-            totalIoncount = ms2spec.getTotalIonCount();
-            ionization = ms2spec.getIonization();
-            if (spec instanceof MutableMs2Spectrum)
-                this.scanNumber = ((MutableMs2Spectrum) spec).scanNumber;
+        public Header clone() {
+            try {
+                return (Header)super.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
+    protected final Header header;
+    protected final SimpleMutableSpectrum peaks;
+
+    public MutableMs2Spectrum() {
+        this.header = new Header();
+        this.peaks = new SimpleMutableSpectrum();
+    }
+
+    protected MutableMs2Spectrum(Header header, SimpleMutableSpectrum peaks) {
+        this.header = header;
+        this.peaks = peaks;
+    }
+
+    public <T extends Peak, S extends Spectrum<T>> MutableMs2Spectrum(S spec, double parentmass, CollisionEnergy energy, int mslevel) {
+        this.peaks = new SimpleMutableSpectrum(spec);
+        this.header = new Header();
+        header.precursorMz = parentmass;
+        header.collisionEnergy = energy;
+        header.msLevel = mslevel;
+    }
+
+    public MutableMs2Spectrum(Spectrum<? extends Peak> spec) {
+        this.peaks = new SimpleMutableSpectrum(spec);
+        if (spec instanceof MutableMs2Spectrum) {
+            this.header = ((MutableMs2Spectrum) spec).header.clone();
+        } else {
+            this.header = new Header();
+            header.msLevel = spec.getMsLevel();
+            header.collisionEnergy = spec.getCollisionEnergy();
+            if (spec instanceof Ms2Spectrum) {
+                final Ms2Spectrum<Peak> ms2spec = (Ms2Spectrum<Peak>) spec;
+                header.precursorMz = ms2spec.getPrecursorMz();
+
+                header.totalIoncount = ms2spec.getTotalIonCount();
+                header.ionization = ms2spec.getIonization();
+            }
+        }
+    }
+
+    public MutableMs2Spectrum shallowCopy() {
+        return new MutableMs2Spectrum(header, peaks);
+    }
+
     public int getScanNumber() {
-        return scanNumber;
+        return header.scanNumber;
     }
 
     public void setScanNumber(int scanNumber) {
-        this.scanNumber = scanNumber;
+        header.scanNumber = scanNumber;
     }
 
     @Override
     public double getPrecursorMz() {
-        return precursorMz;
+        return header.precursorMz;
+    }
+
+    @Override
+    public double getMzAt(int index) {
+        return peaks.getMzAt(index);
+    }
+
+    @Override
+    public double getIntensityAt(int index) {
+        return peaks.getIntensityAt(index);
+    }
+
+    @Override
+    public Peak getPeakAt(int index) {
+        return peaks.getPeakAt(index);
+    }
+
+    @Override
+    public int size() {
+        return peaks.size();
     }
 
     @Override
     public CollisionEnergy getCollisionEnergy() {
-        return collisionEnergy;
+        return header.collisionEnergy;
     }
 
     @Override
     public double getTotalIonCount() {
-        return totalIoncount;
+        return header.totalIoncount;
     }
 
     @Override
     public Ionization getIonization() {
-        return ionization;
+        return header.ionization;
     }
 
     @Override
     public int getMsLevel() {
-        return msLevel;
+        return header.msLevel;
     }
 
     public void setPrecursorMz(double precursorMz) {
-        this.precursorMz = precursorMz;
+        header.precursorMz = precursorMz;
     }
 
     public void setCollisionEnergy(CollisionEnergy collisionEnergy) {
-        this.collisionEnergy = collisionEnergy;
+        header.collisionEnergy = collisionEnergy;
     }
 
     public void setTotalIonCount(double totalIoncount) {
-        this.totalIoncount = totalIoncount;
+        header.totalIoncount = totalIoncount;
     }
 
     public void setIonization(Ionization ionization) {
-        this.ionization = ionization;
+        header.ionization = ionization;
     }
 
     public void setMsLevel(int msLevel) {
-        this.msLevel = msLevel;
+        header.msLevel = msLevel;
+    }
+
+
+    @Override
+    public void addPeak(Peak peak) {
+        peaks.addPeak(peak);
+    }
+
+    @Override
+    public void addPeak(double mz, double intensity) {
+        peaks.addPeak(mz,intensity);
+    }
+
+    @Override
+    public void setPeakAt(int index, Peak peak) {
+        peaks.setPeakAt(index,peak);
+    }
+
+    @Override
+    public void setMzAt(int index, double mass) {
+        peaks.setMzAt(index,mass);
+    }
+
+    @Override
+    public void setIntensityAt(int index, double intensity) {
+        peaks.setIntensityAt(index,intensity);
+    }
+
+    @Override
+    public Peak removePeakAt(int index) {
+        return peaks.removePeakAt(index);
+    }
+
+    @Override
+    public void swap(int index1, int index2) {
+        peaks.swap(index1, index2);
+    }
+
+    @NotNull
+    @Override
+    public Iterator<Peak> iterator() {
+        return peaks.iterator();
     }
 }
