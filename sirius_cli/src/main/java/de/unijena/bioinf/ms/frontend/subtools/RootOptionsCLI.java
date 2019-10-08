@@ -276,7 +276,7 @@ public class RootOptionsCLI implements RootOptions {
                     throw new IOException("Could not create new directory for project-space'" + projectSpaceLocation + "'");
             }
 
-            final SiriusProjectSpace psTmp = new ProjectSpaceIO(makeProjectSpaceConfig()).openExistingProjectSpace(projectSpaceLocation);
+            final SiriusProjectSpace psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(projectSpaceLocation);
 
             //check for formatter
             if (projectSpaceFilenameFormatter == null) {
@@ -302,45 +302,4 @@ public class RootOptionsCLI implements RootOptions {
             throw new CommandLine.PicocliException("Could not initialize workspace!", e);
         }
     }
-
-
-    protected ProjectSpaceConfiguration makeProjectSpaceConfig() {
-        final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
-        //configure ProjectspaceProperties
-        config.defineProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSPropertySerializer());
-        //configure compound container
-        config.registerContainer(CompoundContainer.class, new CompoundContainerSerializer());
-        config.registerComponent(CompoundContainer.class, ProjectSpaceConfig.class, new ProjectSpaceConfigSerializer());
-        config.registerComponent(CompoundContainer.class, Ms2Experiment.class, new MsExperimentSerializer());
-        //configure formula result
-        config.registerContainer(FormulaResult.class, new FormulaResultSerializer());
-        config.registerComponent(FormulaResult.class, FTree.class, new TreeSerializer());
-        config.registerComponent(FormulaResult.class, FormulaScoring.class, new FormulaScoringSerializer());
-        //pssatuto components
-        config.registerComponent(FormulaResult.class, Decoy.class, new PassatuttoSerializer());
-        //fingerid components
-        config.defineProjectSpaceProperty(CSIClientData.class, new CsiClientSerializer());
-        config.registerComponent(FormulaResult.class, FingerprintResult.class, new FingerprintSerializer());
-        config.registerComponent(FormulaResult.class, FingerblastResult.class, new FingerblastResultSerializer());
-        //canopus
-        config.defineProjectSpaceProperty(CanopusClientData.class, new CanopusClientSerializer());
-        config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());
-        return config;
-    }
-
-    /*protected MetaDataSerializer[] makeSerializerArray() {
-
-        //TODO this should be collected from the different subtool clis
-        // we should be able to import and export the data even if
-        // the calculators are not available -> e.g. web connection!
-        List<MetaDataSerializer> al = new ArrayList<>();
-        al.add(new IdentificationResultSerializer());
-        al.add(new ZodiacResultSerializer());
-        al.add(new FingerIdResultSerializer(ApplicationCore.WEB_API));
-        if (ApplicationCore.CANOPUS != null)
-            al.add(new CanopusResultSerializer(ApplicationCore.CANOPUS));
-        al.add(new PassatuttoSerializer());
-
-        return al.toArray(new MetaDataSerializer[0]);
-    }*/
 }
