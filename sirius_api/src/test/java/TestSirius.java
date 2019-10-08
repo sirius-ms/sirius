@@ -74,19 +74,20 @@ public class TestSirius {
         final ProcessedInput processedInput = preprocessor.preprocess(experiment);
         sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
         final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
+
         FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
         JobManager jobs = SiriusJobs.getGlobalJobManager();
         jobs.submitJob(instance);
         FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
         final FTree top = finalResult.getResults().get(0);
-        assertEquals(MolecularFormula.parse("C20H17NO6"), top.getRoot().getFormula());
+        assertEquals(MolecularFormula.parseOrThrow("C20H17NO6"), top.getRoot().getFormula());
 
         // test ms1
         final FragmentAnnotation<Score> score = top.getFragmentAnnotationOrThrow(Score.class);
         assertTrue(score.get(top.getRoot()).get("MS-Isotopes") > 0);
 
         // number of decompositions should be equal in MS1 and MSMS
-        assertEquals(processedInput.getAnnotation(ExtractedIsotopePattern.class).getExplanations().size(), processedInput.getPeakAnnotationOrThrow(DecompositionList.class).get(processedInput.getParentPeak()).getDecompositions().size());
+        assertEquals(processedInput.getAnnotationOrThrow(ExtractedIsotopePattern.class).getExplanations().size(), processedInput.getPeakAnnotationOrThrow(DecompositionList.class).get(processedInput.getParentPeak()).getDecompositions().size());
     }
 
     @Test
@@ -135,9 +136,9 @@ public class TestSirius {
         FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
         final FTree top = finalResult.getResults().get(0);
 
-        assertEquals(PrecursorIonType.getPrecursorIonType("[M-H2O+H]+"), top.getAnnotation(PrecursorIonType.class));
-        assertEquals(MolecularFormula.parse("C20H19NO7"), top.getRoot().getFormula());
-        assertEquals(MolecularFormula.parse("H2O"), top.getRoot().getOutgoingEdge(0).getFormula());
+        assertEquals(PrecursorIonType.getPrecursorIonType("[M-H2O+H]+"), top.getAnnotationOrThrow(PrecursorIonType.class));
+        assertEquals(MolecularFormula.parseOrThrow("C20H19NO7"), top.getRoot().getFormula());
+        assertEquals(MolecularFormula.parseOrThrow("H2O"), top.getRoot().getOutgoingEdge(0).getFormula());
         final LossAnnotation<LossType> is = top.getLossAnnotationOrNull(LossType.class);
         assertNotNull(is);
         assertTrue("first loss is markjed in-source fragmentation", is.get(top.getRoot().getOutgoingEdge(0)).isInSource());
@@ -179,11 +180,11 @@ public class TestSirius {
             top = finalResult.getResults().get(0);
         }
 
-        assertEquals(PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"), top.getAnnotation(PrecursorIonType.class));
-        assertEquals(MolecularFormula.parse("C20H14O6"), top.getRoot().getFormula());
+        assertEquals(PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"), top.getAnnotationOrThrow(PrecursorIonType.class));
+        assertEquals(MolecularFormula.parseOrThrow("C20H14O6"), top.getRoot().getFormula());
 
         boolean found=false;
-        MolecularFormula c2H2 = MolecularFormula.parse("C2H2");
+        MolecularFormula c2H2 = MolecularFormula.parseOrThrow("C2H2");
         for (Loss l : top.getRoot().getOutgoingEdges()) {
             found |= l.getFormula().equals(c2H2);
         }
@@ -246,7 +247,7 @@ public class TestSirius {
             boolean found = false;
             final PrecursorIonType sodium = PrecursorIonType.fromString("[M+Na]+");
             for (FTree tree : finalResult.getResults()) {
-                if (tree.getAnnotation(PrecursorIonType.class).equals(sodium))  {
+                if (tree.getAnnotationOrThrow(PrecursorIonType.class).equals(sodium))  {
                     found = true;
                     break;
                 }
@@ -286,7 +287,7 @@ public class TestSirius {
 
         //sirius.getMs2Analyzer().registerPlugin(new IsotopePatternInMs2Plugin());
 
-        IdentificationResult result = sirius.compute(exp, MolecularFormula.parse("C14H23ClN2O4S"));
+        IdentificationResult result = sirius.compute(exp, MolecularFormula.parseOrThrow("C14H23ClN2O4S"));
         final FragmentAnnotation<Ms2IsotopePattern> iso = result.getTree().getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
         assertNotNull(iso);
         int peaksWithIsotopes = 0;
