@@ -30,3 +30,9 @@ RecomputeResults=de.unijena.bioinf.ms.annotaions.RecomputeResults
 FormulaResultThreshold=de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold
 UserFormulaResultRankingScore=de.unijena.bioinf.ms.frontend.subtools.fingerid.annotations.UserFormulaResultRankingScore
 FormulaResultRankingScore=de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore
+
+ZodiacEpochs=de.unijena.bioinf.GibbsSampling.properties.ZodiacEpochs
+ZodiacRunInTwoSteps=de.unijena.bioinf.GibbsSampling.properties.ZodiacRunInTwoSteps
+ZodiacEdgeFilterThresholds=de.unijena.bioinf.GibbsSampling.properties.ZodiacEdgeFilterThresholds
+ZodiacNumberOfConsideredCandidates=de.unijena.bioinf.GibbsSampling.properties.ZodiacNumberOfConsideredCandidates
+ZodiacLibraryScoring=de.unijena.bioinf.GibbsSampling.properties.ZodiacLibraryScoring

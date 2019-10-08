@@ -45,7 +45,7 @@ public class LibraryHitScorer implements NodeScorer<FragmentsCandidate> {
             } else if(candidate.hasLibraryHit()) {
                 LibraryHit libraryHit = candidate.getLibraryHit();
                 double cosine = libraryHit.getCosine();
-                if (cosine>1.001) throw new RuntimeException(String.format("Cosine score for %s is greater than 1: %d", libraryHit.getQueryExperiment().getName(), cosine));
+                if (cosine>1.01) throw new RuntimeException(String.format("Cosine score for %s is greater than 1: %f", libraryHit.getQueryExperiment().getName(), cosine));
                 if (cosine>1.0) cosine = 1.0;
 
                 MolecularFormula diff = libraryHit.getMolecularFormula().subtract(candidate.getFormula());
