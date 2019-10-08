@@ -126,8 +126,8 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         if (ranked_candidates_covscore.length != ranked_candidates_csiscore.length)
             throw new IllegalArgumentException("Covariance scored candidate list has different length from fingerid scored candidates list!");
 
-        if (ranked_candidates_covscore.length <= 1) {
-            LoggerFactory.getLogger(getClass()).warn("Cannot calculate confidence with only ONE hit or less in PubChem database! Returning NaN.");
+        if (ranked_candidates_covscore.length <= 4) {
+            LoggerFactory.getLogger(getClass()).warn("Cannot calculate confidence with less than 5 hits in PubChem database! Returning NaN.");
             return Double.NaN;
         } else if (ranked_candidates_covscore_filtered.length == 0) {
             LoggerFactory.getLogger(getClass()).warn("Cannot calculate confidence with NO hit in \"filtered\" structure database! Returning NaN.");

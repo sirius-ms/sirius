@@ -88,6 +88,10 @@ public class PvalueScoreUtils {
             score_samples_last_mode=score_samples;
         }
 
+        if (score_samples_last_mode.size()<5){
+            score_samples_last_mode=score_samples; //TODO: This should prevent failed lognormal parameter estimations
+        }
+
         LogNormalDistribution dist = estimate_lognormal_parameters(score_samples_last_mode);
 
         double p_value_lognormal = 1 - dist.cumulativeProbability(current_candidate.getScore() + score_shift);
