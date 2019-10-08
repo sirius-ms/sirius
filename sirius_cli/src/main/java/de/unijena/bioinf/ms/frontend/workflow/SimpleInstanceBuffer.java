@@ -6,7 +6,6 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
-
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,8 +53,9 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
 
                 checkForCancellation();
                 final Instance instance = instances.next();
-                JJob<Instance> jobToWaitOn = (DymmyExpResultJob) () -> instance;
                 final InstanceJobCollectorJob collector = new InstanceJobCollectorJob(instance);
+
+                JJob<Instance> jobToWaitOn = (DymmyExpResultJob) () -> instance;
                 for (InstanceJob.Factory task : tasks) {
                     jobToWaitOn = task.createToolJob(jobToWaitOn);
                     collector.addRequiredJob(jobToWaitOn);
@@ -119,34 +119,33 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
         final Instance instance;
 
         public InstanceJobCollectorJob(Instance instance) {
-            super(JobType.SCHEDULER);
+            super(JobType.SCHEDULER,ReqJobFailBehaviour.IGNORE); //we want to ignore failing because we do not want to multiply exceptions
             this.instance = instance;
+
+            addPropertyChangeListener(evt -> {
+                if (isFinished()) {
+                    lock.lock();
+                    try {
+                        runningInstances.remove(this);
+                        isFull.signal(); //all not needed?
+                    } finally {
+                        lock.unlock();
+                    }
+                }
+            });
         }
 
 
         @Override
-        protected CompoundContainerId compute() throws Exception {
+        protected CompoundContainerId compute() {
+            // this should always run because we ignore failling of reqiured jobs
             //this runs if all jobs of the instance are finished
-            checkForInterruption();
-            lock.lock();
-            try {
-                runningInstances.remove(this);
-                isFull.signal(); //all not needed?
-                return instance.getID();
-            } finally {
-                lock.unlock();
-            }
+            return instance.getID();
         }
 
         @Override
         public void handleFinishedRequiredJob(JJob required) {
-           //todo not longer needed writing is done by the jobs itself
-            /* // write results to project space.
-            try {
-                instance.writeExperiment(instance);
-            } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).error("Could not write results of Job with Name:" + required.LOG().getName() + ", Type: " + required.getClass().getSimpleName() + " to Project-Space", e);
-            }*/
+
         }
     }
 }
