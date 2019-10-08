@@ -1,7 +1,7 @@
 package de.unijena.bioinf.confidence_score.features;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
@@ -9,7 +9,6 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.confidence_score.Utils;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
@@ -17,49 +16,66 @@ import de.unijena.bioinf.sirius.IdentificationResult;
  */
 public class LogPvalueFeatures implements FeatureCreator {
     Scored<FingerprintCandidate>[] rankedCandidates;
-    long flags=-1;
+    Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
 
     }
 
-    public LogPvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates){
+    public LogPvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
         this.rankedCandidates=rankedCandidates;
+        this.rankedCandidates_filtered=rankedCandidates_filtered;
     }
 
-    public LogPvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates,long flags){
-        this.rankedCandidates=rankedCandidates;
-        this.flags=flags;
-    }
+
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query,  IdentificationResult idresult, long flags) {
-        double[] return_value =  new double[1];
+    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
+        double[] return_value =  new double[2];
 
 
         PvalueScoreUtils utils= new PvalueScoreUtils();
 
-        Utils utils2 = new Utils();
 
-        if(this.flags==-1)this.flags=flags;
 
-        if(utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0])==0){
-            System.out.println("0 pvalue?");
+
+
+        double pvalue= utils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[0]);
+
+
+        double pvalue_kde=100;
+        if(rankedCandidates.length>5) pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[0]);
+
+
+
+        if(pvalue==0){
+            return_value[0]=-20;
+
+        }else {
+            return_value[0]  = Math.log(pvalue);
+
         }
 
-        return_value[0]  = Math.log(utils.computePvalueScore(rankedCandidates,utils2.condense_candidates_by_flag(rankedCandidates,this.flags)[0]));
+        if(pvalue_kde==0){
+            return_value[1]=-20;
+
+        }else {
+            return_value[1]= Math.log(pvalue_kde);
+        }
+
+
 
         return return_value;
     }
 
     @Override
     public int getFeatureSize() {
-        return 1;
+        return 2;
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return false;
     }
 
@@ -70,8 +86,9 @@ public class LogPvalueFeatures implements FeatureCreator {
 
     @Override
     public String[] getFeatureNames() {
-        String[] name = new String[1];
+        String[] name = new String[2];
         name[0]="LogpvalueScore";
+        name[1]="LogPvalueScoreKDE";
         return name;
     }
 

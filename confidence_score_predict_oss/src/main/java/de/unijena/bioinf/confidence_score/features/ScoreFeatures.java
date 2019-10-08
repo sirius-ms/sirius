@@ -1,7 +1,7 @@
 package de.unijena.bioinf.confidence_score.features;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
@@ -9,7 +9,6 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.confidence_score.Utils;
 import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
@@ -20,21 +19,18 @@ public class ScoreFeatures implements FeatureCreator {
     private final String[] names;
     private FingerblastScoring scoring;
     private PredictionPerformance[] statistics;
-    private Utils utils;
     Scored<FingerprintCandidate>[] rankedCandidates;
-    long flags;
+    Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
-    public ScoreFeatures(FingerblastScoring scoring, Scored<FingerprintCandidate>[] rankedCandidates){
+
+    public ScoreFeatures(FingerblastScoring scoring, Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
         this.rankedCandidates=rankedCandidates;
         names = new String[]{scoring.toString()};
         this.scoring=scoring;
+        this.rankedCandidates_filtered=rankedCandidates_filtered;
     }
-    public ScoreFeatures(FingerblastScoring scoring, Scored<FingerprintCandidate>[] rankedCandidates, long flags){
-        this.rankedCandidates=rankedCandidates;
-        names = new String[]{scoring.toString()};
-        this.scoring=scoring;
-        this.flags=flags;
-    }
+
+
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
@@ -42,20 +38,16 @@ public class ScoreFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult,long flags) {
-
-        utils= new Utils();
-        if(this.flags==-1)this.flags=flags;
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
 
-        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,this.flags);
 
 
-        final FingerprintCandidate topHit = rankedCandidates[0].getCandidate();
+        final FingerprintCandidate topHit = rankedCandidates_filtered[0].getCandidate();
         final double[] scores = new double[1];
 
-        scoring.prepare(query.getFingerprint());
-        scores[0] = scoring.score(query.getFingerprint(), topHit.getFingerprint());
+        scoring.prepare(query);
+        scores[0] = scoring.score(query, topHit.getFingerprint());
 
         return scores;
     }
@@ -66,7 +58,7 @@ public class ScoreFeatures implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return rankedCandidates.length>0;
     }
 

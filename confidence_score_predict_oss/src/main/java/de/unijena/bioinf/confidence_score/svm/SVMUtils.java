@@ -17,12 +17,8 @@ import java.util.Collections;
  */
 public class SVMUtils {
 
-    protected SVMInterface.svm_model model;
 
-
-
-
-    public SVMScales loadScalesFromJson(File file){
+    public static SVMScales loadScalesFromJson(File file) {
 
     try {
         JsonReader jreader = Json.createReader(new FileReader(file));
@@ -41,8 +37,7 @@ public class SVMUtils {
     }
 
 
-
-    public SVMScales calculateScales(double[][] features) {
+    public static SVMScales calculateScales(double[][] features) {
 
 
         //Normalisation
@@ -182,8 +177,7 @@ public class SVMUtils {
         }
 
 
-
-    public  double[][] standardize_features(double[][] features, SVMScales scales){
+    public static double[][] standardize_features(double[][] features, SVMScales scales) {
 
 
         for(double[] element : features){
@@ -194,6 +188,7 @@ public class SVMUtils {
 
                 if(scales.deviations[i]==0){
                     System.out.println("?");
+                    System.out.println(i);
                 }
 
                 element[i] = (element[i] - scales.medians[i]) / scales.deviations[i];
@@ -206,7 +201,7 @@ public class SVMUtils {
     }
 
 
-    public  double[][] normalize_features(double[][] features,SVMScales scales){
+    public static double[][] normalize_features(double[][] features, SVMScales scales) {
 
 
 
@@ -230,7 +225,7 @@ public class SVMUtils {
         return features;
     }
 
-    public LinearSVMPredictor getPredictorFromJson(File file){
+    public static LinearSVMPredictor getPredictorFromJson(File file) {
 
 
         return null;

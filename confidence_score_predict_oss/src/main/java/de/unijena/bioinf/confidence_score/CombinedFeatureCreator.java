@@ -1,7 +1,7 @@
 package de.unijena.bioinf.confidence_score;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
@@ -48,12 +48,12 @@ public class CombinedFeatureCreator implements FeatureCreator{
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query,  IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
 
         computed_features= new double[getFeatureSize()];
         int pos = 0;
         for (FeatureCreator featureCreator : featureCreators) {
-            final double[] currentScores = featureCreator.computeFeatures(query,idresult,flags);
+            final double[] currentScores = featureCreator.computeFeatures(query,idresult);
             for (int i = 0; i < currentScores.length; i++) computed_features[pos++] = currentScores[i];
         }
         return computed_features;
@@ -65,7 +65,7 @@ public class CombinedFeatureCreator implements FeatureCreator{
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         for (FeatureCreator featureCreator : featureCreators) {
             if (!featureCreator.isCompatible(query, rankedCandidates)) return false;
         }
