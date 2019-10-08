@@ -16,23 +16,19 @@ public class CompoundContainer extends ProjectSpaceContainer<CompoundContainerId
     protected final Set<FormulaResultId> results;
     private final CompoundContainerId id;
 
-    // necessary information
-//    private Class<? extends FormulaScore> rankingScore;
-
     public CompoundContainer(CompoundContainerId id/*, Class<? extends FormulaScore> resultScore*/) {
         this.annotations = new Annotations<>();
         this.results = Collections.newSetFromMap(new ConcurrentHashMap<>());
         this.id = id;
-//        this.rankingScore = resultScore;
     }
 
     public Set<FormulaResultId> getResults() {
         return results;
     }
 
-//    public Class<? extends FormulaScore> getRankingScore() {
-//        return rankingScore;
-//    }
+    public boolean containsResult(FormulaResultId id) {
+        return getResults().contains(id);
+    }
 
     @Override
     public CompoundContainerId getId() {
