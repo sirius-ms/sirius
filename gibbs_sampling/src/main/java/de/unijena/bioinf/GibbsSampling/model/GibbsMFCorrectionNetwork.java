@@ -298,7 +298,11 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
 
             for(j = min; j <= max; ++j) {
                 freq = scoring[j];
-                candidates[j - min] = new Scored<>(this.graph.getPossibleFormulas1D(j).getCandidate(), 1.0D * (double)freq / (double)sum);
+                double score = 1.0D * (double)freq / (double)sum;
+                if (Double.isNaN(score)) {
+                    throw new IllegalStateException("ZODIAC Gibbs sampling produced NaN score for: "+this.graph.getIds()[i]);
+                }
+                candidates[j - min] = new Scored<>(this.graph.getPossibleFormulas1D(j).getCandidate(), score);
             }
 
             Arrays.sort(candidates, Comparator.reverseOrder());

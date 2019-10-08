@@ -2,6 +2,7 @@ package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.GibbsSampling.model.EdgeFilter;
 import de.unijena.bioinf.GibbsSampling.model.Graph;
+import de.unijena.bioinf.jjobs.MasterJJob;
 
 public class EdgeThresholdFilter extends AbstractEdgeFilter {
     private double threshold;
@@ -30,7 +31,7 @@ public class EdgeThresholdFilter extends AbstractEdgeFilter {
         this.logThres = threshold;
     }
 
-    public int[][] postprocessCompleteGraph(Graph graph) {
+    public int[][] postprocessCompleteGraph(Graph graph, MasterJJob masterJJob) {
         return this.makeWeightsSymmetricAndCreateConnectionsArray(graph);
     }
 

@@ -137,8 +137,8 @@ public class ChromatogramBuilder {
             final TDoubleArrayList intensityQuantile = new TDoubleArrayList();
             int k = 0;
             while (k < peak.numberOfScans()) {
-                medianSlope.resetQuick();
-                intensityQuantile.resetQuick();
+                medianSlope.clearQuick();
+                intensityQuantile.clearQuick();
                 int start = k;
                 int end = k + 10;
                 if (end + 10 > peak.numberOfScans()) end = peak.numberOfScans();

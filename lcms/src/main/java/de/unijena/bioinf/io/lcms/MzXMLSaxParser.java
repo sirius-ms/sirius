@@ -279,7 +279,7 @@ class MzXMLSaxParser extends DefaultHandler {
         }
 
         private byte[] decompress(String content) {
-            totalBuffer.resetQuick();
+            totalBuffer.clearQuick();
             final Inflater inflater = new Inflater();
             inflater.setInput(Base64.getDecoder().decode(content));
             while (true){
