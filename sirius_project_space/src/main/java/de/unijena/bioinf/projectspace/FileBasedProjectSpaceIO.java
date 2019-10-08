@@ -2,6 +2,7 @@ package de.unijena.bioinf.projectspace;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -30,8 +31,9 @@ public class FileBasedProjectSpaceIO implements ProjectIO {
     public List<String> list(String globPattern)  throws IOException {
         final ArrayList<String> content = new ArrayList<>();
         Path r = dir.toPath();
-        for (Path p : Files.newDirectoryStream(r, globPattern)) {
-            content.add(r.relativize(p).toString());
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(r, globPattern)) {
+            for (Path p : stream)
+                content.add(r.relativize(p).toString());
         }
         return content;
     }

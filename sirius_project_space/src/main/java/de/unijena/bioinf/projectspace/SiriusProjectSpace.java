@@ -209,7 +209,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                     throw new RuntimeException("Error when Instantiating Score class: " + score.getName(), e);
                 }
             }
-        }).sorted().collect(Collectors.toList());
+        }).sorted(Collections.reverseOrder()).collect(Collectors.toList());
     }
 
     public FormulaResult getFormulaResult(FormulaResultId id, Class<? extends DataAnnotation>... components) throws IOException {
