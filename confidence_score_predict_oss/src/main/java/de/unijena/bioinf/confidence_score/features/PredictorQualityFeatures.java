@@ -1,40 +1,60 @@
 package de.unijena.bioinf.confidence_score.features;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
- * Created by martin on 20.06.18.
+ * Created by martin on 27.06.18.
  */
-public class TreeFeatures implements FeatureCreator {
+public class PredictorQualityFeatures implements FeatureCreator{
+
+
+    PredictionPerformance[] statistics;
+
     @Override
     public void prepare(PredictionPerformance[] statistics) {
-
+        this.statistics=statistics;
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
-        double[] scores= new double[4];
-        TreeStatistics current_tree_scores =  idresult.getRawTree().getAnnotationOrThrow(TreeStatistics.class);
-        scores[0]=current_tree_scores.getExplainedIntensityOfExplainablePeaks();
-        scores[1]= current_tree_scores.getExplainedIntensity();
-        scores[2]=current_tree_scores.getRatioOfExplainedPeaks();
-        scores[3]= idresult.getRawTree().getTreeWeight();
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
-        return scores;
+    PredictionPerformance.averageF1(statistics);
+    int f1Below33=0;
+    int f1Below66=0;
+    int f1Below80=0;
+
+    for (int i=0;i<statistics.length;i++){
+        if(statistics[i].getF()>0 && statistics[i].getF()<=0.33){
+            f1Below33+=1;
+
+        }
+        if(statistics[i].getF()>0.33 && statistics[i].getF()<=0.66){
+
+            f1Below66+=1;
+
+        }
+        if(statistics[i].getF()>0.66 && statistics[i].getF()<=0.8){
+
+            f1Below80+=1;
+        }
+
+    }
+    return null;
 
     }
 
     @Override
     public int getFeatureSize() {
-        return 4;
+        return 1;
     }
 
     @Override
@@ -49,14 +69,11 @@ public class TreeFeatures implements FeatureCreator {
 
     @Override
     public String[] getFeatureNames() {
-        String[] names = new String[getFeatureSize()];
-        names[0] = "explIntExplPeaks";
-        names[1] = "explInt";
-        names[2] = "ratioExplPeaks";
-        names[3] = "score";
 
-        return names;
 
+        String[] name = new String[getFeatureSize()];
+        name[0] = "AverageF1";
+        return name;
     }
 
     @Override

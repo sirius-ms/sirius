@@ -1,7 +1,7 @@
 package de.unijena.bioinf.confidence_score.features;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
@@ -9,9 +9,6 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.confidence_score.Utils;
-import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
-import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
@@ -32,27 +29,19 @@ public class LogPvalueDistanceFeatures implements FeatureCreator {
     private int[] distances;
     private int feature_size;
     private PredictionPerformance[] statistics;
-    private Utils utils;
-    long flags=-1;
     Scored<FingerprintCandidate>[] rankedCandidates;
+    Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
 
-    public LogPvalueDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,int... distances){
-
-        this.distances=distances;
-        feature_size=distances.length;
-        this.rankedCandidates=rankedCandidates;
-
-    }
-
-    public LogPvalueDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,long flags,int... distances){
+    public LogPvalueDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered,int... distances){
 
         this.distances=distances;
         feature_size=distances.length;
         this.rankedCandidates=rankedCandidates;
-        this.flags=flags;
+        this.rankedCandidates_filtered=rankedCandidates_filtered;
 
     }
+
 
 
     @Override
@@ -61,19 +50,9 @@ public class LogPvalueDistanceFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
-
-
-        utils= new Utils();
-        if(this.flags==-1)this.flags=flags;
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
         PvalueScoreUtils putils = new PvalueScoreUtils();
-
-        Scored<FingerprintCandidate>[] rankedCandidatesOrig =rankedCandidates.clone();
-
-        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,this.flags);
-
-
 
         double[] scores =  new double[feature_size];
 
@@ -83,11 +62,11 @@ public class LogPvalueDistanceFeatures implements FeatureCreator {
 
         for (int j = 0; j < distances.length; j++) {
 
-            if(putils.computePvalueScore(rankedCandidatesOrig, rankedCandidates[0]) - putils.computePvalueScore(rankedCandidatesOrig,rankedCandidates[distances[j]])==0){
-                scores[pos++]=0;
+            if(putils.computePvalueScore(rankedCandidates, rankedCandidates_filtered,rankedCandidates_filtered[0]) - putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[distances[j]])==0){
+                scores[pos++]=-20;
             }else{
 
-            scores[pos++] = Math.log(Math.abs(putils.computePvalueScore(rankedCandidatesOrig, rankedCandidates[0]) - putils.computePvalueScore(rankedCandidatesOrig,rankedCandidates[distances[j]])));
+            scores[pos++] = Math.log(Math.abs(putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered, rankedCandidates_filtered[0]) - putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates[distances[j]])));
         }
         }
 
@@ -104,7 +83,7 @@ public class LogPvalueDistanceFeatures implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return false;
     }
 

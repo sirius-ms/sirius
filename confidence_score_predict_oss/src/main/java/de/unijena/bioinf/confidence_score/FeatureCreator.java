@@ -1,7 +1,7 @@
 package de.unijena.bioinf.confidence_score;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
@@ -17,11 +17,11 @@ public interface FeatureCreator extends Parameterized {
     void prepare(PredictionPerformance[] statistics);
 
 
-    double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags);
+    double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult);
 
     int getFeatureSize();
 
-    boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates);
+    boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates);
 
     int getRequiredCandidateSize();
 

@@ -1,7 +1,7 @@
 package de.unijena.bioinf.confidence_score.features;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
@@ -9,9 +9,6 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.confidence_score.Utils;
-import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
-import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
@@ -31,28 +28,21 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 public class TanimotoToPredFeatures implements FeatureCreator {
     private int feature_size;
     private PredictionPerformance[] statistics;
-    private Utils utils;
     Scored<FingerprintCandidate>[] rankedCandidates;
-    long flags=-1;
+    Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
 
-    public TanimotoToPredFeatures(Scored<FingerprintCandidate>[] rankedCandidates){
 
-
-        feature_size=1;
-        this.rankedCandidates=rankedCandidates;
-
-    }
-
-
-    public TanimotoToPredFeatures(Scored<FingerprintCandidate>[] rankedCandidates, long flags){
+    public TanimotoToPredFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
 
 
         feature_size=1;
         this.rankedCandidates=rankedCandidates;
-        this.flags=flags;
+        this.rankedCandidates_filtered=rankedCandidates_filtered;
 
     }
+
+
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {this.statistics=statistics;
@@ -60,14 +50,9 @@ public class TanimotoToPredFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
 
-        utils= new Utils();
-
-        if(this.flags==-1)this.flags=flags;
-
-        rankedCandidates=utils.condense_candidates_by_flag(rankedCandidates,this.flags);
 
 
 
@@ -75,11 +60,11 @@ public class TanimotoToPredFeatures implements FeatureCreator {
 
 
 
-        final double topHit = rankedCandidates[0].getScore();
+        final double topHit = rankedCandidates_filtered[0].getScore();
 
 
 
-            scores[0] = rankedCandidates[0].getCandidate().getFingerprint().tanimoto(query.getFingerprint().asDeterministic());
+            scores[0] = rankedCandidates_filtered[0].getCandidate().getFingerprint().tanimoto(query.asDeterministic());
 
 
         return scores;
@@ -94,7 +79,7 @@ public class TanimotoToPredFeatures implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return false;
     }
 

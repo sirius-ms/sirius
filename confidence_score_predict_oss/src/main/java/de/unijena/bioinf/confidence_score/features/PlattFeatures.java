@@ -1,7 +1,7 @@
 package de.unijena.bioinf.confidence_score.features;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
@@ -17,7 +17,7 @@ import java.util.Arrays;
  * Created by Marcus Ludwig on 07.03.16.
  */
 public class PlattFeatures implements FeatureCreator {
-    private double[] quantiles = new double[]{ 0.50, 0.75, 0.90, 0.95};
+    private double[] quantiles = new double[]{0.50, 0.75, 0.90};
     //private double[] quantilesAbs = new double[]{0.5, 0.10, 0.25, 0.45};
     private int featureSize;
 
@@ -35,9 +35,9 @@ public class PlattFeatures implements FeatureCreator {
 
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
         final double[] scores = new double[featureSize];
-        final double[] platt = query.getFingerprint().toProbabilityArray();
+        final double[] platt = query.toProbabilityArray();
         Arrays.sort(platt);
 
         for (int i = 0; i < quantiles.length; i++) {
@@ -66,7 +66,7 @@ public class PlattFeatures implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return true;
     }
 

@@ -1,7 +1,7 @@
 package de.unijena.bioinf.confidence_score.features;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
@@ -17,28 +17,25 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 public class PredictionQualityFeatures implements FeatureCreator{
 
 
-
+    PredictionPerformance[] statistics;
     @Override
     public void prepare(PredictionPerformance[] statistics) {
-
+        this.statistics=statistics;
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
         double[] qualityReturn = new double[1];
 
         double quality=0;
-        double[] prob_fpt= query.getFingerprint().toProbabilityArray();
+        double[] prob_fpt= query.toProbabilityArray();
 
         for(int i=0;i<prob_fpt.length;i++){
-            quality+=Math.max(1-prob_fpt[i],prob_fpt[i]);
+            quality+=(Math.max(1-prob_fpt[i],prob_fpt[i])*statistics[i].getF());
 
-            //this penalizes predictions close to 0.5 stronger because they
 
-            if(prob_fpt[i]>0.4 && prob_fpt[i]<0.6){
-                quality-=1;
-            }
+
         }
 
         qualityReturn[0]=quality;
@@ -54,7 +51,7 @@ public class PredictionQualityFeatures implements FeatureCreator{
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return false;
     }
 

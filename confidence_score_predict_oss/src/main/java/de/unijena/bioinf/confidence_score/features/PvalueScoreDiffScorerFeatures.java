@@ -1,7 +1,7 @@
 package de.unijena.bioinf.confidence_score.features;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
@@ -18,33 +18,27 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
 
     Scored<FingerprintCandidate>[] rankedCands;
-
+    Scored<FingerprintCandidate>[] rankedCands_filtered;
     Scored<FingerprintCandidate> best_hit_scorer;
 
     FingerblastScoring scoring;
-    long flags=-1;
+
 
 
     /**
      * rescores the best hit of a scorer with a different scorer, than calculates pvalue and compares it to the best hit of the 2nd scorer
      */
-    public PvalueScoreDiffScorerFeatures(Scored<FingerprintCandidate>[] rankedCands, Scored<FingerprintCandidate> hit, FingerblastScoring scoring){
+    public PvalueScoreDiffScorerFeatures(Scored<FingerprintCandidate>[] rankedCands, Scored<FingerprintCandidate>[] rankedCands_filtered,Scored<FingerprintCandidate> hit, FingerblastScoring scoring){
         this.rankedCands=rankedCands;
         this.best_hit_scorer=hit;
+        this.rankedCands_filtered=rankedCands_filtered;
 
         this.scoring=scoring;
 
 
     }
 
-    public PvalueScoreDiffScorerFeatures(Scored<FingerprintCandidate>[] rankedCands, Scored<FingerprintCandidate> hit, FingerblastScoring scoring, long flags){
-        this.rankedCands=rankedCands;
-        this.best_hit_scorer=hit;
-        this.flags=flags;
-        this.scoring=scoring;
 
-
-    }
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
@@ -52,20 +46,25 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, IdentificationResult idresult, long flags) {
+    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
         double[] pvalueScore = new double[2];
 
 
-        if(this.flags==-1)this.flags=flags;
-        scoring.prepare(query.getFingerprint());
 
-        double score = scoring.score(query.getFingerprint(),best_hit_scorer.getCandidate().getFingerprint());
+        scoring.prepare(query);
+
+        double score = scoring.score(query,best_hit_scorer.getCandidate().getFingerprint());
 
         Scored<FingerprintCandidate> current = new Scored<FingerprintCandidate>(best_hit_scorer.getCandidate(),score);
 
         PvalueScoreUtils utils = new PvalueScoreUtils();
 
-        pvalueScore[0] = utils.computePvalueScore(rankedCands,current);
+        pvalueScore[0] = utils.computePvalueScore(rankedCands,rankedCands_filtered,current);
+
+        if (pvalueScore[0]==0){
+            pvalueScore[1]=-20;
+            return pvalueScore;
+        }
 
         pvalueScore[1] = Math.log(pvalueScore[0]);
 
@@ -83,7 +82,7 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+    public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return false;
     }
 
