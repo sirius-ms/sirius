@@ -18,6 +18,7 @@
 
 package de.unijena.bioinf.sirius;
 
+@Deprecated
 class FeedbackFlag implements Feedback {
 
     FeedbackFlag() {

@@ -19,8 +19,12 @@ package de.unijena.bioinf.ftblast;
 
 import au.com.bytecode.opencsv.CSVReader;
 import de.unijena.bioinf.ChemistryBase.data.DoubleDataMatrix;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -41,7 +45,7 @@ public class CLI {
         for (String arg : args) {
             final File f = new File(arg);
             try {
-                final CSVReader fileReader = new CSVReader(new BufferedReader(new FileReader(f)));
+                final CSVReader fileReader = new CSVReader(FileUtils.ensureBuffering(new FileReader(f)));
                 names.add(f.getName().substring(0, f.getName().lastIndexOf('.')));
                 final String[] headerLine = fileReader.readNext();
                 csvParser.add(new Iterator<String[]>() {

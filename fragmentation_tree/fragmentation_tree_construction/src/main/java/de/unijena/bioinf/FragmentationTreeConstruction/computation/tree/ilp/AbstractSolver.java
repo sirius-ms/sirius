@@ -17,20 +17,19 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
-import com.google.common.collect.BiMap;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
+import de.unijena.bioinf.sirius.ProcessedInput;
 import gnu.trove.map.hash.TCustomHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Spectar on 13.11.2014.
@@ -66,8 +65,11 @@ abstract public class AbstractSolver {
     }
 
     public TreeBuilder.Result compute() {
-        if (graph.numberOfEdges() == 1)
-            return new TreeBuilder.Result(buildSolution(graph.getRoot().getOutgoingEdge(0).getWeight(), new boolean[]{true}), true, TreeBuilder.AbortReason.COMPUTATION_CORRECT);
+        if (graph.numberOfEdges() == 1) {
+            IntergraphMapping.Builder mapping = IntergraphMapping.build();
+            FTree smallTree = buildSolution(graph.getRoot().getOutgoingEdge(0).getWeight(), new boolean[]{true}, mapping);
+            return new TreeBuilder.Result(smallTree, true, TreeBuilder.AbortReason.COMPUTATION_CORRECT, mapping.done(graph,smallTree));
+        }
         return solve();
     }
 
@@ -174,13 +176,15 @@ abstract public class AbstractSolver {
             if (c == TreeBuilder.AbortReason.COMPUTATION_CORRECT) {
                 // reconstruct tree after having determined the (possible) optimal solution
                 final double score = getSolverScore();
-                final FTree tree = buildSolution();
-                if (tree != null && !isComputationCorrect(tree, this.graph, score))
+                final IntergraphMapping.Builder builder = IntergraphMapping.build();
+                final FTree tree = buildSolution(builder);
+                IntergraphMapping done = builder.done(graph, tree);
+                if (tree != null && !isComputationCorrect(tree, this.graph, score,done))
                     throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
-                return new TreeBuilder.Result(tree, true, c);
+                return new TreeBuilder.Result(tree, true, c, done);
             } else if (c == TreeBuilder.AbortReason.TIMEOUT) {
                 throw new TimeoutException("ILP Solver canceled by Timeout!");
-            } else return new TreeBuilder.Result(null, false, c);
+            } else return new TreeBuilder.Result(null, false, c,null);
         } catch (Exception e) {
             if (e instanceof TimeoutException) throw (TimeoutException) e;
             throw new RuntimeException(String.valueOf(e.getMessage()), e);
@@ -328,7 +332,7 @@ abstract public class AbstractSolver {
     abstract protected double getSolverScore() throws Exception;
 
 
-    protected FTree buildSolution(double score, boolean[] edesAreUsed) {
+    protected FTree buildSolution(double score, boolean[] edesAreUsed, IntergraphMapping.Builder builder) {
         Fragment graphRoot = null;
         double rootScore = 0d;
         // get root
@@ -348,7 +352,8 @@ abstract public class AbstractSolver {
         if (graphRoot == null) return null;
 
         final FTree tree = new FTree(graphRoot.getFormula(), graphRoot.getIonization());
-        tree.setTreeWeight(rootScore);
+        builder.mapLeftToRight(graphRoot,tree.getRoot());
+        tree.setRootScore(rootScore);
         final ArrayDeque<Stackitem> stack = new ArrayDeque<Stackitem>();
         stack.push(new Stackitem(tree.getRoot(), graphRoot));
         while (!stack.isEmpty()) {
@@ -359,6 +364,9 @@ abstract public class AbstractSolver {
                 if (edesAreUsed[edgeIds[offset]]) {
                     final Loss l = losses.get(edgeIds[offset]);
                     final Fragment child = tree.addFragment(item.treeNode, l.getTarget());
+                    builder.mapLeftToRight(l.getTarget(),child);
+                    child.setColor(l.getTarget().getColor());
+                    child.setPeakId(l.getTarget().getPeakId());
                     child.getIncomingEdge().setWeight(l.getWeight());
                     tree.setTreeWeight(tree.getTreeWeight() + l.getWeight());
                     stack.push(new Stackitem(child, l.getTarget()));
@@ -366,14 +374,15 @@ abstract public class AbstractSolver {
                 ++offset;
             }
         }
+        tree.setTreeWeight(tree.getTreeWeight() + tree.getRootScore());
         return tree;
     }
 
-    protected FTree buildSolution() throws Exception {
+    protected FTree buildSolution(IntergraphMapping.Builder builder) throws Exception {
         final double score = getSolverScore();
 
         final boolean[] edesAreUsed = getVariableAssignment();
-        return buildSolution(score, edesAreUsed);
+        return buildSolution(score, edesAreUsed, builder);
     }
 
     ///////////////////////////
@@ -388,17 +397,15 @@ abstract public class AbstractSolver {
      * @param graph
      * @return
      */
-    protected static boolean isComputationCorrect(FTree tree, FGraph graph, double score) {
+    protected static boolean isComputationCorrect(FTree tree, FGraph graph, double score,IntergraphMapping mapping) {
         final double optSolScore = score;
-        final BiMap<Fragment, Fragment> fragmentMap = FTree.createFragmentMapping(tree, graph);
         final Fragment pseudoRoot = graph.getRoot();
-        for (Map.Entry<Fragment, Fragment> e : fragmentMap.entrySet()) {
-            final Fragment t = e.getKey();
-            final Fragment g = e.getValue();
+        for (Fragment t : tree) {
+            final Fragment g = mapping.mapRightToLeft(t);
             if (g.getParent() == pseudoRoot) {
                 score -= g.getIncomingEdge().getWeight();
             } else {
-                if (t.getFormula().isEmpty()) continue;
+                //if (t.getFormula().isEmpty()) continue;
                 final Loss in = t.getIncomingEdge();
                 for (int k = 0; k < g.getInDegree(); ++k)
 //                    if (in.getSource().getFormula().equals(g.getIncomingEdge(k).getSource().getFormula())) {
@@ -408,11 +415,13 @@ abstract public class AbstractSolver {
             }
         }
         // just trust pseudo edges
+        /*
         for (Fragment pseudo : tree.getFragments()) {
             if (pseudo.getFormula().isEmpty()) {
                 score -= pseudo.getIncomingEdge().getWeight();
             }
         }
+        */
         if (score > 1e-9d) {
             logger.warn("There is a large gap between the optimal solution and the score of the computed fragmentation tree: Gap is " + score + " for a score of " + optSolScore);
         }

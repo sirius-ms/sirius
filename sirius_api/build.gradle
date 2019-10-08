@@ -1,7 +1,12 @@
 dependencies {
+    annotationProcessor project(':default_properties:processor')
+    compile project(':default_properties:annotations')
     compile project(':chemistry_base')
-    compile project(':io')
     compile project(':isotope_pattern:isotope_pattern_analysis')
+    compile project(':isotope_pattern:sirius_isotopes')
     compile project(':fragmentation_tree:fragmentation_tree_construction')
     compile project(':utils')
+    compile project(':spectral_alignment')
+    compile project(':tree_motif_search')
+    testCompile project(':io')
 }

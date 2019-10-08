@@ -26,6 +26,20 @@ import java.util.Random;
  */
 public class Statistics {
 
+    public static double robustAverage(double[] xs) {
+        if (xs.length < 4) return expectation(xs);
+        final double[] ys = xs.clone();
+        Arrays.sort(ys);
+        double mean = 0d;
+        int i=(int)(ys.length*0.25), n=(int)(ys.length*0.75);
+        double sz = n-i;
+        for (; i < n; ++i) {
+            mean += ys[i];
+        }
+        mean /= sz;
+        return mean;
+    }
+
     /**
      * Computes pearson correlation coefficient between xs and ys
      */

@@ -1,5 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.ms.annotations.TreeAnnotation;
+
 /**
  * The IonType is an arbitrary modification of the molecular formula of the precursor ion
  * <p>
@@ -14,7 +17,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
  * - every modification that only apply to the precursor (e.g. in-source fragmentation) goes into modification
  * - every modification that apply to the precursor but might get lost in the fragments (e.g. adducts) goes into modification
  */
-public class PrecursorIonType {
+public class PrecursorIonType implements TreeAnnotation {
 
     protected static enum SPECIAL_TYPES {
         REGULAR, UNKNOWN, INTRINSICAL_CHARGED
@@ -33,8 +36,17 @@ public class PrecursorIonType {
 
     private final SPECIAL_TYPES special; // flag used to annotate unknown ion types
 
+
+    public static PrecursorIonType fromString(String name) {
+        return getPrecursorIonType(name);
+    }
+
     public static PrecursorIonType getPrecursorIonType(String name) {
-        return PeriodicTable.getInstance().ionByName(name);
+        try {
+            return PeriodicTable.getInstance().ionByName(name);
+        } catch (UnknownElementException e) {
+            throw new IllegalArgumentException("Illegal IonType: " + name, e);
+        }
     }
 
     public static PrecursorIonType getPrecursorIonType(Ionization ion) {
@@ -43,10 +55,6 @@ public class PrecursorIonType {
 
     public static PrecursorIonType unknown(int charge) {
         return PeriodicTable.getInstance().getUnknownPrecursorIonType(charge);
-    }
-
-    public static PrecursorIonType unknown() {
-        return PeriodicTable.getInstance().unknownPrecursorIonType();
     }
 
     public static PrecursorIonType unknownPositive() {
@@ -128,7 +136,7 @@ public class PrecursorIonType {
 
     @Override
     public int hashCode() {
-        return 31 * ionization.hashCode() + modification.hashCode() + 17*special.hashCode();
+        return 31 * ionization.hashCode() + modification.hashCode() + 17 * special.hashCode();
     }
 
     @Override
@@ -239,6 +247,9 @@ public class PrecursorIonType {
         return ionization.subtractFromMass(mz - adduct.getMass());
     }
 
+    /*
+    TODO: in-source is not contained here. is this correct? CHECK!
+     */
     public double addIonAndAdduct(double mz) {
         return ionization.addToMass(mz + adduct.getMass());
     }

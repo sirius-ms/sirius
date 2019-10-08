@@ -39,6 +39,10 @@ public class Element implements Comparable<Element> {
         this.nominalMass = (int)Math.round(mass);
     }
 
+    public static Element fromString(String element) {
+        return PeriodicTable.getInstance().getByName(element);
+    }
+
     /**
      * returns the monoisotopic mass of the element.
      */

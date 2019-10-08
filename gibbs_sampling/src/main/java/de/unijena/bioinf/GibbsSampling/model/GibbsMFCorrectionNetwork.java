@@ -1,6 +1,6 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
@@ -260,7 +260,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
                 candidates[j - min] = new Scored<>(this.graph.getPossibleFormulas1D(j).getCandidate(), freq / sum);
             }
 
-            Arrays.sort(candidates, Scored.<C>desc());
+            Arrays.sort(candidates, Comparator.reverseOrder());
             candidatesByCompound[i] = candidates;
         }
 
@@ -301,7 +301,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
                 candidates[j - min] = new Scored<>(this.graph.getPossibleFormulas1D(j).getCandidate(), 1.0D * (double)freq / (double)sum);
             }
 
-            Arrays.sort(candidates, Scored.<C>desc());
+            Arrays.sort(candidates, Comparator.reverseOrder());
             candidatesByCompound[i] = candidates;
         }
 
@@ -588,7 +588,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
             scoredCandidates[i-left] = new Scored(graph.getPossibleFormulas1D(i).getCandidate(), scores[i-left]/sum);
         }
 
-        Arrays.sort(scoredCandidates, Scored.<C>desc());
+        Arrays.sort(scoredCandidates, Comparator.reverseOrder());
 
         return scoredCandidates;
     }

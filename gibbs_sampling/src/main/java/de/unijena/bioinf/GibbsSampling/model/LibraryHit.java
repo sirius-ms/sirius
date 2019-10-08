@@ -13,8 +13,9 @@ public class LibraryHit {
     private final PrecursorIonType ionType;
     private final int sharedPeaks;
     private final LibraryHitQuality quality;
+    private final double precursorMz;
 
-    public LibraryHit(Ms2Experiment queryExperiment, MolecularFormula molecularFormula, String structure, PrecursorIonType ionType, double cosine, int sharedPeaks, LibraryHitQuality quality) {
+    public LibraryHit(Ms2Experiment queryExperiment, MolecularFormula molecularFormula, String structure, PrecursorIonType ionType, double cosine, int sharedPeaks, LibraryHitQuality quality, double libPrecursorMz) {
         this.queryExperiment = queryExperiment;
         this.molecularFormula = molecularFormula;
         this.structure = structure;
@@ -22,6 +23,7 @@ public class LibraryHit {
         this.cosine = cosine;
         this.sharedPeaks = sharedPeaks;
         this.quality = quality;
+        this.precursorMz = libPrecursorMz;
     }
 
     public Ms2Experiment getQueryExperiment() {
@@ -50,5 +52,9 @@ public class LibraryHit {
 
     public LibraryHitQuality getQuality() {
         return this.quality;
+    }
+
+    public double getPrecursorMz() {
+        return precursorMz;
     }
 }

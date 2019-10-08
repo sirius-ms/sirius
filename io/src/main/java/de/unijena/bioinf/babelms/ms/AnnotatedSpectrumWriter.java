@@ -24,12 +24,37 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class AnnotatedSpectrumWriter {
+
+    public enum Fields {
+        MZ("mz"),
+        INTENSITY("intensity"),
+        REL_INTENSITY("rel.intensity"),
+        EXACTMASS("exactmass"),
+        FORMULA("formula"),
+        ION("ionization"),
+        //ISOTOPE("isotope")
+        ;
+
+        public final String name;
+
+        private Fields(String name) {
+            this.name=name;
+        }
+    };
+
+    private EnumSet<Fields> enabledFields;
+
+    public AnnotatedSpectrumWriter() {
+        this.enabledFields = EnumSet.allOf(Fields.class);
+    }
+
+    public AnnotatedSpectrumWriter(Fields enabled, Fields... enabledFields) {
+        this.enabledFields = EnumSet.of(enabled, enabledFields);
+    }
 
     public void writeFile(File f, FTree tree) throws IOException {
         final FileWriter fw = new FileWriter(f);
@@ -43,20 +68,33 @@ public class AnnotatedSpectrumWriter {
         final FragmentAnnotation<AnnotatedPeak> peakAno = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
         final List<Fragment> fragments = new ArrayList<Fragment>(tree.getFragments());
         Collections.sort(fragments);
-        bw.write("mz\tintensity\trel.intensity\texactmass\texplanation\n");
+        bw.write(Arrays.stream(Fields.values()).filter(enabledFields::contains).map(x->x.name).collect(Collectors.joining("\t")));
+        bw.newLine();
+        final List<String> values = new ArrayList<>();
         for (Fragment f : fragments) {
+            values.clear();
             final AnnotatedPeak p = peakAno.get(f);
             if (p==null) continue;
-            bw.write(String.format(Locale.US, "%.6f", p.getMass()));
-            bw.write('\t');
-            bw.write(String.format(Locale.US, "%.2f", p.getMaximalIntensity()));
-            bw.write('\t');
-            bw.write(String.format(Locale.US, "%.2f", 100d*p.getRelativeIntensity()));
-            bw.write('\t');
-            bw.write(String.format(Locale.US, "%.6f", ion.getIonization().addToMass(f.getFormula().getMass())));
-            bw.write('\t');
-            bw.write(f.getFormula().toString());
-            bw.write('\n');
+            if (enabledFields.contains(Fields.MZ)) {
+                values.add(String.format(Locale.US, "%.6f", p.getMass()));
+            }
+            if (enabledFields.contains(Fields.INTENSITY)) {
+                values.add(String.format(Locale.US, "%.2f", p.getMaximalIntensity()));
+            }
+            if (enabledFields.contains(Fields.REL_INTENSITY)) {
+                values.add(String.format(Locale.US, "%.2f", 100d*p.getRelativeIntensity()));
+            }
+            if (enabledFields.contains(Fields.EXACTMASS)) {
+                values.add(String.format(Locale.US, "%.6f", ion.getIonization().addToMass(f.getFormula().getMass())));
+            }
+            if (enabledFields.contains(Fields.FORMULA)) {
+                values.add(f.getFormula().toString());
+            }
+            if (enabledFields.contains(Fields.ION)) {
+                values.add(f.getIonization().toString());
+            }
+            bw.write(values.stream().collect(Collectors.joining("\t")));
+            bw.newLine();
         }
         bw.close();
     }

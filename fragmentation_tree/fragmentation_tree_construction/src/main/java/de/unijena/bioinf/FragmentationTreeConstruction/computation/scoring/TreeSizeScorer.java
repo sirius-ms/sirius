@@ -19,16 +19,18 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Beautified;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Scoring;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 
 import java.util.List;
 
-public class TreeSizeScorer implements PeakScorer {
+public class TreeSizeScorer implements PeakScorer{
 
 
-    public final static class TreeSizeBonus {
+    public final static class TreeSizeBonus implements DataAnnotation {
         public final double score;
 
         public TreeSizeBonus(double score) {
@@ -39,7 +41,7 @@ public class TreeSizeScorer implements PeakScorer {
     public double fastReplace(final ProcessedInput processedInput, final TreeSizeBonus newBonus) {
         // fast replace of peak scores. Dirty hack. be careful what you are doing!
         final Scoring scoring = processedInput.getAnnotationOrThrow(Scoring.class);
-        final TreeSizeBonus oldBonus = processedInput.getAnnotation(TreeSizeBonus.class, defaultBonus);
+        final TreeSizeBonus oldBonus = processedInput.getAnnotation(TreeSizeBonus.class, () -> defaultBonus);
         final double diff = newBonus.score - oldBonus.score;
         if (Math.abs(diff) > 1e-12) {
             final double[] xs = scoring.getPeakScores();
@@ -72,9 +74,11 @@ public class TreeSizeScorer implements PeakScorer {
 
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
-        final double bonus = input.getAnnotation(TreeSizeBonus.class, defaultBonus).score;
+        Beautified beauty = input.getAnnotation(Beautified.class, Beautified::ugly);
+        final double bonus = beauty.isBeautiful() ? beauty.getNodeBoost() : input.getAnnotation(TreeSizeBonus.class, () -> defaultBonus).score;
+        final double penalty = beauty!=null ? beauty.getBeautificationPenalty()/peaks.size() : 0d;
         for (int i=0; i < peaks.size(); ++i) {
-            scores[i] += bonus;
+            scores[i] += bonus - penalty;
         }
     }
 

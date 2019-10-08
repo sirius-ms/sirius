@@ -1,0 +1,4 @@
+dependencies() {
+    compile project(':fragmentation_tree:fragmentation_tree_construction')
+    compile project(':isotope_pattern:isotope_pattern_analysis')
+}

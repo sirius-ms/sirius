@@ -1,0 +1,18 @@
+
+
+dependencies {
+    compile project(':chemistry_base')
+    compile "org.apache.commons:commons-math3:$math3_version"
+    compile group: 'de.unijena.bioinf.ms', name: 'Recalibration', version: '1.0'
+    testCompile project(':io')
+    testCompile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+    compile project(':spectral_alignment')
+
+//    compile group: 'uk.ac.ebi.jmzml', name: 'jmzml', version: "1.7.4"
+//    compile 'com.digitalproteomics:dp-mzml:1.0.0'
+//    compile 'se.lth.immun:MsNumpress:0.1.21'
+    compile 'uk.ac.ebi.pride.tools:jmzreader:2.0.6'
+    compile 'javax.xml.bind:jaxb-api:2.3.0'
+    compile 'org.glassfish.jaxb:jaxb-core:2.3.0'
+    compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: '2.3.2'
+}

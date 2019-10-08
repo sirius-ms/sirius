@@ -23,8 +23,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Map;
@@ -52,7 +52,7 @@ public class PeriodicTableJSONReader extends PeriodicTableReader {
     @Override
     public void read(PeriodicTable table, Reader reader) throws IOException {
         final JsonParser jreader = new JsonParser();
-        final JsonObject data = jreader.parse(new BufferedReader(reader)).getAsJsonObject();
+        final JsonObject data = jreader.parse(FileUtils.ensureBuffering(reader)).getAsJsonObject();
         for (Map.Entry<String, JsonElement> entry : data.entrySet()) {
             final JsonObject element = entry.getValue().getAsJsonObject();
             final String elementName = element.get("name").getAsString();

@@ -118,6 +118,7 @@ public class FastIsotopePatternGenerator extends IsotopePatternGenerator {
         for (int k = finalSpectrum.size() - 1; k >= 0; --k) {
             if (finalSpectrum.getIntensityAt(k) < minimalIntensity)
                 finalSpectrum.removePeakAt(k);
+            else break;
         }
         return finalSpectrum;
     }

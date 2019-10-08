@@ -18,6 +18,8 @@
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.SpectrumAnnotation;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;

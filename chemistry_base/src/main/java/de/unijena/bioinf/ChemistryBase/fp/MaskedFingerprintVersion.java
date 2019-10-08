@@ -3,6 +3,7 @@ package de.unijena.bioinf.ChemistryBase.fp;
 import gnu.trove.list.array.TShortArrayList;
 import gnu.trove.map.hash.TShortShortHashMap;
 
+import java.util.Arrays;
 import java.util.BitSet;
 
 public class MaskedFingerprintVersion extends FingerprintVersion{
@@ -45,6 +46,8 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
 
     public <T extends AbstractFingerprint> T mask(T fingerprint) {
         if (fingerprint.fingerprintVersion instanceof MaskedFingerprintVersion) {
+            if (fingerprint.fingerprintVersion == this)
+                return fingerprint;
             if (!compatible(fingerprint.fingerprintVersion)) {
                 throw new RuntimeException("Fingerprint is already masked by a fingerprint mask which is not compatible to this mask: " + toString() +  " vs " + fingerprint.fingerprintVersion.toString());
             }
@@ -131,6 +134,11 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
     }
     public int getAbsoluteIndexOf(int relativeIndex) {
         return allowedIndizes[relativeIndex];
+    }
+
+    @Override
+    protected int getClosestRelativeIndexTo(int absoluteIndex) {
+        return Arrays.binarySearch(allowedIndizes, absoluteIndex);
     }
 
     @Override
