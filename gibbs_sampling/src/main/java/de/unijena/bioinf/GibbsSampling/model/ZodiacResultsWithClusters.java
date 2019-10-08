@@ -1,7 +1,5 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-
 import java.util.Map;
 
 public class ZodiacResultsWithClusters extends ZodiacResult<FragmentsCandidate> {

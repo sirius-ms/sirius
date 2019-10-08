@@ -8,9 +8,9 @@ import java.util.List;
 
 public class EmptySpectraValidator implements Ms2ExperimentValidator {
     @Override
-    public Ms2Experiment validate(Ms2Experiment input, Warning warning, boolean repair) throws InvalidException {
+    public boolean validate(MutableMs2Experiment input, Warning warning, boolean repair) throws InvalidException {
         if  (!anyEmpty(input.getMs1Spectra()) & !anyEmpty(input.getMs2Spectra())){
-            return input;
+            return true;
         }
         List<SimpleSpectrum> ms1SpectraNonEmpty = new ArrayList<>();
         List<MutableMs2Spectrum> ms2SpectraNonEmpty = new ArrayList<>();
@@ -23,7 +23,7 @@ public class EmptySpectraValidator implements Ms2ExperimentValidator {
         }
         mutableMs2Experiment.setMs1Spectra(ms1SpectraNonEmpty);
         mutableMs2Experiment.setMs2Spectra(ms2SpectraNonEmpty);
-        return mutableMs2Experiment;
+        return true;
     }
 
     private boolean anyEmpty(List<? extends Spectrum> spectrumList){

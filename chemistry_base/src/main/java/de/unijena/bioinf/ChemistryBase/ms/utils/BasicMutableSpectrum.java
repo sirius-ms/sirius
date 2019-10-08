@@ -31,6 +31,12 @@ public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpect
         this.intensities = new TDoubleArrayList(Spectrums.copyIntensities(immutable));
     }
 
+    @Override
+    public void clear() {
+        masses.resetQuick();
+        intensities.resetQuick();
+    }
+
     public BasicMutableSpectrum() {
         super();
         this.masses = new TDoubleArrayList();

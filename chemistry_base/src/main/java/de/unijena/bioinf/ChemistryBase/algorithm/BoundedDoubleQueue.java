@@ -17,12 +17,15 @@
  */
 package de.unijena.bioinf.ChemistryBase.algorithm;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * A fixed size queue of double values. Inserting a new value into a full queue will lead to a removal of the smallest element
  */
-public final class BoundedDoubleQueue {
+public final class BoundedDoubleQueue implements Iterable<Double> {
 
     private final double[] values;
     private int length;
@@ -42,10 +45,11 @@ public final class BoundedDoubleQueue {
     }
 
     public double max() {
-        return values[1];
+        return values[length-1];
     }
 
     public boolean add(double value) {
+        if (value < values[0]) return false;
         final int index = (length <= 5) ? linearSearch(value) : binarySearch(value);
         if (length < values.length) {
             if (index < length) System.arraycopy(values, index, values, index+1, length-index);
@@ -74,5 +78,15 @@ public final class BoundedDoubleQueue {
             }
         }
         return length;
+    }
+
+    @NotNull
+    @Override
+    public Iterator<Double> iterator() {
+        return Arrays.stream(values).iterator();
+    }
+
+    public double[] toArray() {
+        return values.clone();
     }
 }

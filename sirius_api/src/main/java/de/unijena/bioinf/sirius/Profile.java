@@ -19,17 +19,27 @@ package de.unijena.bioinf.sirius;
 
 
 import com.google.gson.JsonObject;
+import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
-import de.unijena.bioinf.babelms.json.JSONDocumentType;
+import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
+import de.unijena.bioinf.ms.properties.DefaultProperty;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+/**
+ * Configuration profile to store instrument specific algorithm properties.
+ * Some of the default profiles are: 'qtof', 'orbitrap', 'fticr'.
+ */
+@DefaultProperty(propertyParent = "AlgorithmProfile")
 public class Profile {
-
     public final FragmentationPatternAnalysis fragmentationPatternAnalysis;
     public final IsotopePatternAnalysis isotopePatternAnalysis;
+    public final Ms2Preprocessor ms2Preprocessor;
+    public final Ms1Preprocessor ms1Preprocessor;
 
     public Profile(String name) throws IOException {
         final boolean oldSirius = name.startsWith("oldSirius");
@@ -42,19 +52,33 @@ public class Profile {
         else fragmentationPatternAnalysis=null;
         if (document.hasKeyInDictionary(json, "IsotopePatternAnalysis")) this.isotopePatternAnalysis = IsotopePatternAnalysis.loadFromProfile(document, json);
         else isotopePatternAnalysis=null;
+        this.ms2Preprocessor = new Ms2Preprocessor();
+        this.ms1Preprocessor = new Ms1Preprocessor();
     }
+
+    @DefaultInstanceProvider
+    public static Profile fromString(@DefaultProperty String value) {
+        try {
+            return new Profile(value);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not find profile JSON", e);
+        }
+    }
+
 
     public Profile(IsotopePatternAnalysis ms1, FragmentationPatternAnalysis ms2) {
         this.fragmentationPatternAnalysis = ms2;
         this.isotopePatternAnalysis = ms1;
+        this.ms2Preprocessor = new Ms2Preprocessor();
+        this.ms1Preprocessor = new Ms1Preprocessor();
     }
 
-    public void writeToFile(String fileName) throws IOException  {
+    public void writeToFile(@NotNull final String fileName) throws IOException  {
         writeToFile(new File(fileName));
     }
 
-    public void writeToFile(File name) throws IOException {
-        final FileWriter writer = new FileWriter(name);
+    public void writeToFile(@NotNull final File file) throws IOException {
+        final FileWriter writer = new FileWriter(file);
         final JSONDocumentType json = new JSONDocumentType();
         final JsonObject obj = json.newDictionary();
         if (fragmentationPatternAnalysis != null) {
