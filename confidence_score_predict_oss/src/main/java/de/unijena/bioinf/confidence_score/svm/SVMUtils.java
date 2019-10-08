@@ -210,7 +210,7 @@ public class SVMUtils {
             for(int i=0;i<element.length;i++){
 
                 if(scales.max_feature_values[i]-scales.min_feature_values[i] ==0){
-                    System.out.println("=");
+                    System.out.println("Something is wrong with the SVM!- "+i);
                 }
 
                 element[i]=(element[i]-scales.min_feature_values[i])/(scales.max_feature_values[i]-scales.min_feature_values[i]);
