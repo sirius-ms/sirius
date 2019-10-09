@@ -86,7 +86,15 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 final String dirName = dir.getName();
                 final double ionMass = Double.parseDouble(keyValues.getOrDefault("ionMass", String.valueOf(Double.NaN)));
 
-                ids.put(dirName, new CompoundContainerId(dirName, name, index, ionMass));
+                PrecursorIonType ionType = null;
+                if (keyValues.containsKey("ionType"))
+                    try {
+                        ionType = PrecursorIonType.fromString(keyValues.get("ionType"));
+                    } catch (Exception e) {
+                        LoggerFactory.getLogger(getClass()).warn("Could not parse ionType of '" + dirName + "'", e);
+                    }
+
+                ids.put(dirName, new CompoundContainerId(dirName, name, index, ionMass, ionType));
                 maxIndex = Math.max(index, maxIndex);
             }
         }
@@ -128,7 +136,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     public Optional<FormulaResult> newFormulaResultWithUniqueId(@NotNull final CompoundContainer container, @NotNull final FTree tree) {
-        if (!containsCompoud(container.getId()))
+        if (!containsCompound(container.getId()))
             throw new IllegalArgumentException("Compound is not part of the project Space! ID: " + container.getId());
 
         final FormulaResultId fid = new FormulaResultId(container.getId(), tree.getRoot().getFormula(), tree.getAnnotationOrThrow(PrecursorIonType.class));
@@ -156,7 +164,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex, double ionMass) {
-        if (containsCompoud(directoryName)) return Optional.empty();
+        if (containsCompound(directoryName)) return Optional.empty();
         synchronized (ids) {
             if (new File(root, directoryName).exists())
                 return Optional.empty();
@@ -388,12 +396,12 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    public boolean containsCompoud(String dirName) {
+    public boolean containsCompound(String dirName) {
         return findCompound(dirName).isPresent();
     }
 
-    public boolean containsCompoud(CompoundContainerId id) {
-        return containsCompoud(id.getDirectoryName());
+    public boolean containsCompound(CompoundContainerId id) {
+        return containsCompound(id.getDirectoryName());
     }
 
     public void updateSummaries(Summarizer... summarizers) throws IOException {
