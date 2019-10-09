@@ -21,7 +21,7 @@ public class AdductSettings implements Ms2ExperimentAnnotation {
 
     /**
      * @param enforced ion modes that are always considered
-     * @param detectable ion modes which are only considered if there is an indication in the MS1 scan (e.g. right mass delta)
+     * @param detectable ion modes which are only considered if there is an indication in the MS1 scan (e.g. correct mass delta)
      * @param fallback ion modes which are considered if the auto detection did not find any indication for an ion mode.
      */
     @DefaultInstanceProvider

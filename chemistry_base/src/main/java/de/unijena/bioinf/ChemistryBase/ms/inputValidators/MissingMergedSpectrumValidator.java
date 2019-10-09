@@ -34,7 +34,7 @@ public class MissingMergedSpectrumValidator implements Ms2ExperimentValidator {
                     //todo test merging multiple spectra!!! merge more radical?
                     //todo or rather do the same as in FPA
                     Deviation deviation = new Deviation(20); //todo Marcus: ist das ein default oder soll der statt des neuen defaults genutzt werden
-                    deviation =  mutableMs2Experiment.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
+                    deviation =  mutableMs2Experiment.getAnnotationOrThrow(MS1MassDeviation.class).allowedMassDeviation;
                     mutableMs2Experiment.setMergedMs1Spectrum(mergeSpectra(mutableMs2Experiment.getMs1Spectra(), deviation));
                 } else {
                     throw new InvalidException("no merged MS1 given for "+mutableMs2Experiment.getName());

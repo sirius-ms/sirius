@@ -684,7 +684,7 @@ public class ZodiacUtils {
         if (result.length>0){
             Ms2Experiment experiment = result[0].getCandidate().getExperiment();
 
-            CompoundQuality compoundQuality = experiment.getAnnotation(CompoundQuality.class, null);
+            CompoundQuality compoundQuality = experiment.getAnnotationOrNull(CompoundQuality.class);
             precursorMass = experiment.getIonMass();
             if (compoundQuality!=null) qualityString = compoundQuality.toString();
         }

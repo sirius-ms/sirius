@@ -559,7 +559,7 @@ public class Sirius {
     }
 
     public ExtractedIsotopePattern extractedIsotopePattern(@NotNull ProcessedInput pinput) {
-        ExtractedIsotopePattern pat = pinput.getAnnotation(ExtractedIsotopePattern.class, null);
+        ExtractedIsotopePattern pat = pinput.getAnnotationOrNull(ExtractedIsotopePattern.class);
         if (pat == null) {
             final MutableMs2Experiment experiment = pinput.getExperimentInformation();
             pat = extractedIsotopePattern(experiment);
