@@ -83,7 +83,8 @@ public class TreeStatisticPlugin extends SiriusPlugin {
             treeIntensity += ano.get(f).getRelativeIntensity()/baseIntensity;
         }
 
-        return new TreeStatistics(treeIntensity / x.totalIntensityOfPeaks, treeIntensity / x.totalIntensityOfExplainablePeaks, 1d * numberOfExplainedPeaks / numberOfPeaksWithoutRootAndArtificial(input, tree.getRoot().getColor()));
+        //if total intensity / number of all peaks is 0, these values should still be 0 and not NaN
+        return new TreeStatistics(treeIntensity==0d ? 0d : (treeIntensity / x.totalIntensityOfPeaks), treeIntensity==0d ? 0d : (treeIntensity / x.totalIntensityOfExplainablePeaks), numberOfExplainedPeaks==0 ? 0d: (1d * numberOfExplainedPeaks / numberOfPeaksWithoutRootAndArtificial(input, tree.getRoot().getColor())));
     }
 
     private int numberOfPeaksWithoutRootAndArtificial(ProcessedInput input, int rootColor) {
