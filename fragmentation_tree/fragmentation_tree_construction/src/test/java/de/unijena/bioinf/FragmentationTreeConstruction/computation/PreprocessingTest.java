@@ -31,7 +31,7 @@ import java.io.IOException;
 
 public class PreprocessingTest {
 
-    public Ms2Experiment getExperimentData() {
+    /*public Ms2Experiment getExperimentData() {
         final JenaMsParser parser = new JenaMsParser();
         final GenericParser<Ms2Experiment> genericParser = new GenericParser<Ms2Experiment>(parser);
         try {
@@ -72,14 +72,14 @@ public class PreprocessingTest {
         return experiment;
     }
 
-    /**
+    *//**
      * As the preprocessing is a pipeline consisting of many (more or less) complex steps,
      * it is hard to "UNIT" test it. An quick'n dirty approach is to test the whole preprocessing
      * pipeline in one method.
-     */
+     *//*
     @Test
     public void testPreprocessing() {
-        /*
+        *//*
         Ms2ExperimentImpl experiment = new Ms2ExperimentImpl(getExperimentData());
         experiment.setMeasurementProfile(new ProfileImpl(new Deviation(10), new Deviation(5), new Deviation(20),
                 FormulaConstraints.create(new ValenceFilter(), "C", "H", "N", "O", "P", "S")));
@@ -124,8 +124,8 @@ public class PreprocessingTest {
 
         // parent peak detection
         ProcessedPeak parentPeak = analysis.selectParentPeakAndCleanSpectrum(experiment, mergedPeaks);
-        */
+        *//*
 
-    }
+    }*/
 
 }
