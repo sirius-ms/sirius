@@ -210,9 +210,9 @@ public class MztabMExporter implements Summarizer {
 
         @NotNull final FTree tree = bestHitSource.getAnnotationOrThrow(FTree.class);
         @NotNull final TreeStatistics treeStats = tree.getAnnotationOrThrow(TreeStatistics.class);
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_EXPL_INTENSITY, String.valueOf(treeStats.getExplainedIntensity())));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_EXPL_INTENSITY_OF_TOTAL_INTENSITY, String.valueOf(treeStats.getExplainedIntensity())));
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_EXPL_INTENSITY_OF_EXPLAINABLE_INTENSITY, String.valueOf(treeStats.getExplainedIntensityOfExplainablePeaks())));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_EXPL_INTENSITY_OF_TOTAL_INTENSITY, String.valueOf(treeStats.getRatioOfExplainedPeaks())));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_NUM_EXPL_PEAKS_RATIO, String.valueOf(treeStats.getRatioOfExplainedPeaks())));
 
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_ANNOTATED_SPECTRA_LOCATION, SPECTRA.relFilePath(bestHitSource.getId())));
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_TREE_LOCATION, TREES.relFilePath(bestHitSource.getId())));
