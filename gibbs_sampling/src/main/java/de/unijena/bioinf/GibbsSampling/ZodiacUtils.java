@@ -1,19 +1,35 @@
 package de.unijena.bioinf.GibbsSampling;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.UnconsideredCandidatesUpperBound;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.GibbsSampling.model.*;
+import de.unijena.bioinf.sirius.FTreeMetricsHelper;
+import de.unijena.bioinf.sirius.Sirius;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TCharSet;
 import gnu.trove.set.hash.TCharHashSet;
+import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 public class ZodiacUtils {
@@ -107,6 +123,7 @@ public class ZodiacUtils {
      * //todo removes compounds with no candidate
      * //todo possibly also use library hits?
      * //todo look ate tclusterCompoundsopN identifications?! best hit is not restrictive enough for high mass compounds
+     * //todo does not look at CompoundQuality
      * @param candidateMap
      * @return mapping from cluster representative to cluster
      */
@@ -203,7 +220,14 @@ public class ZodiacUtils {
         return candidateMapNew;
     }
 
-    public static void addNotExplainableDummy(Map<String, List<FragmentsCandidate>> candidateMap, int maxCandidates, Logger logger){
+    /**
+     * add dummy candidate which gains the score of all unconsidered candidates.
+     * besides, the list of candidates (without dummy) is truncated to maxCandidates
+     * @param candidateMap
+     * @param maxCandidates truncate list of candidates to this size, if positive number
+     * @param logger
+     */
+    public static void addNotExplainableDummyAndTruncateCandidateList(Map<String, List<FragmentsCandidate>> candidateMap, int maxCandidates, Logger logger){
         List<String> idList = new ArrayList<>(candidateMap.keySet());
 
         int missingCounter = 0;
@@ -222,7 +246,7 @@ public class ZodiacUtils {
             double worstScore = unconsideredCandidatesUpperBound.getLowestConsideredCandidateScore();
             int numberOfIgnored = unconsideredCandidatesUpperBound.getNumberOfUnconsideredCandidates();
 
-            if (candidates.size()>maxCandidates) {
+            if (maxCandidates>0 && candidates.size()>maxCandidates) {
                 numberOfIgnored += candidates.size()-maxCandidates;
 
                 candidates = candidates.subList(0,maxCandidates);
@@ -242,6 +266,246 @@ public class ZodiacUtils {
         if (missingCounter>0){
             logger.warn("Cannot create dummy nodes for "+missingCounter+" compounds. Information missing.");
         }
+    }
+
+
+    //    private final static String IDX_HEADER = "FEATURE_ID";
+    private final static String[] KNOWN_IDX_HEADER = new String[]{"FEATURE_ID", "#Scan#", "compoundName", "compoundID", "compound_name", "compound_name"};
+
+    public static List<LibraryHit> parseLibraryHits(Path libraryHitsPath, List<Ms2Experiment> ms2Experiments, Logger logger) throws IOException {
+        BufferedReader reader = Files.newBufferedReader(libraryHitsPath);
+        String line = reader.readLine();
+        reader.close();
+        if (line==null) {
+            throw new IOException("Spectral library hits file is empty.");
+        }
+        String[] header = line.split("\t");
+        for (String idxHeader : KNOWN_IDX_HEADER) {
+            if (arrayFind(header, idxHeader)>=0){
+                logger.debug("Parsing spectral library hits file. Use "+idxHeader+" column to match library hits to compounds in the spectrum file.");
+                return parseLibraryHitsByFeatureId(libraryHitsPath, ms2Experiments, idxHeader, logger);
+            }
+        }
+        logger.error("Cannot parse spectral library file. Could not find ID column");
+        return null;
+    }
+
+    private static List<LibraryHit> parseLibraryHitsByFeatureId(Path libraryHitsPath, List<Ms2Experiment> experiments, String idHeader, Logger logger) throws IOException {
+        try {
+            final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
+            for (Ms2Experiment ms2Experiment : experiments) {
+                //todo removed clean string
+                //                String name = cleanString(experiment.getName());
+//               todo  String name = cleanString(experimentResult.getExperimentName()); vs
+//                String name = cleanString(experimentResult.getExperiment().getName());
+                String name = ms2Experiment.getName();
+                if (experimentMap.containsKey(name)) throw new IOException("compound id duplicate: "+name+". Ids must be unambiguous to map library hits");
+                experimentMap.put(name, ms2Experiment);
+            }
+
+
+            List<String> lines = Files.readAllLines(libraryHitsPath, Charset.defaultCharset());
+            String[] header = lines.remove(0).split("\t");
+
+
+            LibraryHitInfo idCol = new LibraryHitInfo(idHeader, true, null);
+            LibraryHitInfo inchiCol = new LibraryHitInfo("INCHI", false, null);
+            LibraryHitInfo smilesCol = new LibraryHitInfo("Smiles", false, null);
+            LibraryHitInfo adductCol = new LibraryHitInfo(new String[]{"libraryAdduct", "Adduct"}, false, null);
+            LibraryHitInfo cosineCol = new LibraryHitInfo(new String[]{"MQScore", "cosine"}, true, null);
+            LibraryHitInfo sharePeaksCol = new LibraryHitInfo("SharedPeaks", false, "Infinity");
+            LibraryHitInfo qualityCol = new LibraryHitInfo("Quality", false, "Unknown");
+            LibraryHitInfo mfCol = new LibraryHitInfo("molecularFormula", false, null);
+            LibraryHitInfo libMzCol = new LibraryHitInfo("libraryMz", false, null);
+
+            LibraryHitInfo[] columnsOfInterest = new LibraryHitInfo[]{
+                    idCol, inchiCol, smilesCol, adductCol, cosineCol, sharePeaksCol, qualityCol, mfCol, libMzCol
+            };
+            for (int i = 0; i < columnsOfInterest.length; i++) {
+                LibraryHitInfo libraryHitInfo = columnsOfInterest[i];
+                int idx = -1;
+                for (String colName : libraryHitInfo.possibleColumnNames) {
+                    idx = arrayFind(header, colName);
+                    if (idx>=0){
+                        break;
+                    } else {
+                        int[] more = arrayFindSimilar(header, colName);
+                        if (more.length>1) throw new IOException("Cannot parse spectral library hits file. Column "+colName+" ambiguous.");
+                        else if (more.length==1){
+                            idx = more[0];
+                            break;
+                        }
+                    }
+
+                }
+                if (idx<0) {
+                    if (libraryHitInfo.isMandatory){
+                        throw new IOException("Cannot parse spectral library hits file. Column "+Arrays.toString(libraryHitInfo.possibleColumnNames)+" not found.");
+                    } else {
+                        idx = -1;
+                    }
+                }
+
+                libraryHitInfo.colIdx = idx;
+
+            }
+
+
+            List<LibraryHit> libraryHits = new ArrayList<>();
+            for (String line : lines) {
+                try {
+                    String[] cols = line.split("\t",-1);
+                    final String featureId = idCol.getInfo(cols);
+
+                    final Ms2Experiment experiment = experimentMap.get(featureId);
+
+                    if (experiment==null){
+                        logger.warn("No compound in SIRIUS workspace found that corresponds to spectral library hit " +
+                                "(this will occur for multiple charged compounds which are not supported by Sirius or the library file is incorrect). " +
+                                idHeader+" "+featureId);
+                        continue;
+                    }
+
+                    String mfString = mfCol.getInfo(cols);
+                    String inchiString = inchiCol.getInfo(cols);
+                    if (inchiString!=null) inchiString = inchiString.replace("\"", "");
+                    String smilesString = smilesCol.getInfo(cols);
+                    if (smilesString!=null) smilesString = smilesString.replace("\"", "");
+                    final MolecularFormula formula = getFormulaFromStructure(mfString, inchiString, smilesString);
+
+                    if (formula==null){
+                        logger.warn("Cannot parse molecular formula of library hit. "+idHeader+" "+featureId);
+                        continue;
+                    }
+
+                    String adductString = adductCol.getInfo(cols);
+                    if (adductString==null || adductString.replace(" ","").length()==0){
+                        logger.warn("Cannot parse adduct information for library hit. "+idHeader+" "+featureId);
+                    }
+
+                    String cosineString = cosineCol.getInfo(cols);
+                    if (cosineString==null || cosineString.replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: cosine score information missing. "+idHeader+" "+featureId);
+                        continue;
+                    }
+                    String sharePeaksString = sharePeaksCol.getInfo(cols);
+                    if (sharePeaksString==null || sharePeaksString.replace(" ","").length()==0){
+                        logger.warn("Cannot parse library hit. Reason: number of shared peaks missing. "+idHeader+" "+featureId);
+                        continue;
+                    }
+
+                    String qualityString = qualityCol.getInfo(cols);
+                    if (qualityString==null || qualityString.replace(" ","").length()==0){
+                        logger.warn("Cannot parse quality information for library hit. Use 'unknown'. "+idHeader+" "+featureId);
+                        qualityString = qualityCol.fallBack;
+                    }
+
+                    String libMzString = libMzCol.getInfo(cols);
+                    if (libMzString==null || qualityString.replace(" ","").length()==0){
+                        logger.warn("Cannot parse library mz. "+idHeader+" "+featureId);
+                        libMzString = libMzCol.fallBack;
+                    }
+
+
+                    final String structure = (isInchi(inchiString) ? inchiString : smilesString);
+                    final PrecursorIonType ionType = adductString==null?null: PeriodicTable.getInstance().ionByName(adductString);
+                    final double cosine = Double.parseDouble(cosineString);
+                    final int sharedPeaks = parseIntegerOrThrow(sharePeaksString);
+                    LibraryHitQuality quality = LibraryHitQuality.valueOf(qualityString);
+                    if (quality==null) quality = LibraryHitQuality.Unknown;
+                    double libMz;
+                    if (libMzString != null) libMz = Double.parseDouble(libMzString);
+                    else if (ionType!=null) libMz = ionType.neutralMassToPrecursorMass(formula.getMass());
+                    else{
+//                        libMz = Double.NaN;
+//                        logger.warn("Cannot infer library mz. Skip "+idHeader+" "+featureId);
+//                        continue;
+                        libMz = experiment.getIonMass();
+                        logger.warn("Cannot infer library mz. Use precursor m/z instead: "+idHeader+" "+featureId);
+                    }
+
+                    LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality, libMz);
+                    libraryHits.add(libraryHit);
+                } catch (Exception e) {
+                    logger.error("Cannot parse library hit. Reason: "+ e.getMessage(),e);
+                }
+
+            }
+
+            return libraryHits;
+        } catch (Exception e){
+            throw new IOException("cannot parse library hits. Reason "+e.getMessage());
+        }
+    }
+
+    private static class LibraryHitInfo {
+        private String[] possibleColumnNames;
+        private boolean isMandatory;
+        private String fallBack;
+        private int colIdx;
+
+        public LibraryHitInfo(String possibleColumnName, boolean isMandatory, String fallBack) {
+            this(new String[]{possibleColumnName}, isMandatory, fallBack);
+        }
+
+        public LibraryHitInfo(String[] possibleColumnNames, boolean isMandatory, String fallBack) {
+            this.possibleColumnNames = possibleColumnNames;
+            this.isMandatory = isMandatory;
+            this.fallBack = fallBack;
+        }
+
+        public String getInfo(String[] row){
+            if (colIdx<0){
+                if (isMandatory) throw new RuntimeException("Option is mandatory but column unknown");
+                return fallBack;
+            }
+            return row[colIdx];
+        }
+    }
+
+
+    private static int parseIntegerOrThrow(String value) {
+        double d = Double.parseDouble(value);
+        if (d==Double.POSITIVE_INFINITY) return Integer.MAX_VALUE;
+        if (d==Double.NEGATIVE_INFINITY) return Integer.MIN_VALUE;
+        int i = (int)Math.round(d);
+        if (Math.abs(d-i)>0.01) throw new NumberFormatException(value+" in not an integer value");
+        return i;
+    }
+
+    private static MolecularFormula getFormulaFromStructure(String formulaString, String inchi, String smiles){
+        if (formulaString!=null && formulaString.length()>0) return MolecularFormula.parseOrThrow(formulaString);
+
+        MolecularFormula formula = null;
+        if (inchi!=null && isInchi(inchi)){
+            try {
+                formula = new InChI(null, inchi).extractFormula();
+            } catch (UnknownElementException e) {
+                LoggerFactory.getLogger(ZodiacUtils.class).warn("Cannot parse molecular formula from InChI.: "+inchi);
+                formula = null;
+            }
+        }
+
+        if (formula==null && smiles!=null && smiles.length()>0){
+            try {
+                final SmilesParser parser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+                final IAtomContainer c = parser.parseSmiles(smiles);
+                formulaString = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(c));
+                formula = MolecularFormula.parseOrThrow(formulaString);
+            } catch (CDKException e) {
+                return null;
+            }
+        }
+        return formula;
+    }
+
+    private static boolean isInchi(String inchi) {
+        if (inchi==null) return false;
+        if (!inchi.toLowerCase().startsWith("inchi=")) return false;
+        int idx1 = inchi.indexOf("/");
+        int idx2 = inchi.indexOf("/", idx1+1);
+        if (idx1>0 && idx2>0 && (idx2-idx1)>1) return true;
+        return false;
     }
 
     private static <T> int arrayFind(T[] array, T object) {
@@ -352,4 +616,188 @@ public class ZodiacUtils {
         clusters.entrySet().stream().forEach(x->System.out.println(x.getKey() + " -> " + Arrays.toString(x.getValue())));
         return clusters;
     }
+
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // write results
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    public static void writeResultSummary(Map<Ms2Experiment, Map<FTree, ZodiacScore>> zodiacScoredTrees, CompoundResult<FragmentsCandidate>[] zodiacResults, Path outputFile) throws IOException {
+        Ms2Experiment[] experimentsSortedByMass = zodiacScoredTrees.keySet().stream().sorted(Comparator.comparing(Ms2Experiment::getIonMass)).toArray(size->new Ms2Experiment[size]);
+
+        Scored<FTree>[] bestInitial = bestInitial(experimentsSortedByMass, zodiacScoredTrees);
+        writeZodiacOutput(experimentsSortedByMass, bestInitial, zodiacResults, outputFile); // outputPath.resolve("zodiac_summary.csv"));
+    }
+
+    private final static int NUMBER_OF_HITS = Integer.MAX_VALUE;
+    private final static String SEP = "\t";
+    public static void writeZodiacOutput(Ms2Experiment[] sortedExperiments, Scored<FTree>[] initial, CompoundResult<FragmentsCandidate>[] result, Path outputPath) throws IOException {
+        Map<Ms2Experiment, CompoundResult<FragmentsCandidate>> experimentToZodiacResult = new HashMap<>();
+        for (CompoundResult<FragmentsCandidate> compoundResult : result) {
+            if (compoundResult.getCandidates().length>0){
+                Ms2Experiment experiment = compoundResult.getCandidates()[0].getCandidate().getExperiment();
+                experimentToZodiacResult.put(experiment, compoundResult);
+
+            }
+        }
+
+        BufferedWriter writer = Files.newBufferedWriter(outputPath, Charset.defaultCharset());
+        writer.write("id" + SEP + "quality" + SEP + "precursorMass" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "numberOfCandidates" + SEP + "hasDummy" + SEP + "connectedCompounds" + SEP + "biggestTreeSize" + SEP + "maxExplainedIntensity" + SEP + "ZodiacMF" + SEP + "ZodiacMFIon"+ SEP + "ZodiacScore" + SEP + "treeSize" + SEP + "explainedIntensity");
+        int maxCandidates = maxNumberOfCandidates(result);
+        for (int i = 2; i <= maxCandidates; i++) {
+            writer.write(SEP + "ZodiacMF" + String.valueOf(i) + SEP + "ZodiacMFIon" + String.valueOf(i) + SEP + "ZodiacScore" + String.valueOf(i) + SEP + "treeSize" + String.valueOf(i) + SEP + "explainedIntensity" + String.valueOf(i));
+        }
+
+        for (int i = 0; i < sortedExperiments.length; i++) {
+            final Ms2Experiment experiment = sortedExperiments[i];
+            CompoundResult<FragmentsCandidate> compoundResult = experimentToZodiacResult.get(experiment);
+            if (compoundResult==null) throw new RuntimeException("could not find ZODIAC result for compound  "+experiment.getName());
+
+            final String siriusMF = initial[i]==null?null:initial[i].getCandidate().getRoot().getFormula().formatByHill();
+            final double siriusScore = initial[i]==null?Double.NaN:initial[i].getScore();
+
+            int connections = compoundResult.getAnnotationOrThrow(Connectivity.class).getNumberOfConnectedCompounds();
+            String summeryLine = createSummaryLine(experiment.getName(), siriusMF, siriusScore, connections, compoundResult.getCandidates());
+            writer.newLine();
+            writer.write(summeryLine);
+        }
+
+        writer.close();
+
+    }
+
+    private static int maxNumberOfCandidates(CompoundResult<FragmentsCandidate>[] result) {
+        int max = 1;
+        for (CompoundResult<FragmentsCandidate> fragmentsCandidateCompoundResult : result) {
+            max = Math.max(fragmentsCandidateCompoundResult.getCandidates().length, max);
+        }
+        return max;
+    }
+
+    private static String createSummaryLine(String id, String siriusMF, double siriusScore, int numberConnections, Scored<FragmentsCandidate>[] result){
+        String qualityString = "";
+        Sirius sirius = new Sirius();
+        double precursorMass = Double.NaN;
+        if (result.length>0){
+            Ms2Experiment experiment = result[0].getCandidate().getExperiment();
+
+            CompoundQuality compoundQuality = experiment.getAnnotation(CompoundQuality.class, null);
+            precursorMass = experiment.getIonMass();
+            if (compoundQuality!=null) qualityString = compoundQuality.toString();
+        }
+
+        int biggestTreeSize = -1;
+        double maxExplainedIntensity = 0;
+        boolean hasDummy = false;
+        for (Scored<FragmentsCandidate> scoredCandidate : result) {
+            FragmentsCandidate candidate = scoredCandidate.getCandidate();
+            if (DummyFragmentCandidate.isDummy(candidate)){
+                hasDummy = true;
+                continue;
+            }
+            final int treeSize = candidate.getFragments().length;
+            final FTree tree = candidate.getAnnotation(FTree.class);
+            final double intensity = (new FTreeMetricsHelper(tree)).getExplainedIntensityRatio();
+            biggestTreeSize = Math.max(treeSize,biggestTreeSize);
+            maxExplainedIntensity = Math.max(maxExplainedIntensity, intensity);
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append(id);
+        builder.append(SEP);
+        builder.append(qualityString);
+        builder.append(SEP);
+        builder.append(String.valueOf(precursorMass));
+        builder.append(SEP);
+        builder.append(siriusMF);
+        builder.append(SEP);
+        builder.append(Double.toString(siriusScore));
+        builder.append(SEP);
+        builder.append(String.valueOf(result.length)); //numberOfCandidates
+        builder.append(SEP);
+        builder.append(String.valueOf(hasDummy));
+        builder.append(SEP);
+        builder.append(numberConnections);
+        builder.append(SEP);
+        builder.append(biggestTreeSize);
+        builder.append(SEP);
+        builder.append(maxExplainedIntensity);
+
+
+
+        for (int j = 0; j < Math.min(result.length, NUMBER_OF_HITS); j++) {
+            Scored<FragmentsCandidate> currentResult = result[j];
+            FragmentsCandidate candidate = currentResult.getCandidate();
+            final String mf = candidate.getFormula().formatByHill();
+            final String ion = candidate.getIonType().toString();
+            final double score = currentResult.getScore();
+            final double treeSize, explIntensity;
+            if (DummyFragmentCandidate.isDummy(candidate)){
+                treeSize = -1;
+                explIntensity = -1;
+            } else {
+                treeSize = currentResult.getCandidate().getFragments().length;//number of fragments = treeSize
+                final FTree tree = candidate.getAnnotation(FTree.class);
+                explIntensity = (new FTreeMetricsHelper(tree)).getExplainedIntensityRatio();
+            }
+
+//            if (score <= 0) break; //don't write MF with 0 probability
+
+            builder.append(SEP);
+            builder.append(mf);
+            builder.append(SEP);
+            builder.append(ion);
+            builder.append(SEP);
+            builder.append(Double.toString(score));
+            builder.append(SEP);
+            builder.append(Double.toString(treeSize));
+            builder.append(SEP);
+            builder.append(Double.toString(explIntensity));
+        }
+        return builder.toString();
+    }
+
+
+    public static Scored<FTree>[] bestInitial(Ms2Experiment[] sortedExperiments, Map<Ms2Experiment, Map<FTree, ZodiacScore>> zodiacScoredTrees){
+        Scored<FTree>[] best = new Scored[sortedExperiments.length];
+        for (int i = 0; i < sortedExperiments.length; i++) {
+            Ms2Experiment experiment = sortedExperiments[i];
+            Map<FTree, ZodiacScore> scoredTrees = zodiacScoredTrees.get(experiment);
+
+            if (scoredTrees.size()==0){
+                best[i] = null;
+                continue;
+            }
+
+            TDoubleArrayList siriusScores = new TDoubleArrayList();
+            Scored<FTree>[] siriusScoredTrees = new Scored[scoredTrees.keySet().size()];
+            int pos = 0;
+            for (FTree tree : scoredTrees.keySet()) {
+                siriusScoredTrees[pos++] = new Scored<>(tree, (new FTreeMetricsHelper(tree)).getSiriusScore());
+
+            }
+
+            Arrays.sort(siriusScoredTrees, Comparator.reverseOrder());
+            double max = siriusScoredTrees[0].getScore();
+            double maxExp = Double.NaN;
+            double sum = 0.0D;
+            //normalize
+            for (int j = 0; j < siriusScoredTrees.length; ++j) {
+                final Scored<FTree> scoredTree = siriusScoredTrees[j];
+                double expS = Math.exp(1d * (scoredTree.getScore() - max));
+                sum += expS;
+                if (j==0) maxExp = expS;
+            }
+
+            //save best with probability
+            best[i] = new Scored(siriusScoredTrees[0].getCandidate(), maxExp/sum);
+
+
+        }
+        return best;
+    }
+
 }

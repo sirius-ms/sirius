@@ -33,8 +33,8 @@ public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpect
 
     @Override
     public void clear() {
-        masses.resetQuick();
-        intensities.resetQuick();
+        masses.clearQuick();
+        intensities.clearQuick();
     }
 
     public BasicMutableSpectrum() {

@@ -2,6 +2,7 @@ package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntIntMap;
@@ -55,7 +56,9 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
         firstRoundCompoundsIdx = new TIntArrayList();
         for (int i = 0; i < possibleFormulas.length; i++) {
             C[] poss = possibleFormulas[i];
-            if (poss.length>0 && poss[0].getExperiment().getAnnotationOrDefault(CompoundQuality.class).is(CompoundQuality.CompoundQualityFlag.Good)){
+//            if (poss.length>0 && CompoundQuality.isNotBadQuality(poss[0].getExperiment())){
+            //todo compound quality handling has changed a lot
+            if (poss.length>0 && poss[0].getExperiment().getAnnotation(CompoundQuality.class, CompoundQuality::new).isNotBadQuality()){
                 firstRoundCompoundsIdx.add(i);
             }
             if (cClass==null && poss.length>0) cClass = (Class<C>)poss[0].getClass();
@@ -63,7 +66,6 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 
 
         C[][] firstRoundPossibleFormulas;
-        String[] firstRoundIds;
         if (firstRoundCompoundsIdx.size()==possibleFormulas.length){
             firstRoundPossibleFormulas = possibleFormulas;
             firstRoundIds = ids;
@@ -78,9 +80,12 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 
 
 
-        LOG().info("Running first round with "+firstRoundIds.length+" compounds.");
+
+        LOG().debug("ZODIAC: Graph building");
+        long start = System.currentTimeMillis();
         GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, cClass);
         graph = submitSubJob(graphBuilder).awaitResult();
+        LOG().debug("finished building graph after: "+(System.currentTimeMillis()-start)+" ms");
     }
 
     private int maxSteps = -1;
@@ -94,15 +99,18 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
     @Override
     protected ZodiacResult<C> compute() throws Exception {
         if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
-
         checkForInterruption();
         init();
+        LOG().info("Running ZODIAC with "+firstRoundIds.length+" of "+ids.length+" compounds.");
         Graph.validateAndThrowError(graph, LOG());
         gibbsParallel = new GibbsParallel<>(graph, repetitions);
         gibbsParallel.setIterationSteps(maxSteps, burnIn);
+        long start = System.currentTimeMillis();
         submitSubJob(gibbsParallel);
 
+
         results1 = gibbsParallel.awaitResult();
+        LOG().debug("finished running "+repetitions+" repetitions in parallel: "+(System.currentTimeMillis()-start)+" ms");
         checkForInterruption();
 
         firstRoundIds = gibbsParallel.getGraph().getIds();
@@ -120,7 +128,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 //            gibbsParallel = new GibbsParallel<>(ids, combined, nodeScorers, edgeScorers, edgeFilter, workersCount, repetitions);
 
             //changed same as in 3phase
-            LOG().info("Score "+(ids.length-results1.length)+" low quality compounds. "+ids.length+" compounds overall.");
+            LOG().info("Running second round: Score "+(ids.length-results1.length)+" low quality compounds. "+ids.length+" compounds overall.");
             //todo rather sample everything and just use results of low quality compounds? may there arise problems? in principle should not as we still sample all compounds (even 'fixed')
             C[][] candidatesNewRound = combineNewAndOldAndSetFixedProbabilities(results1, firstRoundCompoundsIdx);
             //todo this stupid thing creates a complete new graph.

@@ -1,5 +1,7 @@
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -14,16 +16,16 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     private int compoundIndex;
 
     // fields for fast compound filtering
-    //todo we may want to use annotations here in future if we want to allow
-    // for arbitrary filtering of compounds
+    //todo switch that to annotations?
     private double ionMass;
+    private PrecursorIonType ionType;
 
 
     protected CompoundContainerId(String directoryName, String compoundName, int compoundIndex) {
-        this(directoryName, compoundName, compoundIndex, Double.NaN);
+        this(directoryName, compoundName, compoundIndex, Double.NaN, null);
     }
 
-    protected CompoundContainerId(String directoryName, String compoundName, int compoundIndex, double ionMass) {
+    protected CompoundContainerId(String directoryName, String compoundName, int compoundIndex, double ionMass, PrecursorIonType ionType) {
         this.directoryName = directoryName;
         this.compoundName = compoundName;
         this.compoundIndex = compoundIndex;
@@ -51,6 +53,14 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         this.ionMass = ionMass;
     }
 
+    public PrecursorIonType getIonType() {
+        return ionType;
+    }
+
+    public void setIonType(PrecursorIonType ionType) {
+        this.ionType = ionType;
+    }
+
     /**
      * This operation is only allowed to be called with careful synchronization within the project space
      */
@@ -69,6 +79,9 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         kv.put("index", String.valueOf(getCompoundIndex()));
         kv.put("name", getCompoundName());
         kv.put("ionMass", String.valueOf(ionMass));
+        if (ionType != null)
+            kv.put("ionType", ionType.toString());
+
         return kv;
     }
 }
