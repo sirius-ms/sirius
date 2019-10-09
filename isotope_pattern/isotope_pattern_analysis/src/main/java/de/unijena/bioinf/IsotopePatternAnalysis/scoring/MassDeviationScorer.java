@@ -54,7 +54,7 @@ public class MassDeviationScorer implements IsotopePatternScorer {
             final double mz = measured.getMzAt(i);
             final double thMz = theoretical.getMzAt(i);
             final double intensity = measured.getIntensityAt(i);
-            final double sd = experiment.getAnnotationOrThrow(MS1MassDeviation.class).standardMassDeviation.absoluteFor(mz) * dependency.getValueAt(intensity);
+            final double sd = experiment.getAnnotationOrDefault(MS1MassDeviation.class).standardMassDeviation.absoluteFor(mz) * dependency.getValueAt(intensity);
             score += Math.log(Erf.erfc(Math.abs(thMz - mz)/(root2*sd)));
             scores[i] += score;
         }

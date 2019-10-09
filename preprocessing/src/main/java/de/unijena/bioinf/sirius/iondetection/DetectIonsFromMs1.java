@@ -22,7 +22,7 @@ public class DetectIonsFromMs1 implements AdductDetection {
     @Override
     public PossibleAdducts detect(ProcessedInput processedInput, Set<PrecursorIonType> candidates) {
         MergedMs1Spectrum ms1 = processedInput.getAnnotationOrThrow(MergedMs1Spectrum.class);
-        final MS1MassDeviation dev = processedInput.getAnnotationOrThrow(MS1MassDeviation.class);
+        final MS1MassDeviation dev = processedInput.getAnnotationOrDefault(MS1MassDeviation.class);
         SimpleMutableSpectrum mutableSpectrum;
         Ms2Experiment exp = processedInput.getExperimentInformation();
         if (ms1.isCorrelated() && ms1.mergedSpectrum.size()>1) {
