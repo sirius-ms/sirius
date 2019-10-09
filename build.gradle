@@ -63,10 +63,10 @@ allprojects {
             url "https://bio.informatik.uni-jena.de/repository/libs-oss"
         }
         maven {
-            url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
+            url "https://www.xypron.de/repository" //glpk repo
         }
         maven {
-            url "https://www.xypron.de/repository" //glpk repo
+            url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/" //mzml parser
         }
     }
 
