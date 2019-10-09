@@ -115,8 +115,8 @@ public class Ms2Validator extends Ms1Validator {
         double absError = 1e-2;
         Deviation dev = new Deviation(20, absError);
         //take maximum of default and particular experiment's deviation.
-        Deviation dev2 = input.getAnnotationOrThrow(MS1MassDeviation.class).allowedMassDeviation;
-        Deviation dev3 = input.getAnnotationOrThrow(MS2MassDeviation.class).allowedMassDeviation;
+        Deviation dev2 = input.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
+        Deviation dev3 = input.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
         dev = new Deviation(Math.max(Math.max(dev.getPpm(), dev2.getPpm()), dev3.getPpm()), Math.max(Math.max(dev.getAbsolute(), dev2.getAbsolute()), dev3.getAbsolute()));
         absError = Math.max(absError, dev.absoluteFor(input.getIonMass()));
 

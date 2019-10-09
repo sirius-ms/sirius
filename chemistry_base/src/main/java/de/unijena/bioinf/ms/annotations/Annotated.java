@@ -76,10 +76,10 @@ public interface Annotated<A extends DataAnnotation> {
      *
      * TODO: only Ms2Experiment has "default" annotations. So this method should removed
      */
-/*    @Deprecated
+    @Deprecated
     default <T extends A> T getAnnotationOrDefault(Class<T> klass) {
         return getAnnotation(klass, () -> annotations().autoInstanceSupplier(klass));
-    }*/
+    }
 
     /**
      * @return true if the given annotation is present
@@ -133,9 +133,9 @@ public interface Annotated<A extends DataAnnotation> {
      *
      * @return true if there was no previous value for this annotation
      */
-    /*default <T extends A> T computeAnnotationIfAbsent(@NotNull final Class<T> klass) {
+    default <T extends A> T computeAnnotationIfAbsent(@NotNull final Class<T> klass) {
         return computeAnnotationIfAbsent(klass, () -> annotations().autoInstanceSupplier(klass));
-    }*/
+    }
 
 
     /**
@@ -305,7 +305,7 @@ public interface Annotated<A extends DataAnnotation> {
             return new Annotations<>(cloneMap);
         }
 
-        /*private <T extends Annotation> T autoInstanceSupplier(Class<T> klass) {
+        private <T extends Annotation> T autoInstanceSupplier(Class<T> klass) {
             if (PropertyManager.DEFAULTS.isInstantiatableWithDefaults(klass))
                 return PropertyManager.DEFAULTS.createInstanceWithDefaults(klass);
             try {
@@ -313,7 +313,7 @@ public interface Annotated<A extends DataAnnotation> {
             } catch (InstantiationException | IllegalAccessException e) {
                 throw new IllegalArgumentException(klass.getName() + " cannot be instantiated automatically");
             }
-        }*/
+        }
 
         @NotNull
         @Override
