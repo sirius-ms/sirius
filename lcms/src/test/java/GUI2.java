@@ -159,7 +159,6 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                         if (!ionTypes.isEmpty()) {
                             ParameterConfig parameterConfig = PropertyManager.DEFAULTS.newIndependentInstance("LCMS-" + experiment.getName());
                             parameterConfig.changeConfig("AdductSettings.enforced", Joiner.on(',').join(ionTypes));
-                            parameterConfig.changeConfig("PossibleAdducts", Joiner.on(',').join(ionTypes));
                             final MsFileConfig config = new MsFileConfig(parameterConfig);
                             experiment.setAnnotation(MsFileConfig.class, config);
                         }
