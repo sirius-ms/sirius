@@ -88,6 +88,8 @@ public class Deviation implements Cloneable, Ms2ExperimentAnnotation {
     }
 
     private static Pattern pattern = Pattern.compile("(?:(.+)\\s*ppm\\s*)?(?:(?:,|\\(|)\\s*(.+?)\\s*(m\\/z|mDa|Da|u)\\s*\\)?)?");
+
+    // this is used for deserialization
     public static Deviation fromString(String s) {
         final Matcher m = pattern.matcher(s);
         if (!m.find()) throw new IllegalArgumentException("Pattern should have the format <number> ppm (<number> m/z)");

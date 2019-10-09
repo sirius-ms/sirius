@@ -5,11 +5,11 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
  * 28.09.16.
  */
 
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.IlpFactory;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public final class TreeBuilderFactory {
 
     private static TreeBuilderFactory INSTANCE = null;
 
-    public enum DefaultBuilder {GUROBI, CPLEX, GLPK}
+    public enum DefaultBuilder {GUROBI, CPLEX, GLPK, CLP}
 
     private static DefaultBuilder[] builderPriorities = null;
 
@@ -132,6 +132,9 @@ public final class TreeBuilderFactory {
                 break;
             case CPLEX:
                 factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver");
+                break;
+            case CLP:
+                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CLPSolver");
                 break;
             default:
                 LoggerFactory.getLogger(this.getClass()).warn("TreeBuilder " + builder.toString() + " is Unknown, supported are: " + Arrays.toString(DefaultBuilder.values()), new IllegalArgumentException("Unknown BuilderType!"));

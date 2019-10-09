@@ -26,6 +26,7 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
 
         // actualize ionMass in ID id
         id.setIonMass(experiment.getIonMass());
+        id.setIonType(experiment.getPrecursorIonType());
         writer.keyValues(SiriusLocations.COMPOUND_INFO, id.asKeyValuePairs());
 
     }
