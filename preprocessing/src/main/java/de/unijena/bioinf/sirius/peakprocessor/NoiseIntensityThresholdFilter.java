@@ -13,7 +13,7 @@ public class NoiseIntensityThresholdFilter implements MergedSpectrumProcessor {
     @Override
     public void process(ProcessedInput input) {
 
-        final NoiseThresholdSettings settings = input.getAnnotationOrDefault(NoiseThresholdSettings.class);
+        final NoiseThresholdSettings settings = input.getAnnotationOrThrow(NoiseThresholdSettings.class);
         final ProcessedPeak parent = input.getParentPeak();
         double base = 0d;
         switch (settings.basePeak) {

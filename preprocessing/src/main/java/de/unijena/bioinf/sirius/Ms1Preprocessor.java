@@ -22,6 +22,7 @@ import de.unijena.bioinf.sirius.iondetection.AdductDetection;
 import de.unijena.bioinf.sirius.iondetection.DetectIonsFromMs1;
 import de.unijena.bioinf.sirius.merging.Ms1Merging;
 import de.unijena.bioinf.sirius.validation.Ms1Validator;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -78,7 +79,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
     @Requires(Ms1IsotopePattern.class)
     @Provides(FormulaConstraints.class)
     public void elementDetection(ProcessedInput pinput) {
-        final FormulaSettings settings = pinput.getAnnotationOrDefault(FormulaSettings.class);
+        final FormulaSettings settings = pinput.getAnnotationOrThrow(FormulaSettings.class);
         final FormulaConstraints fc = elementDetection.detect(pinput);
         if (fc==null) {
             pinput.setAnnotation(FormulaConstraints.class, settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()));
@@ -98,20 +99,28 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
             pinput.setAnnotation(PossibleAdducts.class, new PossibleAdducts(pinput.getExperimentInformation().getPrecursorIonType()));
             return;
         }
-        if (pinput.getAnnotation(PossibleAdducts.class)!=null) return;
-        if (pinput.getExperimentInformation().getAnnotation(PossibleAdducts.class)!=null) {
+
+        if (pinput.hasAnnotation(PossibleAdducts.class)) return;
+
+        if (pinput.getExperimentInformation().hasAnnotation(PossibleAdducts.class)) {
             pinput.setAnnotation(PossibleAdducts.class, pinput.getExperimentInformation().getAnnotationOrNull(PossibleAdducts.class));
             return;
         }
         final int charge = pinput.getExperimentInformation().getPrecursorIonType().getCharge();
-        final AdductSettings settings = pinput.getAnnotationOrDefault(AdductSettings.class);
+
+        final AdductSettings settings = pinput.getAnnotationOrThrow(AdductSettings.class);
         final PossibleAdducts ionModes = ionModeDetection.detect(pinput, settings.getDetectable(charge));
 
         final HashSet<PrecursorIonType> set = new HashSet<>(settings.getEnforced(charge));
 
         if (ionModes==null || (ionModes.isEmpty() && set.isEmpty())) set.addAll(settings.getFallback(charge));
         else set.addAll(ionModes.getAdducts());
-        pinput.setAnnotation(PossibleAdducts.class, new PossibleAdducts(set));
+        if (set.isEmpty()) {
+            pinput.setAnnotation(PossibleAdducts.class, new PossibleAdducts(settings.getFallback(charge)));
+            LoggerFactory.getLogger(getClass()).warn("Could not Find any Valid Adducts. Assigning Fallback list: " + pinput.getAnnotationOrNull(PossibleAdducts.class));
+        } else {
+            pinput.setAnnotation(PossibleAdducts.class, new PossibleAdducts(set));
+        }
     }
 
 

@@ -28,7 +28,7 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
     }
 
     protected List<ProcessedPeak> mergePeaks(ProcessedInput processedInput) {
-        final Deviation mergeWindow = processedInput.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation.multiply(2);
+        final Deviation mergeWindow = processedInput.getAnnotationOrThrow(MS2MassDeviation.class).allowedMassDeviation.multiply(2);
 
         // step 1: delete close peaks within a spectrum
         final List<MS2Peak> peaks = new ArrayList<>();
