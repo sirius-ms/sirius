@@ -26,7 +26,7 @@ public class DeepNeuralNetworkElementDetector implements ElementDetection {
     @Override
     @Nullable
     public FormulaConstraints detect(ProcessedInput processedInput) {
-        final FormulaSettings settings = processedInput.getAnnotationOrThrow(FormulaSettings.class);
+        final FormulaSettings settings = processedInput.getAnnotationOrDefault(FormulaSettings.class);
         SimpleSpectrum ms1 = processedInput.getAnnotationOrThrow(Ms1IsotopePattern.class).getSpectrum();
         if (ms1.size()<=2) return settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet());
         final FormulaConstraints constraints = dnnRegressionPredictor.predictConstraints(ms1);

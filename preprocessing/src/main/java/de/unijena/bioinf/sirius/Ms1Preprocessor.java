@@ -79,7 +79,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
     @Requires(Ms1IsotopePattern.class)
     @Provides(FormulaConstraints.class)
     public void elementDetection(ProcessedInput pinput) {
-        final FormulaSettings settings = pinput.getAnnotationOrThrow(FormulaSettings.class);
+        final FormulaSettings settings = pinput.getAnnotationOrDefault(FormulaSettings.class);
         final FormulaConstraints fc = elementDetection.detect(pinput);
         if (fc==null) {
             pinput.setAnnotation(FormulaConstraints.class, settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()));
@@ -115,12 +115,8 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
 
         if (ionModes==null || (ionModes.isEmpty() && set.isEmpty())) set.addAll(settings.getFallback(charge));
         else set.addAll(ionModes.getAdducts());
-        if (set.isEmpty()) {
-            pinput.setAnnotation(PossibleAdducts.class, new PossibleAdducts(settings.getFallback(charge)));
-            LoggerFactory.getLogger(getClass()).warn("Could not Find any Valid Adducts. Assigning Fallback list: " + pinput.getAnnotationOrNull(PossibleAdducts.class));
-        } else {
-            pinput.setAnnotation(PossibleAdducts.class, new PossibleAdducts(set));
-        }
+
+        pinput.setAnnotation(PossibleAdducts.class, new PossibleAdducts(set));
     }
 
 

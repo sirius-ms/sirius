@@ -703,11 +703,7 @@ public class Spectrums {
                 double diffAdductMass = addedIT.getIonization().getMass() + addedIT.getModificationMass() - (removedIT.getModificationMass() + removedIT.getIonization().getMass());
                 int idx = Spectrums.binarySearch(spectrum, ionMass + diffAdductMass, deviation);
                 if (idx < 0) continue; // no corresponding mass found;
-                Set<PrecursorIonType> addedList = adductDiffs.get(removedIT);
-                if (addedList == null) {
-                    addedList = new HashSet<>();
-                    adductDiffs.put(removedIT, addedList);
-                }
+                Set<PrecursorIonType> addedList = adductDiffs.computeIfAbsent(removedIT, k -> new HashSet<>());
                 addedList.add(addedIT);
             }
         }

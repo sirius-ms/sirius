@@ -30,12 +30,13 @@ public class TargetedIsotopePatternDetection implements IsotopePatternDetection 
         } else if (processedInput.hasAnnotation(FormulaConstraints.class)) {
             stdalphabet = processedInput.getAnnotationOrThrow(FormulaConstraints.class).getChemicalAlphabet();
         } else {
-            FormulaSettings fs = processedInput.getAnnotationOrThrow(FormulaSettings.class);
+            FormulaSettings fs = processedInput.getAnnotationOrDefault(FormulaSettings.class);
             stdalphabet = fs.getEnforcedAlphabet().getExtendedConstraints(fs.getFallbackAlphabet()).getExtendedConstraints(fs.getAutoDetectionElements().toArray(new Element[0])).getChemicalAlphabet();
         }
 
         final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(ms1);
-        MS1MassDeviation dev = processedInput.getAnnotationOrThrow(MS1MassDeviation.class);
+        final ArrayList<SimpleSpectrum> patterns = new ArrayList<SimpleSpectrum>();
+        MS1MassDeviation dev = processedInput.getAnnotationOrDefault(MS1MassDeviation.class);
         final int index = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, experiment.getIonMass(), dev.allowedMassDeviation);
         if (index < 0) return Spectrums.empty();
         final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
