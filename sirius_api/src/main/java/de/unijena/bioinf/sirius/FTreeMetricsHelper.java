@@ -104,8 +104,13 @@ public class FTreeMetricsHelper {
         return getNumOfExplainedPeaks(tree) / getExplainedPeaksRatio(tree);
     }
 
+    /**
+     * number of peaks explained by FTree, ignoring the root
+     * @param tree
+     * @return
+     */
     public static double getNumOfExplainedPeaks(@NotNull FTree tree) {
-        return tree.numberOfVertices();
+        return tree.numberOfVertices()-1;
     }
 
 
