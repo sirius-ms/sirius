@@ -48,13 +48,13 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
     }
 
     @Option(names = "--ppm-max", description = "Maximum allowed mass deviation in ppm for decomposing masses.")
-    public void setPpmMax(String value) throws Exception {
-        defaultConfigOptions.changeOption("MS1MassDeviation.allowedMassDeviation", value);
+    public void setPpmMax(double value) throws Exception {
+        defaultConfigOptions.changeOption("MS1MassDeviation.allowedMassDeviation", value + "ppm");
     }
 
     @Option(names = "--ppm-max-ms2", description = "Maximum allowed mass deviation in ppm for decomposing masses in MS2. If not specified, the same value as for the MS1 is used.")
-    public void setPpmMaxMs2(String value) throws Exception {
-        defaultConfigOptions.changeOption("MS2MassDeviation.allowedMassDeviation", value);
+    public void setPpmMaxMs2(double value) throws Exception {
+        defaultConfigOptions.changeOption("MS2MassDeviation.allowedMassDeviation", value + "ppm");
     }
 
     @Option(names = "--tree-timeout", description = "Time out in seconds per fragmentation tree computations. 0 for an infinite amount of time. Default: 0"/*, defaultValue = "0"*/)
