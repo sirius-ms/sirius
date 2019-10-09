@@ -1,11 +1,16 @@
 package de.unijena.bioinf.babelms;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
+import de.unijena.bioinf.fingerid.CanopusResult;
+import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.frontend.subtools.Instance;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.projectspace.StandardMSFilenameFormatter;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
+import de.unijena.bioinf.passatutto.Decoy;
+import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.fingerid.*;
+import de.unijena.bioinf.projectspace.sirius.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -81,5 +86,29 @@ public class ProjectSpaceManager implements Iterable<Instance> {
                 return new Instance(id,ProjectSpaceManager.this);
             }
         };
+    }
+
+    public static ProjectSpaceConfiguration newDefaultConfig(){
+        final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
+        //configure ProjectSpaceProperties
+        config.defineProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSPropertySerializer());
+        //configure compound container
+        config.registerContainer(CompoundContainer.class, new CompoundContainerSerializer());
+        config.registerComponent(CompoundContainer.class, ProjectSpaceConfig.class, new ProjectSpaceConfigSerializer());
+        config.registerComponent(CompoundContainer.class, Ms2Experiment.class, new MsExperimentSerializer());
+        //configure formula result
+        config.registerContainer(FormulaResult.class, new FormulaResultSerializer());
+        config.registerComponent(FormulaResult.class, FTree.class, new TreeSerializer());
+        config.registerComponent(FormulaResult.class, FormulaScoring.class, new FormulaScoringSerializer());
+        //pssatuto components
+        config.registerComponent(FormulaResult.class, Decoy.class, new PassatuttoSerializer());
+        //fingerid components
+        config.defineProjectSpaceProperty(CSIClientData.class, new CsiClientSerializer());
+        config.registerComponent(FormulaResult.class, FingerprintResult.class, new FingerprintSerializer());
+        config.registerComponent(FormulaResult.class, FingerblastResult.class, new FingerblastResultSerializer());
+        //canopus
+        config.defineProjectSpaceProperty(CanopusClientData.class, new CanopusClientSerializer());
+        config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());
+        return config;
     }
 }
