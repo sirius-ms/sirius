@@ -23,7 +23,6 @@ MS2MassDeviation=de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation
 MedianNoiseIntensity=de.unijena.bioinf.ChemistryBase.ms.MedianNoiseIntensity
 Timeout=de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout
 AdductSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings
-PossibleAdducts=de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts
 CompoundQuality=de.unijena.bioinf.ChemistryBase.ms.CompoundQuality
 PossibleAdductSwitches=de.unijena.bioinf.ChemistryBase.ms.PossibleAdductSwitches
 IsotopeSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeSettings

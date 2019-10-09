@@ -30,10 +30,10 @@ public class AddConfigsJob extends InstanceJob {
 
         ParameterConfig baseConfig;
 
-        if (psConfig.isPresent()) //override defaults
-            baseConfig = psConfig.get().config.newIndependentInstance(cliConfig);
-        else
-            baseConfig = cliConfig;
+        //override defaults
+        baseConfig = psConfig
+                .map(projectSpaceConfig -> projectSpaceConfig.config.newIndependentInstance(cliConfig))
+                .orElseGet(() -> cliConfig);
 
         if (exp.hasAnnotation(MsFileConfig.class))
             baseConfig = baseConfig.newIndependentInstance(exp.getAnnotationOrThrow(MsFileConfig.class).config);
@@ -44,7 +44,7 @@ public class AddConfigsJob extends InstanceJob {
         exp.addAnnotationsFrom(baseConfig, Ms2ExperimentAnnotation.class);
 
         //reduce basic list of possible Adducts to charge
-        exp.getAnnotationOrThrow(PossibleAdducts.class).keepOnly(exp.getPrecursorIonType().getCharge());
+        exp.getAnnotation(PossibleAdducts.class).ifPresent(add -> add.keepOnly(exp.getPrecursorIonType().getCharge()));
 
         // convert csi ranking score
         if (exp.getAnnotationOrThrow(UserFormulaResultRankingScore.class).isDefined()) {
