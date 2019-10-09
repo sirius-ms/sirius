@@ -11,8 +11,8 @@ import java.io.IOException;
 public class SiriusCLIApplication {
     private static CLIRun RUN = null;
 
-    public static void main(String[] args) {
 
+    public static void main(String[] args) {
         //shut down hook to clean up when sirius is shutting down
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             ApplicationCore.DEFAULT_LOGGER.info("CLI shut down hook: SIRIUS is cleaning up threads and shuts down...");
