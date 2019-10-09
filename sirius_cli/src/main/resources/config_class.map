@@ -32,3 +32,9 @@ FormulaSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings
 NumberOfCandidates=de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates
 FormulaResultRankingScore=de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore
 
+
+ZodiacEpochs=de.unijena.bioinf.GibbsSampling.properties.ZodiacEpochs
+ZodiacRunInTwoSteps=de.unijena.bioinf.GibbsSampling.properties.ZodiacRunInTwoSteps
+ZodiacEdgeFilterThresholds=de.unijena.bioinf.GibbsSampling.properties.ZodiacEdgeFilterThresholds
+ZodiacNumberOfConsideredCandidates=de.unijena.bioinf.GibbsSampling.properties.ZodiacNumberOfConsideredCandidates
+ZodiacLibraryScoring=de.unijena.bioinf.GibbsSampling.properties.ZodiacLibraryScoring

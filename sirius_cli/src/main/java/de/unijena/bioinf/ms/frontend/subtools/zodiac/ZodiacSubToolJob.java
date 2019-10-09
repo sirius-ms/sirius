@@ -5,7 +5,6 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.GibbsSampling.Zodiac;
@@ -27,13 +26,14 @@ import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.quality_assessment.TreeQualityEvaluator;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ZodiacSubToolJob extends DataSetJob {
@@ -57,7 +57,7 @@ public class ZodiacSubToolJob extends DataSetJob {
         }
 
         if (instances.stream().anyMatch(it -> isRecompute(it) || (input.containsKey(it.getExperiment()) && !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class)))) {
-            System.out.println("I am ZODIAC and run on all instances: " + instances.stream().map(Instance::toString).collect(Collectors.joining(",")));
+            System.out.println("I am ZODIAC and run " + instances.size() + " instances: ");
 
             Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = input.keySet().stream().collect(Collectors.toMap(k -> k, k -> input.get(k).stream().map(r -> r.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList())));
 
@@ -66,7 +66,7 @@ public class ZodiacSubToolJob extends DataSetJob {
             for (Map.Entry<Ms2Experiment, List<FTree>> ms2ExperimentListEntry : ms2ExperimentToTreeCandidates.entrySet()) {
                 Ms2Experiment experiment = ms2ExperimentListEntry.getKey();
                 List<FTree> treeCandidates = ms2ExperimentListEntry.getValue();
-                boolean isPoorlyExplained = SiriusJobs.getGlobalJobManager().submitJob(treeQualityEvaluator.makeIsAllCandidatesPoorlyExplainSpectrumJob(treeCandidates)).awaitResult().booleanValue();
+                boolean isPoorlyExplained = SiriusJobs.getGlobalJobManager().submitJob(treeQualityEvaluator.makeIsAllCandidatesPoorlyExplainSpectrumJob(treeCandidates)).awaitResult();
                 if (isPoorlyExplained) {
                     //update if poorly explained
                     CompoundQuality quality = experiment.getAnnotationOrNull(CompoundQuality.class);
