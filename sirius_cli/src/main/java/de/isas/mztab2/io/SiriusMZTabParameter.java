@@ -15,9 +15,9 @@ public enum SiriusMZTabParameter {
     SIRIUS_ISOTOPE_SCORE("SIRIUS:isotope_score"),
     SIRIUS_TREE_SCORE("SIRIUS:tree_score"),
     ZODIAC_SCORE("SIRIUS:zodiac_score"),
-    SIRIUS_EXPL_INTENSITY("SIRIUS:explained_intensity"),
-    SIRIUS_EXPL_INTENSITY_OF_EXPLAINABLE_INTENSITY("SIRIUS:num_explained_peaks"),
-    SIRIUS_EXPL_INTENSITY_OF_TOTAL_INTENSITY("SIRIUS:explained_peaks_ratio"),
+    SIRIUS_EXPL_INTENSITY_OF_TOTAL_INTENSITY("SIRIUS:explained_intensity_ratio"),
+    SIRIUS_EXPL_INTENSITY_OF_EXPLAINABLE_INTENSITY("SIRIUS:explained_intensity_of_explainable_peaks_ratio"),
+    SIRIUS_NUM_EXPL_PEAKS_RATIO("SIRIUS:explained_peaks_ratio"),
     SIRIUS_MED_ABS_MASS_DEVIATION("SIRIUS:med_abs_mass_deviation"),
 
     SIRIUS_ANNOTATED_SPECTRA_LOCATION("SIRIUS:annotated_spectra_location"),
