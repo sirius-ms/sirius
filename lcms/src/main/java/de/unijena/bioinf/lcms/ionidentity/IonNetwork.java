@@ -1,6 +1,5 @@
 package de.unijena.bioinf.lcms.ionidentity;
 
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
@@ -8,8 +7,10 @@ import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.align.AlignedFeatures;
 import de.unijena.bioinf.lcms.quality.Quality;
-import de.unijena.bioinf.model.lcms.*;
-import gnu.trove.list.array.TIntArrayList;
+import de.unijena.bioinf.model.lcms.CorrelatedIon;
+import de.unijena.bioinf.model.lcms.FragmentedIon;
+import de.unijena.bioinf.model.lcms.IonGroup;
+import de.unijena.bioinf.model.lcms.Polarity;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
@@ -18,11 +19,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class IonNetwork {
 
@@ -84,7 +82,6 @@ public class IonNetwork {
 
     public void gibbsSampling(Assignment assignment) {
         final GibbsSampler sampler = new GibbsSampler();
-        sampler.learnP(this);
         for (IonNode node : nodes) {
             if (node.assignment == null)
                 sampler.sample(node);

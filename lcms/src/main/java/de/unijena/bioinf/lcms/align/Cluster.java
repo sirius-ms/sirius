@@ -157,7 +157,7 @@ public class Cluster {
         }
         values.sort();
         double mean = 0d;
-        int k=(int)(values.size()*0.25), n =(int)(values.size()*0.95);
+        int k=(int)(values.size()*0.25), n =(int)(values.size()*0.9);
         for (int i=k; i < n; ++i) {
             mean += values.getQuick(i);
         }

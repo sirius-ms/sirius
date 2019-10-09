@@ -1124,6 +1124,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (SiriusPlugin plugin : siriusPlugins.values()) {
             plugin.releaseTreeToUser(input,graph,tree);
         }
+
         tree.normalizeStructure();
     }
 

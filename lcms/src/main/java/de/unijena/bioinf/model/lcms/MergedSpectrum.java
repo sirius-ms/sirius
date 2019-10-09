@@ -86,10 +86,10 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
         }
     }
 
-    public Quality getQuality() {
+    public Quality getQuality(SimpleSpectrum mergedSpectrum) {
         int peaksAboveNoise = 0;
-        for (int k=0; k < peaks.size(); ++k) {
-            if (peaks.get(k).getMass() < (getPrecursor().getMass()-20) && peaks.get(k).getIntensity() >= noiseLevel*5)
+        for (int k=0; k < mergedSpectrum.size(); ++k) {
+            if (mergedSpectrum.getMzAt(k) < (getPrecursor().getMass()-20) && mergedSpectrum.getIntensityAt(k) >= noiseLevel*5)
                 ++peaksAboveNoise;
         }
         if (peaksAboveNoise >= 5) return Quality.GOOD;
