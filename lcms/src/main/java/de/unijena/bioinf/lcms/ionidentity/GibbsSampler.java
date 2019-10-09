@@ -2,26 +2,11 @@ package de.unijena.bioinf.lcms.ionidentity;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.Set;
 
 class GibbsSampler {
-
-    protected double p=0.5;
-
-    public void learnP(IonNetwork network) {
-        int sum = 0;
-        int n=0;
-        for (IonNode node : network.nodes) {
-            for (Edge e : node.neighbours) {
-                if (e.deltaMz()>=0) {
-                    sum += e.numberOfCommonSamples()-1;
-                    ++n;
-                }
-            }
-        }
-        this.p = (((double)n)/sum);
-        System.out.println("p = " + p);
-    }
 
     public void sample(IonNode subnetwork) {
         ArrayList<IonNode> nodes = new ArrayList<>();
@@ -45,7 +30,7 @@ class GibbsSampler {
         gibbsSampling(nodes, assignment, null, 100,0);
         // now record it
         int repetitions = 2000;
-        int recordEvery = 4;
+        int recordEvery = 2;
         int totalSamples = repetitions/recordEvery;
         gibbsSampling(nodes, assignment, posteriorCount, repetitions,recordEvery);
         // compute marginals
@@ -96,12 +81,15 @@ class GibbsSampler {
     }
 
     private void spread(ArrayList<IonNode> nodes, IonNode node) {
-        final PrecursorIonType[] ionTypes = node.possibleIonTypes().toArray(PrecursorIonType[]::new);
+        Set<PrecursorIonType> set = node.possibleIonTypes();
+        // we always add the "unknown" ion type
+        set.add(PrecursorIonType.unknown(node.getFeature().getRepresentativeIon().getPolarity()));
+        final PrecursorIonType[] ionTypes = set.toArray(PrecursorIonType[]::new);
         final double[] probs = new double[ionTypes.length];
         double total = 0;
         for (int k=0; k < ionTypes.length; ++k) {
             final PrecursorIonType ionType = ionTypes[k];
-            probs[k] = node.neighbours.stream().filter(n->ionType.equals(n.fromType)).mapToInt(Edge::numberOfCommonSamples).reduce(Integer::sum).orElse(0);
+            probs[k] = 0.5+node.neighbours.stream().filter(n->ionType.equals(n.fromType)).mapToInt(Edge::numberOfCommonSamples).reduce(Integer::sum).orElse(0);
             total += probs[k];
         }
         for (int k=0; k < probs.length; ++k) {
