@@ -18,6 +18,11 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeighted extends CommonFra
     final RealDistribution distribution;
     private double beta;
     private double maxClip;
+
+    public CommonFragmentAndLossScorerNoiseIntensityWeighted() {
+        this(0d);
+    }
+
     public CommonFragmentAndLossScorerNoiseIntensityWeighted(double threshold) {
         super(threshold);
         MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 1d; //changed from 5

@@ -7,9 +7,12 @@ package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.GibbsSampling.model.EdgeFilter;
 import de.unijena.bioinf.GibbsSampling.model.Graph;
+import de.unijena.bioinf.jjobs.MasterJJob;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.concurrent.ExecutionException;
 
 public class LocalEdgeFilter implements EdgeFilter {
     private final double alpha;
@@ -58,7 +61,7 @@ public class LocalEdgeFilter implements EdgeFilter {
     public void setThreshold(double threshold) {
     }
 
-    public int[][] postprocessCompleteGraph(Graph graph) {
+    public int[][] postprocessCompleteGraph(Graph graph, MasterJJob masterJJob) throws ExecutionException {
         throw new NoSuchMethodError("not implemented");
     }
 

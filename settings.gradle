@@ -29,5 +29,5 @@ include ':utils'
 include ':lcms'
     include ':lcms:mzml-converter'
 include ':sirius_project_space'
-
+include 'quality_assessment'
 

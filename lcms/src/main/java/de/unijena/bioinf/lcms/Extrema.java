@@ -110,9 +110,9 @@ class Extrema {
                     }
                 }
             }
-            extrema.resetQuick();
+            extrema.clearQuick();
             extrema.add(newExtrema, 0, k);
-            indizes.resetQuick();
+            indizes.clearQuick();
             indizes.add(newIndizes, 0, k);
             return true;
         } else return cardinality==0;
