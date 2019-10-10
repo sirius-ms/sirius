@@ -4,7 +4,6 @@ import de.unijena.bioinf.jjobs.JJob;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public interface AnnotationJJob<D extends DataAnnotation, A extends Annotated> extends JJob<D> {

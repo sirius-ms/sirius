@@ -10,9 +10,9 @@ import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
-import java.io.File;
-import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ConsensusFeature implements Annotated<DataAnnotation> {
 

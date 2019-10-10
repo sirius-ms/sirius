@@ -17,6 +17,7 @@
  */
 package fragtreealigner;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import fragtreealigner.algorithm.ScoringFunctionNeutralLosses;
 import fragtreealigner.algorithm.ScoringFunctionNeutralLosses.ScoreWeightingType;
 import fragtreealigner.algorithm.TreeAligner;

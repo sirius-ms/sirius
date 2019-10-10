@@ -1,7 +1,6 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.GibbsSampling.model.Reaction;
 
 public class SimpleReaction implements Reaction {
     private final MolecularFormula group;

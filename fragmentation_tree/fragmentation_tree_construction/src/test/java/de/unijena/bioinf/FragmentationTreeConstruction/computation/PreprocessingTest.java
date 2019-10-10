@@ -25,13 +25,12 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
-import org.junit.Test;
 
 import java.io.IOException;
 
 public class PreprocessingTest {
 
-    /*public Ms2Experiment getExperimentData() {
+    public Ms2Experiment getExperimentData() {
         final JenaMsParser parser = new JenaMsParser();
         final GenericParser<Ms2Experiment> genericParser = new GenericParser<Ms2Experiment>(parser);
         try {
@@ -43,43 +42,43 @@ public class PreprocessingTest {
 
     public MutableMs2Experiment testData() {
         final MutableMs2Experiment experiment = new MutableMs2Experiment();
-        experiment.setPrecursorIonType(PeriodicTable.getInstance().ionByName("[M]+"));
+        experiment.setPrecursorIonType(PeriodicTable.getInstance().ionByNameOrThrow("[M]+"));
         experiment.setIonMass(180.0633881184 + new Charge(1).getMass());
 //        experiment.setMolecule(180.0633881184);
-        experiment.setMolecularFormula(MolecularFormula.parse("C6H12O6"));
+        experiment.setMolecularFormula(MolecularFormula.parseOrThrow("C6H12O6"));
         final SimpleMutableSpectrum sp = new SimpleMutableSpectrum();
         final double c = new Charge(1).getMass();
         final double parent = 180.0633881184 + c;
-        sp.addPeak(new Peak(parent, 1.0));
+        sp.addPeak(new SimplePeak(parent, 1.0));
         experiment.getMs1Spectra().add(new SimpleSpectrum(sp));
         experiment.setMergedMs1Spectrum(new SimpleSpectrum(sp));
         {
             final SimpleMutableSpectrum sp2 = new SimpleMutableSpectrum();
-            sp2.addPeak(new Peak(parent, 320));
-            sp2.addPeak(new Peak(MolecularFormula.parse("C6H10O5").getMass() + c, 100));
-            sp2.addPeak(new Peak(MolecularFormula.parse("C5H12O4").getMass() + c, 75));
+            sp2.addPeak(new SimplePeak(parent, 320));
+            sp2.addPeak(new SimplePeak(MolecularFormula.parseOrThrow("C6H10O5").getMass() + c, 100));
+            sp2.addPeak(new SimplePeak(MolecularFormula.parseOrThrow("C5H12O4").getMass() + c, 75));
             final MutableMs2Spectrum ms2 = new MutableMs2Spectrum(sp2, parent, new CollisionEnergy(0, 10), 2);
             experiment.getMs2Spectra().add(ms2);
         }
         {
             final SimpleMutableSpectrum sp2 = new SimpleMutableSpectrum();
-            sp2.addPeak(new Peak(parent, 21));
-            sp2.addPeak(new Peak(MolecularFormula.parse("C5H6O5").getMass() + c, 22));
-            sp2.addPeak(new Peak(MolecularFormula.parse("C4H6O3").getMass() + c, 11));
+            sp2.addPeak(new SimplePeak(parent, 21));
+            sp2.addPeak(new SimplePeak(MolecularFormula.parseOrThrow("C5H6O5").getMass() + c, 22));
+            sp2.addPeak(new SimplePeak(MolecularFormula.parseOrThrow("C4H6O3").getMass() + c, 11));
             final MutableMs2Spectrum ms2 = new MutableMs2Spectrum(sp2, parent, new CollisionEnergy(0, 10), 2);
             experiment.getMs2Spectra().add(ms2);
         }
         return experiment;
     }
 
-    *//**
+    /**
      * As the preprocessing is a pipeline consisting of many (more or less) complex steps,
      * it is hard to "UNIT" test it. An quick'n dirty approach is to test the whole preprocessing
      * pipeline in one method.
-     *//*
-    @Test
+     */
+    /*@Test
     public void testPreprocessing() {
-        *//*
+
         Ms2ExperimentImpl experiment = new Ms2ExperimentImpl(getExperimentData());
         experiment.setMeasurementProfile(new ProfileImpl(new Deviation(10), new Deviation(5), new Deviation(20),
                 FormulaConstraints.create(new ValenceFilter(), "C", "H", "N", "O", "P", "S")));
@@ -110,7 +109,7 @@ public class PreprocessingTest {
         // second peak is at 114.066386424197 Da
         assertEquals(mergedPeaks.get(23).getMz(), 115.049976864731, 1e-6);
         assertEquals(mergedPeaks.get(23).getRelativeIntensity(), 0.0250236, 1e-3);
-        /*
+
         // 90.0553049770099 // should be preferred, as it has the lowest collision energy
         assertEquals(mergedPeaks.get(11).getMz(), 90.0553049770099d, 1e-6);
         assertEquals(mergedPeaks.get(11).getRelativeIntensity(), 210.18379000000002, 1e-3);
@@ -124,7 +123,7 @@ public class PreprocessingTest {
 
         // parent peak detection
         ProcessedPeak parentPeak = analysis.selectParentPeakAndCleanSpectrum(experiment, mergedPeaks);
-        *//*
+
 
     }*/
 

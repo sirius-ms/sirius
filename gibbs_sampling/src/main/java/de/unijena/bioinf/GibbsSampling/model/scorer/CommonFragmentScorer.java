@@ -6,24 +6,14 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.Transformation;
-import de.unijena.bioinf.GibbsSampling.model.Candidate;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
 import de.unijena.bioinf.GibbsSampling.model.FragmentsCandidate;
-import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
-import java.util.Arrays;
+
 import java.util.BitSet;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -126,7 +116,7 @@ public class CommonFragmentScorer implements EdgeScorer<FragmentsCandidate> {
 //        final PrecursorIonType[] var26 = new PrecursorIonType[1];
 //        Transformation var10000 = new Transformation() {
 //            public Peak transform(Peak input) {
-//                return new Peak(var26[0].precursorMassToNeutralMass(input.getMass()), input.getIntensity());
+//                return new SimplePeak(var26[0].precursorMassToNeutralMass(input.getMass()), input.getIntensity());
 //            }
 //        };
 //

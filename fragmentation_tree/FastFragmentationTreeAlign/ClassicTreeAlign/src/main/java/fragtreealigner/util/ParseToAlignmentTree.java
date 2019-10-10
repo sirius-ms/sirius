@@ -17,6 +17,8 @@
  */
 package fragtreealigner.util;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
