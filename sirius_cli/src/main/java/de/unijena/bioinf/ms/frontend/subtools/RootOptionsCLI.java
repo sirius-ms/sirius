@@ -1,21 +1,13 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.babelms.MS2ExpInputIterator;
+import de.unijena.bioinf.ms.frontend.io.MS2ExpInputIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.babelms.ProjectSpaceManager;
-import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
-import de.unijena.bioinf.fingerid.CanopusResult;
-import de.unijena.bioinf.fingerid.FingerprintResult;
-import de.unijena.bioinf.fingerid.blast.FingerblastResult;
+import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
+import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.projectspace.*;
-import de.unijena.bioinf.projectspace.fingerid.*;
-import de.unijena.bioinf.projectspace.sirius.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -252,7 +244,7 @@ public class RootOptionsCLI implements RootOptions {
                                 msit.next(); //writes new instances to projectspace
                             return space;
                     }
-                } else if (space != null && space.projectSpace().size() > 0) {
+                } else if (space != null && space.size() > 0) {
                     LOG.info("No Input given but output Project-Space is not empty and will be used as Input instead!");
                     return space;
                 }

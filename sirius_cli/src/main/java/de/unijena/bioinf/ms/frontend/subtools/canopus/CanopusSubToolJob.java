@@ -6,15 +6,13 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.fingerid.CanopusJJob;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
-import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.subtools.Instance;
+import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.fingerid.CanopusClientData;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
-import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,8 +53,8 @@ public class CanopusSubToolJob extends InstanceJob {
         jobs.forEach((k, v) -> k.setAnnotation(CanopusResult.class, v.takeResult()));
 
         // write Canopus client data
-        if (inst.getProjectSpace().getProjectSpaceProperty(CanopusClientData.class).isEmpty())
-            inst.getProjectSpace().setProjectSpaceProperty(CanopusClientData.class, new CanopusClientData(ApplicationCore.CANOPUS));
+        if (inst.getProjectSpaceManager().getProjectSpaceProperty(CanopusClientData.class).isEmpty())
+            inst.getProjectSpaceManager().setProjectSpaceProperty(CanopusClientData.class, new CanopusClientData(ApplicationCore.CANOPUS));
 
         // write canopus results
         for (FormulaResult r : res)

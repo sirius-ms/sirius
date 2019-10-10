@@ -1,8 +1,8 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
-import de.unijena.bioinf.babelms.ProjectSpaceManager;
+import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
+import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.List;

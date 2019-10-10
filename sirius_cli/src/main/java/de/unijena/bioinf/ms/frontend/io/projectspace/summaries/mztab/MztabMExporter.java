@@ -1,4 +1,4 @@
-package de.unijena.bioinf.babelms.projectspace.summaries.mztab;
+package de.unijena.bioinf.ms.frontend.io.projectspace.summaries.mztab;
 
 import de.isas.mztab2.io.MZTabParameter;
 import de.isas.mztab2.io.SiriusMZTabParameter;
@@ -16,7 +16,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
-import de.unijena.bioinf.babelms.projectspace.summaries.SummaryLocations;
+import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.SummaryLocations;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
@@ -42,7 +42,7 @@ import java.io.Writer;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.babelms.projectspace.summaries.mztab.JenaMSAdditionalKeys.*;
+import static de.unijena.bioinf.ms.frontend.io.projectspace.summaries.mztab.JenaMSAdditionalKeys.*;
 import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.*;
 
 public class MztabMExporter implements Summarizer {

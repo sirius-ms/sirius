@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.frontend.subtools;
 import de.unijena.bioinf.jjobs.BasicDependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
 
 /**

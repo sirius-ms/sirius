@@ -18,7 +18,7 @@ import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorerNoiseIntensityWeighted;
 import de.unijena.bioinf.GibbsSampling.properties.*;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
-import de.unijena.bioinf.ms.frontend.subtools.Instance;
+import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.fingerid.annotations.UserFormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
@@ -26,7 +26,6 @@ import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.quality_assessment.TreeQualityEvaluator;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -163,11 +162,8 @@ public class ZodiacSubToolJob extends DataSetJob {
                     scoring.setAnnotation(ZodiacScore.class,
                             sTress.get(fr.getAnnotationOrThrow(FTree.class))
                     );
-                    try {
-                        inst.getProjectSpace().updateFormulaResult(fr, FormulaScoring.class);
-                    } catch (IOException e) {
-                        LoggerFactory.getLogger(ZodiacSubToolJob.class).error(e.getMessage(), e);
-                    }
+
+                    inst.updateFormulaResult(fr, FormulaScoring.class);
                     System.out.println(fr.getId().getFormula().toString() + sTress.get(fr.getAnnotationOrThrow(FTree.class)));
                 });
 

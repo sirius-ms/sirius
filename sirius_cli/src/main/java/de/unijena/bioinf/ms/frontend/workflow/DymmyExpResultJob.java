@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.ms.frontend.subtools.Instance;
+import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
