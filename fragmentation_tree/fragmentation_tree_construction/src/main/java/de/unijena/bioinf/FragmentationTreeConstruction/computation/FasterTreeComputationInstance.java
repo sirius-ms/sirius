@@ -137,11 +137,21 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         final boolean useHeuristic = pinput.getParentPeak().getMass() > 300;
         final ExactResult[] results = estimateTreeSizeAndRecalibration(decompositions, useHeuristic);
         //we do not resolve here anymore -> because we need unresolved trees to expand adducts for fingerid
-        final List<FTree> trees = Arrays.stream(results).map(r -> r.tree).collect(Collectors.toList());
+        final List<FTree> trees = Arrays.stream(results).map(r -> fixIonization(r.tree)).collect(Collectors.toList());
         final long t2 = System.nanoTime();
         final int timeInSeconds = (int)Math.round((t2-t)*1e-9);
         System.out.println(new Date() + "\t-> I am Sirius, finished with computing trees for Experiment " + pinput.getExperimentInformation().getName() +" which took " + (timeInSeconds) + " seconds.");
         return new FinalResult(trees);
+    }
+
+    private FTree fixIonization(FTree tree) {
+        /*
+        // does not work yet
+        if (!(pinput.getExperimentInformation().getPrecursorIonType().hasNeitherAdductNorInsource())) {
+            return new IonTreeUtils().treeToNeutralTree(tree, pinput.getExperimentInformation().getPrecursorIonType());
+        } else return tree;
+        */
+        return tree;
     }
 
     protected void recalculateScore(ProcessedInput input, FTree tree, String prefix) {
