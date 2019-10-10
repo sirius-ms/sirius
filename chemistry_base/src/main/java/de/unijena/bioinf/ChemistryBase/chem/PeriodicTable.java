@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
  * PeriodicTable.getInstance().parse("C6H12O6", myAtomVisitor)
  * </pre>
  */
-public class PeriodicTable implements Iterable<Element>, Cloneable {
+public final class PeriodicTable implements Iterable<Element>, Cloneable {
 
 
     /*

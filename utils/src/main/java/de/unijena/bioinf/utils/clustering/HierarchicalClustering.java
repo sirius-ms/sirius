@@ -112,7 +112,7 @@ public class HierarchicalClustering<T> {
     }
 
 
-    private class ClusteringMatrixImplementation implements ClusteringMatrix {
+    private static class ClusteringMatrixImplementation implements ClusteringMatrix {
 
         Distance[][] distances;
 

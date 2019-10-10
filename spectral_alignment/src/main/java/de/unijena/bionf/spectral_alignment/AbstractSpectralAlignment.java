@@ -223,7 +223,7 @@ public abstract class AbstractSpectralAlignment {
     protected abstract double maxAllowedDifference(double mz);
 
 
-    private class MatchesMatrix {
+    private static class MatchesMatrix {
         private int leftN, rightN;
         TIntHashSet pairedIndexSet;
 
