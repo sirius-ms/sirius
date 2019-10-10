@@ -22,7 +22,6 @@ import de.unijena.bioinf.sirius.iondetection.AdductDetection;
 import de.unijena.bioinf.sirius.iondetection.DetectIonsFromMs1;
 import de.unijena.bioinf.sirius.merging.Ms1Merging;
 import de.unijena.bioinf.sirius.validation.Ms1Validator;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Set;

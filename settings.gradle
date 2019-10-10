@@ -11,6 +11,9 @@ include ':fragmentation_tree'
         include ":fragmentation_tree:FastFragmentationTreeAlign:FastTreeAlign"
         include ":fragmentation_tree:FastFragmentationTreeAlign:FTAlignmentTool"
         include ":fragmentation_tree:FastFragmentationTreeAlign:FTBlast"
+        include ":fragmentation_tree:FastFragmentationTreeAlign:ClassicTreeAlign"
+        include ":fragmentation_tree:FastFragmentationTreeAlign:AlignmentViewer"
+
 include ':isotope_pattern'
 	include ':isotope_pattern:isotope_pattern_analysis'
     include ':isotope_pattern:isogen_cli'

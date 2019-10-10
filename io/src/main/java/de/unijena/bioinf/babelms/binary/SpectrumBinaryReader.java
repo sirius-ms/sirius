@@ -4,7 +4,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Created by kaidu on 20.06.2015.

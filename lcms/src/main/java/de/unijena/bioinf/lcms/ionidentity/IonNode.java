@@ -2,10 +2,11 @@ package de.unijena.bioinf.lcms.ionidentity;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.lcms.align.AlignedFeatures;
-import de.unijena.bioinf.lcms.align.Cluster;
-import de.unijena.bioinf.model.lcms.IonGroup;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 class IonNode {
 

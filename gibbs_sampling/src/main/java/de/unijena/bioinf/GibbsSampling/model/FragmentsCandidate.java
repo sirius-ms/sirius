@@ -144,7 +144,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             if (fragment.isRoot() && !experiment.getPrecursorIonType().getInSourceFragmentation().isEmpty() && fragment.getChildren().size()==1){
                 //if tree is resolved and ionization has in-source loss (e.g. H2O) use this mz as a proxy for the compounds peak.
                 double mzWithInsource = experiment.getPrecursorIonType().addIonAndAdduct(experiment.getIonMass()-experiment.getPrecursorIonType().getModificationMass());
-                peak = new Peak(mzWithInsource, 0d);
+                peak = new SimplePeak(mzWithInsource, 0d);
             } else {
                 throw new RuntimeException("no peak annotation found");
             }
@@ -165,15 +165,15 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             meanMass /= annotatedPeak.getOriginalPeaks().length;
             meanIntensity /= annotatedPeak.getOriginalPeaks().length;
 
-//            return new Peak(meanMass, meanIntensity);
+//            return new SimplePeak(meanMass, meanIntensity);
             //changed
-            return new Peak(meanMass, annotatedPeak.getRelativeIntensity());
-//            return new Peak(meanMass, meanIntensity);
+            return new SimplePeak(meanMass, annotatedPeak.getRelativeIntensity());
+//            return new SimplePeak(meanMass, meanIntensity);
         } else {
-//            return new Peak(annotatedPeak.getMass(), annotatedPeak.getSumedIntensity());
-//            return new Peak(annotatedPeak.getMass(), annotatedPeak.getMaximalIntensity());
-//            return new Peak(annotatedPeak.getMass(), 0d);
-            return new Peak(annotatedPeak.getMass(), annotatedPeak.getRelativeIntensity());
+//            return new SimplePeak(annotatedPeak.getMass(), annotatedPeak.getSumedIntensity());
+//            return new SimplePeak(annotatedPeak.getMass(), annotatedPeak.getMaximalIntensity());
+//            return new SimplePeak(annotatedPeak.getMass(), 0d);
+            return new SimplePeak(annotatedPeak.getMass(), annotatedPeak.getRelativeIntensity());
         }
     }
 */

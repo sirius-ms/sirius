@@ -263,10 +263,10 @@ public class PatternGenerator {
 			intensity = 0;
 			//filling the lists
 			while (list1.size()<n+1){
-				list1.add(new Peak(0,0));
+				list1.add(new SimplePeak(0,0));
 			}
 			while (list2.size()<n+1){
-				list2.add(new Peak(0,0));
+				list2.add(new SimplePeak(0,0));
 			}
 			for(int k=0;k<=n;k++){
 				intensity += list1.get(k).getIntensity() * list2.get(n-k).getIntensity();
@@ -281,7 +281,7 @@ public class PatternGenerator {
 				maxint = intensity;
 			}
 			m = intensity != 0 ? mass/intensity : 0.0;
-			result.add(new Peak(m, intensity));
+			result.add(new SimplePeak(m, intensity));
 		}
 		return result;
 	}

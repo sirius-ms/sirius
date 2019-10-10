@@ -8,10 +8,8 @@ import de.unijena.bioinf.io.lcms.MzXMLParser;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.MemoryFileStorage;
 import de.unijena.bioinf.lcms.ProcessedSample;
-import de.unijena.bioinf.lcms.align.AlignedFeatures;
 import de.unijena.bioinf.lcms.align.Cluster;
 import de.unijena.bioinf.lcms.debuggui.Gradient;
-import de.unijena.bioinf.lcms.ionidentity.IonNetwork;
 import de.unijena.bioinf.lcms.peakshape.GaussianShape;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
 import de.unijena.bioinf.lcms.quality.Quality;
@@ -20,7 +18,6 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;

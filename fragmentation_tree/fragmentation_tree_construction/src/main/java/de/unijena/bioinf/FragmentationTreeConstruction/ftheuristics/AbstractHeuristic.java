@@ -1,11 +1,9 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 
 public abstract class AbstractHeuristic {

@@ -17,6 +17,7 @@
  */
 package fragtreealigner.util;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import fragtreealigner.domainobjects.chem.basics.MolecularFormula;
 
 import java.io.*;
