@@ -731,6 +731,15 @@ public class Spectrums {
         return intens;
     }
 
+    public static <P extends Peak,S extends Spectrum<P>>double calculateTIC(S spec, Range<Double> massRange, double intensityBaseline) {
+        double intens = 0d;
+        for (int k=0; k < spec.size(); ++k) {
+            if (spec.getIntensityAt(k)>=intensityBaseline && massRange.contains(spec.getMzAt(k)))
+            intens += spec.getIntensityAt(k);
+        }
+        return intens;
+    }
+
     public static <P extends Peak,S extends Spectrum<P>> double calculateTIC(S spec, double intensityBaseLine) {
         double intens = 0d;
         for (int k=0; k < spec.size(); ++k) {
