@@ -11,11 +11,10 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.subtools.Instance;
+import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.fingerid.CSIClientData;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -66,14 +65,13 @@ public class FingeridSubToolJob extends InstanceJob {
         final Map<FTree, FormulaResult> formulaResultsMap = formulaResults.stream().collect(Collectors.toMap(r -> r.getCandidate().getAnnotationOrThrow(FTree.class), SScored::getCandidate));
 
         // add CSIClientData to PS if it is not already there
-        if (inst.getProjectSpace().getProjectSpaceProperty(CSIClientData.class).isEmpty())
-            inst.getProjectSpace().setProjectSpaceProperty(CSIClientData.class, new CSIClientData(csi));
+        if (inst.getProjectSpaceManager().getProjectSpaceProperty(CSIClientData.class).isEmpty())
+            inst.getProjectSpaceManager().setProjectSpaceProperty(CSIClientData.class, new CSIClientData(csi));
 
 
         // add new id results to projectspace and mal.
-        final CompoundContainer ioC = inst.loadCompoundContainer();
         for (IdentificationResult idr : job.getAddedIdentificationResults())
-            inst.getProjectSpace().newFormulaResultWithUniqueId(ioC, idr.getTree())
+            inst.newFormulaResultWithUniqueId(idr.getTree())
                     .ifPresent(fr -> formulaResultsMap.put(fr.getAnnotationOrThrow(FTree.class), fr));
 
 

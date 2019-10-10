@@ -1,9 +1,11 @@
-package de.unijena.bioinf.babelms;
+package de.unijena.bioinf.ms.frontend.io;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.ms.frontend.subtools.Instance;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.babelms.GenericParser;
+import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.sirius.Sirius;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,4 +1,4 @@
-package de.unijena.bioinf.babelms;
+package de.unijena.bioinf.ms.frontend.io.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -6,7 +6,6 @@ import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
-import de.unijena.bioinf.ms.frontend.subtools.Instance;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.*;
@@ -17,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -25,10 +25,10 @@ import java.util.function.Predicate;
  * e.g. iteration on Instance level.
  * maybe some type of caching?
  */
-public class ProjectSpaceManager implements Iterable<Instance> {
+public final class ProjectSpaceManager implements Iterable<Instance> {
 
     private final SiriusProjectSpace space;
-    protected Function<Ms2Experiment, String> nameFormatter = new StandardMSFilenameFormatter();
+    private final Function<Ms2Experiment, String> nameFormatter;
     private final Predicate<CompoundContainerId> compoundFilter;
 
     public ProjectSpaceManager(@NotNull SiriusProjectSpace space) {
@@ -37,12 +37,13 @@ public class ProjectSpaceManager implements Iterable<Instance> {
 
     public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
         this.space = space;
-        if (formatter != null)
-            nameFormatter = formatter;
+        this.nameFormatter = formatter != null
+                ? formatter
+                : new StandardMSFilenameFormatter();
         this.compoundFilter = compoundFilter;
     }
 
-    public SiriusProjectSpace projectSpace() {
+    SiriusProjectSpace projectSpace() {
         return space;
     }
 
@@ -63,6 +64,14 @@ public class ProjectSpaceManager implements Iterable<Instance> {
             LoggerFactory.getLogger(ProjectSpaceManager.class).error("Could not create an project space ID for the Instance", e);
             throw new RuntimeException("Could not create an project space ID for the Instance");
         }
+    }
+
+    public <T extends ProjectSpaceProperty> Optional<T> getProjectSpaceProperty(Class<T> key) {
+        return projectSpace().getProjectSpaceProperty(key);
+    }
+
+    public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
+        return projectSpace().setProjectSpaceProperty(key, value);
     }
 
 
@@ -110,5 +119,25 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         config.defineProjectSpaceProperty(CanopusClientData.class, new CanopusClientSerializer());
         config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());
         return config;
+    }
+
+    public int size() {
+        return space.size();
+    }
+
+    public boolean containsCompound(String dirName) {
+        return space.containsCompound(dirName);
+    }
+
+    public boolean containsCompound(CompoundContainerId id) {
+        return space.containsCompound(id);
+    }
+
+    public void updateSummaries(Summarizer... summarizers) throws IOException {
+        space.updateSummaries(summarizers);
+    }
+
+    public void close() throws IOException {
+        space.close();
     }
 }

@@ -1,9 +1,8 @@
-package de.unijena.bioinf.babelms;
+package de.unijena.bioinf.ms.frontend.io;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ms.frontend.subtools.Instance;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import org.jetbrains.annotations.NotNull;
+import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 
 import java.util.Iterator;
 

@@ -1,11 +1,10 @@
-package de.unijena.bioinf.ms.frontend.subtools;
+package de.unijena.bioinf.ms.frontend.io.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
-import de.unijena.bioinf.babelms.ProjectSpaceManager;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.*;
@@ -61,7 +60,7 @@ public class Instance {
         return getID().toString();
     }
 
-    public SiriusProjectSpace getProjectSpace() {
+    private SiriusProjectSpace projectSpace() {
         return getProjectSpaceManager().projectSpace();
     }
 
@@ -79,7 +78,7 @@ public class Instance {
         try {
             Class[] missingComps = Arrays.stream(components).filter(comp -> !compoundCache.hasAnnotation(comp)).distinct().toArray(Class[]::new);
             if (missingComps.length > 0) { //load missing comps
-                final CompoundContainer tmpComp = getProjectSpace().getCompound(getID(), missingComps);
+                final CompoundContainer tmpComp = projectSpace().getCompound(getID(), missingComps);
                 compoundCache.setAnnotationsFrom(tmpComp);
             }
             return compoundCache;
@@ -91,21 +90,29 @@ public class Instance {
     public synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends FormulaScore> rankingScoreType, Class<? extends DataAnnotation>... components) {
         try {
             if (!formulaResultCache.keySet().containsAll(compoundCache.getResults())) {
-                final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = getProjectSpace().getFormulaResultsOrderedBy(getID(), rankingScoreType, components);
+                final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = projectSpace().getFormulaResultsOrderedBy(getID(), rankingScoreType, components);
                 formulaResultCache = returnList.stream().collect(Collectors.toMap(r -> r.getCandidate().getId(), SScored::getCandidate));
                 return returnList;
             } else {
-                Class[] missingComps = Arrays.stream(components).
-                        filter(comp -> !formulaResultCache.values().stream().allMatch(r -> r.hasAnnotation(comp))).
-                        distinct().toArray(Class[]::new);
-                if (missingComps.length > 0) {
-                    //reloading missing comps for all formularesults -> can be done more efficiently.
-//                    System.out.println("############# Reloading cache with:  " + Arrays.toString(missingComps) + "  ####################");
-                    final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList =
-                            getProjectSpace().getFormulaResultsOrderedBy(getID(), rankingScoreType, missingComps);
-                    returnList.stream().map(SScored::getCandidate).
-                            forEach(rs -> formulaResultCache.get(rs.getId()).setAnnotationsFrom(rs));
-                }
+                final Map<FormulaResultId, Class[]> toRefresh = new HashMap<>();
+                formulaResultCache.forEach((k, v) -> {
+                    Class[] missingComps = Arrays.stream(components).filter(c -> !v.hasAnnotation(c)).distinct().toArray(Class[]::new);
+                    if (missingComps.length > 0)
+                        toRefresh.put(k, missingComps);
+                });
+
+                if (!toRefresh.isEmpty())
+                    System.out.println("######## refreshing components of '" + toRefresh.keySet().toString() + "' #########");
+
+                //refresh annotations
+                toRefresh.forEach((k, v) -> {
+                    try {
+                        final FormulaResult fr = projectSpace().getFormulaResult(k, v);
+                        formulaResultCache.get(k).setAnnotationsFrom(fr);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
 
                 //return updated an sorted formula results
                 return formulaResultCache.values().stream()
@@ -121,7 +128,7 @@ public class Instance {
     public synchronized void updateCompound(CompoundContainer container, Class<? extends DataAnnotation>... components) {
         try {
             updateAnnotations(compoundCache, container, components);
-            getProjectSpace().updateCompound(compoundCache, components);
+            projectSpace().updateCompound(compoundCache, components);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -136,7 +143,7 @@ public class Instance {
             //refresh cache to actual object state?
             final FormulaResult rs = formulaResultCache.get(result.getId());
             updateAnnotations(rs, result, components);
-            getProjectSpace().updateFormulaResult(rs, components);
+            projectSpace().updateFormulaResult(rs, components);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -186,6 +193,12 @@ public class Instance {
                 formulaResultCache.get(id).removeAnnotation(comp);
     }
 
+    public synchronized Optional<FormulaResult> newFormulaResultWithUniqueId(FTree tree) {
+        Optional<FormulaResult> frOpt = projectSpace().newFormulaResultWithUniqueId(compoundCache, tree);
+        frOpt.ifPresent(fr -> formulaResultCache.put(fr.getId(), fr));
+        return frOpt;
+    }
+
 
     // static helper methods
     private static <T extends DataAnnotation> void updateAnnotations(final Annotated<T> toRefresh, final Annotated<T> refresher, final Class<? extends DataAnnotation>... components) {
@@ -196,10 +209,5 @@ public class Instance {
                     toRefresh.setAnnotation(k, v);
             });
         }
-    }
-
-    public synchronized void newFormulaResultWithUniqueId(FTree tree) {
-        getProjectSpace().newFormulaResultWithUniqueId(compoundCache, tree).
-                ifPresent(fr -> formulaResultCache.put(fr.getId(), fr));
     }
 }

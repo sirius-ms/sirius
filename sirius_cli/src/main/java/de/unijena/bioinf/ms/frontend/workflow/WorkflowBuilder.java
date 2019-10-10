@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
-import de.unijena.bioinf.ms.frontend.PreprocessingTool;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
 import de.unijena.bioinf.ms.frontend.subtools.SingeltonTool;

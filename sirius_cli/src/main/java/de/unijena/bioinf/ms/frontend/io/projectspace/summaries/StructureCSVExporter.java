@@ -16,7 +16,7 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.bioinf.babelms.projectspace.summaries;
+package de.unijena.bioinf.ms.frontend.io.projectspace.summaries;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Collections2;

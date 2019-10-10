@@ -1,12 +1,12 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.babelms.ProjectSpaceManager;
-import de.unijena.bioinf.babelms.projectspace.summaries.FormulaSummaryWriter;
-import de.unijena.bioinf.babelms.projectspace.summaries.StructureSummaryWriter;
-import de.unijena.bioinf.babelms.projectspace.summaries.mztab.MztabMExporter;
+import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.FormulaSummaryWriter;
+import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.StructureSummaryWriter;
+import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.mztab.MztabMExporter;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
-import de.unijena.bioinf.ms.frontend.subtools.Instance;
+import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
@@ -96,15 +96,14 @@ public class ToolChainWorkflow implements Workflow {
 //                System.out.println("Summaries are currently disabled!");
 //                iteratorSource.forEach(it -> it.getExperiment().setAnnotation(RecomputeResults.class,null));
                 //use all experiments in workspace to create summaries
-                //todo write summaries
                 LOG.info("Writing summary files...");
-                project.projectSpace().updateSummaries(
+                project.updateSummaries(
                         new FormulaSummaryWriter(),
                         new StructureSummaryWriter(),
                         new MztabMExporter()
                 );
 
-                project.projectSpace().close();
+                project.close();
                 LOG.info("Project-Space successfully written!");
             } catch (IOException e) {
                 LOG.error("Error when closing workspace. Workspace summaries may be incomplete");
