@@ -158,7 +158,7 @@ public class Ms2CosineSegmenter {
     private CosineQuery prepareForCosine(ProcessedSample sample, MergedSpectrum orig) {
         final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum(orig);
         Spectrums.cutByMassThreshold(buffer,orig.getPrecursor().getMass()-20);
-        final double noiseLevel = 2 * sample.ms2NoiseModel.getNoiseLevel(orig.getScans().get(0).getIndex(), orig.getScans().get(0).getPrecursor().getMass());
+        final double noiseLevel = sample.ms2NoiseModel.getNoiseLevel(orig.getScans().get(0).getIndex(), orig.getScans().get(0).getPrecursor().getMass());
         Spectrums.applyBaseline(buffer, noiseLevel);
         orig.setNoiseLevel(noiseLevel);
         if (buffer.isEmpty()) return null;
