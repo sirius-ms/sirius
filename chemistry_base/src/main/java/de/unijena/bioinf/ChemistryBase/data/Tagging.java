@@ -55,6 +55,7 @@ public final class Tagging implements Ms2ExperimentAnnotation, Iterable<String> 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         Tagging strings = (Tagging) o;
         return labels.equals(strings.labels);
     }

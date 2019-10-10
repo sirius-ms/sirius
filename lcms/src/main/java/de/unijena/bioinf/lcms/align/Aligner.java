@@ -76,8 +76,6 @@ public class Aligner {
                 final FragmentedIon ion = f.features.get(sample);
                 if (Math.abs(ion.getChargeState())>1)
                     continue; // multiple charged ions are not allowed
-                if (ion.getMsMs()==null)
-                    continue; // seems to be gap-filled ion
                 retentionTimes.add(ion.getRetentionTime());
                 if (ion.getMsMsScan()!=null)collision_energies.add(ion.getMsMsScan().getCollisionEnergy());
 
@@ -90,7 +88,10 @@ public class Aligner {
 
                 for (SimpleSpectrum coel : e.getCorrelatedFeatures()) {
                     final int mz0 = (int)Math.round(coel.getMzAt(0));
-                    coeluted.putIfAbsent(mz0, coel);
+                    final SimpleSpectrum bef = coeluted.get(mz0);
+                    if (bef==null || coel.size()>bef.size()) {
+                        coeluted.put(mz0,coel);
+                    }
                 }
                 if (!e.getIonType().isIonizationUnknown())
                     ionTypes.add(e.getIonType());

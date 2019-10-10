@@ -1,7 +1,5 @@
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-
 import java.io.IOException;
 
 public interface ContainerSerializer<S extends ProjectSpaceContainerId, T extends ProjectSpaceContainer<S>> {

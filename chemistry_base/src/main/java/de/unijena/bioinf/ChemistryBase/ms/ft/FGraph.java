@@ -30,12 +30,14 @@ public class FGraph extends AbstractFragmentationGraph {
     public FGraph() {
         super();
         this.pseudoRoot = addFragment(MolecularFormula.emptyFormula(), new Charge(0));
+        this.pseudoRoot.setColor(-1); //pseudo root must not correspond to any peak.
     }
 
     public FGraph(FGraph copy) {
         super(copy);
         this.pseudoRoot = fragments.get(0);
         assert pseudoRoot.isRoot();
+        assert pseudoRoot.getColor()==-1;
     }
 
     @Override

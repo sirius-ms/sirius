@@ -8,10 +8,8 @@ import de.unijena.bioinf.io.lcms.MzXMLParser;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.MemoryFileStorage;
 import de.unijena.bioinf.lcms.ProcessedSample;
-import de.unijena.bioinf.lcms.align.AlignedFeatures;
 import de.unijena.bioinf.lcms.align.Cluster;
 import de.unijena.bioinf.lcms.debuggui.Gradient;
-import de.unijena.bioinf.lcms.ionidentity.IonNetwork;
 import de.unijena.bioinf.lcms.peakshape.GaussianShape;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
 import de.unijena.bioinf.lcms.quality.Quality;
@@ -20,7 +18,6 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
@@ -159,7 +156,6 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                         if (!ionTypes.isEmpty()) {
                             ParameterConfig parameterConfig = PropertyManager.DEFAULTS.newIndependentInstance("LCMS-" + experiment.getName());
                             parameterConfig.changeConfig("AdductSettings.enforced", Joiner.on(',').join(ionTypes));
-                            parameterConfig.changeConfig("PossibleAdducts", Joiner.on(',').join(ionTypes));
                             final MsFileConfig config = new MsFileConfig(parameterConfig);
                             experiment.setAnnotation(MsFileConfig.class, config);
                         }
@@ -237,7 +233,6 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
     }
 
     public static void main(String[] args) {
-
         final File mzxmlFile = new File(
                 //"/home/kaidu/analysis/example"
                 "/home/kaidu/analysis/canopus/mice/raw/cecum"
@@ -307,7 +302,6 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
         }
 
     }
-
     private static void addOrderedSampleNames(Cluster c, List<String> sampleNames) {
         if (c.getLeft()==null && c.getRight()==null) {
             sampleNames.addAll(c.getMergedSamples().stream().map(x->x.run.getIdentifier()).sorted().collect(Collectors.toList()));

@@ -85,7 +85,7 @@ public final class MassTrace {
         return trace.size();
     }
 
-    public class Segment {
+    public static class Segment {
 
         protected final int apex;
         protected final int start,end;

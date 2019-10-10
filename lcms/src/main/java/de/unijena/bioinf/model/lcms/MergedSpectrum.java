@@ -1,5 +1,6 @@
 package de.unijena.bioinf.model.lcms;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.*;
@@ -52,7 +53,7 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
     }
 
     public double totalTic() {
-        return Spectrums.calculateTIC(this);
+        return Spectrums.calculateTIC(this, Range.closed(0d,precursor.getMass()-20), noiseLevel);
     }
 
     public Precursor getPrecursor() {
@@ -66,9 +67,11 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
             int min = (int)Math.ceil(n*0.2);
             final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
             for (MergedPeak p : peaks) {
+                if (p.getMass() > (this.precursor.getMass()+10))
+                    continue;
                 if (p.getSourcePeaks().length >= min) {
                     buf.addPeak(p);
-                } else {
+                } else if (p.getIntensity() > 2*noiseLevel) {
                     for (ScanPoint q : p.getSourcePeaks()) {
                         if (q.getScanNumber()==mostIntensive) {
                             buf.addPeak(p);
@@ -77,19 +80,19 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
                     }
                 }
             }
-            Spectrums.applyBaseline(buf, noiseLevel);
             return new SimpleSpectrum(buf);
         } else {
             final SimpleMutableSpectrum buf = new SimpleMutableSpectrum(this);
-            Spectrums.applyBaseline(buf, noiseLevel);
+            Spectrums.applyBaseline(buf, 2*noiseLevel);
+            Spectrums.cutByMassThreshold(buf,precursor.getMass()-20);
             return new SimpleSpectrum(buf);
         }
     }
 
-    public Quality getQuality() {
+    public Quality getQuality(SimpleSpectrum mergedSpectrum) {
         int peaksAboveNoise = 0;
-        for (int k=0; k < peaks.size(); ++k) {
-            if (peaks.get(k).getMass() < (getPrecursor().getMass()-20) && peaks.get(k).getIntensity() >= noiseLevel*5)
+        for (int k=0; k < mergedSpectrum.size(); ++k) {
+            if (mergedSpectrum.getMzAt(k) < (getPrecursor().getMass()-20) && mergedSpectrum.getIntensityAt(k) >= noiseLevel*3)
                 ++peaksAboveNoise;
         }
         if (peaksAboveNoise >= 5) return Quality.GOOD;

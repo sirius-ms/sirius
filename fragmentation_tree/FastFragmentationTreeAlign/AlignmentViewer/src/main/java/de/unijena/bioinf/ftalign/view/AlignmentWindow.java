@@ -219,7 +219,7 @@ public class AlignmentWindow extends JPanel {
                 private double align(DataElement a, DataElement b) {
                     final double value = new DPSparseTreeAlign<Fragment>(new StandardScoring(true), true, a.getTree().getRoot(),
                             b.getTree().getRoot(),
-                            FTree.treeAdapter()).compute();
+                            FTree.treeAdapterStatic()).compute();
                     return new TreeSizeNormalizer(0.5d).normalize(a.getTree(), b.getTree(), new StandardScoring(true), (float) value);
                 }
 
@@ -290,7 +290,7 @@ public class AlignmentWindow extends JPanel {
             System.out.println("START COMPUTING");
             final Scoring<Fragment> scoring = getScoring();
             final DPMultiJoin<Fragment> dp = new DPMultiJoin<Fragment>(scoring, getNumberOfJoins(),
-                    pair.getLeft().getTree().getRoot(), pair.getRight().getTree().getRoot(), FTree.treeAdapter());
+                    pair.getLeft().getTree().getRoot(), pair.getRight().getTree().getRoot(), FTree.treeAdapterStatic());
             this.score = dp.compute();
             if (params.normalize) {
                 this.score = (float) new TreeSizeNormalizer(0.5d).normalize(pair.getLeft().getTree(),
@@ -299,7 +299,7 @@ public class AlignmentWindow extends JPanel {
             if (score == 0) return getSvgFromDot("strict digraph {\nv1 [label=\"Empty Alignment\"];\n}");
             if (isCancelled()) return null;
             final ByteArrayOutputStream bout = new ByteArrayOutputStream(1024);
-            final AlignmentTreeBacktrace<Fragment> backtrace = new AlignmentTreeBacktrace<Fragment>(FTree.treeAdapter());
+            final AlignmentTreeBacktrace<Fragment> backtrace = new AlignmentTreeBacktrace<Fragment>(FTree.treeAdapterStatic());
             dp.backtrace(backtrace);
             if (isCancelled()) return null;
             final AlignmentTree<Fragment> alignment = backtrace.getAlignmentTree();

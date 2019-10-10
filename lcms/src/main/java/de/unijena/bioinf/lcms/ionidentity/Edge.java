@@ -6,7 +6,6 @@ import de.unijena.bioinf.lcms.align.AlignedFeatures;
 import de.unijena.bioinf.model.lcms.CorrelationGroup;
 import de.unijena.bioinf.model.lcms.IonGroup;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;

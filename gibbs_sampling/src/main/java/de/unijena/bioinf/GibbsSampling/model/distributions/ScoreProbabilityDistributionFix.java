@@ -3,8 +3,6 @@ package de.unijena.bioinf.GibbsSampling.model.distributions;
 import de.unijena.bioinf.GibbsSampling.model.Candidate;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
 
-import java.util.Arrays;
-
 public class ScoreProbabilityDistributionFix<C extends Candidate<?>> extends ScoreProbabilityDistributionEstimator<C> {
 
     /**

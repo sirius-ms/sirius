@@ -4,8 +4,19 @@ import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 
 public final class TreeStatistics implements TreeAnnotation {
 
+    /**
+     * an intensity ratio: intensity summed over all peaks explained by the tree normalized by total intensity. ignores FT root and artificial peaks
+     */
     protected final double explainedIntensity;
+
+    /**
+     * an intensity ratio: intensity summed over all peaks explained by the tree normalized by total intensity of peaks with MF decomposition. ignores FT root and artificial peaks
+     */
     protected final double explainedIntensityOfExplainablePeaks;
+
+    /**
+     * ratio of explained and total number of peaks. ignores FT root and artificial peaks
+     */
     protected final double ratioOfExplainedPeaks;
 
     private final static TreeStatistics NONE = new TreeStatistics();
