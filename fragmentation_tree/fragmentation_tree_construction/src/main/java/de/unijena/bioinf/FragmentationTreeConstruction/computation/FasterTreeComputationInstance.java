@@ -411,7 +411,8 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     private void checkTimeout() {
         final long time = System.currentTimeMillis();
         final int elapsedTime = (int) ((time - startTime) / 1000);
-        restTime = Math.min(restTime, secondsPerInstance - elapsedTime);
+        final int min = Math.min(restTime, secondsPerInstance - elapsedTime);
+        restTime = min;
         if (restTime <= 0) throw new TimeoutException("FasterTreeComputationInstance canceled by timeout!");
     }
 
