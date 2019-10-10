@@ -11,11 +11,6 @@ import java.io.InputStream;
  */
 public class SpectrumBinaryReader {
 
-    public static SimpleSpectrum[] readSpectra(InputStream in) throws IOException {
-        final DataInputStream instream = new DataInputStream(in);
-        return readSpectra(in);
-    }
-
     public static SimpleSpectrum[] readSpectra(DataInputStream in) throws IOException {
         final SimpleSpectrum[] spectra = new SimpleSpectrum[in.readInt()];
         for (int i=0; i < spectra.length; ++i) {
