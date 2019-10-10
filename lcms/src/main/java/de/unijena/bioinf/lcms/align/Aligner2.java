@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms.align;
 
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -14,6 +15,7 @@ import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
+import org.apache.commons.math3.special.Erf;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -172,6 +174,23 @@ public class Aligner2 {
         final double gamma = 1d/(2*retentionTimeError*retentionTimeError);
         final double retentionTimeScore = Math.exp(-gamma * (f.rt - rightRt)*(f.rt - rightRt));
 
+        // isotope score
+        double isotopeScore = 1d;
+        {
+            if (ion.getIsotopes().size()>=2) {
+                isotopeScore=0d;
+                int count = 0;
+                for (FragmentedIon ia : f.features.values()) {
+                    if (ia.getIsotopes().size()>=2) {
+                        isotopeScore += scoreIsotopes(ion, ia);
+                        ++count;
+                    }
+                }
+                isotopeScore /= count;
+                isotopeScore = Math.exp(isotopeScore);
+            }
+        }
+
         double finalScore;
         if (f.getRepresentativeIon()!=null && f.getRepresentativeIon().getMsMs()!=null && ion.getMsMs()!=null) {
             SpectralSimilarity cosineScore = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(dev)).cosineProduct(f.getRepresentativeIon().getMsMs(), ion.getMsMs());
@@ -189,9 +208,43 @@ public class Aligner2 {
         } else {
             finalScore = peakShapeScore*peakHeightScore*retentionTimeScore;
         }
+        finalScore *= isotopeScore;
         if (finalScore < 1e-10) return 0f;
         finalScore += intensityScore;
         return (float)finalScore;
+    }
+
+    private double scoreIsotopes(FragmentedIon a, FragmentedIon b) {
+        SimpleSpectrum sa = a.getIsotopesAsSpectrum();
+        SimpleSpectrum sb = b.getIsotopesAsSpectrum();
+        final double dev = new Deviation(8).absoluteFor(Math.max(a.getMass(),b.getMass()));
+        int n = Math.min(sa.size(),sb.size());
+        final double[] scores = new double[n];
+        double score = 0d;
+        final double sigmaA = 0.02, sigmaR = 0.08;
+        double ia = sa.getIntensityAt(0), ib = sb.getIntensityAt(0);
+        for (int k=1; k < n; ++k) {
+            final double diff = Math.abs((sa.getMzAt(k)-sa.getMzAt(0))-(sb.getMzAt(k)-sb.getMzAt(0)));
+            scores[k] += Math.log(Erf.erfc(Math.abs(diff)/(Math.sqrt(2)*dev)));
+            final double delta = sa.getIntensityAt(k)-sb.getIntensityAt(k);
+            final double mi = Math.max(sa.getIntensityAt(k),sb.getIntensityAt(k));
+            scores[k] += Math.log(Math.exp(-(delta*delta)/(2*(sigmaA*sigmaA + mi*mi*sigmaR*sigmaR)))/(2*Math.PI*mi*sigmaR*sigmaR));
+            final double sigma = mi*2*sigmaR + 2*sigmaA;
+            scores[k] -= Math.log(Math.exp(-(sigma*sigma)/(2*(sigmaA*sigmaA + mi*mi*sigmaR*sigmaR)))/(2*Math.PI*mi*sigmaR*sigmaR));
+        }
+        double mis = 0d;
+        for (int k=n; k < sa.size(); ++k) {
+            mis += Math.log(1-sa.getIntensityAt(k));
+        }
+        for (int k=n; k < sb.size(); ++k) {
+            mis += Math.log(1-sb.getIntensityAt(k));
+        }
+        for (int k=n-1; k >= 0; --k) {
+            scores[k] += mis;
+            mis += Math.log(1-sa.getIntensityAt(k));
+            mis += Math.log(1-sb.getIntensityAt(k));
+        }
+        return Arrays.stream(scores).max().orElse(1d);
     }
 
     private AlignedFeatures[] rejoin(BasicMasterJJob<Cluster> basicMasterJJob, AlignedFeatures[] features) {
