@@ -224,11 +224,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             }
         }
 
+        final SpectralRecalibration recalibration = input.getAnnotation(SpectralRecalibration.class,SpectralRecalibration::none);
+
         int j = 0;
         for (ProcessedPeak peak : processedPeaks.subList(0, processedPeaks.size() - 1)) {
             peak.setIndex(j++);
             final List<Decomposition> decompositions = new ArrayList<>();
-            final double mz = peak.getMass();
+            final double mz = recalibration.recalibrate(peak);
             for (Ionization ion : ionModeSet) {
                 final double mass = ion.subtractFromMass(mz);
                 if (mass > 0) {
@@ -254,7 +256,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         assert parentPeak == processedPeaks.get(processedPeaks.size() - 1);
         // important: for each two peaks which are within 2*massrange:
         //  => make decomposition list disjoint
-        final SpectralRecalibration recalibration = input.getAnnotation(SpectralRecalibration.class, SpectralRecalibration::none);
         final double[] recalibrated = new double[processedPeaks.size()];
         for (int i=0; i < recalibrated.length; ++i) recalibrated[i] = recalibration.recalibrate(input.getMergedPeaks().get(i));
         final Deviation window = fragmentDeviation.multiply(2);
@@ -360,6 +361,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                     int k = 0;
                     for (DecompositionScorer<?> scorer : decompositionScorers) {
                         score += ((DecompositionScorer<Object>) scorer).score(f.getCandidate(),f.getIon(), processedPeaks.get(i), input, preparations.get(k++));
+                        assert Double.isFinite(score) : scorer.getClass().getSimpleName();
                     }
                     scored.add(new Decomposition(f.getCandidate(),f.getIon(), score));
                 }
@@ -1049,8 +1051,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             // add the score of the loss
             if (!u.isRoot()) {
                 for (int i = 0; i < lossScorers.length; ++i) {
-                    if (!isArtificial || lossScorers[i].processArtificialEdges())
+                    if (!isArtificial || lossScorers[i].processArtificialEdges()) {
                         score += lossScorers[i].score(loss, input, precomputeds[i]);
+                        assert !Double.isInfinite(score) : lossScorers[i].getClass().getSimpleName();
+                    }
                 }
             }
             // add score of the fragment

@@ -80,7 +80,7 @@ public class CompoundQuality implements Ms2ExperimentAnnotation  {
      * @return true if only Good flag is contained or nothing is known about quality.
      */
     public boolean isNotBadQuality(){
-        return flags.size()==0 || (flags.size()==1 && (flags.contains(CompoundQualityFlag.Good) || flags.contains(CompoundQualityFlag.UNKNOWN)));
+        return flags.size()==0 || flags.contains(CompoundQualityFlag.Good) || (flags.size()==1 && (flags.contains(CompoundQualityFlag.UNKNOWN)));
     }
 
     public CompoundQuality updateQuality(CompoundQualityFlag flag){
