@@ -47,7 +47,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
             try {
                 Hydrogen = parse("H");
             } catch (UnknownElementException e) {
-                new RuntimeException();
+                throw new RuntimeException();
             }
         }
         return Hydrogen;
