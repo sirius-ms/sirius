@@ -1,8 +1,8 @@
 package de.unijena.bioinf.utils.clustering;
 
-import gnu.trove.list.array.TIntArrayList;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * cluster elements and provides final clusters. clustering is stopped at threshold.
@@ -112,7 +112,7 @@ public class HierarchicalClustering<T> {
     }
 
 
-    private class ClusteringMatrixImplementation implements ClusteringMatrix {
+    private static class ClusteringMatrixImplementation implements ClusteringMatrix {
 
         Distance[][] distances;
 

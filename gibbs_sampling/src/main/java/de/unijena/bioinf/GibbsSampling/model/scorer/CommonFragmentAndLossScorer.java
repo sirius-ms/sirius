@@ -2,13 +2,16 @@ package de.unijena.bioinf.GibbsSampling.model.scorer;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidate> {
     protected TObjectIntHashMap<Ms2Experiment> idxMap;
@@ -387,7 +390,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
     }
 
 
-    class PeakWithExplanation implements Comparable<PeakWithExplanation>{
+    static class PeakWithExplanation implements Comparable<PeakWithExplanation>{
         String[] formulas;
         double mass;
         double bestScore;

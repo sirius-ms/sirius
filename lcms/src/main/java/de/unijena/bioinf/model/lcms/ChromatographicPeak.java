@@ -77,7 +77,7 @@ public interface ChromatographicPeak {
             this.fwhmStart = fwhm.lowerEndpoint();
         }
 
-        public double getIntensity() {
+        public double getApexIntensity() {
             return peak.getIntensityAt(apex);
         }
 
@@ -167,6 +167,10 @@ public interface ChromatographicPeak {
 
         public long getApexRt() {
             return peak.getRetentionTimeAt(apex);
+        }
+
+        public double getApexMass() {
+            return peak.getMzAt(apex);
         }
     }
 

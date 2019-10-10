@@ -48,7 +48,7 @@ public class FTreeMetricsHelper {
         return getExplainedPeaksRatio(tree);
     }
 
-    public double getNumOfExplainedPeaks() {
+    public int getNumOfExplainedPeaks() {
         return getNumOfExplainedPeaks(tree);
     }
 
@@ -56,7 +56,7 @@ public class FTreeMetricsHelper {
         return getExplainedIntensityRatio(tree);
     }
 
-    public double getNumberOfExplainablePeaks() {
+    public int getNumberOfExplainablePeaks() {
         return getNumberOfExplainablePeaks(tree);
     }
 
@@ -100,12 +100,19 @@ public class FTreeMetricsHelper {
         return tree.getAnnotationOrThrow(TreeStatistics.class).getExplainedIntensity();
     }
 
-    public static double getNumberOfExplainablePeaks(@NotNull FTree tree) {
-        return getNumOfExplainedPeaks(tree) / getExplainedPeaksRatio(tree);
+    public static int getNumberOfExplainablePeaks(@NotNull FTree tree) {
+        final int numberOfExplainedPeaks = getNumOfExplainedPeaks(tree);
+        if (numberOfExplainedPeaks==0) return 0;
+        return (int)Math.round(getNumOfExplainedPeaks(tree) / getExplainedPeaksRatio(tree));
     }
 
-    public static double getNumOfExplainedPeaks(@NotNull FTree tree) {
-        return tree.numberOfVertices();
+    /**
+     * number of peaks explained by FTree, ignoring the root
+     * @param tree
+     * @return
+     */
+    public static int getNumOfExplainedPeaks(@NotNull FTree tree) {
+        return tree.numberOfVertices()-1;
     }
 
 

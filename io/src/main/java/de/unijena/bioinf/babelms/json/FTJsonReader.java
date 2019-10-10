@@ -266,7 +266,7 @@ public class FTJsonReader implements Parser<FTree> {
     }
 
 
-    private class FragmentInfo {
+    private static class FragmentInfo {
         int id;
         MolecularFormula formula;
         Ionization ionization;

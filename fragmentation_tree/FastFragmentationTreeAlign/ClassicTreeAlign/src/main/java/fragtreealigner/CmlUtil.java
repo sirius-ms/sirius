@@ -17,6 +17,7 @@
  */
 package fragtreealigner;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import fragtreealigner.domainobjects.graphs.FragmentationTree;
 import fragtreealigner.util.Parameters;
 import fragtreealigner.util.Session;

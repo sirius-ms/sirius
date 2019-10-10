@@ -22,9 +22,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
-import static de.unijena.bioinf.ChemistryBase.ms.NormalizationMode.MAX;
-import static de.unijena.bioinf.ChemistryBase.ms.NormalizationMode.SUM;
-import static de.unijena.bioinf.ChemistryBase.ms.NormalizationMode.FIRST;
+import static de.unijena.bioinf.ChemistryBase.ms.NormalizationMode.*;
 
 @HasParameters
 public class Normalization {

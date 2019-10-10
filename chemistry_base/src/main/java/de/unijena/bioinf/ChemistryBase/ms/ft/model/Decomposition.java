@@ -18,6 +18,7 @@ public class Decomposition extends Scored<MolecularFormula> implements DataAnnot
 
     public Decomposition(MolecularFormula candidate, Ionization ion, double score) {
         super(candidate, score);
+        assert Double.isFinite(score);
         this.ion = ion;
     }
 

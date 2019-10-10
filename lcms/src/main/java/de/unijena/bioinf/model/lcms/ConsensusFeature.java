@@ -10,9 +10,9 @@ import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
-import java.io.File;
-import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ConsensusFeature implements Annotated<DataAnnotation> {
 
@@ -36,6 +36,15 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
         this.averageMass = averageMass;
         this.totalIntensity = totalIntensity;
         this.ionType = ionType;
+    }
+
+    private SimpleSpectrum getIsotopes() {
+        for (SimpleSpectrum spec : coelutedPeaks) {
+            if (Math.abs(spec.getMzAt(0)-averageMass)<0.1) {
+                return spec;
+            }
+        }
+        return Spectrums.empty();
     }
 
     public int getFeatureId() {
@@ -94,16 +103,30 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
 
         final TObjectDoubleHashMap<String> map = new TObjectDoubleHashMap<>();
         boolean good = false;
+        boolean goodMs1 = false, goodMs2 = false, goodPeakShape = false;
         for (Feature f : features) {
             map.put(f.origin.identifier, f.intensity);
-            if (f.ms2Quality.betterThan(Quality.DECENT) && f.ms1Quality.betterThan(Quality.DECENT) && f.peakShapeQuality.betterThan(Quality.DECENT)) {
+            if (f.ms2Quality.betterThan(Quality.DECENT) && (f.ms1Quality.betterThan(Quality.DECENT) || f.peakShapeQuality.betterThan(Quality.DECENT)) && (f.ms1Quality.betterThan(Quality.BAD) && f.peakShapeQuality.betterThan(Quality.BAD))) {
                 good = true;
             }
+            if (f.ms2Quality.betterThan(Quality.DECENT))
+                goodMs2 = true;
+            if (f.ms1Quality.betterThan(Quality.DECENT))
+                goodMs1 = true;
+            if (f.peakShapeQuality.betterThan(Quality.DECENT) && (f.ms2Quality.betterThan(Quality.DECENT) || f.ms1Quality.betterThan(Quality.DECENT)))
+                goodPeakShape = true;
         }
 
         exp.setAnnotation(Quantification.class, new Quantification(map));
-        if (good)
-            exp.setAnnotation(CompoundQuality.class, new CompoundQuality(CompoundQuality.CompoundQualityFlag.Good));
+
+        CompoundQuality quality = new CompoundQuality();
+        if (good) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.Good);
+
+        if (!goodMs1) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.BadIsotopePattern);
+        if (!goodMs2) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.FewPeaks);
+        if (!goodPeakShape) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.BadPeakShape);
+
+        exp.setAnnotation(CompoundQuality.class, quality);
 
         return exp;
     }

@@ -96,14 +96,14 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
         String format(Ms2Experiment experimentResult);
     }
 
-    private class NameFormat implements FormatString {
+    private static class NameFormat implements FormatString {
         @Override
         public String format(Ms2Experiment experimentResult) {
             return simplify(experimentResult.getName());
         }
     }
 
-    private class FilenameFormat implements FormatString {
+    private static class FilenameFormat implements FormatString {
         @Override
         public String format(Ms2Experiment experimentResult) {
             if (experimentResult.getSource() == null)
@@ -112,7 +112,7 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
         }
     }
 
-    private class FixedString implements FormatString {
+    private static class FixedString implements FormatString {
         private String string;
 
         FixedString(String string){
@@ -125,7 +125,7 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
         }
     }
 
-    private class AnnotationString implements FormatString {
+    private static class AnnotationString implements FormatString {
         private String annotation;
 
         public AnnotationString(String annotation) {

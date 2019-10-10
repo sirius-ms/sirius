@@ -7,9 +7,6 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.sirius.ProcessedInput;
 
-import java.util.Arrays;
-import java.util.HashSet;
-
 //todo do we also adjust this for M+K ?
 public class AdductSwitchLossScorer implements LossScorer<Object> {
 

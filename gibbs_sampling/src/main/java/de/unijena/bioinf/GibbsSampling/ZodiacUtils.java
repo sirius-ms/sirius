@@ -411,8 +411,7 @@ public class ZodiacUtils {
                     final PrecursorIonType ionType = adductString==null?null: PeriodicTable.getInstance().ionByName(adductString);
                     final double cosine = Double.parseDouble(cosineString);
                     final int sharedPeaks = parseIntegerOrThrow(sharePeaksString);
-                    LibraryHitQuality quality = LibraryHitQuality.valueOf(qualityString);
-                    if (quality==null) quality = LibraryHitQuality.Unknown;
+                    LibraryHitQuality quality = LibraryHitQuality.valueOf(qualityString); // never null
                     double libMz;
                     if (libMzString != null) libMz = Double.parseDouble(libMzString);
                     else if (ionType!=null) libMz = ionType.neutralMassToPrecursorMass(formula.getMass());
@@ -477,7 +476,7 @@ public class ZodiacUtils {
         if (formulaString!=null && formulaString.length()>0) return MolecularFormula.parseOrThrow(formulaString);
 
         MolecularFormula formula = null;
-        if (inchi!=null && isInchi(inchi)){
+        if (isInchi(inchi)){
             try {
                 formula = new InChI(null, inchi).extractFormula();
             } catch (UnknownElementException e) {
@@ -684,7 +683,7 @@ public class ZodiacUtils {
         if (result.length>0){
             Ms2Experiment experiment = result[0].getCandidate().getExperiment();
 
-            CompoundQuality compoundQuality = experiment.getAnnotation(CompoundQuality.class, null);
+            CompoundQuality compoundQuality = experiment.getAnnotationOrNull(CompoundQuality.class);
             precursorMass = experiment.getIonMass();
             if (compoundQuality!=null) qualityString = compoundQuality.toString();
         }

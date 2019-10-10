@@ -1,10 +1,7 @@
 package de.unijena.bioinf.babelms.projectspace;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceIO;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 
-import java.io.File;
 import java.io.IOException;
 
 public class ProjectSpaceTest {

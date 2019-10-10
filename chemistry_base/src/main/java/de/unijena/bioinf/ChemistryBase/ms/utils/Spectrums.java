@@ -703,11 +703,7 @@ public class Spectrums {
                 double diffAdductMass = addedIT.getIonization().getMass() + addedIT.getModificationMass() - (removedIT.getModificationMass() + removedIT.getIonization().getMass());
                 int idx = Spectrums.binarySearch(spectrum, ionMass + diffAdductMass, deviation);
                 if (idx < 0) continue; // no corresponding mass found;
-                Set<PrecursorIonType> addedList = adductDiffs.get(removedIT);
-                if (addedList == null) {
-                    addedList = new HashSet<>();
-                    adductDiffs.put(removedIT, addedList);
-                }
+                Set<PrecursorIonType> addedList = adductDiffs.computeIfAbsent(removedIT, k -> new HashSet<>());
                 addedList.add(addedIT);
             }
         }
@@ -730,6 +726,15 @@ public class Spectrums {
     public static <P extends Peak,S extends Spectrum<P>>double calculateTIC(S spec) {
         double intens = 0d;
         for (int k=0; k < spec.size(); ++k) {
+            intens += spec.getIntensityAt(k);
+        }
+        return intens;
+    }
+
+    public static <P extends Peak,S extends Spectrum<P>>double calculateTIC(S spec, Range<Double> massRange, double intensityBaseline) {
+        double intens = 0d;
+        for (int k=0; k < spec.size(); ++k) {
+            if (spec.getIntensityAt(k)>=intensityBaseline && massRange.contains(spec.getMzAt(k)))
             intens += spec.getIntensityAt(k);
         }
         return intens;

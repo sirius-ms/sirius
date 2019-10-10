@@ -24,7 +24,6 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;

@@ -18,7 +18,6 @@ Timeout=de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout
 AdductSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings
 ForbidRecalibration=de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration
 FormulaSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings
-PossibleAdducts=de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts
 NumberOfCandidates=de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates
 
 ms1=de.unijena.bioinf.IsotopePatternAnalysis.IsotopicIntensitySettings

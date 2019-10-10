@@ -1,7 +1,6 @@
 package de.unijena.bioinf.passatutto;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 
 import java.util.ArrayList;
 import java.util.List;

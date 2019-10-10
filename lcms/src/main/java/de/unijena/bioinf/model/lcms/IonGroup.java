@@ -1,5 +1,7 @@
 package de.unijena.bioinf.model.lcms;
 
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.quality.Quality;
 
 import java.util.Arrays;
@@ -10,6 +12,7 @@ public class IonGroup {
 
     protected ChromatographicPeak peak;
     protected List<CorrelationGroup> isotopes;
+    protected SimpleSpectrum isotopeSpectrum;
     protected IonAnnotation ionAnnotation;
     protected int chargeState;
     protected final ChromatographicPeak.Segment segment;
@@ -30,6 +33,11 @@ public class IonGroup {
 
     public List<CorrelationGroup> getIsotopes() {
         return isotopes;
+    }
+
+    public SimpleSpectrum getIsotopesAsSpectrum() {
+        if (isotopeSpectrum==null) isotopeSpectrum = new SimpleSpectrum(LCMSProccessingInstance.toIsotopeSpectrum(this,getMass()));
+        return isotopeSpectrum;
     }
 
     public void addIsotopes(List<CorrelationGroup> correlatedPeaks) {
@@ -66,8 +74,8 @@ public class IonGroup {
     }
 
     public Quality getMsQuality() {
-        if (isotopes.size()>=3) return Quality.GOOD;
-        if (isotopes.size()>=2) return Quality.DECENT;
+        if (isotopes.size()>=2) return Quality.GOOD;
+        if (isotopes.size()>=1) return Quality.DECENT;
         return Quality.BAD;
     }
 

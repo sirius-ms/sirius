@@ -5,8 +5,6 @@
 
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.GibbsSampling.model.EdgeFilter;
-import de.unijena.bioinf.GibbsSampling.model.Graph;
 import de.unijena.bioinf.jjobs.MasterJJob;
 
 import java.util.ArrayList;
@@ -65,7 +63,7 @@ public class LocalEdgeFilter implements EdgeFilter {
         throw new NoSuchMethodError("not implemented");
     }
 
-    protected class WeightedEdge implements Comparable<LocalEdgeFilter.WeightedEdge> {
+    protected static class WeightedEdge implements Comparable<LocalEdgeFilter.WeightedEdge> {
         public final int index1;
         public final int index2;
         public final double weight;

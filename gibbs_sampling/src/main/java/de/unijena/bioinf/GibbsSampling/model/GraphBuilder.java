@@ -182,12 +182,12 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
             jobs.add(job);
             submitSubJob(job);
         }
-        LOG().debug("running "+jobs.size()+" workers to compute edges");
+        LOG().info("running "+jobs.size()+" workers to compute edges");
 
         for (BasicJJob job : jobs) {
             job.awaitResult();
         }
-        LOG().debug("finished computing edges after "+(System.currentTimeMillis()-start));
+        LOG().info("finished computing edges after "+(System.currentTimeMillis()-start));
 
     }
 

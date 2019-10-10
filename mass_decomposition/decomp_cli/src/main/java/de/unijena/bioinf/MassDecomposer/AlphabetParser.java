@@ -21,7 +21,6 @@ package de.unijena.bioinf.MassDecomposer;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.MassDecomposer.Interval;
 
 import java.util.HashMap;
 import java.util.regex.Matcher;

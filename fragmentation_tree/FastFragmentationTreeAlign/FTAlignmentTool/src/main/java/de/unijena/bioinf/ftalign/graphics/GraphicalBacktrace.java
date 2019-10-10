@@ -132,8 +132,8 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
         dotFile.add("node[odering=out]");
 
         dotFile.add("{rank=min");
-        dotFile.add(makeNode(leftNodes.get(left.getTree().getRoot()) + "Left", leftNodesLabel.get(left.getTree().getRoot()), null, null));
-        dotFile.add(makeNode(rightNodes.get(right.getTree().getRoot()) + "Right", rightNodesLabel.get(right.getTree().getRoot()), null, null));
+        dotFile.add(makeNode(leftNodes.get(left.getTree().getRoot().getFormula()) + "Left", leftNodesLabel.get(left.getTree().getRoot().getFormula()), null, null));
+        dotFile.add(makeNode(rightNodes.get(right.getTree().getRoot().getFormula()) + "Right", rightNodesLabel.get(right.getTree().getRoot().getFormula()), null, null));
         dotFile.add("}");
 
 
@@ -533,7 +533,7 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
         return true;
     }
 
-    private class FormulaEdge {
+    private static class FormulaEdge {
         private MolecularFormula formula1;
         private MolecularFormula formula2;
 
@@ -562,7 +562,7 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
 
     }
 
-    private class Color {
+    private static class Color {
         private final static String firstColor = "ff0000";
         private final int stepsize = 11983725;
         private final int maxValue = 16777216;
@@ -583,7 +583,7 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
         }
     }
 
-    private class FragmentationTreeWrapper {
+    private static class FragmentationTreeWrapper {
         private String color;
         private String shape;
         private double edgeLength;

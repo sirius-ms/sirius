@@ -17,6 +17,8 @@
  */
 package fragtreealigner.util;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;

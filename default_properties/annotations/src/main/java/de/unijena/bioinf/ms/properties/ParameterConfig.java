@@ -484,7 +484,7 @@ public final class ParameterConfig {
         TypeVariable<Class<T>> generic = targetElementType.getTypeParameters() != null && targetElementType.getTypeParameters().length > 0
                 ? targetElementType.getTypeParameters()[0]
                 : null;
-        final String[] stringValues = Arrays.stream(values.split(",")).map(String::trim).toArray(String[]::new);
+        final String[] stringValues = Arrays.stream(values.split(",")).map(String::trim).filter(it -> !it.isEmpty()).toArray(String[]::new);
         final T[] objectValues = (T[]) Array.newInstance(targetElementType, stringValues.length);
         for (int i = 0; i < stringValues.length; i++)
             objectValues[i] = convertStringToType(targetElementType, generic, stringValues[i]);

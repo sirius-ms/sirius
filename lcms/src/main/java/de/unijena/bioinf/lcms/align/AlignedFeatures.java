@@ -1,13 +1,10 @@
 package de.unijena.bioinf.lcms.align;
 
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.model.lcms.FragmentedIon;
 import de.unijena.bioinf.model.lcms.Scan;
 import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.map.hash.TObjectDoubleHashMap;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 

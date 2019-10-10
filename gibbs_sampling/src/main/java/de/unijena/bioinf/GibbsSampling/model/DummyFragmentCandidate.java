@@ -4,8 +4,6 @@ import com.google.common.collect.Lists;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 
-import java.util.Collections;
-
 public class DummyFragmentCandidate extends FragmentsCandidate{
 
     private int numberOfIgnoredInstances;

@@ -49,7 +49,7 @@ public class TreeMotifDB {
                 }
             }
             String name = "";
-            if (tree.getAnnotation(DataSource.class)!=null)
+            if (tree.hasAnnotation(DataSource.class))
                 name = tree.getAnnotationOrThrow(DataSource.class).getUrl().getFile();
             final long[] fg = frags.toArray();
             final long[] rl = rls.toArray();
