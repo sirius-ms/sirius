@@ -96,10 +96,13 @@ public class Instance {
                 return returnList;
             } else {
                 Class[] missingComps = Arrays.stream(components).
-                        filter(comp -> formulaResultCache.values().stream().allMatch(r -> r.hasAnnotation(comp))).
+                        filter(comp -> !formulaResultCache.values().stream().allMatch(r -> r.hasAnnotation(comp))).
                         distinct().toArray(Class[]::new);
                 if (missingComps.length > 0) {
-                    final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = getProjectSpace().getFormulaResultsOrderedBy(getID(), rankingScoreType, components);
+                    //reloading missing comps for all formularesults -> can be done more efficiently.
+//                    System.out.println("############# Reloading cache with:  " + Arrays.toString(missingComps) + "  ####################");
+                    final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList =
+                            getProjectSpace().getFormulaResultsOrderedBy(getID(), rankingScoreType, missingComps);
                     returnList.stream().map(SScored::getCandidate).
                             forEach(rs -> formulaResultCache.get(rs.getId()).setAnnotationsFrom(rs));
                 }
