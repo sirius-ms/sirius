@@ -213,7 +213,7 @@ public class LCMSProccessingInstance {
     }
 
     @NotNull
-    private SimpleMutableSpectrum toIsotopeSpectrum(IonGroup ion, double ionMass) {
+    public static SimpleMutableSpectrum toIsotopeSpectrum(IonGroup ion, double ionMass) {
         final SimpleMutableSpectrum isotope = new SimpleMutableSpectrum();
         isotope.addPeak(ionMass, 1.0d);
         eachPeak:
