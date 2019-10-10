@@ -47,7 +47,7 @@ public class ChromatogramCache {
         set.store(peak);
     }
 
-    protected class ChromatographicPeakSet {
+    protected static class ChromatographicPeakSet {
 
         private final ArrayList<ChromatographicPeak> peaks;
 

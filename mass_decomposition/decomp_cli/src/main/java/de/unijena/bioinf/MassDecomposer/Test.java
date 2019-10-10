@@ -1,13 +1,11 @@
 package de.unijena.bioinf.MassDecomposer;
 
-import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 
-import java.util.HashMap;
 import java.util.List;
 
 /**

@@ -17,8 +17,6 @@
  */
 package de.unijena.bioinf.babelms.chemdb;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-
 /**
  * Created by kaidu on 27.03.14.
  */

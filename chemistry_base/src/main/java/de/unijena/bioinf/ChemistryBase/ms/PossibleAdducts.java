@@ -5,7 +5,6 @@ import de.unijena.bioinf.ChemistryBase.chem.IonMode;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
-import de.unijena.bioinf.ms.properties.DefaultProperty;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -14,7 +13,6 @@ import java.util.stream.Collectors;
  * Can be attached to a Ms2Experiment or ProcessedInput. If PrecursorIonType is unknown, CSI:FingerID will use this
  * object and for all different adducts.
  */
-@DefaultProperty
 public final class PossibleAdducts implements Iterable<PrecursorIonType>, Ms2ExperimentAnnotation {
 
     protected final LinkedHashSet<PrecursorIonType> value;
