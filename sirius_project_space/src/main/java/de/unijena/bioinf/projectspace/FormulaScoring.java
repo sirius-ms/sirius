@@ -1,8 +1,8 @@
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;

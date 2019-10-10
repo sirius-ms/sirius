@@ -1,8 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.jobs;
 
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 public class SiriusJobs {

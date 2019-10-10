@@ -1,8 +1,6 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.GibbsSampling.model.Graph;
 import de.unijena.bioinf.jjobs.MasterJJob;
-import gnu.trove.list.array.TIntArrayList;
 
 import java.util.concurrent.ExecutionException;
 

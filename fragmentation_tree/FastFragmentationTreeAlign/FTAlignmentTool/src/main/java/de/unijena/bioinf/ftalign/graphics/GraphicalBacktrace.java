@@ -132,8 +132,8 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
         dotFile.add("node[odering=out]");
 
         dotFile.add("{rank=min");
-        dotFile.add(makeNode(leftNodes.get(left.getTree().getRoot()) + "Left", leftNodesLabel.get(left.getTree().getRoot()), null, null));
-        dotFile.add(makeNode(rightNodes.get(right.getTree().getRoot()) + "Right", rightNodesLabel.get(right.getTree().getRoot()), null, null));
+        dotFile.add(makeNode(leftNodes.get(left.getTree().getRoot().getFormula()) + "Left", leftNodesLabel.get(left.getTree().getRoot().getFormula()), null, null));
+        dotFile.add(makeNode(rightNodes.get(right.getTree().getRoot().getFormula()) + "Right", rightNodesLabel.get(right.getTree().getRoot().getFormula()), null, null));
         dotFile.add("}");
 
 

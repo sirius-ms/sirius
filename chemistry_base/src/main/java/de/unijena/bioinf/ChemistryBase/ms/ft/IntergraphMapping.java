@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
-import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCustomHashMap;
 
 import java.util.Arrays;
