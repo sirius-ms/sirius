@@ -233,7 +233,6 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
     }
 
     public static void main(String[] args) {
-
         final File mzxmlFile = new File(
                 //"/home/kaidu/analysis/example"
                 "/home/kaidu/analysis/canopus/mice/raw/cecum"
@@ -303,7 +302,6 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
         }
 
     }
-
     private static void addOrderedSampleNames(Cluster c, List<String> sampleNames) {
         if (c.getLeft()==null && c.getRight()==null) {
             sampleNames.addAll(c.getMergedSamples().stream().map(x->x.run.getIdentifier()).sorted().collect(Collectors.toList()));

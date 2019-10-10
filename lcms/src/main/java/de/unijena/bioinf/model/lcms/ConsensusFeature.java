@@ -38,6 +38,15 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
         this.ionType = ionType;
     }
 
+    private SimpleSpectrum getIsotopes() {
+        for (SimpleSpectrum spec : coelutedPeaks) {
+            if (Math.abs(spec.getMzAt(0)-averageMass)<0.1) {
+                return spec;
+            }
+        }
+        return Spectrums.empty();
+    }
+
     public int getFeatureId() {
         return featureId;
     }
@@ -94,16 +103,30 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
 
         final TObjectDoubleHashMap<String> map = new TObjectDoubleHashMap<>();
         boolean good = false;
+        boolean goodMs1 = false, goodMs2 = false, goodPeakShape = false;
         for (Feature f : features) {
             map.put(f.origin.identifier, f.intensity);
-            if (f.ms2Quality.betterThan(Quality.DECENT) && f.ms1Quality.betterThan(Quality.DECENT) && f.peakShapeQuality.betterThan(Quality.DECENT)) {
+            if (f.ms2Quality.betterThan(Quality.DECENT) && (f.ms1Quality.betterThan(Quality.DECENT) || f.peakShapeQuality.betterThan(Quality.DECENT)) && (f.ms1Quality.betterThan(Quality.BAD) && f.peakShapeQuality.betterThan(Quality.BAD))) {
                 good = true;
             }
+            if (f.ms2Quality.betterThan(Quality.DECENT))
+                goodMs2 = true;
+            if (f.ms1Quality.betterThan(Quality.DECENT))
+                goodMs1 = true;
+            if (f.peakShapeQuality.betterThan(Quality.DECENT) && (f.ms2Quality.betterThan(Quality.DECENT) || f.ms1Quality.betterThan(Quality.DECENT)))
+                goodPeakShape = true;
         }
 
         exp.setAnnotation(Quantification.class, new Quantification(map));
-        if (good)
-            exp.setAnnotation(CompoundQuality.class, new CompoundQuality(CompoundQuality.CompoundQualityFlag.Good));
+
+        CompoundQuality quality = new CompoundQuality();
+        if (good) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.Good);
+
+        if (!goodMs1) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.BadIsotopePattern);
+        if (!goodMs2) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.FewPeaks);
+        if (!goodPeakShape) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.BadPeakShape);
+
+        exp.setAnnotation(CompoundQuality.class, quality);
 
         return exp;
     }

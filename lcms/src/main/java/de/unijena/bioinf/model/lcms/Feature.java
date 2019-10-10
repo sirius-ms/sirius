@@ -20,7 +20,8 @@ public class Feature implements Annotated<DataAnnotation> {
     protected final LCMSRun origin;
     protected final double mz, intensity;
     protected final ScanPoint[] trace;
-    protected final SimpleSpectrum[] correlatedFeatures;
+    protected final SimpleSpectrum[] correlatedFeatures; // isotopes of ion and all correlated ions
+    protected final SimpleSpectrum isotopes; // isotopes of ion itself
     protected final SimpleSpectrum[] ms2Spectra;
     protected final PrecursorIonType ionType;
     protected final Set<PrecursorIonType> alternativeIonTypes;
@@ -33,12 +34,13 @@ public class Feature implements Annotated<DataAnnotation> {
     // debug
     public ScanPoint[] completeTraceDebug;
 
-    public Feature(LCMSRun origin, double mz, double intensity, ScanPoint[] trace, SimpleSpectrum[] correlatedFeatures, SimpleSpectrum[] ms2Spectra, PrecursorIonType ionType, Set<PrecursorIonType> alternativeIonTypes, UnivariateFunction rtRecalibration,Quality peakShapeQuality, Quality ms1Quality, Quality ms2Quality) {
+    public Feature(LCMSRun origin, double mz, double intensity, ScanPoint[] trace, SimpleSpectrum[] correlatedFeatures, int isotope, SimpleSpectrum[] ms2Spectra, PrecursorIonType ionType, Set<PrecursorIonType> alternativeIonTypes, UnivariateFunction rtRecalibration,Quality peakShapeQuality, Quality ms1Quality, Quality ms2Quality) {
         this.origin = origin;
         this.mz = mz;
         this.intensity = intensity;
         this.trace = trace;
         this.correlatedFeatures = correlatedFeatures;
+        this.isotopes = this.correlatedFeatures[isotope];
         this.ms2Spectra = ms2Spectra;
         this.ionType = ionType;
         this.rtRecalibration = rtRecalibration;

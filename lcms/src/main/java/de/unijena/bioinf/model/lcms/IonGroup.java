@@ -66,8 +66,8 @@ public class IonGroup {
     }
 
     public Quality getMsQuality() {
-        if (isotopes.size()>=3) return Quality.GOOD;
-        if (isotopes.size()>=2) return Quality.DECENT;
+        if (isotopes.size()>=2) return Quality.GOOD;
+        if (isotopes.size()>=1) return Quality.DECENT;
         return Quality.BAD;
     }
 

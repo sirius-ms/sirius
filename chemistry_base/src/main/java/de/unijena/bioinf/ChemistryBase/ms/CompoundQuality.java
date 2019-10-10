@@ -67,7 +67,8 @@ public class CompoundQuality implements Ms2ExperimentAnnotation  {
     }
 
     public static enum CompoundQualityFlag {
-        Good, LowIntensity, NoMS1Peak, FewPeaks, Chimeric, NotMonoisotopicPeak, PoorlyExplained, UNKNOWN;
+        Good, LowIntensity, NoMS1Peak, FewPeaks, Chimeric, NotMonoisotopicPeak, PoorlyExplained, UNKNOWN,
+        BadIsotopePattern, BadPeakShape;
     }
 
     public String toString() {
