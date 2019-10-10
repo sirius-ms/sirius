@@ -65,7 +65,7 @@ public class LocalEdgeFilter implements EdgeFilter {
         throw new NoSuchMethodError("not implemented");
     }
 
-    protected class WeightedEdge implements Comparable<LocalEdgeFilter.WeightedEdge> {
+    protected static class WeightedEdge implements Comparable<LocalEdgeFilter.WeightedEdge> {
         public final int index1;
         public final int index2;
         public final double weight;

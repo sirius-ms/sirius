@@ -533,7 +533,7 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
         return true;
     }
 
-    private class FormulaEdge {
+    private static class FormulaEdge {
         private MolecularFormula formula1;
         private MolecularFormula formula2;
 
@@ -562,7 +562,7 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
 
     }
 
-    private class Color {
+    private static class Color {
         private final static String firstColor = "ff0000";
         private final int stepsize = 11983725;
         private final int maxValue = 16777216;
@@ -583,7 +583,7 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
         }
     }
 
-    private class FragmentationTreeWrapper {
+    private static class FragmentationTreeWrapper {
         private String color;
         private String shape;
         private double edgeLength;

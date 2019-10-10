@@ -387,7 +387,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
     }
 
 
-    class PeakWithExplanation implements Comparable<PeakWithExplanation>{
+    static class PeakWithExplanation implements Comparable<PeakWithExplanation>{
         String[] formulas;
         double mass;
         double bestScore;
