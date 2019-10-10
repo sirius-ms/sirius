@@ -1,12 +1,12 @@
 package de.unijena.bioinf.projectspace;
 
-import com.google.common.io.Files;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 public class ProjectSpaceIO {
     private static final Logger LOG = LoggerFactory.getLogger(ProjectSpaceIO.class);
@@ -32,7 +32,7 @@ public class ProjectSpaceIO {
     }
 
     public SiriusProjectSpace createTemporaryProjectSpace() throws IOException {
-        final File tempFile = Files.createTempDir();
+        final File tempFile = Files.createTempDirectory("-tmp-project-space").toFile();
         final SiriusProjectSpace space = new SiriusProjectSpace(configuration,tempFile);
         space.addProjectSpaceListener(new TemporaryProjectSpaceCleanUp(tempFile));
         space.open();
