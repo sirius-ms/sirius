@@ -15,6 +15,7 @@ import de.unijena.bioinf.lcms.noise.NoiseStatistics;
 import de.unijena.bioinf.lcms.peakshape.CustomPeakShape;
 import de.unijena.bioinf.lcms.peakshape.CustomPeakShapeFitting;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
+import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
@@ -76,7 +77,7 @@ public class LCMSProccessingInstance {
         final SimpleSpectrum spec2 = Spectrums.extractMostIntensivePeaks(spec, 8, 100);
         final Scan scan = new Scan(id, merged.getScans().get(0).getPolarity(),peak.getRetentionTimeAt(segment.getApexIndex()), merged.getScans().get(0).getCollisionEnergy(),spec.size(), Spectrums.calculateTIC(spec), merged.getPrecursor());
         ms2Storage.add(scan, spec);
-        return new FragmentedIon(merged.getScans().get(0).getPolarity(), scan, new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20))).createQueryWithIntensityTransformationNoLoss(spec2, merged.getPrecursor().getMass(), true), merged.getQuality(), peak, segment);
+        return new FragmentedIon(merged.getScans().get(0).getPolarity(), scan, new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20))).createQueryWithIntensityTransformationNoLoss(spec2, merged.getPrecursor().getMass(), true), merged.getQuality(spec), peak, segment);
     }
 
 
@@ -95,11 +96,19 @@ public class LCMSProccessingInstance {
                 // we only consider adducts which are at least 1/5 as likely as the most likely option
                 final double threshold = Arrays.stream(prob).max().orElse(0d)/5d;
                 final HashSet<PrecursorIonType> set = new HashSet<>();
+                boolean unknown = false;
                 for (int k=0; k < types.length; ++k) {
-                    if (prob[k]>=threshold) set.add(types[k]);
+                    if (types[k].isIonizationUnknown()) {
+                        if (prob[k]>=threshold)
+                            unknown=true;
+                    } else {
+                        if (prob[k] >= threshold) {
+                            set.add(types[k]);
+                        }
+                    }
                 }
                 ion.setPossibleAdductTypes(set);
-                if (set.size()==1) ion.setDetectedIonType(set.iterator().next());
+                if (!unknown && set.size()==1) ion.setDetectedIonType(set.iterator().next());
                 else ion.setDetectedIonType(PrecursorIonType.unknown(ion.getPolarity()));
             }
         });
@@ -165,6 +174,19 @@ public class LCMSProccessingInstance {
         final ArrayList<SimpleSpectrum> correlatedFeatures = new ArrayList<>();
         {
             final SimpleMutableSpectrum isotope = toIsotopeSpectrum(ion, ionMass);
+
+            {
+                if (isotope.size() <= 2 && ion.getMsQuality().betterThan(Quality.DECENT)) {
+                    System.err.println("SOMETHING STRANGE IS HAPPENING WITH " + ion);
+                    System.err.println("-------------");
+                    System.out.println(ion.getIsotopes().get(0).getLeftSegment().getApexMass() + "\t"  + ion.getIsotopes().get(0).getLeftSegment().getApexIntensity());
+                    for (CorrelationGroup g : ion.getIsotopes()) {
+                        System.out.println(g.getRightSegment().getApexMass() + "\t"  + g.getRightSegment().getApexIntensity());
+                    }
+                    System.err.println("-------------");
+                }
+            }
+
             correlatedFeatures.add(new SimpleSpectrum(isotope));
             for (CorrelatedIon adduct : ion.getAdducts()) {
                 correlatedFeatures.add(new SimpleSpectrum(toIsotopeSpectrum(adduct.ion, adduct.ion.getPeak().getMzAt(adduct.ion.getPeak().findScanNumber(ion.getSegment().getApexScanNumber())))));
@@ -181,7 +203,7 @@ public class LCMSProccessingInstance {
             fitPeakShape(sample,ion);
 
 
-        final Feature feature = new Feature(sample.run, ionMass, intensity, trace.toArray(new ScanPoint[0]), correlatedFeatures.toArray(new SimpleSpectrum[0]), gapFilled ? new SimpleSpectrum[0] : new SimpleSpectrum[]{ms2Storage.getScan(ion.getMsMsScan())}, ionType, ion.getPossibleAdductTypes(), sample.recalibrationFunction,
+        final Feature feature = new Feature(sample.run, ionMass, intensity, trace.toArray(new ScanPoint[0]), correlatedFeatures.toArray(new SimpleSpectrum[0]), 0,ion.getMsMsScan()==null ? new SimpleSpectrum[0] : new SimpleSpectrum[]{ms2Storage.getScan(ion.getMsMsScan())}, ionType, ion.getPossibleAdductTypes(), sample.recalibrationFunction,
                 ion.getPeakShape().getPeakShapeQuality(), ion.getMsQuality(), ion.getMsMsQuality()
 
                 );
@@ -374,10 +396,6 @@ public class LCMSProccessingInstance {
         BasicJJob<Cluster> clusterJob = new Aligner2(error*5).align(samples);//new Aligner().recalibrateRetentionTimes(this.samples);
         manager.submitJob(clusterJob);
         Cluster cluster = clusterJob.takeResult();
-        double numberOfFeatures = cluster.getFeatures().length;
-        cluster = cluster.deleteRowsWithNoIsotopes();
-        double numberOfFeatures2 = cluster.getFeatures().length;
-        System.out.println("Remove " + (100d - 100d*numberOfFeatures2/numberOfFeatures ) +  " % of the data due to low quality. There are" + cluster.getFeatures().length + " features in total."); System.out.flush();
         error = cluster.estimateError();
         final double errorFromClustering = error;
         System.out.println("Start Gap Filling #1");System.out.flush();
@@ -400,6 +418,7 @@ public class LCMSProccessingInstance {
         clusterJob = new GapFilling().gapFillingInParallel(this, cluster, error, cluster.estimatePeakShapeError(), false);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult();
+
         final double finalError = cluster.estimateError();
 
         System.out.println("########################################");
@@ -410,11 +429,13 @@ public class LCMSProccessingInstance {
         System.out.println("PeakShape Error: " + cluster.estimatePeakShapeError());
         System.out.println("Start Realign #4"); System.out.flush();
         cluster = manager.submitJob(new Aligner2(error).align(samples)).takeResult();
-        int before = cluster.getFeatures().length;
+        double numberOfFeatures = cluster.getFeatures().length;
         cluster = cluster.deleteRowsWithNoMsMs();
-        if (samples.size()>=50) cluster = cluster.deleteRowsWithTooFewEntries(5);
+        cluster = cluster.deleteRowsWithNoIsotopes();
+        double numberOfFeatures2 = cluster.getFeatures().length;
+        System.out.println("Remove " + (100d - 100d*numberOfFeatures2/numberOfFeatures ) +  " % of the data due to low quality. There are" + cluster.getFeatures().length + " features in total."); System.out.flush();
+        if (samples.size()>=50) cluster = cluster.deleteRowsWithTooFewEntries(4);
         int after = cluster.getFeatures().length;
-        System.out.println("Remove " + (after-before) + "features which are low represented in samples.");
         System.out.println("Done."); System.out.flush();
         System.out.println("Total number of features is " + cluster.getFeatures().length);
         return cluster;

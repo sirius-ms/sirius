@@ -82,7 +82,6 @@ public class IonNetwork {
 
     public void gibbsSampling(Assignment assignment) {
         final GibbsSampler sampler = new GibbsSampler();
-        sampler.learnP(this);
         for (IonNode node : nodes) {
             if (node.assignment == null)
                 sampler.sample(node);
