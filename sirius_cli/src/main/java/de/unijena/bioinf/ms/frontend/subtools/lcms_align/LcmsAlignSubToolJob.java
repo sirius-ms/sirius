@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MultipleSources;
 import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
@@ -69,10 +70,14 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
         final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(alignment);
         LOG().info("Gapfilling Done.");
 
+        int totalFeatures=0, goodFeatures=0;
         //save to project space
         for (ConsensusFeature feature : consensusFeatures) {
             final Ms2Experiment experiment = feature.toMs2Experiment();
-
+            ++totalFeatures;
+            if (experiment.getAnnotation(CompoundQuality.class,CompoundQuality::new).isNotBadQuality()) {
+                ++goodFeatures;
+            }
             // set name to common prefix
             // kaidu: this is super slow, so we just ignore the filename
             experiment.setAnnotation(SpectrumFileSource.class, new SpectrumFileSource(sourcelocation.value));
@@ -88,7 +93,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
 
             @NotNull final CompoundContainer compoundContainer = space.newCompoundWithUniqueId(experiment);
         }
-        LOG().info("LCMS-Align done.");
+        LOG().info("LCMS-Align done. " + goodFeatures + " of " + totalFeatures +  " are in qood quality.");
         return space;
     }
 }
