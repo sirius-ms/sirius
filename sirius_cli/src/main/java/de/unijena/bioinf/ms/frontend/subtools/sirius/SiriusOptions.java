@@ -69,7 +69,9 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
 
     @Option(names = "--no-recalibration", description = "Disable Recalibration of input Spectra")
     public void disableRecalibration(boolean disable) throws Exception {
-        defaultConfigOptions.changeOption("ForbidRecalibration", String.valueOf(disable));
+        if (disable){
+            defaultConfigOptions.changeOption("ForbidRecalibration", "FORBIDDEN");
+        }
     }
 
     @Option(names = {"-p", "--profile"}, description = "Name of the configuration profile. Some of the default profiles are: 'qtof', 'orbitrap', 'fticr'.")
