@@ -630,10 +630,17 @@ public class Sirius {
         }
 
         private List<IdentificationResult<SiriusScore>> createIdentificationResults(FasterTreeComputationInstance.FinalResult fr, FasterTreeComputationInstance computationInstance) {
-            final List<IdentificationResult<SiriusScore>> irs = fr.getResults().stream()
+            List<IdentificationResult<SiriusScore>> irs = fr.getResults().stream()
                     .map(tree -> new IdentificationResult<>(tree, new SiriusScore(FTreeMetricsHelper.getSiriusScore(tree))))
                     .sorted(Comparator.reverseOrder())
                     .collect(Collectors.toList());
+
+            final PrecursorIonType ionType = computationInstance.getProcessedInput().getExperimentInformation().getPrecursorIonType();
+
+            if (!ionType.isIonizationUnknown()) {
+                LoggerFactory.getLogger(getClass()).info("Compound has set a fixed Adduct: " + ionType.toString() + ". Transforming trees to Adduct if necessary");
+                irs = irs.stream().map(idr -> IdentificationResult.withPrecursorIonType(idr, ionType)).collect(Collectors.toList());
+            }
 
             return irs;
         }
