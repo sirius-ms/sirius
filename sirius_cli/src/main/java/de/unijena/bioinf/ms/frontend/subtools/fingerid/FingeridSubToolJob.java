@@ -44,7 +44,7 @@ public class FingeridSubToolJob extends InstanceJob {
             return;
         }
 
-        System.out.println("I am FingerID on Experiment " + inst.getID());
+//        System.out.println("I am FingerID on Experiment " + inst.getID());
         invalidateResults(inst);
 
         PredictorTypeAnnotation type = inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class);

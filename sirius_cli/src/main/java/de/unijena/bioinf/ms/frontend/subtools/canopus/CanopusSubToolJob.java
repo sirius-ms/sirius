@@ -24,7 +24,7 @@ public class CanopusSubToolJob extends InstanceJob {
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        System.out.println("I am Canopus on Experiment " + inst);
+//        System.out.println("I am Canopus on Experiment " + inst);
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> input = inst.loadFormulaResults(
                 SiriusScore.class,
                 FormulaScoring.class, FingerprintResult.class, CanopusResult.class);

@@ -101,8 +101,8 @@ public class Instance {
                         toRefresh.put(k, missingComps);
                 });
 
-                if (!toRefresh.isEmpty())
-                    System.out.println("######## refreshing components of '" + toRefresh.keySet().toString() + "' #########");
+//                if (!toRefresh.isEmpty())
+//                    System.out.println("######## refreshing components of '" + toRefresh.keySet().toString() + "' #########");
 
                 //refresh annotations
                 toRefresh.forEach((k, v) -> {
