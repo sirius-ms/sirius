@@ -56,7 +56,7 @@ public class ZodiacSubToolJob extends DataSetJob {
         }
 
         if (instances.stream().anyMatch(it -> isRecompute(it) || (input.containsKey(it.getExperiment()) && !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class)))) {
-            System.out.println("I am ZODIAC and run " + instances.size() + " instances: ");
+//            System.out.println("I am ZODIAC and run " + instances.size() + " instances: ");
 
             Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = input.keySet().stream().collect(Collectors.toMap(k -> k, k -> input.get(k).stream().map(r -> r.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList())));
 
@@ -150,7 +150,7 @@ public class ZodiacSubToolJob extends DataSetJob {
 
             //add score and set new Ranking score
             instances.forEach(inst -> {
-                System.out.println(inst.getID().getDirectoryName());
+//                System.out.println(inst.getID().getDirectoryName());
                 final Map<FTree, ZodiacScore> sTress = scoreResults.get(inst.getExperiment());
                 final List<FormulaResult> formulaResults = input.get(inst.getExperiment());
                 if (formulaResults==null){
@@ -164,7 +164,7 @@ public class ZodiacSubToolJob extends DataSetJob {
                     );
 
                     inst.updateFormulaResult(fr, FormulaScoring.class);
-                    System.out.println(fr.getId().getFormula().toString() + sTress.get(fr.getAnnotationOrThrow(FTree.class)));
+//                    System.out.println(fr.getId().getFormula().toString() + sTress.get(fr.getAnnotationOrThrow(FTree.class)));
                 });
 
                 // set sirius to ranking score

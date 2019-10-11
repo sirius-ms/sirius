@@ -11,7 +11,7 @@ import java.util.Arrays;
 public class ProjectSpaceTest {
 
     public static void main(String[] args) throws IOException {
-        PropertyManager.setProperty("de.unijena.bioinf.fingerid.web.host", "https://www.csi-fingerid.uni-jena.de");
+      /*  PropertyManager.setProperty("de.unijena.bioinf.fingerid.web.host", "https://www.csi-fingerid.uni-jena.de");
         PropertyManager.setProperty("de.unijena.bioinf.fingerid.db.date", "2017-08-28");
         PropertyManager.setProperty("de.unijena.bioinf.sirius.version", "4.1.0-SNAPSHOT");
         PropertyManager.setProperty("de.unijena.bioinf.sirius.build", "666");
@@ -34,6 +34,6 @@ public class ProjectSpaceTest {
         space.registerSummaryWriter(new MztabSummaryWriter());
         space.writeSummaries((cur, max, mess) -> System.out.println((((((double) cur) / (double) max)) * 100d) + "% " + mess));
         space.close();
-        System.out.println("done!");
+        System.out.println("done!");*/
     }
 }

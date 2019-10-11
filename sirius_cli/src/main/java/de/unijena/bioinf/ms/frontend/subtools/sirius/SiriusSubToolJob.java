@@ -33,7 +33,7 @@ public class SiriusSubToolJob extends InstanceJob {
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         final Ms2Experiment exp = inst.getExperiment();
         final CompoundContainer ioC = inst.loadCompoundContainer();
-        System.out.println(new Date() + "\t-> I am Sirius, start computing Experiment " + inst.getID());
+//        System.out.println(new Date() + "\t-> I am Sirius, start computing Experiment " + inst.getID());
 
 
         if (ioC.getResults().isEmpty() || isRecompute(inst)) {
@@ -84,7 +84,7 @@ public class SiriusSubToolJob extends InstanceJob {
 
         } else {
             LOG().info("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
-            System.out.println("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
+//            System.out.println("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
         }
     }
 }
