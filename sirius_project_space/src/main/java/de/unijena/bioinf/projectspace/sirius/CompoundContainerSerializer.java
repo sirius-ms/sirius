@@ -28,7 +28,7 @@ public class CompoundContainerSerializer implements ContainerSerializer<Compound
             final CompoundContainer container = new CompoundContainer(id);
             if (reader.exists(TREES.relDir())) {
                 reader.inDirectory(TREES.relDir(), () -> {
-                    for (String file : reader.list("*" + TREES.fileExtDot())) {
+                    for (String file : reader.list("*" + TREES.fileExtDot())) { //todo change to score
                         final String name = file.substring(0, file.length() - TREES.fileExtDot().length());
                         String[] pt = name.split("_");
                         container.results.add(new FormulaResultId(id, MolecularFormula.parseOrThrow(pt[0]), PrecursorIonType.fromString(pt[1])));
