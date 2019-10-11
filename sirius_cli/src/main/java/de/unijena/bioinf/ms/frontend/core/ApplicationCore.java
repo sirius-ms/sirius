@@ -251,15 +251,20 @@ public abstract class ApplicationCore {
 
             Canopus c = null;
             try {
-                Path cfile = WORKSPACE.resolve("canopus.data");
-                if (Files.isRegularFile(cfile)){
-                    DEFAULT_LOGGER.info("Loading Canopus from local file...");
-                    c = Canopus.loadFromFile(cfile.toFile());
-                }else {
-                    DEFAULT_LOGGER.warn("NO Canopus data available!");
-                }
+                c = Canopus.load(ApplicationCore.class.getResourceAsStream("/canopus.data"));
             } catch (IOException e) {
-                e.printStackTrace();
+                DEFAULT_LOGGER.warn("NO Canopus data available in JAR file! Try '" + WORKSPACE.toString() + "'.");
+                try {
+                    Path cfile = WORKSPACE.resolve("canopus.data");
+                    if (Files.isRegularFile(cfile)) {
+                        DEFAULT_LOGGER.info("Loading Canopus from local file...");
+                        c = Canopus.loadFromFile(cfile.toFile());
+                    } else {
+                        DEFAULT_LOGGER.warn("NO Canopus data available!");
+                    }
+                } catch (IOException e2) {
+                    DEFAULT_LOGGER.error("Error when reading canopus file! from '" + WORKSPACE.toString() + "'.", e);
+                }
             } finally {
                 CANOPUS = c;
             }
