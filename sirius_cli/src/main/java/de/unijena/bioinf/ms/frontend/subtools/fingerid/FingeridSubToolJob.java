@@ -75,7 +75,7 @@ public class FingeridSubToolJob extends InstanceJob {
                     .ifPresent(fr -> formulaResultsMap.put(fr.getAnnotationOrThrow(FTree.class), fr));
 
 
-        assert formulaResultsMap.size() == result.size();
+        assert formulaResultsMap.size() >= result.size();
 
         for (FingerIdResult structRes : result) {
 
