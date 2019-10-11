@@ -76,7 +76,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
             CompoundCandidate c = hit.getCandidate();
             row[0] = c.getInchiKey2D();
             row[1] = c.getInchi().in2D;
-            row[2] = id.getFormula().toString();
+            row[2] = id.getMolecularFormula().toString();
             row[3] = String.valueOf(++ranking[0]);
             row[4] = String.valueOf(hit.getScore());
             row[5] = c.getName();
