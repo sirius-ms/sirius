@@ -107,7 +107,7 @@ public class TrainedSVM {
 
 
     private void import_parameters(JsonObject jsonObject) {
-        names = new String[jsonObject.keySet().size()];
+        names = new String[jsonObject.keySet().size()-1];
         weights = new double[names.length];
 
         double[] medians = new double[names.length];
