@@ -63,7 +63,7 @@ public class CanopusSubToolJob extends InstanceJob {
 
     private CanopusJJob buildAndSubmit(@NotNull final FormulaResult ir) {
         final CanopusJJob canopusJob = new CanopusJJob(ApplicationCore.CANOPUS);
-        canopusJob.setFormula(ir.getId().getFormula())
+        canopusJob.setFormula(ir.getId().getMolecularFormula())
                 .setFingerprint(ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint);
         return SiriusJobs.getGlobalJobManager().submitJob(canopusJob);
     }

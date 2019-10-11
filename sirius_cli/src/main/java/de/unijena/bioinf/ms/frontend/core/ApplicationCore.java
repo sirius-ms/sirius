@@ -251,7 +251,10 @@ public abstract class ApplicationCore {
 
             Canopus c = null;
             try {
-                c = Canopus.load(ApplicationCore.class.getResourceAsStream("/canopus.data"));
+                InputStream s = ApplicationCore.class.getResourceAsStream("/canopus.data");
+                if (s == null)
+                    throw new IOException("canopus file not in jar");
+                c = Canopus.load(s);
             } catch (IOException e) {
                 DEFAULT_LOGGER.warn("NO Canopus data available in JAR file! Try '" + WORKSPACE.toString() + "'.");
                 try {
