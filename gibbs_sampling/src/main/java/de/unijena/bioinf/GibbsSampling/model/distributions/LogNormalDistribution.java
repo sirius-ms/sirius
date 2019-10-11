@@ -21,7 +21,7 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
     private static final double MAD_SCALE_FACTOR = 1.482602218505602;
     private static final double DEFAULT_LOGMEAN = -1.8184825393688084;
     private static final double DEFAULT_LOGVAR = 0.1640657366079353;
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     public LogNormalDistribution(double logMean, double logVar) {
         this.logMean = logMean;
