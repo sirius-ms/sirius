@@ -114,14 +114,14 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
             jobs.add(job);
             masterJJob.submitSubJob(job);
         }
-        System.out.println("running "+jobs.size()+" workers to postprocess edges");
+//        System.out.println("running "+jobs.size()+" workers to postprocess edges");
 
         for (BasicJJob job : jobs) {
             job.awaitResult();
         }
 
 
-        System.out.println("postprocess: first step took "+(System.currentTimeMillis()-start));
+//        System.out.println("postprocess: first step took "+(System.currentTimeMillis()-start));
 
         start = System.currentTimeMillis();
         for(int i = 0; i < graph.getSize(); ++i) {
@@ -149,7 +149,8 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
         }
 
 //todo this part is not parallel yet. Fast enough?
-        System.out.println("postprocess: second step symmetry took "+(System.currentTimeMillis()-start));
+
+//        System.out.println("postprocess: second step symmetry took "+(System.currentTimeMillis()-start));
 
         int[][] connections = new int[graph.getSize()][];
 
@@ -157,7 +158,7 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
             connections[i] = connectionsList[i].toArray();
         }
 
-        System.out.println("postprocess: second step took "+(System.currentTimeMillis()-start));
+//        System.out.println("postprocess: second step took "+(System.currentTimeMillis()-start));
 
         return connections;
     }
