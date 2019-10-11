@@ -66,6 +66,11 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         return Arrays.asList(decompositionSet.toArray(new Decomposition[decompositionSet.size()]));
     }
 
+    public Whiteset withPrecursor(PrecursorIonType ionType) {
+        if (ionType.hasNeitherAdductNorInsource()) return this;
+        return new Whiteset(formulas.stream().map(ionType::measuredNeutralMoleculeToNeutralMolecule).collect(Collectors.toSet()));
+    }
+
     public Whiteset union(Whiteset set) {
         final Set<MolecularFormula> union = new HashSet<>(this.formulas);
         union.addAll(set.formulas);
