@@ -63,9 +63,9 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
                 final MolecularFormula[] formulas = filterFormulasByIsotopeScore(extractedIsotopePattern);
                 final Whiteset whiteset = input.getAnnotationOrNull(Whiteset.class);
                 if (whiteset == null || whiteset.getFormulas().isEmpty()) {
-                    input.setAnnotation(Whiteset.class, Whiteset.of(formulas));
+                    input.setAnnotation(Whiteset.class, Whiteset.of(formulas).withPrecursor(input.getExperimentInformation().getPrecursorIonType()));
                 } else if (whiteset.getFormulas().size() > 1) { // necessary, otherwise we remove formulas which are enforded
-                    input.setAnnotation(Whiteset.class, whiteset.intersection(formulas));
+                    input.setAnnotation(Whiteset.class, whiteset.intersection(Whiteset.of(formulas).withPrecursor(input.getExperimentInformation().getPrecursorIonType())));
                 }
 
             }

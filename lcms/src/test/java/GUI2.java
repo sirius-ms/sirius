@@ -113,7 +113,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
         pn.add(toggleRec);
         pn.add(toggleDebug);
 
-        final JButton export = new JButton(new AbstractAction("Copy") {
+        final JButton export = new JButton(new AbstractAction("Copy Merged") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final Ms2Experiment experiment = specViewer.feature.toMs2Experiment();
@@ -129,7 +129,29 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(wr.toString()), GUI2.this);
             }
         });
-        stack.add(export, BorderLayout.EAST);
+        final JButton export2 = new JButton(new AbstractAction("Copy Single") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final List<Ms2Experiment> experiments = Arrays.stream(specViewer.feature.getFeatures()).map(f->f.toMsExperiment()).collect(Collectors.toList());
+                final StringWriter wr = new StringWriter();
+                try {
+                    final BufferedWriter writer = new BufferedWriter(wr);
+                    for (Ms2Experiment experiment : experiments) {
+                        new JenaMsWriter().write(writer,experiment);
+                        writer.newLine();
+                    }
+                    writer.flush();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+                System.out.println(wr.toString());
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(wr.toString()), GUI2.this);
+            }
+        });
+        final Box box = new Box(BoxLayout.Y_AXIS);
+        box.add(export);
+        box.add(export2);
+        stack.add(box, BorderLayout.EAST);
 
         {
             int min = (int)features[0].getAverageMass();
@@ -274,7 +296,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
             addOrderedSampleNames(c, sampleNames);
 
             // write correlation network
-            i.detectAdductsWithGibbsSampling(c).writeToFile(i,new File("ion_network.js"));
+            //i.detectAdductsWithGibbsSampling(c).writeToFile(i,new File("ion_network.js"));
 
             final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(c);
             for (ProcessedSample s : i.getSamples()) s.storage.close();

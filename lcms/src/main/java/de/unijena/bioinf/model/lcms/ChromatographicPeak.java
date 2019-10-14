@@ -17,6 +17,25 @@ public interface ChromatographicPeak {
     public NavigableSet<Segment> getSegments();
     public ScanPoint getScanPointAt(int k);
 
+    default public boolean samePeak(ChromatographicPeak other) {
+        if (this==other) return true;
+        if (!getRetentionTime().isConnected(other.getRetentionTime())) return false;
+        ScanPoint u = getApexPeak();
+        ScanPoint v = other.getApexPeak();
+        return (u.getScanNumber()==v.getScanNumber() && Math.abs(u.getMass()-v.getMass())<0.001 && Math.abs(u.getIntensity()-v.getIntensity())< (u.getIntensity()*0.001) );
+    }
+
+    default public ScanPoint getApexPeak() {
+        ScanPoint apex = null;
+        for (Segment s : getSegments()) {
+            ScanPoint p = getScanPointAt(s.apex);
+            if (apex==null || p.getIntensity()>apex.getIntensity()) {
+                apex = p;
+            }
+        }
+        return apex;
+    }
+
     public ScanPoint getScanPointForScanId(int scanId);
     public default ScanPoint getRightEdge() {
         return getScanPointAt(numberOfScans()-1);
@@ -162,7 +181,7 @@ public interface ChromatographicPeak {
         }
 
         public boolean samePeak(Segment other) {
-            return peak==other.peak && apex==other.apex;
+            return peak.samePeak(other.peak) && getApexScanNumber()==other.getApexScanNumber();
         }
 
         public long getApexRt() {
