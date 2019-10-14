@@ -6,6 +6,7 @@ import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.*;
@@ -53,16 +54,26 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
 
 
     @NotNull
-    public CompoundContainer newCompoundWithUniqueId(Ms2Experiment inputExperiment) {
+    public Instance newCompoundWithUniqueId(Ms2Experiment inputExperiment) {
         final String name = nameFormatter().apply(inputExperiment);
         try {
             final CompoundContainer container = projectSpace().newCompoundWithUniqueId(name, (idx) -> idx + "_" + name).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
             container.setAnnotation(Ms2Experiment.class, inputExperiment);
             projectSpace().updateCompound(container, Ms2Experiment.class);
-            return container;
+            return new Instance(container, this);
         } catch (IOException e) {
             LoggerFactory.getLogger(ProjectSpaceManager.class).error("Could not create an project space ID for the Instance", e);
             throw new RuntimeException("Could not create an project space ID for the Instance");
+        }
+    }
+
+    public Instance loadCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
+        try {
+            CompoundContainer c = projectSpace().getCompound(id, components);
+            return new Instance(c, this);
+        } catch (IOException e) {
+            LoggerFactory.getLogger(Instance.class).error("Could not create read Input Experiment from Project Space.");
+            throw new RuntimeException("Could not create read Input Experiment from Project Space.", e);
         }
     }
 
@@ -92,7 +103,7 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
             public Instance next() {
                 final CompoundContainerId id = it.next();
                 if (id == null) return null;
-                return new Instance(id,ProjectSpaceManager.this);
+                return loadCompound(id, Ms2Experiment.class);
             }
         };
     }
@@ -132,6 +143,7 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
     public boolean containsCompound(CompoundContainerId id) {
         return space.containsCompound(id);
     }
+
 
     public void updateSummaries(Summarizer... summarizers) throws IOException {
         space.updateSummaries(summarizers);
