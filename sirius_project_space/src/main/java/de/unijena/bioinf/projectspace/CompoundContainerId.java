@@ -64,8 +64,9 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     /**
      * This operation is only allowed to be called with careful synchronization within the project space
      */
-    void rename(String newName) {
+    void rename(String newName, String newDirName) {
         this.compoundName = newName;
+        this.directoryName = newDirName;
     }
 
     @Override
