@@ -24,7 +24,7 @@ public class CanopusSubToolJob extends InstanceJob {
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        System.out.println("I am Canopus on Experiment " + inst);
+//        System.out.println("I am Canopus on Experiment " + inst);
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> input = inst.loadFormulaResults(
                 SiriusScore.class,
                 FormulaScoring.class, FingerprintResult.class, CanopusResult.class);
@@ -63,7 +63,7 @@ public class CanopusSubToolJob extends InstanceJob {
 
     private CanopusJJob buildAndSubmit(@NotNull final FormulaResult ir) {
         final CanopusJJob canopusJob = new CanopusJJob(ApplicationCore.CANOPUS);
-        canopusJob.setFormula(ir.getId().getFormula())
+        canopusJob.setFormula(ir.getId().getMolecularFormula())
                 .setFingerprint(ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint);
         return SiriusJobs.getGlobalJobManager().submitJob(canopusJob);
     }

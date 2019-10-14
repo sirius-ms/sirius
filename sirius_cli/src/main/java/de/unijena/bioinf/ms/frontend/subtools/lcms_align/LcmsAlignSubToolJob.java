@@ -8,7 +8,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MultipleSources;
 import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
-import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.babelms.ms.MsFileConfig;
 import de.unijena.bioinf.io.lcms.LCMSParsing;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -18,11 +17,10 @@ import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.align.Cluster;
 import de.unijena.bioinf.model.lcms.ConsensusFeature;
 import de.unijena.bioinf.model.lcms.LCMSRun;
+import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -91,7 +89,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
                 experiment.setAnnotation(MsFileConfig.class, config);
             }
 
-            @NotNull final CompoundContainer compoundContainer = space.newCompoundWithUniqueId(experiment);
+            space.newCompoundWithUniqueId(experiment);
         }
         LOG().info("LCMS-Align done. " + goodFeatures + " of " + totalFeatures +  " are in qood quality.");
         return space;

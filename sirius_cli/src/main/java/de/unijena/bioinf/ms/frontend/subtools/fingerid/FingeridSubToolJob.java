@@ -44,7 +44,7 @@ public class FingeridSubToolJob extends InstanceJob {
             return;
         }
 
-        System.out.println("I am FingerID on Experiment " + inst.getID());
+//        System.out.println("I am FingerID on Experiment " + inst.getID());
         invalidateResults(inst);
 
         PredictorTypeAnnotation type = inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class);
@@ -75,7 +75,7 @@ public class FingeridSubToolJob extends InstanceJob {
                     .ifPresent(fr -> formulaResultsMap.put(fr.getAnnotationOrThrow(FTree.class), fr));
 
 
-        assert formulaResultsMap.size() == result.size();
+        assert formulaResultsMap.size() >= result.size();
 
         for (FingerIdResult structRes : result) {
 

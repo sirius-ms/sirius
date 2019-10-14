@@ -62,7 +62,7 @@ public class FormulaSummaryWriter implements Summarizer {
                     FormulaScoring scores = r.getAnnotationOrThrow(FormulaScoring.class);
                     FTree tree = r.getAnnotationOrNull(FTree.class);
 
-                    w.write(r.getId().getFormula().toString());
+                    w.write(r.getId().getMolecularFormula().toString());
                     w.write('\t');
                     w.write(ion != null ? ion.toString() : "?");
                     w.write('\t');
