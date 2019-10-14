@@ -24,25 +24,7 @@ public class Instance {
 
     protected Map<FormulaResultId, FormulaResult> formulaResultCache = new HashMap<>();
 
-    public Instance(@NotNull Ms2Experiment inputExperient, @NotNull ProjectSpaceManager spaceManager) {
-        this(spaceManager.newCompoundWithUniqueId(inputExperient), spaceManager);
-
-    }
-
-    public Instance(@NotNull CompoundContainerId projectSpaceID, @NotNull ProjectSpaceManager spaceManager) {
-        this(((Supplier<CompoundContainer>) () -> {
-                    try {
-                        return spaceManager.projectSpace().getCompound(projectSpaceID, Ms2Experiment.class);
-                    } catch (IOException e) {
-                        LoggerFactory.getLogger(Instance.class).error("Could not create read Input Experiment from Project Space.");
-                        throw new RuntimeException("Could not create read Input Experiment from Project Space.", e);
-                    }
-                }).get(),
-                spaceManager
-        );
-    }
-
-    protected Instance(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager spaceManager) {
+   protected Instance(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager spaceManager) {
         this.compoundCache = compoundContainer;
         this.spaceManager = spaceManager;
     }
@@ -60,7 +42,7 @@ public class Instance {
         return getID().toString();
     }
 
-    private SiriusProjectSpace projectSpace() {
+    SiriusProjectSpace projectSpace() {
         return getProjectSpaceManager().projectSpace();
     }
 
@@ -101,8 +83,8 @@ public class Instance {
                         toRefresh.put(k, missingComps);
                 });
 
-                if (!toRefresh.isEmpty())
-                    System.out.println("######## refreshing components of '" + toRefresh.keySet().toString() + "' #########");
+//                if (!toRefresh.isEmpty())
+//                    System.out.println("######## refreshing components of '" + toRefresh.keySet().toString() + "' #########");
 
                 //refresh annotations
                 toRefresh.forEach((k, v) -> {

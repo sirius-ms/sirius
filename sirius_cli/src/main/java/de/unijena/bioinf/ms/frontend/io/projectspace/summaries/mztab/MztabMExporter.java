@@ -188,8 +188,8 @@ public class MztabMExporter implements Summarizer {
         smeItem.setMsLevel(MZTabParameter.newInstance(MZTabParameter.MS_LEVEL).value("2"));
         smeItem.setCharge(bestHitSource.getId().getIonType().getCharge());
         smeItem.setAdductIon(bestHitSource.getId().getIonType().toString());
-        smeItem.setChemicalFormula(bestHitSource.getId().getFormula().toString());
-        smeItem.setTheoreticalMassToCharge(bestHitSource.getId().getIonType().addIonAndAdduct(bestHitSource.getId().getFormula().getMass()));
+        smeItem.setChemicalFormula(bestHitSource.getId().getMolecularFormula().toString());
+        smeItem.setTheoreticalMassToCharge(bestHitSource.getId().getIonType().addIonAndAdduct(bestHitSource.getId().getMolecularFormula().getMass()));
         smeItem.setExpMassToCharge(er.getIonMass());
 
         return smeItem;
@@ -297,8 +297,8 @@ public class MztabMExporter implements Summarizer {
         final SmallMoleculeSummary smlItem = new SmallMoleculeSummary();
         smlItem.setSmlId(++smlID);
         smlItem.adductIons(Collections.singletonList(bestHitSource.getId().getIonType().toString()));
-        smlItem.addChemicalFormulaItem(bestHitSource.getId().getFormula().toString());
-        smlItem.addTheoreticalNeutralMassItem(bestHitSource.getId().getFormula().getMass());
+        smlItem.addChemicalFormulaItem(bestHitSource.getId().getMolecularFormula().toString());
+        smlItem.addTheoreticalNeutralMassItem(bestHitSource.getId().getMolecularFormula().getMass());
 
         if (bestHit != null) {
             smlItem.addChemicalNameItem(bestHit.getCandidate().getName());
@@ -393,7 +393,7 @@ public class MztabMExporter implements Summarizer {
     }
 
     protected static String makeFormulaIdentifier(Ms2Experiment ex, FormulaResult result) {
-        return result.getId().getParentId().getDirectoryName() + ":" + result.getId().getFormula() + ":" + result.getId().getIonType().toString().replaceAll("[\\[\\] _]", "");
+        return result.getId().getParentId().getDirectoryName() + ":" + result.getId().getMolecularFormula() + ":" + result.getId().getIonType().toString().replaceAll("[\\[\\] _]", "");
     }
 
     protected String makeMassIdentifier(Ms2Experiment ex, FormulaResult result) {

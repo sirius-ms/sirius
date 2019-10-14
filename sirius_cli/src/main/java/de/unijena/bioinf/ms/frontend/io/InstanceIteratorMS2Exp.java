@@ -1,8 +1,8 @@
 package de.unijena.bioinf.ms.frontend.io;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
+import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 
 import java.util.Iterator;
 
@@ -26,6 +26,6 @@ class InstanceIteratorMS2Exp implements Iterator<Instance> {
     public Instance next() {
         Ms2Experiment input = MS2ExpInputIterator.next();
         if (input == null) return null;
-        return new Instance(input, spaceManager); //this writers
+        return spaceManager.newCompoundWithUniqueId(input); //this writers
     }
 }
