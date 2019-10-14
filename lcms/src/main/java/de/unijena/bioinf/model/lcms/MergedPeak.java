@@ -1,5 +1,6 @@
 package de.unijena.bioinf.model.lcms;
 
+import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 
 import java.util.Arrays;
@@ -59,5 +60,15 @@ public class MergedPeak implements Peak {
     @Override
     public double getIntensity() {
         return intensity;
+    }
+
+    public double getHighestIntensity() {
+        return intensity;
+    }
+
+    public double getAverageMass() {
+        final double[] xs = new double[sourcePeaks.length];
+        for (int k=0; k < sourcePeaks.length; ++k) xs[k] = sourcePeaks[k].getMass();
+        return Statistics.robustAverage(xs);
     }
 }
