@@ -65,7 +65,10 @@ public class Aligner2 {
         };
     }
 
+
     private AlignedFeatures[] merge(AlignedFeatures[] features, AlignmentResult results) {
+        final HashSet<FragmentedIon> alreadyJoinedFragmentsDEBUG = new HashSet<>();
+
         final ArrayList<AlignedFeatures> newFeatures = new ArrayList<>();
         final List<FragmentedIon> ions = results.ions;
         int[] as = results.assignments;
@@ -73,6 +76,11 @@ public class Aligner2 {
             final int j = as[i];
             if (j>=0) {
                 newFeatures.add(features[i].merge(results.mergedSample, ions.get(j)));
+                for (FragmentedIon I : newFeatures.get(newFeatures.size()-1).getFeatures().values()) {
+                    if (!alreadyJoinedFragmentsDEBUG.add(I)) {
+                        throw new RuntimeException("Already added fragment " + I);
+                    }
+                }
                 ions.set(j,null);
             } else {
                 newFeatures.add(features[i]); // do not merge
@@ -174,23 +182,6 @@ public class Aligner2 {
         final double gamma = 1d/(2*retentionTimeError*retentionTimeError);
         final double retentionTimeScore = Math.exp(-gamma * (f.rt - rightRt)*(f.rt - rightRt));
 
-        // isotope score
-        double isotopeScore = 1d;
-        {
-            if (ion.getIsotopes().size()>=2) {
-                isotopeScore=0d;
-                int count = 0;
-                for (FragmentedIon ia : f.features.values()) {
-                    if (ia.getIsotopes().size()>=2) {
-                        isotopeScore += scoreIsotopes(ion, ia);
-                        ++count;
-                    }
-                }
-                isotopeScore /= count;
-                isotopeScore = Math.exp(isotopeScore);
-            }
-        }
-
         double finalScore;
         if (f.getRepresentativeIon()!=null && f.getRepresentativeIon().getMsMs()!=null && ion.getMsMs()!=null) {
             SpectralSimilarity cosineScore = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(dev)).cosineProduct(f.getRepresentativeIon().getMsMs(), ion.getMsMs());
@@ -208,7 +199,6 @@ public class Aligner2 {
         } else {
             finalScore = peakShapeScore*peakHeightScore*retentionTimeScore;
         }
-        finalScore *= isotopeScore;
         if (finalScore < 1e-10) return 0f;
         finalScore += intensityScore;
         return (float)finalScore;

@@ -237,5 +237,40 @@ public class Statistics {
         shuffle(dest, dstPos, length, length);
     }
 
+    public static double geometricAverage(double[] xs, boolean useLog) {
+        if (useLog) {
+            double x = 0d;
+            for (double y : xs) x += Math.log(y);
+            return Math.exp(x/xs.length);
+        } else {
+            double x = 1d;
+            for (double y : xs) x*=y;
+            return Math.pow(x,1d/xs.length);
+        }
+    }
 
+
+    public static double robustGeometricAverage(double[] xs, boolean useLog) {
+        if (xs.length < 4) return geometricAverage(xs, useLog);
+        final double[] ys = xs.clone();
+        Arrays.sort(ys);
+        if (useLog) {
+            double geom = 0d;
+            int i=(int)(ys.length*0.25), n=(int)(ys.length*0.75);
+            double sz = n-i;
+            for (; i < n; ++i) {
+                geom += Math.log(ys[i]);
+            }
+            geom /= sz;
+            return geom;
+        } else {
+            double geom = 1d;
+            int i=(int)(ys.length*0.25), n=(int)(ys.length*0.75);
+            double sz = n-i;
+            for (; i < n; ++i) {
+                geom *= ys[i];
+            }
+            return Math.pow(geom, 1d/sz);
+        }
+    }
 }

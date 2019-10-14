@@ -4,8 +4,10 @@ import de.unijena.bioinf.ChemistryBase.algorithm.HierarchicalClustering;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
+import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.utils.BasicSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -14,6 +16,7 @@ import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.LoessFunction;
+import de.unijena.bioinf.lcms.Ms2CosineSegmenter;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.quality.AlignmentQuality;
 import de.unijena.bioinf.lcms.quality.Quality;
@@ -59,7 +62,7 @@ public class Aligner {
             final TDoubleArrayList collision_energies = new TDoubleArrayList();
             final ArrayList<Feature> features = new ArrayList<>();
             final ArrayList<MergedSpectrum> mergedSpectra = new ArrayList<>();
-            final TIntObjectHashMap<SimpleSpectrum> coeluted = new TIntObjectHashMap<>();
+            final TIntObjectHashMap<List<SimpleSpectrum>> coeluted = new TIntObjectHashMap<>();
             Feature best = null;
             List<ProcessedSample> samples = new ArrayList<>(f.features.keySet());
             samples.sort((u,v)->{
@@ -69,7 +72,7 @@ public class Aligner {
 
             });
             double totalInt = 0d;
-            SimpleSpectrum merged = null;
+            MergedSpectrum merged = null;
             final Set<PrecursorIonType> ionTypes = new HashSet<>();
             PrecursorIonType ionType=null;
             for (ProcessedSample sample : samples) {
@@ -83,19 +86,57 @@ public class Aligner {
                 features.add(e);
                 totalInt += e.getIntensity();
 
-                if (merged==null && ion.getMsMsScan()!=null) merged = instance.getMs2(ion.getMsMsScan());
-                else if (ion.getMsMsScan()!=null) merged = Spectrums.mergeSpectra(new Deviation(15), true, true, merged, instance.getMs2(ion.getMsMsScan()));
+                final MergedSpectrum msms = ion.getMsMsScan()==null ? null : new MergedSpectrum(ion.getMsMsScan(), instance.getMs2(ion.getMsMsScan()), ion.getMsMsScan().getPrecursor());;
+
+
+                if (merged==null) merged = msms;
+                else if (msms!=null) {
+                    MergedSpectrum spec = Ms2CosineSegmenter.merge(merged,msms);
+                    if (spec.getMergedCosine()>=0.5)
+                        merged = spec;
+                }
 
                 for (SimpleSpectrum coel : e.getCorrelatedFeatures()) {
                     final int mz0 = (int)Math.round(coel.getMzAt(0));
-                    final SimpleSpectrum bef = coeluted.get(mz0);
-                    if (bef==null || coel.size()>bef.size()) {
-                        coeluted.put(mz0,coel);
-                    }
+                    if (coeluted.get(mz0)==null) coeluted.put(mz0,new ArrayList<>());
+                    coeluted.get(mz0).add(coel);
                 }
+
                 if (!e.getIonType().isIonizationUnknown())
                     ionTypes.add(e.getIonType());
                 ionType = PrecursorIonType.unknown(e.getIonType().getCharge());
+            }
+
+            final ArrayList<SimpleSpectrum> allMs1Spectra = new ArrayList<>();
+            for (int key : coeluted.keys()) {
+                final List<SimpleSpectrum> cs = coeluted.get(key);
+                int allowedSize = cs.stream().mapToInt(BasicSpectrum::size).max().orElse(1)-1;
+                cs.removeIf(x->x.size()<allowedSize);
+                if (cs.size()==1) {
+                    allMs1Spectra.add(cs.get(0));
+                    continue;
+                }
+                cs.sort(Comparator.comparingInt(BasicSpectrum::size));
+                cs.remove(cs.size()-1);
+                SimpleSpectrum lastOne = cs.get(cs.size()-1);
+                final SimpleMutableSpectrum buf = new SimpleMutableSpectrum(allowedSize+1);
+                final TDoubleArrayList intensities = new TDoubleArrayList(allowedSize+1), masses = new TDoubleArrayList(allowedSize+1);
+                for (int k=0; k < lastOne.size(); ++k) {
+                    masses.clear();
+                    intensities.clear();
+                    final double mz = lastOne.getMzAt(k);
+                    masses.add(mz); intensities.add(lastOne.getIntensityAt(k));
+                    for (SimpleSpectrum c : cs) {
+                        for (int i=0; i < c.size(); ++i) {
+                            if (Math.abs(c.getMzAt(i)-mz)<0.1) {
+                                masses.add(c.getMzAt(i));
+                                intensities.add(c.getIntensityAt(i));
+                            }
+                        }
+                    }
+                    buf.addPeak(Statistics.robustAverage(masses.toArray()), Statistics.robustGeometricAverage(intensities.toArray(),false));
+                }
+                allMs1Spectra.add(new SimpleSpectrum(buf));
             }
 
 
@@ -119,7 +160,7 @@ public class Aligner {
             }
 
             double highest = collision_energies.get(collision_energies.size()-1);
-            final ConsensusFeature F = new ConsensusFeature(++featureID, features.toArray(new Feature[0]), coeluted.values(new SimpleSpectrum[0]), new SimpleSpectrum[]{merged}, ionType, medianRet, new CollisionEnergy(lowestNonZero,highest),mass, totalInt);
+            final ConsensusFeature F = new ConsensusFeature(++featureID, features.toArray(new Feature[0]), allMs1Spectra.toArray(SimpleSpectrum[]::new), new SimpleSpectrum[]{merged.finishMerging()}, ionType, medianRet, new CollisionEnergy(lowestNonZero,highest),mass, totalInt);
             consensusFeatures.add(F);
         }
 
