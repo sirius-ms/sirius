@@ -176,13 +176,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 return Optional.empty();
             try {
                 Files.createDirectory(new File(root, directoryName).toPath());
-                try (final BufferedWriter bw = FileUtils.getWriter(new File(new File(root, id.getDirectoryName()), SiriusLocations.COMPOUND_INFO))) {
-                    for (Map.Entry<String, String> kv : id.asKeyValuePairs().entrySet()) {
-                        bw.write(kv.getKey() + "\t" + kv.getValue());
-                        bw.newLine();
-                    }
-                }
-                fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
+                writeCompoundContainerID(id);
                 return Optional.of(id);
             } catch (IOException e) {
                 LoggerFactory.getLogger(getClass()).error("cannot create directory " + directoryName, e);
@@ -190,6 +184,19 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 return Optional.empty();
             }
         }
+    }
+
+    private void writeCompoundContainerID(CompoundContainerId cid) throws IOException {
+        final File f = new File(new File(root, cid.getDirectoryName()), SiriusLocations.COMPOUND_INFO);
+        if (f.exists())
+            f.delete();
+        try (final BufferedWriter bw = FileUtils.getWriter(f)) {
+            for (Map.Entry<String, String> kv : cid.asKeyValuePairs().entrySet()) {
+                bw.write(kv.getKey() + "\t" + kv.getValue());
+                bw.newLine();
+            }
+        }
+        fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
     }
 
     // shorthand methods
@@ -230,7 +237,6 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             return getContainer(FormulaResult.class, id, components);
         } finally {
             parentId.containerLock.unlock();
-            ;
         }
     }
 
@@ -288,30 +294,44 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    public boolean renameCompound(CompoundContainerId oldId, String newDirName) throws IOException {
+    public boolean renameCompound(CompoundContainerId oldId, String name, IntFunction<String> index2dirName) throws IOException {
         oldId.containerLock.lock();
         try {
+            final String newDirName = index2dirName.apply(oldId.getCompoundIndex());
             synchronized (ids) {
+                if (newDirName.equals(oldId.getDirectoryName())) {
+                    if (name.equals(oldId.getCompoundName()))
+                        return true; //nothing to do
+                    oldId.rename(name, newDirName);
+                    writeCompoundContainerID(oldId);
+                    return true; //renamed but no move needed
+                }
+
                 if (ids.containsKey(newDirName))
-                    return false;
+                    return false; // rename not possible because key already exists
+
                 File file = new File(root, newDirName);
                 if (file.exists()) {
-                    return false;
+                    return false; // rename not target directory already exists
                 }
+
                 try {
                     Files.move(new File(root, oldId.getDirectoryName()).toPath(), file.toPath());
+                    //change id only if move was successful
+                    ids.remove(oldId.getDirectoryName());
+                    oldId.rename(name, newDirName);
+                    ids.put(oldId.getDirectoryName(), oldId);
+                    writeCompoundContainerID(oldId);
+                    return true;
                 } catch (IOException e) {
                     LoggerFactory.getLogger(SiriusProjectSpace.class).error("cannot move directory", e);
-                    return false;
+                    return false; // move failed due to an error
                 }
-                ids.remove(oldId.getDirectoryName());
-                oldId.rename(newDirName);
-                ids.put(oldId.getDirectoryName(), oldId);
+
             }
         } finally {
             oldId.containerLock.unlock();
         }
-        return true;
     }
 
 
