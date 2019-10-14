@@ -126,6 +126,10 @@ public class Graph<C extends Candidate<?>> {
         return this.indexMap[i].keys();
     }
 
+    public boolean hasLogWeightConnections(int i, int j) {
+        return this.indexMap[i].containsKey(j);
+    }
+
     public void setLogWeight(int i, int j, double weight) {
         int relJ = this.indexMap[i].get(j);
         if(relJ < 0) {
