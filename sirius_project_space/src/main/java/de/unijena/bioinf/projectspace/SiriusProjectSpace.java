@@ -294,17 +294,22 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    public boolean renameCompound(CompoundContainerId oldId, String name, IntFunction<String> index2dirName) throws IOException {
+    public boolean renameCompound(CompoundContainerId oldId, String name, IntFunction<String> index2dirName) {
         oldId.containerLock.lock();
         try {
             final String newDirName = index2dirName.apply(oldId.getCompoundIndex());
             synchronized (ids) {
                 if (newDirName.equals(oldId.getDirectoryName())) {
-                    if (name.equals(oldId.getCompoundName()))
-                        return true; //nothing to do
-                    oldId.rename(name, newDirName);
-                    writeCompoundContainerID(oldId);
-                    return true; //renamed but no move needed
+                    try {
+                        if (name.equals(oldId.getCompoundName()))
+                            return true; //nothing to do
+                        oldId.rename(name, newDirName);
+                        writeCompoundContainerID(oldId);
+                        return true; //renamed but no move needed
+                    } catch (IOException e) {
+                        LoggerFactory.getLogger(SiriusProjectSpace.class).error("cannot write changed ID. Renaming may not be persistent", e);
+                        return true; //rename failed due ioError
+                    }
                 }
 
                 if (ids.containsKey(newDirName))
