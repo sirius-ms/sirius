@@ -240,11 +240,14 @@ public class Ms2CosineSegmenter {
     public static MergedSpectrum merge(MergedSpectrum left, MergedSpectrum right) {
         // we assume a rather large deviation as signal peaks should be contained in more than one
         // measurement
+        final double lcosine = left.getNorm(), rcosine = right.getNorm();
         final List<MergedPeak> orderedByMz = new ArrayList<>(left.size());
         for (MergedPeak l : left) orderedByMz.add(l);
         final List<MergedPeak> append = new ArrayList<>();
         final Deviation deviation = new Deviation(20,0.05);
         final Spectrum<MergedPeak> orderedByInt;
+        double cosine = 0d;
+        final double parentMass = left.getPrecursor().getMass();
         {
             final List<MergedPeak> peaks = new ArrayList<>(right.size());
             for (MergedPeak p : right) peaks.add(p);
@@ -276,8 +279,13 @@ public class Ms2CosineSegmenter {
                             mostIntensive = i;
                         }
                     }
+                    final MergedPeak leftPeak = orderedByMz.get(mostIntensive);
+                    final MergedPeak rightPeak = orderedByInt.getPeakAt(k);
+                    if (leftPeak.getMass()<left.getPrecursor().getMass()-20 && rightPeak.getMass()<right.getPrecursor().getMass()-20 && leftPeak.getIntensity()>left.getNoiseLevel() && rightPeak.getIntensity()>right.getNoiseLevel()) {
+                        cosine += leftPeak.getIntensity()*rightPeak.getIntensity();
+                    }
+                    orderedByMz.set(mostIntensive, new MergedPeak(leftPeak,rightPeak));
 
-                    orderedByMz.set(mostIntensive, new MergedPeak(orderedByMz.get(mostIntensive), orderedByInt.getPeakAt(k)));
                 }
             } else {
                 // append
@@ -287,7 +295,7 @@ public class Ms2CosineSegmenter {
         orderedByMz.addAll(append);
         final ArrayList<Scan> scans = new ArrayList<>(left.getScans());
         scans.addAll(right.getScans());
-        MergedSpectrum mergedPeaks = new MergedSpectrum(left.getPrecursor(), orderedByMz, scans);
+        MergedSpectrum mergedPeaks = new MergedSpectrum(left.getPrecursor(), orderedByMz, scans, cosine / Math.sqrt(lcosine*rcosine));
         mergedPeaks.setNoiseLevel(Math.max(left.getNoiseLevel(), right.getNoiseLevel()));
         return mergedPeaks;
     }

@@ -11,18 +11,21 @@ public final class FormulaResultId extends ProjectSpaceContainerId {
     private final CompoundContainerId parentId;
     private final String fileName;
 
-    private final MolecularFormula formula;
+    private final MolecularFormula precursorFormula;
     private final PrecursorIonType ionType;
 
-    public FormulaResultId(@NotNull CompoundContainerId parentId, @NotNull MolecularFormula formula, @NotNull PrecursorIonType ionType) {
+    public FormulaResultId(@NotNull CompoundContainerId parentId, @NotNull MolecularFormula precursorFormula, @NotNull PrecursorIonType ionType) {
         this.parentId = parentId;
-        this.formula = formula;
+        this.precursorFormula = precursorFormula;
         this.ionType = ionType;
-        this.fileName = /*rank + "_" + */ formula + "_" + ionType.toString().replace(" ", "");
+        this.fileName = precursorFormula + "_" + ionType.toString().replace(" ", "");
     }
 
-    public MolecularFormula getFormula() {
-        return formula;
+    public MolecularFormula getMolecularFormula() {
+        return precursorFormula.subtract(ionType.getAdduct()).add(ionType.getInSourceFragmentation());
+    }
+    public MolecularFormula getPrecursorFormula() {
+        return precursorFormula;
     }
 
     public PrecursorIonType getIonType() {
