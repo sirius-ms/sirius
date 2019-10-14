@@ -2,6 +2,7 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -138,9 +139,11 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public Optional<FormulaResult> newFormulaResultWithUniqueId(@NotNull final CompoundContainer container, @NotNull final FTree tree) {
         if (!containsCompound(container.getId()))
             throw new IllegalArgumentException("Compound is not part of the project Space! ID: " + container.getId());
-
-        final FormulaResultId fid = new FormulaResultId(container.getId(), tree.getRoot().getFormula(), tree.getAnnotationOrThrow(PrecursorIonType.class));
+        final PrecursorIonType ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
+        final MolecularFormula f = tree.getRoot().getFormula().add(ionType.getAdduct()).subtract(ionType.getInSourceFragmentation()); //get precursor formula
+        final FormulaResultId fid = new FormulaResultId(container.getId(), f, ionType);
         fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.CREATED, container.getId(), container, Collections.emptySet()));
+
         if (container.contains(fid))
             return Optional.empty(); //todo how to handle this?
 
