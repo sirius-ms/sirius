@@ -10,6 +10,7 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -22,7 +23,7 @@ public class Instance {
 
     protected Map<FormulaResultId, FormulaResult> formulaResultCache = new HashMap<>();
 
-   protected Instance(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager spaceManager) {
+    protected Instance(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager spaceManager) {
         this.compoundCache = compoundContainer;
         this.spaceManager = spaceManager;
     }
@@ -65,6 +66,13 @@ public class Instance {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * @return Sorted List of FormulaResults scored by the currently defined RankingScore
+     */
+    public synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends DataAnnotation>... components) {
+        return loadFormulaResults(getID().getRankingScoreType().orElse(SiriusScore.class), components);
     }
 
     public synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends FormulaScore> rankingScoreType, Class<? extends DataAnnotation>... components) {
