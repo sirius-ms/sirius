@@ -13,6 +13,6 @@ public class OrderByMass extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        MainFrame.MF.getExperimentList().orderByMass();
+        MainFrame.MF.getCompoundList().orderByMass();
     }
 }

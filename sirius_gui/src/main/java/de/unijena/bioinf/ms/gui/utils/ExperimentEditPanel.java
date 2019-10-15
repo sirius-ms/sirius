@@ -4,8 +4,8 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.babelms.projectspace.GuiProjectSpace;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 
 import javax.swing.*;
 
@@ -34,7 +34,7 @@ public class ExperimentEditPanel extends JPanel {
         add(new TextHeaderBoxPanel("Molecular Formula", formulaTF));
     }
 
-    public ExperimentEditPanel(ExperimentResultBean ec) {
+    public ExperimentEditPanel(InstanceBean ec) {
         this();
         if (ec != null) {
             setData(ec);
@@ -60,7 +60,7 @@ public class ExperimentEditPanel extends JPanel {
         return PeriodicTable.getInstance().getUnknownPrecursorIonType(1);
     }
 
-    public void setData(ExperimentResultBean ec) {
+    public void setData(InstanceBean ec) {
         nameTF.setText(ec.getName());
         ionizationCB.setSelectedItem(ec.getIonization().toString());
         precursorSelection.setData(ec.getMs1Spectra(), ec.getMs2Spectra(), ec.getIonMass());

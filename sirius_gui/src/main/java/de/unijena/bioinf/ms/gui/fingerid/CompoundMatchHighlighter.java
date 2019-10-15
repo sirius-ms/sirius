@@ -20,7 +20,7 @@ public class CompoundMatchHighlighter {
 
     protected int[] match, unsure, nomatch;
 
-    public CompoundMatchHighlighter(FingerprintCandidateBean compound, ProbabilityFingerprint fp) {
+    public CompoundMatchHighlighter(FingerprintCandidatePropertyChangeSupport compound, ProbabilityFingerprint fp) {
         compound.parseAndPrepare();
         // we have to match all fingerprints against this compound
         final IAtomContainer container = compound.getMolecule();
@@ -96,7 +96,7 @@ public class CompoundMatchHighlighter {
         }
     }
 
-    public void hightlight(FingerprintCandidateBean compound) {
+    public void hightlight(FingerprintCandidatePropertyChangeSupport compound) {
         final IAtomContainer molecule = compound.getMolecule();
         for (IAtom atom : molecule.atoms()) atom.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);
         for (IBond bond : molecule.bonds()) bond.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);

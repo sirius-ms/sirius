@@ -1,57 +1,64 @@
-package de.unijena.bioinf.babelms.projectspace;
+package de.unijena.bioinf.ms.frontend.io.projectspace;
 
 import ca.odell.glazedlists.BasicEventList;
-import de.unijena.bioinf.ChemistryBase.chem.*;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.sirius.ExperimentResult;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
-import org.jetbrains.annotations.NotNull;
-import org.openscience.cdk.DefaultChemObjectBuilder;
-import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.smiles.SmilesParser;
-import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
+import de.unijena.bioinf.projectspace.*;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.text.ParseException;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
-//todo this naming shit is no longer needed with the ne project space of the CLI:
 public class GuiProjectSpace {
-    public static final GuiProjectSpace PS;
 
-    static {
-        //todo load workspace form Property
-        PropertyManager.getProperty("path/to/space");
-        PS = new GuiProjectSpace(null);
+    public final BasicEventList<InstanceBean> COMPOUNT_LIST = new BasicEventList<>();
+
+    //todo ringbuffer???
+    private final Map<CompoundContainerId, InstanceBean> idToWrapperBean = new ConcurrentHashMap<>();
+
+    private ProjectSpaceManager projectSpace;
+
+    public GuiProjectSpace(File projectSpaceLocation) {
+        try {
+            if (!projectSpaceLocation.exists()) {
+                if (!projectSpaceLocation.mkdir())
+                    throw new IOException("Could not create new directory for project-space'" + projectSpaceLocation + "'");
+            }
+
+            final SiriusProjectSpace psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(projectSpaceLocation);
+
+            //check for formatter
+            StandardMSFilenameFormatter projectSpaceFilenameFormatter;
+            try {
+                projectSpaceFilenameFormatter = psTmp.getProjectSpaceProperty(FilenameFormatter.PSProperty.class).map(it -> new StandardMSFilenameFormatter(it.formatExpression)).orElse(new StandardMSFilenameFormatter());
+            } catch (Exception e) {
+                LoggerFactory.getLogger(getClass()).debug("Could not Parse filenameformatter -> Using default", e);
+                LoggerFactory.getLogger(getClass()).warn("Could not Parse filenameformatter -> Using default");
+                projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
+            }
+            //todo when do we write this?
+            psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(projectSpaceFilenameFormatter));
+
+            projectSpace = new ProjectSpaceManager(psTmp, projectSpaceFilenameFormatter, null);
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).debug("Could not Parse create ProjectSpace. Try creating Temproray one", e);
+            LoggerFactory.getLogger(getClass()).warn("Could not Parse create ProjectSpace. Try creating Temproray one");
+            try {
+                projectSpace = new ProjectSpaceManager(new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createTemporaryProjectSpace());
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        projectSpace.projectSpace().defineCompoundListener().onCreate().thenDo((it) -> {
+            //todo projectsapce listener for compound creation an deletion
+            //todo we may need so kind of Instance factory heres
+//            idToWrapperBean.put(it, ))
+        });
+
     }
 
-    public final BasicEventList<ExperimentResultBean> COMPOUNT_LIST = new BasicEventList<>();
-    private final Set<ExperimentResult> changed = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final Map<String, TIntSet> NAMES = new ConcurrentHashMap<>();
-    public final SiriusProjectSpace projectSpace;
-
-    public GuiProjectSpace(SiriusProjectSpace space) {
-        projectSpace = space;
-
-    }
-
-    public void importCompound(@NotNull final ExperimentResultBean ec) {
+    /*public void importCompound(@NotNull final ExperimentResultBean ec) {
         SwingUtilities.invokeLater(() -> {
             cleanExperiment(ec.getMs2Experiment());
 
@@ -252,5 +259,5 @@ public class GuiProjectSpace {
                 new IdentificationResultSerializer(), new FingerIdResultSerializer(ApplicationCore.WEB_API), new CanopusResultSerializer(ApplicationCore.CANOPUS));
         space.registerSummaryWriter(new MztabSummaryWriter());
         return space;
-    }
+    }*/
 }

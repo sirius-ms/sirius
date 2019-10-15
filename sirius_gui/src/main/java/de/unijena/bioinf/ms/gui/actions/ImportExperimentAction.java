@@ -5,10 +5,10 @@ package de.unijena.bioinf.ms.gui.actions;
  * 29.01.17.
  */
 
-import de.unijena.bioinf.babelms.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.babelms.load.LoadController;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -30,7 +30,7 @@ public class ImportExperimentAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         LoadController lc = new LoadController(MF);
         lc.showDialog();
-        ExperimentResultBean ec = lc.getExperiment();
+        InstanceBean ec = lc.getExperiment();
         if (ec != null) {
             GuiProjectSpace.PS.importCompound(ec);
         }

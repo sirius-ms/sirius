@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.gui.canopus;
 
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.PanelDescription;
 
@@ -11,7 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-public class CanopusPanel extends JPanel implements ActionListener, ActiveElementChangedListener<IdentificationResultBean, ExperimentResultBean>, PanelDescription {
+public class CanopusPanel extends JPanel implements ActionListener, ActiveElementChangedListener<FormulaResultBean, InstanceBean>, PanelDescription {
 
     protected ClassyfireTreePanel treePanel;
 
@@ -30,7 +30,7 @@ public class CanopusPanel extends JPanel implements ActionListener, ActiveElemen
     }
 
     @Override
-    public void resultsChanged(ExperimentResultBean experiment, IdentificationResultBean sre, List<IdentificationResultBean> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
         treePanel.updateTree(experiment, sre);
     }
 

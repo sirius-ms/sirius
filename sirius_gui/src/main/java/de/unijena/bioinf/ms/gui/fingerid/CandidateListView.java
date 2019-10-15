@@ -39,7 +39,7 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 /**
  * Created by fleisch on 16.05.17.
  */
-public class CandidateListView extends ActionListDetailView<FingerprintCandidateBean, Set<FingerIdResultBean>, CandidateList> {
+public class CandidateListView extends ActionListDetailView<FingerprintCandidatePropertyChangeSupport, Set<FingerIdResultPropertyChangeSupport>, CandidateList> {
 
     private FilterRangeSlider logPSlider;
     private FilterRangeSlider tanimotoSlider;
@@ -142,7 +142,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
 
         if (selectedFile != null) {
 
-            Set<FingerIdResult> datas = source.getElementList().stream().map(FingerprintCandidateBean::getData).map(FingerIdResultBean::getFingerIdResult)
+            Set<FingerIdResult> datas = source.getElementList().stream().map(FingerprintCandidatePropertyChangeSupport::getData).map(FingerIdResultPropertyChangeSupport::getFingerIdResult)
                     .collect(Collectors.toSet());
             try {
                 new CSVExporter().exportFingerIdResultsToFile(selectedFile, datas);
@@ -154,11 +154,11 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
     }
 
     @Override
-    protected EventList<MatcherEditor<FingerprintCandidateBean>> getSearchFieldMatchers() {
+    protected EventList<MatcherEditor<FingerprintCandidatePropertyChangeSupport>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
                 new CandidateStringMatcherEditor(searchField.textField),
-                new MinMaxMatcherEditor<>(logPSlider, (Filterator<Double, FingerprintCandidateBean>) (baseList, element) -> baseList.add(element.getXLogP())),
-                new MinMaxMatcherEditor<>(tanimotoSlider, (Filterator<Double, FingerprintCandidateBean>) (baseList, element) -> baseList.add(element.getTanimotoScore())),
+                new MinMaxMatcherEditor<>(logPSlider, (Filterator<Double, FingerprintCandidatePropertyChangeSupport>) (baseList, element) -> baseList.add(element.getXLogP())),
+                new MinMaxMatcherEditor<>(tanimotoSlider, (Filterator<Double, FingerprintCandidatePropertyChangeSupport>) (baseList, element) -> baseList.add(element.getTanimotoScore())),
                 new DatabaseFilterMatcherEditor(dbFilterPanel)
         );
     }

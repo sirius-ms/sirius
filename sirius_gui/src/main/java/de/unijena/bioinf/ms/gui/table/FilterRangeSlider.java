@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.gui.table;
 
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
-import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import eu.hansolo.rangeslider.RangeSlider;
 
 import javax.swing.*;
@@ -13,7 +13,7 @@ import java.text.DecimalFormat;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class FilterRangeSlider<L extends ActionList<E, D>, E extends AbstractEDTBean, D> extends JPanel implements ActiveElementChangedListener<E, D> {
+public class FilterRangeSlider<L extends ActionList<E, D>, E extends SiriusPCS, D> extends JPanel implements ActiveElementChangedListener<E, D> {
     private static final String RANGE_CHANGE = "range-change";
     public static final String DEFAUTL_INT_FORMAT = "##0";
     public static final String DEFAUTL_DOUBLE_FORMAT = "##0.00";

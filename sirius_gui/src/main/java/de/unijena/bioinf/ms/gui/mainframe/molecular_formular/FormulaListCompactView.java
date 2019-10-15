@@ -7,7 +7,7 @@ package de.unijena.bioinf.ms.gui.mainframe.molecular_formular;
 
 import ca.odell.glazedlists.swing.DefaultEventListModel;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActionListView;
 
 import javax.swing.*;
@@ -23,7 +23,7 @@ public class FormulaListCompactView extends ActionListView<FormulaList> {
     public FormulaListCompactView(FormulaList source) {
         super(source);
 
-        final JList<IdentificationResultBean> resultListView;
+        final JList<FormulaResultBean> resultListView;
         resultListView = new JList<>(new DefaultEventListModel<>(source.getElementList()));
         resultListView.setCellRenderer(new FormulaListTextCellRenderer(source.scoreStats));
         resultListView.setSelectionModel(source.getResultListSelectionModel());

@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidateBean, Set<FingerIdResultBean>>, CustomDataSourceService.DataSourceChangeListener {
+public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidatePropertyChangeSupport, Set<FingerIdResultPropertyChangeSupport>>, CustomDataSourceService.DataSourceChangeListener {
     private final List<FilterChangeListener> listeners = new LinkedList<>();
 
     protected long bitSet;
@@ -87,7 +87,7 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
     }
 
     @Override
-    public void resultsChanged(Set<FingerIdResultBean> datas, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(Set<FingerIdResultPropertyChangeSupport> datas, FingerprintCandidatePropertyChangeSupport sre, List<FingerprintCandidatePropertyChangeSupport> resultElements, ListSelectionModel selections) {
         reset();
     }
 

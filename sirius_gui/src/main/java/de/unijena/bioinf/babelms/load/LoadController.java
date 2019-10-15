@@ -8,7 +8,6 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.CSVToSpectrumConverter;
 import de.unijena.bioinf.babelms.filefilter.SupportedDataFormatsFilter;
-import de.unijena.bioinf.babelms.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -16,7 +15,7 @@ import de.unijena.bioinf.ms.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.BatchImportDialog;
 import de.unijena.bioinf.ms.gui.mainframe.FileImportDialog;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.sirius.SpectrumContainer;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -32,12 +31,12 @@ public class LoadController implements LoadDialogListener {
     private final JFrame owner;
     private DefaultLoadDialog loadDialog;
 
-    private final ExperimentResultBean expToModify;
+    private final InstanceBean expToModify;
 
     private final EventList<SpectrumContainer> spectra;
 
 
-    public LoadController(JFrame owner, ExperimentResultBean exp) {
+    public LoadController(JFrame owner, InstanceBean exp) {
         this.owner = owner;
 
 
@@ -58,7 +57,7 @@ public class LoadController implements LoadDialogListener {
             addToSpectra(expToModify.getMs1Spectra());
             addToSpectra(expToModify.getMs2Spectra());
         } else {
-            expToModify = new ExperimentResultBean(new MutableMs2Experiment());
+            expToModify = new InstanceBean(new MutableMs2Experiment());
             spectra = GlazedListsSwing.swingThreadProxyList(new BasicEventList<>());
             loadDialog = new DefaultLoadDialog(owner, spectra);
             loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
@@ -241,7 +240,7 @@ public class LoadController implements LoadDialogListener {
 
     }
 
-    public ExperimentResultBean getExperiment() {
+    public InstanceBean getExperiment() {
         if (expToModify.getMs1Spectra().isEmpty() && expToModify.getMs2Spectra().isEmpty())
             return null;
         return expToModify;

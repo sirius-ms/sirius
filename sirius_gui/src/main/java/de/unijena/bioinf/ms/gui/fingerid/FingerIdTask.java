@@ -19,16 +19,16 @@
 package de.unijena.bioinf.ms.gui.fingerid;
 
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 
 public class FingerIdTask {
 
-    public final ExperimentResultBean experiment;
-    public final IdentificationResultBean result;
+    public final InstanceBean experiment;
+    public final FormulaResultBean result;
     public SearchableDatabase db;
 
-    public FingerIdTask(SearchableDatabase db, ExperimentResultBean experiment, IdentificationResultBean result) {
+    public FingerIdTask(SearchableDatabase db, InstanceBean experiment, FormulaResultBean result) {
         this.experiment = experiment;
         this.result = result;
         this.db = db;

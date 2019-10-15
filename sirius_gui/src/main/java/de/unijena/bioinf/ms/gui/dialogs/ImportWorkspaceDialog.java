@@ -18,7 +18,7 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
-import de.unijena.bioinf.babelms.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.babelms.GuiProjectSpaceIO;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 

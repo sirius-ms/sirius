@@ -10,7 +10,7 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListChangeListener;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -29,11 +29,11 @@ public class CancelComputeAction extends AbstractAction {
 
         setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty() && MF.getCompoundListSelectionModel().getSelected().get(0).isComputing());
 
-        MF.getExperimentList().addChangeListener(new ExperimentListChangeListener() {
+        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<ExperimentResultBean> event, DefaultEventSelectionModel<ExperimentResultBean> selection) {
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
                 if (!selection.isSelectionEmpty()) {
-                    for (ExperimentResultBean ec : selection.getSelected()) {
+                    for (InstanceBean ec : selection.getSelected()) {
                         if (ec != null && (ec.isComputing() || ec.isQueued())) { //todo minor but: isQueued is somehow not detected -> maybe not property change fired?
                             setEnabled(true);
                             return;
@@ -44,7 +44,7 @@ public class CancelComputeAction extends AbstractAction {
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentResultBean> selection) {
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
 
             }
         });
@@ -54,7 +54,7 @@ public class CancelComputeAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        for (ExperimentResultBean ec : MF.getCompoundListSelectionModel().getSelected()) {
+        for (InstanceBean ec : MF.getCompoundListSelectionModel().getSelected()) {
             Jobs.cancel(ec);
         }
     }

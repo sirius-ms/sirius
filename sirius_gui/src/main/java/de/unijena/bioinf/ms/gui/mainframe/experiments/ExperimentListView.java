@@ -7,7 +7,7 @@ package de.unijena.bioinf.ms.gui.mainframe.experiments;
 
 import ca.odell.glazedlists.swing.DefaultEventListModel;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -19,11 +19,11 @@ import java.awt.event.MouseListener;
  */
 public class ExperimentListView extends JScrollPane {
 
-    final ExperimentList sourceList;
-    final JList<ExperimentResultBean> compoundListView;
+    final CompoundList sourceList;
+    final JList<InstanceBean> compoundListView;
     final JPopupMenu expPopMenu;
 
-    public ExperimentListView(ExperimentList sourceList) {
+    public ExperimentListView(CompoundList sourceList) {
         super(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         this.sourceList = sourceList;
 

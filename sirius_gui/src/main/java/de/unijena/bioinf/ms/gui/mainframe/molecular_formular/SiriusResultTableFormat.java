@@ -6,7 +6,7 @@ package de.unijena.bioinf.ms.gui.mainframe.molecular_formular;
  */
 
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
 import de.unijena.bioinf.ms.gui.table.list_stats.ListStats;
 
@@ -15,7 +15,7 @@ import de.unijena.bioinf.ms.gui.table.list_stats.ListStats;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SiriusResultTableFormat extends SiriusTableFormat<IdentificationResultBean> {
+public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean> {
     private static final int COL_COUNT = 9;
 
     protected SiriusResultTableFormat(ListStats stats) {
@@ -29,7 +29,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<IdentificationRes
     }
 
     @Override
-    protected boolean isBest(IdentificationResultBean element) {
+    protected boolean isBest(FormulaResultBean element) {
         return stats.getMax() <= element.getScore();
     }
 
@@ -65,7 +65,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<IdentificationRes
         }
     }
 
-    public Object getColumnValue(IdentificationResultBean result, int column) {
+    public Object getColumnValue(FormulaResultBean result, int column) {
         switch (column) {
             case 0:
                 return result.getRank();

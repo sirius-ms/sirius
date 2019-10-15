@@ -41,7 +41,7 @@ import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.sirius.ComputingStatus;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -75,12 +75,12 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private FingerIDComputationPanel csiOptions;
 
     private MainFrame owner;
-    List<ExperimentResultBean> compoundsToProcess;
+    List<InstanceBean> compoundsToProcess;
 
     private Sirius sirius;
     private boolean success;
 
-    public BatchComputeDialog(MainFrame owner, List<ExperimentResultBean> compoundsToProcess) {
+    public BatchComputeDialog(MainFrame owner, List<InstanceBean> compoundsToProcess) {
         super(owner, "compute", true);
         this.owner = owner;
         this.compoundsToProcess = compoundsToProcess;
@@ -205,7 +205,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             startComputing();
         } else if (e.getSource() == elementAutoDetect) {
             String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
-            ExperimentResultBean ec = compoundsToProcess.get(0);
+            InstanceBean ec = compoundsToProcess.get(0);
             if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
                 MutableMs2Experiment exp = ec.getMs2Experiment();
 
@@ -232,7 +232,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         this.dispose();
     }
 
-    private void saveEdits(ExperimentResultBean ec) {
+    private void saveEdits(InstanceBean ec) {
         if (editPanel.validateFormula()) {
             final MolecularFormula nuFormula = editPanel.getMolecularFormula();
             ec.getMs2Experiment().setMolecularFormula(nuFormula);
@@ -255,9 +255,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
             //reset status of already computed values to uncomputed if needed
             if (isSuccsess) {
-                final Iterator<ExperimentResultBean> compounds = this.compoundsToProcess.iterator();
+                final Iterator<InstanceBean> compounds = this.compoundsToProcess.iterator();
                 while (compounds.hasNext()) {
-                    final ExperimentResultBean ec = compounds.next();
+                    final InstanceBean ec = compounds.next();
                     ec.setSiriusComputeState(ComputingStatus.UNCOMPUTED);
                     ec.setBestHit(null);
                     ec.getMs2Experiment().clearAllAnnotations();
@@ -293,12 +293,12 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             @Override
             protected Object compute() throws InterruptedException {
                 //entspricht setup() Methode
-                final Iterator<ExperimentResultBean> compounds = compoundsToProcess.iterator();
+                final Iterator<InstanceBean> compounds = compoundsToProcess.iterator();
                 final int max = compoundsToProcess.size();
                 int progress = 0;
 
                 while (compounds.hasNext()) {
-                    final ExperimentResultBean ec = compounds.next();
+                    final InstanceBean ec = compounds.next();
                     checkForInterruption();
                     if (ec.isUncomputed() || ec.getBestHit() == null) {
                         progressInfo(ec.getGUIName());
@@ -369,7 +369,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     public void initSingleExperimentDialog(List<Element> detectableElements) {
         JPanel north = new JPanel(new BorderLayout());
 
-        ExperimentResultBean ec = compoundsToProcess.get(0);
+        InstanceBean ec = compoundsToProcess.get(0);
         editPanel = new ExperimentEditPanel();
         editPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Edit Input Data"));
         north.add(editPanel, BorderLayout.NORTH);

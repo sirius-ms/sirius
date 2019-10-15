@@ -18,7 +18,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
-import static de.unijena.bioinf.babelms.projectspace.GuiProjectSpace.PS;
+import static de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace.PS;
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**

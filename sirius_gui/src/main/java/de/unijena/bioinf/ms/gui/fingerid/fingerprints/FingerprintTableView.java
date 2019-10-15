@@ -5,7 +5,7 @@ import ca.odell.glazedlists.gui.AbstractTableComparatorChooser;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.TableComparatorChooser;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
@@ -15,7 +15,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
-public class FingerprintTableView extends ActionListDetailView<MolecularPropertyTableEntry, IdentificationResultBean, FingerprintTable> {
+public class FingerprintTableView extends ActionListDetailView<MolecularPropertyTableEntry, FormulaResultBean, FingerprintTable> {
 
     protected SortedList<MolecularPropertyTableEntry> sortedSource;
     protected ActionTable<MolecularPropertyTableEntry> actionTable;

@@ -14,11 +14,11 @@ import de.unijena.bioinf.fingerid.webapi.PredictionJJob;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.*;
-import de.unijena.bioinf.ms.gui.fingerid.FingerIdResultBean;
+import de.unijena.bioinf.ms.gui.fingerid.FingerIdResultPropertyChangeSupport;
 import de.unijena.bioinf.ms.gui.fingerid.FingerIdTask;
 import de.unijena.bioinf.ms.gui.sirius.ComputingStatus;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.sirius.SiriusResultElementConverter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -54,19 +54,19 @@ public class CSIFingerIDComputation {
     }
 
     //compute for a single experiment
-    public void compute(ExperimentResultBean c, SearchableDatabase db) {
+    public void compute(InstanceBean c, SearchableDatabase db) {
         computeAll(Collections.singletonList(c), db);
     }
 
     //csi fingerid compute all button in main panel
-    public void computeAll(List<ExperimentResultBean> compounds, SearchableDatabase db) {
+    public void computeAll(List<InstanceBean> compounds, SearchableDatabase db) {
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
-        for (ExperimentResultBean c : compounds) {
-            final List<IdentificationResultBean> candidates = getTopSiriusCandidates(c);
+        for (InstanceBean c : compounds) {
+            final List<FormulaResultBean> candidates = getTopSiriusCandidates(c);
             if (candidates.isEmpty()) {
                 LoggerFactory.getLogger(getClass()).warn("No molecular formula candidates available for compound: " + c.getGUIName() + " with " + c.getIonization());
             } else {
-                for (IdentificationResultBean e : candidates) {
+                for (FormulaResultBean e : candidates) {
                     tasks.add(new FingerIdTask(db, c, e));
                 }
             }
@@ -82,17 +82,17 @@ public class CSIFingerIDComputation {
         }
     }
 
-    protected static List<IdentificationResultBean> getTopSiriusCandidates(ExperimentResultBean container) {
-        final ArrayList<IdentificationResultBean> elements = new ArrayList<>();
+    protected static List<FormulaResultBean> getTopSiriusCandidates(InstanceBean container) {
+        final ArrayList<FormulaResultBean> elements = new ArrayList<>();
         if (container == null || !container.isComputed()) return elements;
-        final List<IdentificationResultBean> results = container.getResults();
+        final List<FormulaResultBean> results = container.getResults();
         if (results == null || results.isEmpty()) return elements;
-        final IdentificationResultBean top = results.get(0);
+        final FormulaResultBean top = results.get(0);
         if (top.getResult().getResolvedTree().numberOfEdges() > 0)
             elements.add(top);
         final double threshold = calculateThreshold(top.getScore());
         for (int k = 1; k < results.size(); ++k) {
-            IdentificationResultBean e = results.get(k);
+            FormulaResultBean e = results.get(k);
             if (e.getScore() < threshold) break;
             if (e.getResult().getResolvedTree().numberOfEdges() > 0)
                 elements.add(e);
@@ -133,12 +133,12 @@ public class CSIFingerIDComputation {
     }
 
     protected class FingerIDGUITask extends BasicMasterJJob<Boolean> {
-        public final ExperimentResultBean container;
-        public final IdentificationResultBean originalResultElement;
-        public final List<IdentificationResultBean> addedResultElements;
+        public final InstanceBean container;
+        public final FormulaResultBean originalResultElement;
+        public final List<FormulaResultBean> addedResultElements;
         public final SearchableDatabase db;
 
-        public FingerIDGUITask(ExperimentResultBean container, IdentificationResultBean originalResultElement, SearchableDatabase db) {
+        public FingerIDGUITask(InstanceBean container, FormulaResultBean originalResultElement, SearchableDatabase db) {
             super(JobType.WEBSERVICE);
             this.container = container;
             this.originalResultElement = originalResultElement;
@@ -161,11 +161,11 @@ public class CSIFingerIDComputation {
             LOG().info("downloading molecular formulas and predicting fingerprints");
             final PossibleAdducts pa = container.getMs2Experiment().getAnnotation(PossibleAdducts.class, new PossibleAdducts());
             pa.addAdduct(origIonType);
-            final List<IdentificationResultBean> inputs = new ArrayList<>();
+            final List<FormulaResultBean> inputs = new ArrayList<>();
             inputs.add(originalResultElement);
             if (originalResultElement.getResult().getPrecursorIonType().isPlainProtonationOrDeprotonation()) {
-                final HashMap<Ion, IdentificationResultBean> knownIonMap = new HashMap<>();
-                for (IdentificationResultBean elem : container.getResults()) {
+                final HashMap<Ion, FormulaResultBean> knownIonMap = new HashMap<>();
+                for (FormulaResultBean elem : container.getResults()) {
                     if (elem.getResult() != null)
                         knownIonMap.put(new Ion(elem.getResult().getMolecularFormula(), elem.getResult().getPrecursorIonType()), elem);
                 }
@@ -174,9 +174,9 @@ public class CSIFingerIDComputation {
                     if (!ion.equals(origIonType) && originalResultElement.getResult().getMolecularFormula().isSubtractable(ion.getAdduct())) {
                         try {
                             final Ion addIon = new Ion(ion.measuredNeutralMoleculeToNeutralMolecule(originalResultElement.getResult().getMolecularFormula()), ion);
-                            IdentificationResultBean e = knownIonMap.get(addIon);
+                            FormulaResultBean e = knownIonMap.get(addIon);
                             if (e == null) {
-                                e = new IdentificationResultBean(IdentificationResult.withPrecursorIonType(originalResultElement.getResult(), ion));
+                                e = new FormulaResultBean(IdentificationResult.withPrecursorIonType(originalResultElement.getResult(), ion));
                                 addedResultElements.add(e);
                             } else {
                                 inputs.add(e);
@@ -195,7 +195,7 @@ public class CSIFingerIDComputation {
             final ArrayList<PredictFingerprintJob> predictionJobs = new ArrayList<>();
             final ArrayList<FingerblastJob> searchJobs = new ArrayList<>();
 
-            for (IdentificationResultBean elem : inputs) {
+            for (FormulaResultBean elem : inputs) {
                 final CSIPredictor csi = elem.getResult().getPrecursorIonType().getCharge() > 0 ? positiveMode : negativeMode;
                 // search in database
                 final FormulaJob fj = new FormulaJob(elem.getMolecularFormula(), csi.database.getSearchEngine(db), elem.getResult().getPrecursorIonType());
@@ -231,7 +231,7 @@ public class CSIFingerIDComputation {
                         ++k;
                     }
 
-                    FingerIdResultBean data = new FingerIdResultBean(result.getAnnotationOrThrow(SearchableDatabase.class), compounds, scores, tanimotos, result.predictedFingerprint);
+                    FingerIdResultPropertyChangeSupport data = new FingerIdResultPropertyChangeSupport(result.getAnnotationOrThrow(SearchableDatabase.class), compounds, scores, tanimotos, result.predictedFingerprint);
 
                     inputs.get(i).setFingerIdData(data);
                     inputs.get(i).setFingerIdComputeState(ComputingStatus.COMPUTED);
@@ -242,16 +242,16 @@ public class CSIFingerIDComputation {
             LOG().info("Collecting results");
             synchronized (container) {
                 // replace result list
-                final HashMap<Ion, IdentificationResultBean> elems = new HashMap<>();
-                for (IdentificationResultBean e : container.getResults()) {
+                final HashMap<Ion, FormulaResultBean> elems = new HashMap<>();
+                for (FormulaResultBean e : container.getResults()) {
                     elems.put(new Ion(e.getResult().getMolecularFormula(), e.getResult().getPrecursorIonType()), e);
                 }
-                for (IdentificationResultBean e : inputs) {
+                for (FormulaResultBean e : inputs) {
                     if (e.getFingerIdData() != null) {
                         elems.put(new Ion(e.getResult().getMolecularFormula(), e.getResult().getPrecursorIonType()), e);
                     }
                 }
-                final ArrayList<IdentificationResultBean> sorted = new ArrayList<>(elems.values());
+                final ArrayList<FormulaResultBean> sorted = new ArrayList<>(elems.values());
                 sorted.sort((a, b) -> {
                     int compare = Integer.compare(a.getRank(), b.getRank());
                     if (compare == 0) {
@@ -268,8 +268,8 @@ public class CSIFingerIDComputation {
                 sorted.forEach(x -> x.buildTreeVisualization(SiriusResultElementConverter::convertTree));
                 container.setResults(sorted);
                 double topHitScore = Double.NEGATIVE_INFINITY;
-                IdentificationResultBean topHit = null;
-                for (IdentificationResultBean elem : container.getResults()) {
+                FormulaResultBean topHit = null;
+                for (FormulaResultBean elem : container.getResults()) {
                     double score = elem.getFingerIdData() != null ? elem.getFingerIdData().getTopScore() : Double.NEGATIVE_INFINITY;
                     if (score > topHitScore) {
                         topHit = elem;
@@ -320,12 +320,12 @@ public class CSIFingerIDComputation {
     protected class PredictFingerprintJob extends BasicDependentMasterJJob<ProbabilityFingerprint> {
 
         protected final CSIPredictor predictor;
-        protected final ExperimentResultBean container;
-        protected final IdentificationResultBean re;
+        protected final InstanceBean container;
+        protected final FormulaResultBean re;
         protected final FormulaJob formulaJob;
         protected final boolean requireCandidates;
 
-        public PredictFingerprintJob(CSIPredictor predictor, ExperimentResultBean container, IdentificationResultBean originalResultElement, FormulaJob formulaJob, boolean requireCandidates) {
+        public PredictFingerprintJob(CSIPredictor predictor, InstanceBean container, FormulaResultBean originalResultElement, FormulaJob formulaJob, boolean requireCandidates) {
             super(JobType.REMOTE);
             this.predictor = predictor;
             this.container = container;

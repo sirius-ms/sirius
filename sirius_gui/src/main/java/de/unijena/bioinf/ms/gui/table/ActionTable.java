@@ -14,14 +14,14 @@ import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventTableModel;
 import ca.odell.glazedlists.swing.TableComparatorChooser;
-import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 
 import javax.swing.*;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ActionTable<T extends AbstractEDTBean> extends JTable {
+public class ActionTable<T extends SiriusPCS> extends JTable {
     public final TableComparatorChooser comparatorChooser;
 
 

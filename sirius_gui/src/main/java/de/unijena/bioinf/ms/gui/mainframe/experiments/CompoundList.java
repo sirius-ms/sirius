@@ -1,9 +1,4 @@
 package de.unijena.bioinf.ms.gui.mainframe.experiments;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 26.01.17.
- */
 
 import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.GlazedLists;
@@ -13,9 +8,10 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
-import de.unijena.bioinf.babelms.projectspace.GuiProjectSpace;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.utils.SearchTextField;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -27,22 +23,22 @@ import java.util.List;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ExperimentList {
+public class CompoundList {
 
     final SearchTextField searchField;
-    final FilterList<ExperimentResultBean> compoundList;
-    final DefaultEventSelectionModel<ExperimentResultBean> compountListSelectionModel;
+    final FilterList<InstanceBean> compoundList;
+    final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
 
     private final List<ExperimentListChangeListener> listeners = new LinkedList<>();
 
-    public ExperimentList() {
+    public CompoundList(@NotNull final GuiProjectSpace ps) {
         searchField = new SearchTextField();
 
 
-        compoundList = new FilterList<>(new ObservableElementList<>(GuiProjectSpace.PS.COMPOUNT_LIST, GlazedLists.beanConnector(ExperimentResultBean.class)),
-                new TextComponentMatcherEditor<>(searchField.textField, new TextFilterator<ExperimentResultBean>() {
+        compoundList = new FilterList<>(new ObservableElementList<>(ps.COMPOUNT_LIST, GlazedLists.beanConnector(InstanceBean.class)),
+                new TextComponentMatcherEditor<>(searchField.textField, new TextFilterator<InstanceBean>() {
                     @Override
-                    public void getFilterStrings(List<String> baseList, ExperimentResultBean element) {
+                    public void getFilterStrings(List<String> baseList, InstanceBean element) {
                         baseList.add(element.getGUIName());
                         baseList.add(element.getIonization().toString());
                         baseList.add(String.valueOf(element.getIonMass()));
@@ -60,27 +56,27 @@ public class ExperimentList {
                 }
             }
         });
-        compoundList.addListEventListener(new ListEventListener<ExperimentResultBean>() {
+        compoundList.addListEventListener(new ListEventListener<InstanceBean>() {
             @Override
-            public void listChanged(final ListEvent<ExperimentResultBean> listChanges) {
+            public void listChanged(final ListEvent<InstanceBean> listChanges) {
                 notifyListenerDataChange(listChanges);
             }
         });
     }
 
     public void orderById() {
-        Collections.sort(compoundList, new Comparator<ExperimentResultBean>() {
+        Collections.sort(compoundList, new Comparator<InstanceBean>() {
             @Override
-            public int compare(ExperimentResultBean o1, ExperimentResultBean o2) {
+            public int compare(InstanceBean o1, InstanceBean o2) {
                 return o1.getGUIName().compareTo(o2.getGUIName());
             }
         });
     }
 
     public void orderByMass() {
-        Collections.sort(compoundList, new Comparator<ExperimentResultBean>() {
+        Collections.sort(compoundList, new Comparator<InstanceBean>() {
             @Override
-            public int compare(ExperimentResultBean o1, ExperimentResultBean o2) {
+            public int compare(InstanceBean o1, InstanceBean o2) {
                 double mz1 = o1.getIonMass();
                 if (mz1 <= 0 || Double.isNaN(mz1)) mz1 = Double.POSITIVE_INFINITY;
                 double mz2 = o2.getIonMass();
@@ -90,7 +86,7 @@ public class ExperimentList {
         });
     }
 
-    private void notifyListenerDataChange(ListEvent<ExperimentResultBean> event) {
+    private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
         for (ExperimentListChangeListener l : listeners) {
             event.reset();//this is hell important to reset the iterator
             l.listChanged(event,compountListSelectionModel);
@@ -112,11 +108,11 @@ public class ExperimentList {
         listeners.remove(l);
     }
 
-    public DefaultEventSelectionModel<ExperimentResultBean> getCompoundListSelectionModel() {
+    public DefaultEventSelectionModel<InstanceBean> getCompoundListSelectionModel() {
         return compountListSelectionModel;
     }
 
-    public FilterList<ExperimentResultBean> getCompoundList() {
+    public FilterList<InstanceBean> getCompoundList() {
         return compoundList;
     }
 

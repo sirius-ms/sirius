@@ -14,7 +14,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -33,11 +33,11 @@ public class ComputeCSIAction extends AbstractAction {
 
         Jobs.runInBackround(() -> proofCSI(MainFrame.CONNECTION_MONITOR.checkConnection().isConnected()));
 
-        MF.getExperimentList().addChangeListener(new ExperimentListChangeListener() {
+        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<ExperimentResultBean> event, DefaultEventSelectionModel<ExperimentResultBean> selection) {
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
                 if (MF.getCsiFingerId().isEnabled()) {
-                    for (ExperimentResultBean container : event.getSourceList()) {
+                    for (InstanceBean container : event.getSourceList()) {
                         if (container.isComputed()) {
                             setEnabled(true);
                             return;
@@ -50,7 +50,7 @@ public class ComputeCSIAction extends AbstractAction {
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentResultBean> selection) {
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
             }
         });
 
@@ -83,7 +83,7 @@ public class ComputeCSIAction extends AbstractAction {
         setEnabled(false);
         if (MF.getCsiFingerId().isEnabled() && MF.getCompounds().size() > 0) {
             if (network) {
-                for (ExperimentResultBean container : MF.getCompounds()) {
+                for (InstanceBean container : MF.getCompounds()) {
                     if (container.isComputed())
                         return true;
                     setEnabled(true);

@@ -11,7 +11,7 @@ import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListChangeListener;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -31,14 +31,14 @@ public class ComputeAllAction extends AbstractAction {
         setEnabled(false);
 
         //filtered Workspace Listener
-        MF.getExperimentList().addChangeListener(new ExperimentListChangeListener() {
+        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<ExperimentResultBean> event, DefaultEventSelectionModel<ExperimentResultBean> selection) {
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
                 setEnabled(event.getSourceList().size() > 0);
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentResultBean> selection) {
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
             }
         });
 

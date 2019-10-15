@@ -7,7 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.fingerid.db.custom.CustomDatabase;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
@@ -67,7 +67,7 @@ public class SearchProfilePanel extends JPanel {
     private SpinnerNumberModel snm;
     final JSpinner candidatesSpinner;
 
-    public SearchProfilePanel(final Window owner, Collection<ExperimentResultBean> ecs) {
+    public SearchProfilePanel(final Window owner, Collection<InstanceBean> ecs) {
         this.owner = owner;
 
         this.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));

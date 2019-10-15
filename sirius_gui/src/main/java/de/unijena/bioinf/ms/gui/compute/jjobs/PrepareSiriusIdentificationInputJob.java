@@ -15,7 +15,7 @@ import de.unijena.bioinf.sirius.IsotopePatternHandling;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.ms.gui.compute.FormulaWhiteListJob;
 import de.unijena.bioinf.ms.gui.compute.SearchProfilePanel;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 
 import java.util.Collections;
@@ -34,7 +34,7 @@ public class PrepareSiriusIdentificationInputJob extends BasicJJob<MutableMs2Exp
     final SearchableDatabase searchableDatabase;
     final SearchProfilePanel.Instruments instrument; // TODO: just a workaround
 
-    public PrepareSiriusIdentificationInputJob(ExperimentResultBean ec, SearchProfilePanel.Instruments instrument, double ppm, boolean onlyOrganic, SearchableDatabase db, final FormulaConstraints constraints, final List<Element> elementsToAutoDetect, PossibleIonModes possibleIonModes, PossibleAdducts possibleAdducts) {
+    public PrepareSiriusIdentificationInputJob(InstanceBean ec, SearchProfilePanel.Instruments instrument, double ppm, boolean onlyOrganic, SearchableDatabase db, final FormulaConstraints constraints, final List<Element> elementsToAutoDetect, PossibleIonModes possibleIonModes, PossibleAdducts possibleAdducts) {
         super(JobType.CPU);
         this.sirius = Jobs.getSiriusByProfile(instrument.profile);
         this.name = ec.getGUIName();

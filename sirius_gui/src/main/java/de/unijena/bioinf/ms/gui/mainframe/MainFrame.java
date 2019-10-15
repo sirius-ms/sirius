@@ -4,20 +4,21 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpaceIO;
 import de.unijena.bioinf.ms.gui.compute.CSIFingerIDComputation;
-import de.unijena.bioinf.babelms.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.dialogs.DragAndDropOpenDialog;
 import de.unijena.bioinf.ms.gui.dialogs.DragAndDropOpenDialogReturnValue;
 import de.unijena.bioinf.babelms.GuiProjectSpaceIO;
 import de.unijena.bioinf.babelms.load.LoadController;
-import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentList;
+import de.unijena.bioinf.ms.gui.mainframe.experiments.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListView;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.FilterableExperimentListPanel;
 import de.unijena.bioinf.ms.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,19 +33,26 @@ import java.util.regex.Pattern;
 public class MainFrame extends JFrame implements DropTargetListener {
     public static final MainFrame MF = new MainFrame();
 
+    private GuiProjectSpace ps;
+
+    public GuiProjectSpace getPs() {
+        return ps;
+    }
+
     //left side panel
-    private ExperimentList experimentList;
+    private CompoundList compoundList;
 
-    public ExperimentList getExperimentList() {
-        return experimentList;
+
+    public CompoundList getCompoundList() {
+        return compoundList;
     }
 
-    public EventList<ExperimentResultBean> getCompounds() {
-        return experimentList.getCompoundList();
+    public EventList<InstanceBean> getCompounds() {
+        return compoundList.getCompoundList();
     }
 
-    public DefaultEventSelectionModel<ExperimentResultBean> getCompoundListSelectionModel() {
-        return experimentList.getCompoundListSelectionModel();
+    public DefaultEventSelectionModel<InstanceBean> getCompoundListSelectionModel() {
+        return compoundList.getCompoundListSelectionModel();
     }
 
     private FormulaList formulaList;
@@ -94,9 +102,13 @@ public class MainFrame extends JFrame implements DropTargetListener {
         //create computation
         csiFingerId = new CSIFingerIDComputation(); //todo maybe make special gui core to not mix this up with view stuff
 
+        // create project space
+        File psFile = new File(PropertyManager.getProperty("path/to/space")); //todo real data
+        ps = new GuiProjectSpace(null);
+
         // create models for views
-        experimentList = new ExperimentList();
-        formulaList = new FormulaList(experimentList);
+        compoundList = new CompoundList(ps);
+        formulaList = new FormulaList(compoundList);
 
 
         //CREATE VIEWS
@@ -112,7 +124,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         add(mainPanel, BorderLayout.CENTER);
 
         //build left sidepane
-        FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(experimentList));
+        FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(compoundList));
 
         //BUILD the MainFrame (GUI)
         final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
@@ -231,9 +243,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
         lc.addSpectra(csvFiles, msFiles, mgfFiles);
         lc.showDialog();
 
-        ExperimentResultBean ec = lc.getExperiment();
+        InstanceBean ec = lc.getExperiment();
         if (ec != null) {
-            GuiProjectSpace.PS.importCompound(ec);
+            ps.importCompound(ec);
         }
     }
     //todo insert canopus here

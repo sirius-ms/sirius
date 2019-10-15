@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * Created by fleisch on 16.05.17.
  */
-public class CandidateCellRenderer extends JPanel implements ListCellRenderer<FingerprintCandidateBean> {
+public class CandidateCellRenderer extends JPanel implements ListCellRenderer<FingerprintCandidatePropertyChangeSupport> {
     public static final int MIN_CELL_SIZE = 5;
     public final static int CELL_SIZE = 15;
     private static Color LOW = Color.RED, MED = Color.WHITE, HIGH = new Color(100, 149, 237);
@@ -34,7 +34,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
     private CompoundStructureImage image;
     private DescriptionPanel descriptionPanel;
-    private FingerprintCandidateBean currentCandidate;
+    private FingerprintCandidatePropertyChangeSupport currentCandidate;
 
     private final CSIFingerIDComputation computation;
     private final DoubleListStats stats;
@@ -67,7 +67,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     }
 
     @Override
-    public Component getListCellRendererComponent(JList<? extends FingerprintCandidateBean> list, FingerprintCandidateBean value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList<? extends FingerprintCandidatePropertyChangeSupport> list, FingerprintCandidatePropertyChangeSupport value, int index, boolean isSelected, boolean cellHasFocus) {
 
         image.molecule = value;
         if (value != null && value.getScore() >= stats.getMax()) {
@@ -182,7 +182,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             setBorder(new EmptyBorder(5, 2, 2, 2));
         }
 
-        public void setCompound(FingerprintCandidateBean candidate) {
+        public void setCompound(FingerprintCandidatePropertyChangeSupport candidate) {
             removeAll();
             if (candidate == null || candidate.compound == null) return;
 
@@ -368,7 +368,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             setVisible(true);
         }
 
-        public void setCompound(FingerprintCandidateBean value) {
+        public void setCompound(FingerprintCandidatePropertyChangeSupport value) {
             setFont(propertyFont);
             inchi.setText(value.compound.getInchi().key2D());
             databasePanel.setCompound(value);

@@ -25,7 +25,7 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 
 /**
  * This is the wrapper for the FingerIdResult class to interact with the gui
@@ -34,7 +34,7 @@ import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
  * be updated in the EDT. Some operations may NOT be Thread save, so you may have
  * to care about Synchronization.
  */
-public class FingerIdResultBean extends AbstractEDTBean implements DataAnnotation {
+public class FingerIdResultPropertyChangeSupport extends SiriusPCS implements DataAnnotation {
 
     protected final FingerIdResult result;
 
@@ -42,7 +42,7 @@ public class FingerIdResultBean extends AbstractEDTBean implements DataAnnotatio
     private double topScore;
 
 
-    public FingerIdResultBean(FingerIdResult result) {
+    public FingerIdResultPropertyChangeSupport(FingerIdResult result) {
         this.result = result;
         this.topScore = result.getCandidates().get(0).getScore();
         this.tanimotoScores = result.getCandidates().stream().mapToDouble(c ->

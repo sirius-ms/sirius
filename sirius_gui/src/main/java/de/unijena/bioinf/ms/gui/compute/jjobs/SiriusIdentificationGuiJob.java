@@ -7,20 +7,20 @@ import de.unijena.bioinf.jjobs.JobStateEvent;
 import de.unijena.bioinf.jjobs.SwingJJobContainer;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 
 import java.util.List;
 
 //todo would be nicer to simply extend the sirius identification job, or simply wrap it, but its not a static class
-public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<IdentificationResultBean>> implements GuiObservableJJob<List<IdentificationResultBean>> {
-    final ExperimentResultBean ec;
+public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<FormulaResultBean>> implements GuiObservableJJob<List<FormulaResultBean>> {
+    final InstanceBean ec;
     final int numberOfCandidates;
     private final Sirius sirius;
-    TextAreaJJobContainer<List<IdentificationResultBean>> swingJobContainer;
+    TextAreaJJobContainer<List<FormulaResultBean>> swingJobContainer;
 
-    public SiriusIdentificationGuiJob(String profile, int numberOfCandidates, ExperimentResultBean ec) {
+    public SiriusIdentificationGuiJob(String profile, int numberOfCandidates, InstanceBean ec) {
         super(JobType.CPU);
         this.sirius = Jobs.getSiriusByProfile(profile);
         this.numberOfCandidates = numberOfCandidates;
@@ -31,7 +31,7 @@ public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<Id
 
 
     @Override
-    protected List<IdentificationResultBean> compute() throws Exception {
+    protected List<FormulaResultBean> compute() throws Exception {
         final MutableMs2Experiment experiment = ec.getMs2Experiment();
 
         //todo find a nice way to combine progress between subjobs
@@ -60,8 +60,8 @@ public class SiriusIdentificationGuiJob extends BasicDependentMasterJJob<List<Id
     }
 
     @Override
-    public SwingJJobContainer<List<IdentificationResultBean>> asSwingJob() {
-        TextAreaJJobContainer<List<IdentificationResultBean>> jsw = new TextAreaJJobContainer<>(this, ec.getGUIName(), "Molecular Formula Identification");
+    public SwingJJobContainer<List<FormulaResultBean>> asSwingJob() {
+        TextAreaJJobContainer<List<FormulaResultBean>> jsw = new TextAreaJJobContainer<>(this, ec.getGUIName(), "Molecular Formula Identification");
         return jsw;
     }
 }

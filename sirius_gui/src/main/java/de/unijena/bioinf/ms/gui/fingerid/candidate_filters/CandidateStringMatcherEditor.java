@@ -1,16 +1,14 @@
 package de.unijena.bioinf.ms.gui.fingerid.candidate_filters;
 
-import ca.odell.glazedlists.TextFilterator;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
-import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
+import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidatePropertyChangeSupport;
 
 import javax.swing.text.JTextComponent;
-import java.util.List;
 
 /**
  * Created by fleisch on 18.05.17.
  */
-public class CandidateStringMatcherEditor extends TextComponentMatcherEditor<FingerprintCandidateBean> {
+public class CandidateStringMatcherEditor extends TextComponentMatcherEditor<FingerprintCandidatePropertyChangeSupport> {
 
     public CandidateStringMatcherEditor(JTextComponent textComponent) {
         super(textComponent, (baseList, element) -> {

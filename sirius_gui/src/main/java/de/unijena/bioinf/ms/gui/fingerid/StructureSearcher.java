@@ -26,7 +26,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class StructureSearcher implements Runnable {
 
     private final Update updater;
-    private ArrayBlockingQueue<FingerprintCandidateBean> queue;
+    private ArrayBlockingQueue<FingerprintCandidatePropertyChangeSupport> queue;
 
     public int highlight;
 
@@ -59,7 +59,7 @@ public class StructureSearcher implements Runnable {
             if (highlight < 0 || activeCandidate < 0) {
                 this.queue.clear();
             } else {
-                queue = new ArrayBlockingQueue<FingerprintCandidateBean>(candidateList.getElementList().size() + 10);
+                queue = new ArrayBlockingQueue<FingerprintCandidatePropertyChangeSupport>(candidateList.getElementList().size() + 10);
 
                 int i = activeCandidate + 1, j = activeCandidate, n = candidateList.getElementList().size();
                 while ((j >= 0 && j < n) || (i >= 0 && i < n)) {
@@ -79,7 +79,7 @@ public class StructureSearcher implements Runnable {
     public void run() {
         while (!shutdown) {
             try {
-                final FingerprintCandidateBean c = queue.poll();
+                final FingerprintCandidatePropertyChangeSupport c = queue.poll();
                 if (c == null) {
                     synchronized (this) {
                         wait();
@@ -104,7 +104,7 @@ public class StructureSearcher implements Runnable {
     }
 
     private static class Update implements Runnable, Cloneable {
-        private FingerprintCandidateBean c;
+        private FingerprintCandidatePropertyChangeSupport c;
         private CandidateList sourceList;
 
         @Override

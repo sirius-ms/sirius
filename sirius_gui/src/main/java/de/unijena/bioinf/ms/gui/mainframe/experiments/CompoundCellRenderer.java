@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.gui.mainframe.experiments;
 
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import org.slf4j.LoggerFactory;
 
@@ -9,9 +9,9 @@ import java.awt.*;
 import java.io.InputStream;
 import java.text.DecimalFormat;
 
-public class CompoundCellRenderer extends JLabel implements ListCellRenderer<ExperimentResultBean>{
+public class CompoundCellRenderer extends JLabel implements ListCellRenderer<InstanceBean>{
 	
-	private ExperimentResultBean ec;
+	private InstanceBean ec;
 
 	private Color backColor, foreColor;
 	
@@ -59,7 +59,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 	
 	@Override
 	public Component getListCellRendererComponent(
-			JList<? extends ExperimentResultBean> list, ExperimentResultBean value,
+			JList<? extends InstanceBean> list, InstanceBean value,
 			int index, boolean isSelected, boolean cellHasFocus) {
 		this.ec = value;
 		if(isSelected){

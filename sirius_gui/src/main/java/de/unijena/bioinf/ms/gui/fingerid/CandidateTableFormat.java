@@ -6,7 +6,7 @@ import de.unijena.bioinf.ms.gui.table.list_stats.ListStats;
 /**
  * Created by fleisch on 15.05.17.
  */
-public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidateBean> {
+public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidatePropertyChangeSupport> {
     protected CandidateTableFormat(ListStats stats) {
         super(stats);
     }
@@ -31,7 +31,7 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
     }
 
     @Override
-    protected boolean isBest(FingerprintCandidateBean element) {
+    protected boolean isBest(FingerprintCandidatePropertyChangeSupport element) {
         return stats.getMax() <= element.getScore();
     }
 
@@ -43,7 +43,7 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
         return columns[column];
     }
 
-    public Object getColumnValue(FingerprintCandidateBean result, int column) {
+    public Object getColumnValue(FingerprintCandidatePropertyChangeSupport result, int column) {
         int col = 0;
         if (column == col++) return result.rank;
         if (column == col++) return result.compound.getName() != null ? result.compound.getName() : "";
