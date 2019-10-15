@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.frontend.subtools.fingerid;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.annotations.UserFormulaResultRankingScore;
+import de.unijena.bioinf.ms.frontend.subtools.fingerid.options.FormulaResultRankingScoreType;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -42,9 +42,9 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
 
     // input formula candidates
     @Option(names = {"-s", "--formula-score"}, description = "Specifies the Score that is used to rank the list Molecular Formula Identifications" +
-            " before the thresholds for CSI:FingerID predictions are calculated.", defaultValue = "AUTO")
-    public void setPredictors(UserFormulaResultRankingScore.Score score) throws Exception {
-        defaultConfigOptions.changeOption("UserFormulaResultRankingScore", score.name());
+            " before the thresholds for CSI:FingerID predictions are calculated.")
+    public void setPredictors(FormulaResultRankingScoreType score) throws Exception {
+        defaultConfigOptions.changeOption("FormulaResultRankingScore", score.simpleClazzName());
     }
 
     // candidates

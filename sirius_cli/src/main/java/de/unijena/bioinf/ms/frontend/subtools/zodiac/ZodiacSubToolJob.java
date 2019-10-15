@@ -6,7 +6,6 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.GibbsSampling.Zodiac;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.GibbsSampling.ZodiacUtils;
@@ -17,9 +16,8 @@ import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistr
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorerNoiseIntensityWeighted;
 import de.unijena.bioinf.GibbsSampling.properties.*;
-import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.annotations.UserFormulaResultRankingScore;
+import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
@@ -167,11 +165,10 @@ public class ZodiacSubToolJob extends DataSetJob {
 //                    System.out.println(fr.getId().getFormula().toString() + sTress.get(fr.getAnnotationOrThrow(FTree.class)));
                 });
 
-                // set sirius to ranking score
-                if (inst.getExperiment().getAnnotationOrThrow(UserFormulaResultRankingScore.class).isAuto()) {
-                    inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(ZodiacScore.class));
-                    inst.getExperiment().getAnnotationOrThrow(FinalConfig.class).config.changeConfig("FormulaResultRankingScore", ZodiacScore.class.getName());
-                    inst.updateConfig();
+                // set zodiac as ranking score
+                if (inst.getExperiment().getAnnotationOrThrow(FormulaResultRankingScore.class).isAuto()) {
+                    inst.getID().setRankingScoreType(ZodiacScore.class);
+                    inst.updateCompoundID();
                 }
             });
 

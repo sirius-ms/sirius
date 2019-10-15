@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -29,8 +30,10 @@ import java.util.function.Predicate;
 public final class ProjectSpaceManager implements Iterable<Instance> {
 
     private final SiriusProjectSpace space;
-    private final Function<Ms2Experiment, String> nameFormatter;
-    private final Predicate<CompoundContainerId> compoundFilter;
+    public final Function<Ms2Experiment, String> nameFormatter;
+    public final BiFunction<Integer, String, String> namingScheme;
+    public final Predicate<CompoundContainerId> compoundFilter;
+
 
     public ProjectSpaceManager(@NotNull SiriusProjectSpace space) {
         this(space, null, null);
@@ -38,9 +41,9 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
 
     public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
         this.space = space;
-        this.nameFormatter = formatter != null
-                ? formatter
-                : new StandardMSFilenameFormatter();
+
+        this.nameFormatter = formatter != null ? formatter : new StandardMSFilenameFormatter();
+        this.namingScheme = (idx, name) -> idx + "_" + name;
         this.compoundFilter = compoundFilter;
     }
 
@@ -48,16 +51,12 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
         return space;
     }
 
-    public Function<Ms2Experiment, String> nameFormatter() {
-        return nameFormatter;
-    }
-
 
     @NotNull
     public Instance newCompoundWithUniqueId(Ms2Experiment inputExperiment) {
-        final String name = nameFormatter().apply(inputExperiment);
+        final String name = nameFormatter.apply(inputExperiment);
         try {
-            final CompoundContainer container = projectSpace().newCompoundWithUniqueId(name, (idx) -> idx + "_" + name).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
+            final CompoundContainer container = projectSpace().newCompoundWithUniqueId(name, (idx) -> namingScheme.apply(idx, name)).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
             container.setAnnotation(Ms2Experiment.class, inputExperiment);
             projectSpace().updateCompound(container, Ms2Experiment.class);
             return new Instance(container, this);

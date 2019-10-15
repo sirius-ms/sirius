@@ -16,8 +16,8 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.fingerid.CSIClientData;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
-import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
@@ -30,7 +30,7 @@ public class FingeridSubToolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults = inst.loadFormulaResults(
-                inst.getExperiment().getAnnotationOrThrow(FormulaResultRankingScore.class).value,
+                inst.getID().getRankingScoreType().orElse(SiriusScore.class),
                 FormulaScoring.class, FTree.class, FingerprintResult.class, FingerblastResult.class);
 
         if (formulaResults == null || formulaResults.isEmpty()) {
