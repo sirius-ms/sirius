@@ -6,12 +6,12 @@ package de.unijena.bioinf.ms.gui.mainframe.experiments;/**
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public interface ExperimentListChangeListener{
-    void listChanged(ListEvent<ExperimentResultBean> event, DefaultEventSelectionModel<ExperimentResultBean> selection);
-    void listSelectionChanged(DefaultEventSelectionModel<ExperimentResultBean> selection);
+    void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection);
+    void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection);
 }

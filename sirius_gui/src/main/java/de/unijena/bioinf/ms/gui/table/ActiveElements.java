@@ -4,12 +4,12 @@ package de.unijena.bioinf.ms.gui.table;/**
  * 30.01.17.
  */
 
-import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public interface ActiveElements<E extends AbstractEDTBean, D> {
+public interface ActiveElements<E extends SiriusPCS, D> {
     void addActiveResultChangedListener(ActiveElementChangedListener<E, D> listener);
 
     void removeActiveResultChangedListener(ActiveElementChangedListener<E, D> listener);

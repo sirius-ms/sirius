@@ -7,8 +7,8 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 
 import javax.swing.*;
 import java.text.DecimalFormat;
@@ -23,7 +23,7 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
     private static final DecimalFormat cEFormat = new DecimalFormat("#0.0");
 
     //data model
-    protected ExperimentResultBean ec; //todo maybe remove this
+    protected InstanceBean ec; //todo maybe remove this
     protected IdentificationResult currentResult;
     private Map<String, Spectrum<?>> identifierToSpectrum = new HashMap<>();
     private final DefaultComboBoxModel<String> cbModel = new DefaultComboBoxModel<>();
@@ -50,7 +50,7 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
         return cbModel;
     }
 
-    public boolean changeData(ExperimentResultBean ec, IdentificationResultBean result) {
+    public boolean changeData(InstanceBean ec, FormulaResultBean result) {
         if (this.ec != ec || (result != null && this.currentResult != result.getResult())) {
             this.ec = ec;
 

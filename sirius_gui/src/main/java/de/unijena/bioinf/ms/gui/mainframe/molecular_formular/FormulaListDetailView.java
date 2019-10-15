@@ -12,8 +12,8 @@ import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.*;
 
 import javax.swing.*;
@@ -29,12 +29,12 @@ import java.util.Map;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaListDetailView extends ActionListDetailView<IdentificationResultBean, ExperimentResultBean, FormulaList> {
+public class FormulaListDetailView extends ActionListDetailView<FormulaResultBean, InstanceBean, FormulaList> {
     //    private static final int[] BAR_COLS = {2, 3, 4};
-    private final ActionTable<IdentificationResultBean> table;
-    private final ConnectedSelection<IdentificationResultBean> selectionConnection; //this object synchronizes selection models and is not obsolete
+    private final ActionTable<FormulaResultBean> table;
+    private final ConnectedSelection<FormulaResultBean> selectionConnection; //this object synchronizes selection models and is not obsolete
 
-    private SortedList<IdentificationResultBean> sortedSource;
+    private SortedList<FormulaResultBean> sortedSource;
     private final SiriusResultTableFormat tableFormat;
 
     public FormulaListDetailView(final FormulaList source) {
@@ -109,14 +109,14 @@ public class FormulaListDetailView extends ActionListDetailView<IdentificationRe
     }
 
     @Override
-    protected EventList<MatcherEditor<IdentificationResultBean>> getSearchFieldMatchers() {
+    protected EventList<MatcherEditor<FormulaResultBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
-                (MatcherEditor<IdentificationResultBean>) new StringMatcherEditor<>(tableFormat, searchField.textField)
+                (MatcherEditor<FormulaResultBean>) new StringMatcherEditor<>(tableFormat, searchField.textField)
         );
     }
 
     @Override
-    protected FilterList<IdentificationResultBean> configureFiltering(EventList<IdentificationResultBean> source) {
+    protected FilterList<FormulaResultBean> configureFiltering(EventList<FormulaResultBean> source) {
         sortedSource = new SortedList<>(source);
         return super.configureFiltering(sortedSource);
     }

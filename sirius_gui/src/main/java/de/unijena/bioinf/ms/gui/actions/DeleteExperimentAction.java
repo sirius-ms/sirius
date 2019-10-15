@@ -7,14 +7,14 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.babelms.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.CloseDialogNoSaveReturnValue;
 import de.unijena.bioinf.ms.gui.dialogs.CloseDialogReturnValue;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListChangeListener;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -36,13 +36,13 @@ public class DeleteExperimentAction extends AbstractAction {
 
         setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty());
 
-        MF.getExperimentList().addChangeListener(new ExperimentListChangeListener() {
+        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<ExperimentResultBean> event, DefaultEventSelectionModel<ExperimentResultBean> selection) {
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentResultBean> selection) {
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
                 setEnabled(!selection.isSelectionEmpty());
             }
         });
@@ -56,8 +56,8 @@ public class DeleteExperimentAction extends AbstractAction {
             if (val == CloseDialogReturnValue.abort) return;
         }
 
-        List<ExperimentResultBean> toRemove = new ArrayList<>(MF.getExperimentList().getCompoundListSelectionModel().getSelected());
-        for (ExperimentResultBean cont : toRemove) {
+        List<InstanceBean> toRemove = new ArrayList<>(MF.getCompoundList().getCompoundListSelectionModel().getSelected());
+        for (InstanceBean cont : toRemove) {
             Jobs.cancel(cont);
             GuiProjectSpace.PS.remove(cont);
         }

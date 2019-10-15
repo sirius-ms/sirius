@@ -26,7 +26,7 @@ import de.unijena.bioinf.ms.gui.compute.CSIFingerIDComputation;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
@@ -51,14 +51,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class CandidateListDetailView extends CandidateListView implements ActiveElementChangedListener<FingerprintCandidateBean, ExperimentResultBean>, MouseListener, ActionListener {
+public class CandidateListDetailView extends CandidateListView implements ActiveElementChangedListener<FingerprintCandidatePropertyChangeSupport, InstanceBean>, MouseListener, ActionListener {
 
 
     public static final Color INVERT_HIGHLIGHTED_COLOR = new Color(255, 30, 0, 192);
     public static final Color INVERT_HIGHLIGHTED_COLOR2 = new Color(255, 197, 0, 192);
     public static final Color PRIMARY_HIGHLIGHTED_COLOR = new Color(0, 100, 255, 128);
     public static final Color SECONDARY_HIGHLIGHTED_COLOR = new Color(100, 100, 255, 64).brighter();
-    protected JList<FingerprintCandidateBean> candidateList;
+    protected JList<FingerprintCandidatePropertyChangeSupport> candidateList;
     protected StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
 
@@ -76,12 +76,12 @@ public class CandidateListDetailView extends CandidateListView implements Active
 
     public CandidateListDetailView(final CSIFingerIDComputation computation, CandidateList sourceList) {
         super(sourceList);
-        candidateList = new CandidateInnerList(new DefaultEventListModel<FingerprintCandidateBean>(filteredSource));
+        candidateList = new CandidateInnerList(new DefaultEventListModel<FingerprintCandidatePropertyChangeSupport>(filteredSource));
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
         candidateList.setCellRenderer(new CandidateCellRenderer(computation, sourceList.scoreStats, this));
         candidateList.setFixedCellHeight(-1);
-        candidateList.setPrototypeCellValue(FingerprintCandidateBean.PROTOTYPE);
+        candidateList.setPrototypeCellValue(FingerprintCandidatePropertyChangeSupport.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         add(scrollPane, BorderLayout.CENTER);
 
@@ -132,8 +132,8 @@ public class CandidateListDetailView extends CandidateListView implements Active
     }
 
     @Override
-    protected EventList<MatcherEditor<FingerprintCandidateBean>> getSearchFieldMatchers() {
-        EventList<MatcherEditor<FingerprintCandidateBean>> list = super.getSearchFieldMatchers();
+    protected EventList<MatcherEditor<FingerprintCandidatePropertyChangeSupport>> getSearchFieldMatchers() {
+        EventList<MatcherEditor<FingerprintCandidatePropertyChangeSupport>> list = super.getSearchFieldMatchers();
         list.add(new SmartFilterMatcherEditor(smartFilterTextField));
 
         molecularPropertyMatcherEditor = new MolecularPropertyMatcherEditor(filterByMolecularPropertyButton);
@@ -144,7 +144,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
     @Override
     public void actionPerformed(ActionEvent e) {
         if (selectedCompoundId < 0) return;
-        final FingerprintCandidateBean c = candidateList.getModel().getElementAt(selectedCompoundId);
+        final FingerprintCandidatePropertyChangeSupport c = candidateList.getModel().getElementAt(selectedCompoundId);
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         if (e.getSource() == CopyInchiKey) {
             clipboard.setContents(new StringSelection(c.compound.getInchi().key2D()), null);
@@ -213,7 +213,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
         final int index = candidateList.locationToIndex(point);
         selectedCompoundId = index;
         if (index < 0) return;
-        final FingerprintCandidateBean candidate = candidateList.getModel().getElementAt(index);
+        final FingerprintCandidatePropertyChangeSupport candidate = candidateList.getModel().getElementAt(index);
         highlightedCandidate = candidate.index;
         final Rectangle relativeRect = candidateList.getCellBounds(index, index);
 
@@ -273,7 +273,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
         final int index = candidateList.locationToIndex(point);
         selectedCompoundId = index;
         if (index < 0) return;
-        final FingerprintCandidateBean candidate = candidateList.getModel().getElementAt(index);
+        final FingerprintCandidatePropertyChangeSupport candidate = candidateList.getModel().getElementAt(index);
         highlightedCandidate = candidate.index;
 
         if (e.isPopupTrigger()) popup(e);
@@ -295,7 +295,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
     }
 
     @Override
-    public void resultsChanged(ExperimentResultBean experiment, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(InstanceBean experiment, FingerprintCandidatePropertyChangeSupport sre, List<FingerprintCandidatePropertyChangeSupport> resultElements, ListSelectionModel selections) {
         if (sre != null)
             this.structureSearcher.reloadList(source);
     }
@@ -325,10 +325,10 @@ public class CandidateListDetailView extends CandidateListView implements Active
     }
 
 
-    public class CandidateInnerList extends JList<FingerprintCandidateBean> {
+    public class CandidateInnerList extends JList<FingerprintCandidatePropertyChangeSupport> {
         private final NumberFormat prob = new DecimalFormat("%");
 
-        public CandidateInnerList(ListModel<FingerprintCandidateBean> dataModel) {
+        public CandidateInnerList(ListModel<FingerprintCandidatePropertyChangeSupport> dataModel) {
             super(dataModel);
         }
 
@@ -337,7 +337,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
             final Point point = e.getPoint();
             final int index = locationToIndex(point);
             if (index < 0) return null;
-            final FingerprintCandidateBean candidate = getModel().getElementAt(index);
+            final FingerprintCandidatePropertyChangeSupport candidate = getModel().getElementAt(index);
             final Rectangle relativeRect = getCellBounds(index, index);
 
 

@@ -6,21 +6,21 @@ import java.util.Arrays;
 
 public class LoadMoleculeJob extends BasicJJob<Boolean> {
 
-    protected Iterable<FingerprintCandidateBean> compounds;
+    protected Iterable<FingerprintCandidatePropertyChangeSupport> compounds;
 
-    public LoadMoleculeJob(Iterable<FingerprintCandidateBean> compounds) {
+    public LoadMoleculeJob(Iterable<FingerprintCandidatePropertyChangeSupport> compounds) {
         this(JobPriority.NOW, compounds);
     }
 
-    public LoadMoleculeJob(FingerprintCandidateBean... compounds) {
+    public LoadMoleculeJob(FingerprintCandidatePropertyChangeSupport... compounds) {
         this(JobPriority.NOW, compounds);
     }
 
-    public LoadMoleculeJob(JobPriority prio, FingerprintCandidateBean... compounds) {
+    public LoadMoleculeJob(JobPriority prio, FingerprintCandidatePropertyChangeSupport... compounds) {
         this(prio, Arrays.asList(compounds));
     }
 
-    public LoadMoleculeJob(JobPriority prio, Iterable<FingerprintCandidateBean> compounds) {
+    public LoadMoleculeJob(JobPriority prio, Iterable<FingerprintCandidatePropertyChangeSupport> compounds) {
         super(JobType.CPU);
         setPriority(prio);
         this.compounds = compounds;
@@ -28,7 +28,7 @@ public class LoadMoleculeJob extends BasicJJob<Boolean> {
 
     @Override
     protected Boolean compute() throws Exception {
-        for (FingerprintCandidateBean c : compounds) {
+        for (FingerprintCandidatePropertyChangeSupport c : compounds) {
             c.getMolecule();
         }
         return true;

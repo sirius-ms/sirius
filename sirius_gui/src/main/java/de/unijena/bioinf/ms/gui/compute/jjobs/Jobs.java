@@ -4,7 +4,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.ms.gui.sirius.ComputingStatus;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -95,7 +95,7 @@ public class Jobs {
             it.next().getSourceJob().cancel();
     }
 
-    public static void cancel(ExperimentResultBean cont) {
+    public static void cancel(InstanceBean cont) {
         //todo cancel job by container???
     }
 

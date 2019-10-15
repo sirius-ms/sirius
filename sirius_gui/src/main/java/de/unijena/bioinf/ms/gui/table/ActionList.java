@@ -6,7 +6,7 @@ import ca.odell.glazedlists.ObservableElementList;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Created by fleisch on 15.05.17.
  */
-public abstract class ActionList<E extends AbstractEDTBean, D> implements ActiveElements<E, D> {
+public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElements<E, D> {
     public enum DataSelectionStrategy {ALL, FIRST_SELECTED, ALL_SELECTED}
 
     private final List<ActiveElementChangedListener> listeners = new LinkedList<>();

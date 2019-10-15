@@ -4,15 +4,15 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.fingerid.CanopusResult;
-import de.unijena.bioinf.ms.gui.fingerid.FingerIdResultBean;
+import de.unijena.bioinf.ms.gui.fingerid.FingerIdResultPropertyChangeSupport;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeColor;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
 import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeNode;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +77,7 @@ public class ClassyfireTreePanel extends TreeRenderPanel {
         return null;
     }
 
-    public void updateTree(ExperimentResultBean experiment, IdentificationResultBean sre) {
+    public void updateTree(InstanceBean experiment, FormulaResultBean sre) {
         if (sre == null || sre.getFingerIdData() == null || sre.getFingerIdData().getFingerIdFingerprint() == null) {
             showTree(null);
         } else {
@@ -90,8 +90,8 @@ public class ClassyfireTreePanel extends TreeRenderPanel {
         }
     }
 
-    private void computeCanopus(final IdentificationResultBean sre) {
-        final FingerIdResultBean data = sre.getFingerIdData();
+    private void computeCanopus(final FormulaResultBean sre) {
+        final FingerIdResultPropertyChangeSupport data = sre.getFingerIdData();
         final ProbabilityFingerprint platts = data.getFingerIdFingerprint();
         final MolecularFormula formula = sre.getMolecularFormula();
         final SwingWorker<ProbabilityFingerprint,ProbabilityFingerprint> worker = new SwingWorker<ProbabilityFingerprint, ProbabilityFingerprint>() {

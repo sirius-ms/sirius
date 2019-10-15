@@ -3,8 +3,8 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.sirius.ComputingStatus;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
@@ -15,7 +15,7 @@ import java.util.*;
 /**
  * Created by fleisch on 15.05.17.
  */
-public class CandidateList extends ActionList<FingerprintCandidateBean, Set<FingerIdResultBean>> implements ActiveElementChangedListener<IdentificationResultBean, ExperimentResultBean> {
+public class CandidateList extends ActionList<FingerprintCandidatePropertyChangeSupport, Set<FingerIdResultPropertyChangeSupport>> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
 
     public final DoubleListStats scoreStats;
     public final DoubleListStats logPStats;
@@ -26,7 +26,7 @@ public class CandidateList extends ActionList<FingerprintCandidateBean, Set<Fing
     }
 
     public CandidateList(final FormulaList source, DataSelectionStrategy strategy) {
-        super(FingerprintCandidateBean.class, strategy);
+        super(FingerprintCandidatePropertyChangeSupport.class, strategy);
 
         scoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
@@ -36,7 +36,7 @@ public class CandidateList extends ActionList<FingerprintCandidateBean, Set<Fing
     }
 
     @Override
-    public void resultsChanged(ExperimentResultBean experiment, IdentificationResultBean sre, List<IdentificationResultBean> resultElements, ListSelectionModel selectionModel) {
+    public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selectionModel) {
         //call only from EDT
         elementList.clear();
         scoreStats.reset();
@@ -44,7 +44,7 @@ public class CandidateList extends ActionList<FingerprintCandidateBean, Set<Fing
         tanimotoStats.reset();
 
         data = new HashSet<>();
-        List<IdentificationResultBean> formulasToShow = new LinkedList<>();
+        List<FormulaResultBean> formulasToShow = new LinkedList<>();
 
         switch (selectionType) {
             case ALL:
@@ -62,11 +62,11 @@ public class CandidateList extends ActionList<FingerprintCandidateBean, Set<Fing
                 break;
         }
 
-        List<FingerprintCandidateBean> emChache = new ArrayList<>();
-        for (IdentificationResultBean e : formulasToShow) {
+        List<FingerprintCandidatePropertyChangeSupport> emChache = new ArrayList<>();
+        for (FormulaResultBean e : formulasToShow) {
             if (e != null && e.getFingerIdComputeState().equals(ComputingStatus.COMPUTED)) {
                 for (int j = 0; j < e.getFingerIdData().getCompounds().length; j++) {
-                    FingerprintCandidateBean c = new FingerprintCandidateBean(j + 1, j, e.getFingerIdData(), e.getResult().getPrecursorIonType());
+                    FingerprintCandidatePropertyChangeSupport c = new FingerprintCandidatePropertyChangeSupport(j + 1, j, e.getFingerIdData(), e.getResult().getPrecursorIonType());
                     emChache.add(c);
                     scoreStats.addValue(c.getScore());
                     logPStats.addValue(c.getXlogp());

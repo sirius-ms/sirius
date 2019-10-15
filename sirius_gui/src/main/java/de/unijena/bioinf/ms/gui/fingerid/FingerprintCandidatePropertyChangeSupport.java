@@ -29,7 +29,7 @@ import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.db.custom.CustomDataSourceService;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
@@ -61,14 +61,14 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p>
  * WARNING: This class is wor in progress
  */
-public class FingerprintCandidateBean extends AbstractEDTBean implements Comparable<FingerprintCandidateBean> {
-    public static final FingerprintCandidateBean PROTOTYPE = new PrototypeCompoundCandidate();
+public class FingerprintCandidatePropertyChangeSupport extends SiriusPCS implements Comparable<FingerprintCandidatePropertyChangeSupport> {
+    public static final FingerprintCandidatePropertyChangeSupport PROTOTYPE = new PrototypeCompoundCandidate();
     public static final boolean ECFP_ENABLED = true;
     private static final double THRESHOLD_FP = 0.4;
 
     //data
     protected final PrecursorIonType adduct;
-    protected final FingerIdResultBean data;
+    protected final FingerIdResultPropertyChangeSupport data;
     protected final FingerprintCandidate compound;
     protected final int rank, index;
 
@@ -89,7 +89,7 @@ public class FingerprintCandidateBean extends AbstractEDTBean implements Compara
     protected ReentrantLock compoundLock = new ReentrantLock();
 
 
-    public FingerprintCandidateBean(int rank, int index, FingerIdResultBean data, PrecursorIonType adduct) {
+    public FingerprintCandidatePropertyChangeSupport(int rank, int index, FingerIdResultPropertyChangeSupport data, PrecursorIonType adduct) {
         this(rank, index, data, data.getFingerIdResult().getCandidates().get(index).getCandidate(), adduct);
     }
 
@@ -97,7 +97,7 @@ public class FingerprintCandidateBean extends AbstractEDTBean implements Compara
         return MainFrame.MF.getCsiFingerId().getPredictor(adduct);
     }
 
-    private FingerprintCandidateBean(int rank, int index, FingerIdResultBean data, FingerprintCandidate compound, PrecursorIonType adduct) {
+    private FingerprintCandidatePropertyChangeSupport(int rank, int index, FingerIdResultPropertyChangeSupport data, FingerprintCandidate compound, PrecursorIonType adduct) {
         this.rank = rank;
         this.index = index;
         this.data = data;
@@ -146,7 +146,7 @@ public class FingerprintCandidateBean extends AbstractEDTBean implements Compara
         return data.getFingerIdFingerprint();
     }
 
-    public FingerIdResultBean getData() {
+    public FingerIdResultPropertyChangeSupport getData() {
         return data;
     }
 
@@ -201,7 +201,7 @@ public class FingerprintCandidateBean extends AbstractEDTBean implements Compara
     }
 
     @Override
-    public int compareTo(FingerprintCandidateBean o) {
+    public int compareTo(FingerprintCandidatePropertyChangeSupport o) {
         return Double.compare(o.getScore(), getScore()); //ATTENTION inverse
     }
 
@@ -367,7 +367,7 @@ public class FingerprintCandidateBean extends AbstractEDTBean implements Compara
         return compound.getXlogp();
     }
 
-    private static class PrototypeCompoundCandidate extends FingerprintCandidateBean {
+    private static class PrototypeCompoundCandidate extends FingerprintCandidatePropertyChangeSupport {
         private static FingerprintCandidate makeSourceCandidate() {
             final FingerprintCandidate candidate = new FingerprintCandidate(
                     new InChI("WQZGKKKJIJFFOK-GASJEMHNSA-N", "InChI=1S/C6H12O6/c7-1-2-3(8)4(9)5(10)6(11)12-2/h2-11H,1H2/t2-,3-,4+,5-,6?/m1/s1"),

@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeNode;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
@@ -18,15 +19,15 @@ import java.util.List;
 @Deprecated //todo may not be needed anymore when using cli/api computation
 public class SiriusResultElementConverter {
 
-    public static IdentificationResultBean convertResult(IdentificationResult res) {
-        IdentificationResultBean out = new IdentificationResultBean(res);
+    public static FormulaResultBean convertResult(IdentificationResult res) {
+        FormulaResultBean out = new FormulaResultBean(res);
         out.buildTreeVisualization(input -> convertTree(input));
         return out;
     }
 
-    public static List<IdentificationResultBean> convertResults(Iterable<IdentificationResult> in) {
+    public static List<FormulaResultBean> convertResults(Iterable<IdentificationResult> in) {
         if (in == null) return Collections.emptyList();
-        List<IdentificationResultBean> outs = new ArrayList<>();
+        List<FormulaResultBean> outs = new ArrayList<>();
         for (IdentificationResult res : in) {
             outs.add(convertResult(res));
         }

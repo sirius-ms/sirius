@@ -10,7 +10,7 @@ import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.utils.SearchTextField;
 
 import javax.swing.*;
@@ -19,7 +19,7 @@ import java.awt.*;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public abstract class ActionListDetailView<E extends AbstractEDTBean, D, T extends ActionList<E, D>> extends ActionListView<T> {
+public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends ActionList<E, D>> extends ActionListView<T> {
     protected final SearchTextField searchField;
     protected final FilterList<E> filteredSource;
     protected final DefaultEventSelectionModel<E> filteredSelectionModel;

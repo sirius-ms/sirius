@@ -9,8 +9,8 @@ import ca.odell.glazedlists.EventList;
 import de.unijena.bioinf.ms.gui.fingerid.FingerIdDialog;
 import de.unijena.bioinf.ms.gui.fingerid.FingerIdTask;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -38,8 +38,8 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
         final int returnState = dialog.run();
 
         if (returnState != FingerIdDialog.CANCELED) {
-            ExperimentResultBean ec = null;
-            EventList<ExperimentResultBean> l = MF.getCompoundListSelectionModel().getSelected();
+            InstanceBean ec = null;
+            EventList<InstanceBean> l = MF.getCompoundListSelectionModel().getSelected();
             if (l != null && !l.isEmpty()) {
                 ec = l.get(0);
             }
@@ -47,9 +47,9 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
             if (returnState == FingerIdDialog.COMPUTE_ALL) {
                 MF.getCsiFingerId().compute(ec, dialog.getSearchDb());
             } else {
-                java.util.List<IdentificationResultBean> selected = MF.getFormulaList().getSelectedValues();
+                java.util.List<FormulaResultBean> selected = MF.getFormulaList().getSelectedValues();
                 java.util.List<FingerIdTask> tasks = new ArrayList<>(selected.size());
-                for (IdentificationResultBean element : selected) {
+                for (FormulaResultBean element : selected) {
                     if (element.getCharge() > 0 || element.getResult().getResolvedTree().numberOfEdges() > 0)
                         tasks.add(new FingerIdTask(dialog.getSearchDb(), ec, element));
                 }

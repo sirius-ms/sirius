@@ -9,7 +9,7 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListChangeListener;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 
 import javax.swing.*;
@@ -29,12 +29,12 @@ public class ComputeAction extends AbstractAction {
 
         setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty());
 
-        MF.getExperimentList().addChangeListener(new ExperimentListChangeListener() {
+        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<ExperimentResultBean> event, DefaultEventSelectionModel<ExperimentResultBean> selection) {}
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {}
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentResultBean> selection) {
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
                 setEnabled(!selection.isSelectionEmpty());
             }
         });

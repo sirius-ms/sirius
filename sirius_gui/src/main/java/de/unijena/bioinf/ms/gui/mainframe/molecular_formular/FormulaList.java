@@ -1,16 +1,11 @@
 package de.unijena.bioinf.ms.gui.mainframe.molecular_formular;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 30.01.17.
- */
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentList;
+import de.unijena.bioinf.ms.gui.mainframe.experiments.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListChangeListener;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 
@@ -20,27 +15,27 @@ import java.util.List;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaList extends ActionList<IdentificationResultBean, ExperimentResultBean> {
+public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     public final FormulaScoreListStats scoreStats = new FormulaScoreListStats();
     public final DoubleListStats isotopeScoreStats = new DoubleListStats();
     public final DoubleListStats treeScoreStats = new DoubleListStats();
     public final DoubleListStats explainedPeaks = new DoubleListStats();
     public final DoubleListStats explainedIntensity = new DoubleListStats();
 
-    public FormulaList(final ExperimentList compoundList) {
-        super(IdentificationResultBean.class);
+    public FormulaList(final CompoundList compoundList) {
+        super(FormulaResultBean.class);
 
-        DefaultEventSelectionModel<ExperimentResultBean> m = compoundList.getCompoundListSelectionModel();
+        DefaultEventSelectionModel<InstanceBean> m = compoundList.getCompoundListSelectionModel();
         if (!m.isSelectionEmpty()) {
             setData(m.getSelected().get(0));
         } else {
             setData(null);
         }
 
-        //this is the selection refresh, element chages are detected by eventlist
+        //this is the selection refresh, element changes are detected by eventlist
         compoundList.addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<ExperimentResultBean> event, DefaultEventSelectionModel<ExperimentResultBean> selection) {
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
                 if (!selection.isSelectionEmpty()) {
                     while (event.next()) {
                         if (selection.isSelectedIndex(event.getIndex())) {
@@ -52,7 +47,7 @@ public class FormulaList extends ActionList<IdentificationResultBean, Experiment
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentResultBean> selection) {
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
                 if (!selection.isSelectionEmpty())
                     setData(selection.getSelected().get(0));
                 else
@@ -61,7 +56,7 @@ public class FormulaList extends ActionList<IdentificationResultBean, Experiment
         });
     }
 
-    private void setData(final ExperimentResultBean ec) {
+    private void setData(final InstanceBean ec) {
         this.data = ec;
         if (this.data != null && this.data.getResults() != null && !this.data.getResults().isEmpty()) {
             if (!this.data.getResults().equals(elementList)) {
@@ -78,7 +73,7 @@ public class FormulaList extends ActionList<IdentificationResultBean, Experiment
         }
 
         //set selection
-        IdentificationResultBean sre = null;
+        FormulaResultBean sre = null;
         if (!elementList.isEmpty()) {
             selectionModel.setSelectionInterval(this.data.getBestHitIndex(), this.data.getBestHitIndex());
             sre = elementList.get(selectionModel.getMinSelectionIndex());
@@ -89,13 +84,14 @@ public class FormulaList extends ActionList<IdentificationResultBean, Experiment
     }
 
     private void intiResultList() {
-        List<IdentificationResultBean> r = data.getResults();
+        List<FormulaResultBean> r = data.getResults();
         if (r != null && !r.isEmpty()) {
             double[] scores = new double[r.size()];
             double[] iScores = new double[r.size()];
             double[] tScores = new double[r.size()];
             int i = 0;
-            for (IdentificationResultBean element : r) {
+            for (FormulaResultBean element : r) {
+                //todo add zodiac score
                 elementList.add(element);
                 scores[i] = element.getScore();
                 iScores[i] = element.getResult().getIsotopeScore();
@@ -119,8 +115,8 @@ public class FormulaList extends ActionList<IdentificationResultBean, Experiment
     }
 
 
-    public List<IdentificationResultBean> getSelectedValues() {
-        List<IdentificationResultBean> selected = new ArrayList<>();
+    public List<FormulaResultBean> getSelectedValues() {
+        List<FormulaResultBean> selected = new ArrayList<>();
         for (int i = selectionModel.getMinSelectionIndex(); i <= selectionModel.getMaxSelectionIndex(); i++) {
             if (selectionModel.isSelectedIndex(i)) {
                 selected.add(elementList.get(i));

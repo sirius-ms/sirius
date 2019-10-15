@@ -13,6 +13,6 @@ public class OrderByName extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        MainFrame.MF.getExperimentList().orderById();
+        MainFrame.MF.getCompoundList().orderById();
     }
 }

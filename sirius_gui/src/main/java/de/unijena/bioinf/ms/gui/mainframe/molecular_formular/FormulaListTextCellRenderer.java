@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.molecular_formular;
 
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import org.slf4j.LoggerFactory;
 
@@ -9,7 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.InputStream;
 
-public class FormulaListTextCellRenderer extends JLabel implements ListCellRenderer<IdentificationResultBean> {
+public class FormulaListTextCellRenderer extends JLabel implements ListCellRenderer<FormulaResultBean> {
     public static final DummySiriusResult PROTOTYPE = new DummySiriusResult();
 
     private Color backColor, foreColor;
@@ -19,7 +19,7 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
     private Color selectedBackground, evenBackground, unevenBackground, selectedForeground;
     private Color activatedForeground, deactivatedForeground, disableBackground;
 
-    private IdentificationResultBean sre;
+    private FormulaResultBean sre;
 
 //    private DecimalFormat numberFormat;
 
@@ -67,7 +67,7 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
 
     @Override
     public Component getListCellRendererComponent(
-            JList<? extends IdentificationResultBean> list, IdentificationResultBean value,
+            JList<? extends FormulaResultBean> list, FormulaResultBean value,
             int index, boolean isSelected, boolean cellHasFocus) {
         this.sre = value;
 
@@ -136,7 +136,7 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         }
     }
 
-    private static class DummySiriusResult extends IdentificationResultBean {
+    private static class DummySiriusResult extends FormulaResultBean {
 
         @Override
         public int getRank() {

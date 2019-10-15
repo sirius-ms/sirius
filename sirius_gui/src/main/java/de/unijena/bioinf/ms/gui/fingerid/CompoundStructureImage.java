@@ -39,7 +39,7 @@ class CompoundStructureImage extends JPanel {
         }
     }
 
-    protected FingerprintCandidateBean molecule;
+    protected FingerprintCandidatePropertyChangeSupport molecule;
     protected AtomContainerRenderer renderer;
     protected Color backgroundColor;
 

@@ -6,8 +6,8 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.sirius.TreeCopyTool;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.PanelDescription;
@@ -32,7 +32,7 @@ import java.util.List;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
-public class TreeVisualizationPanel extends JPanel implements ActionListener, ActiveElementChangedListener<IdentificationResultBean, ExperimentResultBean>, PanelDescription {
+public class TreeVisualizationPanel extends JPanel implements ActionListener, ActiveElementChangedListener<FormulaResultBean, InstanceBean>, PanelDescription {
     public enum FileFormat {
         dot, json, jpg, png, gif, none
     }
@@ -50,7 +50,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
     private JButton saveTreeB;
 
 
-    private IdentificationResultBean sre;
+    private FormulaResultBean sre;
 
     public TreeVisualizationPanel() {
         this.sre = null;
@@ -93,7 +93,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
         this.add(pane, BorderLayout.CENTER);
     }
 
-    public void showTree(IdentificationResultBean sre) {
+    public void showTree(FormulaResultBean sre) {
         this.sre = sre;
         if (sre != null) {
             TreeNode root = sre.getTreeVisualization();
@@ -280,7 +280,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
     }
 
     @Override
-    public void resultsChanged(ExperimentResultBean experiment, IdentificationResultBean sre, List<IdentificationResultBean> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
         if (sre == null || sre.getResult() == null) showTree(null);
         else showTree(sre);
     }

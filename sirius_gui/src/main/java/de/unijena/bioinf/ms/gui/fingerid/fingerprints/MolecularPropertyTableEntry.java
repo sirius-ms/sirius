@@ -1,12 +1,12 @@
 package de.unijena.bioinf.ms.gui.fingerid.fingerprints;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.ms.frontend.core.AbstractEDTBean;
+import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 
 /**
  * TODO: this class is immutable. Does it make sense to have it extend AbstractBean?
  */
-public class MolecularPropertyTableEntry extends AbstractEDTBean implements Comparable<MolecularPropertyTableEntry> {
+public class MolecularPropertyTableEntry extends SiriusPCS implements Comparable<MolecularPropertyTableEntry> {
 
     protected final ProbabilityFingerprint underlyingFingerprint;
     protected final int absoluteIndex;

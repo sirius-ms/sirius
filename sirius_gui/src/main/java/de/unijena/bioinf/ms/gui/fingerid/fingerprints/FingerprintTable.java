@@ -5,12 +5,12 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ms.gui.compute.CSIFingerIDComputation;
 import de.unijena.bioinf.fingerid.CSIPredictor;
-import de.unijena.bioinf.ms.gui.fingerid.FingerIdResultBean;
+import de.unijena.bioinf.ms.gui.fingerid.FingerIdResultPropertyChangeSupport;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.molecular_formular.FormulaList;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 
@@ -19,9 +19,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, IdentificationResultBean> implements ActiveElementChangedListener<IdentificationResultBean, ExperimentResultBean> {
+public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, FormulaResultBean> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
 
-    protected FingerIdResultBean data;
+    protected FingerIdResultPropertyChangeSupport data;
     protected FingerprintVisualization[] visualizations;
     protected double[] fscores = null;
     protected CSIFingerIDComputation csi;
@@ -54,7 +54,7 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Id
     }
 
     @Override
-    public void resultsChanged(ExperimentResultBean experiment, IdentificationResultBean sre, List<IdentificationResultBean> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
         //no lock all in edt
         elementList.clear();
         if (sre != null && sre.getFingerIdData() != null) {

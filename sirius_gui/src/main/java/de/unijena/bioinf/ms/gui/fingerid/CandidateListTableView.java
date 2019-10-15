@@ -4,8 +4,8 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
 import de.unijena.bioinf.chemdb.PubmedLinks;
-import de.unijena.bioinf.ms.gui.sirius.ExperimentResultBean;
-import de.unijena.bioinf.ms.gui.sirius.IdentificationResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.*;
 
 import javax.swing.*;
@@ -15,10 +15,10 @@ import java.util.List;
 /**
  * Created by fleisch on 15.05.17.
  */
-public class CandidateListTableView extends CandidateListView implements ActiveElementChangedListener<IdentificationResultBean, ExperimentResultBean> {
+public class CandidateListTableView extends CandidateListView implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
 
-    private final ActionTable<FingerprintCandidateBean> table;
-    private SortedList<FingerprintCandidateBean> sortedSource;
+    private final ActionTable<FingerprintCandidatePropertyChangeSupport> table;
+    private SortedList<FingerprintCandidatePropertyChangeSupport> sortedSource;
 
     public CandidateListTableView(final CandidateList list) {
         super(list);
@@ -44,13 +44,13 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
     }
 
     @Override
-    protected FilterList<FingerprintCandidateBean> configureFiltering(EventList<FingerprintCandidateBean> source) {
+    protected FilterList<FingerprintCandidatePropertyChangeSupport> configureFiltering(EventList<FingerprintCandidatePropertyChangeSupport> source) {
         sortedSource = new SortedList<>(source);
         return super.configureFiltering(sortedSource);
     }
 
     @Override
-    public void resultsChanged(ExperimentResultBean experiment, IdentificationResultBean sre, List<IdentificationResultBean> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
         //not used
     }
 }
