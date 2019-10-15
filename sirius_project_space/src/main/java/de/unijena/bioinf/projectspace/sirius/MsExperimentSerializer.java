@@ -7,6 +7,7 @@ import de.unijena.bioinf.projectspace.ComponentSerializer;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.ProjectReader;
 import de.unijena.bioinf.projectspace.ProjectWriter;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,9 +25,10 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
         Ms2Experiment experiment = optEx.orElseThrow(() -> new RuntimeException("Could not find Experiment for FormulaResult with ID: " + id));
         writer.textFile(SiriusLocations.MS2_EXPERIMENT, (w) -> new JenaMsWriter().write(w, experiment));
 
-        // actualize ionMass in ID id
+        // actualize optional values in ID
         id.setIonMass(experiment.getIonMass());
         id.setIonType(experiment.getPrecursorIonType());
+
         writer.keyValues(SiriusLocations.COMPOUND_INFO, id.asKeyValuePairs());
 
     }
