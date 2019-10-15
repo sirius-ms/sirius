@@ -45,7 +45,7 @@ public interface ContainerListener<ID extends ProjectSpaceContainerId, Container
             return on(ContainerEvent.EventType.DELETED);
         }
 
-        public PartiallyListeningFluentBuilder onlyFor(Class<DataAnnotation>... klasses) {
+        public PartiallyListeningFluentBuilder onlyFor(Class<? extends DataAnnotation>... klasses) {
             return new PartiallyListeningFluentBuilder(queue, klasses, types);
         }
 

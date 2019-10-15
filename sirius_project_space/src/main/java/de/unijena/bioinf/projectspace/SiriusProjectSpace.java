@@ -95,7 +95,15 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                         LoggerFactory.getLogger(getClass()).warn("Could not parse ionType of '" + dirName + "'", e);
                     }
 
-                ids.put(dirName, new CompoundContainerId(dirName, name, index, ionMass, ionType));
+                final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType);
+
+                try {
+                    cid.setRankingScoreType(FormulaResultRankingScore.fromString(keyValues.get(CompoundContainerId.RANKING_KEY)).value);
+                } catch (Exception e) {
+                    LoggerFactory.getLogger(getClass()).warn("Could not parse ionType of '" + dirName + "'", e);
+                }
+
+                ids.put(dirName, cid);
                 maxIndex = Math.max(index, maxIndex);
             }
         }
@@ -186,6 +194,17 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
+    public void updateCompoundContainerID(CompoundContainerId cid) throws IOException {
+        if (cid == null || ids.get(cid.getDirectoryName()) != cid)
+            return;
+
+        cid.containerLock.lock();
+        try {
+            writeCompoundContainerID(cid);
+        } finally {
+            cid.containerLock.unlock();
+        }
+    }
     private void writeCompoundContainerID(CompoundContainerId cid) throws IOException {
         final File f = new File(new File(root, cid.getDirectoryName()), SiriusLocations.COMPOUND_INFO);
         if (f.exists())
@@ -435,10 +454,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public void updateSummaries(Summarizer... summarizers) throws IOException {
         Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
         for (CompoundContainerId cid : ids.values()) {
-            CompoundContainer c = getCompound(cid, Ms2Experiment.class);
-            Ms2Experiment ex = c.getAnnotationOrThrow(Ms2Experiment.class);
-            final Class<? extends FormulaScore> rankingScore = ex.getAnnotation(FormulaResultRankingScore.class).orElse(new FormulaResultRankingScore(SiriusScore.class)).value;
-            List<SScored<FormulaResult, SiriusScore>> results = getFormulaResultsOrderedBy(cid, rankingScore, annotations);
+            final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
+            final List<SScored<FormulaResult, SiriusScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreType().orElse(SiriusScore.class), annotations);
             for (Summarizer sim : summarizers)
                 sim.addWriteCompoundSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), c, results);
         }
