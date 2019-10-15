@@ -68,6 +68,25 @@ public class Instance {
         }
     }
 
+    public synchronized FormulaResult loadFormulaResult(FormulaResultId fid, Class<? extends DataAnnotation>... components) {
+        try {
+            if (!formulaResultCache.containsKey(fid)) {
+                final FormulaResult fr = projectSpace().getFormulaResult(fid, components);
+                formulaResultCache.put(fid, fr);
+                return fr;
+            } else {
+                FormulaResult fr = formulaResultCache.get(fid);
+                final Class[] missing = Arrays.stream(components).filter(comp -> !fr.hasAnnotation(comp)).toArray(Class[]::new);
+                if (missing.length > 0)
+                    fr.setAnnotationsFrom(projectSpace().getFormulaResult(fid, missing));
+
+                return fr;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * @return Sorted List of FormulaResults scored by the currently defined RankingScore
      */
