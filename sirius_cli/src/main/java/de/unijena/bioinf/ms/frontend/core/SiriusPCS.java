@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.frontend.core;
 
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.ms.annotations.ResultAnnotation;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.SwingPropertyChangeSupport;
 import java.beans.PropertyChangeEvent;
@@ -115,22 +115,8 @@ import java.beans.PropertyChangeSupport;
  * @author rbair
  */
 @SuppressWarnings("nls")
-public abstract class AbstractEDTBean {
-    /**
-     * Helper class that manages all the property change notification machinery.
-     * PropertyChangeSupport cannot be extended directly because it requires
-     * a bean in the constructor, and the "this" argument is not valid until
-     * after super construction. Hence, delegation instead of extension
-     */
-    private final transient PropertyChangeSupport pcs;
+public interface SiriusPCS {
 
-
-    /**
-     * Creates a new instance of AbstractBean
-     */
-    protected AbstractEDTBean() {
-        pcs = new SwingPropertyChangeSupport(this, true);
-    }
 
     /**
      * Add a PropertyChangeListener to the listener list.
@@ -142,8 +128,8 @@ public abstract class AbstractEDTBean {
      *
      * @param listener The PropertyChangeListener to be added
      */
-    public final void addPropertyChangeListener(PropertyChangeListener listener) {
-        pcs.addPropertyChangeListener(listener);
+    default void addPropertyChangeListener(PropertyChangeListener listener) {
+        pcs().pcs.addPropertyChangeListener(listener);
     }
 
     /**
@@ -157,8 +143,8 @@ public abstract class AbstractEDTBean {
      *
      * @param listener The PropertyChangeListener to be removed
      */
-    public final void removePropertyChangeListener(PropertyChangeListener listener) {
-        pcs.removePropertyChangeListener(listener);
+    default void removePropertyChangeListener(PropertyChangeListener listener) {
+        pcs().pcs.removePropertyChangeListener(listener);
     }
 
     /**
@@ -191,8 +177,8 @@ public abstract class AbstractEDTBean {
      * empty array if no listeners have been added
      * @see java.beans.PropertyChangeListenerProxy
      */
-    public final PropertyChangeListener[] getPropertyChangeListeners() {
-        return pcs.getPropertyChangeListeners();
+    default PropertyChangeListener[] getPropertyChangeListeners() {
+        return pcs().pcs.getPropertyChangeListeners();
     }
 
     /**
@@ -208,11 +194,11 @@ public abstract class AbstractEDTBean {
      * @param propertyName The name of the property to listen on.
      * @param listener     The PropertyChangeListener to be added
      */
-    public final void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-        pcs.addPropertyChangeListener(propertyName, listener);
+    default void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        pcs().pcs.addPropertyChangeListener(propertyName, listener);
     }
 
-    public final void addPropertyChangeListener(Class<? extends DataAnnotation> property, PropertyChangeListener listener) {
+    default void addPropertyChangeListener(Class<? extends DataAnnotation> property, PropertyChangeListener listener) {
         addPropertyChangeListener(DataAnnotation.getIdentifier(property), listener);
     }
 
@@ -229,11 +215,11 @@ public abstract class AbstractEDTBean {
      * @param propertyName The name of the property that was listened on.
      * @param listener     The PropertyChangeListener to be removed
      */
-    public final void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-        pcs.removePropertyChangeListener(propertyName, listener);
+    default void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        pcs().pcs.removePropertyChangeListener(propertyName, listener);
     }
 
-    public final void removePropertyChangeListener(Class<? extends DataAnnotation> property, PropertyChangeListener listener) {
+    default void removePropertyChangeListener(Class<? extends DataAnnotation> property, PropertyChangeListener listener) {
         removePropertyChangeListener(DataAnnotation.getIdentifier(property), listener);
     }
 
@@ -247,73 +233,102 @@ public abstract class AbstractEDTBean {
      * or if <code>propertyName</code> is null, an empty array is
      * returned.
      */
-    public final PropertyChangeListener[] getPropertyChangeListeners(String propertyName) {
-        return pcs.getPropertyChangeListeners(propertyName);
+    default PropertyChangeListener[] getPropertyChangeListeners(String propertyName) {
+        return pcs().pcs.getPropertyChangeListeners(propertyName);
     }
+
+
+    HiddenChangeSupport pcs();
 
     /**
-     * Report a bound property update to any registered listeners.
-     * No event is fired if old and new are equal and non-null.
-     * <p>
-     * <p>
-     * This is merely a convenience wrapper around the more general
-     * firePropertyChange method that takes {@code
-     * PropertyChangeEvent} value.
-     *
-     * @param propertyName The programmatic name of the property
-     *                     that was changed.
-     * @param oldValue     The old value of the property.
-     * @param newValue     The new value of the property.
+     * This allows us to hide the PropertyChangeSupport from the outside
+     * but inject it from the class that implements the interface.
+     * So we can implement all annotation functionality within this interface
+     * instead of each class separately.
      */
-    protected final void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
-        pcs.firePropertyChange(propertyName, oldValue, newValue);
+    abstract class HiddenChangeSupport {
+        /**
+         * Helper class that manages all the property change notification machinery.
+         * PropertyChangeSupport cannot be extended directly because it requires
+         * a bean in the constructor, and the "this" argument is not valid until
+         * after super construction. Hence, delegation instead of extension
+         */
+        final transient PropertyChangeSupport pcs;
+
+        protected HiddenChangeSupport(@NotNull final Object sourceBean, final boolean notifyOnEDT) {
+            pcs = new SwingPropertyChangeSupport(sourceBean, notifyOnEDT);
+        }
     }
 
-    /**
-     * Fire an existing PropertyChangeEvent to any registered listeners.
-     * No event is fired if the given event's old and new values are
-     * equal and non-null.
-     *
-     * @param evt The PropertyChangeEvent object.
-     */
-    protected final void firePropertyChange(PropertyChangeEvent evt) {
-        pcs.firePropertyChange(evt);
+    final class MutableHiddenChangeSupport extends HiddenChangeSupport {
+
+        public MutableHiddenChangeSupport(@NotNull Object sourceBean, boolean notifyOnEDT) {
+            super(sourceBean, notifyOnEDT);
+        }
+
+        /**
+         * Report a bound property update to any registered listeners.
+         * No event is fired if old and new are equal and non-null.
+         * <p>
+         * <p>
+         * This is merely a convenience wrapper around the more general
+         * firePropertyChange method that takes {@code
+         * PropertyChangeEvent} value.
+         *
+         * @param propertyName The programmatic name of the property
+         *                     that was changed.
+         * @param oldValue     The old value of the property.
+         * @param newValue     The new value of the property.
+         */
+        public final void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+            pcs.firePropertyChange(propertyName, oldValue, newValue);
+        }
+
+        /**
+         * Fire an existing PropertyChangeEvent to any registered listeners.
+         * No event is fired if the given event's old and new values are
+         * equal and non-null.
+         *
+         * @param evt The PropertyChangeEvent object.
+         */
+        public final void firePropertyChange(PropertyChangeEvent evt) {
+            pcs.firePropertyChange(evt);
+        }
+
+
+        /**
+         * Report a bound indexed property update to any registered
+         * listeners.
+         * <p>
+         * No event is fired if old and new values are equal
+         * and non-null.
+         * <p>
+         * <p>
+         * This is merely a convenience wrapper around the more general
+         * firePropertyChange method that takes {@code PropertyChangeEvent} value.
+         *
+         * @param propertyName The programmatic name of the property that
+         *                     was changed.
+         * @param index        index of the property element that was changed.
+         * @param oldValue     The old value of the property.
+         * @param newValue     The new value of the property.
+         */
+        public final void fireIndexedPropertyChange(String propertyName, int index,
+                                                       Object oldValue, Object newValue) {
+            pcs.fireIndexedPropertyChange(propertyName, index, oldValue, newValue);
+        }
+
+        /**
+         * Check if there are any listeners for a specific property, including
+         * those registered on all properties.  If <code>propertyName</code>
+         * is null, only check for listeners registered on all properties.
+         *
+         * @param propertyName the property name.
+         * @return true if there are one or more listeners for the given property
+         */
+        public final boolean hasPropertyChangeListeners(String propertyName) {
+            return pcs.hasListeners(propertyName);
+        }
     }
-
-
-    /**
-     * Report a bound indexed property update to any registered
-     * listeners.
-     * <p>
-     * No event is fired if old and new values are equal
-     * and non-null.
-     * <p>
-     * <p>
-     * This is merely a convenience wrapper around the more general
-     * firePropertyChange method that takes {@code PropertyChangeEvent} value.
-     *
-     * @param propertyName The programmatic name of the property that
-     *                     was changed.
-     * @param index        index of the property element that was changed.
-     * @param oldValue     The old value of the property.
-     * @param newValue     The new value of the property.
-     */
-    protected final void fireIndexedPropertyChange(String propertyName, int index,
-                                                   Object oldValue, Object newValue) {
-        pcs.fireIndexedPropertyChange(propertyName, index, oldValue, newValue);
-    }
-
-    /**
-     * Check if there are any listeners for a specific property, including
-     * those registered on all properties.  If <code>propertyName</code>
-     * is null, only check for listeners registered on all properties.
-     *
-     * @param propertyName the property name.
-     * @return true if there are one or more listeners for the given property
-     */
-    protected final boolean hasPropertyChangeListeners(String propertyName) {
-        return pcs.hasListeners(propertyName);
-    }
-
 
 }

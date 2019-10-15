@@ -7,10 +7,10 @@ import de.unijena.bioinf.babelms.ms.MsFileConfig;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.annotations.UserFormulaResultRankingScore;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.ProjectSpaceConfig;
 import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -46,14 +46,10 @@ public class AddConfigsJob extends InstanceJob {
         //reduce basic list of possible Adducts to charge
         exp.getAnnotation(PossibleAdducts.class).ifPresent(add -> add.keepOnly(exp.getPrecursorIonType().getCharge()));
 
-        // convert csi ranking score
-        if (exp.getAnnotationOrThrow(UserFormulaResultRankingScore.class).isDefined()) {
-            exp.setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(exp.getAnnotationOrThrow(UserFormulaResultRankingScore.class).getScoreClass()));
-            exp.getAnnotationOrThrow(FinalConfig.class).config.changeConfig("FormulaResultRankingScore", exp.getAnnotationOrThrow(UserFormulaResultRankingScore.class).getScoreClass().getName());
-        }
+        final FormulaResultRankingScore it = exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO);
+        inst.getID().setRankingScoreType(it.isAuto() ? SiriusScore.class : it.value);
 
-
-        inst.updateExperiment(); //todo may be not needed if wo do not write cofigs to this ms file
+        inst.updateExperiment();
         inst.updateConfig();
     }
 }

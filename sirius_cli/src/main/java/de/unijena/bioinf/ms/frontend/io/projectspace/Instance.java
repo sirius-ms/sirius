@@ -11,11 +11,9 @@ import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class Instance {
@@ -138,6 +136,14 @@ public class Instance {
     public synchronized void updateConfig() {
         compoundCache.setAnnotation(ProjectSpaceConfig.class, new ProjectSpaceConfig(getExperiment().getAnnotationOrThrow(FinalConfig.class).config));
         updateCompound(compoundCache, ProjectSpaceConfig.class);
+    }
+
+    public synchronized void updateCompoundID() {
+        try {
+            projectSpace().updateCompoundContainerID(compoundCache.getId());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     //remove from cache

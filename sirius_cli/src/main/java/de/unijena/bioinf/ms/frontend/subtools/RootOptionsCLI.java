@@ -283,7 +283,7 @@ public class RootOptionsCLI implements RootOptions {
             }
 
             projectSpaceToWriteOn = new ProjectSpaceManager(psTmp, projectSpaceFilenameFormatter, id -> {
-                if (id.getIonMass() <= maxMz)
+                if (id.getIonMass().orElse(Double.NaN) <= maxMz)
                     return true;
                 else {
                     LOG.info("Skipping instance " + id.toString() + " with mass: " + id.getIonMass() + " > " + maxMz);

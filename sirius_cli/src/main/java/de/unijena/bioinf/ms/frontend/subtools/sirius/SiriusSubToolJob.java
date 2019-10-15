@@ -9,15 +9,12 @@ import de.unijena.bioinf.fingerid.db.annotations.FormulaSearchDB;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.annotations.UserFormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -68,10 +65,9 @@ public class SiriusSubToolJob extends InstanceJob {
                 inst.newFormulaResultWithUniqueId(result.getTree());
 
             // set sirius to ranking score
-            if (exp.getAnnotationOrThrow(UserFormulaResultRankingScore.class).isAuto()) {
-                inst.getExperiment().setAnnotation(FormulaResultRankingScore.class, new FormulaResultRankingScore(SiriusScore.class));
-                inst.getExperiment().getAnnotationOrThrow(FinalConfig.class).config.changeConfig("FormulaResultRankingScore", SiriusScore.class.getName());
-                inst.updateConfig();
+            if (exp.getAnnotationOrThrow(FormulaResultRankingScore.class).isAuto()) {
+                inst.getID().setRankingScoreType(SiriusScore.class);
+                inst.updateCompoundID();
             }
 
 
