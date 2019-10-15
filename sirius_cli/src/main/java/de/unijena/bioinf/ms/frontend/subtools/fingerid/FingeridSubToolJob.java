@@ -29,9 +29,8 @@ public class FingeridSubToolJob extends InstanceJob {
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults = inst.loadFormulaResults(
-                inst.getID().getRankingScoreType().orElse(SiriusScore.class),
-                FormulaScoring.class, FTree.class, FingerprintResult.class, FingerblastResult.class);
+        List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults =
+                inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, FingerblastResult.class);
 
         if (formulaResults == null || formulaResults.isEmpty()) {
             LOG().info("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are not trees computed.");
