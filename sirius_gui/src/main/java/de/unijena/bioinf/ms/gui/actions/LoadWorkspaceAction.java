@@ -1,16 +1,11 @@
 package de.unijena.bioinf.ms.gui.actions;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 29.01.17.
- */
 
+import de.unijena.bioinf.babelms.filefilter.SupportedSaveFileFilter;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ImportWorkspaceDialog;
-import de.unijena.bioinf.babelms.GuiProjectSpaceIO;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -35,7 +30,7 @@ public class LoadWorkspaceAction extends AbstractAction {
         jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_SAVE_FILE_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
-        jfc.addChoosableFileFilter(GuiProjectSpaceIO.SAVE_FILE_FILTER);
+        jfc.addChoosableFileFilter(new SupportedSaveFileFilter());
 
         int returnVal = jfc.showOpenDialog(MF);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -49,7 +44,7 @@ public class LoadWorkspaceAction extends AbstractAction {
             workspaceDialog.start();
 
             if (workspaceDialog.hasImportMode())
-                GuiProjectSpaceIO.importFromProjectSpace(workspaceDialog.getImportMode(), selFile);
+                MF.getPS().importFromProjectSpace(workspaceDialog.getImportMode(), selFile);
         }
     }
 }

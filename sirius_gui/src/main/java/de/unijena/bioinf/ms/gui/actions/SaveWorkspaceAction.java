@@ -1,24 +1,18 @@
 package de.unijena.bioinf.ms.gui.actions;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 29.01.17.
- */
 
+import de.unijena.bioinf.babelms.filefilter.SupportedSaveFileFilter;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
-import de.unijena.bioinf.babelms.GuiProjectSpaceIO;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
-import static de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace.PS;
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
@@ -30,10 +24,10 @@ public class SaveWorkspaceAction extends AbstractAction {
         super("Save Project");
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_CLOSE_32);
         putValue(Action.SHORT_DESCRIPTION, "Save current Project to file");
-        setEnabled(!PS.COMPOUNT_LIST.isEmpty());
+        setEnabled(!MF.getPS().COMPOUNT_LIST.isEmpty());
 
         //add Workspace Listener for button activity
-        PS.COMPOUNT_LIST.addListEventListener(listChanges -> setEnabled(!listChanges.getSourceList().isEmpty()));
+        MF.getPS().COMPOUNT_LIST.addListEventListener(listChanges -> setEnabled(!listChanges.getSourceList().isEmpty()));
     }
 
     @Override
@@ -43,7 +37,7 @@ public class SaveWorkspaceAction extends AbstractAction {
         jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_SAVE_FILE_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
-        jfc.addChoosableFileFilter(GuiProjectSpaceIO.SAVE_FILE_FILTER);
+        jfc.addChoosableFileFilter(new SupportedSaveFileFilter());
 
         File selectedFile = null;
 
@@ -81,7 +75,7 @@ public class SaveWorkspaceAction extends AbstractAction {
 
         if (selectedFile != null) {
             try {
-                GuiProjectSpaceIO.exportAsProjectSpace(selectedFile);
+                MF.getPS().exportAsProjectSpace(selectedFile);
             } catch (Exception e2) {
                 new ErrorReportDialog(MF, e2.getMessage());
             }

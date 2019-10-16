@@ -34,7 +34,7 @@ public class PrecursorSelector extends JPanel {
 
 
     public PrecursorSelector(final InstanceBean ec) {
-        this(ec.getMs2Experiment());
+        this(ec.getExperiment());
     }
 
     public PrecursorSelector(final Ms2Experiment exp) {

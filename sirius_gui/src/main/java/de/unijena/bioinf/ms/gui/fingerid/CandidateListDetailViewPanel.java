@@ -18,11 +18,12 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
-import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.ms.gui.compute.CSIFingerIDComputation;
-import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.gui.actions.SiriusActions;
+import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.PanelDescription;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
@@ -44,18 +45,15 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
                 + "</html>";
     }
 
-
-    protected final CSIFingerIDComputation storage;
     protected CandidateListDetailView list;
     protected JButton searchCSIButton;
 
     protected CardLayout layout;
 
 
-    public CandidateListDetailViewPanel(CSIFingerIDComputation storage, CandidateList sourceList) {
+    public CandidateListDetailViewPanel(CandidateList sourceList) {
         super();
-        this.storage = storage;
-        list = new CandidateListDetailView(storage, sourceList);
+        list = new CandidateListDetailView(sourceList);
         init();
     }
 
@@ -104,11 +102,11 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
             }
         }
 
-        if (resultElement == null || !storage.isEnabled()) {
+        if (resultElement == null || !MainFrame.MF.isFingerid()) {
 
             searchCSIButton.setEnabled(false);
             searchCSIButton.setToolTipText("");
-        } else if (resultElement.getResult().getResolvedTree().numberOfVertices() < 3) {
+        } else if (resultElement.getResult(FTree.class).getAnnotation(FTree.class).get().numberOfVertices() < 3) { //todo do we neeed null check???
             searchCSIButton.setEnabled(false);
             searchCSIButton.setToolTipText("Fragmentation tree must explain at least 3 peaks");
         } else {
@@ -123,10 +121,8 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
             searchCSIButton = new ToolbarButton(SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
             add(searchCSIButton);
 
-            searchCSIButton.setEnabled((!(list.getSource().getElementList().isEmpty() || list.getSource().getResultListSelectionModel().isSelectionEmpty()) && storage.isEnabled()));
+            searchCSIButton.setEnabled((!(list.getSource().getElementList().isEmpty() || list.getSource().getResultListSelectionModel().isSelectionEmpty()) && MainFrame.MF.isFingerid()));
             setVisible(true);
         }
     }
-
-
 }

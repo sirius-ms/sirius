@@ -2,14 +2,11 @@ package de.unijena.bioinf.ms.gui.mainframe;
 
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.babelms.projectspace.SiriusProjectSpaceIO;
-import de.unijena.bioinf.ms.gui.compute.CSIFingerIDComputation;
 import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.dialogs.DragAndDropOpenDialog;
 import de.unijena.bioinf.ms.gui.dialogs.DragAndDropOpenDialogReturnValue;
-import de.unijena.bioinf.babelms.GuiProjectSpaceIO;
 import de.unijena.bioinf.babelms.load.LoadController;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListView;
@@ -19,6 +16,7 @@ import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceIO;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,20 +26,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class MainFrame extends JFrame implements DropTargetListener {
     public static final MainFrame MF = new MainFrame();
 
+    // Project Space
     private GuiProjectSpace ps;
 
-    public GuiProjectSpace getPs() {
+    public GuiProjectSpace getPS() {
         return ps;
     }
 
     //left side panel
     private CompoundList compoundList;
-
 
     public CompoundList getCompoundList() {
         return compoundList;
@@ -55,6 +52,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return compoundList.getCompoundListSelectionModel();
     }
 
+
+    // right side panel
     private FormulaList formulaList;
 
     public FormulaList getFormulaList() {
@@ -67,30 +66,44 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return resultsPanel;
     }
 
-    private CSIFingerIDComputation csiFingerId;
 
-    public CSIFingerIDComputation getCsiFingerId() {
-        return csiFingerId;
-    }
-
-
+    //job dialog
     private JobDialog jobDialog;
 
     public JobDialog getJobDialog() {
         return jobDialog;
     }
 
+    //toolbar
     private SiriusToolbar toolbar;
 
     public SiriusToolbar getToolbar() {
         return toolbar;
     }
 
+
+    //drop target for file input
     private DropTarget dropTarget;
 
+
+    //internet connection monitor
     public static final ConnectionMonitor CONNECTION_MONITOR = new ConnectionMonitor();
 
 
+    // some global switch that should better be within the property manager
+    private boolean fingerid;
+
+    public void setFingerIDEnabled(boolean enableFingerID) {
+        fingerid = enableFingerID;
+    }
+
+    public boolean isFingerid() {
+        return fingerid;
+    }
+
+
+
+    // methods for creating the mainframe
     private MainFrame() {
         super(ApplicationCore.VERSION_STRING());
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -100,7 +113,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     public void decoradeMainFrameInstance() {
         //create computation
-        csiFingerId = new CSIFingerIDComputation(); //todo maybe make special gui core to not mix this up with view stuff
+        //todo get predictor from application core?
 
         // create project space
         File psFile = new File(PropertyManager.getProperty("path/to/space")); //todo real data
@@ -180,12 +193,13 @@ public class MainFrame extends JFrame implements DropTargetListener {
         final List<File> newFiles = DragAndDrop.getFileListFromDrop(dtde);
 
         if (newFiles.size() > 0) {
-            importDragAndDropFiles(Arrays.asList(GuiProjectSpaceIO.resolveFileList(newFiles.toArray(new File[newFiles.size()]))));
+            importDragAndDropFiles(resolveFileList(newFiles));
         }
     }
 
-    protected static Pattern CANOPUS_PATTERN = Pattern.compile("canopus[^.]*\\.data(?:\\.gz)?", Pattern.CASE_INSENSITIVE);
 
+
+    // todo this should be somewhere else?
     private void importDragAndDropFiles(List<File> rawFiles) {
         rawFiles = new ArrayList<>(rawFiles);
         // entferne nicht unterstuetzte Files und suche nach CSVs
@@ -195,19 +209,14 @@ public class MainFrame extends JFrame implements DropTargetListener {
         final Iterator<File> rawFileIterator = rawFiles.iterator();
         while (rawFileIterator.hasNext()) {
             final File f = rawFileIterator.next();
-            if (f.getName().toLowerCase().endsWith(".sirius") || (f.isDirectory() && SiriusProjectSpaceIO.isSiriusWorkspaceDirectory(f))) {
+            if (ProjectSpaceIO.isCompressedProjectSpace(f) || (f.isDirectory() && ProjectSpaceIO.isExistingProjectspaceDirectory(f))) {
                 siriusFiles.add(f);
                 rawFileIterator.remove();
             }
-            //todo CANOPUS
-            /*else if (CANOPUS_PATTERN.matcher(f.getName()).matches()) {
-                importCanopus(f);
-                rawFileIterator.remove();
-            }*/
         }
 
         if (siriusFiles.size() > 0) {
-            GuiProjectSpaceIO.importFromProjectSpace(siriusFiles);
+            ps.importFromProjectSpace(siriusFiles);
         }
 
         FileImportDialog dropDiag = new FileImportDialog(this, rawFiles);
@@ -225,7 +234,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         if ((csvFiles.size() > 0 && (msFiles.size() + mgfFiles.size() == 0))) {   //nur CSV bzw. nur ein File
             openImporterWindow(csvFiles, msFiles, mgfFiles);
         } else if (csvFiles.size() == 0 && mgfFiles.size() == 0 && msFiles.size() > 0) {
-            GuiProjectSpaceIO.importOneExperimentPerFile(msFiles, mgfFiles);
+            ps.importOneExperimentPerFile(msFiles, mgfFiles);
         } else {
             DragAndDropOpenDialog diag = new DragAndDropOpenDialog(this);
             DragAndDropOpenDialogReturnValue rv = diag.getReturnValue();
@@ -233,7 +242,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
             } else if (rv == DragAndDropOpenDialogReturnValue.oneExperimentForAll) {
                 openImporterWindow(csvFiles, msFiles, mgfFiles);
             } else if (rv == DragAndDropOpenDialogReturnValue.oneExperimentPerFile) {
-                GuiProjectSpaceIO.importOneExperimentPerFile(msFiles, mgfFiles);
+                ps.importOneExperimentPerFile(msFiles, mgfFiles);
             }
         }
     }
@@ -242,42 +251,28 @@ public class MainFrame extends JFrame implements DropTargetListener {
         LoadController lc = new LoadController(this);
         lc.addSpectra(csvFiles, msFiles, mgfFiles);
         lc.showDialog();
-
-        InstanceBean ec = lc.getExperiment();
-        if (ec != null) {
-            ps.importCompound(ec);
-        }
     }
-    //todo insert canopus here
-    /*private void importCanopus(final File f) {
-        final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
-            @Override
-            protected Object doInBackground() throws Exception {
-                final JobLog.Job j = JobLog.getInstance().submit("Load CANOPUS", "Load CANOPUS prediction model");
-                try {
-                    getCsiFingerId().loadCanopus(f);
-                } catch (Exception e) {
-                    j.error(e.getMessage(), e);
-                    return null;
+
+    public static File[] resolveFileList(File[] files) {
+        List<File> l = resolveFileList(Arrays.asList(files));
+        return l.toArray(new File[l.size()]);
+    }
+
+    public static List<File> resolveFileList(List<File> files) {
+        final ArrayList<File> filelist = new ArrayList<>();
+        for (File f : files) {
+            if (f.isDirectory() && !ProjectSpaceIO.isExistingProjectspaceDirectory(f)) {
+                final File[] fl = f.listFiles();
+                if (fl != null) {
+                    for (File g : fl)
+                        if (!g.isDirectory()) filelist.add(g);
                 }
-                j.done();
-                return null;
+            } else {
+                filelist.add(f);
             }
-
-            @Override
-            protected void done() {
-                super.done();
-                activateCanopus();
-            }
-        };
-        worker.execute();
-    }*/
-
-    private void activateCanopus() {
-        resultsPanel.enableCanopus();
+        }
+        return filelist;
     }
-
-
 }
 
 

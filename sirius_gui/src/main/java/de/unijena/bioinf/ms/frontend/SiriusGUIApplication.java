@@ -65,6 +65,7 @@ public class SiriusGUIApplication {
             //parse args to set config
             final CLIRun cliRunCore = new CLIRun();
             cliRunCore.parseArgs(args);
+            //todo init projectspace
 
 
             GuiUtils.initUI();
@@ -96,7 +97,7 @@ public class SiriusGUIApplication {
                             new UpdateDialog(MainFrame.MF, versionsNumber);
                         }
                         if (!versionsNumber.outdated()) {
-                            MainFrame.MF.getCsiFingerId().setEnabled(true);
+                            MainFrame.MF.setFingerIDEnabled(true);
                         }
                         if (versionsNumber.hasNews()) {
                             new NewsDialog(MainFrame.MF, versionsNumber.getNews());

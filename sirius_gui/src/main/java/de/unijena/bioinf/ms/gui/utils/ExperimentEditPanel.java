@@ -4,6 +4,8 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.utils.MsExperiments;
+import de.unijena.bioinf.ms.frontend.io.MsExperiments2;
 import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 
@@ -64,11 +66,11 @@ public class ExperimentEditPanel extends JPanel {
         nameTF.setText(ec.getName());
         ionizationCB.setSelectedItem(ec.getIonization().toString());
         precursorSelection.setData(ec.getMs1Spectra(), ec.getMs2Spectra(), ec.getIonMass());
-        setMolecularFomula(ec.getMs2Experiment());
+        setMolecularFomula(ec.getExperiment());
     }
 
     public void setMolecularFomula(Ms2Experiment ec) {
-        String formulaString = GuiProjectSpace.extractMolecularFormulaString(ec);
+        String formulaString = MsExperiments2.extractMolecularFormulaString(ec);
         formulaTF.setText(formulaString);
     }
 

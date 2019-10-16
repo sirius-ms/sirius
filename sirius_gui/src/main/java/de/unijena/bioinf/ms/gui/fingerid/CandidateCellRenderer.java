@@ -1,8 +1,7 @@
 package de.unijena.bioinf.ms.gui.fingerid;
 
-import de.unijena.bioinf.chemdb.DatasourceService;
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.fingerid.db.custom.CustomDataSourceService;
-import de.unijena.bioinf.ms.gui.compute.CSIFingerIDComputation;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
@@ -36,14 +35,12 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     private DescriptionPanel descriptionPanel;
     private FingerprintCandidatePropertyChangeSupport currentCandidate;
 
-    private final CSIFingerIDComputation computation;
     private final DoubleListStats stats;
 
     protected final CandidateListDetailView candidateJList; //todo remove me to make conversion complete
 
-    public CandidateCellRenderer(CSIFingerIDComputation computation, DoubleListStats stats, CandidateListDetailView candidateJList) {
+    public CandidateCellRenderer(DoubleListStats stats, CandidateListDetailView candidateJList) {
         this.candidateJList = candidateJList;
-        this.computation = computation;
         this.stats = stats;
         setLayout(new BorderLayout());
 
@@ -214,7 +211,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         private Color color() {
             CustomDataSourceService.Source s = CustomDataSourceService.getSourceFromName(label.name);
             if (s.isCustomSource()) return Colors.DB_CUSTOM;
-            if (s.name().equals(DatasourceService.Source.TRAIN.realName)) return Colors.DB_TRAINING;
+            if (s.name().equals(DataSource.TRAIN.realName)) return Colors.DB_TRAINING;
             return label.values.length == 0 ? Colors.DB_UNLINKED : Colors.DB_LINKED;
         }
 

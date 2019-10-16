@@ -33,6 +33,7 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
     public final Function<Ms2Experiment, String> nameFormatter;
     public final BiFunction<Integer, String, String> namingScheme;
     public final Predicate<CompoundContainerId> compoundFilter;
+    protected final InstanceFactory instFac;
 
 
     public ProjectSpaceManager(@NotNull SiriusProjectSpace space) {
@@ -40,8 +41,12 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
     }
 
     public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
-        this.space = space;
+       this(space, new InstanceFactory.Default(), formatter,compoundFilter);
+    }
 
+    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
+        this.space = space;
+        this.instFac = factory;
         this.nameFormatter = formatter != null ? formatter : new StandardMSFilenameFormatter();
         this.namingScheme = (idx, name) -> idx + "_" + name;
         this.compoundFilter = compoundFilter;
@@ -59,17 +64,17 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
             final CompoundContainer container = projectSpace().newCompoundWithUniqueId(name, (idx) -> namingScheme.apply(idx, name)).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
             container.setAnnotation(Ms2Experiment.class, inputExperiment);
             projectSpace().updateCompound(container, Ms2Experiment.class);
-            return new Instance(container, this);
+            return instFac.create(container, this);
         } catch (IOException e) {
             LoggerFactory.getLogger(ProjectSpaceManager.class).error("Could not create an project space ID for the Instance", e);
             throw new RuntimeException("Could not create an project space ID for the Instance");
         }
     }
 
-    public Instance loadCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
+    public Instance newInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
         try {
             CompoundContainer c = projectSpace().getCompound(id, components);
-            return new Instance(c, this);
+            return instFac.create(c, this);
         } catch (IOException e) {
             LoggerFactory.getLogger(Instance.class).error("Could not create read Input Experiment from Project Space.");
             throw new RuntimeException("Could not create read Input Experiment from Project Space.", e);
@@ -102,7 +107,7 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
             public Instance next() {
                 final CompoundContainerId id = it.next();
                 if (id == null) return null;
-                return loadCompound(id, Ms2Experiment.class);
+                return newInstanceFromCompound(id, Ms2Experiment.class);
             }
         };
     }

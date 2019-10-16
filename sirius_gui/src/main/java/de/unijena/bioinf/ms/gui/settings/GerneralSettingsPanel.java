@@ -1,12 +1,7 @@
 package de.unijena.bioinf.ms.gui.settings;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 07.10.16.
- */
 
-import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.babelms.FileChooserPanel;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;
@@ -60,14 +55,10 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
         final Path dir = Paths.get(db.getFilePath());
         if (Files.isDirectory(dir)) {
             props.setProperty("de.unijena.bioinf.sirius.fingerID.cache", dir.toAbsolutePath().toString());
-            new SwingWorker<Integer, String>() {
-                @Override
-                protected Integer doInBackground() throws Exception {
-                    SearchableDatabases.invalidateCache();
-                    MF.getCsiFingerId().refreshDatabaseCacheDir();
-                    return 1;
-                }
-            }.execute();
+            Jobs.runInBackroundAndLoad(MF, () -> {
+                //todo do we need to invalidate chache somehow
+                System.out.println("WaRN Check if we have to do something???");
+            });
         } else {
             LoggerFactory.getLogger(this.getClass()).warn("Specified path is not a directory (" + dir.toString() + "). Directory not Changed!");
         }

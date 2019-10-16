@@ -1,11 +1,16 @@
 package de.unijena.bioinf.ms.frontend.core;
 
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ms.properties.PersistentProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.stream.Collectors;
 
 /**
  * This class can be used to manage persistent properties of the sirius_frontend
@@ -51,6 +56,31 @@ public class SiriusProperties extends PropertyManager {
         if (getProperty(DEFAULT_TREE_EXPORT_PATH) == null) propFile.setProperty(DEFAULT_TREE_EXPORT_PATH, path);
         if (getProperty(DEFAULT_SAVE_FILE_PATH) == null) propFile.setProperty(DEFAULT_SAVE_FILE_PATH, path);
         if (getProperty(CSV_EXPORT_PATH) == null) propFile.setProperty(CSV_EXPORT_PATH, path);
+    }
+
+    public static boolean addIonToPeriodicTable(PrecursorIonType ionization) {
+        if (ionization != null) {
+            String name = ionization.toString();
+            if (name != null) {
+                if (!PeriodicTable.getInstance().hasIon(name)) {
+                    final PeriodicTable i = PeriodicTable.getInstance();
+                    try {
+                        i.addCommonIonType(name);
+                        if (ionization.getCharge() > 0)
+                            SIRIUS_PROPERTIES_FILE().setProperty("de.unijena.bioinf.sirius.chem.adducts.positive",
+                                    i.getPositiveAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.joining(",")));
+                        else if (ionization.getCharge() < 0)
+                            SIRIUS_PROPERTIES_FILE().setProperty("de.unijena.bioinf.sirius.chem.adducts.negative",
+                                    i.getNegativeAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.joining(",")));
+                    } catch (UnknownElementException e) {
+                        LoggerFactory.getLogger(SiriusProperties.class).error("Could not add ion \"" + name + "\" to default ions.", e);
+                    }
+
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 }

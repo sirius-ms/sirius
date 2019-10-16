@@ -19,7 +19,6 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
-import de.unijena.bioinf.babelms.GuiProjectSpaceIO;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
@@ -33,10 +32,10 @@ import java.awt.event.WindowEvent;
 public class ImportWorkspaceDialog extends JDialog implements ActionListener {
 
     private final JButton replace, merge, abort;
-    private GuiProjectSpaceIO.ImportMode decision = null;
+    private GuiProjectSpace.ImportMode decision = null;
     private MainFrame mainFrame;
 
-    public GuiProjectSpaceIO.ImportMode getImportMode() {
+    public GuiProjectSpace.ImportMode getImportMode() {
         return decision;
     }
 
@@ -77,20 +76,20 @@ public class ImportWorkspaceDialog extends JDialog implements ActionListener {
     }
 
     public void start() {
-        if (GuiProjectSpace.PS.COMPOUNT_LIST.size() > 0) {
+        if (MainFrame.MF.getPS().COMPOUNT_LIST.size() > 0) {
             setVisible(true);
         } else {
-            decision = GuiProjectSpaceIO.ImportMode.MERGE;
+            decision = GuiProjectSpace.ImportMode.MERGE;
         }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource()==replace) {
-            GuiProjectSpace.PS.clear();
-            decision = GuiProjectSpaceIO.ImportMode.REPLACE;
+            MainFrame.MF.getPS().clear();
+            decision = GuiProjectSpace.ImportMode.REPLACE;
         } else if (e.getSource()==merge) {
-            decision = GuiProjectSpaceIO.ImportMode.MERGE;
+            decision = GuiProjectSpace.ImportMode.MERGE;
         } else if (e.getSource()==abort) {
             decision = null;
         } else return;
