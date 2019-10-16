@@ -1,20 +1,33 @@
 package de.unijena.bioinf.ms.frontend.io.projectspace;
 
 import ca.odell.glazedlists.BasicEventList;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorListDialog;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
+import de.unijena.bioinf.ms.gui.mainframe.BatchImportDialog;
+import de.unijena.bioinf.ms.gui.mainframe.FileImportDialog;
 import de.unijena.bioinf.projectspace.*;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class GuiProjectSpace {
-
+    protected static final Logger LOG = LoggerFactory.getLogger(GuiProjectSpace.class);
     public final BasicEventList<InstanceBean> COMPOUNT_LIST = new BasicEventList<>();
+    private final ContainerListener.Defined addListener, deleteListener;
 
-    //todo ringbuffer???
-    private final Map<CompoundContainerId, InstanceBean> idToWrapperBean = new ConcurrentHashMap<>();
+//    todo ringbuffer???
+//    private final Map<CompoundContainerId, InstanceBean> idToWrapperBean = new ConcurrentHashMap<>();
 
     private ProjectSpaceManager projectSpace;
 
@@ -36,10 +49,9 @@ public class GuiProjectSpace {
                 LoggerFactory.getLogger(getClass()).warn("Could not Parse filenameformatter -> Using default");
                 projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
             }
-            //todo when do we write this?
-            psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(projectSpaceFilenameFormatter));
 
-            projectSpace = new ProjectSpaceManager(psTmp, projectSpaceFilenameFormatter, null);
+            psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(projectSpaceFilenameFormatter));
+            projectSpace = new ProjectSpaceManager(psTmp, new InstanceBeanFactory(), projectSpaceFilenameFormatter, null);
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).debug("Could not Parse create ProjectSpace. Try creating Temproray one", e);
             LoggerFactory.getLogger(getClass()).warn("Could not Parse create ProjectSpace. Try creating Temproray one");
@@ -50,13 +62,138 @@ public class GuiProjectSpace {
             }
         }
 
-        projectSpace.projectSpace().defineCompoundListener().onCreate().thenDo((it) -> {
-            //todo projectsapce listener for compound creation an deletion
-            //todo we may need so kind of Instance factory heres
-//            idToWrapperBean.put(it, ))
-        });
+        // add already existing compounds to reactive list
+        projectSpace.forEach(intBean -> COMPOUNT_LIST.add((InstanceBean) intBean));
+
+        // listen to add events
+        addListener = projectSpace.projectSpace().defineCompoundListener().onCreate().thenDo((event) -> {
+            COMPOUNT_LIST.add((InstanceBean) projectSpace.newInstanceFromCompound(event.getAffectedID()));
+        }).register();
+
+        // listen to delete events
+        deleteListener = projectSpace.projectSpace().defineCompoundListener().onDelete().thenDo((event) -> {
+            COMPOUNT_LIST.removeIf(inst -> event.getAffectedID().equals(inst.getID()));
+        }).register();
 
     }
+
+
+    public void importCompound(Ms2Experiment ex) {
+        projectSpace.newCompoundWithUniqueId(ex);
+    }
+
+    public void deleteCompound(final InstanceBean inst) {
+        if (inst == null)
+            return;
+        deleteCompound(inst.getID());
+    }
+
+    public void deleteCompound(@NotNull final CompoundContainerId id) {
+        try {
+            projectSpace.projectSpace().deleteCompound(id);
+        } catch (IOException e) {
+            LOG.error("Could not delete Compound: " + id, e);
+        }
+    }
+
+    public synchronized void clear() {
+        COMPOUNT_LIST.iterator().forEachRemaining(this::deleteCompound);
+    }
+
+
+    public enum ImportMode {REPLACE, MERGE}
+
+    public void importFromProjectSpace(@NotNull final ImportMode importMode, @NotNull final File... selFile) {
+        importFromProjectSpace(importMode, Arrays.asList(selFile));
+    }
+
+    public void importFromProjectSpace(@NotNull final Collection<File> selFile) {
+        importFromProjectSpace(ImportMode.REPLACE, selFile);
+    }
+
+    public void importFromProjectSpace(@NotNull final ImportMode importMode, @NotNull final Collection<File> selFile) {
+        Jobs.runInBackroundAndLoad(MF, "Importing into Project-Space", (TinyBackgroundJJob) new TinyBackgroundJJob<Boolean>() {
+            @Override
+            protected Boolean compute() {
+                System.out.println("##### NOT IMPLEMENTED");
+                //todo do import
+                return true;
+            }
+        }.asIO());
+    }
+
+    public void exportAsProjectSpace(File file) throws IOException {
+        System.out.println("##### NOT IMPLEMENTED");
+        //todo save as and compress (archive)
+    }
+
+
+    public void importOneExperimentPerFile(File... files) {
+        importOneExperimentPerFile(Arrays.asList(files));
+    }
+
+    public void importOneExperimentPerFile(List<File> files) {
+        FileImportDialog imp = new FileImportDialog(MF, files);
+        importOneExperimentPerFile(imp.getMSFiles(), imp.getMGFFiles());
+    }
+
+    public void importOneExperimentPerFile(List<File> msFiles, List<File> mgfFiles) {
+        BatchImportDialog batchDiag = new BatchImportDialog(MF);
+        batchDiag.start(msFiles, mgfFiles);
+
+        List<Ms2Experiment> ecs = batchDiag.getResults();
+        List<String> errors = batchDiag.getErrors();
+
+        ecs.forEach(this::importCompound);
+
+        if (errors != null) {
+            if (errors.size() > 1) {
+                ErrorListDialog elDiag = new ErrorListDialog(MF, errors);
+            } else if (errors.size() == 1) {
+                ErrorReportDialog eDiag = new ErrorReportDialog(MF, errors.get(0));
+            }
+
+        }
+    }
+
+    /*
+
+
+private static String escapeFileName(String name) {
+        final String n = name.replaceAll("[:\\\\/*\"?|<>']", "");
+        if (n.length() > 128) {
+            return n.substring(0, 128);
+        } else return n;
+    }
+
+
+
+    }*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /*public void importCompound(@NotNull final ExperimentResultBean ec) {
         SwingUtilities.invokeLater(() -> {
@@ -151,9 +288,7 @@ public class GuiProjectSpace {
         COMPOUNT_LIST.removeAll(containers);
     }
 
-    public void clear() {
-        remove(new ArrayList<>(COMPOUNT_LIST));
-    }
+
 
     // region static import helper methods
     public void changeName(ExperimentResultBean ec, String old) {
@@ -183,64 +318,10 @@ public class GuiProjectSpace {
         }
     }
 
-    //todo check why this is located here
-    public static String extractMolecularFormulaString(Ms2Experiment exp) {
-        MolecularFormula formula = exp.getMolecularFormula();
-        if (formula != null) {
-            return formula.toString();
-        }
-
-        if (exp.hasAnnotation(InChI.class)) {
-            InChI inChI = exp.getAnnotation(InChI.class);
-            formula = inChI.extractFormulaOrThrow();
-            return formula.toString();
-
-        }
-
-        if (exp.hasAnnotation(Smiles.class)) {
-            Smiles smiles = exp.getAnnotation(Smiles.class);
-            try {
-                final IAtomContainer mol = new SmilesParser(DefaultChemObjectBuilder.getInstance()).parseSmiles(smiles.smiles);
-                String formulaString = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(mol));
-                return formulaString;
-            } catch (CDKException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return null;
-    }
-
-    public static void clearExperimentAnotations(Ms2Experiment exp) {
-        exp.clearAnnotation(Smiles.class);
-        exp.clearAnnotation(InChI.class);
-    }
 
 
-    public static boolean addIonToPeriodicTable(PrecursorIonType ionization) {
-        if (ionization != null) {
-            String name = ionization.toString();
-            if (name != null) {
-                if (!PeriodicTable.getInstance().hasIon(name)) {
-                    final PeriodicTable i = PeriodicTable.getInstance();
-                    try {
-                        i.addCommonIonType(name);
-                        if (ionization.getCharge() > 0)
-                            SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty("de.unijena.bioinf.sirius.chem.adducts.positive",
-                                    i.getPositiveAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.joining(",")));
-                        else if (ionization.getCharge() < 0)
-                            SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty("de.unijena.bioinf.sirius.chem.adducts.negative",
-                                    i.getNegativeAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.joining(",")));
-                    } catch (UnknownElementException e) {
-                        LoggerFactory.getLogger(GuiProjectSpace.class).error("Could not add ion \"" + name + "\" to default ions.", e);
-                    }
 
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+
     //endregion
 
     public static SiriusProjectSpace createGuiProjectSpace(File location) throws IOException {

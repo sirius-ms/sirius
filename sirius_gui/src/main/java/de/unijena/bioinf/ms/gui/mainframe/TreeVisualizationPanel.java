@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.gui.mainframe;
 
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -19,6 +20,7 @@ import de.unijena.bioinf.myxo.gui.tree.render.NodeColor;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
 import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -237,7 +239,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
 
                 try {
                     if (ff == FileFormat.dot) {
-                        DotIO.writeTree(selectedFile, sre.getTreeVisualization(), sre.getScore());
+                        DotIO.writeTree(selectedFile, sre.getTreeVisualization(), sre.getScoreValue(SiriusScore.class));
                     } else if (ff == FileFormat.gif) {
                         RasterGraphicsIO.writeGIF(selectedFile, getTreeImage());
                     } else if (ff == FileFormat.jpg) {
@@ -245,7 +247,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
                     } else if (ff == FileFormat.png) {
                         RasterGraphicsIO.writePNG(selectedFile, getTreeImage());
                     } else if (ff == FileFormat.json) {
-                        new FTJsonWriter().writeTreeToFile(selectedFile, sre.getResult().getResolvedTree());
+                        new FTJsonWriter().writeTreeToFile(selectedFile, sre.getResult(FTree.class).getAnnotationOrNull(FTree.class));
                     }
                 } catch (Exception e2) {
                     ErrorReportDialog fed = new ErrorReportDialog(MF, e2.getMessage());

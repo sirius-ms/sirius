@@ -8,6 +8,9 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
+import de.unijena.bioinf.sirius.scores.IsotopeScore;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
+import de.unijena.bioinf.sirius.scores.TreeScore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +78,8 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         //set selection
         FormulaResultBean sre = null;
         if (!elementList.isEmpty()) {
-            selectionModel.setSelectionInterval(this.data.getBestHitIndex(), this.data.getBestHitIndex());
+            //we have sorted results so best hit is always at 0
+            selectionModel.setSelectionInterval(0, 0);
             sre = elementList.get(selectionModel.getMinSelectionIndex());
         }
 
@@ -93,9 +97,9 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             for (FormulaResultBean element : r) {
                 //todo add zodiac score
                 elementList.add(element);
-                scores[i] = element.getScore();
-                iScores[i] = element.getResult().getIsotopeScore();
-                tScores[i++] = element.getResult().getTreeScore();
+                scores[i] = element.getScoreValue(SiriusScore.class);
+                iScores[i] = element.getScoreValue(IsotopeScore.class);
+                tScores[i++] = element.getScoreValue(TreeScore.class);
             }
 
             this.scoreStats.update(scores);

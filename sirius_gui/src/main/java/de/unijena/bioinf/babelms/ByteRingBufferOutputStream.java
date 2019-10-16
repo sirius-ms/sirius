@@ -1,9 +1,4 @@
 package de.unijena.bioinf.babelms;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 03.10.16.
- */
 
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;

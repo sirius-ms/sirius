@@ -36,7 +36,7 @@ public class ResultPanel extends JTabbedPane {
         tvp = new TreeVisualizationPanel();
         svp = new SpectraVisualizationPanel();
         cov = new CandidateOverviewPanel(new CandidateList(suriusResultElements, ActionList.DataSelectionStrategy.ALL));
-        ccv = new CandidateListDetailViewPanel(MainFrame.MF.getCsiFingerId(), new CandidateList(suriusResultElements));
+        ccv = new CandidateListDetailViewPanel(new CandidateList(suriusResultElements));
         try {
             fpt = new FingerprintPanel(new FingerprintTable(suriusResultElements));
         } catch (IOException e) {

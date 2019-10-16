@@ -5,10 +5,14 @@ package de.unijena.bioinf.ms.gui.mainframe.molecular_formular;
  * 25.01.17.
  */
 
-import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
+import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
 import de.unijena.bioinf.ms.gui.table.list_stats.ListStats;
+import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
+import de.unijena.bioinf.sirius.scores.IsotopeScore;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
+import de.unijena.bioinf.sirius.scores.TreeScore;
 
 /**
  * Display issues in a tabular form.
@@ -30,7 +34,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
 
     @Override
     protected boolean isBest(FormulaResultBean element) {
-        return stats.getMax() <= element.getScore();
+        return stats.getMax() <= element.getScoreValue(SiriusScore.class);
     }
 
     @Override
@@ -47,18 +51,20 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             case 2:
                 return "Adduct";
             case 3:
-                return "Score";
+                return "Zodiac Score";
             case 4:
-                return "Isotope Score";
+                return "Sirius Score";
             case 5:
-                return "Tree Score";
+                return "Isotope Score";
             case 6:
-                return "Explained Peaks";
+                return "Tree Score";
             case 7:
-                return "Total Explained Intensity";
+                return "Explained Peaks";
             case 8:
-                return "Median Absolute Mass Deviation in ppm";
+                return "Total Explained Intensity";
             case 9:
+                return "Median Absolute Mass Deviation in ppm";
+            case 10:
                 return "Best";
             default:
                 throw new IllegalStateException();
@@ -74,30 +80,32 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             case 2:
                 return result.getPrecursorIonType().toString();
             case 3:
-                return result.getScore();
+                return result.getScoreValue(ZodiacScore.class);
             case 4:
-                return result.getResult().getIsotopeScore();
+                return result.getScoreValue(SiriusScore.class);
             case 5:
-                return result.getResult().getTreeScore();
+                return result.getScoreValue(IsotopeScore.class);
             case 6:
+                return result.getScoreValue(TreeScore.class);
+            case 7:
                 final double expPeaks = result.getNumOfExplainedPeaks();
                 if (Double.isNaN(expPeaks))
                     return "Value not found";
                 else
                     return expPeaks;
-            case 7:
+            case 8:
                 final double intensity = result.getExplainedIntensityRatio();
                 if (Double.isNaN(intensity))
                     return "Value not found";
                 else
                     return intensity;
-            case 8:
+            case 9:
                 TreeNode visibleTreeRoot = result.getTreeVisualization();
                 if (visibleTreeRoot != null && visibleTreeRoot.getMedianMassDeviation() != null)
                     return visibleTreeRoot.getMedianMassDeviation();
                 else
                     return "Value not found";
-            case 9:
+            case 10:
                 return isBest(result);
             default:
                 throw new IllegalStateException();

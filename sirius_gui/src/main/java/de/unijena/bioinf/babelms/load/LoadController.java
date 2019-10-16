@@ -10,17 +10,19 @@ import de.unijena.bioinf.babelms.CSVToSpectrumConverter;
 import de.unijena.bioinf.babelms.filefilter.SupportedDataFormatsFilter;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.BatchImportDialog;
 import de.unijena.bioinf.ms.gui.mainframe.FileImportDialog;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.sirius.SpectrumContainer;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
 import gnu.trove.list.array.TDoubleArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -31,33 +33,32 @@ public class LoadController implements LoadDialogListener {
     private final JFrame owner;
     private DefaultLoadDialog loadDialog;
 
-    private final InstanceBean expToModify;
+    private final MutableMs2Experiment expToModify;
+    private final InstanceBean instance;
 
     private final EventList<SpectrumContainer> spectra;
 
-
-    public LoadController(JFrame owner, InstanceBean exp) {
+    public LoadController(JFrame owner, InstanceBean inst) {
         this.owner = owner;
 
-
-        if (exp != null) {
-            expToModify = exp;
+        instance = inst;
+        if (instance != null) {
+            expToModify = (MutableMs2Experiment) inst.getExperiment();
             spectra = new BasicEventList<>(expToModify.getMs1Spectra().size() + expToModify.getMs2Spectra().size());
             loadDialog = new DefaultLoadDialog(owner, spectra);
 
+            loadDialog.ionizationChanged(expToModify.getPrecursorIonType() != null ? expToModify.getPrecursorIonType() : PrecursorIonType.unknown(1));
 
-            loadDialog.ionizationChanged(exp.getIonization() != null ? exp.getIonization() : PrecursorIonType.unknown(1));
+            loadDialog.editPanel.setMolecularFomula(expToModify);
 
-            loadDialog.editPanel.setMolecularFomula(exp.getMs2Experiment());
-
-            loadDialog.experimentNameChanged(exp.getName());
+            loadDialog.experimentNameChanged(expToModify.getName());
 
             loadDialog.setParentMass(expToModify.getIonMass());
 
             addToSpectra(expToModify.getMs1Spectra());
             addToSpectra(expToModify.getMs2Spectra());
         } else {
-            expToModify = new InstanceBean(new MutableMs2Experiment());
+            expToModify = new MutableMs2Experiment();
             spectra = GlazedListsSwing.swingThreadProxyList(new BasicEventList<>());
             loadDialog = new DefaultLoadDialog(owner, spectra);
             loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
@@ -191,7 +192,7 @@ public class LoadController implements LoadDialogListener {
                 List<Spectrum<?>> spectra = new ArrayList<>();
 
                 for (Ms2Experiment experiment : r) {
-                    expToModify.getMs2Experiment().addAnnotationsFrom(experiment);
+                    expToModify.addAnnotationsFrom(experiment);
 
                     if (name == null || name.isEmpty())
                         name = experiment.getName();
@@ -240,14 +241,8 @@ public class LoadController implements LoadDialogListener {
 
     }
 
-    public InstanceBean getExperiment() {
-        if (expToModify.getMs1Spectra().isEmpty() && expToModify.getMs2Spectra().isEmpty())
-            return null;
-        return expToModify;
-    }
-
     private void addIonToPeriodicTableAndFireChange(PrecursorIonType ionization) {
-        if (GuiProjectSpace.addIonToPeriodicTable(ionization))
+        if (SiriusProperties.addIonToPeriodicTable(ionization))
             loadDialog.editPanel.ionizationCB.refresh();
         loadDialog.ionizationChanged(ionization);
     }
@@ -272,29 +267,39 @@ public class LoadController implements LoadDialogListener {
     @Override
     public void completeProcess() {
         if (!spectra.isEmpty()) {
-            expToModify.getMs2Experiment().getMs1Spectra().clear();
-            expToModify.getMs2Experiment().getMs2Spectra().clear();
+            expToModify.getMs1Spectra().clear();
+            expToModify.getMs2Spectra().clear();
 
             //add spectra
             for (SpectrumContainer container : spectra) {
                 Spectrum<?> spectrum = container.getSpectrum(); // this return already the modified version if one exists
                 if (spectrum.getMsLevel() == 1) {
                     if (container.isModified())
-                        expToModify.getMs2Experiment().getMs1Spectra().add(new SimpleSpectrum(spectrum));
+                        expToModify.getMs1Spectra().add(new SimpleSpectrum(spectrum));
                     else
-                        expToModify.getMs2Experiment().getMs1Spectra().add((SimpleSpectrum) spectrum);
+                        expToModify.getMs1Spectra().add((SimpleSpectrum) spectrum);
                 } else {
-                    expToModify.getMs2Experiment().getMs2Spectra().add((MutableMs2Spectrum) spectrum);
+                    expToModify.getMs2Spectra().add((MutableMs2Spectrum) spectrum);
                 }
             }
 
-            expToModify.setIonization(loadDialog.getIonization());
+            expToModify.setPrecursorIonType(loadDialog.getIonization());
             expToModify.setIonMass(loadDialog.getParentMass());
             expToModify.setName(loadDialog.getExperimentName());
 
             if (loadDialog.editPanel.validateFormula()) {
-                expToModify.getMs2Experiment().setMolecularFormula(loadDialog.editPanel.getMolecularFormula());
+                expToModify.setMolecularFormula(loadDialog.editPanel.getMolecularFormula());
             }
+        }
+
+        if (expToModify.getMs1Spectra().isEmpty() && expToModify.getMs2Spectra().isEmpty())
+            return;
+
+        //make changes persistent
+        if (instance == null) {
+            Jobs.runInBackroundAndLoad(owner, () -> MainFrame.MF.getPS().importCompound(expToModify));
+        } else {
+            Jobs.runInBackroundAndLoad(owner, instance::updateExperiment);
         }
     }
 

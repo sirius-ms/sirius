@@ -1,9 +1,4 @@
 package de.unijena.bioinf.babelms;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 07.10.16.
- */
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.configs.Buttons;

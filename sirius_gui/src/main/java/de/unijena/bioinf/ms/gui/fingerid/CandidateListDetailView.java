@@ -21,12 +21,12 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventListModel;
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DatasourceService;
-import de.unijena.bioinf.ms.gui.compute.CSIFingerIDComputation;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
-import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
@@ -74,12 +74,12 @@ public class CandidateListDetailView extends CandidateListView implements Active
     private JTextField smartFilterTextField;
     private MolecularPropertyMatcherEditor molecularPropertyMatcherEditor;
 
-    public CandidateListDetailView(final CSIFingerIDComputation computation, CandidateList sourceList) {
+    public CandidateListDetailView(CandidateList sourceList) {
         super(sourceList);
         candidateList = new CandidateInnerList(new DefaultEventListModel<FingerprintCandidatePropertyChangeSupport>(filteredSource));
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
-        candidateList.setCellRenderer(new CandidateCellRenderer(computation, sourceList.scoreStats, this));
+        candidateList.setCellRenderer(new CandidateCellRenderer(sourceList.scoreStats, this));
         candidateList.setFixedCellHeight(-1);
         candidateList.setPrototypeCellValue(FingerprintCandidatePropertyChangeSupport.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -158,7 +158,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
             }
         } else if (e.getSource() == OpenInBrowser2) {
             for (Map.Entry<String, String> entry : c.compound.getLinkedDatabases().entries()) {
-                final DatasourceService.Sources s = DatasourceService.getFromName(entry.getKey());
+                final DataSource s = DatasourceService.getSourceFromName(entry.getKey());
                 if (entry.getValue() == null || s == null || s.URI == null) continue;
                 try {
                     if (s.URI.contains("%s")) {
@@ -243,7 +243,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
     }
 
     private void clickOnDBLabel(DatabaseLabel label) {
-        final DatasourceService.Sources s = DatasourceService.getFromName(label.name);
+        final DataSource s = DatasourceService.getSourceFromName(label.name);
         if (label.values == null || label.values.length == 0 || s == null || s.URI == null) return;
         try {
             for (String id : label.values) {

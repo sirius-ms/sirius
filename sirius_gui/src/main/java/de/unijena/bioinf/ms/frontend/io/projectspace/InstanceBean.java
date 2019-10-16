@@ -44,6 +44,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
     // e.g. if the scoring changes from sirius to zodiac
 
     //todo make compute state nice
+    //todo we may nee backround loading tasks for retriving informaion from project space
 
     //todo som unregister listener stategy
 

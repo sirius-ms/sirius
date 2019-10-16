@@ -1,8 +1,10 @@
 package de.unijena.bioinf.ms.gui.mainframe.molecular_formular;
 
-import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -128,7 +130,7 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         g2.setFont(propertyFont);
         g2.drawString("Score:", 10, 35);
         g2.setFont(valueFont);
-        g2.drawString(String.format("%.2f",(Math.exp(sre.getScore()) / stats.getExpScoreSum()*100d)) + "%", 15 + scoreLength, 35);
+        g2.drawString(String.format("%.2f", (Math.exp(sre.getScoreValue(SiriusScore.class)) / stats.getExpScoreSum() * 100d)) + "%", 15 + scoreLength, 35);
 //
         if (sre != null && sre.getFingerIdComputeState() != null) {
             g.setFont(statusFont);
@@ -153,13 +155,14 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
             return 1;
         }
 
+
         @Override
-        public double getSiriusScore() {
+        public <T extends FormulaScore> double getScoreValue(Class<T> scoreType) {
             return 9000;
         }
 
         public DummySiriusResult() {
-            super(null);
+            super(null, null, 1);
         }
     }
 }

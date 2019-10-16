@@ -1,16 +1,10 @@
 package de.unijena.bioinf.ms.gui.actions;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 29.01.17.
- */
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.babelms.filefilter.SupportedBatchDataFormatFilter;
-import de.unijena.bioinf.babelms.GuiProjectSpaceIO;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -45,7 +39,7 @@ public class ImportExperimentBatchAction extends AbstractAction {
                     SiriusProperties.SIRIUS_PROPERTIES_FILE().
                             setAndStoreProperty(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH, files[0].getParentFile().getAbsolutePath())
             );
-            GuiProjectSpaceIO.importOneExperimentPerFile(files);
+            MF.getPS().importOneExperimentPerFile(files);
         }
     }
 }
