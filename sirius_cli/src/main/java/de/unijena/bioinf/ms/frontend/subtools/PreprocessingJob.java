@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * Only one preprocessing Subtool is allowed per Workflow. They can only run in first position
- * These tool are intended to transform some non standard input into a list of Instances
+ * These tools are intended to transform some non standard input into a list of Instances
  * The default here is to write the results to the project space that will be used for th rest of the workflow
  */
 public abstract class PreprocessingJob extends BasicJJob<Iterable<Instance>> implements SubToolJob {

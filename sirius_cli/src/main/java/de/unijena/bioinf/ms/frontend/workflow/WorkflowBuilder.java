@@ -1,9 +1,10 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
+import com.google.common.collect.Streams;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
-import de.unijena.bioinf.ms.frontend.subtools.SingeltonTool;
+import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
@@ -18,6 +19,7 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -36,6 +38,7 @@ import java.util.concurrent.Callable;
  * Buy using this class we do not need to write new Workflows every time we add a new tool.
  * We just have to define its parameters in h
  */
+
 public class WorkflowBuilder<R extends RootOptionsCLI> {
 
     //root
@@ -83,7 +86,14 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
         CommandLine.Model.CommandSpec lcmsAlignSpec = forAnnotatedObjectWithSubCommands(lcmsAlignOptions, siriusSpec);
 
         CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), customDBOptions, lcmsAlignSpec, siriusSpec, zodiacSpec,passatuttoSpec, fingeridSpec, canopusOptions);
-        rootSpec = forAnnotatedObjectWithSubCommands(this.rootOptions, customDBOptions, configSpec, lcmsAlignSpec, siriusSpec, zodiacSpec,passatuttoSpec, fingeridSpec, canopusOptions);
+        rootSpec = forAnnotatedObjectWithSubCommands(
+                this.rootOptions,
+                Streams.concat(Arrays.stream(singletonTools()), Arrays.stream(new Object[]{configSpec, lcmsAlignSpec, siriusSpec, zodiacSpec,passatuttoSpec, fingeridSpec, canopusOptions})).toArray()
+        );
+    }
+
+    protected Object[] singletonTools(){
+        return new Object[] {customDBOptions};
     }
 
     protected CommandLine.Model.CommandSpec forAnnotatedObjectWithSubCommands(Object parent, Object... subsToolInExecutionOrder) {
@@ -123,8 +133,8 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
                 parseResult = parseResult.subcommand();
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof DefaultParameterConfigLoader.ConfigOptions)
                     parseResult = parseResult.subcommand();
-                if (parseResult.commandSpec().commandLine().getCommand() instanceof SingeltonTool)
-                    return ((SingeltonTool) parseResult.commandSpec().commandLine().getCommand()).getSingeltonWorkflow();
+                if (parseResult.commandSpec().commandLine().getCommand() instanceof SingletonTool)
+                    return ((SingletonTool) parseResult.commandSpec().commandLine().getCommand()).makeSingletonWorkflow(preproJob, rootOptions.getProjectSpace(), configOptionLoader.config);
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof PreprocessingTool)
                     preproJob = ((PreprocessingTool) parseResult.commandSpec().commandLine().getCommand()).makePreprocessingJob(rootOptions.getInput(), rootOptions.getProjectSpace());
                 else

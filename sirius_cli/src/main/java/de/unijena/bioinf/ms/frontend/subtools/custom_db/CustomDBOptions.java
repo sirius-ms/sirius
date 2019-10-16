@@ -1,8 +1,11 @@
 package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 
+import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
-import de.unijena.bioinf.ms.frontend.subtools.SingeltonTool;
+import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -15,7 +18,7 @@ import java.util.List;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "EXPERIMENTAL FEATURE: generate a custom compound database. Import compounds from all given files.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-public class CustomDBOptions implements SingeltonTool {
+public class CustomDBOptions implements SingletonTool {
 
     @Option(names = "--name", description = "Name of the custom database to be added to the default or specified workspace (--workspace).")
     public String dbName;
@@ -25,7 +28,7 @@ public class CustomDBOptions implements SingeltonTool {
 
 
     @Override
-    public Workflow getSingeltonWorkflow() {
+    public Workflow makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
         //todo configure it
         return new CustomDBWorkflow();
     }
