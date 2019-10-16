@@ -1,13 +1,17 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ms.frontend.io.MS2ExpInputIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.ms.frontend.io.MS2ExpInputIterator;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceFactory;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.FilenameFormatter;
+import de.unijena.bioinf.projectspace.ProjectSpaceIO;
+import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.projectspace.StandardMSFilenameFormatter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +40,11 @@ public class RootOptionsCLI implements RootOptions {
     public enum InputType {PROJECT, SIRIUS}
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
+    protected final InstanceFactory instacneFactory;
 
-    public RootOptionsCLI(@NotNull DefaultParameterConfigLoader defaultConfigOptions) {
+    public RootOptionsCLI(@NotNull DefaultParameterConfigLoader defaultConfigOptions, @NotNull InstanceFactory instanceFactory) {
         this.defaultConfigOptions = defaultConfigOptions;
+        this.instacneFactory = instanceFactory;
     }
 
 
@@ -259,12 +265,14 @@ public class RootOptionsCLI implements RootOptions {
             if (projectSpaceLocation == null) {
                 if (inputType == InputType.PROJECT && input.size() == 1 && !ProjectSpaceIO.isCompressedProjectSpace(input.get(0))) {
                     projectSpaceLocation = input.get(0);
-                } else
-                    throw new CommandLine.PicocliException("No output location given. Can only be avoided if a single (non compressed) project-space is the input");
+                } else {
+                    projectSpaceLocation = ProjectSpaceIO.createTmpProjectSpaceLocation();
+                    LOG.warn("No unique output location found. Writing output to Temporary folder: " + projectSpaceLocation.getPath());
+                }
             }
 
             if (!projectSpaceLocation.exists()) {
-                if (!projectSpaceLocation.mkdir())
+                if (!projectSpaceLocation.mkdirs())
                     throw new IOException("Could not create new directory for project-space'" + projectSpaceLocation + "'");
             }
 
@@ -282,7 +290,7 @@ public class RootOptionsCLI implements RootOptions {
                 psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(projectSpaceFilenameFormatter));
             }
 
-            projectSpaceToWriteOn = new ProjectSpaceManager(psTmp, projectSpaceFilenameFormatter, id -> {
+            projectSpaceToWriteOn = new ProjectSpaceManager(psTmp, instacneFactory, projectSpaceFilenameFormatter, id -> {
                 if (id.getIonMass().orElse(Double.NaN) <= maxMz)
                     return true;
                 else {

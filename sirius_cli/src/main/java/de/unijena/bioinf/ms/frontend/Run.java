@@ -25,10 +25,14 @@ import java.io.IOException;
  * Other Methods only produce output to the Workspace (e.g. SIRIUS).
  * So they need to merge their results with the existing ones.
  */
-public class CLIRun extends ApplicationCore {
-    protected final static Logger logger = LoggerFactory.getLogger(CLIRun.class);
+public class Run extends ApplicationCore {
+    protected final static Logger logger = LoggerFactory.getLogger(Run.class);
     private de.unijena.bioinf.ms.frontend.workflow.Workflow flow;
-    private WorkflowBuilder<RootOptionsCLI> builder;
+    private final WorkflowBuilder<?> builder;
+
+    public Run(WorkflowBuilder<?> builder) {
+        this.builder = builder;
+    }
 
 
     public void compute() {
@@ -38,10 +42,7 @@ public class CLIRun extends ApplicationCore {
     }
 
     /*Returns true if a workflow was parsed*/
-    public boolean parseArgs(String[] args) throws IOException {
-        final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-        builder = new WorkflowBuilder<>(new RootOptionsCLI(configOptionLoader), configOptionLoader);
-
+    public boolean parseArgs(String[] args) {
         if (args == null || args.length < 1)
             args = new String[]{"--help"};
 

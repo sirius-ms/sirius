@@ -97,11 +97,7 @@ public class ToolChainWorkflow implements Workflow {
 //                iteratorSource.forEach(it -> it.getExperiment().setAnnotation(RecomputeResults.class,null));
                 //use all experiments in workspace to create summaries
                 LOG.info("Writing summary files...");
-                project.updateSummaries(
-                        new FormulaSummaryWriter(),
-                        new StructureSummaryWriter(),
-                        new MztabMExporter()
-                );
+                project.updateSummaries(ProjectSpaceManager.defaultSummarizer());
 
                 project.close();
                 LOG.info("Project-Space successfully written!");

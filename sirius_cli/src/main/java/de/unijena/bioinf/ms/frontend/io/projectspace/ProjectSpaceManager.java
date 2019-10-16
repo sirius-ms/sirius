@@ -7,6 +7,9 @@ import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.FormulaSummaryWriter;
+import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.StructureSummaryWriter;
+import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.mztab.MztabMExporter;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.*;
@@ -112,6 +115,13 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
         };
     }
 
+    public static Summarizer[] defaultSummarizer() {
+        return new Summarizer[]{
+                new FormulaSummaryWriter(),
+                new StructureSummaryWriter(),
+                new MztabMExporter()
+        };
+    }
     public static ProjectSpaceConfiguration newDefaultConfig(){
         final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
         //configure ProjectSpaceProperties
