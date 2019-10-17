@@ -24,9 +24,11 @@ public class GuiOptions implements SingletonTool {
     @Override
     public Workflow makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
         return () -> {
+            //todo minor: cancellation handling
+
             //todo 1:  run prepro and
 
-            //todo 1:  run run addConfig job
+            //todo 2:  run addConfig job
 
             //todo 3: init GUI with given project space.
             GuiUtils.initUI();
@@ -39,6 +41,7 @@ public class GuiOptions implements SingletonTool {
                         SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
                         ApplicationCore.DEFAULT_LOGGER.info("Writing Summaries to Project-Space before termination.");
                         projectSpace.updateSummaries(ProjectSpaceManager.defaultSummarizer());
+                        projectSpace.close();
                     } catch (IOException e) {
                         ApplicationCore.DEFAULT_LOGGER.error("Could not write summaries", e);
                     } finally {
