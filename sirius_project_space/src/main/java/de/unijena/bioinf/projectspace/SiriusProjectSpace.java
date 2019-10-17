@@ -2,6 +2,7 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -94,7 +95,15 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                         LoggerFactory.getLogger(getClass()).warn("Could not parse ionType of '" + dirName + "'", e);
                     }
 
-                ids.put(dirName, new CompoundContainerId(dirName, name, index, ionMass, ionType));
+                final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType);
+
+                try {
+                    cid.setRankingScoreType(FormulaResultRankingScore.fromString(keyValues.get(CompoundContainerId.RANKING_KEY)).value);
+                } catch (Exception e) {
+                    LoggerFactory.getLogger(getClass()).warn("Could not parse ionType of '" + dirName + "'", e);
+                }
+
+                ids.put(dirName, cid);
                 maxIndex = Math.max(index, maxIndex);
             }
         }
@@ -138,9 +147,11 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public Optional<FormulaResult> newFormulaResultWithUniqueId(@NotNull final CompoundContainer container, @NotNull final FTree tree) {
         if (!containsCompound(container.getId()))
             throw new IllegalArgumentException("Compound is not part of the project Space! ID: " + container.getId());
-
-        final FormulaResultId fid = new FormulaResultId(container.getId(), tree.getRoot().getFormula(), tree.getAnnotationOrThrow(PrecursorIonType.class));
+        final PrecursorIonType ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
+        final MolecularFormula f = tree.getRoot().getFormula().add(ionType.getAdduct()).subtract(ionType.getInSourceFragmentation()); //get precursor formula
+        final FormulaResultId fid = new FormulaResultId(container.getId(), f, ionType);
         fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.CREATED, container.getId(), container, Collections.emptySet()));
+
         if (container.contains(fid))
             return Optional.empty(); //todo how to handle this?
 
@@ -173,13 +184,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 return Optional.empty();
             try {
                 Files.createDirectory(new File(root, directoryName).toPath());
-                try (final BufferedWriter bw = FileUtils.getWriter(new File(new File(root, id.getDirectoryName()), SiriusLocations.COMPOUND_INFO))) {
-                    for (Map.Entry<String, String> kv : id.asKeyValuePairs().entrySet()) {
-                        bw.write(kv.getKey() + "\t" + kv.getValue());
-                        bw.newLine();
-                    }
-                }
-                fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
+                writeCompoundContainerID(id);
                 return Optional.of(id);
             } catch (IOException e) {
                 LoggerFactory.getLogger(getClass()).error("cannot create directory " + directoryName, e);
@@ -187,6 +192,30 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 return Optional.empty();
             }
         }
+    }
+
+    public void updateCompoundContainerID(CompoundContainerId cid) throws IOException {
+        if (cid == null || ids.get(cid.getDirectoryName()) != cid)
+            return;
+
+        cid.containerLock.lock();
+        try {
+            writeCompoundContainerID(cid);
+        } finally {
+            cid.containerLock.unlock();
+        }
+    }
+    private void writeCompoundContainerID(CompoundContainerId cid) throws IOException {
+        final File f = new File(new File(root, cid.getDirectoryName()), SiriusLocations.COMPOUND_INFO);
+        if (f.exists())
+            f.delete();
+        try (final BufferedWriter bw = FileUtils.getWriter(f)) {
+            for (Map.Entry<String, String> kv : cid.asKeyValuePairs().entrySet()) {
+                bw.write(kv.getKey() + "\t" + kv.getValue());
+                bw.newLine();
+            }
+        }
+        fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
     }
 
     // shorthand methods
@@ -227,7 +256,6 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             return getContainer(FormulaResult.class, id, components);
         } finally {
             parentId.containerLock.unlock();
-            ;
         }
     }
 
@@ -285,30 +313,49 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    public boolean renameCompound(CompoundContainerId oldId, String newDirName) throws IOException {
+    public boolean renameCompound(CompoundContainerId oldId, String name, IntFunction<String> index2dirName) {
         oldId.containerLock.lock();
         try {
+            final String newDirName = index2dirName.apply(oldId.getCompoundIndex());
             synchronized (ids) {
+                if (newDirName.equals(oldId.getDirectoryName())) {
+                    try {
+                        if (name.equals(oldId.getCompoundName()))
+                            return true; //nothing to do
+                        oldId.rename(name, newDirName);
+                        writeCompoundContainerID(oldId);
+                        return true; //renamed but no move needed
+                    } catch (IOException e) {
+                        LoggerFactory.getLogger(SiriusProjectSpace.class).error("cannot write changed ID. Renaming may not be persistent", e);
+                        return true; //rename failed due ioError
+                    }
+                }
+
                 if (ids.containsKey(newDirName))
-                    return false;
+                    return false; // rename not possible because key already exists
+
                 File file = new File(root, newDirName);
                 if (file.exists()) {
-                    return false;
+                    return false; // rename not target directory already exists
                 }
+
                 try {
                     Files.move(new File(root, oldId.getDirectoryName()).toPath(), file.toPath());
+                    //change id only if move was successful
+                    ids.remove(oldId.getDirectoryName());
+                    oldId.rename(name, newDirName);
+                    ids.put(oldId.getDirectoryName(), oldId);
+                    writeCompoundContainerID(oldId);
+                    return true;
                 } catch (IOException e) {
                     LoggerFactory.getLogger(SiriusProjectSpace.class).error("cannot move directory", e);
-                    return false;
+                    return false; // move failed due to an error
                 }
-                ids.remove(oldId.getDirectoryName());
-                oldId.rename(newDirName);
-                ids.put(oldId.getDirectoryName(), oldId);
+
             }
         } finally {
             oldId.containerLock.unlock();
         }
-        return true;
     }
 
 
@@ -407,10 +454,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public void updateSummaries(Summarizer... summarizers) throws IOException {
         Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
         for (CompoundContainerId cid : ids.values()) {
-            CompoundContainer c = getCompound(cid, Ms2Experiment.class);
-            Ms2Experiment ex = c.getAnnotationOrThrow(Ms2Experiment.class);
-            final Class<? extends FormulaScore> rankingScore = ex.getAnnotation(FormulaResultRankingScore.class).orElse(new FormulaResultRankingScore(SiriusScore.class)).value;
-            List<SScored<FormulaResult, SiriusScore>> results = getFormulaResultsOrderedBy(cid, rankingScore, annotations);
+            final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
+            final List<SScored<FormulaResult, SiriusScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreType().orElse(SiriusScore.class), annotations);
             for (Summarizer sim : summarizers)
                 sim.addWriteCompoundSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), c, results);
         }

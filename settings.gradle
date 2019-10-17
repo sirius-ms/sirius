@@ -13,7 +13,6 @@ include ':fragmentation_tree'
         include ":fragmentation_tree:FastFragmentationTreeAlign:FTBlast"
         include ":fragmentation_tree:FastFragmentationTreeAlign:ClassicTreeAlign"
         include ":fragmentation_tree:FastFragmentationTreeAlign:AlignmentViewer"
-
 include ':isotope_pattern'
 	include ':isotope_pattern:isotope_pattern_analysis'
     include ':isotope_pattern:isogen_cli'
@@ -26,11 +25,11 @@ include ':tree_motif_search'
 include ':sirius_api'
 include ':gibbs_sampling'
     include ':gibbs_sampling:zodiac_project_space'
-include 'passatutto'
-    include 'passatutto:passatutto_project_space'
+include ':sirius_project_space'
+include ':passatutto'
+    include ':passatutto:passatutto_project_space'
 include ':utils'
 include ':lcms'
     include ':lcms:mzml-converter'
-include ':sirius_project_space'
-include 'quality_assessment'
+include ':quality_assessment'
 

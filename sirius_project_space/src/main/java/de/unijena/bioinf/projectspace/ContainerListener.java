@@ -45,11 +45,11 @@ public interface ContainerListener<ID extends ProjectSpaceContainerId, Container
             return on(ContainerEvent.EventType.DELETED);
         }
 
-        public PartiallyListeningFluentBuilder onlyFor(Class<DataAnnotation>... klasses) {
+        public PartiallyListeningFluentBuilder onlyFor(Class<? extends DataAnnotation>... klasses) {
             return new PartiallyListeningFluentBuilder(queue, klasses, types);
         }
 
-        Defined thenDo(ContainerListener<ID,Container> listener) {
+        public Defined thenDo(ContainerListener<ID,Container> listener) {
             EnumSet<ContainerEvent.EventType> types = this.types==null ? EnumSet.allOf(ContainerEvent.EventType.class) : this.types;
             return new Defined(queue, new PartiallyListeningUpdateListener<ID,Container>(classes, types, listener));
         }

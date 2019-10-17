@@ -25,7 +25,20 @@ public class GapFilling {
         return cluster;
     }
 
-    private void gapFill(LCMSProccessingInstance instance, Cluster cluster, double rtError, double peakShapeError, boolean onlyGoodShapes, ProcessedSample sample) {
+    private static class Gaps {
+        private AlignedFeatures feature;
+        private ProcessedSample sample;
+        private GapFilledIon gapFilledIon;
+
+        public Gaps(AlignedFeatures feature, ProcessedSample sample, GapFilledIon gapFilledIon) {
+            this.feature = feature;
+            this.sample = sample;
+            this.gapFilledIon = gapFilledIon;
+        }
+    }
+
+    private List<Gaps> gapFill(LCMSProccessingInstance instance, Cluster cluster, double rtError, double peakShapeError, boolean onlyGoodShapes, ProcessedSample sample) {
+        final ArrayList<Gaps> gaps = new ArrayList<>();
         if (sample.storage instanceof MemoryFileStorage)
             ((MemoryFileStorage) sample.storage).keepInMemory();
         final Set<ChromatographicPeak.Segment> segments = new HashSet<>();
@@ -46,10 +59,7 @@ public class GapFilling {
             if (f.features.containsKey(sample) && !(f.features.get(sample) instanceof GapFilledIon)) {
                 // no need for gap filling
             } else {
-                final HashMap<ProcessedSample, FragmentedIon> ions;
-                synchronized (f.features) {
-                    ions = new HashMap<>(f.features);
-                }
+                final HashMap<ProcessedSample, FragmentedIon> ions =  new HashMap<>(f.features);
                 final double retentionTimeTolerance = rtError;
                 final double[] rets;
                 rets = ions.entrySet().stream().filter(x -> !(x instanceof GapFilledIon)).mapToDouble(e -> e.getKey().getRecalibratedRT(e.getValue().getRetentionTime())).toArray();
@@ -83,7 +93,7 @@ public class GapFilling {
                             if (tolerance.contains(peakRt)) {
                                 if (segments.contains(seg))
                                     continue ; // we already know this ion
-                                final GapFilledIon pseudoIon = new GapFilledIon(sample.run.getScanByNumber(seg.getPeak().getScanPointAt(seg.getApexIndex()).getScanNumber()).map(x->x.getPolarity()).orElse(Polarity.UNKNOWN),  peak.get(), seg, mostAbundant);
+                                final GapFilledIon pseudoIon = new GapFilledIon(sample.run.getScanByNumber(seg.getPeak().getScanPointAt(seg.getApexIndex()).getScanNumber()).map(Scan::getPolarity).orElse(Polarity.UNKNOWN),  peak.get(), seg, mostAbundant);
                                 // search for isotopes
                                 if (new CorrelatedPeakDetector(instance.getDetectableIonTypes()).detectCorrelatedPeaks(sample, pseudoIon)) {
 
@@ -109,22 +119,13 @@ public class GapFilling {
                                         continue;
                                     }
                                     pseudoIon.setPeakShape(instance.fitPeakShape(sample, pseudoIon));
-                                    sample.gapFilledIons.add(pseudoIon);
 
                                     FragmentedIon ion = ions.get(sample);
-                                    synchronized (f.features) {
-                                        if (ion == null) {
-                                            f.features.put(sample, pseudoIon);
-                                        } else {
-                                            // we do not really know which one is correct. Hopefully, alignments will figure it out
-                                            if (Math.abs(ion.getRetentionTime() - middle) > Math.abs(pseudoIon.getRetentionTime() - middle)) {
-                                                f.features.put(sample, pseudoIon);
-                                            }
-                                        }
+                                    if (ion == null || (Math.abs(ion.getRetentionTime() - middle) > Math.abs(pseudoIon.getRetentionTime() - middle))) {
+                                        gaps.add(new Gaps(f,sample,pseudoIon));
+                                        segments.add(seg);
+                                        break outerLoop;
                                     }
-
-                                    segments.add(seg);
-                                    break outerLoop;
                                 }
                             }
                         }
@@ -140,22 +141,30 @@ public class GapFilling {
                 e.printStackTrace();
             }
         }
+        return gaps;
     }
 
     public BasicJJob<Cluster> gapFillingInParallel(LCMSProccessingInstance instance, Cluster cluster, double rtError, double peakShapeError, boolean onlyGoodShapes) {
         return new BasicMasterJJob<Cluster>(JJob.JobType.SCHEDULER) {
             @Override
             protected Cluster compute() throws Exception {
-                for (ProcessedSample s : instance.getSamples()) {
-                    submitSubJob(new BasicJJob<Object>() {
+                final ArrayList<BasicJJob<List<Gaps>>> jobs = new ArrayList<>();
+                for (ProcessedSample s : new HashSet<>(instance.getSamples())) {
+                    jobs.add(submitSubJob(new BasicJJob<List<Gaps>>() {
                         @Override
-                        protected Object compute() throws Exception {
-                            gapFill(instance,cluster,rtError,peakShapeError,onlyGoodShapes,s);
-                            return "";
+                        protected List<Gaps> compute() throws Exception {
+                            return gapFill(instance,cluster,rtError,peakShapeError,onlyGoodShapes,s);
                         }
-                    });
+                    }));
                 }
-                awaitAllSubJobs();
+                jobs.forEach(JJob::takeResult);
+                for (BasicJJob<List<Gaps>> job : jobs) {
+                    List<Gaps> gaps = job.takeResult();
+                    for (Gaps g : gaps) {
+                        g.feature.getFeatures().putIfAbsent(g.sample,g.gapFilledIon);
+                        g.sample.gapFilledIons.add(g.gapFilledIon);
+                    }
+                }
                 return cluster;
             }
         };
