@@ -15,6 +15,7 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
     protected Precursor precursor;
     protected List<Scan> scans;
     protected double noiseLevel;
+    protected double dotProduct, cosine;
 
     public MergedSpectrum(Scan scan, Spectrum<? extends Peak> spectrum, Precursor precursor) {
         super(new ArrayList<>());
@@ -25,13 +26,24 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
         this.precursor= precursor;
         scans = new ArrayList<>();
         scans.add(scan);
+        this.dotProduct = 0d;
+        for (MergedPeak peak : peaks) dotProduct += peak.getIntensity()*peak.getIntensity();
+        this.cosine = 1d;
     }
 
-    public MergedSpectrum(Precursor precursor, List<MergedPeak> peaks, List<Scan> scans) {
+    public MergedSpectrum(Precursor precursor, List<MergedPeak> peaks, List<Scan> scans, double cosine) {
         super(peaks);
         this.peaks.sort(Comparator.comparingDouble(Peak::getMass));
         this.scans = scans;
         this.precursor=precursor;
+        this.dotProduct = 0d;
+        for (MergedPeak peak : peaks) {
+            if (peak.getMass() < precursor.getMass()-20 && peak.getIntensity()>noiseLevel) {
+                dotProduct += peak.getIntensity() * peak.getIntensity();
+            }
+        }
+        this.cosine = cosine;
+        System.out.println("Merged with cosine " + this.cosine);
     }
 
     // we have to do this. Otherwise, memory consumption is just too high
@@ -56,6 +68,14 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
         return Spectrums.calculateTIC(this, Range.closed(0d,precursor.getMass()-20), noiseLevel);
     }
 
+    public double getNorm() {
+        return dotProduct;
+    }
+
+    public double getMergedCosine() {
+        return cosine;
+    }
+
     public Precursor getPrecursor() {
         return precursor;
     }
@@ -63,15 +83,15 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
     public SimpleSpectrum finishMerging() {
         final int n = scans.size();
         int mostIntensive = scans.stream().max(Comparator.comparingDouble(Scan::getTIC)).map(x->x.getIndex()).orElse(-1);
-        if (n >= 5) {
+        final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
+        if (n>=6) {
             int min = (int)Math.ceil(n*0.2);
-            final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
             for (MergedPeak p : peaks) {
                 if (p.getMass() > (this.precursor.getMass()+10))
                     continue;
                 if (p.getSourcePeaks().length >= min) {
-                    buf.addPeak(p);
-                } else if (p.getIntensity() > 2*noiseLevel) {
+                    buf.addPeak(p.getAverageMass(), p.getHighestIntensity());
+                } else if (p.getIntensity() > 3*noiseLevel) {
                     for (ScanPoint q : p.getSourcePeaks()) {
                         if (q.getScanNumber()==mostIntensive) {
                             buf.addPeak(p);
@@ -80,13 +100,15 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
                     }
                 }
             }
-            return new SimpleSpectrum(buf);
         } else {
-            final SimpleMutableSpectrum buf = new SimpleMutableSpectrum(this);
-            Spectrums.applyBaseline(buf, 2*noiseLevel);
-            Spectrums.cutByMassThreshold(buf,precursor.getMass()-20);
-            return new SimpleSpectrum(buf);
+            for (MergedPeak peak : peaks) {
+                if (peak.getIntensity()>2*noiseLevel && peak.getMass() < precursor.getMass()+10) {
+                    buf.addPeak(peak);
+                }
+            }
         }
+
+        return new SimpleSpectrum(buf);
     }
 
     public Quality getQuality(SimpleSpectrum mergedSpectrum) {

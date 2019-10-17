@@ -123,7 +123,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     @Override
     protected FinalResult compute() throws Exception {
         final long t = System.nanoTime();
-        System.out.println(new Date() + "\t-> I am Sirius, computing trees for Experiment " + pinput.getExperimentInformation().getName());
+//        System.out.println(new Date() + "\t-> I am Sirius, computing trees for Experiment " + pinput.getExperimentInformation().getName());
         configureProgress(0, 2, 1);
         score();
         startTime = System.currentTimeMillis();
@@ -140,7 +140,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         final List<FTree> trees = Arrays.stream(results).map(r -> fixIonization(r.tree)).collect(Collectors.toList());
         final long t2 = System.nanoTime();
         final int timeInSeconds = (int)Math.round((t2-t)*1e-9);
-        System.out.println(new Date() + "\t-> I am Sirius, finished with computing trees for Experiment " + pinput.getExperimentInformation().getName() +" which took " + (timeInSeconds) + " seconds.");
+//        System.out.println(new Date() + "\t-> I am Sirius, finished with computing trees for Experiment " + pinput.getExperimentInformation().getName() +" which took " + (timeInSeconds) + " seconds.");
         return new FinalResult(trees);
     }
 

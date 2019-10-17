@@ -23,7 +23,6 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransform
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformer;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -43,8 +42,10 @@ import de.unijena.bioinf.sirius.plugins.*;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.treemotifs.model.TreeMotifPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 //todo we should cleanup the api methods, proof which should be private and which are no longer needed, or at least change them, so that they use the identification job
@@ -629,12 +630,18 @@ public class Sirius {
         }
 
         private List<IdentificationResult<SiriusScore>> createIdentificationResults(FasterTreeComputationInstance.FinalResult fr, FasterTreeComputationInstance computationInstance) {
+            List<IdentificationResult<SiriusScore>> irs = fr.getResults().stream()
+                    .map(tree -> new IdentificationResult<>(tree, new SiriusScore(FTreeMetricsHelper.getSiriusScore(tree))))
+                    .sorted(Comparator.reverseOrder())
+                    .collect(Collectors.toList());
 
-            final List<IdentificationResult<SiriusScore>> irs = new ArrayList<>();
-            for (FTree tree : fr.getResults()) {
-                irs.add(new IdentificationResult<>(tree, new SiriusScore(FTreeMetricsHelper.getSiriusScore(tree))));
+            final PrecursorIonType ionType = computationInstance.getProcessedInput().getExperimentInformation().getPrecursorIonType();
+
+            if (!ionType.isIonizationUnknown()) {
+                LoggerFactory.getLogger(getClass()).info("Compound has set a fixed Adduct: " + ionType.toString() + ". Transforming trees to Adduct if necessary");
+                irs = irs.stream().map(idr -> IdentificationResult.withPrecursorIonType(idr, ionType)).collect(Collectors.toList());
             }
-            irs.sort(Comparator.reverseOrder());
+
             return irs;
         }
 

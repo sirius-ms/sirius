@@ -114,34 +114,40 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
             jobs.add(job);
             masterJJob.submitSubJob(job);
         }
-        System.out.println("running "+jobs.size()+" workers to postprocess edges");
+//        System.out.println("running "+jobs.size()+" workers to postprocess edges");
 
         for (BasicJJob job : jobs) {
             job.awaitResult();
         }
 
 
-        System.out.println("postprocess: first step took "+(System.currentTimeMillis()-start));
+//        System.out.println("postprocess: first step took "+(System.currentTimeMillis()-start));
 
         start = System.currentTimeMillis();
         for(int i = 0; i < graph.getSize(); ++i) {
-            for(int j = i + 1; j < graph.getSize(); ++j) {
-                double a = graph.getLogWeight(i, j);
-                double b = graph.getLogWeight(j, i);
+            int[] connections = graph.getLogWeightConnections(i);
+            for (int j = 0; j < connections.length; j++) {
+                int c = connections[j];
+
+                //check if this pair of edges has already beend considered
+                if (c<i && graph.hasLogWeightConnections(c, i)) continue;
+
+                double a = graph.getLogWeight(i, c);
+                double b = graph.getLogWeight(c, i);
                 double max;
                 if(a < b) {
-                    graph.setLogWeight(i, j, b);
+                    graph.setLogWeight(i, c, b);
                     max = b;
                 } else if(b < a) {
-                    graph.setLogWeight(j, i, a);
+                    graph.setLogWeight(c, i, a);
                     max = a;
                 } else {
                     max = a;
                 }
 
                 if(max > 0.0D) {
-                    connectionsList[i].add(j);
-                    connectionsList[j].add(i);
+                    connectionsList[i].add(c);
+                    connectionsList[c].add(i);
                 } else if (max < 0d) {
                     throw new RuntimeException("Edge has a negative weight");
                 }
@@ -149,7 +155,8 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
         }
 
 //todo this part is not parallel yet. Fast enough?
-        System.out.println("postprocess: second step symmetry took "+(System.currentTimeMillis()-start));
+
+//        System.out.println("postprocess: second step symmetry took "+(System.currentTimeMillis()-start));
 
         int[][] connections = new int[graph.getSize()][];
 
@@ -157,7 +164,7 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
             connections[i] = connectionsList[i].toArray();
         }
 
-        System.out.println("postprocess: second step took "+(System.currentTimeMillis()-start));
+//        System.out.println("postprocess: second step took "+(System.currentTimeMillis()-start));
 
         return connections;
     }

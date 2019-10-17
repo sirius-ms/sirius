@@ -21,7 +21,7 @@ public interface Score<T extends Score> extends DataAnnotation, Comparable<T> {
 
     //todo this does not allow to define new scores within external packages?!
     static Class<? extends Score> resolve(String name) {
-        if (name == null || name.isEmpty())
+        if (name == null || name.isEmpty() || name.toLowerCase().equals("null"))
             return null;
 
         try {
