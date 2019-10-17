@@ -257,8 +257,9 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
     public static void main(String[] args) {
         final File mzxmlFile = new File(
                 //"/home/kaidu/analysis/example"
-                "/home/kaidu/analysis/canopus/mice/raw/cecum"
+               // "/home/kaidu/analysis/canopus/mice/raw/cecum"
                 //"/home/kaidu/analysis/example"
+                "/home/kaidu/data/raw/rosmarin"
                 //"/home/kaidu/analysis/canopus/arabidobsis"
                 );
         MemoryFileStorage storage= null;
@@ -296,7 +297,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
             addOrderedSampleNames(c, sampleNames);
 
             // write correlation network
-            //i.detectAdductsWithGibbsSampling(c).writeToFile(i,new File("ion_network.js"));
+            i.detectAdductsWithGibbsSampling(c).writeToFile(i,new File("ion_network.js"));
 
             final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(c);
             for (ProcessedSample s : i.getSamples()) s.storage.close();
