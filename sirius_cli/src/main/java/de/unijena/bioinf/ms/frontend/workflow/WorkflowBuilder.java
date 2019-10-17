@@ -1,9 +1,9 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
-import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
-import de.unijena.bioinf.ms.frontend.subtools.SingeltonTool;
+import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
@@ -123,8 +123,8 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
                 parseResult = parseResult.subcommand();
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof DefaultParameterConfigLoader.ConfigOptions)
                     parseResult = parseResult.subcommand();
-                if (parseResult.commandSpec().commandLine().getCommand() instanceof SingeltonTool)
-                    return ((SingeltonTool) parseResult.commandSpec().commandLine().getCommand()).getSingeltonWorkflow();
+                if (parseResult.commandSpec().commandLine().getCommand() instanceof SingletonTool)
+                    return ((SingletonTool) parseResult.commandSpec().commandLine().getCommand()).getSingeltonWorkflow();
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof PreprocessingTool)
                     preproJob = ((PreprocessingTool) parseResult.commandSpec().commandLine().getCommand()).makePreprocessingJob(rootOptions.getInput(), rootOptions.getProjectSpace());
                 else
