@@ -28,7 +28,7 @@ public class GuiOptions implements SingletonTool {
 
             //todo 1:  run prepro and
 
-            //todo 2:  run addConfig job
+            //todo 1ZZ:  run addConfig job
 
             //todo 3: init GUI with given project space.
             GuiUtils.initUI();
