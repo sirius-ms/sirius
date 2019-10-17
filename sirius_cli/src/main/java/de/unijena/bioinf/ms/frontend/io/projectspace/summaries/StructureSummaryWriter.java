@@ -45,14 +45,23 @@ public class StructureSummaryWriter implements Summarizer {
 
             writer.inDirectory(exp.getId().getDirectoryName(), () -> {
                 writer.textFile(SummaryLocations.STRUCTURE_SUMMARY, fileWriter -> {
+                    fileWriter.write("formula\tadduct\tprecursorFormula\t");
                     fileWriter.write(StructureCSVExporter.HEADER);
                     for (SScored<FormulaResult, ? extends FormulaScore> results : formulaResults) {
                         if (results.getCandidate().hasAnnotation(FingerblastResult.class)) {
                             final List<Scored<CompoundCandidate>> frs = results.getCandidate().getAnnotationOrThrow(FingerblastResult.class).getResults();
                             final StringWriter w = new StringWriter(128);
-                            new StructureCSVExporter().exportFingerIdResults(w, frs, false);
+                            int rank = 0;
+                            for (Scored<CompoundCandidate> res : frs) {
+                                w.write(results.getCandidate().getId().getMolecularFormula().toString());
+                                w.write('\t');
+                                w.write(results.getCandidate().getId().getIonType().toString());
+                                w.write('\t');
+                                w.write(results.getCandidate().getId().getPrecursorFormula().toString());
+                                w.write('\t');
+                                new StructureCSVExporter().exportFingerIdResult(w, res, ++rank, false);
+                            }
                             final String hits = w.toString();
-
                             // write summary file
                             fileWriter.write(hits);
 
@@ -67,7 +76,7 @@ public class StructureSummaryWriter implements Summarizer {
                             if (lines.length >= 1)
                                 topHits.add(new Scored<>(StandardMSFilenameFormatter.simplifyURL(experimentResult.getSource().getFile()) + "\t" + StandardMSFilenameFormatter.simplify(experimentResult.getName()) + "\t" + confidence + "\t" + lines[0] + "\n", confidence));
                             if (header == null)
-                                header = "source\texperimentName\tconfidence\t" + StructureCSVExporter.HEADER;
+                                header = "source\texperimentName\tconfidence\tformula\tadduct\tprecursorFormula\t" + StructureCSVExporter.HEADER;
                         }
                     }
                 });

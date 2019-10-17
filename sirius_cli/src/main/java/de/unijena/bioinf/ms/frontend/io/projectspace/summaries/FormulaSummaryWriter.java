@@ -38,7 +38,7 @@ public class FormulaSummaryWriter implements Summarizer {
         writer.inDirectory(exp.getId().getDirectoryName(), () -> {
 //            writer.delete(SummaryLocations.FORMULA_SUMMARY);
             writer.textFile(SummaryLocations.FORMULA_SUMMARY, w -> {
-                final StringBuilder headerBuilder = new StringBuilder("formula\tadduct\trank\trankingScore");
+                final StringBuilder headerBuilder = new StringBuilder("formula\tadduct\tprecursorFormula\trank\trankingScore");
                 LinkedHashSet<Class<? extends FormulaScore>> types = new LinkedHashSet<>();
                 results.stream().forEach(r -> {
                     r.getCandidate().getAnnotation(FormulaScoring.class)
@@ -66,6 +66,10 @@ public class FormulaSummaryWriter implements Summarizer {
                     w.write('\t');
                     w.write(ion != null ? ion.toString() : "?");
                     w.write('\t');
+
+                    w.write(r.getId().getPrecursorFormula().toString());
+                    w.write('\t');
+
                     w.write(String.valueOf(++rank));
                     w.write('\t');
                     w.write(String.valueOf(s.getScore()));
