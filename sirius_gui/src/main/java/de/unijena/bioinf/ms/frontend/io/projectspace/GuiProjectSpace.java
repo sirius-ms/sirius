@@ -31,36 +31,8 @@ public class GuiProjectSpace {
 
     private ProjectSpaceManager projectSpace;
 
-    public GuiProjectSpace(File projectSpaceLocation) {
-        try {
-            if (!projectSpaceLocation.exists()) {
-                if (!projectSpaceLocation.mkdir())
-                    throw new IOException("Could not create new directory for project-space'" + projectSpaceLocation + "'");
-            }
-
-            final SiriusProjectSpace psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(projectSpaceLocation);
-
-            //check for formatter
-            StandardMSFilenameFormatter projectSpaceFilenameFormatter;
-            try {
-                projectSpaceFilenameFormatter = psTmp.getProjectSpaceProperty(FilenameFormatter.PSProperty.class).map(it -> new StandardMSFilenameFormatter(it.formatExpression)).orElse(new StandardMSFilenameFormatter());
-            } catch (Exception e) {
-                LoggerFactory.getLogger(getClass()).debug("Could not Parse filenameformatter -> Using default", e);
-                LoggerFactory.getLogger(getClass()).warn("Could not Parse filenameformatter -> Using default");
-                projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
-            }
-
-            psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(projectSpaceFilenameFormatter));
-            projectSpace = new ProjectSpaceManager(psTmp, new InstanceBeanFactory(), projectSpaceFilenameFormatter, null);
-        } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).debug("Could not Parse create ProjectSpace. Try creating Temproray one", e);
-            LoggerFactory.getLogger(getClass()).warn("Could not Parse create ProjectSpace. Try creating Temproray one");
-            try {
-                projectSpace = new ProjectSpaceManager(new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createTemporaryProjectSpace());
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
+    public GuiProjectSpace(@NotNull ProjectSpaceManager projectSpaceManager) {
+        projectSpace = projectSpaceManager;
 
         // add already existing compounds to reactive list
         projectSpace.forEach(intBean -> COMPOUNT_LIST.add((InstanceBean) intBean));
@@ -74,7 +46,6 @@ public class GuiProjectSpace {
         deleteListener = projectSpace.projectSpace().defineCompoundListener().onDelete().thenDo((event) -> {
             COMPOUNT_LIST.removeIf(inst -> event.getAffectedID().equals(inst.getID()));
         }).register();
-
     }
 
 

@@ -39,7 +39,7 @@ class CompoundStructureImage extends JPanel {
         }
     }
 
-    protected FingerprintCandidatePropertyChangeSupport molecule;
+    protected FingerprintCandidateBean molecule;
     protected AtomContainerRenderer renderer;
     protected Color backgroundColor;
 
@@ -81,13 +81,13 @@ class CompoundStructureImage extends JPanel {
             LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
         }
         renderer.getRenderer2DModel().set(BasicSceneGenerator.BackgroundColor.class, backgroundColor);
-        synchronized (molecule.compound) {
+        synchronized (molecule.candidate) {
             renderer.paint(molecule.getMolecule(), new AWTDrawVisitor(gg),
                     new Rectangle2D.Double(7, 14, 360, 185), true);
         }
-        if (molecule.compound.getName() != null) {
+        if (molecule.candidate.getName() != null) {
             gg.setFont(nameFont);
-            gg.drawString(molecule.compound.getName(), 3, 16);
+            gg.drawString(molecule.candidate.getName(), 3, 16);
         }
         gg.setFont(rankFont);
         final String rankString = String.valueOf(molecule.rank);

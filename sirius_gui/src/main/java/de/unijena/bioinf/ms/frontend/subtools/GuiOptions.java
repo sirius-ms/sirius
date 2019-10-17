@@ -1,8 +1,10 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.fingerid.webapi.VersionsInfo;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -26,9 +28,14 @@ public class GuiOptions implements SingletonTool {
         return () -> {
             //todo minor: cancellation handling
 
-            //todo 1:  run prepro and
+            // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
+            Iterable<Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
 
-            //todo 1ZZ:  run addConfig job
+            assert ps == projectSpace;
+
+            // NOTE: we do not want to run ConfigJob here because we want to set
+            // final config for experient if something will be computed and that is not the case here
+
 
             //todo 3: init GUI with given project space.
             GuiUtils.initUI();
@@ -51,7 +58,7 @@ public class GuiOptions implements SingletonTool {
             });
             MainFrame.MF.setLocationRelativeTo(null);//init mainframe
             ApplicationCore.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
-            MainFrame.MF.decoradeMainFrameInstance();
+            MainFrame.MF.decoradeMainFrameInstance(projectSpace);
 
             ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
             Jobs.runInBackround(() -> {

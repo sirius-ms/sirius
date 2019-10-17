@@ -2,7 +2,7 @@ package de.unijena.bioinf.ms.gui.fingerid.candidate_filters;
 
 import ca.odell.glazedlists.matchers.AbstractMatcherEditor;
 import ca.odell.glazedlists.matchers.Matcher;
-import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidatePropertyChangeSupport;
+import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.smiles.smarts.SMARTSQueryTool;
 
@@ -12,14 +12,14 @@ import java.awt.*;
 /**
  * Created by tkoehl on 18.07.18.
  */
-public class SmartFilterMatcherEditor extends AbstractMatcherEditor<FingerprintCandidatePropertyChangeSupport> {
+public class SmartFilterMatcherEditor extends AbstractMatcherEditor<FingerprintCandidateBean> {
 
     public SmartFilterMatcherEditor(JTextField textField) {
         super();
         textField.addActionListener(propertyChangeEvent -> fireChanged(new SmartMatcher(textField)));
     }
 
-    public static class SmartMatcher implements Matcher<FingerprintCandidatePropertyChangeSupport> {
+    public static class SmartMatcher implements Matcher<FingerprintCandidateBean> {
         final SMARTSQueryTool tool;
         boolean isValidSmartString;
 
@@ -51,7 +51,7 @@ public class SmartFilterMatcherEditor extends AbstractMatcherEditor<FingerprintC
         }
 
         @Override
-        public boolean matches(FingerprintCandidatePropertyChangeSupport candidate) {
+        public boolean matches(FingerprintCandidateBean candidate) {
             if (isValidSmartString) {
                 try {
                     return tool.matches(candidate.getMolecule());

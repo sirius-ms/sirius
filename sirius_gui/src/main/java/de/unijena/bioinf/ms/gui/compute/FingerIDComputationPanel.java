@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.gui.fingerid;
+package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;

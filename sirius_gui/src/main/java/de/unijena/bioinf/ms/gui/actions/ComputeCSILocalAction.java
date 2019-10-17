@@ -6,7 +6,7 @@ package de.unijena.bioinf.ms.gui.actions;
  */
 
 import ca.odell.glazedlists.EventList;
-import de.unijena.bioinf.ms.gui.fingerid.FingerIdDialog;
+import de.unijena.bioinf.ms.gui.compute.FingerIdDialog;
 import de.unijena.bioinf.ms.gui.fingerid.FingerIdTask;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;

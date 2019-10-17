@@ -4,25 +4,27 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.Filterator;
 import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.matchers.MatcherEditor;
-import de.unijena.bioinf.fingerid.CSVExporter;
-import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.CandidateStringMatcherEditor;
-import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.DatabaseFilterMatcherEditor;
-import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.babelms.filefilter.SupportedExportCSVFormatsFilter;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.StructureCSVExporter;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
-import de.unijena.bioinf.babelms.filefilter.SupportedExportCSVFormatsFilter;
-import de.unijena.bioinf.ms.gui.utils.ReturnValue;
+import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.CandidateStringMatcherEditor;
+import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.DatabaseFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.table.ActionListDetailView;
 import de.unijena.bioinf.ms.gui.table.FilterRangeSlider;
 import de.unijena.bioinf.ms.gui.table.MinMaxMatcherEditor;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
+import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -31,6 +33,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.nio.file.Files;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,7 +44,7 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 /**
  * Created by fleisch on 16.05.17.
  */
-public class CandidateListView extends ActionListDetailView<FingerprintCandidatePropertyChangeSupport, Set<FingerIdResultPropertyChangeSupport>, CandidateList> {
+public class CandidateListView extends ActionListDetailView<FingerprintCandidateBean, Set<FormulaResultBean>, CandidateList> {
 
     private FilterRangeSlider logPSlider;
     private FilterRangeSlider tanimotoSlider;
@@ -142,23 +147,22 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
 
         if (selectedFile != null) {
 
-            Set<FingerIdResult> datas = source.getElementList().stream().map(FingerprintCandidatePropertyChangeSupport::getData).map(FingerIdResultPropertyChangeSupport::getFingerIdResult)
-                    .collect(Collectors.toSet());
+            final List<Scored<CompoundCandidate>> datas = source.getElementList().stream().map(fpc -> new Scored<CompoundCandidate>(fpc.candidate, fpc.score)).sorted(Comparator.reverseOrder()).collect(Collectors.toList());
             try {
-                new CSVExporter().exportFingerIdResultsToFile(selectedFile, datas);
+                new StructureCSVExporter().exportFingerIdResults(Files.newBufferedWriter(selectedFile.toPath()), datas);
             } catch (Exception e2) {
-                ErrorReportDialog fed = new ErrorReportDialog(MF, e2.getMessage());
+                new ErrorReportDialog(MF, e2.getMessage());
                 LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(), e2);
             }
         }
     }
 
     @Override
-    protected EventList<MatcherEditor<FingerprintCandidatePropertyChangeSupport>> getSearchFieldMatchers() {
+    protected EventList<MatcherEditor<FingerprintCandidateBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
                 new CandidateStringMatcherEditor(searchField.textField),
-                new MinMaxMatcherEditor<>(logPSlider, (Filterator<Double, FingerprintCandidatePropertyChangeSupport>) (baseList, element) -> baseList.add(element.getXLogP())),
-                new MinMaxMatcherEditor<>(tanimotoSlider, (Filterator<Double, FingerprintCandidatePropertyChangeSupport>) (baseList, element) -> baseList.add(element.getTanimotoScore())),
+                new MinMaxMatcherEditor<>(logPSlider, (Filterator<Double, FingerprintCandidateBean>) (baseList, element) -> baseList.add(element.getXLogP())),
+                new MinMaxMatcherEditor<>(tanimotoSlider, (Filterator<Double, FingerprintCandidateBean>) (baseList, element) -> baseList.add(element.getTanimotoScore())),
                 new DatabaseFilterMatcherEditor(dbFilterPanel)
         );
     }

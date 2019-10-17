@@ -27,7 +27,6 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
-import de.unijena.bioinf.ms.gui.fingerid.FingerIDComputationPanel;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;

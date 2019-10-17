@@ -17,8 +17,8 @@ import java.util.List;
  */
 public class CandidateListTableView extends CandidateListView implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
 
-    private final ActionTable<FingerprintCandidatePropertyChangeSupport> table;
-    private SortedList<FingerprintCandidatePropertyChangeSupport> sortedSource;
+    private final ActionTable<FingerprintCandidateBean> table;
+    private SortedList<FingerprintCandidateBean> sortedSource;
 
     public CandidateListTableView(final CandidateList list) {
         super(list);
@@ -44,7 +44,7 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
     }
 
     @Override
-    protected FilterList<FingerprintCandidatePropertyChangeSupport> configureFiltering(EventList<FingerprintCandidatePropertyChangeSupport> source) {
+    protected FilterList<FingerprintCandidateBean> configureFiltering(EventList<FingerprintCandidateBean> source) {
         sortedSource = new SortedList<>(source);
         return super.configureFiltering(sortedSource);
     }

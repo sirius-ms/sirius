@@ -9,7 +9,7 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.sirius.ComputingStatus;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
-
+getRawTree();
 public class FingerIDSearchGuiJob extends BasicDependentMasterJJob<FingerIdResultPropertyChangeSupport> implements GuiObservableJJob<FingerIdResultPropertyChangeSupport> {
     final InstanceBean ec;
     final SearchableDatabase db;

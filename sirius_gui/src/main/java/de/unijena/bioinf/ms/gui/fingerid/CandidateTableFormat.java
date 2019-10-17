@@ -6,7 +6,7 @@ import de.unijena.bioinf.ms.gui.table.list_stats.ListStats;
 /**
  * Created by fleisch on 15.05.17.
  */
-public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidatePropertyChangeSupport> {
+public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidateBean> {
     protected CandidateTableFormat(ListStats stats) {
         super(stats);
     }
@@ -31,7 +31,7 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
     }
 
     @Override
-    protected boolean isBest(FingerprintCandidatePropertyChangeSupport element) {
+    protected boolean isBest(FingerprintCandidateBean element) {
         return stats.getMax() <= element.getScore();
     }
 
@@ -43,18 +43,18 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
         return columns[column];
     }
 
-    public Object getColumnValue(FingerprintCandidatePropertyChangeSupport result, int column) {
+    public Object getColumnValue(FingerprintCandidateBean result, int column) {
         int col = 0;
         if (column == col++) return result.rank;
-        if (column == col++) return result.compound.getName() != null ? result.compound.getName() : "";
-        if (column == col++) return result.compound.getSmiles();
+        if (column == col++) return result.candidate.getName() != null ? result.candidate.getName() : "";
+        if (column == col++) return result.candidate.getSmiles();
         if (column == col++) return result.getMolecularFormula();
         if (column == col++) return result.adduct;
         if (column == col++) return result.getScore();
         if (column == col++) return result.getTanimotoScore();
         if (column == col++) return result.getFingerprintCandidate().getPubmedIDs();
-        if (column == col++) return result.compound.getXlogp();
-        if (column == col++) return result.compound.getInchi().key;
+        if (column == col++) return result.candidate.getXlogp();
+        if (column == col++) return result.candidate.getInchi().key;
         if (column == col) return isBest(result);
 
         throw new IllegalStateException();
