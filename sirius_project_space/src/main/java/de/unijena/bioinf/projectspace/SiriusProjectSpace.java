@@ -239,7 +239,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 T fs = fr.getAnnotationOrThrow(FormulaScoring.class).getAnnotationOrThrow(score);
                 return new SScored<>(fr, fs);
             } catch (Exception e) {
-                LoggerFactory.getLogger(getClass()).warn("Error when loading Scores of '" + fr.getId() + "' from Project Space! Score might be NaN");
+                LoggerFactory.getLogger(getClass()).warn("Could not load Scores of '" + fr.getId() + "' from Project Space! Score might be NaN");
                 try {
                     return new SScored<>(fr, score.getConstructor(double.class).newInstance(Double.NaN));
                 } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
