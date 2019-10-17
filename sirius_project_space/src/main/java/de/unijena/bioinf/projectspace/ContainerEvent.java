@@ -23,7 +23,7 @@ public class ContainerEvent<ID extends ProjectSpaceContainerId, Container extend
         this.affectedComponents = affectedComponents;
     }
 
-    public ID getAffectedID(ID id) {
+    public ID getAffectedID() {
         return id;
     }
 
