@@ -43,34 +43,42 @@ public class StructureCSVExporter {
         exportFingerIdResults(writer, candidates, true);
     }
 
+
+
+    public void exportFingerIdResult(Writer writer, Scored<CompoundCandidate> r, int rank, boolean writeHeader) throws IOException {
+        if (writeHeader)
+            writer.write(HEADER);
+        final Multimap<String, String> dbMap = r.getCandidate().getLinkedDatabases();
+
+        writer.write(r.getCandidate().getInchiKey2D());
+        writer.write('\t');
+        writer.write(r.getCandidate().getInchi().in2D);
+        writer.write('\t');
+        writer.write(r.getCandidate().getInchi().extractFormulaOrThrow().toString());
+        writer.write('\t');
+        writer.write(String.valueOf(++rank));
+        writer.write('\t');
+        writer.write(String.valueOf(r.getScore()));
+        writer.write('\t');
+        writer.write(escape(r.getCandidate().getName()));
+        writer.write('\t');
+        writer.write(escape(r.getCandidate().getSmiles()));
+        writer.write('\t');
+        if (Double.isNaN(r.getCandidate().getXlogp())) writer.write("\"\"");
+        else writer.write(String.valueOf(r.getCandidate().getXlogp()));
+        writer.write('\t');
+        list(writer, dbMap.get(DataSource.PUBCHEM.realName).stream().filter(Objects::nonNull).collect(Collectors.toList())); //is this a hack or ok?
+        writer.write('\t');
+        links(writer, dbMap);
+        writer.write('\n');
+    }
+
     public void exportFingerIdResults(Writer writer, List<Scored<CompoundCandidate>> candidates, boolean writeHeader) throws IOException {
         if (writeHeader)
             writer.write(HEADER);
         int rank = 0;
         for (Scored<CompoundCandidate> r : candidates) {
-            final Multimap<String, String> dbMap = r.getCandidate().getLinkedDatabases();
-
-            writer.write(r.getCandidate().getInchiKey2D());
-            writer.write('\t');
-            writer.write(r.getCandidate().getInchi().in2D);
-            writer.write('\t');
-            writer.write(r.getCandidate().getInchi().extractFormulaOrThrow().toString());
-            writer.write('\t');
-            writer.write(String.valueOf(++rank));
-            writer.write('\t');
-            writer.write(String.valueOf(r.getScore()));
-            writer.write('\t');
-            writer.write(escape(r.getCandidate().getName()));
-            writer.write('\t');
-            writer.write(escape(r.getCandidate().getSmiles()));
-            writer.write('\t');
-            if (Double.isNaN(r.getCandidate().getXlogp())) writer.write("\"\"");
-            else writer.write(String.valueOf(r.getCandidate().getXlogp()));
-            writer.write('\t');
-            list(writer, dbMap.get(DataSource.PUBCHEM.realName).stream().filter(Objects::nonNull).collect(Collectors.toList())); //is this a hack or ok?
-            writer.write('\t');
-            links(writer, dbMap);
-            writer.write('\n');
+            exportFingerIdResult(writer,r, ++rank,false);
         }
     }
 
