@@ -20,6 +20,7 @@ public class CLPModel {
     }
 
     static int DOUBLE_SIZE = Native.getNativeSize(Double.class);
+    static int INT_SIZE = Native.getNativeSize(Integer.class);
 
     public interface CLibrary extends Library {
         CLibrary INSTANCE = (CLibrary) Native.load("CLPModelWrapper", CLibrary.class);
@@ -32,13 +33,15 @@ public class CLPModel {
 
         void CLPModel_setObjective(Pointer self, Memory objective, int len);
 
+        void CLPModel_setTimeLimit(Pointer self, double seconds);
+
         void CLPModel_setColBounds(Pointer self, Memory col_lb, Memory col_ub, int len);
 
         void CLPModel_setColStart(Pointer self, double start[], int length);
 
         void CLPModel_addRow(Pointer self, double row[], int len, double lb, double ub);
 
-        void CLPModel_addSparseRow(Pointer self, double elems[], int indices[], int len, double lb, double ub);
+        void CLPModel_addSparseRow(Pointer self, Memory elems, Memory indices, int len, double lb, double ub);
 
         int CLPModel_solve(Pointer self); // returns ReturnStatus
 
@@ -49,6 +52,11 @@ public class CLPModel {
 
     private Pointer self;
     private int ncols;
+    // NOTE: for some reason, Memory still gets GCed.
+    // this should ensure that the variables are GCed with this instance
+    private Memory obj_mem;
+    private Memory mem_lb;
+    private Memory mem_ub;
 
     CLPModel(int ncols, int obj_sense) {
         this.ncols = ncols;
@@ -60,20 +68,24 @@ public class CLPModel {
     }
 
     void setObjective(double objective[]) {
-        Memory mem = new Memory(DOUBLE_SIZE * objective.length);
+        obj_mem = new Memory(DOUBLE_SIZE * objective.length);
         for (int i = 0; i < objective.length; ++i)
-            mem.setDouble(i * DOUBLE_SIZE, objective[i]);
-        CLibrary.INSTANCE.CLPModel_setObjective(self, mem, objective.length);
+            obj_mem.setDouble(i * DOUBLE_SIZE, objective[i]);
+        CLibrary.INSTANCE.CLPModel_setObjective(self, obj_mem, objective.length);
         // TODO: make sure memory is freed up!!
+    }
+
+    void setTimeLimit(double seconds){
+        CLibrary.INSTANCE.CLPModel_setTimeLimit(self, seconds);
     }
 
     void setColBounds(double col_lb[], double col_ub[]) {
         assert col_lb.length == col_ub.length;
         int len = col_lb.length;
-        Memory mem_lb = new Memory(DOUBLE_SIZE * len);
+        mem_lb = new Memory(DOUBLE_SIZE * len);
         for (int i = 0; i < len; ++i)
             mem_lb.setDouble(i * DOUBLE_SIZE, col_lb[i]);
-        Memory mem_ub = new Memory(DOUBLE_SIZE * len);
+        mem_ub = new Memory(DOUBLE_SIZE * len);
         for (int i = 0; i < len; ++i)
             mem_ub.setDouble(i * DOUBLE_SIZE, col_ub[i]);
         CLibrary.INSTANCE.CLPModel_setColBounds(self, mem_lb, mem_ub, len);
@@ -90,11 +102,19 @@ public class CLPModel {
     void addSparseRow(double elems[], int indices[], double lb, double ub) {
         assert elems.length == indices.length;
         int len = elems.length;
-        CLibrary.INSTANCE.CLPModel_addSparseRow(self, elems, indices, len, lb, ub);
+        Memory mem_elems = new Memory(DOUBLE_SIZE * len);
+        Memory mem_indices = new Memory(INT_SIZE * len);
+        for (int i = 0; i < len; ++i){
+            mem_elems.setDouble(i * DOUBLE_SIZE, elems[i]);
+            mem_indices.setInt(i * INT_SIZE, indices[i]);
+        }
+        CLibrary.INSTANCE.CLPModel_addSparseRow(self, mem_elems, mem_indices, len, lb, ub);
+
     }
 
     int solve() {
-        return CLibrary.INSTANCE.CLPModel_solve(self);
+        int return_code = CLibrary.INSTANCE.CLPModel_solve(self);
+        return return_code;
     }
 
     double[] getColSolution() {
