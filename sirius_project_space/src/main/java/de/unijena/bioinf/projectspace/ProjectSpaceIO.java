@@ -32,11 +32,15 @@ public class ProjectSpaceIO {
     }
 
     public SiriusProjectSpace createTemporaryProjectSpace() throws IOException {
-        final File tempFile = Files.createTempDirectory("-tmp-project-space").toFile();
+        final File tempFile = createTmpProjectSpaceLocation();
         final SiriusProjectSpace space = new SiriusProjectSpace(configuration,tempFile);
         space.addProjectSpaceListener(new TemporaryProjectSpaceCleanUp(tempFile));
         space.open();
         return space;
+    }
+
+    public static File createTmpProjectSpaceLocation() throws IOException {
+        return Files.createTempDirectory("-tmp-project-space").toFile();
     }
 
 
