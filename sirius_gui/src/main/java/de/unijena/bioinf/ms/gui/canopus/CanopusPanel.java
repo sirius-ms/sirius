@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.gui.canopus;
 
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
@@ -17,7 +18,7 @@ public class CanopusPanel extends JPanel implements ActionListener, ActiveElemen
 
     public CanopusPanel() {
         super(new BorderLayout());
-        this.treePanel = new ClassyfireTreePanel();
+        this.treePanel = new ClassyfireTreePanel(ApplicationCore.CANOPUS);
         final JScrollPane scroll = new JScrollPane(treePanel);
         treePanel.setScrollPane(scroll);
         add(scroll, BorderLayout.CENTER);

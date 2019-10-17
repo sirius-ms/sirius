@@ -2,14 +2,14 @@ package de.unijena.bioinf.ms.gui.fingerid.candidate_filters;
 
 import ca.odell.glazedlists.matchers.AbstractMatcherEditor;
 import ca.odell.glazedlists.matchers.Matcher;
-import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidatePropertyChangeSupport;
+import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.fingerid.StructureSearcher;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 
 /**
  * Created by tkoehl on 19.07.18.
  */
-public class MolecularPropertyMatcherEditor extends AbstractMatcherEditor<FingerprintCandidatePropertyChangeSupport> {
+public class MolecularPropertyMatcherEditor extends AbstractMatcherEditor<FingerprintCandidateBean> {
     StructureSearcher structureSearcher;
 
     public MolecularPropertyMatcherEditor(ToolbarToggleButton filterByMolecularPropertyButton) {
@@ -26,7 +26,7 @@ public class MolecularPropertyMatcherEditor extends AbstractMatcherEditor<Finger
 
     }
 
-    public static class MolecularPropertyMatcher implements Matcher<FingerprintCandidatePropertyChangeSupport> {
+    public static class MolecularPropertyMatcher implements Matcher<FingerprintCandidateBean> {
         boolean filterIsActiv;
         int id;
 
@@ -44,7 +44,7 @@ public class MolecularPropertyMatcherEditor extends AbstractMatcherEditor<Finger
         }
 
         @Override
-        public boolean matches(FingerprintCandidatePropertyChangeSupport candidate) {
+        public boolean matches(FingerprintCandidateBean candidate) {
             if (filterIsActiv) {
                 return candidate.hasFingerprintIndex(id);
             } else {

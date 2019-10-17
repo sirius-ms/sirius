@@ -54,9 +54,47 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     public FormulaResultBean(FormulaResultId fid, InstanceBean parent, int rank) {
         this.fid = fid;
         this.parent = parent;
-        tree = null;
         this.rank = rank;
+        tree = null;
+        configureListeners();
     }
+
+    //todo  compute states need to be observable
+    private void configureListeners() {
+        //this is used to detect a new tree as well as a new zodiac score
+        scoreListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FormulaScoring.class).
+                thenDo((event -> {
+                    FormulaScoring fScores = (FormulaScoring) event.getAffectedComponent(FormulaScoring.class).orElse(null);
+                    pcs.firePropertyChange("formulaScore", null, fScores);
+
+
+                    if (event.hasChanged(FTree.class)) {
+                        final FTree fTree = (FTree) event.getAffectedComponent(FTree.class).orElse(null);
+                        //todo create gui tree here?
+                        pcs.firePropertyChange("tree", null, fTree);
+                    }
+                })).register();
+
+        fingerprintListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FingerprintResult.class).
+                thenDo((event -> {
+                    FingerprintResult fpRes = (FingerprintResult) event.getAffectedComponent(FingerprintResult.class).orElse(null);
+                    pcs.firePropertyChange("fingerprint", null, fpRes);
+                })).register();
+
+        fingerBlastListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FingerblastResult.class).
+                thenDo((event -> {
+                    FingerblastResult fbRes = (FingerblastResult) event.getAffectedComponent(FingerblastResult.class).orElse(null);
+                    pcs.firePropertyChange("fingerblast", null, fbRes);
+                })).register();
+
+        canopusListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(CanopusResult.class).
+                thenDo((event -> {
+                    CanopusResult cRes = (CanopusResult) event.getAffectedComponent(CanopusResult.class).orElse(null);
+                    pcs.firePropertyChange("canopus", null, cRes);
+                })).register();
+    }
+
+
 
     public FormulaResultId getID() {
         return fid;
@@ -82,6 +120,19 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return getResult(FormulaScoring.class).getAnnotationOrThrow(FormulaScoring.class).getAnnotationOrThrow(scoreType);
     }
 
+    public Optional<FTree> getFragTree(){
+        return getResult(FTree.class).getAnnotation(FTree.class);
+    }
+    public Optional<FingerprintResult> getFingerprintResult(){
+        return getResult(FingerprintResult.class).getAnnotation(FingerprintResult.class);
+    }
+    public Optional<FingerblastResult> getFingerblastResult(){
+        return getResult(FingerblastResult.class).getAnnotation(FingerblastResult.class);
+    }
+    public Optional<CanopusResult> getCanopusResult(){
+        return getResult(CanopusResult.class).getAnnotation(CanopusResult.class);
+    }
+
     //ranking stuff
     public int getRank() {
         return rank;
@@ -91,8 +142,13 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return getRank() == 1;
     }
 
+    //id based info
     public PrecursorIonType getPrecursorIonType() {
         return getID().getIonType();
+    }
+
+    public int getCharge() {
+        return getPrecursorIonType().getCharge();
     }
 
     public MolecularFormula getMolecularFormula() {
@@ -113,9 +169,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         }
     }
 
-    public int getCharge() {
-        return getID().getIonType().getCharge();
-    }
+
 
     public void buildTreeVisualization(@NotNull final Function<FTree, TreeNode> builder) {
         this.tree = getResult(FTree.class).getAnnotation(FTree.class).map(builder::apply).orElse(null);
@@ -159,40 +213,5 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         final ComputingStatus old = this.fingerIdComputeState;
         this.fingerIdComputeState = fingerIdComputeState;
         pcs.firePropertyChange("finger_compute_state", old, this.fingerIdComputeState);
-    }
-
-    //todo  compute states need to be observable
-    private void configureListeners() {
-        //this is used to detect a new tree as well as a new zodiac score
-        scoreListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FormulaScoring.class).
-                thenDo((event -> {
-                    FormulaScoring fScores = (FormulaScoring) event.getAffectedComponent(FormulaScoring.class).orElse(null);
-                    pcs.firePropertyChange("formulaScore", null, fScores);
-
-
-                    if (event.hasChanged(FTree.class)) {
-                        final FTree fTree = (FTree) event.getAffectedComponent(FTree.class).orElse(null);
-                        //todo create gui tree here?
-                        pcs.firePropertyChange("tree", null, fTree);
-                    }
-                })).register();
-
-        fingerprintListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FingerprintResult.class).
-                thenDo((event -> {
-                    FingerprintResult fpRes = (FingerprintResult) event.getAffectedComponent(FingerprintResult.class).orElse(null);
-                    pcs.firePropertyChange("fingerprint", null, fpRes);
-                })).register();
-
-        fingerBlastListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FingerblastResult.class).
-                thenDo((event -> {
-                    FingerblastResult fbRes = (FingerblastResult) event.getAffectedComponent(FingerblastResult.class).orElse(null);
-                    pcs.firePropertyChange("fingerblast", null, fbRes);
-                })).register();
-
-        canopusListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(CanopusResult.class).
-                thenDo((event -> {
-                    CanopusResult cRes = (CanopusResult) event.getAffectedComponent(CanopusResult.class).orElse(null);
-                    pcs.firePropertyChange("canopus", null, cRes);
-                })).register();
     }
 }

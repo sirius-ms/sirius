@@ -18,17 +18,20 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeLayer;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.db.custom.CustomDataSourceService;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -61,16 +64,28 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p>
  * WARNING: This class is wor in progress
  */
-public class FingerprintCandidatePropertyChangeSupport extends SiriusPCS implements Comparable<FingerprintCandidatePropertyChangeSupport> {
-    public static final FingerprintCandidatePropertyChangeSupport PROTOTYPE = new PrototypeCompoundCandidate();
+
+//todo can we create a dummy PCS for Immuatable Beans
+public class FingerprintCandidateBean implements SiriusPCS, Comparable<FingerprintCandidateBean> {
+    private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
+
+    @Override
+    public HiddenChangeSupport pcs() {
+        return pcs;
+    }
+
+
+    public static final FingerprintCandidateBean PROTOTYPE = new PrototypeCompoundCandidate();
     public static final boolean ECFP_ENABLED = true;
     private static final double THRESHOLD_FP = 0.4;
 
     //data
     protected final PrecursorIonType adduct;
-    protected final FingerIdResultPropertyChangeSupport data;
-    protected final FingerprintCandidate compound;
-    protected final int rank, index;
+    protected final ProbabilityFingerprint fp;
+    protected final FingerprintCandidate candidate;
+    protected final double score;
+    protected final double tanimoto;
+    protected final int rank;
 
     //view
     protected final String molecularFormulaString;
@@ -89,30 +104,27 @@ public class FingerprintCandidatePropertyChangeSupport extends SiriusPCS impleme
     protected ReentrantLock compoundLock = new ReentrantLock();
 
 
-    public FingerprintCandidatePropertyChangeSupport(int rank, int index, FingerIdResultPropertyChangeSupport data, PrecursorIonType adduct) {
-        this(rank, index, data, data.getFingerIdResult().getCandidates().get(index).getCandidate(), adduct);
+    public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<CompoundCandidate> scoredCandidate, PrecursorIonType adduct) {
+        this(rank, fp, (FingerprintCandidate) scoredCandidate.getCandidate(), scoredCandidate.getScore(), adduct);
     }
 
-    protected CSIPredictor getCorrespondingCSIPredictor() {
-        return MainFrame.MF.getCsiFingerId().getPredictor(adduct);
-    }
-
-    private FingerprintCandidatePropertyChangeSupport(int rank, int index, FingerIdResultPropertyChangeSupport data, FingerprintCandidate compound, PrecursorIonType adduct) {
+    private FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, FingerprintCandidate candidate, double candidateScore, PrecursorIonType adduct) {
         this.rank = rank;
-        this.index = index;
-        this.data = data;
-        this.compound = compound;
-        this.molecularFormulaString = compound.getInchi().extractFormula().toString();
+        this.fp = fp;
+        this.candidate = candidate;
+        this.score = candidateScore;
+        this.tanimoto = fp != null ? Tanimoto.probabilisticTanimoto(this.fp, candidate.getFingerprint()).expectationValue() : Double.NaN;
+        this.molecularFormulaString = candidate.getInchi().extractFormulaOrThrow().toString();
         this.adduct = adduct;
         this.relevantFps = null;
 
 
-        if (this.compound == null || this.compound.getLinkedDatabases().isEmpty()) {
+        if (this.candidate == null || this.candidate.getLinkedDatabases().isEmpty()) {
             this.labels = new DatabaseLabel[0];
         } else {
             List<DatabaseLabel> labels = new ArrayList<>();
-            for (String key : this.compound.getLinkedDatabases().keySet()) {
-                final Collection<String> values = this.compound.getLinkedDatabases().get(key);
+            for (String key : this.candidate.getLinkedDatabases().keySet()) {
+                final Collection<String> values = this.candidate.getLinkedDatabases().get(key);
                 final ArrayList<String> cleaned = new ArrayList<>(values.size());
                 for (String value : values) {
                     if (value != null)
@@ -125,6 +137,10 @@ public class FingerprintCandidatePropertyChangeSupport extends SiriusPCS impleme
         }
     }
 
+    protected CSIPredictor getCorrespondingCSIPredictor() {
+        return (CSIPredictor) ApplicationCore.WEB_API.getPredictorFromType(adduct.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_POSITIVE);
+    }
+
 
     public void highlightInBackground() {
         CompoundMatchHighlighter h = new CompoundMatchHighlighter(this, getPlatts());
@@ -135,31 +151,27 @@ public class FingerprintCandidatePropertyChangeSupport extends SiriusPCS impleme
 
 
     public double getTanimotoScore() {
-        return data.getTanimoto(index);
+        return tanimoto;
     }
 
     public double getScore() {
-        return data.getScore(index);
+        return score;
     }
 
     public ProbabilityFingerprint getPlatts() {
-        return data.getFingerIdFingerprint();
-    }
-
-    public FingerIdResultPropertyChangeSupport getData() {
-        return data;
+        return fp;
     }
 
     public String getName() {
-        return compound.getName();
+        return candidate.getName();
     }
 
     public String getInChiKey() {
-        return compound.getInchi().key;
+        return candidate.getInchi().key;
     }
 
     public FingerprintCandidate getFingerprintCandidate() {
-        return compound;
+        return candidate;
     }
 
     public String getMolecularFormula() {
@@ -186,13 +198,13 @@ public class FingerprintCandidatePropertyChangeSupport extends SiriusPCS impleme
     }
 
     public boolean hasChargeState(CompoundCandidateChargeState chargeState) {
-        return (hasChargeState(compound.getpLayer(), chargeState.getValue()) || hasChargeState(compound.getqLayer(), chargeState.getValue()));
+        return (hasChargeState(candidate.getpLayer(), chargeState.getValue()) || hasChargeState(candidate.getqLayer(), chargeState.getValue()));
     }
 
     public boolean hasChargeState(CompoundCandidateChargeLayer chargeLayer, CompoundCandidateChargeState chargeState) {
         return (chargeLayer == CompoundCandidateChargeLayer.P_LAYER ?
-                hasChargeState(compound.getpLayer(), chargeState.getValue()) :
-                hasChargeState(compound.getqLayer(), chargeState.getValue())
+                hasChargeState(candidate.getpLayer(), chargeState.getValue()) :
+                hasChargeState(candidate.getqLayer(), chargeState.getValue())
         );
     }
 
@@ -201,7 +213,7 @@ public class FingerprintCandidatePropertyChangeSupport extends SiriusPCS impleme
     }
 
     @Override
-    public int compareTo(FingerprintCandidatePropertyChangeSupport o) {
+    public int compareTo(FingerprintCandidateBean o) {
         return Double.compare(o.getScore(), getScore()); //ATTENTION inverse
     }
 
@@ -224,12 +236,12 @@ public class FingerprintCandidatePropertyChangeSupport extends SiriusPCS impleme
     }
 
     public boolean hasFingerprintIndex(int index) {
-        return compound.getFingerprint().isSet(index);
+        return candidate.getFingerprint().isSet(index);
     }
 
     public boolean highlightFingerprint(int absoluteIndex) {
         if (!prepared) parseAndPrepare();
-        final FingerprintVersion version = compound.getFingerprint().getFingerprintVersion();
+        final FingerprintVersion version = candidate.getFingerprint().getFingerprintVersion();
         final IAtomContainer molecule = getMolecule();
         for (IAtom atom : molecule.atoms()) atom.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);
         for (IBond bond : molecule.bonds()) bond.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);
@@ -303,7 +315,7 @@ public class FingerprintCandidatePropertyChangeSupport extends SiriusPCS impleme
         if (substructures == null)
             substructures = FingerprintAgreement.getSubstructures(
                     prediction.getFingerprintVersion(), prediction.toProbabilityArray(),
-                    compound.getFingerprint().toBooleanArray(), getCorrespondingCSIPredictor().getPerformances(),
+                    candidate.getFingerprint().toBooleanArray(), getCorrespondingCSIPredictor().getPerformances(),
                     0.25);
         return substructures;
     }
@@ -332,13 +344,13 @@ public class FingerprintCandidatePropertyChangeSupport extends SiriusPCS impleme
     private IAtomContainer parseMoleculeFromInChi() {
         try {
             final InChIGeneratorFactory f = InChIGeneratorFactory.getInstance();
-            final InChIToStructure s = f.getInChIToStructure(compound.getInchi().in2D, SilentChemObjectBuilder.getInstance());
+            final InChIToStructure s = f.getInChIToStructure(candidate.getInchi().in2D, SilentChemObjectBuilder.getInstance());
             if (s.getReturnStatus() == INCHI_RET.OKAY && (s.getReturnStatus() == INCHI_RET.OKAY || s.getReturnStatus() == INCHI_RET.WARNING)) {
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(s.getAtomContainer());
 
                 return s.getAtomContainer();
             } else {
-                LoggerFactory.getLogger(getClass()).warn("Cannot parse InChI: " + compound.getInchi().in2D + " due to the following error: " + s.getMessage() + " Return code: " + s.getReturnStatus() + ", Return status: " + s.getReturnStatus().toString());
+                LoggerFactory.getLogger(getClass()).warn("Cannot parse InChI: " + candidate.getInchi().in2D + " due to the following error: " + s.getMessage() + " Return code: " + s.getReturnStatus() + ", Return status: " + s.getReturnStatus().toString());
                 // try to parse smiles instead
                 return parseMoleculeFromSmiles();
             }
@@ -351,7 +363,7 @@ public class FingerprintCandidatePropertyChangeSupport extends SiriusPCS impleme
 
     private IAtomContainer parseMoleculeFromSmiles() {
         try {
-            final IAtomContainer c = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(compound.getSmiles());
+            final IAtomContainer c = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(candidate.getSmiles());
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(c);
             return c;
         } catch (CDKException e) {
@@ -364,10 +376,15 @@ public class FingerprintCandidatePropertyChangeSupport extends SiriusPCS impleme
     }
 
     public double getXlogp() {
-        return compound.getXlogp();
+        return candidate.getXlogp();
     }
 
-    private static class PrototypeCompoundCandidate extends FingerprintCandidatePropertyChangeSupport {
+    public int index() {
+        //todo check if we really need that for the detail list reloading stuff
+        return rank - 1;
+    }
+
+    private static class PrototypeCompoundCandidate extends FingerprintCandidateBean {
         private static FingerprintCandidate makeSourceCandidate() {
             final FingerprintCandidate candidate = new FingerprintCandidate(
                     new InChI("WQZGKKKJIJFFOK-GASJEMHNSA-N", "InChI=1S/C6H12O6/c7-1-2-3(8)4(9)5(10)6(11)12-2/h2-11H,1H2/t2-,3-,4+,5-,6?/m1/s1"),
@@ -386,7 +403,7 @@ public class FingerprintCandidatePropertyChangeSupport extends SiriusPCS impleme
         }
 
         private PrototypeCompoundCandidate() {
-            super(0, 0, null, makeSourceCandidate(), PrecursorIonType.getPrecursorIonType("[M + C2H3N + Na]+"));
+            super(0, null, makeSourceCandidate(), -12.22, PrecursorIonType.getPrecursorIonType("[M + C2H3N + Na]+"));
         }
 
 

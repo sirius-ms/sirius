@@ -51,14 +51,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class CandidateListDetailView extends CandidateListView implements ActiveElementChangedListener<FingerprintCandidatePropertyChangeSupport, InstanceBean>, MouseListener, ActionListener {
+public class CandidateListDetailView extends CandidateListView implements ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean>, MouseListener, ActionListener {
 
 
     public static final Color INVERT_HIGHLIGHTED_COLOR = new Color(255, 30, 0, 192);
     public static final Color INVERT_HIGHLIGHTED_COLOR2 = new Color(255, 197, 0, 192);
     public static final Color PRIMARY_HIGHLIGHTED_COLOR = new Color(0, 100, 255, 128);
     public static final Color SECONDARY_HIGHLIGHTED_COLOR = new Color(100, 100, 255, 64).brighter();
-    protected JList<FingerprintCandidatePropertyChangeSupport> candidateList;
+    protected JList<FingerprintCandidateBean> candidateList;
     protected StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
 
@@ -76,12 +76,12 @@ public class CandidateListDetailView extends CandidateListView implements Active
 
     public CandidateListDetailView(CandidateList sourceList) {
         super(sourceList);
-        candidateList = new CandidateInnerList(new DefaultEventListModel<FingerprintCandidatePropertyChangeSupport>(filteredSource));
+        candidateList = new CandidateInnerList(new DefaultEventListModel<FingerprintCandidateBean>(filteredSource));
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
         candidateList.setCellRenderer(new CandidateCellRenderer(sourceList.scoreStats, this));
         candidateList.setFixedCellHeight(-1);
-        candidateList.setPrototypeCellValue(FingerprintCandidatePropertyChangeSupport.PROTOTYPE);
+        candidateList.setPrototypeCellValue(FingerprintCandidateBean.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         add(scrollPane, BorderLayout.CENTER);
 
@@ -132,8 +132,8 @@ public class CandidateListDetailView extends CandidateListView implements Active
     }
 
     @Override
-    protected EventList<MatcherEditor<FingerprintCandidatePropertyChangeSupport>> getSearchFieldMatchers() {
-        EventList<MatcherEditor<FingerprintCandidatePropertyChangeSupport>> list = super.getSearchFieldMatchers();
+    protected EventList<MatcherEditor<FingerprintCandidateBean>> getSearchFieldMatchers() {
+        EventList<MatcherEditor<FingerprintCandidateBean>> list = super.getSearchFieldMatchers();
         list.add(new SmartFilterMatcherEditor(smartFilterTextField));
 
         molecularPropertyMatcherEditor = new MolecularPropertyMatcherEditor(filterByMolecularPropertyButton);
@@ -144,20 +144,20 @@ public class CandidateListDetailView extends CandidateListView implements Active
     @Override
     public void actionPerformed(ActionEvent e) {
         if (selectedCompoundId < 0) return;
-        final FingerprintCandidatePropertyChangeSupport c = candidateList.getModel().getElementAt(selectedCompoundId);
+        final FingerprintCandidateBean c = candidateList.getModel().getElementAt(selectedCompoundId);
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         if (e.getSource() == CopyInchiKey) {
-            clipboard.setContents(new StringSelection(c.compound.getInchi().key2D()), null);
+            clipboard.setContents(new StringSelection(c.candidate.getInchi().key2D()), null);
         } else if (e.getSource() == CopyInchi) {
-            clipboard.setContents(new StringSelection(c.compound.getInchi().in2D), null);
+            clipboard.setContents(new StringSelection(c.candidate.getInchi().in2D), null);
         } else if (e.getSource() == OpenInBrowser1) {
             try {
-                Desktop.getDesktop().browse(new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.compound.getInchi().key2D() + "%22[InChIKey]"));
+                Desktop.getDesktop().browse(new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.candidate.getInchi().key2D() + "%22[InChIKey]"));
             } catch (IOException | URISyntaxException e1) {
                 LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
             }
         } else if (e.getSource() == OpenInBrowser2) {
-            for (Map.Entry<String, String> entry : c.compound.getLinkedDatabases().entries()) {
+            for (Map.Entry<String, String> entry : c.candidate.getLinkedDatabases().entries()) {
                 final DataSource s = DatasourceService.getSourceFromName(entry.getKey());
                 if (entry.getValue() == null || s == null || s.URI == null) continue;
                 try {
@@ -213,8 +213,8 @@ public class CandidateListDetailView extends CandidateListView implements Active
         final int index = candidateList.locationToIndex(point);
         selectedCompoundId = index;
         if (index < 0) return;
-        final FingerprintCandidatePropertyChangeSupport candidate = candidateList.getModel().getElementAt(index);
-        highlightedCandidate = candidate.index;
+        final FingerprintCandidateBean candidate = candidateList.getModel().getElementAt(index);
+        highlightedCandidate = candidate.index();
         final Rectangle relativeRect = candidateList.getCellBounds(index, index);
 
         final FingerprintAgreement ag = candidate.substructures;
@@ -273,8 +273,8 @@ public class CandidateListDetailView extends CandidateListView implements Active
         final int index = candidateList.locationToIndex(point);
         selectedCompoundId = index;
         if (index < 0) return;
-        final FingerprintCandidatePropertyChangeSupport candidate = candidateList.getModel().getElementAt(index);
-        highlightedCandidate = candidate.index;
+        final FingerprintCandidateBean candidate = candidateList.getModel().getElementAt(index);
+        highlightedCandidate = candidate.index();
 
         if (e.isPopupTrigger()) popup(e);
     }
@@ -295,7 +295,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
     }
 
     @Override
-    public void resultsChanged(InstanceBean experiment, FingerprintCandidatePropertyChangeSupport sre, List<FingerprintCandidatePropertyChangeSupport> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(InstanceBean experiment, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
         if (sre != null)
             this.structureSearcher.reloadList(source);
     }
@@ -325,10 +325,10 @@ public class CandidateListDetailView extends CandidateListView implements Active
     }
 
 
-    public class CandidateInnerList extends JList<FingerprintCandidatePropertyChangeSupport> {
+    public class CandidateInnerList extends JList<FingerprintCandidateBean> {
         private final NumberFormat prob = new DecimalFormat("%");
 
-        public CandidateInnerList(ListModel<FingerprintCandidatePropertyChangeSupport> dataModel) {
+        public CandidateInnerList(ListModel<FingerprintCandidateBean> dataModel) {
             super(dataModel);
         }
 
@@ -337,7 +337,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
             final Point point = e.getPoint();
             final int index = locationToIndex(point);
             if (index < 0) return null;
-            final FingerprintCandidatePropertyChangeSupport candidate = getModel().getElementAt(index);
+            final FingerprintCandidateBean candidate = getModel().getElementAt(index);
             final Rectangle relativeRect = getCellBounds(index, index);
 
 
@@ -346,7 +346,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
                 int[] rowcol = calculateAgreementIndex(ag, relativeRect, point);
                 if (rowcol != null) {
                     int fpindex = candidate.substructures.indexAt(rowcol[0], rowcol[1]);
-                    return candidate.compound.getFingerprint().getFingerprintVersion().getMolecularProperty(fpindex).getDescription() + "  (" + prob.format(candidate.getPlatts().getProbability(fpindex)) + " %)";
+                    return candidate.candidate.getFingerprint().getFingerprintVersion().getMolecularProperty(fpindex).getDescription() + "  (" + prob.format(candidate.getPlatts().getProbability(fpindex)) + " %)";
                 }
             }
             return null;

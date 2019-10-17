@@ -4,10 +4,11 @@ import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 
 /**
- * TODO: this class is immutable. Does it make sense to have it extend AbstractBean?
+ * This class is immutable, but we have to extend Property support,
+ * because the recative glazed lists do need the property change methods,
+ * to register itself even if they do nothing. Otherwise the event lists throw an error.
  */
-public class MolecularPropertyTableEntry extends SiriusPCS implements Comparable<MolecularPropertyTableEntry> {
-
+public class MolecularPropertyTableEntry implements SiriusPCS, Comparable<MolecularPropertyTableEntry> {
     protected final ProbabilityFingerprint underlyingFingerprint;
     protected final int absoluteIndex;
     protected final FingerprintVisualization visualization;
@@ -86,4 +87,11 @@ public class MolecularPropertyTableEntry extends SiriusPCS implements Comparable
     public String toString() {
         return absoluteIndex + ": " + getMolecularProperty().toString();
     }
+
+    protected final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this,true);
+    @Override
+    public HiddenChangeSupport pcs() {
+        return pcs;
+    }
+
 }

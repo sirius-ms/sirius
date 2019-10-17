@@ -1,13 +1,16 @@
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.blast.FingerblastResult;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.sirius.ComputingStatus;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
-import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
+import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 
 import javax.swing.*;
 import java.util.*;
@@ -15,7 +18,7 @@ import java.util.*;
 /**
  * Created by fleisch on 15.05.17.
  */
-public class CandidateList extends ActionList<FingerprintCandidatePropertyChangeSupport, Set<FingerIdResultPropertyChangeSupport>> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
+public class CandidateList extends ActionList<FingerprintCandidateBean, Set<FormulaResultBean>> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
 
     public final DoubleListStats scoreStats;
     public final DoubleListStats logPStats;
@@ -26,7 +29,7 @@ public class CandidateList extends ActionList<FingerprintCandidatePropertyChange
     }
 
     public CandidateList(final FormulaList source, DataSelectionStrategy strategy) {
-        super(FingerprintCandidatePropertyChangeSupport.class, strategy);
+        super(FingerprintCandidateBean.class, strategy);
 
         scoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
@@ -62,17 +65,24 @@ public class CandidateList extends ActionList<FingerprintCandidatePropertyChange
                 break;
         }
 
-        List<FingerprintCandidatePropertyChangeSupport> emChache = new ArrayList<>();
+        List<FingerprintCandidateBean> emChache = new ArrayList<>();
         for (FormulaResultBean e : formulasToShow) {
             if (e != null && e.getFingerIdComputeState().equals(ComputingStatus.COMPUTED)) {
-                for (int j = 0; j < e.getFingerIdData().getCompounds().length; j++) {
-                    FingerprintCandidatePropertyChangeSupport c = new FingerprintCandidatePropertyChangeSupport(j + 1, j, e.getFingerIdData(), e.getResult().getPrecursorIonType());
-                    emChache.add(c);
-                    scoreStats.addValue(c.getScore());
-                    logPStats.addValue(c.getXlogp());
-                    tanimotoStats.addValue(c.getTanimotoScore());
-                    data.add(c.data);
-                }
+                final FormulaResult res = e.getResult(FingerprintResult.class, FingerblastResult.class);
+                res.getAnnotation(FingerblastResult.class).ifPresent(fbr -> {
+                    data.add(e);
+                    for (int j = 0; j < fbr.getResults().size(); j++) {
+                        FingerprintCandidateBean c = new FingerprintCandidateBean(j + 1,
+                                res.getAnnotationOrThrow(FingerprintResult.class).fingerprint,
+                                fbr.getResults().get(j),
+                                e.getPrecursorIonType());
+                        emChache.add(c);
+                        scoreStats.addValue(c.getScore());
+                        logPStats.addValue(c.getXlogp());
+                        tanimotoStats.addValue(c.getTanimotoScore());
+                    }
+                });
+
             }
         }
 

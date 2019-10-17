@@ -4,6 +4,7 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.dialogs.DragAndDropOpenDialog;
 import de.unijena.bioinf.ms.gui.dialogs.DragAndDropOpenDialogReturnValue;
@@ -17,6 +18,7 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceIO;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -111,13 +113,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this); //todo do we want to have the left table as drop target?
     }
 
-    public void decoradeMainFrameInstance() {
+    public void decoradeMainFrameInstance(@NotNull ProjectSpaceManager projectSpaceManager) {
         //create computation
         //todo get predictor from application core?
 
         // create project space
-        File psFile = new File(PropertyManager.getProperty("path/to/space")); //todo real data
-        ps = new GuiProjectSpace(null);
+        ps = new GuiProjectSpace(projectSpaceManager);
 
         // create models for views
         compoundList = new CompoundList(ps);

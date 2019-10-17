@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.gui.fingerid;
 
 import de.unijena.bioinf.fingerid.db.custom.CustomDataSourceService;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
 
@@ -12,7 +13,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidatePropertyChangeSupport, Set<FingerIdResultPropertyChangeSupport>>, CustomDataSourceService.DataSourceChangeListener {
+public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidateBean, Set<FormulaResultBean>>, CustomDataSourceService.DataSourceChangeListener {
     private final List<FilterChangeListener> listeners = new LinkedList<>();
 
     protected long bitSet;
@@ -87,7 +88,7 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
     }
 
     @Override
-    public void resultsChanged(Set<FingerIdResultPropertyChangeSupport> datas, FingerprintCandidatePropertyChangeSupport sre, List<FingerprintCandidatePropertyChangeSupport> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(Set<FormulaResultBean> datas, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
         reset();
     }
 

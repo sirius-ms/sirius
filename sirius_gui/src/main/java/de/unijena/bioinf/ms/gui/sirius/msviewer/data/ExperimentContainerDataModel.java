@@ -5,10 +5,11 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
+import de.unijena.bioinf.sirius.ProcessedInput;
 
 import javax.swing.*;
 import java.text.DecimalFormat;
@@ -24,7 +25,7 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
 
     //data model
     protected InstanceBean ec; //todo maybe remove this
-    protected IdentificationResult currentResult;
+    protected FormulaResultBean currentResult;
     private Map<String, Spectrum<?>> identifierToSpectrum = new HashMap<>();
     private final DefaultComboBoxModel<String> cbModel = new DefaultComboBoxModel<>();
 
@@ -51,11 +52,11 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
     }
 
     public boolean changeData(InstanceBean ec, FormulaResultBean result) {
-        if (this.ec != ec || (result != null && this.currentResult != result.getResult())) {
+        if (this.ec != ec || (result != null && this.currentResult.getID() != result.getID())) {
             this.ec = ec;
 
-            if (result != null && result.getResult() != null) {
-                this.currentResult = result.getResult();
+            if (result != null) {
+                this.currentResult = result;
             } else {
                 this.currentResult = null;
             }
@@ -167,39 +168,38 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
         if (id.equals(MSMS_MERGED_DISPLAY)) {
             if (currentResult != null) {
                 //todo @kai, why is the ms2experiment modified during view???
-                final FTree tree = currentResult.getRawTree();
-                final MutableMs2Experiment ms2;
 
-                if (tree != null && tree.getAnnotationOrNull(ProcessedInput.class) != null) {
+               /* if (tree != null && tree.getAnnotationOrNull(ProcessedInput.class) != null) {
                     ms2 = tree.getAnnotationOrNull(ProcessedInput.class).getExperimentInformation();
                 } else {
                     ms2 = ec.getMs2Experiment();
-                }
+                }*/
 
                 //ioMass
-                double ionMass;
+                /*double ionMass;
                 if (tree != null && tree.getAnnotationOrNull(PrecursorIonType.class) != null) {
                     ionMass = tree.getAnnotationOrNull(PrecursorIonType.class).addIonAndAdduct(tree.getRoot().getFormula().getMass());
                 } else {
                     ionMass = ec.getIonMass();
                 }
-
+*/
                 // remove peaks behind the parent
                 /*
                 for (MutableMs2Spectrum ms2spec : ms2.getMs2Spectra()) {
                     Spectrums.cutByMassThreshold(ms2spec, ionMass + 1d);
                 }
                 */
+                final FTree tree = currentResult.getFragTree().orElse(null);
 
-                underlyingModel = new SiriusMergedMs2Annotated(tree, ms2, minMz, maxMz);
+                underlyingModel = new SiriusMergedMs2Annotated(tree, ec.getExperiment(), minMz, maxMz);
             } else {
-                underlyingModel = new SiriusMergedMs2(ec.getMs2Experiment(), minMz, maxMz);
+                underlyingModel = new SiriusMergedMs2(ec.getExperiment(), minMz, maxMz);
             }
         } else if (spec == null) {
             underlyingModel = new DummySpectrumModel();
         } else {
             if (currentResult != null) {
-                final FTree tree = currentResult.getRawTree();
+                final FTree tree = currentResult.getFragTree().orElse(null);
                 if (spec.getMsLevel() == 1) {
                     underlyingModel = new SiriusIsotopePattern(tree, spec);
                 } else {

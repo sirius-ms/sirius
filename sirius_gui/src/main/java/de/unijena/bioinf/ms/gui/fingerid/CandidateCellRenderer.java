@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * Created by fleisch on 16.05.17.
  */
-public class CandidateCellRenderer extends JPanel implements ListCellRenderer<FingerprintCandidatePropertyChangeSupport> {
+public class CandidateCellRenderer extends JPanel implements ListCellRenderer<FingerprintCandidateBean> {
     public static final int MIN_CELL_SIZE = 5;
     public final static int CELL_SIZE = 15;
     private static Color LOW = Color.RED, MED = Color.WHITE, HIGH = new Color(100, 149, 237);
@@ -33,7 +33,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
     private CompoundStructureImage image;
     private DescriptionPanel descriptionPanel;
-    private FingerprintCandidatePropertyChangeSupport currentCandidate;
+    private FingerprintCandidateBean currentCandidate;
 
     private final DoubleListStats stats;
 
@@ -64,7 +64,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     }
 
     @Override
-    public Component getListCellRendererComponent(JList<? extends FingerprintCandidatePropertyChangeSupport> list, FingerprintCandidatePropertyChangeSupport value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList<? extends FingerprintCandidateBean> list, FingerprintCandidateBean value, int index, boolean isSelected, boolean cellHasFocus) {
 
         image.molecule = value;
         if (value != null && value.getScore() >= stats.getMax()) {
@@ -179,9 +179,9 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             setBorder(new EmptyBorder(5, 2, 2, 2));
         }
 
-        public void setCompound(FingerprintCandidatePropertyChangeSupport candidate) {
+        public void setCompound(FingerprintCandidateBean candidate) {
             removeAll();
-            if (candidate == null || candidate.compound == null) return;
+            if (candidate == null || candidate.candidate == null) return;
 
             for (DatabaseLabel label : candidate.labels) {
                 final TextLayout tlayout = new TextLayout(label.name, dbPanelFont, new FontRenderContext(null, false, false));
@@ -365,13 +365,13 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             setVisible(true);
         }
 
-        public void setCompound(FingerprintCandidatePropertyChangeSupport value) {
+        public void setCompound(FingerprintCandidateBean value) {
             setFont(propertyFont);
-            inchi.setText(value.compound.getInchi().key2D());
+            inchi.setText(value.candidate.getInchi().key2D());
             databasePanel.setCompound(value);
-            xlogP.setLogP(value.compound.getXlogp());
+            xlogP.setLogP(value.candidate.getXlogp());
             scoreL.setScore(value.getScore());
-            if (value.data == null) {
+            if (value.fp == null) {
                 ag.agreement = null;
             } else {
                 ag.setAgreement(value.getSubstructures(value.getPlatts()));

@@ -1,19 +1,18 @@
 package de.unijena.bioinf.ms.gui.canopus;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.fingerid.CanopusResult;
-import de.unijena.bioinf.ms.gui.fingerid.FingerIdResultPropertyChangeSupport;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeColor;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
 import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeNode;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
-import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -28,12 +27,11 @@ public class ClassyfireTreePanel extends TreeRenderPanel {
 
     ClassyFireFingerprintVersion version;
     MaskedFingerprintVersion mask;
-    Canopus canopus;
+    final Canopus canopus;
 
-    public ClassyfireTreePanel() {
+    public ClassyfireTreePanel(@NotNull Canopus canopus) {
         super();
-        //todo CANOPUS
-        this.canopus = null ;//MainFrame.MF.getCsiFingerId().getCanopus();
+        this.canopus = canopus;
 
         this.version = canopus.getClassyFireFingerprintVersion();
         this.mask = canopus.getCanopusMask();
@@ -78,39 +76,11 @@ public class ClassyfireTreePanel extends TreeRenderPanel {
     }
 
     public void updateTree(InstanceBean experiment, FormulaResultBean sre) {
-        if (sre == null || sre.getFingerIdData() == null || sre.getFingerIdData().getFingerIdFingerprint() == null) {
-            showTree(null);
-        } else {
-            final ProbabilityFingerprint canopus = sre.getFingerIdData().getCanopusFingerprint();
-            if (canopus==null) {
-                computeCanopus(sre);
-            } else {
-                showTree(canopus);
-            }
-        }
-    }
-
-    private void computeCanopus(final FormulaResultBean sre) {
-        final FingerIdResultPropertyChangeSupport data = sre.getFingerIdData();
-        final ProbabilityFingerprint platts = data.getFingerIdFingerprint();
-        final MolecularFormula formula = sre.getMolecularFormula();
-        final SwingWorker<ProbabilityFingerprint,ProbabilityFingerprint> worker = new SwingWorker<ProbabilityFingerprint, ProbabilityFingerprint>() {
-            @Override
-            protected ProbabilityFingerprint doInBackground() throws Exception {
-                final ProbabilityFingerprint fp = canopus.predictClassificationFingerprint(formula, platts );
-                publish(fp);
-                return fp;
-            }
-
-            @Override
-            protected void process(List<ProbabilityFingerprint> chunks) {
-                super.process(chunks);
-                //todo replace with cli job
-                data.getFingerIdResult().setAnnotation(CanopusResult.class, new CanopusResult(chunks.get(0)));
-                showTree(chunks.get(0));
-            }
-        };
-        worker.execute();
+        showTree(sre != null
+                ? sre.getCanopusResult().map(CanopusResult::getCanopusFingerprint)
+                    .orElse(null)
+                : null
+        );
     }
 
     private void showTree(ProbabilityFingerprint canopusFingerprint) {
