@@ -1,8 +1,8 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import com.google.common.collect.Streams;
-import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
 import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
@@ -11,6 +11,7 @@ import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
+import de.unijena.bioinf.ms.frontend.subtools.projectspace.ProjecSpaceOptions;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +53,7 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
     public final CustomDBOptions customDBOptions = new CustomDBOptions();
 
     //external preprocessing
+    public final ProjecSpaceOptions projectSpaceOptions = new ProjecSpaceOptions(); // this is also singleton
     public final LcmsAlignOptions lcmsAlignOptions = new LcmsAlignOptions();
 
     //toolchain subtools
@@ -88,7 +90,7 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
         CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), customDBOptions, lcmsAlignSpec, siriusSpec, zodiacSpec,passatuttoSpec, fingeridSpec, canopusOptions);
         rootSpec = forAnnotatedObjectWithSubCommands(
                 this.rootOptions,
-                Streams.concat(Arrays.stream(singletonTools()), Arrays.stream(new Object[]{configSpec, lcmsAlignSpec, siriusSpec, zodiacSpec,passatuttoSpec, fingeridSpec, canopusOptions})).toArray()
+                Streams.concat(Arrays.stream(singletonTools()), Arrays.stream(new Object[]{configSpec, projectSpaceOptions, lcmsAlignSpec, siriusSpec, zodiacSpec, passatuttoSpec, fingeridSpec, canopusOptions})).toArray()
         );
     }
 
