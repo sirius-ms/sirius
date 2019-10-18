@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+//this is a swing job wrapper that writes log output into a accociated text area instead into the console or the log file
 public class TextAreaJJobContainer<R> extends SwingJJobContainer<R> {
     private final JTextArea jobLog;
     private final TextAreaHandler textAreaLogHandler;

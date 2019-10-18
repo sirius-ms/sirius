@@ -57,7 +57,7 @@ public class SiriusSubToolJob extends InstanceJob {
 
             exp.setAnnotation(Whiteset.class, wSet);
 
-            final Sirius sirius = cliOptions.siriusProvider.sirius(exp.getAnnotationOrThrow(FinalConfig.class).config.getConfigValue("AlgorithmProfile"));
+            final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(exp.getAnnotationOrThrow(FinalConfig.class).config.getConfigValue("AlgorithmProfile"));
             List<IdentificationResult<SiriusScore>> results = SiriusJobs.getGlobalJobManager().submitJob(sirius.makeIdentificationJob(exp)).awaitResult();
 
             //write results to project space

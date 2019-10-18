@@ -2,21 +2,20 @@ package de.unijena.bioinf.ms.gui.mainframe;
 
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.babelms.load.LoadController;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.dialogs.DragAndDropOpenDialog;
 import de.unijena.bioinf.ms.gui.dialogs.DragAndDropOpenDialogReturnValue;
-import de.unijena.bioinf.babelms.load.LoadController;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListView;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.FilterableExperimentListPanel;
 import de.unijena.bioinf.ms.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceIO;
 import org.jetbrains.annotations.NotNull;
 
@@ -128,7 +127,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         //CREATE VIEWS
         jobDialog = new JobDialog(this);
         // results Panel
-        resultsPanel = new ResultPanel(formulaList);
+        resultsPanel = new ResultPanel(formulaList, ApplicationCore.WEB_API);
 
         toolbar = new SiriusToolbar();
 

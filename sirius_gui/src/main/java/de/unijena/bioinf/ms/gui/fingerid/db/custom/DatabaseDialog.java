@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.gui.fingerid.db.custom;
 import com.google.common.base.Predicate;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.fingerid.db.custom.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.custom.CustomDatabaseImporter;
@@ -622,7 +623,7 @@ public class DatabaseDialog extends JDialog {
         protected Collector collector;
         protected CustomDatabase database;
 
-        private static final String NONE = "None", BIO = "Biological database", PUBCHEM = "PubChem";
+        private static final String NONE = "None", BIO = DataSource.BIO.realName, PUBCHEM = DataSource.PUBCHEM.realName;
 
         public ImportDatabaseDialog(String name) {
             super(owner, "Import " + name + " database", false);
