@@ -36,7 +36,7 @@ public class ComputeCSIAction extends AbstractAction {
         MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
-                if (MF.getCsiFingerId().isEnabled()) {
+                if (MF.isFingerid()) {
                     for (InstanceBean container : event.getSourceList()) {
                         if (container.isComputed()) {
                             setEnabled(true);
@@ -81,7 +81,7 @@ public class ComputeCSIAction extends AbstractAction {
 
     protected boolean proofCSI(final boolean network) {
         setEnabled(false);
-        if (MF.getCsiFingerId().isEnabled() && MF.getCompounds().size() > 0) {
+        if (MF.isFingerid() && MF.getCompounds().size() > 0) {
             if (network) {
                 for (InstanceBean container : MF.getCompounds()) {
                     if (container.isComputed())

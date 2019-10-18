@@ -20,8 +20,6 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
-import de.unijena.bioinf.ms.gui.compute.CSIFingerIDComputation;
-import de.unijena.bioinf.ms.gui.compute.FingerIDComputationPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,12 +33,10 @@ public class FingerIdDialog extends JDialog {
     protected boolean showComputeButton;
     protected int returnState = CANCELED;
     protected FingerIDComputationPanel dbForm;
-    protected CSIFingerIDComputation storage;
     private String buttonSuffix = "compounds";
 
-    public FingerIdDialog(Frame owner, CSIFingerIDComputation storage, boolean showComputeButton, boolean local) {
+    public FingerIdDialog(Frame owner, boolean showComputeButton, boolean local) {
         super(owner, "Search with CSI:FingerID", true);
-        this.storage = storage;
         dbForm = new FingerIDComputationPanel(SearchableDatabases.getAvailableDatabases());
         this.showComputeButton = showComputeButton;
         setLocationRelativeTo(owner);

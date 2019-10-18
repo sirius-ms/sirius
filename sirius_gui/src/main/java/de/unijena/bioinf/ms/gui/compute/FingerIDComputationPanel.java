@@ -45,7 +45,7 @@ public class FingerIDComputationPanel extends JPanel {
                 csiButton = new ToolbarToggleButton("CSI:FingerID", Icons.FINGER_32);
                 ;
                 MainFrame.CONNECTION_MONITOR.addConectionStateListener(evt -> setCsiButtonEnabled(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck().isConnected()));
-                setCsiButtonEnabled(MainFrame.MF.getCsiFingerId().isEnabled());
+                setCsiButtonEnabled(MainFrame.MF.isFingerid());
 
                 csiButton.addActionListener(e -> {
                     setComponentsEnabled(csiButton.isSelected());

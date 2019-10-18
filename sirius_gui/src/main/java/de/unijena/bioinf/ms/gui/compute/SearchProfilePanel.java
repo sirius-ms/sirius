@@ -3,7 +3,6 @@ package de.unijena.bioinf.ms.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.fingerid.db.custom.CustomDatabase;
@@ -131,15 +130,12 @@ public class SearchProfilePanel extends JPanel {
         java.util.List<String> ionizations = new ArrayList<>();
 
         if (!ionTypes.isEmpty()) {
-            if (ionTypes.contains(PrecursorIonType.unknown().getIonization().getName())) {
-                ionizations.addAll(PeriodicTable.getInstance().getIonizationsAsString());
-            } else {
-                if (ionTypes.contains(PrecursorIonType.unknownPositive().getIonization().getName())) {
-                    ionizations.addAll(PeriodicTable.getInstance().getPositiveIonizationsAsString());
-                }
-                if (ionTypes.contains(PrecursorIonType.unknownNegative().getIonization().getName())) {
-                    ionizations.addAll(PeriodicTable.getInstance().getNegativeIonizationsAsString());
-                }
+
+            if (ionTypes.contains(PrecursorIonType.unknownPositive().getIonization().getName())) {
+                ionizations.addAll(PeriodicTable.getInstance().getPositiveIonizationsAsString());
+            }
+            if (ionTypes.contains(PrecursorIonType.unknownNegative().getIonization().getName())) {
+                ionizations.addAll(PeriodicTable.getInstance().getNegativeIonizationsAsString());
             }
         }
 
@@ -153,7 +149,6 @@ public class SearchProfilePanel extends JPanel {
             ionizationPanel.checkBoxList.checkAll();
             ionizationPanel.setEnabled(true);
         }
-//        pack();
     }
 
     public Instruments getInstrument() {
@@ -162,14 +157,6 @@ public class SearchProfilePanel extends JPanel {
 
     public boolean hasIsotopesEnabled() {
         return getInstrument() == Instruments.BRUKER;
-    }
-
-    public PossibleIonModes getPossibleIonModes() {
-        PossibleIonModes mode = new PossibleIonModes();
-        for (String ioniz : ionizationPanel.checkBoxList.getCheckedItems()) {
-            mode.add(ioniz, 1d);
-        }
-        return mode;
     }
 
     public double getPpm() {

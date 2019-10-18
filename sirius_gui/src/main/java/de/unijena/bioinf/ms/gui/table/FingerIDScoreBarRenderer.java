@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.gui.table;
 
-import de.unijena.bioinf.ms.gui.compute.CSIFingerIDComputation;
 import de.unijena.bioinf.ms.gui.mainframe.molecular_formular.FormulaScoreListStats;
 
 import javax.swing.*;

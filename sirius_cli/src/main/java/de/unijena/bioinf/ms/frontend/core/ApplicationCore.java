@@ -11,6 +11,8 @@ import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
+import de.unijena.bioinf.sirius.SiriusCachedFactory;
+import de.unijena.bioinf.sirius.SiriusFactory;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
@@ -42,6 +44,7 @@ public abstract class ApplicationCore {
     public static final String CITATION_BIBTEX;
 
     public static final Path WORKSPACE;
+    public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
     public static final WebAPI WEB_API;
     public static final Canopus CANOPUS;
 

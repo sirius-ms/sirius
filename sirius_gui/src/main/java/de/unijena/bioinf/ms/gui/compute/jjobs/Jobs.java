@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.gui.compute.jjobs;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
+import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.ms.gui.sirius.ComputingStatus;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
@@ -19,9 +20,12 @@ public class Jobs {
 
     private Jobs() {/*prevent instantiation*/}
 
-    public static <JJ extends GuiObservableJJob> JJ submit(final JJ j) {
-        submit(j.asSwingJob());
-        return j;
+    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, String jobName) {
+        return submit(new TextAreaJJobContainer<>(j, jobName));
+    }
+
+    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, String jobName, String jobCategory) {
+        return submit(new TextAreaJJobContainer<>(j, jobName, jobCategory));
     }
 
     public static <JJ extends SwingJJobContainer> JJ submit(final JJ j) {

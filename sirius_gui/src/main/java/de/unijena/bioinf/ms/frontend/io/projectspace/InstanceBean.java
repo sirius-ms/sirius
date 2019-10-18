@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.frontend.io.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
@@ -15,7 +16,9 @@ import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -125,28 +128,50 @@ public class InstanceBean extends Instance implements SiriusPCS {
         return getSiriusComputeState() == ComputingStatus.QUEUED;
     }
 
-
-    // this is all MSExperiment update stuff. We listen to experiment changes on the project-space.
-    // so calling updateExperiemnt will result in a EDT property change event if it was successful
-    public void setName(String name) {
-        if (projectSpace().renameCompound(getID(), name, (idx) -> spaceManager.namingScheme.apply(idx, name))){
-            getMutableExperiment().setName(name);
-            updateExperiment();
-        }
-    }
-
-
-    public void setIonization(PrecursorIonType ionization) {
-        getMutableExperiment().setPrecursorIonType(ionization);
-        updateExperiment();
-    }
-
-    public void setIonMass(double ionMass) {
-        getMutableExperiment().setIonMass(ionMass);
-        updateExperiment();
-    }
-
     private MutableMs2Experiment getMutableExperiment() {
         return (MutableMs2Experiment) getExperiment();
+    }
+
+    public Setter set() {
+        return new Setter();
+    }
+
+    public class Setter {
+        private List<Consumer<MutableMs2Experiment>> mods = new ArrayList<>();
+
+        private Setter() {
+        }
+
+        // this is all MSExperiment update stuff. We listen to experiment changes on the project-space.
+        // so calling updateExperiemnt will result in a EDT property change event if it was successful
+        public Setter setName(final String name) {
+            mods.add((exp) -> {
+                if (projectSpace().renameCompound(getID(), name, (idx) -> spaceManager.namingScheme.apply(idx, name)))
+                    exp.setName(name);
+            });
+            return this;
+        }
+
+        public Setter setIonization(final PrecursorIonType ionization) {
+            mods.add((exp) -> exp.setPrecursorIonType(ionization));
+            return this;
+        }
+
+        public Setter setIonMass(final double ionMass) {
+            mods.add((exp) -> exp.setIonMass(ionMass));
+            return this;
+        }
+
+        public Setter setMolecularFormula(final MolecularFormula formula) {
+            mods.add((exp) -> exp.setMolecularFormula(formula));
+            return this;
+        }
+
+        public void apply() {
+            final MutableMs2Experiment exp = getMutableExperiment();
+            for (Consumer<MutableMs2Experiment> mod : mods)
+                mod.accept(exp);
+            updateExperiment();
+        }
     }
 }

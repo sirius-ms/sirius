@@ -22,26 +22,24 @@ import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
-import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
-import de.unijena.bioinf.ms.gui.compute.jjobs.FingerIDSearchGuiJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.compute.jjobs.PrepareSiriusIdentificationInputJob;
-import de.unijena.bioinf.ms.gui.compute.jjobs.SiriusIdentificationGuiJob;
 import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.sirius.ComputingStatus;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.sirius.Ms1Preprocessor;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.Sirius;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -53,8 +51,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
@@ -94,12 +92,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         //mainpanel done
 
 
-        this.sirius = new Sirius();
-        ElementPredictor elementPredictor = sirius.getElementPrediction();
-        List<Element> detectableElements = new ArrayList<>();
-        for (Element element : elementPredictor.getChemicalAlphabet().getElements()) {
-            if (elementPredictor.isPredictable(element)) detectableElements.add(element);
-        }
+        // set list of detectable elements
+        this.sirius = ApplicationCore.SIRIUS_PROVIDER.sirius();
+        List<Element> detectableElements = new ArrayList<>(sirius.getMs1Preprocessor().getSetOfPredictableElements());
+        detectableElements.sort(Comparator.naturalOrder());
+
 
         searchProfilePanel = new SearchProfilePanel(this, compoundsToProcess);
         mainPanel.add(searchProfilePanel);
@@ -206,21 +203,23 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
             InstanceBean ec = compoundsToProcess.get(0);
             if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
-                MutableMs2Experiment exp = ec.getMs2Experiment();
+                final Ms1Preprocessor pp = sirius.getMs1Preprocessor();
+                ProcessedInput pi = pp.preprocess(ec.getExperiment());
 
-                ElementPredictor predictor = sirius.getElementPrediction();
-                final FormulaConstraints c = sirius.predictElementsFromMs1(exp);
-                if (c != null) {
-                    for (Element element : c.getChemicalAlphabet()) {
-                        if (!predictor.isPredictable(element)) {
-                            c.setLowerbound(element, 0);
-                            c.setUpperbound(element, 0);
-                        }
-                    }
-                    elementPanel.setSelectedElements(c);
-                } else {
-                    new ExceptionDialog(this, notWorkingMessage);
-                }
+                pi.getAnnotation(FormulaConstraints.class).
+                        ifPresentOrElse(c -> {
+                                    final Set<Element> pe = pp.getSetOfPredictableElements();
+                                    for (Element element : c.getChemicalAlphabet()) {
+                                        if (!pe.contains(element)) {
+                                            c.setLowerbound(element, 0);
+                                            c.setUpperbound(element, 0);
+                                        }
+                                    }
+                                    elementPanel.setSelectedElements(c);
+                                },
+                                () -> new ExceptionDialog(this, notWorkingMessage)
+                        );
+
             } else {
                 new ExceptionDialog(this, notWorkingMessage);
             }
@@ -232,22 +231,26 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     }
 
     private void saveEdits(InstanceBean ec) {
-        if (editPanel.validateFormula()) {
-            final MolecularFormula nuFormula = editPanel.getMolecularFormula();
-            ec.getMs2Experiment().setMolecularFormula(nuFormula);
-        }
+        Jobs.runInBackroundAndLoad(this, "Saving changes...", () -> {
+            final InstanceBean.Setter expSetter = ec.set();
+            if (editPanel.validateFormula()) {
+                final MolecularFormula nuFormula = editPanel.getMolecularFormula();
+                expSetter.setMolecularFormula(nuFormula);
+            }
 
-        final double ionMass = editPanel.getSelectedIonMass();
-        if (ionMass > 0)
-            ec.setIonMass(ionMass);
-        ec.setName(editPanel.getExperiementName());
-        ec.setIonization(editPanel.getSelectedIonization());
+            final double ionMass = editPanel.getSelectedIonMass();
+            if (ionMass > 0)
+                expSetter.setIonMass(ionMass);
+            expSetter.setIonization(editPanel.getSelectedIonization());
+            expSetter.setName(editPanel.getExperiementName());
+            expSetter.apply(); //applies changes to experiment an writes it to projectspace
+        });
     }
 
     private void startComputing() {
         if (recompute.isSelected()) {
             boolean isSuccsess = true;
-            if (!PropertyManager.getBooleanProperty(DONT_ASK_RECOMPUTE_KEY,false) && this.compoundsToProcess.size() > 1) {
+            if (!PropertyManager.getBoolean(DONT_ASK_RECOMPUTE_KEY, false) && this.compoundsToProcess.size() > 1) {
                 QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY);
                 isSuccsess = questionDialog.isSuccess();
             }

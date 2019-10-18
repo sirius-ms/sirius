@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.gui.mainframe;
 
+import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.ms.gui.canopus.CanopusPanel;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateList;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListDetailViewPanel;
@@ -28,7 +29,7 @@ public class ResultPanel extends JTabbedPane {
     private CanopusPanel classyfireTreePanel;
     private FormulaList fl;
 
-    public ResultPanel(final FormulaList suriusResultElements) {
+    public ResultPanel(final FormulaList suriusResultElements, WebAPI webAPI) {
         super();
         this.setToolTipText("Results");
 
@@ -38,7 +39,7 @@ public class ResultPanel extends JTabbedPane {
         cov = new CandidateOverviewPanel(new CandidateList(suriusResultElements, ActionList.DataSelectionStrategy.ALL));
         ccv = new CandidateListDetailViewPanel(new CandidateList(suriusResultElements));
         try {
-            fpt = new FingerprintPanel(new FingerprintTable(suriusResultElements));
+            fpt = new FingerprintPanel(new FingerprintTable(suriusResultElements,webAPI));
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
             fpt = null;
