@@ -253,4 +253,7 @@ public class ChromatogramBuilder {
         return Math.exp(-(mzDiff*mzDiff/(4*mzVar) + intDiff*intDiff/(4*intVar)) );
     }
 
+    public Deviation getAllowedMassDeviation() {
+        return dev;
+    }
 }
