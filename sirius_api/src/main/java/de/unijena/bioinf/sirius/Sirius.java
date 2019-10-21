@@ -107,18 +107,27 @@ public class Sirius {
         return new FasterTreeComputationInstance(analyzer, input);
     }
 
+
+    public Ms1Preprocessor getMs1Preprocessor() {
+        return profile.ms1Preprocessor;
+    }
+
+    public Ms2Preprocessor getMs2Preprocessor() {
+        return profile.ms2Preprocessor;
+    }
+
     /**
      * Perform all preprocessing steps for MS1 analysis
      */
     public ProcessedInput preprocessForMs1Analysis(Ms2Experiment experiment) {
-        return profile.ms1Preprocessor.preprocess(experiment);
+        return getMs1Preprocessor().preprocess(experiment);
     }
 
     /**
      * Perform all preprocessing steps for MS/MS analysis
      */
     public ProcessedInput preprocessForMs2Analysis(Ms2Experiment experiment) {
-        return profile.ms2Preprocessor.preprocess(experiment);
+        return getMs2Preprocessor().preprocess(experiment);
     }
 
     protected ProcessedInput preprocess(Ms2Experiment experiment) {
