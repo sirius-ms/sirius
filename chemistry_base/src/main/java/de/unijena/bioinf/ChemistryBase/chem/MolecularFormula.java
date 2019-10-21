@@ -364,6 +364,9 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     public boolean isCHNO() {
         return atomCount() <= numberOfCarbons() + numberOfHydrogens() + numberOfNitrogens() + numberOfOxygens();
     }
+    public boolean isCHO() {
+        return atomCount() <= numberOfCarbons() + numberOfHydrogens() + numberOfOxygens();
+    }
 
     public boolean isCHNOPS() {
         return atomCount() <= numberOfCarbons() + numberOfHydrogens() + numberOfNitrogens() + numberOfOxygens() + numberOf(getTableSelection().getPeriodicTable().getByName("S")) + numberOf(getTableSelection().getPeriodicTable().getByName("P"));
