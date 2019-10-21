@@ -31,6 +31,18 @@ public class CorrelatedPeakDetector {
         this.detectableIonTypes = detectableIonTypes;
     }
 
+    public static Range<Double> getIsotopeMassRange(int niso) {
+        return ISO_RANGES[niso-1];
+    }
+
+    public static boolean hasMassOfAnIsotope(double peak, double isoPeak) {
+        final double massdiff = isoPeak-peak;
+        for (Range<Double> r : ISO_RANGES) {
+            if (r.contains(massdiff)) return true;
+        }
+        return false;
+    }
+
     public boolean doIAmAnIsotope(ProcessedSample sample, FragmentedIon ion, TDoubleArrayList alreadyAnnotatedMzs) {
         // we assume that the peak might be either the second or the third isotopic peak
         Scan ms1Scan = sample.run.getScanByNumber(ion.getSegment().getApexScanNumber()).get();
@@ -104,7 +116,7 @@ public class CorrelatedPeakDetector {
         // ensure that we do not double-annotate a peak
         final TDoubleArrayList alreadyAnnotatedMzs = new TDoubleArrayList();
         // 1. detect isotopes of main feature
-        detectIsotopesAndSetChargeStateFor(sample, ion, alreadyAnnotatedMzs);
+        detectIsotopesAndSetChargeStateForAndChimerics(sample, ion, alreadyAnnotatedMzs);
 
         if (ion.getChargeState() > 1)
             System.out.println("========> Multiple charged Ion detected! Ion = " + ion.toString());
@@ -145,16 +157,16 @@ public class CorrelatedPeakDetector {
                     final Optional<ChromatographicPeak> detection = sample.builder.detectExact(ms1Scan,ms1.getMzAt(l));
                     if (detection.isPresent()) {
 
-                        CorrelationGroup correlate = correlate(ion.getPeak(), ion.getSegment(), detection.get());
-                        if (correlate==null) continue;
-                        if (correlate.getCorrelation() >= 0.95) {
-                            final IonGroup ion1 = ionWithIsotopes(sample, correlate.getRight(), correlate.getRightSegment(), ion.getChargeState(),alreadyAnnotatedMzs);
+                        Optional<CorrelationGroup> correlate = correlate(ion.getPeak(), ion.getSegment(), detection.get());
+                        if (correlate.isEmpty()) continue;
+                        if (correlate.get().getCorrelation() >= 0.95) {
+                            final IonGroup ion1 = ionWithIsotopes(sample, correlate.get().getRight(), correlate.get().getRightSegment(), ion.getChargeState(),alreadyAnnotatedMzs);
                             if (ion1==null) continue;
-                            ion.getInSourceFragments().add(new CorrelatedIon(correlate, ion1));
+                            ion.getInSourceFragments().add(new CorrelatedIon(correlate.get(), ion1));
                             //System.out.println(ion + " :: Found IN-SOURCE FRAGMENT with delta m/z = " + (ion.getMsMs().getPrecursor().getMass() - peak)  + ", " + correlate );
                             //System.out.println("Add insource " + correlate.getRight().getScanPointForScanId(ms1Scan.getScanNumber()).getMass());
                             List<CorrelationGroup> isos = new ArrayList<>();
-                            detectIsotopesFor(sample, correlate.getRight(), correlate.getRightSegment(), ion.getChargeState(), isos);
+                            detectIsotopesFor(sample, correlate.get().getRight(), correlate.get().getRightSegment(), ion.getChargeState(), isos);
                             alreadyAnnotatedMzs.add(ms1.getMzAt(l));
                             for (CorrelationGroup isotopePeak : isos) {
                                 alreadyAnnotatedMzs.add(isotopePeak.getRight().getMzAt(isotopePeak.getRightSegment().getApexIndex()));
@@ -193,12 +205,14 @@ public class CorrelatedPeakDetector {
                         if (alreadyFound(alreadyAnnotatedMzs, peakMass))
                             continue;
                         // add ion as possibleIonType. But first make correlation analysis
-                        CorrelationGroup correlate = correlate(ion.getPeak(), ion.getSegment(), detect.get());
-                        if (correlate!=null) {
+                        Optional<CorrelationGroup> maybeCorrelate = correlate(ion.getPeak(), ion.getSegment(), detect.get());
+                        CorrelationGroup correlate = null;
+                        if (maybeCorrelate.isPresent()) {
+                            correlate = maybeCorrelate.get();
                             correlate.setLeftType(ionType);
                             correlate.setRightType(other);
                         }
-                        if (correlate != null && correlate.getCorrelation() >= 0.9 && correlate.getKullbackLeibler() <= 0.5 && correlate.getNumberOfCorrelatedPeaks() >= 4) {
+                        if (maybeCorrelate.isPresent() && correlate.getCorrelation() >= 0.9 && correlate.getKullbackLeibler() <= 0.5 && correlate.getNumberOfCorrelatedPeaks() >= 4) {
                             final IonGroup ion1 = ionWithIsotopes(sample, correlate.getRight(), correlate.getRightSegment(), ion.getChargeState(), alreadyAnnotatedMzs);
                             if (ion1==null) continue;
                             adducts.add(new CorrelatedIon(correlate, ion1));
@@ -225,7 +239,7 @@ public class CorrelatedPeakDetector {
 
     }
 
-    public void detectIsotopesAndSetChargeStateFor(ProcessedSample sample, IonGroup ion, TDoubleArrayList alreadyAnnotatedMzs) {
+    public void detectIsotopesAndSetChargeStateForAndChimerics(ProcessedSample sample, IonGroup ion, TDoubleArrayList alreadyAnnotatedMzs) {
         final Scan ms1Scan = sample.run.getScanByNumber(ion.getSegment().getApexScanNumber()).get();
         // try different charge states
         List<CorrelationGroup> bestPattern = new ArrayList<>();
@@ -249,20 +263,15 @@ public class CorrelatedPeakDetector {
                 ion.setChargeState(bestChargeState);
                 ion.addIsotopes(bestPattern);
             }
-            //System.out.println(ion +  " Found " + bestPattern.size() + " isotopes with correlations " + bestPattern.stream().mapToDouble(CorrelationGroup::getCorrelation).min().getAsDouble() + " .. " + bestPattern.stream().mapToDouble(CorrelationGroup::getCorrelation).max().getAsDouble());
-            for (CorrelationGroup g : bestPattern) {
-                //System.out.println(g.getRight().getScanPointAt(g.getRightSegment().getApexIndex()));
-            }
         }
     }
 
     public IonGroup ionWithIsotopes(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge, TDoubleArrayList alreadyAnnotatedMzs) {
         IonGroup ion = new IonGroup(peak, segment, new ArrayList<>());
-        detectIsotopesAndSetChargeStateFor(sample,ion,alreadyAnnotatedMzs);
+        detectIsotopesAndSetChargeStateForAndChimerics(sample,ion,alreadyAnnotatedMzs);
         if (ion.getChargeState() == charge || ion.getChargeState()==0) return ion;
         else return null;
     }
-
 
     public double detectIsotopesFor(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge, List<CorrelationGroup> isoPeaks) {
 
@@ -280,7 +289,7 @@ public class CorrelatedPeakDetector {
             for (int i=a; i < spectrum.size(); ++i) {
                 if (spectrum.getMzAt(i) > maxMz)
                     break;
-                sample.builder.detectExact(scan, spectrum.getMzAt(i)).map(x->correlate(peak, segment, x)).filter(x->x.getCorrelation() >= 0.9).ifPresent(isoPeaks::add);
+                sample.builder.detectExact(scan, spectrum.getMzAt(i)).map(x->correlate(peak, segment, x)).filter(x->x.map(CorrelationGroup::getCorrelation).orElse(0d) >= 0.9).map(Optional::get).ifPresent(isoPeaks::add);
             }
             if (isoPeaks.size() <= nsize) {
                 break forEachIsotopePeak;
@@ -291,7 +300,7 @@ public class CorrelatedPeakDetector {
     }
 
 
-    protected CorrelationGroup correlate(ChromatographicPeak main, ChromatographicPeak.Segment mainSegment, ChromatographicPeak mightBeCorrelated) {
+    public Optional<CorrelationGroup> correlate(ChromatographicPeak main, ChromatographicPeak.Segment mainSegment, ChromatographicPeak mightBeCorrelated) {
         // overlap both
         int start = mainSegment.getStartScanNumber();
         int end = mainSegment.getEndScanNumber();
@@ -302,7 +311,7 @@ public class CorrelatedPeakDetector {
         }
         int otherStart = k;
         if (otherStart >= mightBeCorrelated.numberOfScans())
-            return null;
+            return Optional.empty();
         int otherEnd;
         for (otherEnd=otherStart+1; otherEnd < mightBeCorrelated.numberOfScans(); ++otherEnd) {
             if (mightBeCorrelated.getScanNumberAt(otherEnd) > end)
@@ -312,7 +321,7 @@ public class CorrelatedPeakDetector {
         assert otherEnd < mightBeCorrelated.numberOfScans();
         if (otherEnd < otherStart) {
             // no overlap
-            return null;
+            return Optional.empty();
         }
 
         // there should be at least one peak after the apex
@@ -325,12 +334,12 @@ public class CorrelatedPeakDetector {
 
         // the the apex of one peak should be in the fhm of the other and vice-versa
         if (mainSegment.getApexScanNumber() > otherSegment.getPeak().getScanNumberAt(otherSegment.getFwhmEndIndex()) || mainSegment.getApexScanNumber() < otherSegment.getPeak().getScanNumberAt(otherSegment.getFwhmStartIndex()) || otherSegment.getApexScanNumber() > mainSegment.getPeak().getScanNumberAt(mainSegment.getFwhmEndIndex()) || otherSegment.getApexScanNumber() < mainSegment.getPeak().getScanNumberAt(mainSegment.getFwhmStartIndex()) ) {
-            return null;
+            return Optional.empty();
         }
 
         if (main.getIntensityAt(mainSegment.getApexIndex()) > mightBeCorrelated.getIntensityAt(otherSegment.getApexIndex())) {
-            return correlateBiggerToSmaller(main,mainSegment, mightBeCorrelated, otherSegment);
-        } else return correlateBiggerToSmaller(mightBeCorrelated, otherSegment, main, mainSegment).invert();
+            return Optional.of(correlateBiggerToSmaller(main, mainSegment, mightBeCorrelated, otherSegment));
+        } else return Optional.ofNullable(correlateBiggerToSmaller(mightBeCorrelated, otherSegment, main, mainSegment).invert());
 
 
 
