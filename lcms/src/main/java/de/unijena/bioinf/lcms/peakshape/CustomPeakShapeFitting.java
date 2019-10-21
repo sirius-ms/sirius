@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.model.lcms.ChromatographicPeak;
+import de.unijena.bioinf.model.lcms.ScanPoint;
 
 public class CustomPeakShapeFitting implements PeakShapeFitting<CustomPeakShape> {
     @Override
@@ -22,6 +23,10 @@ public class CustomPeakShapeFitting implements PeakShapeFitting<CustomPeakShape>
         // is not too broad
         score *= checkPeakWidth(sample,peak,segment);
 
+        // if the peak apex is clearly above the signal level, we can relax the constraints a little bit
+        ScanPoint apex = peak.getApexPeak();
+        score *= Math.max(1, Math.sqrt((apex.getIntensity()/sample.ms1NoiseModel.getSignalLevel(apex.getScanNumber(),apex.getMass()))-1));
+
         return new CustomPeakShape(score);
 
     }
@@ -36,7 +41,7 @@ public class CustomPeakShapeFitting implements PeakShapeFitting<CustomPeakShape>
         final Range<Integer> integerRange = segment.calculateFWHM(0.15);
         int ndatapointsLeft = segment.getApexIndex() - integerRange.lowerEndpoint() + 1;
         int ndatapointsRight = integerRange.upperEndpoint() - segment.getApexIndex() + 1;
-        final NormalDistribution distribution = new NormalDistribution(3, 9);
+        final NormalDistribution distribution = new NormalDistribution(3, 4);
         return distribution.getCumulativeProbability(ndatapointsLeft) * distribution.getCumulativeProbability(ndatapointsRight);
     }
 

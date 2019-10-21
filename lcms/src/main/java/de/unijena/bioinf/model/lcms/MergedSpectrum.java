@@ -43,7 +43,6 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
             }
         }
         this.cosine = cosine;
-        System.out.println("Merged with cosine " + this.cosine);
     }
 
     // we have to do this. Otherwise, memory consumption is just too high

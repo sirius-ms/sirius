@@ -2,6 +2,8 @@ package de.unijena.bioinf.model.lcms;
 
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.set.hash.TIntHashSet;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -24,6 +26,7 @@ public class MergedPeak implements Peak {
         this.mass = (float)best.getMass();
         this.intensity = (float)best.getIntensity();
         this.sourcePeaks = list;
+        assert allFromDifferentScans(sourcePeaks);
     }
 
     public MergedPeak(MergedPeak left, MergedPeak right) {
@@ -33,6 +36,37 @@ public class MergedPeak implements Peak {
         Arrays.sort(sourcePeaks, Comparator.comparingInt(ScanPoint::getScanNumber));
         this.mass = (float)h.getMass();
         this.intensity = (float)h.getIntensity();
+        assert allFromDifferentScans(sourcePeaks);
+    }
+
+    private static boolean allFromDifferentScans(ScanPoint[] xs) {
+        final TIntHashSet set = new TIntHashSet();
+        for (ScanPoint p : xs) {
+            if (!set.add(p.getScanNumber())) {
+                return false;
+            }
+        }
+        return true;
+
+    }
+
+    protected double correlation(TDoubleArrayList bufferLeft,TDoubleArrayList bufferRight, MergedPeak other) {
+        int i=0,j=0;
+        bufferLeft.clearQuick(); bufferRight.clearQuick();
+        while (i < sourcePeaks.length && j < other.sourcePeaks.length) {
+            if (sourcePeaks[i].getScanNumber()==other.sourcePeaks[j].getScanNumber()) {
+                bufferLeft.add(sourcePeaks[i].getIntensity());
+                bufferRight.add(other.sourcePeaks[j].getIntensity());
+                ++i;++j;
+            } else if (sourcePeaks[i].getScanNumber()<other.sourcePeaks[j].getScanNumber()) {
+                ++i;
+            } else {
+                ++j;
+            }
+        }
+        if (bufferLeft.size()>=3 && bufferRight.size()>=3) {
+            return Statistics.pearson(bufferLeft.toArray(), bufferRight.toArray());
+        } else return 0d;
     }
 
     private static Peak getHightestPeak(MergedPeak left, MergedPeak right) {

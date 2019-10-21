@@ -49,7 +49,7 @@ public abstract class SiriusPlugin {
      * set to true if anything in your plugin clashs with the reduction heuristics
      * @return
      */
-    public boolean isGraphReductionForbidden(){
+    public boolean isGraphReductionForbidden(FGraph graph){
         return false;
     }
 
