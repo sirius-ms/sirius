@@ -1,6 +1,8 @@
 package de.unijena.bioinf.lcms.align;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.HierarchicalClustering;
+import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
@@ -71,10 +73,42 @@ public class Aligner {
                 return Double.compare(right.getIntensity(), left.getIntensity());
 
             });
+
+            // reject chimeric spectra
+            double lowestChimeric = Double.POSITIVE_INFINITY;
+            double highestScore = 0d;
+            double[] tics = new double[samples.size()];
+            for (int i=0; i < samples.size(); ++i) {
+                final FragmentedIon ion = f.getFeatures().get(samples.get(i));
+                if (ion.getMsMs()!=null) {
+                    lowestChimeric = Math.min(lowestChimeric, ion.getChimericPollution());
+                    tics[i] = Spectrums.calculateTIC(ion.getMsMs());
+                    highestScore = Math.max(highestScore, tics[i]*tics[i]/ion.getChimericPollution());
+                }
+            }
+            final double chimericThreshold = lowestChimeric+0.2d;
+            final double scoreThreshold = highestScore*0.75d;
+            int tot=0;
+            final HashSet<ProcessedSample> rejectedSamples = new HashSet<>();
+            for (int i=0; i < samples.size(); ++i) {
+                final FragmentedIon ion = f.getFeatures().get(samples.get(i));
+                if (ion.getMsMs()!=null) {
+                    ++tot;
+                    if (ion.getChimericPollution() > chimericThreshold && tics[i]*tics[i]/ion.getChimericPollution() < scoreThreshold) {
+                        rejectedSamples.add(samples.get(i));
+                    }
+                }
+            }
+
+            if (rejectedSamples.size()>0) {
+                System.out.println("Reject " +rejectedSamples.size() + " of " + tot + " samples");
+            }
+
             double totalInt = 0d;
             MergedSpectrum merged = null;
             final Set<PrecursorIonType> ionTypes = new HashSet<>();
             PrecursorIonType ionType=null;
+            double chimericPollution = 0d;
             for (ProcessedSample sample : samples) {
                 final FragmentedIon ion = f.features.get(sample);
                 if (Math.abs(ion.getChargeState())>1)
@@ -86,7 +120,9 @@ public class Aligner {
                 features.add(e);
                 totalInt += e.getIntensity();
 
-                final MergedSpectrum msms = ion.getMsMsScan()==null ? null : new MergedSpectrum(ion.getMsMsScan(), instance.getMs2(ion.getMsMsScan()), ion.getMsMsScan().getPrecursor());;
+                final MergedSpectrum msms;
+                if (ion.getMsMsScan()==null || rejectedSamples.contains(sample)) msms=null;
+                else msms = new MergedSpectrum(ion.getMsMsScan(), instance.getMs2(ion.getMsMsScan()), ion.getMsMsScan().getPrecursor());
 
 
                 if (merged==null) merged = msms;
@@ -105,6 +141,8 @@ public class Aligner {
                 if (!e.getIonType().isIonizationUnknown())
                     ionTypes.add(e.getIonType());
                 ionType = PrecursorIonType.unknown(e.getIonType().getCharge());
+
+                if (msms!=null) chimericPollution = Math.max(chimericPollution, ion.getChimericPollution());
             }
 
             final ArrayList<SimpleSpectrum> allMs1Spectra = new ArrayList<>();
@@ -160,7 +198,10 @@ public class Aligner {
             }
 
             double highest = collision_energies.get(collision_energies.size()-1);
-            final ConsensusFeature F = new ConsensusFeature(++featureID, features.toArray(new Feature[0]), allMs1Spectra.toArray(SimpleSpectrum[]::new), new SimpleSpectrum[]{merged.finishMerging()}, ionType, medianRet, new CollisionEnergy(lowestNonZero,highest),mass, totalInt);
+            SimpleMutableSpectrum ms2merged = new SimpleMutableSpectrum(merged.finishMerging());
+            // remove isotope peaks from the MS/MS
+            Spectrums.filterIsotopePeaks(ms2merged,new Deviation(10),0.2, 0.55,3,new ChemicalAlphabet(MolecularFormula.parseOrNull("CHNOPS").elementArray()),true);
+            final ConsensusFeature F = new ConsensusFeature(++featureID, features.toArray(new Feature[0]), allMs1Spectra.toArray(SimpleSpectrum[]::new), new SimpleSpectrum[]{new SimpleSpectrum(ms2merged)}, ionType, medianRet, new CollisionEnergy(lowestNonZero,highest),mass, totalInt,chimericPollution);
             consensusFeatures.add(F);
         }
 

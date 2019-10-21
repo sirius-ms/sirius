@@ -1,6 +1,7 @@
 import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.babelms.ms.MsFileConfig;
@@ -8,6 +9,7 @@ import de.unijena.bioinf.io.lcms.MzXMLParser;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.MemoryFileStorage;
 import de.unijena.bioinf.lcms.ProcessedSample;
+import de.unijena.bioinf.lcms.align.AlignedFeatures;
 import de.unijena.bioinf.lcms.align.Cluster;
 import de.unijena.bioinf.lcms.debuggui.Gradient;
 import de.unijena.bioinf.lcms.peakshape.GaussianShape;
@@ -298,6 +300,23 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
 
             // write correlation network
             i.detectAdductsWithGibbsSampling(c).writeToFile(i,new File("ion_network.js"));
+
+            {
+                for (AlignedFeatures s : c.getFeatures()) {
+                    if (Math.abs(s.getMass()-453.336)<0.02) {
+                        final ProcessedSample sample = s.getRepresentativeSample();
+                        long rt = s.getFeatures().get(sample).getMsMsScan().getRetentionTime();
+                        final ChromatographicPeak.Segment segment = s.getFeatures().get(sample).getSegment();
+                        List<Scan> scans = new ArrayList<>();
+                        final List<SimpleSpectrum> specs = new ArrayList<>();
+                        for (int j=segment.getFwhmStartIndex(); j <= segment.getFwhmEndIndex(); ++j) {
+                            scans.add(sample.run.getScanByNumber(segment.getPeak().getScanPointAt(j).getScanNumber()).get());
+                            specs.add(sample.storage.getScan(scans.get(scans.size()-1)));
+                        }
+                        System.out.println("-----");
+                    }
+                }
+            }
 
             final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(c);
             for (ProcessedSample s : i.getSamples()) s.storage.close();

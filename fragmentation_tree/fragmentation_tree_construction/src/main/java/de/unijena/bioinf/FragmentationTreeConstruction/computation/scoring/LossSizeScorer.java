@@ -33,8 +33,11 @@ import java.util.List;
 
 public class LossSizeScorer implements LossScorer, PeakPairScorer, MolecularFormulaScorer{
 
-    public static final DensityFunction LEARNED_DISTRIBUTION = LogNormalDistribution.withMeanAndSd(4.057753844479435d, 0.6386804182255676d);
-    public static final double LEARNED_NORMALIZATION = -5.860753214730718d;
+    public static final double LEARNED_MEAN = 4.022526672023266;
+    public static final double LEARNED_VARIANCE = 0.3124649410213113d;
+    public static final DensityFunction LEARNED_DISTRIBUTION = LogNormalDistribution.withMeanAndSd(LEARNED_MEAN, Math.sqrt(LEARNED_VARIANCE));
+
+    public static final double LEARNED_NORMALIZATION = -5.310349962255842d;
 
     private DensityFunction distribution;
     private double normalization;

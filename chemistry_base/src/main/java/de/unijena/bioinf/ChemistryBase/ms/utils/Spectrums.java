@@ -464,6 +464,11 @@ public class Spectrums {
         filterIsotpePeaks(spec, deviation, 0.2, 0.55, 3, new ChemicalAlphabet()); //a fixed 0.45 ratio would filter about 95% of CHONPS in 100-800Da
     }
 
+
+    public static <P extends Peak, S extends MutableSpectrum<P>> void filterIsotpePeaks(S spec, Deviation deviation, double maxIntensityRatioAt0, double maxIntensityRatioAt1000, int maxNumberOfIsotopePeaks, ChemicalAlphabet alphabet) {
+        filterIsotopePeaks(spec, deviation, maxIntensityRatioAt0, maxIntensityRatioAt1000, maxNumberOfIsotopePeaks, alphabet,false);
+    }
+
     /**
      * remove isotope peaks from spectrum
      *
@@ -473,10 +478,9 @@ public class Spectrums {
      * @param maxIntensityRatioAt1000 intensity ratio at 1000 Da above which peaks are treated as independent, non-isotope peaks
      * @param maxNumberOfIsotopePeaks maximum number of iosotope peaks
      * @param alphabet                {@link ChemicalAlphabet} which is used to compute the mass windows in which isotope peaks are expected.
-     * @param <P>
-     * @param <S>
+     * @param checkForConsistentIsotopeAssignment if true, only remove isotopes of peaks when all peaks with higher intensity also have an isotope pattern
      */
-    public static <P extends Peak, S extends MutableSpectrum<P>> void filterIsotpePeaks(S spec, Deviation deviation, double maxIntensityRatioAt0, double maxIntensityRatioAt1000, int maxNumberOfIsotopePeaks, ChemicalAlphabet alphabet) {
+    public static <P extends Peak, S extends MutableSpectrum<P>> void filterIsotopePeaks(S spec, Deviation deviation, double maxIntensityRatioAt0, double maxIntensityRatioAt1000, int maxNumberOfIsotopePeaks, ChemicalAlphabet alphabet, boolean checkForConsistentIsotopeAssignment) {
         final PeriodicTable pt = PeriodicTable.getInstance();
 
         final SimpleMutableSpectrum byInt = new SimpleMutableSpectrum(spec);
@@ -494,6 +498,7 @@ public class Spectrums {
                 double upper = range.upperEndpoint().doubleValue();
 
                 boolean isotopePeakFound = false;
+                boolean atLeastOneIsotopePeakFound = false;
                 int isoIndex = index + 1;
                 while (isoIndex < spec.size()) {
                     final double mass = spec.getMzAt(isoIndex);
@@ -505,6 +510,7 @@ public class Spectrums {
                             //remove peak (multiple peak are allowed to be in the same window and removed)
                             toDelete.add(isoIndex);
                             isotopePeakFound = true;
+                            atLeastOneIsotopePeakFound=true;
                         }
                         ++isoIndex;
                     } else {
@@ -521,6 +527,9 @@ public class Spectrums {
                         }
                     }
                 }
+
+                if (checkForConsistentIsotopeAssignment && !atLeastOneIsotopePeakFound)
+                    break;
 
 
                 for (int j = 0; j < toDelete.size(); j++) {
@@ -781,7 +790,6 @@ public class Spectrums {
         }
         return new SimpleSpectrum(buf);
     }
-
 
     public interface Transformation<P1 extends Peak, P2 extends Peak> {
         P2 transform(P1 input);
