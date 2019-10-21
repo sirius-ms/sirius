@@ -38,6 +38,7 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         this.compoundIndex = compoundIndex;
         this.containerLock = new ReentrantLock();
         this.ionMass = ionMass;
+        this.ionType = ionType;
     }
 
     public String getDirectoryName() {
