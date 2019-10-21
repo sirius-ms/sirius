@@ -22,6 +22,9 @@ public class FragmentedIon extends IonGroup {
     protected Quality ms2Quality;
     protected Polarity polarity;
 
+    protected List<ChromatographicPeak> chimerics;
+    private double chimericPollution;
+
     public FragmentedIon(Polarity polarity, Scan ms2Scan, CosineQuerySpectrum msms, Quality ms2Quality, ChromatographicPeak chromatographicPeak,ChromatographicPeak.Segment segment) {
         super(chromatographicPeak, segment, new ArrayList<>());
         this.polarity = polarity;
@@ -31,7 +34,11 @@ public class FragmentedIon extends IonGroup {
         this.inSourceFragments = new ArrayList<>();
         this.ms2Quality = ms2Quality;
         this.alternativeIonTypes = Collections.emptySet();
+        this.chimerics = new ArrayList<>();
+    }
 
+    public void setMs2Quality(Quality ms2Quality) {
+        this.ms2Quality = ms2Quality;
     }
 
     public int getPolarity() {
@@ -125,5 +132,21 @@ public class FragmentedIon extends IonGroup {
 
     public Scan getMsMsScan() {
         return ms2Scan;
+    }
+
+    public void setChimerics(List<ChromatographicPeak> chimerics) {
+        this.chimerics = chimerics;
+    }
+
+    public List<ChromatographicPeak> getChimerics() {
+        return this.chimerics;
+    }
+
+    public void setChimericPollution(double chimericPollution) {
+        this.chimericPollution = chimericPollution;
+    }
+
+    public double getChimericPollution() {
+        return chimericPollution;
     }
 }

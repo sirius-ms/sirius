@@ -63,8 +63,8 @@ public class ChromatogramCache {
             for (ChromatographicPeak p : peaks) {
                 int i = p.findScanNumber(dp.getScanNumber());
                 if (i<0) continue;
-                final double mzDiff = dp.getMass() - p.getMzAt(i);
-                final double intDiff = dp.getIntensity() - p.getIntensityAt(i);
+                final double mzDiff = Math.abs(dp.getMass() - p.getMzAt(i));
+                final double intDiff = Math.abs(dp.getIntensity() - p.getIntensityAt(i));
                 if (mzDiff < 1e-8 && intDiff < 1e-3)
                     return p;
             }
