@@ -741,11 +741,13 @@ public class Spectrums {
             }
         }
 
-        final Set<PrecursorIonType> set = adductDiffs.keySet();
+        Set<PrecursorIonType> set = adductDiffs.keySet();
 
         // if we removed intrinsic in the list, add it back again
-        if (intrinsic>=0 && protonated>=0 && set.contains(protonation))
+        if (intrinsic>=0 && protonated>=0 && set.contains(protonation)) {
+            set = new HashSet<>(set);
             set.add(intrinsicType);
+        }
 
         return set.toArray(new PrecursorIonType[0]);
     }
