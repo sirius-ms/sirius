@@ -1,5 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
+import java.util.Stack;
+
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
@@ -43,6 +45,8 @@ public class CLPModel {
 
         void CLPModel_addSparseRow(Pointer self, Memory elems, Memory indices, int len, double lb, double ub);
 
+        void CLPModel_addSparseRows(Pointer self, int numrows, int rowstarts[], double elems[], int indices[], int len, double lb[], double ub[]);
+
         int CLPModel_solve(Pointer self); // returns ReturnStatus
 
         Pointer CLPModel_getColSolution(Pointer self);
@@ -57,6 +61,11 @@ public class CLPModel {
     private Memory obj_mem;
     private Memory mem_lb;
     private Memory mem_ub;
+    private Stack<Double> row_elems = null;
+    private Stack<Integer> row_indices = null;
+    private Stack<Double> row_lb = null;
+    private Stack<Double> row_ub = null;
+    private Stack<Integer> row_starts = null;
 
     CLPModel(int ncols, int obj_sense) {
         this.ncols = ncols;
@@ -112,7 +121,23 @@ public class CLPModel {
 
     }
 
+    void addSparseRows(int rowstarts[], double elems[], int indices[], double lb[], double ub[]){
+        assert rowstarts.length == lb.length && lb.length == ub.length;
+        assert elems.length == indices.length;
+        int numrows = rowstarts.length;
+        int len = elems.length;
+        CLibrary.INSTANCE.CLPModel_addSparseRows(self, numrows, rowstarts, elems, indices, len, lb, ub);
+    }
+
     int solve() {
+        if (row_elems != null){
+            row_starts.pop();
+            addSparseRows(row_starts.stream().mapToInt(i->i).toArray(),
+                          row_elems.stream().mapToDouble(i->i).toArray(),
+                          row_indices.stream().mapToInt(i->i).toArray(),
+                          row_lb.stream().mapToDouble(i->i).toArray(),
+                          row_ub.stream().mapToDouble(i->i).toArray());
+        }
         int return_code = CLibrary.INSTANCE.CLPModel_solve(self);
         return return_code;
     }
@@ -128,5 +153,31 @@ public class CLPModel {
     void dispose() {
         // is it necessary to clean up Memory objects?
         CLibrary.INSTANCE.CLPModel_dtor(self);
+    }
+
+    /////////////////////////
+    // JAVA only functions //
+    /////////////////////////
+
+    // does not call CLibrary addSparseRow everytime
+    // instead, stores rows and calls addSparseRows() add the end
+    void addSparseRowCached(double elems[], int indices[], double lb, double ub){
+        if (row_elems == null){
+            row_elems = new Stack<Double>();
+            row_indices = new Stack<Integer>();
+            row_lb = new Stack<Double>();
+            row_ub = new Stack<Double>();
+            row_starts = new Stack<Integer>();
+            row_starts.push(0);
+        }
+
+        for (int i = 0; i < elems.length; ++i){
+            row_elems.push(elems[i]);
+            row_indices.push(indices[i]);
+        }
+
+        row_lb.push(lb);
+        row_ub.push(ub);
+        row_starts.push(row_starts.peek() + elems.length);
     }
 }
