@@ -82,6 +82,33 @@ public class FTreeMetricsHelper {
         return fragmentScoring.get(measuredIonRoot).get(Recalibrated.PENALTY_KEY);
     }
 
+    public double getMedianMassDeviation() {
+        return Double.NaN;
+//        FragmentAnnotation<Peak> peakAno = tree.getOrCreateFragmentAnnotation(Peak.class);
+//        FragmentAnnotation<AnnotatedPeak> annoPeakAnno = ft.getFragmentAnnotationOrNull(AnnotatedPeak.class);
+
+    }
+
+    /*private static void calculateDeviatonMassInPpm(Fragment treeNode, Ionization ionization, PeakAnnotation<Peak> peakAno, PeakAnnotation<AnnotatedPeak> annoPeakAnno, ArrayList<Double> massDeviations) {
+        final double relativToPpm = 1000 * 1000;
+
+        final double peakMass;
+        if (peakAno.get(treeNode) == null) {
+            peakMass = ionization.addToMass(treeNode.getFormula().getMass());
+        } else {
+            if (annoPeakAnno != null)
+                peakMass = annoPeakAnno.get(treeNode).getMass();
+            else
+                peakMass = peakAno.get(treeNode).getMass();
+        }
+
+
+        if (ionization != null && treeNode != null) {
+            Double massDeviation = ((treeNode.getFormula().getMass() - peakMass + ionization.getMass()) / treeNode.getFormula().getMass()) * relativToPpm;
+            massDeviations.add(massDeviation);
+        }
+    }*/
+
 
     // static helper methods
     public static double getSiriusScore(FTree tree) {
