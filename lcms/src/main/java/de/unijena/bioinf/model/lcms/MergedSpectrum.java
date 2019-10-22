@@ -89,7 +89,7 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
                 if (p.getMass() > (this.precursor.getMass()+10))
                     continue;
                 if (p.getSourcePeaks().length >= min) {
-                    buf.addPeak(p.getAverageMass(), p.getHighestIntensity());
+                    buf.addPeak(p.getRobustAverageMass(noiseLevel), p.sumIntensity());
                 } else if (p.getIntensity() > 3*noiseLevel) {
                     for (ScanPoint q : p.getSourcePeaks()) {
                         if (q.getScanNumber()==mostIntensive) {
@@ -102,7 +102,7 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
         } else {
             for (MergedPeak peak : peaks) {
                 if (peak.getIntensity()>2*noiseLevel && peak.getMass() < precursor.getMass()+10) {
-                    buf.addPeak(peak);
+                    buf.addPeak(peak.getRobustAverageMass(noiseLevel),peak.sumIntensity());
                 }
             }
         }
