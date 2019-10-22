@@ -100,9 +100,46 @@ public class MergedPeak implements Peak {
         return intensity;
     }
 
-    public double getAverageMass() {
-        final double[] xs = new double[sourcePeaks.length];
-        for (int k=0; k < sourcePeaks.length; ++k) xs[k] = sourcePeaks[k].getMass();
-        return Statistics.robustAverage(xs);
+    public double getRobustAverageMass(double noiseLevel) {
+        if (sourcePeaks.length==1) return sourcePeaks[0].getMass();
+        ScanPoint[] copy = sourcePeaks.clone();
+        Arrays.sort(copy,Comparator.comparingDouble(ScanPoint::getIntensity).reversed());
+        double threshold = Math.min(4*noiseLevel, copy[0].getIntensity()*0.5d);
+        int i=0;
+        for (; i < copy.length; ++i)
+            if (copy[i].getIntensity()<threshold) {
+                break;
+            }
+        if (i<=3) return weightedAverage(copy,i);
+        Arrays.sort(copy,0,i, Comparator.comparingDouble(ScanPoint::getMass));
+        int perc = (int)Math.floor(i*0.25);
+        double avg = 0d, ints=0d;
+        for (int k=perc; k < i-perc; ++k) {
+            avg += copy[k].getMass()*copy[k].getIntensity();
+            ints += copy[k].getIntensity();
+        }
+        assert ints>0;
+        return avg/(ints);
+
+    }
+
+    public double weightedAverage() {
+        return weightedAverage(sourcePeaks,sourcePeaks.length);
+    }
+
+    private double weightedAverage(ScanPoint[] xs, int n) {
+        double m=0d, i=0d;
+        for (int k=0; k < n; ++k) {
+            m += xs[k].getIntensity()*xs[k].getMass();
+            i+=xs[k].getIntensity();
+        }
+        return m/i;
+    }
+
+    public double sumIntensity() {
+        double i = 0d;
+        for (Peak p : sourcePeaks)
+            i += p.getIntensity();
+        return i;
     }
 }

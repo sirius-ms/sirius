@@ -701,10 +701,28 @@ public class Spectrums {
             heavierType = PrecursorIonType.getPrecursorIonType("[M]-");
         }
 
+        // remove intrinsical charged from list
+        int intrinsic = -1, protonated = -1, numberOfIons = ionTypes.length;
+        PrecursorIonType protonation = null, intrinsicType = null;
+        for (int k=0; k < ionTypes.length; ++k) {
+            if (ionTypes[k].isIntrinsicalCharged()) {
+                intrinsic = k;
+                intrinsicType = ionTypes[k];
+            } else if (ionTypes[k].isPlainProtonationOrDeprotonation()) {
+                protonated = k;
+                protonation = ionTypes[k];
+            }
+        }
+        if (intrinsic >= 0 && protonated >= 0) {
+            // remove intrinsic from list
+            ionTypes[intrinsic] = ionTypes[ionTypes.length-1];
+            --numberOfIons;
+        }
+
         HashMap<PrecursorIonType, Set<PrecursorIonType>> adductDiffs = new HashMap<>();
-        for (int i = 0; i < ionTypes.length; i++) {
+        for (int i = 0; i < numberOfIons; i++) {
             final PrecursorIonType removedIT = ionTypes[i];
-            for (int j = 0; j < ionTypes.length; j++) {
+            for (int j = 0; j < numberOfIons; j++) {
                 final PrecursorIonType addedIT = ionTypes[j];
                 if (i == j) continue;
                 if (removedIT.equals(lighterType) && addedIT.equals(heavierType))
@@ -724,6 +742,11 @@ public class Spectrums {
         }
 
         final Set<PrecursorIonType> set = adductDiffs.keySet();
+
+        // if we removed intrinsic in the list, add it back again
+        if (intrinsic>=0 && protonated>=0 && set.contains(protonation))
+            set.add(intrinsicType);
+
         return set.toArray(new PrecursorIonType[0]);
     }
 
