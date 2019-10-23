@@ -7,7 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.PossibleIonModes;
 import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
-import de.unijena.bioinf.fingerid.net.WebAPI;
+import de.unijena.bioinf.sirius.IsotopePatternHandling;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.CheckBoxListItem;
@@ -18,8 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -66,6 +64,7 @@ public class SearchProfilePanel extends JPanel {
     final JCheckboxListPanel<String> ionizationPanel;
     public final JComboBox<String> formulaCombobox;
     private JComboBox<Instruments> instrumentCB;
+    private JComboBox<IsotopePatternHandling> isoHandlingCB;
     private JSpinner ppmSpinner;
     private SpinnerNumberModel snm;
     final JSpinner candidatesSpinner;
@@ -89,11 +88,21 @@ public class SearchProfilePanel extends JPanel {
         instrumentCB = new JComboBox<>(instruments);
         add(new TwoCloumnPanel(new JLabel("instrument"), instrumentCB));
 
+
         snm = new SpinnerNumberModel(10, 0.25, 20, 0.25);
         ppmSpinner = new JSpinner(this.snm);
         ppmSpinner.setMinimumSize(new Dimension(70, 26));
         ppmSpinner.setPreferredSize(new Dimension(70, 26));
         add(new TwoCloumnPanel(new JLabel("ppm"), ppmSpinner));
+
+        isoHandlingCB = new JComboBox<>(IsotopePatternHandling.values());
+        isoHandlingCB.setToolTipText("<html><p>How to handle isotope pattern data. Use" +
+                "  <br>'<strong>score</strong>' to use them for ranking (default) or" +
+                "  <br>'<strong>filter</strong>' if you just want to remove candidates with bad isotope pattern. With" +
+                "  <br>'<strong>both</strong>' you can use isotopes for filtering and scoring. Use" +
+                "  <br>'<strong>omit</strong>' to ignore isotope pattern.</p></html>");
+        isoHandlingCB.setSelectedItem(IsotopePatternHandling.score);
+        add(new TwoCloumnPanel(new JLabel("Isotope Handling"), isoHandlingCB));
 
         final SpinnerNumberModel candidatesNumberModel = new SpinnerNumberModel(10, 1, 1000, 1);
         candidatesSpinner = new JSpinner(candidatesNumberModel);
@@ -200,5 +209,9 @@ public class SearchProfilePanel extends JPanel {
 
     public boolean restrictToOrganics() {
         return formulaCombobox.getSelectedIndex() == 2; // TODO: add checkbox instead
+    }
+
+    public IsotopePatternHandling getIsotopeHandling() {
+        return (IsotopePatternHandling) isoHandlingCB.getSelectedItem();
     }
 }

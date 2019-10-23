@@ -31,6 +31,7 @@ import de.unijena.bioinf.fingerid.FingerIDComputationPanel;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.sirius.IsotopePatternHandling;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.sirius.gui.compute.jjobs.FingerIDSearchGuiJob;
@@ -277,6 +278,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.EMPTY_LIST;
         final double ppm = searchProfilePanel.getPpm();
         final int candidates = searchProfilePanel.getNumberOfCandidates();
+        final IsotopePatternHandling isoHandling = searchProfilePanel.getIsotopeHandling();
         ////////////////////////////////////////////////////////////////
 
         // CHECK ILP SOLVER
@@ -316,7 +318,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                                 new FormulaConstraints(constraints),
                                 Collections.unmodifiableList(elementsToAutoDetect),
                                 searchProfilePanel.getPossibleIonModes(),
-                                csiOptions.getPossibleAdducts()
+                                csiOptions.getPossibleAdducts(),
+                                isoHandling
                         );
                         Jobs.submit(prepareJob);
 

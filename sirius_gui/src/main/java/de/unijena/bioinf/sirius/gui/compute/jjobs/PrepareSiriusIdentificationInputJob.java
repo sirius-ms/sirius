@@ -34,8 +34,9 @@ public class PrepareSiriusIdentificationInputJob extends BasicJJob<MutableMs2Exp
     final boolean onlyOrganic;
     final SearchableDatabase searchableDatabase;
     final SearchProfilePanel.Instruments instrument; // TODO: just a workaround
+    final IsotopePatternHandling isoHandling;
 
-    public PrepareSiriusIdentificationInputJob(ExperimentContainer ec, SearchProfilePanel.Instruments instrument, double ppm, boolean onlyOrganic, SearchableDatabase db, final FormulaConstraints constraints, final List<Element> elementsToAutoDetect, PossibleIonModes possibleIonModes, PossibleAdducts possibleAdducts) {
+    public PrepareSiriusIdentificationInputJob(ExperimentContainer ec, SearchProfilePanel.Instruments instrument, double ppm, boolean onlyOrganic, SearchableDatabase db, final FormulaConstraints constraints, final List<Element> elementsToAutoDetect, PossibleIonModes possibleIonModes, PossibleAdducts possibleAdducts, IsotopePatternHandling isoHandling) {
         super(JobType.CPU);
         this.sirius = Jobs.getSiriusByProfile(instrument.profile);
         this.name = ec.getGUIName();
@@ -48,7 +49,7 @@ public class PrepareSiriusIdentificationInputJob extends BasicJJob<MutableMs2Exp
         this.onlyOrganic = onlyOrganic;
         this.searchableDatabase = db;
         this.instrument = instrument;
-
+        this.isoHandling = isoHandling;
     }
 
     @Override
@@ -101,7 +102,7 @@ public class PrepareSiriusIdentificationInputJob extends BasicJJob<MutableMs2Exp
         sirius.setFormulaConstraints(exp, constraints);
         sirius.setAllowedMassDeviation(exp, massDev);
         sirius.enableRecalibration(exp, true); //todo maybe as gui option
-        sirius.setIsotopeMode(exp, IsotopePatternHandling.both); //todo maybe as gui option
+        sirius.setIsotopeMode(exp, isoHandling);
 
         if (exp.getMolecularFormula() == null) {
             if (searchableDatabase != null) {
