@@ -20,6 +20,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Ms2CosineSegmenter {
 
@@ -118,23 +119,16 @@ public class Ms2CosineSegmenter {
                         window = isolationWindow;
                     } else window = s.getPrecursor().getIsolationWindow();
                     // we might also see chimerics. So let us check that now
-                    List<ChromatographicPeak> chromatographicPeaks = new ChimericDetector().searchChimerics(sample, lastMs1, s.getPrecursor(), window, F);
+                    List<ChimericDetector.Chimeric> chromatographicPeaks = new ChimericDetector(window).searchChimerics(sample, lastMs1, s.getPrecursor(), F);
                     // calculate how much percent of the intensity which is gonna fragment is chimeric
-                    double chimericPollution = 0d;
                     double precursorIntensity = 0d;
                     int k = F.findScanNumber(lastMs1.getIndex());
                     if (k >= 0) {
                         precursorIntensity = F.getIntensityAt(k);
                     } else assert false;
-                    for (ChromatographicPeak peak : chromatographicPeaks) {
-                        k = peak.findScanNumber(lastMs1.getIndex());
-                        if (k >= 0) {
-                            chimericPollution += (peak.getIntensityAt(k) / precursorIntensity);
-                        } else assert false;
-                    }
                     // associate the MS2 scan with the detected feature. We might later see other MS2 scans of the same
                     // feature.
-                    scansPerPeak.computeIfAbsent(F, (x) -> new ArrayList<Ms2Scan>()).add(new Ms2Scan(precursorIntensity, lastMs1, s, F, new HashSet<>(chromatographicPeaks), chimericPollution));
+                    scansPerPeak.computeIfAbsent(F, (x) -> new ArrayList<Ms2Scan>()).add(new Ms2Scan(precursorIntensity, lastMs1, s, F, chromatographicPeaks.stream().map(x->x.peak).collect(Collectors.toSet()), chromatographicPeaks.stream().mapToDouble(x->x.estimatedIntensityThatPassesFilter).sum()));
                 }
             } else {
                 lastMs1 = s;
@@ -159,7 +153,7 @@ public class Ms2CosineSegmenter {
             double bestChimericScore = 0d;
             double lowestChimeric = Double.POSITIVE_INFINITY;
             for (Ms2Scan ms2Scan : entry.getValue()) {
-                bestChimericScore = Math.max(bestChimericScore, ms2Scan.precursorIntensity*ms2Scan.precursorIntensity/Math.max(0.1,ms2Scan.chimericPollution));
+                bestChimericScore = Math.max(bestChimericScore, ms2Scan.precursorIntensity*Math.sqrt(ms2Scan.precursorIntensity)/Math.max(0.1,ms2Scan.chimericPollution));
                 lowestChimeric = Math.min(lowestChimeric, ms2Scan.chimericPollution);
             }
             final double chimericThreshold = lowestChimeric+0.2d;
@@ -167,7 +161,7 @@ public class Ms2CosineSegmenter {
 
             for (Ms2Scan ms2Scan : entry.getValue()) {
                 // if this scan has a high chimeric pollution while the others do not, reject it
-                if (ms2Scan.chimericPollution > chimericThreshold && (ms2Scan.precursorIntensity*ms2Scan.precursorIntensity/Math.max(0.1,ms2Scan.chimericPollution) < scoreThreshold))
+                if (ms2Scan.chimericPollution > chimericThreshold && (ms2Scan.precursorIntensity*Math.sqrt(ms2Scan.precursorIntensity)/Math.max(0.1,ms2Scan.chimericPollution) < scoreThreshold))
                 {
                     LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("Reject spectrum because of high chimeric pollution.");
                     continue;

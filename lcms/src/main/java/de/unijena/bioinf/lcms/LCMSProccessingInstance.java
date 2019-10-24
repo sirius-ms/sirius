@@ -4,7 +4,6 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -74,10 +73,6 @@ public class LCMSProccessingInstance {
 
     public FragmentedIon createMs2Ion(ProcessedSample sample, MergedSpectrum merged, MutableChromatographicPeak peak, ChromatographicPeak.Segment segment) {
         final int id = numberOfMs2Scans.incrementAndGet();
-        IsolationWindow window = merged.getPrecursor().getIsolationWindow();
-        if (window.getWindowWidth()<=0 || !Double.isFinite(window.getWindowWidth())) {
-            window = sample.getEstimatedIsolationWindow();
-        }
         final SimpleSpectrum spec = merged.finishMerging();
         final SimpleSpectrum spec2 = Spectrums.extractMostIntensivePeaks(spec, 8, 100);
         final Scan scan = new Scan(id, merged.getScans().get(0).getPolarity(),peak.getRetentionTimeAt(segment.getApexIndex()), merged.getScans().get(0).getCollisionEnergy(),spec.size(), Spectrums.calculateTIC(spec), merged.getPrecursor());
@@ -130,7 +125,6 @@ public class LCMSProccessingInstance {
                 run, noiseStatisticsMs1.getLocalNoiseModel(), noiseStatisticsMs2.getGlobalNoiseModel(),
                 new ChromatogramCache(), storage
         );
-        sample.estimatedIsolationWindow = new Ms2CosineSegmenter().learnIsolationWindow(this,sample);
         synchronized (this) {
             this.samples.add(sample);
             this.storages.put(sample, storage);

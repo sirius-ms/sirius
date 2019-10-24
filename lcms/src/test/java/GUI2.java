@@ -1,6 +1,7 @@
 import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
@@ -259,18 +260,23 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
     public static void main(String[] args) {
         final File mzxmlFile = new File(
                 //"/home/kaidu/analysis/example"
-               // "/home/kaidu/analysis/canopus/mice/raw/cecum"
+                //"/home/kaidu/analysis/canopus/mice/raw/cecum"
                 //"/home/kaidu/analysis/example"
-                "/home/kaidu/data/raw/rosmarin"
+                //"/home/kaidu/data/raw/rosmarin"
                 //"/home/kaidu/analysis/canopus/arabidobsis"
+                "/home/kaidu/data/raw/euphorbiaceae/raw"
                 );
         MemoryFileStorage storage= null;
         try {
             final LCMSProccessingInstance i = new LCMSProccessingInstance();
+            i.setDetectableIonTypes(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
             i.getMs2Storage().keepInMemory();
+            int k=0;
             for (File f : mzxmlFile.listFiles()) {
                 if (!f.getName().endsWith(".mzXML"))
                     continue;
+                if (++k > 20)
+                    break;
                 storage = new MemoryFileStorage();
                 final LCMSRun parse = new MzXMLParser().parse(f, storage);
                 final ProcessedSample sample = i.addSample(parse, storage);
