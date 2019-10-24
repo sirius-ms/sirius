@@ -7,14 +7,14 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.gui.compute.FingerIdDialog;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.gui.compute.FingerIdDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -66,7 +66,7 @@ public class ComputeCSIAction extends AbstractAction {
             return;
 
 
-        final FingerIdDialog dialog = new FingerIdDialog(MF, MF.getCsiFingerId(), true, false);
+        final FingerIdDialog dialog = new FingerIdDialog(MF, Mc .getCsiFingerId(), true, false);
         final int returnState = dialog.run();
         final SearchableDatabase db = dialog.getSearchDb();
         if (returnState == FingerIdDialog.COMPUTE_ALL) {
