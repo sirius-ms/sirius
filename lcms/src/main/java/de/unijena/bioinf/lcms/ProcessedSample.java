@@ -1,7 +1,6 @@
 package de.unijena.bioinf.lcms;
 
 import com.google.common.collect.Range;
-import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.lcms.noise.NoiseModel;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.lcms.quality.QualityAnnotation;
@@ -33,8 +32,6 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
     protected final Annotations<DataAnnotation> annotations;
     protected UnivariateFunction recalibrationFunction;
     protected double maxRT;
-    protected IsolationWindow estimatedIsolationWindow;
-
     public final ArrayList<FragmentedIon> ions;
     public final ArrayList<FragmentedIon> gapFilledIons;
     public final ArrayList<FragmentedIon> otherIons; // any ions used for alignment solely
@@ -168,7 +165,4 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
         return annotations;
     }
 
-    public IsolationWindow getEstimatedIsolationWindow() {
-        return estimatedIsolationWindow;
-    }
 }

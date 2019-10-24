@@ -1,5 +1,6 @@
 package de.unijena.bioinf.lcms;
 
+import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -16,7 +17,27 @@ import java.util.Optional;
 
 public class ChimericDetector {
 
-    public List<ChromatographicPeak> searchChimerics(ProcessedSample sample, Scan ms1Scan, Precursor precursor, IsolationWindow isolationWindow, ChromatographicPeak ms1Feature) {
+    protected IsolationWindow isolationWindow;
+    protected NormalDistribution guessedFilter;
+
+    public ChimericDetector(IsolationWindow isolationWindow) {
+        this.isolationWindow = isolationWindow;
+        final double window = isolationWindow.getWindowWidth();
+        final double offset = isolationWindow.getWindowOffset();
+        this.guessedFilter = new NormalDistribution(offset,(window*0.5)*(window*0.5));
+    }
+
+    public static class Chimeric {
+        public final ChromatographicPeak peak;
+        public final double estimatedIntensityThatPassesFilter;
+
+        public Chimeric(ChromatographicPeak peak, double estimatedIntensityThatPassesFilter) {
+            this.peak = peak;
+            this.estimatedIntensityThatPassesFilter = estimatedIntensityThatPassesFilter;
+        }
+    }
+
+    public List<Chimeric> searchChimerics(ProcessedSample sample, Scan ms1Scan, Precursor precursor, ChromatographicPeak ms1Feature) {
         final Optional<ChromatographicPeak.Segment> segment = ms1Feature.getSegmentForScanId(ms1Scan.getIndex());
         if (segment.isEmpty()) {
             throw new IllegalArgumentException("MS1 feature does not contain MS1 scan");
@@ -45,10 +66,13 @@ public class ChimericDetector {
         final double ms1Mass = scan.getMzAt(mostIntensive);
         final CorrelatedPeakDetector detector = new CorrelatedPeakDetector(Collections.emptySet());
         // now add all other peaks as chimerics
-        final ArrayList<ChromatographicPeak> chimerics = new ArrayList<>();
+        final ArrayList<Chimeric> chimerics = new ArrayList<>();
         final double signalLevel = scan.getIntensityAt(mostIntensive)*0.25;
+        final double norm = guessedFilter.getDensity(offset);
         for (int k=bgindex; k < scan.size() && scan.getMzAt(k) <= to; ++k) {
-            if (k!=mostIntensive && scan.getIntensityAt(k)>signalLevel) {
+            final double mzdiff = scan.getMzAt(k)-ms1Mass;
+            final double possInt = scan.getIntensityAt(k)*guessedFilter.getDensity(mzdiff)/norm;
+            if (k!=mostIntensive && possInt>signalLevel) {
                 // build a mass trace
                 Optional<ChromatographicPeak> chim = sample.builder.detectExact(ms1Scan, scan.getMzAt(k));
                 if (chim.isPresent()) {
@@ -61,7 +85,7 @@ public class ChimericDetector {
                         // ignore this peak
                         continue;
                     } else {
-                        chimerics.add(chim.get());
+                        chimerics.add(new Chimeric(chim.get(), possInt));
                     }
                 }
             }

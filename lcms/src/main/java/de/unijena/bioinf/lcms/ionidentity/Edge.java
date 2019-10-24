@@ -15,6 +15,7 @@ class Edge {
     public Edge reverse() {
         final Edge e = new Edge(to,from,type,toType,fromType);
         e.cor = cor.invert();
+        e.totalNumberOfCorrelatedPeaks = totalNumberOfCorrelatedPeaks;
         return e;
     }
 
@@ -42,6 +43,7 @@ class Edge {
     Type type;
 
     CorrelationGroup cor;
+    int totalNumberOfCorrelatedPeaks;
 
     protected PrecursorIonType fromType, toType;
 
