@@ -190,7 +190,8 @@ public class CorrelatedPeakDetector {
     }
 
     private void detectAdductsAndInSourceFor(ProcessedSample sample, FragmentedIon ion, TDoubleArrayList alreadyAnnotatedMzs) {
-        final List<PrecursorIonType> adductTypes = this.detectableIonTypes.stream().filter(x->!x.isIonizationUnknown() && (x.getCharge() * ion.getPolarity())>0).collect(Collectors.toList());
+        final List<PrecursorIonType> adductTypes = this.detectableIonTypes.stream().filter(x->!x.isIonizationUnknown() && !x.isIntrinsicalCharged() && (x.getCharge() * ion.getPolarity())>0).collect(Collectors.toList());
+
         final ArrayList<PrecursorIonType> detectedIonTypes = new ArrayList<>(), possibleIonTypes = new ArrayList<>();
         final ArrayList<CorrelatedIon> adducts = new ArrayList<>();
         ScanPoint scanPoint = ion.getPeak().getScanPointAt(ion.getSegment().getApexIndex());

@@ -156,4 +156,13 @@ public class AlignedFeatures {
         double rtic = r==null ? 0 : r.getTIC();
         return new AlignedFeatures(Statistics.robustAverage(masses.toArray()), Statistics.robustAverage(rts.toArray()), ltic>rtic? representativeFeature : otherSample , copy, rt, otherSample.getRecalibratedRT(other.getRetentionTime()));
     }
+
+    public int getNumberOfIntensiveFeatures() {
+        int count=0;
+        for (var x : features.entrySet()) {
+            if (x.getValue().getIntensity() > x.getKey().ms1NoiseModel.getSignalLevel(x.getValue().getSegment().getApexScanNumber(),x.getValue().getMass()))
+                ++count;
+        }
+        return count;
+    }
 }

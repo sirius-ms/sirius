@@ -15,7 +15,7 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -23,6 +23,11 @@ import java.io.IOException;
 import java.util.*;
 
 public class IonNetwork {
+
+    public static void main(String[] args) {
+         System.out.println(PrecursorIonType.getPrecursorIonType("[M + C3H8O + H]+").getModificationMass() -  PrecursorIonType.getPrecursorIonType("[M + C4H6N2 + H]+").getModificationMass());
+        System.out.println(PrecursorIonType.getPrecursorIonType("[M + H]+").getModificationMass() -  PrecursorIonType.getPrecursorIonType("[M + Na]+").getModificationMass());
+    }
 
     protected ArrayList<IonNode> nodes;
 
@@ -157,31 +162,28 @@ public class IonNetwork {
                         }
                     }
                 }
-                PrecursorIonType ionTypeLeft = null, ionTypeRight = null;
+                final HashMap<Pair<PrecursorIonType,PrecursorIonType>,List<CorrelatedIon>> lnks = new HashMap<>();
                 for (ImmutablePair<ProcessedSample, CorrelatedIon> pair : link.ions) {
-                    if (ionTypeLeft == null) {
-                        ionTypeLeft = pair.right.correlation.getLeftType();
-                        ionTypeRight = pair.right.correlation.getRightType();
-                    } else {
-                        if (!ionTypeLeft.equals(pair.right.correlation.getLeftType()) || !ionTypeRight.equals(pair.right.correlation.getRightType())) {
-                            LoggerFactory.getLogger(IonNetwork.class).warn("Strange inconsistency in adduct detection: Two different explanations for the same edge: " + ionTypeLeft.toString() + " -> " + ionTypeRight.toString() + " and " + pair.right.correlation.getLeftType() + " -> " + pair.right.correlation.getRightType());
-                        }
-                    }
+                    var p = Pair.of(pair.right.correlation.getLeftType(),pair.right.correlation.getRightType());
+                    lnks.computeIfAbsent(p,(x)->new ArrayList<>()).add(pair.right);
                 }
 
-                // if we have more than 10 samples, we only add edges if we see a correlation in at least two samples
-                if (node.getFeature().getFeatures().keySet().size()<10 || link.associatedNode.getFeature().getFeatures().keySet().size()>1 ) {
-                    // now add the edge into the graph
-                    final Edge edge = new Edge(node, link.associatedNode, Edge.Type.ADDUCT, ionTypeLeft, ionTypeRight);
-                    // for debugging purpose
-                    {
-                        edge.cor = link.ions.stream().max(Comparator.comparingDouble(i -> i.right.correlation.getNumberOfCorrelatedPeaks())).map(x -> x.right.correlation).orElse(null);
+                for (var p : lnks.entrySet()) {
+                    // if we have more than 10 samples, we only add edges if we see a correlation in at least two samples
+                    if (node.getFeature().getFeatures().keySet().size()<10 || p.getValue().size()>1) {
+                        // now add the edge into the graph
+                        final Edge edge = new Edge(node, link.associatedNode, Edge.Type.ADDUCT, p.getKey().getLeft(), p.getKey().getRight());
+                        // for debugging purpose
+                        {
+                            edge.cor = p.getValue().stream().max(Comparator.comparingDouble(i -> i.correlation.getNumberOfCorrelatedPeaks())).map(x -> x.correlation).orElse(null);
+                            edge.totalNumberOfCorrelatedPeaks = p.getValue().stream().mapToInt(i->i.correlation.getNumberOfCorrelatedPeaks()).sum();
+                        }
+                        if (node.hasEdge(edge)) {
+                            continue;
+                        }
+                        node.neighbours.add(edge);
+                        link.associatedNode.neighbours.add(edge.reverse());
                     }
-                    if (node.hasEdge(edge)) {
-                        continue;
-                    }
-                    node.neighbours.add(edge);
-                    link.associatedNode.neighbours.add(edge.reverse());
                 }
             }
         }

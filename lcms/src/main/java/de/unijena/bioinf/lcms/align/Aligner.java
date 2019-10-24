@@ -82,8 +82,8 @@ public class Aligner {
                 final FragmentedIon ion = f.getFeatures().get(samples.get(i));
                 if (ion.getMsMs()!=null) {
                     lowestChimeric = Math.min(lowestChimeric, ion.getChimericPollution());
-                    tics[i] = Spectrums.calculateTIC(ion.getMsMs());
-                    highestScore = Math.max(highestScore, tics[i]*tics[i]/ion.getChimericPollution());
+                    tics[i] = ion.getIntensity();
+                    highestScore = Math.max(highestScore, tics[i]*Math.sqrt(tics[i])/ion.getChimericPollution());
                 }
             }
             final double chimericThreshold = lowestChimeric+0.2d;
@@ -94,7 +94,7 @@ public class Aligner {
                 final FragmentedIon ion = f.getFeatures().get(samples.get(i));
                 if (ion.getMsMs()!=null) {
                     ++tot;
-                    if (ion.getChimericPollution() > chimericThreshold && tics[i]*tics[i]/ion.getChimericPollution() < scoreThreshold) {
+                    if (ion.getChimericPollution() > chimericThreshold && tics[i]*Math.sqrt(tics[i])/ion.getChimericPollution() < scoreThreshold) {
                         rejectedSamples.add(samples.get(i));
                     }
                 }
