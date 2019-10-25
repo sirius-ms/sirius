@@ -12,6 +12,7 @@ import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.ms.frontend.subtools.projectspace.ProjecSpaceOptions;
+import de.unijena.bioinf.ms.frontend.subtools.similarity.SimilarityMatrixOptions;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +64,8 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
     public final CanopusOptions canopusOptions;
     public final PassatuttoOptions passatuttoOptions;
 
+    public final SimilarityMatrixOptions similarityMatrixOptions;
+
 
     public WorkflowBuilder(@NotNull R rootOptions) throws IOException {
         this(rootOptions,new DefaultParameterConfigLoader());
@@ -78,6 +81,8 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
         fingeridOptions = new FingerIdOptions(configOptionLoader);
         canopusOptions = new CanopusOptions(configOptionLoader);
         passatuttoOptions = new PassatuttoOptions(configOptionLoader);
+
+        similarityMatrixOptions = new SimilarityMatrixOptions();
 
 
         // define execution order and dependencies of different Subtools
@@ -95,7 +100,7 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
     }
 
     protected Object[] singletonTools(){
-        return new Object[] {customDBOptions};
+        return new Object[] {customDBOptions,similarityMatrixOptions};
     }
 
     protected CommandLine.Model.CommandSpec forAnnotatedObjectWithSubCommands(Object parent, Object... subsToolInExecutionOrder) {

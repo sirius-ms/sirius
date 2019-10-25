@@ -94,6 +94,15 @@ public class Instance {
         return loadFormulaResults(getID().getRankingScoreType().orElse(SiriusScore.class), components);
     }
 
+    public synchronized Optional<FormulaResult> loadTopFormulaResult(Class<? extends DataAnnotation>... components) {
+        List<? extends SScored<FormulaResult, ? extends FormulaScore>> sScoreds = loadFormulaResults();
+        if (sScoreds.isEmpty()) return Optional.empty();
+        else {
+            FormulaResult candidate = sScoreds.get(0).getCandidate();
+            return Optional.of(loadFormulaResult(candidate.getId(), components));
+        }
+    }
+
     public synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends FormulaScore> rankingScoreType, Class<? extends DataAnnotation>... components) {
         try {
             if (!formulaResultCache.keySet().containsAll(compoundCache.getResults())) {
