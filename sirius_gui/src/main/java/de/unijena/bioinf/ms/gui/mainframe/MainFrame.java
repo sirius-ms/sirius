@@ -148,8 +148,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
         mainPanel.add(tabbedPane, BorderLayout.WEST);
         mainPanel.add(resultsPanel, BorderLayout.CENTER);
         add(toolbar, BorderLayout.NORTH);
-        setSize(new Dimension(1368, 1024));
 
+        setSize(new Dimension(1368, 1024));
         setVisible(true);
     }
 

@@ -1,10 +1,7 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import com.google.common.collect.Streams;
-import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
-import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
-import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
-import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
+import de.unijena.bioinf.ms.frontend.subtools.*;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
@@ -41,7 +38,7 @@ import java.util.concurrent.Callable;
  * We just have to define its parameters in h
  */
 
-public class WorkflowBuilder<R extends RootOptionsCLI> {
+public class WorkflowBuilder<R extends RootOptions> {
 
     //root
     public final CommandLine.Model.CommandSpec rootSpec;
@@ -156,7 +153,7 @@ public class WorkflowBuilder<R extends RootOptionsCLI> {
             }
 
             final ToolChainWorkflow wf = new ToolChainWorkflow(rootOptions.getProjectSpace(), preproJob, configOptionLoader.config, toolchain);
-            wf.setInstanceBuffer(rootOptions.getInitialInstanceBuffer(), rootOptions.getMaxInstanceBuffer());
+//            wf.setInstanceBuffer(rootOptions.getInitialInstanceBuffer(), rootOptions.getMaxInstanceBuffer());
 
             return returnResultOrExit(wf);
         }

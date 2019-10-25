@@ -29,7 +29,7 @@ public class GuiProjectSpace {
 //    todo ringbuffer???
 //    private final Map<CompoundContainerId, InstanceBean> idToWrapperBean = new ConcurrentHashMap<>();
 
-    private ProjectSpaceManager projectSpace;
+    public final ProjectSpaceManager projectSpace;
 
     public GuiProjectSpace(@NotNull ProjectSpaceManager projectSpaceManager) {
         projectSpace = projectSpaceManager;

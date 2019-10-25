@@ -83,35 +83,14 @@ public class RootOptionsCLI implements RootOptions {
     @Option(names = "--max-compound-buffer", description = "Deprecated: This Option is deprecated and has no effect anymore.", order = 60, hidden = true)
     private Integer maxInstanceBuffer;
 
-    @Override
-    public Integer getMaxInstanceBuffer() {
-        initBuffers();
-        return maxInstanceBuffer;
-    }
 
-//    @Option(names = "--initial-compound-buffer", description = "Number of compounds that will be loaded initially into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores", order = 60)
+    //    @Option(names = "--initial-compound-buffer", description = "Number of compounds that will be loaded initially into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores", order = 60)
     @Option(names = {"--compound-buffer", "--initial-compound-buffer"}, description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores", order = 60)
-    private Integer initialInstanceBuffer;
-
-    @Override
-    public Integer getInitialInstanceBuffer() {
-        initBuffers();
-        return initialInstanceBuffer;
-    }
-
-    private void initBuffers() {
+    public void setInitialInstanceBuffer(Integer initialInstanceBuffer) {
         if (initialInstanceBuffer == null)
             initialInstanceBuffer = SiriusJobs.getGlobalJobManager().getCPUThreads();
 
-        if (maxInstanceBuffer == null) {
-            maxInstanceBuffer = initialInstanceBuffer * 2;
-        } else {
-            if (initialInstanceBuffer <= 0) {
-                maxInstanceBuffer = initialInstanceBuffer; //this means infinity
-            } else {
-                maxInstanceBuffer = Math.max(initialInstanceBuffer, maxInstanceBuffer);
-            }
-        }
+        PropertyManager.setProperty("de.unijena.bioinf.sirius.instanceBuffer", String.valueOf(initialInstanceBuffer));
     }
 
     //endregion
@@ -167,7 +146,9 @@ public class RootOptionsCLI implements RootOptions {
             input = siriusInfiles;
             inputType = InputType.SIRIUS;
         } else {
-            throw new CommandLine.PicocliException("No valid input data is found. Please give you input in a supported format.");
+            input = null;
+            inputType = null;
+//            throw new CommandLine.PicocliException("No valid input data is found. Please give you input in a supported format.");
         }
     }
 
@@ -234,7 +215,7 @@ public class RootOptionsCLI implements RootOptions {
 
     @Override
     public PreprocessingJob makePreprocessingJob(List<File> input, ProjectSpaceManager space) {
-        return new PreprocessingJob(getInput(), getProjectSpace()) {
+        return new PreprocessingJob(input, space) {
             @Override
             protected Iterable<Instance> compute() {
                 //todo handle compressed stuff
@@ -250,8 +231,12 @@ public class RootOptionsCLI implements RootOptions {
                                 msit.next(); //writes new instances to projectspace
                             return space;
                     }
-                } else if (space != null && space.size() > 0) {
-                    LOG.info("No Input given but output Project-Space is not empty and will be used as Input instead!");
+                } else if (space != null) {
+                    if (space.size() > 0)
+                        LOG.info("No Input given but output Project-Space is not empty and will be used as Input instead!");
+                    else
+                        LOG.info("No Input given and output Project-Space is also empty. Starting application without input data.");
+
                     return space;
                 }
                 throw new CommandLine.PicocliException("Illegal Input type: " + inputType);

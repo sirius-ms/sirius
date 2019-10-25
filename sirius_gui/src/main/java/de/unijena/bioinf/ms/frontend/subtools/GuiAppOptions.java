@@ -2,10 +2,12 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.fingerid.webapi.VersionsInfo;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.NewsDialog;
@@ -20,22 +22,28 @@ import picocli.CommandLine;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @CommandLine.Command(name = "gui", aliases = {"GUI"}, description = "Starts the graphical user interface of SIRIUS", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-public class GuiOptions implements SingletonTool {
+public class GuiAppOptions implements SingletonTool {
     @Override
     public Workflow makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
         return () -> {
             //todo minor: cancellation handling
 
             // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
-            Iterable<Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
+            Iterable<? extends Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
 
             assert ps == projectSpace;
 
             // NOTE: we do not want to run ConfigJob here because we want to set
             // final config for experient if something will be computed and that is not the case here
-
+            //todo maybe invalidate cache here!
+//            final List<AddConfigsJob> configsJobs = new ArrayList<>(projectSpace.size());
+//            ps.forEach(inst -> configsJobs.add(SiriusJobs.getGlobalJobManager().submitJob(new AddConfigsJob(config))));
+//            configsJobs.forEach(JJob::takeResult);
+//            configsJobs.clear();
 
             //todo 3: init GUI with given project space.
             GuiUtils.initUI();
@@ -56,12 +64,15 @@ public class GuiOptions implements SingletonTool {
                     }
                 }
             });
-            MainFrame.MF.setLocationRelativeTo(null);//init mainframe
+            MainFrame.MF.setLocationRelativeTo(null); //init mainframe
             ApplicationCore.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
             MainFrame.MF.decoradeMainFrameInstance(projectSpace);
 
             ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
-            Jobs.runInBackround(() -> {
+
+            System.out.println("DEBUG and reimplement Connection Check");
+            //todo reenable
+            /*Jobs.runInBackround(() -> {
                 ConnectionMonitor.ConnetionCheck cc = MainFrame.CONNECTION_MONITOR.checkConnection();
                 if (cc.isConnected()) {
                     @Nullable VersionsInfo versionsNumber = ApplicationCore.WEB_API.getVersionInfo();
@@ -78,7 +89,7 @@ public class GuiOptions implements SingletonTool {
                         }
                     }
                 }
-            });
+            });*/
         };
     }
 }
