@@ -1,16 +1,15 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.FormulaSummaryWriter;
-import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.StructureSummaryWriter;
-import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.mztab.MztabMExporter;
-import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
+import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,13 +25,12 @@ public class ToolChainWorkflow implements Workflow {
     private final PreprocessingJob preprocessingJob;
 
     protected List<Object> toolchain;
-    protected int initialInstanceNum, maxBufferSize = 0;
 
     private final AtomicBoolean canceled = new AtomicBoolean(false);
     private InstanceBuffer submitter = null;
     private final ProjectSpaceManager project;
 
-    public ToolChainWorkflow(ProjectSpaceManager projectSpace, PreprocessingJob preprocessingJob, ParameterConfig parameters, List<Object> toolchain) {
+    public ToolChainWorkflow(@NotNull ProjectSpaceManager projectSpace, @NotNull PreprocessingJob preprocessingJob, @NotNull ParameterConfig parameters, @NotNull List<Object> toolchain) {
         this.preprocessingJob = preprocessingJob;
         this.parameters = parameters;
         this.toolchain = toolchain;
@@ -56,12 +54,16 @@ public class ToolChainWorkflow implements Workflow {
     public void run() {
         try {
             checkForCancellation();
+
             // prepare input
-            Iterable<Instance> iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
+            Iterable<? extends Instance> iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
             // build toolchain
             final List<InstanceJob.Factory> instanceJobChain = new ArrayList<>(toolchain.size());
             //job factory for job that add config annotations to an instance
             instanceJobChain.add(() -> new AddConfigsJob(parameters));
+            // get buffer size
+            final int bufferSize = PropertyManager.getInteger("de.unijena.bioinf.sirius.instanceBuffer", "de.unijena.bioinf.sirius.cpu.cores", 0);
+
             //other jobs
             for (Object o : toolchain) {
                 checkForCancellation();
@@ -69,7 +71,7 @@ public class ToolChainWorkflow implements Workflow {
                     instanceJobChain.add((InstanceJob.Factory) o);
                 } else if (o instanceof DataSetJob.Factory) {
                     final DataSetJob dataSetJob = ((DataSetJob.Factory) o).makeJob();
-                    submitter = new SimpleInstanceBuffer(maxBufferSize, iteratorSource.iterator(), instanceJobChain, dataSetJob);
+                    submitter = new SimpleInstanceBuffer(bufferSize, iteratorSource.iterator(), instanceJobChain, dataSetJob);
                     submitter.start();
                     iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(dataSetJob).awaitResult();
 
@@ -84,7 +86,7 @@ public class ToolChainWorkflow implements Workflow {
             // disk to not waste memory -> otherwise the whole buffer thing is useless.
             checkForCancellation();
             if (!instanceJobChain.isEmpty()) {
-                submitter = new SimpleInstanceBuffer(maxBufferSize, iteratorSource.iterator(), instanceJobChain, null);
+                submitter = new SimpleInstanceBuffer(bufferSize, iteratorSource.iterator(), instanceJobChain, null);
                 submitter.start();
                 iteratorSource = project;
             }
@@ -109,10 +111,5 @@ public class ToolChainWorkflow implements Workflow {
         } catch (InterruptedException e) {
             LOG.info("Workflow successfully canceled!", e);
         }
-    }
-
-    public void setInstanceBuffer(int initialInstanceNum, int maxBufferSize) {
-        this.initialInstanceNum = initialInstanceNum;
-        this.maxBufferSize = maxBufferSize;
     }
 }

@@ -12,7 +12,7 @@ import java.util.List;
  * These tools are intended to transform some non standard input into a list of Instances
  * The default here is to write the results to the project space that will be used for th rest of the workflow
  */
-public abstract class PreprocessingJob extends BasicJJob<Iterable<Instance>> implements SubToolJob {
+public abstract class PreprocessingJob extends BasicJJob<Iterable<? extends Instance>> implements SubToolJob {
     protected List<File> input;
     protected ProjectSpaceManager space;
 

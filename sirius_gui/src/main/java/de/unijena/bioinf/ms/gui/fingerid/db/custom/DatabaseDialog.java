@@ -614,6 +614,8 @@ public class DatabaseDialog extends JDialog {
         }
     }
 
+    private static final String NONE = "None", BIO = DataSource.BIO.realName, PUBCHEM = DataSource.PUBCHEM.realName;
+
     protected class ImportDatabaseDialog extends JDialog implements CustomDatabaseImporter.Listener {
 
         protected ImportList ilist;
@@ -623,7 +625,6 @@ public class DatabaseDialog extends JDialog {
         protected Collector collector;
         protected CustomDatabase database;
 
-        private static final String NONE = "None", BIO = DataSource.BIO.realName, PUBCHEM = DataSource.PUBCHEM.realName;
 
         public ImportDatabaseDialog(String name) {
             super(owner, "Import " + name + " database", false);

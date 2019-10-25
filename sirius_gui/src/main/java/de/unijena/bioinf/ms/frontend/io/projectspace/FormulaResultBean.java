@@ -51,6 +51,12 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     private volatile ComputingStatus canopusComputeState = ComputingStatus.UNCOMPUTED;
 
 
+    protected FormulaResultBean(int rank) {
+        this.rank = rank;
+        fid = null;
+        parent = null;
+    }
+
     public FormulaResultBean(FormulaResultId fid, InstanceBean parent, int rank) {
         this.fid = fid;
         this.parent = parent;

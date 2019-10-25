@@ -162,7 +162,7 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         }
 
         public DummySiriusResult() {
-            super(null, null, 1);
+            super(1);
         }
     }
 }

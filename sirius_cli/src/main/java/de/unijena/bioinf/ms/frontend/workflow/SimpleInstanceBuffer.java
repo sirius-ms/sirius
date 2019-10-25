@@ -3,8 +3,8 @@ package de.unijena.bioinf.ms.frontend.workflow;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.BasicDependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
+import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class SimpleInstanceBuffer implements InstanceBuffer {
-    private final Iterator<Instance> instances;
+    private final Iterator<? extends Instance> instances;
     private final List<InstanceJob.Factory> tasks;
     private final DataSetJob dependJob;
 
@@ -30,8 +30,8 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
     private final int bufferSize;
     private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
-    public SimpleInstanceBuffer(int bufferSize, @NotNull Iterator<Instance> instances, @NotNull List<InstanceJob.Factory> tasks, @Nullable DataSetJob dependJob) {
-        this.bufferSize = bufferSize;
+    public SimpleInstanceBuffer(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory> tasks, @Nullable DataSetJob dependJob) {
+        this.bufferSize = bufferSize < 1 ? Integer.MAX_VALUE : bufferSize;
         this.instances = instances;
         this.tasks = tasks;
         this.dependJob = dependJob;

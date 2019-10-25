@@ -34,7 +34,7 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
             return;
         
         //calculate csi
-        final FingerIdDialog dialog = new FingerIdDialog(MF, MF.getCsiFingerId(), true, true);
+        final FingerIdDialog dialog = new FingerIdDialog(MF, MF.isFingerid(),  true);
         final int returnState = dialog.run();
 
         if (returnState != FingerIdDialog.CANCELED) {
@@ -45,15 +45,19 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
             }
 
             if (returnState == FingerIdDialog.COMPUTE_ALL) {
-                MF.getCsiFingerId().compute(ec, dialog.getSearchDb());
+                System.out.println("Compute ALL local CSI not implemented yet!");
+
+//                MF.getCsiFingerId().compute(ec, dialog.getSearchDb());
             } else {
-                java.util.List<FormulaResultBean> selected = MF.getFormulaList().getSelectedValues();
-                java.util.List<FingerIdTask> tasks = new ArrayList<>(selected.size());
-                for (FormulaResultBean element : selected) {
+                System.out.println("Compute local CSI not implemented yet!");
+
+//                java.util.List<FormulaResultBean> selected = MF.getFormulaList().getSelectedValues();
+//                java.util.List<FingerIdTask> tasks = new ArrayList<>(selected.size());
+                /*for (FormulaResultBean element : selected) {
                     if (element.getCharge() > 0 || element.getResult().getResolvedTree().numberOfEdges() > 0)
                         tasks.add(new FingerIdTask(dialog.getSearchDb(), ec, element));
                 }
-                MF.getCsiFingerId().computeAll(tasks);
+                MF.getCsiFingerId().computeAll(tasks);*/
             }
         }
     }

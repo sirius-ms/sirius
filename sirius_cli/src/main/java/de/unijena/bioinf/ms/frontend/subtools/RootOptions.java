@@ -7,10 +7,6 @@ import java.util.List;
 
 public interface RootOptions extends PreprocessingTool {
 
-    Integer getMaxInstanceBuffer();
-
-    Integer getInitialInstanceBuffer();
-
     ProjectSpaceManager getProjectSpace();
 
     List<File> getInput();

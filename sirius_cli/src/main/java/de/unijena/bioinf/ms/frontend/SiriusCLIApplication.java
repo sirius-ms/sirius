@@ -16,12 +16,17 @@ public class SiriusCLIApplication {
 
 
     public static void main(String[] args) {
-        configureShutDownHook(() -> {
-        });
-        run(args, () -> {
-            final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-            return new WorkflowBuilder<>(new RootOptionsCLI(configOptionLoader, new InstanceFactory.Default()), configOptionLoader);
-        });
+        try {
+            configureShutDownHook(() -> {
+            });
+            run(args, () -> {
+                final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
+                return new WorkflowBuilder<>(new RootOptionsCLI(configOptionLoader, new InstanceFactory.Default()), configOptionLoader);
+            });
+        } finally {
+            ApplicationCore.cite();
+            System.exit(0);
+        }
     }
 
     public static void configureShutDownHook(@NotNull final Runnable additionalActions) {
@@ -51,9 +56,6 @@ public class SiriusCLIApplication {
                 RUN.compute();
         } catch (Throwable e) {
             LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unexpected Error!", e);
-        } finally {
-            ApplicationCore.cite();
-            System.exit(0);
         }
     }
 

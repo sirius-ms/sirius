@@ -1,9 +1,4 @@
 package de.unijena.bioinf.ms.gui.actions;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 29.01.17.
- */
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
@@ -66,16 +61,20 @@ public class ComputeCSIAction extends AbstractAction {
             return;
 
 
-        final FingerIdDialog dialog = new FingerIdDialog(MF, Mc .getCsiFingerId(), true, false);
+        final FingerIdDialog dialog = new FingerIdDialog(MF, MF.isFingerid(), false);
         final int returnState = dialog.run();
         final SearchableDatabase db = dialog.getSearchDb();
         if (returnState == FingerIdDialog.COMPUTE_ALL) {
+            System.out.println("Compute ALL CSI not implemented yet!");
             //MF.getCsiFingerId().computeAll(MF.getCompounds(), db);
-            MF.getCsiFingerId().computeAll(MF.getCompounds(), db);
+//            MF.getCsiFingerId().computeAll(MF.getCompounds(), db);
+
         } else if (returnState == FingerIdDialog.COMPUTE) {
+            System.out.println("Compute CSI not implemented yet!");
             //MF.getCsiFingerId().computeAll(MF.getCompoundListSelectionModel().getSelected(), db);
-            MF.getCsiFingerId().computeAll(MF.getCompoundListSelectionModel().getSelected(), db);
+//            MF.getCsiFingerId().computeAll(MF.getCompoundListSelectionModel().getSelected(), db);
         }
+
     }
 
 
