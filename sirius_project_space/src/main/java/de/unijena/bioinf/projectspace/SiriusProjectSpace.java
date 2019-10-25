@@ -464,4 +464,5 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         for (Summarizer summarizer : summarizers)
             summarizer.writeProjectSpaceSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty));
     }
+
 }

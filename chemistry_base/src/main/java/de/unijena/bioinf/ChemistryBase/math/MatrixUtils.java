@@ -1,5 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.math;
 
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import gnu.trove.list.array.TIntArrayList;
 
 public class MatrixUtils {
@@ -261,5 +264,55 @@ public class MatrixUtils {
             if (n == 0.0) return 0;
             else return uv/n;
         }
+    }
+
+    /**
+     * This will return a master job that will calculate each position in the matrix with the given function, assuming that
+     * the function is symmetric. A single subjob will always compute 2 rows and n entries (with n is the number of rows/columns).
+     */
+    public static BasicMasterJJob<double[][]> parallelizeSymmetricMatrixComputation(double[][] matrix, MatrixComputationFunction function) {
+        return new BasicMasterJJob<double[][]>(JJob.JobType.SCHEDULER) {
+            @Override
+            protected double[][] compute() throws Exception {
+
+                final int middle = matrix.length/2;
+                for (int row=0; row < middle; ++row) {
+                    final int ROW = row;
+                    submitSubJob(new BasicJJob<Object>() {
+                        @Override
+                        protected Object compute() throws Exception {
+                            for (int i=0; i <= ROW; ++i) {
+                                matrix[ROW][i] = matrix[i][ROW] = function.compute(ROW, i);
+                            }
+                            int row2 = matrix.length-ROW-1;
+                            for (int i=0; i <= row2; ++i) {
+                                matrix[row2][i] = matrix[i][row2] = function.compute(row2, i);
+                            }
+                            return true;
+                        }
+                    });
+                }
+                if (matrix.length % 2 != 0) {
+                    submitSubJob(new BasicJJob<Object>() {
+                        @Override
+                        protected Object compute() throws Exception {
+                            for (int k=0; k <= middle; ++k) {
+                                matrix[middle][k] = matrix[k][middle] = function.compute(middle,k);
+                            }
+                            return true;
+                        }
+                    });
+                }
+                awaitAllSubJobs();
+                return matrix;
+            }
+        };
+    }
+
+    /**
+     * Functional interface for calculating the value for a matrix entry given the indizes i and j
+     */
+    public interface MatrixComputationFunction {
+        public double compute(int i, int j);
     }
 }
