@@ -22,6 +22,8 @@ dependencies {
     compile group: "de.unijena.bioinf.ms", name: "fingerid_client_api_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "fingerid_project_space_oss", version: "$fingeridVersion"
 
+    compile group: "de.unijena.bioinf.ms", name: "FTAlignmentTool", version: "$siriusVersion"
+
     //cdk
     compile "org.openscience.cdk:cdk-silent:$cdk_version"
 
