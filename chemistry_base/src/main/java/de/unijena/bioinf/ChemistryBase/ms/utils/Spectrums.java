@@ -824,7 +824,7 @@ public class Spectrums {
         boolean apply(double mz, double intensity);
     }
 
-    public static SimpleSpectrum from(Collection<Peak> peaks) {
+    public static SimpleSpectrum from(Collection<? extends Peak> peaks) {
         final double[] mzs = new double[peaks.size()];
         final double[] intensities = new double[peaks.size()];
         int k = 0;
