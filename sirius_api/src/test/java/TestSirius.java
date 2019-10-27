@@ -91,7 +91,7 @@ public class TestSirius {
     }
 
     @Test
-    public void testSolverPerformance() {
+    public void testSolverPerformance() throws InterruptedException {
         final Ms2Experiment experiment = getStandardExperiment();
         final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
         final ProcessedInput processedInput = preprocessor.preprocess(experiment);
@@ -100,6 +100,25 @@ public class TestSirius {
         int samples = 100;
         java.util.Map<String, double[]> times = Map.of("clp", new double[samples],
                 "glpk", new double[samples]);
+        // pre run
+        for (String solver: times.keySet()){
+            analysis.setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(solver));
+            for (int n=0; n < 20; ++n){
+                FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
+                JobManager jobs = SiriusJobs.getGlobalJobManager();
+                jobs.submitJob(instance);
+                FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
+                final FTree top = finalResult.getResults().get(0);
+                assertEquals(MolecularFormula.parseOrThrow("C20H17NO6"), top.getRoot().getFormula());
+
+                // test ms1
+                final FragmentAnnotation<Score> score = top.getFragmentAnnotationOrThrow(Score.class);
+                assertTrue(score.get(top.getRoot()).get("MS-Isotopes") > 0);
+            }
+        }
+        // wait
+        Thread.sleep(5000);
+        // real run
         for (String solver: times.keySet()){
           analysis.setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(solver));
           long t1;
@@ -142,7 +161,7 @@ public class TestSirius {
         JobManager jobs = SiriusJobs.getGlobalJobManager();
         FasterTreeComputationInstance.FinalResult finalResult = null;
         analysis.setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder("clp"));
-        for (int i = 0; i < 10; ++i){
+        for (int i = 0; i < 20; ++i){
             FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
             jobs.submitJob(instance);
             finalResult = instance.takeResult();

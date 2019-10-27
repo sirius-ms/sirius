@@ -7,7 +7,7 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Memory;
 
-public class CLPModel {
+public class CLPModel_JNA {
     public static interface ObjectiveSense {
         public static final int MAXIMIZE = -1;
         public static final int MINIMIZE = 1;
@@ -25,7 +25,7 @@ public class CLPModel {
     static int INT_SIZE = Native.getNativeSize(Integer.class);
 
     public interface CLibrary extends Library {
-        CLibrary INSTANCE = (CLibrary) Native.load("CLPModelWrapper", CLibrary.class);
+        CLibrary INSTANCE = (CLibrary) Native.load("CLPModelWrapper_JNA", CLibrary.class);
 
         Pointer CLPModel_ctor(int ncols, int obj_sense); // obj_sense: ObjectiveSense
 
@@ -41,11 +41,11 @@ public class CLPModel {
 
         void CLPModel_setColStart(Pointer self, double start[], int length);
 
-        void CLPModel_addRow(Pointer self, double row[], int len, double lb, double ub);
+        void CLPModel_addFullRow(Pointer self, double row[], int len, double lb, double ub);
 
         void CLPModel_addSparseRow(Pointer self, Memory elems, Memory indices, int len, double lb, double ub);
 
-        void CLPModel_addSparseRows(Pointer self, int numrows, int rowstarts[], double elems[], int indices[], int len, double lb[], double ub[]);
+        void CLPModel_addSparseRows(Pointer self, int numrows, Memory rowstarts, Memory elems, Memory indices, int len, Memory lb, Memory ub);
 
         int CLPModel_solve(Pointer self); // returns ReturnStatus
 
@@ -59,15 +59,20 @@ public class CLPModel {
     // NOTE: for some reason, Memory still gets GCed.
     // this should ensure that the variables are GCed with this instance
     private Memory obj_mem;
-    private Memory mem_lb;
-    private Memory mem_ub;
+    private Memory mem_col_lb;
+    private Memory mem_col_ub;
+    private Memory mem_row_lb;
+    private Memory mem_row_ub;
+    private Memory mem_row_starts;
+    private Memory mem_row_elems;
+    private Memory mem_row_indices;
     private Stack<Double> row_elems = null;
     private Stack<Integer> row_indices = null;
     private Stack<Double> row_lb = null;
     private Stack<Double> row_ub = null;
     private Stack<Integer> row_starts = null;
 
-    CLPModel(int ncols, int obj_sense) {
+    CLPModel_JNA(int ncols, int obj_sense) {
         this.ncols = ncols;
         self = CLibrary.INSTANCE.CLPModel_ctor(ncols, obj_sense);
     }
@@ -91,21 +96,21 @@ public class CLPModel {
     void setColBounds(double col_lb[], double col_ub[]) {
         assert col_lb.length == col_ub.length;
         int len = col_lb.length;
-        mem_lb = new Memory(DOUBLE_SIZE * len);
+        mem_col_lb = new Memory(DOUBLE_SIZE * len);
         for (int i = 0; i < len; ++i)
-            mem_lb.setDouble(i * DOUBLE_SIZE, col_lb[i]);
-        mem_ub = new Memory(DOUBLE_SIZE * len);
+            mem_col_lb.setDouble(i * DOUBLE_SIZE, col_lb[i]);
+        mem_col_ub = new Memory(DOUBLE_SIZE * len);
         for (int i = 0; i < len; ++i)
-            mem_ub.setDouble(i * DOUBLE_SIZE, col_ub[i]);
-        CLibrary.INSTANCE.CLPModel_setColBounds(self, mem_lb, mem_ub, len);
+            mem_col_ub.setDouble(i * DOUBLE_SIZE, col_ub[i]);
+        CLibrary.INSTANCE.CLPModel_setColBounds(self, mem_col_lb, mem_col_ub, len);
     }
 
     void setColStart(double start[]) {
         CLibrary.INSTANCE.CLPModel_setColStart(self, start, start.length);
     }
 
-    void addRow(double row[], double lb, double ub) {
-        CLibrary.INSTANCE.CLPModel_addRow(self, row, row.length, lb, ub);
+    void addFullRow(double row[], double lb, double ub) {
+        CLibrary.INSTANCE.CLPModel_addFullRow(self, row, row.length, lb, ub);
     }
 
     void addSparseRow(double elems[], int indices[], double lb, double ub) {
@@ -121,22 +126,30 @@ public class CLPModel {
 
     }
 
-    void addSparseRows(int rowstarts[], double elems[], int indices[], double lb[], double ub[]){
-        assert rowstarts.length == lb.length && lb.length == ub.length;
-        assert elems.length == indices.length;
-        int numrows = rowstarts.length;
-        int len = elems.length;
+    void addSparseRows(int numrows, Memory rowstarts, Memory elems, Memory indices, int len, Memory lb, Memory ub){
         CLibrary.INSTANCE.CLPModel_addSparseRows(self, numrows, rowstarts, elems, indices, len, lb, ub);
     }
 
     int solve() {
         if (row_elems != null){
-            row_starts.pop();
-            addSparseRows(row_starts.stream().mapToInt(i->i).toArray(),
-                          row_elems.stream().mapToDouble(i->i).toArray(),
-                          row_indices.stream().mapToInt(i->i).toArray(),
-                          row_lb.stream().mapToDouble(i->i).toArray(),
-                          row_ub.stream().mapToDouble(i->i).toArray());
+            int numrows = row_lb.size();
+            int numelems = row_elems.size();
+            mem_row_lb = new Memory(DOUBLE_SIZE * numrows);
+            mem_row_ub = new Memory(DOUBLE_SIZE * row_ub.size());
+            mem_row_starts = new Memory(INT_SIZE * row_starts.size());
+            mem_row_elems = new Memory(DOUBLE_SIZE * numelems);
+            mem_row_indices = new Memory(INT_SIZE * row_indices.size());
+            mem_row_starts.setInt(numrows * INT_SIZE, row_starts.pop());
+            for (int i = numrows - 1; i >= 0; --i){
+                mem_row_lb.setDouble(i * DOUBLE_SIZE, row_lb.pop());
+                mem_row_ub.setDouble(i * DOUBLE_SIZE, row_ub.pop());
+                mem_row_starts.setInt(i * INT_SIZE, row_starts.pop());
+            }
+            for (int i = numelems - 1; i >= 0; --i){
+                mem_row_elems.setDouble(i * DOUBLE_SIZE, row_elems.pop());
+                mem_row_indices.setInt(i * INT_SIZE, row_indices.pop());
+            }
+            addSparseRows(numrows, mem_row_starts, mem_row_elems, mem_row_indices, numelems, mem_row_lb, mem_row_ub);
         }
         int return_code = CLibrary.INSTANCE.CLPModel_solve(self);
         return return_code;
