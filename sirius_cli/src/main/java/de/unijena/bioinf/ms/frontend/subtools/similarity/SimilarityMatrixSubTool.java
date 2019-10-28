@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 public class SimilarityMatrixSubTool implements Workflow {
@@ -211,20 +212,13 @@ public class SimilarityMatrixSubTool implements Workflow {
     }
 
     private BasicJJob<CosineQuerySpectrum> getSpectrum(Instance i) {
-        // das ist soo doof -_- Gibts da keine einfachere Lösung?
-        AddConfigsJob addConfigsJob = new AddConfigsJob(config);
-        final BasicJJob requiredJob = new BasicJJob(JJob.JobType.SCHEDULER) {
-            @Override
-            protected Object compute() throws Exception {
-                return i;
-            }
-        };
-        addConfigsJob.addRequiredJob(requiredJob);
-        return new BasicMasterJJob<CosineQuerySpectrum>(JJob.JobType.CPU) {
+        return new BasicMasterJJob<>(JJob.JobType.CPU) {
             @Override
             protected CosineQuerySpectrum compute() throws Exception {
-                jobManager.submitJob(requiredJob).takeResult();
-                jobManager.submitJob(addConfigsJob).takeResult();
+                final AddConfigsJob addConfigsJob = new AddConfigsJob(config);
+                submitSubJob(addConfigsJob.addRequiredJob((Callable<Instance>) () -> i)).takeResult();
+                submitSubJob(addConfigsJob).takeResult();
+
                 final Ms2Experiment exp = i.getExperiment();
                 final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(config.getConfigValue("AlgorithmProfile"));
                 final CosineQueryUtils cosineQueryUtils = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(config.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.multiply(2)));
