@@ -166,7 +166,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
 
         //modify input container
-        container.getResults().add(r.getId());
+        container.getResults().put(r.getId().fileName(), r.getId());
         return Optional.of(r);
     }
 
@@ -220,7 +220,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     // shorthand methods
     public <T extends FormulaScore> List<SScored<FormulaResult, T>> getFormulaResultsOrderedBy(CompoundContainerId cid, Class<T> score, Class<? extends DataAnnotation>... components) throws IOException {
-        return getFormulaResultsOrderedBy(getCompound(cid).getResults(), score, components);
+        return getFormulaResultsOrderedBy(getCompound(cid).getResults().values(), score, components);
     }
 
     public <T extends FormulaScore> List<SScored<FormulaResult, T>> getFormulaResultsOrderedBy(Collection<FormulaResultId> results, Class<T> score, Class<? extends DataAnnotation>... components) throws IOException {
