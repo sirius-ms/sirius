@@ -105,7 +105,7 @@ public class Instance {
 
     public synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends FormulaScore> rankingScoreType, Class<? extends DataAnnotation>... components) {
         try {
-            if (!formulaResultCache.keySet().containsAll(compoundCache.getResults())) {
+            if (!formulaResultCache.keySet().containsAll(compoundCache.getResults().values())) {
                 final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = projectSpace().getFormulaResultsOrderedBy(getID(), rankingScoreType, components);
                 formulaResultCache = returnList.stream().collect(Collectors.toMap(r -> r.getCandidate().getId(), SScored::getCandidate));
                 return returnList;
@@ -154,7 +154,7 @@ public class Instance {
         try {
             if (!formulaResultCache.containsKey(result.getId())) {
                 formulaResultCache.put(result.getId(), result);
-                compoundCache.getResults().add(result.getId());
+                compoundCache.getResults().put(result.getId().fileName(), result.getId());
             }
             //refresh cache to actual object state?
             final FormulaResult rs = formulaResultCache.get(result.getId());
@@ -201,7 +201,7 @@ public class Instance {
     }
 
     public synchronized void clearFormulaResultsCache(Class<? extends DataAnnotation>... components) {
-        clearFormulaResultsCache(compoundCache.getResults(), components);
+        clearFormulaResultsCache(compoundCache.getResults().values(), components);
     }
 
     public synchronized void clearFormulaResultsCache(Collection<FormulaResultId> results, Class<? extends DataAnnotation>... components) {
