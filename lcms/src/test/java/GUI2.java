@@ -262,9 +262,9 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                 //"/home/kaidu/analysis/example"
                 //"/home/kaidu/analysis/canopus/mice/raw/cecum"
                 //"/home/kaidu/analysis/example"
-                //"/home/kaidu/data/raw/rosmarin"
+                "/home/kaidu/data/raw/rosmarin"
                 //"/home/kaidu/analysis/canopus/arabidobsis"
-                "/home/kaidu/data/raw/euphorbiaceae/raw"
+               // "/home/kaidu/data/raw/euphorbiaceae/raw"
                 );
         MemoryFileStorage storage= null;
         try {
@@ -275,7 +275,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
             for (File f : mzxmlFile.listFiles()) {
                 if (!f.getName().endsWith(".mzXML"))
                     continue;
-                if (++k > 20)
+                if (++k > 100)
                     break;
                 storage = new MemoryFileStorage();
                 final LCMSRun parse = new MzXMLParser().parse(f, storage);

@@ -781,7 +781,7 @@ public class Aligner {
                 int before=0,after=0;
                 for (ProcessedSample sample : samples) {
                     before += sample.ions.size();
-                    sample.ions.removeIf(ion->ion.alignmentCount() < threshold);
+                    sample.ions.removeIf(ion->ion.alignmentCount() < threshold && ion.getMsMsQuality().notBetterThan(Quality.DECENT));
                     after += sample.ions.size();
                 }
                 return before-after;
