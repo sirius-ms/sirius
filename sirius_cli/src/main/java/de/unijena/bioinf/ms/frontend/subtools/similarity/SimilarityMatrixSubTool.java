@@ -36,6 +36,7 @@ import de.unijena.bioinf.treealign.multijoin.DPMultiJoin;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -203,18 +204,21 @@ public class SimilarityMatrixSubTool implements Workflow {
     }
 
     private void cosine(List<Instance> xs) {
-        final double[][] M = new double[xs.size()][xs.size()];
         final JobManager J = SiriusJobs.getGlobalJobManager();
-        CosineQuerySpectrum[] cosineQuerySpectrums = J.submitJobsInBatches(xs.stream().map(this::getSpectrum).collect(Collectors.toList())).stream().map(JJob::takeResult).toArray(CosineQuerySpectrum[]::new);
+
+        List<Pair<Instance, CosineQuerySpectrum>> pairs = J.submitJobsInBatches(xs.stream().map(this::getSpectrum).collect(Collectors.toList())).stream().map(JJob::takeResult).filter(c -> c.getRight().getSelfSimilarity() > 0 && c.getRight().getSelfSimilarityLosses() > 0).collect(Collectors.toList());
+        xs = pairs.stream().map(Pair::getLeft).collect(Collectors.toList());
+        final CosineQuerySpectrum[] cosineQuerySpectrums = pairs.stream().map(Pair::getRight).toArray(CosineQuerySpectrum[]::new);
         final CosineQueryUtils cosineQueryUtils = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(config.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.multiply(2)));
+        final double[][] M = new double[xs.size()][xs.size()];
         J.submitJob(MatrixUtils.parallelizeSymmetricMatrixComputation(M, (i,j)-> cosineQueryUtils.cosineProductWithLosses(cosineQuerySpectrums[i],cosineQuerySpectrums[j]).similarity)).takeResult();
         writeMatrix("cosine", M, xs.stream().map(x->x.getID().getCompoundName()).toArray(String[]::new));
     }
 
-    private BasicJJob<CosineQuerySpectrum> getSpectrum(Instance i) {
+    private BasicJJob<Pair<Instance,CosineQuerySpectrum>> getSpectrum(Instance i) {
         return new BasicMasterJJob<>(JJob.JobType.CPU) {
             @Override
-            protected CosineQuerySpectrum compute() throws Exception {
+            protected Pair<Instance,CosineQuerySpectrum> compute() throws Exception {
                 final AddConfigsJob addConfigsJob = new AddConfigsJob(config);
                 submitSubJob(addConfigsJob.addRequiredJob((Callable<Instance>) () -> i)).takeResult();
                 submitSubJob(addConfigsJob).takeResult();
@@ -223,7 +227,7 @@ public class SimilarityMatrixSubTool implements Workflow {
                 final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(config.getConfigValue("AlgorithmProfile"));
                 final CosineQueryUtils cosineQueryUtils = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(config.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.multiply(2)));
                 ProcessedInput processedInput = sirius.preprocessForMs2Analysis(exp);
-                return cosineQueryUtils.createQueryWithIntensityTransformation(Spectrums.from(processedInput.getMergedPeaks()), processedInput.getExperimentInformation().getIonMass(), true);
+                return Pair.of(i,cosineQueryUtils.createQueryWithIntensityTransformation(Spectrums.from(processedInput.getMergedPeaks()), processedInput.getExperimentInformation().getIonMass(), true));
             }
         };
     }
