@@ -25,6 +25,22 @@ public class CosineQuerySpectrum implements Spectrum<Peak> {
 
     }
 
+    public double getPrecursorMz() {
+        return precursorMz;
+    }
+
+    public SimpleSpectrum getInverseSpectrum() {
+        return inverseSpectrum;
+    }
+
+    public double getSelfSimilarity() {
+        return selfSimilarity;
+    }
+
+    public double getSelfSimilarityLosses() {
+        return selfSimilarityLosses;
+    }
+
     @Override
     public double getMzAt(int index) {
         return spectrum.getMzAt(index);
