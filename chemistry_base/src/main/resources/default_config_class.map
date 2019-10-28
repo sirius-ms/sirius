@@ -25,7 +25,7 @@ CompoundQuality=de.unijena.bioinf.ChemistryBase.ms.CompoundQuality
 
 
 MotifDbFile=de.unijena.bioinf.treemotifs.model.MotifDbFile
-RecomputeResults=de.unijena.bioinf.ms.annotaions.RecomputeResults
+RecomputeResults=de.unijena.bioinf.ms.annotations.RecomputeResults
 FormulaResultThreshold=de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold
 FormulaResultRankingScore=de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore
 
