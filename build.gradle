@@ -27,7 +27,7 @@ ext {
 
     siriusVersion = System.getProperty('de.unijena.bioinf.sirius.version')
     //version for external libraries
-    jjobs_version = '0.9.10-SNAPSHOT'
+    jjobs_version = '0.9.11-SNAPSHOT'
     slf4j_version = '1.7.25'
     gson_version = '2.6.2'
     math3_version = '3.6.1'
