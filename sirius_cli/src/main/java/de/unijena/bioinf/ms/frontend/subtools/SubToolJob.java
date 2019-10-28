@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
-import de.unijena.bioinf.ms.annotaions.RecomputeResults;
+import de.unijena.bioinf.ms.annotations.RecomputeResults;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
 

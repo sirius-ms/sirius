@@ -1,6 +1,5 @@
-package de.unijena.bioinf.ms.annotaions;
+package de.unijena.bioinf.ms.annotations;
 
-import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 
 @DefaultProperty

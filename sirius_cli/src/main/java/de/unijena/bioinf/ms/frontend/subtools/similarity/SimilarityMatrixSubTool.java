@@ -23,6 +23,7 @@ import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
@@ -210,12 +211,23 @@ public class SimilarityMatrixSubTool implements Workflow {
     }
 
     private BasicJJob<CosineQuerySpectrum> getSpectrum(Instance i) {
-        final Ms2Experiment exp = i.getExperiment();
-        final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(config.getConfigValue("AlgorithmProfile"));
-        final CosineQueryUtils cosineQueryUtils = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(config.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.multiply(2)));
+        // das ist soo doof -_- Gibts da keine einfachere Lösung?
+        AddConfigsJob addConfigsJob = new AddConfigsJob(config);
+        final BasicJJob requiredJob = new BasicJJob(JJob.JobType.SCHEDULER) {
+            @Override
+            protected Object compute() throws Exception {
+                return i;
+            }
+        };
+        addConfigsJob.addRequiredJob(requiredJob);
         return new BasicMasterJJob<CosineQuerySpectrum>(JJob.JobType.CPU) {
             @Override
             protected CosineQuerySpectrum compute() throws Exception {
+                jobManager.submitJob(requiredJob).takeResult();
+                jobManager.submitJob(addConfigsJob).takeResult();
+                final Ms2Experiment exp = i.getExperiment();
+                final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(config.getConfigValue("AlgorithmProfile"));
+                final CosineQueryUtils cosineQueryUtils = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(config.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.multiply(2)));
                 ProcessedInput processedInput = sirius.preprocessForMs2Analysis(exp);
                 return cosineQueryUtils.createQueryWithIntensityTransformation(Spectrums.from(processedInput.getMergedPeaks()), processedInput.getExperimentInformation().getIonMass(), true);
             }

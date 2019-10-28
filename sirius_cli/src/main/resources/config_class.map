@@ -1,4 +1,4 @@
-RecomputeResults=de.unijena.bioinf.ms.annotaions.RecomputeResults
+RecomputeResults=de.unijena.bioinf.ms.annotations.RecomputeResults
 
 NumberOfStructureCandidates=de.unijena.bioinf.fingerid.annotations.NumberOfStructureCandidates
 FormulaSearchDB=de.unijena.bioinf.fingerid.db.annotations.FormulaSearchDB
