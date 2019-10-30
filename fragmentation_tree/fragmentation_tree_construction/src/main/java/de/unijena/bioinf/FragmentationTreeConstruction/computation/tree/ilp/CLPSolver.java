@@ -5,22 +5,23 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.sirius.ProcessedInput;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 
-public class CLPSolver extends AbstractSolver{
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class CLPSolver extends AbstractSolver {
 
     public final static IlpFactory<CLPSolver> Factory = new IlpFactory<CLPSolver>() {
         @Override
         public CLPSolver create(ProcessedInput input, FGraph graph, TreeBuilder.FluentInterface options) {
-            return new CLPSolver(graph,input,options);
+            return new CLPSolver(graph, input, options);
         }
 
         @Override
         public boolean isThreadSafe() {
-            return true;
+            return false; // TODO: check
         }
 
         @Override
@@ -29,7 +30,7 @@ public class CLPSolver extends AbstractSolver{
         }
     };
 
-    protected CLPModel model;
+    protected CLPModel_JNI model;
 
     public CLPSolver(FGraph graph, ProcessedInput input, TreeBuilder.FluentInterface options) {
         super(graph, input, options);
@@ -37,17 +38,19 @@ public class CLPSolver extends AbstractSolver{
 
     @Override
     protected void setTimeLimitInSeconds(double timeLimitsInSeconds) throws Exception {
-        // TODO: is this possible?
+        this.model.setTimeLimit(timeLimitsInSeconds);
     }
 
     @Override
     protected void setNumberOfCpus(int numberOfCPUS) throws Exception {
-        // TODO: is this possible?
+        // not supported
+        if (numberOfCPUS!=1)
+            LoggerFactory.getLogger(CLPSolver.class).warn("CLP does not support multitreading.");
     }
 
     @Override
     protected void initializeModel() throws Exception {
-        this.model = new CLPModel(losses.size(), CLPModel.ObjectiveSense.MAXIMIZE);
+        this.model = new CLPModel_JNI(losses.size(), CLPModel_JNI.ObjectiveSense.MAXIMIZE);
     }
 
     @Override
@@ -72,7 +75,8 @@ public class CLPSolver extends AbstractSolver{
     @Override
     protected void setVariableStartValues(int[] usedEdgeIds) throws Exception {
         final double[] values = new double[losses.size()];
-        for (int index : usedEdgeIds) values[index] = 1d;
+        for (int index : usedEdgeIds)
+            values[index] = 1d;
         model.setColStart(values);
     }
 
@@ -85,19 +89,20 @@ public class CLPSolver extends AbstractSolver{
             Arrays.fill(elems, 1d);
             for (int l = 0; l < fragment.getInDegree(); ++l)
                 indices[l] = k++;
-            model.addSparseRow(elems, indices, 0d, 1d);
-            // 1. For all vertices u with u!=root the sum of all edges uv for a fixed v is <= 1
+            model.addSparseRowCached(elems, indices, 0d, 1d);
+            // 1. For all vertices u with u!=root the sum of all edges uv for a fixed v is
+            // <= 1
             // => TreeCondition: Each vertex (except root has a parent
             // 2. An edge is only set, if one of the incomming edges of its head is set
             // => Connectivity-Condition: There is a path between each two vertices
             int j = edgeOffsets[fragment.getVertexId()];
-            final int[] indices2 = Arrays.copyOf(indices, indices.length+1);
-            final double[] elems2 = Arrays.copyOf(elems, elems.length+1);
+            final int[] indices2 = Arrays.copyOf(indices, indices.length + 1);
+            final double[] elems2 = Arrays.copyOf(elems, elems.length + 1);
             final int n = indices.length;
             elems2[n] = -1d;
             for (int l = 0; l < fragment.getOutDegree(); ++l) {
-                elems2[n] = edgeIds[j];
-                model.addSparseRow(elems2, indices2, 0d, 1d);
+                indices2[n] = edgeIds[j];
+                model.addSparseRowCached(elems2, indices2, 0d, 1d);
                 assert losses.get(edgeIds[j]).getSource() == fragment;
                 ++j;
             }
@@ -106,13 +111,13 @@ public class CLPSolver extends AbstractSolver{
 
     @Override
     protected void setColorConstraint() throws Exception {
-        final int[] colorSizes = new int[graph.maxColor()+1];
+        final int[] colorSizes = new int[graph.maxColor() + 1];
         for (Loss l : losses) {
             ++colorSizes[l.getTarget().getColor()];
         }
         final int[][] indizesPerColor = new int[colorSizes.length][];
-        for (int c=0; c < colorSizes.length; ++c) {
-            if (colorSizes[c]>0)
+        for (int c = 0; c < colorSizes.length; ++c) {
+            if (colorSizes[c] > 0)
                 indizesPerColor[c] = new int[colorSizes[c]];
         }
 
@@ -123,10 +128,10 @@ public class CLPSolver extends AbstractSolver{
             ++k;
         }
         for (int i = 0; i < indizesPerColor.length; ++i) {
-            if (indizesPerColor[i]!=null) {
+            if (indizesPerColor[i] != null) {
                 final double[] ones = new double[indizesPerColor[i].length];
                 Arrays.fill(ones, 1d);
-                model.addSparseRow(ones, indizesPerColor[i], 0, 1);
+                model.addSparseRowCached(ones, indizesPerColor[i], 0d, 1d);
             }
         }
     }
@@ -137,11 +142,11 @@ public class CLPSolver extends AbstractSolver{
         final double[] ones = new double[subroots.length];
         Arrays.fill(ones, 1d);
         int from = edgeOffsets[graph.getRoot().getVertexId()];
-        int k=0;
-        for (int i=from, n = from+subroots.length; i < n; ++i) {
+        int k = 0;
+        for (int i = from, n = from + subroots.length; i < n; ++i) {
             subroots[k++] = edgeIds[i];
         }
-        model.addSparseRow(ones, subroots, 1d, model.getInfinity());
+        model.addSparseRowCached(ones, subroots, 1d, model.getInfinity());
     }
 
     @Override
@@ -155,18 +160,18 @@ public class CLPSolver extends AbstractSolver{
     protected TreeBuilder.AbortReason solveMIP() throws Exception {
         int return_status = model.solve();
         // TODO: how to handle timeouts, score cutoff
-        switch (return_status){
-            case CLPModel.ReturnStatus.OPTIMAL:
-                return TreeBuilder.AbortReason.COMPUTATION_CORRECT;
-            case CLPModel.ReturnStatus.INFEASIBLE:
-                logger.info("Solution is infeasible");
-                return TreeBuilder.AbortReason.INFEASIBLE;
-            case CLPModel.ReturnStatus.ABANDONED:
-                logger.info("Model was abandoned");
-            case CLPModel.ReturnStatus.LIMIT_REACHED:
-                logger.info("Objective and/or iteration limits were reached");
-            default:
-                return TreeBuilder.AbortReason.NO_SOLUTION;
+        switch (return_status) {
+        case CLPModel_JNI.ReturnStatus.OPTIMAL:
+            return TreeBuilder.AbortReason.COMPUTATION_CORRECT;
+        case CLPModel_JNI.ReturnStatus.INFEASIBLE:
+            logger.info("Solution is infeasible");
+            return TreeBuilder.AbortReason.INFEASIBLE;
+        case CLPModel_JNI.ReturnStatus.ABANDONED:
+            logger.info("Model was abandoned");
+        case CLPModel_JNI.ReturnStatus.LIMIT_REACHED:
+            logger.info("Objective and/or iteration limits were reached");
+        default:
+            return TreeBuilder.AbortReason.NO_SOLUTION;
         }
     }
 
@@ -179,7 +184,7 @@ public class CLPSolver extends AbstractSolver{
     protected boolean[] getVariableAssignment() throws Exception {
         final double[] weights = model.getColSolution();
         final boolean[] assigned = new boolean[weights.length];
-        for (int i=0; i < weights.length; ++i) {
+        for (int i = 0; i < weights.length; ++i) {
             assigned[i] = weights[i] > 0.5d;
         }
         return assigned;
