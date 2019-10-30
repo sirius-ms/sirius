@@ -14,6 +14,7 @@ import de.unijena.bioinf.model.lcms.FragmentedIon;
 import de.unijena.bioinf.model.lcms.LCMSRun;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -34,34 +35,39 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
 
     @Override
     public Ms2Experiment parse(BufferedReader sourceReader, URL sourceURL) throws IOException {
-        if (setNewSource(sourceReader, sourceURL)) {
-            instance = new LCMSProccessingInstance();
-            inMemoryStorage = new InMemoryStorage();
-            final LCMSRun run = parseToLCMSRun(sourceReader, sourceURL);
-            sample = instance.addSample(run, inMemoryStorage);
-            instance.detectFeatures(sample);
-            ions = Iterators.filter(sample.ions.iterator(), i -> Math.abs(i.getChargeState()) <= 1);
-        }
-
-        if (ions.hasNext()) {
-            Feature feature = instance.makeFeature(sample, ions.next(), false);
-            Ms2Experiment experiment = feature.toMsExperiment();
-            // TODO: =/
-            final Set<PrecursorIonType> ionTypes = feature.getPossibleAdductTypes();
-            if (!ionTypes.isEmpty()) {
-                ParameterConfig parameterConfig = PropertyManager.DEFAULTS.newIndependentInstance("LCMS-" + experiment.getName());
-                parameterConfig.changeConfig("AdductSettings.enforced", Joiner.on(',').join(ionTypes));
-                final MsFileConfig config = new MsFileConfig(parameterConfig);
-                experiment.setAnnotation(MsFileConfig.class, config);
+        try {
+            if (setNewSource(sourceReader, sourceURL)) {
+                instance = new LCMSProccessingInstance();
+                inMemoryStorage = new InMemoryStorage();
+                final LCMSRun run = parseToLCMSRun(sourceReader, sourceURL);
+                sample = instance.addSample(run, inMemoryStorage);
+                instance.detectFeatures(sample);
+                ions = Iterators.filter(sample.ions.iterator(), i -> Math.abs(i.getChargeState()) <= 1);
             }
 
-            return experiment;
-        } else {
-            instance = null;
-            inMemoryStorage = null;
-            sample = null;
-            ions = null;
-            return null;
+            if (ions.hasNext()) {
+                Feature feature = instance.makeFeature(sample, ions.next(), false);
+                Ms2Experiment experiment = feature.toMsExperiment();
+                // TODO: =/
+                final Set<PrecursorIonType> ionTypes = feature.getPossibleAdductTypes();
+                if (!ionTypes.isEmpty()) {
+                    ParameterConfig parameterConfig = PropertyManager.DEFAULTS.newIndependentInstance("LCMS-" + experiment.getName());
+                    parameterConfig.changeConfig("AdductSettings.enforced", Joiner.on(',').join(ionTypes));
+                    final MsFileConfig config = new MsFileConfig(parameterConfig);
+                    experiment.setAnnotation(MsFileConfig.class, config);
+                }
+
+                return experiment;
+            } else {
+                instance = null;
+                inMemoryStorage = null;
+                sample = null;
+                ions = null;
+                return null;
+            }
+        } catch (Throwable e) {
+            LoggerFactory.getLogger(AbstractMzParser.class).error("Error while parsing " + String.valueOf(sourceURL) + ": " + e.getMessage());
+            throw e;
         }
-    }
+        }
 }
