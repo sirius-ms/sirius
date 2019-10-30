@@ -87,7 +87,7 @@ public class MzMLParser implements LCMSParser {
                     for (CVParam cvParam : spectrum.getScanList().getScan().get(0).getCvParam()) {
                         switch (cvParam.getAccession()) {
                             case "MS:1000016":
-                                retentionTimeMillis = (long) (Double.parseDouble(cvParam.getValue()) * 60L * 1000L);
+                                retentionTimeMillis = CVUtils.getTimeInMilliseconds(cvParam);
                                 break;
                         }
                     }
