@@ -42,10 +42,11 @@ public class CVUtils {
     }
 
     public enum TimeUnit {
-
         MILLISECONDS("UO:0000028","millisecond","ms",1e-3),
         MICROSECONDS("UO:0000029", "microsecond","us", 1e-6),
+        NANOSECONDS("UO:0000150", "nanosecond", "ns", 1e-9),
         PICOSECONDS("UO:0000030","picosecond","ps",1e-12),
+        SECONDS("UO:0000010","second","s",1),
         MINUTES("UO:0000031","minute","min",60),
         HOURS("UO:0000032", "hour", "h", 3600),
         DAYS("UO:0000033", "day", "", 3600*24),
