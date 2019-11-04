@@ -22,6 +22,7 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -53,7 +54,10 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
                         storage.backOnDisc();
                         storage.dropBuffer();
                     } catch (Throwable e) {
+                        LoggerFactory.getLogger(LcmsAlignSubToolJob.class).error("Error while parsing file '" + f + "': " + e.getMessage());
                         e.printStackTrace();
+                        throw new RuntimeException(e);
+
                     }
                     return "";
                 }
