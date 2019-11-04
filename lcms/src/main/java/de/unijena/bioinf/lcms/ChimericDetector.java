@@ -77,8 +77,8 @@ public class ChimericDetector {
                 Optional<ChromatographicPeak> chim = sample.builder.detectExact(ms1Scan, scan.getMzAt(k));
                 if (chim.isPresent()) {
                     if (chim.get().samePeak(ms1Feature)) {
-                        System.err.println("WTF?");
-                        sample.builder.detectExact(ms1Scan, scan.getMzAt(k));
+                        LoggerFactory.getLogger(ChimericDetector.class).warn(precursor.toString() + ": there is a chimeric peak that overlaps with the ion. It is unclear, if this chimeric is a real feature or just a badly picked peak. We will ignore it.");
+                        continue;
                     }
                     // check if it is an isotope
                     if (CorrelatedPeakDetector.hasMassOfAnIsotope(ms1Mass, scan.getMzAt(k)) && detector.correlate(ms1Feature,segment.get(),chim.get()).filter(f->f.getCorrelation()>=0.9).isPresent()) {

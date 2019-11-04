@@ -19,7 +19,6 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Range;
-import de.unijena.bioinf.ChemistryBase.algorithm.BoundedQueue;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
@@ -785,35 +784,27 @@ public class Spectrums {
 
     public static <P extends Peak,S extends Spectrum<P>> SimpleSpectrum extractMostIntensivePeaks(S spectrum, int numberOfPeaksPerMassWindow, double slidingWindowWidth) {
         if (spectrum.isEmpty()) return Spectrums.empty();
-        final Spectrum<Peak> spec = getMassOrderedSpectrum(spectrum);
-        final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
-        final BoundedQueue<Integer> queue = new BoundedQueue<>(numberOfPeaksPerMassWindow, Integer[]::new, Comparator.comparingDouble(spec::getIntensityAt));
-        final BitSet deleted = new BitSet(spec.size());
-        queue.setCallbackForRemoval(deleted::set);
-        int start = 0;
-        int end = 0;
-        double windowOffset = spec.getMzAt(0);
-        for (; end < spec.size(); ++end) {
-            if (spec.getMzAt(end)-windowOffset > slidingWindowWidth)
-                break;
-        }
-        for (int i=start; i < end; ++i) queue.add(i);
-        // now slide window over the specrum
-        final double maxMz = spec.getMzAt(spec.size()-1);
-        while (windowOffset+slidingWindowWidth < maxMz) {
-            ++start;
-            windowOffset = spec.getMzAt(start);
-            for (; end < spec.size(); ++end) {
-                if (spec.getMzAt(end)-windowOffset > slidingWindowWidth)
-                    break;
-                queue.add(end);
+        final Spectrum<? extends Peak> spec = getIntensityOrderedSpectrum(spectrum);
+        final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
+        for (int k=0; k < spec.size(); ++k) {
+            // only insert k in buffer, if there are no more than numberOfPeaksPerMassWindow peaks closeby
+            final double mz = spec.getMzAt(k);
+            final double wa = mz - slidingWindowWidth/2d, wb = mz + slidingWindowWidth/2d;
+
+            int count = 0;
+            for (int i=0; i < buffer.size(); ++i) {
+                final double mz2 = buffer.getMzAt(i);
+                if (mz2 >= wa && mz2 <= wb) {
+                    if (++count >= numberOfPeaksPerMassWindow)
+                        break;
+                }
+            }
+            if (count < numberOfPeaksPerMassWindow) {
+                buffer.addPeak(spec.getMzAt(k),spec.getIntensityAt(k));
             }
         }
-        for (int k=0; k < spec.size(); ++k) {
-            if (!deleted.get(k))
-                buf.addPeak(spec.getMzAt(k), spec.getIntensityAt(k));
-        }
-        return new SimpleSpectrum(buf);
+
+        return new SimpleSpectrum(buffer);
     }
 
     public interface Transformation<P1 extends Peak, P2 extends Peak> {

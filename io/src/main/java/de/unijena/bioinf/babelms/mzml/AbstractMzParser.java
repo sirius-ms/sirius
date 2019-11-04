@@ -9,6 +9,7 @@ import de.unijena.bioinf.babelms.ms.MsFileConfig;
 import de.unijena.bioinf.lcms.InMemoryStorage;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.ProcessedSample;
+import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.Feature;
 import de.unijena.bioinf.model.lcms.FragmentedIon;
 import de.unijena.bioinf.model.lcms.LCMSRun;
@@ -42,12 +43,16 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
                 final LCMSRun run = parseToLCMSRun(sourceReader, sourceURL);
                 sample = instance.addSample(run, inMemoryStorage);
                 instance.detectFeatures(sample);
-                ions = Iterators.filter(sample.ions.iterator(), i -> Math.abs(i.getChargeState()) <= 1);
+
+                ions = Iterators.filter(sample.ions.iterator(), i -> Math.abs(i.getChargeState()) <= 1
+                        // TODO: kaidu: maybe we can add some parameter for that? But Marcus SpectralQuality is not flexible enough for this
+                        && i.getMsMsQuality().betterThan(Quality.BAD) );
             }
 
             if (ions.hasNext()) {
                 Feature feature = instance.makeFeature(sample, ions.next(), false);
                 Ms2Experiment experiment = feature.toMsExperiment();
+
                 // TODO: =/
                 final Set<PrecursorIonType> ionTypes = feature.getPossibleAdductTypes();
                 if (!ionTypes.isEmpty()) {

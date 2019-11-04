@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.IonMode;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
@@ -17,27 +18,40 @@ import java.util.*;
 @DefaultProperty
 public class PossibleAdductSwitches implements Ms2ExperimentAnnotation {
 
-    private final Map<IonMode, List<IonMode>> precursorIonizationToFragmentIonizations;
+    private final Map<Ionization, Set<Ionization>> precursorIonizationToFragmentIonizations;
 
-    public PossibleAdductSwitches(Map<IonMode, List<IonMode>> precursorIonizationToFragmentIonizations) {
+    public PossibleAdductSwitches(Map<Ionization, Set<Ionization>> precursorIonizationToFragmentIonizations) {
         this.precursorIonizationToFragmentIonizations = precursorIonizationToFragmentIonizations;
+        for (Ionization keys : precursorIonizationToFragmentIonizations.keySet()) {
+            precursorIonizationToFragmentIonizations.get(keys).add(keys);
+        }
     }
+
+    public Map<Ionization,Set<Ionization>> getTransitions() {
+        return Collections.unmodifiableMap(precursorIonizationToFragmentIonizations);
+    }
+
+    private final static PossibleAdductSwitches DISABLED = new PossibleAdductSwitches(Collections.emptyMap());
 
     @DefaultInstanceProvider
     protected static PossibleAdductSwitches fromListOfAdductsSwitches(@DefaultProperty List<String> adducts) {
-        final HashMap<IonMode, List<IonMode>> map = new HashMap<>();
+        final HashMap<Ionization, Set<Ionization>> map = new HashMap<>();
         for (String ad : adducts) {
             String[] parts = ad.split("\\s*(:|->)\\s*",2); //->,
-            IonMode left = IonMode.fromString(parts[0]);
-            IonMode right = IonMode.fromString(parts[1]);
-            map.computeIfAbsent(left, (k)->new ArrayList<>()).add(right);
+            Ionization left = IonMode.fromString(parts[0]);
+            Ionization right = IonMode.fromString(parts[1]);
+            map.computeIfAbsent(left, (k)->new HashSet<>()).add(right);
         }
         return new PossibleAdductSwitches(map);
     }
 
-    public List<IonMode> getPossibleIonizations(IonMode precursorIonization) {
-        List<IonMode> ionizations = precursorIonizationToFragmentIonizations.get(precursorIonization);
-        if (ionizations==null) return Collections.singletonList(precursorIonization);
+    public Set<Ionization> getPossibleIonizations(Ionization precursorIonization) {
+        Set<Ionization> ionizations = precursorIonizationToFragmentIonizations.get(precursorIonization);
+        if (ionizations==null) return Collections.singleton(precursorIonization);
         return ionizations;
+    }
+
+    public static PossibleAdductSwitches disabled() {
+        return DISABLED;
     }
 }

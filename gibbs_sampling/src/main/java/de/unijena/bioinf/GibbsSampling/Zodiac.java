@@ -71,11 +71,11 @@ public class Zodiac {
         return new BasicMasterJJob<ZodiacResultsWithClusters>(JJob.JobType.CPU) {
             @Override
             protected ZodiacResultsWithClusters compute() throws Exception {
-                Log.debug("Step 2: Initialization of ZODIAC.");
+                Log.info("Step 2: Initialization of ZODIAC.");
                 final long t1 = System.currentTimeMillis();
                 init();
                 final long t2 = System.currentTimeMillis();
-                Log.debug("Step 2 took " + ((t2-t1)/1000d) + " seconds" );
+                Log.info("Step 2 took " + ((t2-t1)/1000d) + " seconds" );
                 if (ids.length<=1) {
                     Log.error("Cannot run ZODIAC. SIRIUS input consists of " + ids.length + " instances. More are needed for running a network analysis.");
                     return null;
@@ -256,7 +256,7 @@ public class Zodiac {
             if (experimentResult.getValue().size() == 0) continue;
 
             Ms2Experiment experiment = experimentResult.getKey();
-            String id = experiment.getName();
+            String id = getUniqueExperimentId(experiment);
             CompoundResult<FragmentsCandidate> compoundResult = idToCompoundResult.get(id);
             if (compoundResult==null){
                 //some ExperimentResult with no results was provided
@@ -281,7 +281,7 @@ public class Zodiac {
                         Log.warn("Instance " + id + ": The high scoring ZODIAC molecular formula " + mf +  " with score " + zodiacScore.score() +
                                 " is not contained in SIRIUS top hits.\n" +
                                 "This might occur if clustered commpounds possess different SIRIUS molecular formula candidates.\n" +
-                                "You might increase the number of SIRIUS output candidates or disable clustering in ZODIAC. Compound id: "+id);
+                                "You might increase the number of SIRIUS output candidates or disable clustering in ZODIAC. Compound id: "+id + " and cluster is " + Arrays.toString(representativeToCluster.get(id)));
                     }
                 } else {
                     zodiacScoredTrees.computeIfAbsent(experimentResult.getKey(), (key) -> new HashMap<>(experimentResult.getValue().size()))
@@ -335,6 +335,11 @@ public class Zodiac {
         return indexMap;
     }
 
+    // TODO: Kaidu: PLEASE change this. It is soo annoying to do these kind of workarounds.
+    private String getUniqueExperimentId(Ms2Experiment experiment) {
+        return experiment.getSource().toString() + "_" + experiment.getName() + "_" + Objects.hashCode(experiment);
+    }
+
     private Map<MolecularFormula, FTree> createIdentificationResultMap(List<FTree> result) {
         Map<MolecularFormula, FTree> resultMap = new HashMap<>(result.size(), 0.75f);
         for (FTree identificationResult : result) {
@@ -361,12 +366,12 @@ public class Zodiac {
             List<FragmentsCandidate> candidates = FragmentsCandidate.createAllCandidateInstances(trees, experiment);
 
             Collections.sort(candidates);
-            if (candidates.size() > 0) candidatesMap.put(experiment.getName(), candidates);
-            experimentIDSet.add(experiment.getName());
+            if (candidates.size() > 0) candidatesMap.put(getUniqueExperimentId(experiment), candidates);
+            experimentIDSet.add(getUniqueExperimentId(experiment));
         }
 
         for (LibraryHit anchor : anchors) {
-            String id = anchor.getQueryExperiment().getName();
+            String id = getUniqueExperimentId(anchor.getQueryExperiment());
             List<FragmentsCandidate> candidatesList = candidatesMap.get(id);
 
             if (!experimentIDSet.contains(id)) {

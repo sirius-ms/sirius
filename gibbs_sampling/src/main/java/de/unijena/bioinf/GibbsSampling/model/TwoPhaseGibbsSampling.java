@@ -80,11 +80,11 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 
 
 
-        LOG().debug("ZODIAC: Graph building");
+        LOG().info("ZODIAC: Graph building");
         long start = System.currentTimeMillis();
         GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, cClass);
         graph = submitSubJob(graphBuilder).awaitResult();
-        LOG().debug("finished building graph after: "+(System.currentTimeMillis()-start)+" ms");
+        LOG().info("finished building graph after: "+(System.currentTimeMillis()-start)+" ms");
     }
 
     private int maxSteps = -1;
