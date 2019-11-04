@@ -82,11 +82,12 @@ public class ZodiacSubToolJob extends DataSetJob {
             if (instances.size()==0) return;
 
             //properties
-            int maxCandidates = instances.get(0).getExperiment().getAnnotationOrThrow(ZodiacNumberOfConsideredCandidates.class).value;
-            ZodiacEpochs zodiacEpochs = instances.get(0).getExperiment().getAnnotationOrThrow(ZodiacEpochs.class);
-            ZodiacEdgeFilterThresholds edgeFilterThresholds = instances.get(0).getExperiment().getAnnotationOrThrow(ZodiacEdgeFilterThresholds.class);
-            ZodiacRunInTwoSteps zodiacRunInTwoSteps = instances.get(0).getExperiment().getAnnotationOrThrow(ZodiacRunInTwoSteps.class);
-
+            Ms2Experiment settings = instances.get(0).getExperiment();
+            int maxCandidates = settings.getAnnotationOrThrow(ZodiacNumberOfConsideredCandidates.class).value;
+            ZodiacEpochs zodiacEpochs = settings.getAnnotationOrThrow(ZodiacEpochs.class);
+            ZodiacEdgeFilterThresholds edgeFilterThresholds = settings.getAnnotationOrThrow(ZodiacEdgeFilterThresholds.class);
+            ZodiacRunInTwoSteps zodiacRunInTwoSteps = settings.getAnnotationOrThrow(ZodiacRunInTwoSteps.class);
+            ZodiacClusterCompounds clusterEnabled = settings.getAnnotationOrThrow(ZodiacClusterCompounds.class);
 
             //node scoring
             NodeScorer[] nodeScorers;
@@ -94,7 +95,7 @@ public class ZodiacSubToolJob extends DataSetJob {
             if (cliOptions.libraryHitsFile!=null) {
                 //todo implement option to set all anchors as good quality compounds
                 LOG().info("use library hits as anchors.");
-                ZodiacLibraryScoring zodiacLibraryScoring = instances.get(0).getExperiment().getAnnotationOrThrow(ZodiacLibraryScoring.class);
+                ZodiacLibraryScoring zodiacLibraryScoring = settings.getAnnotationOrThrow(ZodiacLibraryScoring.class);
 
                 anchors = parseAnchors(input.keySet().stream().collect(Collectors.toList()));
 
@@ -136,7 +137,7 @@ public class ZodiacSubToolJob extends DataSetJob {
                     nodeScorers,
                     new EdgeScorer[]{scoreProbabilityDistributionEstimator},
                     edgeFilter,
-                    maxCandidates, false, zodiacRunInTwoSteps.value, null
+                    maxCandidates, clusterEnabled.value, zodiacRunInTwoSteps.value, null
             );
 
             //todo clustering disabled. Evaluate if it might help at any point?
@@ -148,27 +149,33 @@ public class ZodiacSubToolJob extends DataSetJob {
 
             //add score and set new Ranking score
             instances.forEach(inst -> {
+                try {
 //                System.out.println(inst.getID().getDirectoryName());
-                final Map<FTree, ZodiacScore> sTress = scoreResults.get(inst.getExperiment());
-                final List<FormulaResult> formulaResults = input.get(inst.getExperiment());
-                if (formulaResults==null){
-                    //this instance was not processed by ZODIAC
-                    return;
-                }
-                formulaResults.forEach(fr -> {
-                    FormulaScoring scoring = fr.getAnnotationOrThrow(FormulaScoring.class);
-                    scoring.setAnnotation(ZodiacScore.class,
-                            sTress.get(fr.getAnnotationOrThrow(FTree.class))
-                    );
+                    final Map<FTree, ZodiacScore> sTress = scoreResults.get(inst.getExperiment());
+                    final List<FormulaResult> formulaResults = input.get(inst.getExperiment());
+                    if (formulaResults == null || sTress == null) {
+                        //this instance was not processed by ZODIAC
+                        return;
+                    }
+                    formulaResults.forEach(fr -> {
+                        FormulaScoring scoring = fr.getAnnotationOrThrow(FormulaScoring.class);
+                        scoring.setAnnotation(ZodiacScore.class,
+                                sTress.get(fr.getAnnotationOrThrow(FTree.class))
+                        );
 
-                    inst.updateFormulaResult(fr, FormulaScoring.class);
+                        inst.updateFormulaResult(fr, FormulaScoring.class);
 //                    System.out.println(fr.getId().getFormula().toString() + sTress.get(fr.getAnnotationOrThrow(FTree.class)));
-                });
+                    });
 
-                // set zodiac as ranking score
-                if (inst.getExperiment().getAnnotationOrThrow(FormulaResultRankingScore.class).isAuto()) {
-                    inst.getID().setRankingScoreType(ZodiacScore.class);
-                    inst.updateCompoundID();
+                    // set zodiac as ranking score
+                    if (inst.getExperiment().getAnnotationOrThrow(FormulaResultRankingScore.class).isAuto()) {
+                        inst.getID().setRankingScoreType(ZodiacScore.class);
+                        inst.updateCompoundID();
+                    }
+                } catch (Throwable e) {
+                    System.err.println("Error for instance " + inst.getID().getDirectoryName());
+                    e.printStackTrace();
+                    // DO NOT CRASH -_-
                 }
             });
 
