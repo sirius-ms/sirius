@@ -35,3 +35,4 @@ ZodiacRunInTwoSteps=de.unijena.bioinf.GibbsSampling.properties.ZodiacRunInTwoSte
 ZodiacEdgeFilterThresholds=de.unijena.bioinf.GibbsSampling.properties.ZodiacEdgeFilterThresholds
 ZodiacNumberOfConsideredCandidates=de.unijena.bioinf.GibbsSampling.properties.ZodiacNumberOfConsideredCandidates
 ZodiacLibraryScoring=de.unijena.bioinf.GibbsSampling.properties.ZodiacLibraryScoring
+ZodiacClusterCompounds=de.unijena.bioinf.GibbsSampling.properties.ZodiacClusterCompounds

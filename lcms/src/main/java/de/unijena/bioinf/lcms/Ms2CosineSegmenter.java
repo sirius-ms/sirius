@@ -291,7 +291,7 @@ public class Ms2CosineSegmenter {
 
     }
     private CosineQuery prepareForCosine(ProcessedSample sample, Scan scan) {
-        return prepareForCosine(sample, new MergedSpectrum(scan, sample.storage.getScan(scan), scan.getPrecursor()));
+        return prepareForCosine(sample, new MergedSpectrum(scan, sample.storage.getScan(scan), scan.getPrecursor(), sample.ms2NoiseModel.getNoiseLevel(scan.getIndex(),scan.getPrecursor().getMass())));
     }
     private CosineQuery prepareForCosine(ProcessedSample sample, MergedSpectrum orig) {
         final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum(orig);
@@ -387,7 +387,7 @@ public class Ms2CosineSegmenter {
         final List<MergedPeak> orderedByMz = new ArrayList<>(left.size());
         for (MergedPeak l : left) orderedByMz.add(l);
         final List<MergedPeak> append = new ArrayList<>();
-        final Deviation deviation = new Deviation(20,0.05);
+        final Deviation deviation = new Deviation(20,0.01);
         final Spectrum<MergedPeak> orderedByInt;
         double cosine = 0d;
         final double parentMass = left.getPrecursor().getMass();

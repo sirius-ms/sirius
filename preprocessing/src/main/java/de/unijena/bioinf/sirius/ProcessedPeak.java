@@ -148,6 +148,13 @@ public class ProcessedPeak implements Peak {
         return relativeIntensity;
     }
 
+    public double getSumIntensity() {
+        double sum=0d;
+        for (Peak p : originalPeaks)
+            sum += p.getIntensity();
+        return sum;
+    }
+
     public double getRelativeIntensity() {
         return relativeIntensity;
     }

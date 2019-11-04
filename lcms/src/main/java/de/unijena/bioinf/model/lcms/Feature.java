@@ -126,7 +126,7 @@ public class Feature implements Annotated<DataAnnotation> {
         }
         exp.setMs2Spectra(ms2Spectra);
         exp.setIonMass(mz);
-        exp.setAnnotation(RetentionTime.class, new RetentionTime(trace[0].getRetentionTime(), trace[trace.length-1].getRetentionTime(), trace[apex].getRetentionTime()));
+        exp.setAnnotation(RetentionTime.class, new RetentionTime(trace[0].getRetentionTime()/1000d, trace[trace.length-1].getRetentionTime()/1000d, trace[apex].getRetentionTime()/1000d));
 
         boolean chimeric = chimericPollution>=0.33;
 

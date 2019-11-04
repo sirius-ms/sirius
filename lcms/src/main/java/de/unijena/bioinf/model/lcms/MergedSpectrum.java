@@ -17,10 +17,16 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
     protected double noiseLevel;
     protected double dotProduct, cosine;
 
-    public MergedSpectrum(Scan scan, Spectrum<? extends Peak> spectrum, Precursor precursor) {
+    public MergedSpectrum(Scan scan, Spectrum<? extends Peak> spectrum, Precursor precursor, double noiseLevel) {
         super(new ArrayList<>());
+        this.noiseLevel = noiseLevel;
         for (int k=0; k < spectrum.size(); ++k) {
             peaks.add(new MergedPeak(new ScanPoint(scan, spectrum.getMzAt(k), spectrum.getIntensityAt(k))));
+        }
+        if (peaks.size()>100) {
+            peaks.sort(Comparator.comparingDouble(MergedPeak::getIntensity).reversed());
+            double cutoff = Math.min(noiseLevel, peaks.get(100).getIntensity());
+            peaks.removeIf(x->x.getIntensity()<cutoff);
         }
         peaks.sort(Comparator.comparingDouble(Peak::getMass));
         this.precursor= precursor;
@@ -84,16 +90,16 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
         int mostIntensive = scans.stream().max(Comparator.comparingDouble(Scan::getTIC)).map(x->x.getIndex()).orElse(-1);
         final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
         if (n>=6) {
-            int min = (int)Math.ceil(n*0.2);
+            int min = (int)Math.ceil(n*0.25);
             for (MergedPeak p : peaks) {
                 if (p.getMass() > (this.precursor.getMass()+10))
                     continue;
                 if (p.getSourcePeaks().length >= min) {
                     buf.addPeak(p.getRobustAverageMass(noiseLevel), p.sumIntensity());
-                } else if (p.getIntensity() > 3*noiseLevel) {
+                } else if (p.getHighestIntensity() > 3*noiseLevel) {
                     for (ScanPoint q : p.getSourcePeaks()) {
                         if (q.getScanNumber()==mostIntensive) {
-                            buf.addPeak(p);
+                            buf.addPeak(q.getMass(),q.getIntensity());
                             break;
                         }
                     }

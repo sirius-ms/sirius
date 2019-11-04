@@ -6,6 +6,8 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.babelms.ms.MsFileConfig;
+import de.unijena.bioinf.io.lcms.LCMSParser;
+import de.unijena.bioinf.io.lcms.MzMLParser;
 import de.unijena.bioinf.io.lcms.MzXMLParser;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.MemoryFileStorage;
@@ -262,9 +264,11 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                 //"/home/kaidu/analysis/example"
                 //"/home/kaidu/analysis/canopus/mice/raw/cecum"
                 //"/home/kaidu/analysis/example"
-                "/home/kaidu/data/raw/rosmarin"
+                //"/home/kaidu/data/raw/rosmarin"
                 //"/home/kaidu/analysis/canopus/arabidobsis"
                // "/home/kaidu/data/raw/euphorbiaceae/raw"
+                //"/home/kaidu/data/raw/mzml"
+                "/home/kaidu/data/raw/diatom"
                 );
         MemoryFileStorage storage= null;
         try {
@@ -273,12 +277,17 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
             i.getMs2Storage().keepInMemory();
             int k=0;
             for (File f : mzxmlFile.listFiles()) {
-                if (!f.getName().endsWith(".mzXML"))
+                if (!f.getName().endsWith(".mzXML") && !f.getName().endsWith(".mzML"))
                     continue;
                 if (++k > 100)
                     break;
                 storage = new MemoryFileStorage();
-                final LCMSRun parse = new MzXMLParser().parse(f, storage);
+                LCMSParser parser;
+                if (f.getName().endsWith(".mzXML"))
+                    parser = new MzXMLParser();
+                else
+                    parser = new MzMLParser();
+                final LCMSRun parse = parser.parse(f, storage);
                 final ProcessedSample sample = i.addSample(parse, storage);
                 i.detectFeatures(sample);
                 int c1=0, c2=0,c3=0;

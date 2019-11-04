@@ -81,7 +81,7 @@ public abstract class CarbohydrogenScorer {
 
         @Override
         public double score(Loss loss, ProcessedInput input, Object precomputed) {
-            if (loss.getFormula().isCHO() && loss.getFormula().getMass() > Math.exp(LossSizeScorer.LEARNED_MEAN)) {
+            if (loss.getFormula().isCHO() && loss.getFormula().getMass() > Math.exp(LossSizeScorer.LEARNED_MEAN) && loss.getFormula().numberOfCarbons()>0 && loss.getFormula().numberOfHydrogens()>0) {
                 // reduce loss size penalty by 50%
                 return -Math.min(0, new LossSizeScorer().score(loss.getFormula()))*0.5;
             } else return 0d;

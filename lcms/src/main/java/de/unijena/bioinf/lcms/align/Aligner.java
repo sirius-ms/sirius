@@ -122,7 +122,7 @@ public class Aligner {
 
                 final MergedSpectrum msms;
                 if (ion.getMsMsScan()==null || rejectedSamples.contains(sample)) msms=null;
-                else msms = new MergedSpectrum(ion.getMsMsScan(), instance.getMs2(ion.getMsMsScan()), ion.getMsMsScan().getPrecursor());
+                else msms = new MergedSpectrum(ion.getMsMsScan(), instance.getMs2(ion.getMsMsScan()), ion.getMsMsScan().getPrecursor(),sample.ms2NoiseModel.getNoiseLevel(ion.getMsMsScan().getIndex(),ion.getMass()));
 
 
                 if (merged==null) merged = msms;

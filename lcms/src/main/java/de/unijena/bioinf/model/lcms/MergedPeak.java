@@ -142,4 +142,9 @@ public class MergedPeak implements Peak {
             i += p.getIntensity();
         return i;
     }
+
+    @Override
+    public String toString(){
+        return this.getMass() + " m/z\t" + this.getIntensity() + "  (" + this.sourcePeaks.length + " peaks)";
+    }
 }
