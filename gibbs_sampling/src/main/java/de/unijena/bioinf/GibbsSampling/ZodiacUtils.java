@@ -554,7 +554,7 @@ public class ZodiacUtils {
         final HashMap<String, String[]> clusters = new HashMap<>();
         final String[] keys = candidateMap.keySet().toArray(String[]::new);
         Arrays.sort(keys, Comparator.comparingInt(u->candidateMap.get(u).get(0).getFragments().length).reversed());
-        Deviation deviation = candidateMap.get(keys[0]).get(0).getExperiment().getAnnotation(MS1MassDeviation.class).map(x -> x.allowedMassDeviation).orElse(new Deviation(20, 0.01));
+        Deviation deviation = candidateMap.get(keys[0]).get(0).getExperiment().getAnnotation(MS1MassDeviation.class).map(x -> x.allowedMassDeviation).orElse(new Deviation(20, 0.01)).divide(2);
         final HashSet<String> formulaSet = new HashSet<>();
         final HashSet<String> alreadyClustered = new HashSet<>();
         final ArrayList<String> cluster = new ArrayList<>();
@@ -577,11 +577,11 @@ public class ZodiacUtils {
                 if (deviation.inErrorWindow(leftExp.getIonMass(), R.get(0).getExperiment().getIonMass())) {
                     int bestCount = 0;
                     // compare molecular formulas of top 3 candidates
-                    for (int a = 0; a < Math.min(3, L.size()); ++a) {
-                        for (int b = 0; b < Math.min(3, R.size()); ++b) {
+                    for (int a = 0; a < Math.min(5, L.size()); ++a) {
+                        for (int b = 0; b < Math.min(5, R.size()); ++b) {
                             if (L.get(a).getFormula().equals(R.get(b).getFormula())) {
                                 formulaSet.clear();
-                                // if at least 66% and min 3 of the nodes are the same, merge the compounds
+                                // if at least 75% and min 3 of the nodes are the same, merge the compounds
                                 for (FragmentWithIndex f : L.get(a).getFragments()) formulaSet.add(f.mf);
                                 int count = 0;
                                 for (FragmentWithIndex f : R.get(b).getFragments()) {
@@ -590,7 +590,7 @@ public class ZodiacUtils {
                                     }
                                 }
                                 bestCount = Math.max(count,bestCount);
-                                if (count >= 3 && count >= Math.floor(0.66 * Math.min(L.get(a).getFragments().length, R.get(b).getFragments().length))) {
+                                if (count >= 3 && count >= Math.floor(0.75 * Math.min(L.get(a).getFragments().length, R.get(b).getFragments().length))) {
                                     // similar enough. Cluster these compounds!
                                     cluster.add(right);
                                     alreadyClustered.add(right); // never cluster a compound twice

@@ -241,7 +241,7 @@ public class IonNetwork {
                 newNode.neighbours.add(edge.reverse());
 
                 if (Math.abs(edge.from.getFeature().getRetentionTime() - edge.to.getFeature().getRetentionTime()) > 5000) {
-                    System.err.println("WTF?");
+                    System.err.println("WTF? Adduct and Ion differ massively in retention time. " );
                 }
 
             } else System.out.println("Duplicate edge " + edge);
