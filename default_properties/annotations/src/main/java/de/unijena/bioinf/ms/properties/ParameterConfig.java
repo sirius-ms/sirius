@@ -317,7 +317,7 @@ public final class ParameterConfig {
                 }
             } catch (IllegalDefaultPropertyKeyException e) {
                 if (skipIllegalKeys)
-                    LoggerFactory.getLogger(getClass()).warn("\" " + classKey + "\" is not a valid DefaultPropertyKey and will be IGNORED!");
+                    LoggerFactory.getLogger(getClass()).warn("\"" + classKey + "\" is not a valid DefaultPropertyKey and will be IGNORED!");
                 else throw new RuntimeException(e);
             }
         });
