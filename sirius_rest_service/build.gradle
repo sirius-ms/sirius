@@ -1,0 +1,178 @@
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE")
+    }
+}
+
+plugins {
+    id 'org.hidetake.swagger.generator' version '2.18.1'
+}
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {//public libs only so anybody can build the frontend without login
+        url "https://bio.informatik.uni-jena.de/repository/libs-oss"
+    }
+    maven {
+        url "https://www.xypron.de/repository" //glpk repo
+    }
+    maven {
+        url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
+    }
+}
+
+ext {
+    springfoxVersion = '2.9.2'
+}
+
+// needed for spring-boot-devtools
+/*configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}*/
+
+dependencies {
+    compile project(':sirius_cli')
+
+
+    //configure spring boot with jetty and jul
+    compile("org.springframework.boot:spring-boot-starter-web") {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+    }
+    compile("org.springframework.boot:spring-boot-starter-jetty")
+    // expose operational information about the running application via /actuator
+    compile("org.springframework.boot:spring-boot-starter-actuator")
+
+    //use spring boot with java logging instead of log4j
+    configurations.all {
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
+    }
+
+    //logging bridges
+    compile("org.slf4j:log4j-over-slf4j:$slf4j_version")
+    compile("org.slf4j:jcl-over-slf4j:$slf4j_version")
+    compile("org.slf4j:jul-to-slf4j:$slf4j_version")
+
+    //logging implemetation
+//    compile("org.slf4j:slf4j-simple:$slf4j_version")
+    compile("org.slf4j:slf4j-jdk14:$slf4j_version")
+
+
+    // Automatically restart whenever files on the classpath change
+    // TODO not working at the moment
+//    developmentOnly("org.springframework.boot:spring-boot-devtools")
+
+
+    compile "info.picocli:picocli-spring-boot-starter:4.0.1"
+    compile "com.fasterxml.jackson:jackson-bom:2.9.7"
+
+    // TODO: maybe needed for better JSON-marshalling
+    // support for accessing parameter names
+//    compile "com.fasterxml.jackson.module:jjackson-module-parameter-names"
+    // support for other new Java 8 datatypes outside of date/time (mainly Optional)
+//    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8"
+    // support for Java 8 date/time types
+//    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+
+    // Automated JSON API documentation for API's built with Spring
+    compile "io.springfox:springfox-swagger2:${springfoxVersion}"
+    // Generate interactive documentation from a Swagger-compliant API
+    compile "io.springfox:springfox-swagger-ui:${springfoxVersion}"
+
+    swaggerCodegen 'io.swagger:swagger-codegen-cli:2.4.2'             // Swagger Codegen V2
+    swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.5'  // or Swagger Codegen V3
+    swaggerCodegen 'org.openapitools:openapi-generator-cli:3.3.4'     // or OpenAPI Generator
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+jar {
+    enabled = true
+}
+
+bootJar {
+    classifier = 'boot'
+}
+
+task buildFrontend(type: Exec, group: 'build') {
+    //todo make conditional -> only if it doe not exists
+    workingDir "${getRootProject().projectDir}/frontend"
+    commandLine(['npm', 'run', 'build'])
+}
+
+task copyFrontend(type: Copy, group: 'build setup') {
+    dependsOn(buildFrontend)
+    from "${getRootProject().projectDir}/frontend/dist"
+    into "${getRootProject().projectDir}/middleware/build/resources/main/public"
+}
+bootJar.mustRunAfter(copyFrontend)
+
+task bootJarWithFrontend(group: 'build') {
+    dependsOn(copyFrontend)
+    dependsOn(bootJar)
+}
+
+/*swaggerSources {
+    nightsky {
+        inputFile = file('petstore.yaml')
+        code {
+            language = 'spring'
+        }
+    }
+}*/
+
+/*//artifactoryPublish.skip = true
+artifactory {
+    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
+    publish {
+        repository {
+            if (version.toString().endsWith('-SNAPSHOT'))
+                repoKey = 'libs-snapshot-local'
+            else
+                repoKey = 'libs-release-local'
+
+            username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
+            password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
+        }
+        defaults {
+            publications('mavenJava')
+        }
+    }
+}*/
+
+artifactory {
+    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
+    publish {
+        repository {
+            if (version.toString().endsWith('-SNAPSHOT'))
+                repoKey = 'libs-snapshot-local'
+            else
+                repoKey = 'libs-release-local'
+
+            username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
+            password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
+        }
+        defaults {
+            publications('mavenJava')
+        }
+    }
+}
+
+
+
+
+
+
+

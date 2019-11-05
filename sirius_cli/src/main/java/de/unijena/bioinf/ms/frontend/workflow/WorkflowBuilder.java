@@ -1,7 +1,10 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import com.google.common.collect.Streams;
-import de.unijena.bioinf.ms.frontend.subtools.*;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
@@ -41,7 +44,12 @@ import java.util.concurrent.Callable;
 public class WorkflowBuilder<R extends RootOptions> {
 
     //root
-    public final CommandLine.Model.CommandSpec rootSpec;
+    private CommandLine.Model.CommandSpec rootSpec;
+
+    public CommandLine.Model.CommandSpec getRootSpec() {
+        return rootSpec;
+    }
+
     public final R rootOptions;
 
     //global configs (subtool)
@@ -80,24 +88,29 @@ public class WorkflowBuilder<R extends RootOptions> {
         passatuttoOptions = new PassatuttoOptions(configOptionLoader);
 
         similarityMatrixOptions = new SimilarityMatrixOptions();
+    }
 
+    public void initRootSpec() {
+
+        if (rootSpec != null)
+            throw new  IllegalStateException("Root spec already initialized");
 
         // define execution order and dependencies of different Subtools
         CommandLine.Model.CommandSpec fingeridSpec = forAnnotatedObjectWithSubCommands(fingeridOptions, canopusOptions);
-        CommandLine.Model.CommandSpec passatuttoSpec =  forAnnotatedObjectWithSubCommands(passatuttoOptions, fingeridSpec);
+        CommandLine.Model.CommandSpec passatuttoSpec = forAnnotatedObjectWithSubCommands(passatuttoOptions, fingeridSpec);
         CommandLine.Model.CommandSpec zodiacSpec = forAnnotatedObjectWithSubCommands(zodiacOptions, passatuttoSpec, fingeridSpec);
         CommandLine.Model.CommandSpec siriusSpec = forAnnotatedObjectWithSubCommands(siriusOptions, zodiacSpec, passatuttoSpec, fingeridSpec);
         CommandLine.Model.CommandSpec lcmsAlignSpec = forAnnotatedObjectWithSubCommands(lcmsAlignOptions, siriusSpec);
 
-        CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), customDBOptions, lcmsAlignSpec, siriusSpec, zodiacSpec,passatuttoSpec, fingeridSpec, canopusOptions);
+        CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), customDBOptions, lcmsAlignSpec, siriusSpec, zodiacSpec, passatuttoSpec, fingeridSpec, canopusOptions);
         rootSpec = forAnnotatedObjectWithSubCommands(
                 this.rootOptions,
                 Streams.concat(Arrays.stream(singletonTools()), Arrays.stream(new Object[]{configSpec, projectSpaceOptions, lcmsAlignSpec, siriusSpec, zodiacSpec, passatuttoSpec, fingeridSpec, canopusOptions})).toArray()
         );
     }
 
-    protected Object[] singletonTools(){
-        return new Object[] {customDBOptions,similarityMatrixOptions};
+    protected Object[] singletonTools() {
+        return new Object[]{customDBOptions, similarityMatrixOptions};
     }
 
     protected CommandLine.Model.CommandSpec forAnnotatedObjectWithSubCommands(Object parent, Object... subsToolInExecutionOrder) {

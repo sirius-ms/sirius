@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.frontend.subtools;
+package de.unijena.bioinf.ms.frontend.subtools.gui;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.fingerid.webapi.VersionsInfo;
@@ -7,6 +7,9 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
 import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;

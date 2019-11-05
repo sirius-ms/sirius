@@ -24,8 +24,7 @@ public class SiriusCLIApplication {
                 return new WorkflowBuilder<>(new RootOptionsCLI(configOptionLoader, new InstanceFactory.Default()), configOptionLoader);
             });
         } finally {
-            ApplicationCore.cite();
-            System.exit(0);
+
         }
     }
 
@@ -43,6 +42,7 @@ public class SiriusCLIApplication {
                 e.printStackTrace();
             } finally {
                 ProxyManager.disconnect();
+                ApplicationCore.cite();
             }
         }));
     }
@@ -61,7 +61,7 @@ public class SiriusCLIApplication {
 
 
     @FunctionalInterface
-    protected interface WorkFlowSupplier {
+    public interface WorkFlowSupplier {
         WorkflowBuilder<?> make() throws Exception;
     }
 }

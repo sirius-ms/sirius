@@ -3,6 +3,7 @@ import java.nio.file.Files
 dependencies {
 //project
     compile project(':sirius_cli')
+    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 
 /*################### Environment variables ################### */
@@ -27,8 +28,6 @@ project.type.each{t ->
 
             jar = "../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}"
 
-//            classpath.add('./lib/*')
-//            classpath.addAll(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':'))
             classpath.add('../../../All/Sirius/lib/*') //add
             println(classpath)
 
@@ -36,18 +35,7 @@ project.type.each{t ->
         }
     }
 }
-/*launch4j {
-    mainClassName = project.mainClassName
-    headerType = "$project.type"
-    jreRuntimeBits = "$project.arch"
-    outfile = "${project.appName}.exe"
-    jar = "../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}"
 
-    classpath.add('./lib/*')
-    classpath.addAll(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':'))
-    classpath.add('../../../All/Sirius/lib/*') //add
-    println(classpath)
-}*/
 
 startScripts {
     applicationName = "${project.appName}"
@@ -71,35 +59,12 @@ startScripts {
     }
 }
 
-
-task downloadOpenmsScript {
-    project.ext.set("openmsScript", getBuildDir().toPath().resolve('tmp/openmsScript/').toFile())
-    doLast {
-        def scriptURL = new URL("https://raw.githubusercontent.com/OpenMS/THIRDPARTY/master/Linux/64bit/Sirius/sirius")
-
-        java.nio.file.Path dir = project.openmsScript.toPath()
-        dir.toFile().deleteDir()
-        Files.createDirectories(dir)
-
-        java.nio.file.Path f = dir.resolve('sirius')
-        if (Files.notExists(f)) {
-            def file = f.newOutputStream()
-            file << scriptURL.openStream()
-            file.close()
-            exec {
-                executable 'chmod'
-                args '755', f.toAbsolutePath().toString()
-            }
-        }
-    }
-}
-
 /*################### Build distributions ################### */
 task distribute { group = 'distribution' }
 
 distributions {
     //create OpenMS dist
-    def n = "openMS"
+    def n = "multiOS"
     create(n, {
         baseName = "${project.appName}-$n"
         contents {
@@ -119,10 +84,10 @@ distributions {
                 }
 
                 into("Linux/${ar}bit/Sirius") {
-                    from project.openmsScript
-                    /*from("build/install/${project.name}/bin") {
+//                    from project.openmsScript
+                    from("build/install/${project.name}/bin") {
                         exclude("*.bat")
-                    }*/
+                    }
                     from("${project.distPath}") {
                         include('COPYING.txt')
                     }
@@ -147,10 +112,10 @@ distributions {
             }
 
             into('MacOS/64bit/Sirius') {
-                from project.openmsScript
-                /*from("build/install/${project.name}/bin") {
+//                from project.openmsScript
+                from("build/install/${project.name}/bin") {
                     exclude("*.bat")
-                }*/
+                }
                 from("${project.distPath}") {
                     include('COPYING.txt')
                 }
@@ -167,12 +132,12 @@ distributions {
     project.getTasksByName("distTar", false).each { it.setEnabled(false) }
     project.getTasksByName("distZip", false).each { it.setEnabled(false) }
 
-    openMSDistZip.dependsOn 'installDist'
-    openMSDistTar.dependsOn 'installDist'
-    installOpenMSDist.dependsOn 'installDist'
-    openMSDistZip.dependsOn 'createExe'
-    openMSDistTar.dependsOn 'createExe'
-    installOpenMSDist.dependsOn 'createExe'
+    multiOSDistZip.dependsOn 'installDist'
+    multiOSDistTar.dependsOn 'installDist'
+    installMultiOSDist.dependsOn 'installDist'
+    multiOSDistZip.dependsOn 'createExe'
+    multiOSDistTar.dependsOn 'createExe'
+    installMultiOSDist.dependsOn 'createExe'
 }
 
 // what should be published
@@ -182,7 +147,7 @@ publishing {
             artifactId = "$name"
             groupId = "$group"
             pom.withXml {}
-            artifact source: openMSDistZip, classifier: 'openMS', extension: 'zip'
+            artifact source: multiOSDistZip, classifier: 'multiOS', extension: 'zip'
         }
     }
 }

@@ -307,7 +307,6 @@ mergeTemplateWithDefaultProfile.dependsOn('mergeClassMaps')
 task checkDefaultProfile() {
     group = 'other'
 
-
     doLast {
         Properties defaultProfile = new Properties()
         tasks.collectDefaultProfile.outputs.files.singleFile.listFiles().first()
