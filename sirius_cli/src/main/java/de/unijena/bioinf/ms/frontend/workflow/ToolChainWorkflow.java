@@ -40,7 +40,8 @@ public class ToolChainWorkflow implements Workflow {
     @Override
     public void cancel() {
         canceled.set(true);
-        submitter.cancel();
+        if (submitter != null)
+            submitter.cancel();
     }
 
     protected void checkForCancellation() throws InterruptedException {

@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.frontend.workfow;
 
-import de.unijena.bioinf.ms.frontend.subtools.GuiAppOptions;
+import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;

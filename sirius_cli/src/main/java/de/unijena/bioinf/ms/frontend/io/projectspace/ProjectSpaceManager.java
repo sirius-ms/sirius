@@ -55,7 +55,7 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
         this.compoundFilter = compoundFilter;
     }
 
-    SiriusProjectSpace projectSpace() {
+    public SiriusProjectSpace projectSpace() {
         return space;
     }
 

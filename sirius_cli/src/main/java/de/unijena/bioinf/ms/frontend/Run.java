@@ -1,14 +1,11 @@
 package de.unijena.bioinf.ms.frontend;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
-import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
-
-import java.io.IOException;
 
 
 /**
@@ -27,11 +24,12 @@ import java.io.IOException;
  */
 public class Run extends ApplicationCore {
     protected final static Logger logger = LoggerFactory.getLogger(Run.class);
-    private de.unijena.bioinf.ms.frontend.workflow.Workflow flow;
+    protected Workflow flow;
     private final WorkflowBuilder<?> builder;
 
     public Run(WorkflowBuilder<?> builder) {
         this.builder = builder;
+        this.builder.initRootSpec();
     }
 
 
@@ -46,12 +44,16 @@ public class Run extends ApplicationCore {
         if (args == null || args.length < 1)
             args = new String[]{"--help"};
 
-        flow = new CommandLine(builder.rootSpec).parseWithHandler(builder.makeParseResultHandler(), args);
+        flow = new CommandLine(builder.getRootSpec()).parseWithHandler(builder.makeParseResultHandler(), args);
         return flow != null; //todo maybe workflow validation would be nice here???
     }
 
     public void cancel() {
         if (flow != null)
             flow.cancel();
+    }
+
+    public Workflow getFlow() {
+        return flow;
     }
 }
