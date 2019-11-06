@@ -12,8 +12,8 @@ public interface SiriusLocations {
             SIRIUS_SUMMARY = "sirius_summary.csv";
 
     Location
-            SPECTRA = new Location("spectra/", "ms", FormulaResultId::fileName),
+            SPECTRA = new Location("spectra/", "csv", FormulaResultId::fileName),
             TREES = new Location("trees/", "json", FormulaResultId::fileName),
             SCORES = new Location("scores/", "info", FormulaResultId::fileName),
-            DECOYS = new Location("decoys/", "tsv", FormulaResultId::fileName);
+            DECOYS = new Location("decoys/", "csv", FormulaResultId::fileName);
 }
