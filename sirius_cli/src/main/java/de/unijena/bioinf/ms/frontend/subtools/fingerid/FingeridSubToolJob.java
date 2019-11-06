@@ -17,7 +17,6 @@ import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.fingerid.CSIClientData;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
@@ -83,11 +82,11 @@ public class FingeridSubToolJob extends InstanceJob {
 
             assert structRes.sourceTree == formRes.getAnnotationOrThrow(FTree.class);
 
-            formRes.setAnnotation(FingerprintResult.class, structRes.getAnnotationOrThrow(FingerprintResult.class));
-            formRes.setAnnotation(FingerblastResult.class, structRes.getAnnotationOrThrow(FingerblastResult.class));
+            formRes.setAnnotation(FingerprintResult.class, structRes.getAnnotationOrNull(FingerprintResult.class));
+            formRes.setAnnotation(FingerblastResult.class, structRes.getAnnotationOrNull(FingerblastResult.class));
 
-            formRes.getAnnotationOrThrow(FormulaScoring.class).setAnnotation(TopFingerblastScore.class, structRes.getAnnotationOrThrow(FingerblastResult.class).getTopHitScore());
-            formRes.getAnnotationOrThrow(FormulaScoring.class).setAnnotation(ConfidenceScore.class, structRes.getAnnotationOrThrow(ConfidenceResult.class).score);
+            formRes.getAnnotationOrThrow(FormulaScoring.class).setAnnotation(TopFingerblastScore.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getTopHitScore).orElse(null));
+            formRes.getAnnotationOrThrow(FormulaScoring.class).setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x->x.score).orElse(null));
 
 //            setRanking score
             inst.updateFormulaResult(formRes,
