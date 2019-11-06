@@ -1,20 +1,31 @@
-package de.unijena.bioinf.lcms;
-
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.babelms.ms.JenaMsWriter;
+import de.unijena.bioinf.io.lcms.MzMLParser;
 import de.unijena.bioinf.io.lcms.MzXMLParser;
+import de.unijena.bioinf.lcms.InMemoryStorage;
+import de.unijena.bioinf.lcms.LCMSProccessingInstance;
+import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.peakshape.*;
 import de.unijena.bioinf.model.lcms.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.ClipboardOwner;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Comparator;
 import java.util.Locale;
 
-public class GUI extends JFrame implements KeyListener  {
+public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
 
     int offset = 0;
@@ -33,6 +44,34 @@ public class GUI extends JFrame implements KeyListener  {
         }
         specViewer = new SpecViewer(sample.ions.get(offset));
         this.sample = sample;
+
+        final JButton left = new JButton("<-");
+        left.setAction(new AbstractAction("<-") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                GUI.this.previousIon();
+            }
+        });
+        final JButton right = new JButton("->");
+        right.setAction(new AbstractAction("->") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                GUI.this.nextIon();
+            }
+        });
+
+        final JButton info = new JButton("show experiment");
+        info.setAction(new AbstractAction("show experiment") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                GUI.this.info();
+            }
+        });
+
+        getContentPane().add(left,BorderLayout.WEST);
+        getContentPane().add(right,BorderLayout.EAST);
+        getContentPane().add(info,BorderLayout.SOUTH);
+
         getContentPane().add(specViewer,BorderLayout.CENTER);
         addKeyListener(this);
         setPreferredSize(new Dimension(1300,868));
@@ -42,11 +81,11 @@ public class GUI extends JFrame implements KeyListener  {
 
     public static void main(String[] args) {
 
-        final File mzxmlFile = new File("/home/kaidu/data/raw/stroma_subset/Stromatolite_Tissue_36_pos.mzXML");
+        final File mzxmlFile = new File("/home/kaidu/data/raw/diatom/Pn_chubby14_100ml.mzXML");
         InMemoryStorage storage= new InMemoryStorage();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         try {
-            final LCMSRun parse = new MzXMLParser().parse(mzxmlFile, storage);
+            final LCMSRun parse = (mzxmlFile.getName().endsWith(".mzML") ? new MzMLParser() : new MzXMLParser()).parse(mzxmlFile, storage);
             final ProcessedSample sample = i.addSample(parse, storage);
 
             i.detectFeatures(sample);
@@ -70,18 +109,39 @@ public class GUI extends JFrame implements KeyListener  {
 
     }
 
+    private void previousIon() {
+        --offset;
+        if (offset<0) offset = sample.ions.size()+offset;
+        specViewer.ion = sample.ions.get(offset);
+        specViewer.repaint();
+    }
+    private void nextIon() {
+        ++offset;
+        if (offset >= sample.ions.size()) offset = 0;
+        specViewer.ion = sample.ions.get(offset);
+        specViewer.repaint();
+    }
+
+    private void info() {
+        final Ms2Experiment exp = instance.makeFeature(sample,specViewer.ion,false).toMsExperiment();
+        final StringWriter s = new StringWriter();
+        try (final BufferedWriter bw = new BufferedWriter(s)) {
+            new JenaMsWriter().write(bw,exp);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        System.out.println(s.toString());
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(s.toString()), this);
+    }
+
     @Override
     public void keyReleased(KeyEvent e) {
         if (e.getKeyCode()==KeyEvent.VK_LEFT) {
-            --offset;
-            if (offset<0) offset = sample.ions.size()+offset;
-            specViewer.ion = sample.ions.get(offset);
-            specViewer.repaint();
+            previousIon();
         } else if (e.getKeyCode()==KeyEvent.VK_RIGHT) {
-            ++offset;
-            if (offset>=sample.ions.size()) offset = 0;
-            specViewer.ion = sample.ions.get(offset);
-            specViewer.repaint();
+            nextIon();
+        } else if (e.getKeyCode()==KeyEvent.VK_ENTER) {
+            info();
         } else if (e.getKeyCode()==KeyEvent.VK_SPACE) {
             System.out.println("Debug Mode");
             SwingUtilities.invokeLater(new Runnable() {
@@ -92,6 +152,11 @@ public class GUI extends JFrame implements KeyListener  {
                 }
             });
         }
+    }
+
+    @Override
+    public void lostOwnership(Clipboard clipboard, Transferable contents) {
+
     }
 
     protected class SpecViewer extends Canvas {

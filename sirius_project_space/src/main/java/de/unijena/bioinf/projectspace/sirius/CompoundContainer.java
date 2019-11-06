@@ -5,29 +5,33 @@ import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.ProjectSpaceContainer;
 
-import java.util.Collections;
-import java.util.Set;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CompoundContainer extends ProjectSpaceContainer<CompoundContainerId> {
 
     private final Annotations<DataAnnotation> annotations;
 
-    protected final Set<FormulaResultId> results;
+    protected final Map<String, FormulaResultId> results;
     private final CompoundContainerId id;
 
     public CompoundContainer(CompoundContainerId id/*, Class<? extends FormulaScore> resultScore*/) {
         this.annotations = new Annotations<>();
-        this.results = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        this.results = new ConcurrentHashMap<>();
         this.id = id;
     }
 
-    public Set<FormulaResultId> getResults() {
+    public Map<String, FormulaResultId> getResults() {
         return results;
     }
 
     public boolean containsResult(FormulaResultId id) {
-        return getResults().contains(id);
+        return id != null && id == (results.get(id.fileName()));
+    }
+
+    public Optional<FormulaResultId> findResult(String id) {
+        return Optional.ofNullable(results.get(id));
     }
 
     @Override

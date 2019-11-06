@@ -19,7 +19,6 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Range;
-import de.unijena.bioinf.ChemistryBase.algorithm.BoundedQueue;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
@@ -464,6 +463,11 @@ public class Spectrums {
         filterIsotpePeaks(spec, deviation, 0.2, 0.55, 3, new ChemicalAlphabet()); //a fixed 0.45 ratio would filter about 95% of CHONPS in 100-800Da
     }
 
+
+    public static <P extends Peak, S extends MutableSpectrum<P>> void filterIsotpePeaks(S spec, Deviation deviation, double maxIntensityRatioAt0, double maxIntensityRatioAt1000, int maxNumberOfIsotopePeaks, ChemicalAlphabet alphabet) {
+        filterIsotopePeaks(spec, deviation, maxIntensityRatioAt0, maxIntensityRatioAt1000, maxNumberOfIsotopePeaks, alphabet,false);
+    }
+
     /**
      * remove isotope peaks from spectrum
      *
@@ -473,10 +477,9 @@ public class Spectrums {
      * @param maxIntensityRatioAt1000 intensity ratio at 1000 Da above which peaks are treated as independent, non-isotope peaks
      * @param maxNumberOfIsotopePeaks maximum number of iosotope peaks
      * @param alphabet                {@link ChemicalAlphabet} which is used to compute the mass windows in which isotope peaks are expected.
-     * @param <P>
-     * @param <S>
+     * @param checkForConsistentIsotopeAssignment if true, only remove isotopes of peaks when all peaks with higher intensity also have an isotope pattern
      */
-    public static <P extends Peak, S extends MutableSpectrum<P>> void filterIsotpePeaks(S spec, Deviation deviation, double maxIntensityRatioAt0, double maxIntensityRatioAt1000, int maxNumberOfIsotopePeaks, ChemicalAlphabet alphabet) {
+    public static <P extends Peak, S extends MutableSpectrum<P>> void filterIsotopePeaks(S spec, Deviation deviation, double maxIntensityRatioAt0, double maxIntensityRatioAt1000, int maxNumberOfIsotopePeaks, ChemicalAlphabet alphabet, boolean checkForConsistentIsotopeAssignment) {
         final PeriodicTable pt = PeriodicTable.getInstance();
 
         final SimpleMutableSpectrum byInt = new SimpleMutableSpectrum(spec);
@@ -494,6 +497,7 @@ public class Spectrums {
                 double upper = range.upperEndpoint().doubleValue();
 
                 boolean isotopePeakFound = false;
+                boolean atLeastOneIsotopePeakFound = false;
                 int isoIndex = index + 1;
                 while (isoIndex < spec.size()) {
                     final double mass = spec.getMzAt(isoIndex);
@@ -505,6 +509,7 @@ public class Spectrums {
                             //remove peak (multiple peak are allowed to be in the same window and removed)
                             toDelete.add(isoIndex);
                             isotopePeakFound = true;
+                            atLeastOneIsotopePeakFound=true;
                         }
                         ++isoIndex;
                     } else {
@@ -521,6 +526,9 @@ public class Spectrums {
                         }
                     }
                 }
+
+                if (checkForConsistentIsotopeAssignment && !atLeastOneIsotopePeakFound)
+                    break;
 
 
                 for (int j = 0; j < toDelete.size(); j++) {
@@ -692,10 +700,28 @@ public class Spectrums {
             heavierType = PrecursorIonType.getPrecursorIonType("[M]-");
         }
 
+        // remove intrinsical charged from list
+        int intrinsic = -1, protonated = -1, numberOfIons = ionTypes.length;
+        PrecursorIonType protonation = null, intrinsicType = null;
+        for (int k=0; k < ionTypes.length; ++k) {
+            if (ionTypes[k].isIntrinsicalCharged()) {
+                intrinsic = k;
+                intrinsicType = ionTypes[k];
+            } else if (ionTypes[k].isPlainProtonationOrDeprotonation()) {
+                protonated = k;
+                protonation = ionTypes[k];
+            }
+        }
+        if (intrinsic >= 0 && protonated >= 0) {
+            // remove intrinsic from list
+            ionTypes[intrinsic] = ionTypes[ionTypes.length-1];
+            --numberOfIons;
+        }
+
         HashMap<PrecursorIonType, Set<PrecursorIonType>> adductDiffs = new HashMap<>();
-        for (int i = 0; i < ionTypes.length; i++) {
+        for (int i = 0; i < numberOfIons; i++) {
             final PrecursorIonType removedIT = ionTypes[i];
-            for (int j = 0; j < ionTypes.length; j++) {
+            for (int j = 0; j < numberOfIons; j++) {
                 final PrecursorIonType addedIT = ionTypes[j];
                 if (i == j) continue;
                 if (removedIT.equals(lighterType) && addedIT.equals(heavierType))
@@ -714,7 +740,14 @@ public class Spectrums {
             }
         }
 
-        final Set<PrecursorIonType> set = adductDiffs.keySet();
+        Set<PrecursorIonType> set = adductDiffs.keySet();
+
+        // if we removed intrinsic in the list, add it back again
+        if (intrinsic>=0 && protonated>=0 && set.contains(protonation)) {
+            set = new HashSet<>(set);
+            set.add(intrinsicType);
+        }
+
         return set.toArray(new PrecursorIonType[0]);
     }
 
@@ -751,37 +784,28 @@ public class Spectrums {
 
     public static <P extends Peak,S extends Spectrum<P>> SimpleSpectrum extractMostIntensivePeaks(S spectrum, int numberOfPeaksPerMassWindow, double slidingWindowWidth) {
         if (spectrum.isEmpty()) return Spectrums.empty();
-        final Spectrum<Peak> spec = getMassOrderedSpectrum(spectrum);
-        final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
-        final BoundedQueue<Integer> queue = new BoundedQueue<>(numberOfPeaksPerMassWindow, Integer[]::new, Comparator.comparingDouble(spec::getIntensityAt));
-        final BitSet deleted = new BitSet(spec.size());
-        queue.setCallbackForRemoval(deleted::set);
-        int start = 0;
-        int end = 0;
-        double windowOffset = spec.getMzAt(0);
-        for (; end < spec.size(); ++end) {
-            if (spec.getMzAt(end)-windowOffset > slidingWindowWidth)
-                break;
-        }
-        for (int i=start; i < end; ++i) queue.add(i);
-        // now slide window over the specrum
-        final double maxMz = spec.getMzAt(spec.size()-1);
-        while (windowOffset+slidingWindowWidth < maxMz) {
-            ++start;
-            windowOffset = spec.getMzAt(start);
-            for (; end < spec.size(); ++end) {
-                if (spec.getMzAt(end)-windowOffset > slidingWindowWidth)
-                    break;
-                queue.add(end);
+        final Spectrum<? extends Peak> spec = getIntensityOrderedSpectrum(spectrum);
+        final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
+        for (int k=0; k < spec.size(); ++k) {
+            // only insert k in buffer, if there are no more than numberOfPeaksPerMassWindow peaks closeby
+            final double mz = spec.getMzAt(k);
+            final double wa = mz - slidingWindowWidth/2d, wb = mz + slidingWindowWidth/2d;
+
+            int count = 0;
+            for (int i=0; i < buffer.size(); ++i) {
+                final double mz2 = buffer.getMzAt(i);
+                if (mz2 >= wa && mz2 <= wb) {
+                    if (++count >= numberOfPeaksPerMassWindow)
+                        break;
+                }
+            }
+            if (count < numberOfPeaksPerMassWindow) {
+                buffer.addPeak(spec.getMzAt(k),spec.getIntensityAt(k));
             }
         }
-        for (int k=0; k < spec.size(); ++k) {
-            if (!deleted.get(k))
-                buf.addPeak(spec.getMzAt(k), spec.getIntensityAt(k));
-        }
-        return new SimpleSpectrum(buf);
-    }
 
+        return new SimpleSpectrum(buffer);
+    }
 
     public interface Transformation<P1 extends Peak, P2 extends Peak> {
         P2 transform(P1 input);
@@ -791,7 +815,7 @@ public class Spectrums {
         boolean apply(double mz, double intensity);
     }
 
-    public static SimpleSpectrum from(Collection<Peak> peaks) {
+    public static SimpleSpectrum from(Collection<? extends Peak> peaks) {
         final double[] mzs = new double[peaks.size()];
         final double[] intensities = new double[peaks.size()];
         int k = 0;

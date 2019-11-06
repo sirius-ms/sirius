@@ -11,6 +11,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
+import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
@@ -19,10 +20,13 @@ import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.annotations.DecompositionList;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -34,7 +38,7 @@ public class TestSirius {
     public TestSirius() {
         this.sirius = new Sirius("qtof");
       //  sirius.getMs2Analyzer().setTreeBuilder(new AbstractTreeBuilder<>(CPLEXSolver.Factory));
-        sirius.getMs2Analyzer().setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder());
+        sirius.getMs2Analyzer().setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder("clp"));
     }
 
     public MutableMs2Experiment getStandardExperiment() {
@@ -49,6 +53,14 @@ public class TestSirius {
                                 new double[]{4537.85205078125,4636.14208984375,4386.55224609375,4726.12646484375,9624.818359375,5201.5712890625,5279.810546875,4162.4697265625,177876.6875,6609.36865234375,10644.8896484375,13759.1005859375,4984.36572265625,151992.171875,12310.5283203125,25785.259765625,52822.25390625,14517.52734375,2420622.25,7693.88671875,55927.109375,12310.1162109375,5552.3896484375,5172.888671875,7269.5537109375,10368.4189453125,11730.9384765625,21044.888671875,4541.33251953125,11602.5078125,34444.68359375,46705.83984375,49155.7421875,27223.947265625,7353.82177734375,147195.140625,45302.55078125,62019.55859375,284616.4375,102046.0546875,35895.4609375,82949.75,69763.328125,8305.2294921875,6610.50537109375,7126.484375,47796.5703125,13488.21875,5194.052734375,7746.63916015625,36957.0703125,51496.2109375,7290191.5,30372.474609375,9119.17578125,28094.4296875,117144.4453125,70117.2421875,9554.611328125,11817.4228515625,1896174.375,8624.4208984375,8855.138671875,27861.388671875,37455.0078125,8466.224609375,333207.96875,6757.73486328125,70097.484375,37933.45703125,278163.8125,362786.59375,10204.8984375,17157.6484375,350741.3125,10007.03125,5503.0703125,6211.84912109375,1299435.75,6204.93994140625,10005.435546875,1837789.875,8296.6474609375,5625.576171875}
                         ))
         ));
+    }
+
+    public MutableMs2Experiment getStandardExample() throws IOException {
+        JenaMsParser p = new JenaMsParser();
+        URL str = getClass().getResource("/Bicuculline.ms");
+        BufferedReader buf = new BufferedReader(new InputStreamReader(str.openStream()));
+        Ms2Experiment exp = p.parse(buf, str);
+        return (MutableMs2Experiment) exp;
     }
 
     @Test
@@ -74,6 +86,87 @@ public class TestSirius {
         // number of decompositions should be equal in MS1 and MSMS
         assertEquals(processedInput.getAnnotationOrThrow(ExtractedIsotopePattern.class).getExplanations().size(), processedInput.getPeakAnnotationOrThrow(DecompositionList.class).get(processedInput.getParentPeak()).getDecompositions().size());
     }
+
+    @Test
+    public void testSolverPerformance() throws InterruptedException {
+        final Ms2Experiment experiment = getStandardExperiment();
+        final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
+        final ProcessedInput processedInput = preprocessor.preprocess(experiment);
+        sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
+        final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
+        int samples = 10;
+        java.util.Map<String, double[]> times = Map.of("clp", new double[samples],
+                "cplex", new double[samples]);
+        // pre run
+        for (String solver: times.keySet()){
+            analysis.setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(solver));
+            for (int n=0; n < 5; ++n){
+                FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
+                JobManager jobs = SiriusJobs.getGlobalJobManager();
+                jobs.submitJob(instance);
+                FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
+                final FTree top = finalResult.getResults().get(0);
+                assertEquals(MolecularFormula.parseOrThrow("C20H17NO6"), top.getRoot().getFormula());
+
+                // test ms1
+                final FragmentAnnotation<Score> score = top.getFragmentAnnotationOrThrow(Score.class);
+                assertTrue(score.get(top.getRoot()).get("MS-Isotopes") > 0);
+            }
+        }
+        // wait
+//        Thread.sleep(5000);
+        // real run
+        for (String solver: times.keySet()){
+          analysis.setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(solver));
+          long t1;
+          for (int n=0; n < samples; ++n){
+            FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
+            JobManager jobs = SiriusJobs.getGlobalJobManager();
+            t1 = System.nanoTime();
+            jobs.submitJob(instance);
+            FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
+            times.get(solver)[n] = (System.nanoTime()-t1)*1e-9;
+            final FTree top = finalResult.getResults().get(0);
+            assertEquals(MolecularFormula.parseOrThrow("C20H17NO6"), top.getRoot().getFormula());
+
+            // test ms1
+            final FragmentAnnotation<Score> score = top.getFragmentAnnotationOrThrow(Score.class);
+            assertTrue(score.get(top.getRoot()).get("MS-Isotopes") > 0);
+          }
+        }
+        // number of decompositions should be equal in MS1 and MSMS
+        assertEquals(processedInput.getAnnotationOrThrow(ExtractedIsotopePattern.class).getExplanations().size(), processedInput.getPeakAnnotationOrThrow(DecompositionList.class).get(processedInput.getParentPeak()).getDecompositions().size());
+        System.out.println("samples: " + samples);
+        for (String solver: times.keySet()){
+            double min = Arrays.stream(times.get(solver)).min().getAsDouble();
+            double max = Arrays.stream(times.get(solver)).max().getAsDouble();
+            double mean = Arrays.stream(times.get(solver)).average().getAsDouble();
+            System.out.println(solver + ": min: " + String.format("%4.3f" , min)
+                               + ", max: " + String.format("%4.3f" , max)
+                               + ", mean: " + String.format("%4.3f" , mean));
+        }
+    }
+
+    @Test
+    public void testCLPSolver() throws IOException {
+        // for profiling
+        final Ms2Experiment experiment = getStandardExample();
+        final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
+        final ProcessedInput processedInput = preprocessor.preprocess(experiment);
+        sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
+        final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
+        JobManager jobs = SiriusJobs.getGlobalJobManager();
+        FasterTreeComputationInstance.FinalResult finalResult = null;
+        analysis.setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder("clp"));
+        for (int i = 0; i < 20; ++i){
+            FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
+            jobs.submitJob(instance);
+            finalResult = instance.takeResult();
+        }
+        final FTree top = finalResult.getResults().get(0);
+        assertEquals(MolecularFormula.parseOrThrow("C20H17NO6"), top.getRoot().getFormula());
+    }
+
 
     @Test
     public void testTreeSerialization() {

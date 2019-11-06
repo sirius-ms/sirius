@@ -24,6 +24,7 @@ public final class TreeBuilderFactory {
     public final static String GUROBI_VERSION;
     public final static String GLPK_VERSION;
     public final static String CPLEX_VERSION;
+    public final static String CPL_VERSION;
 
     public final static String ILP_VERSIONS_STRING;
 
@@ -32,7 +33,8 @@ public final class TreeBuilderFactory {
         GLPK_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.glpk_version");
         GUROBI_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.gurobi_version");
         CPLEX_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.cplex_version");
-        ILP_VERSIONS_STRING = "Sirius was compiled with the following ILP solvers: GLPK-v" + GLPK_VERSION + " (included), Gurobi-v" + GUROBI_VERSION + ", CPLEX-v" + CPLEX_VERSION;
+        CPL_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.cpl_version");
+        ILP_VERSIONS_STRING = "Sirius was compiled with the following ILP solvers: GLPK-v" + GLPK_VERSION + " (included), Gurobi-v" + GUROBI_VERSION + ", CPLEX-v" + CPLEX_VERSION + ", COIN-OR-v" + CPL_VERSION;
     }
 
     private static TreeBuilderFactory INSTANCE = null;

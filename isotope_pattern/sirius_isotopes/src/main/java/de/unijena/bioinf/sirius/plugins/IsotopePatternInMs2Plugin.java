@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -40,17 +41,19 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
 
     @Override
     protected void afterPreprocessing(ProcessedInput input) {
-        new Ms2IsotopeDetector().detectAndSetAnnotations(input,input.getExperimentInformation());
+        if (input.getAnnotation(IsotopeMs2Settings.class,IsotopeMs2Settings::new).strategy== IsotopeMs2Settings.Strategy.SCORE)
+            new Ms2IsotopeDetector().detectAndSetAnnotations(input,input.getExperimentInformation());
     }
 
     @Override
-    public boolean isGraphReductionForbidden() {
-        return true;
+    public boolean isGraphReductionForbidden(FGraph graph) {
+        return graph.getFragmentAnnotationOrNull(Ms2IsotopePattern.class)!=null;
     }
 
     @Override
     protected void afterGraphBuilding(ProcessedInput input, FGraph graph) {
-        new IntroduceIsotopeLosses(input, graph).introduceIsotopeLosses();
+        if (graph.getFragmentAnnotationOrNull(Ms2IsotopePattern.class)!=null)
+            new IntroduceIsotopeLosses(input, graph).introduceIsotopeLosses();
     }
 
     @Override

@@ -166,7 +166,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
 
         //modify input container
-        container.getResults().add(r.getId());
+        container.getResults().put(r.getId().fileName(), r.getId());
         return Optional.of(r);
     }
 
@@ -220,7 +220,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     // shorthand methods
     public <T extends FormulaScore> List<SScored<FormulaResult, T>> getFormulaResultsOrderedBy(CompoundContainerId cid, Class<T> score, Class<? extends DataAnnotation>... components) throws IOException {
-        return getFormulaResultsOrderedBy(getCompound(cid).getResults(), score, components);
+        return getFormulaResultsOrderedBy(getCompound(cid).getResults().values(), score, components);
     }
 
     public <T extends FormulaScore> List<SScored<FormulaResult, T>> getFormulaResultsOrderedBy(Collection<FormulaResultId> results, Class<T> score, Class<? extends DataAnnotation>... components) throws IOException {
@@ -239,7 +239,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 T fs = fr.getAnnotationOrThrow(FormulaScoring.class).getAnnotationOrThrow(score);
                 return new SScored<>(fr, fs);
             } catch (Exception e) {
-                LoggerFactory.getLogger(getClass()).warn("Error when loading Scores of '" + fr.getId() + "' from Project Space! Score might be NaN");
+                LoggerFactory.getLogger(getClass()).warn("Could not load Scores of '" + fr.getId() + "' from Project Space! Score might be NaN");
                 try {
                     return new SScored<>(fr, score.getConstructor(double.class).newInstance(Double.NaN));
                 } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
@@ -464,4 +464,5 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         for (Summarizer summarizer : summarizers)
             summarizer.writeProjectSpaceSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty));
     }
+
 }

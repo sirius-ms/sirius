@@ -42,7 +42,7 @@ public class NoiseIntensityThresholdFilter implements MergedSpectrumProcessor {
             default: base = 1d;
         }
         final double scale = base;
-        input.getMergedPeaks().removeIf(peak -> peak!=parent && ((peak.getIntensity() < settings.absoluteThreshold) || (peak.getRelativeIntensity()/scale) < settings.intensityThreshold));
+        input.getMergedPeaks().removeIf(peak -> peak!=parent && ((peak.getSumIntensity() < settings.absoluteThreshold) || (peak.getRelativeIntensity()/scale) < settings.intensityThreshold));
         if (input.getMergedPeaks().size()>settings.maximalNumberOfPeaks) {
             final TDoubleArrayList intensities = new TDoubleArrayList(input.getMergedPeaks().size());
             for (ProcessedPeak p : input.getMergedPeaks()) intensities.add(p.getRelativeIntensity());

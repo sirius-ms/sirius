@@ -2,6 +2,8 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import com.google.common.collect.Range;
 
+import java.util.Locale;
+
 public class IsolationWindow {
 
     protected final double windowOffset;
@@ -29,5 +31,14 @@ public class IsolationWindow {
         double width = lowerOffset + higherOffset;
         double offset = higherOffset - lowerOffset;
         return new IsolationWindow(offset, width);
+    }
+
+    public boolean isUndefined() {
+        return windowWidth<=0 || !Double.isFinite(windowWidth);
+    }
+
+    @Override
+    public String toString() {
+        return String.format(Locale.US, "IsolationWindow: offset = %f, width=%f.",windowOffset,windowWidth);
     }
 }

@@ -11,6 +11,7 @@ import de.unijena.bioinf.model.lcms.LCMSRun;
 import de.unijena.bioinf.model.lcms.Polarity;
 import de.unijena.bioinf.model.lcms.Scan;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 import uk.ac.ebi.jmzml.model.mzml.*;
 import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 
@@ -87,7 +88,7 @@ public class MzMLParser implements LCMSParser {
                     for (CVParam cvParam : spectrum.getScanList().getScan().get(0).getCvParam()) {
                         switch (cvParam.getAccession()) {
                             case "MS:1000016":
-                                retentionTimeMillis = (long) (Double.parseDouble(cvParam.getValue()) * 60L * 1000L);
+                                retentionTimeMillis = CVUtils.getTimeInMilliseconds(cvParam);
                                 break;
                         }
                     }
@@ -103,22 +104,27 @@ public class MzMLParser implements LCMSParser {
 
                 double[] mzArray = null;
                 double[] intArray = null;
-                for (BinaryDataArray array : spectrum.getBinaryDataArrayList().getBinaryDataArray()) {
-                    switch (array.getDataType()) {
-                        case INTENSITY:
-                            intArray = Arrays.stream(array.getBinaryDataAsNumberArray()).mapToDouble(Number::doubleValue).toArray();
-                            break;
-                        case MZ_VALUES:
-                            mzArray = Arrays.stream(array.getBinaryDataAsNumberArray()).mapToDouble(Number::doubleValue).toArray();
-                            break;
-                        case UNKNOWN:
-                            break;
-                    }
+                if (spectrum.getBinaryDataArrayList()!=null) {
+                    for (BinaryDataArray array : spectrum.getBinaryDataArrayList().getBinaryDataArray()) {
+                        switch (array.getDataType()) {
+                            case INTENSITY:
+                                intArray = Arrays.stream(array.getBinaryDataAsNumberArray()).mapToDouble(Number::doubleValue).toArray();
+                                break;
+                            case MZ_VALUES:
+                                mzArray = Arrays.stream(array.getBinaryDataAsNumberArray()).mapToDouble(Number::doubleValue).toArray();
+                                break;
+                            case UNKNOWN:
+                                break;
+                        }
 
+                    }
                 }
 
-                if (mzArray == null || intArray == null)
-                    throw new IllegalArgumentException("No spectrum data found in Spectrum with id: " + spectrum.getId());
+                if (mzArray == null || intArray == null) {
+                    LoggerFactory.getLogger(MzMLParser.class).warn("No spectrum data found in Spectrum with id: " + spectrum.getId());
+                    mzArray = new double[0];
+                    intArray = new double[0];
+                }
                 final SimpleSpectrum spec = new SimpleSpectrum(mzArray, intArray);
 
                 final Scan scan = new Scan(
