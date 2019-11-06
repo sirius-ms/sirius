@@ -10,6 +10,8 @@ buildscript {
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
+ext['jna.version'] = '5.4.0'
+
 
 dependencies {
     compile project(':sirius_rest_service')
