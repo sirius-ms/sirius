@@ -262,13 +262,13 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
     public static void main(String[] args) {
         final File mzxmlFile = new File(
                 //"/home/kaidu/analysis/example"
-                //"/home/kaidu/analysis/canopus/mice/raw/cecum"
+              //  "/home/kaidu/analysis/canopus/mice/raw/cecum"
                 //"/home/kaidu/analysis/example"
-                //"/home/kaidu/data/raw/rosmarin"
+                "/home/kaidu/data/raw/rosmarin"
                 //"/home/kaidu/analysis/canopus/arabidobsis"
                // "/home/kaidu/data/raw/euphorbiaceae/raw"
                 //"/home/kaidu/data/raw/mzml"
-                "/home/kaidu/data/raw/diatom"
+               // "/home/kaidu/data/raw/diatom"
                 );
         MemoryFileStorage storage= null;
         try {
