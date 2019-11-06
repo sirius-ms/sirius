@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -245,6 +246,14 @@ public class LCMSProccessingInstance {
         sample.ions.clear(); sample.ions.addAll(ions);
         assert checkForDuplicates(sample);
         ////
+        {
+            final double[] intensityAfterPrec = new double[sample.ions.size()];
+            for (int k=0; k < sample.ions.size(); ++k) {
+                intensityAfterPrec[k] = sample.ions.get(k).getIntensityAfterPrecursor();
+            }
+            Arrays.sort(intensityAfterPrec);
+            sample.intensityAfterPrecursorDistribution = ExponentialDistribution.getMedianEstimator().extimateByMedian(intensityAfterPrec[intensityAfterPrec.length/2]);
+        }
         ListIterator<FragmentedIon> iter = ions.listIterator();
         final CorrelatedPeakDetector detector = new CorrelatedPeakDetector(detectableIonTypes);
         while (iter.hasNext()) {
