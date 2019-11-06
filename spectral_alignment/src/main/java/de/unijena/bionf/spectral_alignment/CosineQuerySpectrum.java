@@ -22,7 +22,18 @@ public class CosineQuerySpectrum implements Spectrum<Peak> {
         this.inverseSpectrum = inverseSpectrum;
         this.selfSimilarity = selfSimilarity;
         this.selfSimilarityLosses = selfSimilarityLosses;
+    }
 
+    public String toString() {
+        final StringBuilder buf = new StringBuilder();
+        buf.append(">parentmass ");buf.append(precursorMz);buf.append('\n');
+        for (int k=0; k < spectrum.size(); ++k) {
+            buf.append(spectrum.getMzAt(k));
+            buf.append('\t');
+            buf.append(spectrum.getIntensityAt(k));
+            buf.append('\n');
+        }
+        return buf.toString();
     }
 
     public double getPrecursorMz() {
