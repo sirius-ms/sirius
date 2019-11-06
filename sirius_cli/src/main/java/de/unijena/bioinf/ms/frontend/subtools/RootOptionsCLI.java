@@ -279,7 +279,7 @@ public class RootOptionsCLI implements RootOptions {
                 if (id.getIonMass().orElse(Double.NaN) <= maxMz)
                     return true;
                 else {
-                    LOG.info("Skipping instance " + id.toString() + " with mass: " + id.getIonMass() + " > " + maxMz);
+                    LOG.info("Skipping instance " + id.toString() + " with mass: " + id.getIonMass().orElse(Double.NaN) + " > " + maxMz);
                     return false;
                 }
             });
