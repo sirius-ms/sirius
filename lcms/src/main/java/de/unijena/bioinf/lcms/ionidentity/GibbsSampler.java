@@ -3,10 +3,18 @@ package de.unijena.bioinf.lcms.ionidentity;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
 class GibbsSampler {
+    protected Set<PrecursorIonType> commonTypes;
+    public GibbsSampler() {
+        this.commonTypes =  new HashSet<>();
+        commonTypes.add(PrecursorIonType.getPrecursorIonType("[M-H2O+H]+"));
+        commonTypes.add(PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"));
+
+    }
 
     public void sample(IonNode subnetwork) {
         ArrayList<IonNode> nodes = new ArrayList<>();
@@ -80,30 +88,48 @@ class GibbsSampler {
         return Math.exp(totalProbability);
     }
 
-    private void spread(ArrayList<IonNode> nodes, IonNode node) {
-        Set<PrecursorIonType> set = node.possibleIonTypes();
-        // we always add the "unknown" ion type
-        set.add(PrecursorIonType.unknown(node.getFeature().getRepresentativeIon().getPolarity()));
-        final PrecursorIonType[] ionTypes = set.toArray(PrecursorIonType[]::new);
-        final double[] probs = new double[ionTypes.length];
-        double total = 0;
-        for (int k=0; k < ionTypes.length; ++k) {
-            final PrecursorIonType ionType = ionTypes[k];
-            probs[k] = 0.5+node.neighbours.stream().filter(n->ionType.equals(n.fromType)).mapToInt(Edge::numberOfCommonSamples).reduce(Integer::sum).orElse(0);
-            total += probs[k];
-        }
-        for (int k=0; k < probs.length; ++k) {
-            probs[k] /= total;
-            probs[k] = Math.log(probs[k]);
-        }
-        node.assignment = new IonAssignment(ionTypes,probs);
+    private void spread(ArrayList<IonNode> nodes, IonNode initial) {
+        final ArrayList<IonNode> stack = new ArrayList<>();
+        stack.add(initial);
+        while (!stack.isEmpty()) {
+            IonNode node = stack.remove(stack.size()-1);
+            assert node.assignment==null;
+            Set<PrecursorIonType> set = node.possibleIonTypes();
+            // we always add the "unknown" ion type
+            set.add(PrecursorIonType.unknown(node.getFeature().getRepresentativeIon().getPolarity()));
+            final PrecursorIonType[] ionTypes = set.toArray(PrecursorIonType[]::new);
+            final double[] probs = new double[ionTypes.length];
+            double total = 0;
+            for (int k=0; k < ionTypes.length; ++k) {
+                final PrecursorIonType ionType = ionTypes[k];
+                if (ionType.isIonizationUnknown()) {
+                    probs[k] += 1 + node.getFeature().getNumberOfIntensiveFeatures();
+                } else {
+                    probs[k] += prior(ionType) * node.neighbours.stream().filter(n->ionType.equals(n.fromType)).mapToInt(e->e.totalNumberOfCorrelatedPeaks).sum();
+                }
 
-        nodes.add(node);
-        for (Edge e : node.neighbours) {
-            if (e.to.assignment==null) {
-                spread(nodes, e.to);
+                total += probs[k];
+            }
+            for (int k=0; k < probs.length; ++k) {
+                probs[k] /= total;
+                probs[k] = Math.log(probs[k]);
+            }
+            node.assignment = new IonAssignment(ionTypes,probs);
+
+            nodes.add(node);
+            for (Edge e : node.neighbours) {
+                if (e.to.assignment==null) {
+                    stack.add(e.to);
+                }
             }
         }
+    }
+
+    // okay, it seems that we have WAY too many adducts, so we need a prior
+
+    private double prior(PrecursorIonType ionType) {
+        //if (ionType.hasNeitherAdductNorInsource()) return 1d;
+        return 1d;
     }
 
 }

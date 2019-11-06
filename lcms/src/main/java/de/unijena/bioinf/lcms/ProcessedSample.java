@@ -32,7 +32,6 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
     protected final Annotations<DataAnnotation> annotations;
     protected UnivariateFunction recalibrationFunction;
     protected double maxRT;
-
     public final ArrayList<FragmentedIon> ions;
     public final ArrayList<FragmentedIon> gapFilledIons;
     public final ArrayList<FragmentedIon> otherIons; // any ions used for alignment solely
@@ -165,4 +164,5 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
     public Annotations<DataAnnotation> annotations() {
         return annotations;
     }
+
 }

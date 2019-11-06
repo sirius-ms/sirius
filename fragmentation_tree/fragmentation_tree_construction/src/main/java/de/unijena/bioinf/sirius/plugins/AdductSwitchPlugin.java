@@ -1,6 +1,10 @@
 package de.unijena.bioinf.sirius.plugins;
 
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdductSwitches;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
@@ -11,6 +15,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.Adduc
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossSizeScorer;
 import de.unijena.bioinf.sirius.ProcessedInput;
 
+import java.util.Map;
 import java.util.Set;
 
 public final class AdductSwitchPlugin extends SiriusPlugin {
@@ -22,44 +27,44 @@ public final class AdductSwitchPlugin extends SiriusPlugin {
 
     @Override
     protected LossValidator filterLossesInGraph(ProcessedInput input, Decomposition root) {
-        final IonMode sodium = (IonMode)PrecursorIonType.getPrecursorIonType("[M+Na]+").getIonization();
-        if (!root.getIon().equals(sodium)) {
+        final PossibleAdductSwitches switches = input.getAnnotation(PossibleAdductSwitches.class,PossibleAdductSwitches::disabled);
+        final Map<Ionization,Set<Ionization>> transitions = switches.getTransitions();
+        Set<Ionization> ionizations = transitions.get(root.getIon());
+        if (ionizations ==null) {
             return null;
         } else {
-            return new AllowAdductSwitch();
+            return new AllowAdductSwitch(transitions);
         }
     }
 
     @Override
     public void addPossibleIonModesToGraph(ProcessedInput input, Ionization candidate, Set<Ionization> ionModes) {
-        Ionization sodium = PrecursorIonType.getPrecursorIonType("[M+Na]+").getIonization();
-        if (candidate.equals(sodium)) {
-            ionModes.add(PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization());
-        }
+        final PossibleAdductSwitches switches = input.getAnnotation(PossibleAdductSwitches.class,PossibleAdductSwitches::disabled);
+        ionModes.addAll(switches.getPossibleIonizations(candidate));
     }
 
     private static class AllowAdductSwitch implements LossValidator{
-        private Ionization sodium, hplus;
+        private Map<Ionization, Set<Ionization>> transitions;
         private final Element N, P;
-        public AllowAdductSwitch() {
-            sodium = PrecursorIonType.getPrecursorIonType("[M+Na]+").getIonization();
-            hplus=PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization();
+
+        public AllowAdductSwitch(Map<Ionization, Set<Ionization>> transitions) {
+            this.transitions = transitions;
             final PeriodicTable pt = PeriodicTable.getInstance();
             N = pt.getByName("N");
             P = pt.getByName("P");
-
-
         }
 
         @Override
         public boolean isForbidden(ProcessedInput input, FGraph graph, Fragment a, Fragment b) {
-            if (a.getIonization().equals(hplus) && b.getIonization().equals(sodium)) return true;
-            if (a.getIonization().equals(sodium) && b.getIonization().equals(hplus)) {
+            if (a.getIonization().equals(b.getIonization()))
+                return false; // never forbid when ion stays the same
+            Set<Ionization> allowed = transitions.get(a.getIonization());
+            if (allowed==null) return true;
+            if (allowed.contains(b.getIonization())) {
                 final MolecularFormula difference = a.getFormula().subtract(b.getFormula());
                 if ((difference.numberOfOxygens()>0) || (difference.numberOf(N)>0) || difference.numberOf(P)>0) return false;
                 return true;
-            }
-            return false;
+            } else return true;
         }
     }
 }

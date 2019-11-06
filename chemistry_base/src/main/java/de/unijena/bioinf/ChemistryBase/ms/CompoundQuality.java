@@ -22,7 +22,7 @@ public class CompoundQuality implements Ms2ExperimentAnnotation  {
     }
 
     @DefaultInstanceProvider
-    public static CompoundQuality fromKeywords(@DefaultProperty(propertyKey = "quality") List<String> properties) {
+    public static CompoundQuality fromKeywords(@DefaultProperty List<String> properties) {
         final EnumSet<CompoundQualityFlag> props = EnumSet.noneOf(CompoundQualityFlag.class);
         for (String property : properties) {
             try {
