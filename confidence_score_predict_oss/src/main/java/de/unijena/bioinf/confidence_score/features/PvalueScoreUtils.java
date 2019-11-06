@@ -40,10 +40,13 @@ public class PvalueScoreUtils {
        // return(pvalue);
 
         ArrayList<Double> score_samples = new ArrayList<>();
+        ArrayList<String> dupl_list = new ArrayList<>();
 
         for (int i=0;i<ranked_candidates.length;i++) {
+            if(!(ranked_candidates[i].getCandidate().getFingerprint().toOneZeroString().equals(current_candidate.getCandidate().getFingerprint().toOneZeroString())) && !dupl_list.contains(ranked_candidates[i].getCandidate().getFingerprint().toOneZeroString()))
 
-            score_samples.add(ranked_candidates[i].getScore() + score_shift);
+                score_samples.add(ranked_candidates[i].getScore() + score_shift);
+                dupl_list.add(ranked_candidates[i].getCandidate().getFingerprint().toOneZeroString());
 
 
         }
@@ -249,17 +252,17 @@ return null;
         ArrayList<Double> tosortlist = new ArrayList<>();
 
         int dupe_counter=0;
+        ArrayList<String> dupl_list = new ArrayList<>();
 
         for(int i=0;i<candidates.length;i++){
-            if(!(candidates[i].getScore()==current.getScore() && candidates[i].getCandidate().getInchiKey2D().equals(current.getCandidate().getInchiKey2D()))) {
+            if(!(candidates[i].getCandidate().getFingerprint().toOneZeroString().equals(current.getCandidate().getFingerprint().toOneZeroString())) && !dupl_list.contains(candidates[i].getCandidate().getFingerprint().toOneZeroString())) {
                 tosortlist.add(Math.log(candidates[i].getScore() + score_shift));
+                dupl_list.add(candidates[i].getCandidate().getFingerprint().toOneZeroString());
             }else {
                 dupe_counter+=1;
             }
         }
         double[] scored_array= new double[tosortlist.size()];
-        if (scored_array.length < 5)
-            return 100;
 
         if(dupe_counter>=2)System.out.println("WARNING DUPLICATES");
         Collections.sort(tosortlist);
@@ -272,6 +275,11 @@ return null;
 
         double bandwidth= KernelDensityGen.getBaseBandwidth(empdist);
 
+        if (bandwidth==0){
+            System.out.println("Critical bandwidth estimation error, send input to Martin");
+            return 100;
+        }
+
         for(int i=0;i<scored_array.length;i++){
 
             NormalDistribution dist = new NormalDistribution(scored_array[i],bandwidth);
@@ -282,6 +290,7 @@ return null;
 
         }
        // System.out.println(pvalue+" ---"+scored_array.length+" --- "+(double)scored_array.length);
+
         pvalue=(double)pvalue/(double)scored_array.length;
 
 
