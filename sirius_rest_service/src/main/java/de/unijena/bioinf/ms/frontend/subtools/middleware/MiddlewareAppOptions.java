@@ -13,9 +13,13 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "asService", aliases = {"REST"}, description = "Starts the graphical user interface of SIRIUS", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
+import java.util.Collections;
+
+@CommandLine.Command(name = "asService", aliases = {"REST"}, description = "Starts SIRIUS as a background service that can be requested via a REST-API", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class MiddlewareAppOptions implements SingletonTool {
 
+    @CommandLine.Option(names = {"--port", "-p"}, description = "Specify the port on which the SIRIUS REST Service should run (Default: 8080).", defaultValue = "8080")
+    private int port = 8080;
 
     @Override
     public Workflow makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
@@ -41,6 +45,8 @@ public class MiddlewareAppOptions implements SingletonTool {
         public void run() {
             SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
             SpringApplication app = new SpringApplication(SiriusMiddlewareApplication.class);
+            app.setDefaultProperties(Collections
+                    .singletonMap("server.port", String.valueOf(port)));
             appContext = app.run();
         }
 
