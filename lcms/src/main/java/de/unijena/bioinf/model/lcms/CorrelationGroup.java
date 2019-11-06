@@ -6,22 +6,27 @@ public class CorrelationGroup {
     protected ChromatographicPeak left, right;
     protected ChromatographicPeak.Segment leftSegment, rightSegment;
     protected int start, end;
-    protected double correlation, kl;
+    protected double correlation, kl, cosine;
 
     protected String annotation;
 
     // for adduct types
     protected PrecursorIonType leftType, rightType;
 
-    public CorrelationGroup(ChromatographicPeak left, ChromatographicPeak right, ChromatographicPeak.Segment leftSegment, ChromatographicPeak.Segment rightSegment, int start, int end, double correlation, double kl) {
+    public CorrelationGroup(ChromatographicPeak left, ChromatographicPeak right, ChromatographicPeak.Segment leftSegment, ChromatographicPeak.Segment rightSegment, int start, int end, double correlation, double kl, double cosine) {
         this.left = left;
         this.right = right;
         this.leftSegment = leftSegment;
         this.rightSegment = rightSegment;
         this.correlation = correlation;
         this.kl = kl;
+        this.cosine = cosine;
         this.start = start;
         this.end = end;
+    }
+
+    public double getCosine() {
+        return cosine;
     }
 
     public double getKullbackLeibler() {
@@ -53,7 +58,7 @@ public class CorrelationGroup {
     }
 
     public CorrelationGroup invert() {
-        return new CorrelationGroup(right,left,rightSegment,leftSegment,start,end, correlation,kl);
+        return new CorrelationGroup(right,left,rightSegment,leftSegment,start,end, correlation,kl,cosine);
     }
 
     public String getAnnotation() {
