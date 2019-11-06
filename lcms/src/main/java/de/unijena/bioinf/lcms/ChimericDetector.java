@@ -81,7 +81,7 @@ public class ChimericDetector {
                         continue;
                     }
                     // check if it is an isotope
-                    if (CorrelatedPeakDetector.hasMassOfAnIsotope(ms1Mass, scan.getMzAt(k)) && detector.correlate(ms1Feature,segment.get(),chim.get()).filter(f->f.getCorrelation()>=0.9).isPresent()) {
+                    if (CorrelatedPeakDetector.hasMassOfAnIsotope(ms1Mass, scan.getMzAt(k)) && detector.correlate(ms1Feature,segment.get(),chim.get()).filter(f->f.getCosine()>=CorrelatedPeakDetector.COSINE_THRESHOLD).isPresent()) {
                         // ignore this peak
                         continue;
                     } else {
