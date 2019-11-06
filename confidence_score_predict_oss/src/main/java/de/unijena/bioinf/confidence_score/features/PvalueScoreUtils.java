@@ -4,6 +4,7 @@ import Tools.ExpectationMaximization1D;
 import Tools.KMeans;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import it.unimi.dsi.fastutil.Hash;
 import jMEF.MixtureModel;
 import jMEF.PVector;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
@@ -40,13 +41,13 @@ public class PvalueScoreUtils {
        // return(pvalue);
 
         ArrayList<Double> score_samples = new ArrayList<>();
-        ArrayList<String> dupl_list = new ArrayList<>();
+        HashMap<String,String> dupl_map =new HashMap<>();
 
         for (int i=0;i<ranked_candidates.length;i++) {
-            if(!(ranked_candidates[i].getCandidate().getFingerprint().toOneZeroString().equals(current_candidate.getCandidate().getFingerprint().toOneZeroString())) && !dupl_list.contains(ranked_candidates[i].getCandidate().getFingerprint().toOneZeroString()))
+            if(!(ranked_candidates[i].getCandidate().getFingerprint().toOneZeroString().equals(current_candidate.getCandidate().getFingerprint().toOneZeroString())) && !dupl_map.containsKey(ranked_candidates[i].getCandidate().getFingerprint().toOneZeroString()))
 
                 score_samples.add(ranked_candidates[i].getScore() + score_shift);
-                dupl_list.add(ranked_candidates[i].getCandidate().getFingerprint().toOneZeroString());
+                dupl_map.put(ranked_candidates[i].getCandidate().getFingerprint().toOneZeroString(),"true");
 
 
         }
@@ -252,12 +253,12 @@ return null;
         ArrayList<Double> tosortlist = new ArrayList<>();
 
         int dupe_counter=0;
-        ArrayList<String> dupl_list = new ArrayList<>();
+        HashMap<String,String> dupl_map = new HashMap<>();
 
         for(int i=0;i<candidates.length;i++){
-            if(!(candidates[i].getCandidate().getFingerprint().toOneZeroString().equals(current.getCandidate().getFingerprint().toOneZeroString())) && !dupl_list.contains(candidates[i].getCandidate().getFingerprint().toOneZeroString())) {
+            if(!(candidates[i].getCandidate().getFingerprint().toOneZeroString().equals(current.getCandidate().getFingerprint().toOneZeroString())) && !dupl_map.containsKey(candidates[i].getCandidate().getFingerprint().toOneZeroString())) {
                 tosortlist.add(Math.log(candidates[i].getScore() + score_shift));
-                dupl_list.add(candidates[i].getCandidate().getFingerprint().toOneZeroString());
+                dupl_map.put(candidates[i].getCandidate().getFingerprint().toOneZeroString(),"true");
             }else {
                 dupe_counter+=1;
             }
