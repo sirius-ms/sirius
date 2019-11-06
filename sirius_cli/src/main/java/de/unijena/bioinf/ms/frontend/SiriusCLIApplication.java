@@ -24,7 +24,7 @@ public class SiriusCLIApplication {
                 return new WorkflowBuilder<>(new RootOptionsCLI(configOptionLoader, new InstanceFactory.Default()), configOptionLoader);
             });
         } finally {
-
+            System.exit(0);
         }
     }
 
