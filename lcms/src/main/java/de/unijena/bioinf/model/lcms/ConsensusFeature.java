@@ -24,9 +24,10 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
     protected final CollisionEnergy collisionEnergy;
     protected final double averageMass, totalIntensity;
     protected final PrecursorIonType ionType;
+    protected final double chimericPollution;
     protected Annotated.Annotations<DataAnnotation> annotations = new Annotated.Annotations<>();
 
-    public ConsensusFeature(int featureId, Feature[] features, SimpleSpectrum[] coelutedPeaks, SimpleSpectrum[] ms2, PrecursorIonType ionType,  long averageRetentionTime,CollisionEnergy collisionEnergy ,double averageMass, double totalIntensity) {
+    public ConsensusFeature(int featureId, Feature[] features, SimpleSpectrum[] coelutedPeaks, SimpleSpectrum[] ms2, PrecursorIonType ionType,  long averageRetentionTime,CollisionEnergy collisionEnergy ,double averageMass, double totalIntensity, double chimericPollution) {
         this.featureId = featureId;
         this.features = features;
         this.coelutedPeaks = coelutedPeaks;
@@ -36,6 +37,7 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
         this.averageMass = averageMass;
         this.totalIntensity = totalIntensity;
         this.ionType = ionType;
+        this.chimericPollution = chimericPollution;
     }
 
     private SimpleSpectrum getIsotopes() {
@@ -116,15 +118,18 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
             if (f.peakShapeQuality.betterThan(Quality.DECENT) && (f.ms2Quality.betterThan(Quality.DECENT) || f.ms1Quality.betterThan(Quality.DECENT)))
                 goodPeakShape = true;
         }
+        final boolean chimeric = chimericPollution>0.33;
 
         exp.setAnnotation(Quantification.class, new Quantification(map));
 
         CompoundQuality quality = new CompoundQuality();
-        if (good) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.Good);
+        if (!chimeric && good) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.Good);
 
         if (!goodMs1) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.BadIsotopePattern);
         if (!goodMs2) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.FewPeaks);
         if (!goodPeakShape) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.BadPeakShape);
+        if (chimeric)
+            quality=quality.updateQuality(CompoundQuality.CompoundQualityFlag.Chimeric);
 
         exp.setAnnotation(CompoundQuality.class, quality);
 

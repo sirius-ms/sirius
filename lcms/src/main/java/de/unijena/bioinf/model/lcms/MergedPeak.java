@@ -2,6 +2,8 @@ package de.unijena.bioinf.model.lcms;
 
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.set.hash.TIntHashSet;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -24,6 +26,7 @@ public class MergedPeak implements Peak {
         this.mass = (float)best.getMass();
         this.intensity = (float)best.getIntensity();
         this.sourcePeaks = list;
+        assert allFromDifferentScans(sourcePeaks);
     }
 
     public MergedPeak(MergedPeak left, MergedPeak right) {
@@ -33,6 +36,37 @@ public class MergedPeak implements Peak {
         Arrays.sort(sourcePeaks, Comparator.comparingInt(ScanPoint::getScanNumber));
         this.mass = (float)h.getMass();
         this.intensity = (float)h.getIntensity();
+        assert allFromDifferentScans(sourcePeaks);
+    }
+
+    private static boolean allFromDifferentScans(ScanPoint[] xs) {
+        final TIntHashSet set = new TIntHashSet();
+        for (ScanPoint p : xs) {
+            if (!set.add(p.getScanNumber())) {
+                return false;
+            }
+        }
+        return true;
+
+    }
+
+    protected double correlation(TDoubleArrayList bufferLeft,TDoubleArrayList bufferRight, MergedPeak other) {
+        int i=0,j=0;
+        bufferLeft.clearQuick(); bufferRight.clearQuick();
+        while (i < sourcePeaks.length && j < other.sourcePeaks.length) {
+            if (sourcePeaks[i].getScanNumber()==other.sourcePeaks[j].getScanNumber()) {
+                bufferLeft.add(sourcePeaks[i].getIntensity());
+                bufferRight.add(other.sourcePeaks[j].getIntensity());
+                ++i;++j;
+            } else if (sourcePeaks[i].getScanNumber()<other.sourcePeaks[j].getScanNumber()) {
+                ++i;
+            } else {
+                ++j;
+            }
+        }
+        if (bufferLeft.size()>=3 && bufferRight.size()>=3) {
+            return Statistics.pearson(bufferLeft.toArray(), bufferRight.toArray());
+        } else return 0d;
     }
 
     private static Peak getHightestPeak(MergedPeak left, MergedPeak right) {
@@ -66,9 +100,51 @@ public class MergedPeak implements Peak {
         return intensity;
     }
 
-    public double getAverageMass() {
-        final double[] xs = new double[sourcePeaks.length];
-        for (int k=0; k < sourcePeaks.length; ++k) xs[k] = sourcePeaks[k].getMass();
-        return Statistics.robustAverage(xs);
+    public double getRobustAverageMass(double noiseLevel) {
+        if (sourcePeaks.length==1) return sourcePeaks[0].getMass();
+        ScanPoint[] copy = sourcePeaks.clone();
+        Arrays.sort(copy,Comparator.comparingDouble(ScanPoint::getIntensity).reversed());
+        double threshold = Math.min(4*noiseLevel, copy[0].getIntensity()*0.5d);
+        int i=0;
+        for (; i < copy.length; ++i)
+            if (copy[i].getIntensity()<threshold) {
+                break;
+            }
+        if (i<=3) return weightedAverage(copy,i);
+        Arrays.sort(copy,0,i, Comparator.comparingDouble(ScanPoint::getMass));
+        int perc = (int)Math.floor(i*0.25);
+        double avg = 0d, ints=0d;
+        for (int k=perc; k < i-perc; ++k) {
+            avg += copy[k].getMass()*copy[k].getIntensity();
+            ints += copy[k].getIntensity();
+        }
+        assert ints>0;
+        return avg/(ints);
+
+    }
+
+    public double weightedAverage() {
+        return weightedAverage(sourcePeaks,sourcePeaks.length);
+    }
+
+    private double weightedAverage(ScanPoint[] xs, int n) {
+        double m=0d, i=0d;
+        for (int k=0; k < n; ++k) {
+            m += xs[k].getIntensity()*xs[k].getMass();
+            i+=xs[k].getIntensity();
+        }
+        return m/i;
+    }
+
+    public double sumIntensity() {
+        double i = 0d;
+        for (Peak p : sourcePeaks)
+            i += p.getIntensity();
+        return i;
+    }
+
+    @Override
+    public String toString(){
+        return this.getMass() + " m/z\t" + this.getIntensity() + "  (" + this.sourcePeaks.length + " peaks)";
     }
 }

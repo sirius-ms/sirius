@@ -809,7 +809,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     public FGraph performGraphReduction(FGraph fragments, double lowerbound) {
         if(reduction==null) return fragments;
         for (SiriusPlugin plugin : siriusPlugins.values()) {
-            if (plugin.isGraphReductionForbidden()) {
+            if (plugin.isGraphReductionForbidden(fragments)) {
                 return fragments;
             }
         }

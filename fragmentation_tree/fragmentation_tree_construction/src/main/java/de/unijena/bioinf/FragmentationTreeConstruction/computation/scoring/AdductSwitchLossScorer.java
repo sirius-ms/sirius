@@ -1,7 +1,9 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
@@ -10,19 +12,9 @@ import de.unijena.bioinf.sirius.ProcessedInput;
 //todo do we also adjust this for M+K ?
 public class AdductSwitchLossScorer implements LossScorer<Object> {
 
-    private final Ionization naIon = PrecursorIonType.getPrecursorIonType("[M+Na]+").getIonization();
-    private final Ionization hIon = PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization();
-
     private static final double DEFAULT_NA_H_SWITCH_SCORE = -3.6109179126442243;
-//    private static final double DEFAULT_NA_H_SWITCH_CHILD_PENALTY_SCORE = -3.6109179126442243;
-
-//    private static final double DEFAULT_NA_H_SWITCH_SCORE = -3.8066624897703196; //only oxygen+ losses
-
     private double naHSwitchScore;
-
     private LossSizeScorer lossSizeScorer;
-
-    private Element P, N;
 
     public AdductSwitchLossScorer(LossSizeScorer lossSizeScorer) {
         this(DEFAULT_NA_H_SWITCH_SCORE, lossSizeScorer);
@@ -32,8 +24,6 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
         this.naHSwitchScore = naHSwitchScore;
         this.lossSizeScorer = lossSizeScorer;
         PeriodicTable T = PeriodicTable.getInstance();
-        P = T.getByName("P");
-        N = T.getByName("N");
     }
 
     @Override
@@ -49,14 +39,7 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
         final Ionization targetIon = loss.getTarget().getIonization();
 
         if (sourceIon.equals(targetIon)) return 0;
-
-
-//        if (sourceIon.equals(naIon) && targetIon.equals(hIon)){
-//            return naHSwitchScore;
-//        }
-
-//        //changed to only allow in combination with O loss
-        if (sourceIon.equals(naIon) && targetIon.equals(hIon) ) {
+        {
             MolecularFormula F = loss.getFormula();
             if (F.isEmpty()) return Double.NEGATIVE_INFINITY;
 
@@ -65,11 +48,10 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
 
             final double correctLossSize = lossSizeScorer.score(F);
 
-            final double lossScore = (F.numberOfOxygens()>0 || F.numberOf(P)>0 || F.numberOf(N)>0) ? DEFAULT_NA_H_SWITCH_SCORE : Double.NEGATIVE_INFINITY;//allowedLosses.contains(loss.getFormula()) ? -2 : Double.NEGATIVE_INFINITY;
+            final double lossScore = DEFAULT_NA_H_SWITCH_SCORE;
 
             return lossScore - wrongLossSize + correctLossSize;
         }
-        return Double.NEGATIVE_INFINITY;
     }
 
     @Override

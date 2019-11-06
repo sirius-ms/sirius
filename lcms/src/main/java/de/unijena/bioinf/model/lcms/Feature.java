@@ -30,11 +30,12 @@ public class Feature implements Annotated<DataAnnotation> {
 
     // quality terms
     protected final Quality peakShapeQuality, ms1Quality, ms2Quality;
+    protected double chimericPollution;
 
     // debug
     public ScanPoint[] completeTraceDebug;
 
-    public Feature(LCMSRun origin, double mz, double intensity, ScanPoint[] trace, SimpleSpectrum[] correlatedFeatures, int isotope, SimpleSpectrum[] ms2Spectra, PrecursorIonType ionType, Set<PrecursorIonType> alternativeIonTypes, UnivariateFunction rtRecalibration,Quality peakShapeQuality, Quality ms1Quality, Quality ms2Quality) {
+    public Feature(LCMSRun origin, double mz, double intensity, ScanPoint[] trace, SimpleSpectrum[] correlatedFeatures, int isotope, SimpleSpectrum[] ms2Spectra, PrecursorIonType ionType, Set<PrecursorIonType> alternativeIonTypes, UnivariateFunction rtRecalibration,Quality peakShapeQuality, Quality ms1Quality, Quality ms2Quality, double chimericPollution) {
         this.origin = origin;
         this.mz = mz;
         this.intensity = intensity;
@@ -48,6 +49,7 @@ public class Feature implements Annotated<DataAnnotation> {
         this.ms1Quality = ms1Quality;
         this.ms2Quality = ms2Quality;
         this.alternativeIonTypes = alternativeIonTypes;
+        this.chimericPollution = chimericPollution;
     }
 
     public Set<PrecursorIonType> getPossibleAdductTypes() {
@@ -124,12 +126,21 @@ public class Feature implements Annotated<DataAnnotation> {
         }
         exp.setMs2Spectra(ms2Spectra);
         exp.setIonMass(mz);
-        exp.setAnnotation(RetentionTime.class, new RetentionTime(trace[0].getRetentionTime(), trace[trace.length-1].getRetentionTime(), trace[apex].getRetentionTime()));
+        exp.setAnnotation(RetentionTime.class, new RetentionTime(trace[0].getRetentionTime()/1000d, trace[trace.length-1].getRetentionTime()/1000d, trace[apex].getRetentionTime()/1000d));
+
+        boolean chimeric = chimericPollution>=0.33;
+
+        CompoundQuality quality = new CompoundQuality();
+        if (chimeric) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.Chimeric);
+        if (getMs2Quality().notBetterThan(Quality.DECENT)) quality=quality.updateQuality(CompoundQuality.CompoundQualityFlag.FewPeaks);
+        if (getMs1Quality().notBetterThan(Quality.DECENT)) quality=quality.updateQuality(CompoundQuality.CompoundQualityFlag.BadIsotopePattern);
+        if (getPeakShapeQuality().notBetterThan(Quality.DECENT)) quality=quality.updateQuality(CompoundQuality.CompoundQualityFlag.BadPeakShape);
+        if (quality.isNotBadQuality())
+            quality=quality.updateQuality(CompoundQuality.CompoundQualityFlag.Good);
 
         final TObjectDoubleHashMap<String> map = new TObjectDoubleHashMap<>();
         exp.setAnnotation(Quantification.class, new Quantification(Collections.singletonMap(origin.identifier, intensity)));
-        if (getMs2Quality().betterThan(Quality.DECENT) && getMs1Quality().betterThan(Quality.DECENT) && getPeakShapeQuality().betterThan(Quality.DECENT))
-            exp.setAnnotation(CompoundQuality.class, new CompoundQuality(CompoundQuality.CompoundQualityFlag.Good));
+        exp.setAnnotation(CompoundQuality.class,quality);
         exp.setSource(new SpectrumFileSource(origin.source.getUrl()));
         return exp;
     }

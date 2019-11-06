@@ -77,9 +77,9 @@ public class LCMSProccessingInstance {
         final SimpleSpectrum spec2 = Spectrums.extractMostIntensivePeaks(spec, 8, 100);
         final Scan scan = new Scan(id, merged.getScans().get(0).getPolarity(),peak.getRetentionTimeAt(segment.getApexIndex()), merged.getScans().get(0).getCollisionEnergy(),spec.size(), Spectrums.calculateTIC(spec), merged.getPrecursor());
         ms2Storage.add(scan, spec);
-        return new FragmentedIon(merged.getScans().get(0).getPolarity(), scan, new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20))).createQueryWithIntensityTransformationNoLoss(spec2, merged.getPrecursor().getMass(), true), merged.getQuality(spec), peak, segment);
+        final FragmentedIon ion = new FragmentedIon(merged.getScans().get(0).getPolarity(), scan, new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20))).createQueryWithIntensityTransformationNoLoss(spec2, merged.getPrecursor().getMass(), true), merged.getQuality(spec), peak, segment);
+        return ion;
     }
-
 
     /**
      * has to be called after alignment
@@ -204,7 +204,7 @@ public class LCMSProccessingInstance {
 
 
         final Feature feature = new Feature(sample.run, ionMass, intensity, trace.toArray(new ScanPoint[0]), correlatedFeatures.toArray(new SimpleSpectrum[0]), 0,ion.getMsMsScan()==null ? new SimpleSpectrum[0] : new SimpleSpectrum[]{ms2Storage.getScan(ion.getMsMsScan())}, ionType, ion.getPossibleAdductTypes(), sample.recalibrationFunction,
-                ion.getPeakShape().getPeakShapeQuality(), ion.getMsQuality(), ion.getMsMsQuality()
+                ion.getPeakShape().getPeakShapeQuality(), ion.getMsQuality(), ion.getMsMsQuality(),ion.getChimericPollution()
 
                 );
         feature.completeTraceDebug = debugTrace.toArray(new ScanPoint[0]);
