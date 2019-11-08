@@ -7,11 +7,11 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.net.ProxyManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import org.apache.http.annotation.ThreadSafe;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;

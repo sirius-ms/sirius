@@ -15,11 +15,14 @@ import picocli.CommandLine;
 
 import java.util.Collections;
 
-@CommandLine.Command(name = "asService", aliases = {"REST"}, description = "Starts SIRIUS as a background service that can be requested via a REST-API", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "Starts SIRIUS as a background service that can be requested via a REST-API", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class MiddlewareAppOptions implements SingletonTool {
 
     @CommandLine.Option(names = {"--port", "-p"}, description = "Specify the port on which the SIRIUS REST Service should run (Default: 8080).", defaultValue = "8080")
     private int port = 8080;
+
+    @CommandLine.Option(names = {"--enable-rest-shutdown", "-s"}, description = "Allows to shut down the rest service via rest api call ()")
+    private boolean enableRestShutdown = false;
 
     @Override
     public Workflow makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
