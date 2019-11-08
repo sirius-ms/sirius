@@ -7,10 +7,10 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ConnectionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
-import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.concurrent.atomic.AtomicBoolean;

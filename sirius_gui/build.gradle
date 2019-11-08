@@ -1,6 +1,21 @@
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE")
+    }
+}
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+ext['jna.version'] = '5.4.0'
+
 dependencies {
 //project
-    compile project(':sirius_cli')
+    compile project(':sirius_rest_service')
+
 
 //internal
     compile group: 'de.unijena.bioinf', name: 'jjobs-swing', version: "$jjobs_version"

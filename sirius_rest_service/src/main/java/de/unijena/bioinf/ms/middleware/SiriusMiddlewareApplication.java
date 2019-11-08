@@ -16,8 +16,8 @@ import java.io.IOException;
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner {
 
 
-    private static RootOptionsCLI rootOptions;
-    private final SiriusContext context;
+    protected static RootOptionsCLI rootOptions;
+    protected final SiriusContext context;
 
     public SiriusMiddlewareApplication(SiriusContext context) {
         this.context = context;

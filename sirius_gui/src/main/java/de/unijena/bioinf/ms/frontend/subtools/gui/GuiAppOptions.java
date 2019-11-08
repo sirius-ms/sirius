@@ -1,44 +1,49 @@
 package de.unijena.bioinf.ms.frontend.subtools.gui;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.fingerid.webapi.VersionsInfo;
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
-import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
+import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.NewsDialog;
-import de.unijena.bioinf.ms.gui.dialogs.UpdateDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 @CommandLine.Command(name = "gui", aliases = {"GUI"}, description = "Starts the graphical user interface of SIRIUS", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class GuiAppOptions implements SingletonTool {
     @Override
     public Workflow makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
-        return () -> {
-            //todo minor: cancellation handling
+        return new Flow(preproJob, projectSpace, config);
+    }
+
+    class Flow implements ServiceWorkflow {
+        private final PreprocessingJob preproJob;
+        private final ParameterConfig config;
+        private final ProjectSpaceManager projectSpace;
+
+
+        public Flow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
+            this.preproJob = preproJob;
+            this.projectSpace = projectSpace;
+            this.config = config;
+        }
+
+        @Override
+        public void run() {
+//todo minor: cancellation handling
 
             // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
-            Iterable<? extends Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
+            SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
 
-            assert ps == projectSpace;
 
             // NOTE: we do not want to run ConfigJob here because we want to set
             // final config for experient if something will be computed and that is not the case here
@@ -63,6 +68,7 @@ public class GuiAppOptions implements SingletonTool {
                     } catch (IOException e) {
                         ApplicationCore.DEFAULT_LOGGER.error("Could not write summaries", e);
                     } finally {
+                        MainFrame.CONNECTION_MONITOR.close();
                         System.exit(0);
                     }
                 }
@@ -93,6 +99,6 @@ public class GuiAppOptions implements SingletonTool {
                     }
                 }
             });*/
-        };
+        }
     }
 }

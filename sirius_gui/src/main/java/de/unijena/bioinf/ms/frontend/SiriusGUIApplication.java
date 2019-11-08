@@ -7,20 +7,29 @@ import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBeanFactory;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
 import de.unijena.bioinf.ms.frontend.workfow.GuiWorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.middleware.SiriusContext;
+import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.net.ProxyManager;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SiriusGUIApplication extends SiriusCLIApplication {
+
+@SpringBootApplication
+public class SiriusGUIApplication extends SiriusMiddlewareApplication {
+
+    public SiriusGUIApplication(SiriusContext context) {
+        super(context);
+    }
 
     public static void main(String[] args) {
         configureShutDownHook(()->{
-            MainFrame.CONNECTION_MONITOR.close();
             Jobs.cancelALL();//cancel all instances to quit
         });
 
@@ -30,13 +39,17 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
         ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
 
         //todo why do we need this?
-        if (ProxyManager.getProxyStrategy() == null) {
+        if (ProxyManager.getProxyStrategy() == null)
             SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty("de.unijena.bioinf.sirius.proxy", ProxyManager.DEFAULT_STRATEGY.name());
-        }
 
         run(args, () -> {
             final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-            return new GuiWorkflowBuilder<>(new RootOptionsCLI(configOptionLoader, new InstanceBeanFactory()), configOptionLoader);
+            rootOptions = new RootOptionsCLI(configOptionLoader, new InstanceBeanFactory());
+            return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader);
         });
+
+        if (!(RUN.getFlow() instanceof ServiceWorkflow)) {
+            System.exit(0);
+        }
     }
 }
