@@ -217,14 +217,14 @@ public interface ZodiacOptions {
 
 
     @Option(
-            longName = {"all-anchors-good-hack"},
+            longName = {"all-anchors-good-quality"},
             description = "Treat all compounds with library anchor as 'Good quality' which means they are always used for ZODIAC optimization",
             hidden = true
     )
     boolean isAllAnchorsHaveGoodQuality();
 
     @Option(
-            longName = {"exclude-bad-quality-anchors-hack"},
+            longName = {"exclude-bad-quality-anchors"},
             description = "Exclude all compounds with library anchors with 'Bad quality'. This has influence on the cross-validation bins.",
             hidden = true
     )
