@@ -34,28 +34,12 @@ repositories {
 ext {
     springfoxVersion = '2.9.2'
 }
-ext['jna.version'] = '5.4.0'
-
-// needed for spring-boot-devtools
-/*configurations {
-    developmentOnly
-    runtimeClasspath {
-        extendsFrom developmentOnly
-    }
-}*/
+ext['jna.version'] = '5.4.0' //force correct jna version -> springs is not compatible with ilp solver
 
 dependencies {
     compile project(':sirius_cli')
 
-
-    //configure spring boot with jetty and jul
-    compile("org.springframework.boot:spring-boot-starter-web") {
-        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
-    }
-    compile("org.springframework.boot:spring-boot-starter-jetty")
-    // expose operational information about the running application via /actuator
-    compile("org.springframework.boot:spring-boot-starter-actuator")
-
+    //////////// configure logging /////////////////////
     //use spring boot with java logging instead of log4j
     configurations.all {
         exclude group: 'ch.qos.logback', module: 'logback-classic'
@@ -65,36 +49,48 @@ dependencies {
     compile("org.slf4j:log4j-over-slf4j:$slf4j_version")
     compile("org.slf4j:jcl-over-slf4j:$slf4j_version")
     compile("org.slf4j:jul-to-slf4j:$slf4j_version")
-
     //logging implemetation
-//    compile("org.slf4j:slf4j-simple:$slf4j_version")
     compile("org.slf4j:slf4j-jdk14:$slf4j_version")
+    ////////////////////////////////////////////////////
 
 
-    // Automatically restart whenever files on the classpath change
-    // TODO not working at the moment
-//    developmentOnly("org.springframework.boot:spring-boot-devtools")
-
+    //////////// Spring (boot) ////////////////////////
+    //configure spring boot with jetty and jul
+    compile("org.springframework.boot:spring-boot-starter-web") {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+    }
+    compile("org.springframework.boot:spring-boot-starter-jetty")
+    // expose operational information about the running application via /actuator
+    compile("org.springframework.boot:spring-boot-starter-actuator")
 
     compile "info.picocli:picocli-spring-boot-starter:4.0.1"
-    compile "com.fasterxml.jackson:jackson-bom:2.9.7"
+    compile 'it.unimi.dsi:fastutil:8.3.0' //replaces old spring version
+    ////////////////////////////////////////////////////
 
+
+    ///////////////////// Json Stuff ///////////////////
     // TODO: maybe needed for better JSON-marshalling
+//    compile "com.fasterxml.jackson:jackson-bom:2.9.7"
     // support for accessing parameter names
 //    compile "com.fasterxml.jackson.module:jjackson-module-parameter-names"
     // support for other new Java 8 datatypes outside of date/time (mainly Optional)
 //    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8"
     // support for Java 8 date/time types
 //    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+    ////////////////////////////////////////////////////
 
+
+    ////////////////////// API Stuff ///////////////////
     // Automated JSON API documentation for API's built with Spring
     compile "io.springfox:springfox-swagger2:${springfoxVersion}"
     // Generate interactive documentation from a Swagger-compliant API
     compile "io.springfox:springfox-swagger-ui:${springfoxVersion}"
 
-    swaggerCodegen 'io.swagger:swagger-codegen-cli:2.4.2'             // Swagger Codegen V2
-    swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.5'  // or Swagger Codegen V3
-    swaggerCodegen 'org.openapitools:openapi-generator-cli:3.3.4'     // or OpenAPI Generator
+    // swagger codegen as gradle task --> this is done in another project I thing!
+//    swaggerCodegen 'io.swagger:swagger-codegen-cli:2.4.2'             // Swagger Codegen V2
+//    swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.5'  // or Swagger Codegen V3
+//    swaggerCodegen 'org.openapitools:openapi-generator-cli:3.3.4'     // or OpenAPI Generator
+    ////////////////////////////////////////////////////
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
@@ -125,33 +121,6 @@ task bootJarWithFrontend(group: 'build') {
     dependsOn(bootJar)
 }
 
-/*swaggerSources {
-    nightsky {
-        inputFile = file('petstore.yaml')
-        code {
-            language = 'spring'
-        }
-    }
-}*/
-
-/*//artifactoryPublish.skip = true
-artifactory {
-    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
-    publish {
-        repository {
-            if (version.toString().endsWith('-SNAPSHOT'))
-                repoKey = 'libs-snapshot-local'
-            else
-                repoKey = 'libs-release-local'
-
-            username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
-            password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
-        }
-        defaults {
-            publications('mavenJava')
-        }
-    }
-}*/
 
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
