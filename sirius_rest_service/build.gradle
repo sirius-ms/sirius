@@ -7,9 +7,6 @@ buildscript {
     }
 }
 
-plugins {
-    id 'org.hidetake.swagger.generator' version '2.18.1'
-}
 
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
@@ -63,7 +60,7 @@ dependencies {
     // expose operational information about the running application via /actuator
     compile("org.springframework.boot:spring-boot-starter-actuator")
 
-    compile "info.picocli:picocli-spring-boot-starter:4.0.1"
+//    compile "info.picocli:picocli-spring-boot-starter:4.0.1"
     compile 'it.unimi.dsi:fastutil:8.3.0' //replaces old spring version
     ////////////////////////////////////////////////////
 
@@ -87,6 +84,9 @@ dependencies {
     compile "io.springfox:springfox-swagger-ui:${springfoxVersion}"
 
     // swagger codegen as gradle task --> this is done in another project I thing!
+    /*plugins {
+    id 'org.hidetake.swagger.generator' version '2.18.1'
+    }*/
 //    swaggerCodegen 'io.swagger:swagger-codegen-cli:2.4.2'             // Swagger Codegen V2
 //    swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.5'  // or Swagger Codegen V3
 //    swaggerCodegen 'org.openapitools:openapi-generator-cli:3.3.4'     // or OpenAPI Generator

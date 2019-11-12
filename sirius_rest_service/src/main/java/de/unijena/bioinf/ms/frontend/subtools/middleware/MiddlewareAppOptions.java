@@ -13,7 +13,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "Starts SIRIUS as a background service that can be requested via a REST-API", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "Starts SIRIUS as a background (REST) service that can be requested via a REST-API", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class MiddlewareAppOptions implements SingletonTool {
 
     @CommandLine.Option(names = {"--port", "-p"}, description = "Specify the port on which the SIRIUS REST Service should run (Default: 8080).", defaultValue = "8080")
@@ -21,7 +21,7 @@ public class MiddlewareAppOptions implements SingletonTool {
         System.getProperties().setProperty("server.port", String.valueOf(port));
     }
 
-    @CommandLine.Option(names = {"--enable-rest-shutdown", "-s"}, description = "Allows to shut down the rest service via rest api call (/actuator/shutdown)", defaultValue = "false")
+    @CommandLine.Option(names = {"--enable-rest-shutdown", "-s"}, description = "Allows to shut down the SIRIUS REST Service via a rest api call (/actuator/shutdown)", defaultValue = "false")
     private void setShutdown(boolean enableRestShutdown) {
         if (enableRestShutdown)
             System.getProperties().setProperty("management.endpoints.web.exposure.include", "info,health,shutdown");

@@ -41,7 +41,6 @@ public class FormulaResultController extends BaseApiController {
         }).map(con -> con.getResults().values().stream().map(FormulaId::new).collect(Collectors.toList())).orElse(Collections.emptyList());
     }
 
-
     @GetMapping(value = "/formulas/{fid}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public FormulaId getFormulaResult(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid) {
         SiriusProjectSpace space = projectSpace(pid);
