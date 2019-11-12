@@ -17,7 +17,6 @@
  */
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
@@ -30,6 +29,7 @@ import gnu.trove.list.array.TIntArrayList;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -353,7 +353,7 @@ public class Spectrums {
         final TIntArrayList keep = new TIntArrayList();
         final int n = spectrum.size();
         for (int i = 0; i < n; ++i) {
-            if (predicate.apply(spectrum.getPeakAt(i))) keep.add(i);
+            if (predicate.test(spectrum.getPeakAt(i))) keep.add(i);
         }
         for (int i=0; i < keep.size(); ++i) {
             if (i != keep.get(i)) spectrum.swap(keep.get(i), i);
