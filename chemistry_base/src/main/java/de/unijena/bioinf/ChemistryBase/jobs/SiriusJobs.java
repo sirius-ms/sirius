@@ -5,6 +5,8 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Callable;
+
 public class SiriusJobs {
 
     private static volatile JobManager globalJobManager = null;
@@ -40,21 +42,28 @@ public class SiriusJobs {
         return globalJobManager;
     }
 
-    public static TinyBackgroundJJob runInBackround(final Runnable task) {
-        final TinyBackgroundJJob t = new TinyBackgroundJJob() {
+    public static TinyBackgroundJJob<Boolean> runInBackground(final Runnable task) {
+        final TinyBackgroundJJob<Boolean> t = new TinyBackgroundJJob<>() {
             @Override
-            protected Object compute() {
+            protected Boolean compute() {
                 task.run();
                 return true;
             }
         };
-        getGlobalJobManager().submitJob(t);
-        return t;
+        return getGlobalJobManager().submitJob(t);
     }
 
-    public static TinyBackgroundJJob runInBackround(TinyBackgroundJJob task) {
-        getGlobalJobManager().submitJob(task);
-        return task;
+    public static <T> TinyBackgroundJJob<T> runInBackground(TinyBackgroundJJob<T> task) {
+        return getGlobalJobManager().submitJob(task);
+    }
+
+    public static <T> TinyBackgroundJJob<T> runInBackground(Callable<T> task) {
+        return getGlobalJobManager().submitJob(new TinyBackgroundJJob<T>() {
+            @Override
+            protected T compute() throws Exception {
+                return task.call();
+            }
+        });
     }
 
 
