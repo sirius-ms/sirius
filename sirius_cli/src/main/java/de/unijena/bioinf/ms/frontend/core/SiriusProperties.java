@@ -34,6 +34,7 @@ public class SiriusProperties extends PropertyManager {
     public static final String DEFAULT_LOAD_DIALOG_PATH = PROPERTY_BASE + ".sirius.paths.load_dialog";
     public static final String DEFAULT_TREE_EXPORT_PATH = PROPERTY_BASE + ".sirius.paths.tree_export";
     public static final String DEFAULT_SAVE_FILE_PATH = PROPERTY_BASE + ".sirius.paths.save_file";
+    public static final String DEFAULT_SAVE_DIR_PATH = PROPERTY_BASE + ".sirius.paths.save_dir";
     public static final String CSV_EXPORT_PATH = PROPERTY_BASE + ".sirius.paths.csv_export";
     public static final String DEFAULT_TREE_FILE_FORMAT = PROPERTY_BASE + ".sirius.paths.tree_file_format";
 

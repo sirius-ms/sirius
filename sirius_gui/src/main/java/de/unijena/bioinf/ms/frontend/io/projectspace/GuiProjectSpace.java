@@ -6,54 +6,105 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
-import de.unijena.bioinf.ms.gui.mainframe.BatchImportDialog;
-import de.unijena.bioinf.ms.gui.mainframe.FileImportDialog;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.ms.gui.dialogs.input.BatchImportDialog;
+import de.unijena.bioinf.ms.gui.dialogs.input.FileImportDialog;
+import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.ContainerListener;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class GuiProjectSpace {
+    //    todo ringbuffer???
     protected static final Logger LOG = LoggerFactory.getLogger(GuiProjectSpace.class);
     public final BasicEventList<InstanceBean> COMPOUNT_LIST = new BasicEventList<>();
-    private final ContainerListener.Defined addListener, deleteListener;
 
-//    todo ringbuffer???
-//    private final Map<CompoundContainerId, InstanceBean> idToWrapperBean = new ConcurrentHashMap<>();
+    private ContainerListener.Defined addListener, deleteListener;
+    private ProjectSpaceManager projectSpace;
 
-    public final ProjectSpaceManager projectSpace;
+    public ProjectSpaceManager getProjectSpace() {
+        return projectSpace;
+    }
 
     public GuiProjectSpace(@NotNull ProjectSpaceManager projectSpaceManager) {
-        projectSpace = projectSpaceManager;
+        changeProjectSpace(projectSpaceManager);
+    }
 
-        // add already existing compounds to reactive list
-        projectSpace.forEach(intBean -> COMPOUNT_LIST.add((InstanceBean) intBean));
+
+    private void clearListener(@Nullable ContainerListener.Defined listener) {
+        if (listener != null)
+            listener.unregister();
+    }
+
+    public synchronized void changeProjectSpace(ProjectSpaceManager projectSpaceManager) {
+        // clean old if available
+        inEDTAndWait(COMPOUNT_LIST::clear);
+        clearListener(addListener);
+        clearListener(deleteListener);
+
+        // add new project & listeners
+        projectSpace = projectSpaceManager;
 
         // listen to add events
         addListener = projectSpace.projectSpace().defineCompoundListener().onCreate().thenDo((event) -> {
-            COMPOUNT_LIST.add((InstanceBean) projectSpace.newInstanceFromCompound(event.getAffectedID()));
+            inEDTAndWait(() -> COMPOUNT_LIST.add((InstanceBean) projectSpace.newInstanceFromCompound(event.getAffectedID(), Ms2Experiment.class)));
         }).register();
 
         // listen to delete events
         deleteListener = projectSpace.projectSpace().defineCompoundListener().onDelete().thenDo((event) -> {
-            COMPOUNT_LIST.removeIf(inst -> event.getAffectedID().equals(inst.getID()));
+            inEDTAndWait(() -> COMPOUNT_LIST.removeIf(inst -> event.getAffectedID().equals(inst.getID())));
         }).register();
+
+        // add already existing compounds to reactive list
+        inEDTAndWait(() -> projectSpace.forEach(intBean -> COMPOUNT_LIST.add((InstanceBean) intBean)));
     }
 
-
-    public void importCompound(Ms2Experiment ex) {
-        projectSpace.newCompoundWithUniqueId(ex);
+    private void inEDTAndWait(@NotNull final Runnable run) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            run.run();
+        } else {
+            try {
+                SwingUtilities.invokeAndWait(run);
+            } catch (InterruptedException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
-    public void deleteCompound(final InstanceBean inst) {
+    /*// close and cleanup PS
+    // ask user etc
+    public void destroy() {
+        try {
+
+            projectSpace.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }*/
+
+
+    /**
+     * Exports the project space as compressed archive to the given files
+     *
+     * @param file The path where the archive will be saved
+     * @throws IOException Thrown if writing of archive fails
+     */
+    public void exportAsProjectArchive(File file) throws IOException {
+        System.out.println("##### NOT IMPLEMENTED");
+        //todo save as and compress (archive)
+    }
+
+    public void deleteCompound(@Nullable final InstanceBean inst) {
         if (inst == null)
             return;
         deleteCompound(inst.getID());
@@ -67,48 +118,27 @@ public class GuiProjectSpace {
         }
     }
 
-    public synchronized void clear() {
+    public synchronized void deleteAll() {
         COMPOUNT_LIST.iterator().forEachRemaining(this::deleteCompound);
     }
 
 
     public enum ImportMode {REPLACE, MERGE}
 
-    public void importFromProjectSpace(@NotNull final ImportMode importMode, @NotNull final File... selFile) {
-        importFromProjectSpace(importMode, Arrays.asList(selFile));
+    public void importCompound(Ms2Experiment ex) {
+        projectSpace.newCompoundWithUniqueId(ex);
     }
 
-    public void importFromProjectSpace(@NotNull final Collection<File> selFile) {
-        importFromProjectSpace(ImportMode.REPLACE, selFile);
+    public void importOneExperimentPerLocation(File... files) {
+        importOneExperimentPerLocation(Arrays.asList(files));
     }
 
-    public void importFromProjectSpace(@NotNull final ImportMode importMode, @NotNull final Collection<File> selFile) {
-        Jobs.runInBackroundAndLoad(MF, "Importing into Project-Space", (TinyBackgroundJJob) new TinyBackgroundJJob<Boolean>() {
-            @Override
-            protected Boolean compute() {
-                System.out.println("##### NOT IMPLEMENTED");
-                //todo do import
-                return true;
-            }
-        }.asIO());
-    }
-
-    public void exportAsProjectSpace(File file) throws IOException {
-        System.out.println("##### NOT IMPLEMENTED");
-        //todo save as and compress (archive)
-    }
-
-
-    public void importOneExperimentPerFile(File... files) {
-        importOneExperimentPerFile(Arrays.asList(files));
-    }
-
-    public void importOneExperimentPerFile(List<File> files) {
+    public void importOneExperimentPerLocation(List<File> files) {
         FileImportDialog imp = new FileImportDialog(MF, files);
-        importOneExperimentPerFile(imp.getMSFiles(), imp.getMGFFiles());
+        importOneExperimentPerLocation(imp.getMSFiles(), imp.getMGFFiles(), null, null); //todo add PS support
     }
 
-    public void importOneExperimentPerFile(List<File> msFiles, List<File> mgfFiles) {
+    public void importOneExperimentPerLocation(List<File> msFiles, List<File> mgfFiles, List<File> psFiles, List<File> psDirs) {
         BatchImportDialog batchDiag = new BatchImportDialog(MF);
         batchDiag.start(msFiles, mgfFiles);
 
@@ -126,6 +156,30 @@ public class GuiProjectSpace {
 
         }
     }
+
+    public void importFromProjectSpace(@NotNull final ImportMode importMode, @NotNull final File... selFile) {
+        importFromProjectSpace(importMode, Arrays.asList(selFile));
+    }
+
+    public void importFromProjectSpace(@NotNull final List<File> selFile) {
+        importFromProjectSpace(ImportMode.REPLACE, selFile);
+    }
+
+    public void importFromProjectSpace(@NotNull final ImportMode importMode, @NotNull final List<File> selFile) {
+        Jobs.runInBackgroundAndLoad(MF, "Importing into Project-Space", new TinyBackgroundJJob<Boolean>() {
+            @Override
+            protected Boolean compute() {
+
+                System.out.println("##### NOT IMPLEMENTED");
+                //todo do import
+                return true;
+            }
+        });
+    }
+
+
+
+
 
     /*
 

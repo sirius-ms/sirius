@@ -16,35 +16,39 @@ import java.awt.*;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 class SiriusToolbar extends JToolBar {
-    private ToolbarButton newB, loadB, saveB, batchB, computeAllB, configFingerID, jobs, db, connect, settings, bug, about;
+    private ToolbarButton imCompB, openB, saveB,exportB, imB, computeAllB, configFingerID, jobs, db, connect, settings, bug, about;
 
     SiriusToolbar() {
 
         setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Colors.ICON_BLUE));
 
-        newB = new ToolbarButton(SiriusActions.IMPORT_EXP.getInstance());
-        add(newB);
-
-        batchB = new ToolbarButton(SiriusActions.IMPORT_EXP_BATCH.getInstance());
-        add(batchB);
+        //in
+        imCompB = new ToolbarButton(SiriusActions.IMPORT_EXP.getInstance());
+        add(imCompB);
         addSeparator(new Dimension(20, 20));
 
-        loadB = new ToolbarButton(SiriusActions.LOAD_WS.getInstance());
-        add(loadB);
+        imB = new ToolbarButton(SiriusActions.IMPORT_EXP_BATCH.getInstance());
+        add(imB);
+
+        openB = new ToolbarButton(SiriusActions.LOAD_WS.getInstance());
+        add(openB);
+        addSeparator(new Dimension(20, 20));
+
+        //out
         saveB = new ToolbarButton(SiriusActions.SAVE_WS.getInstance());
         add(saveB);
+
+        exportB = new ToolbarButton(SiriusActions.EXPORT_WS.getInstance());
+        add(exportB);
+
         addSeparator(new Dimension(20, 20));
-//
+        add(Box.createGlue());
+        addSeparator(new Dimension(20, 20));
+
+        //compute
         computeAllB = new ToolbarButton(SiriusActions.COMPUTE_ALL.getInstance());
         add(computeAllB);
-
         addSeparator(new Dimension(20, 20));
-//        add(Box.createGlue());
-
-//        configFingerID = new ToolbarButton(SiriusActions.COMPUTE_CSI.getInstance());
-//        add(configFingerID);
-//        addSeparator(new Dimension(20, 20));
-//        add(Box.createGlue());
 
         //todo implement database menu
         db = new ToolbarButton(SiriusActions.SHOW_DB.getInstance());

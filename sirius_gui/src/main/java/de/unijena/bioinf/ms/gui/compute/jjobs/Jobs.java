@@ -2,16 +2,17 @@ package de.unijena.bioinf.ms.gui.compute.jjobs;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
-import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
-import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.ms.gui.sirius.ComputingStatus;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
+import de.unijena.bioinf.ms.gui.sirius.ComputingStatus;
+import de.unijena.bioinf.sirius.Sirius;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.concurrent.Callable;
 
 public class Jobs {
     public static final SwingJobManager MANAGER = (SwingJobManager) SiriusJobs.getGlobalJobManager();
@@ -38,47 +39,67 @@ public class Jobs {
         return siriusPerProfile.get(profile);
     }
 
-    public static TinyBackgroundJJob runInBackround(final Runnable task) {
-        return SiriusJobs.runInBackround(task);
+    public static TinyBackgroundJJob<Boolean> runInBackground(final Runnable task) {
+        return SiriusJobs.runInBackground(task);
     }
 
-    public static TinyBackgroundJJob runInBackround(TinyBackgroundJJob task) {
-        return SiriusJobs.runInBackround(task);
+    public static <T> TinyBackgroundJJob<T> runInBackground(TinyBackgroundJJob<T> task) {
+        return SiriusJobs.runInBackground(task);
     }
 
-    public static LoadingBackroundTask runInBackroundAndLoad(final Dialog owner, final Runnable task) {
-        return runInBackroundAndLoad(owner, "Please wait", task);
+    public static <T> TinyBackgroundJJob<T> runInBackground(Callable<T> task) {
+        return SiriusJobs.runInBackground(task);
     }
 
-    public static LoadingBackroundTask runInBackroundAndLoad(final Dialog owner, final String title, final Runnable task) {
+    public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final Dialog owner, final Runnable task) {
+        return runInBackgroundAndLoad(owner, "Please wait", task);
+    }
+
+    public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final Dialog owner, final String title, final Runnable task) {
         return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
     }
 
-    public static LoadingBackroundTask runInBackroundAndLoad(final Dialog owner, TinyBackgroundJJob task) {
-        return runInBackroundAndLoad(owner, "Please wait", task);
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, Callable<T> task) {
+        return runInBackgroundAndLoad(owner, "Please wait", task);
     }
 
-    public static LoadingBackroundTask runInBackroundAndLoad(final Dialog owner, String title, TinyBackgroundJJob task) {
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, String title, Callable<T> task) {
         return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
     }
 
-    public static LoadingBackroundTask runInBackroundAndLoad(final JFrame owner, final Runnable task) {
-        return runInBackroundAndLoad(owner, "Please wait", task);
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, TinyBackgroundJJob<T> task) {
+        return runInBackgroundAndLoad(owner, "Please wait", task);
     }
 
-    public static LoadingBackroundTask runInBackroundAndLoad(final JFrame owner, final String title, final Runnable task) {
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, String title, TinyBackgroundJJob<T> task) {
         return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
     }
 
-    public static LoadingBackroundTask runInBackroundAndLoad(JFrame owner, TinyBackgroundJJob task) {
-        return runInBackroundAndLoad(owner, "Please wait", task);
+    public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final JFrame owner, final Runnable task) {
+        return runInBackgroundAndLoad(owner, "Please wait", task);
     }
 
-    public static LoadingBackroundTask runInBackroundAndLoad(JFrame owner, String title, TinyBackgroundJJob task) {
+    public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final JFrame owner, final String title, final Runnable task) {
         return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
     }
 
-    public static LoadingBackroundTask runInBackroundAndLoad(JFrame owner, String title, boolean indeterminateProgress, TinyBackgroundJJob task) {
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, Callable<T> task) {
+        return runInBackgroundAndLoad(owner, "Please wait", task);
+    }
+
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, String title, Callable<T> task) {
+        return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
+    }
+
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, TinyBackgroundJJob<T> task) {
+        return runInBackgroundAndLoad(owner, "Please wait", task);
+    }
+
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, String title, TinyBackgroundJJob<T> task) {
+        return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
+    }
+
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, String title, boolean indeterminateProgress, TinyBackgroundJJob<T> task) {
         return LoadingBackroundTask.runInBackground(owner, title, indeterminateProgress, MANAGER, task);
     }
 

@@ -7,7 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.DragAndDrop;
+import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.sirius.msviewer.MSViewerPanel;
 import de.unijena.bioinf.ms.gui.sirius.SpectrumContainer;
 import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;

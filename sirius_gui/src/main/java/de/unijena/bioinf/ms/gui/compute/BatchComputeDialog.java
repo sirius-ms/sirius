@@ -238,7 +238,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     }
 
     private void saveEdits(InstanceBean ec) {
-        Jobs.runInBackroundAndLoad(this, "Saving changes...", () -> {
+        Jobs.runInBackgroundAndLoad(this, "Saving changes...", () -> {
             final InstanceBean.Setter expSetter = ec.set();
             if (editPanel.validateFormula()) {
                 final MolecularFormula nuFormula = editPanel.getMolecularFormula();
@@ -299,7 +299,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder);
 
 
-        Jobs.runInBackroundAndLoad(owner, "Submitting Identification Jobs", new TinyBackgroundJJob() {
+        Jobs.runInBackgroundAndLoad(owner, "Submitting Identification Jobs", new TinyBackgroundJJob() {
             @Override
             protected Object compute() throws InterruptedException {
                 //entspricht setup() Methode
@@ -360,7 +360,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
 
                     computation.parseArgs(configs.toArray(String[]::new));
-                    SiriusJobs.runInBackround(computation::compute);//todo make som nice head job that does some organizing stuff
+                    Jobs.runInBackground(computation::compute);//todo make som nice head job that does some organizing stuff
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

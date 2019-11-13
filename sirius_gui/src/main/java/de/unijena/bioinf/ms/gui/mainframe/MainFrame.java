@@ -8,14 +8,14 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
-import de.unijena.bioinf.ms.gui.dialogs.DragAndDropOpenDialog;
-import de.unijena.bioinf.ms.gui.dialogs.DragAndDropOpenDialogReturnValue;
+import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
+import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDropOpenDialog;
+import de.unijena.bioinf.ms.gui.dialogs.input.FileImportDialog;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListView;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.FilterableExperimentListPanel;
 import de.unijena.bioinf.ms.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
-import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.projectspace.ProjectSpaceIO;
 import org.jetbrains.annotations.NotNull;
 
@@ -220,7 +220,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         }
 
         FileImportDialog dropDiag = new FileImportDialog(this, rawFiles);
-        if (dropDiag.getReturnValue() == ReturnValue.Abort) {
+        if (dropDiag.getReturnValue() == de.unijena.bioinf.ms.gui.utils.ReturnValue.Abort) {
             return;
         }
 
@@ -234,15 +234,15 @@ public class MainFrame extends JFrame implements DropTargetListener {
         if ((csvFiles.size() > 0 && (msFiles.size() + mgfFiles.size() == 0))) {   //nur CSV bzw. nur ein File
             openImporterWindow(csvFiles, msFiles, mgfFiles);
         } else if (csvFiles.size() == 0 && mgfFiles.size() == 0 && msFiles.size() > 0) {
-            ps.importOneExperimentPerFile(msFiles, mgfFiles);
+            ps.importOneExperimentPerLocation(msFiles, mgfFiles,null,null);
         } else {
             DragAndDropOpenDialog diag = new DragAndDropOpenDialog(this);
-            DragAndDropOpenDialogReturnValue rv = diag.getReturnValue();
-            if (rv == DragAndDropOpenDialogReturnValue.abort) {
-            } else if (rv == DragAndDropOpenDialogReturnValue.oneExperimentForAll) {
+            DragAndDropOpenDialog.ReturnValue rv = diag.getReturnValue();
+            if (rv == DragAndDropOpenDialog.ReturnValue.abort) {
+            } else if (rv == DragAndDropOpenDialog.ReturnValue.oneExperimentForAll) {
                 openImporterWindow(csvFiles, msFiles, mgfFiles);
-            } else if (rv == DragAndDropOpenDialogReturnValue.oneExperimentPerFile) {
-                ps.importOneExperimentPerFile(msFiles, mgfFiles);
+            } else if (rv == DragAndDropOpenDialog.ReturnValue.oneExperimentPerFile) {
+                ps.importOneExperimentPerLocation(msFiles, mgfFiles,null,null);
             }
         }
     }
@@ -273,6 +273,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         }
         return filelist;
     }
+
 }
 
 

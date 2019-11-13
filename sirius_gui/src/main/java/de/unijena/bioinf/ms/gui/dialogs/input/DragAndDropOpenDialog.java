@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.gui.dialogs;
+package de.unijena.bioinf.ms.gui.dialogs.input;
 
 import javax.swing.*;
 import java.awt.*;
@@ -6,15 +6,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class DragAndDropOpenDialog extends JDialog implements ActionListener{
-	
+	public enum ReturnValue {
+		oneExperimentForAll, oneExperimentPerFile, abort
+	}
+
 	private JButton batchB, expB, abortB;
 	
-	private DragAndDropOpenDialogReturnValue rv;
+	private ReturnValue rv;
 
 	public DragAndDropOpenDialog(JFrame owner) {
 		super(owner,true);
 		
-		rv = DragAndDropOpenDialogReturnValue.abort;
+		rv = ReturnValue.abort;
 		
 		this.setLayout(new BorderLayout());
 		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,20,10));
@@ -43,16 +46,16 @@ public class DragAndDropOpenDialog extends JDialog implements ActionListener{
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==abortB){
-			this.rv = DragAndDropOpenDialogReturnValue.abort;
+			this.rv = ReturnValue.abort;
 		}else if(e.getSource()==batchB){
-			this.rv = DragAndDropOpenDialogReturnValue.oneExperimentPerFile;
+			this.rv = ReturnValue.oneExperimentPerFile;
 		}else if(e.getSource()==expB){
-			this.rv = DragAndDropOpenDialogReturnValue.oneExperimentForAll;
+			this.rv = ReturnValue.oneExperimentForAll;
 		}
 		this.dispose();
 	}
 	
-	public DragAndDropOpenDialogReturnValue getReturnValue(){
+	public ReturnValue getReturnValue(){
 		return this.rv;
 	}
 

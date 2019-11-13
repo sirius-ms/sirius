@@ -63,15 +63,8 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
     @NotNull
     public Instance newCompoundWithUniqueId(Ms2Experiment inputExperiment) {
         final String name = nameFormatter.apply(inputExperiment);
-        try {
-            final CompoundContainer container = projectSpace().newCompoundWithUniqueId(name, (idx) -> namingScheme.apply(idx, name)).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
-            container.setAnnotation(Ms2Experiment.class, inputExperiment);
-            projectSpace().updateCompound(container, Ms2Experiment.class);
-            return instFac.create(container, this);
-        } catch (IOException e) {
-            LoggerFactory.getLogger(ProjectSpaceManager.class).error("Could not create an project space ID for the Instance", e);
-            throw new RuntimeException("Could not create an project space ID for the Instance");
-        }
+        final CompoundContainer container = projectSpace().newCompoundWithUniqueId(name, (idx) -> namingScheme.apply(idx, name), inputExperiment).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
+        return instFac.create(container, this);
     }
 
     public Instance newInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {

@@ -14,15 +14,14 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.BatchImportDialog;
-import de.unijena.bioinf.ms.gui.mainframe.FileImportDialog;
+import de.unijena.bioinf.ms.gui.dialogs.input.BatchImportDialog;
+import de.unijena.bioinf.ms.gui.dialogs.input.FileImportDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.sirius.SpectrumContainer;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
 import gnu.trove.list.array.TDoubleArrayList;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -98,7 +97,7 @@ public class LoadController implements LoadDialogListener {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] files = chooser.getSelectedFiles();
             //setzt Pfad as default
-            Jobs.runInBackround(() ->
+            Jobs.runInBackground(() ->
                     SiriusProperties.SIRIUS_PROPERTIES_FILE().
                             setAndStoreProperty(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH, files[0].getParentFile().getAbsolutePath())
             );
@@ -177,7 +176,7 @@ public class LoadController implements LoadDialogListener {
         batchImportDialog.start(msFiles, mgfFiles);
         errorStorage.addAll(batchImportDialog.getErrors());
 
-        Jobs.runInBackroundAndLoad(loadDialog, "Importing Compounds", new TinyBackgroundJJob() {
+        Jobs.runInBackgroundAndLoad(loadDialog, "Importing Compounds", new TinyBackgroundJJob() {
             @Override
             protected Object compute() {
                 List<Ms2Experiment> r = batchImportDialog.getResults();
@@ -297,9 +296,9 @@ public class LoadController implements LoadDialogListener {
 
         //make changes persistent
         if (instance == null) {
-            Jobs.runInBackroundAndLoad(owner, () -> MainFrame.MF.getPS().importCompound(expToModify));
+            Jobs.runInBackgroundAndLoad(owner, () -> MainFrame.MF.getPS().importCompound(expToModify));
         } else {
-            Jobs.runInBackroundAndLoad(owner, instance::updateExperiment);
+            Jobs.runInBackgroundAndLoad(owner, instance::updateExperiment);
         }
     }
 
