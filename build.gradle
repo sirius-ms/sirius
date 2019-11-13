@@ -1,0 +1,8 @@
+group = 'de.unijena.bioinf.utils'
+
+dependencies {
+    compile group: 'org.apache.commons', name: 'commons-email', version: "$commons_email_version"
+    compile group: 'com.github.oshi', name: 'oshi-core', version: "$oshi_version"
+}
+
+
