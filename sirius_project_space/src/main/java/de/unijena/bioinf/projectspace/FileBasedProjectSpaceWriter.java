@@ -63,6 +63,11 @@ public class FileBasedProjectSpaceWriter extends FileBasedProjectSpaceIO impleme
         Files.delete(asPath(relativePath));
     }
 
+    @Override
+    public void deleteIfExists(String relativePath) throws IOException {
+        Files.deleteIfExists(asPath(relativePath));
+    }
+
     protected File resolveFilePath(String relativePath) {
         File file = new File(dir, relativePath);
         file.getParentFile().mkdirs();

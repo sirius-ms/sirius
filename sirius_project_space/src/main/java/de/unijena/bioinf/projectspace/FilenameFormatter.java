@@ -36,8 +36,7 @@ public interface FilenameFormatter extends Function<Ms2Experiment, String> {
         @Override
         public void write(ProjectWriter writer, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container, Optional<PSProperty> optProp) throws IOException {
             if (optProp.isPresent()) {
-                if (writer.exists(FILENAME))
-                    writer.delete(FILENAME);
+                writer.deleteIfExists(FILENAME);
                 writer.textFile(FILENAME, bf -> bf.write(optProp.get().formatExpression));
             } else {
                 LoggerFactory.getLogger(getClass()).warn("Could not find Project Space formatting information!");
@@ -47,7 +46,7 @@ public interface FilenameFormatter extends Function<Ms2Experiment, String> {
 
         @Override
         public void delete(ProjectWriter writer, ProjectSpaceContainerId id) throws IOException {
-            writer.delete(FILENAME);
+            writer.deleteIfExists(FILENAME);
         }
     }
 }

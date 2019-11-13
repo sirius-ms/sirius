@@ -35,6 +35,8 @@ public interface ProjectWriter extends ProjectIO {
 
     public void delete(String relativePath)  throws IOException;
 
+    public void deleteIfExists(String relativePath) throws IOException;
+
     public static interface ForContainer<S extends ProjectSpaceContainerId,T extends ProjectSpaceContainer<S>> {
         public void writeAllComponents(ProjectWriter writer, T container, IOFunctions.ClassValueProducer producer)  throws IOException;
     }
