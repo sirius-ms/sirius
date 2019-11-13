@@ -26,7 +26,7 @@ public final class PooledDBReconnector<T extends PooledDB> implements Closeable,
 
     public void reconnect() {
         if (reconnectingDB.compareAndSet(false, true)) {
-            SiriusJobs.runInBackround(new TinyBackgroundJJob<T>() {
+            SiriusJobs.runInBackground(new TinyBackgroundJJob<T>() {
                 @Override
                 protected T compute() throws Exception {
                     LOGGER.warn("Thread " + Thread.currentThread().getName() + " is reconnecting " + source.getName() + "."
