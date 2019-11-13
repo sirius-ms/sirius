@@ -20,7 +20,7 @@ import de.unijena.bioinf.sirius.scores.TreeScore;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean> {
-    private static final int COL_COUNT = 9;
+    private static final int COL_COUNT = 10;
 
     protected SiriusResultTableFormat(ListStats stats) {
         super(stats);
