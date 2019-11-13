@@ -36,6 +36,6 @@ public class FormulaScoringSerializer implements ComponentSerializer<FormulaResu
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
-        writer.delete(SCORES.relFilePath(id));
+        writer.deleteIfExists(SCORES.relFilePath(id));
     }
 }

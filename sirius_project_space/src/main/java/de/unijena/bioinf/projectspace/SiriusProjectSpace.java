@@ -15,6 +15,7 @@ import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
@@ -122,11 +123,20 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return Optional.ofNullable(ids.get(dirName));
     }
 
-    public Optional<CompoundContainer> newCompoundWithUniqueId(String compoundName, IntFunction<String> index2dirName) {
+
+    public Optional<CompoundContainer> newCompoundWithUniqueId(@NotNull String compoundName, @NotNull IntFunction<String> index2dirName, @Nullable Ms2Experiment exp) {
         return newUniqueCompoundId(compoundName, index2dirName)
                 .map(idd -> {
                     try {
-                        return getCompound(idd);
+                        final CompoundContainer comp = getCompound(idd);
+                        if (exp != null) {
+                            comp.setAnnotation(Ms2Experiment.class, exp);
+                            updateCompound(comp, Ms2Experiment.class);
+                        }
+
+                        fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.CREATED, comp.getId(), comp, Collections.emptySet()));
+                        return comp;
+
                     } catch (IOException e) {
                         return null;
                     }
@@ -137,7 +147,11 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName) {
         int index = compoundCounter.getAndIncrement();
         String dirName = index2dirName.apply(index);
-        return tryCreateCompoundContainer(dirName, compoundName, index, Double.NaN);
+
+        Optional<CompoundContainerId> cidOpt = tryCreateCompoundContainer(dirName, compoundName, index, Double.NaN);
+        cidOpt.ifPresent(cid ->
+                fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_CREATED, cid, null, Collections.emptySet())));
+        return cidOpt;
     }
 
     public Optional<FormulaResultId> newUniqueFormulaResultId(@NotNull CompoundContainerId id, @NotNull FTree tree) throws IOException {
@@ -150,7 +164,6 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         final PrecursorIonType ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
         final MolecularFormula f = tree.getRoot().getFormula().add(ionType.getAdduct()).subtract(ionType.getInSourceFragmentation()); //get precursor formula
         final FormulaResultId fid = new FormulaResultId(container.getId(), f, ionType);
-        fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.CREATED, container.getId(), container, Collections.emptySet()));
 
         if (container.contains(fid))
             return Optional.empty(); //todo how to handle this?
@@ -160,6 +173,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         r.setAnnotation(FormulaScoring.class, new FormulaScoring(FTreeMetricsHelper.getScoresFromTree(tree)));
         try {
             updateFormulaResult(r, FTree.class, FormulaScoring.class);
+            fireContainerListeners(formulaResultListener, new ContainerEvent(ContainerEvent.EventType.CREATED, r.getId(), r, Collections.emptySet()));
+
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).error("Could not create FormulaResult from FTree!", e);
             return Optional.empty();

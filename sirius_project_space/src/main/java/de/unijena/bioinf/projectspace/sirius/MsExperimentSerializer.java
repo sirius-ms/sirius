@@ -35,6 +35,7 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
 
     @Override
     public void delete(ProjectWriter writer, CompoundContainerId id) throws IOException {
-        writer.delete(id.getDirectoryName() + "/" + SiriusLocations.MS2_EXPERIMENT);
+        writer.deleteIfExists(SiriusLocations.MS2_EXPERIMENT);
+        writer.deleteIfExists(SiriusLocations.COMPOUND_INFO);
     }
 }

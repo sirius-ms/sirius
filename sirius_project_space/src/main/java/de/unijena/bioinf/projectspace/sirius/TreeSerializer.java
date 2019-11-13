@@ -47,13 +47,13 @@ public class TreeSerializer implements ComponentSerializer<FormulaResultId, Form
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
         //delete trees
         writer.inDirectory(TREES.relDir(), () -> {
-            writer.delete(TREES.fileName(id));
+            writer.deleteIfExists(TREES.fileName(id));
             return true;
         });
 
         //delete annotated spectra
         writer.inDirectory(SPECTRA.relDir(), () -> {
-            writer.delete(SPECTRA.fileName(id));
+            writer.deleteIfExists(SPECTRA.fileName(id));
             return true;
         });
     }
