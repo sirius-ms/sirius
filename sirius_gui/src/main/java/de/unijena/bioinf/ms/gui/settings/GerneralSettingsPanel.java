@@ -55,7 +55,7 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
         final Path dir = Paths.get(db.getFilePath());
         if (Files.isDirectory(dir)) {
             props.setProperty("de.unijena.bioinf.sirius.fingerID.cache", dir.toAbsolutePath().toString());
-            Jobs.runInBackroundAndLoad(MF, () -> {
+            Jobs.runInBackgroundAndLoad(MF, () -> {
                 //todo do we need to invalidate chache somehow
                 System.out.println("WaRN Check if we have to do something???");
             });

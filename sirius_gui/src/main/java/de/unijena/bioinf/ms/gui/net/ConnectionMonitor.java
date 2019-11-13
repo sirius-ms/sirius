@@ -45,9 +45,9 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         super();
         if (startBackroundMonitorThread) {
             backroundMonitorJob = new ConnectionCheckMonitor();
-            Jobs.runInBackround(backroundMonitorJob);
+            Jobs.runInBackground(backroundMonitorJob);
         } else {
-            Jobs.runInBackround(this::checkConnection);
+            Jobs.runInBackground(this::checkConnection);
         }
     }
 
@@ -55,7 +55,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     private synchronized TinyBackgroundJJob<ConnetionCheck> runOrGet() {
         if (checkJob == null) {
             checkJob = new CheckJob();
-            Jobs.runInBackround(checkJob);
+            Jobs.runInBackground(checkJob);
         }
         return checkJob;
     }

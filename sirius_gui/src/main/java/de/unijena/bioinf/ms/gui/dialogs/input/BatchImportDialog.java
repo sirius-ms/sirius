@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.gui.mainframe;
+package de.unijena.bioinf.ms.gui.dialogs.input;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.CloseableIterator;

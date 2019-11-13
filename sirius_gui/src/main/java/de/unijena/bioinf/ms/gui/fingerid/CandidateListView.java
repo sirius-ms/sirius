@@ -124,7 +124,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
             if (returnval == JFileChooser.APPROVE_OPTION) {
                 File selFile = jfc.getSelectedFile();
 
-                Jobs.runInBackround(() ->
+                Jobs.runInBackground(() ->
                         SiriusProperties.SIRIUS_PROPERTIES_FILE().
                                 setAndStoreProperty(SiriusProperties.DEFAULT_TREE_EXPORT_PATH, selFile.getParentFile().getAbsolutePath())
                 );

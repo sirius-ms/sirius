@@ -23,13 +23,14 @@ public enum SiriusActions {
     COMPUTE_CSI(ComputeCSIAction.class),
     COMPUTE_CSI_LOCAL(ComputeCSILocalAction.class),
 
-    IMPORT_EXP(ImportExperimentAction.class),
-    IMPORT_EXP_BATCH(ImportExperimentBatchAction.class),
+    IMPORT_EXP(ImportCompoundAction.class),
+    IMPORT_EXP_BATCH(ImportAction.class),
     EDIT_EXP(EditExperimentAction.class),
     DELETE_EXP(DeleteExperimentAction.class),
 
-    SAVE_WS(SaveWorkspaceAction.class),
-    LOAD_WS(LoadWorkspaceAction.class),
+    LOAD_WS(ProjectOpenAction.class),
+    SAVE_WS(ProjectSaveAsAction.class),
+    EXPORT_WS(ProjectExportAction.class),
 
     SHOW_SETTINGS(ShowSettingsDialogAction.class),
     SHOW_BUGS(ShowBugReportDialogAction.class),

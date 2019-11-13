@@ -1,6 +1,7 @@
-package de.unijena.bioinf.ms.gui.mainframe;
+package de.unijena.bioinf.ms.gui.dialogs.input;
 
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import org.slf4j.LoggerFactory;
 
 import java.awt.datatransfer.DataFlavor;

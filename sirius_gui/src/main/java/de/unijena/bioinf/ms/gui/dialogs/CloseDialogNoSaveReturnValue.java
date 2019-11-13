@@ -78,7 +78,7 @@ public class CloseDialogNoSaveReturnValue extends JDialog implements ActionListe
             rv = CloseDialogReturnValue.abort;
         } else return;
 
-        Jobs.runInBackround(() -> SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(dontaskagainKey, String.valueOf(dontaskagain.isSelected())));
+        Jobs.runInBackground(() -> SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(dontaskagainKey, String.valueOf(dontaskagain.isSelected())));
         this.dispose();
     }
 }

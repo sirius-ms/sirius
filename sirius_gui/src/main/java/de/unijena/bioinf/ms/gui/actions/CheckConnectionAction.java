@@ -38,7 +38,7 @@ public class CheckConnectionAction extends AbstractAction {
             }
         });
 
-        Jobs.runInBackround(() -> setIcon(MainFrame.CONNECTION_MONITOR.checkConnection()));
+        Jobs.runInBackground(() -> setIcon(MainFrame.CONNECTION_MONITOR.checkConnection()));
     }
 
 
@@ -69,7 +69,7 @@ public class CheckConnectionAction extends AbstractAction {
             }
         };
 
-        Jobs.runInBackroundAndLoad(MF, "Checking Connection", true, connectionChecker);
+        Jobs.runInBackgroundAndLoad(MF, "Checking Connection", true, connectionChecker);
         return connectionChecker.getResult();
     }
 

@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.gui.mainframe;
+package de.unijena.bioinf.ms.gui.dialogs.input;
 
 import de.unijena.bioinf.babelms.DataFormat;
 import de.unijena.bioinf.babelms.DataFormatIdentifier;
@@ -27,16 +27,16 @@ public class FileImportDialog extends JDialog implements ActionListener{
 
 		this.setTitle("Checking Files");
 
-		JPanel centerPanel = new JPanel(new BorderLayout());
+		/*JPanel centerPanel = new JPanel(new BorderLayout());
 		centerPanel.setBorder(BorderFactory.createEtchedBorder());
-		this.add(centerPanel, BorderLayout.CENTER);
+		this.add(centerPanel, BorderLayout.CENTER);*/
 		
 		rv = ReturnValue.Abort;
 		
 		bar = new JProgressBar(JProgressBar.HORIZONTAL,0,100);
 		bar.setValue(0);
 		
-		JPanel progressPanel = new JPanel(new BorderLayout());
+		/*JPanel progressPanel = new JPanel(new BorderLayout());
 		progressPanel.add(bar,BorderLayout.NORTH);
 		JLabel  progressl = new JLabel("Analysing data...");
 		JPanel progressLabelPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
@@ -44,7 +44,7 @@ public class FileImportDialog extends JDialog implements ActionListener{
 		progressPanel.add(progressLabelPanel,BorderLayout.SOUTH);
 		progressPanel.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
 //		progressPanel.setBorder(BorderFactory.createEtchedBorder());
-		centerPanel.add(progressPanel,BorderLayout.NORTH);
+		centerPanel.add(progressPanel,BorderLayout.NORTH);*/
 		
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
 		abort = new JButton("Abort");
@@ -115,7 +115,7 @@ public class FileImportDialog extends JDialog implements ActionListener{
 //this is am perfect application for a io backround jjob
 class DataAnalyseThread implements Runnable {
 	
-	private List<File> csvFiles, msFiles, mgfFiles, rawFiles;
+	private List<File> csvFiles, msFiles, mgfFiles, psFiles, psDirs, rawFiles;
 	private DataFormatIdentifier ident;
 	private FileImportDialog diag;
 	private volatile boolean stop;
@@ -137,7 +137,9 @@ class DataAnalyseThread implements Runnable {
 		csvFiles = new ArrayList<>();
 		msFiles = new ArrayList<>();
 		mgfFiles = new ArrayList<>();
-		
+		psFiles = new ArrayList<>();
+		psDirs = new ArrayList<>();
+
 		ident = new DataFormatIdentifier();
 		
 		for(int i=0;i<rawFiles.size();i++){
@@ -188,5 +190,13 @@ class DataAnalyseThread implements Runnable {
 	
 	List<File> getCSVFiles(){
 		return this.csvFiles;
+	}
+
+	List<File> getPSFiles(){
+		return this.psFiles;
+	}
+
+	List<File> getPSDirs(){
+		return this.psDirs;
 	}
 }

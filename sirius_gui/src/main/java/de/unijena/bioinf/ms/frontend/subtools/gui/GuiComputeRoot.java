@@ -28,7 +28,7 @@ public class GuiComputeRoot implements RootOptions {
      * */
     @Override
     public ProjectSpaceManager getProjectSpace() {
-        return guiProjectSpace.projectSpace;
+        return guiProjectSpace.getProjectSpace();
     }
 
     @Override

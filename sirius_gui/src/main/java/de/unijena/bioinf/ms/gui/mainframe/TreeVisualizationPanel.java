@@ -177,7 +177,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
 
                     {
                         final String path = selFile.getParentFile().getAbsolutePath();
-                        Jobs.runInBackround(() ->
+                        Jobs.runInBackground(() ->
                                 SiriusProperties.SIRIUS_PROPERTIES_FILE().
                                         setAndStoreProperty(SiriusProperties.DEFAULT_TREE_EXPORT_PATH, path)
                         );
@@ -229,7 +229,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
 
             if (ff != FileFormat.none) {
                 final String name = ff.name();
-                Jobs.runInBackround(() ->
+                Jobs.runInBackground(() ->
                         SiriusProperties.SIRIUS_PROPERTIES_FILE().
                                 setAndStoreProperty(SiriusProperties.DEFAULT_TREE_FILE_FORMAT, name)
                 );

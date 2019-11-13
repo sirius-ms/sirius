@@ -16,7 +16,7 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.bioinf.ms.gui.dialogs;
+package de.unijena.bioinf.ms.gui.dialogs.input;
 
 import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
@@ -28,7 +28,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-
+@Deprecated
 public class ImportWorkspaceDialog extends JDialog implements ActionListener {
 
     private final JButton replace, merge, abort;
@@ -44,7 +44,7 @@ public class ImportWorkspaceDialog extends JDialog implements ActionListener {
     }
 
     public ImportWorkspaceDialog(MainFrame owner) {
-        super(owner, "Import workspace", true);
+        super(owner, "Open project-space", true);
         this.mainFrame = owner;
         this.setLayout(new BorderLayout());
         JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,20,10));
@@ -86,7 +86,7 @@ public class ImportWorkspaceDialog extends JDialog implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource()==replace) {
-            MainFrame.MF.getPS().clear();
+            MainFrame.MF.getPS().deleteAll();
             decision = GuiProjectSpace.ImportMode.REPLACE;
         } else if (e.getSource()==merge) {
             decision = GuiProjectSpace.ImportMode.MERGE;
