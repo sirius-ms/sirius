@@ -1,20 +1,20 @@
 package de.unijena.bioinf.ms.gui.mainframe;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.babelms.DotIO;
+import de.unijena.bioinf.babelms.RasterGraphicsIO;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
-import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.sirius.TreeCopyTool;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.PanelDescription;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
-import de.unijena.bioinf.babelms.DotIO;
-import de.unijena.bioinf.babelms.RasterGraphicsIO;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeColor;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
@@ -97,8 +97,8 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
 
     public void showTree(FormulaResultBean sre) {
         this.sre = sre;
-        if (sre != null) {
-            TreeNode root = sre.getTreeVisualization();
+        if (sre != null && sre.getTreeVisualization().isPresent()) {
+            TreeNode root = sre.getTreeVisualization().get();
             NodeType nt = NodeType.small;
             NodeColor nc = (NodeColor) colorType.getSelectedItem();
             this.renderPanel.showTree(root, nt, nc);
@@ -239,7 +239,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
 
                 try {
                     if (ff == FileFormat.dot) {
-                        DotIO.writeTree(selectedFile, sre.getTreeVisualization(), sre.getScoreValue(SiriusScore.class));
+                        DotIO.writeTree(selectedFile, sre.getTreeVisualization().get(), sre.getScoreValue(SiriusScore.class));
                     } else if (ff == FileFormat.gif) {
                         RasterGraphicsIO.writeGIF(selectedFile, getTreeImage());
                     } else if (ff == FileFormat.jpg) {
@@ -269,7 +269,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
     }
 
     private BufferedImage getTreeImage() {
-        TreeNode root = TreeCopyTool.copyTree(this.sre.getTreeVisualization());
+        TreeNode root = TreeCopyTool.copyTree(this.sre.getTreeVisualization().get());
         NodeColor color = this.renderPanel.getNodeColor();
         NodeType type = this.renderPanel.getNodeType();
         TreeRenderPanel panel = new TreeRenderPanel();

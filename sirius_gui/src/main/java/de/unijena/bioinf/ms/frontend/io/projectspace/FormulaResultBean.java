@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.frontend.io.projectspace;
 
-import com.google.common.base.Function;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -11,6 +10,7 @@ import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.sirius.ComputingStatus;
+import de.unijena.bioinf.myxo.gui.tree.structure.MyxoTreeConverter;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.projectspace.ContainerListener;
 import de.unijena.bioinf.projectspace.FormulaResultId;
@@ -18,8 +18,6 @@ import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -119,11 +117,11 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     }
 
     public <T extends FormulaScore> double getScoreValue(Class<T> scoreType) {
-        return getScore(scoreType).score();
+        return getScore(scoreType).map(FormulaScore::score).orElse(Double.NaN);
     }
 
-    public <T extends FormulaScore> T getScore(Class<T> scoreType) {
-        return getResult(FormulaScoring.class).getAnnotationOrThrow(FormulaScoring.class).getAnnotationOrThrow(scoreType);
+    public <T extends FormulaScore> Optional<T> getScore(final Class<T> scoreType) {
+        return getResult(FormulaScoring.class).getAnnotation(FormulaScoring.class).map(it -> it.getAnnotationOrNull(scoreType));
     }
 
     public Optional<FTree> getFragTree(){
@@ -175,17 +173,13 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         }
     }
 
+    public Optional<TreeNode> getTreeVisualization() {
+        if (tree == null)
+            tree = getFragTree().map(MyxoTreeConverter::convertTree).orElse(null);
 
-
-    public void buildTreeVisualization(@NotNull final Function<FTree, TreeNode> builder) {
-        this.tree = getResult(FTree.class).getAnnotation(FTree.class).map(builder::apply).orElse(null);
+        return Optional.ofNullable(tree);
     }
 
-    public TreeNode getTreeVisualization() {
-        return tree;
-    }
-
-    @Nullable
     private Optional<FTreeMetricsHelper> getMetrics() {
         return getResult(FTree.class).getAnnotation(FTree.class).map(FTreeMetricsHelper::new);
     }
