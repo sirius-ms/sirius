@@ -1,7 +1,5 @@
 package de.unijena.bioinf.myxo.gui.tree.structure;
 
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

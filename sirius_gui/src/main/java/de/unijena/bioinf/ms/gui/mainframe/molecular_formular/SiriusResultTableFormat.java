@@ -100,11 +100,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
                 else
                     return intensity;
             case 9:
-                TreeNode visibleTreeRoot = result.getTreeVisualization();
-                if (visibleTreeRoot != null && visibleTreeRoot.getMedianMassDeviation() != null)
-                    return visibleTreeRoot.getMedianMassDeviation();
-                else
-                    return "Value not found";
+                return result.getTreeVisualization().map(TreeNode::getMedianMassDeviation).map(String::valueOf).orElse("Value not found");
             case 10:
                 return isBest(result);
             default:

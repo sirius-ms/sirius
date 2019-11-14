@@ -1,15 +1,15 @@
 package de.unijena.bioinf.ms.gui.sirius.msviewer.data;
 
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
-import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
-import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.FormulaResultId;
 
 import javax.swing.*;
 import java.text.DecimalFormat;
@@ -52,7 +52,10 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
     }
 
     public boolean changeData(InstanceBean ec, FormulaResultBean result) {
-        if (this.ec != ec || (result != null && this.currentResult.getID() != result.getID())) {
+        final FormulaResultId currentID = this.currentResult != null ? this.currentResult.getID() : null;
+        final FormulaResultId newID = result != null ? result.getID() : null;
+
+        if (this.ec != ec || currentID != newID) {
             this.ec = ec;
 
             if (result != null) {
