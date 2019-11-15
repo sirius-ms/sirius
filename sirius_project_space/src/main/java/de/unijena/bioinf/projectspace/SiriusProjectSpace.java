@@ -14,6 +14,7 @@ import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
+import net.lingala.zip4j.util.Zip4jUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,7 +37,7 @@ import java.util.stream.Collectors;
 public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCloseable {
 
 
-    protected final File root;
+    private File root;
     protected final ConcurrentHashMap<String, CompoundContainerId> ids;
     protected final ProjectSpaceConfiguration configuration;
     protected final AtomicInteger compoundCounter;
@@ -55,7 +57,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         this.formulaResultListener = new ConcurrentLinkedQueue<>();
     }
 
-    public Path getRootPath() {
+    public synchronized Path getRootPath() {
         return root.toPath();
     }
 
@@ -220,6 +222,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             cid.containerLock.unlock();
         }
     }
+
     private void writeCompoundContainerID(CompoundContainerId cid) throws IOException {
         final File f = new File(new File(root, cid.getDirectoryName()), SiriusLocations.COMPOUND_INFO);
         if (f.exists())
@@ -317,14 +320,14 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    public void deleteCompound(CompoundContainerId resultId) throws IOException {
-        resultId.containerLock.lock();
+    public void deleteCompound(CompoundContainerId cid) throws IOException {
+        cid.containerLock.lock();
         try {
-            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.DELETED, resultId, null, Collections.emptySet()));
-            deleteContainer(CompoundContainer.class, resultId);
+            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.DELETED, cid, null, Collections.emptySet()));
+            deleteContainer(CompoundContainer.class, cid);
             fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
         } finally {
-            resultId.containerLock.unlock();
+            cid.containerLock.unlock();
         }
     }
 
@@ -428,26 +431,28 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public <T extends ProjectSpaceProperty> Optional<T> getProjectSpaceProperty(Class<T> key) {
         T property = (T) projectSpaceProperties.get(key);
         if (property == null) {
-            synchronized (projectSpaceProperties) {
-                property = (T) projectSpaceProperties.get(key);
-                if (property != null) return Optional.of(property);
-                try {
-                    T read = configuration.getProjectSpacePropertySerializer(key).read(new FileBasedProjectSpaceReader(root, this::getProjectSpaceProperty), null, null);
-                    if (read == null)
+            synchronized (this) {
+                synchronized (projectSpaceProperties) {
+                    property = (T) projectSpaceProperties.get(key);
+                    if (property != null) return Optional.of(property);
+                    try {
+                        T read = configuration.getProjectSpacePropertySerializer(key).read(new FileBasedProjectSpaceReader(root, this::getProjectSpaceProperty), null, null);
+                        if (read == null)
+                            return Optional.empty();
+
+                        projectSpaceProperties.put(key, read);
+                        return Optional.of(read);
+                    } catch (IOException e) {
+                        LoggerFactory.getLogger(SiriusProjectSpace.class).error(e.getMessage(), e);
                         return Optional.empty();
+                    }
 
-                    projectSpaceProperties.put(key, read);
-                    return Optional.of(read);
-                } catch (IOException e) {
-                    LoggerFactory.getLogger(SiriusProjectSpace.class).error(e.getMessage(), e);
-                    return Optional.empty();
                 }
-
             }
         } else return Optional.of(property);
     }
 
-    public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
+    public synchronized <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
         synchronized (projectSpaceProperties) {
             try {
                 configuration.getProjectSpacePropertySerializer(key).write(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), null, null, value != null ? Optional.of(value) : Optional.empty());
@@ -467,17 +472,44 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     public void updateSummaries(Summarizer... summarizers) throws IOException {
-        Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
-        for (CompoundContainerId cid : ids.values()) {
-            final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
-            final List<SScored<FormulaResult, SiriusScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreType().orElse(SiriusScore.class), annotations);
-            for (Summarizer sim : summarizers)
-                sim.addWriteCompoundSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), c, results);
-        }
+        withAllLockedDo(() -> {
+            Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
+            for (CompoundContainerId cid : ids.values()) {
+                final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
+                final List<SScored<FormulaResult, SiriusScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreType().orElse(SiriusScore.class), annotations);
+                for (Summarizer sim : summarizers)
+                    sim.addWriteCompoundSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), c, results);
+            }
 
-        //write summaries to project space
-        for (Summarizer summarizer : summarizers)
-            summarizer.writeProjectSpaceSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty));
+            //write summaries to project space
+            for (Summarizer summarizer : summarizers)
+                summarizer.writeProjectSpaceSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty));
+            return true;
+        });
     }
 
+    public boolean move(File nuLocation) throws IOException {
+        return withAllLockedDo(() -> {
+            org.apache.commons.io.FileUtils.moveDirectory(root, nuLocation);
+            root.delete();
+            root = nuLocation;
+            return true;
+        });
+    }
+
+    protected synchronized boolean withAllLockedDo(IOCallable<Boolean> code) throws IOException {
+        //todo do we need mor locks to move the space?
+        try {
+            ids.values().forEach(cid -> cid.containerLock.lock());
+            return code.call();
+        } finally {
+            ids.values().forEach(cid -> cid.containerLock.unlock());
+        }
+    }
+
+    @FunctionalInterface
+    protected interface IOCallable<V> extends Callable<V> {
+        @Override
+        V call() throws IOException;
+    }
 }
