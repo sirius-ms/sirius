@@ -29,7 +29,7 @@ public enum SiriusActions {
     DELETE_EXP(DeleteExperimentAction.class),
 
     LOAD_WS(ProjectOpenAction.class),
-    SAVE_WS(ProjectSaveAsAction.class),
+    SAVE_WS(ProjectSaveAction.class),
     EXPORT_WS(ProjectExportAction.class),
 
     SHOW_SETTINGS(ShowSettingsDialogAction.class),

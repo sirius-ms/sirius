@@ -38,6 +38,7 @@ public class ProjectExportAction extends AbstractAction {
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
         jfc.addChoosableFileFilter(new SupportedArchivedProjectFilter());
+        jfc.setApproveButtonText("Export");
 
         File selectedFile = null;
 
