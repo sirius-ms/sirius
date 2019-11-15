@@ -1,5 +1,6 @@
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,10 +48,18 @@ public class ProjectSpaceIO {
     /**
      * Check for a compressed project-space by file ending
      */
-    public static boolean isCompressedProjectSpace(File file) {
+    public static boolean isZipProjectSpace(File file) {
         if (!file.isFile()) return false;
         final String lowercaseName = file.getName().toLowerCase();
         return lowercaseName.endsWith(".workspace") || lowercaseName.endsWith(".zip") || lowercaseName.endsWith(".sirius");
+    }
+
+    public static void toZipProjectSpace(@NotNull SiriusProjectSpace space, @NotNull File zipFile, Summarizer... summarizerToUpdate) throws IOException {
+        space.withAllLockedDo(() -> {
+            space.updateSummaries(summarizerToUpdate);
+            FileUtils.zipDir(space.getRootPath(), zipFile.toPath());
+            return true;
+        });
     }
 
     /**
