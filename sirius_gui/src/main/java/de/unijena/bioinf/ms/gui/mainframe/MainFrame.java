@@ -112,6 +112,10 @@ public class MainFrame extends JFrame implements DropTargetListener {
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this); //todo do we want to have the left table as drop target?
     }
 
+    public void setTitlePath(String path) {
+        setTitle(ApplicationCore.VERSION_STRING() + " on Project: '" + path + "'");
+    }
+
     public void decoradeMainFrameInstance(@NotNull ProjectSpaceManager projectSpaceManager) {
         //create computation
         //todo get predictor from application core?
@@ -209,7 +213,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         final Iterator<File> rawFileIterator = rawFiles.iterator();
         while (rawFileIterator.hasNext()) {
             final File f = rawFileIterator.next();
-            if (ProjectSpaceIO.isCompressedProjectSpace(f) || (f.isDirectory() && ProjectSpaceIO.isExistingProjectspaceDirectory(f))) {
+            if (ProjectSpaceIO.isZipProjectSpace(f) || (f.isDirectory() && ProjectSpaceIO.isExistingProjectspaceDirectory(f))) {
                 siriusFiles.add(f);
                 rawFileIterator.remove();
             }

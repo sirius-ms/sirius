@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.frontend.core;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.properties.PersistentProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.commons.configuration2.PropertiesConfiguration;
@@ -84,4 +85,9 @@ public class SiriusProperties extends PropertyManager {
         return false;
     }
 
+    public static void setAndStoreInBackground(String key, String value) {
+        SiriusJobs.runInBackground(() ->
+                SIRIUS_PROPERTIES_FILE().setAndStoreProperty(key, value)
+        );
+    }
 }

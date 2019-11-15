@@ -176,7 +176,7 @@ public class RootOptionsCLI implements RootOptions {
                 final String name = g.getName();
                 if (MsExperimentParser.isSupportedFileName(name)) {
                     siriusInfiles.add(g);
-                } else if (ProjectSpaceIO.isCompressedProjectSpace(g)) {
+                } else if (ProjectSpaceIO.isZipProjectSpace(g)) {
                     //compressed spaces are read only and can be handled as simple input
                     projectSpaces.add(g);
                 } else {
@@ -248,7 +248,7 @@ public class RootOptionsCLI implements RootOptions {
     protected void configureProjectSpace() {
         try {
             if (projectSpaceLocation == null) {
-                if (inputType == InputType.PROJECT && input.size() == 1 && !ProjectSpaceIO.isCompressedProjectSpace(input.get(0))) {
+                if (inputType == InputType.PROJECT && input.size() == 1 && !ProjectSpaceIO.isZipProjectSpace(input.get(0))) {
                     projectSpaceLocation = input.get(0);
                 } else {
                     projectSpaceLocation = ProjectSpaceIO.createTmpProjectSpaceLocation();

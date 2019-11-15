@@ -6,10 +6,13 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
+import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.BatchImportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.FileImportDialog;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.ContainerListener;
+import de.unijena.bioinf.projectspace.ProjectSpaceIO;
+import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -67,6 +70,8 @@ public class GuiProjectSpace {
 
         // add already existing compounds to reactive list
         inEDTAndWait(() -> projectSpace.forEach(intBean -> COMPOUNT_LIST.add((InstanceBean) intBean)));
+
+        inEDTAndWait(() -> MF.setTitlePath(projectSpace.projectSpace().getRootPath().toString()));
     }
 
     private void inEDTAndWait(@NotNull final Runnable run) {
@@ -79,29 +84,6 @@ public class GuiProjectSpace {
                 throw new RuntimeException(e);
             }
         }
-    }
-
-    /*// close and cleanup PS
-    // ask user etc
-    public void destroy() {
-        try {
-
-            projectSpace.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }*/
-
-
-    /**
-     * Exports the project space as compressed archive to the given files
-     *
-     * @param file The path where the archive will be saved
-     * @throws IOException Thrown if writing of archive fails
-     */
-    public void exportAsProjectArchive(File file) throws IOException {
-        System.out.println("##### NOT IMPLEMENTED");
-        //todo save as and compress (archive)
     }
 
     public void deleteCompound(@Nullable final InstanceBean inst) {
@@ -178,192 +160,53 @@ public class GuiProjectSpace {
     }
 
 
-
-
-
-    /*
-
-
-private static String escapeFileName(String name) {
-        final String n = name.replaceAll("[:\\\\/*\"?|<>']", "");
-        if (n.length() > 128) {
-            return n.substring(0, 128);
-        } else return n;
-    }
-
-
-
-    }*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /*public void importCompound(@NotNull final ExperimentResultBean ec) {
-        SwingUtilities.invokeLater(() -> {
-            cleanExperiment(ec.getMs2Experiment());
-
-            //adding experiment to gui
-            addToCompoundList(ec);
-
-            //listen to changes to decide if a compound has to be rewritten
-            addListener(ec);
-
-            //write experiment to project-space
-            writeToProjectSpace(ec.getExperimentResult());
-
+    public void openProjectSpace(File selFile) {
+        Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
+            SiriusProjectSpace ps = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile);
+            final ProjectSpaceManager psm = new ProjectSpaceManager(ps, new InstanceBeanFactory(), null, null);
+            //todo we need to cancel all running computations here.
+            System.out.println("todo we need to cancel all running computations here!");
+            MF.getPS().changeProjectSpace(psm);
+            return psm;
         });
+
     }
 
-    //todo make thread safe and check property changes
-    private void addListener(final ExperimentResultBean ec) {
-        ec.addPropertyChangeListener(evt -> {
-            changed.add(ec.getExperimentResult());
-        });
-    }
-
-    public void importCompound(@NotNull final MutableMs2Experiment ex) {
-        importCompound(new ExperimentResultBean(ex));
-    }
-
-    private void addToCompoundList(@NotNull final ExperimentResultBean ec) {
-        addName(ec);
-        COMPOUNT_LIST.add(ec);
-    }
-
-    public void writeToProjectSpace(@NotNull final ExperimentResult... exResults) {
-        writeToProjectSpace(Arrays.asList(exResults).iterator());
-    }
-
-    public void writeToProjectSpace(@NotNull final Iterator<ExperimentResult> exResults) {
-        SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<ExperimentDirectory>(JJob.JobType.IO) {
-            @Override
-            protected ExperimentDirectory compute() throws Exception {
-                while (exResults.hasNext()) {
-                    final ExperimentResult exResult = exResults.next();
-                    projectSpace.writeExperiment(exResult);
-                    changed.remove(exResult); //todo check locking
-                }
+    public void moveProjectSpace(File newlocation) {
+        final IOException ex = Jobs.runInBackgroundAndLoad(MF, "Moving Project to '" + newlocation.getAbsolutePath() + "'", () -> {
+            try {
+                projectSpace.projectSpace().move(newlocation);
+                inEDTAndWait(() -> MF.setTitlePath(projectSpace.projectSpace().getRootPath().toString()));
                 return null;
-            }
-        });
-    }
-
-    public void writeChangedCompounds() {
-        writeToProjectSpace(changed.iterator());
-    }
-
-    //todo check
-    public void writeSummary() {
-        writeChangedCompounds();
-        projectSpace.writeSummaries(COMPOUNT_LIST.stream().map(ExperimentResultBean::getExperimentResult).collect(Collectors.toList()));
-    }
-
-
-    private void cleanExperiment(@NotNull final MutableMs2Experiment ex) {
-        //search for a missing molecular formula before cleaning the annotations
-        if (ex.getMolecularFormula() == null) {
-            String f = extractMolecularFormulaString(ex);
-            if (f != null && !f.isEmpty())
-                ex.setMolecularFormula(MolecularFormula.parseOrThrow(f));
-        }
-
-        if (ex.getPrecursorIonType() == null) {
-            LoggerFactory.getLogger(getClass()).warn("Input experiment with name '" + ex.getName() + "' does not have a charge nor an ion type annotation.");
-            ex.setPrecursorIonType(PeriodicTable.getInstance().getUnknownPrecursorIonType(1));
-        }
-        clearExperimentAnotations(ex);
-        addIonToPeriodicTable(ex.getPrecursorIonType());
-    }
-
-    public void remove(ExperimentResultBean... containers) {
-        remove(Arrays.asList(containers));
-    }
-
-    public void remove(List<ExperimentResultBean> containers) {
-        for (ExperimentResultBean ec : containers) {
-            NAMES.remove(ec.getGUIName());
-            try {
-                projectSpace.deleteExperiment(ec.getProjectSpaceID());
             } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).warn("Could not delete Compound: " + ec.getGUIName(), e);
+                return e;
             }
-        }
-        COMPOUNT_LIST.removeAll(containers);
+        }).getResult();
+
+        if (ex != null)
+            new ExceptionDialog(MF, ex.getMessage());
     }
 
-
-
-    // region static import helper methods
-    public void changeName(ExperimentResultBean ec, String old) {
-        if (NAMES.containsKey(old)) {
-            TIntSet indeces = NAMES.get(old);
-            indeces.remove(ec.getNameIndex());
-
-            if (indeces.isEmpty())
-                NAMES.remove(old);
-        }
-        addName(ec);
-    }
-
-    public void addName(ExperimentResultBean ec) {
-        if (ec.getName() == null || ec.getName().isEmpty()) {
-            ec.setName("Unknown");
-        } else {
-            final TIntSet indeces = NAMES.putIfAbsent(ec.getName(), new TIntHashSet());
-            assert indeces != null;
-
-            int counter = 1;
-            while (indeces.contains(counter))
-                counter++;
-            indeces.add(counter);
-
-            ec.setNameIndex(counter);
-        }
-    }
-
-
-
-
-
-    //endregion
-
-    public static SiriusProjectSpace createGuiProjectSpace(File location) throws IOException {
-        FilenameFormatter formatter = null;
-        String formatterString = SiriusProperties.getProperty("de.unijena.bioinf.sirius.projectspace.formatter");
-        if (formatterString != null) {
+    /**
+     * Exports the project space as compressed archive to the given files
+     *
+     * @param zipFile The path where the archive will be saved
+     * @throws IOException Thrown if writing of archive fails
+     */
+    public void exportAsProjectArchive(File zipFile) throws IOException {
+        final IOException ex = Jobs.runInBackgroundAndLoad(MF, "Exporting Project to '" + zipFile.getAbsolutePath() + "'", () -> {
             try {
-                formatter = new StandardMSFilenameFormatter(formatterString);
-            } catch (ParseException e) {
-                LoggerFactory.getLogger(GuiProjectSpace.class).error("Could not parse Formatter String." + formatterString + " Using default Formatter instead!", e);
+                ProjectSpaceIO.toZipProjectSpace(projectSpace.projectSpace(), zipFile, ProjectSpaceManager.defaultSummarizer());
+                return null;
+            } catch (IOException e) {
+                return e;
             }
-        }
-        final @NotNull SiriusProjectSpace space = SiriusProjectSpaceIO.create(formatter, location,
-                (cur, max, mess) -> {//todo progress listener
-                },
-                new IdentificationResultSerializer(), new FingerIdResultSerializer(ApplicationCore.WEB_API), new CanopusResultSerializer(ApplicationCore.CANOPUS));
-        space.registerSummaryWriter(new MztabSummaryWriter());
-        return space;
-    }*/
+        }).getResult();
+
+        if (ex != null)
+            new ExceptionDialog(MF, ex.getMessage());
+    }
+
+
+
 }

@@ -1,13 +1,10 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBeanFactory;
-import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceIO;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -34,26 +31,20 @@ public class ProjectOpenAction extends AbstractAction {
         jfc.setAcceptAllFileFilterUsed(false);
 
         while (true) {
-            jfc.showOpenDialog(MF);
+            int state = jfc.showOpenDialog(MF);
+            if (state == JFileChooser.CANCEL_OPTION || state == JFileChooser.ERROR_OPTION)
+                break;
+
             final File selFile = jfc.getSelectedFile();
             if (selFile.isDirectory() && ProjectSpaceIO.isExistingProjectspaceDirectory(selFile)) {
-                Jobs.runInBackground(() ->
-                        SiriusProperties.SIRIUS_PROPERTIES_FILE().
-                                setAndStoreProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, selFile.getParentFile().getAbsolutePath())
-                );
+                SiriusProperties.
+                        setAndStoreInBackground(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH, selFile.getParentFile().getAbsolutePath());
 
-                final ProjectSpaceManager psm = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
-                    SiriusProjectSpace ps = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile);
-                    return new ProjectSpaceManager(ps, new InstanceBeanFactory(), null, null);
-                }).getResult();
-
-                Jobs.runInBackgroundAndLoad(MF, "Importing new Project...", () -> {
-                    //todo we need to cancel all running computations here.
-                    System.out.println("todo we need to cancel all running computations here!");
-                    MF.getPS().changeProjectSpace(psm);
-                });
+                MF.getPS().openProjectSpace(selFile);
 
                 break;
+            } else {
+                new WarningDialog(MF, "'" + selFile.getAbsolutePath() + "' does not contain valid SIRIUS project.");
             }
         }
     }
