@@ -41,6 +41,8 @@ dependencies {
     compile group: 'com.glazedlists', name: 'glazedlists', version: '1.11.0'
 
     //compile group: 'com.kitfox.svg', name: 'svg-salamander', version: '1.0'
+    compile group: 'org.apache.xmlgraphics', name: 'batik-rasterizer', version: '1.8'
+    compile group: 'org.apache.xmlgraphics', name: 'fop', version: '2.3'
 }
 
 /*################### Environment variables ################### */
