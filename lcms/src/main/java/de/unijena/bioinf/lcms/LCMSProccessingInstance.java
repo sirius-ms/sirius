@@ -248,11 +248,26 @@ public class LCMSProccessingInstance {
         ////
         {
             final double[] intensityAfterPrec = new double[sample.ions.size()];
+            int n=0;
             for (int k=0; k < sample.ions.size(); ++k) {
-                intensityAfterPrec[k] = sample.ions.get(k).getIntensityAfterPrecursor();
+                if (sample.ions.get(k).getMsMsQuality().betterThan(Quality.BAD)) {
+                    intensityAfterPrec[k] = sample.ions.get(k).getIntensityAfterPrecursor();
+                    ++n;
+                }
             }
-            Arrays.sort(intensityAfterPrec);
-            sample.intensityAfterPrecursorDistribution = ExponentialDistribution.getMedianEstimator().extimateByMedian(intensityAfterPrec[intensityAfterPrec.length/2]);
+            Arrays.sort(intensityAfterPrec,0,n);
+
+            int k=n/2;
+            while (k < n && intensityAfterPrec[k] <= 0) {
+                ++k;
+            }
+
+            if (k>=n) {
+                sample.intensityAfterPrecursorDistribution = null;
+            } else {
+                sample.intensityAfterPrecursorDistribution = ExponentialDistribution.getMedianEstimator().extimateByMedian(intensityAfterPrec[k]);
+                LoggerFactory.getLogger(LCMSProccessingInstance.class).info("Median intensity after precursor in MS/MS: " + intensityAfterPrec[k]);
+            }
         }
         ListIterator<FragmentedIon> iter = ions.listIterator();
         final CorrelatedPeakDetector detector = new CorrelatedPeakDetector(detectableIonTypes);

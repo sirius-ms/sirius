@@ -108,7 +108,7 @@ public class Ms2CosineSegmenter {
                 Optional<ChromatographicPeak> detectedFeature = sample.builder.detect(lastMs1, s.getPrecursor().getMass());
                 final IsolationWindow window;
                 if (detectedFeature.isEmpty()) {
-                    LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("No MS1 feature belonging to MS/MS " + s);
+                    LoggerFactory.getLogger(Ms2CosineSegmenter.class).debug("No MS1 feature belonging to MS/MS " + s);
                 } else {
                     final MutableChromatographicPeak F = detectedFeature.get().mutate();
                     if (s.getPrecursor().getIsolationWindow().isUndefined()) {
@@ -164,7 +164,7 @@ public class Ms2CosineSegmenter {
                 // if this scan has a high chimeric pollution while the others do not, reject it
                 if (ms2Scan.chimericPollution > chimericThreshold && (ms2Scan.precursorIntensity*Math.sqrt(ms2Scan.precursorIntensity)/Math.max(0.1,ms2Scan.chimericPollution) < scoreThreshold))
                 {
-                    LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("Reject spectrum because of high chimeric pollution.");
+                    LoggerFactory.getLogger(Ms2CosineSegmenter.class).debug("Reject spectrum because of high chimeric pollution.");
                     continue;
                 }
 
@@ -179,7 +179,7 @@ public class Ms2CosineSegmenter {
                     for (ChromatographicPeak.Segment seg : entry.getKey().segments.descendingSet()) {
                         if (s.getIndex() > seg.getEndScanNumber()) {
                             if (seg.getFwhmEndIndex() == seg.getApexIndex()) {
-                                LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("MS2 scan outside of an segment of an chromatographic peak because of BAD PEAK SHAPE");
+                                LoggerFactory.getLogger(Ms2CosineSegmenter.class).debug("MS2 scan outside of an segment of an chromatographic peak because of BAD PEAK SHAPE");
                                 ms2Segment = seg;
                             }
                             break;
