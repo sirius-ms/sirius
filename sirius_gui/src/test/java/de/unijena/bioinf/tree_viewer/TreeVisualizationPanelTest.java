@@ -32,7 +32,7 @@ public class TreeVisualizationPanelTest{
         Thread.sleep(2000);
         try{
             InputStream data_json_stream = WebViewTreeViewer.class.
-                getResourceAsStream("/de/unijena/bioinf/js/" + "example_tree.json");
+                getResourceAsStream("/example_tree.json");
             StringBuilder data_json_builder = new StringBuilder();
             BufferedReader br = new BufferedReader(new InputStreamReader(data_json_stream));
             String line;
