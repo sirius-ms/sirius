@@ -5,7 +5,7 @@ package de.unijena.bioinf.ms.gui.errorReport;
  * 03.10.16.
  */
 
-import de.unijena.bioinf.babelms.ByteRingBufferOutputStream;
+import de.unijena.bioinf.ms.frontend.io.ByteRingBufferOutputStream;
 
 import java.util.logging.StreamHandler;
 

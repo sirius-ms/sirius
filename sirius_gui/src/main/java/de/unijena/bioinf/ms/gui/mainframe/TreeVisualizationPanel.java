@@ -14,7 +14,7 @@ import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.PanelDescription;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.tree_viewer.*;
+import de.unijena.bioinf.ms.gui.tree_viewer.*;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import org.slf4j.LoggerFactory;

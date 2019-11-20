@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.babelms.filefilter.SupportedBatchDataFormatFilter;
+import de.unijena.bioinf.ms.frontend.io.filefilter.SupportedBatchDataFormatFilter;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.properties.PropertyManager;

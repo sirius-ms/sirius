@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.babelms.load.LoadController;
+import de.unijena.bioinf.ms.frontend.io.load.LoadController;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 
 import javax.swing.*;

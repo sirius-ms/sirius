@@ -3,8 +3,8 @@ package de.unijena.bioinf.ms.gui.dialogs.input;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.babelms.DataFormat;
-import de.unijena.bioinf.babelms.DataFormatIdentifier;
+import de.unijena.bioinf.ms.frontend.io.DataFormat;
+import de.unijena.bioinf.ms.frontend.io.DataFormatIdentifier;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 
 import javax.swing.*;
