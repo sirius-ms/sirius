@@ -4,7 +4,7 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.babelms.load.LoadController;
+import de.unijena.bioinf.ms.frontend.io.load.LoadController;
 import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 

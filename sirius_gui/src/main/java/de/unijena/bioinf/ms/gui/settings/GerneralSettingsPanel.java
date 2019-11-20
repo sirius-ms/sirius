@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.gui.settings;
 
-import de.unijena.bioinf.babelms.FileChooserPanel;
+import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
 import org.jdesktop.swingx.JXTitledSeparator;
