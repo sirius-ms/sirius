@@ -1,4 +1,4 @@
-package de.unijena.bioinf.myxo.io.spectrum;
+package de.unijena.bioinf.ms.frontend.io.spectrum;
 
 
 import java.io.File;

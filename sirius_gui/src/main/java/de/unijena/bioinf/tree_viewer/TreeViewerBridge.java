@@ -42,9 +42,9 @@ public class TreeViewerBridge {
         "mz", "massDeviationMz", "massDeviationPpm", "score",
         "relativeIntensity" };
 
-    static final int TREE_SCALE_MIN = 25;
-    static final int TREE_SCALE_MAX = 200;
-    static final int TREE_SCALE_INIT = 100;
+    public static final int TREE_SCALE_MIN = 25;
+    public static final int TREE_SCALE_MAX = 200;
+    public static final int TREE_SCALE_INIT = 100;
 
     TreeViewerBrowser browser;
 

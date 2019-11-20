@@ -20,7 +20,7 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.sirius.SpectrumContainer;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
+import de.unijena.bioinf.ms.frontend.io.spectrum.CSVFormatReader;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import javax.swing.*;

@@ -9,7 +9,6 @@ import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
 import de.unijena.bioinf.ms.gui.table.list_stats.ListStats;
-import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
@@ -100,7 +99,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
                 else
                     return intensity;
             case 9:
-                return result.getTreeVisualization().map(TreeNode::getMedianMassDeviation).map(String::valueOf).orElse("Value not found");
+                return "NOT Implemented";
             case 10:
                 return isBest(result);
             default:

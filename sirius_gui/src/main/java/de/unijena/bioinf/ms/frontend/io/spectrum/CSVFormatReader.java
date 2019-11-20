@@ -1,4 +1,4 @@
-package de.unijena.bioinf.myxo.io.spectrum;
+package de.unijena.bioinf.ms.frontend.io.spectrum;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import gnu.trove.list.array.TDoubleArrayList;

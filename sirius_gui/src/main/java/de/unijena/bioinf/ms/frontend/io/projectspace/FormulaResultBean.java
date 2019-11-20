@@ -10,8 +10,6 @@ import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.sirius.ComputingStatus;
-import de.unijena.bioinf.myxo.gui.tree.structure.MyxoTreeConverter;
-import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.projectspace.ContainerListener;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.FormulaScoring;
@@ -38,7 +36,6 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     private final FormulaResultId fid;
     private final InstanceBean parent;
 
-    private TreeNode tree; //just a gui tree.
     private int rank;
 
 
@@ -59,7 +56,6 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         this.fid = fid;
         this.parent = parent;
         this.rank = rank;
-        tree = null;
         configureListeners();
     }
 
@@ -171,13 +167,6 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         } else {
             return mf.toString() + " " + niceName;
         }
-    }
-
-    public Optional<TreeNode> getTreeVisualization() {
-        if (tree == null)
-            tree = getFragTree().map(MyxoTreeConverter::convertTree).orElse(null);
-
-        return Optional.ofNullable(tree);
     }
 
     private Optional<FTreeMetricsHelper> getMetrics() {
