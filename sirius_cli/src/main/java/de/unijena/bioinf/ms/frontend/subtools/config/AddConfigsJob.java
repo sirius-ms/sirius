@@ -47,7 +47,14 @@ public class AddConfigsJob extends InstanceJob {
         exp.getAnnotation(PossibleAdducts.class).ifPresent(add -> add.keepOnly(exp.getPrecursorIonType().getCharge()));
 
         final FormulaResultRankingScore it = exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO);
-        inst.getID().setRankingScoreType(it.isAuto() ? SiriusScore.class : it.value);
+        // this value is a commandline parameter that specifies how to handle the ranking score. If auto we decide how to
+        // handle, otherwise we set the user defined value
+        if (it.isAuto()) {
+            if (inst.getID().getRankingScoreType().isEmpty()) //set a default if nothing else is already set
+                inst.getID().setRankingScoreType(SiriusScore.class);
+        } else {
+            inst.getID().setRankingScoreType(it.value);
+        }
 
         inst.updateExperiment();
         inst.updateConfig();
