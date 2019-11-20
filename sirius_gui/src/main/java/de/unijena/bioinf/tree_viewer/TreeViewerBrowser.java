@@ -7,12 +7,12 @@ Interface for classes displaying the TreeViewer Javascript file (WebView impleme
 Allows communication with JavaScript.
  */
 public interface TreeViewerBrowser  {
-    public void addJS(String resource_url);
-    public void load();
-    public void load(Map<String, Object> bridges);
-    public void loadTree(String jsonTree);
-    public Object executeJS(String js_code);
-    public Object getJSObject(String name);
-    public Object[] getJSArray(String name);
-    public void setJSArray(String name, Object[] newArray);
+    void addJS(String resource_url);
+    void load();
+    void load(Map<String, Object> bridges);
+    void loadTree(String jsonTree);
+    Object executeJS(String js_code);
+    Object getJSObject(String name);
+    Object[] getJSArray(String name);
+    void setJSArray(String name, Object[] newArray);
 }

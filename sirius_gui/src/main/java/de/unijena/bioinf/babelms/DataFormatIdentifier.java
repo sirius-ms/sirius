@@ -1,7 +1,7 @@
 package de.unijena.bioinf.babelms;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
+import de.unijena.bioinf.ms.frontend.io.spectrum.CSVFormatReader;
 
 import java.io.BufferedReader;
 import java.io.File;

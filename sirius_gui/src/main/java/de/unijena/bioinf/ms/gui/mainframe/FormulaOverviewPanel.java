@@ -8,7 +8,6 @@ package de.unijena.bioinf.ms.gui.mainframe;
 import de.unijena.bioinf.ms.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.mainframe.molecular_formular.FormulaListDetailView;
 import de.unijena.bioinf.ms.gui.utils.PanelDescription;
-import de.unijena.bioinf.tree_viewer.TreeVisualizationPanel;
 
 import javax.swing.*;
 import java.awt.*;

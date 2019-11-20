@@ -14,14 +14,14 @@ import java.util.List;
 
 public class CanopusPanel extends JPanel implements ActionListener, ActiveElementChangedListener<FormulaResultBean, InstanceBean>, PanelDescription {
 
-    protected ClassyfireTreePanel treePanel;
+//    protected ClassyfireTreePanel treePanel;
 
     public CanopusPanel() {
         super(new BorderLayout());
-        this.treePanel = new ClassyfireTreePanel(ApplicationCore.CANOPUS);
-        final JScrollPane scroll = new JScrollPane(treePanel);
-        treePanel.setScrollPane(scroll);
-        add(scroll, BorderLayout.CENTER);
+//        this.treePanel = new ClassyfireTreePanel(ApplicationCore.CANOPUS);
+//        final JScrollPane scroll = new JScrollPane(treePanel);
+//        treePanel.setScrollPane(scroll);
+//        add(scroll, BorderLayout.CENTER);
 
     }
 
@@ -32,7 +32,7 @@ public class CanopusPanel extends JPanel implements ActionListener, ActiveElemen
 
     @Override
     public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
-        treePanel.updateTree(experiment, sre);
+//        treePanel.updateTree(experiment, sre);
     }
 
     @Override

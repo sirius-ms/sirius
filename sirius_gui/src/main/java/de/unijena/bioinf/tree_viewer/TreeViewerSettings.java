@@ -22,13 +22,12 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.ListModel;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import de.unijena.bioinf.ms.gui.mainframe.TreeVisualizationPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;
@@ -124,8 +123,8 @@ public class TreeViewerSettings extends JFrame implements ItemListener,
         super("Customize");
         this.treePanel = treePanel;
         this.setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
-        this.bridge = treePanel.jsBridge;
-        this.localConfig = treePanel.localConfig;
+        this.bridge = treePanel.getJsBridge();
+        this.localConfig = treePanel.getLocalConfig();
         this.selectedPreset = PropertyManager.getProperty("customPreset", null, "Custom");
 
         this.panel = new TwoCloumnPanel();

@@ -9,7 +9,6 @@ import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTable;
 import de.unijena.bioinf.ms.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.mainframe.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
-import de.unijena.bioinf.tree_viewer.TreeVisualizationPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
