@@ -130,9 +130,9 @@ public class TreeVisualizationPanel extends JPanel
 
         browser.addJS("d3.min.js");
         browser.addJS("d3-colorbar.js");
-        browser.addJS("treeViewer.js");
-        browser.addJS("treeViewerSettings.js");
-        browser.addJS("treeViewerConnector.js");
+        browser.addJS("tree_viewer/treeViewer.js");
+        browser.addJS("tree_viewer/treeViewerSettings.js");
+        browser.addJS("tree_viewer/treeViewerConnector.js");
         this.add((JFXPanel) this.browser, BorderLayout.CENTER);
         this.setVisible(true);
         HashMap<String, Object> bridges = new HashMap<String, Object>() {{

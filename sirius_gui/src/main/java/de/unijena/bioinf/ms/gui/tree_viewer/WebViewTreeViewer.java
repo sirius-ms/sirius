@@ -37,7 +37,7 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
         String res_html;
         try{
             res_html = getJSResourceInHTML(WebViewTreeViewer.class.
-                    getResourceAsStream("/de/unijena/bioinf/js/"
+                    getResourceAsStream("/js/"
                                         + resource_name));
         } catch (IOException e){
             e.printStackTrace();
