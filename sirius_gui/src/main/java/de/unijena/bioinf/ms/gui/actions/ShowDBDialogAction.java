@@ -5,7 +5,7 @@ package de.unijena.bioinf.ms.gui.actions;
  * 29.01.17.
  */
 
-import de.unijena.bioinf.ms.gui.fingerid.db.custom.DatabaseDialog;
+import de.unijena.bioinf.ms.gui.fingerid.custom_db.DatabaseDialog;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 
 import javax.swing.*;

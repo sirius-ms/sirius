@@ -4,7 +4,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
-import de.unijena.bioinf.ms.gui.sirius.ComputingStatus;
+import de.unijena.bioinf.ms.frontend.io.projectspace.ComputingStatus;
 import de.unijena.bioinf.sirius.Sirius;
 import org.slf4j.LoggerFactory;
 

@@ -10,7 +10,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.MsExperiments;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
-import de.unijena.bioinf.ms.gui.sirius.SpectrumContainer;
+import de.unijena.bioinf.ms.gui.io.spectrum.SpectrumContainer;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
 import org.slf4j.LoggerFactory;
