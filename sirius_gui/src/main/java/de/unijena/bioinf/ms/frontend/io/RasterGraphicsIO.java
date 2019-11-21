@@ -6,10 +6,6 @@ import java.io.File;
 import java.io.IOException;
 
 public class RasterGraphicsIO {
-
-	public RasterGraphicsIO() {
-		// TODO Auto-generated constructor stub
-	}
 	
 	/**
 	 * 

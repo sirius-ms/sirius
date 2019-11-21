@@ -8,7 +8,7 @@ import de.unijena.bioinf.ms.gui.compute.FingerIdDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.gui.mainframe.experiments.ExperimentListChangeListener;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 
 import javax.swing.*;

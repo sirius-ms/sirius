@@ -1,10 +1,9 @@
 package de.unijena.bioinf.ms.gui.canopus;
 
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
-import de.unijena.bioinf.ms.gui.utils.PanelDescription;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 
 import javax.swing.*;
 import java.awt.*;

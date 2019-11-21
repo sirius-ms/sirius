@@ -18,7 +18,7 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
-import de.unijena.bioinf.ms.frontend.io.filefilter.SupportedExportCSVFormatsFilter;
+import de.unijena.bioinf.ms.gui.io.filefilter.SupportedExportCSVFormatsFilter;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
