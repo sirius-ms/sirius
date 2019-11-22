@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
+import de.unijena.bioinf.ms.frontend.io.InputFiles;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
@@ -13,7 +14,7 @@ import java.util.List;
 public class LcmsAlignOptions implements PreprocessingTool {
 
     @Override
-    public PreprocessingJob makePreprocessingJob(List<File> input, ProjectSpaceManager space) {
+    public PreprocessingJob makePreprocessingJob(InputFiles input, ProjectSpaceManager space) {
         return new LcmsAlignSubToolJob(input,space);
     }
 }

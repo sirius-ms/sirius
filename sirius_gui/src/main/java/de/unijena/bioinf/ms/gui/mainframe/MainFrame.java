@@ -24,6 +24,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -210,18 +211,19 @@ public class MainFrame extends JFrame implements DropTargetListener {
         // entferne nicht unterstuetzte Files und suche nach CSVs
         // suche nach Sirius files
         //todo into fileimport dialog
-        final List<File> siriusFiles = new ArrayList<>();
+        final List<Path> projectFiles = new ArrayList<>();
         final Iterator<File> rawFileIterator = rawFiles.iterator();
         while (rawFileIterator.hasNext()) {
-            final File f = rawFileIterator.next();
-            if (ProjectSpaceIO.isZipProjectSpace(f) || (f.isDirectory() && ProjectSpaceIO.isExistingProjectspaceDirectory(f))) {
-                siriusFiles.add(f);
+            final Path f = rawFileIterator.next().toPath();
+            if (ProjectSpaceIO.isZipProjectSpace(f) || ProjectSpaceIO.isExistingProjectspaceDirectory(f)) {
+                projectFiles.add(f);
                 rawFileIterator.remove();
             }
         }
 
-        if (siriusFiles.size() > 0) {
-            ps.importFromProjectSpace(siriusFiles);
+        if (projectFiles.size() > 0) {
+            ps.importFromProjectSpace(projectFiles);
+
         }
 
         FileImportDialog dropDiag = new FileImportDialog(this, rawFiles);
@@ -266,7 +268,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public static List<File> resolveFileList(List<File> files) {
         final ArrayList<File> filelist = new ArrayList<>();
         for (File f : files) {
-            if (f.isDirectory() && !ProjectSpaceIO.isExistingProjectspaceDirectory(f)) {
+            if (f.isDirectory() && !ProjectSpaceIO.isExistingProjectspaceDirectory(f.toPath())) {
                 final File[] fl = f.listFiles();
                 if (fl != null) {
                     for (File g : fl)

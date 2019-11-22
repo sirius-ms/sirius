@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.gui;
 
+import de.unijena.bioinf.ms.frontend.io.InputFiles;
 import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
@@ -32,7 +33,7 @@ public class GuiComputeRoot implements RootOptions {
     }
 
     @Override
-    public List<File> getInput() {
+    public InputFiles getInput() {
         return null;
     }
 
@@ -40,7 +41,7 @@ public class GuiComputeRoot implements RootOptions {
      * here we provide an iterator about the Instances we want to compute with this configured workflow
      * */
     @Override
-    public PreprocessingJob makePreprocessingJob(List<File> input, ProjectSpaceManager space) {
+    public PreprocessingJob makePreprocessingJob(InputFiles input, ProjectSpaceManager space) {
         return new PreprocessingJob() {
             @Override
             protected Iterable<InstanceBean> compute() throws Exception {

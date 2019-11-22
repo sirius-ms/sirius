@@ -126,9 +126,9 @@ public class SimilarityMatrixSubTool implements Workflow {
         final JobManager Jobs= SiriusJobs.getGlobalJobManager();
         final List<FTree> libTrees = new ArrayList<>();
         FTree[] lib;
-        if (ProjectSpaceIO.isExistingProjectspaceDirectory(options.useFtblast)) {
+        if (ProjectSpaceIO.isExistingProjectspaceDirectory(options.useFtblast.toPath())) {
             try {
-                SiriusProjectSpace compoundContainerIds = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(options.useFtblast);
+                SiriusProjectSpace compoundContainerIds = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(options.useFtblast.toPath());
                 for (CompoundContainerId id : compoundContainerIds) {
                     List<? extends SScored<FormulaResult, ? extends FormulaScore>> list = compoundContainerIds.getFormulaResultsOrderedBy(id, id.getRankingScoreType().get());
                     if (list.size()>0) {

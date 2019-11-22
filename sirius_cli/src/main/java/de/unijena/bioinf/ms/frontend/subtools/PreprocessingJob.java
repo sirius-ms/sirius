@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
+import de.unijena.bioinf.ms.frontend.io.InputFiles;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -13,20 +14,20 @@ import java.util.List;
  * The default here is to write the results to the project space that will be used for th rest of the workflow
  */
 public abstract class PreprocessingJob extends BasicJJob<Iterable<? extends Instance>> implements SubToolJob {
-    protected List<File> input;
+    protected InputFiles input;
     protected ProjectSpaceManager space;
 
     public PreprocessingJob() {
         this(null, null);
     }
 
-    public PreprocessingJob(@Nullable List<File> input, @Nullable ProjectSpaceManager space) {
+    public PreprocessingJob(@Nullable InputFiles input, @Nullable ProjectSpaceManager space) {
         super(JobType.SCHEDULER);
         this.input = input;
         this.space = space;
     }
 
-    public void setInput(List<File> input) {
+    public void setInput(InputFiles input) {
         this.input = input;
     }
 

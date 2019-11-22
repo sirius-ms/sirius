@@ -22,6 +22,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
@@ -139,15 +140,15 @@ public class GuiProjectSpace {
         }
     }
 
-    public void importFromProjectSpace(@NotNull final ImportMode importMode, @NotNull final File... selFile) {
+    public void importFromProjectSpace(@NotNull final ImportMode importMode, @NotNull final Path... selFile) {
         importFromProjectSpace(importMode, Arrays.asList(selFile));
     }
 
-    public void importFromProjectSpace(@NotNull final List<File> selFile) {
+    public void importFromProjectSpace(@NotNull final List<Path> selFile) {
         importFromProjectSpace(ImportMode.REPLACE, selFile);
     }
 
-    public void importFromProjectSpace(@NotNull final ImportMode importMode, @NotNull final List<File> selFile) {
+    public void importFromProjectSpace(@NotNull final ImportMode importMode, @NotNull final List<Path> selFile) {
         Jobs.runInBackgroundAndLoad(MF, "Importing into Project-Space", new TinyBackgroundJJob<Boolean>() {
             @Override
             protected Boolean compute() {
@@ -160,7 +161,7 @@ public class GuiProjectSpace {
     }
 
 
-    public void openProjectSpace(File selFile) {
+    public void openProjectSpace(Path selFile) {
         Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
             SiriusProjectSpace ps = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile);
             final ProjectSpaceManager psm = new ProjectSpaceManager(ps, new InstanceBeanFactory(), null, null);
@@ -173,7 +174,9 @@ public class GuiProjectSpace {
     }
 
     public void moveProjectSpace(File newlocation) {
-        final IOException ex = Jobs.runInBackgroundAndLoad(MF, "Moving Project to '" + newlocation.getAbsolutePath() + "'", () -> {
+        //todo implement save as
+        System.out.println("TODO implement save as");
+        /*final IOException ex = Jobs.runInBackgroundAndLoad(MF, "Moving Project to '" + newlocation.getAbsolutePath() + "'", () -> {
             try {
                 projectSpace.projectSpace().move(newlocation);
                 inEDTAndWait(() -> MF.setTitlePath(projectSpace.projectSpace().getRootPath().toString()));
@@ -184,7 +187,7 @@ public class GuiProjectSpace {
         }).getResult();
 
         if (ex != null)
-            new ExceptionDialog(MF, ex.getMessage());
+            new ExceptionDialog(MF, ex.getMessage());*/
     }
 
     /**
@@ -193,8 +196,8 @@ public class GuiProjectSpace {
      * @param zipFile The path where the archive will be saved
      * @throws IOException Thrown if writing of archive fails
      */
-    public void exportAsProjectArchive(File zipFile) throws IOException {
-        final IOException ex = Jobs.runInBackgroundAndLoad(MF, "Exporting Project to '" + zipFile.getAbsolutePath() + "'", () -> {
+    public void exportAsProjectArchive(Path zipFile) throws IOException {
+        final IOException ex = Jobs.runInBackgroundAndLoad(MF, "Exporting Project to '" + zipFile.toString() + "'", () -> {
             try {
                 ProjectSpaceIO.toZipProjectSpace(projectSpace.projectSpace(), zipFile, ProjectSpaceManager.defaultSummarizer());
                 return null;

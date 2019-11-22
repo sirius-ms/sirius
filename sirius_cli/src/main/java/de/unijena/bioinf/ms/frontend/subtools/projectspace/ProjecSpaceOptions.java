@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.projectspace;
 
+import de.unijena.bioinf.ms.frontend.io.InputFiles;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
@@ -14,7 +15,7 @@ import java.util.List;
 public class ProjecSpaceOptions implements PreprocessingTool {
 
     @Override
-    public PreprocessingJob makePreprocessingJob(List<File> input, ProjectSpaceManager space) {
+    public PreprocessingJob makePreprocessingJob(InputFiles input, ProjectSpaceManager space) {
         return new ProjectSpaceSubToolJob(input,space);
     }
 }

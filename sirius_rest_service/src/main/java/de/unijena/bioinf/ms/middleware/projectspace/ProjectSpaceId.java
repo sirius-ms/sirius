@@ -3,14 +3,15 @@ package de.unijena.bioinf.ms.middleware.projectspace;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Objects;
 
 public final class ProjectSpaceId {
 
     public final @NotNull  String name;
-    public final @NotNull  File path;
+    public final @NotNull  Path path;
 
-    public ProjectSpaceId(@NotNull  String name, @NotNull  File path) {
+    public ProjectSpaceId(@NotNull  String name, @NotNull Path path) {
         this.name = name;
         this.path = path;
     }

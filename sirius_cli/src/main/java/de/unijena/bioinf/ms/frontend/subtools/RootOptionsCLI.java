@@ -1,17 +1,15 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.ms.frontend.io.InputFiles;
+import de.unijena.bioinf.ms.frontend.io.InstanceImporter;
 import de.unijena.bioinf.ms.frontend.io.MS2ExpInputIterator;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceFactory;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.FilenameFormatter;
-import de.unijena.bioinf.projectspace.ProjectSpaceIO;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.projectspace.StandardMSFilenameFormatter;
+import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +19,11 @@ import picocli.CommandLine.Option;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * This is for not algorithm related parameters.
@@ -123,78 +124,23 @@ public class RootOptionsCLI implements RootOptions {
 
 
     @Option(names = {"--output", "--project-space", "-o", "-p"}, description = "Specify project-space to read from and also write to if nothing else is specified. For compression use the File ending .zip or .sirius", order = 70)
-    public File projectSpaceLocation;
+    private Path projectSpaceLocation;
+
 
     @Option(names = {"--input", "-i"}, description = "Input for the analysis. Ths can be either preprocessed mass spectra in .ms or .mgf file format, " +
             "LC/MS runs in .mzML/.mzXml format or already existing SIRIUS project-space(s) (uncompressed/compressed).", order = 80)
     // we differentiate between contiunuing a project-space and starting from mzml or  already processed ms/mgf file.
     // If multiple files match the priobtrrity is project-space,  ms/mgf,  mzml
-    public void setInput(List<File> files) {
-        if (files == null || files.isEmpty()) return;
-
-        final List<File> projectSpaces = new ArrayList<>();
-        final List<File> siriusInfiles = new ArrayList<>();
-
-        expandInput(files, siriusInfiles, projectSpaces);
-
-        if (!projectSpaces.isEmpty()) {
-            if (!siriusInfiles.isEmpty())
-                LOG.warn("Multiple input types found: Only the project-space data ist used as input.");
-            input = projectSpaces;
-            inputType = InputType.PROJECT;
-        } else if (!siriusInfiles.isEmpty()) {
-            input = siriusInfiles;
-            inputType = InputType.SIRIUS;
-        } else {
-            input = null;
-            inputType = null;
-//            throw new CommandLine.PicocliException("No valid input data is found. Please give you input in a supported format.");
-        }
+    public void setInputFiles(List<File> files) {
+        this.inputFiles = InstanceImporter.expandInputFromFile(files);
     }
 
-
-    private void expandInput(@NotNull List<File> files, @NotNull List<File> siriusInfiles, @NotNull List<File> projectSpaces) {
-        for (File g : files) {
-            if (!g.exists()) {
-                LOG.warn("Path \"" + g.getPath() + "\" does not exist and will be skipped");
-                continue;
-            }
-
-            if (g.isDirectory()) {
-                // check whether it is a workspace or a gerneric directory with some other input
-                if (ProjectSpaceIO.isExistingProjectspaceDirectory(g)) {
-                    projectSpaces.add(g);
-                } else {
-                    File[] ins = g.listFiles(pathname -> pathname.isFile());
-                    if (ins != null) {
-                        Arrays.sort(ins, Comparator.comparing(File::getName));
-                        expandInput(Arrays.asList(ins), siriusInfiles, projectSpaces);
-                    }
-                }
-            } else {
-                //check whether files are lcms runs copressed project-spaces or stadard ms/mgf files
-                final String name = g.getName();
-                if (MsExperimentParser.isSupportedFileName(name)) {
-                    siriusInfiles.add(g);
-                } else if (ProjectSpaceIO.isZipProjectSpace(g)) {
-                    //compressed spaces are read only and can be handled as simple input
-                    projectSpaces.add(g);
-                } else {
-                    LOG.warn("File with the name \"" + name + "\" is not in a supported format or has a wrong file extension. File is skipped");
-                }
-            }
-        }
-    }
-
-    List<File> input = null;
+    private InputFiles inputFiles = null;
 
     @Override
-    public List<File> getInput() {
-        return input;
+    public InputFiles getInput() {
+        return inputFiles;
     }
-
-    InputType inputType = null;
-
 
     @Option(names = {"--ignore-formula"}, description = "ignore given molecular formula in .ms or .mgf file format, ")
     private boolean ignoreFormula = false;
@@ -214,24 +160,15 @@ public class RootOptionsCLI implements RootOptions {
 
 
     @Override
-    public PreprocessingJob makePreprocessingJob(List<File> input, ProjectSpaceManager space) {
+    public PreprocessingJob makePreprocessingJob(InputFiles input, ProjectSpaceManager space) {
         return new PreprocessingJob(input, space) {
             @Override
             protected Iterable<Instance> compute() {
                 //todo handle compressed stuff
                 //todo check if output space needs to be added to input
-                if (inputType != null && input != null) {
-                    switch (inputType) {
-                        case PROJECT:
-                            return space;
-                        case SIRIUS:
-                            //we decided to do maxMZ filtering after writing data to the project space
-                            final Iterator<Instance> msit = new MS2ExpInputIterator(input, Integer.MAX_VALUE, ignoreFormula).asInstanceIterator(space);
-                            while (msit.hasNext())
-                                msit.next(); //writes new instances to projectspace
-                            return space;
-                    }
-                } else if (space != null) {
+
+                if (space != null) {
+                    new InstanceImporter(space).importMultipleSources(inputFiles);
                     if (space.size() > 0)
                         LOG.info("No Input given but output Project-Space is not empty and will be used as Input instead!");
                     else
@@ -239,7 +176,7 @@ public class RootOptionsCLI implements RootOptions {
 
                     return space;
                 }
-                throw new CommandLine.PicocliException("Illegal Input type: " + inputType);
+                throw new CommandLine.PicocliException("NO projectspace to write on: ");
             }
         };
     }
@@ -248,20 +185,21 @@ public class RootOptionsCLI implements RootOptions {
     protected void configureProjectSpace() {
         try {
             if (projectSpaceLocation == null) {
-                if (inputType == InputType.PROJECT && input.size() == 1 && !ProjectSpaceIO.isZipProjectSpace(input.get(0))) {
-                    projectSpaceLocation = input.get(0);
+                if (inputFiles != null && inputFiles.projects.size() == 1) {
+                    projectSpaceLocation = (inputFiles.projects.get(0));
+                    LOG.info("No output location given. Writing output to input location: " + projectSpaceLocation.toString());
                 } else {
                     projectSpaceLocation = ProjectSpaceIO.createTmpProjectSpaceLocation();
-                    LOG.warn("No unique output location found. Writing output to Temporary folder: " + projectSpaceLocation.getPath());
+                    LOG.warn("No unique output location found. Writing output to Temporary folder: " + projectSpaceLocation.toString());
                 }
             }
 
-            if (!projectSpaceLocation.exists()) {
-                if (!projectSpaceLocation.mkdirs())
-                    throw new IOException("Could not create new directory for project-space'" + projectSpaceLocation + "'");
+            final SiriusProjectSpace psTmp;
+            if (Files.notExists(projectSpaceLocation)) {
+                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(projectSpaceLocation);
+            }else {
+                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(projectSpaceLocation);
             }
-
-            final SiriusProjectSpace psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(projectSpaceLocation);
 
             //check for formatter
             if (projectSpaceFilenameFormatter == null) {

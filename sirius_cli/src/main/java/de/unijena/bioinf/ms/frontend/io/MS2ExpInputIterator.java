@@ -5,13 +5,12 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.sirius.Sirius;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Iterator;
@@ -23,20 +22,20 @@ import java.util.Iterator;
 public class MS2ExpInputIterator implements Iterator<Ms2Experiment> {
     private static final Logger LOG = LoggerFactory.getLogger(MS2ExpInputIterator.class);
     private final ArrayDeque<Ms2Experiment> instances = new ArrayDeque<>();
-    private final Iterator<File> fileIter;
+    private final Iterator<Path> fileIter;
     private final double maxMz;
     private final MsExperimentParser parser = new MsExperimentParser();
     private final boolean ignoreFormula;
 
 
-    File currentFile;
+    Path currentFile;
     Iterator<Ms2Experiment> currentExperimentIterator;
 
-    public MS2ExpInputIterator(Collection<File> input, double maxMz) {
+    public MS2ExpInputIterator(Collection<Path> input, double maxMz) {
         this(input, maxMz, false);
     }
 
-    public MS2ExpInputIterator(Collection<File> input, double maxMz, boolean ignoreFormula) {
+    public MS2ExpInputIterator(Collection<Path> input, double maxMz, boolean ignoreFormula) {
         fileIter = input.iterator();
         this.maxMz = maxMz;
         currentExperimentIterator = fetchNext();
@@ -66,7 +65,7 @@ public class MS2ExpInputIterator implements Iterator<Ms2Experiment> {
                         GenericParser<Ms2Experiment> p = parser.getParser(currentFile);
                         if (p == null) {
                             LOG.error("Unknown file format: '" + currentFile + "'");
-                        } else currentExperimentIterator = p.parseFromFileIterator(currentFile);
+                        } else currentExperimentIterator = p.parseFromPathIterator(currentFile);
                     } catch (IOException e) {
                         LOG.error("Cannot parse file '" + currentFile + "':\n", e);
                     }
@@ -93,7 +92,7 @@ public class MS2ExpInputIterator implements Iterator<Ms2Experiment> {
         throw new UnsupportedOperationException();
     }
 
-    public Iterator<Instance> asInstanceIterator(ProjectSpaceManager projectSpace) {
+    public InstanceIteratorMS2Exp asInstanceIterator(ProjectSpaceManager projectSpace) {
         return new InstanceIteratorMS2Exp(this, projectSpace);
     }
 }

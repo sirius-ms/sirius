@@ -36,11 +36,11 @@ public class ProjectOpenAction extends AbstractAction {
                 break;
 
             final File selFile = jfc.getSelectedFile();
-            if (selFile.isDirectory() && ProjectSpaceIO.isExistingProjectspaceDirectory(selFile)) {
+            if (selFile.isDirectory() && ProjectSpaceIO.isExistingProjectspaceDirectory(selFile.toPath())) {
                 SiriusProperties.
                         setAndStoreInBackground(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH, selFile.getParentFile().getAbsolutePath());
 
-                MF.getPS().openProjectSpace(selFile);
+                MF.getPS().openProjectSpace(selFile.toPath());
 
                 break;
             } else {

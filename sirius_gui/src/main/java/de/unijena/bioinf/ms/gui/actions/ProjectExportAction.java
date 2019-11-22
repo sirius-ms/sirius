@@ -76,7 +76,7 @@ public class ProjectExportAction extends AbstractAction {
 
         if (selectedFile != null) {
             try {
-                MF.getPS().exportAsProjectArchive(selectedFile);
+                MF.getPS().exportAsProjectArchive(selectedFile.toPath());
             } catch (Exception e2) {
                 new ErrorReportDialog(MF, e2.getMessage());
             }
