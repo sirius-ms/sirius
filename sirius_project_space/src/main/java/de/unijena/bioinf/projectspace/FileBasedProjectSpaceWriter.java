@@ -1,40 +1,39 @@
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
 public class FileBasedProjectSpaceWriter extends FileBasedProjectSpaceIO implements ProjectWriter {
 
-    public FileBasedProjectSpaceWriter(File dir, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
+    public FileBasedProjectSpaceWriter(Path dir, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
         super(dir, propertyGetter);
     }
 
     @Override
     public void textFile(String relativePath, IOFunctions.IOConsumer<BufferedWriter> func) throws IOException {
-        try (final BufferedWriter stream = FileUtils.getWriter(resolveFilePath(relativePath))) {
+        try (final BufferedWriter stream = Files.newBufferedWriter(resolveAndMkFilePath(relativePath))) {
             func.consume(stream);
         }
     }
 
     @Override
     public void binaryFile(String relativePath, IOFunctions.IOConsumer<BufferedOutputStream> func) throws IOException {
-        try (final BufferedOutputStream stream = FileUtils.getOut(resolveFilePath(relativePath))) {
+        try (final BufferedOutputStream stream = new BufferedOutputStream(Files.newOutputStream(resolveAndMkFilePath(relativePath)))) {
             func.consume(stream);
         }
     }
 
     @Override
     public void keyValues(String relativePath, Map<?, ?> map) throws IOException {
-        try (final BufferedWriter stream = FileUtils.getWriter(resolveFilePath(relativePath))) {
+        try (final BufferedWriter stream = Files.newBufferedWriter(resolveAndMkFilePath(relativePath))) {
             for (Map.Entry<?,?> entry : map.entrySet()) {
                 stream.write(String.valueOf(entry.getKey()));
                 stream.write('\t');
@@ -46,7 +45,7 @@ public class FileBasedProjectSpaceWriter extends FileBasedProjectSpaceIO impleme
 
     @Override
     public void table(String relativePath, @Nullable  String[] header, Iterable<String[]> rows) throws IOException {
-        try (final BufferedWriter bw = FileUtils.getWriter(resolveFilePath(relativePath))) {
+        try (final BufferedWriter bw = Files.newBufferedWriter(resolveAndMkFilePath(relativePath))) {
             if (header!=null) {
                 bw.write(String.join("\t", header));
                 bw.newLine();
@@ -68,9 +67,9 @@ public class FileBasedProjectSpaceWriter extends FileBasedProjectSpaceIO impleme
         Files.deleteIfExists(asPath(relativePath));
     }
 
-    protected File resolveFilePath(String relativePath) {
-        File file = new File(dir, relativePath);
-        file.getParentFile().mkdirs();
+    protected Path resolveAndMkFilePath(String relativePath) throws IOException {
+        Path file = asPath(relativePath);
+        Files.createDirectories(file.getParent());
         return file;
     }
 }
