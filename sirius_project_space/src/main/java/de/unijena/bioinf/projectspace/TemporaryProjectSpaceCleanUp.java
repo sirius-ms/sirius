@@ -2,7 +2,6 @@ package de.unijena.bioinf.projectspace;
 
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
@@ -15,10 +14,10 @@ import java.nio.file.attribute.BasicFileAttributes;
  * To avoid data loss, this object should only be initialized with a subdirectory of /tmp
  */
 public class TemporaryProjectSpaceCleanUp implements ProjectSpaceListener{
+    //todo add Zip support
+    protected final Path cleanupPath;
 
-    protected final File cleanupPath;
-
-    TemporaryProjectSpaceCleanUp(File cleanupPath) {
+    TemporaryProjectSpaceCleanUp(Path cleanupPath) {
         this.cleanupPath = cleanupPath;
     }
 
@@ -26,11 +25,11 @@ public class TemporaryProjectSpaceCleanUp implements ProjectSpaceListener{
     public void projectSpaceChanged(ProjectSpaceEvent event) {
         if (event==ProjectSpaceEvent.CLOSED) {
             // cleanup complete temporary directory
-            if (cleanupPath.exists()) {
+            if (Files.exists(cleanupPath)) {
                 try {
-                    Files.walkFileTree(cleanupPath.toPath(), new FileVisitor<Path>() {
+                    Files.walkFileTree(cleanupPath, new FileVisitor<>() {
                         @Override
-                        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                             return FileVisitResult.CONTINUE;
                         }
 
@@ -41,7 +40,7 @@ public class TemporaryProjectSpaceCleanUp implements ProjectSpaceListener{
                         }
 
                         @Override
-                        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                        public FileVisitResult visitFileFailed(Path file, IOException exc) {
                             return FileVisitResult.CONTINUE;
                         }
 

@@ -17,7 +17,13 @@ import java.util.zip.*;
 
 public class FileUtils {
 
-    public static void zipDir(final Path folder, final Path zipFilePath) throws IOException {
+    /**
+     * @param folder
+     * @param zipFilePath
+     * @return new Created zip Files
+     * @throws IOException if zip file compression fails
+     */
+    public static Path zipDir(final Path folder, final Path zipFilePath) throws IOException {
         try (
                 FileOutputStream fos = new FileOutputStream(zipFilePath.toFile());
                 ZipOutputStream zos = new ZipOutputStream(fos)
@@ -36,6 +42,39 @@ public class FileUtils {
                     return FileVisitResult.CONTINUE;
                 }
             });
+            return zipFilePath;
+        }
+    }
+
+    /**
+     *
+     * @param zipFilePath
+     * @param target
+     * @return Target directory with unzipped data
+     * @throws IOException if extraction fails
+     */
+    public static Path unZipDir(final Path zipFilePath, final Path target) throws IOException {
+        try (ZipInputStream zip = new ZipInputStream(Files.newInputStream(zipFilePath))) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                Path file = target.resolve(entry.getName());
+
+                if (!file.normalize().startsWith(target))
+                    throw new IOException("Bad zip entry");
+
+                if (entry.isDirectory()) {
+                    Files.createDirectories(file);
+                } else {
+                    byte[] buffer = new byte[4096];
+                    Files.createDirectories(file.getParent());
+                    try (BufferedOutputStream out = new BufferedOutputStream(Files.newOutputStream(file))) {
+                        int len;
+                        while ((len = zip.read(buffer)) != -1)
+                            out.write(buffer, 0, len);
+                    }
+                }
+            }
+            return target;
         }
     }
 
@@ -517,6 +556,12 @@ public class FileUtils {
             }
         }
         return lines;
+    }
+
+    public static Map<String, String> readKeyValues(Path path) throws IOException {
+        try (final BufferedReader br = Files.newBufferedReader(path)) {
+            return readKeyValues(br);
+        }
     }
 
     public static Map<String,String> readKeyValues(File file) throws IOException {
