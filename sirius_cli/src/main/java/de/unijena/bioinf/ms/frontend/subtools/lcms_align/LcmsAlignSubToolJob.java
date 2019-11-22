@@ -17,6 +17,7 @@ import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.align.Cluster;
 import de.unijena.bioinf.model.lcms.ConsensusFeature;
 import de.unijena.bioinf.model.lcms.LCMSRun;
+import de.unijena.bioinf.ms.frontend.io.InputFiles;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -32,7 +34,7 @@ import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJob extends PreprocessingJob {
 
-    public LcmsAlignSubToolJob(@Nullable List<File> input, @Nullable ProjectSpaceManager space) {
+    public LcmsAlignSubToolJob(@Nullable InputFiles input, @Nullable ProjectSpaceManager space) {
         super(input, space);
     }
 
@@ -41,14 +43,13 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
         final ArrayList<BasicJJob> jobs = new ArrayList<>();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         i.setDetectableIonTypes(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
-        input = input.stream().sorted().collect(Collectors.toList());
-        for (File f : input) {
+        for (Path f : input.msParserfiles.stream().sorted().collect(Collectors.toList())) {
             jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<>() {
                 @Override
                 protected Object compute() {
                     try {
                         MemoryFileStorage storage = new MemoryFileStorage();
-                        final LCMSRun parse = LCMSParsing.parseRun(f, storage);
+                        final LCMSRun parse = LCMSParsing.parseRun(f.toFile(), storage);
                         final ProcessedSample sample = i.addSample(parse, storage);
                         i.detectFeatures(sample);
                         storage.backOnDisc();
@@ -63,7 +64,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
                 }
             }));
         }
-        MultipleSources sourcelocation = MultipleSources.leastCommonAncestor(input.toArray(File[]::new));
+        MultipleSources sourcelocation = MultipleSources.leastCommonAncestor(input.getAllFilesArray());
         for (BasicJJob j : jobs) j.takeResult();
         i.getMs2Storage().backOnDisc();
         i.getMs2Storage().dropBuffer();

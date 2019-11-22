@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.io.filefilter.SupportedArchivedProjectFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.SupportedBatchDataFormatFilter;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -37,6 +38,7 @@ public class ImportAction extends AbstractAction {
         chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         chooser.setMultiSelectionEnabled(true);
         chooser.addChoosableFileFilter(new SupportedBatchDataFormatFilter());
+        chooser.addChoosableFileFilter(new SupportedArchivedProjectFilter());
         chooser.setAcceptAllFileFilterUsed(false);
         int returnVal = chooser.showOpenDialog(MF);
 

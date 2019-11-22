@@ -36,14 +36,13 @@ public class FormulaSummaryWriter implements Summarizer {
             return;
 
         writer.inDirectory(exp.getId().getDirectoryName(), () -> {
-//            writer.delete(SummaryLocations.FORMULA_SUMMARY);
             writer.textFile(SummaryLocations.FORMULA_SUMMARY, w -> {
                 final StringBuilder headerBuilder = new StringBuilder("formula\tadduct\tprecursorFormula\trank\trankingScore");
                 LinkedHashSet<Class<? extends FormulaScore>> types = new LinkedHashSet<>();
-                results.stream().forEach(r -> {
+                results.forEach(r -> {
                     r.getCandidate().getAnnotation(FormulaScoring.class)
                             .ifPresent(s -> s.annotations().forEach((key, value) -> {
-                                if (value instanceof FormulaScore) {
+                                if (value != null) {
                                     if (types.add(value.getClass()))
                                         headerBuilder.append("\t").append(value.name());
                                 }

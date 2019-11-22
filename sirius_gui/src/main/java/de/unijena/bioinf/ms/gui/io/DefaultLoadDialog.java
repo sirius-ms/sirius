@@ -49,7 +49,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     private static Pattern NUMPATTERN = Pattern.compile("^[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?$");
 
     public DefaultLoadDialog(JFrame owner, EventList<SpectrumContainer> list) {
-        super(owner, "load", true);
+        super(owner, "Import as Single Compound", true);
 
         this.cEFormat = new DecimalFormat("#0.0");
         listeners = new ArrayList<LoadDialogListener>();

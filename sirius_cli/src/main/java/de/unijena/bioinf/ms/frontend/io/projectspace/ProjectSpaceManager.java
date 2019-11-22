@@ -35,6 +35,7 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
     private final SiriusProjectSpace space;
     public final Function<Ms2Experiment, String> nameFormatter;
     public final BiFunction<Integer, String, String> namingScheme;
+    @NotNull
     public final Predicate<CompoundContainerId> compoundFilter;
     protected final InstanceFactory instFac;
 
@@ -52,7 +53,7 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
         this.instFac = factory;
         this.nameFormatter = formatter != null ? formatter : new StandardMSFilenameFormatter();
         this.namingScheme = (idx, name) -> idx + "_" + name;
-        this.compoundFilter = compoundFilter;
+        this.compoundFilter = compoundFilter != null ? compoundFilter : id -> true;
     }
 
     public SiriusProjectSpace projectSpace() {
@@ -90,9 +91,7 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
     @Override
     public Iterator<Instance> iterator() {
         return new Iterator<>() {
-            final Iterator<CompoundContainerId> it = compoundFilter == null
-                    ? space.iterator()
-                    : space.filteredIterator(compoundFilter);
+            final Iterator<CompoundContainerId> it = space.filteredIterator(compoundFilter);
 
             @Override
             public boolean hasNext() {

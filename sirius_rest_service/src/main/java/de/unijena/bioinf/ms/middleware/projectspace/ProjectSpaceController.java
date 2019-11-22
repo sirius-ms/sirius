@@ -9,6 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 @RestController
@@ -27,17 +28,17 @@ public class ProjectSpaceController extends BaseApiController {
 
     @GetMapping(value = "/{name}")
     public ProjectSpaceId getProjectSpace(@PathVariable String name) {
-        return context.getProjectSpace(name).map(x -> new ProjectSpaceId(name, x.getRootPath().toFile())).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + name + "'"));
+        return context.getProjectSpace(name).map(x -> new ProjectSpaceId(name, x.getRootPath())).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + name + "'"));
     }
 
     @PutMapping(value = "/{name}")
-    public ProjectSpaceId openProjectSpace(@PathVariable String name, @RequestParam(required = true) File path) throws IOException {
+    public ProjectSpaceId openProjectSpace(@PathVariable String name, @RequestParam(required = true) Path path) throws IOException {
         return context.openProjectSpace(new ProjectSpaceId(name, path));
     }
 
     @PostMapping(value = "/new")
-    public ProjectSpaceId openProjectSpace(@RequestParam(required = true) File path) throws IOException {
-        final String name = path.getName();
+    public ProjectSpaceId openProjectSpace(@RequestParam(required = true) Path path) throws IOException {
+        final String name = path.getFileName().toString();
         return context.ensureUniqueName(name, (newName)-> {
             try {
                 return context.openProjectSpace(new ProjectSpaceId(newName,path));

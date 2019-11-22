@@ -9,7 +9,7 @@ public class SupportedArchivedProjectFilter extends FileFilter {
     @Override
     public boolean accept(File f) {
         if (f.isDirectory()) return true;
-        return ProjectSpaceIO.isZipProjectSpace(f);
+        return ProjectSpaceIO.isZipProjectSpace(f.toPath());
     }
 
     @Override

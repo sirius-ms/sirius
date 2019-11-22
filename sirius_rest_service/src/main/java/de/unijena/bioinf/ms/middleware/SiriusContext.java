@@ -32,7 +32,7 @@ public class SiriusContext implements DisposableBean {
     public List<ProjectSpaceId> listAllProjectSpaces() {
         projectSpaceLock.readLock().lock();
         try {
-            return projectSpace.entrySet().stream().map(x -> new ProjectSpaceId(x.getKey(), x.getValue().getRootPath().toFile())).collect(Collectors.toList());
+            return projectSpace.entrySet().stream().map(x -> new ProjectSpaceId(x.getKey(), x.getValue().getRootPath())).collect(Collectors.toList());
         } finally {
             projectSpaceLock.readLock().unlock();
         }
@@ -76,7 +76,7 @@ public class SiriusContext implements DisposableBean {
             if (projectSpace.containsKey(id.name)) {
                 throw new IllegalArgumentException("project space with name '" + id.name + "' already exists.");
             }
-            if (!ProjectSpaceIO.isExistingProjectspaceDirectory(id.path)) {
+            if (!ProjectSpaceIO.isExistingProjectspaceDirectory(id.path) && !ProjectSpaceIO.isZipProjectSpace(id.path)) {
                 throw new IllegalArgumentException("'" + id.name + "' is no valid SIRIUS project space.");
             }
             projectSpace.put(id.name, new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(id.path));
@@ -89,7 +89,7 @@ public class SiriusContext implements DisposableBean {
     public ProjectSpaceId addProjectSpace(@NotNull String nameSuggestion, @NotNull SiriusProjectSpace projectSpaceToAdd) {
         return ensureUniqueName(nameSuggestion, (name) -> {
             projectSpace.put(name, projectSpaceToAdd);
-            return new ProjectSpaceId(name, projectSpaceToAdd.getRootPath().toFile());
+            return new ProjectSpaceId(name, projectSpaceToAdd.getRootPath());
         });
     }
 
@@ -113,7 +113,7 @@ public class SiriusContext implements DisposableBean {
             try {
                 SiriusProjectSpace space = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createTemporaryProjectSpace();
                 projectSpace.put(name, space);
-                return new ProjectSpaceId(name, space.getRootPath().toFile());
+                return new ProjectSpaceId(name, space.getRootPath());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

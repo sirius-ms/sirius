@@ -28,4 +28,9 @@ class InstanceIteratorMS2Exp implements Iterator<Instance> {
         if (input == null) return null;
         return spaceManager.newCompoundWithUniqueId(input); //this writers
     }
+
+    public void importAll() {
+        while (hasNext())
+            next();
+    }
 }
