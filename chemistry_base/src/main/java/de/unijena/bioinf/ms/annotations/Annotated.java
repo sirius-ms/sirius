@@ -330,5 +330,9 @@ public interface Annotated<A extends DataAnnotation> {
             map.forEach(action);
         }
 
+        public Class<Annotation>[] getKeysArray() {
+            return map.keySet().toArray(Class[]::new);
+        }
+
     }
 }

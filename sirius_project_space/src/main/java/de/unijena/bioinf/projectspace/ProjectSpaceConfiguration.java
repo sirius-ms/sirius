@@ -3,6 +3,7 @@ package de.unijena.bioinf.projectspace;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -58,7 +59,7 @@ public class ProjectSpaceConfiguration {
     }
 
     public <T extends ProjectSpaceContainer<?>>
-    Iterable<Class> getAllComponentsForContainer(Class<T> containerKlass) {
-        return containerComponents.get(containerKlass);
+    List<Class> getAllComponentsForContainer(Class<T> containerKlass) {
+        return Collections.unmodifiableList(containerComponents.get(containerKlass));
     }
 }

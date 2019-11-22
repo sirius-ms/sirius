@@ -14,15 +14,15 @@ import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
-import net.lingala.zip4j.util.Zip4jUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -36,8 +36,8 @@ import java.util.stream.Collectors;
 
 public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCloseable {
 
+    private final Path root;
 
-    private File root;
     protected final ConcurrentHashMap<String, CompoundContainerId> ids;
     protected final ProjectSpaceConfiguration configuration;
     protected final AtomicInteger compoundCounter;
@@ -46,7 +46,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     protected ConcurrentLinkedQueue<ProjectSpaceListener> projectSpaceListeners;
     protected ConcurrentLinkedQueue<ContainerListener> compoundListeners, formulaResultListener;
 
-    protected SiriusProjectSpace(ProjectSpaceConfiguration configuration, File root) {
+    protected SiriusProjectSpace(ProjectSpaceConfiguration configuration, Path root) {
         this.configuration = configuration;
         this.ids = new ConcurrentHashMap<>();
         this.root = root;
@@ -58,7 +58,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     public synchronized Path getRootPath() {
-        return root.toPath();
+        return root;
     }
 
     public void addProjectSpaceListener(ProjectSpaceListener listener) {
@@ -81,13 +81,13 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     protected synchronized void open() throws IOException {
         ids.clear();
         int maxIndex = 0;
-        for (File dir : root.listFiles()) {
-            final File expInfo = new File(dir, SiriusLocations.COMPOUND_INFO);
-            if (dir.isDirectory() && expInfo.exists()) {
+        for (Path dir : Files.list(root).collect(Collectors.toList())) {
+            final Path expInfo = dir.resolve(SiriusLocations.COMPOUND_INFO);
+            if (Files.isDirectory(dir) && Files.exists(expInfo)) {
                 final Map<String, String> keyValues = FileUtils.readKeyValues(expInfo);
                 final int index = Integer.parseInt(keyValues.getOrDefault("index", "0"));
                 final String name = keyValues.getOrDefault("name", "");
-                final String dirName = dir.getName();
+                final String dirName = dir.getFileName().toString();
                 final double ionMass = Double.parseDouble(keyValues.getOrDefault("ionMass", String.valueOf(Double.NaN)));
 
                 PrecursorIonType ionType = null;
@@ -116,8 +116,14 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     public synchronized void close() throws IOException {
-        this.ids.clear();
-        fireProjectSpaceChange(ProjectSpaceEvent.CLOSED);
+        try {
+            this.ids.clear();
+            final FileSystem fs = root.getFileSystem();
+            if (!fs.equals(FileSystems.getDefault()) && fs.isOpen())
+                fs.close();
+        } finally {
+            fireProjectSpaceChange(ProjectSpaceEvent.CLOSED);
+        }
     }
 
 
@@ -194,13 +200,13 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex, double ionMass) {
         if (containsCompound(directoryName)) return Optional.empty();
         synchronized (ids) {
-            if (new File(root, directoryName).exists())
+            if (Files.exists(root.resolve(directoryName)))
                 return Optional.empty();
             CompoundContainerId id = new CompoundContainerId(directoryName, compoundName, compoundIndex);
             if (ids.put(directoryName, id) != null)
                 return Optional.empty();
             try {
-                Files.createDirectory(new File(root, directoryName).toPath());
+                Files.createDirectory(root.resolve(directoryName));
                 writeCompoundContainerID(id);
                 return Optional.of(id);
             } catch (IOException e) {
@@ -224,10 +230,9 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     private void writeCompoundContainerID(CompoundContainerId cid) throws IOException {
-        final File f = new File(new File(root, cid.getDirectoryName()), SiriusLocations.COMPOUND_INFO);
-        if (f.exists())
-            f.delete();
-        try (final BufferedWriter bw = FileUtils.getWriter(f)) {
+        final Path f = root.resolve(cid.getDirectoryName()).resolve(SiriusLocations.COMPOUND_INFO);
+        Files.deleteIfExists(f);
+        try (final BufferedWriter bw = Files.newBufferedWriter(f)) {
             for (Map.Entry<String, String> kv : cid.asKeyValuePairs().entrySet()) {
                 bw.write(kv.getKey() + "\t" + kv.getValue());
                 bw.newLine();
@@ -352,13 +357,13 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 if (ids.containsKey(newDirName))
                     return false; // rename not possible because key already exists
 
-                File file = new File(root, newDirName);
-                if (file.exists()) {
+                final Path file = root.resolve(newDirName);
+                if (Files.exists(file)) {
                     return false; // rename not target directory already exists
                 }
 
                 try {
-                    Files.move(new File(root, oldId.getDirectoryName()).toPath(), file.toPath());
+                    Files.move(root.resolve(oldId.getDirectoryName()), file);
                     //change id only if move was successful
                     ids.remove(oldId.getDirectoryName());
                     oldId.rename(name, newDirName);
@@ -487,15 +492,15 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             return true;
         });
     }
-
-    public boolean move(File nuLocation) throws IOException {
+//todo do we want to support moves?
+    /*public boolean move(File nuLocation) throws IOException {
         return withAllLockedDo(() -> {
             org.apache.commons.io.FileUtils.moveDirectory(root, nuLocation);
             root.delete();
             root = nuLocation;
             return true;
         });
-    }
+    }*/
 
     protected synchronized boolean withAllLockedDo(IOCallable<Boolean> code) throws IOException {
         //todo do we need mor locks to move the space?
@@ -511,5 +516,13 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     protected interface IOCallable<V> extends Callable<V> {
         @Override
         V call() throws IOException;
+    }
+
+    public Class[] getRegisteredFormulaResultComponents() {
+        return configuration.getAllComponentsForContainer(FormulaResult.class).toArray(Class[]::new);
+    }
+
+    public Class[] getRegisteredCompoundComponents() {
+        return configuration.getAllComponentsForContainer(CompoundContainer.class).toArray(Class[]::new);
     }
 }

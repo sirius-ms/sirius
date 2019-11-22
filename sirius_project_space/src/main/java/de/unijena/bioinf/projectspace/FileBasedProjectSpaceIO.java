@@ -1,6 +1,5 @@
 package de.unijena.bioinf.projectspace;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -13,10 +12,10 @@ import java.util.function.Function;
 public class FileBasedProjectSpaceIO implements ProjectIO {
 
 
-    protected File dir;
+    protected Path dir;
     protected final Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter;
 
-    public FileBasedProjectSpaceIO(File dir, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
+    public FileBasedProjectSpaceIO(Path dir, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
         this.dir = dir;
         this.propertyGetter = propertyGetter;
     }
@@ -30,25 +29,24 @@ public class FileBasedProjectSpaceIO implements ProjectIO {
     @Override
     public List<String> list(String globPattern)  throws IOException {
         final ArrayList<String> content = new ArrayList<>();
-        Path r = dir.toPath();
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(r, globPattern)) {
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, globPattern)) {
             for (Path p : stream)
-                content.add(r.relativize(p).toString());
+                content.add(dir.relativize(p).toString());
         }
         return content;
     }
 
 
     @Override
-    public boolean exists(String relativePath) throws IOException {
-        return new File(dir,relativePath).exists();
+    public boolean exists(String relativePath) {
+        return Files.exists(asPath(relativePath));
     }
 
 
     @Override
     public <T> T inDirectory(String relativePath, IOFunctions.IOCallable<T> ioAction)  throws IOException {
-        final File newDir = new File(dir, relativePath);
-        final File oldDir = dir;
+        final Path newDir = asPath(relativePath);
+        final Path oldDir = dir;
         try {
             dir = newDir;
             return ioAction.call();
@@ -59,6 +57,6 @@ public class FileBasedProjectSpaceIO implements ProjectIO {
 
     @Override
     public Path asPath(String relativePath) {
-        return dir.toPath().resolve(relativePath);
+        return dir.resolve(relativePath);
     }
 }
