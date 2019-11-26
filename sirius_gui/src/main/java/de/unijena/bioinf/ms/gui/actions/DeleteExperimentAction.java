@@ -56,9 +56,8 @@ public class DeleteExperimentAction extends AbstractAction {
         }
 
         List<InstanceBean> toRemove = new ArrayList<>(MF.getCompoundList().getCompoundListSelectionModel().getSelected());
-        for (InstanceBean cont : toRemove) {
-            Jobs.cancel(cont);
-            MF.getPS().deleteCompound(cont);
-        }
+        Jobs.cancel(toRemove);
+        MF.ps().deleteCompounds(toRemove);
+
     }
 }

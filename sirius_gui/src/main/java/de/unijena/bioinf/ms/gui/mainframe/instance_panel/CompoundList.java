@@ -8,7 +8,7 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
-import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.utils.SearchTextField;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ public class CompoundList {
 
     private final List<ExperimentListChangeListener> listeners = new LinkedList<>();
 
-    public CompoundList(@NotNull final GuiProjectSpace ps) {
+    public CompoundList(@NotNull final GuiProjectSpaceManager ps) {
         searchField = new SearchTextField();
 
 

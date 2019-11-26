@@ -30,6 +30,7 @@ import de.unijena.bioinf.fingerid.db.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.io.projectspace.GPSMFactory;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceFactory;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
@@ -316,7 +317,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
                 try {
                     final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                    WorkflowBuilder<RootOptionsCLI> wfBuilder = new WorkflowBuilder<>(new RootOptionsCLI(configOptionLoader, new InstanceFactory.Default()), configOptionLoader);
+                    WorkflowBuilder<RootOptionsCLI> wfBuilder = new WorkflowBuilder<>(new RootOptionsCLI(configOptionLoader, new GPSMFactory()), configOptionLoader);
                     Run computation = new Run(wfBuilder);
 
                     // create computation parameters

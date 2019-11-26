@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.ms.gui.io.filefilter.SupportedArchivedProjectFilter;
+import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -21,13 +21,13 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class ProjectExportAction extends AbstractAction {
 
     public ProjectExportAction() {
-        super("Export Project");
+        super("SaveCopy");
         putValue(Action.LARGE_ICON_KEY, Icons.EXPORT_32);
-        putValue(Action.SHORT_DESCRIPTION, "Export current project to archive file (.sirius)");
-        setEnabled(!MF.getPS().COMPOUNT_LIST.isEmpty());
+        putValue(Action.SHORT_DESCRIPTION, "Save a copy of the current project. (current location stays active)");
+        setEnabled(true);
 
         //add Workspace Listener for button activity
-        MF.getPS().COMPOUNT_LIST.addListEventListener(listChanges -> setEnabled(!listChanges.getSourceList().isEmpty()));
+//        MF.ps().COMPOUNT_LIST.addListEventListener(listChanges -> setEnabled(!listChanges.getSourceList().isEmpty()));
     }
 
     @Override
@@ -37,7 +37,7 @@ public class ProjectExportAction extends AbstractAction {
         jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_SAVE_FILE_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
-        jfc.addChoosableFileFilter(new SupportedArchivedProjectFilter());
+        jfc.addChoosableFileFilter(new ProjectArchivedFilter());
         jfc.setApproveButtonText("Export");
 
         File selectedFile = null;
@@ -76,7 +76,7 @@ public class ProjectExportAction extends AbstractAction {
 
         if (selectedFile != null) {
             try {
-                MF.getPS().exportAsProjectArchive(selectedFile.toPath());
+                MF.ps().saveCopy(selectedFile.toPath());
             } catch (Exception e2) {
                 new ErrorReportDialog(MF, e2.getMessage());
             }

@@ -43,7 +43,7 @@ public class Jobs {
         return SiriusJobs.runInBackground(task);
     }
 
-    public static <T> TinyBackgroundJJob<T> runInBackground(TinyBackgroundJJob<T> task) {
+    public static <T> ProgressJJob<T> runInBackground(ProgressJJob<T> task) {
         return SiriusJobs.runInBackground(task);
     }
 
@@ -67,11 +67,11 @@ public class Jobs {
         return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
     }
 
-    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, TinyBackgroundJJob<T> task) {
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, ProgressJJob<T> task) {
         return runInBackgroundAndLoad(owner, "Please wait", task);
     }
 
-    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, String title, TinyBackgroundJJob<T> task) {
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, String title, ProgressJJob<T> task) {
         return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
     }
 
@@ -91,15 +91,15 @@ public class Jobs {
         return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
     }
 
-    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, TinyBackgroundJJob<T> task) {
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, ProgressJJob<T> task) {
         return runInBackgroundAndLoad(owner, "Please wait", task);
     }
 
-    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, String title, TinyBackgroundJJob<T> task) {
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, String title, ProgressJJob<T> task) {
         return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
     }
 
-    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, String title, boolean indeterminateProgress, TinyBackgroundJJob<T> task) {
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, String title, boolean indeterminateProgress, ProgressJJob<T> task) {
         return LoadingBackroundTask.runInBackground(owner, title, indeterminateProgress, MANAGER, task);
     }
 
@@ -120,7 +120,7 @@ public class Jobs {
             it.next().getSourceJob().cancel();
     }
 
-    public static void cancel(InstanceBean cont) {
+    public static void cancel(java.util.List<InstanceBean> cont) {
         //todo cancel job by container???
     }
 

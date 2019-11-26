@@ -5,7 +5,7 @@ import ca.odell.glazedlists.Filterator;
 import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.ms.gui.io.filefilter.SupportedExportCSVFormatsFilter;
+import de.unijena.bioinf.ms.gui.io.filefilter.ExportCSVFormatsFilter;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
@@ -116,7 +116,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_TREE_EXPORT_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
-        FileFilter csvFileFilter = new SupportedExportCSVFormatsFilter();
+        FileFilter csvFileFilter = new ExportCSVFormatsFilter();
         jfc.addChoosableFileFilter(csvFileFilter);
         File selectedFile = null;
         while (selectedFile == null) {

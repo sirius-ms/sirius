@@ -51,16 +51,13 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
             }
         });
 
-        elementList.addListEventListener(new ListEventListener<E>() {
-            @Override
-            public void listChanged(ListEvent<E> listChanges) {
-                if (!selectionModel.getValueIsAdjusting()) {
-                    if (!selectionModel.isSelectionEmpty() && elementList != null && !elementList.isEmpty()) {
-                        while (listChanges.next()) {
-                            if (selectionModel.getMinSelectionIndex() == listChanges.getIndex()) {
-                                notifyListeners(data, elementList.get(selectionModel.getMinSelectionIndex()), elementList, selectionModel);
-                                return;
-                            }
+        elementList.addListEventListener(listChanges -> {
+            if (!selectionModel.getValueIsAdjusting()) {
+                if (!selectionModel.isSelectionEmpty() && elementList != null && !elementList.isEmpty()) {
+                    while (listChanges.next()) {
+                        if (selectionModel.getMinSelectionIndex() == listChanges.getIndex()) {
+                            notifyListeners(data, elementList.get(selectionModel.getMinSelectionIndex()), elementList, selectionModel);
+                            return;
                         }
                     }
                 }

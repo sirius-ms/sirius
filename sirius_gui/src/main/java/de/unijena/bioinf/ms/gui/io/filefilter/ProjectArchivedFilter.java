@@ -5,10 +5,11 @@ import de.unijena.bioinf.projectspace.ProjectSpaceIO;
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
 
-public class SupportedArchivedProjectFilter extends FileFilter {
+public class ProjectArchivedFilter extends FileFilter {
     @Override
     public boolean accept(File f) {
-        if (f.isDirectory()) return true;
+        if (f.isDirectory())
+            return true;
         return ProjectSpaceIO.isZipProjectSpace(f.toPath());
     }
 

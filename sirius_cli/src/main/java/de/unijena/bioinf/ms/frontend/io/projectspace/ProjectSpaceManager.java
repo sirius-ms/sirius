@@ -30,7 +30,7 @@ import java.util.function.Predicate;
  * e.g. iteration on Instance level.
  * maybe some type of caching?
  */
-public final class ProjectSpaceManager implements Iterable<Instance> {
+public class ProjectSpaceManager implements Iterable<Instance> {
 
     private final SiriusProjectSpace space;
     public final Function<Ms2Experiment, String> nameFormatter;
@@ -38,15 +38,6 @@ public final class ProjectSpaceManager implements Iterable<Instance> {
     @NotNull
     public final Predicate<CompoundContainerId> compoundFilter;
     protected final InstanceFactory instFac;
-
-
-    public ProjectSpaceManager(@NotNull SiriusProjectSpace space) {
-        this(space, null, null);
-    }
-
-    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
-       this(space, new InstanceFactory.Default(), formatter,compoundFilter);
-    }
 
     public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
         this.space = space;

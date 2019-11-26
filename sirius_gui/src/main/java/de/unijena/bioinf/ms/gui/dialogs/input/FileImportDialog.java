@@ -26,25 +26,10 @@ public class FileImportDialog extends JDialog implements ActionListener{
 		this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
 		this.setTitle("Checking Files");
-
-		/*JPanel centerPanel = new JPanel(new BorderLayout());
-		centerPanel.setBorder(BorderFactory.createEtchedBorder());
-		this.add(centerPanel, BorderLayout.CENTER);*/
-		
 		rv = ReturnValue.Abort;
 		
 		bar = new JProgressBar(JProgressBar.HORIZONTAL,0,100);
 		bar.setValue(0);
-		
-		/*JPanel progressPanel = new JPanel(new BorderLayout());
-		progressPanel.add(bar,BorderLayout.NORTH);
-		JLabel  progressl = new JLabel("Analysing data...");
-		JPanel progressLabelPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		progressLabelPanel.add(progressl);
-		progressPanel.add(progressLabelPanel,BorderLayout.SOUTH);
-		progressPanel.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
-//		progressPanel.setBorder(BorderFactory.createEtchedBorder());
-		centerPanel.add(progressPanel,BorderLayout.NORTH);*/
 		
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
 		abort = new JButton("Abort");
