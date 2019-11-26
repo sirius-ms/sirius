@@ -3,5 +3,6 @@ package de.unijena.bioinf.projectspace;
 public enum ProjectSpaceEvent {
     OPENED,
     CLOSED,
-    INDEX_UPDATED
-};
+    INDEX_UPDATED,
+    LOCATION_CHANGED
+}

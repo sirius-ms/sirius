@@ -1,6 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.jobs;
 
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
@@ -53,7 +55,9 @@ public class SiriusJobs {
         return getGlobalJobManager().submitJob(t);
     }
 
-    public static <T> TinyBackgroundJJob<T> runInBackground(TinyBackgroundJJob<T> task) {
+    public static <T> ProgressJJob<T> runInBackground(ProgressJJob<T> task) {
+        if (!task.getType().equals(JJob.JobType.TINY_BACKGROUND))
+            throw new IllegalArgumentException("Only Jobs of Type JJob.JobType.TINY_BACKGROUND are allowed");
         return getGlobalJobManager().submitJob(task);
     }
 
