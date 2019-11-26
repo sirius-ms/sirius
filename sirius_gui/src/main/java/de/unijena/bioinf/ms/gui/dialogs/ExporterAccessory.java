@@ -18,7 +18,7 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
-import de.unijena.bioinf.ms.gui.io.filefilter.SupportedExportCSVFormatsFilter;
+import de.unijena.bioinf.ms.gui.io.filefilter.ExportCSVFormatsFilter;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -118,7 +118,7 @@ public class ExporterAccessory extends JPanel implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (isSingleFile()) {
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fileChooser.setFileFilter(new SupportedExportCSVFormatsFilter());
+            fileChooser.setFileFilter(new ExportCSVFormatsFilter());
             fingeridWasSelected = isExportingFingerId();
             siriusWasSelected = isExportingSirius();
             exportingFingerId.setEnabled(false);

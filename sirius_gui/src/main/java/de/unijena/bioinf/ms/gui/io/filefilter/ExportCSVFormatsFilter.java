@@ -21,7 +21,7 @@ package de.unijena.bioinf.ms.gui.io.filefilter;
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
 
-public class SupportedExportCSVFormatsFilter extends FileFilter{
+public class ExportCSVFormatsFilter extends FileFilter{
     @Override
     public boolean accept(File f) {
         if(f.isDirectory()) return true;

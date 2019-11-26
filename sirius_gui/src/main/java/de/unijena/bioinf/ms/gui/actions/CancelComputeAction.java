@@ -54,9 +54,7 @@ public class CancelComputeAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        for (InstanceBean ec : MF.getCompoundListSelectionModel().getSelected()) {
-            Jobs.cancel(ec);
-        }
+        Jobs.cancel(MF.getCompoundListSelectionModel().getSelected());
     }
 
 

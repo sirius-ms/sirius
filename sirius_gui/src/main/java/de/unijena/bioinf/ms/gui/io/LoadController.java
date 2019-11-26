@@ -7,7 +7,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ms.gui.io.spectrum.csv.CSVToSpectrumConverter;
-import de.unijena.bioinf.ms.gui.io.filefilter.SupportedDataFormatsFilter;
+import de.unijena.bioinf.ms.gui.io.filefilter.MsDataFormatsFilter;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
@@ -91,7 +91,7 @@ public class LoadController implements LoadDialogListener {
         JFileChooser chooser = new JFileChooser(PropertyManager.getFile(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH));
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         chooser.setMultiSelectionEnabled(true);
-        chooser.addChoosableFileFilter(new SupportedDataFormatsFilter());
+        chooser.addChoosableFileFilter(new MsDataFormatsFilter());
         chooser.setAcceptAllFileFilterUsed(false);
         int returnVal = chooser.showOpenDialog(loadDialog);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -296,7 +296,7 @@ public class LoadController implements LoadDialogListener {
 
         //make changes persistent
         if (instance == null) {
-            Jobs.runInBackgroundAndLoad(owner, () -> MainFrame.MF.getPS().importCompound(expToModify));
+            Jobs.runInBackgroundAndLoad(owner, () -> MainFrame.MF.ps().newCompoundWithUniqueId(expToModify));
         } else {
             Jobs.runInBackgroundAndLoad(owner, instance::updateExperiment);
         }

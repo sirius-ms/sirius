@@ -1,14 +1,17 @@
 package de.unijena.bioinf.ms.frontend.subtools.gui;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
 import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -63,7 +66,13 @@ public class GuiAppOptions implements SingletonTool {
                         ApplicationCore.DEFAULT_LOGGER.info("Saving properties file before termination.");
                         SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
                         ApplicationCore.DEFAULT_LOGGER.info("Writing Summaries to Project-Space before termination.");
-                        projectSpace.updateSummaries(ProjectSpaceManager.defaultSummarizer());
+                        Jobs.runInBackgroundAndLoad(MainFrame.MF, "Writing Summaries to Project-Space", true, new TinyBackgroundJJob<Boolean>() {
+                            @Override //todo summary job with rel loading screen
+                            protected Boolean compute() throws Exception {
+                                projectSpace.updateSummaries(ProjectSpaceManager.defaultSummarizer());
+                                return true;
+                            }
+                        });
                         projectSpace.close();
                     } catch (IOException e) {
                         ApplicationCore.DEFAULT_LOGGER.error("Could not write summaries", e);
@@ -75,7 +84,7 @@ public class GuiAppOptions implements SingletonTool {
             });
             MainFrame.MF.setLocationRelativeTo(null); //init mainframe
             ApplicationCore.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
-            MainFrame.MF.decoradeMainFrameInstance(projectSpace);
+            MainFrame.MF.decoradeMainFrameInstance((GuiProjectSpaceManager) projectSpace);
 
             ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
 

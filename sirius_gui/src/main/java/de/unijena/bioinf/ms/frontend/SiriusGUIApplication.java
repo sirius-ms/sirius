@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.io.projectspace.GPSMFactory;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBeanFactory;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -43,7 +44,7 @@ public class SiriusGUIApplication extends SiriusMiddlewareApplication {
 
         run(args, () -> {
             final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-            rootOptions = new RootOptionsCLI(configOptionLoader, new InstanceBeanFactory());
+            rootOptions = new RootOptionsCLI(configOptionLoader, new GPSMFactory());
             return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader);
         });
 

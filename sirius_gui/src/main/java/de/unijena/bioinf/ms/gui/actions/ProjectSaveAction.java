@@ -3,6 +3,8 @@ package de.unijena.bioinf.ms.gui.actions;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
+import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
+import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
@@ -18,21 +20,24 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class ProjectSaveAction extends AbstractAction {
 
     public ProjectSaveAction() {
-        super("Save Project");
+        super("SaveAs");
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_CLOSE_32);
-        putValue(Action.SHORT_DESCRIPTION, "Save/Move current project to a new location (directory)");
-        setEnabled(!MF.getPS().COMPOUNT_LIST.isEmpty());
+        putValue(Action.SHORT_DESCRIPTION, "Save (copy) the current project to a new location.");
+        setEnabled(true);
 
-        //add Workspace Listener for button activity
-        MF.getPS().COMPOUNT_LIST.addListEventListener(listChanges -> setEnabled(!listChanges.getSourceList().isEmpty()));
+        //add action list Listener for button activity
+//        MF.ps().COMPOUNT_LIST.addListEventListener(listChanges -> setEnabled(!listChanges.getSourceList().isEmpty()));
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         JFileChooser jfc = new JFileChooser();
         jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_SAVE_DIR_PATH));
-        jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        jfc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         jfc.setAcceptAllFileFilterUsed(false);
+        jfc.addChoosableFileFilter(new ProjectArchivedFilter());
+        jfc.addChoosableFileFilter(new ProjectDirectoryFilter());
+
 
         while (true) {
             final int state = jfc.showSaveDialog(MF);
@@ -43,8 +48,7 @@ public class ProjectSaveAction extends AbstractAction {
                 SiriusProperties.
                         setAndStoreInBackground(SiriusProperties.DEFAULT_SAVE_DIR_PATH, selFile.getParentFile().getAbsolutePath());
 
-                MF.getPS().moveProjectSpace(selFile);
-
+                MF.ps().saveAs(selFile.toPath());
                 break;
             } else {
                 new WarningDialog(MF, "'" + selFile.getAbsolutePath() + "' does not contain valid SIRIUS project.");

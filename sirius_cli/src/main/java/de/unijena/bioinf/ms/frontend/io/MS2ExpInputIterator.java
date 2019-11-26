@@ -71,17 +71,21 @@ public class MS2ExpInputIterator implements Iterator<Ms2Experiment> {
                     }
                 } else return null;
             } else {
-                MutableMs2Experiment experiment = Sirius.makeMutable(currentExperimentIterator.next());
+                try {
+                    MutableMs2Experiment experiment = Sirius.makeMutable(currentExperimentIterator.next());
 
-                if (experiment.getIonMass() > maxMz) {
-                    LOG.info("Skipping instance " + experiment.getName() + " with mass: " + experiment.getIonMass() + " > " + maxMz);
-                } else if (experiment.getMolecularFormula() != null && experiment.getMolecularFormula().numberOf("D") > 0) {
-                    LOG.warn("Deuterium Formula found in: " + experiment.getName() + " Instance will be Ignored: ");
-                } else {
-                    if (ignoreFormula)
-                        experiment.setMolecularFormula(null);
-                    instances.add(experiment);
-                    return currentExperimentIterator;
+                    if (experiment.getIonMass() > maxMz) {
+                        LOG.info("Skipping instance " + experiment.getName() + " with mass: " + experiment.getIonMass() + " > " + maxMz);
+                    } else if (experiment.getMolecularFormula() != null && experiment.getMolecularFormula().numberOf("D") > 0) {
+                        LOG.warn("Deuterium Formula found in: " + experiment.getName() + " Instance will be Ignored: ");
+                    } else {
+                        if (ignoreFormula)
+                            experiment.setMolecularFormula(null);
+                        instances.add(experiment);
+                        return currentExperimentIterator;
+                    }
+                } catch (Exception e) {
+                    LOG.error("Error while parsing compound! Skipping entry", e);
                 }
             }
         }

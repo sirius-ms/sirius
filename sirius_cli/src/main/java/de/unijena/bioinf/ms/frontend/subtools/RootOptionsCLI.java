@@ -3,13 +3,15 @@ package de.unijena.bioinf.ms.frontend.subtools;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.frontend.io.InputFiles;
 import de.unijena.bioinf.ms.frontend.io.InstanceImporter;
-import de.unijena.bioinf.ms.frontend.io.MS2ExpInputIterator;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceFactory;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.FilenameFormatter;
+import de.unijena.bioinf.projectspace.ProjectSpaceIO;
+import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.projectspace.StandardMSFilenameFormatter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +23,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -35,17 +35,17 @@ import java.util.List;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "night-sky", aliases = {"ns"/*, "sirius"*/}, defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
-public class RootOptionsCLI implements RootOptions {
+public class RootOptionsCLI<M extends ProjectSpaceManager> implements RootOptions {
     public static final Logger LOG = LoggerFactory.getLogger(RootOptionsCLI.class);
 
     public enum InputType {PROJECT, SIRIUS}
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
-    protected final InstanceFactory instacneFactory;
+    protected final ProjectSpaceManagerFactory<M> spaceManagerFactory;
 
-    public RootOptionsCLI(@NotNull DefaultParameterConfigLoader defaultConfigOptions, @NotNull InstanceFactory instanceFactory) {
+    public RootOptionsCLI(@NotNull DefaultParameterConfigLoader defaultConfigOptions, @NotNull ProjectSpaceManagerFactory<M> spaceManagerFactory) {
         this.defaultConfigOptions = defaultConfigOptions;
-        this.instacneFactory = instanceFactory;
+        this.spaceManagerFactory = spaceManagerFactory;
     }
 
 
@@ -148,10 +148,10 @@ public class RootOptionsCLI implements RootOptions {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    private ProjectSpaceManager projectSpaceToWriteOn = null;
+    private M projectSpaceToWriteOn = null;
 
     @Override
-    public ProjectSpaceManager getProjectSpace() {
+    public M getProjectSpace() {
         if (projectSpaceToWriteOn == null)
             configureProjectSpace();
 
@@ -163,12 +163,10 @@ public class RootOptionsCLI implements RootOptions {
     public PreprocessingJob makePreprocessingJob(InputFiles input, ProjectSpaceManager space) {
         return new PreprocessingJob(input, space) {
             @Override
-            protected Iterable<Instance> compute() {
-                //todo handle compressed stuff
-                //todo check if output space needs to be added to input
-
+            protected Iterable<Instance> compute() throws Exception {
                 if (space != null) {
-                    new InstanceImporter(space).importMultipleSources(inputFiles);
+                    if (inputFiles != null)
+                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, maxMz, ignoreFormula).makeImportJJob(inputFiles)).awaitResult();
                     if (space.size() > 0)
                         LOG.info("No Input given but output Project-Space is not empty and will be used as Input instead!");
                     else
@@ -213,7 +211,7 @@ public class RootOptionsCLI implements RootOptions {
                 psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(projectSpaceFilenameFormatter));
             }
 
-            projectSpaceToWriteOn = new ProjectSpaceManager(psTmp, instacneFactory, projectSpaceFilenameFormatter, id -> {
+            projectSpaceToWriteOn = spaceManagerFactory.create(psTmp, projectSpaceFilenameFormatter, id -> {
                 if (id.getIonMass().orElse(Double.NaN) <= maxMz)
                     return true;
                 else {

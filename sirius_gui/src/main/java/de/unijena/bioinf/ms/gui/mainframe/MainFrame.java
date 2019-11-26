@@ -1,42 +1,48 @@
 package de.unijena.bioinf.ms.gui.mainframe;
 
+import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.gui.io.LoadController;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpace;
+import de.unijena.bioinf.ms.frontend.io.InputFiles;
+import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
-import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDropOpenDialog;
-import de.unijena.bioinf.ms.gui.dialogs.input.FileImportDialog;
+import de.unijena.bioinf.ms.gui.io.LoadController;
+import de.unijena.bioinf.ms.gui.io.spectrum.csv.CSVFormatReader;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableExperimentListPanel;
-import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
+import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
+import de.unijena.bioinf.projectspace.ProjectSpaceEvent;
 import de.unijena.bioinf.projectspace.ProjectSpaceIO;
+import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MainFrame extends JFrame implements DropTargetListener {
     public static final MainFrame MF = new MainFrame();
 
     // Project Space
-    private GuiProjectSpace ps;
+    private GuiProjectSpaceManager ps;
 
-    public GuiProjectSpace getPS() {
+    public GuiProjectSpaceManager ps() {
         return ps;
     }
 
@@ -118,12 +124,30 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setTitle(ApplicationCore.VERSION_STRING() + " on Project: '" + path + "'");
     }
 
-    public void decoradeMainFrameInstance(@NotNull ProjectSpaceManager projectSpaceManager) {
+
+    public void openNewProjectSpace(Path selFile) {
+        final BasicEventList<InstanceBean> psList = this.ps.COMPOUNT_LIST;
+        this.ps = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
+            SiriusProjectSpace ps = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile);
+            //todo we need to cancel all running computations here.
+            System.out.println("todo we need to cancel all running computations here!");
+            final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList);
+            inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
+            gps.projectSpace().addProjectSpaceListener(event -> {
+                if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
+                    inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
+            });
+            return gps;
+        }).getResult();
+    }
+
+    public void decoradeMainFrameInstance(@NotNull GuiProjectSpaceManager projectSpaceManager) {
         //create computation
         //todo get predictor from application core?
-
         // create project space
-        ps = new GuiProjectSpace(projectSpaceManager);
+        ps = projectSpaceManager;
+        inEDTAndWait(() -> MF.setTitlePath(ps.projectSpace().getLocation().toString()));
+
 
         // create models for views
         compoundList = new CompoundList(ps);
@@ -157,6 +181,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         setSize(new Dimension(1368, 1024));
         setVisible(true);
+
     }
 
     @Override
@@ -204,54 +229,17 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
 
-
-    // todo this should be somewhere else?
     private void importDragAndDropFiles(List<File> rawFiles) {
-        rawFiles = new ArrayList<>(rawFiles);
-        // entferne nicht unterstuetzte Files und suche nach CSVs
-        // suche nach Sirius files
-        //todo into fileimport dialog
-        final List<Path> projectFiles = new ArrayList<>();
-        final Iterator<File> rawFileIterator = rawFiles.iterator();
-        while (rawFileIterator.hasNext()) {
-            final Path f = rawFileIterator.next().toPath();
-            if (ProjectSpaceIO.isZipProjectSpace(f) || ProjectSpaceIO.isExistingProjectspaceDirectory(f)) {
-                projectFiles.add(f);
-                rawFileIterator.remove();
-            }
-        }
+        final InputFiles input = ps.importOneExperimentPerLocation(rawFiles); //import all batch mode importable file types (e.g. .sirius, project-dir, .ms, .mgf, .mzml, .mzxml)
 
-        if (projectFiles.size() > 0) {
-            ps.importFromProjectSpace(projectFiles);
+        // check if unknown files contain csv files with spectra
+        final CSVFormatReader csvChecker = new CSVFormatReader();
+        List<File> csvFiles = input.unknownFiles.stream().map(Path::toFile)
+                .filter(f -> csvChecker.isCompatible(f) || f.getName().toLowerCase().endsWith(".txt"))
+                .collect(Collectors.toList());
 
-        }
-
-        FileImportDialog dropDiag = new FileImportDialog(this, rawFiles);
-        if (dropDiag.getReturnValue() == de.unijena.bioinf.ms.gui.utils.ReturnValue.Abort) {
-            return;
-        }
-
-        List<File> csvFiles = dropDiag.getCSVFiles();
-        List<File> msFiles = dropDiag.getMSFiles();
-        List<File> mgfFiles = dropDiag.getMGFFiles();
-
-        if (csvFiles.isEmpty() && msFiles.isEmpty() && mgfFiles.isEmpty()) return;
-
-        //Frage den Anwender ob er batch-Import oder alles zu einen Experiment packen moechte
-        if ((csvFiles.size() > 0 && (msFiles.size() + mgfFiles.size() == 0))) {   //nur CSV bzw. nur ein File
-            openImporterWindow(csvFiles, msFiles, mgfFiles);
-        } else if (csvFiles.size() == 0 && mgfFiles.size() == 0 && msFiles.size() > 0) {
-            ps.importOneExperimentPerLocation(msFiles, mgfFiles,null,null);
-        } else {
-            DragAndDropOpenDialog diag = new DragAndDropOpenDialog(this);
-            DragAndDropOpenDialog.ReturnValue rv = diag.getReturnValue();
-            if (rv == DragAndDropOpenDialog.ReturnValue.abort) {
-            } else if (rv == DragAndDropOpenDialog.ReturnValue.oneExperimentForAll) {
-                openImporterWindow(csvFiles, msFiles, mgfFiles);
-            } else if (rv == DragAndDropOpenDialog.ReturnValue.oneExperimentPerFile) {
-                ps.importOneExperimentPerLocation(msFiles, mgfFiles,null,null);
-            }
-        }
+        if (!csvFiles.isEmpty())
+            openImporterWindow(csvFiles, Collections.emptyList(), Collections.emptyList());
     }
 
     private void openImporterWindow(List<File> csvFiles, List<File> msFiles, List<File> mgfFiles) {
@@ -279,6 +267,18 @@ public class MainFrame extends JFrame implements DropTargetListener {
             }
         }
         return filelist;
+    }
+
+    public static void inEDTAndWait(@NotNull final Runnable run) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            run.run();
+        } else {
+            try {
+                SwingUtilities.invokeAndWait(run);
+            } catch (InterruptedException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
 }

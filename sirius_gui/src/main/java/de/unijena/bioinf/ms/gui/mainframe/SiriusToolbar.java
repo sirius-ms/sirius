@@ -22,21 +22,22 @@ class SiriusToolbar extends JToolBar {
 
         setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Colors.ICON_BLUE));
 
-        //in
+        //import
         imCompB = new ToolbarButton(SiriusActions.IMPORT_EXP.getInstance());
         add(imCompB);
-        addSeparator(new Dimension(20, 20));
+//        addSeparator(new Dimension(20, 20));
 
         imB = new ToolbarButton(SiriusActions.IMPORT_EXP_BATCH.getInstance());
         add(imB);
-
-        openB = new ToolbarButton(SiriusActions.LOAD_WS.getInstance());
-        add(openB);
         addSeparator(new Dimension(20, 20));
 
-        //out
+        //open
+        openB = new ToolbarButton(SiriusActions.LOAD_WS.getInstance());
+        add(openB);
+        //save
         saveB = new ToolbarButton(SiriusActions.SAVE_WS.getInstance());
         add(saveB);
+        addSeparator(new Dimension(20, 20));
 
         exportB = new ToolbarButton(SiriusActions.EXPORT_WS.getInstance());
         add(exportB);
