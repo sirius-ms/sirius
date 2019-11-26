@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 
 public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCloseable {
 
-    private final Path root;
+    private Path root;
 
     protected final ConcurrentHashMap<String, CompoundContainerId> ids;
     protected final ProjectSpaceConfiguration configuration;
@@ -59,6 +59,13 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     public synchronized Path getRootPath() {
         return root;
+    }
+
+    public Path getLocation() {
+        if (root.getFileSystem().equals(FileSystems.getDefault()))
+            return root;
+        else
+            return Path.of(root.getFileSystem().toString());
     }
 
     public void addProjectSpaceListener(ProjectSpaceListener listener) {
@@ -492,15 +499,6 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             return true;
         });
     }
-//todo do we want to support moves?
-    /*public boolean move(File nuLocation) throws IOException {
-        return withAllLockedDo(() -> {
-            org.apache.commons.io.FileUtils.moveDirectory(root, nuLocation);
-            root.delete();
-            root = nuLocation;
-            return true;
-        });
-    }*/
 
     protected synchronized boolean withAllLockedDo(IOCallable<Boolean> code) throws IOException {
         //todo do we need mor locks to move the space?
@@ -510,6 +508,18 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         } finally {
             ids.values().forEach(cid -> cid.containerLock.unlock());
         }
+    }
+
+    protected boolean changeLocation(Path nuLocation) throws IOException {
+        return withAllLockedDo(() -> {
+            final FileSystem fs = root.getFileSystem();
+            if (!fs.equals(FileSystems.getDefault()) && fs.isOpen())
+                fs.close();
+
+            root = nuLocation;
+            fireProjectSpaceChange(ProjectSpaceEvent.LOCATION_CHANGED);
+            return true;
+        });
     }
 
     @FunctionalInterface

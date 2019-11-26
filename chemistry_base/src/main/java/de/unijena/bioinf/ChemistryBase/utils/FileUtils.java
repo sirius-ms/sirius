@@ -15,6 +15,8 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.zip.*;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 public class FileUtils {
 
     /**
@@ -48,33 +50,53 @@ public class FileUtils {
 
     /**
      *
-     * @param zipFilePath
+     * @param zipFile
      * @param target
      * @return Target directory with unzipped data
      * @throws IOException if extraction fails
      */
-    public static Path unZipDir(final Path zipFilePath, final Path target) throws IOException {
-        try (ZipInputStream zip = new ZipInputStream(Files.newInputStream(zipFilePath))) {
+    public static Path unZipDir(final Path zipFile, final Path target) throws IOException {
+        try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(zipFile))) {
             ZipEntry entry;
-            while ((entry = zip.getNextEntry()) != null) {
-                Path file = target.resolve(entry.getName());
-
-                if (!file.normalize().startsWith(target))
-                    throw new IOException("Bad zip entry");
-
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                final Path toPath = target.resolve(entry.getName());
                 if (entry.isDirectory()) {
-                    Files.createDirectories(file);
+                    Files.createDirectory(toPath);
                 } else {
-                    byte[] buffer = new byte[4096];
-                    Files.createDirectories(file.getParent());
-                    try (BufferedOutputStream out = new BufferedOutputStream(Files.newOutputStream(file))) {
-                        int len;
-                        while ((len = zip.read(buffer)) != -1)
-                            out.write(buffer, 0, len);
-                    }
+                    Files.copy(zipInputStream, toPath);
                 }
             }
-            return target;
+        }
+        return target;
+    }
+
+    /**
+     * Copies a File Tree recursively to another location.
+     * Src and dest might be different Filesystems (e.g. mounted ZipFile)
+     *
+     * Note: The target directory must already exist.
+     *
+     * @param src Source location
+     * @param dest Target location
+     * @throws IOException if I/O Error occurs
+     */
+    public static void copyFolder(Path src, Path dest) throws IOException {
+        if (Files.notExists(dest))
+            throw new IllegalArgumentException("Root destination dir/file must exist!");
+
+        Files.walk(src).forEach(source -> {
+            String relative = src.relativize(source).toString();
+            final Path target = dest.resolve(relative);
+            if (!target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
+                copy(source, target);;
+        });
+    }
+
+    private static void copy(Path source, Path dest) {
+        try {
+            Files.copy(source, dest, REPLACE_EXISTING);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
