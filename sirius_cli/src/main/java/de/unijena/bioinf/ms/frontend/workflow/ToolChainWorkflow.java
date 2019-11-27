@@ -97,20 +97,24 @@ public class ToolChainWorkflow implements Workflow {
             try {
                 //remove recompute annotation since it should be cli only option
 //                System.out.println("Summaries are currently disabled!");
-//                iteratorSource.forEach(it -> it.getExperiment().setAnnotation(RecomputeResults.class,null));
+//                iteratorSource.forEach(it -> it.getExperiment().setAnnotation(RecomputeResults.class,null)); //todo fix needed
                 //use all experiments in workspace to create summaries
                 LOG.info("Writing summary files...");
                 project.updateSummaries(ProjectSpaceManager.defaultSummarizer());
 
-                project.close();
+
                 LOG.info("Project-Space successfully written!");
             } catch (IOException e) {
-                LOG.error("Error when closing workspace. Workspace summaries may be incomplete");
+                LOG.error("Error when summarizing project. Project summaries may be incomplete!", e);
+            } finally {
+                project.close();
             }
         } catch (ExecutionException e) {
-            LOG.error("Error When Executing ToolChain");
+            LOG.error("Error When Executing ToolChain", e);
         } catch (InterruptedException e) {
             LOG.info("Workflow successfully canceled!", e);
+        } catch (IOException e) {
+            LOG.info("Error when closing project", e);
         }
     }
 }

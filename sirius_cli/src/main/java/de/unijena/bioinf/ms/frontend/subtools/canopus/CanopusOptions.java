@@ -25,10 +25,6 @@ public class CanopusOptions implements Callable<InstanceJob.Factory<CanopusSubTo
         this.defaultConfigOptions = defaultConfigOptions;
     }
 
-
-    @Option(names = {"--experimental-canopus"}, hidden = true) //experimental/temporary/internal
-    public File experimentalCanopus;
-
     @Override
     public InstanceJob.Factory<CanopusSubToolJob> call() throws Exception {
         return CanopusSubToolJob::new;
