@@ -13,3 +13,7 @@ function formulaDiff(f1, f2){
 function formulaIsSubset(f1, f2){
     return connector.formulaIsSubset(f1, f2);
 }
+
+function getCommonLosses(){
+    return connector.getCommonLosses();
+}

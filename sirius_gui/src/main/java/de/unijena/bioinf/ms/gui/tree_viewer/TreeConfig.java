@@ -12,7 +12,8 @@ public class TreeConfig{
         "colorVariant", "colorScheme2", "colorScheme3", "colorBar",
         "nodeAnnotations", "popupAnnotations", "edgeLabels", "nodeLabels",
         "edgeLabelMode", "lossColors", "deviationColors",
-        "centeredNodeLabels"    // not configurable in GUI for now
+        "centeredNodeLabels",    // not configurable in GUI for now
+        "editMode"               // not configurable in GUI for now
     };
 
     private Map<String, Object> map;
@@ -52,6 +53,7 @@ public class TreeConfig{
         case "lossColors":
         case "deviationColors":
         case "centeredNodeLabels":
+        case "editMode":
             map.put(setting, Boolean.valueOf(value));
             break;
         case "nodeAnnotations":

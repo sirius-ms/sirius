@@ -18,6 +18,7 @@ function applySettings(){
     loss_colors = config.get("lossColors");
     deviation_colors = config.get("deviationColors");
     centered_node_labels = config.get("centeredNodeLabels");
+    edit_mode = config.get("editMode");
     switch (config.get("edgeLabelMode")){
     case "angled":
         edge_labels_angled = true;
@@ -69,6 +70,8 @@ function settingsChanged(){
             break;
         case "centeredNodeLabels":
             drawNodes(root);
+        default:
+            break;              // do nothing
         };
     });
 }

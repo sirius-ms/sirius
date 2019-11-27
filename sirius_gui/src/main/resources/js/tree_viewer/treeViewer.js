@@ -1,13 +1,13 @@
 // tree config variables, will be overwritten by treeViewerSettings.js
+// when used in SIRIUS, values set here will have no effect
 var data, data_json, root,
     annot_fields = ['mz', 'massDeviationMz', 'relativeIntensity'],
     popup_annot_fields = ['massDeviationPpm', 'score'],
     color_variant = "rel_int", color_scheme = "blues",
     show_edge_labels = true, show_node_labels = true,
-    centered_node_labels = true,
-    show_color_bar = true,
-    edge_label_boxes = false, edge_labels_angled = true,
-    loss_colors = true, deviation_colors = true;
+    centered_node_labels = true, edit_mode=true, show_color_bar = true,
+    edge_label_boxes = false, edge_labels_angled = true, loss_colors = true,
+    deviation_colors = true;
 // constants that will probably not be configurable
 var SNAP_THR = 0;
 // statistics for color coding
@@ -54,7 +54,7 @@ function loadJSONTree(jsonTree){
     data = JSON.parse(jsonTree);
     // NOTE: RESET VARIABLES HERE
     moveModes = {};
-    colorGen = nextSchemeColor();
+    colorGen = nextLossColor();
     loss_colors_dict = {};
     losses = [];
     if (d3.select(nodeToMove).size() == 0)
@@ -171,6 +171,8 @@ function handleMouseMove(){
 
 // activate node move/swap-mode, visualize moving possibilities
 function handleClick(){
+    if (!edit_mode)
+        return;
 
     function clickedOnCollapse(){
         if (typeof(collapse_button) == 'undefined')
@@ -369,19 +371,26 @@ function colorLossByElements(loss){
     return color;
 }
 
-function* nextSchemeColor(scheme=interpolateHslHue){
+function* nextLossColor(scheme=interpolateHslHue){
     var t = 0;
-    var size = losses.length;
-    while (t <= size)
-        yield scheme(t++/size);
+    var commonLosses_len = getCommonLosses().length;
+    console.log(commonLosses_len);
+    console.log(t);
+    while (t < commonLosses_len)
+        yield scheme(t++/commonLosses_len);
+    yield "black";
 }
 
 function colorLossSequentially(loss){
-    if (loss_colors_dict.hasOwnProperty(loss))
-        return loss_colors_dict[loss];
-    var color = colorGen.next().value;
-    loss_colors_dict[loss] = color;
-    return color;
+    if (!loss_colors_dict.hasOwnProperty("commonLosses_initialized")){
+        console_p.text(getCommonLosses() + getCommonLosses()[0]);
+        for (var loss of getCommonLosses())
+            loss_colors_dict[loss] = colorGen.next().value;
+        loss_colors_dict["commonLosses_initialized"] = true;
+    }
+    if (!loss_colors_dict.hasOwnProperty(loss))
+        loss_colors_dict[loss] = colorGen.next().value;
+    return loss_colors_dict[loss];
 }
 
 function colorLossDet(loss){
