@@ -17,10 +17,12 @@ public class TreeVisualizationPanelTest{
         WebViewTreeViewer browser = new WebViewTreeViewer();
         browser.addJS("d3.min.js");
         browser.addJS("d3-colorbar.js");
-        browser.addJS("treeViewer.js");
-        browser.addJS("treeViewerSettings.js");
+        browser.addJS("tree_viewer/treeViewer.js");
+        // browser.addJS("tree_viewer/treeViewerSettings.js");
+        browser.addJS("tree_viewer/treeViewerConnector.js");
         frame.add((JFXPanel) browser);
         HashMap<String, Object> bridges = new HashMap<String, Object>() {{
+                put("config", new TreeConfig());
                 put("connector", new TreeViewerConnector());
             }};
         browser.load(bridges);
