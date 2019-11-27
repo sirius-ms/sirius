@@ -90,13 +90,12 @@ public class StructureSummaryWriter implements Summarizer {
     @Override
     public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
         if (topHits.size() > 0) {
-            writer.textFile(SummaryLocations.IDENTIFICATIONS_SUMMARY, w -> {
+            writer.textFile(SummaryLocations.STRUCTURE_SUMMARY_GLOBAL, w -> {
                 topHits.sort(Collections.reverseOrder());
                 w.write(header);
                 for (Scored<String> s : topHits)
                     w.write(s.getCandidate());
             });
         }
-
     }
 }

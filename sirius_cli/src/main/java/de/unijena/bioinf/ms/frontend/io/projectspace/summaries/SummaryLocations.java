@@ -5,5 +5,6 @@ public interface SummaryLocations {
             MZTAB_SUMMARY = "report.mztab",
             FORMULA_SUMMARY = "formula_candidates.csv",
             STRUCTURE_SUMMARY = "structure_candidates.csv",
-            IDENTIFICATIONS_SUMMARY = "compound_identifications.csv";
+            FORMULA_SUMMARY_GLOBAL = "formula_identifications.csv",
+            STRUCTURE_SUMMARY_GLOBAL = "compound_identifications.csv";
 }

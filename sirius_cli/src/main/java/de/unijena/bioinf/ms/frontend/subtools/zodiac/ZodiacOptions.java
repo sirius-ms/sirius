@@ -45,7 +45,7 @@ public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiacSubToolJ
     }
 
     public Path libraryHitsFile;
-    @Option(names = "--library-hits", description = "CSV file containing spectral library hits. Libray hits are used as anchors to improve ZODIAC scoring.")
+    @Option(names = "--library-hits", description = "CSV file containing spectral library hits. Library hits are used as anchors to improve ZODIAC scoring.")
     public void setLibraryHits(String filePath) throws Exception {
         libraryHitsFile = Paths.get(filePath);
     }
