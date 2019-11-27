@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 
 
 public class TreeVisualizationPanelTest{
@@ -19,7 +20,10 @@ public class TreeVisualizationPanelTest{
         browser.addJS("treeViewer.js");
         browser.addJS("treeViewerSettings.js");
         frame.add((JFXPanel) browser);
-        browser.load();
+        HashMap<String, Object> bridges = new HashMap<String, Object>() {{
+                put("connector", new TreeViewerConnector());
+            }};
+        browser.load(bridges);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setSize(1200, 1400);
