@@ -5,7 +5,7 @@ var data, data_json, root,
     popup_annot_fields = ['massDeviationPpm', 'score'],
     color_variant = "rel_int", color_scheme = "blues",
     show_edge_labels = true, show_node_labels = true,
-    centered_node_labels = true, edit_mode=true, show_color_bar = true,
+    centered_node_labels = false, edit_mode=true, show_color_bar = true,
     edge_label_boxes = false, edge_labels_angled = true, loss_colors = true,
     deviation_colors = true;
 // constants that will probably not be configurable
@@ -383,7 +383,6 @@ function* nextLossColor(scheme=interpolateHslHue){
 
 function colorLossSequentially(loss){
     if (!loss_colors_dict.hasOwnProperty("commonLosses_initialized")){
-        console_p.text(getCommonLosses() + getCommonLosses()[0]);
         for (var loss of getCommonLosses())
             loss_colors_dict[loss] = colorGen.next().value;
         loss_colors_dict["commonLosses_initialized"] = true;
@@ -414,9 +413,30 @@ function interpolateHslHue(value, s=1, l=0.35){
 
 // Tries to position link text (edge labels) optimally as to not overlap with
 // the links themselves
-function link_text_x(sx, tx) {
+function linkTextX(sx, tx) {
     // TODO: can be improved
     return (sx + tx) / 2 + ((sx > tx) ? -1 : 1) * 3;
+}
+
+// returns the x (dx) value of annotation text.
+// Attempts to center the text to the decimal separator
+function getAnnotX(d){
+    var base_dx = this.parentNode.parentNode.__data__.x +
+        (centered_node_labels?0: (-(boxwidth / 2) + 5));
+    var orig_content = this.textContent;
+    // works with both '.' and ',' as decimal separator
+    var decimal = orig_content.match(/[\.,]/);
+    if (decimal == null)
+        return base_dx;
+    var dec_sep = decimal[0];
+    if (orig_content.indexOf('.'))
+        this.textContent = this.textContent.split(dec_sep)[0] + dec_sep;
+    var max_offset = boxwidth/4; // somewhat arbitrary
+    var offset = max_offset - d3.select(this).node().getBBox().width;
+    if (offset < 0)
+        console.log('WARNING: decimals could not be perfectly aligned');
+    this.textContent = orig_content;
+    return base_dx + Math.max(offset, 0);
 }
 
 function linkAngle(x1, x2, y1, y2){
@@ -1134,10 +1154,7 @@ function drawNodeAnnots() {
             return this.parentNode.parentNode.__data__.y
                 - boxheight + (2 + i) * lineheight + 5;
         })
-        .attr('dx', function(d) {
-            return this.parentNode.parentNode.__data__.x + (centered_node_labels?0:
-                (-(boxwidth / 2) + 5));
-        })
+        .attr('dx', getAnnotX)
         .attr('text-anchor', centered_node_labels?'middle':'start')
         .style('fill', (deviation_colors?
                         (function (d) {return getAnnotColor(
@@ -1210,7 +1227,7 @@ function drawLinks(root) {
             if (edge_label_boxes)
                 return (d.source.x+d.target.x)/2;
             else
-                return link_text_x(d.source.x,
+                return linkTextX(d.source.x,
                                    d.target.x);
         })
         .attr('dy', function(d) {
@@ -1228,7 +1245,7 @@ function drawLinks(root) {
             if (edge_labels_angled)
                 return 'rotate(' + linkAngle(d.source.x, d.target.x, d.source.y,
                                              d.target.y - boxheight) + ',' +
-                link_text_x(d.source.x, d.target.x) + ',' +
+                linkTextX(d.source.x, d.target.x) + ',' +
                 (d.source.y + (d.target.y - boxheight)) / 2 + ')';
             else
                 return null;
