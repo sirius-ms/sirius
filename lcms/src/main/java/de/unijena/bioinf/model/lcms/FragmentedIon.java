@@ -22,6 +22,9 @@ public class FragmentedIon extends IonGroup {
     protected Quality ms2Quality;
     protected Polarity polarity;
 
+    // might be useful for chimeric detection?
+    protected double intensityAfterPrecursor;
+
     protected List<ChromatographicPeak> chimerics;
     private double chimericPollution;
 
@@ -35,6 +38,14 @@ public class FragmentedIon extends IonGroup {
         this.ms2Quality = ms2Quality;
         this.alternativeIonTypes = Collections.emptySet();
         this.chimerics = new ArrayList<>();
+    }
+
+    public double getIntensityAfterPrecursor() {
+        return intensityAfterPrecursor;
+    }
+
+    public void setIntensityAfterPrecursor(double intensityAfterPrecursor) {
+        this.intensityAfterPrecursor = intensityAfterPrecursor;
     }
 
     public void setMs2Quality(Quality ms2Quality) {

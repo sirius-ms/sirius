@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms;
 
 import com.google.common.collect.Range;
+import de.unijena.bioinf.ChemistryBase.math.RealDistribution;
 import de.unijena.bioinf.lcms.noise.NoiseModel;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.lcms.quality.QualityAnnotation;
@@ -36,6 +37,9 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
     public final ArrayList<FragmentedIon> gapFilledIons;
     public final ArrayList<FragmentedIon> otherIons; // any ions used for alignment solely
 
+    // can be used for multiple charge detection
+    protected RealDistribution intensityAfterPrecursorDistribution;
+
     ProcessedSample(LCMSRun run, NoiseModel ms1NoiseModel, NoiseModel ms2NoiseModel, ChromatogramCache chromatogramCache, SpectrumStorage storage) {
         this.run = run;
         this.ms1NoiseModel = ms1NoiseModel;
@@ -49,6 +53,14 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
         this.annotations = new Annotations<>();
         this.gapFilledIons = new ArrayList<>();
         this.otherIons = new ArrayList<>();
+    }
+
+    public RealDistribution getIntensityAfterPrecursorDistribution() {
+        return intensityAfterPrecursorDistribution;
+    }
+
+    public void setIntensityAfterPrecursorDistribution(RealDistribution intensityAfterPrecursorDistribution) {
+        this.intensityAfterPrecursorDistribution = intensityAfterPrecursorDistribution;
     }
 
     public NavigableMap<Integer,Scan> findScansByRT(Range<Long> rt) {

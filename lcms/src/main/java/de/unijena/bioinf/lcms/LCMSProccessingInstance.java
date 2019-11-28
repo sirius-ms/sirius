@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -245,6 +246,29 @@ public class LCMSProccessingInstance {
         sample.ions.clear(); sample.ions.addAll(ions);
         assert checkForDuplicates(sample);
         ////
+        {
+            final double[] intensityAfterPrec = new double[sample.ions.size()];
+            int n=0;
+            for (int k=0; k < sample.ions.size(); ++k) {
+                if (sample.ions.get(k).getMsMsQuality().betterThan(Quality.BAD)) {
+                    intensityAfterPrec[k] = sample.ions.get(k).getIntensityAfterPrecursor();
+                    ++n;
+                }
+            }
+            Arrays.sort(intensityAfterPrec,0,n);
+
+            int k=n/2;
+            while (k < n && intensityAfterPrec[k] <= 0) {
+                ++k;
+            }
+
+            if (k>=n) {
+                sample.intensityAfterPrecursorDistribution = null;
+            } else {
+                sample.intensityAfterPrecursorDistribution = ExponentialDistribution.getMedianEstimator().extimateByMedian(intensityAfterPrec[k]);
+                LoggerFactory.getLogger(LCMSProccessingInstance.class).info("Median intensity after precursor in MS/MS: " + intensityAfterPrec[k]);
+            }
+        }
         ListIterator<FragmentedIon> iter = ions.listIterator();
         final CorrelatedPeakDetector detector = new CorrelatedPeakDetector(detectableIonTypes);
         while (iter.hasNext()) {

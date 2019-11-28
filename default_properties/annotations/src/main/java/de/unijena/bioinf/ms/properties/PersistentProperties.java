@@ -30,11 +30,11 @@ public final class PersistentProperties {
 
         this.propertiesFile = propertiesFile;
         if (watchFile) {
-            this.config = SiriusConfigUtils.newConfiguration(propertiesFile);
-            this.watcher = null;
-        } else {
             this.watcher = new PropertyFileWatcher(propertiesFile.toPath());
             this.config = SiriusConfigUtils.newConfiguration(watcher);
+        } else {
+            this.config = SiriusConfigUtils.newConfiguration(propertiesFile);
+            this.watcher = null;
         }
 
     }
@@ -75,7 +75,7 @@ public final class PersistentProperties {
 
     public synchronized void store() {
         try {
-            new org.apache.commons.configuration2.io.FileHandler(config).save();
+            new FileHandler(config).save(propertiesFile);
         } catch (ConfigurationException e) {
             LOGGER.error("Could not save new Properties file! Changes not saved!", e);
         }

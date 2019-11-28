@@ -8,7 +8,7 @@ import java.util.Set;
 public class ContainerEvent<ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>> {
 
     public enum EventType {
-        CREATED, UPDATED, DELETED;
+        ID_CREATED, CREATED, UPDATED, DELETED;
     }
 
     protected final EventType type;

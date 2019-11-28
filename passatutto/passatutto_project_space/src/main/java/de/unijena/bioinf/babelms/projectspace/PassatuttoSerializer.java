@@ -45,6 +45,6 @@ public class PassatuttoSerializer implements ComponentSerializer<FormulaResultId
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
-        writer.delete(DECOYS.relFilePath(id));
+        writer.deleteIfExists(DECOYS.relFilePath(id));
     }
 }
