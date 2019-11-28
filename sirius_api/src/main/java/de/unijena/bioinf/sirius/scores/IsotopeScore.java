@@ -12,4 +12,9 @@ public final class IsotopeScore extends FormulaScore {
     public ScoreType getScoreType() {
         return ScoreType.Logarithmic;
     }
+
+    @Override
+    public String name() {
+        return "Isotope_Score";
+    }
 }

@@ -10,7 +10,7 @@ public class ZodiacScore extends FormulaScore {
 
     @Override
     public String name() {
-        return "zodiacScore";
+        return "Zodiac_Score";
     }
 
     @Override
