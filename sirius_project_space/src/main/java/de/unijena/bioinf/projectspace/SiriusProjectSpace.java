@@ -15,15 +15,18 @@ import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,8 +36,8 @@ import java.util.stream.Collectors;
 
 public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCloseable {
 
+    private Path root;
 
-    protected final File root;
     protected final ConcurrentHashMap<String, CompoundContainerId> ids;
     protected final ProjectSpaceConfiguration configuration;
     protected final AtomicInteger compoundCounter;
@@ -43,7 +46,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     protected ConcurrentLinkedQueue<ProjectSpaceListener> projectSpaceListeners;
     protected ConcurrentLinkedQueue<ContainerListener> compoundListeners, formulaResultListener;
 
-    protected SiriusProjectSpace(ProjectSpaceConfiguration configuration, File root) {
+    protected SiriusProjectSpace(ProjectSpaceConfiguration configuration, Path root) {
         this.configuration = configuration;
         this.ids = new ConcurrentHashMap<>();
         this.root = root;
@@ -54,8 +57,15 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         this.formulaResultListener = new ConcurrentLinkedQueue<>();
     }
 
-    public Path getRootPath() {
-        return root.toPath();
+    public synchronized Path getRootPath() {
+        return root;
+    }
+
+    public Path getLocation() {
+        if (root.getFileSystem().equals(FileSystems.getDefault()))
+            return root;
+        else
+            return Path.of(root.getFileSystem().toString());
     }
 
     public void addProjectSpaceListener(ProjectSpaceListener listener) {
@@ -78,13 +88,13 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     protected synchronized void open() throws IOException {
         ids.clear();
         int maxIndex = 0;
-        for (File dir : root.listFiles()) {
-            final File expInfo = new File(dir, SiriusLocations.COMPOUND_INFO);
-            if (dir.isDirectory() && expInfo.exists()) {
+        for (Path dir : Files.list(root).collect(Collectors.toList())) {
+            final Path expInfo = dir.resolve(SiriusLocations.COMPOUND_INFO);
+            if (Files.isDirectory(dir) && Files.exists(expInfo)) {
                 final Map<String, String> keyValues = FileUtils.readKeyValues(expInfo);
                 final int index = Integer.parseInt(keyValues.getOrDefault("index", "0"));
                 final String name = keyValues.getOrDefault("name", "");
-                final String dirName = dir.getName();
+                final String dirName = dir.getFileName().toString();
                 final double ionMass = Double.parseDouble(keyValues.getOrDefault("ionMass", String.valueOf(Double.NaN)));
 
                 PrecursorIonType ionType = null;
@@ -113,8 +123,14 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     public synchronized void close() throws IOException {
-        this.ids.clear();
-        fireProjectSpaceChange(ProjectSpaceEvent.CLOSED);
+        try {
+            this.ids.clear();
+            final FileSystem fs = root.getFileSystem();
+            if (!fs.equals(FileSystems.getDefault()) && fs.isOpen())
+                fs.close();
+        } finally {
+            fireProjectSpaceChange(ProjectSpaceEvent.CLOSED);
+        }
     }
 
 
@@ -122,11 +138,20 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return Optional.ofNullable(ids.get(dirName));
     }
 
-    public Optional<CompoundContainer> newCompoundWithUniqueId(String compoundName, IntFunction<String> index2dirName) {
+
+    public Optional<CompoundContainer> newCompoundWithUniqueId(@NotNull String compoundName, @NotNull IntFunction<String> index2dirName, @Nullable Ms2Experiment exp) {
         return newUniqueCompoundId(compoundName, index2dirName)
                 .map(idd -> {
                     try {
-                        return getCompound(idd);
+                        final CompoundContainer comp = getCompound(idd);
+                        if (exp != null) {
+                            comp.setAnnotation(Ms2Experiment.class, exp);
+                            updateCompound(comp, Ms2Experiment.class);
+                        }
+
+                        fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.CREATED, comp.getId(), comp, Collections.emptySet()));
+                        return comp;
+
                     } catch (IOException e) {
                         return null;
                     }
@@ -137,7 +162,11 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName) {
         int index = compoundCounter.getAndIncrement();
         String dirName = index2dirName.apply(index);
-        return tryCreateCompoundContainer(dirName, compoundName, index, Double.NaN);
+
+        Optional<CompoundContainerId> cidOpt = tryCreateCompoundContainer(dirName, compoundName, index, Double.NaN);
+        cidOpt.ifPresent(cid ->
+                fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_CREATED, cid, null, Collections.emptySet())));
+        return cidOpt;
     }
 
     public Optional<FormulaResultId> newUniqueFormulaResultId(@NotNull CompoundContainerId id, @NotNull FTree tree) throws IOException {
@@ -150,7 +179,6 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         final PrecursorIonType ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
         final MolecularFormula f = tree.getRoot().getFormula().add(ionType.getAdduct()).subtract(ionType.getInSourceFragmentation()); //get precursor formula
         final FormulaResultId fid = new FormulaResultId(container.getId(), f, ionType);
-        fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.CREATED, container.getId(), container, Collections.emptySet()));
 
         if (container.contains(fid))
             return Optional.empty(); //todo how to handle this?
@@ -160,6 +188,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         r.setAnnotation(FormulaScoring.class, new FormulaScoring(FTreeMetricsHelper.getScoresFromTree(tree)));
         try {
             updateFormulaResult(r, FTree.class, FormulaScoring.class);
+            fireContainerListeners(formulaResultListener, new ContainerEvent(ContainerEvent.EventType.CREATED, r.getId(), r, Collections.emptySet()));
+
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).error("Could not create FormulaResult from FTree!", e);
             return Optional.empty();
@@ -177,13 +207,13 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex, double ionMass) {
         if (containsCompound(directoryName)) return Optional.empty();
         synchronized (ids) {
-            if (new File(root, directoryName).exists())
+            if (Files.exists(root.resolve(directoryName)))
                 return Optional.empty();
             CompoundContainerId id = new CompoundContainerId(directoryName, compoundName, compoundIndex);
             if (ids.put(directoryName, id) != null)
                 return Optional.empty();
             try {
-                Files.createDirectory(new File(root, directoryName).toPath());
+                Files.createDirectory(root.resolve(directoryName));
                 writeCompoundContainerID(id);
                 return Optional.of(id);
             } catch (IOException e) {
@@ -205,11 +235,11 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             cid.containerLock.unlock();
         }
     }
+
     private void writeCompoundContainerID(CompoundContainerId cid) throws IOException {
-        final File f = new File(new File(root, cid.getDirectoryName()), SiriusLocations.COMPOUND_INFO);
-        if (f.exists())
-            f.delete();
-        try (final BufferedWriter bw = FileUtils.getWriter(f)) {
+        final Path f = root.resolve(cid.getDirectoryName()).resolve(SiriusLocations.COMPOUND_INFO);
+        Files.deleteIfExists(f);
+        try (final BufferedWriter bw = Files.newBufferedWriter(f)) {
             for (Map.Entry<String, String> kv : cid.asKeyValuePairs().entrySet()) {
                 bw.write(kv.getKey() + "\t" + kv.getValue());
                 bw.newLine();
@@ -302,14 +332,14 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    public void deleteCompound(CompoundContainerId resultId) throws IOException {
-        resultId.containerLock.lock();
+    public void deleteCompound(CompoundContainerId cid) throws IOException {
+        cid.containerLock.lock();
         try {
-            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.DELETED, resultId, null, Collections.emptySet()));
-            deleteContainer(CompoundContainer.class, resultId);
+            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.DELETED, cid, null, Collections.emptySet()));
+            deleteContainer(CompoundContainer.class, cid);
             fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
         } finally {
-            resultId.containerLock.unlock();
+            cid.containerLock.unlock();
         }
     }
 
@@ -334,13 +364,13 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 if (ids.containsKey(newDirName))
                     return false; // rename not possible because key already exists
 
-                File file = new File(root, newDirName);
-                if (file.exists()) {
+                final Path file = root.resolve(newDirName);
+                if (Files.exists(file)) {
                     return false; // rename not target directory already exists
                 }
 
                 try {
-                    Files.move(new File(root, oldId.getDirectoryName()).toPath(), file.toPath());
+                    Files.move(root.resolve(oldId.getDirectoryName()), file);
                     //change id only if move was successful
                     ids.remove(oldId.getDirectoryName());
                     oldId.rename(name, newDirName);
@@ -413,26 +443,28 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public <T extends ProjectSpaceProperty> Optional<T> getProjectSpaceProperty(Class<T> key) {
         T property = (T) projectSpaceProperties.get(key);
         if (property == null) {
-            synchronized (projectSpaceProperties) {
-                property = (T) projectSpaceProperties.get(key);
-                if (property != null) return Optional.of(property);
-                try {
-                    T read = configuration.getProjectSpacePropertySerializer(key).read(new FileBasedProjectSpaceReader(root, this::getProjectSpaceProperty), null, null);
-                    if (read == null)
+            synchronized (this) {
+                synchronized (projectSpaceProperties) {
+                    property = (T) projectSpaceProperties.get(key);
+                    if (property != null) return Optional.of(property);
+                    try {
+                        T read = configuration.getProjectSpacePropertySerializer(key).read(new FileBasedProjectSpaceReader(root, this::getProjectSpaceProperty), null, null);
+                        if (read == null)
+                            return Optional.empty();
+
+                        projectSpaceProperties.put(key, read);
+                        return Optional.of(read);
+                    } catch (IOException e) {
+                        LoggerFactory.getLogger(SiriusProjectSpace.class).error(e.getMessage(), e);
                         return Optional.empty();
+                    }
 
-                    projectSpaceProperties.put(key, read);
-                    return Optional.of(read);
-                } catch (IOException e) {
-                    LoggerFactory.getLogger(SiriusProjectSpace.class).error(e.getMessage(), e);
-                    return Optional.empty();
                 }
-
             }
         } else return Optional.of(property);
     }
 
-    public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
+    public synchronized <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
         synchronized (projectSpaceProperties) {
             try {
                 configuration.getProjectSpacePropertySerializer(key).write(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), null, null, value != null ? Optional.of(value) : Optional.empty());
@@ -452,17 +484,55 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     public void updateSummaries(Summarizer... summarizers) throws IOException {
-        Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
-        for (CompoundContainerId cid : ids.values()) {
-            final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
-            final List<SScored<FormulaResult, SiriusScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreType().orElse(SiriusScore.class), annotations);
-            for (Summarizer sim : summarizers)
-                sim.addWriteCompoundSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), c, results);
-        }
+        withAllLockedDo(() -> {
+            Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
+            for (CompoundContainerId cid : ids.values()) {
+                final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
+                final List<SScored<FormulaResult, SiriusScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreType().orElse(SiriusScore.class), annotations);
+                for (Summarizer sim : summarizers)
+                    sim.addWriteCompoundSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), c, results);
+            }
 
-        //write summaries to project space
-        for (Summarizer summarizer : summarizers)
-            summarizer.writeProjectSpaceSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty));
+            //write summaries to project space
+            for (Summarizer summarizer : summarizers)
+                summarizer.writeProjectSpaceSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty));
+            return true;
+        });
     }
 
+    protected synchronized boolean withAllLockedDo(IOCallable<Boolean> code) throws IOException {
+        //todo do we need mor locks to move the space?
+        try {
+            ids.values().forEach(cid -> cid.containerLock.lock());
+            return code.call();
+        } finally {
+            ids.values().forEach(cid -> cid.containerLock.unlock());
+        }
+    }
+
+    protected boolean changeLocation(Path nuLocation) throws IOException {
+        return withAllLockedDo(() -> {
+            final FileSystem fs = root.getFileSystem();
+            if (!fs.equals(FileSystems.getDefault()) && fs.isOpen())
+                fs.close();
+
+            root = nuLocation;
+            fireProjectSpaceChange(ProjectSpaceEvent.LOCATION_CHANGED);
+            return true;
+        });
+    }
+
+    @FunctionalInterface
+    protected interface IOCallable<V> extends Callable<V> {
+        @Override
+        V call() throws IOException;
+    }
+
+    public Class[] getRegisteredFormulaResultComponents() {
+        return configuration.getAllComponentsForContainer(FormulaResult.class).toArray(Class[]::new);
+    }
+
+    public Class[] getRegisteredCompoundComponents() {
+        return configuration.getAllComponentsForContainer(CompoundContainer.class).toArray(Class[]::new);
+    }
 }

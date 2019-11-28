@@ -6,7 +6,7 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 
 /**
- * Specifies the ScoreType that is used to rank the list of Molecular Formula Identifications
+ * Allows the USER to Specify the ScoreType that is used to rank the list of Molecular Formula Identifications
  * before CSI:FingerID predictions are calculated. Auto means that this ScoreType is
  * automatically set depending on the executed workflow.
  */

@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms;
 
 import de.unijena.bioinf.ChemistryBase.math.MathUtils;
+import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -107,7 +108,7 @@ public class Ms2CosineSegmenter {
                 Optional<ChromatographicPeak> detectedFeature = sample.builder.detect(lastMs1, s.getPrecursor().getMass());
                 final IsolationWindow window;
                 if (detectedFeature.isEmpty()) {
-                    LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("No MS1 feature belonging to MS/MS " + s);
+                    LoggerFactory.getLogger(Ms2CosineSegmenter.class).debug("No MS1 feature belonging to MS/MS " + s);
                 } else {
                     final MutableChromatographicPeak F = detectedFeature.get().mutate();
                     if (s.getPrecursor().getIsolationWindow().isUndefined()) {
@@ -163,7 +164,7 @@ public class Ms2CosineSegmenter {
                 // if this scan has a high chimeric pollution while the others do not, reject it
                 if (ms2Scan.chimericPollution > chimericThreshold && (ms2Scan.precursorIntensity*Math.sqrt(ms2Scan.precursorIntensity)/Math.max(0.1,ms2Scan.chimericPollution) < scoreThreshold))
                 {
-                    LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("Reject spectrum because of high chimeric pollution.");
+                    LoggerFactory.getLogger(Ms2CosineSegmenter.class).debug("Reject spectrum because of high chimeric pollution.");
                     continue;
                 }
 
@@ -178,7 +179,7 @@ public class Ms2CosineSegmenter {
                     for (ChromatographicPeak.Segment seg : entry.getKey().segments.descendingSet()) {
                         if (s.getIndex() > seg.getEndScanNumber()) {
                             if (seg.getFwhmEndIndex() == seg.getApexIndex()) {
-                                LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("MS2 scan outside of an segment of an chromatographic peak because of BAD PEAK SHAPE");
+                                LoggerFactory.getLogger(Ms2CosineSegmenter.class).debug("MS2 scan outside of an segment of an chromatographic peak because of BAD PEAK SHAPE");
                                 ms2Segment = seg;
                             }
                             break;
@@ -260,11 +261,13 @@ public class Ms2CosineSegmenter {
                 }
             }
             if (merged!=null) {
+                TDoubleArrayList intensityAfterPrecursor = new TDoubleArrayList();
                 final ChromatographicPeak.Segment left = entry.getKey().getSegmentForScanId(segmentIds[j]).get();
                 FragmentedIon ms2Ion = instance.createMs2Ion(sample, merged, entry.getKey(), left);
                 final HashSet<ChromatographicPeak> chimerics = new HashSet<>();
                 double chimericPollution = 0d;
                 for (Scan s : merged.getScans()) {
+                    intensityAfterPrecursor.add(intensityAfterPrecursor(sample.storage.getScan(s),merged.getPrecursor().getMass()));
                     for (Ms2Scan t : entry.getValue()) {
                         if (t.ms2Scan.getIndex()==s.getIndex()) {
                             chimerics.addAll(t.chimerics);
@@ -277,6 +280,7 @@ public class Ms2CosineSegmenter {
                 if (chimericPollution>=0.33) {
                     ms2Ion.setMs2Quality(Quality.BAD);
                 }
+                ms2Ion.setIntensityAfterPrecursor(Statistics.robustAverage(intensityAfterPrecursor.toArray()));
                 ions.add(ms2Ion);
                 if (!SEGS.add(left))
                     System.out.println("=/");
@@ -319,6 +323,19 @@ public class Ms2CosineSegmenter {
             SpectralSimilarity score = new IntensityWeightedSpectralAlignment(new Deviation(20)).score(spectrum, other.spectrum);
             return new SpectralSimilarity(score.similarity / Math.sqrt(selfNorm*other.selfNorm), score.shardPeaks);
         }
+    }
+
+    private double intensityAfterPrecursor(SimpleSpectrum spectrum, double precursorMz) {
+        // exclude isotopic peaks
+        double offset = precursorMz+5;
+        int k = Spectrums.getFirstPeakGreaterOrEqualThan(spectrum, offset);
+        double before=0d,after=0d;
+        for (int i=0; i < k; ++i)
+            before += spectrum.getIntensityAt(i);
+        for (int i=k; i < spectrum.size(); ++i)
+            after += spectrum.getIntensityAt(i);
+        if (after==0) return 0d;
+        return after / (before+after);
     }
 
     public MergedSpectrum mergeViaClustering(ProcessedSample sample, CosineQuery[] cosines) {

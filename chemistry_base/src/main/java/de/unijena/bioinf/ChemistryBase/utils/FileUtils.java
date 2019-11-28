@@ -9,15 +9,96 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
-import java.util.zip.InflaterInputStream;
+import java.util.zip.*;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class FileUtils {
+
+    /**
+     * @param folder
+     * @param zipFilePath
+     * @return new Created zip Files
+     * @throws IOException if zip file compression fails
+     */
+    public static Path zipDir(final Path folder, final Path zipFilePath) throws IOException {
+        try (
+                FileOutputStream fos = new FileOutputStream(zipFilePath.toFile());
+                ZipOutputStream zos = new ZipOutputStream(fos)
+        ) {
+            Files.walkFileTree(folder, new SimpleFileVisitor<>() {
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    zos.putNextEntry(new ZipEntry(folder.relativize(file).toString()));
+                    Files.copy(file, zos);
+                    zos.closeEntry();
+                    return FileVisitResult.CONTINUE;
+                }
+
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    zos.putNextEntry(new ZipEntry(folder.relativize(dir).toString() + "/"));
+                    zos.closeEntry();
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+            return zipFilePath;
+        }
+    }
+
+    /**
+     *
+     * @param zipFile
+     * @param target
+     * @return Target directory with unzipped data
+     * @throws IOException if extraction fails
+     */
+    public static Path unZipDir(final Path zipFile, final Path target) throws IOException {
+        try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(zipFile))) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                final Path toPath = target.resolve(entry.getName());
+                if (entry.isDirectory()) {
+                    Files.createDirectory(toPath);
+                } else {
+                    Files.copy(zipInputStream, toPath);
+                }
+            }
+        }
+        return target;
+    }
+
+    /**
+     * Copies a File Tree recursively to another location.
+     * Src and dest might be different Filesystems (e.g. mounted ZipFile)
+     *
+     * Note: The target directory must already exist.
+     *
+     * @param src Source location
+     * @param dest Target location
+     * @throws IOException if I/O Error occurs
+     */
+    public static void copyFolder(Path src, Path dest) throws IOException {
+        if (Files.notExists(dest))
+            throw new IllegalArgumentException("Root destination dir/file must exist!");
+
+        Files.walk(src).forEach(source -> {
+            String relative = src.relativize(source).toString();
+            final Path target = dest.resolve(relative);
+            if (!target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
+                copy(source, target);;
+        });
+    }
+
+    private static void copy(Path source, Path dest) {
+        try {
+            Files.copy(source, dest, REPLACE_EXISTING);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
 
     public static <T> List<T> mapLines(File file, Function<String, T> f) throws IOException {
         try (final BufferedReader br = getReader(file)) {
@@ -497,6 +578,12 @@ public class FileUtils {
             }
         }
         return lines;
+    }
+
+    public static Map<String, String> readKeyValues(Path path) throws IOException {
+        try (final BufferedReader br = Files.newBufferedReader(path)) {
+            return readKeyValues(br);
+        }
     }
 
     public static Map<String,String> readKeyValues(File file) throws IOException {
