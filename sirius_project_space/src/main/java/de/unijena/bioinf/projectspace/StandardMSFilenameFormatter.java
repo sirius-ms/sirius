@@ -4,7 +4,7 @@ import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -157,7 +157,7 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
     public static String simplifyURL(String filename) {
         if (filename == null)
             return null;
-        filename = new File(filename).getName();
+        filename = Path.of(filename).getFileName().toString();
         int ext = filename.lastIndexOf('.');
         if (ext<0) ext = filename.length();
         int i = Math.min(48,ext);

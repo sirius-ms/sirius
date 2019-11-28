@@ -8,8 +8,11 @@ import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
+import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import gnu.trove.list.array.TDoubleArrayList;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,6 +27,9 @@ public class CorrelatedPeakDetector {
             Range.closed(3.99359037 - MZ_ISO_ERRT, 4.01300058 + MZ_ISO_ERRT),
             Range.closed(4.9937908 - MZ_ISO_ERRT, 5.01572941 + MZ_ISO_ERRT)
     };
+
+    protected final static double COSINE_THRESHOLD = 0.96d,
+                                  STRICT_COSINE_THRESHOLD = 0.99;
 
     protected Set<PrecursorIonType> detectableIonTypes;
 
@@ -71,7 +77,7 @@ public class CorrelatedPeakDetector {
         detectIsotopesFor(sample, peakBeforeChr.get(), segmentForScanId.get(), ion.getChargeState(), correlationGroups);
         for (CorrelationGroup g : correlationGroups) {
             int scanNumber = g.getRight().findScanNumber(ms1Scan.getIndex());
-            if (scanNumber >= 0 && g.getCorrelation() >= 0.95 && Math.abs(g.getRight().getMzAt(scanNumber) - ionPeak.getMass())<1e-8) {
+            if (scanNumber >= 0 && g.getCosine() >= STRICT_COSINE_THRESHOLD && Math.abs(g.getRight().getMzAt(scanNumber) - ionPeak.getMass())<1e-8) {
                 final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
                 for (CorrelationGroup h : correlationGroups) {
                     int sc = h.getRight().findScanNumber(ms1Scan.getIndex());
@@ -118,9 +124,9 @@ public class CorrelatedPeakDetector {
         // 1. detect isotopes of main feature
         detectIsotopesAndSetChargeStateForAndChimerics(sample, ion, alreadyAnnotatedMzs);
 
-        if (ion.getChargeState() > 1)
-            System.out.println("========> Multiple charged Ion detected! Ion = " + ion.toString());
-
+        if (ion.getChargeState() > 1) {
+            System.out.println("========> Multiple charged Ion detected! Ion = " + ion.toString() + "\t" + ion.getIntensityAfterPrecursor());
+        }
         // do I am an isotope peak myself?
         if (doIAmAnIsotope(sample, ion, alreadyAnnotatedMzs)) {
             return false;
@@ -159,7 +165,7 @@ public class CorrelatedPeakDetector {
 
                         Optional<CorrelationGroup> correlate = correlate(ion.getPeak(), ion.getSegment(), detection.get());
                         if (correlate.isEmpty()) continue;
-                        if (correlate.get().getCorrelation() >= 0.95) {
+                        if (correlate.get().getCosine() >= STRICT_COSINE_THRESHOLD) {
                             final IonGroup ion1 = ionWithIsotopes(sample, correlate.get().getRight(), correlate.get().getRightSegment(), ion.getChargeState(),alreadyAnnotatedMzs);
                             if (ion1==null) continue;
                             ion.getInSourceFragments().add(new CorrelatedIon(correlate.get(), ion1));
@@ -213,7 +219,7 @@ public class CorrelatedPeakDetector {
                             correlate.setLeftType(ionType);
                             correlate.setRightType(other);
                         }
-                        if (maybeCorrelate.isPresent() && correlate.getCorrelation() >= 0.9 && correlate.getKullbackLeibler() <= 0.5 && correlate.getNumberOfCorrelatedPeaks() >= 4) {
+                        if (maybeCorrelate.isPresent() && correlate.getCosine() >= COSINE_THRESHOLD && correlate.getKullbackLeibler() <= 0.5 && correlate.getNumberOfCorrelatedPeaks() >= 4) {
                             final IonGroup ion1 = ionWithIsotopes(sample, correlate.getRight(), correlate.getRightSegment(), ion.getChargeState(), alreadyAnnotatedMzs);
                             if (ion1==null) continue;
                             adducts.add(new CorrelatedIon(correlate, ion1));
@@ -242,6 +248,32 @@ public class CorrelatedPeakDetector {
 
     public void detectIsotopesAndSetChargeStateForAndChimerics(ProcessedSample sample, IonGroup ion, TDoubleArrayList alreadyAnnotatedMzs) {
         final Scan ms1Scan = sample.run.getScanByNumber(ion.getSegment().getApexScanNumber()).get();
+
+        double numberOfPeaksWithStrangeMass = 0, totalNumberOfPeaks = 0d;
+        if (ion instanceof FragmentedIon && ((FragmentedIon) ion).getMsMs()!=null) {
+            final CosineQuerySpectrum c = ((FragmentedIon) ion).getMsMs();
+            double maxInt = 0d;
+            for (int k=0; k < c.size(); ++k) {
+                double mz = c.getMzAt(k);
+                if (mz < 250) {
+                    double massDefect = mz - Math.floor(mz);
+                    if (massDefect >= 0.3 && massDefect <= 0.7) {
+                        numberOfPeaksWithStrangeMass += c.getIntensityAt(k);
+                    }
+                    totalNumberOfPeaks += c.getIntensityAt(k);
+                }
+                maxInt = Math.max(c.getIntensityAt(k),maxInt);
+            }
+            double base = Math.max(totalNumberOfPeaks,maxInt);
+            numberOfPeaksWithStrangeMass = base>0 ? numberOfPeaksWithStrangeMass/base : 0d;
+        }
+        // check precursor, too
+        boolean precursorWithStrangeMass;
+        {
+            double massDefect = ion.getMass()-Math.floor(ion.getMass());
+            precursorWithStrangeMass = ion.getMass() <= 250 && (massDefect>=0.3 && massDefect<=0.7);
+        }
+
         // try different charge states
         List<CorrelationGroup> bestPattern = new ArrayList<>();
         int bestChargeState = 0;
@@ -249,6 +281,17 @@ public class CorrelatedPeakDetector {
         for (int charge = 1; charge < 4; ++charge) {
             final List<CorrelationGroup> isoPeaks = new ArrayList<>();
             double score = detectIsotopesFor(sample, ion.getPeak(), ion.getSegment(), charge, isoPeaks);
+            if (charge>1)
+                score /= 4; // we have twice as many iso peaks, because every even peak picked before is part of this pattern
+            if (Double.isFinite(score) && ion instanceof FragmentedIon && ((FragmentedIon) ion).getMsMsQuality().betterThan(Quality.BAD)&& sample.intensityAfterPrecursorDistribution!=null) {
+                if (charge > 1) {
+                    if (precursorWithStrangeMass || numberOfPeaksWithStrangeMass>=0.03) {
+                        score *= 8;
+                    } else {
+                        score *= Math.max(0.1,sample.intensityAfterPrecursorDistribution.getCumulativeProbability(((FragmentedIon) ion).getIntensityAfterPrecursor()));
+                    }
+                }
+            }
             if (score > bestScore) {
                 bestChargeState =charge;
                 bestPattern = isoPeaks;
@@ -290,12 +333,13 @@ public class CorrelatedPeakDetector {
             for (int i=a; i < spectrum.size(); ++i) {
                 if (spectrum.getMzAt(i) > maxMz)
                     break;
-                sample.builder.detectExact(scan, spectrum.getMzAt(i)).map(x->correlate(peak, segment, x)).filter(x->x.map(CorrelationGroup::getCorrelation).orElse(0d) >= 0.9).map(Optional::get).ifPresent(isoPeaks::add);
+                sample.builder.detectExact(scan, spectrum.getMzAt(i)).map(x->correlate(peak, segment, x)).filter(x->x.map(CorrelationGroup::getCosine).orElse(0d) >= COSINE_THRESHOLD).map(Optional::get).ifPresent(isoPeaks::add);
             }
             if (isoPeaks.size() <= nsize) {
                 break forEachIsotopePeak;
-            } else score += 1;
+            }
         }
+        score += isoPeaks.stream().mapToInt(CorrelationGroup::getNumberOfCorrelatedPeaks).sum();
         if (isoPeaks.isEmpty()) return Double.NEGATIVE_INFINITY;
         else return score;
     }
@@ -339,14 +383,14 @@ public class CorrelatedPeakDetector {
         }
 
         if (main.getIntensityAt(mainSegment.getApexIndex()) > mightBeCorrelated.getIntensityAt(otherSegment.getApexIndex())) {
-            return Optional.of(correlateBiggerToSmaller(main, mainSegment, mightBeCorrelated, otherSegment));
-        } else return Optional.ofNullable(correlateBiggerToSmaller(mightBeCorrelated, otherSegment, main, mainSegment).invert());
+            return Optional.ofNullable(correlateBiggerToSmaller(main, mainSegment, mightBeCorrelated, otherSegment));
+        } else return Optional.ofNullable(correlateBiggerToSmaller(mightBeCorrelated, otherSegment, main, mainSegment)).map(x->x.invert());
 
 
 
     }
 
-    private CorrelationGroup correlateBiggerToSmaller(ChromatographicPeak large, ChromatographicPeak.Segment largeSegment, ChromatographicPeak small, ChromatographicPeak.Segment smallSegment) {
+    private @Nullable CorrelationGroup correlateBiggerToSmaller(ChromatographicPeak large, ChromatographicPeak.Segment largeSegment, ChromatographicPeak small, ChromatographicPeak.Segment smallSegment) {
         final TDoubleArrayList a = new TDoubleArrayList(), b = new TDoubleArrayList();
 
         // find index that is above 25% intensity of main peak
@@ -359,9 +403,10 @@ public class CorrelatedPeakDetector {
             else a.add(0d);
             b.add(small.getIntensityAt(i));
         }
+        if (a.size()<3) return null;
         final double correlation = pearson(a,b,a.size());
         final double kl = kullbackLeibler(a,b, a.size());
-        return new CorrelationGroup(large,small,largeSegment,smallSegment,t25.lowerEndpoint(), t25.upperEndpoint(), correlation, kl);
+        return new CorrelationGroup(large,small,largeSegment,smallSegment,t25.lowerEndpoint(), t25.upperEndpoint(), correlation, kl, cosine(a,b));
     }
 
     private double cosine(TDoubleArrayList a, TDoubleArrayList b) {
@@ -373,6 +418,7 @@ public class CorrelatedPeakDetector {
             l += x[k]*x[k];
             r += y[k]*y[k];
         }
+        if (l==0 || r == 0) return 0d;
         return cosine/Math.sqrt(l*r);
     }
 
@@ -417,6 +463,7 @@ public class CorrelatedPeakDetector {
             vb += y*y;
             vab += x*y;
         }
+        if (va*vb==0) return 0d;
         return vab / Math.sqrt(va*vb);
     }
 

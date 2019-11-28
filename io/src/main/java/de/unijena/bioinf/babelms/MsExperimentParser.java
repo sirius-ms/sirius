@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,12 +34,18 @@ public class MsExperimentParser {
 
     private static final Map<String, Class<? extends Parser<Ms2Experiment>>> knownEndings = addKnownEndings();
 
+    public GenericParser<Ms2Experiment> getParser(Path file) {
+        return getParser(file.getFileName().toString());
+    }
 
-    public GenericParser<Ms2Experiment> getParser(File f) {
-        final String name = f.getName();
-        final int i = name.lastIndexOf('.');
+    public GenericParser<Ms2Experiment> getParser(File file) {
+        return getParser(file.getName());
+    }
+
+    public GenericParser<Ms2Experiment> getParser(String fileName) {
+        final int i = fileName.lastIndexOf('.');
         if (i < 0) return null; // no parser found
-        final String extName = name.substring(i).toLowerCase();
+        final String extName = fileName.substring(i).toLowerCase();
         final Class<? extends Parser<Ms2Experiment>> pc = knownEndings.get(extName);
         if (pc==null) return null;
         try {

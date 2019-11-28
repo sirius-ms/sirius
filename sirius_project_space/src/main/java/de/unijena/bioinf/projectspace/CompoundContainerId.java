@@ -106,4 +106,12 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
 
         return kv;
     }
+
+    public void setAllNonFinal(final CompoundContainerId cid) {
+        if (cid == null || cid == this)
+            return;
+        setRankingScoreType(cid.rankingScoreType);
+        setIonMass(cid.ionMass);
+        setIonType(cid.ionType);
+    }
 }

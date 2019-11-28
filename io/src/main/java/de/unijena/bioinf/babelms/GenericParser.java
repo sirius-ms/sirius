@@ -21,6 +21,8 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,6 +108,11 @@ public class GenericParser<T> implements Parser<T> {
     public <S extends T> CloseableIterator<S> parseFromFileIterator(File file) throws IOException {
         final BufferedReader r = FileUtils.ensureBuffering(new FileReader(file));
         return parseIterator(r, file.toURI().toURL());
+    }
+
+    public <S extends T> CloseableIterator<S> parseFromPathIterator(Path file) throws IOException {
+        final BufferedReader r = Files.newBufferedReader(file);
+        return parseIterator(r, file.toUri().toURL());
     }
 
 

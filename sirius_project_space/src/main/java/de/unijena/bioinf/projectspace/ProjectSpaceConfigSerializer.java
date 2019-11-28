@@ -37,6 +37,6 @@ public class ProjectSpaceConfigSerializer implements ComponentSerializer<Compoun
 
     @Override
     public void delete(ProjectWriter writer, CompoundContainerId id) throws IOException {
-        writer.delete(id.getDirectoryName() + "/" + SiriusLocations.COMPOUND_CONFIG);
+        writer.deleteIfExists(SiriusLocations.COMPOUND_CONFIG);
     }
 }
