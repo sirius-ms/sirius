@@ -52,17 +52,18 @@ public class DatasourceService {
         KNAPSACK("KNApSAcK",16, "SELECT knapsack_id FROM ref.knapsack WHERE inchi_key_1 = ?", "http://kanaya.naist.jp/knapsack_jsp/information.jsp?word=C%08d"),
         CHEBI("CHEBI",32,       "SELECT chebi_id FROM ref.chebi WHERE inchi_key_1 = ?", "https://www.ebi.ac.uk/chebi/searchId.do?chebiId=%s"),
         PUBMED("PubMed", 64,    null,null),
-        BIO("biological", 128,  null,null, 0),
+        BIO("biological", 128,  null,null, 0), //todo obsolete?
         KEGG("KEGG", 256,       "SELECT kegg_id FROM ref.kegg WHERE inchi_key_1 = ?", "http://www.kegg.jp/dbget-bin/www_bget?cpd:%s"),
         HSDB("HSDB", 512,       "SELECT cas FROM ref.hsdb WHERE inchi_key_1 = ?", null),
         MACONDA("Maconda", 1024,"SELECT maconda_id FROM ref.maconda WHERE inchi_key_1 = ?", "http://www.maconda.bham.ac.uk/contaminant.php?id=%d"),
         METACYC("Biocyc", 2048,"SELECT unique_id FROM ref.biocyc WHERE inchi_key_1 = ?", "http://biocyc.org/compound?orgid=META&id=%s"),
         GNPS("GNPS", 4096,      "SELECT id FROM ref.gnps WHERE inchi_key_1 = ?", "https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID=%s"),
         ZINCBIO("ZINC bio", 8192,"SELECT zinc_id FROM ref.zincbio WHERE inchi_key_1 = ?", "http://zinc.docking.org/substance/%s"),
-        TRAIN("training set", 16384, null,null),
+        TRAIN("training set", 16384, null,null), //todo obsolete?
         UNDP("Natural Products", 32768, "SELECT undp_id FROM ref.undp WHERE inchi_key_1 = ?", null),
-        PLANTCYC("Plantcyc", 131072, "SELECT unique_id FROM ref.plantcyc WHERE inchi_key_1 = ?", "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s"),
         YMDB("YMDB", 65536,         "SELECT ymdb_id FROM ref.ymdb WHERE inchi_key_1 = ?", "http://www.ymdb.ca/compounds/YMDB%d05"),
+        PLANTCYC("Plantcyc", 131072, "SELECT unique_id FROM ref.plantcyc WHERE inchi_key_1 = ?", "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s"),
+        PUBCHEMANNOTATION("PubChem Classification", 16777216,  null,null, 0), //2**24; Pubchem Annotations now have a separate flag
         KEGGMINE("KEGG Mine", 8589934592L, null,null, 8589934592L | 256L ),
         ECOCYCMINE("EcoCyc Mine", 17179869184L, null,null, 17179869184L | 2048L),
         YMDBMINE("YMDB Mine", 34359738368L, null,null, 34359738368L | 65536L);
