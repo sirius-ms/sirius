@@ -168,6 +168,10 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         } else {
 
                         }
+                    } catch (MultipleChargeException e) {
+                        LoggerFactory.getLogger(this.getClass()).warn(e.getMessage());
+                        if (!ignoreUnsupportedIonTypes) throw (e);
+                        else return;
                     } catch (RuntimeException e) {
                         LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                         if (!ignoreUnsupportedIonTypes) throw (e);
