@@ -13,4 +13,9 @@ public class TopFingerblastScore extends FormulaScore {
     public ScoreType getScoreType() {
         return ScoreType.Logarithmic;
     }
+
+    @Override
+    public String name() {
+        return "CSI:FingerID_Score";
+    }
 }
