@@ -16,13 +16,13 @@ import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
-import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.SummaryLocations;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.SummaryLocations;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.Summarizer;
@@ -203,10 +203,10 @@ public class MztabMExporter implements Summarizer {
         smeItem.setEvidenceInputId(makeMassIdentifier(er, bestHitSource));
 
         @NotNull final FormulaScoring scoring = bestHitSource.getAnnotationOrThrow(FormulaScoring.class);
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_SCORE, String.valueOf(scoring.getAnnotation(SiriusScore.class).map(SiriusScore::score).orElse(Double.NaN))));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_ISOTOPE_SCORE, String.valueOf(scoring.getAnnotation(IsotopeScore.class).map(IsotopeScore::score).orElse(Double.NaN))));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_TREE_SCORE, String.valueOf(scoring.getAnnotation(TreeScore.class).map(TreeScore::score).orElse(Double.NaN))));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.ZODIAC_SCORE, String.valueOf(scoring.getAnnotation(ZodiacScore.class).map(ZodiacScore::score).orElse(Double.NaN))));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_SCORE, scoring.getAnnotation(SiriusScore.class).map(String::valueOf).orElse(FormulaScore.NA())));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_ISOTOPE_SCORE, scoring.getAnnotation(IsotopeScore.class).map(String::valueOf).orElse(FormulaScore.NA())));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_TREE_SCORE, scoring.getAnnotation(TreeScore.class).map(String::valueOf).orElse(FormulaScore.NA())));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.ZODIAC_SCORE, scoring.getAnnotation(ZodiacScore.class).map(String::valueOf).orElse(FormulaScore.NA())));
 
         @NotNull final FTree tree = bestHitSource.getAnnotationOrThrow(FTree.class);
         @NotNull final TreeStatistics treeStats = tree.getAnnotationOrThrow(TreeStatistics.class);
@@ -232,12 +232,12 @@ public class MztabMExporter implements Summarizer {
         smeItem.setSmiles(bestHit.getCandidate().getSmiles());
 
         @NotNull final FormulaScoring scoring = bestHitSource.getAnnotationOrThrow(FormulaScoring.class);
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_SCORE, String.valueOf(scoring.getAnnotation(TopFingerblastScore.class).map(TopFingerblastScore::score).orElse(Double.NaN))));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_SCORE, scoring.getAnnotation(TopFingerblastScore.class).map(String::valueOf).orElse(FormulaScore.NA())));
 //        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_TANIMOTO_SIMILARITY, bestHit.getCandidate().));
 
-        double c = scoring.getAnnotation(ConfidenceScore.class).map(ConfidenceScore::score).orElse(Double.NaN);
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_CONFIDENCE, String.valueOf(c)));
-        smeItem.addIdConfidenceMeasureItem(c);
+        final ConfidenceScore c = scoring.getAnnotationOr(ConfidenceScore.class, FormulaScore::NA);
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_CONFIDENCE, c.toString()));
+        smeItem.addIdConfidenceMeasureItem(c.score());
 
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_FINGERPRINT_LOCATION, FingerIdLocations.FINGERPRINTS.relFilePath(bestHitSource.getId())));
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_CANDIDATE_LOCATION, FingerIdLocations.FINGERBLAST.relFilePath(bestHitSource.getId())));

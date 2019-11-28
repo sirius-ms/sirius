@@ -56,9 +56,9 @@ public class StructureCSVExporter {
         writer.write('\t');
         writer.write(r.getCandidate().getInchi().extractFormulaOrThrow().toString());
         writer.write('\t');
-        writer.write(String.valueOf(++rank));
+        writer.write(String.valueOf(rank));
         writer.write('\t');
-        writer.write(String.valueOf(r.getScore()));
+        writer.write(r.getScoreObject().toString());
         writer.write('\t');
         writer.write(escape(r.getCandidate().getName()));
         writer.write('\t');

@@ -112,11 +112,11 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     }
 
     public <T extends FormulaScore> double getScoreValue(Class<T> scoreType) {
-        return getScore(scoreType).map(FormulaScore::score).orElse(Double.NaN);
+        return getScore(scoreType).orElse(FormulaScore.NA(scoreType)).score();
     }
 
     public <T extends FormulaScore> Optional<T> getScore(final Class<T> scoreType) {
-        return getResult(FormulaScoring.class).getAnnotation(FormulaScoring.class).map(it -> it.getAnnotationOrNull(scoreType));
+        return getResult(FormulaScoring.class).getAnnotation(FormulaScoring.class).flatMap(it -> it.getAnnotation(scoreType));
     }
 
     public Optional<FTree> getFragTree(){
