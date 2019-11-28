@@ -55,7 +55,6 @@ public class MS2ExpInputIterator implements Iterator<Ms2Experiment> {
     }
 
     private Iterator<Ms2Experiment> fetchNext() {
-        //todo csv support
         start:
         while (true) {
             if (currentExperimentIterator == null || !currentExperimentIterator.hasNext()) {
