@@ -22,10 +22,13 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
+import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -33,32 +36,56 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class StructureCSVExporter {
-    public static final String HEADER = "inchikey2D\tinchi\tmolecularFormula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n";
+    public static final String HEADER = new TopFingerblastScore(0).name() + "\tmolecularFormula\tInChIkey2D\tInChI\tname\tsmiles\txlogp\tpubchemids\tlinks";
 
     public void exportFingerIdResults(Writer writer, FormulaResult formulaResult) throws IOException {
-        exportFingerIdResults(writer,formulaResult.getAnnotationOrThrow(FingerblastResult.class).getResults());
+        exportFingerIdResults(writer, formulaResult.getAnnotationOrThrow(FingerblastResult.class).getResults());
     }
 
     public void exportFingerIdResults(Writer writer, List<Scored<CompoundCandidate>> candidates) throws IOException {
         exportFingerIdResults(writer, candidates, true);
     }
 
-
-
-    public void exportFingerIdResult(Writer writer, Scored<CompoundCandidate> r, int rank, boolean writeHeader) throws IOException {
-        if (writeHeader)
+    public void exportFingerIdResults(Writer writer, List<Scored<CompoundCandidate>> candidates, boolean writeHeader) throws IOException {
+        if (writeHeader){
             writer.write(HEADER);
+            writer.write("\n");
+        }
+
+        int rank = 0;
+        for (Scored<CompoundCandidate> r : candidates) {
+            exportFingerIdResult(writer, r, false, ++rank);
+        }
+    }
+
+    public void exportFingerIdResult(Writer writer, Scored<CompoundCandidate> r, boolean writeHeader, @Nullable Integer rank) throws IOException {
         final Multimap<String, String> dbMap = r.getCandidate().getLinkedDatabases();
 
+
+        if (writeHeader) {
+            if (rank != null)
+                writer.write("rank\t");
+            writer.write(HEADER);
+            writer.write("\n");
+        }
+
+        if (rank != null) {
+            writer.write(rank);
+            writer.write('\t');
+        }
+
+        writer.write(r.getScoreObject().toString());
+        writer.write('\t');
+        try {
+            writer.write(r.getCandidate().getInchi().extractFormula().toString());
+        } catch (UnknownElementException e) {
+            writer.write("N/A");
+        }finally {
+            writer.write('\t');
+        }
         writer.write(r.getCandidate().getInchiKey2D());
         writer.write('\t');
         writer.write(r.getCandidate().getInchi().in2D);
-        writer.write('\t');
-        writer.write(r.getCandidate().getInchi().extractFormulaOrThrow().toString());
-        writer.write('\t');
-        writer.write(String.valueOf(rank));
-        writer.write('\t');
-        writer.write(r.getScoreObject().toString());
         writer.write('\t');
         writer.write(escape(r.getCandidate().getName()));
         writer.write('\t');
@@ -71,15 +98,6 @@ public class StructureCSVExporter {
         writer.write('\t');
         links(writer, dbMap);
         writer.write('\n');
-    }
-
-    public void exportFingerIdResults(Writer writer, List<Scored<CompoundCandidate>> candidates, boolean writeHeader) throws IOException {
-        if (writeHeader)
-            writer.write(HEADER);
-        int rank = 0;
-        for (Scored<CompoundCandidate> r : candidates) {
-            exportFingerIdResult(writer,r, ++rank,false);
-        }
     }
 
 

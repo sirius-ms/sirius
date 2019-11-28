@@ -34,7 +34,7 @@ import java.util.List;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "night-sky", aliases = {"ns"/*, "sirius"*/}, defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
+@CommandLine.Command(name = "sirius", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
 public class RootOptionsCLI<M extends ProjectSpaceManager> implements RootOptions {
     public static final Logger LOG = LoggerFactory.getLogger(RootOptionsCLI.class);
 
