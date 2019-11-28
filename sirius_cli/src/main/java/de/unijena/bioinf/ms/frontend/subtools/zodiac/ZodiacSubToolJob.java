@@ -182,8 +182,11 @@ public class ZodiacSubToolJob extends DataSetJob {
 
             instances.forEach(this::invalidateResults);
 
-            if (cliOptions.summaryFile != null) {
-                ZodiacUtils.writeResultSummary(scoreResults, clusterResults.getResults(), cliOptions.summaryFile);
+            try { //ensure that summary does not crash job
+                if (cliOptions.summaryFile != null)
+                    ZodiacUtils.writeResultSummary(scoreResults, clusterResults.getResults(), cliOptions.summaryFile);
+            } catch (Exception e) {
+                LOG().error("Error when writing Deprecated ZodiacSummary", e);
             }
         }
     }
