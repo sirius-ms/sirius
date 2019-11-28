@@ -648,9 +648,11 @@ public class Sirius {
 
             if (!ionType.isIonizationUnknown()) {
                 LoggerFactory.getLogger(getClass()).info("Compound has set a fixed Adduct: " + ionType.toString() + ". Transforming trees to Adduct if necessary");
-                irs = irs.stream().map(idr -> IdentificationResult.withPrecursorIonType(idr, ionType)).collect(Collectors.toList());
+                irs = irs.stream()
+                        .filter(idr -> idr.getMolecularFormula().isSubtractable(ionType.getInSourceFragmentation()))
+                        .map(idr -> IdentificationResult.withPrecursorIonType(idr, ionType))
+                        .collect(Collectors.toList());
             }
-
             return irs;
         }
 

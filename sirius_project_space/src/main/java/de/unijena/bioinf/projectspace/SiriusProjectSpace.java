@@ -87,9 +87,9 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     protected synchronized void open() throws IOException {
         ids.clear();
         int maxIndex = 0;
-        for (Path dir : Files.list(root).collect(Collectors.toList())) {
+        for (Path dir : Files.list(root).filter(Files::isDirectory).collect(Collectors.toList())) {
             final Path expInfo = dir.resolve(SiriusLocations.COMPOUND_INFO);
-            if (Files.isDirectory(dir) && Files.exists(expInfo)) {
+            if (Files.exists(expInfo)) {
                 final Map<String, String> keyValues = FileUtils.readKeyValues(expInfo);
                 final int index = Integer.parseInt(keyValues.getOrDefault("index", "0"));
                 final String name = keyValues.getOrDefault("name", "");
@@ -117,7 +117,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             }
         }
 
-        this.compoundCounter.set(maxIndex);
+        this.compoundCounter.set(maxIndex + 1);
         fireProjectSpaceChange(ProjectSpaceEvent.OPENED);
     }
 
