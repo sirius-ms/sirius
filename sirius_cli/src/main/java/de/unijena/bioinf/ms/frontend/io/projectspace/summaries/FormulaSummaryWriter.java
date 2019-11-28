@@ -3,13 +3,14 @@ package de.unijena.bioinf.ms.frontend.io.projectspace.summaries;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.ProjectWriter;
+import de.unijena.bioinf.projectspace.StandardMSFilenameFormatter;
 import de.unijena.bioinf.projectspace.Summarizer;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
@@ -20,12 +21,12 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class FormulaSummaryWriter implements Summarizer {
     final LinkedHashMap<Class<? extends FormulaScore>, String> types = new LinkedHashMap<>();
     final Map<FormulaResult, Class<? extends FormulaScore>> results = new HashMap<>();
+    final Map<FormulaResult, String> prefix = new HashMap<>();
 
     @Override
     public List<Class<? extends DataAnnotation>> requiredFormulaResultAnnotations() {
@@ -52,9 +53,10 @@ public class FormulaSummaryWriter implements Summarizer {
                 results.forEach(r -> {
                     r.getCandidate().getAnnotation(FormulaScoring.class)
                             .ifPresent(s -> {
-                                if (first.getAndSet(false))
+                                if (first.getAndSet(false)) {
                                     this.results.put(r.getCandidate(), r.getScoreObject().getClass());
-
+                                    this.prefix.put(r.getCandidate(), StandardMSFilenameFormatter.simplify(exp.getId().getCompoundName()) + "\t" + exp.getId().getDirectoryName() + "\t");
+                                }
 
                                 scorings.put(r.getCandidate(), s);
                                 s.annotations().forEach((key, value) -> {
@@ -67,7 +69,7 @@ public class FormulaSummaryWriter implements Summarizer {
                 });
 
                 //writing stuff
-                writeCSV(w, types, results);
+                writeCSV(w, types, results, null);
             });
 
             return true;
@@ -76,14 +78,13 @@ public class FormulaSummaryWriter implements Summarizer {
 
     @Override
     public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
-        final Map<Class<? extends FormulaScore>, AtomicInteger> counts = new HashMap<>();
-        results.forEach((k, v) -> Objects.requireNonNull(counts.computeIfAbsent(v, (v2) -> new AtomicInteger(0))).incrementAndGet());
-        Class<? extends FormulaScore> rankingScore = counts.keySet().stream().max(Comparator.comparingInt(k -> counts.get(k).get())).orElse(SiriusScore.class);
 
-        List<Scored<FormulaResult>> r = results.keySet().stream().map(res -> new Scored<>(res, res.getAnnotationOrThrow(FormulaScoring.class).getAnnotation(rankingScore).map(FormulaScore::score).orElse(Double.NaN))).sorted().collect(Collectors.toList());
+        final Class<? extends FormulaScore> rankingScore = ProjectSpaceManager.scorePriorities().stream().filter(types::containsKey).findFirst().orElse(SiriusScore.class);
+        List<SScored<? extends FormulaResult, ? extends FormulaScore>> r = results.keySet().stream()
+                .map(res -> new SScored<>(res, res.getAnnotationOrThrow(FormulaScoring.class).getAnnotationOr(rankingScore, FormulaScore::NA))).collect(Collectors.toList());
 
         writer.textFile(SummaryLocations.FORMULA_SUMMARY_GLOBAL, w -> {
-            writeCSV(w, types, r);
+            writeCSV(w, types, r, prefix);
         });
     }
 
@@ -97,14 +98,28 @@ public class FormulaSummaryWriter implements Summarizer {
         return headerBuilder.toString();
     }
 
-    private void writeCSV(Writer w, LinkedHashMap<Class<? extends FormulaScore>, String> types, List<? extends SScored<FormulaResult, ? extends Score>> results) throws IOException {
-        w.write(makeHeader(types));
+    private void writeCSV(Writer w, LinkedHashMap<Class<? extends FormulaScore>, String> types, List<? extends SScored<? extends FormulaResult, ? extends Score>> results, Map<FormulaResult, String> prefix) throws IOException {
+        final List<Class<? extends FormulaScore>> t = ProjectSpaceManager.scorePriorities().stream().filter(types::containsKey).collect(Collectors.toList());
+        results = results.stream()
+                .sorted((i1, i2) -> FormulaScoring.comparingMultiScore(t).compare(
+                        i1.getCandidate().getAnnotationOrThrow(FormulaScoring.class),
+                        i2.getCandidate().getAnnotationOrThrow(FormulaScoring.class)))
+                .collect(Collectors.toList());
+
+        String header = makeHeader(types);
+        if (prefix != null)
+            header = "name\tid\t" + header;
+
+        w.write(header);
         int rank = 0;
-        for (SScored<FormulaResult, ? extends Score> s : results) {
+        for (SScored<? extends FormulaResult, ? extends Score> s : results) {
             FormulaResult r = s.getCandidate();
             PrecursorIonType ion = r.getId().getIonType();
             FormulaScoring scores = r.getAnnotationOrThrow(FormulaScoring.class);
             FTree tree = r.getAnnotationOrNull(FTree.class);
+
+            if (prefix != null)
+                w.write(prefix.get(r));
 
             w.write(r.getId().getMolecularFormula().toString());
             w.write('\t');
@@ -116,11 +131,11 @@ public class FormulaSummaryWriter implements Summarizer {
 
             w.write(String.valueOf(++rank));
             w.write('\t');
-            w.write(String.valueOf(s.getScore()));
+            w.write(s.getScoreObject().toString());
             w.write('\t');
             //writing different Scores to file e.g. sirius and zodiac
             for (Class<? extends FormulaScore> k : types.keySet()) {
-                w.write(String.valueOf(scores.getAnnotation(k).map(FormulaScore::score).orElse(Double.NaN)));
+                w.write(scores.getAnnotationOr(k, FormulaScore::NA).toString());
                 w.write('\t');
             }
             w.write(tree != null ? String.valueOf(tree.numberOfVertices()) : "");

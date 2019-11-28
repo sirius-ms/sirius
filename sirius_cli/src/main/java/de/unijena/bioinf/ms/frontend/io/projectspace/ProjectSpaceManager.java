@@ -1,11 +1,15 @@
 package de.unijena.bioinf.ms.frontend.io.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
 import de.unijena.bioinf.fingerid.CanopusResult;
+import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
+import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.FormulaSummaryWriter;
 import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.StructureSummaryWriter;
@@ -14,12 +18,17 @@ import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.*;
 import de.unijena.bioinf.projectspace.sirius.*;
+import de.unijena.bioinf.sirius.scores.IsotopeScore;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
+import de.unijena.bioinf.sirius.scores.TreeScore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -105,6 +114,18 @@ public class ProjectSpaceManager implements Iterable<Instance> {
                 new MztabMExporter()
         };
     }
+
+    public static List<Class<? extends FormulaScore>> scorePriorities() {
+        final LinkedList<Class<? extends FormulaScore>> list = new LinkedList<>();
+        list.add(ConfidenceScore.class);
+        list.add(TopFingerblastScore.class);
+        list.add(ZodiacScore.class);
+        list.add(SiriusScore.class);
+        list.add(TreeScore.class);
+        list.add(IsotopeScore.class);
+        return list;
+    }
+
     public static ProjectSpaceConfiguration newDefaultConfig(){
         final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
         //configure ProjectSpaceProperties

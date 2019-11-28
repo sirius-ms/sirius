@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.zodiac;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
@@ -146,7 +147,6 @@ public class ZodiacSubToolJob extends DataSetJob {
                     .awaitResult();
             final Map<Ms2Experiment, Map<FTree, ZodiacScore>> scoreResults = zodiac.getZodiacScoredTrees();
 
-            final ZodiacScore Unassigned = new ZodiacScore(Double.NaN);
 
             //add score and set new Ranking score
             instances.forEach(inst -> {
@@ -161,7 +161,7 @@ public class ZodiacSubToolJob extends DataSetJob {
                     formulaResults.forEach(fr -> {
                         FormulaScoring scoring = fr.getAnnotationOrThrow(FormulaScoring.class);
                         scoring.setAnnotation(ZodiacScore.class,
-                                sTress.getOrDefault(fr.getAnnotationOrThrow(FTree.class), Unassigned)
+                                sTress.getOrDefault(fr.getAnnotationOrThrow(FTree.class), FormulaScore.NA(ZodiacScore.class))
                         );
 
                         inst.updateFormulaResult(fr, FormulaScoring.class);

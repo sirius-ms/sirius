@@ -25,7 +25,7 @@ import java.util.List;
 
 public class StructureSummaryWriter implements Summarizer {
     private String header;
-    private List<Scored<String>> topHits = new ArrayList<>();
+    private List<SScored<String, ? extends FormulaScore>> topHits = new ArrayList<>();
 
     @Override
     public List<Class<? extends DataAnnotation>> requiredFormulaResultAnnotations() {
@@ -66,17 +66,16 @@ public class StructureSummaryWriter implements Summarizer {
                             fileWriter.write(hits);
 
                             // collect data for project wide summary
-                            final double confidence = results.getCandidate().getAnnotation(FormulaScoring.class).
-                                    map(s -> s.getAnnotation(ConfidenceScore.class).orElse(new ConfidenceScore(Double.NaN))).
-                                    map(ConfidenceScore::score).orElse(Double.NaN);
+                            final ConfidenceScore confidence = results.getCandidate().getAnnotation(FormulaScoring.class).
+                                    map(s -> s.getAnnotationOr(ConfidenceScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(ConfidenceScore.class));
 
                             final @NotNull Ms2Experiment experimentResult = exp.getAnnotationOrThrow(Ms2Experiment.class);
                             final String[] lines = hits.split("\n", 2);
 
                             if (lines.length >= 1)
-                                topHits.add(new Scored<>(StandardMSFilenameFormatter.simplifyURL(experimentResult.getSource().getFile()) + "\t" + StandardMSFilenameFormatter.simplify(experimentResult.getName()) + "\t" + confidence + "\t" + lines[0] + "\n", confidence));
+                                topHits.add(new SScored<>(StandardMSFilenameFormatter.simplify(experimentResult.getName()) + "\t" + exp.getId().getDirectoryName() + "\t" + confidence + "\t" + lines[0] + "\n", confidence));
                             if (header == null)
-                                header = "source\texperimentName\tconfidence\tformula\tadduct\tprecursorFormula\t" + StructureCSVExporter.HEADER;
+                                header = "name\tid\tconfidence\tformula\tadduct\tprecursorFormula\t" + StructureCSVExporter.HEADER;
                         }
                     }
                 });
@@ -93,7 +92,7 @@ public class StructureSummaryWriter implements Summarizer {
             writer.textFile(SummaryLocations.STRUCTURE_SUMMARY_GLOBAL, w -> {
                 topHits.sort(Collections.reverseOrder());
                 w.write(header);
-                for (Scored<String> s : topHits)
+                for (SScored<String,? extends FormulaScore> s : topHits)
                     w.write(s.getCandidate());
             });
         }
