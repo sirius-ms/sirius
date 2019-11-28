@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface Annotated<A extends DataAnnotation> {
@@ -60,6 +61,10 @@ public interface Annotated<A extends DataAnnotation> {
      */
     default <T extends A> T getAnnotation(@NotNull Class<T> klass, @NotNull Supplier<T> defaultValueSupplier) {
         return getAnnotation(klass).orElseGet(defaultValueSupplier);
+    }
+
+    default <T extends A> T getAnnotationOr(@NotNull Class<T> klass, @NotNull Function<Class<T>, T> defaultValueFunction) {
+        return getAnnotation(klass).orElse(defaultValueFunction.apply(klass));
     }
 
     default <T extends A> Optional<T> getAnnotation(@NotNull Class<T> klass) {

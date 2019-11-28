@@ -3,6 +3,7 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -18,7 +19,13 @@ public class FormulaScoringSerializer implements ComponentSerializer<FormulaResu
         final FormulaScoring scoring = new FormulaScoring();
         for (String key : kv.keySet()) {
             final Class<? extends FormulaScore> s = (Class<? extends FormulaScore>) Score.resolve(key);
-            final double value = Double.parseDouble(kv.get(key));
+            double value;
+            try {
+                value = Double.parseDouble(kv.get(key));
+            } catch (NumberFormatException e) {
+                LoggerFactory.getLogger(getClass()).warn("Could not parse score value '" + key + ":" + kv.get(key) + "'. Setting value to " + FormulaScore.NA());
+                value = FormulaScore.NA(s).score();
+            }
             scoring.addAnnotation(s, value);
         }
         return scoring;
