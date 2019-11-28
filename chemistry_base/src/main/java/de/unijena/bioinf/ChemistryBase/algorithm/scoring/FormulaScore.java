@@ -53,7 +53,11 @@ public abstract class FormulaScore extends Score.AbstDoubleScore<FormulaScore> {
 
     @Override
     public final String toString() {
-        return Double.compare(MISSING_SCORE_VALUE, score()) == 0 ? NA() : String.valueOf(score());
+        return isNa() ? NA() : String.valueOf(score());
+    }
+
+    public boolean isNa() {
+        return Double.compare(MISSING_SCORE_VALUE, score()) == 0;
     }
 
     public synchronized static <T extends FormulaScore> T NA(@NotNull Class<T> scoreType) {
