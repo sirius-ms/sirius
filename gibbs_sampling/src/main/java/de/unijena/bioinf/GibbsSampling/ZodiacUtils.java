@@ -653,7 +653,11 @@ public class ZodiacUtils {
         for (int i = 0; i < sortedExperiments.length; i++) {
             final Ms2Experiment experiment = sortedExperiments[i];
             CompoundResult<FragmentsCandidate> compoundResult = experimentToZodiacResult.get(experiment);
-            if (compoundResult==null) throw new RuntimeException("could not find ZODIAC result for compound  "+experiment.getName());
+            if (compoundResult==null) {
+                LoggerFactory.getLogger(ZodiacUtils.class).warn("could not find ZODIAC result for compound  "+experiment.getName());
+                continue;
+//                throw new RuntimeException("could not find ZODIAC result for compound  "+experiment.getName());
+            }
 
             final String siriusMF = initial[i]==null?null:initial[i].getCandidate().getRoot().getFormula().formatByHill();
             final double siriusScore = initial[i]==null?Double.NaN:initial[i].getScore();
