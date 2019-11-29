@@ -177,7 +177,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         return candidates;
     }
 
-    private synchronized List<FingerprintCandidate> requestFormula(File output, MolecularFormula formula, BioFilter bioFilter) throws IOException {
+    private List<FingerprintCandidate> requestFormula(File output, MolecularFormula formula, BioFilter bioFilter) throws IOException {
         final HttpGet get;
         try {
             String biof = bioFilter == BioFilter.ONLY_BIO ? "bio/" : (bioFilter == BioFilter.ONLY_NONBIO) ? "not-bio/" : null;
