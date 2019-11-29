@@ -86,7 +86,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     protected synchronized void open() throws IOException {
         ids.clear();
-        int maxIndex = 0;
+        int maxIndex = -1;
         for (Path dir : Files.list(root).filter(Files::isDirectory).collect(Collectors.toList())) {
             final Path expInfo = dir.resolve(SiriusLocations.COMPOUND_INFO);
             if (Files.exists(expInfo)) {
