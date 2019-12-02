@@ -13,6 +13,7 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
+import de.unijena.bioinf.net.NetUtils;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.fingerid.CSIClientData;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
@@ -51,7 +52,8 @@ public class FingeridSubToolJob extends InstanceJob {
         //todo currently there is only csi -> change if there are multiple methods
         // we need to run multiple structure elucidation jobs and need  different prediction results then.
         EnumSet<PredictorType> predictors = type.toPredictors(inst.getExperiment().getPrecursorIonType().getCharge());
-        final @NotNull CSIPredictor csi = (CSIPredictor) ApplicationCore.WEB_API.getPredictorFromType(predictors.iterator().next());
+        final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor) ApplicationCore.WEB_API.getPredictorFromType(predictors.iterator().next()));
+
         final FingerIDJJob job = csi.makeFingerIDJJob(inst.getExperiment(),
                 formulaResults.stream().map(res -> new IdentificationResult<>(res.getCandidate().getAnnotationOrThrow(FTree.class), res.getScoreObject()))
                         .collect(Collectors.toList()));
