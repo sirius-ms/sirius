@@ -202,7 +202,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
                 }
             }
             // move tempFile
-            if (!tempFile.exists()) {
+            if (!output.exists()) {
                 if (!tempFile.renameTo(output)) {
                     tempFile.delete();
                 }
@@ -230,19 +230,21 @@ public class RESTDatabase extends AbstractChemicalDatabase {
                 try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new InputStreamReader(zin))) {
                     while (fciter.hasNext()) fingerprintCandidates.add(wrap(fciter.next()));
                 }
+                return fingerprintCandidates;
             } catch (IOException | JsonException e) {
-                LoggerFactory.getLogger(RESTDatabase.class).error("Error when searching for " + formula.toString() + " in " + bioFilter.name() + "file database.");
-                throw new ChemicalDatabaseException(e);
-            }
-        } else {
-            try {
-                for (FingerprintCandidate fc : requestFormula(stfile, formula, bioFilter)) {
-                    fingerprintCandidates.add(wrap(fc));
-                }
-            } catch (IOException e) {
-                throw new ChemicalDatabaseException(e);
+                LoggerFactory.getLogger(RESTDatabase.class).error("Error when searching for " + formula.toString() + " in " + bioFilter.name() + "file database. Deleting cache file '" + stfile.getAbsolutePath() + "' an try fetching from Server");
+                stfile.delete();
             }
         }
+
+        try {
+            for (FingerprintCandidate fc : requestFormula(stfile, formula, bioFilter)) {
+                fingerprintCandidates.add(wrap(fc));
+            }
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+
         return fingerprintCandidates;
     }
 
