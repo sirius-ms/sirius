@@ -70,22 +70,27 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
     }
 
     public Ms2Experiment parse(BufferedReader reader, URL source, ParameterConfig config) throws IOException {
+
         ParserInstance p = null;
-        try {
-            if (reader == lastReader) {
-                p = new ParserInstance(source, reader, config);
-                p.newCompound(lastCompundName);
-                return p.parse();
-            } else {
-                p = new ParserInstance(source, reader, config);
-                return p.parse();
-            }
-        } finally {
-            if (p != null) {
-                if (p.compoundName != null) {
-                    lastReader = reader;
+        while (true) {
+            try {
+                if (reader == lastReader) {
+                    p = new ParserInstance(source, reader, config);
+                    p.newCompound(lastCompundName);
+                    return p.parse();
+                } else {
+                    p = new ParserInstance(source, reader, config);
+                    return p.parse();
                 }
-                lastCompundName = p.compoundName;
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).warn("Error when parsing Compound '" + p.compoundName + "'. Skipping this entry!");
+            } finally {
+                if (p != null) {
+                    if (p.compoundName != null) {
+                        lastReader = reader;
+                    }
+                    lastCompundName = p.compoundName;
+                }
             }
         }
     }
@@ -198,9 +203,20 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                             }
                         }
                     }
-                } catch (RuntimeException e) {
-                    e.printStackTrace();
-                    error(e.toString());
+                } catch (IOException | RuntimeException e) {
+//                   go to next compound
+                    line = reader.readLine();
+                    while (line != null && !line.startsWith(">compound")) {
+                        try {
+                            line = reader.readLine();
+                        } catch (IOException ex) {
+                            LoggerFactory.getLogger(getClass()).warn("Error when cleaning up after Exception", ex);
+                        }
+                    }
+
+                    if (e instanceof RuntimeException)
+                        error(e.toString());
+                    else throw e;
                 }
             }
             flushCompound();
