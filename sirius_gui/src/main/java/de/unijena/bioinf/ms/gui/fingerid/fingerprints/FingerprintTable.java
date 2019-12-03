@@ -7,9 +7,12 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -36,18 +39,20 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Fo
         this.visualizations = visualizations;
     }
 
-    private void setFScores(PredictorType predictorType) {
+    private void setFScores(PredictorType predictorType) throws IOException {
         if (this.predictorType == predictorType && fscores != null) return;
         this.predictorType = predictorType;
+
         final CSIPredictor csi = (CSIPredictor) csiApi.getPredictorFromType(predictorType);
         final PredictionPerformance[] performances = csi.getPerformances();
         this.fscores = new double[csi.getFingerprintVersion().getMaskedFingerprintVersion().size()];
         this.trainingExamples = new int[fscores.length];
         int k = 0;
         for (int index : csi.getFingerprintVersion().allowedIndizes()) {
-            this.trainingExamples[index] = (int)(performances[k].withRelabelingAllowed(false).getCount());
+            this.trainingExamples[index] = (int) (performances[k].withRelabelingAllowed(false).getCount());
             this.fscores[index] = performances[k++].getF();
         }
+
     }
 
     @Override
@@ -56,14 +61,21 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Fo
         elementList.clear();
         if (sre != null) {
             sre.getFingerprintResult().ifPresent(fpr -> {
-                setFScores(sre.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE);
-                List<MolecularPropertyTableEntry> tmp = new ArrayList<>();
-                for (final FPIter iter : fpr.fingerprint) {
-                    tmp.add(new MolecularPropertyTableEntry(fpr.fingerprint, visualizations[iter.getIndex()], fscores[iter.getIndex()], iter.getIndex(), trainingExamples[iter.getIndex()]));
+                try {
+                    setFScores(sre.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE);
+                    List<MolecularPropertyTableEntry> tmp = new ArrayList<>();
+                    for (final FPIter iter : fpr.fingerprint) {
+                        tmp.add(new MolecularPropertyTableEntry(fpr.fingerprint, visualizations[iter.getIndex()], fscores[iter.getIndex()], iter.getIndex(), trainingExamples[iter.getIndex()]));
+                    }
+                    elementList.addAll(tmp);
+                } catch (IOException e) {
+                    new ExceptionDialog(MainFrame.MF, "Could not get Fingerprint information! Try again later...");
+                    LoggerFactory.getLogger(getClass()).warn("Could not get Fingerprint information! Try again later", e);
+                    elementList.clear();
                 }
-                elementList.addAll(tmp);
             });
         }
+
         notifyListeners(sre, null, getElementList(), getResultListSelectionModel());
     }
 }
