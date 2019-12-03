@@ -63,7 +63,11 @@ public class DatasourceService {
         UNDP("Natural Products", 32768, "SELECT undp_id FROM ref.undp WHERE inchi_key_1 = ?", null),
         YMDB("YMDB", 65536,         "SELECT ymdb_id FROM ref.ymdb WHERE inchi_key_1 = ?", "http://www.ymdb.ca/compounds/YMDB%d05"),
         PLANTCYC("Plantcyc", 131072, "SELECT unique_id FROM ref.plantcyc WHERE inchi_key_1 = ?", "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s"),
-        PUBCHEMANNOTATION("PubChem Classification", 16777216,  null,null, 0), //2**24; Pubchem Annotations now have a separate flag
+        PUBCHEMANNOTATIONBIO("PubChem classifications: bio and metabolites", 16777216,  null,null, 0), //2**24; Pubchem Annotations now have a separate flag
+        PUBCHEMANNOTATIONDRUG("PubChem classifications: drug", 33554432,  null,null, 0),
+        PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem classifications: safety and toxic", 67108864,  null,null, 0),
+        PUBCHEMANNOTATIONFOOD("PubChem classification: food", 134217728,  null,null, 0),
+
         KEGGMINE("KEGG Mine", 8589934592L, null,null, 8589934592L | 256L ),
         ECOCYCMINE("EcoCyc Mine", 17179869184L, null,null, 17179869184L | 2048L),
         YMDBMINE("YMDB Mine", 34359738368L, null,null, 34359738368L | 65536L);
