@@ -51,6 +51,7 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -137,7 +138,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
     }
 
-    protected CSIPredictor getCorrespondingCSIPredictor() {
+    protected CSIPredictor getCorrespondingCSIPredictor() throws IOException {
         return (CSIPredictor) ApplicationCore.WEB_API.getPredictorFromType(adduct.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_POSITIVE);
     }
 
@@ -312,11 +313,16 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     }
 
     public FingerprintAgreement getSubstructures(ProbabilityFingerprint prediction) {
-        if (substructures == null)
-            substructures = FingerprintAgreement.getSubstructures(
-                    prediction.getFingerprintVersion(), prediction.toProbabilityArray(),
-                    candidate.getFingerprint().toBooleanArray(), getCorrespondingCSIPredictor().getPerformances(),
-                    0.25);
+        if (substructures == null) {
+            try {
+                substructures = FingerprintAgreement.getSubstructures(
+                        prediction.getFingerprintVersion(), prediction.toProbabilityArray(),
+                        candidate.getFingerprint().toBooleanArray(), getCorrespondingCSIPredictor().getPerformances(),
+                        0.25);
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).warn("Could not reach WebAPI. Cause: " + e.getMessage());
+            }
+        }
         return substructures;
     }
 
