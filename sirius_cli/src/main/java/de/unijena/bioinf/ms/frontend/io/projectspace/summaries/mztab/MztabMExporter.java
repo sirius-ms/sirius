@@ -39,6 +39,7 @@ import uk.ac.ebi.pride.jmztab2.model.MZTabUtils;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -339,10 +340,14 @@ public class MztabMExporter implements Summarizer {
     }
 
     public List<SpectraRef> extractReferencesAnRuns(@NotNull Ms2Experiment exp) {
-        List<Spectrum> specs = new ArrayList<>(exp.getMs2Spectra().size() + exp.getMs1Spectra().size());
+        List<Spectrum> specs = new ArrayList<>(exp.getMs2Spectra().size() + exp.getMs1Spectra().size() + 1);
+        specs.add(exp.getMergedMs1Spectrum());
         specs.addAll(exp.getMs1Spectra());
         specs.addAll(exp.getMs2Spectra());
 
+        final AdditionalFields global = exp.getAnnotation(AdditionalFields.class).orElse(new AdditionalFields());
+
+        final String globalSource = global.getOrDefault(SOURCE_FILE, Optional.ofNullable(exp.getSource()).map(URL::getFile).orElse(null));
 
         return specs.stream().map((it) -> {
             if (it instanceof AnnotatedSpectrum)
@@ -353,40 +358,47 @@ public class MztabMExporter implements Summarizer {
             SpectraRef ref = new SpectraRef();
             String specref = it.get(SPECTRUM_ID);
             Integer runID = null;
-            if (specref != null) {
-                if (specref.startsWith("ms_run[") && specref.contains("]:")) { //todo pattern matcher
-                    final String[] s = specref.split(":", 2);
-                    specref = s[1];
-                    try {
-                        runID = Integer.parseInt(s[0].substring(s[0].indexOf('[') + 1, s[0].indexOf(']')));
-                    } catch (NumberFormatException e) {
-                        runID = null;
-                    }
+//            String scanNumber =  it.get(SCAN_NUMBER);
+//            if (scanNumber != null)
+
+
+            if (specref == null)
+                return null;
+
+            if (specref.startsWith("ms_run[") && specref.contains("]:")) { //todo pattern matcher
+                final String[] s = specref.split(":", 2);
+                specref = s[1];
+                try {
+                    runID = Integer.parseInt(s[0].substring(s[0].indexOf('[') + 1, s[0].indexOf(']')));
+                } catch (NumberFormatException e) {
+                    runID = null;
                 }
-                ref.setReference(specref);
+            }
+            ref.setReference(specref);
+
+            String source = it.getOrDefault(SOURCE_FILE, globalSource);
+            if (source == null)
+                return null;
+
+            MsRun run = pathToRun.get(source);
+            if (run == null) {
+                run = new MsRun()
+                        .id(runID != null ? runID : pathToRun.size() + 1)
+                        .location(source);
+                pathToRun.put(source, run);
             }
 
-            String source = it.get(SOURCE_FILE);
-            if (source != null) {
-                MsRun run = pathToRun.get(source);
-                if (run == null) {
-                    run = new MsRun()
-                            .id(runID != null ? runID : pathToRun.size() + 1)
-                            .location(source);
-                    pathToRun.put(source, run);
-                }
+            if (run.getFormat() == null && it.containsKey(SOURCE_FILE_FORMAT))
+                run.setFormat(MZTabUtils.parseParam(it.get(SOURCE_FILE_FORMAT)));
+            if (run.getIdFormat() == null && it.containsKey(SPECTRUM_ID_FORMAT))
+                run.setIdFormat(MZTabUtils.parseParam(it.get(SPECTRUM_ID_FORMAT)));
 
-                if (run.getFormat() == null && it.containsKey(SOURCE_FILE_FORMAT))
-                    run.setFormat(MZTabUtils.parseParam(it.get(SOURCE_FILE_FORMAT)));
-                if (run.getIdFormat() == null && it.containsKey(SPECTRUM_ID_FORMAT))
-                    run.setIdFormat(MZTabUtils.parseParam(it.get(SPECTRUM_ID_FORMAT)));
+            final Parameter polarity = SiriusMZTabParameter.getScanPolarity(exp.getPrecursorIonType());
+            if (polarity != null && (run.getScanPolarity() == null || !run.getScanPolarity().contains(polarity)))
+                run.addScanPolarityItem(polarity);
 
-                final Parameter polarity = SiriusMZTabParameter.getScanPolarity(exp.getPrecursorIonType());
-                if (polarity != null && (run.getScanPolarity() == null || !run.getScanPolarity().contains(polarity)))
-                    run.addScanPolarityItem(polarity);
+            ref.setMsRun(run);
 
-                ref.setMsRun(run);
-            }
 
             return ref;
         }).collect(Collectors.toCollection(ArrayList::new));
