@@ -28,7 +28,7 @@ public class SiriusProperties extends PropertyManager {
         return SIRIUS_PROPERTIES_FILE;
     }
 
-    static void initSiriusPropertyFile(@NotNull File siriusPropsFile, @NotNull PropertiesConfiguration baseConfig) {
+    public static void initSiriusPropertyFile(@NotNull File siriusPropsFile, @NotNull PropertiesConfiguration baseConfig) {
         SIRIUS_PROPERTIES_FILE = addPersistentPropertiesFile(siriusPropsFile, baseConfig, false);
     }
 
