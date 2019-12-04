@@ -16,6 +16,7 @@ public final class PersistentProperties {
 
     protected final File propertiesFile;
     protected final PropertiesConfiguration config;
+    protected final FileHandler fileHandler;
     protected final PropertyFileWatcher watcher;
 
 
@@ -36,7 +37,7 @@ public final class PersistentProperties {
             this.config = SiriusConfigUtils.newConfiguration(propertiesFile);
             this.watcher = null;
         }
-
+        fileHandler = new FileHandler(config);
     }
 
     public void setProperty(String key, String value) {
@@ -44,7 +45,7 @@ public final class PersistentProperties {
     }
 
 
-    public void setAndStoreProperty(String propertyName, String propertyValue) {
+    public synchronized void setAndStoreProperty(String propertyName, String propertyValue) {
         setProperty(propertyName, propertyValue);
         store();
     }
@@ -53,7 +54,7 @@ public final class PersistentProperties {
         properties.forEach((k, v) -> setProperty((String) k, (String) v));
     }
 
-    public void setAndStoreProperties(Properties properties) {
+    public synchronized void setAndStoreProperties(Properties properties) {
         setProperties(properties);
         store();
     }
@@ -75,7 +76,7 @@ public final class PersistentProperties {
 
     public synchronized void store() {
         try {
-            new FileHandler(config).save(propertiesFile);
+            fileHandler.save(propertiesFile);
         } catch (ConfigurationException e) {
             LOGGER.error("Could not save new Properties file! Changes not saved!", e);
         }
