@@ -19,6 +19,7 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.ms.annotations.SpectrumAnnotation;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -27,7 +28,14 @@ import java.util.Iterator;
  * Mutable spectrum with header information about MS/MS.
  * Allows shallow copy which do not copy all peak data and, thus,
  */
-public class MutableMs2Spectrum implements Ms2Spectrum<Peak>,MutableSpectrum<Peak> {
+public class MutableMs2Spectrum implements Ms2Spectrum<Peak>, MutableSpectrum<Peak>, AnnotatedSpectrum<Peak> {
+
+    private final Annotations<SpectrumAnnotation> annotations = new Annotations<>();
+
+    @Override
+    public Annotations<SpectrumAnnotation> annotations() {
+        return annotations;
+    }
 
     public static class Header implements Cloneable {
         private double precursorMz = 0d;
