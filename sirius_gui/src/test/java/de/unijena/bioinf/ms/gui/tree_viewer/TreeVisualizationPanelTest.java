@@ -14,11 +14,19 @@ public class TreeVisualizationPanelTest{
     public static void main(String[] args) throws InterruptedException {
         JFrame frame = new JFrame("TreeViewer Test");
         WebViewTreeViewer browser = new WebViewTreeViewer();
+
         browser.addJS("d3.min.js");
         browser.addJS("d3-colorbar.js");
-        browser.addJS("treeViewer.js");
-        browser.addJS("treeViewerSettings.js");
-        frame.add((JFXPanel) browser);
+        browser.addJS("tree_viewer/treeViewer.js");
+        browser.addJS("tree_viewer/treeViewerSettings.js");
+//        browser.addJS("tree_viewer/treeViewerConnector.js");
+
+
+//        browser.addJS("d3.min.js");
+//        browser.addJS("d3-colorbar.js");
+//        browser.addJS("treeViewer.js");
+//        browser.addJS("treeViewerSettings.js");
+        frame.add(browser);
         browser.load();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();

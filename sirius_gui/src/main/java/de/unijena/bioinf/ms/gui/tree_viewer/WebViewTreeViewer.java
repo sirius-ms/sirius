@@ -1,11 +1,5 @@
 package de.unijena.bioinf.ms.gui.tree_viewer;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Map;
-
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -14,6 +8,13 @@ import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Map;
 
 /*
 NOTE: first create new WebViewTreeViewer, then add all JS resources (addJS);
@@ -68,28 +69,30 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
                         public void changed(ObservableValue ov,
                                             Worker.State oldState,
                                             Worker.State newState) {
-                            if (newState == Worker.State.SUCCEEDED){
+                            if (newState == Worker.State.SUCCEEDED) {
                                 JSObject win = (JSObject) executeJS("window");
                                 for (Map.Entry<String, Object> entry :
-                                         bridges.entrySet())
+                                        bridges.entrySet())
                                     win.setMember(entry.getKey(),
-                                                  entry.getValue());
+                                            entry.getValue());
                                 executeJS("applySettings()");
                             }
                         }
                     });
-            });
-    }
-
-    public void loadTree(String json_tree){
-        Platform.runLater(() -> {
-                webView.getEngine().executeScript("loadJSONTree('" +
-                                                  json_tree.replace("\n", " ")
-                                                  + "')");
         });
     }
 
-    public Object executeJS(String js_code){
+    public void loadTree(@Nullable String json_tree) {
+        //todo clear tree on null or empty
+        final String jt = json_tree == null || json_tree.isEmpty() ? "{}" : json_tree;
+        Platform.runLater(() -> {
+            webView.getEngine().executeScript("loadJSONTree('" +
+                    jt.replace("\n", " ")
+                    + "')");
+        });
+    }
+
+    public Object executeJS(String js_code) {
         return webView.getEngine().executeScript(js_code);
     }
 

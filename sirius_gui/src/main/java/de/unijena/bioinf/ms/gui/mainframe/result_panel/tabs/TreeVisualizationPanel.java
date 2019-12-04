@@ -12,11 +12,12 @@ import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.ms.gui.tree_viewer.*;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.gui.tree_viewer.*;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -48,8 +49,8 @@ public class TreeVisualizationPanel extends JPanel
                 "for the selected molecular formula (JS)";
     }
 
-    FormulaResultBean sre;
-
+    //    FormulaResultBean sre;
+    FTree ftree;
     TreeViewerBrowser browser;
     TreeViewerBridge jsBridge;
     JToolBar toolBar;
@@ -146,27 +147,22 @@ public class TreeVisualizationPanel extends JPanel
         applyPreset((String) presetBox.getSelectedItem());
     }
 
-    public void showTree(FormulaResultBean sre) {
-        this.sre = sre;
-        if (sre != null) {
-            FTree tree = sre.getResult(FTree.class).getAnnotationOrNull(FTree.class);
-            String jsonTree = new FTJsonWriter().treeToJsonString(tree);
-            browser.loadTree(jsonTree);
-            for (Component comp : toolBar.getComponents())
-                comp.setEnabled(true);
-            Platform.runLater(() -> {
-                // adapt scale slider to tree scales
-                scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin()
-                        * 100));
-                scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
-                scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
-            });
-            if (settings == null)
-                settings = new TreeViewerSettings(this);
-        } else {
-            for (Component comp : toolBar.getComponents())
-                comp.setEnabled(false);
-        }
+    public void showTree(@NotNull FTree tree) {
+        this.ftree = tree;
+        String jsonTree = new FTJsonWriter().treeToJsonString(tree);
+        browser.loadTree(jsonTree);
+        for (Component comp : toolBar.getComponents())
+            comp.setEnabled(true);
+        Platform.runLater(() -> {
+            // adapt scale slider to tree scales
+            scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin()
+                    * 100));
+            scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
+            scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
+        });
+        if (settings == null)
+            settings = new TreeViewerSettings(this);
+
     }
 
     @Override
@@ -174,7 +170,13 @@ public class TreeVisualizationPanel extends JPanel
                                FormulaResultBean sre,
                                List<FormulaResultBean> resultElements,
                                ListSelectionModel selections) {
-        showTree(sre);
+        if (sre != null && sre.getFragTree().isPresent())
+            showTree(sre.getFragTree().get());
+        else {
+            browser.loadTree(null);
+            for (Component comp : toolBar.getComponents())
+                comp.setEnabled(false);
+        }
     }
 
     public void applyPreset(String preset) {
@@ -387,13 +389,13 @@ public class TreeVisualizationPanel extends JPanel
         if (selectedFile != null && ff != FileFormat.none) {
             try {
                 if (ff == FileFormat.dot) {
-                    new FTDotWriter().writeTreeToFile(selectedFile, sre.getFragTree().orElseThrow());
+                    new FTDotWriter().writeTreeToFile(selectedFile, ftree);
                 } else if (ff == FileFormat.svg) {
                     TreeViewerIO.writeSVG(selectedFile, jsBridge.getSVG());
                 } else if (ff == FileFormat.pdf) {
                     TreeViewerIO.writePDF(selectedFile, jsBridge.getSVG());
                 } else if (ff == FileFormat.json) {
-                    new FTJsonWriter().writeTreeToFile(selectedFile, sre.getResult(FTree.class).getAnnotationOrNull(FTree.class));
+                    new FTJsonWriter().writeTreeToFile(selectedFile, ftree);
                 }
             } catch (Exception e2) {
                 ErrorReportDialog fed = new ErrorReportDialog(MF, e2.getMessage());
@@ -409,7 +411,7 @@ public class TreeVisualizationPanel extends JPanel
         Platform.runLater(() -> {
             browser.executeJS("window.outerHeight = " + String.valueOf(height));
             browser.executeJS("window.outerWidth = " + String.valueOf(width));
-            if (sre != null) {
+            if (ftree != null) {
                 browser.executeJS("update()");
                 Platform.runLater(() -> {
                     // adapt scale slider to tree scales
