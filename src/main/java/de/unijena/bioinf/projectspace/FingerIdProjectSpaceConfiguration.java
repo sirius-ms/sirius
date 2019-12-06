@@ -1,7 +1,5 @@
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
