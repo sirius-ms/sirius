@@ -11,6 +11,7 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -72,10 +73,12 @@ public class RESTDatabase extends AbstractChemicalDatabase {
     private static URI getDefaultHost() {
         String host = FingerIDProperties.fingeridWebHost();
         String port = FingerIDProperties.fingeridWebPort();
-        if (port == null)
-            return URI.create(host + "/csi-fingerid-" + FingerIDProperties.fingeridVersion());
+        if (PropertyManager.getBoolean("de.unijena.bioinf.net.DEBUG", false))
+            return URI.create("http://localhost:8080");
+        else if (port == null)
+            return URI.create(host + "/v" + FingerIDProperties.fingeridVersion());
         else
-            return URI.create(host + ":" + port + "/csi-fingerid-" + FingerIDProperties.fingeridVersion());
+            return URI.create(host + ":" + port + "/v" + FingerIDProperties.fingeridVersion());
     }
 
     public static File defaultCacheDir() {
@@ -86,7 +89,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
 
     public boolean testConnection() {
         try {
-            URIBuilder builder = getFingerIdURI("");
+            URIBuilder builder = getFingerIdURI("/actuator/health");
             HttpURLConnection urlConn = (HttpURLConnection) builder.build().toURL().openConnection();
             urlConn.connect();
 
@@ -141,11 +144,11 @@ public class RESTDatabase extends AbstractChemicalDatabase {
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
         final HttpGet get;
         try {
-            URIBuilder builder = getFingerIdURI("/webapi/formulasdb.json/");
+            URIBuilder builder = getFingerIdURI("/api/formulasdb");
             builder.setParameter("mass", String.valueOf(mass));
             builder.setParameter("ppm", String.valueOf(deviation.getPpm()));
             builder.setParameter("ion", ionType.toString());
-            if (bioFilter == BioFilter.ONLY_BIO) builder.setParameter("bio", "true");
+            builder.setParameter("db", bioFilter.name());
 
             get = new HttpGet(builder.build());
 
@@ -180,11 +183,9 @@ public class RESTDatabase extends AbstractChemicalDatabase {
     private List<FingerprintCandidate> requestFormula(File output, MolecularFormula formula, BioFilter bioFilter) throws IOException {
         final HttpGet get;
         try {
-            String biof = bioFilter == BioFilter.ONLY_BIO ? "bio/" : (bioFilter == BioFilter.ONLY_NONBIO) ? "not-bio/" : null;
-            if (biof == null) throw new IllegalArgumentException();
-            get = new HttpGet(getFingerIdURI("/webapi/compounds/" + biof + formula.toString() + ".json").build());
+            if (bioFilter == BioFilter.ALL) throw new IllegalArgumentException();
+            get = new HttpGet(getFingerIdURI("/api/compounds/" + formula.toString()).setParameter("db", bioFilter.name()).build());
             get.setConfig(RequestConfig.custom().setConnectTimeout(60000).setContentCompressionEnabled(true).build());
-
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
@@ -255,7 +256,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         final Iterator<String> keyIter = inchi_keys.iterator();
         for (int i = 0; i < n; i += 1000) {
             try {
-                final HttpPost post = new HttpPost(getFingerIdURI("/webapi/compounds.json").build());
+                final HttpPost post = new HttpPost(getFingerIdURI("/api/compounds").build());
                 StringBuilder buffer = new StringBuilder(Math.min(n - i, 1000) * 15);
                 for (int k = 0; keyIter.hasNext() && k < 1000; ++k) {
                     buffer.append(keyIter.next()).append('\n');
