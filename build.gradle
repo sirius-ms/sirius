@@ -1,5 +1,5 @@
 
 dependencies {
-    compile project(':fingerid_client_api_oss')
+    compile project(':rest_service:backend_rest_client_oss')
     compile group: "de.unijena.bioinf.ms", name: "sirius_project_space", version: "$siriusVersion"
 }
