@@ -87,19 +87,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         return new File(System.getProperty("user.home"), "csi_fingerid_cache");
     }
 
-    public boolean testConnection() {
-        try {
-            URIBuilder builder = getFingerIdURI("/actuator/health");
-            HttpURLConnection urlConn = (HttpURLConnection) builder.build().toURL().openConnection();
-            urlConn.connect();
 
-            return HttpURLConnection.HTTP_OK == urlConn.getResponseCode();
-        } catch (IOException e) {
-            return false;
-        } catch (URISyntaxException e) {
-            return false;
-        }
-    }
 
 
     public RESTDatabase(File cacheDir, BioFilter bioFilter, URI host, CloseableHttpClient client) {
@@ -142,30 +130,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
 
     @Override
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
-        final HttpGet get;
-        try {
-            URIBuilder builder = getFingerIdURI("/api/formulasdb");
-            builder.setParameter("mass", String.valueOf(mass));
-            builder.setParameter("ppm", String.valueOf(deviation.getPpm()));
-            builder.setParameter("ion", ionType.toString());
-            builder.setParameter("db", bioFilter.name());
-
-            get = new HttpGet(builder.build());
-
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-        final ArrayList<FormulaCandidate> candidates = new ArrayList<>();
-        try (CloseableHttpResponse response = client.execute(get)) {
-            JsonParser parser = new JsonParser();
-            JsonElement elem = parser.parse(new InputStreamReader(response.getEntity().getContent(), Charset.forName("UTF-8")));
-            for (Map.Entry<String, JsonElement> pair : elem.getAsJsonObject().entrySet())
-                for (Map.Entry<String, JsonElement> e : pair.getValue().getAsJsonObject().entrySet())
-                    MolecularFormula.parseAndExecute(e.getKey(), form -> candidates.add(new FormulaCandidate(form, ionType, e.getValue().getAsLong())));
-        } catch (IOException e) {
-            throw new ChemicalDatabaseException(e);
-        }
-        return candidates;
+        //todo fill me
     }
 
     protected FingerprintCandidate wrap(FingerprintCandidate c) {
@@ -394,6 +359,6 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         RESTDatabase rest = new RESTDatabase(BioFilter.ALL);
         System.out.println(rest.uri.getHost());
         System.out.println(rest.uri.getPath());
-        rest.testConnection();
+//        rest.testConnection();
     }
 }
