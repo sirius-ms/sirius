@@ -1,8 +1,6 @@
 package de.unijena.bioinf.chemdb;
 
 import com.google.common.collect.Iterables;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -11,26 +9,29 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.chemdb.ChemDBClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.json.JsonException;
 import javax.json.stream.JsonParsingException;
 import java.io.*;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -57,29 +58,19 @@ public class RESTDatabase extends AbstractChemicalDatabase {
     }
 
 
-    protected URIBuilder getFingerIdURI(String path) throws URISyntaxException {
+    /*protected URIBuilder getFingerIdURI(String path) throws URISyntaxException {
         URIBuilder builder = new URIBuilder(uri);
         if (path != null && !path.isEmpty())
             builder.setPath(uri.getPath() + path);
         else
             builder.setPath(uri.getPath());
         return builder;
-    }
+    }*/
 
     protected BioFilter bioFilter;
     protected File cacheDir;
-    protected URI uri;
+    protected ChemDBClient chemDBClient;
 
-    private static URI getDefaultHost() {
-        String host = FingerIDProperties.fingeridWebHost();
-        String port = FingerIDProperties.fingeridWebPort();
-        if (PropertyManager.getBoolean("de.unijena.bioinf.net.DEBUG", false))
-            return URI.create("http://localhost:8080");
-        else if (port == null)
-            return URI.create(host + "/v" + FingerIDProperties.fingeridVersion());
-        else
-            return URI.create(host + ":" + port + "/v" + FingerIDProperties.fingeridVersion());
-    }
 
     public static File defaultCacheDir() {
         final String val = System.getenv("CSI_FINGERID_STORAGE");
@@ -88,15 +79,10 @@ public class RESTDatabase extends AbstractChemicalDatabase {
     }
 
 
-
-
-    public RESTDatabase(File cacheDir, BioFilter bioFilter, URI host, CloseableHttpClient client) {
+    public RESTDatabase(@NotNull File cacheDir, @NotNull BioFilter bioFilter, @Nullable URI host, @NotNull CloseableHttpClient client) {
         this.bioFilter = bioFilter;
         this.cacheDir = cacheDir;
-        if (host == null)
-            this.uri = getDefaultHost();
-        else
-            this.uri = host;
+        this.chemDBClient = new ChemDBClient(host);
         this.client = client;
     }
 
@@ -130,7 +116,11 @@ public class RESTDatabase extends AbstractChemicalDatabase {
 
     @Override
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
-        //todo fill me
+        try {
+            return chemDBClient.getFormulasDB(mass, deviation, ionType, bioFilter, client);
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
     }
 
     protected FingerprintCandidate wrap(FingerprintCandidate c) {
@@ -355,10 +345,10 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         }
     }
 
-    public static void main(String[] args) {
+   /* public static void main(String[] args) {
         RESTDatabase rest = new RESTDatabase(BioFilter.ALL);
-        System.out.println(rest.uri.getHost());
-        System.out.println(rest.uri.getPath());
-//        rest.testConnection();
+        System.out.println(rest.chemDBClient.getHost());
+        System.out.println(rest.chemDBClient.getPath());
+        rest.testConnection();
     }
-}
+*/}
