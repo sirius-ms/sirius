@@ -46,7 +46,6 @@ import de.unijena.bioinf.ms.rest.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.info.InfoClient;
 import de.unijena.bioinf.ms.rest.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.jobs.JobsClient;
-import de.unijena.bioinf.utils.NetUtils;
 import de.unijena.bioinf.utils.ProxyManager;
 import gnu.trove.list.array.TIntArrayList;
 import org.apache.http.annotation.ThreadSafe;
@@ -72,7 +71,6 @@ public final class WebAPI {
     //caches predicors so that we do not have to download the statistics and fingerprint infos every
     //time we need them
     private final Map<PredictorType, StructurePredictor> predictors = new HashMap<>();
-    private CdkFingerprintVersion fpVersionCache = null;
     private final WebJobWatcher jobWatcher = new WebJobWatcher(this);
 
     public final InfoClient serverInfoClient;
@@ -167,9 +165,7 @@ public final class WebAPI {
     }
 
     public CdkFingerprintVersion getFingerprintVersion() throws IOException {
-        if (fpVersionCache == null)
-            fpVersionCache = chemDBClient.getFingerprintVersion(ProxyManager.client());
-        return fpVersionCache;
+       return chemDBClient.getFingerprintVersion(ProxyManager.client());
     }
     //endregion
 
