@@ -46,6 +46,19 @@ public class FingerprintCandidate extends CompoundCandidate {
         return c;
     }
 
+    public static void toJSONList(List<FingerprintCandidate> candidates, Writer writer){
+        try (final JsonGenerator generator = Json.createGenerator(writer)) {
+            generator.writeStartObject();
+            generator.writeStartArray("compounds");
+            for (FingerprintCandidate candidate : candidates) {
+                candidate.writeToJSON(generator);
+            }
+            generator.writeEnd();
+            generator.writeEnd();
+            generator.flush();
+        }
+    }
+
     /**
      * merges a given list of fingerprint candidates into the given file. Ignore duplicates
      *
@@ -122,4 +135,6 @@ public class FingerprintCandidate extends CompoundCandidate {
     public Fingerprint getFingerprint() {
         return fingerprint;
     }
+
+
 }

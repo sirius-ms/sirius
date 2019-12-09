@@ -1,20 +1,15 @@
 package de.unijena.bioinf.chemdb;
 
-import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.rest.chemdb.ChemDBClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.jetbrains.annotations.NotNull;
@@ -23,23 +18,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.json.JsonException;
-import javax.json.stream.JsonParsingException;
 import java.io.*;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 public class RESTDatabase extends AbstractChemicalDatabase {
+    private static Logger LOG = LoggerFactory.getLogger(RESTDatabase.class);
+//    private static final boolean IS_USING_ECFP = false;
 
-    private static final boolean IS_USING_ECFP = false;
-    private final CloseableHttpClient client;
-    private static Logger logger = LoggerFactory.getLogger(RESTDatabase.class);
 
     public static void SHUT_UP_STUPID_LOGGING() {
         java.util.logging.Logger.getLogger("org.apache.http.wire").setLevel(java.util.logging.Level.FINEST);
@@ -66,10 +57,10 @@ public class RESTDatabase extends AbstractChemicalDatabase {
             builder.setPath(uri.getPath());
         return builder;
     }*/
-
+    private final CloseableHttpClient client;
+    protected ChemDBClient chemDBClient;
     protected BioFilter bioFilter;
     protected File cacheDir;
-    protected ChemDBClient chemDBClient;
 
 
     public static File defaultCacheDir() {
@@ -79,11 +70,15 @@ public class RESTDatabase extends AbstractChemicalDatabase {
     }
 
 
-    public RESTDatabase(@NotNull File cacheDir, @NotNull BioFilter bioFilter, @Nullable URI host, @NotNull CloseableHttpClient client) {
+    public RESTDatabase(@Nullable File cacheDir, @NotNull BioFilter bioFilter, @NotNull ChemDBClient chemDBClient, @NotNull CloseableHttpClient client) {
         this.bioFilter = bioFilter;
-        this.cacheDir = cacheDir;
-        this.chemDBClient = new ChemDBClient(host);
+        this.cacheDir = cacheDir != null ? cacheDir : defaultCacheDir();
+        this.chemDBClient = chemDBClient;
         this.client = client;
+    }
+
+    public RESTDatabase(@NotNull File cacheDir, @NotNull BioFilter bioFilter, @Nullable URI host, @NotNull CloseableHttpClient client) {
+        this(cacheDir, bioFilter, new ChemDBClient(host), client);
     }
 
     public RESTDatabase(File cacheDir, BioFilter bioFilter, String host, CloseableHttpClient client) {
@@ -135,36 +130,32 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         return candidates;
     }
 
-    private List<FingerprintCandidate> requestFormula(File output, MolecularFormula formula, BioFilter bioFilter) throws IOException {
-        final HttpGet get;
-        try {
-            if (bioFilter == BioFilter.ALL) throw new IllegalArgumentException();
-            get = new HttpGet(getFingerIdURI("/api/compounds/" + formula.toString()).setParameter("db", bioFilter.name()).build());
-            get.setConfig(RequestConfig.custom().setConnectTimeout(60000).setContentCompressionEnabled(true).build());
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-        output.getParentFile().mkdirs();
-        final ArrayList<FingerprintCandidate> compounds = new ArrayList<>(100);
-        try (CloseableHttpResponse response = client.execute(get)) {
+    private List<FingerprintCandidate> requestFormula(final @NotNull File output, MolecularFormula formula, BioFilter bioFilter) throws IOException {
+        final List<FingerprintCandidate> fpcs = chemDBClient.getCompounds(formula, bioFilter, client);
 
-            final File tempFile = File.createTempFile("sirius_formula",".json.gz", output.getParentFile());
-            try (final GZIPOutputStream fout = new GZIPOutputStream(new FileOutputStream(tempFile))) {
-                try (MultiplexerFileAndIO io = new MultiplexerFileAndIO(response.getEntity().getContent(), fout)) {
-                    try (CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new InputStreamReader(io))) {
-                        while (fciter.hasNext())
-                            compounds.add(fciter.next());
+        // write cache in background
+        SiriusJobs.runInBackground(() -> {
+            output.getParentFile().mkdirs();
+            final File tempFile = File.createTempFile("sirius_formula", ".json.gz", output.getParentFile());
+            try {
+                try (final GZIPOutputStream fout = new GZIPOutputStream(new FileOutputStream(tempFile))) {
+                    try (final BufferedWriter br = new BufferedWriter(new OutputStreamWriter(fout))) {
+                        FingerprintCandidate.toJSONList(fpcs, br);
                     }
                 }
+
+                // move tempFile is canonical on same fs
+                if (!output.exists())
+                    if (!tempFile.renameTo(output))
+                        tempFile.delete();
+
+                return true;
+            } finally {
+                Files.deleteIfExists(tempFile.toPath());
             }
-            // move tempFile
-            if (!output.exists()) {
-                if (!tempFile.renameTo(output)) {
-                    tempFile.delete();
-                }
-            }
-        }
-        return compounds;
+        });
+
+        return fpcs;
     }
 
     @Override
@@ -178,7 +169,6 @@ public class RESTDatabase extends AbstractChemicalDatabase {
     }
 
     protected <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates, BioFilter bioFilter) throws ChemicalDatabaseException {
-
         final File stfile = new File(cacheDir, (bioFilter == BioFilter.ONLY_BIO ? "bio/" : (bioFilter == BioFilter.ONLY_NONBIO) ? "not-bio/" : "") + formula.toString() + ".json.gz");
         if (stfile.exists()) {
             try {
@@ -194,9 +184,8 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         }
 
         try {
-            for (FingerprintCandidate fc : requestFormula(stfile, formula, bioFilter)) {
+            for (FingerprintCandidate fc : requestFormula(stfile, formula, bioFilter))
                 fingerprintCandidates.add(wrap(fc));
-            }
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -206,44 +195,19 @@ public class RESTDatabase extends AbstractChemicalDatabase {
 
     @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        final int n = Iterables.size(inchi_keys);
-        final ArrayList<FingerprintCandidate> compounds = new ArrayList<>(Iterables.size(inchi_keys));
-        final Iterator<String> keyIter = inchi_keys.iterator();
-        for (int i = 0; i < n; i += 1000) {
-            try {
-                final HttpPost post = new HttpPost(getFingerIdURI("/api/compounds").build());
-                StringBuilder buffer = new StringBuilder(Math.min(n - i, 1000) * 15);
-                for (int k = 0; keyIter.hasNext() && k < 1000; ++k) {
-                    buffer.append(keyIter.next()).append('\n');
-                }
-                post.setEntity(new StringEntity(buffer.toString(), Charset.forName("UTF-8")));
-                try (CloseableHttpResponse response = client.execute(post)) {
-                    try (CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(getFingerprintVersion(), new InputStreamReader(response.getEntity().getContent()))) {
-                        while (fciter.hasNext())
-                            compounds.add(fciter.next());
-                    } catch (JsonParsingException e) {
-                        final BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-                        final StringBuilder buf = new StringBuilder();
-                        String line;
-                        while ((line = br.readLine()) != null) buf.append(line).append('\n');
-                        logger.debug(buf.toString());
-                        logger.error(e.getMessage(), e);
-                    }
+        final Partition<String> keyParts = Partition.ofSize(inchi_keys, ChemDBClient.MAX_NUM_OF_INCHIS);
+        final ArrayList<FingerprintCandidate> compounds = new ArrayList<>(keyParts.numberOfElements());
 
-                } catch (IOException e) {
-                    throw new ChemicalDatabaseException(e);
-                }
-            } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
-            }
+        try {
+            for (List<String> inchiKeys : keyParts)
+                compounds.addAll(chemDBClient.postCompounds(inchiKeys, client));
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
         }
         return compounds;
     }
 
-    private FingerprintVersion getFingerprintVersion() {
-        if (IS_USING_ECFP) return CdkFingerprintVersion.withECFP();
-        else return CdkFingerprintVersion.getDefault();
-    }
+
 
     @Override
     public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
@@ -276,7 +240,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
     }
 
 
-    private static class MultiplexerFileAndIO extends InputStream implements Closeable {
+    /*private static class MultiplexerFileAndIO extends InputStream implements Closeable {
 
         private final byte[] buffer;
         private final InputStream stream;
@@ -343,7 +307,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
             writer.close();
             closed = true;
         }
-    }
+    }*/
 
    /* public static void main(String[] args) {
         RESTDatabase rest = new RESTDatabase(BioFilter.ALL);
