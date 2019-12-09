@@ -2,14 +2,16 @@ package de.unijena.bioinf.ms.frontend;
 
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceFactory;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
-import de.unijena.bioinf.net.ProxyManager;
+import de.unijena.bioinf.utils.NetUtils;
+import de.unijena.bioinf.utils.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeoutException;
 
 
 public class SiriusCLIApplication {
@@ -38,8 +40,8 @@ public class SiriusCLIApplication {
                     SiriusCLIApplication.RUN.cancel();
                 additionalActions.run();
                 JobManager.shutDownNowAllInstances();
-                ApplicationCore.WEB_API.unregisterClientAndDeleteJobsFromServer();
-            } catch (InterruptedException e) {
+                NetUtils.tryAndWait(ApplicationCore.WEB_API::deleteClientAndJobs, 30000);
+            } catch (InterruptedException | TimeoutException e) {
                 e.printStackTrace();
             } finally {
                 ProxyManager.disconnect();
