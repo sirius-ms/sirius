@@ -1,0 +1,9 @@
+dependencies {
+    compile project(":rest_service_oss:backend_rest_client_oss")
+    compile project(':chemical_db_oss:chemdb_rest_oss')
+    compile project(':fingerprinter_oss')
+    compile project(':fingerblast_oss')
+    compile project(':chemical_db_oss:chemdb_file_oss')
+    compile project(':canopus:canopus_predict_oss')
+    compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
+}
