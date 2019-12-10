@@ -29,7 +29,6 @@ import java.util.zip.GZIPOutputStream;
 
 public class RESTDatabase extends AbstractChemicalDatabase {
     private static Logger LOG = LoggerFactory.getLogger(RESTDatabase.class);
-//    private static final boolean IS_USING_ECFP = false;
 
 
     public static void SHUT_UP_STUPID_LOGGING() {
@@ -45,18 +44,9 @@ public class RESTDatabase extends AbstractChemicalDatabase {
 
     static {
         FingerIDProperties.fingeridVersion();
-        SHUT_UP_STUPID_LOGGING();
+//        SHUT_UP_STUPID_LOGGING();
     }
 
-
-    /*protected URIBuilder getFingerIdURI(String path) throws URISyntaxException {
-        URIBuilder builder = new URIBuilder(uri);
-        if (path != null && !path.isEmpty())
-            builder.setPath(uri.getPath() + path);
-        else
-            builder.setPath(uri.getPath());
-        return builder;
-    }*/
     private final CloseableHttpClient client;
     protected ChemDBClient chemDBClient;
     protected BioFilter bioFilter;
@@ -238,81 +228,4 @@ public class RESTDatabase extends AbstractChemicalDatabase {
     public void close() throws IOException {
         client.close();
     }
-
-
-    /*private static class MultiplexerFileAndIO extends InputStream implements Closeable {
-
-        private final byte[] buffer;
-        private final InputStream stream;
-        private final OutputStream writer;
-        private int offset, limit;
-        private boolean closed = false;
-
-        private MultiplexerFileAndIO(InputStream stream, OutputStream writer) throws IOException {
-            this.buffer = new byte[1024 * 512];
-            this.stream = stream;
-            this.writer = writer;
-            this.offset = 0;
-            this.limit = 0;
-            fillCache();
-        }
-
-        private boolean fillCache() throws IOException {
-            this.limit = stream.read(buffer, 0, buffer.length);
-            this.offset = 0;
-            if (limit <= 0) return false;
-            writer.write(buffer, offset, limit);
-            return true;
-        }
-
-        @Override
-        public int read() throws IOException {
-            if (offset >= limit) {
-                if (!fillCache()) return -1;
-            }
-            return buffer[offset++];
-        }
-
-        @Override
-        public int read(byte[] b, int off, int len) throws IOException {
-            int written = 0;
-            while (true) {
-                final int bytesAvailable = limit - offset;
-                if (bytesAvailable <= 0) {
-                    if (!fillCache()) return written;
-                }
-                final int bytesToRead = len - off;
-                if (bytesToRead == 0) return written;
-                final int bytesToWrite = Math.min(bytesAvailable, bytesToRead);
-                System.arraycopy(buffer, offset, b, off, bytesToWrite);
-                written += bytesToWrite;
-                off += bytesToWrite;
-                offset += bytesToWrite;
-            }
-        }
-
-        @Override
-        public int read(byte[] b) throws IOException {
-            return read(b, 0, b.length);
-        }
-
-        @Override
-        public void close() throws IOException {
-            if (closed) return;
-            boolean finished;
-            do {
-                finished = fillCache();
-            } while (finished);
-            stream.close();
-            writer.close();
-            closed = true;
-        }
-    }*/
-
-   /* public static void main(String[] args) {
-        RESTDatabase rest = new RESTDatabase(BioFilter.ALL);
-        System.out.println(rest.chemDBClient.getHost());
-        System.out.println(rest.chemDBClient.getPath());
-        rest.testConnection();
-    }
-*/}
+}
