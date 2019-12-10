@@ -10,8 +10,8 @@ ZodiacLibraryScoring=de.unijena.bioinf.GibbsSampling.properties.ZodiacLibrarySco
 FormulaResultRankingScore=de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore
 
 NumberOfStructureCandidates=de.unijena.bioinf.fingerid.annotations.NumberOfStructureCandidates
-FormulaSearchDB=de.unijena.bioinf.fingerid.db.annotations.FormulaSearchDB
-StructureSearchDB=de.unijena.bioinf.fingerid.db.annotations.StructureSearchDB
+FormulaSearchDB=de.unijena.bioinf.chemdb.annotations.FormulaSearchDB
+StructureSearchDB=de.unijena.bioinf.chemdb.annotations.StructureSearchDB
 FormulaResultThreshold=de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold
 
 AlgorithmProfile=de.unijena.bioinf.sirius.Profile
