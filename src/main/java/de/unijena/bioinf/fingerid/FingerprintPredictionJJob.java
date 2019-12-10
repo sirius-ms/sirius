@@ -25,7 +25,7 @@ import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.jobdb.JobId;
 import de.unijena.bioinf.ms.jobdb.JobTable;
 import de.unijena.bioinf.ms.jobdb.JobUpdate;
-import de.unijena.bioinf.ms.jobdb.fingerid.FingerprintJobUpdate;
+import de.unijena.bioinf.ms.jobdb.fingerid.FingerprintJobData;
 import de.unijena.bioinf.ms.rest.fingerid.FingerprintJobInput;
 import gnu.trove.list.array.TDoubleArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -33,10 +33,9 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob, FingerprintResult> implements AnnotationJJob<FingerprintResult, FingerIdResult> {
+public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob, FingerprintResult, FingerprintJobData> implements AnnotationJJob<FingerprintResult, FingerIdResult> {
 
     protected final String name;
-    protected final String securityToken;
 
     //states: INITIAL/*(0)*/, SUBMITTED/*(1)*/, FETCHED/*(2)*/, DONE/*(3)*/, CRASHED/*(4)*/, CANCELED/*(5)*/
     protected volatile ProbabilityFingerprint prediction;
@@ -46,19 +45,18 @@ public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob
     public final FingerprintJobInput input;
 
 
-    public FingerprintPredictionJJob(FingerprintJobInput input, FingerprintJobUpdate jobUpdate, MaskedFingerprintVersion version, long submissionTime, String name) {
-        this(input, jobUpdate.jobId, jobUpdate.securityToken, jobUpdate.state, version, submissionTime, name);
+    public FingerprintPredictionJJob(FingerprintJobInput input, JobUpdate<FingerprintJobData> jobUpdate, MaskedFingerprintVersion version, long submissionTime, String name) {
+        this(input, jobUpdate.jobId, jobUpdate.state, version, submissionTime, name);
     }
 
-    public FingerprintPredictionJJob(FingerprintJobInput input, long jobId, String securityToken, de.unijena.bioinf.ms.jobdb.JobState state, MaskedFingerprintVersion version, long submissionTime, String name) {
-        this(input, new JobId(jobId, JobTable.FINGERPRINT_JOB), securityToken, state, version, submissionTime, name);
+    public FingerprintPredictionJJob(FingerprintJobInput input, long jobId, de.unijena.bioinf.ms.jobdb.JobState state, MaskedFingerprintVersion version, long submissionTime, String name) {
+        this(input, new JobId(jobId, JobTable.FINGERPRINT_JOB), state, version, submissionTime, name);
 
     }
 
-    protected FingerprintPredictionJJob(FingerprintJobInput input, JobId jobId, String securityToken, de.unijena.bioinf.ms.jobdb.JobState state, MaskedFingerprintVersion version, long submissionTime, String name) {
+    protected FingerprintPredictionJJob(FingerprintJobInput input, JobId jobId, de.unijena.bioinf.ms.jobdb.JobState state, MaskedFingerprintVersion version, long submissionTime, String name) {
         super(jobId, state, submissionTime);
         this.name = name;
-        this.securityToken = securityToken;
         this.version = version;
         this.input = input;
     }
@@ -69,17 +67,13 @@ public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob
     }
 
     @Override
-    public synchronized <U extends JobUpdate> FingerprintPredictionJJob update(@NotNull final U update) {
-        if (!(update instanceof FingerprintJobUpdate))
-            throw new IllegalArgumentException("Not the correct update Class");
-
-        final FingerprintJobUpdate up2 = (FingerprintJobUpdate) update;
-        if (updateState(up2)) {
-
-            if (up2.fingerprints != null)
-                prediction = new ProbabilityFingerprint(version, parseBinaryToDoubles(up2.fingerprints));
-            if (up2.iokrVector != null)
-                iokrVerctor = parseBinaryToDoubles(up2.iokrVector);
+    public synchronized FingerprintPredictionJJob updateTyped(@NotNull final JobUpdate<FingerprintJobData> update) {
+        if (updateState(update)) {
+            if (update.data != null) {
+                prediction = new ProbabilityFingerprint(version, parseBinaryToDoubles(update.data.fingerprints));
+                if (update.data.iokrVector != null)
+                    iokrVerctor = parseBinaryToDoubles(update.data.iokrVector);
+            }
         }
 
         checkForTimeout();

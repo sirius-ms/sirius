@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 final class WebJobWatcher {
-    private final Map<JobId, WebJJob<?, ?>> waitingJobs = new ConcurrentHashMap<>();
+    private final Map<JobId, WebJJob<?, ?, ?>> waitingJobs = new ConcurrentHashMap<>();
     private final WebAPI api;
     private WebJobWatcherJJob job = null;
 
@@ -22,7 +22,7 @@ final class WebJobWatcher {
         this.api = api;
     }
 
-    public <J extends WebJJob<?, ?>> J watchJob(@NotNull final J jobToWatch) {
+    public <J extends WebJJob<?, ?, ?>> J watchJob(@NotNull final J jobToWatch) {
         waitingJobs.put(jobToWatch.jobId, jobToWatch);
 
         checkWatcherJob();
@@ -57,20 +57,20 @@ final class WebJobWatcher {
                 }
 
                 final Set<JobId> orphanJobs = new HashSet<>(waitingJobs.keySet());
-                EnumMap<JobTable, List<? extends JobUpdate>> updates = NetUtils.tryAndWait(() -> {
+                EnumMap<JobTable, List<JobUpdate<?>>> updates = NetUtils.tryAndWait(() -> {
                     checkForInterruption();
                     return api.updateJobStates(waitingJobs.keySet().stream().map(id -> id.jobTable).collect(Collectors.toSet()));
                 });
-                List<? extends JobUpdate> toRemove = null;
+                List<JobUpdate<?>> toRemove = null;
 
 
-                if (updates != null) {
+                if (updates != null && !updates.isEmpty()) {
                     //update, find orphans and notify finished jobs
                     toRemove = updates.values().stream().flatMap(Collection::stream).filter(up -> {
                         try {
                             checkForInterruption();
 
-                            final WebJJob<?, ?> job;
+                            final WebJJob<?, ?, ?> job;
                             orphanJobs.remove(up.jobId);
                             job = waitingJobs.get(up.jobId);
 

@@ -6,7 +6,7 @@ import de.unijena.bioinf.ms.jobdb.JobId;
 import de.unijena.bioinf.ms.jobdb.JobUpdate;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class WebJJob<Self extends WebJJob<Self, R>, R> extends WaiterJJob<R> {
+public abstract class WebJJob<Self extends WebJJob<Self, R, D>, R, D> extends WaiterJJob<R> {
     @NotNull
     public final JobId jobId;
     protected final long submissionTime;
@@ -20,12 +20,12 @@ public abstract class WebJJob<Self extends WebJJob<Self, R>, R> extends WaiterJJ
         this.submissionTime = submissionTime;
     }
 
-    protected <U extends JobUpdate> void checkIdOrThrow(@NotNull final U update) {
+    protected void checkIdOrThrow(@NotNull final JobUpdate<D> update) {
         if (!jobId.equals(update.jobId))
             throw new IllegalArgumentException("Update jobsId differs from jobId: " + jobId + " vs. " + update.jobId);
     }
 
-    public <U extends JobUpdate> boolean updateState(@NotNull final U update) {
+    public boolean updateState(@NotNull final JobUpdate<D> update) {
         checkIdOrThrow(update);
         if (serverState != update.state) {
             setServerState(update.state);
@@ -34,14 +34,6 @@ public abstract class WebJJob<Self extends WebJJob<Self, R>, R> extends WaiterJJ
         }
         return false;
     }
-
-    /*public void setServerState(@NotNull String name) {
-        setServerState(de.unijena.bioinf.ms.jobdb.JobState.valueOf(name.toUpperCase()));
-    }
-
-    public void setServerState(int state) {
-        setServerState(de.unijena.bioinf.ms.jobdb.JobState.values()[state]);
-    }*/
 
     protected synchronized void setServerState(de.unijena.bioinf.ms.jobdb.JobState state) {
         this.serverState = state;
@@ -69,5 +61,10 @@ public abstract class WebJJob<Self extends WebJJob<Self, R>, R> extends WaiterJJ
     }
 
     protected abstract R makeResult();
-    public abstract <U extends JobUpdate> Self update(@NotNull final U update);
+
+    public Self update(@NotNull final JobUpdate<?> update) {
+        return updateTyped((JobUpdate<D>) update);
+    }
+
+    protected abstract Self updateTyped(@NotNull final JobUpdate<D> update);
 }

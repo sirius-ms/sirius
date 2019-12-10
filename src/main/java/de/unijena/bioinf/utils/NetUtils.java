@@ -1,5 +1,6 @@
 package de.unijena.bioinf.utils;
 
+import de.unijena.bioinf.ms.rest.AbstractClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +40,15 @@ public class NetUtils {
             } catch (IOException retry) {
                 waitTime = Math.min(waitTime * 2, 120000);
                 timeout -= waitTime;
-                LOG.warn("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s \n Cause: " + retry.getMessage());
-                LOG.debug("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s", retry);
+
+
+                if(AbstractClient.DEBUG){
+                    LOG.warn("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s", retry);
+                }else {
+                    LOG.warn("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s \n Cause: " + retry.getMessage());
+                    LOG.debug("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s", retry);
+                }
+
                 Thread.sleep(waitTime);
             }
         }

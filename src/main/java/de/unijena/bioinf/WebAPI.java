@@ -38,7 +38,7 @@ import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.jobdb.JobId;
 import de.unijena.bioinf.ms.jobdb.JobTable;
 import de.unijena.bioinf.ms.jobdb.JobUpdate;
-import de.unijena.bioinf.ms.jobdb.fingerid.FingerprintJobUpdate;
+import de.unijena.bioinf.ms.jobdb.fingerid.FingerprintJobData;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.fingerid.FingerIdClient;
@@ -138,11 +138,11 @@ public final class WebAPI {
     //endregion
 
     //region Jobs
-    public List<? extends JobUpdate> updateJobStates(JobTable jobTable) throws IOException {
+    public List<JobUpdate<?>> updateJobStates(JobTable jobTable) throws IOException {
         return updateJobStates(EnumSet.of(jobTable)).get(jobTable);
     }
 
-    public EnumMap<JobTable, List<? extends JobUpdate>> updateJobStates(Collection<JobTable> jobTablesToCheck) throws IOException {
+    public EnumMap<JobTable, List<JobUpdate<?>>> updateJobStates(Collection<JobTable> jobTablesToCheck) throws IOException {
         return jobsClient.getJobs(jobTablesToCheck, ProxyManager.client());
     }
 
@@ -178,7 +178,7 @@ public final class WebAPI {
     }
 
     public FingerprintPredictionJJob submitFingerprintJob(FingerprintJobInput input) throws IOException {
-        final FingerprintJobUpdate jobUpdate = fingerprintClient.postJobs(input, ProxyManager.client());
+        final JobUpdate<FingerprintJobData> jobUpdate = fingerprintClient.postJobs(input, ProxyManager.client());
         final MaskedFingerprintVersion version = getFingerprintMaskedVersion(input.experiment.getPrecursorIonType().getCharge());
         return jobWatcher.watchJob(new FingerprintPredictionJJob(input, jobUpdate, version, System.currentTimeMillis(), input.experiment.getName()));
     }
