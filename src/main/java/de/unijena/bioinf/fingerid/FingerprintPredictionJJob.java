@@ -70,7 +70,8 @@ public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob
     public synchronized FingerprintPredictionJJob updateTyped(@NotNull final JobUpdate<FingerprintJobData> update) {
         if (updateState(update)) {
             if (update.data != null) {
-                prediction = new ProbabilityFingerprint(version, parseBinaryToDoubles(update.data.fingerprints));
+                if (update.data.fingerprints != null)
+                    prediction = new ProbabilityFingerprint(version, parseBinaryToDoubles(update.data.fingerprints));
                 if (update.data.iokrVector != null)
                     iokrVerctor = parseBinaryToDoubles(update.data.iokrVector);
             }
