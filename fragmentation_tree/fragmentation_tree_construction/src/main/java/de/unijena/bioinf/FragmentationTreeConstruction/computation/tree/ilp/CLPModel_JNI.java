@@ -1,5 +1,9 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Stack;
 
 public class CLPModel_JNI {
@@ -21,86 +25,91 @@ public class CLPModel_JNI {
         System.loadLibrary("CLPModelWrapper_JNI");
     }
 
-    private Stack<Double> row_elems = null;
-    private Stack<Integer> row_indices = null;
-    private Stack<Double> row_lb = null;
-    private Stack<Double> row_ub = null;
-    private Stack<Integer> row_starts = null;
+    // needed, because JNI libraries are loaded as static, multiple
+    // instances are managed in the Wrapper class and accessed by index
+    private int wrapper_index = 0;
 
     public CLPModel_JNI(int ncols, int obj_sense){
-        ctor(ncols, obj_sense);
+        wrapper_index = n_ctor(ncols, obj_sense);
     }
 
-    native void ctor(int ncols, int obj_sense); // obj_sense: ObjectiveSense
+    native int n_ctor(int ncols, int obj_sense); // obj_sense: ObjectiveSense
 
-    native void dispose();
+    native void n_dispose(int self);
 
-    native double getInfinity();
+    native double n_getInfinity(int self);
 
-    native void setObjective(double[] objective);
+    native void n_setObjective(int self, double[] objective);
 
-    native void setTimeLimit(double seconds);
+    native void n_setTimeLimit(int self, double seconds);
 
-    native void setColBounds(double[] col_lb, double[] col_ub);
+    native void n_setColBounds(int self, double[] col_lb, double[] col_ub);
 
-    native void setColStart(double start[]);
+    native void n_setColStart(int self, double start[]);
 
-    native void addFullRow(double row[], double lb, double ub);
+    native void n_addFullRow(int self, double row[], double lb, double ub);
 
-    native void addSparseRow(double[] elems, int[] indices, double lb, double ub);
+    native void n_addSparseRow(int self, double[] elems, int[] indices, double lb, double ub);
 
-    native void addSparseRowCached(double[] elems, int[] indices, double lb, double ub);
+    native void n_addSparseRowCached(int self, double[] elems, int[] indices, double lb, double ub);
 
-    native void addSparseRows(int numrows, int rowstarts[], double elems[], int indices[], double lb[], double ub[]);
+    native void n_addSparseRows(int self, int numrows, int rowstarts[], double elems[], int indices[], double lb[], double ub[]);
 
-    native int solve(); // returns ReturnStatus
+    native int n_solve(int self); // returns ReturnStatus
 
-    native double[] getColSolution();
+    native double[] n_getColSolution(int self);
 
-    native double getScore();
+    native double n_getScore(int self);
 
-    void j_addSparseRowCached(double elems[], int indices[], double lb, double ub){
-        if (row_elems == null){
-            row_elems = new Stack<Double>();
-            row_indices = new Stack<Integer>();
-            row_lb = new Stack<Double>();
-            row_ub = new Stack<Double>();
-            row_starts = new Stack<Integer>();
-            row_starts.push(0);
-        }
-
-        for (int i = 0; i < elems.length; ++i){
-            row_elems.push(elems[i]);
-            row_indices.push(indices[i]);
-        }
-
-        row_lb.push(lb);
-        row_ub.push(ub);
-        row_starts.push(row_starts.lastElement() + elems.length);
+    void dispose(){
+        n_dispose(wrapper_index);
     }
 
-    int j_solve(){
-        if (row_elems != null){
-            int numrows = row_lb.size();
-            int numelems = row_elems.size();
-            double arr_row_lb[] = new double[row_lb.size()];
-            double arr_row_ub[] = new double[row_ub.size()];
-            int arr_row_starts[] = new int[row_starts.size()];
-            double arr_row_elems[] = new double[row_elems.size()];
-            int arr_row_indices[] = new int[row_indices.size()];
-            arr_row_starts[numrows] = row_starts.pop();
-            for (int i = numrows - 1; i >= 0; --i){
-                arr_row_lb[i] = row_lb.pop();
-                arr_row_ub[i] = row_ub.pop();
-                arr_row_starts[i] = row_starts.pop();
-            }
-            for (int i = numelems - 1; i >= 0; --i){
-                arr_row_elems[i] = row_elems.pop();
-                arr_row_indices[i] = row_indices.pop();
-            }
-            addSparseRows(numrows, arr_row_starts, arr_row_elems, arr_row_indices,
-                          arr_row_lb, arr_row_ub);
-        }
-        return solve();
+    double getInfinity(){
+        return n_getInfinity(wrapper_index);
+    }
+
+    void setObjective(double[] objective){
+        n_setObjective(wrapper_index, objective);
+    }
+
+void setTimeLimit(double seconds){
+        n_setTimeLimit(wrapper_index, seconds);
+    }
+
+void setColBounds(double[] col_lb, double[] col_ub){
+        n_setColBounds(wrapper_index, col_lb, col_ub);
+    }
+
+void setColStart(double start[]){
+        n_setColStart(wrapper_index, start);
+    }
+
+void addFullRow(double row[], double lb, double ub){
+        n_addFullRow(wrapper_index, row, lb, ub);
+    }
+
+void addSparseRow(double[] elems, int[] indices, double lb, double ub){
+        n_addSparseRow(wrapper_index, elems, indices, lb, ub);
+    }
+
+void addSparseRowCached(double[] elems, int[] indices, double lb, double ub){
+        n_addSparseRowCached(wrapper_index, elems, indices, lb, ub);
+    }
+
+void addSparseRows(int numrows, int rowstarts[], double elems[], int indices[], double lb[], double ub[]){
+        n_addSparseRows(wrapper_index, numrows, rowstarts, elems, indices, lb, ub);
+    }
+
+    int solve(){ // returns ReturnStatus
+        return n_solve(wrapper_index);
+    }
+
+    double[] getColSolution(){
+        return n_getColSolution(wrapper_index);
+    }
+
+    double getScore(){
+        return n_getScore(wrapper_index);
     }
 }
