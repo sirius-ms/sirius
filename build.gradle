@@ -1,0 +1,7 @@
+dependencies {
+    compile project(':rest_service:rest_core_oss')
+    compile project(':confidence_score:confidence_score_predict_oss')
+    compile group: "net.iharder", name: "base64", version: "2.3.8"
+    compile "org.apache.httpcomponents:httpclient:4.5.1"
+
+}
