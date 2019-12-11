@@ -1,0 +1,13 @@
+dependencies {
+    //internal
+    compile project(':fingerid_utils_oss')
+    compile project(':error_reporter_oss')
+
+    compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
+
+    // maven version number parsing
+    compile group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
+    // jason marshalling
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:"2.9.5"
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"2.9.5"
+}
