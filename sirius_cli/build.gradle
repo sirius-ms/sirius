@@ -10,7 +10,7 @@ dependencies {
     compile group: "de.unijena.bioinf.ms", name: "quality_assessment", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "passatutto", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "passatutto_project_space", version: "$siriusVersion"
-    compile group: "de.unijena.bioinf.ms", name: "fingerid_db_oss", version: "$fingeridVersion"
+//    compile group: "de.unijena.bioinf.ms", name: "fingerid_db_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "fingerprinter_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "fingerblast_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "chemdb_rest_oss", version: "$fingeridVersion"
