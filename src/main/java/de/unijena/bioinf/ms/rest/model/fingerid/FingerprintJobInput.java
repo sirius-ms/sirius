@@ -11,11 +11,11 @@ import java.util.EnumSet;
 public class FingerprintJobInput {
     public final Ms2Experiment experiment;
     public final FTree ftree;
-    public final IdentificationResult identificationResult;
+    public final IdentificationResult<?> identificationResult;
     public final EnumSet<PredictorType> predicors;
 
 
-    public FingerprintJobInput(final Ms2Experiment experiment, final IdentificationResult result, final FTree ftree, EnumSet<PredictorType> predicors) {
+    public FingerprintJobInput(final Ms2Experiment experiment, final IdentificationResult<?> result, final FTree ftree, EnumSet<PredictorType> predicors) {
         this.experiment = experiment;
         this.ftree = ftree;
         this.identificationResult = result;
