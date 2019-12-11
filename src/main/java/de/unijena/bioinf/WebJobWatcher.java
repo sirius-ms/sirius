@@ -2,9 +2,9 @@ package de.unijena.bioinf;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.ms.jobdb.JobId;
-import de.unijena.bioinf.ms.jobdb.JobTable;
-import de.unijena.bioinf.ms.jobdb.JobUpdate;
+import de.unijena.bioinf.ms.rest.model.JobId;
+import de.unijena.bioinf.ms.rest.model.JobTable;
+import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 

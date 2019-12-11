@@ -12,7 +12,7 @@ import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
-import de.unijena.bioinf.ms.rest.fingerid.FingerprintJobInput;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.utils.NetUtils;

@@ -22,11 +22,11 @@ import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.WebJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
-import de.unijena.bioinf.ms.jobdb.JobId;
-import de.unijena.bioinf.ms.jobdb.JobTable;
-import de.unijena.bioinf.ms.jobdb.JobUpdate;
-import de.unijena.bioinf.ms.jobdb.fingerid.FingerprintJobData;
-import de.unijena.bioinf.ms.rest.fingerid.FingerprintJobInput;
+import de.unijena.bioinf.ms.rest.model.JobId;
+import de.unijena.bioinf.ms.rest.model.JobTable;
+import de.unijena.bioinf.ms.rest.model.JobUpdate;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobData;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import gnu.trove.list.array.TDoubleArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,12 +49,12 @@ public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob
         this(input, jobUpdate.jobId, jobUpdate.state, version, submissionTime, name);
     }
 
-    public FingerprintPredictionJJob(FingerprintJobInput input, long jobId, de.unijena.bioinf.ms.jobdb.JobState state, MaskedFingerprintVersion version, long submissionTime, String name) {
+    public FingerprintPredictionJJob(FingerprintJobInput input, long jobId, de.unijena.bioinf.ms.rest.model.JobState state, MaskedFingerprintVersion version, long submissionTime, String name) {
         this(input, new JobId(jobId, JobTable.FINGERPRINT_JOB), state, version, submissionTime, name);
 
     }
 
-    protected FingerprintPredictionJJob(FingerprintJobInput input, JobId jobId, de.unijena.bioinf.ms.jobdb.JobState state, MaskedFingerprintVersion version, long submissionTime, String name) {
+    protected FingerprintPredictionJJob(FingerprintJobInput input, JobId jobId, de.unijena.bioinf.ms.rest.model.JobState state, MaskedFingerprintVersion version, long submissionTime, String name) {
         super(jobId, state, submissionTime);
         this.name = name;
         this.version = version;

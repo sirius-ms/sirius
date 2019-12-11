@@ -1,5 +1,5 @@
 dependencies {
-    compile project(":rest_service_oss:backend_rest_client_oss")
+    compile project(":rest_service:rest_client_oss")
     compile project(':chemical_db_oss:chemdb_rest_oss')
     compile project(':fingerprinter_oss')
     compile project(':fingerblast_oss')

@@ -2,8 +2,8 @@ package de.unijena.bioinf;
 
 import de.unijena.bioinf.jjobs.WaiterJJob;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
-import de.unijena.bioinf.ms.jobdb.JobId;
-import de.unijena.bioinf.ms.jobdb.JobUpdate;
+import de.unijena.bioinf.ms.rest.model.JobId;
+import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class WebJJob<Self extends WebJJob<Self, R, D>, R, D> extends WaiterJJob<R> {
@@ -11,10 +11,10 @@ public abstract class WebJJob<Self extends WebJJob<Self, R, D>, R, D> extends Wa
     public final JobId jobId;
     protected final long submissionTime;
     protected volatile String errorMessage;
-    private volatile de.unijena.bioinf.ms.jobdb.JobState serverState;
+    private volatile de.unijena.bioinf.ms.rest.model.JobState serverState;
 
 
-    protected WebJJob(@NotNull JobId jobId, de.unijena.bioinf.ms.jobdb.JobState serverState, long submissionTime) {
+    protected WebJJob(@NotNull JobId jobId, de.unijena.bioinf.ms.rest.model.JobState serverState, long submissionTime) {
         this.jobId = jobId;
         this.serverState = serverState;
         this.submissionTime = submissionTime;
@@ -35,7 +35,7 @@ public abstract class WebJJob<Self extends WebJJob<Self, R, D>, R, D> extends Wa
         return false;
     }
 
-    protected synchronized void setServerState(de.unijena.bioinf.ms.jobdb.JobState state) {
+    protected synchronized void setServerState(de.unijena.bioinf.ms.rest.model.JobState state) {
         this.serverState = state;
     }
 

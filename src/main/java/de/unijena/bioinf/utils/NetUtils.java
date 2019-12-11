@@ -1,6 +1,6 @@
 package de.unijena.bioinf.utils;
 
-import de.unijena.bioinf.ms.rest.AbstractClient;
+import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

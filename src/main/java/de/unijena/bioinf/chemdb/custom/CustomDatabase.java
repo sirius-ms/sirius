@@ -6,7 +6,7 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.WebAPI;
-import de.unijena.bioinf.ms.rest.info.VersionsInfo;
+import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;

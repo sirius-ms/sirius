@@ -11,7 +11,7 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.WebAPI;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.Fingerprinter;
-import de.unijena.bioinf.ms.rest.info.VersionsInfo;
+import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.inchi.InChIGenerator;
