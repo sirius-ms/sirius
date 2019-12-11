@@ -91,7 +91,7 @@ public abstract class AbstractClient {
     }
 
     protected URIBuilder buildWebapiURI(@Nullable final String path, final boolean versionSpecific) throws URISyntaxException {
-        StringBuilder pathBuilder = getWebAPIBasePath();
+        StringBuilder pathBuilder = versionSpecific?getWebAPIBasePath():new StringBuilder("/webapi"); //todo workaround until nu api version is deployed to root
 
         if (path != null && !path.isEmpty()) {
             if (!path.startsWith("/"))
