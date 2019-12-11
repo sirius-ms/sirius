@@ -156,6 +156,7 @@ public class FingerIdClient extends AbstractClient {
 
             final ArrayList<PredictionPerformance> performances = new ArrayList<>();
             try (CloseableHttpResponse response = client.execute(get)) {
+                isSuccessful(response);
                 HttpEntity e = response.getEntity();
                 final BufferedReader br = new BufferedReader(getIn(e));
                 String line;
