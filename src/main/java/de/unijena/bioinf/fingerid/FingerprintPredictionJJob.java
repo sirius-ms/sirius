@@ -25,7 +25,7 @@ import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobData;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import gnu.trove.list.array.TDoubleArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob, FingerprintResult, FingerprintJobData> implements AnnotationJJob<FingerprintResult, FingerIdResult> {
+public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob, FingerprintResult, FingerprintJobOutput> implements AnnotationJJob<FingerprintResult, FingerIdResult> {
 
     protected final String name;
 
@@ -45,12 +45,12 @@ public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob
     public final FingerprintJobInput input;
 
 
-    public FingerprintPredictionJJob(FingerprintJobInput input, JobUpdate<FingerprintJobData> jobUpdate, MaskedFingerprintVersion version, long submissionTime, String name) {
+    public FingerprintPredictionJJob(FingerprintJobInput input, JobUpdate<FingerprintJobOutput> jobUpdate, MaskedFingerprintVersion version, long submissionTime, String name) {
         this(input, jobUpdate.jobId, jobUpdate.state, version, submissionTime, name);
     }
 
     public FingerprintPredictionJJob(FingerprintJobInput input, long jobId, de.unijena.bioinf.ms.rest.model.JobState state, MaskedFingerprintVersion version, long submissionTime, String name) {
-        this(input, new JobId(jobId, JobTable.FINGERPRINT_JOB), state, version, submissionTime, name);
+        this(input, new JobId(jobId, JobTable.SIRIUS_FINGERID_JOB), state, version, submissionTime, name);
 
     }
 
@@ -67,7 +67,7 @@ public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob
     }
 
     @Override
-    public synchronized FingerprintPredictionJJob updateTyped(@NotNull final JobUpdate<FingerprintJobData> update) {
+    public synchronized FingerprintPredictionJJob updateTyped(@NotNull final JobUpdate<FingerprintJobOutput> update) {
         if (updateState(update)) {
             if (update.data != null) {
                 if (update.data.fingerprints != null)

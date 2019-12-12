@@ -71,8 +71,8 @@ final class WebJobWatcher {
                             checkForInterruption();
 
                             final WebJJob<?, ?, ?> job;
-                            orphanJobs.remove(up.jobId);
-                            job = waitingJobs.get(up.jobId);
+                            orphanJobs.remove(up.getGlobalId());
+                            job = waitingJobs.get(up.getGlobalId());
 
                             if (job == null) {
                                 LOG().warn("Job \"" + up.jobId + "\" was found on the server but is unknown locally. Trying to match it again later!");
@@ -98,7 +98,7 @@ final class WebJobWatcher {
 
                     checkForInterruption();
 
-                    orphanJobs.addAll(toRemove.stream().map(j -> j.jobId).collect(Collectors.toSet()));
+                    orphanJobs.addAll(toRemove.stream().map(JobUpdate::getGlobalId).collect(Collectors.toSet()));
 
                     checkForInterruption();
 

@@ -38,7 +38,7 @@ import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobData;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.fingerid.FingerIdClient;
@@ -178,7 +178,7 @@ public final class WebAPI {
     }
 
     public FingerprintPredictionJJob submitFingerprintJob(FingerprintJobInput input) throws IOException {
-        final JobUpdate<FingerprintJobData> jobUpdate = fingerprintClient.postJobs(input, ProxyManager.client());
+        final JobUpdate<FingerprintJobOutput> jobUpdate = fingerprintClient.postJobs(input, ProxyManager.client());
         final MaskedFingerprintVersion version = getFingerprintMaskedVersion(input.experiment.getPrecursorIonType().getCharge());
         return jobWatcher.watchJob(new FingerprintPredictionJJob(input, jobUpdate, version, System.currentTimeMillis(), input.experiment.getName()));
     }

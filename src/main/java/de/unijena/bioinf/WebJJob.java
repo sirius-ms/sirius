@@ -21,7 +21,7 @@ public abstract class WebJJob<Self extends WebJJob<Self, R, D>, R, D> extends Wa
     }
 
     protected void checkIdOrThrow(@NotNull final JobUpdate<D> update) {
-        if (!jobId.equals(update.jobId))
+        if (!jobId.equals(update.getGlobalId()))
             throw new IllegalArgumentException("Update jobsId differs from jobId: " + jobId + " vs. " + update.jobId);
     }
 
