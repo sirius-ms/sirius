@@ -40,7 +40,6 @@ public class JobsClient extends AbstractClient {
             try (CloseableHttpResponse response = client.execute(get)) {
                 isSuccessful(response);
                 try (final BufferedReader reader = new BufferedReader(getIn(response.getEntity()))) {
-
                     return new ObjectMapper().readValue(reader, new TypeReference<EnumMap<JobTable, List<JobUpdate<?>>>>() {});
                 }
             }

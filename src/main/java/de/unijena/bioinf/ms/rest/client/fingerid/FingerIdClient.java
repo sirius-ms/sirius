@@ -12,7 +12,7 @@ import de.unijena.bioinf.fingerid.blast.CovarianceScoringMethod;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobData;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import gnu.trove.list.array.TIntArrayList;
 import net.sf.jniinchi.INCHI_KEY;
@@ -91,10 +91,10 @@ public class FingerIdClient extends AbstractClient {
     }*/
 
 
-    public JobUpdate<FingerprintJobData> postJobs(final FingerprintJobInput input, CloseableHttpClient client) throws IOException {
+    public JobUpdate<FingerprintJobOutput> postJobs(final FingerprintJobInput input, CloseableHttpClient client) throws IOException {
         //check predictor compatibility
         int c = input.experiment.getPrecursorIonType().getCharge();
-        for (PredictorType type : input.predicors) {
+        for (PredictorType type : input.predictors) {
             if (!type.isValid(c))
                 throw new IllegalArgumentException("Predictor " + type.name() + " is not compatible with charge " + c + ".");
         }
@@ -119,7 +119,7 @@ public class FingerIdClient extends AbstractClient {
 
             final NameValuePair ms = new BasicNameValuePair("ms", stringMs);
             final NameValuePair tree = new BasicNameValuePair("ft", jsonTree);
-            final NameValuePair predictor = new BasicNameValuePair("predictors", PredictorType.getBitsAsString(input.predicors));
+            final NameValuePair predictor = new BasicNameValuePair("predictors", PredictorType.getBitsAsString(input.predictors));
 
             final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(ms, tree, predictor));
             post.setEntity(params);
@@ -128,7 +128,7 @@ public class FingerIdClient extends AbstractClient {
             try (CloseableHttpResponse response = client.execute(post)) {
                 isSuccessful(response);
                 try (final BufferedReader reader = new BufferedReader(getIn(response.getEntity()))) {
-                    return new ObjectMapper().readValue(reader, new TypeReference<JobUpdate<FingerprintJobData>>(){});
+                    return new ObjectMapper().readValue(reader, new TypeReference<JobUpdate<FingerprintJobOutput>>(){});
                 }
             }
         } catch (URISyntaxException e) {
