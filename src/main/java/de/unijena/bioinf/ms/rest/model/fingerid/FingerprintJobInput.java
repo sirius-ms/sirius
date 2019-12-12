@@ -12,17 +12,17 @@ public class FingerprintJobInput {
     public final Ms2Experiment experiment;
     public final FTree ftree;
     public final IdentificationResult<?> identificationResult;
-    public final EnumSet<PredictorType> predicors;
+    public final EnumSet<PredictorType> predictors;
 
 
-    public FingerprintJobInput(final Ms2Experiment experiment, final IdentificationResult<?> result, final FTree ftree, EnumSet<PredictorType> predicors) {
+    public FingerprintJobInput(final Ms2Experiment experiment, final IdentificationResult<?> result, final FTree ftree, EnumSet<PredictorType> predictors) {
         this.experiment = experiment;
         this.ftree = ftree;
         this.identificationResult = result;
 
-        if (predicors == null || predicors.isEmpty())
-            this.predicors = EnumSet.of(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(experiment.getPrecursorIonType()));
+        if (predictors == null || predictors.isEmpty())
+            this.predictors = EnumSet.of(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(experiment.getPrecursorIonType()));
         else
-            this.predicors = predicors;
+            this.predictors = predictors;
     }
 }

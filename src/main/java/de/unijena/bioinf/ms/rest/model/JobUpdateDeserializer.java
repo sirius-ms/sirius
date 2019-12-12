@@ -13,8 +13,8 @@ public class JobUpdateDeserializer extends JsonDeserializer<JobUpdate<?>> {
     public JobUpdate<?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         final ObjectMapper mapper = new ObjectMapper();
         final TreeNode tree = mapper.readTree(p);
-        final JobUpdateBase baseInfo = mapper.readValue(tree.traverse(), JobUpdateBase.class);
-        final Object data = mapper.readValue(tree.get("data").traverse(), baseInfo.jobId.jobTable.classRef);
+        final JobBase baseInfo = mapper.readValue(tree.traverse(), JobBase.class);
+        final Object data = mapper.readValue(tree.get("data").traverse(), baseInfo.jobTable.jobOutputType);
         return new JobUpdate<>(baseInfo, data);
     }
 

@@ -18,31 +18,24 @@
 package de.unijena.bioinf.ms.rest.model;
 
 
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobData;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 
-//there jobtypes correspond to the different job-table names
+/**
+ * Defines available JobTable. A JobTable contains always the fields present {@link JobBase}
+ * and the fields defined by the {@link JobTable#jobOutputType}
+ */
 public enum JobTable {
     TREE_JOB(null),
     FINGERPRINT_JOB(null),
-    SIRIUS_FINGERID_JOB(FingerprintJobData.class),
-    SIRIUS_CANOPUS_JOB(CanopusJobData.class);
+    SIRIUS_FINGERID_JOB(FingerprintJobOutput.class),
+    SIRIUS_CANOPUS_JOB(CanopusJobOutput.class);
 
 
-//    protected final TypeReference<? extends JobDataWrapper<?>> typeRef;
-    protected final Class<?> classRef;
+    protected final Class<?> jobOutputType;
 
-//    JobTable(TypeReference<? extends JobDataWrapper<?>> typeRef) {
-//        this.typeRef = typeRef;
-//    }
-    JobTable(Class<?> classRef) {
-        this.classRef = classRef;
+    JobTable(Class<?> jobOutputType) {
+        this.jobOutputType = jobOutputType;
     }
-
-   /* @JsonIgnoreProperties(ignoreUnknown = true)
-    final static class JobDataWrapper<D> {
-        D data;
-    }*/
-
 
 }

@@ -1,18 +1,18 @@
 package de.unijena.bioinf.ms.rest.model.fingerid;
 
-public class FingerprintJobData {
+public class FingerprintJobOutput {
     //optional fields
-    public final String securityToken;
+//    public final String securityToken;
     public final byte[] fingerprints; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
     public final byte[] iokrVector; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
 
 
-    private FingerprintJobData() {
-        this(null, null, null);
+    private FingerprintJobOutput() {
+        this(null, null);
     }
 
-    public FingerprintJobData(String securityToken, byte[] fingerprints, byte[] iokrVector) {
-        this.securityToken = securityToken;
+    public FingerprintJobOutput(/*String securityToken, */byte[] fingerprints, byte[] iokrVector) {
+//        this.securityToken = securityToken;
         this.fingerprints = fingerprints;
         this.iokrVector = iokrVector;
     }
