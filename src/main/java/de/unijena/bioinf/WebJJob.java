@@ -22,14 +22,14 @@ public abstract class WebJJob<Self extends WebJJob<Self, R, D>, R, D> extends Wa
 
     protected void checkIdOrThrow(@NotNull final JobUpdate<D> update) {
         if (!jobId.equals(update.getGlobalId()))
-            throw new IllegalArgumentException("Update jobsId differs from jobId: " + jobId + " vs. " + update.jobId);
+            throw new IllegalArgumentException("Update jobsId differs from jobId: " + jobId + " vs. " + update.getJobId());
     }
 
     public boolean updateState(@NotNull final JobUpdate<D> update) {
         checkIdOrThrow(update);
-        if (serverState != update.state) {
-            setServerState(update.state);
-            errorMessage = update.errorMessage;
+        if (serverState != update.getStateEnum()) {
+            setServerState(update.getStateEnum());
+            errorMessage = update.getErrorMessage();
             return true;
         }
         return false;

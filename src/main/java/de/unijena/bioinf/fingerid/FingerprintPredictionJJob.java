@@ -46,7 +46,7 @@ public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob
 
 
     public FingerprintPredictionJJob(FingerprintJobInput input, JobUpdate<FingerprintJobOutput> jobUpdate, MaskedFingerprintVersion version, long submissionTime, String name) {
-        this(input, jobUpdate.jobId, jobUpdate.state, version, submissionTime, name);
+        this(input, jobUpdate.getJobId(), jobUpdate.getStateEnum(), version, submissionTime, name);
     }
 
     public FingerprintPredictionJJob(FingerprintJobInput input, long jobId, de.unijena.bioinf.ms.rest.model.JobState state, MaskedFingerprintVersion version, long submissionTime, String name) {
@@ -70,8 +70,8 @@ public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob
     public synchronized FingerprintPredictionJJob updateTyped(@NotNull final JobUpdate<FingerprintJobOutput> update) {
         if (updateState(update)) {
             if (update.data != null) {
-                if (update.data.fingerprints != null)
-                    prediction = new ProbabilityFingerprint(version, parseBinaryToDoubles(update.data.fingerprints));
+                if (update.data.fingerprint != null)
+                    prediction = new ProbabilityFingerprint(version, parseBinaryToDoubles(update.data.fingerprint));
                 if (update.data.iokrVector != null)
                     iokrVerctor = parseBinaryToDoubles(update.data.iokrVector);
             }
