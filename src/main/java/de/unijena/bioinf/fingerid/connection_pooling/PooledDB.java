@@ -4,7 +4,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.sql.SQLException;
 
-public interface PooledDB<T> extends Closeable {
+public interface PooledDB<T> extends Closeable, AutoCloseable {
     void refresh() throws IOException;
 
     <R> R useConnection(PoolFunction<T, R> runWithConnection) throws SQLException, IOException, InterruptedException;
