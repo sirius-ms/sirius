@@ -1,30 +1,78 @@
 package de.unijena.bioinf.ms.rest.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
-@MappedSuperclass
 public class JobBase {
-    @Column public Long jobId;
-    @Column public JobState state;
-    @Column public String securityToken;
-    @Column public String errorMessage;
+    @NotNull
+    protected final JobTable jobTable;
 
-    public JobTable jobTable;
+    protected Long jobId;
+    protected JobState state;
+    protected String securityToken;
+    protected String errorMessage;
 
+
+    //just for jackson
     private JobBase() {
-        this(null, null, null, null, null);
+        this(null, null, null, null);
     }
 
-    protected JobBase(Long jobId, JobState state, @Nullable String securityToken, @Nullable String errorMessage, @Nullable JobTable table) {
+    protected JobBase(Long jobId, JobState state, @Nullable String securityToken, @NotNull JobTable table) {
+        this(jobId, state, securityToken, table, null);
+    }
+
+    protected JobBase(Long jobId, JobState state, @Nullable String securityToken, @NotNull JobTable table, String errorMessage) {
         this.jobId = jobId;
         this.state = state;
         this.securityToken = securityToken;
-        this.errorMessage = errorMessage;
         this.jobTable = table;
+        this.errorMessage = errorMessage;
+    }
+
+    public JobState getStateEnum() {
+        return state;
+    }
+
+    public void setStateEnum(JobState state) {
+        this.state = state;
+    }
+
+    public int getState() {
+        return getStateEnum().id();
+    }
+
+    public void setState(int state) {
+        setStateEnum(JobState.withId(state));
+    }
+
+    public String getSecurityToken() {
+        return securityToken;
+    }
+
+    public void setSecurityToken(String securityToken) {
+        this.securityToken = securityToken;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public JobTable getJobTable() {
+        return jobTable;
+    }
+
+    public Long getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(Long jobId) {
+        this.jobId = jobId;
     }
 }

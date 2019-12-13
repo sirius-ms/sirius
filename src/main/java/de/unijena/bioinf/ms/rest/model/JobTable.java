@@ -18,24 +18,31 @@
 package de.unijena.bioinf.ms.rest.model;
 
 
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusJob;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
+import de.unijena.bioinf.ms.rest.model.fingerid.SiriusPredictionJob;
 
 /**
  * Defines available JobTable. A JobTable contains always the fields present {@link JobBase}
  * and the fields defined by the {@link JobTable#jobOutputType}
  */
 public enum JobTable {
-    TREE_JOB(null),
-    FINGERPRINT_JOB(null),
-    SIRIUS_FINGERID_JOB(FingerprintJobOutput.class),
-    SIRIUS_CANOPUS_JOB(CanopusJobOutput.class);
+    TREE_JOB(null, null, null),
+    FINGERPRINT_JOB(null, null, null),
+    SIRIUS_FINGERID_JOB(SiriusPredictionJob.class, FingerprintJobInput.class, FingerprintJobOutput.class),
+    SIRIUS_CANOPUS_JOB(CanopusJob.class, CanopusJobInput.class, CanopusJobOutput.class);
 
 
-    protected final Class<?> jobOutputType;
+    public final Class<? extends Job<?>> jobType;
+    public final Class<?> jobIntputType;
+    public final Class<?> jobOutputType;
 
-    JobTable(Class<?> jobOutputType) {
+    JobTable(Class<? extends Job<?>> jobType, Class<?> jobIntputType, Class<?> jobOutputType) {
+        this.jobType = jobType;
+        this.jobIntputType = jobIntputType;
         this.jobOutputType = jobOutputType;
     }
-
 }

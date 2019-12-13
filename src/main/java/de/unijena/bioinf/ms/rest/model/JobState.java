@@ -28,4 +28,5 @@ public enum JobState {
     public int id() {
         return ordinal();
     }
+
 }
