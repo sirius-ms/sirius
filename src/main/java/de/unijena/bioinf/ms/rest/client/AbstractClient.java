@@ -1,18 +1,26 @@
 package de.unijena.bioinf.ms.rest.client;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import de.unijena.bioinf.babelms.utils.IOFunction;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.SecurityService;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -61,6 +69,24 @@ public abstract class AbstractClient {
             throw new IOException("Error when querying REST service. Bad Response Code: "
                     + status.getStatusCode() + " | Message: " + status.getReasonPhrase());
     }
+
+
+    //region helper
+    public <T> T execute(@NotNull final HttpUriRequest request, @NotNull CloseableHttpClient client, IOFunction<Reader, T> doIt) throws IOException {
+        try (CloseableHttpResponse response = client.execute(request)) {
+            isSuccessful(response);
+            try (final BufferedReader reader = new BufferedReader(getIn(response.getEntity()))) {
+                return doIt.apply(reader);
+            }
+        }
+    }
+
+    public <T> T executeFromJson(@NotNull final HttpUriRequest request, @NotNull CloseableHttpClient client, @NotNull TypeReference<T> typeReference) throws IOException {
+        return execute(request, client, r -> new ObjectMapper().readValue(r, typeReference));
+    }
+
+    //endregion
+
 
     //#################################################################################################################
     //region PathBuilderMethods
