@@ -40,8 +40,7 @@ public class FormulaJob extends BasicJJob<List<FingerprintCandidate>> {
                 intrinsic.addAll(protonated);
                 return intrinsic;
             } else {
-                final List<FingerprintCandidate> candidates = searchDatabase.lookupStructuresAndFingerprintsByFormula(formula);
-                return candidates;
+                return searchDatabase.lookupStructuresAndFingerprintsByFormula(formula);
             }
         });
     }
