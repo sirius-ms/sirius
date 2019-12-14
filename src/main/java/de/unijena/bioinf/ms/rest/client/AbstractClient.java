@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.babelms.utils.IOFunction;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.client.utils.HTTPSupplier;
 import de.unijena.bioinf.ms.rest.model.SecurityService;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -20,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -45,11 +45,6 @@ public abstract class AbstractClient {
         this.serverUrl = serverUrl;
     }
 
-    @NotNull
-    protected InputStreamReader getIn(HttpEntity entity) throws IOException {
-        final Charset charset = ContentType.getOrDefault(entity).getCharset();
-        return new InputStreamReader(entity.getContent(), charset == null ? StandardCharsets.UTF_8 : charset);
-    }
 
     public boolean testConnection() {
         try {
@@ -71,20 +66,45 @@ public abstract class AbstractClient {
     }
 
 
-    //region helper
-    public <T> T execute(@NotNull final HttpUriRequest request, @NotNull CloseableHttpClient client, IOFunction<Reader, T> doIt) throws IOException {
+    //region http request execution API
+    public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunction<BufferedReader, T> respHandling) throws IOException {
         try (CloseableHttpResponse response = client.execute(request)) {
             isSuccessful(response);
             try (final BufferedReader reader = new BufferedReader(getIn(response.getEntity()))) {
-                return doIt.apply(reader);
+                return respHandling.apply(reader);
             }
         }
     }
 
-    public <T> T executeFromJson(@NotNull final HttpUriRequest request, @NotNull CloseableHttpClient client, @NotNull TypeReference<T> typeReference) throws IOException {
-        return execute(request, client, r -> new ObjectMapper().readValue(r, typeReference));
+    public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunction<BufferedReader, T> respHandling) throws IOException {
+        try {
+            return execute(client, makeRequest.get(), respHandling);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
+    public void execute(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest) throws IOException {
+        execute(client, makeRequest, (br) -> true);
+    }
+
+    public void execute(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request) throws IOException {
+        execute(client, () -> request);
+    }
+
+    public <T, R extends TypeReference<T>> T executeFromJson(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, R tr) throws IOException {
+        return execute(client, request, r -> new ObjectMapper().readValue(r, tr));
+    }
+
+    public <T, R extends TypeReference<T>> T executeFromJson(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest,  R tr) throws IOException {
+        return execute(client, makeRequest, r -> new ObjectMapper().readValue(r, tr));
+    }
+
+    @NotNull
+    protected InputStreamReader getIn(HttpEntity entity) throws IOException {
+        final Charset charset = ContentType.getOrDefault(entity).getCharset();
+        return new InputStreamReader(entity.getContent(), charset == null ? StandardCharsets.UTF_8 : charset);
+    }
     //endregion
 
 

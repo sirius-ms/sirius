@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 
 public class CanopusClient extends AbstractClient {
@@ -23,15 +22,14 @@ public class CanopusClient extends AbstractClient {
     }
 
     public JobUpdate<CanopusJobOutput> postJobs(final CanopusJobInput input, CloseableHttpClient client) throws IOException {
-        try {
-            final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/canopus/" + CID + "/jobs").build());
-            post.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(input), StandardCharsets.UTF_8));
-            post.setHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
-            // SUBMIT JOB
-            return executeFromJson(post, client, new TypeReference<>() {});
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+        return executeFromJson(client,
+                () -> {
+                    final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/canopus/" + CID + "/jobs").build());
+                    post.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(input), StandardCharsets.UTF_8));
+                    post.setHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
+                    return post;
+                }, new TypeReference<>() {}
+        );
     }
 }
 
