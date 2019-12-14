@@ -89,7 +89,7 @@ public class ChemDBClient extends AbstractClient {
                     final HttpGet get = new HttpGet(buildVersionSpecificWebapiURI("/compounds/" + formula.toString())
                             .setParameter("db", bioFilter.name())
                             .build());
-                    get.setConfig(RequestConfig.custom().setConnectTimeout(60000).setContentCompressionEnabled(true).build());
+                    get.setConfig(RequestConfig.custom().setSocketTimeout(120000).setConnectTimeout(120000).setContentCompressionEnabled(true).build());
                     return get;
                 },
                 br -> {
