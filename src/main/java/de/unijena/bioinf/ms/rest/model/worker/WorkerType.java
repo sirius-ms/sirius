@@ -10,9 +10,9 @@ import java.util.stream.Collectors;
 
 //specifies job from which jobtable a worker has to use see @JobTable
 public enum WorkerType {
-    FORMULA_ID(EnumSet.of(JobTable.TREE_JOB)),
-    FINGER_ID(EnumSet.of(JobTable.SIRIUS_FINGERID_JOB, JobTable.FINGERPRINT_JOB)),
-    CANOPUS(EnumSet.of(JobTable.SIRIUS_FINGERID_JOB, JobTable.FINGERPRINT_JOB)),
+//    FORMULA_ID(EnumSet.of(JobTable.TREE_JOB)),
+    FINGER_ID(EnumSet.of(JobTable.JOBS_FINGERID)),
+    CANOPUS(EnumSet.of(JobTable.JOBS_CANOPUS)),
     GUARDIAN(null);
 
 

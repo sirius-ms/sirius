@@ -30,12 +30,12 @@ public abstract class Job<O> extends JobBase {
     protected String cid;
     protected String version;
 
-    protected Job(String workerPrefix, JobState state, String securityToken, JobTable table) {
-        this(workerPrefix, null, state, securityToken, table);
+    protected Job(String workerPrefix, JobState state, JobTable table) {
+        this(workerPrefix, null, state, table);
     }
 
-    protected Job(String workerPrefix, Long jobId, JobState state, String securityToken, JobTable table) {
-        super(jobId, state, securityToken, table);
+    protected Job(String workerPrefix, Long jobId, JobState state,  JobTable table) {
+        super(jobId, state, table);
         this.workerPrefix = workerPrefix;
         this.version = FingerIDProperties.fingeridVersion();
     }
