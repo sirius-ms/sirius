@@ -50,7 +50,7 @@ public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob
     }
 
     public FingerprintPredictionJJob(FingerprintJobInput input, long jobId, de.unijena.bioinf.ms.rest.model.JobState state, MaskedFingerprintVersion version, long submissionTime, String name) {
-        this(input, new JobId(jobId, JobTable.SIRIUS_FINGERID_JOB), state, version, submissionTime, name);
+        this(input, new JobId(jobId, JobTable.JOBS_FINGERID), state, version, submissionTime, name);
 
     }
 
