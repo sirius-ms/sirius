@@ -30,8 +30,6 @@ import de.unijena.bioinf.ms.rest.model.fingerid.SiriusPredictionJob;
  * and the fields defined by the {@link JobTable#jobOutputType}
  */
 public enum JobTable {
-//    TREE_JOB(null, null, null),
-//    FINGERPRINT_JOB(null, null, null),
     JOBS_FINGERID(SiriusPredictionJob.class, FingerprintJobInput.class, FingerprintJobOutput.class),
     JOBS_CANOPUS(CanopusJob.class, CanopusJobInput.class, CanopusJobOutput.class);
 

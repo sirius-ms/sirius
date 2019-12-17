@@ -29,6 +29,10 @@ public class SiriusPredictionJob extends Job<FingerprintJobOutput> {
     protected byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
     protected byte[] iokrVector; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
 
+    public SiriusPredictionJob() {
+        this(null, null, null, null);
+    }
+
     public SiriusPredictionJob(String workerPrefix, Long jobId, JobState state, Long predictors) {
         super(workerPrefix, jobId, state, JobTable.JOBS_FINGERID);
         this.predictors = predictors;
