@@ -18,6 +18,7 @@
 
 package de.unijena.bioinf.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.fp.AbstractFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.WebJJob;
@@ -25,13 +26,9 @@ import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
-import gnu.trove.list.array.TDoubleArrayList;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import org.jetbrains.annotations.NotNull;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob, FingerprintResult, FingerprintJobOutput> implements AnnotationJJob<FingerprintResult, FingerIdResult> {
 
@@ -71,9 +68,9 @@ public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob
         if (updateState(update)) {
             if (update.data != null) {
                 if (update.data.fingerprint != null)
-                    prediction = new ProbabilityFingerprint(version, parseBinaryToDoubles(update.data.fingerprint));
+                    prediction = ProbabilityFingerprint.fromProbabilityArrayBinary(version, update.data.fingerprint);
                 if (update.data.iokrVector != null)
-                    iokrVerctor = parseBinaryToDoubles(update.data.iokrVector);
+                    iokrVerctor = AbstractFingerprint.convertToDoubles(update.data.iokrVector);
             }
         }
 
@@ -85,15 +82,4 @@ public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob
     public ProbabilityFingerprint getPrediction() {
         return prediction;
     }
-
-    private double[] parseBinaryToDoubles(byte[] bytes) {
-        final TDoubleArrayList data = new TDoubleArrayList(2000);
-        final ByteBuffer buf = ByteBuffer.wrap(bytes);
-        buf.order(ByteOrder.LITTLE_ENDIAN);
-        while (buf.position() < buf.limit()) {
-            data.add(buf.getDouble());
-        }
-        return data.toArray();
-    }
-
 }
