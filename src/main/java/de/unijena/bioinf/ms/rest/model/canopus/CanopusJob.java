@@ -1,10 +1,14 @@
 package de.unijena.bioinf.ms.rest.model.canopus;
 
-import de.unijena.bioinf.ms.rest.model.*;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ms.rest.model.Job;
+import de.unijena.bioinf.ms.rest.model.JobState;
+import de.unijena.bioinf.ms.rest.model.JobTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CanopusJob extends Job<CanopusJobOutput> {
+    protected String formula;
     protected byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
     protected byte[] compoundClasses; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
 
@@ -17,6 +21,7 @@ public class CanopusJob extends Job<CanopusJobOutput> {
         setIp(ip);
         setCid(cid);
         setFingerprint(input.fingerprint);
+        setFormula(input.formula);
     }
 
     public CanopusJob(String workerPrefix, JobState state) {
@@ -43,6 +48,17 @@ public class CanopusJob extends Job<CanopusJobOutput> {
         this.compoundClasses = compoundClasses;
     }
 
+    public String getFormula() {
+        return formula;
+    }
+
+    public void setFormula(String formula) {
+        this.formula = formula;
+    }
+
+    public MolecularFormula getMolecularFormula() {
+        return MolecularFormula.parseOrThrow(getFormula());
+    }
 
     @Override
     @Nullable
