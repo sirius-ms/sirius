@@ -5,13 +5,15 @@ package de.unijena.bioinf.ms.rest.model.canopus;
  * Will be (De-)Marshaled to/from json
  */
 public class CanopusJobInput {
+    protected String formula;
     public final byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
 
     private CanopusJobInput() {
-        this(null);
+        this(null,null);
     }
 
-    public CanopusJobInput(byte[] fingerprint) {
+    public CanopusJobInput(String formula, byte[] fingerprint) {
         this.fingerprint = fingerprint;
+        this.formula = formula;
     }
 }
