@@ -11,15 +11,18 @@ import java.util.EnumSet;
 
 public class WorkerInfo {
 
-    public final int id;
+    private int id;
 
-    public final WorkerType workerType;
-    public final EnumSet<PredictorType> predictors;
-    public final String version;
-    public final String hostname;
+    private WorkerType workerType;
+    private EnumSet<PredictorType> predictors;
+    private String version;
+    private String hostname;
 
+    // heartbeat of the worker/ last request of the worker
     private long pulse;
 
+    public WorkerInfo() {
+    }
 
     public WorkerInfo(int id, @NotNull WorkerType workerType, @NotNull EnumSet<PredictorType> predictors, @NotNull String version, String hostname, long alive) {
         this.id = id;
@@ -45,31 +48,74 @@ public class WorkerInfo {
         return pulse;
     }
 
+    public void setPulseAsLong(long pulse) {
+        this.pulse = pulse;
+    }
+
     public Time getPulseAsSQLTime() {
         return new Time(pulse);
     }
 
-    public Timestamp getPulseAsSQLTimestamp() {
-        return new Timestamp(pulse);
-    }
-
-    public Date getPulse() {
+    public Date getPulseAsDate() {
         return new Date(pulse);
     }
 
-    public void setPulse(long pulse) {
-        this.pulse = pulse;
+    public EnumSet<PredictorType> getPredictorsAsEnums() {
+        return predictors;
+    }
+
+    public void setPredictorsAsEnums(EnumSet<PredictorType> predictors) {
+        this.predictors = predictors;
+    }
+
+
+    //region bean getter and setter
+    public Timestamp getPulse() {
+        return new Timestamp(pulse);
     }
 
     public void setPulse(Timestamp alive) {
         this.pulse = alive.getTime();
     }
 
-    public void setPulse(Time alive) {
-        this.pulse = alive.getTime();
+    public int getId() {
+        return id;
     }
 
-    public void setPulse(Date alive) {
-        this.pulse = alive.getTime();
+    public void setId(int id) {
+        this.id = id;
     }
+
+    public WorkerType getWorkerType() {
+        return workerType;
+    }
+
+    public void setWorkerType(WorkerType workerType) {
+        this.workerType = workerType;
+    }
+
+    public Long getPredictors() {
+        return getPredictorsAsEnums() != null ? PredictorType.getBits(getPredictorsAsEnums()) : null;
+    }
+
+    public void setPredictors(Long predictors) {
+        setPredictorsAsEnums(predictors != null ? PredictorType.bitsToTypes(predictors) : null);
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
+    //endregion
 }

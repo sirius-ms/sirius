@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.rest.model.worker;
 
 
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
 import java.util.*;
@@ -11,7 +12,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class WorkerList {
+public class WorkerList /*extends AbstractList<WorkerInfo>*/ {
     private int pendingJobs = Integer.MIN_VALUE;
     private final ArrayList<WorkerInfo> workerList;
 
@@ -60,11 +61,11 @@ public class WorkerList {
     }
 
     public EnumSet<PredictorType> getSupportedTypes() {
-        return workerList.stream().map((w) -> w.predictors).flatMap(Collection::stream).collect(Collectors.toCollection(() -> EnumSet.noneOf(PredictorType.class)));
+        return workerList.stream().map(WorkerInfo::getPredictorsAsEnums).flatMap(Collection::stream).collect(Collectors.toCollection(() -> EnumSet.noneOf(PredictorType.class)));
     }
 
     public EnumSet<PredictorType> getActiveSupportedTypes(Instant slot) {
-        return getWorkerActiveWithinAsStrean(slot).map((w) -> w.predictors).flatMap(Collection::stream).collect(Collectors.toCollection(() -> EnumSet.noneOf(PredictorType.class)));
+        return getWorkerActiveWithinAsStrean(slot).map(WorkerInfo::getPredictorsAsEnums).flatMap(Collection::stream).collect(Collectors.toCollection(() -> EnumSet.noneOf(PredictorType.class)));
     }
 
     public boolean supportsAllPredictorTypes(EnumSet<PredictorType> neededTypes, Instant activeWithin) {
@@ -76,7 +77,7 @@ public class WorkerList {
     }
 
 
-    //region ArrayList_Delegation
+    //region ArrayList Delegation
     public int size() {
         return workerList.size();
     }
@@ -141,18 +142,22 @@ public class WorkerList {
         return workerList.retainAll(c);
     }
 
+    @NotNull
     public ListIterator<WorkerInfo> listIterator(int index) {
         return workerList.listIterator(index);
     }
 
+    @NotNull
     public ListIterator<WorkerInfo> listIterator() {
         return workerList.listIterator();
     }
 
+    @NotNull
     public Iterator<WorkerInfo> iterator() {
         return workerList.iterator();
     }
 
+    @NotNull
     public List<WorkerInfo> subList(int fromIndex, int toIndex) {
         return workerList.subList(fromIndex, toIndex);
     }
