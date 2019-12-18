@@ -19,33 +19,35 @@
 package de.unijena.bioinf;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.CSIPredictor;
+import de.unijena.bioinf.fingerid.CanopusWebJJob;
 import de.unijena.bioinf.fingerid.FingerprintPredictionJJob;
 import de.unijena.bioinf.fingerid.StructurePredictor;
 import de.unijena.bioinf.fingerid.blast.CovarianceScoringMethod;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.client.canopus.CanopusClient;
+import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
+import de.unijena.bioinf.ms.rest.client.fingerid.FingerIdClient;
+import de.unijena.bioinf.ms.rest.client.info.InfoClient;
+import de.unijena.bioinf.ms.rest.client.jobs.JobsClient;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
-import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
-import de.unijena.bioinf.ms.rest.client.fingerid.FingerIdClient;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
-import de.unijena.bioinf.ms.rest.client.info.InfoClient;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
-import de.unijena.bioinf.ms.rest.client.jobs.JobsClient;
 import de.unijena.bioinf.utils.ProxyManager;
 import gnu.trove.list.array.TIntArrayList;
 import org.apache.http.annotation.ThreadSafe;
@@ -77,17 +79,19 @@ public final class WebAPI {
     public final JobsClient jobsClient;
     public final ChemDBClient chemDBClient;
     public final FingerIdClient fingerprintClient;
+    public final CanopusClient canopusClient;
 
 
-    public WebAPI(@NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient) {
+    public WebAPI(@NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
         this.serverInfoClient = infoClient;
         this.jobsClient = jobsClient;
         this.chemDBClient = chemDBClient;
         this.fingerprintClient = fingerIdClient;
+        this.canopusClient = canopusClient;
     }
 
     public WebAPI(@NotNull URI host) {
-        this(new InfoClient(host), new JobsClient(host), new ChemDBClient(host), new FingerIdClient(host));
+        this(new InfoClient(host), new JobsClient(host), new ChemDBClient(host), new FingerIdClient(host), new CanopusClient(host));
     }
 
     public WebAPI(@NotNull String host) {
@@ -165,11 +169,26 @@ public final class WebAPI {
     }
 
     public CdkFingerprintVersion getFingerprintVersion() throws IOException {
-       return chemDBClient.getFingerprintVersion(ProxyManager.client());
+        return chemDBClient.getFingerprintVersion(ProxyManager.client());
     }
     //endregion
 
     //region Canopus
+    public CanopusWebJJob submitCanopusJob(FTree tree, ProbabilityFingerprint fingerprint) throws IOException {
+        return submitCanopusJob(tree.getRoot().getFormula(), tree.getRoot().getIonization().getCharge(), fingerprint);
+    }
+
+    public CanopusWebJJob submitCanopusJob(MolecularFormula formula, int charge, ProbabilityFingerprint fingerprint) throws IOException {
+        return submitCanopusJob(new CanopusJobInput(formula.toString(), fingerprint.toProbabilityArrayBinary()), charge);
+    }
+
+    public CanopusWebJJob submitCanopusJob(CanopusJobInput input, int charge) throws IOException {
+        JobUpdate<CanopusJobOutput> jobUpdate = canopusClient.postJobs(input, ProxyManager.client());
+        final MaskedFingerprintVersion version = getFingerprintMaskedVersion(charge);
+
+        return jobWatcher.watchJob(new CanopusWebJJob(jobUpdate.getGlobalId(), jobUpdate.getStateEnum(), version, System.currentTimeMillis()));
+    }
+
     //endregion
 
     //region CSI:FingerID
