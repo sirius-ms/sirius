@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.rest.model.worker;
 
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +13,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE, isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 public class WorkerList /*extends AbstractList<WorkerInfo>*/ {
     private int pendingJobs = Integer.MIN_VALUE;
     private final ArrayList<WorkerInfo> workerList;
