@@ -1,5 +1,9 @@
 package de.unijena.bioinf.ChemistryBase.fp;
 
+import gnu.trove.list.array.TDoubleArrayList;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Iterator;
 
 public abstract class AbstractFingerprint implements Iterable<FPIter> {
@@ -47,6 +51,29 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
     public abstract String toTabSeparatedString();
 
     public abstract double[] toProbabilityArray();
+
+    public byte[] toProbabilityArrayBinary() {
+        return convertToBinary(toProbabilityArray());
+    }
+
+    public static byte[] convertToBinary(double[] data) {
+        final ByteBuffer buffer = ByteBuffer.allocate(data.length * 8);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        for (double val : data)
+            buffer.putDouble(val);
+        buffer.rewind();
+        return buffer.array();
+    }
+
+    public static double[] convertToDoubles(byte[] bytes) {
+        final TDoubleArrayList data = new TDoubleArrayList(2000);
+        final ByteBuffer buf = ByteBuffer.wrap(bytes);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        while (buf.position() < buf.limit()) {
+            data.add(buf.getDouble());
+        }
+        return data.toArray();
+    }
 
     public abstract boolean isSet(int index);
 
