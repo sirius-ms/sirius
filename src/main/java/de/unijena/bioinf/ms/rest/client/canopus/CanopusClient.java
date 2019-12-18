@@ -17,7 +17,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 public class CanopusClient extends AbstractClient {
-    protected CanopusClient(@NotNull URI serverUrl) {
+    public CanopusClient(@NotNull URI serverUrl) {
         super(serverUrl);
     }
 
