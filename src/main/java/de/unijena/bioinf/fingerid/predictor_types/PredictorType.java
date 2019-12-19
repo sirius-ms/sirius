@@ -13,6 +13,8 @@ public enum PredictorType {
     IOKR_POSITIVE(true),
     CSI_FINGERID_NEGATIVE(false), //CSI for negative ionization
     IOKR_NEGATIVE(false);
+//    CANOPUS_POSITIVE(true),
+//    CANOPUS_NEGATIVE(false);
 
     private final boolean positive;
 
@@ -33,6 +35,10 @@ public enum PredictorType {
         if (charge < 0) return isNegative();
         throw new IllegalArgumentException("Neutral charge is not Allowed!");
 
+    }
+
+    public int toCharge(){
+        return positive ? 1 :-1;
     }
 
     public String toBitsAsString() {
