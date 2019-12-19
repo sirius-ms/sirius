@@ -25,7 +25,8 @@ public class CanopusClient extends AbstractClient {
         return executeFromJson(client,
                 () -> {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/canopus/" + CID + "/jobs").build());
-                    post.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(input), StandardCharsets.UTF_8));
+                    String v = new ObjectMapper().writeValueAsString(input);
+                    post.setEntity(new StringEntity(v, StandardCharsets.UTF_8));
                     post.setHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
                     return post;
                 }, new TypeReference<>() {}
