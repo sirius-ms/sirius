@@ -175,16 +175,16 @@ public final class WebAPI {
 
     //region Canopus
     public CanopusWebJJob submitCanopusJob(FTree tree, ProbabilityFingerprint fingerprint) throws IOException {
-        return submitCanopusJob(tree.getRoot().getFormula(), tree.getRoot().getIonization().getCharge(), fingerprint);
+        return submitCanopusJob(tree.getRoot().getFormula(), fingerprint, (tree.getRoot().getIonization().getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE));
     }
 
-    public CanopusWebJJob submitCanopusJob(MolecularFormula formula, int charge, ProbabilityFingerprint fingerprint) throws IOException {
-        return submitCanopusJob(new CanopusJobInput(formula.toString(), fingerprint.toProbabilityArrayBinary()), charge);
+    public CanopusWebJJob submitCanopusJob(MolecularFormula formula, ProbabilityFingerprint fingerprint, PredictorType type) throws IOException {
+        return submitCanopusJob(new CanopusJobInput(formula.toString(), fingerprint.toProbabilityArrayBinary(), type));
     }
 
-    public CanopusWebJJob submitCanopusJob(CanopusJobInput input, int charge) throws IOException {
+    public CanopusWebJJob submitCanopusJob(CanopusJobInput input) throws IOException {
         JobUpdate<CanopusJobOutput> jobUpdate = canopusClient.postJobs(input, ProxyManager.client());
-        final MaskedFingerprintVersion version = getFingerprintMaskedVersion(charge);
+        final MaskedFingerprintVersion version = getFingerprintMaskedVersion(input.predictor.toCharge());
 
         return jobWatcher.watchJob(new CanopusWebJJob(jobUpdate.getGlobalId(), jobUpdate.getStateEnum(), version, System.currentTimeMillis()));
     }
