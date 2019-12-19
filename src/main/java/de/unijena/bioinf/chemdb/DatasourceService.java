@@ -63,6 +63,8 @@ public class DatasourceService {
         UNDP("Natural Products", 32768, "SELECT undp_id FROM ref.undp WHERE inchi_key_1 = ?", null),
         YMDB("YMDB", 65536,         "SELECT ymdb_id FROM ref.ymdb WHERE inchi_key_1 = ?", "http://www.ymdb.ca/compounds/YMDB%d05"),
         PLANTCYC("Plantcyc", 131072, "SELECT unique_id FROM ref.plantcyc WHERE inchi_key_1 = ?", "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s"),
+        NORMAN("NORMAN", 262144,  null,null), //TODO implement importer
+        ADDITIONAL("additional", 524288,  null,null, 0), //proably mostly training structures, but maybe more.
         PUBCHEMANNOTATIONBIO("PubChem classifications: bio and metabolites", 16777216,  null,null, 0), //2**24; Pubchem Annotations now have a separate flag
         PUBCHEMANNOTATIONDRUG("PubChem classifications: drug", 33554432,  null,null, 0),
         PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem classifications: safety and toxic", 67108864,  null,null, 0),
