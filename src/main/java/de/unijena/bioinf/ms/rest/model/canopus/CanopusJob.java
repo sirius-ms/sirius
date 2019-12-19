@@ -11,6 +11,7 @@ public class CanopusJob extends Job<CanopusJobOutput> {
     protected String formula;
     protected byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
     protected byte[] compoundClasses; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
+    protected Long predictors;
 
     public CanopusJob() {
         this(null, null, null);
@@ -22,6 +23,13 @@ public class CanopusJob extends Job<CanopusJobOutput> {
         setCid(cid);
         setFingerprint(input.fingerprint);
         setFormula(input.formula);
+        setPredictors(input.predictor.toBits());
+    }
+
+    //worker Constructor
+    public CanopusJob(String workerPrefix, long lockedByWorker) {
+        this(workerPrefix, null);
+        setLockedByWorker(lockedByWorker);
     }
 
     public CanopusJob(String workerPrefix, JobState state) {
@@ -66,9 +74,15 @@ public class CanopusJob extends Job<CanopusJobOutput> {
         return compoundClasses != null ? new CanopusJobOutput(compoundClasses) : null;
     }
 
+    public Long getPredictors() {
+        return predictors;
+    }
 
+    public void setPredictors(Long predictors) {
+        this.predictors = predictors;
+    }
 
-/*
+    /*
     @Override
     public void setOutput(CanopusJobOutput output) {
         setCompoundClasses(output.compoundClasses);
