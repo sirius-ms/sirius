@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.fingerid.CanopusJJob;
 import de.unijena.bioinf.fingerid.CanopusResult;
+import de.unijena.bioinf.fingerid.CanopusWebJJob;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -14,6 +15,7 @@ import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.fingerid.CanopusClientData;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
+import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -45,10 +47,11 @@ public class CanopusSubToolJob extends InstanceJob {
         // check for valid input
         if (res.size() < 1)
             return; // nothing to do
-            //throw new IllegalArgumentException("No FingerID Result available for compound class prediction");
+        //throw new IllegalArgumentException("No FingerID Result available for compound class prediction");
 
         // submit canopus jobs for Identification results that contain CSI:FingerID results
-        Map<FormulaResult, CanopusJJob> jobs = res.stream().collect(Collectors.toMap(r -> r, this::buildAndSubmit));
+//        Map<FormulaResult, CanopusJJob> jobs = res.stream().collect(Collectors.toMap(r -> r, this::buildAndSubmit));
+        Map<FormulaResult, CanopusWebJJob> jobs = res.stream().collect(Collectors.toMap(r -> r, this::buildAndSubmitRemote));
 
         jobs.forEach((k, v) -> k.setAnnotation(CanopusResult.class, v.takeResult()));
 
@@ -66,6 +69,14 @@ public class CanopusSubToolJob extends InstanceJob {
         canopusJob.setFormula(ir.getId().getMolecularFormula())
                 .setFingerprint(ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint);
         return SiriusJobs.getGlobalJobManager().submitJob(canopusJob);
+    }
+
+    private CanopusWebJJob buildAndSubmitRemote(@NotNull final FormulaResult ir) {
+        return NetUtils.tryAndWait(() -> {
+            checkForInterruption();
+            return ApplicationCore.WEB_API.submitCanopusJob(
+                    ir.getId().getMolecularFormula(), ir.getId().getIonType().getCharge(), ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint);
+        });
     }
 
     @Override
