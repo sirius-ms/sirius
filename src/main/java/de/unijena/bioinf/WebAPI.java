@@ -174,8 +174,9 @@ public final class WebAPI {
     //endregion
 
     //region Canopus
-    public CanopusWebJJob submitCanopusJob(FTree tree, ProbabilityFingerprint fingerprint) throws IOException {
-        return submitCanopusJob(tree.getRoot().getFormula(), fingerprint, (tree.getRoot().getIonization().getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE));
+
+    public CanopusWebJJob submitCanopusJob(MolecularFormula formula, int charge,  ProbabilityFingerprint fingerprint) throws IOException {
+        return submitCanopusJob(formula, fingerprint, (charge > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE));
     }
 
     public CanopusWebJJob submitCanopusJob(MolecularFormula formula, ProbabilityFingerprint fingerprint, PredictorType type) throws IOException {
