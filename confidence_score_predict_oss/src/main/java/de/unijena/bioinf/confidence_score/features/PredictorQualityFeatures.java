@@ -25,6 +25,11 @@ public class PredictorQualityFeatures implements FeatureCreator{
     }
 
     @Override
+    public int weight_direction() {
+        return 0;
+    }
+
+    @Override
     public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
     PredictionPerformance.averageF1(statistics);

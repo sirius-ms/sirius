@@ -31,7 +31,14 @@ public class FptLengthDiffFeatures implements FeatureCreator {
     }
 
     @Override
+    public int weight_direction() {
+        return 0;
+    }
+
+    @Override
     public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
+        assert ranked_candidates[0].getScore()>=ranked_candidates[ranked_candidates.length-1].getScore();
+
         double[] diff = new double[1];
 
         diff[0]=Math.abs(ranked_candidates[0].getCandidate().getFingerprint().cardinality() - query.asDeterministic().cardinality());

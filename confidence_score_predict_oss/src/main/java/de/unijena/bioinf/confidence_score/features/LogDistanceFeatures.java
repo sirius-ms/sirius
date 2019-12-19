@@ -20,6 +20,7 @@ public class LogDistanceFeatures implements FeatureCreator {
     private PredictionPerformance[] statistics;
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
+    public int weight_direction=1;
 
 
 
@@ -40,7 +41,13 @@ public class LogDistanceFeatures implements FeatureCreator {
     }
 
     @Override
+    public int weight_direction() {
+        return weight_direction;
+    }
+
+    @Override
     public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
+        assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();
 
 
 
@@ -50,20 +57,16 @@ public class LogDistanceFeatures implements FeatureCreator {
 
         final double topHit = rankedCandidates_filtered[0].getScore();
         int pos = 0;
-        int additional_shift=0;
+
 
             for (int j = 0; j < distances.length; j++) {
-
+                int additional_shift=0;
                 while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
                     additional_shift+=1;
                 }
 
-                if(topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore()==0){
-                    scores[pos++]=0;
-                }else {
+                scores[pos++] = Math.log(topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore());
 
-                    scores[pos++] = Math.log(topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore());
-                }
 
         }
         assert pos == scores.length;

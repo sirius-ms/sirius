@@ -8,7 +8,7 @@ import de.unijena.bioinf.fingerid.blast.Fingerblast;
 /**
  * Created by martin on 03.08.18.
  */
-public class FptFptInchiFormulaName {
+public class FptFptInchiSmilesFormulaName {
 
 
     MolecularFormula formula;
@@ -16,14 +16,16 @@ public class FptFptInchiFormulaName {
     String inchikey;
     String name;
     Fingerprint true_fpt;
+    String smiles;
 
-    public FptFptInchiFormulaName(ProbabilityFingerprint fpt, Fingerprint true_fpt,String inchikey, MolecularFormula formula, String name){
+    public FptFptInchiSmilesFormulaName(ProbabilityFingerprint fpt, Fingerprint true_fpt,String inchikey,String smiles, MolecularFormula formula, String name){
 
         this.formula=formula;
         this.fpt=fpt;
         this.inchikey=inchikey;
         this.name=name;
         this.true_fpt=true_fpt;
+        this.smiles=smiles;
 
     }
 
@@ -40,6 +42,7 @@ public class FptFptInchiFormulaName {
     public ProbabilityFingerprint getFpt() {
         return fpt;
     }
+    public String getSmiles(){return smiles;}
 
     public String getInchikey() {
         return inchikey;

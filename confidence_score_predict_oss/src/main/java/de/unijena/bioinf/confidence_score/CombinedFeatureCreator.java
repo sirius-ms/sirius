@@ -24,7 +24,7 @@ import java.util.List;
  * Created by Marcus Ludwig on 09.03.16.
  */
 public class CombinedFeatureCreator implements FeatureCreator{
-    FeatureCreator[] featureCreators;
+    public FeatureCreator[] featureCreators;
     private int featureCount;
     private double[] computed_features;
 
@@ -45,6 +45,11 @@ public class CombinedFeatureCreator implements FeatureCreator{
         for (FeatureCreator featureCreator : featureCreators) {
             featureCreator.prepare(statistics);
         }
+    }
+
+    @Override
+    public int weight_direction() {
+        return 0;
     }
 
     @Override

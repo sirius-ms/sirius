@@ -17,10 +17,16 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 public class PredictionQualityFeatures implements FeatureCreator{
 
 
+    public int weight_direction=1;
     PredictionPerformance[] statistics;
     @Override
     public void prepare(PredictionPerformance[] statistics) {
         this.statistics=statistics;
+    }
+
+    @Override
+    public int weight_direction() {
+        return weight_direction;
     }
 
     @Override
@@ -32,13 +38,13 @@ public class PredictionQualityFeatures implements FeatureCreator{
         double[] prob_fpt= query.toProbabilityArray();
 
         for(int i=0;i<prob_fpt.length;i++){
-            quality+=(Math.max(1-prob_fpt[i],prob_fpt[i])*statistics[i].getF());
+            quality+=(Math.max(1-prob_fpt[i],prob_fpt[i]));
 
 
 
         }
 
-        qualityReturn[0]=quality;
+        qualityReturn[0]=quality/query.cardinality();
 
 
 

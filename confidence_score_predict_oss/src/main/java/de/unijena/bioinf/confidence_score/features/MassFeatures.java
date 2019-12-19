@@ -9,78 +9,63 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
- * Created by Marcus Ludwig on 07.03.16.
+ * Created by martin on 16.07.18.
  */
-public class AllConfidenceScoreFeatures implements FeatureCreator {
-    private final String[] names;
-    private FingerblastScoring scoring;
-    private PredictionPerformance[] statistics;
-    Scored<FingerprintCandidate>[] rankedCandidates;
-    double conf;
-    boolean same;
-    public AllConfidenceScoreFeatures(double conf,boolean same){
-        this.rankedCandidates=rankedCandidates;
-        names = new String[]{"AllConfScore","same"};
-        this.scoring=scoring;
-        this.conf=conf;
-        this.same=same;
-    }
+public class MassFeatures implements FeatureCreator {
 
 
-    //TODO: Also code in that this is different for same pubchem hit - different pubchem hit
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
-        this.statistics = statistics;
+
+    }
+
+    @Override
+    public int weight_direction() {
+        return 0;
     }
 
     @Override
     public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
-
-        final double[] scores = new double[2];
-
-        scores[0] = conf;
-        if(same)
-        scores[1] = 1;
-        else scores[1]=0;
-
-        return scores;
+        double[] return_vector= new double[1];
+        return_vector[0]=idresult.getMolecularFormula().getMass();
+        return  return_vector;
     }
 
     @Override
     public int getFeatureSize() {
-        return 2;
+        return 1;
     }
 
     @Override
     public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
-        return rankedCandidates.length>0;
+        return false;
     }
 
     @Override
     public int getRequiredCandidateSize() {
-        return 1;
+        return 0;
     }
 
     @Override
     public String[] getFeatureNames() {
 
-
-        return names;
+        String[] name = new String[1];
+        name[0] = "mass";
+        return name;
     }
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        //Nothing to do as long as ScoringMethods stay the same
+
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        //Nothing to do as long as ScoringMethods stay the same
+
     }
 }

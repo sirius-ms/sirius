@@ -46,8 +46,13 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
     }
 
     @Override
+    public int weight_direction() {
+        return -1;
+    }
+
+    @Override
     public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
-        double[] pvalueScore = new double[2];
+        double[] pvalueScore = new double[1];
 
 
 
@@ -59,14 +64,9 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
 
         PvalueScoreUtils utils = new PvalueScoreUtils();
 
-        pvalueScore[0] = utils.computePvalueScore(rankedCands,rankedCands_filtered,current);
+        pvalueScore[0] = Math.log(utils.computePvalueScore(rankedCands,rankedCands_filtered,current));
 
-        if (pvalueScore[0]==0){
-            pvalueScore[1]=-20;
-            return pvalueScore;
-        }
-
-        pvalueScore[1] = Math.log(pvalueScore[0]);
+    //    pvalueScore[1] = Math.log(pvalueScore[0]);
 
 
 
@@ -78,7 +78,7 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
 
     @Override
     public int getFeatureSize() {
-        return 2;
+        return 1;
     }
 
     @Override
@@ -94,9 +94,8 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
     @Override
     public String[] getFeatureNames() {
 
-        String[] name = new String[2];
+        String[] name = new String[1];
         name[0] = "pvaluescorediffscorer";
-        name[1] = "pvaluescorediffscorer";
         return name;
     }
 

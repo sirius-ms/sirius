@@ -17,10 +17,16 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 public class LogPvalueFeatures implements FeatureCreator {
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
+    public int weight_direction=-1;
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
 
+    }
+
+    @Override
+    public int weight_direction() {
+        return weight_direction;
     }
 
     public LogPvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
@@ -32,7 +38,9 @@ public class LogPvalueFeatures implements FeatureCreator {
 
     @Override
     public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
-        double[] return_value =  new double[2];
+        assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();
+
+        double[] return_value =  new double[1];
 
 
         PvalueScoreUtils utils= new PvalueScoreUtils();
@@ -44,25 +52,14 @@ public class LogPvalueFeatures implements FeatureCreator {
         double pvalue= utils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[0]);
 
 
-        double pvalue_kde=100;
-        if(rankedCandidates.length>5) pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[0]);
+        return_value[0]  = Math.log(pvalue);
+
+      //  if(pvalue_kde==0){
+         //   return_value[1]=-20;
 
 
 
-        if(pvalue==0){
-            return_value[0]=-20;
 
-        }else {
-            return_value[0]  = Math.log(pvalue);
-
-        }
-
-        if(pvalue_kde==0){
-            return_value[1]=-20;
-
-        }else {
-            return_value[1]= Math.log(pvalue_kde);
-        }
 
 
 
@@ -71,7 +68,7 @@ public class LogPvalueFeatures implements FeatureCreator {
 
     @Override
     public int getFeatureSize() {
-        return 2;
+        return 1;
     }
 
     @Override
@@ -86,9 +83,8 @@ public class LogPvalueFeatures implements FeatureCreator {
 
     @Override
     public String[] getFeatureNames() {
-        String[] name = new String[2];
+        String[] name = new String[1];
         name[0]="LogpvalueScore";
-        name[1]="LogPvalueScoreKDE";
         return name;
     }
 
