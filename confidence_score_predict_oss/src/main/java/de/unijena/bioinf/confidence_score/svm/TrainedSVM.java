@@ -15,8 +15,8 @@ import java.io.StringReader;
 
 //Trained SVM object containing all the feature weights, names and scaling information
 public class TrainedSVM {
-    double[] weights;
-    String[] names;
+    public double[] weights;
+    public String[] names;
     public SVMScales scales;
     public double[] probAB;
     public int score_shift;

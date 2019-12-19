@@ -51,6 +51,11 @@ public class TanimotoDistanceFeatures implements FeatureCreator {
     }
 
     @Override
+    public int weight_direction() {
+        return -1;
+    }
+
+    @Override
     public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
 
@@ -67,6 +72,10 @@ public class TanimotoDistanceFeatures implements FeatureCreator {
 
 
         for (int j = 0; j < distances.length; j++) {
+            int additional_shift=0;
+            while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
+                additional_shift+=1;
+            }
 
             scores[pos++] = rankedCandidates_filtered[0].getCandidate().getFingerprint().tanimoto(rankedCandidates_filtered[distances[j]].getCandidate().getFingerprint());
         }

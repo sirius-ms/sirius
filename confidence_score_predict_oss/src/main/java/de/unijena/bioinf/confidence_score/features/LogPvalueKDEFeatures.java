@@ -12,11 +12,12 @@ import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
- * Created by martin on 16.07.18.
+ * Created by martin on 20.06.18.
  */
-public class FptLengthFeature implements FeatureCreator {
-
-
+public class LogPvalueKDEFeatures implements FeatureCreator {
+    Scored<FingerprintCandidate>[] rankedCandidates;
+    Scored<FingerprintCandidate>[] rankedCandidates_filtered;
+    public int weight_direction=-1;
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
@@ -25,17 +26,43 @@ public class FptLengthFeature implements FeatureCreator {
 
     @Override
     public int weight_direction() {
-        return 0;
+        return weight_direction;
     }
 
+    public LogPvalueKDEFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
+        this.rankedCandidates=rankedCandidates;
+        this.rankedCandidates_filtered=rankedCandidates_filtered;
+    }
+
+
+
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
+    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
+        assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();
 
-        double[] length =  new double[1];
+        double[] return_value =  new double[1];
 
-        length[0]= query.asDeterministic().cardinality();
 
-        return length;
+        PvalueScoreUtils utils= new PvalueScoreUtils();
+
+
+
+        double pvalue_kde;
+        pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[0]);
+
+
+
+
+          if(pvalue_kde==0) {
+              return_value[0] = -20;
+          }
+          else
+            return_value[0]= Math.log(pvalue_kde);
+
+
+
+
+        return return_value;
     }
 
     @Override
@@ -55,9 +82,8 @@ public class FptLengthFeature implements FeatureCreator {
 
     @Override
     public String[] getFeatureNames() {
-
         String[] name = new String[1];
-        name[0] = "fptLength";
+        name[0]="LogPvalueScoreKDE";
         return name;
     }
 

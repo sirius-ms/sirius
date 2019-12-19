@@ -1,23 +1,19 @@
 package de.unijena.bioinf.confidence_score.features;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
- * Created by martin on 16.07.18.
+ * Created by martin on 20.06.18.
  */
-public class FptLengthFeature implements FeatureCreator {
-
-
-
+public class SiriusScoreFeatures implements FeatureCreator {
     @Override
     public void prepare(PredictionPerformance[] statistics) {
 
@@ -25,17 +21,26 @@ public class FptLengthFeature implements FeatureCreator {
 
     @Override
     public int weight_direction() {
-        return 0;
+        return weight_direction;
     }
 
+    public int weight_direction=1;
+
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
+    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
+       // double[] scores= new double[4];
+        double[] scores= new double[1];
+        TreeStatistics current_tree_scores =  idresult.getRawTree().getAnnotationOrThrow(TreeStatistics.class);
+       // scores[0]=current_tree_scores.getExplainedIntensityOfExplainablePeaks();
+        //scores[1]= current_tree_scores.getExplainedIntensity();
+        //scores[2]=current_tree_scores.getRatioOfExplainedPeaks();
+        //scores[3]= idresult.getRawTree().getTreeWeight();
+        scores[0]=idresult.newMetricsHelper().getSiriusScore();
 
-        double[] length =  new double[1];
 
-        length[0]= query.asDeterministic().cardinality();
 
-        return length;
+        return scores;
+
     }
 
     @Override
@@ -55,10 +60,16 @@ public class FptLengthFeature implements FeatureCreator {
 
     @Override
     public String[] getFeatureNames() {
+        String[] names = new String[getFeatureSize()];
+      //  names[0] = "explIntExplPeaks";
+       // names[1] = "explInt";
+       // names[2] = "ratioExplPeaks";
+       // names[3] = "score";
+        names[0] = "sirius score";
 
-        String[] name = new String[1];
-        name[0] = "fptLength";
-        return name;
+
+        return names;
+
     }
 
     @Override

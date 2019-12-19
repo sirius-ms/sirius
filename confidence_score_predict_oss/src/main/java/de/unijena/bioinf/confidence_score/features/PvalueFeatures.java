@@ -24,6 +24,11 @@ public class PvalueFeatures implements FeatureCreator {
 
     }
 
+    @Override
+    public int weight_direction() {
+        return 0;
+    }
+
     public PvalueFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
         this.rankedCandidates=rankedCandidates;
         this.rankedCandidates_filtered=rankedCandidates_filtered;

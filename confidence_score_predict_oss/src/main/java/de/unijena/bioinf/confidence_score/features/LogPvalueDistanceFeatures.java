@@ -31,6 +31,7 @@ public class LogPvalueDistanceFeatures implements FeatureCreator {
     private PredictionPerformance[] statistics;
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
+    public int weight_direction=1;
 
 
     public LogPvalueDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered,int... distances){
@@ -50,8 +51,14 @@ public class LogPvalueDistanceFeatures implements FeatureCreator {
     }
 
     @Override
+    public int weight_direction() {
+        return weight_direction;
+    }
+
+    @Override
     public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
+        assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();
         PvalueScoreUtils putils = new PvalueScoreUtils();
 
         double[] scores =  new double[feature_size];
@@ -62,12 +69,22 @@ public class LogPvalueDistanceFeatures implements FeatureCreator {
 
         for (int j = 0; j < distances.length; j++) {
 
-            if(putils.computePvalueScore(rankedCandidates, rankedCandidates_filtered,rankedCandidates_filtered[0]) - putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[distances[j]])==0){
-                scores[pos++]=-20;
-            }else{
+            int additional_shift=0;
+            while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
+                additional_shift+=1;
+            }
 
-            scores[pos++] = Math.log(Math.abs(putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered, rankedCandidates_filtered[0]) - putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates[distances[j]])));
-        }
+
+            double pvalue1=putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered, rankedCandidates_filtered[0]);
+            double pvalue2 = putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[distances[j]+additional_shift]);
+            if(pvalue1-pvalue2==0){
+                System.out.println("pvaluedist "+pvalue1+" "+pvalue2+" "+rankedCandidates.length+" "+additional_shift);
+                scores[pos++]=-20;
+            }else {
+
+                scores[pos++] = Math.log(Math.abs(putils.computePvalueScore(rankedCandidates, rankedCandidates_filtered, rankedCandidates_filtered[0]) - putils.computePvalueScore(rankedCandidates, rankedCandidates_filtered, rankedCandidates_filtered[distances[j] + additional_shift])));
+
+            }
         }
 
         assert pos == scores.length;

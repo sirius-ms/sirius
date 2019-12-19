@@ -12,30 +12,55 @@ import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
- * Created by martin on 16.07.18.
+ * Created by martin on 20.06.18.
  */
-public class FptLengthFeature implements FeatureCreator {
 
+
+/**
+ *
+ *
+ computes distance features, max distance is variable, so are scorers. Top scoring hit is FIXED at this point!
+
+
+ */
+
+
+public class CandlistSizeFeatures implements FeatureCreator {
+    private PredictionPerformance[] statistics;
+    Scored<FingerprintCandidate>[] rankedCandidates;
+
+
+
+    public CandlistSizeFeatures(Scored<FingerprintCandidate>[] rankedCandidates){
+
+        this.rankedCandidates=rankedCandidates;
+
+    }
 
 
     @Override
-    public void prepare(PredictionPerformance[] statistics) {
+    public void prepare(PredictionPerformance[] statistics) {this.statistics=statistics;
 
     }
 
     @Override
     public int weight_direction() {
-        return 0;
+        return -1;
     }
 
     @Override
     public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
-        double[] length =  new double[1];
 
-        length[0]= query.asDeterministic().cardinality();
+        double[] scores =  new double[1];
 
-        return length;
+        scores[0]=Math.log(rankedCandidates.length);
+
+
+        return scores;
+
+
+
     }
 
     @Override
@@ -50,14 +75,14 @@ public class FptLengthFeature implements FeatureCreator {
 
     @Override
     public int getRequiredCandidateSize() {
-        return 0;
+        return 1;
     }
 
     @Override
-    public String[] getFeatureNames() {
-
-        String[] name = new String[1];
-        name[0] = "fptLength";
+    public String[] getFeatureNames()
+    {
+        String[] name=  new String[1];
+        name[0]="candlistsize";
         return name;
     }
 

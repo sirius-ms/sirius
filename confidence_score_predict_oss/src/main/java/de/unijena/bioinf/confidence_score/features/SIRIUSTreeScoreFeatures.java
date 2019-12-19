@@ -34,6 +34,11 @@ public class SIRIUSTreeScoreFeatures implements FeatureCreator {
     }
 
     @Override
+    public int weight_direction() {
+        return 0;
+    }
+
+    @Override
     public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
         FTreeMetricsHelper metricsIdRes = new FTreeMetricsHelper(idresult.getTree());
         FTreeMetricsHelper metrics0 = new FTreeMetricsHelper(idlist.get(0).getTree());

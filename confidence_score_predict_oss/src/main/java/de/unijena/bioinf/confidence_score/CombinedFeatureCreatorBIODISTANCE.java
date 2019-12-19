@@ -21,13 +21,13 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
 
 
 
-    FeatureCreator[] featureCreators;
+    public FeatureCreator[] featureCreators;
     private int featureCount;
     private double[] computed_features;
 
     //all confidence means the pubchem confidence score for this input. Has to be always computet
     // same is the tophit in pubchem the same as in the reduced db.
-    public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered, PredictionPerformance[] performance, CovarianceScoringMethod.Scoring covscore, double all_confidence, boolean same){
+    public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered, PredictionPerformance[] performance, CovarianceScoringMethod.Scoring covscore){
 
 
         //CombinedFeatureCreatorALL conf_score_all = new CombinedFeatureCreatorALL(scored_array,scored_array_covscore,performance,covscore);
@@ -36,32 +36,68 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
 
 
 
-        ArrayList<FeatureCreator> creators = new ArrayList<>(Arrays.asList(new PlattFeatures(), new LogPvalueDistanceFeatures(scored_array,scored_array,1),
-               //these are pubchem features and cannot have a filtered list as input
-                new LogDistanceFeatures(scored_array,scored_array,1),
-                new DistanceFeatures(scored_array,scored_array,1),
-                new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array),
-                 new LogPvalueFeatures(scored_array,scored_array),
-                 new LogPvalueFeatures(scored_array_covscore,scored_array_covscore),
-                new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore_filtered,scored_array[0],covscore),
-                new TreeFeatures(), new PredictionQualityFeatures(),
-                new TanimotoDistanceFeatures(scored_array,scored_array,1), new TanimotoToPredFeatures(scored_array,scored_array),
-                new FptLengthDiffFeatures(scored_array),
-                new ScoreDiffScorerFeatures(scored_array[0],scored_array_covscore[0],covscore),
-                new ScoreFeatures(covscore,scored_array,scored_array),
-                new ScoreFeatures(covscore,scored_array_covscore,scored_array_covscore),
+        ArrayList<FeatureCreator> creators = new ArrayList<>(Arrays.asList(
+                //new PlattFeatures(),
+              //  new LogPvalueDistanceFeatures(scored_array,scored_array,1),
+               // new LogPvalueDistanceFeatures(scored_array_covscore,scored_array_covscore,1),
+
+
+                //these are pubchem features and cannot have a filtered list as input
+               // new ScoreFeatures(covscore,scored_array,scored_array),
+                //new ScoreFeatures(covscore,scored_array_covscore,scored_array_covscore),
+                //new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array),
+                //new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array_covscore,scored_array_covscore),
+
+                //  new LogDistanceFeatures(scored_array,scored_array,1),
+               // new LogDistanceFeatures(scored_array_covscore,scored_array_covscore,1),
+
+               // new LogPvalueFeatures(scored_array,scored_array),
+              //  new LogPvalueFeatures(scored_array_covscore,scored_array_covscore),
+
+               // new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore,scored_array[0],covscore),
+
+                //new ScoreFeaturesNonBio(covscore,scored_array_covscore,scored_array_covscore),
+                new ScoreFeaturesNonBio(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
+                new ScoreFeaturesNonBio(covscore,scored_array_covscore,scored_array_covscore_filtered),
+
+                //Todo: beste ausgangslage, vlt kann man noch ein bisschen was rausholen
+                new FptLengthFeature(),
+                //new FptLengthDiffFeatures(scored_array),
+                new SiriusScoreFeatures(),
+                new ExplIntFeatures(),
+                new PredictionQualityFeatures(),
+                //new MassFeatures(),
+                new CandlistSizeFeatures(scored_array_covscore), //this
+
 
                 //these are bio features and can have a filtered list as input
-                new AllConfidenceScoreFeatures(all_confidence,same),
+                new FptLengthFeatureHit(scored_array_covscore_filtered),
+
+                 new CandlistSizeFeatures(scored_array_covscore_filtered),
+
+                //new AllConfidenceScoreSameHitFeatures(all_confidence,same),
+                //new AllConfidenceScoreDiffHitFeatures(all_confidence,same),
                 new LogDistanceFeatures(scored_array,scored_array_filtered,1),
+                new LogDistanceFeatures(scored_array_covscore,scored_array_covscore_filtered,1),
                 new DistanceFeatures(scored_array,scored_array_filtered,1),
+                new DistanceFeatures(scored_array_covscore,scored_array_covscore_filtered,1),
+
+
+
                 new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
-                 new LogPvalueFeatures(scored_array,scored_array_filtered),
-                 new LogPvalueFeatures(scored_array_covscore,scored_array_covscore_filtered),
-                new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore_filtered,scored_array[0],covscore),
-                new TanimotoDistanceFeatures(scored_array,scored_array_filtered,1), new TanimotoToPredFeatures(scored_array,scored_array_filtered),
+                new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array_covscore,scored_array_covscore_filtered),
                 new ScoreFeatures(covscore,scored_array,scored_array_filtered),
-                new ScoreFeatures(covscore,scored_array_covscore,scored_array_covscore_filtered)
+                new ScoreFeatures(covscore,scored_array_covscore,scored_array_covscore_filtered),
+
+                //new LogPvalueFeatures(scored_array,scored_array_filtered),
+                //new LogPvalueFeatures(scored_array_covscore,scored_array_covscore_filtered),
+                new LogPvalueKDEFeatures(scored_array,scored_array_filtered),
+                new LogPvalueKDEFeatures(scored_array_covscore,scored_array_covscore_filtered),
+                new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore_filtered,scored_array[0],covscore),
+                new TanimotoDistanceFeatures(scored_array,scored_array_filtered,1),
+                new TanimotoToPredFeatures(scored_array,scored_array_filtered)
+
+
 
 
 

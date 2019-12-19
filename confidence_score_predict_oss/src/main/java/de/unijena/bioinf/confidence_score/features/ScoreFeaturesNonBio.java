@@ -9,110 +9,88 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
+import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
- * Created by martin on 20.06.18.
+ * Created by Marcus Ludwig on 07.03.16.
  */
-
-
-/**
- *
- *
-computes distance features, max distance is variable, so are scorers. Top scoring hit is FIXED at this point!
-
-
- */
-
-
-public class DistanceFeatures implements FeatureCreator {
-    private int[] distances;
-    private int feature_size;
+public class ScoreFeaturesNonBio implements FeatureCreator {
+    private final String[] names;
+    private FingerblastScoring scoring;
     private PredictionPerformance[] statistics;
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
+    public int weight_direction=1;
 
 
-    public DistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered,int... distances){
-
-        this.distances=distances;
-        feature_size=distances.length;
+    public ScoreFeaturesNonBio(FingerblastScoring scoring, Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
         this.rankedCandidates=rankedCandidates;
+        names = new String[]{scoring.toString()};
+        this.scoring=scoring;
         this.rankedCandidates_filtered=rankedCandidates_filtered;
-
     }
 
 
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {this.statistics=statistics;
 
+    @Override
+    public void prepare(PredictionPerformance[] statistics) {
+        this.statistics = statistics;
     }
 
     @Override
     public int weight_direction() {
-        return 1;
+        return weight_direction;
     }
 
     @Override
     public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
 
-
-        double[] scores =  new double[feature_size];
-
+        assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();
 
 
-        final double topHit = rankedCandidates_filtered[0].getScore();
-        int pos = 0;
-        int additional_shift=0;
 
 
-            for (int j = 0; j < distances.length; j++) {
-                while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
-                    additional_shift+=1;
-                }
+        final FingerprintCandidate topHit = rankedCandidates_filtered[0].getCandidate();
+        final FingerprintCandidate topHitpub = rankedCandidates[0].getCandidate();
+        final double[] scores = new double[1];
 
-                scores[pos++] = topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore();
-            }
+        scoring.prepare(query);
+        scores[0] = scoring.score(query, topHit.getFingerprint())-scoring.score(query,topHitpub.getFingerprint());
 
-        assert pos == scores.length;
+
         return scores;
-
-
-
     }
 
     @Override
     public int getFeatureSize() {
-        return distances.length;
+        return 1;
     }
 
     @Override
     public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
-        return false;
+        return rankedCandidates.length>0;
     }
 
     @Override
     public int getRequiredCandidateSize() {
-        return distances.length;
+        return 1;
     }
 
     @Override
-    public String[] getFeatureNames()
-    {
-        String[] name=  new String[distances.length];
-        for(int i=0;i<distances.length;i++){
-            name[i]="distance_"+distances[i];
-        }
-        return name;
+    public String[] getFeatureNames() {
+
+
+        return names;
     }
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-
+        //Nothing to do as long as ScoringMethods stay the same
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-
+        //Nothing to do as long as ScoringMethods stay the same
     }
 }

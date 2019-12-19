@@ -140,17 +140,17 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         final CombinedFeatureCreatorALL pubchemConfidence = new CombinedFeatureCreatorALL(ranked_candidates_csiscore, ranked_candidates_covscore, csiPerformances, covarianceScoring);
         pubchemConfidence.prepare(csiPerformances);
         final double[] pubchemConfidenceFeatures = pubchemConfidence.computeFeatures(query, idResult);
-        final boolean sameTopHit = ranked_candidates_covscore[0] == ranked_candidates_covscore_filtered[0];
-        final double pubchemConf = calculateConfidence(pubchemConfidenceFeatures, DB_ALL_ID, "", ce);
+       // final boolean sameTopHit = ranked_candidates_covscore[0] == ranked_candidates_covscore_filtered[0];
+        //final double pubchemConf = calculateConfidence(pubchemConfidenceFeatures, DB_ALL_ID, "", ce);
 
         //calculate score for filtered lists
         final CombinedFeatureCreator comb;
         final String distanceType;
         if (ranked_candidates_covscore_filtered.length > 1) {
-            comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, ranked_candidates_csiscore_filtered, ranked_candidates_covscore_filtered, csiPerformances, covarianceScoring, pubchemConf, sameTopHit);
+            comb = new CombinedFeatureCreatorBIODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, ranked_candidates_csiscore_filtered, ranked_candidates_covscore_filtered, csiPerformances, covarianceScoring);
             distanceType = DISTANCE_ID;
         } else {
-            comb = new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, ranked_candidates_csiscore_filtered, ranked_candidates_covscore_filtered, csiPerformances, covarianceScoring, pubchemConf, sameTopHit);
+            comb = new CombinedFeatureCreatorBIONODISTANCE(ranked_candidates_csiscore, ranked_candidates_covscore, ranked_candidates_csiscore_filtered, ranked_candidates_covscore_filtered, csiPerformances, covarianceScoring);
             distanceType = NO_DISTANCE_ID;
         }
 

@@ -16,6 +16,7 @@ public interface FeatureCreator extends Parameterized {
 
     void prepare(PredictionPerformance[] statistics);
 
+    int weight_direction();
 
     double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult);
 

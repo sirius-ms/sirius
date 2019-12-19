@@ -21,6 +21,7 @@ public class ScoreFeatures implements FeatureCreator {
     private PredictionPerformance[] statistics;
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
+    public int weight_direction=1;
 
 
     public ScoreFeatures(FingerblastScoring scoring, Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
@@ -38,7 +39,14 @@ public class ScoreFeatures implements FeatureCreator {
     }
 
     @Override
+    public int weight_direction() {
+        return weight_direction;
+    }
+
+    @Override
     public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
+
+        assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();
 
 
 

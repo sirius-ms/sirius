@@ -13,20 +13,31 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 /**
  * Created by martin on 20.06.18.
  */
-public class TreeFeatures implements FeatureCreator {
+public class ExplIntFeatures implements FeatureCreator {
     @Override
     public void prepare(PredictionPerformance[] statistics) {
 
     }
 
     @Override
+    public int weight_direction() {
+        return weight_direction;
+    }
+
+    public int weight_direction=1;
+
+    @Override
     public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
-        double[] scores= new double[4];
+        // double[] scores= new double[4];
+        double[] scores= new double[1];
         TreeStatistics current_tree_scores =  idresult.getRawTree().getAnnotationOrThrow(TreeStatistics.class);
-        scores[0]=current_tree_scores.getExplainedIntensityOfExplainablePeaks();
-        scores[1]= current_tree_scores.getExplainedIntensity();
-        scores[2]=current_tree_scores.getRatioOfExplainedPeaks();
-        scores[3]= idresult.getRawTree().getTreeWeight();
+        // scores[0]=current_tree_scores.getExplainedIntensityOfExplainablePeaks();
+        //scores[1]= current_tree_scores.getExplainedIntensity();
+        //scores[2]=current_tree_scores.getRatioOfExplainedPeaks();
+        //scores[3]= idresult.getRawTree().getTreeWeight();
+        scores[0]=current_tree_scores.getExplainedIntensity();
+
+
 
         return scores;
 
@@ -34,7 +45,7 @@ public class TreeFeatures implements FeatureCreator {
 
     @Override
     public int getFeatureSize() {
-        return 4;
+        return 1;
     }
 
     @Override
@@ -50,10 +61,12 @@ public class TreeFeatures implements FeatureCreator {
     @Override
     public String[] getFeatureNames() {
         String[] names = new String[getFeatureSize()];
-        names[0] = "explIntExplPeaks";
-        names[1] = "explInt";
-        names[2] = "ratioExplPeaks";
-        names[3] = "score";
+        //  names[0] = "explIntExplPeaks";
+        // names[1] = "explInt";
+        // names[2] = "ratioExplPeaks";
+        // names[3] = "score";
+        names[0] = "explIntensity";
+
 
         return names;
 

@@ -265,7 +265,6 @@ return null;
         }
         double[] scored_array= new double[tosortlist.size()];
 
-        if(dupe_counter>=2)System.out.println("WARNING DUPLICATES");
         Collections.sort(tosortlist);
         for(int i=0;i<tosortlist.size();i++){
             scored_array[i]=tosortlist.get(i);
