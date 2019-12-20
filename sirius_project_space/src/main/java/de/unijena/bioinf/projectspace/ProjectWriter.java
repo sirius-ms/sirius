@@ -1,6 +1,7 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedOutputStream;
