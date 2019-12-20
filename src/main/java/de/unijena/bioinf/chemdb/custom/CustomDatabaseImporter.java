@@ -484,7 +484,7 @@ public class CustomDatabaseImporter {
 
     public static void importDatabase(String dbPath, List<String> files, WebAPI api) {
         try {
-            final CustomDatabase db = CustomDatabase.createNewDatabase(new File(dbPath).getName(), new File(dbPath), api.getFingerprintVersion());
+            final CustomDatabase db = CustomDatabase.createNewDatabase(new File(dbPath).getName(), new File(dbPath), api.getCDKChemDBFingerprintVersion());
             final List<File> inchiorsmiles = new ArrayList<>();
             for (String f : files) inchiorsmiles.add(new File(f));
 

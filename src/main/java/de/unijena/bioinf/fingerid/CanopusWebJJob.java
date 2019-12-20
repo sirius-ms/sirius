@@ -10,11 +10,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class CanopusWebJJob extends WebJJob<CanopusWebJJob, CanopusResult, CanopusJobOutput> {
 
-    protected volatile MaskedFingerprintVersion version;
+    protected final MaskedFingerprintVersion version;
     protected ProbabilityFingerprint compoundClasses = null;
 
     public CanopusWebJJob(@NotNull JobId jobId, de.unijena.bioinf.ms.rest.model.JobState serverState, MaskedFingerprintVersion version, long submissionTime) {
         super(jobId, serverState, submissionTime);
+        this.version = version;
     }
 
     @Override

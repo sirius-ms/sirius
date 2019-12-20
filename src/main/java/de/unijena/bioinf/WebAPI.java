@@ -20,7 +20,10 @@ package de.unijena.bioinf;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.BioFilter;
@@ -43,13 +46,14 @@ import de.unijena.bioinf.ms.rest.client.jobs.JobsClient;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.utils.ProxyManager;
-import gnu.trove.list.array.TIntArrayList;
 import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,9 +74,6 @@ public final class WebAPI {
     private static final Logger LOG = LoggerFactory.getLogger(WebAPI.class);
     public static long WEB_API_JOB_TIME_OUT = PropertyManager.getLong("de.unijena.bioinf.fingerid.web.job.timeout", 1000L * 60L * 60L); //default 1h
 
-    //caches predicors so that we do not have to download the statistics and fingerprint infos every
-    //time we need them
-    private final Map<PredictorType, StructurePredictor> predictors = new HashMap<>();
     private final WebJobWatcher jobWatcher = new WebJobWatcher(this);
 
     public final InfoClient serverInfoClient;
@@ -115,29 +116,29 @@ public final class WebAPI {
 
     @Nullable
     public VersionsInfo getVersionInfo() {
-        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
-            return serverInfoClient.getVersionInfo(client);
-        }
+        return ProxyManager.doWithClient(serverInfoClient::getVersionInfo);
     }
 
     public int checkConnection() {
-        try (final ProxyManager.LockedClosableHttpClient client = ProxyManager.client()) {
-            VersionsInfo v = serverInfoClient.getVersionInfo(client);
-            if (v == null) {
-                int error = ProxyManager.checkInternetConnection(client);
-                if (error > 0) return error;
-                else return 4;
-            } else if (v.outdated()) {
+        return ProxyManager.doWithClient(client -> {
+            try {
+                VersionsInfo v = serverInfoClient.getVersionInfo(client);
+                if (v == null) {
+                    int error = ProxyManager.checkInternetConnection(client);
+                    if (error > 0) return error;
+                    else return 4;
+                } else if (v.outdated()) {
+                    return MAX_STATE;
+                } else if (serverInfoClient.testConnection()) {
+                    return 0;
+                } else {
+                    return 5;
+                }
+            } catch (Exception e) {
+                LOG.error("Error during connection check", e);
                 return MAX_STATE;
-            } else if (serverInfoClient.testConnection()) {
-                return 0;
-            } else {
-                return 5;
             }
-        } catch (Exception e) {
-            LOG.error("Error during connection check", e);
-            return MAX_STATE;
-        }
+        });
     }
     //endregion
 
@@ -147,15 +148,15 @@ public final class WebAPI {
     }
 
     public EnumMap<JobTable, List<JobUpdate<?>>> updateJobStates(Collection<JobTable> jobTablesToCheck) throws IOException {
-        return jobsClient.getJobs(jobTablesToCheck, ProxyManager.client());
+        return ProxyManager.applyClient(client -> jobsClient.getJobs(jobTablesToCheck, client));
     }
 
     public void deleteJobs(Collection<JobId> jobsToDelete) throws IOException {
-        jobsClient.deleteJobs(jobsToDelete, ProxyManager.client());
+        ProxyManager.consumeClient(client -> jobsClient.deleteJobs(jobsToDelete, client));
     }
 
     public void deleteClientAndJobs() throws IOException {
-        jobsClient.deleteAllJobs(ProxyManager.client());
+        ProxyManager.consumeClient(jobsClient::deleteAllJobs);
     }
     //endregion
 
@@ -165,17 +166,12 @@ public final class WebAPI {
     }
 
     public RESTDatabase getRESTDb(BioFilter bioFilter, @Nullable File cacheDir) {
-        return new RESTDatabase(cacheDir, bioFilter, chemDBClient, ProxyManager.client());
-    }
-
-    public CdkFingerprintVersion getFingerprintVersion() throws IOException {
-        return chemDBClient.getFingerprintVersion(ProxyManager.client());
+        return ProxyManager.doWithClient(client -> new RESTDatabase(cacheDir, bioFilter, chemDBClient, client));
     }
     //endregion
 
     //region Canopus
-
-    public CanopusWebJJob submitCanopusJob(MolecularFormula formula, int charge,  ProbabilityFingerprint fingerprint) throws IOException {
+    public CanopusWebJJob submitCanopusJob(MolecularFormula formula, int charge, ProbabilityFingerprint fingerprint) throws IOException {
         return submitCanopusJob(formula, fingerprint, (charge > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE));
     }
 
@@ -184,12 +180,20 @@ public final class WebAPI {
     }
 
     public CanopusWebJJob submitCanopusJob(CanopusJobInput input) throws IOException {
-        JobUpdate<CanopusJobOutput> jobUpdate = canopusClient.postJobs(input, ProxyManager.client());
-        final MaskedFingerprintVersion version = getFingerprintMaskedVersion(input.predictor.toCharge());
-
+        JobUpdate<CanopusJobOutput> jobUpdate = ProxyManager.applyClient(client -> canopusClient.postJobs(input, client));
+        final MaskedFingerprintVersion version = getClassifierMaskedFingerprintVersion(input.predictor.toCharge());
         return jobWatcher.watchJob(new CanopusWebJJob(jobUpdate.getGlobalId(), jobUpdate.getStateEnum(), version, System.currentTimeMillis()));
     }
 
+    private final EnumMap<PredictorType, CanopusData> canopusData = new EnumMap<>(PredictorType.class);
+
+    public final CanopusData getCanopusdData(@NotNull PredictorType predictorType) throws IOException {
+        synchronized (canopusData) {
+            if (!canopusData.containsKey(predictorType))
+                canopusData.put(predictorType, ProxyManager.applyClient(client -> canopusClient.getCanopusData(predictorType, client)));
+        }
+        return canopusData.get(predictorType);
+    }
     //endregion
 
     //region CSI:FingerID
@@ -198,53 +202,84 @@ public final class WebAPI {
     }
 
     public FingerprintPredictionJJob submitFingerprintJob(FingerprintJobInput input) throws IOException {
-        final JobUpdate<FingerprintJobOutput> jobUpdate = fingerprintClient.postJobs(input, ProxyManager.client());
-        final MaskedFingerprintVersion version = getFingerprintMaskedVersion(input.experiment.getPrecursorIonType().getCharge());
+        final JobUpdate<FingerprintJobOutput> jobUpdate = ProxyManager.applyClient(client -> fingerprintClient.postJobs(input, client));
+        final MaskedFingerprintVersion version = getCDKMaskedFingerprintVersion(input.experiment.getPrecursorIonType().getCharge());
         return jobWatcher.watchJob(new FingerprintPredictionJJob(input, jobUpdate, version, System.currentTimeMillis(), input.experiment.getName()));
     }
 
+    //caches predicors so that we do not have to download the statistics and fingerprint infos every
+    private final EnumMap<PredictorType, StructurePredictor> fingerIdPredictors = new EnumMap<>(PredictorType.class);
 
-    public @NotNull StructurePredictor getPredictorFromType(PredictorType type) throws IOException {
-        StructurePredictor p = predictors.get(type);
-        if (p == null) {
-            if (UserDefineablePredictorType.CSI_FINGERID.contains(type)) {
-                p = new CSIPredictor(type, this);
-                ((CSIPredictor) p).initialize();
-                predictors.put(type, p);
-            } else {
-                //todo add IOKR if it is ready
-                throw new UnsupportedOperationException("Only CSI:FingerID predictors are available sot far.");
+    public @NotNull StructurePredictor getStructurePredictor(int charge) throws IOException {
+        return getStructurePredictor(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(charge));
+    }
+
+    public @NotNull StructurePredictor getStructurePredictor(@NotNull PredictorType type) throws IOException {
+        synchronized (fingerIdPredictors) {
+            if (!fingerIdPredictors.containsKey(type)) {
+                final CSIPredictor p = new CSIPredictor(type, this);
+                p.initialize();
+                fingerIdPredictors.put(type, p);
             }
         }
-        return p;
+        return fingerIdPredictors.get(type);
     }
 
-    public PredictionPerformance[] getStatistics(PredictorType predictorType, TIntArrayList fingerprintIndizes) throws IOException {
-        return fingerprintClient.getStatistics(predictorType, fingerprintIndizes, ProxyManager.client());
+
+    private final EnumMap<PredictorType, FingerIdData> fingerIdData = new EnumMap<>(PredictorType.class);
+
+    public FingerIdData getFingerIdData(@NotNull PredictorType predictorType) throws IOException {
+        synchronized (fingerIdData) {
+            if (!fingerIdData.containsKey(predictorType))
+                fingerIdData.put(predictorType, ProxyManager.applyClient(client -> fingerprintClient.getFingerIdData(predictorType, client)));
+        }
+        return fingerIdData.get(predictorType);
     }
 
-    public CovarianceScoringMethod getCovarianceScoring(PredictorType predictorType, FingerprintVersion fpVersion, PredictionPerformance[] performances) throws IOException {
-        return fingerprintClient.getCovarianceScoring(predictorType, fpVersion, performances, ProxyManager.client());
+    //uncached -> access via predictor
+    public CovarianceScoringMethod getCovarianceScoring(@NotNull PredictorType predictorType) throws IOException {
+        final MaskedFingerprintVersion fpVersion = getFingerIdData(predictorType).getFingerprintVersion();
+        final PredictionPerformance[] performances = getFingerIdData(predictorType).getPerformances();
+        return ProxyManager.applyClient(client -> fingerprintClient.getCovarianceScoring(predictorType, fpVersion, performances, client));
     }
 
+    //uncached -> access via predictor
     public Map<String, TrainedSVM> getTrainedConfidence(@NotNull PredictorType predictorType) throws IOException {
-        return fingerprintClient.getTrainedConfidence(predictorType, ProxyManager.client());
+        return ProxyManager.applyClient(client -> fingerprintClient.getTrainedConfidence(predictorType, client));
     }
 
+    //uncached -> access via predictor
     public InChI[] getTrainingStructures(PredictorType predictorType) throws IOException {
-        return fingerprintClient.getTrainingStructures(predictorType, ProxyManager.client());
-    }
-
-    /**
-     * gives you the MaskedFingerprint used by CSI:FingerID for a given Charge
-     */
-    public MaskedFingerprintVersion getFingerprintMaskedVersion(final int charge) throws IOException {
-        return ((CSIPredictor) getPredictorFromType(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(charge))).getFingerprintVersion();
+        return ProxyManager.applyClient(client -> fingerprintClient.getTrainingStructures(predictorType, client));
     }
     //endRegion
 
+    //region FingerprintVersions
 
+    /**
+     * @return The MaskedFingerprint used by CSI:FingerID for a given Charge
+     * @throws IOException if connection error happens
+     */
+    public MaskedFingerprintVersion getCDKMaskedFingerprintVersion(final int charge) throws IOException {
+        return getFingerIdData(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(charge)).getFingerprintVersion();
+    }
 
+    /**
+     * @return The MaskedFingerprint version used the Canopus predictor
+     * @throws IOException if connection error happens
+     */
+    public MaskedFingerprintVersion getClassifierMaskedFingerprintVersion(final int charge) throws IOException {
+        return getCanopusdData(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(charge)).getFingerprintVersion();
+    }
+
+    /**
+     * @return The Fingerprint version used by the rest Database ->  not really needed but for sanity checks
+     * @throws IOException if connection error happens
+     */
+    public CdkFingerprintVersion getCDKChemDBFingerprintVersion() throws IOException {
+        return ProxyManager.applyClient(chemDBClient::getCDKFingerprintVersion);
+    }
+    //endregion
 
 
 }

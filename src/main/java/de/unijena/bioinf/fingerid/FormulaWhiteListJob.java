@@ -64,7 +64,7 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
         }
 
         if (searchableDatabase.isCustomDb()) {
-            for (List<FormulaCandidate> fc : new FilebasedDatabase(webAPI.getFingerprintMaskedVersion(ionType.getCharge()), searchableDatabase.getDatabasePath()).lookupMolecularFormulas(experiment.getIonMass(), massDev, allowedIons)) {
+            for (List<FormulaCandidate> fc : new FilebasedDatabase(webAPI.getCDKMaskedFingerprintVersion(ionType.getCharge()), searchableDatabase.getDatabasePath()).lookupMolecularFormulas(experiment.getIonMass(), massDev, allowedIons)) {
                 formulas.addAll(getFromCandidates(fc));
             }
         }

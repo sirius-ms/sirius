@@ -1,5 +1,6 @@
 package de.unijena.bioinf.utils;
 
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -243,12 +244,26 @@ public class ProxyManager {
         }
     }
 
-    public static LockedClosableHttpClient client() {
+    private static LockedClosableHttpClient client() {
         return new LockedClosableHttpClient(clientContainer);
     }
 
-    public static <R> R withClient(Function<CloseableHttpClient, R> doWithClient) {
-        return doWithClient.apply(client());
+    public static void consumeClient(IOFunctions.IOConsumer<LockedClosableHttpClient> doWithClient) throws IOException {
+        try (LockedClosableHttpClient client = ProxyManager.client()) {
+            doWithClient.accept(client);
+        }
+    }
+
+    public static <T> T doWithClient(Function<LockedClosableHttpClient, T> doWithClient) {
+        try (LockedClosableHttpClient client = ProxyManager.client()) {
+            return doWithClient.apply(client);
+        }
+    }
+
+    public static <T> T applyClient(IOFunctions.IOFunction<LockedClosableHttpClient, T> doWithClient) throws IOException {
+        try (LockedClosableHttpClient client = ProxyManager.client()) {
+            return doWithClient.apply(client);
+        }
     }
 
 

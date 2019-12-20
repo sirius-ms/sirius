@@ -118,7 +118,7 @@ public class CachedRESTDB {
         if (customDatabases.containsKey(db.name()))
             return customDatabases.get(db.name());
         else {
-            final FileCompoundStorage custom = new FileCompoundStorage(db.getDatabasePath(), api.getFingerprintVersion());
+            final FileCompoundStorage custom = new FileCompoundStorage(db.getDatabasePath(), api.getCDKChemDBFingerprintVersion());
             customDatabases.put(db.name(), custom);
             return custom;
         }
@@ -152,7 +152,7 @@ public class CachedRESTDB {
             final JsonObject obj = Json.createReader(reader).readObject();
             final JsonArray array = obj.getJsonArray("compounds");
             for (int i = 0; i < array.size(); ++i) {
-                candidates.add(FingerprintCandidate.fromJSON(api.getFingerprintVersion(), array.getJsonObject(i)));
+                candidates.add(FingerprintCandidate.fromJSON(api.getCDKChemDBFingerprintVersion(), array.getJsonObject(i)));
             }
         }
     }
