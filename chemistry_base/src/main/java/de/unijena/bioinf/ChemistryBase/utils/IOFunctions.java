@@ -1,4 +1,4 @@
-package de.unijena.bioinf.projectspace;
+package de.unijena.bioinf.ChemistryBase.utils;
 
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
@@ -20,11 +20,11 @@ public abstract class IOFunctions {
     }
 
     public interface IOConsumer<A> {
-        public void consume(A a) throws IOException;
+        public void accept(A a) throws IOException;
     }
 
-    public interface IOProducer<A> {
-        public A produce() throws IOException;
+    public interface IOSupplier<A> {
+        public A get() throws IOException;
     }
 
     public static interface ClassValueProducer {
