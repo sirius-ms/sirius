@@ -2,7 +2,7 @@ package de.unijena.bioinf.ms.rest.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.unijena.bioinf.babelms.utils.IOFunction;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.utils.HTTPSupplier;
@@ -67,7 +67,7 @@ public abstract class AbstractClient {
 
 
     //region http request execution API
-    public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunction<BufferedReader, T> respHandling) throws IOException {
+    public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
         try (CloseableHttpResponse response = client.execute(request)) {
             isSuccessful(response);
             try (final BufferedReader reader = new BufferedReader(getIn(response.getEntity()))) {
@@ -76,7 +76,7 @@ public abstract class AbstractClient {
         }
     }
 
-    public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunction<BufferedReader, T> respHandling) throws IOException {
+    public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
         try {
             return execute(client, makeRequest.get(), respHandling);
         } catch (URISyntaxException e) {

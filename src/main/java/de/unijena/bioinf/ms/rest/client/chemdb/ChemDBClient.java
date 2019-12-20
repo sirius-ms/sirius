@@ -49,7 +49,7 @@ public class ChemDBClient extends AbstractClient {
     /**
      * gives you the Fingerprint version used by CSI:FingerID
      */
-    public CdkFingerprintVersion getFingerprintVersion(CloseableHttpClient client) throws IOException {
+    public CdkFingerprintVersion getCDKFingerprintVersion(CloseableHttpClient client) throws IOException {
         if (!cacheFpVersion || fpVersion == null) {
             fpVersion = new CdkFingerprintVersion(
                     executeFromJson(client, () -> new HttpGet(buildVersionSpecificWebapiURI("/usedfingerprints").build()), new TypeReference<>() {})
@@ -79,7 +79,7 @@ public class ChemDBClient extends AbstractClient {
     }
 
     public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, @NotNull BioFilter bioFilter, CloseableHttpClient client) throws IOException {
-        return getCompounds(formula, bioFilter, getFingerprintVersion(client), client);
+        return getCompounds(formula, bioFilter, getCDKFingerprintVersion(client), client);
     }
 
     public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, @NotNull BioFilter bioFilter, @NotNull CdkFingerprintVersion fpVersion, CloseableHttpClient client) throws IOException {
@@ -104,7 +104,7 @@ public class ChemDBClient extends AbstractClient {
     }
 
     public List<FingerprintCandidate> postCompounds(@NotNull List<String> inChIs, CloseableHttpClient client) throws IOException {
-        return postCompounds(inChIs, getFingerprintVersion(client), client);
+        return postCompounds(inChIs, getCDKFingerprintVersion(client), client);
     }
 
     public List<FingerprintCandidate> postCompounds(@NotNull List<String> inChIs, @NotNull CdkFingerprintVersion fpVersion, CloseableHttpClient client) throws IOException {

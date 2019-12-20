@@ -11,9 +11,9 @@ import de.unijena.bioinf.fingerid.blast.CovarianceScoringMethod;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
-import gnu.trove.list.array.TIntArrayList;
 import net.sf.jniinchi.INCHI_KEY;
 import net.sf.jniinchi.JniInchiException;
 import net.sf.jniinchi.JniInchiOutputKey;
@@ -43,11 +43,11 @@ import java.util.Map;
 public class FingerIdClient extends AbstractClient {
     private static final Logger LOG = LoggerFactory.getLogger(FingerIdClient.class);
 
-    public FingerIdClient(@NotNull URI serverUrl) {
+    public FingerIdClient(URI serverUrl) {
         super(serverUrl);
     }
 
-    //todo dcide if we want tool specific job deletion and updating
+    //todo decide if we want tool specific job deletion and updating
 
     //region http requests
     /*public boolean deleteJobs(@NotNull final List<JobId> idsToDelete, CloseableHttpClient client) throws URISyntaxException {
@@ -125,7 +125,8 @@ public class FingerIdClient extends AbstractClient {
                     final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(ms, tree, predictor));
                     post.setEntity(params);
                     return post;
-                }, new TypeReference<>() {}
+                }, new TypeReference<>() {
+                }
         );
     }
 
@@ -133,33 +134,15 @@ public class FingerIdClient extends AbstractClient {
      * make statistics of fingerprints and write the used indizes of fingerprints into the
      * given TIntArrayList (as this property is not contained in FingerprintStatistics)
      *
-     * @param fingerprintIndizes
      * @return prediction model
      * @throws IOException if http response parsing fails
      */
-    public PredictionPerformance[] getStatistics(PredictorType predictorType, final TIntArrayList fingerprintIndizes, CloseableHttpClient client) throws IOException {
-        fingerprintIndizes.clear();
+    public FingerIdData getFingerIdData(PredictorType predictorType, CloseableHttpClient client) throws IOException {
         return execute(client,
-                () -> new HttpGet(buildVersionSpecificWebapiURI("/fingerid/statistics.csv")
+                () -> new HttpGet(buildVersionSpecificWebapiURI("/fingerid/data.csv")
                         .setParameter("predictor", predictorType.toBitsAsString())
                         .build()),
-                br -> {
-                    final ArrayList<PredictionPerformance> performances = new ArrayList<>();
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        String[] tabs = line.split("\t");
-                        final int index = Integer.parseInt(tabs[0]);
-                        PredictionPerformance p = new PredictionPerformance(
-                                Double.parseDouble(tabs[1]),
-                                Double.parseDouble(tabs[2]),
-                                Double.parseDouble(tabs[3]),
-                                Double.parseDouble(tabs[4])
-                        );
-                        performances.add(p);
-                        fingerprintIndizes.add(index);
-                    }
-                    return performances.toArray(new PredictionPerformance[0]);
-                }
+                FingerIdData::read
         );
     }
 
