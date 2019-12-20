@@ -40,10 +40,6 @@ public abstract class Job<O> extends JobBase {
         this.version = FingerIDProperties.fingeridVersion();
     }
 
-    public void setLockedByWorker(Long lockedByWorker) {
-        this.lockedByWorker = lockedByWorker;
-    }
-
     public String getWorkerPrefix() {
         return workerPrefix;
     }
@@ -72,11 +68,11 @@ public abstract class Job<O> extends JobBase {
         this.submissionTime = new Timestamp(submissionTime);
     }
 
-    public long getLockedByWorker() {
+    public Long getLockedByWorker() {
         return lockedByWorker;
     }
 
-    public void setLockedByWorker(long lockedByWorker) {
+    public void setLockedByWorker(Long lockedByWorker) {
         this.lockedByWorker = lockedByWorker;
     }
 

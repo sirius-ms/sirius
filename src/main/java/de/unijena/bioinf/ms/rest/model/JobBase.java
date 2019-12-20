@@ -2,7 +2,8 @@ package de.unijena.bioinf.ms.rest.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JobBase {
@@ -38,12 +39,12 @@ public class JobBase {
         this.state = state;
     }
 
-    public int getState() {
-        return getStateEnum().id();
+    public Integer getState() {
+        return Optional.ofNullable(getStateEnum()).map(JobState::id).orElse(null);
     }
 
-    public void setState(int state) {
-        setStateEnum(JobState.withId(state));
+    public void setState(Integer state) {
+        setStateEnum(state != null ? JobState.withId(state) : null);
     }
 
     public String getErrorMessage() {
