@@ -13,8 +13,8 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.FormulaScoring;
-import de.unijena.bioinf.projectspace.fingerid.CSIClientData;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.utils.NetUtils;
@@ -52,7 +52,7 @@ public class FingeridSubToolJob extends InstanceJob {
         //todo currently there is only csi -> change if there are multiple methods
         // we need to run multiple structure elucidation jobs and need  different prediction results then.
         EnumSet<PredictorType> predictors = type.toPredictors(inst.getExperiment().getPrecursorIonType().getCharge());
-        final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor) ApplicationCore.WEB_API.getPredictorFromType(predictors.iterator().next()));
+        final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor) ApplicationCore.WEB_API.getStructurePredictor(predictors.iterator().next()));
 
         final FingerIDJJob job = csi.makeFingerIDJJob(inst.getExperiment(),
                 formulaResults.stream().map(res -> new IdentificationResult<>(res.getCandidate().getAnnotationOrThrow(FTree.class), res.getScoreObject()))
@@ -65,8 +65,8 @@ public class FingeridSubToolJob extends InstanceJob {
         final Map<FTree, FormulaResult> formulaResultsMap = formulaResults.stream().collect(Collectors.toMap(r -> r.getCandidate().getAnnotationOrThrow(FTree.class), SScored::getCandidate));
 
         // add CSIClientData to PS if it is not already there
-        if (inst.getProjectSpaceManager().getProjectSpaceProperty(CSIClientData.class).isEmpty())
-            inst.getProjectSpaceManager().setProjectSpaceProperty(CSIClientData.class, new CSIClientData(csi));
+        if (inst.getProjectSpaceManager().getProjectSpaceProperty(FingerIdData.class).isEmpty())
+            inst.getProjectSpaceManager().setProjectSpaceProperty(FingerIdData.class, ApplicationCore.WEB_API.getFingerIdData(predictors.iterator().next()));
 
 
         // add new id results to projectspace and mal.
