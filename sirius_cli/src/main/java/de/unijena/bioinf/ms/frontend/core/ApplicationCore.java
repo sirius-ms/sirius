@@ -46,7 +46,7 @@ public abstract class ApplicationCore {
     public static final Path WORKSPACE;
     public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
     public static final WebAPI WEB_API;
-    public static final Canopus CANOPUS;
+//    public static final Canopus CANOPUS;
 
 
 
@@ -252,7 +252,7 @@ public abstract class ApplicationCore {
             DEFAULT_LOGGER.info("Web API initialized.");
 
 
-            Canopus c = null;
+            /*Canopus c = null;
             try {
                 InputStream s = ApplicationCore.class.getResourceAsStream("/canopus.data");
                 if (s == null)
@@ -273,7 +273,7 @@ public abstract class ApplicationCore {
                 }
             } finally {
                 CANOPUS = c;
-            }
+            }*/
         } catch (Throwable e) {
             System.err.println("Application Core STATIC Block Error!");
             e.printStackTrace(System.err);
