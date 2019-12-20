@@ -14,6 +14,8 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.FormulaSummaryWriter;
 import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.StructureSummaryWriter;
 import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.mztab.MztabMExporter;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.*;
@@ -141,11 +143,11 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         //pssatuto components
         config.registerComponent(FormulaResult.class, Decoy.class, new PassatuttoSerializer());
         //fingerid components
-        config.defineProjectSpaceProperty(CSIClientData.class, new CsiClientSerializer());
+        config.defineProjectSpaceProperty(FingerIdData.class, new CsiClientSerializer());
         config.registerComponent(FormulaResult.class, FingerprintResult.class, new FingerprintSerializer());
         config.registerComponent(FormulaResult.class, FingerblastResult.class, new FingerblastResultSerializer());
         //canopus
-        config.defineProjectSpaceProperty(CanopusClientData.class, new CanopusClientSerializer());
+        config.defineProjectSpaceProperty(CanopusData.class, new CanopusClientSerializer());
         config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());
         return config;
     }
