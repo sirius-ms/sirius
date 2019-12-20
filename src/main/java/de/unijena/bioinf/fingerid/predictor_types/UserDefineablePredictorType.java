@@ -17,8 +17,8 @@ import java.util.stream.Collectors;
 * */
 
 public enum UserDefineablePredictorType {
-    CSI_FINGERID(PredictorType.CSI_FINGERID_POSITIVE, PredictorType.CSI_FINGERID_NEGATIVE),//CSI for negative ionization
-    IOKR(PredictorType.IOKR_POSITIVE, PredictorType.IOKR_NEGATIVE);
+    CSI_FINGERID(PredictorType.CSI_FINGERID_POSITIVE, PredictorType.CSI_FINGERID_NEGATIVE);//CSI for negative ionization
+//    IOKR(PredictorType.IOKR_POSITIVE, PredictorType.IOKR_NEGATIVE);
 
     private final PredictorType positive;
     private final PredictorType negative;

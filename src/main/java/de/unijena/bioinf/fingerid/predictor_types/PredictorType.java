@@ -9,10 +9,12 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public enum PredictorType {
+    //todo web should switch to positive/negative and Both here. Differences like CSI_FIGNERID, IOKR, Canopus are just diffenrent workers
+    // that may share resources
     CSI_FINGERID_POSITIVE(true),//CSI for negative ionization
-    IOKR_POSITIVE(true),
-    CSI_FINGERID_NEGATIVE(false), //CSI for negative ionization
-    IOKR_NEGATIVE(false);
+//    IOKR_POSITIVE(true),
+    CSI_FINGERID_NEGATIVE(false); //CSI for negative ionization
+//    IOKR_NEGATIVE(false);
 //    CANOPUS_POSITIVE(true),
 //    CANOPUS_NEGATIVE(false);
 
