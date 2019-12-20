@@ -3,9 +3,7 @@ package de.unijena.bioinf.ms.frontend;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.projectspace.GPSMFactory;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBeanFactory;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
@@ -14,7 +12,6 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.net.ProxyManager;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
@@ -39,8 +36,8 @@ public class SiriusGUIApplication extends SiriusMiddlewareApplication {
         ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
 
         //todo why do we need this?
-        if (ProxyManager.getProxyStrategy() == null)
-            SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty("de.unijena.bioinf.sirius.proxy", ProxyManager.DEFAULT_STRATEGY.name());
+//        if (ProxyManager.getProxyStrategy() == null)
+//            SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty("de.unijena.bioinf.sirius.proxy", ProxyManager.DEFAULT_STRATEGY.name());
 
         run(args, () -> {
             final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();

@@ -1,10 +1,10 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
-import de.unijena.bioinf.fingerid.webapi.WebAPI;
-import de.unijena.bioinf.fingerworker.WorkerList;
+import de.unijena.bioinf.WebAPI;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionCheckPanel;
+import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

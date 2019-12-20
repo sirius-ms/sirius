@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.gui.fingerid;
 
 import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.fingerid.db.custom.CustomDataSourceService;
+import de.unijena.bioinf.chemdb.custom.CustomDataSourceService;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;

@@ -1,8 +1,8 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.fingerid.webapi.VersionsInfo;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;

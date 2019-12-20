@@ -18,7 +18,7 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
+import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 

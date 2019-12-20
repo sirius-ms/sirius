@@ -2,9 +2,9 @@ package de.unijena.bioinf.ms.gui.net;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.Nullable;
 
