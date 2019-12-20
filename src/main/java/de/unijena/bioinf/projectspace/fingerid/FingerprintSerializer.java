@@ -2,6 +2,7 @@ package de.unijena.bioinf.projectspace.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.ComponentSerializer;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.ProjectReader;
@@ -19,9 +20,9 @@ public class FingerprintSerializer implements ComponentSerializer<FormulaResultI
     public FingerprintResult read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         String loc = FINGERPRINTS.relFilePath(id);
         if (!reader.exists(loc)) return null;
-        final CSIClientData csiClientData = reader.getProjectSpaceProperty(CSIClientData.class).orElseThrow();
+        final FingerIdData fingerIdData = reader.getProjectSpaceProperty(FingerIdData.class).orElseThrow();
         final double[] probabilities = reader.doubleVector(loc);
-        return new FingerprintResult(new ProbabilityFingerprint(csiClientData.getFingerprintVersion(), probabilities));
+        return new FingerprintResult(new ProbabilityFingerprint(fingerIdData.getFingerprintVersion(), probabilities));
     }
 
     @Override

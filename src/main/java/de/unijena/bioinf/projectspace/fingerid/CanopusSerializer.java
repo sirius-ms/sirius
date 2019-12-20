@@ -1,6 +1,7 @@
 package de.unijena.bioinf.projectspace.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.projectspace.ComponentSerializer;
 import de.unijena.bioinf.projectspace.FormulaResultId;
@@ -19,9 +20,9 @@ public class CanopusSerializer implements ComponentSerializer<FormulaResultId, F
         final String loc = CANOPUS.relFilePath(id);
         if (!reader.exists(loc)) return null;
 
-        final CanopusClientData canopusClientData = reader.getProjectSpaceProperty(CanopusClientData.class).orElseThrow();
+        final CanopusData canopusData = reader.getProjectSpaceProperty(CanopusData.class).orElseThrow();
         final double[] probabilities = reader.doubleVector(loc);
-        final ProbabilityFingerprint probabilityFingerprint = new ProbabilityFingerprint(canopusClientData.maskedFingerprintVersion, probabilities);
+        final ProbabilityFingerprint probabilityFingerprint = new ProbabilityFingerprint(canopusData.getFingerprintVersion(), probabilities);
         return new CanopusResult(probabilityFingerprint);
     }
 

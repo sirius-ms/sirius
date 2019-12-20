@@ -1,8 +1,10 @@
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.fingerid.*;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 
@@ -17,8 +19,8 @@ public class FingerIdProjectSpaceConfiguration {
         configuration.registerComponent(FormulaResult.class, CanopusResult.class , new CanopusSerializer());
         configuration.registerComponent(FormulaResult.class, FingerblastResult.class, new FingerblastResultSerializer());
 
-        configuration.defineProjectSpaceProperty(CSIClientData.class, new CsiClientSerializer());
-        configuration.defineProjectSpaceProperty(CanopusClientData.class, new CanopusClientSerializer());
+        configuration.defineProjectSpaceProperty(FingerIdData.class, new CsiClientSerializer());
+        configuration.defineProjectSpaceProperty(CanopusData.class, new CanopusClientSerializer());
     }
 
 }
