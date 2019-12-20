@@ -117,7 +117,7 @@ public class InfoClient extends AbstractClient {
         );
     }
 
-    public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME, @NotNull CloseableHttpClient client) throws IOException, URISyntaxException {
+    public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME, @NotNull CloseableHttpClient client) throws IOException {
         return execute(client,
                 () -> {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/report.json").build());
