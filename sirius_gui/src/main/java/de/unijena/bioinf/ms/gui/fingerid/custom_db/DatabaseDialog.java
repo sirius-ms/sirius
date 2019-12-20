@@ -2,23 +2,24 @@ package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import com.google.common.base.Predicate;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.fingerid.db.SearchableDatabases;
-import de.unijena.bioinf.fingerid.db.custom.CustomDatabase;
-import de.unijena.bioinf.fingerid.db.custom.CustomDatabaseImporter;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
+import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHaeder;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
-import de.unijena.bioinf.ms.gui.utils.ListAction;
-import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
-import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.ms.gui.io.CsvFields;
 import de.unijena.bioinf.ms.gui.io.csv.GeneralCSVDialog;
 import de.unijena.bioinf.ms.gui.io.csv.SimpleCsvParser;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.utils.ListAction;
+import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
+import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
 import org.jdesktop.swingx.JXRadioGroup;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.ReaderFactory;
@@ -38,6 +39,9 @@ import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.List;
 import java.util.*;
+
+//import de.unijena.bioinf.fingerid.db.custom.CustomDatabase;
+//import de.unijena.bioinf.fingerid.db.custom.CustomDatabaseImporter;
 
 public class DatabaseDialog extends JDialog {
 
@@ -628,103 +632,110 @@ public class DatabaseDialog extends JDialog {
 
         public ImportDatabaseDialog(String name) {
             super(owner, "Import " + name + " database", false);
-            database = CustomDatabase.createNewDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name), ApplicationCore.WEB_API.getFingerprintVersion());
-            importer = database.getImporter(ApplicationCore.WEB_API);
-            importer.init();
-            importer.addListener(this);
-            collector = new Collector(importer);
-            collector.execute();
-            setPreferredSize(new Dimension(640, 480));
-            setLayout(new BorderLayout());
 
-            final JLabel explain = new JLabel("<html>You can inherit compounds from PubChem or our biological database. If you do so, all compounds in these databases are implicitly added to your custom database.");
-            final Box hbox = Box.createHorizontalBox();
-            hbox.add(explain);
-            final Box vbox = Box.createVerticalBox();
-            vbox.add(hbox);
-            vbox.add(Box.createVerticalStrut(4));
+            try {
+                CdkFingerprintVersion version = ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion();
 
-            final JXRadioGroup<String> inh = new JXRadioGroup<String>(new String[]{NONE, BIO, PUBCHEM});
-            inh.setLayoutAxis(BoxLayout.X_AXIS);
-            vbox.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Inherit compounds from"));
-            final Box hbox2 = Box.createHorizontalBox();
-            hbox2.add(inh);
-            hbox2.add(Box.createHorizontalGlue());
-            vbox.add(hbox2);
-            add(vbox, BorderLayout.NORTH);
-            if (database.isDeriveFromBioDb()) inh.setSelectedValue(BIO);
-            else if (database.isDeriveFromPubchem()) inh.setSelectedValue(PUBCHEM);
-            else inh.setSelectedValue(NONE);
+                database = CustomDatabase.createNewDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name), version);
+                importer = database.getImporter(ApplicationCore.WEB_API);
+                importer.init();
+                importer.addListener(this);
+                collector = new Collector(importer);
+                collector.execute();
+                setPreferredSize(new Dimension(640, 480));
+                setLayout(new BorderLayout());
 
-            inh.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    final String value = inh.getSelectedValue();
-                    database.setDeriveFromBioDb(false);
-                    database.setDeriveFromPubchem(false);
-                    if (value.equals(BIO)) database.setDeriveFromBioDb(true);
-                    else if (value.equals(PUBCHEM)) database.setDeriveFromPubchem(true);
-                    try {
-                        importer.writeSettings();
-                    } catch (IOException e1) {
-                        LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
+                final JLabel explain = new JLabel("<html>You can inherit compounds from PubChem or our biological database. If you do so, all compounds in these databases are implicitly added to your custom database.");
+                final Box hbox = Box.createHorizontalBox();
+                hbox.add(explain);
+                final Box vbox = Box.createVerticalBox();
+                vbox.add(hbox);
+                vbox.add(Box.createVerticalStrut(4));
+
+                final JXRadioGroup<String> inh = new JXRadioGroup<String>(new String[]{NONE, BIO, PUBCHEM});
+                inh.setLayoutAxis(BoxLayout.X_AXIS);
+                vbox.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Inherit compounds from"));
+                final Box hbox2 = Box.createHorizontalBox();
+                hbox2.add(inh);
+                hbox2.add(Box.createHorizontalGlue());
+                vbox.add(hbox2);
+                add(vbox, BorderLayout.NORTH);
+                if (database.isDeriveFromBioDb()) inh.setSelectedValue(BIO);
+                else if (database.isDeriveFromPubchem()) inh.setSelectedValue(PUBCHEM);
+                else inh.setSelectedValue(NONE);
+
+                inh.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        final String value = inh.getSelectedValue();
+                        database.setDeriveFromBioDb(false);
+                        database.setDeriveFromPubchem(false);
+                        if (value.equals(BIO)) database.setDeriveFromBioDb(true);
+                        else if (value.equals(PUBCHEM)) database.setDeriveFromPubchem(true);
+                        try {
+                            importer.writeSettings();
+                        } catch (IOException e1) {
+                            LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
+                        }
                     }
-                }
-            });
+                });
 
-            final Box box = Box.createVerticalBox();
-            box.setAlignmentX(Component.LEFT_ALIGNMENT);
-            final JLabel label = new JLabel("<html>Please insert the compounds of your custom database here (one compound per line). You can use SMILES and InChI to describe your compounds. It is also possible to drag and drop files with InChI, SMILES or in other molecule formats (e.g. MDL) into this text field.");
-            label.setAlignmentX(Component.LEFT_ALIGNMENT);
-            box.add(label);
-            final JTextArea textArea = new JTextArea();
-            textArea.setAlignmentX(Component.LEFT_ALIGNMENT);
-            final JScrollPane pane = new JScrollPane(textArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            pane.setAlignmentX(Component.LEFT_ALIGNMENT);
-            box.add(pane);
-            importButton = new JButton("Import compounds");
-            importButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-            box.add(importButton);
+                final Box box = Box.createVerticalBox();
+                box.setAlignmentX(Component.LEFT_ALIGNMENT);
+                final JLabel label = new JLabel("<html>Please insert the compounds of your custom database here (one compound per line). You can use SMILES and InChI to describe your compounds. It is also possible to drag and drop files with InChI, SMILES or in other molecule formats (e.g. MDL) into this text field.");
+                label.setAlignmentX(Component.LEFT_ALIGNMENT);
+                box.add(label);
+                final JTextArea textArea = new JTextArea();
+                textArea.setAlignmentX(Component.LEFT_ALIGNMENT);
+                final JScrollPane pane = new JScrollPane(textArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                pane.setAlignmentX(Component.LEFT_ALIGNMENT);
+                box.add(pane);
+                importButton = new JButton("Import compounds");
+                importButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+                box.add(importButton);
 
 
-            box.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Import compounds"));
+                box.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Import compounds"));
 
-            add(box, BorderLayout.CENTER);
+                add(box, BorderLayout.CENTER);
 
-            final Box box2 = Box.createVerticalBox();
-            box2.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Recently imported"));
+                final Box box2 = Box.createVerticalBox();
+                box2.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Recently imported"));
 
-            ilist = new ImportList();
-            box2.add(new JScrollPane(ilist, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
+                ilist = new ImportList();
+                box2.add(new JScrollPane(ilist, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
 
-            add(box2, BorderLayout.SOUTH);
+                add(box2, BorderLayout.SOUTH);
 
-            importDialog = new ImportCompoundsDialog(importer);
+                importDialog = new ImportCompoundsDialog(importer);
 
-            importButton.addActionListener(e -> {
-                if (!importDialog.isVisible()) {
-                    final String[] lines = textArea.getText().split("\n");
-                    importDialog.setCompounds(database, Arrays.asList(lines));
-                    textArea.setText("");
-                }
-            });
-
-            final DropTarget dropTarget = new DropTarget() {
-                @Override
-                public synchronized void drop(DropTargetDropEvent evt) {
-                    final List<File> files = DragAndDrop.getFileListFromDrop(evt);
+                importButton.addActionListener(e -> {
                     if (!importDialog.isVisible()) {
-                        importDialog.setCompounds(database, files);
+                        final String[] lines = textArea.getText().split("\n");
+                        importDialog.setCompounds(database, Arrays.asList(lines));
                         textArea.setText("");
                     }
-                }
-            };
+                });
 
-            setDropTarget(dropTarget);
-            textArea.setDropTarget(dropTarget);
-            setLocationRelativeTo(getParent());
-            pack();
-            setVisible(true);
+                final DropTarget dropTarget = new DropTarget() {
+                    @Override
+                    public synchronized void drop(DropTargetDropEvent evt) {
+                        final List<File> files = DragAndDrop.getFileListFromDrop(evt);
+                        if (!importDialog.isVisible()) {
+                            importDialog.setCompounds(database, files);
+                            textArea.setText("");
+                        }
+                    }
+                };
+
+                setDropTarget(dropTarget);
+                textArea.setDropTarget(dropTarget);
+                setLocationRelativeTo(getParent());
+                pack();
+                setVisible(true);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
 

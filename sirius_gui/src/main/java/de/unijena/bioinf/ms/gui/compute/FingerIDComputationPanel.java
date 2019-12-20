@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
+import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.ms.gui.compute.AdductSelectionList;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;

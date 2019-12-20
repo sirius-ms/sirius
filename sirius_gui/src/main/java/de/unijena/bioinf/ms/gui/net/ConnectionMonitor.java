@@ -1,12 +1,12 @@
 package de.unijena.bioinf.ms.gui.net;
 
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.net.ProxyManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
+import de.unijena.bioinf.utils.ProxyManager;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -102,7 +102,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
             ConnectionState conState;
             @Nullable WorkerList wl = null;
-            if (connectionState == ProxyManager.OK_STATE) {
+            if (connectionState == 0) {
                 checkForInterruption();
                 wl = ApplicationCore.WEB_API.getWorkerInfo();
                 checkForInterruption();
@@ -157,7 +157,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         }
 
         public boolean isConnected() {
-            return errorCode == ProxyManager.OK_STATE;
+            return errorCode == 0;
         }
 
         public boolean isNotConnected() {

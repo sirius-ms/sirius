@@ -1,12 +1,12 @@
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.fingerworker.WorkerList;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ConnectionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
+import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 

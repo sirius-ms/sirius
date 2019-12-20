@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.gui.fingerid;
 
-import de.unijena.bioinf.fingerid.db.custom.CustomDataSourceService;
+import de.unijena.bioinf.chemdb.custom.CustomDataSourceService;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;

@@ -2,7 +2,7 @@ package de.unijena.bioinf.ms.gui.fingerid.candidate_filters;
 
 import ca.odell.glazedlists.matchers.AbstractMatcherEditor;
 import ca.odell.glazedlists.matchers.Matcher;
-import de.unijena.bioinf.fingerid.db.custom.CustomDataSourceService;
+import de.unijena.bioinf.chemdb.custom.CustomDataSourceService;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.fingerid.DBFilterPanel;
 

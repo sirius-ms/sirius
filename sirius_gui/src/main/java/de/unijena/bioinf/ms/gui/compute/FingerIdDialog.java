@@ -18,8 +18,8 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.fingerid.db.SearchableDatabases;
+import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
 
 import javax.swing.*;
 import java.awt.*;

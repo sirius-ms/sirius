@@ -2,9 +2,9 @@ package de.unijena.bioinf.ms.gui.fingerid.fingerprints;
 
 import de.unijena.bioinf.ChemistryBase.fp.FPIter;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.WebAPI;
 import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.fingerid.webapi.WebAPI;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
@@ -43,7 +43,7 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Fo
         if (this.predictorType == predictorType && fscores != null) return;
         this.predictorType = predictorType;
 
-        final CSIPredictor csi = (CSIPredictor) csiApi.getPredictorFromType(predictorType);
+        final CSIPredictor csi = (CSIPredictor) csiApi.getStructurePredictor(predictorType);
         final PredictionPerformance[] performances = csi.getPerformances();
         this.fscores = new double[csi.getFingerprintVersion().getMaskedFingerprintVersion().size()];
         this.trainingExamples = new int[fscores.length];

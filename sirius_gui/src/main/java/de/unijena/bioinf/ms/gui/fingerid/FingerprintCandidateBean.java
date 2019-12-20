@@ -27,8 +27,8 @@ import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeLayer;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.custom.CustomDataSourceService;
 import de.unijena.bioinf.fingerid.CSIPredictor;
-import de.unijena.bioinf.fingerid.db.custom.CustomDataSourceService;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -139,7 +139,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     }
 
     protected CSIPredictor getCorrespondingCSIPredictor() throws IOException {
-        return (CSIPredictor) ApplicationCore.WEB_API.getPredictorFromType(adduct.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_POSITIVE);
+        return (CSIPredictor) ApplicationCore.WEB_API.getStructurePredictor(adduct.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_POSITIVE);
     }
 
 
