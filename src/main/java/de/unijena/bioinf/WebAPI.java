@@ -53,7 +53,9 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.utils.ProxyManager;
+import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,6 +141,14 @@ public final class WebAPI {
                 return MAX_STATE;
             }
         });
+    }
+
+    public WorkerList getWorkerInfo() throws IOException {
+        return ProxyManager.applyClient(serverInfoClient::getWorkerInfo);
+    }
+
+    public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException {
+        return ProxyManager.applyClient(client -> serverInfoClient.reportError(report, SOFTWARE_NAME, client));
     }
     //endregion
 
@@ -280,6 +290,4 @@ public final class WebAPI {
         return ProxyManager.applyClient(chemDBClient::getCDKFingerprintVersion);
     }
     //endregion
-
-
 }
