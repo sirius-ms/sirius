@@ -32,4 +32,12 @@ public class JobId {
     public int hashCode() {
         return Objects.hash(jobId, jobTable);
     }
+
+    @Override
+    public String toString() {
+        return "JobId{" +
+                "jobId=" + jobId +
+                ", jobTable=" + jobTable +
+                '}';
+    }
 }
