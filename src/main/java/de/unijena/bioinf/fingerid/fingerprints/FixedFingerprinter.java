@@ -8,7 +8,10 @@ import de.unijena.bioinf.fingerid.Fingerprinter;
 import gnu.trove.set.hash.TIntHashSet;
 import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.aromaticity.Aromaticity;
+import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.graph.CycleFinder;
+import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.inchi.InChIToStructure;
 import org.openscience.cdk.interfaces.IAtom;
@@ -117,7 +120,9 @@ public class FixedFingerprinter {
         private void perceiveAromaticity() {
             try {
                 if (cdkAromaticBonds==null) {
-                    cdkAromaticBonds = Aromaticity.cdkLegacy().findBonds(molecule);
+                    final CycleFinder cycles = Cycles.or(Cycles.all(), Cycles.all(6));
+                    final Aromaticity aromaticity = new Aromaticity(ElectronDonation.daylight(), cycles);
+                    cdkAromaticBonds = aromaticity.findBonds(molecule);
                 }
                 // clear existing flags
                 molecule.setFlag(ISAROMATIC, false);
