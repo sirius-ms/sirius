@@ -2,7 +2,10 @@ package de.unijena.bioinf.IsotopePatternAnalysis.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 
 @Deprecated
 public class ScorePerPeak implements IsotopePatternScorer {
@@ -15,7 +18,7 @@ public class ScorePerPeak implements IsotopePatternScorer {
 
 
     @Override
-    public void score(double[] scoreUptoKPeaks, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment, MeasurementProfile profile) {
+    public void score(double[] scoreUptoKPeaks, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment) {
         for (int k=0; k < scoreUptoKPeaks.length; ++k) {
             if (measuredSpectrum.size() > k) scoreUptoKPeaks[k] += scorePerPeak;
         }

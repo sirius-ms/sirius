@@ -115,7 +115,7 @@ public class MsExperiments {
         if (defaultIon == null)
             defaultIon = bestDataIon;
 
-        possiblePrecursors.defaultPrecursor = new Peak(ionMass, defaultIon!=null ? defaultIon.getIntensity() : 0d);
+        possiblePrecursors.defaultPrecursor = new SimplePeak(ionMass, defaultIon!=null ? defaultIon.getIntensity() : 0d);
 
         return possiblePrecursors;
     }

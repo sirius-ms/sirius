@@ -23,17 +23,21 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
 import de.unijena.bioinf.ChemistryBase.math.LogNormalDistribution;
+import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.List;
 
 public class LossSizeScorer implements LossScorer, PeakPairScorer, MolecularFormulaScorer{
 
-    public static final DensityFunction LEARNED_DISTRIBUTION = LogNormalDistribution.withMeanAndSd(4.057753844479435d, 0.6386804182255676d);
-    public static final double LEARNED_NORMALIZATION = -5.860753214730718d;
+    public static final double LEARNED_MEAN = 4.022526672023266;
+    public static final double LEARNED_VARIANCE = 0.3124649410213113d;
+    public static final DensityFunction LEARNED_DISTRIBUTION = LogNormalDistribution.withMeanAndSd(LEARNED_MEAN, Math.sqrt(LEARNED_VARIANCE));
+
+    public static final double LEARNED_NORMALIZATION = -5.310349962255842d;
 
     private DensityFunction distribution;
     private double normalization;
@@ -74,7 +78,7 @@ public class LossSizeScorer implements LossScorer, PeakPairScorer, MolecularForm
         return distribution;
     }
 
-    private final double scoring(double mass) {
+    public final double scoring(double mass) {
         return Math.log(Math.max(1e-12, distribution.getDensity(mass))) - normalization;
     }
 
@@ -129,7 +133,7 @@ public class LossSizeScorer implements LossScorer, PeakPairScorer, MolecularForm
     }
 
     @Override
-    public Object prepare(ProcessedInput input) {
+    public Object prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
         return null;
     }
 

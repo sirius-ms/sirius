@@ -3,7 +3,10 @@ package de.unijena.bioinf.IsotopePatternAnalysis.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.IsotopePatternAnalysis.util.IntensityDependency;
 import de.unijena.bioinf.IsotopePatternAnalysis.util.LinearIntensityDependency;
 import org.apache.commons.math3.special.Erf;
@@ -37,7 +40,7 @@ public class LogNormDistributedIntensityScorer implements IsotopePatternScorer {
 
 
     @Override
-    public void score(double[] scoreUptoKPeaks, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment, MeasurementProfile profile) {
+    public void score(double[] scoreUptoKPeaks, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment) {
         // score
         double score = 0d;
         for (int i=0; i < measuredSpectrum.size(); ++i) {

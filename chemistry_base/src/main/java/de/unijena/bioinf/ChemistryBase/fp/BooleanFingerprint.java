@@ -156,6 +156,17 @@ public class BooleanFingerprint extends Fingerprint {
         }
 
         @Override
+        public FPIter jumpTo(int index) {
+            int r = fingerprintVersion.getClosestRelativeIndexTo(index);
+            if (r<0) r = -r - 1;
+            --r;
+            BIterJustOnes j = new BIterJustOnes(r);
+            j.next();
+            return j;
+        }
+
+
+        @Override
         public boolean isSet() {
             return fingerprint[current];
         }
@@ -213,6 +224,13 @@ public class BooleanFingerprint extends Fingerprint {
         }
 
         @Override
+        public FPIter jumpTo(int index) {
+            int r = fingerprintVersion.getClosestRelativeIndexTo(index);
+            if (r<0) r = -r - 1;
+            return new BIter(r);
+        }
+
+        @Override
         public FPIter clone() {
             return new BIter(offset);
         }
@@ -255,6 +273,13 @@ public class BooleanFingerprint extends Fingerprint {
             current=next;
             ++next;
             return this;
+        }
+
+        @Override
+        public FPIter2 jumpTo(int index) {
+            int r = left.fingerprintVersion.getClosestRelativeIndexTo(index);
+            if (r < 0) r = -r - 1;
+            return new PairwiseIterator(left,right, r, r+1);
         }
 
         @Override
@@ -303,7 +328,7 @@ public class BooleanFingerprint extends Fingerprint {
         }
     }
 
-    private final static class PairwiseUnionIterator extends PairwiseIterator {
+    private final class PairwiseUnionIterator extends PairwiseIterator {
 
         public PairwiseUnionIterator(BooleanFingerprint left, BooleanFingerprint right, int current, int next) {
             super(left, right, current, next);
@@ -317,15 +342,54 @@ public class BooleanFingerprint extends Fingerprint {
             return this;
         }
 
+        @Override
+        public FPIter2 jumpTo(int index) {
+            int r = fingerprintVersion.getClosestRelativeIndexTo(index);
+            if (r<0) r = -r - 1;
+            int current = -1;
+            next = -1;
+            for (int i=r; i < left.fingerprint.length; ++i) {
+                if (left.fingerprint[i] || right.fingerprint[i]) {
+                    if (current<0) current = i;
+                    else {
+                        next = i;
+                        break;
+                    }
+                }
+            }
+            if (next < 0) next = fingerprint.length;
+            return new PairwiseUnionIterator(left,right,current,next);
+        }
+
+
         public PairwiseUnionIterator clone() {
             return new PairwiseUnionIterator(left,right,current,next);
         }
     }
 
 
-    private final static class PairwiseIntersectionIterator extends PairwiseIterator {
+    private final class PairwiseIntersectionIterator extends PairwiseIterator {
         private PairwiseIntersectionIterator(BooleanFingerprint left, BooleanFingerprint right, int current,int next) {
             super(left,right,current,next);
+        }
+
+        @Override
+        public FPIter2 jumpTo(int index) {
+            int r = fingerprintVersion.getClosestRelativeIndexTo(index);
+            if (r<0) r = -r - 1;
+            int current = -1;
+            int next = -1;
+            for (int i=r; i < left.fingerprint.length; ++i) {
+                if (left.fingerprint[i] && right.fingerprint[i]) {
+                    if (current<0) current = i;
+                    else {
+                        next = i;
+                        break;
+                    }
+                }
+            }
+            if (next < 0) next = fingerprint.length;
+            return new PairwiseIntersectionIterator(left,right,current,next);
         }
 
         @Override

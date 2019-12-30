@@ -1,31 +1,14 @@
-plugins {
-    id 'com.github.johnrengelman.shadow' version '1.2.3'
-}
-
-apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow'
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-mainClassName = "de.unijena.bioinf.GibbsSampling.GibbsSamplerMain"
-
 dependencies() {
     //project
-    compile project(':chemistry_base')
     compile project(':sirius_api')
-    compile project(':io')
-
-    compile 'com.lexicalscope.jewelcli:jewelcli:0.8.1'
 
     compile group: "org.openscience.cdk", name: "cdk-smiles", version: "$cdk_version"
     compile group: "org.openscience.cdk", name: "cdk-data", version: "$cdk_version"
     compile group: "org.openscience.cdk", name: "cdk-formula", version: "$cdk_version"
 }
 
-
-shadowJar {
-    baseName = 'shadow'
-    classifier = null
-    version = null
+allprojects {
+    dependencies {
+        annotationProcessor project(':default_properties:processor')
+    }
 }

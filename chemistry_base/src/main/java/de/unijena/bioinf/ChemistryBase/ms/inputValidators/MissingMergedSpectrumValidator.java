@@ -1,8 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.ms.inputValidators;
 
-import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.utils.BasicSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
@@ -16,8 +16,7 @@ import java.util.List;
 public class MissingMergedSpectrumValidator implements Ms2ExperimentValidator {
 
     @Override
-    public Ms2Experiment validate(Ms2Experiment input, Warning warning, boolean repair) throws InvalidException {
-        MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(input);
+    public boolean validate(MutableMs2Experiment mutableMs2Experiment, Warning warning, boolean repair) throws InvalidException {
 //        if (mutableMs2Experiment.getMs1Spectra().isEmpty()){
 //            if (repair){
 //                mutableMs2Experiment.getMs1Spectra().add(new SimpleSpectrum(new double[0], new double[0]));
@@ -34,20 +33,15 @@ public class MissingMergedSpectrumValidator implements Ms2ExperimentValidator {
                     warning.warn("no merged MS1 given for "+mutableMs2Experiment.getName()+". Merging MS1 spectra is still experimental");
                     //todo test merging multiple spectra!!! merge more radical?
                     //todo or rather do the same as in FPA
-                    Deviation deviation = new Deviation(20);
-                    if (mutableMs2Experiment.hasAnnotation(MeasurementProfile.class)){
-                        deviation = mutableMs2Experiment.getAnnotation(MeasurementProfile.class).getAllowedMassDeviation();
-                    }
-                    if (mutableMs2Experiment.hasAnnotation(Deviation.class)) {
-                        deviation = mutableMs2Experiment.getAnnotation(Deviation.class);
-                    }
+                    Deviation deviation = new Deviation(20); //todo Marcus: ist das ein default oder soll der statt des neuen defaults genutzt werden
+                    deviation =  mutableMs2Experiment.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
                     mutableMs2Experiment.setMergedMs1Spectrum(mergeSpectra(mutableMs2Experiment.getMs1Spectra(), deviation));
                 } else {
                     throw new InvalidException("no merged MS1 given for "+mutableMs2Experiment.getName());
                 }
             }
         }
-        return mutableMs2Experiment;
+        return true;
     }
 
     private SimpleSpectrum mergeSpectra(List<SimpleSpectrum> spectrumList, Deviation expectedDev) {

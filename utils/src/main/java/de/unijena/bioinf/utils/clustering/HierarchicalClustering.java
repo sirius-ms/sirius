@@ -2,7 +2,6 @@ package de.unijena.bioinf.utils.clustering;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -16,7 +15,7 @@ public class HierarchicalClustering<T> {
     private T[] elements;
     private double[][] inputDistanceMatrix;
     private ClusteringMatrix distances;
-    private List<List<T>> clusters;
+    private ClusteringTree<T> clusteringTree;
 
     public HierarchicalClustering(DistanceMeasureStrategy distanceMeasureStrategy) {
         this.distanceMeasureStrategy = distanceMeasureStrategy;
@@ -30,21 +29,18 @@ public class HierarchicalClustering<T> {
         this.elements = elements;
         this.inputDistanceMatrix = pairwiseDistances;
         this.distances = new ClusteringMatrixImplementation(pairwiseDistances);
-        this.clusters = new ArrayList<>();
-        for (T element : elements) {
-            List<T> list = new ArrayList<>();
-            list.add(element);
-            clusters.add(list);
-        }
-        while (clusters.size()>1){
+        clusteringTree = new ClusteringTree<>(elements);
+        List<ClusteringTree<T>.TreeNode> clusterNodes = clusteringTree.getLeaves();
+
+        while (clusterNodes.size()>1){
             IndexPair minimum = distances.getMinimum();
             if (minimum==null || distances.getDistance(minimum.i, minimum.j).getDistance()>threshold){
                 //no elements left to cluster
                 return;
             }
 
-            int clusterSize1 = clusters.get(minimum.i).size();
-            int clusterSize2 = clusters.get(minimum.j).size();
+            int clusterSize1 = clusterNodes.get(minimum.i).getNumberOfLeafNodes(); //clusters.get(minimum.i).size();
+            int clusterSize2 = clusterNodes.get(minimum.j).getNumberOfLeafNodes(); //clusters.get(minimum.j).size();
 
             Distance[] newDistancesRow = new Distance[distances.numberOfClusters()-1];
             int newIdx = 0;
@@ -62,14 +58,22 @@ public class HierarchicalClustering<T> {
             }
             distances.update(minimum, newDistancesRow);
 
-            clusters.get(minimum.i).addAll(clusters.get(minimum.j));
-            clusters.remove(minimum.j);
-
+            ClusteringTree.TreeNode newNode = clusteringTree.mergeNodes(clusterNodes.get(minimum.i), clusterNodes.get(minimum.j));
+            clusterNodes.set(minimum.i, newNode);
+            clusterNodes.remove(minimum.j);
         }
     }
 
     public List<List<T>> getClusters() {
+        List<List<T>> clusters = new ArrayList<>();
+        for (ClusteringTree<T>.TreeNode child : clusteringTree.getRoot().getChildren()) {
+            clusters.add(clusteringTree.getLeafElements(child));
+        }
         return clusters;
+    }
+
+    public ClusteringTree<T> getClusteringTree() {
+        return clusteringTree;
     }
 
     private static class IndexPair {
@@ -108,7 +112,7 @@ public class HierarchicalClustering<T> {
     }
 
 
-    private class ClusteringMatrixImplementation implements ClusteringMatrix {
+    private static class ClusteringMatrixImplementation implements ClusteringMatrix {
 
         Distance[][] distances;
 

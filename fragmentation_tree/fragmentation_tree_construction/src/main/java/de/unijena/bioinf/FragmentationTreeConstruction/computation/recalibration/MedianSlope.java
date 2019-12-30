@@ -34,7 +34,8 @@ import java.util.Collections;
 import java.util.Comparator;
 
 /**
- * Recommended recalibration strategy.
+ * Recommended recalibration strategy. Recalibrates using the median of slopes (instead of the least square estimate).
+ * Should be more robust than least square.
  */
 public class MedianSlope extends AbstractRecalibrationStrategy {
 

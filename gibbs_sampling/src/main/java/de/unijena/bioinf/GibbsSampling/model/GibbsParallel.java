@@ -1,18 +1,18 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.jjobs.*;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<CompoundResult<C>[]> implements JobProgressEventListener {
     private int repetitions;
@@ -89,8 +89,7 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
             }
 
 
-
-            Arrays.sort(scoredCandidates, Scored.<C>desc());
+            Arrays.sort(scoredCandidates, Comparator.reverseOrder());
             array[i] = scoredCandidates;
         }
 
@@ -124,15 +123,22 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
         step = maxProgress/20;
 
         updateProgress(0, maxProgress, 0, "Sample probabilities");
+        List<BasicJJob> jobs = new ArrayList<>();
         for (final GibbsMFCorrectionNetwork gibbsNetwork : gibbsNetworks) {
             gibbsNetwork.setIterationSteps(maxStepProportioned, burnIn);
             gibbsNetwork.addPropertyChangeListener(this);
+            jobs.add(gibbsNetwork);
             submitSubJob(gibbsNetwork);
         }
 
-        awaitAllSubJobs();
+        for (BasicJJob job : jobs) {
+            job.awaitResult();
+        }
 
+
+        long start = System.currentTimeMillis();
         combineResults();
+        LOG().debug("combined all results in: "+(System.currentTimeMillis()-start)+" ms");
 
         return createCompoundResults();
 

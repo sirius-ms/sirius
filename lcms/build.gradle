@@ -1,0 +1,24 @@
+dependencies {
+    compile project(':chemistry_base')
+    compile project(':spectral_alignment')
+    compile "org.apache.commons:commons-math3:$math3_version"
+    compile group: 'de.unijena.bioinf.ms', name: 'Recalibration', version: '1.0'
+
+    compile ('uk.ac.ebi.jmzml:jmzml:1.7.11') {
+        exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
+        exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-xml-handling' //pom dependency that does not work
+    }
+    compile ('psidev.psi.tools:xxindex:0.23'){
+        exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
+    } //jmzl dep. from excluded pom dep
+    compile ('it.unimi.dsi:fastutil:6.5.1'){
+        exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
+    } //jmzl dep. from excluded pom dep
+
+    compile 'javax.xml.bind:jaxb-api:2.3.0' //also needed by jmzl but not exclusively
+    compile 'org.glassfish.jaxb:jaxb-core:2.3.0' //also needed by jmzl but not exclusively
+    compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: '2.3.2'
+
+    testCompile project(':io')
+    testCompile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+}

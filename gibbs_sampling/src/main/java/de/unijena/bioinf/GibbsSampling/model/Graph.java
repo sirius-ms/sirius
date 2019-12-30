@@ -1,35 +1,16 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ExponentialDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionFix;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.jjobs.MasterJJob;
-import gnu.trove.list.TDoubleList;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
-import gnu.trove.procedure.TDoubleProcedure;
 import gnu.trove.procedure.TIntProcedure;
-import gnu.trove.set.hash.TDoubleHashSet;
 import gnu.trove.set.hash.TIntHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Array;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.LogManager;
 
 public class Graph<C extends Candidate<?>> {
     protected final TIntIntHashMap[] indexMap;
@@ -145,6 +126,10 @@ public class Graph<C extends Candidate<?>> {
         return this.indexMap[i].keys();
     }
 
+    public boolean hasLogWeightConnections(int i, int j) {
+        return this.indexMap[i].containsKey(j);
+    }
+
     public void setLogWeight(int i, int j, double weight) {
         int relJ = this.indexMap[i].get(j);
         if(relJ < 0) {
@@ -249,10 +234,10 @@ public class Graph<C extends Candidate<?>> {
         return new GraphValidationMessage("", false, false);
     }
 
-    public static void validateAndThrowError(Graph graph, Logger logger) throws Exception {
+    public static void validateAndThrowError(Graph graph, Logger logger) {
         GraphValidationMessage validationMessage = graph.validate();
         if (validationMessage.isError()) {
-            throw new Exception(validationMessage.getMessage());
+            throw new RuntimeException(validationMessage.getMessage());
         } else if (validationMessage.isWarning()) {
             logger.warn(validationMessage.getMessage());
         }

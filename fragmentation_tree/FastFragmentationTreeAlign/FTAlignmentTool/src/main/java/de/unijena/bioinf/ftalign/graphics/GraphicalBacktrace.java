@@ -19,6 +19,7 @@ package de.unijena.bioinf.ftalign.graphics;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ftalign.analyse.FTDataElement;
 import de.unijena.bioinf.treealign.AbstractBacktrace;
 
@@ -77,14 +78,14 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
 
 
         try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(left.getSource().getFile()));
+            BufferedReader bufferedReader = FileUtils.ensureBuffering(new FileReader(left.getSource().getFile()));
             String line;
             while (bufferedReader.ready()) {
                 line = bufferedReader.readLine();
                 if (!line.contains("->")) {
                     final Matcher m = nodePattern.matcher(line);
                     if (m.find()) {
-                        final MolecularFormula formula = MolecularFormula.parse(m.group(2));
+                        final MolecularFormula formula = MolecularFormula.parseOrThrow(m.group(2));
                         leftNodes.put(formula, m.group(1));
                         leftNodesLabel.put(formula, m.group(2));
 
@@ -92,26 +93,26 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
                 } else {
                     final Matcher m = edgePattern.matcher(line);
                     if (m.find()) {
-                        final FormulaEdge formulaEdge = new FormulaEdge(MolecularFormula.parse(m.group(1)), MolecularFormula.parse(m.group(2)));
+                        final FormulaEdge formulaEdge = new FormulaEdge(MolecularFormula.parseOrThrow(m.group(1)), MolecularFormula.parseOrThrow(m.group(2)));
                         leftEdges.put(formulaEdge, m.group(3));
                     }
                 }
 
             }
-            bufferedReader = new BufferedReader(new FileReader(right.getSource().getFile()));
+            bufferedReader = FileUtils.ensureBuffering(new FileReader(right.getSource().getFile()));
             while (bufferedReader.ready()) {
                 line = bufferedReader.readLine();
                 if (!line.contains("->")) {
                     final Matcher m = nodePattern.matcher(line);
                     if (m.find()) {
-                        final MolecularFormula formula = MolecularFormula.parse(m.group(2));
+                        final MolecularFormula formula = MolecularFormula.parseOrThrow(m.group(2));
                         rightNodes.put(formula, m.group(1));
                         rightNodesLabel.put(formula, m.group(2));
                     }
                 } else {
                     final Matcher m = edgePattern.matcher(line);
                     if (m.find()) {
-                        final FormulaEdge formulaEdge = new FormulaEdge(MolecularFormula.parse(m.group(1)), MolecularFormula.parse(m.group(2)));
+                        final FormulaEdge formulaEdge = new FormulaEdge(MolecularFormula.parseOrThrow(m.group(1)), MolecularFormula.parseOrThrow(m.group(2)));
                         ;
                         rightEdges.put(formulaEdge, m.group(3));
                     }
@@ -131,8 +132,8 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
         dotFile.add("node[odering=out]");
 
         dotFile.add("{rank=min");
-        dotFile.add(makeNode(leftNodes.get(left.getTree().getRoot()) + "Left", leftNodesLabel.get(left.getTree().getRoot()), null, null));
-        dotFile.add(makeNode(rightNodes.get(right.getTree().getRoot()) + "Right", rightNodesLabel.get(right.getTree().getRoot()), null, null));
+        dotFile.add(makeNode(leftNodes.get(left.getTree().getRoot().getFormula()) + "Left", leftNodesLabel.get(left.getTree().getRoot().getFormula()), null, null));
+        dotFile.add(makeNode(rightNodes.get(right.getTree().getRoot().getFormula()) + "Right", rightNodesLabel.get(right.getTree().getRoot().getFormula()), null, null));
         dotFile.add("}");
 
 
@@ -532,7 +533,7 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
         return true;
     }
 
-    private class FormulaEdge {
+    private static class FormulaEdge {
         private MolecularFormula formula1;
         private MolecularFormula formula2;
 
@@ -561,7 +562,7 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
 
     }
 
-    private class Color {
+    private static class Color {
         private final static String firstColor = "ff0000";
         private final int stepsize = 11983725;
         private final int maxValue = 16777216;
@@ -582,7 +583,7 @@ public class GraphicalBacktrace extends AbstractBacktrace<Fragment> {
         }
     }
 
-    private class FragmentationTreeWrapper {
+    private static class FragmentationTreeWrapper {
         private String color;
         private String shape;
         private double edgeLength;
