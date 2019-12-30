@@ -74,8 +74,7 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
             }
             if (!found) continue;
             final String form = name.substring(0, name.length() - format.length());
-            final MolecularFormula formula = MolecularFormula.parse(form);
-            formulas.add(formula);
+            MolecularFormula.parseAndExecute(form, formulas::add);
         }
         if (format == null) throw new IOException("Couldn't find any compounds in given database");
         format = format.toLowerCase();
@@ -179,7 +178,7 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
         final HashMap<String, CompoundCandidate> innerMap = new HashMap<>();
         final Multimap<MolecularFormula, CompoundCandidate> formulas2Candidates = ArrayListMultimap.create();
         for (CompoundCandidate c : compounds) {
-            final MolecularFormula f = c.getInchi().extractFormula();
+            final MolecularFormula f = c.getInchi().extractFormulaOrThrow();
             formulas2Candidates.put(f, c);
             innerMap.put(c.getInchiKey2D(), c);
         }

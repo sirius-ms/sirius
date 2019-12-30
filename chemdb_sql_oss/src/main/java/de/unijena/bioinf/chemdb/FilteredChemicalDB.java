@@ -95,4 +95,8 @@ public class FilteredChemicalDB extends AbstractChemicalDatabase implements Clon
     public boolean isWrappedDBChemDB(){
         return wrappedDB instanceof ChemicalDatabase;
     }
+
+    public ChemicalDatabase getWrappedDB() {
+        return wrappedDB;
+    }
 }

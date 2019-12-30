@@ -18,15 +18,19 @@
 
 package de.unijena.bioinf.chemdb;
 
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+
 /*
     A single link to a compound database with a database name
     and a database id
  */
 public final class DBLink {
     public final String name;
-    public final String id;
+    public final @Nullable  String id;
 
-    public DBLink(String name, String id) {
+    public DBLink(String name, @Nullable  String id) {
         this.name = name;
         this.id = id;
     }
@@ -39,7 +43,7 @@ public final class DBLink {
         DBLink dbLink = (DBLink) o;
 
         if (!name.equals(dbLink.name)) return false;
-        return id != null ? id.equals(dbLink.id) : dbLink.id == null;
+        return Objects.equals(id, dbLink.id);
     }
 
     @Override
@@ -51,6 +55,6 @@ public final class DBLink {
 
     @Override
     public String toString() {
-        return name + ":" + id;
+        return id==null ? name :  name + ":" + id;
     }
 }

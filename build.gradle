@@ -13,5 +13,4 @@ dependencies {
 	// external
 	compile group: 'javax.json', name: 'javax.json-api', version:"$json_version"
     compile group: 'org.glassfish', name: 'javax.json', version:"$json_impl_version"
-//    compile group: "org.postgresql", name: "postgresql", version: "$psql_version"
-}	
+}

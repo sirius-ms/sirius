@@ -13,7 +13,7 @@ public enum CompoundCandidateChargeState {
         } else return NEUTRAL_CHARGE;
     }
 
-    private int value;
+    private final int value;
 
     private CompoundCandidateChargeState(int value) {
         this.value = value;
