@@ -3,8 +3,6 @@ package de.unijena.bioinf.GibbsSampling.model.distributions;
 import de.unijena.bioinf.GibbsSampling.model.Candidate;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
 
-import java.util.Arrays;
-
 public class ScoreProbabilityDistributionFix<C extends Candidate<?>> extends ScoreProbabilityDistributionEstimator<C> {
 
     /**
@@ -29,7 +27,7 @@ public class ScoreProbabilityDistributionFix<C extends Candidate<?>> extends Sco
     }
 
     @Override
-    public double[] normalization(C[][] var1) {
+    public double[] normalization(C[][] var1, double minimum_number_matched_peaks_losses) {
         return new double[0];
     }
 }

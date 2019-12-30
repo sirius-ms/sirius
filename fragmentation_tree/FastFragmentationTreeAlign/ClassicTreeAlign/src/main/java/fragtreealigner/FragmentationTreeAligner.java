@@ -17,6 +17,7 @@
  */
 package fragtreealigner;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import fragtreealigner.algorithm.ScoringFunctionNeutralLosses;
 import fragtreealigner.algorithm.ScoringFunctionNeutralLosses.ScoreWeightingType;
 import fragtreealigner.algorithm.TreeAligner;
@@ -192,7 +193,7 @@ public class FragmentationTreeAligner {
 			else if (set.getOption("normal").getResultValue(0).equalsIgnoreCase("p_value")) {
 				params.normalizationType = NormalizationType.P_VALUE;
 				try{
-					BufferedReader r = new BufferedReader(new FileReader("evdParamList"));
+					BufferedReader r = FileUtils.ensureBuffering(new FileReader("evdParamList"));
 					TreeAligner.readStatisticalParameter(r);
 				} catch (IOException e) {
 					System.err.println("unable to read distribution parameters");
@@ -211,7 +212,7 @@ public class FragmentationTreeAligner {
 		else params.scoreWeightingType = ScoreWeightingType.NONE;
 
 		if (set.isSet("scoring")) {
-			params.setScores(new BufferedReader(new FileReader(set.getOption("scoring").getResultValue(0))));
+			params.setScores(FileUtils.ensureBuffering(new FileReader(set.getOption("scoring").getResultValue(0))));
 		}
 		if (set.isSet("pLikeValue")) {
 			params.computePlikeValue = true;
@@ -375,13 +376,13 @@ public class FragmentationTreeAligner {
 				i += 1;
 				System.out.println(i + " x -10000");
 //				System.out.println("fragmentationTrees/" + fragTree1Str);
-				FragmentationTree fTree1 = FragmentationTree.readFromDot(new BufferedReader(new FileReader("fragmentationTrees/" + fragTree1Str)), session);
+				FragmentationTree fTree1 = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader("fragmentationTrees/" + fragTree1Str)), session);
 				if (fTree1 == null){ continue; } // This is ugly, but works.
 				AlignmentTree aTree1 = fTree1.toAlignmentTree();
 				for (String fragTree2Str : fileList) {
 					if ((fragTree2Str.endsWith(".dot")) && (fragTree1Str.compareToIgnoreCase(fragTree2Str) != 0)) {
 //					if (fragTree2Str.endsWith(".dot")) {
-						FragmentationTree fTree2 = FragmentationTree.readFromDot(new BufferedReader(new FileReader("fragmentationTrees/" + fragTree2Str)), session);
+						FragmentationTree fTree2 = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader("fragmentationTrees/" + fragTree2Str)), session);
 						if (fTree2 == null){ continue; } // This is ugly, but works.
 //						for (int iter = 0; iter < 10; iter++) {
 						AlignmentTree aTree2 = fTree2.toAlignmentTree();
@@ -420,28 +421,28 @@ public class FragmentationTreeAligner {
 		FragmentationTree[] fragTrees = {null, null, null, null, null, null, null, null, null, null, null, null, null, null};
 				
 		try {
-			fragTrees[0] = FragmentationTree.readFromDot(new BufferedReader(new FileReader("fragmentationTrees/a_phenylalanine.ms1.dot")), session);
-			fragTrees[1] = FragmentationTree.readFromDot(new BufferedReader(new FileReader("fragmentationTrees/c_4-hexosylferuloyl_choline.ms2.dot")), session);
-			fragTrees[2] = FragmentationTree.readFromDot(new BufferedReader(new FileReader("fragmentationTrees/c_cafeoyl_choline.ms1.dot")), session);
-			fragTrees[3] = FragmentationTree.readFromDot(new BufferedReader(new FileReader("fragmentationTrees/c_Syringoyl_choline.ms3.dot")), session);
-			fragTrees[4] = FragmentationTree.readFromDot(new BufferedReader(new FileReader("fragmentationTrees/c_4-hydroxybenzoyl_choline.ms1.dot")), session);
-			fragTrees[5] = FragmentationTree.readFromDot(new BufferedReader(new FileReader("fragmentationTrees/c_4-hexosyloxybenzoyl_choline.ms1.dot")), session);
-			fragTrees[6] = FragmentationTree.readFromDot(new BufferedReader(new FileReader("fragmentationTrees/a_tryptophane.ms1.dot")), session);
-			fragTrees[7] = FragmentationTree.readFromDot(new BufferedReader(new FileReader("fragmentationTrees/a_tyrosine.ms1.dot")), session);
-			fragTrees[8] = FragmentationTree.readFromDot(new BufferedReader(new FileReader("fragmentationTrees/u_6-aminocapronic_acid.ms1.dot")), session);
-			fragTrees[9] = FragmentationTree.readFromDot(new BufferedReader(new FileReader("fragmentationTrees/a_citrulline.ms1.dot")), session);
-			fragTrees[10] = FragmentationTree.readFromDot(new BufferedReader(new FileReader("fragmentationTrees/a_arginine.ms1.dot")), session);
-			fragTrees[11] = FragmentationTree.readFromDot(new BufferedReader(new FileReader("fragmentationTrees/a_asparagine.ms1.dot")), session);
+			fragTrees[0] = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader("fragmentationTrees/a_phenylalanine.ms1.dot")), session);
+			fragTrees[1] = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader("fragmentationTrees/c_4-hexosylferuloyl_choline.ms2.dot")), session);
+			fragTrees[2] = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader("fragmentationTrees/c_cafeoyl_choline.ms1.dot")), session);
+			fragTrees[3] = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader("fragmentationTrees/c_Syringoyl_choline.ms3.dot")), session);
+			fragTrees[4] = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader("fragmentationTrees/c_4-hydroxybenzoyl_choline.ms1.dot")), session);
+			fragTrees[5] = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader("fragmentationTrees/c_4-hexosyloxybenzoyl_choline.ms1.dot")), session);
+			fragTrees[6] = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader("fragmentationTrees/a_tryptophane.ms1.dot")), session);
+			fragTrees[7] = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader("fragmentationTrees/a_tyrosine.ms1.dot")), session);
+			fragTrees[8] = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader("fragmentationTrees/u_6-aminocapronic_acid.ms1.dot")), session);
+			fragTrees[9] = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader("fragmentationTrees/a_citrulline.ms1.dot")), session);
+			fragTrees[10] = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader("fragmentationTrees/a_arginine.ms1.dot")), session);
+			fragTrees[11] = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader("fragmentationTrees/a_asparagine.ms1.dot")), session);
 	
-//			aTree1.readFromList(new BufferedReader(new FileReader("TestTree1.list")));
-//			aTree2.readFromList(new BufferedReader(new FileReader("TestTree5.list")));
+//			aTree1.readFromList(FileUtils.ensureBuffering(new FileReader("TestTree1.list")));
+//			aTree2.readFromList(FileUtils.ensureBuffering(new FileReader("TestTree5.list")));
 		} catch (FileNotFoundException e) {
 			System.out.println("Datei nicht gefunden " + e);
 		}
 		AlignmentTree aTree3 = fragTrees[9].toAlignmentTree();
 		AlignmentTree aTree4 = fragTrees[10].toAlignmentTree();
 		fragTrees[6].writeToCml("output/test.cml");
-		fragTrees[13] = FragmentationTree.readFromCml(new BufferedReader(new FileReader("output/test.cml")), session);
+		fragTrees[13] = FragmentationTree.readFromCml(FileUtils.ensureBuffering(new FileReader("output/test.cml")), session);
 		fragTrees[13].writeToCml("output/test2.cml");
 		
 //		TreeAligner treeAligner1 = new TreeAligner(aTree1, aTree2, sFunc, true, false, session);
@@ -478,14 +479,14 @@ public class FragmentationTreeAligner {
 					FragmentationTree decoyTree = null;
 					if (decoyFile.toString().endsWith("dot")) {
 						decoyTree = FragmentationTree.readFromDot(
-								new BufferedReader(new FileReader(decoyFile)),
+								FileUtils.ensureBuffering(new FileReader(decoyFile)),
 								session);
 						if (decoyTree == null){ continue; } //This is ugly, but works
 						iter.next().setDecoyAlignmentTree(
 								decoyTree.toAlignmentTree());
 					} else if (decoyFile.toString().endsWith("cml")) {
 						decoyTree = FragmentationTree.readFromCml(
-								new BufferedReader(new FileReader(decoyFile)),
+								FileUtils.ensureBuffering(new FileReader(decoyFile)),
 								session);
 						iter.next().setDecoyAlignmentTree(
 								decoyTree.toAlignmentTree());

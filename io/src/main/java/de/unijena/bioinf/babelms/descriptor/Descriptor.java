@@ -1,6 +1,7 @@
 package de.unijena.bioinf.babelms.descriptor;
 
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
 /**
  * This class handles the serialization of annotation objects.
@@ -9,7 +10,7 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
  * Until this point every user is encouraged to define his own Annotation classes in the ChemistryBase packacke as
  * final, immutable pojos together with a serialization route in this class.
  */
-public interface Descriptor<AnnotationType> {
+public interface Descriptor<AnnotationType extends DataAnnotation> {
 
     /**
      * A Descriptor is tried to parse an annotation as soon as one of the keywords appear in the dictionary.

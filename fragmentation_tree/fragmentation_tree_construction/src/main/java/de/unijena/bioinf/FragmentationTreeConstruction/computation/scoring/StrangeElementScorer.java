@@ -24,8 +24,9 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedInput;
 
 /**
  * Special elements like F, I, S, P, Cl, Br and so on are rarely and losses containing this elements seems to be
@@ -64,7 +65,7 @@ public class StrangeElementScorer implements LossScorer, MolecularFormulaScorer 
     }
 
     @Override
-    public Object prepare(ProcessedInput input) {
+    public Object prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
         final PeriodicTable pt = PeriodicTable.getInstance();
         return pt.getAllByName("C", "H", "N", "O", "Na", "K", "Cl", "Br");
     }

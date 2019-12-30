@@ -17,6 +17,8 @@
  */
 package fragtreealigner.util;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,7 +54,7 @@ public class Classifier {
 
 
         try {
-            BufferedReader file = new BufferedReader( new FileReader(classfile));
+            BufferedReader file = FileUtils.ensureBuffering( new FileReader(classfile));
 
 
             Map<String,String> classes = new HashMap<String,String>();
@@ -75,7 +77,7 @@ public class Classifier {
                     String filename = f.getName();
                     System.out.println(filename);
 
-                    file = new BufferedReader( new FileReader(f));
+                    file = FileUtils.ensureBuffering( new FileReader(f));
 
                     String line = file.readLine();
                     String[] split = line.split("\\,");

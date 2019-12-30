@@ -63,7 +63,7 @@ public class ParserTest {
         PeriodicTable.pushCopy();
         PeriodicTable.getInstance().addElement("Quark mit Soße", "Quark", 777, 4);
         assertNotNull(PeriodicTable.getInstance().getByName("Quark"));
-        assertEquals(13, MolecularFormula.parse("Quark13").numberOf(PeriodicTable.getInstance().getByName("Quark")));
+        assertEquals(13, MolecularFormula.parseOrThrow("Quark13").numberOf(PeriodicTable.getInstance().getByName("Quark")));
         assertNotNull(PeriodicTable.getInstance().getByName("C"));
         PeriodicTable.pop();
         assertNull(PeriodicTable.getInstance().getByName("Quark"));
@@ -76,7 +76,7 @@ public class ParserTest {
         PeriodicTable.getInstance().addElement("Quark mit Soße", "Quark", 777, 4);
         assertNotNull(PeriodicTable.getInstance().getByName("Quark"));
         assertNull(PeriodicTable.getInstance().getByName("C"));
-        assertEquals(13, MolecularFormula.parse("Quark13").numberOf(PeriodicTable.getInstance().getByName("Quark")));
+        assertEquals(13, MolecularFormula.parseOrThrow("Quark13").numberOf(PeriodicTable.getInstance().getByName("Quark")));
         PeriodicTable.pop();
         assertNull(PeriodicTable.getInstance().getByName("Quark"));
     }

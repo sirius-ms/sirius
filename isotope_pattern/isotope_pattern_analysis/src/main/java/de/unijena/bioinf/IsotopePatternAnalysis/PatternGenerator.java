@@ -20,6 +20,7 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.ArrayWrapperSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -127,9 +128,9 @@ public class PatternGenerator {
             int k=0;
             for (int i = 0; i <= n; i++){
                 int diff =  iso.getIntegerMass(k) - monoIsotopicMass;
-                while (diff > i) {modIsoDist.add(new Peak(0,0)); ++i;}
+                while (diff > i) {modIsoDist.add(new SimplePeak(0,0)); ++i;}
                 // Florian says: minus i is because the i-th isotope nominal mass is elemental nominal mass plus i!
-                Peak peak = new Peak(iso.getMass(k)-e.getIntegerMass()-i, iso.getAbundance(k));
+                Peak peak = new SimplePeak(iso.getMass(k)-e.getIntegerMass()-i, iso.getAbundance(k));
                 modIsoDist.add(peak);
                 ++k;
             }
@@ -189,11 +190,11 @@ public class PatternGenerator {
             for (int i = 0; i <= n; i++) {
                 int diff = iso.getIntegerMass(k) - monoIsotopicMass;
                 while (diff > i) {
-                    modIsoDist.add(new Peak(0, 0));
+                    modIsoDist.add(new SimplePeak(0, 0));
                     ++i;
                 }
                 // Florian says: minus i is because the i-th isotope nominal mass is elemental nominal mass plus i!
-                Peak peak = new Peak(iso.getMass(k) - e.getIntegerMass() - i, iso.getAbundance(k));
+                Peak peak = new SimplePeak(iso.getMass(k) - e.getIntegerMass() - i, iso.getAbundance(k));
                 modIsoDist.add(peak);
                 ++k;
             }
@@ -262,10 +263,10 @@ public class PatternGenerator {
 			intensity = 0;
 			//filling the lists
 			while (list1.size()<n+1){
-				list1.add(new Peak(0,0));
+				list1.add(new SimplePeak(0,0));
 			}
 			while (list2.size()<n+1){
-				list2.add(new Peak(0,0));
+				list2.add(new SimplePeak(0,0));
 			}
 			for(int k=0;k<=n;k++){
 				intensity += list1.get(k).getIntensity() * list2.get(n-k).getIntensity();
@@ -280,7 +281,7 @@ public class PatternGenerator {
 				maxint = intensity;
 			}
 			m = intensity != 0 ? mass/intensity : 0.0;
-			result.add(new Peak(m, intensity));
+			result.add(new SimplePeak(m, intensity));
 		}
 		return result;
 	}
@@ -303,10 +304,10 @@ public class PatternGenerator {
         int len = Math.min((list1.size() + list2.size()) - 1, limit);
         //filling the lists
         while (list1.size() < len) {
-            list1.add(new Peak(0, 0));
+            list1.add(new SimplePeak(0, 0));
         }
         while (list2.size() < len) {
-            list2.add(new Peak(0, 0));
+            list2.add(new SimplePeak(0, 0));
         }
 
         List<Peak> result = new ArrayList<Peak>(len);
@@ -320,7 +321,7 @@ public class PatternGenerator {
                 mass += list1.get(k).getIntensity() * list2.get(n - k).getIntensity() * (list1.get(k).getMass() + list2.get(n - k).getMass());
             }
             m = intensity != 0 ? mass / intensity : 0.0;
-            result.add(new Peak(m, intensity));
+            result.add(new SimplePeak(m, intensity));
         }
 		return result;
 	}

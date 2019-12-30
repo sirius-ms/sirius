@@ -17,7 +17,9 @@
  */
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import gnu.trove.list.array.TDoubleArrayList;
 
 public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpectrum<P> implements MutableSpectrum<P> {
@@ -29,6 +31,12 @@ public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpect
         super(immutable);
         this.masses = new TDoubleArrayList(Spectrums.copyMasses(immutable));
         this.intensities = new TDoubleArrayList(Spectrums.copyIntensities(immutable));
+    }
+
+    @Override
+    public void clear() {
+        masses.clearQuick();
+        intensities.clearQuick();
     }
 
     public BasicMutableSpectrum() {

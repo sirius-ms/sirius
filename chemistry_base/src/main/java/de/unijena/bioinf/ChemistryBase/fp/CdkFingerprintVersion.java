@@ -2,6 +2,7 @@ package de.unijena.bioinf.ChemistryBase.fp;
 
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -24,13 +25,21 @@ public class CdkFingerprintVersion extends FingerprintVersion {
     private final MolecularProperty[] properties;
     private final USED_FINGERPRINTS[] usedFingerprints;
 
+    public USED_FINGERPRINTS[] getUsedFingerprints() {
+        return usedFingerprints;
+    }
+
+    protected CdkFingerprintVersion() {
+        this(new USED_FINGERPRINTS[0]);
+    }
+
     public CdkFingerprintVersion(USED_FINGERPRINTS... fingerprints) {
         final ArrayList<MolecularProperty> properties = new ArrayList<>();
         long fastCompareFlag = 0L;
         Arrays.sort(fingerprints);
         for (USED_FINGERPRINTS uf : fingerprints) {
             properties.addAll(Arrays.asList(getDefaultPropertiesFor(uf)));
-            fastCompareFlag |= (1L<<uf.defaultPosition);
+            fastCompareFlag |= (1L << uf.defaultPosition);
         }
         this.fastCompareFlag = fastCompareFlag;
         this.usedFingerprints = fingerprints;
@@ -90,9 +99,6 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         return false;
     }
 
-    private static final USED_FINGERPRINTS[] DEFAULT_SETUP = new USED_FINGERPRINTS[]{
-            USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP};
-
     private static final USED_FINGERPRINTS[] WITHOUT_ECFP_SETUP = new USED_FINGERPRINTS[]{
             USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH
     };
@@ -101,14 +107,17 @@ public class CdkFingerprintVersion extends FingerprintVersion {
      * will be replaced by complete setup as soon as fingerprints are imported into the database.
      */
     private static final USED_FINGERPRINTS[] EXTENDED_SETUP = new USED_FINGERPRINTS[]{
-            USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP, USED_FINGERPRINTS.BIOSMARTS, USED_FINGERPRINTS.RINGSYSTEMS, USED_FINGERPRINTS.SHORTEST_PATH, USED_FINGERPRINTS.CLASSYFIRE_SMARTS};
+            USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP, USED_FINGERPRINTS.BIOSMARTS, USED_FINGERPRINTS.RINGSYSTEMS};
+
+    private static final USED_FINGERPRINTS[] DEFAULT_SETUP = EXTENDED_SETUP;
+
 
     public enum USED_FINGERPRINTS {
         OPENBABEL(0, 55,true,false), SUBSTRUCTURE(1, 307,false,false), MACCS(2, 166,false,true), PUBCHEM(3, 881,true,true), KLEKOTA_ROTH(4, 4860,false,false),
         ECFP(5, ExtendedConnectivityProperty.getFingerprintLength(),false,false),
 
-        BIOSMARTS(6, 228, false, true),
-        RINGSYSTEMS(7, 505, false, true),
+        BIOSMARTS(6, 283, false, true),
+        RINGSYSTEMS(7, 463, false, true),
         SHORTEST_PATH(8, 2718, false, true),
         CLASSYFIRE_SMARTS(9, 84, true, true);
 
@@ -174,7 +183,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 /*
     private static void loadFingerprintDescriptors() throws IOException {
         final PeriodicTable T = PeriodicTable.getInstance();
-        final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/index_fingerprints.txt")));
+        final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/index_fingerprints.txt")));
         String line = null;
         final ArrayList<MolecularProperty> properties = new ArrayList<>();
         while ((line = r.readLine()) != null) {
@@ -223,7 +232,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
     private static void loadFingerprintDescriptors() throws IOException {
         final PeriodicTable T = PeriodicTable.getInstance();
         final ArrayList<MolecularProperty> properties = new ArrayList<>();
-        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/index_fingerprints.txt")))) {
+        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/index_fingerprints.txt")))) {
             String line = null;
             while ((line = r.readLine()) != null) {
                 final String[] parts = line.split("\t#");
@@ -264,13 +273,13 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         }
 
         // MINED FINGERPRINTS
-        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/biosmarts.txt")))) {
+        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/biosmarts.txt")))) {
             String line = null;
             while ((line = r.readLine()) != null) {
                 properties.add(new SubstructureProperty(line));
             }
         }
-        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/ringsystems.txt")))) {
+        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/ringsystems.txt")))) {
             String line = null;
             while ((line = r.readLine()) != null) {
                 properties.add(new SubstructureProperty(line));
@@ -278,7 +287,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         }
 
         // SHORTEST PATH FINGERPRINTS
-        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/shortest_paths.txt")))) {
+        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/shortest_paths.txt")))) {
             String line = null;
             while ((line = r.readLine()) != null) {
                 properties.add(new ShortestPathProperty(line));
@@ -286,7 +295,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         }
 
         // CLASSYFIRE PROPERTIES
-        try (final BufferedReader r = new BufferedReader(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/classyfire_smarts.txt")))) {
+        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/classyfire_smarts.txt")))) {
             String line = null;
             while ((line = r.readLine()) != null) {
                 String[] pts = line.split("\t#");
