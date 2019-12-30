@@ -18,4 +18,12 @@ public abstract class FingerprintVersion {
     public boolean hasProperty(int absoluteIndex) {
         return absoluteIndex < size();
     }
+
+    /**
+     * returns the index of the molecular property either with the given absolute index or -(insertionPoint - 1) where
+     * insertion point is same as in Arrays.binarysearch.
+     */
+    protected int getClosestRelativeIndexTo(int absoluteIndex) {
+        return absoluteIndex;
+    }
 }

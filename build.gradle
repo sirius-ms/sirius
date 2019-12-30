@@ -1,8 +1,9 @@
 import java.nio.file.Paths
 
 plugins {
-    id "com.jfrog.artifactory" version "4.3.0"
+    id "com.jfrog.artifactory" version "4.9.3"
 }
+
 
 //Global Properties
 ext {
@@ -17,7 +18,7 @@ ext {
     System.properties.putAll(props)
     logger.lifecycle('reading build properties file...')
     props = new Properties()
-    File propertiesFileIn = new File("${projectDir}/src/main/resources/sirius.build.properties")
+    File propertiesFileIn = new File("${projectDir}/chemistry_base/src/main/resources/sirius.build.properties")
     propertiesFileIn.withReader("UTF8", {
         props.load(it)
     })
@@ -26,7 +27,7 @@ ext {
 
     siriusVersion = System.getProperty('de.unijena.bioinf.sirius.version')
     //version for external libraries
-    jjobs_version = '0.9.6'
+    jjobs_version = '0.9.11-SNAPSHOT'
     slf4j_version = '1.7.25'
     gson_version = '2.6.2'
     math3_version = '3.6.1'
@@ -35,6 +36,7 @@ ext {
     cplex_version = System.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
     graphUtils_version = '1.1'
     cdk_version = "2.1.1"
+    jetbrains_version = "17.0.0"
 
     jewelcli_version = '0.8.9'
     //todo wenn wir die inhouse clis auch ind das frontend moven haben wir keinerlei distribution zeug mehr in sirius
@@ -47,8 +49,8 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    sourceCompatibility = 11
+    targetCompatibility = 11
 
 
     version = project.siriusVersion
@@ -61,17 +63,29 @@ allprojects {
             url "https://bio.informatik.uni-jena.de/repository/libs-oss"
         }
         maven {
-            url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
-            //url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
+            url "https://www.xypron.de/repository" //glpk repo
         }
         maven {
-            url "https://www.xypron.de/repository" //glpk repo
+            url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/" //mzml parser
+        }
+        maven {
+            url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
         }
     }
 
     dependencies {
-        compile 'net.sf.trove4j:trove4j:3.0.3'
-        compile 'com.google.guava:guava:18.0'
+        compile "org.jetbrains:annotations:$jetbrains_version"
+        compile 'net.sf.trove4j:core:3.1.0' //switched from 'net.sf.trove4j:trove4j:3.0.3' which seems to be buggy and no longer supported
+        compile group: 'com.google.guava', name: 'guava', version: '28.1-jre'
+        compile 'org.apache.commons:commons-lang3:3.8.1'
+        compile 'commons-io:commons-io:2.6'
+        compile group: 'de.unijena.bioinf', name: 'jjobs-core', version:"$jjobs_version"
+        compile group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
+
+
+
+        testCompile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+        testCompile group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
 
@@ -86,7 +100,6 @@ allprojects {
         classifier = 'javadoc'
         from javadoc.destinationDir
     }
-
 
     publishing {
         publications {
@@ -105,6 +118,24 @@ allprojects {
             }
         }
     }
+
+    sourceSets {
+        main {
+            resources {
+                srcDirs "src/main/resources", "configs"
+            }
+        }
+    }
+
+    task cleanConfig {
+        group = 'build'
+        doLast {
+            def f = file("${projectDir}/configs")
+            if (f.exists())
+                f.deleteDir()
+        }
+    }
+    clean.dependsOn cleanConfig
 }
 
 def javaProjects() {

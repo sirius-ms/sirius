@@ -3,6 +3,7 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import org.junit.Test;
 
 import java.util.Random;
@@ -34,9 +35,9 @@ public class SpectrumsTest {
     @Test
     public void testSort() {
         SimpleMutableSpectrum spectrum = new SimpleMutableSpectrum();
-        spectrum.addPeak(new Peak(5,3));
-        spectrum.addPeak(new Peak(3,2));
-        spectrum.addPeak(new Peak(1,4));
+        spectrum.addPeak(new SimplePeak(5,3));
+        spectrum.addPeak(new SimplePeak(3,2));
+        spectrum.addPeak(new SimplePeak(1,4));
         Spectrums.sortSpectrumByMass(spectrum);
         Peak last = null;
         for (Peak p : spectrum) {
@@ -93,9 +94,9 @@ public class SpectrumsTest {
     @Test
     public void testSearch() {
         SimpleMutableSpectrum spectrum = new SimpleMutableSpectrum();
-        spectrum.addPeak(new Peak(5,3));
-        spectrum.addPeak(new Peak(3,2));
-        spectrum.addPeak(new Peak(1,4));
+        spectrum.addPeak(new SimplePeak(5,3));
+        spectrum.addPeak(new SimplePeak(3,2));
+        spectrum.addPeak(new SimplePeak(1,4));
         Spectrums.sortSpectrumByMass(spectrum);
         assertTrue(Spectrums.binarySearch(spectrum, 18)<0);
         assertEquals(2, Spectrums.binarySearch(spectrum, 5));
@@ -114,23 +115,23 @@ public class SpectrumsTest {
     public void testFilterIsotpes(){
         SimpleMutableSpectrum spectrum = new SimpleMutableSpectrum();
         //C36H37N5
-        spectrum.addPeak(new Peak(540.3121726360905, 0.6640867687951271));
-        spectrum.addPeak(new Peak(541.3152753047328, 0.2737396761795133));
-        spectrum.addPeak(new Peak(542.318370128813, 0.05499724422532549));
-        spectrum.addPeak(new Peak(543.3214567823122, 0.007176310800034031));
+        spectrum.addPeak(new SimplePeak(540.3121726360905, 0.6640867687951271));
+        spectrum.addPeak(new SimplePeak(541.3152753047328, 0.2737396761795133));
+        spectrum.addPeak(new SimplePeak(542.318370128813, 0.05499724422532549));
+        spectrum.addPeak(new SimplePeak(543.3214567823122, 0.007176310800034031));
 
 
         //C27H33N13
-        spectrum.addPeak(new Peak(540.3054645080905, 0.7104014905351598));
-        spectrum.addPeak(new Peak(541.307970285248, 0.2443438820957737));
-        spectrum.addPeak(new Peak(542.3104462599396, 0.0408362176639628));
-        spectrum.addPeak(new Peak(543.3128911877274, 0.004418409705103798));
+        spectrum.addPeak(new SimplePeak(540.3054645080905, 0.7104014905351598));
+        spectrum.addPeak(new SimplePeak(541.307970285248, 0.2443438820957737));
+        spectrum.addPeak(new SimplePeak(542.3104462599396, 0.0408362176639628));
+        spectrum.addPeak(new SimplePeak(543.3128911877274, 0.004418409705103798));
 
         //C36H38N5
-        spectrum.addPeak(new Peak(541.3199976680905, 0.6640109468088424));
-        spectrum.addPeak(new Peak(542.323101222116, 0.27378479204311157));
-        spectrum.addPeak(new Peak(543.3261969812916, 0.05502244501368937));
-        spectrum.addPeak(new Peak(544.3292846236769, 0.007181816134356579));
+        spectrum.addPeak(new SimplePeak(541.3199976680905, 0.6640109468088424));
+        spectrum.addPeak(new SimplePeak(542.323101222116, 0.27378479204311157));
+        spectrum.addPeak(new SimplePeak(543.3261969812916, 0.05502244501368937));
+        spectrum.addPeak(new SimplePeak(544.3292846236769, 0.007181816134356579));
 
         ChemicalAlphabet alphabet = new ChemicalAlphabet();
         Deviation deviation = new Deviation(10);
@@ -146,9 +147,9 @@ public class SpectrumsTest {
         Spectrums.filterIsotpePeaks(spectrum, deviation, 0.2, 0.55, 4, alphabet);
 
         assertEquals(3, spectrum.size());
-        assertEquals(new Peak(540.3054645080905, 0.7104014905351598), spectrum.getPeakAt(0));
-        assertEquals(new Peak(540.3121726360905, 0.6640867687951271), spectrum.getPeakAt(1));
-        assertEquals(new Peak(541.3199976680905, 0.6640109468088424), spectrum.getPeakAt(2));
+        assertEquals(new SimplePeak(540.3054645080905, 0.7104014905351598), spectrum.getPeakAt(0));
+        assertEquals(new SimplePeak(540.3121726360905, 0.6640867687951271), spectrum.getPeakAt(1));
+        assertEquals(new SimplePeak(541.3199976680905, 0.6640109468088424), spectrum.getPeakAt(2));
 
     }
 

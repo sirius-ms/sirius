@@ -12,7 +12,14 @@ subprojects {
         compile group: 'org.gnu.glpk', name: 'glpk-java', version: "$glpk_version"
         compile group: 'gurobi', name: 'gurobi-linux64', version: "$gurobi_version"
         compile group: 'cplex', name: 'cplex', version: "$cplex_version"
+        compile ('net.java.dev.jna:jna:5.4.0')
 //test
         testCompile project(':io')
+    }
+}
+
+allprojects {
+    dependencies {
+        annotationProcessor project(':default_properties:processor')
     }
 }

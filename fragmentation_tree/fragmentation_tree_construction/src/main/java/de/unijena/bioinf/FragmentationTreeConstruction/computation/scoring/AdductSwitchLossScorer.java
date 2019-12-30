@@ -1,38 +1,37 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
-
-import java.util.List;
+import de.unijena.bioinf.sirius.ProcessedInput;
 
 //todo do we also adjust this for M+K ?
 public class AdductSwitchLossScorer implements LossScorer<Object> {
 
-    private final Ionization naIon = PrecursorIonType.getPrecursorIonType("[M+Na]+").getIonization();
-    private final Ionization hIon = PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization();
-
     private static final double DEFAULT_NA_H_SWITCH_SCORE = -3.6109179126442243;
-//    private static final double DEFAULT_NA_H_SWITCH_CHILD_PENALTY_SCORE = -3.6109179126442243;
-
-//    private static final double DEFAULT_NA_H_SWITCH_SCORE = -3.8066624897703196; //only oxygen+ losses
-
     private double naHSwitchScore;
+    private LossSizeScorer lossSizeScorer;
 
-    public AdductSwitchLossScorer() {
-        this(DEFAULT_NA_H_SWITCH_SCORE);
+    public AdductSwitchLossScorer(LossSizeScorer lossSizeScorer) {
+        this(DEFAULT_NA_H_SWITCH_SCORE, lossSizeScorer);
     }
 
-    public AdductSwitchLossScorer(double naHSwitchScore) {
+    public AdductSwitchLossScorer(double naHSwitchScore, LossSizeScorer lossSizeScorer) {
         this.naHSwitchScore = naHSwitchScore;
+        this.lossSizeScorer = lossSizeScorer;
+        PeriodicTable T = PeriodicTable.getInstance();
     }
 
     @Override
-    public Object prepare(ProcessedInput input) {
+    public Object prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
         return null;
     }
+
+//    private HashSet<MolecularFormula> allowedLosses = new HashSet<>(Arrays.asList(MolecularFormula.parse("C2H2O"), MolecularFormula.parse("CO"), MolecularFormula.parse("C2H4O2"), MolecularFormula.parse("CO2")));
 
     @Override
     public double score(Loss loss, ProcessedInput input, Object precomputed) {
@@ -40,18 +39,19 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
         final Ionization targetIon = loss.getTarget().getIonization();
 
         if (sourceIon.equals(targetIon)) return 0;
+        {
+            MolecularFormula F = loss.getFormula();
+            if (F.isEmpty()) return Double.NEGATIVE_INFINITY;
 
+            // first: correct loss size error
+            final double wrongLossSize = lossSizeScorer.scoring(input.getMergedPeaks().get(loss.getSource().getPeakId()).getMass() - input.getMergedPeaks().get(loss.getTarget().getPeakId()).getMass());
 
-//        if (sourceIon.equals(naIon) && targetIon.equals(hIon)){
-//            return naHSwitchScore;
-//        }
+            final double correctLossSize = lossSizeScorer.score(F);
 
-//        //changed to only allow in combination with O loss
-        if (sourceIon.equals(naIon) && targetIon.equals(hIon)
-                && loss.getFormula().numberOfOxygens()>0){
-            return naHSwitchScore;
+            final double lossScore = DEFAULT_NA_H_SWITCH_SCORE;
+
+            return lossScore - wrongLossSize + correctLossSize;
         }
-        return Double.NEGATIVE_INFINITY;
     }
 
     @Override

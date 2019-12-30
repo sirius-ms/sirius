@@ -5,9 +5,9 @@ import de.unijena.bioinf.GibbsSampling.model.Candidate;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
 import de.unijena.bioinf.GibbsSampling.model.Reaction;
 import de.unijena.bioinf.GibbsSampling.model.ReactionStepSizeScorer;
+
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -90,7 +90,7 @@ public class ReactionScorer implements EdgeScorer {
     public void clean() {
     }
 
-    public double[] normalization(Candidate[][] candidates) {
+    public double[] normalization(Candidate[][] candidates, double minimum_number_matched_peaks_losses) {
         return null;
     }
 }

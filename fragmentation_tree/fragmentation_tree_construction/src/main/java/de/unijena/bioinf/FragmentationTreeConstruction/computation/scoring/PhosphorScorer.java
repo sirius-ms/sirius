@@ -23,17 +23,22 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 
 public class PhosphorScorer implements DecompositionScorer<Element[]>, LossScorer<Element[]> {
     @Override
-    public Element[] prepare(ProcessedInput input) {
+    public Element[] prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
         return new Element[]{
                 PeriodicTable.getInstance().getByName("P"),
                 PeriodicTable.getInstance().getByName("S")
         };
+    }
+    @Override
+    public Element[] prepare(ProcessedInput input) {
+        return prepare(input,null);
     }
 
     @Override

@@ -17,6 +17,7 @@
  */
 package fragtreealigner.util;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import fragtreealigner.algorithm.ScoringFunctionNeutralLosses;
 import fragtreealigner.domainobjects.graphs.*;
 
@@ -80,8 +81,8 @@ public class ParseToAlignmentInstance {
                     FragmentationTree  fTree1 =null;
                     FragmentationTree fTree2 =null;
                     try {
-                        fTree1 = FragmentationTree.readFromDot(new BufferedReader(new FileReader(filename1)), session);
-                        fTree2 = FragmentationTree.readFromDot(new BufferedReader(new FileReader(filename2)), session);
+                        fTree1 = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader(filename1)), session);
+                        fTree2 = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader(filename2)), session);
                     } catch (IOException e) {
                         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                     }
@@ -252,8 +253,8 @@ public class ParseToAlignmentInstance {
 
 //
 //                try {
-//                    BufferedReader f1 = new BufferedReader(new FileReader(files[i]));
-//                    BufferedReader f2 = new BufferedReader(new FileReader(files[j]));
+//                    BufferedReader f1 = FileUtils.ensureBuffering(new FileReader(files[i]));
+//                    BufferedReader f2 = FileUtils.ensureBuffering(new FileReader(files[j]));
 //
 //
 //                    //read tree 1

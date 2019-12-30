@@ -17,6 +17,7 @@
  */
 package fragtreealigner.util;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import fragtreealigner.algorithm.ScoringFunctionNeutralLosses;
 import fragtreealigner.algorithm.ScoringFunctionSimple;
 import fragtreealigner.algorithm.TreeAligner;
@@ -34,8 +35,8 @@ public class Macros implements Serializable {
 		AlignmentTree aTree1 = new AlignmentTree();
 		AlignmentTree aTree2 = new AlignmentTree();
 		try {
-			aTree1.readFromList(new BufferedReader(new FileReader(filename1)));
-			aTree2.readFromList(new BufferedReader(new FileReader(filename2)));
+			aTree1.readFromList(FileUtils.ensureBuffering(new FileReader(filename1)));
+			aTree2.readFromList(FileUtils.ensureBuffering(new FileReader(filename2)));
 		} catch (Exception e) {
 			System.err.println("The following error occured while reading the files:\n" + e.getMessage());
 		}
@@ -48,10 +49,10 @@ public class Macros implements Serializable {
 		ScoringFunctionNeutralLosses sFuncNL = new ScoringFunctionNeutralLosses(session);
 		FragmentationTree fTree1 = null, fTree2 = null;	
 		try {
-			if (filename1.endsWith(".dot")) fTree1 = FragmentationTree.readFromDot(new BufferedReader(new FileReader(filename1)), session);
-			else if (filename1.endsWith(".cml")) fTree1 = FragmentationTree.readFromCml(new BufferedReader(new FileReader(filename1)), session);
-			if (filename2.endsWith(".dot")) fTree2 = FragmentationTree.readFromDot(new BufferedReader(new FileReader(filename2)), session);
-			else if (filename2.endsWith(".cml")) fTree2 = FragmentationTree.readFromCml(new BufferedReader(new FileReader(filename2)), session);
+			if (filename1.endsWith(".dot")) fTree1 = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader(filename1)), session);
+			else if (filename1.endsWith(".cml")) fTree1 = FragmentationTree.readFromCml(FileUtils.ensureBuffering(new FileReader(filename1)), session);
+			if (filename2.endsWith(".dot")) fTree2 = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader(filename2)), session);
+			else if (filename2.endsWith(".cml")) fTree2 = FragmentationTree.readFromCml(FileUtils.ensureBuffering(new FileReader(filename2)), session);
 		} catch (Exception e) {
 			System.err.println("The following error occured while reading the files:\n" + e.getMessage());
 		}
@@ -73,7 +74,7 @@ public class Macros implements Serializable {
 		String line;
 
 		try {
-			BufferedReader br = new BufferedReader(new FileReader(filename));			
+			BufferedReader br = FileUtils.ensureBuffering(new FileReader(filename));
 			while((line = br.readLine()) != null) {
 				strBuffer.append(line + "\n");
 			}

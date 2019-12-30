@@ -5,11 +5,11 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
  * 28.09.16.
  */
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.IlpFactory;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -24,20 +24,22 @@ public final class TreeBuilderFactory {
     public final static String GUROBI_VERSION;
     public final static String GLPK_VERSION;
     public final static String CPLEX_VERSION;
+    public final static String CPL_VERSION;
 
     public final static String ILP_VERSIONS_STRING;
 
 
     static {
-        GLPK_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.glpk_version");
-        GUROBI_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.gurobi_version");
-        CPLEX_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.cplex_version");
-        ILP_VERSIONS_STRING = "Sirius was compiled with the following ILP solvers: GLPK-v" + GLPK_VERSION + " (included), Gurobi-v" + GUROBI_VERSION + ", CPLEX-v" + CPLEX_VERSION;
+        GLPK_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.glpk_version");
+        GUROBI_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.gurobi_version");
+        CPLEX_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.cplex_version");
+        CPL_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.cpl_version");
+        ILP_VERSIONS_STRING = "Sirius was compiled with the following ILP solvers: GLPK-v" + GLPK_VERSION + " (included), Gurobi-v" + GUROBI_VERSION + ", CPLEX-v" + CPLEX_VERSION + ", COIN-OR-v" + CPL_VERSION;
     }
 
     private static TreeBuilderFactory INSTANCE = null;
 
-    public enum DefaultBuilder {GUROBI, CPLEX, GLPK}
+    public enum DefaultBuilder {GUROBI, CPLEX, GLPK, CLP}
 
     private static DefaultBuilder[] builderPriorities = null;
 
@@ -89,7 +91,7 @@ public final class TreeBuilderFactory {
 
     public static DefaultBuilder[] getBuilderPriorities() {
         if (builderPriorities != null) return builderPriorities.clone();
-        DefaultBuilder[] b = parseBuilderPriority(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.treebuilder"));
+        DefaultBuilder[] b = parseBuilderPriority(PropertyManager.getProperty("de.unijena.bioinf.sirius.treebuilder.solvers"));
         if (b!=null && b.length>0) return b;
         return DefaultBuilder.values();
     }
@@ -111,7 +113,8 @@ public final class TreeBuilderFactory {
         try {
             return (IlpFactory<T>) builderClass.getDeclaredField("Factory").get(null);
         } catch (Throwable e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING, e);
+            LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING);
+            LoggerFactory.getLogger(this.getClass()).debug("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING, e);
             return null;
         }
     }
@@ -132,6 +135,9 @@ public final class TreeBuilderFactory {
                 break;
             case CPLEX:
                 factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver");
+                break;
+            case CLP:
+                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CLPSolver");
                 break;
             default:
                 LoggerFactory.getLogger(this.getClass()).warn("TreeBuilder " + builder.toString() + " is Unknown, supported are: " + Arrays.toString(DefaultBuilder.values()), new IllegalArgumentException("Unknown BuilderType!"));

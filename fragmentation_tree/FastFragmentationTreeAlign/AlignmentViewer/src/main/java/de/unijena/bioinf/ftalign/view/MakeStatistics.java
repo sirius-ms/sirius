@@ -112,7 +112,7 @@ public class MakeStatistics {
     private void align(Pair pair) {
         final DPSparseTreeAlign<Fragment> aligner = new DPSparseTreeAlign<Fragment>(new StandardScoring(true), true, pair.getLeft().getTree().getRoot(),
                 pair.getRight().getTree().getRoot(),
-                FTree.treeAdapter());
+                FTree.treeAdapterStatic());
         final double value = aligner.compute();
         aligner.backtrace(statistics);
 

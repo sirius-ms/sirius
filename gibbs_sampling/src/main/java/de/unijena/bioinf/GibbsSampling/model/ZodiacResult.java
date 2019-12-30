@@ -1,7 +1,5 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-
 public class ZodiacResult<C extends Candidate<?>> {
     private String[] ids;
     private Graph<C> graph;

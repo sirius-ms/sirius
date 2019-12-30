@@ -638,7 +638,7 @@ public class SupportVectorMolecularFormulaScorer implements MolecularFormulaScor
 
     public static boolean inWhiteset(MolecularFormula f) {
         if (WHITESET.isEmpty()) {
-            for (String s : whiteset) WHITESET.add(MolecularFormula.parse(s));
+            for (String s : whiteset) WHITESET.add(MolecularFormula.parseOrThrow(s));
         }
         return WHITESET.contains(f);
     }

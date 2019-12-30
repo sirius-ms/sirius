@@ -20,6 +20,8 @@ package de.unijena.bioinf.ChemistryBase.chem;
 import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ElementMap;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -38,9 +40,9 @@ import java.util.*;
  */
 public class ChemicalAlphabet implements Iterable<Element> {
 
-    private final TableSelection selection;
-    private final Element[] allowedElements;
-    private final int[] orderOfElements;
+    @NotNull private final TableSelection selection;
+    @NotNull private final Element[] allowedElements;
+    @NotNull private final int[] orderOfElements;
     private final int maxLen;
 
     /**
@@ -50,11 +52,20 @@ public class ChemicalAlphabet implements Iterable<Element> {
         this(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S"));
     }
 
-    public ChemicalAlphabet(ChemicalAlphabet alpha) {
+    public ChemicalAlphabet(@NotNull ChemicalAlphabet alpha) {
         this.allowedElements = alpha.allowedElements;
         this.selection = alpha.selection;
         this.orderOfElements = alpha.orderOfElements;
         this.maxLen = alpha.maxLen;
+    }
+
+    public static ChemicalAlphabet fromString(String value) throws UnknownElementException {
+        if (value.indexOf(',')>0) {
+            final PeriodicTable T = PeriodicTable.getInstance();
+            return new ChemicalAlphabet(Arrays.stream(value.split(",")).map(s->T.getByName(s)).toArray(Element[]::new));
+        } else {
+            return new ChemicalAlphabet(MolecularFormula.parse(value).elementArray());
+        }
     }
 
     /**
@@ -85,6 +96,18 @@ public class ChemicalAlphabet implements Iterable<Element> {
     */
     public ChemicalAlphabet(Element... elements) {
         this(PeriodicTable.getInstance().getSelectionFor(elements), elements);
+    }
+
+    private static final ChemicalAlphabet EMPTY = new ChemicalAlphabet(new Element[0]);
+    public static ChemicalAlphabet empty() {
+        return EMPTY;
+    }
+
+
+    public ChemicalAlphabet extend(Element... elements) {
+        final HashSet<Element> elems = new HashSet<Element>(Arrays.asList(elements));
+        for (Element e : this) elems.add(e);
+        return new ChemicalAlphabet(elems.toArray(elements));
     }
 
     public static ChemicalAlphabet getExtendedAlphabet() {
@@ -181,6 +204,27 @@ public class ChemicalAlphabet implements Iterable<Element> {
         int result = selection.hashCode();
         result = 31 * result + Arrays.hashCode(allowedElements);
         return result;
+    }
+
+    public Set<Element> toSet() {
+        return new AbstractSet<Element>(){
+
+            @Override
+            public boolean contains(Object o) {
+                if (!(o instanceof Element)) return false;
+                return ChemicalAlphabet.this.indexOf((Element)o)>=0;
+            }
+
+            @Override
+            public Iterator<Element> iterator() {
+                return ChemicalAlphabet.this.iterator();
+            }
+
+            @Override
+            public int size() {
+                return ChemicalAlphabet.this.size();
+            }
+        };
     }
 
 

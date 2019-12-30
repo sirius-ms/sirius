@@ -1,0 +1,5 @@
+dependencies {
+    compile project(":fragmentation_tree:FastFragmentationTreeAlign:FastTreeAlign")
+    compile "org.xml-cml:cmlxom:3.1"
+    compile "att.grappa:grappa:1.2"
+}

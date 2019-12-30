@@ -17,11 +17,9 @@
  */
 package de.unijena.bioinf.ChemistryBase.chem;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
-import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
-import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.*;
@@ -29,8 +27,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * FormulaConstraints contains all constraints which reduce the size of all possible decompositions of a mass.
- * It contains of:
+ * FormulaConstraints contain all constraints which reduce the size of all possible decompositions of a mass.
+ * It consists of:
  * - allowed elements
  * - boundaries for elements
  * - constraints for formulas
@@ -41,8 +39,10 @@ import java.util.regex.Pattern;
  *
  * But in application, you probably want the RDBE filter always active. If you just want to change its limit, set
  * it explicitly by calling new FormulaConstraints(alphabet, Arrays.asList(new ValenceFilter(-4)));
+ *
+ * @author kaidu
  */
-public class FormulaConstraints implements ImmutableParameterized<FormulaConstraints> {
+public class FormulaConstraints implements Ms2ExperimentAnnotation {
 
     private final ChemicalAlphabet chemicalAlphabet;
     private final int[] upperbounds, lowerbounds;
@@ -50,7 +50,12 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
 
     private final static Pattern INTERVAL = Pattern.compile("\\[(?:(\\d*)\\s*-\\s*)?(\\d*)?\\]");
 
+    public static FormulaConstraints fromString(String alphabet) {
+        return new FormulaConstraints(alphabet);
+    }
+
     public FormulaConstraints(String string) {
+        if (string.indexOf(',')>0) string = string.replace(",","");
         final PeriodicTable PT = PeriodicTable.getInstance();
         final Pattern pattern = PT.getPattern();
         final Matcher matcher = pattern.matcher(string);
@@ -114,6 +119,7 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         this.filters = new ArrayList<FormulaFilter>();
         addFilter(new ValenceFilter());
     }
+
 
     /**
      * A factory method which provides a nice way to instantiate formula constraints, but which is not type-safe. So
@@ -213,11 +219,8 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
 
     public static FormulaConstraints allSubsetsOf(MolecularFormula f) {
         final FormulaConstraints c = new FormulaConstraints(new ChemicalAlphabet(f.elementArray()));
-        f.visit(new FormulaVisitor<Object>() {
-            @Override
-            public Object visit(Element element, int amount) {
-                c.setUpperbound(element, amount); return null;
-            }
+        f.visit((element, amount) -> {
+            c.setUpperbound(element, amount); return null;
         });
         return c;
     }
@@ -248,6 +251,11 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
 
     public FormulaConstraints(ChemicalAlphabet alphabet) {
         this(alphabet, null);
+    }
+
+    private static final FormulaConstraints EMPTY = new FormulaConstraints(ChemicalAlphabet.empty());
+    public static FormulaConstraints empty() {
+        return EMPTY;
     }
 
     public FormulaConstraints(ChemicalAlphabet alphabet, List<FormulaFilter> filters) {
@@ -445,41 +453,41 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         return new FormulaConstraints(this);
     }
 
-    @Override
-    public <G, D, L> FormulaConstraints readFromParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        final ChemicalAlphabet alphabet = new ChemicalAlphabet(MolecularFormula.parse(document.getStringFromDictionary(dictionary, "alphabet")).elementArray());
-        final FormulaConstraints constraints = new FormulaConstraints(alphabet);
-        final Iterator<Map.Entry<String, G>> upperbounds = document.iteratorOfDictionary(document.getDictionaryFromDictionary(dictionary, "upperbounds"));
-        final PeriodicTable PT = PeriodicTable.getInstance();
-        final int[] ub = constraints.getUpperbounds();
-        while (upperbounds.hasNext()) {
-            final Map.Entry<String, G> entry = upperbounds.next();
-            final Element e = PT.getByName(entry.getKey());
-            ub[alphabet.getElements().indexOf(e)] = (int)document.getInt(entry.getValue());
-        }
-        final Iterator<G> filters = document.iteratorOfList(document.getListFromDictionary(dictionary, "filters"));
-        while (filters.hasNext()) {
-            addFilter((FormulaFilter)helper.unwrap(document, filters.next()));
-        }
-        return constraints;
-    }
-
-    @Override
-    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        document.addToDictionary(dictionary, "alphabet", chemicalAlphabet.toString());
-        final D upper = document.newDictionary();
-        for (int i=0; i < upperbounds.length; ++i) {
-            if (upperbounds[i] < Integer.MAX_VALUE) {
-                document.addToDictionary(upper, chemicalAlphabet.getElements().get(i).getSymbol(), document.wrap(upperbounds[i]));
-            }
-        }
-        document.addToDictionary(dictionary, "upperbounds", document.wrapDictionary(upper));
-        final L filters = document.newList();
-        for (FormulaFilter filter : getFilters()) {
-            document.addToList(filters, helper.wrap(document, filter));
-        }
-        document.addToDictionary(dictionary, "filters", document.wrapList(filters));
-    }
+//    @Override
+//    public <G, D, L> FormulaConstraints readFromParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+//        final ChemicalAlphabet alphabet = new ChemicalAlphabet(MolecularFormula.parse(document.getStringFromDictionary(dictionary, "alphabet")).elementArray());
+//        final FormulaConstraints constraints = new FormulaConstraints(alphabet);
+//        final Iterator<Map.Entry<String, G>> upperbounds = document.iteratorOfDictionary(document.getDictionaryFromDictionary(dictionary, "upperbounds"));
+//        final PeriodicTable PT = PeriodicTable.getInstance();
+//        final int[] ub = constraints.getUpperbounds();
+//        while (upperbounds.hasNext()) {
+//            final Map.Entry<String, G> entry = upperbounds.next();
+//            final Element e = PT.getByName(entry.getKey());
+//            ub[alphabet.getElements().indexOf(e)] = (int)document.getInt(entry.getValue());
+//        }
+//        final Iterator<G> filters = document.iteratorOfList(document.getListFromDictionary(dictionary, "filters"));
+//        while (filters.hasNext()) {
+//            addFilter((FormulaFilter)helper.unwrap(document, filters.next()));
+//        }
+//        return constraints;
+//    }
+//
+//    @Override
+//    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+//        document.addToDictionary(dictionary, "alphabet", chemicalAlphabet.toString());
+//        final D upper = document.newDictionary();
+//        for (int i=0; i < upperbounds.length; ++i) {
+//            if (upperbounds[i] < Integer.MAX_VALUE) {
+//                document.addToDictionary(upper, chemicalAlphabet.getElements().get(i).getSymbol(), document.wrap(upperbounds[i]));
+//            }
+//        }
+//        document.addToDictionary(dictionary, "upperbounds", document.wrapDictionary(upper));
+//        final L filters = document.newList();
+//        for (FormulaFilter filter : getFilters()) {
+//            document.addToList(filters, helper.wrap(document, filter));
+//        }
+//        document.addToDictionary(dictionary, "filters", document.wrapList(filters));
+//    }
 
     public String toString() {
         StringBuilder buf = new StringBuilder();

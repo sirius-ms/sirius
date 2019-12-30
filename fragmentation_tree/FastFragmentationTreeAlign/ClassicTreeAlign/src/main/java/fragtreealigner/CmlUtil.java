@@ -17,6 +17,7 @@
  */
 package fragtreealigner;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import fragtreealigner.domainobjects.graphs.FragmentationTree;
 import fragtreealigner.util.Parameters;
 import fragtreealigner.util.Session;
@@ -47,7 +48,7 @@ public class CmlUtil {
 			filename = file.getAbsolutePath();
 			if (!filename.endsWith(".dot")) continue;
 			try {
-				fragTree = FragmentationTree.readFromDot(new BufferedReader(new FileReader(filename)), session);
+				fragTree = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader(filename)), session);
 				if (fragTree == null){
 					System.err.println("Tree empty in file: "+filename);
 				} else {

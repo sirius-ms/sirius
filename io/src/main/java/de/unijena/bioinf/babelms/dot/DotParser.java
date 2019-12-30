@@ -17,6 +17,8 @@
  */
 package de.unijena.bioinf.babelms.dot;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -81,7 +83,7 @@ public class DotParser<NodeType, EdgeType> {
     }
 
     private void parseIt(Reader input) throws IOException {
-        final BufferedReader r = (input instanceof BufferedReader) ? (BufferedReader) input : new BufferedReader(input);
+        final BufferedReader r = FileUtils.ensureBuffering(input);
         source = new StringBuilder();
         while (r.ready()) source.append(r.readLine()).append('\n');
         scanner = TOKENIZE.matcher(source);

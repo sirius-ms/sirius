@@ -18,7 +18,10 @@
 package de.unijena.bioinf.IsotopePatternAnalysis.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 
 public interface IsotopePatternScorer extends Parameterized{
 
@@ -29,7 +32,7 @@ public interface IsotopePatternScorer extends Parameterized{
      * @param theoreticalSpectrum normalized theoretical spectrum
      * @param usedNormalization normalization mode which was applied to the spectra, or null, if both spectra is not normalized
      */
-    void score(double[] scoreUptoKPeaks, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment, MeasurementProfile profile);
+    void score(double[] scoreUptoKPeaks, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment);
 	
 	
 }

@@ -1,7 +1,6 @@
 package de.unijena.bioinf.GibbsSampling.model.distributions;
 
 import de.unijena.bioinf.GibbsSampling.model.GibbsMFCorrectionNetwork;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
 import gnu.trove.list.array.TDoubleArrayList;
 
 public class ParetoDistribution implements ScoreProbabilityDistribution {

@@ -11,6 +11,18 @@ public class IonizedMolecularFormula {
         this.ionization = ionization;
     }
 
+    public MolecularFormula getFormula() {
+        return formula;
+    }
+
+    public Ionization getIonization() {
+        return ionization;
+    }
+
+    public String toString() {
+        return formula + "  " + ionization;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

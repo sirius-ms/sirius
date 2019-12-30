@@ -46,7 +46,7 @@ public class PatternGeneratorTest {
 		// Generator
 		final PatternGenerator generator = new PatternGenerator(new Charge(1), Normalization.Max(100));
 		// test data
-		final MolecularFormula mol = MolecularFormula.parse("C6H12O6");
+		final MolecularFormula mol = MolecularFormula.parseOrThrow("C6H12O6");
 		// test
 		final Spectrum<? extends Peak> spectrum = generator.generatePattern(mol, 6);
 		assertEquals(6, spectrum.size());
@@ -73,7 +73,7 @@ public class PatternGeneratorTest {
         // Generator
         final PatternGenerator generator = new PatternGenerator(new Charge(1), Normalization.Max(100));
         // test data
-        final MolecularFormula mol = MolecularFormula.parse("C27H42FeN9O12");
+        final MolecularFormula mol = MolecularFormula.parseOrThrow("C27H42FeN9O12");
         // test
         final Spectrum<? extends Peak> spectrum = generator.generatePattern(mol, 5);
         assertEquals(5, spectrum.size());
@@ -97,11 +97,11 @@ public class PatternGeneratorTest {
 	
 	@Test
 	public void testChargedPatternGeneration() {
-		final PatternGenerator generator = new PatternGenerator(PeriodicTable.getInstance().ionByName("[M+Na]+").getIonization(), Normalization.Max(100));
+		final PatternGenerator generator = new PatternGenerator(PeriodicTable.getInstance().ionByNameOrThrow("[M+Na]+").getIonization(), Normalization.Max(100));
 		final PatternGenerator generatorRaw = 
 				new PatternGenerator(new Charge(1), Normalization.Max(100));
-		final MolecularFormula glucose = MolecularFormula.parse("C6H12O6");
-		final MolecularFormula glucoseIonized = MolecularFormula.parse("C6H12O6Na");
+		final MolecularFormula glucose = MolecularFormula.parseOrThrow("C6H12O6");
+		final MolecularFormula glucoseIonized = MolecularFormula.parseOrThrow("C6H12O6Na");
 		final Spectrum<? extends Peak> spectrum = generator.generatePattern(glucose, 5);
 		final Spectrum<? extends Peak> spectrum2 = generatorRaw.generatePattern(glucoseIonized, 5);
 		assertTrue(Spectrums.haveEqualPeaks(spectrum, spectrum2));

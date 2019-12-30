@@ -1,5 +1,7 @@
 package net.iharder;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+
 import java.awt.datatransfer.DataFlavor;
 import java.io.*;
 
@@ -323,7 +325,7 @@ public class FileDrop {
 
                                     Reader reader = flavors[zz].getReaderForText(tr);
 
-                                    BufferedReader br = new BufferedReader(reader);
+                                    BufferedReader br = FileUtils.ensureBuffering(reader);
 
                                     if (listener != null)
                                         listener.filesDropped(createFileArray(br, out));

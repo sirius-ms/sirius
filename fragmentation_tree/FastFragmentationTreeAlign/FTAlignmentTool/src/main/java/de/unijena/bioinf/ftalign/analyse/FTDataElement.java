@@ -18,11 +18,15 @@
 package de.unijena.bioinf.ftalign.analyse;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.dot.FTDotReader;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -96,7 +100,7 @@ public class FTDataElement {
     private static FTree parseTree(URL source) throws IOException {
         BufferedReader reader = null;
         try {
-            reader = new BufferedReader(new InputStreamReader(new BufferedInputStream(source.openStream())));
+            reader = FileUtils.ensureBuffering(new InputStreamReader(source.openStream()));
             return new GenericParser<FTree>(source.getPath().endsWith(".json") ? new FTJsonReader() : new FTDotReader()).parse(reader);
         } catch (Throwable e) {
             final IOException newExc = new IOException("Error while parsing '" + source + "' :\n" + e.toString());

@@ -1,7 +1,6 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.GibbsSampling.model.EdgeFilter;
-import de.unijena.bioinf.GibbsSampling.model.Graph;
+import de.unijena.bioinf.jjobs.MasterJJob;
 
 public class NoEdgeFilter extends AbstractEdgeFilter {
     public NoEdgeFilter() {
@@ -22,7 +21,7 @@ public class NoEdgeFilter extends AbstractEdgeFilter {
 
     }
 
-    public int[][] postprocessCompleteGraph(Graph graph) {
+    public int[][] postprocessCompleteGraph(Graph graph, MasterJJob masterJJob) {
         return this.makeWeightsSymmetricAndCreateConnectionsArray(graph);
     }
 

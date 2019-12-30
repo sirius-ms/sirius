@@ -5,16 +5,102 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TObjectProcedure;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
-import java.util.zip.InflaterInputStream;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.zip.*;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class FileUtils {
+
+    /**
+     * @param folder
+     * @param zipFilePath
+     * @return new Created zip Files
+     * @throws IOException if zip file compression fails
+     */
+    public static Path zipDir(final Path folder, final Path zipFilePath) throws IOException {
+        try (
+                FileOutputStream fos = new FileOutputStream(zipFilePath.toFile());
+                ZipOutputStream zos = new ZipOutputStream(fos)
+        ) {
+            Files.walkFileTree(folder, new SimpleFileVisitor<>() {
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    zos.putNextEntry(new ZipEntry(folder.relativize(file).toString()));
+                    Files.copy(file, zos);
+                    zos.closeEntry();
+                    return FileVisitResult.CONTINUE;
+                }
+
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    zos.putNextEntry(new ZipEntry(folder.relativize(dir).toString() + "/"));
+                    zos.closeEntry();
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+            return zipFilePath;
+        }
+    }
+
+    /**
+     *
+     * @param zipFile
+     * @param target
+     * @return Target directory with unzipped data
+     * @throws IOException if extraction fails
+     */
+    public static Path unZipDir(final Path zipFile, final Path target) throws IOException {
+        try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(zipFile))) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                final Path toPath = target.resolve(entry.getName());
+                if (entry.isDirectory()) {
+                    Files.createDirectory(toPath);
+                } else {
+                    Files.copy(zipInputStream, toPath);
+                }
+            }
+        }
+        return target;
+    }
+
+    /**
+     * Copies a File Tree recursively to another location.
+     * Src and dest might be different Filesystems (e.g. mounted ZipFile)
+     *
+     * Note: The target directory must already exist.
+     *
+     * @param src Source location
+     * @param dest Target location
+     * @throws IOException if I/O Error occurs
+     */
+    public static void copyFolder(Path src, Path dest) throws IOException {
+        if (Files.notExists(dest))
+            throw new IllegalArgumentException("Root destination dir/file must exist!");
+
+        Files.walk(src).forEach(source -> {
+            String relative = src.relativize(source).toString();
+            final Path target = dest.resolve(relative);
+            if (!target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
+                copy(source, target);;
+        });
+    }
+
+    private static void copy(Path source, Path dest) {
+        try {
+            Files.copy(source, dest, REPLACE_EXISTING);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
 
     public static <T> List<T> mapLines(File file, Function<String, T> f) throws IOException {
         try (final BufferedReader br = getReader(file)) {
@@ -44,7 +130,7 @@ public class FileUtils {
         String line;
         final ArrayList<T> list = new ArrayList<>();
         while ((line=reader.readLine())!=null) {
-            list.add(f.apply(line.split(separator)));
+            list.add(f.apply(line.split(separator,-1)));
         }
         return list;
     }
@@ -68,7 +154,7 @@ public class FileUtils {
     public static void eachRow(BufferedReader reader, TObjectProcedure<String[]> proc) throws IOException {
         String line;
         while ((line=reader.readLine())!=null) {
-            if (!proc.execute(line.split("\t")))
+            if (!proc.execute(line.split("\t",-1)))
                 break;
         }
     }
@@ -127,7 +213,7 @@ public class FileUtils {
         ArrayList<String[]> table = new ArrayList<>();
         if (skipHeader) reader.readLine();
         while ((line=reader.readLine())!=null) {
-            table.add(line.split(colSeparator));
+            table.add(line.split(colSeparator,-1));
         }
         return table.toArray(new String[table.size()][]);
     }
@@ -251,11 +337,11 @@ public class FileUtils {
         }
     }
 
-    private static BufferedReader makeBufferedReader(Reader r) {
+    public static BufferedReader ensureBuffering(Reader r) {
         if (r instanceof BufferedReader) return (BufferedReader)r;
         else return new BufferedReader(r, getRecommendetBufferSize());
     }
-    private static InputStream ensureBuffering(InputStream r) {
+    public static InputStream ensureBuffering(InputStream r) {
         if (r instanceof BufferedInputStream || r instanceof GZIPInputStream || r instanceof InflaterInputStream)
             return r;
         else return new BufferedInputStream(r, getRecommendetBufferSize());
@@ -290,7 +376,7 @@ public class FileUtils {
             if (n < line.length()) values.add(Float.parseFloat(line.substring(n,line.length())));
             if (values.size()==0) continue;
             rows.add(values.toArray());
-            values.reset();
+            values.clear();
         }
         return rows.toArray(new float[rows.size()][]);
     }
@@ -344,7 +430,7 @@ public class FileUtils {
             if (n < line.length()) values.add(Double.parseDouble(line.substring(n,line.length())));
             if (values.size()==0) continue;
             rows.add(values.toArray());
-            values.reset();
+            values.clear();
         }
         return rows.toArray(new double[rows.size()][]);
     }
@@ -398,7 +484,7 @@ public class FileUtils {
             if (n < line.length()) values.add(Integer.parseInt(line.substring(n,line.length())));
             if (values.size()==0) continue;
             rows.add(values.toArray());
-            values.reset();
+            values.clear();
         }
         return rows.toArray(new int[rows.size()][]);
     }
@@ -476,11 +562,94 @@ public class FileUtils {
             writer.write('\n');
         }
     }
+
     public static void writeIntVector(Writer writer, int[] vector) throws IOException {
         for (int value : vector) {
             writer.write(String.valueOf(value));
             writer.write('\n');
         }
     }
+
+    public static void writeKeyValues(Writer stream, Map<?, ?> map) throws IOException {
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            stream.write(String.valueOf(entry.getKey()));
+            stream.write('\t');
+            stream.write(String.valueOf(entry.getValue()));
+            stream.write('\n');
+        }
+    }
+
+    public static void writeTable(Writer w, @Nullable String[] header, Iterable<String[]> rows) throws IOException {
+        if (header != null) {
+            w.write(String.join("\t", header));
+            w.write(System.lineSeparator());
+        }
+        for (String[] row : rows) {
+            w.write(String.join("\t", row));
+            w.write(System.lineSeparator());
+        }
+    }
+
+    public static Map<String, String> readKeyValues(Path path) throws IOException {
+        try (final BufferedReader br = Files.newBufferedReader(path)) {
+            return readKeyValues(br);
+        }
+    }
+
+    public static Map<String,String> readKeyValues(File file) throws IOException {
+        try (final BufferedReader br = getReader(file)) {
+            return readKeyValues(br);
+        }
+    }
+
+    public static Map<String,String> readKeyValues(BufferedReader reader) throws IOException {
+        final HashMap<String,String> keyValues = new HashMap<>();
+        String line;
+        while ((line=reader.readLine())!=null) {
+            String[] kv = line.split("\\s+",2);
+            keyValues.put(kv[0],kv[1]);
+        }
+        return keyValues;
+    }
+
+    public static void readTable(BufferedReader br, boolean skipHeader, Consumer<String[]> f) throws IOException {
+        String line;
+        if (skipHeader)
+            br.readLine();
+        while ((line=br.readLine())!=null) {
+            f.accept(line.split("\t",-1));
+        }
+    }
+
+    /**
+     * read the first nlines lines from file. Keep buffersize low.
+     * If less than nlines lines exist in file, fill them with empty strings
+     */
+    public static String[] head(File file, int nlines) throws IOException {
+        String[] lines = new String[nlines];
+        int k=0;
+        try (final BufferedReader br = new BufferedReader(new FileReader(file),40*nlines)) {
+            while (k < nlines) {
+                String l = lines[k++] = br.readLine();
+                if (l==null) {
+                    Arrays.fill(lines,k,lines.length,"");
+                    return lines;
+                }
+            }
+        }
+        return lines;
+    }
+
+
+
+    public static Path newTempFile(@NotNull String directory, @NotNull String prefix, @NotNull String suffix) {
+        return Paths.get(directory, MessageFormat.format("{0}{1}{2}", prefix, UUID.randomUUID(), suffix));
+    }
+
+    public static Path newTempFile(@NotNull String prefix, @NotNull String suffix) {
+        return newTempFile(System.getProperty("java.io.tmpdir"), prefix, suffix);
+    }
+
+
 
 }

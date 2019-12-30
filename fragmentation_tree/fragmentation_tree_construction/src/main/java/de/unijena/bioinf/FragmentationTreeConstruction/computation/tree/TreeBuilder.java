@@ -2,7 +2,8 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.ChemistryBase.ms.ft.IntergraphMapping;
+import de.unijena.bioinf.sirius.ProcessedInput;
 
 public interface TreeBuilder {
 
@@ -80,11 +81,13 @@ public interface TreeBuilder {
         public final boolean isOptimal;
         public final AbortReason error;
         public final FTree tree;
+        public final IntergraphMapping mapping;
 
-        public Result(FTree tree, boolean isOptimal, AbortReason error) {
+        public Result(FTree tree, boolean isOptimal, AbortReason error, IntergraphMapping mapping) {
             this.isOptimal = isOptimal;
             this.error = error;
             this.tree = tree;
+            this.mapping = mapping;
         }
     }
 

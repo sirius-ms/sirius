@@ -1,22 +1,24 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionFix;
-import de.unijena.bioinf.jjobs.*;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.procedure.TDoubleProcedure;
 import gnu.trove.set.hash.TIntHashSet;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 
 public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<C>> implements JobProgressEventListener{
@@ -53,7 +55,10 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
     }
 
     public static <C extends Candidate<?>> GraphBuilder<C> createGraphBuilder(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds, Class<C> cClass){
+        final long t1 = System.currentTimeMillis();
         Graph<C> graph = createGraph(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, fixedCompounds);
+        final long t2 = System.currentTimeMillis();
+        LoggerFactory.getLogger(GraphBuilder.class).debug("Building (part of) the graph took " + ((t2-t1)/1000d) + " seconds.");
         return new GraphBuilder<C>(graph, edgeScorers, edgeFilter, cClass);
     }
 
@@ -155,56 +160,41 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
         if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("minV "+minV);
 
         this.edgeFilter.setThreshold(minV);
-        final Graph final_graph = graph;
         size = graph.getSize();
         step = Math.max(size/20, 1);
         updateProgress(0, size,0, "Computing edges");
-        for(int i = 0; i < size; ++i) {
-            final int final_i = i;
-            final C candidate = graph.getPossibleFormulas1D(i).getCandidate();
-            //todo use worker jobs
-            BasicJJob job = new BasicJJob() {
-                @Override
-                protected Object compute() throws Exception {
-                    TDoubleArrayList scores = new TDoubleArrayList(graph.getSize());
-
-                    for(int j = 0; j < graph.getSize(); ++j) {
-                        if(graph.getPeakIdx(final_i) == graph.getPeakIdx(j)) {
-                            scores.add(0.0D);
-                        } else {
-                            C candidate2 = graph.getPossibleFormulas1D(j).getCandidate();
-                            double score = 0.0D;
-
-                            for(int k = 0; k < edgeScorers.length; ++k) {
-                                EdgeScorer edgeScorer = edgeScorers[k];
-                                score += edgeScorer.score(candidate, candidate2);
-                            }
-
-                            scores.add(score);
-                        }
-                    }
-
-                    edgeFilter.filterEdgesAndSetThreshold(final_graph, final_i, scores.toArray());
-
-                    //progess is always fired if job done
-                    checkForInterruption();
-                    return null;
-                }
-            };
 
 
-            job.addPropertyChangeListener(this);
+        //now using workers to compute edges, for the reason that not so many subjobs have to be created.
+        //But does not seem to improve performance compared to previous version.
+        LOG().debug("computing edges");
+        long start = System.currentTimeMillis();
+
+        List<Integer> allIndices = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            allIndices.add(i);
+        }
+        ConcurrentLinkedQueue<Integer> candidatesQueue = new ConcurrentLinkedQueue<>(allIndices);
+
+        List<BasicJJob> jobs = new ArrayList<>();
+        for (int i = 0; i < super.jobManager.getCPUThreads(); i++) {
+            BasicJJob job = new EdgeCalculationWorker(candidatesQueue, graph);
+            jobs.add(job);
             submitSubJob(job);
         }
+        LOG().info("running "+jobs.size()+" workers to compute edges");
 
-        awaitAllSubJobs();
+        for (BasicJJob job : jobs) {
+            job.awaitResult();
+        }
+        LOG().info("finished computing edges after "+(System.currentTimeMillis()-start));
 
     }
 
 
-    private void setConnections() {
+    private void setConnections() throws ExecutionException {
         long time = System.currentTimeMillis();
-        graph.connections = this.edgeFilter.postprocessCompleteGraph(graph);
+        graph.connections = this.edgeFilter.postprocessCompleteGraph(graph, this);
         HighQualityRandom random = new HighQualityRandom();
 
         if (GibbsMFCorrectionNetwork.DEBUG){
@@ -280,4 +270,46 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
         }
     }
 
+    private class EdgeCalculationWorker extends BasicJJob {
+        private ConcurrentLinkedQueue<Integer> remainingCandidates;
+        private Graph<C> graph;
+
+        private EdgeCalculationWorker(ConcurrentLinkedQueue<Integer> remainingCandidates, Graph<C> graph) {
+            this.remainingCandidates = remainingCandidates;
+            this.graph = graph;
+        }
+        @Override
+        protected Object compute() throws Exception {
+            while (!remainingCandidates.isEmpty()){
+                Integer idx = remainingCandidates.poll();
+                if (idx==null) continue;
+                final C candidate = graph.getPossibleFormulas1D(idx).getCandidate();
+
+                TDoubleArrayList scores = new TDoubleArrayList(graph.getSize());
+
+                for(int j = 0; j < graph.getSize(); ++j) {
+                    if(graph.getPeakIdx(idx) == graph.getPeakIdx(j)) {
+                        scores.add(0.0D);
+                    } else {
+                        C candidate2 = graph.getPossibleFormulas1D(j).getCandidate();
+                        double score = 0.0D;
+
+                        for(int k = 0; k < edgeScorers.length; ++k) {
+                            EdgeScorer edgeScorer = edgeScorers[k];
+                            score += edgeScorer.score(candidate, candidate2);
+                        }
+
+                        scores.add(score);
+                    }
+                }
+
+                edgeFilter.filterEdgesAndSetThreshold(graph, idx, scores.toArray());
+
+                //progess is always fired if job done
+//                checkForInterruption();
+
+            }
+            return null;
+        }
+    }
 }

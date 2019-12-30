@@ -20,41 +20,62 @@ package de.unijena.bioinf.babelms;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.mgf.MgfParser;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
+import de.unijena.bioinf.babelms.mzml.MzMlExperimentParser;
+import de.unijena.bioinf.babelms.mzml.MzXmlExperimentParser;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.HashMap;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MsExperimentParser {
 
-    private final HashMap<String, Class<? extends Parser<Ms2Experiment>>> knownEndings;
+    private static final Map<String, Class<? extends Parser<Ms2Experiment>>> knownEndings = addKnownEndings();
 
-    public MsExperimentParser() {
-        this.knownEndings = new HashMap<String, Class<? extends Parser<Ms2Experiment>>>();
-        addKnownEndings();
+    public GenericParser<Ms2Experiment> getParser(Path file) {
+        return getParser(file.getFileName().toString());
     }
 
-    public GenericParser<Ms2Experiment> getParser(File f) {
-        final String name = f.getName();
-        final int i = name.lastIndexOf('.');
+    public GenericParser<Ms2Experiment> getParser(File file) {
+        return getParser(file.getName());
+    }
+
+    public GenericParser<Ms2Experiment> getParser(String fileName) {
+        final int i = fileName.lastIndexOf('.');
         if (i < 0) return null; // no parser found
-        final String extName = name.substring(i).toLowerCase();
+        final String extName = fileName.substring(i).toLowerCase();
         final Class<? extends Parser<Ms2Experiment>> pc = knownEndings.get(extName);
         if (pc==null) return null;
         try {
-            if (pc.equals(ZippedSpectraParser.class)){
-                return (GenericParser<Ms2Experiment>)pc.newInstance();
-            }
-            return new GenericParser<Ms2Experiment>(pc.newInstance());
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
+            if (pc.equals(ZippedSpectraParser.class))
+                return (GenericParser<Ms2Experiment>) pc.getConstructor().newInstance();
+
+            return new GenericParser<>(pc.getConstructor().newInstance());
+        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void addKnownEndings() {
-        knownEndings.put(".ms", JenaMsParser.class);
-        knownEndings.put(".mgf", MgfParser.class);
-        knownEndings.put(".zip", ZippedSpectraParser.class);
+    public static boolean isSupportedFileName(final @NotNull String fileName) {
+        int index = fileName.lastIndexOf('.');
+        if (index < 0)
+            return false;
+        return isSupportedEnding(fileName.substring(index));
+    }
+
+    public static boolean isSupportedEnding(final @NotNull String fileEnding) {
+        return knownEndings.containsKey(fileEnding.toLowerCase());
+    }
+
+    private static Map<String, Class<? extends Parser<Ms2Experiment>>> addKnownEndings() {
+        final Map<String, Class<? extends Parser<Ms2Experiment>>> endings = new ConcurrentHashMap<>(3);
+        endings.put(".ms", JenaMsParser.class);
+        endings.put(".mgf", MgfParser.class);
+        endings.put(".zip", ZippedSpectraParser.class);
+        endings.put(".mzxml", MzXmlExperimentParser.class);
+        endings.put(".mzml", MzMlExperimentParser.class);
+        return endings;
     }
 }

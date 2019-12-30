@@ -23,13 +23,15 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 import gnu.trove.decorator.TObjectDoubleMapDecorator;
 import gnu.trove.function.TDoubleFunction;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.procedure.TObjectDoubleProcedure;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -78,7 +80,11 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         for (int i=0; i < values.length; i += 2) {
             final String formula = (String)values[i];
             final double score = ((Number)values[i+1]).doubleValue();
-            map.put(MolecularFormula.parse(formula), score);
+            try {
+                map.put(MolecularFormula.parse(formula), score);
+            } catch (UnknownElementException e) {
+                LoggerFactory.getLogger(CommonFragmentsScore.class).warn("Cannot parse Formula. Skipping!", e);
+            }
         }
         return new CommonFragmentsScore(map);
     }
@@ -170,7 +176,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
     }
 
     public Object prepare(ProcessedInput input) {
-        return MolecularFormula.parse("H");
+        return MolecularFormula.parseOrThrow("H");
     }
 
     @Override
@@ -191,7 +197,11 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         final Iterator<Map.Entry<String, G>> iter = document.iteratorOfDictionary(document.getDictionaryFromDictionary(dictionary, "fragments"));
         while (iter.hasNext()) {
             final Map.Entry<String,G> entry = iter.next();
-            commonFragments.put(MolecularFormula.parse(entry.getKey()), document.getDouble(entry.getValue()));
+            try {
+                commonFragments.put(MolecularFormula.parse(entry.getKey()), document.getDouble(entry.getValue()));
+            } catch (UnknownElementException e) {
+                LoggerFactory.getLogger(getClass()).warn("Cannot parse Formula. Skipping!", e);
+            }
         }
         recombinatedFragments = commonFragments;
         normalization = document.getDoubleFromDictionary(dictionary, "normalization");
@@ -275,7 +285,13 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
             double penalty = document.getDoubleFromDictionary(dictionary, "penalty");
             List<MolecularFormula> losses = new ArrayList<MolecularFormula>();
             final Iterator<G> iter = document.iteratorOfList(document.getListFromDictionary(dictionary, "losses"));
-            while (iter.hasNext()) losses.add(MolecularFormula.parse(document.getString(iter.next())));
+            while (iter.hasNext()) {
+                try {
+                    losses.add(MolecularFormula.parse(document.getString(iter.next())));
+                } catch (UnknownElementException e) {
+                    LoggerFactory.getLogger(getClass()).warn("Cannot parse Formula. Skipping!", e);
+                }
+            }
             return new LossCombinator(penalty, losses);
         }
 

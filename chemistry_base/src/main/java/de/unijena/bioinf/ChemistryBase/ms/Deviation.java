@@ -18,14 +18,13 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import com.google.common.collect.Range;
-import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
-import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@HasParameters
-public class Deviation implements Cloneable, Ms2ExperimentAnnotation{
+public class Deviation implements Cloneable, Ms2ExperimentAnnotation {
+    public static final Deviation NULL_DEVIATION = new Deviation(Double.NaN,Double.NaN);
 
     private final double ppm;
     private final double absolute;
@@ -41,7 +40,7 @@ public class Deviation implements Cloneable, Ms2ExperimentAnnotation{
         this.absolute = 200e-6*ppm; // set absolute to 200 Da with given ppm
     }
 
-    public Deviation(@Parameter("ppm") double ppm, @Parameter("absolute") double absolute) {
+    public Deviation(double ppm, double absolute) {
         this.ppm = ppm;
         this.absolute = absolute;
     }
@@ -89,6 +88,8 @@ public class Deviation implements Cloneable, Ms2ExperimentAnnotation{
     }
 
     private static Pattern pattern = Pattern.compile("(?:(.+)\\s*ppm\\s*)?(?:(?:,|\\(|)\\s*(.+?)\\s*(m\\/z|mDa|Da|u)\\s*\\)?)?");
+
+    // this is used for deserialization
     public static Deviation fromString(String s) {
         final Matcher m = pattern.matcher(s);
         if (!m.find()) throw new IllegalArgumentException("Pattern should have the format <number> ppm (<number> m/z)");

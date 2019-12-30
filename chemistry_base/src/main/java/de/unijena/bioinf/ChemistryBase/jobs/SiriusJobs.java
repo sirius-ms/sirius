@@ -1,9 +1,13 @@
 package de.unijena.bioinf.ChemistryBase.jobs;
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.Callable;
 
 public class SiriusJobs {
 
@@ -40,21 +44,30 @@ public class SiriusJobs {
         return globalJobManager;
     }
 
-    public static TinyBackgroundJJob runInBackround(final Runnable task) {
-        final TinyBackgroundJJob t = new TinyBackgroundJJob() {
+    public static TinyBackgroundJJob<Boolean> runInBackground(final Runnable task) {
+        final TinyBackgroundJJob<Boolean> t = new TinyBackgroundJJob<>() {
             @Override
-            protected Object compute() {
+            protected Boolean compute() {
                 task.run();
                 return true;
             }
         };
-        getGlobalJobManager().submitJob(t);
-        return t;
+        return getGlobalJobManager().submitJob(t);
     }
 
-    public static TinyBackgroundJJob runInBackround(TinyBackgroundJJob task) {
-        getGlobalJobManager().submitJob(task);
-        return task;
+    public static <T> ProgressJJob<T> runInBackground(ProgressJJob<T> task) {
+        if (!task.getType().equals(JJob.JobType.TINY_BACKGROUND))
+            throw new IllegalArgumentException("Only Jobs of Type JJob.JobType.TINY_BACKGROUND are allowed");
+        return getGlobalJobManager().submitJob(task);
+    }
+
+    public static <T> TinyBackgroundJJob<T> runInBackground(Callable<T> task) {
+        return getGlobalJobManager().submitJob(new TinyBackgroundJJob<T>() {
+            @Override
+            protected T compute() throws Exception {
+                return task.call();
+            }
+        });
     }
 
 

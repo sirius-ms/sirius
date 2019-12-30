@@ -1,0 +1,4 @@
+dependencies {
+    compile project(':passatutto')
+    compile project(':sirius_project_space')
+}
