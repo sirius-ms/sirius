@@ -52,7 +52,7 @@ public class FingeridSubToolJob extends InstanceJob {
         //todo currently there is only csi -> change if there are multiple methods
         // we need to run multiple structure elucidation jobs and need  different prediction results then.
         EnumSet<PredictorType> predictors = type.toPredictors(inst.getExperiment().getPrecursorIonType().getCharge());
-        final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor) ApplicationCore.WEB_API.getStructurePredictor(predictors.iterator().next()));
+        final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor) ApplicationCore.WEB_API.getStructurePredictor(predictors.iterator().next()), this::checkForInterruption);
 
         final FingerIDJJob job = csi.makeFingerIDJJob(inst.getExperiment(),
                 formulaResults.stream().map(res -> new IdentificationResult<>(res.getCandidate().getAnnotationOrThrow(FTree.class), res.getScoreObject()))

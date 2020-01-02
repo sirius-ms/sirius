@@ -40,7 +40,9 @@ public class SiriusCLIApplication {
                     SiriusCLIApplication.RUN.cancel();
                 additionalActions.run();
                 JobManager.shutDownNowAllInstances();
-                NetUtils.tryAndWait(ApplicationCore.WEB_API::deleteClientAndJobs, 30000);
+                ApplicationCore.DEFAULT_LOGGER.info("Try to delete leftover jobs on web server...");
+                NetUtils.tryAndWait(ApplicationCore.WEB_API::deleteClientAndJobs, () -> {}, 20000);
+                ApplicationCore.DEFAULT_LOGGER.info("...Job deletion Done!");
             } catch (InterruptedException | TimeoutException e) {
                 e.printStackTrace();
             } finally {
