@@ -297,8 +297,8 @@ public abstract class ApplicationCore {
     }
 
     public static void cite() {
-        System.out.println(System.lineSeparator() + System.lineSeparator() + "Please cite the following publications when using our tool:" + System.lineSeparator());
-        System.out.println(ApplicationCore.CITATION);
+        System.err.println(System.lineSeparator() + System.lineSeparator() + "Please cite the following publications when using our tool:" + System.lineSeparator());
+        System.err.println(ApplicationCore.CITATION);
     }
 }
 
