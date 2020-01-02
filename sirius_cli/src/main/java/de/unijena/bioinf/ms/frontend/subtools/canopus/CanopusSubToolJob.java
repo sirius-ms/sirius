@@ -2,8 +2,6 @@ package de.unijena.bioinf.ms.frontend.subtools.canopus;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.fingerid.CanopusJJob;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.CanopusWebJJob;
 import de.unijena.bioinf.fingerid.FingerprintResult;
@@ -21,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 public class CanopusSubToolJob extends InstanceJob {
@@ -73,11 +72,14 @@ public class CanopusSubToolJob extends InstanceJob {
     }*/
 
     private CanopusWebJJob buildAndSubmitRemote(@NotNull final FormulaResult ir) {
-        return NetUtils.tryAndWait(() -> {
-            checkForInterruption();
-            return ApplicationCore.WEB_API.submitCanopusJob(
-                    ir.getId().getMolecularFormula(), ir.getId().getIonType().getCharge(), ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint);
-        });
+        try {
+            return NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.submitCanopusJob(
+                    ir.getId().getMolecularFormula(), ir.getId().getIonType().getCharge(), ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint
+                    ), this::checkForInterruption
+            );
+        } catch (TimeoutException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
