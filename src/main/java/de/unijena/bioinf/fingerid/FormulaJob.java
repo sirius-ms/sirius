@@ -29,7 +29,6 @@ public class FormulaJob extends BasicJJob<List<FingerprintCandidate>> {
     @Override
     protected List<FingerprintCandidate> compute() throws Exception {
         return NetUtils.tryAndWait(() -> {
-            checkForInterruption();
             final CompoundCandidateChargeState chargeState = CompoundCandidateChargeState.getFromPrecursorIonType(ionType);
             if (chargeState != CompoundCandidateChargeState.NEUTRAL_CHARGE) {
                 final List<FingerprintCandidate> intrinsic = searchDatabase.lookupStructuresAndFingerprintsByFormula(formula);
@@ -42,6 +41,6 @@ public class FormulaJob extends BasicJJob<List<FingerprintCandidate>> {
             } else {
                 return searchDatabase.lookupStructuresAndFingerprintsByFormula(formula);
             }
-        });
+        }, this::checkForInterruption);
     }
 }

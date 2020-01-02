@@ -57,10 +57,10 @@ final class WebJobWatcher {
                 }
 
                 final Set<JobId> orphanJobs = new HashSet<>(waitingJobs.keySet());
-                EnumMap<JobTable, List<JobUpdate<?>>> updates = NetUtils.tryAndWait(() -> {
-                    checkForInterruption();
-                    return api.updateJobStates(waitingJobs.keySet().stream().map(id -> id.jobTable).collect(Collectors.toSet()));
-                });
+                EnumMap<JobTable, List<JobUpdate<?>>> updates = NetUtils.tryAndWait(
+                        () -> api.updateJobStates(waitingJobs.keySet().stream().map(id -> id.jobTable).collect(Collectors.toSet())),
+                        this::checkForInterruption
+                );
                 List<JobUpdate<?>> toRemove = null;
 
 
@@ -105,11 +105,7 @@ final class WebJobWatcher {
                     if (!orphanJobs.isEmpty()) {
                         orphanJobs.forEach(waitingJobs::remove);
                         // not it sync because it may take some time and is not needed since jobwatcher is single threaded
-                        NetUtils.tryAndWait(() -> {
-                            checkForInterruption();
-                            api.deleteJobs(orphanJobs);
-                            return true;
-                        });
+                        NetUtils.tryAndWait(() -> api.deleteJobs(orphanJobs), this::checkForInterruption);
                     }
                 } else {
                     LOG().warn("Cannot fetch jobUpdates from CSI:FingerID Server. Trying again in " + waitTime + "ms.");

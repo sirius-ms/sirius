@@ -8,16 +8,16 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.chemdb.SearchStructureByFormula;
-import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
+import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
-import de.unijena.bioinf.utils.NetUtils;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
+import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -195,12 +195,11 @@ public class FingerIDJJob extends BasicMasterJJob<List<FingerIdResult>> {
             final FingerIdResult fres = new FingerIdResult(fingeridInput.getTree());
 
             // prediction job: predict fingerprint
-            final FingerprintPredictionJJob predictionJob = NetUtils.tryAndWait(() -> {
-                checkForInterruption();
-                return predictor.csiWebAPI.submitFingerprintJob(
-                        new FingerprintJobInput(experiment, fingeridInput, fingeridInput.getTree(), UserDefineablePredictorType.toPredictorTypes(experiment.getPrecursorIonType(), predictors.value))
-                );
-            });
+            final FingerprintPredictionJJob predictionJob = NetUtils.tryAndWait(
+                    () -> predictor.csiWebAPI.submitFingerprintJob(
+                            new FingerprintJobInput(experiment, fingeridInput, fingeridInput.getTree(), UserDefineablePredictorType.toPredictorTypes(experiment.getPrecursorIonType(), predictors.value))
+                    ), this::checkForInterruption
+            );
 
             annotationJJobs.put(predictionJob, fres);
 
