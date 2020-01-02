@@ -1,11 +1,9 @@
 package de.unijena.bioinf.fingerid.connection_pooling;
 
-import gnu.trove.procedure.TObjectProcedure;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -47,13 +45,15 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ConnectionPool<T> implements Closeable, AutoCloseable {
 
-    public interface Connection<T> {
-        public T open() throws IOException;
+    public interface Connector<T> {
+        T open() throws IOException;
 
-        public void close(T connection) throws IOException;
+        void close(T connection) throws IOException;
+
+        boolean isValid(T connection);
     }
 
-    protected final Connection<T> connector;
+    protected final Connector<T> connector;
     protected final ConcurrentLinkedQueue<T> freeConnections;
     protected volatile boolean shutdown, forcedShutdown;
     protected final AtomicInteger size, sharedCounter;
@@ -66,7 +66,7 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
 
     private final Set<Thread> threads = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    public ConnectionPool(Connection<T> connector, int capacity) {
+    public ConnectionPool(Connector<T> connector, int capacity) {
         this.connector = connector;
         this.freeConnections = new ConcurrentLinkedQueue<>();
         this.shutdown = false;
@@ -100,12 +100,11 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
         return size.get();
     }
 
-    public ConnectionPool(Connection<T> connector) {
+    public ConnectionPool(Connector<T> connector) {
         this(connector, Integer.MAX_VALUE);
     }
 
     public PooledConnection<T> orderConnection() throws InterruptedException, IOException {
-
         if (shutdown)
             throw new IllegalStateException("Connection pool is closed and does not accept new requests.");
         if (threads.contains(Thread.currentThread()))
@@ -118,7 +117,8 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
     }
 
     private PooledConnection<T> orderConnectionDontIncreaseWaitingCount() throws InterruptedException, IOException {
-        final T connection = freeConnections.poll();
+        final T connection = pollFreeValidConnection();
+
         if (connection == null) {
             // try to open a new connection
             final boolean nuConnection;
@@ -130,7 +130,7 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
 
             if (nuConnection) {//return new connection added to the pool
                 try {
-                    return new PooledConnection<T>(this, connector.open());
+                    return new PooledConnection<>(this, connector.open());
                 } catch (IOException e) {
                     connectionLock.lock();
                     size.decrementAndGet();
@@ -149,6 +149,32 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
         }
     }
 
+    /**
+     * This will poll a valid connection form free connection pool.
+     * inValid connection will be closed a another connection will be polled
+     * until the pool is empty.
+     */
+    protected T pollFreeValidConnection() {
+        T connection = freeConnections.poll();
+        while (connection != null && !connector.isValid(connection)) {
+            try {
+                connector.close(connection);
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).warn("Error when closing invalid Connections: " + e.getMessage());
+            } finally {
+                size.decrementAndGet();
+            }
+            connection = freeConnections.poll();
+        }
+        //notify
+        connectionLock.lock();
+        try {
+            noFreeConnectionsLeft.signalAll(); // we might get new capacity free
+            return connection;
+        } finally {
+            connectionLock.unlock();
+        }
+    }
 
     /**
      * This will close all idling connections. This method might be called regularly for e.g. database connections
@@ -158,10 +184,14 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
         while (!freeConnections.isEmpty()) {
             final T c = freeConnections.poll();
             if (c != null) {
-                connector.close(c);
-                size.decrementAndGet();
+                try {
+                    connector.close(c);
+                } finally {
+                    size.decrementAndGet();
+                }
             }
         }
+        //notify
         connectionLock.lock();
         try {
             noFreeConnectionsLeft.signalAll(); // we might get new capacity free
@@ -170,10 +200,12 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
         }
     }
 
-    /**
+
+    /*
      * This will refresh all idling connections. This method might be called regularly for e.g. database connections
      * to avoid that a database connection (that is idling for a long time) is dying.
      */
+    /*
     public void refreshAllIdlingConnections(TObjectProcedure<T> refreshOperation) {
         final ArrayList<T> refreshedConnections = new ArrayList<>();
         while (!freeConnections.isEmpty()) {
@@ -190,7 +222,7 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
         } finally {
             connectionLock.unlock();
         }
-    }
+    }*/
 
     private PooledConnection<T> waitForNewConnectionComesIn() throws InterruptedException, IOException {
 //        System.out.println(Thread.currentThread().getName() + " waits for connection of " + connector.getClass().getName());
