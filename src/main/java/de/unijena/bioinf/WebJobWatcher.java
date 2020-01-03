@@ -2,7 +2,6 @@ package de.unijena.bioinf;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.WaiterJJob;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
@@ -28,11 +27,10 @@ final class WebJobWatcher {
     }
 
     public <J extends WebJJob<?, ?, ?>> J watchJob(@NotNull final J jobToWatch) {
-        waitingJobs.put(jobToWatch.jobId, jobToWatch);
-
         checkWatcherJob();
 
         synchronized (waitingJobs) {
+            waitingJobs.put(jobToWatch.jobId, jobToWatch);
             waitingJobs.notifyAll();
         }
 
@@ -133,16 +131,18 @@ final class WebJobWatcher {
         @Override
         protected synchronized void cleanup() {
             super.cleanup();
+
+            LOG().info("Canceling WebWaiterJobs...");
             synchronized (waitingJobs) {
-                LOG().info("Canceling WebWaiterJobs...");
-                waitingJobs.values().forEach(WaiterJJob::cancel); //this jobs are not submitted to the job manager and need no be canceled manually
-                waitingJobs.clear();
                 try {
+                    waitingJobs.values().forEach(WaiterJJob::cancel); //this jobs are not submitted to the job manager and need no be canceled manually
                     LOG().info("Try to delete leftover jobs on web server...");
-                    NetUtils.tryAndWait(api::deleteClientAndJobs, () -> {}, 15000);
+                    NetUtils.tryAndWait(() -> api.deleteJobs(waitingJobs.keySet()), () -> {}, 4000);
                     LOG().info("...Job deletion Done!");
                 } catch (InterruptedException | TimeoutException e) {
-                    LOG().warn("Failed to delete remote jobs from server!");
+                    LOG().warn("Failed to delete remote jobs from server!", e);
+                } finally {
+                    waitingJobs.clear();
                 }
             }
         }

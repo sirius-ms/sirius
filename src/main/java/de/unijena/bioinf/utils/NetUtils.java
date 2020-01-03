@@ -67,7 +67,7 @@ public class NetUtils {
         throw new TimeoutException("Stop trying because of Timeout!");
     }
 
-    public static final int INIT_WAIT_TIME = 5000;
+    public static final int INIT_WAIT_TIME = 2000;
     public static final int MAX_WAIT_TIME = 120000;
     public static final float WAIT_TIME_MULTIPLIER = 2;
     public static final int TICK = 1000; //1 sek. without interruption check
