@@ -34,18 +34,17 @@ public class SiriusCLIApplication {
     public static void configureShutDownHook(@NotNull final Runnable additionalActions) {
         //shut down hook to clean up when sirius is shutting down
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+
             ApplicationCore.DEFAULT_LOGGER.info("CLI shut down hook: SIRIUS is cleaning up threads and shuts down...");
             try {
                 if (SiriusCLIApplication.RUN != null)
                     SiriusCLIApplication.RUN.cancel();
                 additionalActions.run();
                 JobManager.shutDownNowAllInstances();
-                ApplicationCore.DEFAULT_LOGGER.info("Try to delete leftover jobs on web server...");
-                NetUtils.tryAndWait(ApplicationCore.WEB_API::deleteClientAndJobs, () -> {}, 20000);
-                ApplicationCore.DEFAULT_LOGGER.info("...Job deletion Done!");
-            } catch (InterruptedException | TimeoutException e) {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
+                System.out.println("Disconnecting network connections...");
                 ProxyManager.disconnect();
                 ApplicationCore.cite();
             }
