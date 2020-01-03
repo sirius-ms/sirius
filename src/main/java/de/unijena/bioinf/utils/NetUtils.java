@@ -67,12 +67,12 @@ public class NetUtils {
         throw new TimeoutException("Stop trying because of Timeout!");
     }
 
-    private static final int INIT_WAIT_TIME = 5000;
-    private static final int MAX_WAIT_TIME = 120000;
-    private static final float WAIT_TIME_MULTIPLIER = 2;
-    private static final int TICK = 1000; //1 sek. without interruption check
+    public static final int INIT_WAIT_TIME = 5000;
+    public static final int MAX_WAIT_TIME = 120000;
+    public static final float WAIT_TIME_MULTIPLIER = 2;
+    public static final int TICK = 1000; //1 sek. without interruption check
 
-    private static void sleep(@NotNull final InterruptionCheck interrupted, long waitTime) throws InterruptedException {
+    public static void sleep(@NotNull final InterruptionCheck interrupted, long waitTime) throws InterruptedException {
         for (long i = waitTime; i > 0; i -= TICK) {
             interrupted.check();
             Thread.sleep(Math.min(i, TICK));

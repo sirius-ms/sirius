@@ -2,6 +2,8 @@ package de.unijena.bioinf;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.WaiterJJob;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
@@ -10,9 +12,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 final class WebJobWatcher {
+    private static final int INIT_WAIT_TIME = 1000;
+
     private final Map<JobId, WebJJob<?, ?, ?>> waitingJobs = new ConcurrentHashMap<>();
     private final WebAPI api;
     private WebJobWatcherJJob job = null;
@@ -47,7 +52,7 @@ final class WebJobWatcher {
 
         @Override
         protected Boolean compute() throws Exception {
-            long waitTime = 1000;
+            long waitTime = INIT_WAIT_TIME;
             while (true) {
                 checkForInterruption();
 
@@ -115,13 +120,30 @@ final class WebJobWatcher {
                 // if nothing was finished increase waiting time
                 // else set back to normal for fast reaction times
                 if (toRemove == null || toRemove.isEmpty()) {
-                    waitTime = Math.min(waitTime * 2, 30000);
+                    waitTime = (long) Math.min(waitTime * NetUtils.WAIT_TIME_MULTIPLIER, 30000);
                     LOG().info("No CSI:FingerID prediction jobs finished. Try again in " + waitTime / 1000d + "s");
                 } else {
-                    waitTime = 1000;
+                    waitTime = INIT_WAIT_TIME;
                 }
 
-                Thread.sleep(waitTime);
+                NetUtils.sleep(this::checkForInterruption, waitTime);
+            }
+        }
+
+        @Override
+        protected synchronized void cleanup() {
+            super.cleanup();
+            synchronized (waitingJobs) {
+                LOG().info("Canceling WebWaiterJobs...");
+                waitingJobs.values().forEach(WaiterJJob::cancel); //this jobs are not submitted to the job manager and need no be canceled manually
+                waitingJobs.clear();
+                try {
+                    LOG().info("Try to delete leftover jobs on web server...");
+                    NetUtils.tryAndWait(api::deleteClientAndJobs, () -> {}, 15000);
+                    LOG().info("...Job deletion Done!");
+                } catch (InterruptedException | TimeoutException e) {
+                    LOG().warn("Failed to delete remote jobs from server!");
+                }
             }
         }
     }
