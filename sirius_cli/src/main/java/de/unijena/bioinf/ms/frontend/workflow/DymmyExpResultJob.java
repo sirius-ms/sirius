@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 @FunctionalInterface
 public interface DymmyExpResultJob extends JJob<Instance> {
@@ -52,8 +53,9 @@ public interface DymmyExpResultJob extends JJob<Instance> {
     }
 
     @Override
-    default void setState(JobState state) {
+    default <T> T setState(JobState state, Function<JJob<Instance>, T> doOnChange) {
         /*ignored*/
+        return null;
     }
 
     @Override
