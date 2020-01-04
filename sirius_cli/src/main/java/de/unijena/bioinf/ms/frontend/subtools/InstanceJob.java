@@ -38,7 +38,8 @@ public abstract class InstanceJob extends BasicDependentJJob<Instance> implement
             computeAndAnnotateResult(input);
         } catch (Exception e) {
             //just to Identify the instance that failed
-            throw new Exception(LOG().getName() + " - Instance job failed on Instance: '" + input.toString() + "'.", e);
+            LOG().info(identifier() + " - Instance job failed on Instance: '" + input.toString() + "'.");
+            throw e;
         } finally {
             final Class<? extends DataAnnotation>[] ca = compoundComponentsToClear();
             if (ca != null && ca.length > 0) input.clearCompoundCache(ca);
