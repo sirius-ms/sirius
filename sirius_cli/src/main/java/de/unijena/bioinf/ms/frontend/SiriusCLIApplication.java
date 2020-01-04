@@ -6,12 +6,11 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
-import de.unijena.bioinf.utils.NetUtils;
 import de.unijena.bioinf.utils.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeoutException;
+import java.io.IOException;
 
 
 public class SiriusCLIApplication {
@@ -41,10 +40,12 @@ public class SiriusCLIApplication {
                     SiriusCLIApplication.RUN.cancel();
                 additionalActions.run();
                 JobManager.shutDownNowAllInstances();
-            } catch (InterruptedException e) {
+                ApplicationCore.DEFAULT_LOGGER.info("Try to delete leftover jobs on web server...");
+                ApplicationCore.WEB_API.deleteClientAndJobs();
+                ApplicationCore.DEFAULT_LOGGER.info("...Job deletion Done!");
+            } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
             } finally {
-                System.out.println("Disconnecting network connections...");
                 ProxyManager.disconnect();
                 ApplicationCore.cite();
             }
