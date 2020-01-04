@@ -7,6 +7,7 @@ import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.utils.HTTPSupplier;
 import de.unijena.bioinf.ms.rest.model.SecurityService;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -60,9 +61,11 @@ public abstract class AbstractClient {
 
     protected void isSuccessful(HttpResponse response) throws IOException {
         final StatusLine status = response.getStatusLine();
-        if (status.getStatusCode() >= 400)
+        if (status.getStatusCode() >= 400){
+            final String content = IOUtils.toString(getIn(response.getEntity()));
             throw new IOException("Error when querying REST service. Bad Response Code: "
-                    + status.getStatusCode() + " | Message: " + status.getReasonPhrase());
+                    + status.getStatusCode() + " | Message: " + status.getReasonPhrase() + "| Content: " + content);
+        }
     }
 
 
