@@ -7,52 +7,80 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public abstract class DataSetJob extends BasicDependentJJob<Iterable<Instance>> implements SubToolJob {
-    private List<JJob> failedInstances = new ArrayList<>();
-    private List<Instance> successfulInstances = new ArrayList<>();
+    private List<JJob<?>> failedJobs = new ArrayList<>();
+    private List<Instance> failedInstances = new ArrayList<>();
+    private List<Instance> inputInstances = new ArrayList<>();
 
-    public DataSetJob() {
-        super(JobType.SCHEDULER, ReqJobFailBehaviour.WARN);
+    private final Predicate<Instance> inputValidator;
+
+    public DataSetJob(@NotNull Predicate<Instance> inputValidator) {
+        this(inputValidator, ReqJobFailBehaviour.WARN);
+    }
+
+    public DataSetJob(@NotNull Predicate<Instance> inputValidator, @NotNull ReqJobFailBehaviour failBehaviour) {
+        super(JobType.SCHEDULER, failBehaviour);
+        this.inputValidator = inputValidator;
     }
 
     @Override
     protected Iterable<Instance> compute() throws Exception {
         checkInputs();
-        computeAndAnnotateResult(successfulInstances);
-        return successfulInstances;
+        computeAndAnnotateResult(inputInstances);
+        return inputInstances;
     }
 
     protected void checkInputs() {
-        if (successfulInstances == null || successfulInstances.isEmpty())
-            throw new IllegalArgumentException("No Input found, all dependent Jobs are failed");
+        {
+            final Map<Boolean, List<Instance>> splitted = inputInstances.stream().collect(Collectors.partitioningBy(inputValidator));
+            inputInstances = splitted.get(true);
+            failedInstances = splitted.get(false);
+        }
+
+        if (inputInstances == null || inputInstances.isEmpty())
+            throw new IllegalArgumentException("No Input found, All dependent SubToolJobs are failed.");
+        if (!failedJobs.isEmpty())
+            LOG().warn("There are " + failedJobs.size() + " failed input providing InstanceJobs!" + System.lineSeparator()
+                    + "Skipping Failed InstanceJobs: " + System.lineSeparator()
+                    + failedJobs.stream().map(JJob::identifier).collect(Collectors.joining(System.lineSeparator()))
+            );
         if (!failedInstances.isEmpty())
-            LOG().warn("There are " + failedInstances.size() + "failed InputProvidingJobs!");
+            LOG().warn("There are " + failedInstances.size() + " invalid input Instances!" + System.lineSeparator()
+                    + "Skipping Invalid Input Instances: " + System.lineSeparator()
+                    + failedInstances.stream().map(Instance::toString).collect(Collectors.joining(System.lineSeparator()))
+            );
     }
 
     @Override
     protected void cleanup() {
         super.cleanup();
-        failedInstances = null;
+        failedJobs = null;
     }
 
     @Override
     public synchronized void handleFinishedRequiredJob(JJob required) {
-        final Object r = required.result();
-        if (r instanceof Instance)
-            successfulInstances.add((Instance) r);
-
+        if (required instanceof InstanceJob) {
+            final Object r = required.result();
+            if (r == null)
+                failedJobs.add(required);
+            else
+                inputInstances.add((Instance) r);
+        }
     }
 
 
     protected abstract void computeAndAnnotateResult(final @NotNull List<Instance> expRes) throws Exception;
 
-    public List<JJob> getFailedInstances() {
-        return failedInstances;
+    public List<JJob<?>> getFailedJobs() {
+        return failedJobs;
     }
 
     public boolean hasFailedInstances() {
-        return failedInstances != null && !failedInstances.isEmpty();
+        return failedJobs != null && !failedJobs.isEmpty();
     }
 
     @FunctionalInterface

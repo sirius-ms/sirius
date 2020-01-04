@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class ZodiacSubToolJob extends DataSetJob {
@@ -39,12 +40,13 @@ public class ZodiacSubToolJob extends DataSetJob {
     protected final ZodiacOptions cliOptions;
 
     public ZodiacSubToolJob(ZodiacOptions cliOptions) {
+        super(in -> !in.loadCompoundContainer().getResults().isEmpty()); //check whether the compound has formula results or not
         this.cliOptions = cliOptions;
     }
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull List<Instance> instances) throws Exception {
-        final Map<Ms2Experiment, List<FormulaResult>> input = instances.stream().collect(Collectors.toMap(
+        final Map<Ms2Experiment, List<FormulaResult>> input = instances.stream().distinct().collect(Collectors.toMap(
                 Instance::getExperiment,
                 in -> in.loadFormulaResults(SiriusScore.class, FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList())
         ));
