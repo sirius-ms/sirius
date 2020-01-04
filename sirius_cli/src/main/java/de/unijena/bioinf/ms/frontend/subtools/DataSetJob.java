@@ -25,7 +25,7 @@ public abstract class DataSetJob extends BasicDependentJJob<Iterable<Instance>> 
 
     protected void checkInputs() {
         if (successfulInstances == null || successfulInstances.isEmpty())
-            throw new IllegalArgumentException("No Input found, all dependend Jobs are failed");
+            throw new IllegalArgumentException("No Input found, all dependent Jobs are failed");
         if (!failedInstances.isEmpty())
             LOG().warn("There are " + failedInstances.size() + "failed InputProvidingJobs!");
     }

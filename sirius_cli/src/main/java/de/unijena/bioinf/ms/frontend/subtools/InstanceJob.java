@@ -34,24 +34,29 @@ public abstract class InstanceJob extends BasicDependentJJob<Instance> implement
     @Override
     protected Instance compute() throws Exception {
         checkInput();
-        try {
-            computeAndAnnotateResult(input);
-        } catch (Exception e) {
-            //just to Identify the instance that failed
-            LOG().info(identifier() + " - Instance job failed on Instance: '" + input.toString() + "'.");
-            throw e;
-        } finally {
-            final Class<? extends DataAnnotation>[] ca = compoundComponentsToClear();
-            if (ca != null && ca.length > 0) input.clearCompoundCache(ca);
-            final Class<? extends DataAnnotation>[] ra = formulaResultComponentsToClear();
-            if (ra != null && ra.length > 0) input.clearFormulaResultsCache(ra);
-        }
+        computeAndAnnotateResult(input);
+        updateProgress(0,100, 99, identifier() + " | DONE!");
+
         return input;
+    }
+
+    @Override
+    protected void cleanup() {
+        super.cleanup();
+        final Class<? extends DataAnnotation>[] ca = compoundComponentsToClear();
+        if (ca != null && ca.length > 0) input.clearCompoundCache(ca);
+        final Class<? extends DataAnnotation>[] ra = formulaResultComponentsToClear();
+        if (ra != null && ra.length > 0) input.clearFormulaResultsCache(ra);
+    }
+
+    @Override
+    public String identifier() {
+        return super.identifier() + " | Instance: '" + input.toString() + "'";
     }
 
     protected void checkInput() {
         if (input == null)
-            throw new IllegalArgumentException("No Input given!");
+            throw new IllegalArgumentException("No Input available! Maybe a previous job could not provide the needed results due to failure.");
     }
 
     protected Class<? extends DataAnnotation>[] compoundComponentsToClear() {
