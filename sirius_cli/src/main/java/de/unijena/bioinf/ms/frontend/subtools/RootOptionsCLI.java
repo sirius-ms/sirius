@@ -167,14 +167,11 @@ public class RootOptionsCLI<M extends ProjectSpaceManager> implements RootOption
                 if (space != null) {
                     if (inputFiles != null)
                         SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, maxMz, ignoreFormula).makeImportJJob(inputFiles)).awaitResult();
-                    if (space.size() > 0)
-                        LOG.info("No Input given but output Project-Space is not empty and will be used as Input instead!");
-                    else
-                        LOG.info("No Input given and output Project-Space is also empty. Starting application without input data.");
-
+                    if (space.size() < 1)
+                        LOG.info("No Input has been imported to Project-Space. Starting application without input data.");
                     return space;
                 }
-                throw new CommandLine.PicocliException("NO projectspace to write on: ");
+                throw new CommandLine.PicocliException("No Project-Space for writing output!");
             }
         };
     }
@@ -204,7 +201,7 @@ public class RootOptionsCLI<M extends ProjectSpaceManager> implements RootOption
                 try {
                     projectSpaceFilenameFormatter = psTmp.getProjectSpaceProperty(FilenameFormatter.PSProperty.class).map(it -> new StandardMSFilenameFormatter(it.formatExpression)).orElse(new StandardMSFilenameFormatter());
                 } catch (Exception e) {
-                    LOG.warn("Could not Parse filenameformatter -> Using default");
+                    LOG.warn("Could not Parse 'FilenameFormatter' -> Using default");
                     projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
                 }
                 //todo when do we write this?
