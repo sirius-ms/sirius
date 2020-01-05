@@ -9,7 +9,7 @@ import picocli.CommandLine;
 
 import java.io.File;
 
-@CommandLine.Command(name = "similarity", aliases = {}, description = "STANDALONE - Computes the similarity between all compounds in the dataset and outputs a matrix of similarities.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "similarity", aliases = {}, description = "<STANDALONE> Computes the similarity between all compounds in the dataset and outputs a matrix of similarities.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
 public class SimilarityMatrixOptions implements SingletonTool<SimilarityMatrixWorkflow> {
 
     @CommandLine.Option(names = "--ftalign", description = "compute fragmentation tree alignments between all compounds in the dataset")

@@ -79,6 +79,6 @@ public class DefaultParameterConfigLoader {
         options.get(optionName).setter().set(value.stream().collect(Collectors.joining(",")));
     }
 
-    @CommandLine.Command(name = "config", description = "Override all possible default configurations of this toolbox from the command line.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
+    @CommandLine.Command(name = "config", description = "<CONFIGURATION> Override all possible default configurations of this toolbox from the command line.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
     public final class ConfigOptions{}
 }

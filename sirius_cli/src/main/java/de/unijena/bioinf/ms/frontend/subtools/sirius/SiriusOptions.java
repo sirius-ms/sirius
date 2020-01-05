@@ -38,7 +38,7 @@ import java.util.concurrent.Callable;
  */
 
 //todo got descriprions from defaultConfigOptions
-@Command(name = "formula", aliases = {"F", "sirius"}, description = "Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true, sortOptions = false)
+@Command(name = "formula", aliases = {"sirius", "F"}, description = "<COMPOUND_TOOL> Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true, sortOptions = false)
 public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
