@@ -63,8 +63,9 @@ ext {
 
     // edit all these versions in sirius_cli/src/main/resources/....build.properties
     appName = System.properties.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
-    buildNumber = System.properties.getProperty('de.unijena.bioinf.sirius.build')
-    println(buildNumber)
+//    buildNumber = System.properties.getProperty('de.unijena.bioinf.sirius.build')
+//    println(buildNumber)
+    siriusFrontendVersion = System.properties.getProperty('de.unijena.bioinf.siriusFrontend.version')
     siriusVersion = System.properties.getProperty('de.unijena.bioinf.sirius.version')
     fingeridVersion = System.properties.getProperty('de.unijena.bioinf.fingerid.version')
     mztabm_version = System.properties.getProperty('de.unijena.bioinf.mztabm.version')
@@ -89,7 +90,7 @@ allprojects {
     targetCompatibility = 11
 
 
-    version = "$siriusVersion"
+    version = "$siriusFrontendVersion"
     group = 'de.unijena.bioinf.ms'
 
     repositories {
@@ -446,14 +447,14 @@ task refreshDownloadLinks {
                 "- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/${version}/sirius-${version}-manual.pdf)",
                 "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)",
                 "",
-                "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (Build ${project.buildNumber} from ${new Date().format('yyyy-MM-dd')})",
+                "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (${new Date().format('yyyy-MM-dd')})",
                 "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win32.zip) / " +
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
                 "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32.zip) / " +
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
                 "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
                 "",
-                "### SIRIUS+CSI:FingerID Commandline only - Version $version (Build ${project.buildNumber} from ${new Date().format('yyyy-MM-dd')})",
+                "### SIRIUS+CSI:FingerID Commandline only - Version $version (${new Date().format('yyyy-MM-dd')})",
                 "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win32-headless.zip) / " +
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
                 "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32-headless.zip) / " +

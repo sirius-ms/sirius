@@ -56,8 +56,7 @@ public abstract class ApplicationCore {
 //            System.setProperty("de.unijena.bioinf.jjobs.DEBUG", "true");
             System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
 
-            final String version = PropertyManager.getProperty("de.unijena.bioinf.sirius.version");
-            final String build = PropertyManager.getProperty("de.unijena.bioinf.sirius.build");
+            final String version = PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
 
             //#################### start init workspace ################################
             final String home = System.getProperty("user.home");
@@ -210,7 +209,7 @@ public abstract class ApplicationCore {
             DEFAULT_LOGGER.info("Sirius Workspace Successfull initialized at: " + WORKSPACE.toAbsolutePath().toString());
 
 
-            PropertyManager.setProperty("de.unijena.bioinf.sirius.versionString", (version != null && build != null) ? "SIRIUS " + version + " (build " + build + ")" : "SIRIUS <Version Unknown>");
+            PropertyManager.setProperty("de.unijena.bioinf.sirius.versionString", (version != null) ? "SIRIUS " + version : "SIRIUS <Version Unknown>");
             DEFAULT_LOGGER.info("You run " + VERSION_STRING());
 
             String prop = PropertyManager.getProperty("de.unijena.bioinf.sirius.cite");
