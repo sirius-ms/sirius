@@ -105,12 +105,12 @@ public class WorkflowBuilder<R extends RootOptions> {
         CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), customDBOptions, lcmsAlignSpec, siriusSpec, zodiacSpec, passatuttoSpec, fingeridSpec, canopusOptions);
         rootSpec = forAnnotatedObjectWithSubCommands(
                 this.rootOptions,
-                Streams.concat(Arrays.stream(singletonTools()), Arrays.stream(new Object[]{configSpec, projectSpaceOptions, lcmsAlignSpec, siriusSpec, zodiacSpec, passatuttoSpec, fingeridSpec, canopusOptions})).toArray()
+                Streams.concat(Arrays.stream(singletonTools()), Arrays.stream(new Object[]{configSpec, lcmsAlignSpec, siriusSpec, zodiacSpec, passatuttoSpec, fingeridSpec, canopusOptions})).toArray()
         );
     }
 
     protected Object[] singletonTools() {
-        return new Object[]{customDBOptions, similarityMatrixOptions};
+        return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions};
     }
 
     protected CommandLine.Model.CommandSpec forAnnotatedObjectWithSubCommands(Object parent, Object... subsToolInExecutionOrder) {

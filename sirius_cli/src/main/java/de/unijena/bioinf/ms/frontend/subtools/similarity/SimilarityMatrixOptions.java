@@ -4,14 +4,13 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
-import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import picocli.CommandLine;
 
 import java.io.File;
 
-@CommandLine.Command(name = "similarity", aliases = {}, description = "Computes the similarity between all compounds in the dataset and outputs a matrix of similarities.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
-public class SimilarityMatrixOptions implements SingletonTool {
+@CommandLine.Command(name = "similarity", aliases = {}, description = "STANDALONE - Computes the similarity between all compounds in the dataset and outputs a matrix of similarities.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
+public class SimilarityMatrixOptions implements SingletonTool<SimilarityMatrixWorkflow> {
 
     @CommandLine.Option(names = "--ftalign", description = "compute fragmentation tree alignments between all compounds in the dataset")
     protected boolean useAlignment;
@@ -32,7 +31,7 @@ public class SimilarityMatrixOptions implements SingletonTool {
     public boolean numpy;
 
     @Override
-    public Workflow makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
-        return new SimilarityMatrixSubTool(projectSpace,this, config);
+    public SimilarityMatrixWorkflow makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
+        return new SimilarityMatrixWorkflow(projectSpace,this, config);
     }
 }

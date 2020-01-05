@@ -50,13 +50,13 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
-public class SimilarityMatrixSubTool implements Workflow {
+public class SimilarityMatrixWorkflow implements Workflow {
 
     protected final SimilarityMatrixOptions options;
     protected final ProjectSpaceManager ps;
     protected final ParameterConfig config;
 
-    public SimilarityMatrixSubTool(ProjectSpaceManager ps, SimilarityMatrixOptions options, ParameterConfig config) {
+    public SimilarityMatrixWorkflow(ProjectSpaceManager ps, SimilarityMatrixOptions options, ParameterConfig config) {
         this.ps = ps;
         this.options = options;
         this.config = config;
@@ -117,7 +117,7 @@ public class SimilarityMatrixSubTool implements Workflow {
                 }
             }
         } catch (IOException e) {
-            LoggerFactory.getLogger(SimilarityMatrixSubTool.class).error(file.getAbsolutePath() + " cannot be written due to: " + e.getMessage(),e);
+            LoggerFactory.getLogger(SimilarityMatrixWorkflow.class).error(file.getAbsolutePath() + " cannot be written due to: " + e.getMessage(),e);
             System.err.println("Cannot write file '"+file+"' due to IO error: " + e.getMessage());
         }
     }

@@ -17,8 +17,8 @@ import java.util.List;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "EXPERIMENTAL FEATURE: generate a custom compound database. Import compounds from all given files.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-public class CustomDBOptions implements SingletonTool {
+@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "STANDALONE - Generate a custom compound database. Import compounds from all given files.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
+public class CustomDBOptions implements SingletonTool<CustomDBWorkflow> {
 
     @Option(names = "--name", description = "Name of the custom database to be added to the default or specified workspace (--workspace).")
     public String dbName;
@@ -28,7 +28,7 @@ public class CustomDBOptions implements SingletonTool {
 
 
     @Override
-    public Workflow makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
+    public CustomDBWorkflow makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
         //todo configure it
         return new CustomDBWorkflow();
     }
