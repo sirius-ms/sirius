@@ -11,10 +11,10 @@ import java.io.File;
 import java.util.List;
 
 @CommandLine.Command(name = "lcms-align", aliases = {"A"}, description = "Align and merge compounds of multiple LCMS Runs. Use this tool if you want to import from mzML/mzXml", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-public class LcmsAlignOptions implements PreprocessingTool {
+public class LcmsAlignOptions implements PreprocessingTool<LcmsAlignSubToolJob> {
 
     @Override
-    public PreprocessingJob makePreprocessingJob(InputFiles input, ProjectSpaceManager space) {
+    public LcmsAlignSubToolJob makePreprocessingJob(InputFiles input, ProjectSpaceManager space) {
         return new LcmsAlignSubToolJob(input,space);
     }
 }

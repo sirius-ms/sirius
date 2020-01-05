@@ -7,6 +7,6 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import java.io.File;
 import java.util.List;
 
-public interface PreprocessingTool {
-    PreprocessingJob makePreprocessingJob(InputFiles input, ProjectSpaceManager space);
+public interface PreprocessingTool<T extends PreprocessingJob> {
+    T makePreprocessingJob(InputFiles input, ProjectSpaceManager space);
 }
