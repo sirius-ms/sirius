@@ -17,7 +17,7 @@ import java.util.concurrent.Callable;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  * */
-@CommandLine.Command(name = "canopus", aliases = {"C"}, description = "Predict compound categories for the whole dataset using CANOPUS.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "canopus", aliases = {"C"}, description = "<COMPOUND_TOOL> Predict compound categories for the whole dataset using CANOPUS.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
 public class CanopusOptions implements Callable<InstanceJob.Factory<CanopusSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
