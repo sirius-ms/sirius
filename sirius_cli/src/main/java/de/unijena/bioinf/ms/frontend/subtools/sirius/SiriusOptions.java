@@ -101,7 +101,7 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
         defaultConfigOptions.changeOption("FormulaSettings.enforced", elements);
     }
 
-    @Option(names = {"-d", "--db"}, description = "Search formulas in given database: all, pubchem, bio, kegg, hmdb")
+    @Option(names = {"--database", "-d", "--db"}, description = "Search formulas in given database: all, pubchem, bio, kegg, hmdb")
     public void setDatabase(String name) throws Exception {
         defaultConfigOptions.changeOption("FormulaSearchDB", name);
     }

@@ -338,7 +338,7 @@ task checkDefaultProfile() {
 }
 checkDefaultProfile.dependsOn('collectDefaultProfile')
 checkDefaultProfile.dependsOn('mergeTemplateWithDefaultProfile')
-distribute.dependsOn('checkDefaultProfile')
+//distribute.dependsOn('checkDefaultProfile')
 
 
 task runCLI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {

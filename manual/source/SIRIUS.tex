@@ -197,7 +197,7 @@ want you to use the best peak picking software out there --- or
 alternatively, your favorite software.  There are several tools specialized
 for this task, such as OpenMS, MZmine or XCMS.  The Trinity workflow
 (see \url{https://www.youtube.com/watch?v=zDcY7iuvyQY}) produces picked peak
-lists that can directly be imported into SIRIUS.
+lists that can directly be imported into SIRIUS. However, since version~4.4.0 SIRIUS contains a zero parameter preprocessing tool to directly import LCMS-Runs from \code{.mzml/.mzXml} format to help you getting started quickly. 
 
 SIRIUS will identify the molecular formula of the measured precursor ion,
 and will also annotates the spectrum by providing a molecular formula for
@@ -220,7 +220,8 @@ interface. See {\hyperref[library::doc]{\crossref{\DUrole{doc}{SIRIUS Java
 Library}}}}.
 
 Since version~3.1, our software ships with a \textbf{Graphical User
-Interface} (GUI).  A version without GUI is available as separate download.
+Interface} (GUI). The GUI version also includes the commanline tool. A slim version without GUI is available as separate download.
+Since version~4.4.0 the GUI and CLI share the same persistence layer, so \textbf{all} results and intermediate steps can be exported/imported between GUI and CLI 
 
 \clearpage
 
@@ -231,11 +232,11 @@ Interface} (GUI).  A version without GUI is available as separate download.
 
 The \emph{scientific development} behind SIRIUS and CSI:FingerID required
 numerous man-years of PhD students, postdocs and principal investigators; an
-educated guess would be roughly 30 man-years.  This estimate does not include
+educated guess would be roughly 35 man-years.  This estimate does not include
 building the shiny Graphical User Interface that was introduced in
 version~3.1.  But it is not the user interface or software development that
 does the work here; it is our scientific research that made SIRIUS and
-CSI:FingerID possible.  It is understood that the work of 10 years cannot be
+CSI:FingerID possible.  It is understood that the work of 15 years cannot be
 described in a single paper.
 
 Please cite all papers that you feel relevant for your work.  Please do not
@@ -245,10 +246,18 @@ scientific papers.
 \begin{itemize}
 	\item Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker.
 	\textbf{SIRIUS 4: a rapid tool for turning tandem mass spectra into metabolite structure information.}
-	\emph{Nat methods}, 16, 2019. \url{https://doi.org/10.1038/s41592-019-0344-8.}
+	\emph{Nat methods}, 16, 2019. doi: \url{https://doi.org/10.1038/s41592-019-0344-8}
 \end{itemize}
 
-\subsection{Searching in molecular structure databases}
+\subsection*{ZODIAC -- molecular formula annotation}
+\label{introduction:zodiac}
+\begin{itemize}
+	\item Marcus Ludwig, Louis-Félix Nothias, Kai Dührkop, Irina Koester, Markus Fleischauer, Martin A. Hoffmann, Daniel Petras, Fernando Vargas, Mustafa Morsy, Lihini Aluwihare, Pieter C. Dorrestein, Sebastian Böcker
+	\textbf{ZODIAC: database-independent molecular formula annotation using Gibbs sampling reveals unknown small molecules.}
+	\emph{bioRxiv}, 842740, 2019. doi: \url{https://doi.org/10.1101/842740}
+\end{itemize}
+
+\subsection*{Searching in molecular structure databases}
 \label{introduction:searching-in-molecular-structure-databases}
 
 \begin{itemize}
@@ -261,7 +270,7 @@ scientific papers.
 \emph{Bioinformatics}, 30(12):i157--i164, 2014. Proc. of \emph{Intelligent Systems for Molecular Biology} (ISMB 2014).
 \end{itemize}
 
-\subsection{Fragmentation Tree Computation}
+\subsection*{Fragmentation Tree Computation}
 \label{introduction:fragmentation-tree-computation}
 
 \begin{itemize}
@@ -287,7 +296,7 @@ In \emph{Proc. of Computing and Combinatorics Conference} (COCOON 2015), volume 
 \end{itemize}
 
 
-\subsection{Isotope pattern analysis}
+\subsection*{Isotope pattern analysis}
 \label{introduction:isotope-pattern-analysis}
 
 \begin{itemize}
@@ -302,7 +311,7 @@ In \emph{Proc. of Workshop on Algorithms in Bioinformatics} (WABI 2006), volume 
 \end{itemize}
 
 
-\subsection{Auto-detection of elements}
+\subsection*{Auto-detection of elements}
 \label{introduction:auto-detection-of-elements}
 
 \begin{itemize}
@@ -311,7 +320,7 @@ In \emph{Proc. of Workshop on Algorithms in Bioinformatics} (WABI 2006), volume 
 \emph{Anal Chem}, 88(15):7556--7566, 2016. 
 \end{itemize}
 
-\subsection{Mass decomposition}
+\subsection*{Mass decomposition}
 \label{introduction:mass-decomposition}
 
 \begin{itemize}
@@ -1007,8 +1016,8 @@ training data!
 
 
 \chapter{Quick start!}
-
-\section{Working in single mode}
+\section{Graphical User Interface}
+\subsection{Working in single mode}
 \label{gui:working-in-single-mode}
 
 SIRIUS's ``Single mode'' corresponds to analyzing a single compound with
@@ -1048,7 +1057,7 @@ one or more mass spectra.
 \end{enumerate}
 
 
-\section{Working in batch mode}
+\subsection{Working in batch mode}
 
 SIRIUS's ``Batch mode'' corresponds to analyzing many compounds at once,
 each having one or more mass spectra.
@@ -1090,8 +1099,7 @@ each having one or more mass spectra.
 	\gui{Cancel Computation} in the toolbar.
 \end{enumerate}
 
-
-\section{Identifying a CASMI challenge}
+\subsection{Identifying a CASMI challenge}
 \label{gui:identifying-a-casmi-challenge}
 \begin{enumerate}
 	\item {} 
@@ -1116,15 +1124,92 @@ each having one or more mass spectra.
 	\emph{C23H46NO7P} should be suggested as number one hit in the candidate list
 	
 \end{enumerate}
+
+
+\section{Command Line Interface}
+\label{commandline:demo-data}
+
+You can download some sample spectra from the SIRIUS website
+at \url{https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip}
+
+The demo-data contain examples for three different data formats readable by
+SIRIUS. The MGF folder contain an example for a MGF file containing a single
+compound with several MS/MS spectra measured on an Orbitrap
+instrument. SIRIUS recognizes that these MS/MS spectra belong to the same
+compound because they have the same parent mass. To analyze this compound,
+run:
+%
+\begin{Verbatim}[commandchars=\\\{\}]
+sirius --input demo-data/mgf/laudanosine.mgf --output /path/laudanosine-out  formula -p orbitrap 
+\end{Verbatim}
+
+The \code{formula\_candidates.csv} should look like this is:
+%
+
+\begin{Verbatim}[commandchars=\\\{\}]
+rank formula      adduct    TrIsScore  TreeScore IsotopeScore explPeaks explIntensity
+1    C21H27NO4    [M + H]+  27.803     19.822    7.980        10        0.994
+2    C17H23N7O2   [M + H]+  23.451     18.391    5.060        10        0.994
+3    C15H28N5O3P  [M + H]+  21.900     16.902    4.997        10        0.994
+4    C19H29NO4    [M + Na]+ 21.645     15.827    5.817         9        0.988
+5    C19H25N4O3   [M + H]+  21.543     14.412    7.131         9        0.990
+6    C17H30N2O4P  [M + H]+  18.438     11.841    6.597         9        0.990
+7    C13H33N3O4P2 [M + H]+  17.091     14.028    3.062        10        0.994
+8    C14H32NO7P   [M + H]+  15.046     12.908    2.138        11        1
+9    C15H32N2O4P  [M + Na]+  9.401      5.956    3.445        10        0.994
+10   C16H35NO2P2  [M + Na]+  8.940      5.532    3.407         9        0.988
+
+\end{Verbatim}
+
+This is a ranking list of the top molecular formula candidates. The best
+candidate is \ce{C21H27NO4} with an overall score (\gui{TrIsScore}) of 27.803. This score is the
+sum of the \gui{TreeScore} (19.822) and the \gui{IsotopeScore} (7.980). 
+
+The last two columns contain the number of explained peaks in MS/MS spectrum
+as well as the relative amount of explained intensity. The last value should
+usually be over 80 \% or even 90 \%. If this value is very low you either
+have strange high intensive noise in your spectrum, or the allowed mass
+deviation might be too low to explain all the peaks.
+
+If you want to look at the fragmentation trees you can open the output \code{/path/laudanosine-out} in the GUI and use
+the included tree viewer (see, \ref{gui:tree-view}). Note that the viewer can also export the tree as vector graphics \code{(svg, pdf)}   
+
+The directory \code{ms} contains two examples of the \code{.ms} format. Each file contains a single compound measured with an Orbitrap instrument. To analyze this compound run:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+sirius -o outputdir -i demo-data/ms/Bicuculline.ms formula -p orbitrap
+\end{Verbatim}
+
+As the ms file already contains the correct molecular formula, SIRIUS will
+directly compute the fragmentation tree without decomposing the mass (like when specifying exactly one molecular formula via \code{-f} option).
+
+If you want to enforce a molecular formula analysis and ranking (although the correct molecular formula is given within the file) you can specify the number of candidates with the \code{-c} option or use \code{--ignore-formula} option to ignore molecular the formula in the file: 
+
+\begin{Verbatim}[commandchars=\\\{\}]
+sirius -o outputdir -i demo-data/ms/Bicuculline.ms formula -p orbitrap -c 5
+\end{Verbatim}
+
+SIRIUS will now ignore the correct molecular formula in the file and output the 5 best candidates.
+
+The TXT folder contains simple peaklist files. Such file formats can be easily extracted from Excel spreadsheets. However, they do not contain meta information like the MS level and the parent mass. So you have to specify this information via commandline options:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+sirius formula \PYGZhy{}p orbitrap  \PYGZhy{}z 354.134704589844 \PYGZhy{}1 demo\PYGZhy{}data/txt/chelidonine\PYGZus{}ms.txt
+\PYGZhy{}2 demo\PYGZhy{}data/txt/chelidonine\PYGZus{}msms1.txt demo\PYGZhy{}data/txt/chelidonine\PYGZus{}msms2.txt
+\end{Verbatim}
+
+The demo data contain a clean MS spectrum (e.g. there is only one isotope pattern contained in the MS spectrum). In such cases, SIRIUS can infer the correct parent mass from the MS data (by simply using the monoisotopic mass of the isotope pattern as parent mass). So you can omit the \code{-z} option in this cases.
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
 
-\chapter{Input/Output}
+\chapter{Input, Output and Formats}
 With SIRIUS 4.4.0 we finalized and released the SIRIUS project-space, the file based persistence layer and output format of SIRIUS. 
 From there CLI and GUI share the same input and output formats. 
-Both, CLI and GUI store the computed results as SIRIUS project-space (see Fig.~\ref{fig:project-space}) which in turn can also be an input for the GUI or the CLI. 
+Both, CLI and GUI store the computed results as SIRIUS project-space (see the Figure below) which in turn can also be an input for the GUI or the CLI. 
 This allows the user to review results in the GUI that have been computed with an automated workflow using the CLI. 
 
 \section{Input}
@@ -1245,7 +1330,7 @@ An example for a .ms file:
 \subsection{SIRIUS project-space}\label{gui:workspace}
 The SIRIUS project-space is a standardized directory structure that is
 organized in a three hierarchy levels, namely, the \emph{project level}, the
-\emph{compound level} and the \emph{method level} (see Fig.~\ref{fig:project-space} for
+\emph{compound level} and the \emph{method level} (see Figure below for
 details).
 
 On the \emph{project level}, each compound corresponds to one sub-directory
@@ -1281,11 +1366,43 @@ connection to the detailed results provided in the project-space.
 Furthermore, SIRIUS passes meta information such as scan numbers and ids of 
 the input data into this analysis report. This allows for an easy 
 combination of the SIRIUS results with the results of other analyses such as 
-MS1-based quantification.     
+MS1-based quantification.  
 
 \begin{center}
 	\includegraphics[width=\textwidth]{{project-space}.pdf}
-\end{center}
+\end{center}   
+
+\subsection{Parameter formats}
+\subsubsection{Ion modes}
+\label{commandline:ions}\label{commandline:ion-modes}
+Whenever SIRIUS requires the ion mode, it should be given in the following format:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+[M+ADDUCT]+ for positive ions
+[M+ADDUCT]\PYGZhy{} for negative ions
+[M\PYGZhy{}ADDUCT]\PYGZhy{} for losses
+[M]+ for instrinsically charged compounds
+\end{Verbatim}
+
+ADDUCT is the molecular formula of the adduct. The most common ionization modes are \code{{[}M+H{]}+}, \code{{[}M+Na{]}+}, \code{{[}M-H{]}-}, \code{{[}M+Cl{]}-}. Currently, SIRIUS supports only single-charged compounds, so \code{{[}M+2H{]}2+} is not valid. For intrinsic charged compounds \code{{[}M{]}+} and \code{{[}M{]}-} should be used.
+
+
+\subsubsection{Molecular formulas}
+\label{commandline:molecular-formulas}\label{commandline:formulas}
+
+Molecular Formulas in SIRIUS must not contain brackets.
+Hence, \code{2(C2H2)} is not a valid molecular formula; write \code{C4H4}
+instead.  Furthermore, all molecular formulas in SIRIUS are always neutral,
+and there is no possibility to add a charge on a molecular formula (instead,
+charges are given separately). Hence, \code{CH3+} is not a valid molecular
+formula.  Write \code{CH3} instead, and provide the charge separately via
+commandline option.
+
+
+\subsubsection{Chemical alphabets}
+\label{commandline:alphabets}\label{commandline:chemical-alphabets}
+Whenever SIRIUS requires the chemical alphabet, you have to provide which elements should be considered and what is the maximum amount for each element. Chemical alphabets are written like molecular formulas. The maximum amount of an element is written in square brackets behind the element. If no square brackets are given, the element might occur arbitrary often. The standard alphabet is CHNOP{[}5{]}S, allowing the elements C, H, N O and S as well as up to five times the element P.
+
 
 \begin{comment}
 	\section{Export results}
@@ -1708,124 +1825,73 @@ can also contact us at \url{sirius@uni-jena.de}.
 
 \todo{what has changed in here? custom databases?}
 
-The SIRIUS commandline tool can be either called via the binary by simply running the command \code{sirius} in your commandline. Alternatively, you can run the sirius jar file using Java with the command:
+The SIRIUS commandline tool can be called via the binary/startscript by simply running the command \code{sirius} in your commandline:
 
 \begin{Verbatim}[commandchars=\\\{\}]
-java \PYGZhy{}jar sirius.jar
+sirius --help
 \end{Verbatim}
 
-You can always use the \code{-{-}help} option to get a documentation about the available commands and options. Assuming you want to analyze the example data given in the CASMI \footnote{\sphinxAtStartFootnote%
-\url{http://casmi-contest.org/2014/example/MSpos\_Challenge0.txt}
-} contest, you would execute the following on the commandline:
-\begin{quote}
+You can always use the \code{--help} option to get a documentation about the available commands and options.
 
-sirius -1 MSpos\_Challenge0.txt -2 MSMSpos\_Challenge0.txt
-\end{quote}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-\section{Analysis Tools}
 Since version 4.4.0 the SIRIUS commandline program is designed as a toolbox that 
-provides different tools (subcommands) for metabolite identification that can be concatenated to \emph{Toolchains} that are specific to your needs. The toolbox provides subcommands of the following categories:
+provides different tools (subcommands) for metabolite identification. This tools can be concatenated to \emph{toolchains} to compute multiple analysis steps at once. we distinguish subcommands of the following categories:
 
 \begin{itemize}
 	\item \textbf{CONFIGURATION: }
 	The config tool can be executed before every Toolchain or standalone tool to set all configurations available in SIRIUS from the command line.
 	\item \textbf{STANDALONE: }
-	Subtools that run Standalone and cannot be concatenated with other subtools. These are usually tools for configuration purposes.
+	Tools that run Standalone and cannot be concatenated with other subtools. These are usually tools for configuration purposes.
 	\item \textbf{PREPROCESSING: }
 	Tools that prepare input data to be compatible with SIRIUS. 
 	\item \textbf{COMPOUND TOOL: }
-	A tool that analysis each compound (instance) of the dataset individually and can be concatenated with other tools.
+	Tools that analyze each compound (instance) of the dataset individually and can be concatenated with other tools.
 	\item \textbf{DATASET TOOL: }
-	A tool that analysis all compounds (instances) of the dataset simultaneously and can be concatenated with other tools.
+	Tools that analyze all compounds (instances) of the dataset simultaneously and can be concatenated with other tools.
 \end{itemize}
 
-\subsection{Basic parameters}
-\subsubsection{Ion modes}
-\label{commandline:ions}\label{commandline:ion-modes}
-Whenever SIRIUS requires the ion mode, it should be given in the following format:
+Each subtool can also be called with the \code{--help} option to get a documentation about the available options and commands that might follow up in a toolchain. For the \code{formula} tool the command would be: 
 
 \begin{Verbatim}[commandchars=\\\{\}]
-[M+ADDUCT]+ for positive ions
-[M+ADDUCT]\PYGZhy{} for negative ions
-[M\PYGZhy{}ADDUCT]\PYGZhy{} for losses
-[M]+ for instrinsically charged compounds
+sirius formula --help
 \end{Verbatim}
-
-ADDUCT is the molecular formula of the adduct. The most common ionization modes are \code{{[}M+H{]}+}, \code{{[}M+Na{]}+}, \code{{[}M-H{]}-}, \code{{[}M+Cl{]}-}. Currently, SIRIUS supports only single-charged compounds, so \code{{[}M+2H{]}2+} is not valid. For intrinsic charged compounds \code{{[}M{]}+} and \code{{[}M{]}-} should be used.
-
-
-\subsubsection{Molecular formulas}
-\label{commandline:molecular-formulas}\label{commandline:formulas}
-
-Molecular Formulas in SIRIUS must not contain brackets.
-Hence, \code{2(C2H2)} is not a valid molecular formula; write \code{C4H4}
-instead.  Furthermore, all molecular formulas in SIRIUS are always neutral,
-and there is no possibility to add a charge on a molecular formula (instead,
-charges are given separately). Hence, \code{CH3+} is not a valid molecular
-formula.  Write \code{CH3} instead, and provide the charge separately via
-commandline option.
+ %Assuming you want to analyze the example data given in the CASMI \footnote{\sphinxAtStartFootnote%
+%\url{http://casmi-contest.org/2014/example/MSpos\_Challenge0.txt}
+%} contest, you would execute the following on the commandline:
+%\begin{quote}
+%sirius -1 MSpos\_Challenge0.txt -2 MSMSpos\_Challenge0.txt
+%\end{quote}
 
 
-\subsubsection{Chemical alphabets}
-\label{commandline:alphabets}\label{commandline:chemical-alphabets}
-Whenever SIRIUS requires the chemical alphabet, you have to provide which elements should be considered and what is the maximum amount for each element. Chemical alphabets are written like molecular formulas. The maximum amount of an element is written in square brackets behind the element. If no square brackets are given, the element might occur arbitrary often. The standard alphabet is CHNOP{[}5{]}S, allowing the elements C, H, N O and S as well as up to five times the element P.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\subsection{Identifying Molecular Formulas}
+
+
+\section{Identifying Molecular Formulas}
 \label{commandline:identifying-molecular-formulas}
-The main purpose of SIRIUS is identifying the molecular formula of the measured ion. The syntax for this command is:
+One main purpose of SIRIUS is identifying the molecular formula of the measured ion. For this task SIRIUS provides the \code{formula} tool. The most basic way to use the \code{formula} tool is in \emph{single compound mode}:
 
 \begin{Verbatim}[commandchars=\\\{\}]
-sirius [OPTIONS] \PYGZhy{}z \PYGZlt{}PARENTMASS\PYGZgt{} \PYGZhy{}i \PYGZlt{}IONIZATION\PYGZgt{} \PYGZhy{}1 \PYGZlt{}MS FILE\PYGZgt{} \PYGZhy{}2 \PYGZlt{}MS/MS FILE\PYGZgt{}
+sirius [OPTIONS] formula [OPTIONS] \PYGZhy{}z \PYGZlt{}PARENTMASS\PYGZgt{} \PYGZhy{}i \PYGZlt{}IONIZATION\PYGZgt{} \PYGZhy{}1 \PYGZlt{}MS FILE\PYGZgt{} \PYGZhy{}2 \PYGZlt{}MS/MS FILE\PYGZgt{}
 \end{Verbatim}
 
-Where MS FILE and MS/MS FILE are either CSV or MGF files. If MGF files are used, you might omit the PARENTMASS option. If you omit the IONIZATION option, {[}M+H{]}+ is used as default. It is also possible to give a list of MS/MS files if you have several measurements of the same compound with different collision energies. SIRIUS will merge these MS/MS spectra into one spectrum.
+Where \gui{MS FILE} and \gui{MS/MS FILE} are either CSV or MGF files. If MGF files are used, you might omit the \code{-z} option. If you omit the \code{-i} option, {[}M+H{]}+ is used as default. It is also possible to give a list of MS/MS files if you have several measurements of the same compound with different collision energies. SIRIUS will merge these MS/MS spectra into one spectrum.
 
 If your input files are in \code{.ms} or \code{.mgf} format (containing MSLEVEL and PEPMASS meta information), you can omit the -1 and -2 flag. For example:
 
 \begin{Verbatim}[commandchars=\\\{\}]
-sirius [OPTIONS] demo\PYGZhy{}data/ms
+sirius [OPTIONS] formula [OPTIONS] demo\PYGZhy{}data/ms
 \end{Verbatim}
 
 SIRIUS will pick the meta information (parentmass, ionization etc.) from the \code{.ms} files in the given directory. This allows SIRIUS to run in batch mode (analyzing multiple compounds without starting a new jvm process every time).
 
-SIRIUS will output a candidate list containing the \gui{rank}, \gui{overall score}, \gui{fragmentation pattern score}, \gui{isotope pattern score}, the number of \gui{explained peaks} and the relative amount of \gui{explained intensity}. See the following example output:
+Besides the raw results like the fragmentation trees in \code{.json} format, SIRIUS will output a  \code{formula\_candidates.csv} containing the  
+\gui{rank},	\gui{molecularFormula},	\gui{adduct}, \gui{precursorFormula},	\gui{rankingScore},	\gui{TreeIsotope\_Score},	\gui{Tree\_Score},	\gui{Isotope\_Score},	\gui{explainedPeaks},	\gui{explainedIntensity}.
 
-\begin{Verbatim}[commandchars=\\\{\}]
-sirius  \PYGZhy{}z 354.1347 \PYGZhy{}p orbitrap  \PYGZhy{}1 demo\PYGZhy{}data/txt/chelidonine\PYGZus{}ms.txt
-        \PYGZhy{}2 demo\PYGZhy{}data/txt/chelidonine\PYGZus{}msms1.txt demo\PYGZhy{}data/txt/chelidonine\PYGZus{}msms2.txt
-
-1.) C20H19NO5         score: 33.17    tree: +27.48    iso: 5.69       peaks: 13       95.44 \PYGZpc{}
-2.) C16H22N2O5P       score: 32.35    tree: +26.77    iso: 5.58       peaks: 13       95.44 \PYGZpc{}
-3.) C12H23N3O7S       score: 24.62    tree: +24.62    iso: 0.00       peaks: 13       95.44 \PYGZpc{}
-4.) C18H17N4O4        score: 23.28    tree: +23.28    iso: 0.00       peaks: 14       95.79 \PYGZpc{}
-5.) C14H20N5O4P       score: 21.61    tree: +21.61    iso: 0.00       peaks: 14       95.79 \PYGZpc{}
-\end{Verbatim}
-
-The overall score is the sum of the fragmentation pattern score and the isotope pattern score. If the isotope pattern score is negative, it is set to zero. If at least one isotope pattern score is greater than 10, the isotope pattern is considered to have \emph{good quality} and only the candidates with best isotope pattern scores are selected for further fragmentation pattern analysis.
-
-\paragraph{Analysis Profiles}
-If you want to analyze spectra measured with Orbitrap or FT-ICR, you should specify the appropriate analysis profile. A profile is a set of configuration options and scoring functions SIRIUS will use for its analysis. For example, the Orbitrap and FT-ICR profiles having tighter constraints for the allowed mass deviation but do not rely so much on the intensity of isotope peaks. You can set the profile with the \code{-p \textless{}name\textgreater{}} option. By default, qtof is used as profile.
+The \gui{TreeIsotope\_Score} is the sum of the \gui{Tree\_Score} and the \gui{Isotope\_Score}. The \code{formula} tool uses the \gui{TreeIsotope\_Score} for ranking. If the \gui{Isotope\_Score} is negative, it is set to zero. If at least one \gui{Isotope\_Score} is greater than 10, the isotope pattern is considered to have \emph{good quality} and only the candidates with best isotope pattern scores are selected for further fragmentation pattern analysis.
 
 
-See the following examples for running SIRIUS commandline tool:
-
-\begin{Verbatim}[commandchars=\\\{\}]
-sirius \PYGZhy{}p orbitrap \PYGZhy{}z 239.0315 \PYGZhy{}i [M+Na]+ \PYGZhy{}1 bergapten\PYGZus{}ms.csv
-                \PYGZhy{}2 bergapten\PYGZus{}msms1.csv bergapten\PYGZus{}msms2.csv
-sirius \PYGZhy{}p fticr \PYGZhy{}z 215.0350 \PYGZhy{}i [M\PYGZhy{}H]\PYGZhy{} \PYGZhy{}e CHNOPSCl[2] \PYGZhy{}c 10 \PYGZhy{}s omit
-                \PYGZhy{}1 unknown\PYGZus{}ms1.csv \PYGZhy{}2 unknown\PYGZus{}ms2.csv
-sirius \PYGZhy{}p qtof \PYGZhy{}z 215.035 \PYGZhy{}i 1\PYGZhy{} \PYGZhy{}\PYGZhy{}auto\PYGZhy{}charge \PYGZhy{}2 unknown\PYGZus{}ms2.csv
-sirius \PYGZhy{}c 10 \PYGZhy{}o trees \PYGZhy{}O json msdir
-sirius \PYGZhy{}f C6H12O6 C5H6N7O C7H16OS2 \PYGZhy{}i [M+H]+ \PYGZhy{}1 ms.csv \PYGZhy{}2 msms.csv
-\end{Verbatim}
-
-
-\paragraph{Computing fragmentation trees}
+\subsection*{Computing fragmentation trees}
 \label{commandline:computing-fragmentation-trees}
 If you already know the correct molecular formula and just want to compute a
 fragmentation tree, you can specify a single molecular formula with
@@ -1836,120 +1902,46 @@ specified, the parent mass can be omitted. However, you still have to specify
 the ionization (except for default value \code{{[}M+H{]}+}):
 
 \begin{Verbatim}[commandchars=\\\{\}]
-sirius \PYGZhy{}f C20H19NO5 \PYGZhy{}2 demo\PYGZhy{}data/txt/chelidonine\PYGZus{}msms2.txt demo\PYGZhy{}data/txt/chelidonine\PYGZus{}msms2.txt
+sirius formula -f C20H19NO5 -2 demo-data/txt/chelidonine/\_msms1.txt demo-data/txt/chelidonine\_msms2.txt
 \end{Verbatim}
 
+\subsection*{Analysis Profiles}
+If you want to analyze spectra measured with Orbitrap or FT-ICR, you should specify the appropriate analysis profile. A profile is a set of configuration options and scoring functions SIRIUS will use for its analysis. For example, the Orbitrap and FT-ICR profiles having tighter constraints for the allowed mass deviation but do not rely so much on the intensity of isotope peaks. You can set the profile with the \code{-p \textless{}name\textgreater{}} option. By default, qtof is used as profile.
 
-\subsection{Identifying Molecular Structures}
+
+See the following examples for running SIRIUS commandline tool:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+sirius formula \PYGZhy{}p orbitrap \PYGZhy{}z 239.0315 \PYGZhy{}i [M+Na]+ \PYGZhy{}1 bergapten\PYGZus{}ms.csv \PYGZhy{}2 bergapten\PYGZus{}msms1.csv bergapten\PYGZus{}msms2.csv
+sirius formula \PYGZhy{}p fticr \PYGZhy{}z 215.0350 \PYGZhy{}i [M\PYGZhy{}H]\PYGZhy{} \PYGZhy{}e CHNOPSCl[2] \PYGZhy{}c 10 \PYGZhy{}1 unknown\PYGZus{}ms1.csv \PYGZhy{}2 unknown\PYGZus{}ms2.csv
+sirius formula \PYGZhy{}f C6H12O6 C5H6N7O C7H16OS2 \PYGZhy{}i [M+H]+ \PYGZhy{}1 ms.csv \PYGZhy{}2 msms.csv
+\end{Verbatim}
+
+\section{ZODIAC: Improve Molecular Formula Identifications}
+
+
+\section{CSI:FingerID: Identifying Molecular Structures}
 \label{commandline:identifying-molecular-structures}
 
-You can also search for molecular structures with
-CSI:FingerID. Just add the option \code{--fingerid} to trigger a CSI:FingerID
-search after fragmentation tree computation. With \code{--database} can now
-also specify the database SIRIUS should search in. Available
-are \code{pubchem} and \code{bio}.  You can also specify certain databases
-like \emph{code} and \emph{code}; however, we strongly recommended to instead
-filter the output list afterwards.
+With the \code{structure} tool you can search for molecular structures with
+CSI:FingerID. To run CSI:FingerID you need to execute the \code{formula} tool first. You also might want to run the \code{zodiac} for improved formula ranking if your data comes from the same sample type. 
 
-SIRIUS will generate CSV files for each input spectrum containing a ordered candidate list of structures with the CSI:FingerID score. Furthermore, another result CSV file is generated only the top candidates from all input spectra ordered by their confidence.
-\begin{quote}
+With \code{--database} you can specify the database SIRIUS should search in. Available are \code{pubchem} and \code{bio}. 
+%You can also specify certain databases
+%like \emph{code} and \emph{code}; however, we strongly recommended to instead
+%filter the output list afterwards.
 
-sirius -c 10 --database=pubchem --fingerid demo-data/ms/Bicuculline.ms
-\end{quote}
-
-
-\paragraph{Demo Data}
-\label{commandline:demo-data}
-
-You can download some sample spectra from the SIRIUS website
-at \url{http://bio.informatik.uni-jena.de/sirius2/wp-content/uploads/2015/05/demo.zip}
-
-The demo-data contain examples for three different data formats readable by
-SIRIUS. The MGF folder contain an example for a MGF file containing a single
-compound with several MS/MS spectra measured on an Orbitrap
-instrument. SIRIUS recognizes that these MS/MS spectra belong to the same
-compound because they have the same parent mass. To analyze this compound,
-run:
-%
-\begin{Verbatim}[commandchars=\\\{\}]
-sirius \PYGZhy{}p orbitrap demo\PYGZhy{}data/mgf/laudanosine.mgf
-\end{Verbatim}
-
-The output is:
-%
-\begin{Verbatim}[commandchars=\\\{\}]
-1.) C21H27NO4         score: 25.41    tree: +17.55    iso: 7.86       peaks: 12       97.94 \PYGZpc{}
-2.) C17H30N2O4P       score: 21.46    tree: +13.97    iso: 7.49       peaks: 12       97.94 \PYGZpc{}
-3.) C15H28N5O3P       score: 15.00    tree: +15.00    iso: 0.00       peaks: 11       87.04 \PYGZpc{}
-4.) C19H25N4O3        score: 14.66    tree: +14.66    iso: 0.00       peaks: 11       87.16 \PYGZpc{}
-5.) C14H27N7O2S       score: 13.69    tree: +13.69    iso: 0.00       peaks: 11       97.38 \PYGZpc{}
-\end{Verbatim}
-
-This is a ranking list of the top molecular formula candidates. The best
-candidate is \ce{C21H27NO4} with a overall score of 25.41. This score is the
-sum of the fragmentation pattern scoring (17.55) and the isotope pattern
-scoring (7.86). For the last three candidates, the isotope pattern scoring is
-0. In fact, this score can never fall below zero. If all isotope pattern
-scores are zero, you can assume that the isotope pattern has very low quality
-and cannot be used to determine the molecular formula. If the isotope pattern
-score of the top candidate is over 10, it is assumed to be a high quality
-isotope pattern. In this case, the isotope pattern is also used to filter out
-unlikely candidates and speed up the analysis.
-
-The last two columns contain the number of explained peaks in MS/MS spectrum
-as well as the relative amount of explained intensity. The last value should
-usually be over 80 \% or even 90 \%. If this value is very low you either
-have strange high intensive noise in your spectrum, or the allowed mass
-deviation might be too low to explain all the peaks.
-
-If you want to look at the fragmentation trees, you have to add the output
-option:
+SIRIUS will generate a \code{structure\_candidates.csv} for each compound containing a ordered candidate list of structures with the CSI:FingerID score. Furthermore, a \code{compound\_identification.csv} file is generated containing the top candidates from all compounds ordered by their confidence.
 
 \begin{Verbatim}[commandchars=\\\{\}]
-sirius \PYGZhy{}p orbitrap \PYGZhy{}o outputdir demo\PYGZhy{}data/mgf/laudanosine.mgf
+sirius  formula -c 10  structure --database=pubchem demo-data/ms/Bicuculline.ms
 \end{Verbatim}
 
-Now, SIRIUS will write the computed fragmentation trees into
-the \code{outputdir} directory. You can visualize this trees in PDF format
-using Graphviz:
+\subsection*{Confidence Score}
+\todo{describe the new confidence Score}
 
-\begin{Verbatim}[commandchars=\\\{\}]
-dot \PYGZhy{}Tpdf \PYGZhy{}O outputdir/laudanosine\PYGZus{}1\PYGZus{}C21H27NO4.dot
-\end{Verbatim}
 
-This creates a pdf file \code{outputdir/laudanosine\_1\_C21H27NO4.dot.pdf}.
-
-The directory \code{ms} contains two examples of the ms format. Each file contains a single compound measured with an Orbitrap instrument. To analyze this compound run:
-
-\begin{Verbatim}[commandchars=\\\{\}]
-sirius \PYGZhy{}p orbitrap \PYGZhy{}o outputdir demo\PYGZhy{}data/ms/Bicuculline.ms
-\end{Verbatim}
-
-As the ms file already contains the correct molecular formula, SIRIUS will
-directly compute the fragmentation tree. For such cases (as well as when you
-specify exactly one molecular formula via \code{-f} option) you can also
-specify the concrete filename of the output file:
-
-\begin{Verbatim}[commandchars=\\\{\}]
-sirius \PYGZhy{}p orbitrap \PYGZhy{}o mycompound.dot demo\PYGZhy{}data/ms/Bicuculline.ms
-\end{Verbatim}
-
-If you want to enforce a molecular formula analysis and ranking (although the correct molecular formula is given within the file) you can specify the number of candidates with the \code{-c} option:
-
-\begin{Verbatim}[commandchars=\\\{\}]
-sirius \PYGZhy{}p orbitrap \PYGZhy{}c 5 demo\PYGZhy{}data/ms/Bicuculline.ms
-\end{Verbatim}
-
-SIRIUS will now ignore the correct molecular formula in the file and output the 5 best candidates.
-
-The TXT folder contains simple peaklist files. Such file formats can be easily extracted from Excel spreadsheets. However, they do not contain meta information like the MS level and the parent mass. So you have to specify this information via commandline options:
-
-\begin{Verbatim}[commandchars=\\\{\}]
-sirius  \PYGZhy{}p orbitrap  \PYGZhy{}z 354.134704589844 \PYGZhy{}1 demo\PYGZhy{}data/txt/chelidonine\PYGZus{}ms.txt
-        \PYGZhy{}2 demo\PYGZhy{}data/txt/chelidonine\PYGZus{}msms1.txt demo\PYGZhy{}data/txt/chelidonine\PYGZus{}msms2.txt
-\end{Verbatim}
-
-The demo data contain a clean MS spectrum (e.g. there is only one isotope pattern contained in the MS spectrum). In such cases, SIRIUS can infer the correct parent mass from the MS data (by simply using the monoisotopic mass of the isotope pattern as parent mass). So you can omit the \code{-z} option in this cases.
+\section{Canopus: Predicting Compound Classes without Identification}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  CHAPTER  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
