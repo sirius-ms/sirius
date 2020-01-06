@@ -39,8 +39,8 @@ CSI:FingerID.</span>
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0.1/sirius-4.0.1-osx64-headless.zip)
 
 ### Sources on GitHub
-- [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)
-- [SIRIUS library](https://github.com/boecker-lab/sirius)
+- [SIRIUS Software](https://github.com/boecker-lab/sirius)
+- [SIRIUS libraries](https://github.com/boecker-lab/sirius-libs)
 
 <!--end download-->
 
