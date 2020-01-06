@@ -530,7 +530,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         connection.close();
     }
 
-    protected static class SqlConnector implements ConnectionPool.Connection<Connection> {
+    protected static class SqlConnector implements ConnectionPool.Connector<Connection> {
         static {
             //it seems that tomcat need that to ensure that the driver is loaded before usage
             try {
@@ -567,6 +567,16 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
                 connection.close();
             } catch (SQLException e) {
                 throw new IOException(e);
+            }
+        }
+
+        @Override
+        public boolean isValid(Connection connection) {
+            try {
+                return connection.isValid(10);
+            } catch (SQLException e) {
+                LoggerFactory.getLogger(getClass()).warn("Error during ChemDB connection validation? Returning inValid state.", e);
+                return false;
             }
         }
     }
