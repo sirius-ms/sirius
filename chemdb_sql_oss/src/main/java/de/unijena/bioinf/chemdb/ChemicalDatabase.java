@@ -260,7 +260,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         final boolean enforceBio = bioFilter == BioFilter.ONLY_BIO;
         final PreparedStatement statement;
         if (enforceBio) {
-            final long bioflag = DataSource.BIOFLAG();
+            final long bioflag = DataSource.BIO.flag;
             statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM " + STRUCTURES_TABLE + " WHERE formula = ? AND (flags & " + bioflag + " ) != 0");
         } else {
             statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM " + STRUCTURES_TABLE + " WHERE formula = ?");

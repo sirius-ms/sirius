@@ -11,6 +11,7 @@ public enum DataSource {
     KNAPSACK("KNApSAcK", 16, "SELECT knapsack_id FROM ref.knapsack WHERE inchi_key_1 = ?", "http://kanaya.naist.jp/knapsack_jsp/information.jsp?word=C%08d"),
     CHEBI("CHEBI", 32, "SELECT chebi_id FROM ref.chebi WHERE inchi_key_1 = ?", "https://www.ebi.ac.uk/chebi/searchId.do?chebiId=%s"),
     PUBMED("PubMed", 64, null, null),
+    //the BIO flag is a collection of many bio-like databases. Furthermore, there is a flag 128 in the PSQL structure datagase which was called bio. This is part of the combined bio-like database. Soon, the 'bio' flag 128 will be obsolete and replaced by different flags.
     BIO("Bio Database", makeBIOFLAG(), null, null),
     KEGG("KEGG", 256, "SELECT kegg_id FROM ref.kegg WHERE inchi_key_1 = ?", "http://www.kegg.jp/dbget-bin/www_bget?cpd:%s"),
     HSDB("HSDB", 512, "SELECT cas FROM ref.hsdb WHERE inchi_key_1 = ?", null),
@@ -58,7 +59,7 @@ public enum DataSource {
     }
 
     public static boolean isBio(long flags) {
-        return (flags & BIOFLAG()) != 0;
+        return (flags & BIO.flag) != 0;
     }
 
     public boolean isBio() {
@@ -74,10 +75,6 @@ public enum DataSource {
     }
 
     // 4294967292
-    public static long BIOFLAG() {
-        return BIO.flag;
-    }
-
     private static long makeBIOFLAG() {
         long bioflag = 0L;
         for (int i = 2; i < 32; ++i) {
