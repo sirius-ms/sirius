@@ -86,7 +86,7 @@ public class RootOptionsCLI<M extends ProjectSpaceManager> implements RootOption
 
 
     //    @Option(names = "--initial-compound-buffer", description = "Number of compounds that will be loaded initially into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores", order = 60)
-    @Option(names = {"--compound-buffer", "--initial-compound-buffer"}, description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores", order = 60)
+    @Option(names = {"--compound-buffer", "--initial-compound-buffer"}, description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores. Note that for DATASET_TOOLS the compound buffer may have no effect because this tools may need all compounds in memory for computation.", order = 60)
     public void setInitialInstanceBuffer(Integer initialInstanceBuffer) {
         if (initialInstanceBuffer == null)
             initialInstanceBuffer = SiriusJobs.getGlobalJobManager().getCPUThreads();
@@ -142,7 +142,7 @@ public class RootOptionsCLI<M extends ProjectSpaceManager> implements RootOption
         return inputFiles;
     }
 
-    @Option(names = {"--ignore-formula"}, description = "ignore given molecular formula in .ms or .mgf file format, ")
+    @Option(names = {"--ignore-formula"}, description = "ignore given molecular formula if present in .ms or .mgf input files.")
     private boolean ignoreFormula = false;
     //endregion
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

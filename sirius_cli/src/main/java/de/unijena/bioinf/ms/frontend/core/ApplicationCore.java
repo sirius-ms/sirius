@@ -1,9 +1,4 @@
 package de.unijena.bioinf.ms.frontend.core;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius
- * 19.09.16.
- */
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
@@ -46,14 +41,10 @@ public abstract class ApplicationCore {
     public static final Path WORKSPACE;
     public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
     public static final WebAPI WEB_API;
-//    public static final Canopus CANOPUS;
-
-
 
     //creating
     static {
         try {
-//            System.setProperty("de.unijena.bioinf.jjobs.DEBUG", "true");
             System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
 
             final String version = PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
