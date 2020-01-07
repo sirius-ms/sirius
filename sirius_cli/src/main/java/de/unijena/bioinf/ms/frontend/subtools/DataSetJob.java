@@ -44,14 +44,14 @@ public abstract class DataSetJob extends BasicDependentJJob<Iterable<Instance>> 
         if (inputInstances == null || inputInstances.isEmpty())
             throw new IllegalArgumentException("No Input found, All dependent SubToolJobs are failed.");
         if (!failedJobs.isEmpty())
-            logWarn("There are " + failedJobs.size() + " failed input providing InstanceJobs!" + System.lineSeparator()
-                    + "Skipping Failed InstanceJobs: " + System.lineSeparator()
-                    + failedJobs.stream().map(JJob::identifier).collect(Collectors.joining(System.lineSeparator()))
+            logWarn("There are " + failedJobs.size() + " failed input providing InstanceJobs!"
+                    + " Skipping Failed InstanceJobs: " + System.lineSeparator() + "\t"
+                    + failedJobs.stream().map(JJob::identifier).collect(Collectors.joining(System.lineSeparator() + "\t"))
             );
         if (!failedInstances.isEmpty())
-            logWarn("There are " + failedInstances.size() + " invalid input Instances!" + System.lineSeparator()
-                    + "Skipping Invalid Input Instances: " + System.lineSeparator()
-                    + failedInstances.stream().map(Instance::toString).collect(Collectors.joining(System.lineSeparator()))
+            logWarn("There are " + failedInstances.size() + " invalid input Instances!"
+                    + " Skipping Invalid Input Instances: " + System.lineSeparator() + "\t"
+                    + failedInstances.stream().map(Instance::toString).collect(Collectors.joining(System.lineSeparator() + "\t"))
             );
     }
 
