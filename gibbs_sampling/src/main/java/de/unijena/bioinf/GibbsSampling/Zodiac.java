@@ -71,36 +71,12 @@ public class Zodiac {
         return new BasicMasterJJob<ZodiacResultsWithClusters>(JJob.JobType.CPU) {
             @Override
             protected ZodiacResultsWithClusters compute() throws Exception {
-                Log.info("Step 2: Initialization of ZODIAC.");
-                final long t1 = System.currentTimeMillis();
                 init();
-                final long t2 = System.currentTimeMillis();
-                Log.info("Step 2 took " + ((t2-t1)/1000d) + " seconds" );
                 if (ids.length<=1) {
                     Log.error("Cannot run ZODIAC. SIRIUS input consists of " + ids.length + " instances. More are needed for running a network analysis.");
                     return null;
                 }
 
-//                long t3 = System.currentTimeMillis();
-//                System.out.println("Step 3: Graph building.");
-//                GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, FragmentsCandidate.class);
-//
-//                submitSubJob(graphBuilder);
-//
-//                Graph<FragmentsCandidate> graph = graphBuilder.takeResult();
-//                Graph.validateAndThrowError(graph, Log);
-//                long t4 = System.currentTimeMillis();
-//                System.out.println("Step 3 took " + ((t4-t3)/1000d) + " seconds" );
-//
-//                System.out.println("Step 4: Gibbs Sampling.");
-//                final long t5 = System.currentTimeMillis();
-//                GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel<>(graph, repetitions);
-//                gibbsParallel.setIterationSteps(iterationSteps, burnIn);
-//
-//                submitSubJob(gibbsParallel);
-//                CompoundResult<FragmentsCandidate>[] results = gibbsParallel.takeResult();
-
-                final long t5 = System.currentTimeMillis();
                 ZodiacResult<FragmentsCandidate> zodiacResult;
                 if (runTwoStep){
                     TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, repetitions, FragmentsCandidate.class);
@@ -113,48 +89,12 @@ public class Zodiac {
                 }
 
                 zodiacScoredTrees = mapZodiacScoresToFTrees(zodiacResult.getResults());
-                final long t6 = System.currentTimeMillis();
-                Log.debug("Sampling step took " + ((t6-t5)/1000d) + " seconds" );
                 if (clusterCompounds) zodiacResult = includedAllClusterInstances(zodiacResult);
                 else zodiacResult = new ZodiacResultsWithClusters(ids, zodiacResult.getGraph(), zodiacResult.getResults(), getSelfMapping(ids));
                 return (ZodiacResultsWithClusters)zodiacResult;
             }
         };
     }
-
-//    public ZodiacResultsWithClusters compute(int iterationSteps, int burnIn, int repetitions) throws ExecutionException {
-//        init();
-//        if (ids.length==0){
-//            Log.error("Cannot run ZODIAC. No/empty SIRIUS input provided.");
-//            return null;
-//        } else if (ids.length==1){
-//            Log.error("Don't run ZODIAC. Only a single compound in SIRIUS input.");
-//            return createOneCompoundOutput();
-//        }
-//
-//        ZodiacResult<FragmentsCandidate> zodiacResult;
-//        //if (runTwoStep){
-//            /*
-//            TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, repetitions, FragmentsCandidate.class);
-//            twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnIn);
-//            if (masterJJob!=null) masterJJob.submitSubJob(twoPhaseGibbsSampling);
-//            else SiriusJobs.getGlobalJobManager().submitJob(twoPhaseGibbsSampling);
-//
-//            zodiacResult = twoPhaseGibbsSampling.awaitResult();
-//            */
-//        //} else {
-//            zodiacResult = runOneStepZodiacOnly(iterationSteps, burnIn, repetitions);
-//        //}
-//
-////        CompoundResult<FragmentsCandidate>[] result = zodiacResult.getResults();
-//
-//        zodiacScoredTrees = mapZodiacScoresToFTrees(zodiacResult.getResults());
-//
-//        if (clusterCompounds) zodiacResult = includedAllClusterInstances(zodiacResult);
-//        else zodiacResult = new ZodiacResultsWithClusters(ids, zodiacResult.getGraph(), zodiacResult.getResults(), getSelfMapping(ids));
-//
-//        return (ZodiacResultsWithClusters)zodiacResult;
-//    }
 
     private ZodiacResult<FragmentsCandidate> runOneStepZodiacOnly(int iterationSteps, int burnIn, int repetitions) throws ExecutionException {
         Log.info("ZODIAC: Graph building.");
@@ -165,7 +105,7 @@ public class Zodiac {
         else graph = SiriusJobs.getGlobalJobManager().submitJob(graphBuilder).awaitResult();
 
         try {
-            Graph.validateAndThrowError(graph, Log);
+            Graph.validateAndThrowError(graph, Log::warn);
         } catch (Exception e) {
             throw new ExecutionException(e);
         }
