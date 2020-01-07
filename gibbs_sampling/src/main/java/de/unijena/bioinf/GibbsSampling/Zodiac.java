@@ -64,7 +64,7 @@ public class Zodiac {
         this.masterJJob = masterJJob;
         this.clusterCompounds = clusterCompounds;
         this.runTwoStep = runTwoStep;
-        this.Log = masterJJob != null ? masterJJob.LOG() : LoggerFactory.getLogger(Zodiac.class);
+        this.Log = masterJJob != null ? LoggerFactory.getLogger(masterJJob.loggerKey()) : LoggerFactory.getLogger(Zodiac.class); //todo this is a bit ugly, we should use log through the job API instead (correct Job ID prefixing).
     }
 
     public JJob<ZodiacResultsWithClusters> makeComputeJob(final int iterationSteps, final int burnIn, final int repetitions) {

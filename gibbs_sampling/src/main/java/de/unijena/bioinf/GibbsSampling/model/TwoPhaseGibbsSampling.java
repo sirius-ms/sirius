@@ -9,6 +9,7 @@ import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -80,11 +81,11 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 
 
 
-        LOG().info("ZODIAC: Graph building");
+        logInfo("ZODIAC: Graph building");
         long start = System.currentTimeMillis();
         GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, cClass);
         graph = submitSubJob(graphBuilder).awaitResult();
-        LOG().info("finished building graph after: "+(System.currentTimeMillis()-start)+" ms");
+        logInfo("finished building graph after: "+(System.currentTimeMillis()-start)+" ms");
     }
 
     private int maxSteps = -1;
@@ -100,8 +101,8 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
         if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
         checkForInterruption();
         init();
-        LOG().info("Running ZODIAC with "+firstRoundIds.length+" of "+ids.length+" compounds.");
-        Graph.validateAndThrowError(graph, LOG());
+        logInfo("Running ZODIAC with "+firstRoundIds.length+" of "+ids.length+" compounds.");
+        Graph.validateAndThrowError(graph, LoggerFactory.getLogger(loggerKey()));
         gibbsParallel = new GibbsParallel<>(graph, repetitions);
         gibbsParallel.setIterationSteps(maxSteps, burnIn);
         long start = System.currentTimeMillis();
@@ -109,7 +110,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 
 
         results1 = gibbsParallel.awaitResult();
-        LOG().debug("finished running "+repetitions+" repetitions in parallel: "+(System.currentTimeMillis()-start)+" ms");
+        logDebug("finished running " + repetitions + " repetitions in parallel: "+(System.currentTimeMillis()-start)+" ms");
         checkForInterruption();
 
         firstRoundIds = gibbsParallel.getGraph().getIds();
@@ -127,7 +128,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 //            gibbsParallel = new GibbsParallel<>(ids, combined, nodeScorers, edgeScorers, edgeFilter, workersCount, repetitions);
 
             //changed same as in 3phase
-            LOG().info("Running second round: Score "+(ids.length-results1.length)+" low quality compounds. "+ids.length+" compounds overall.");
+            logInfo("Running second round: Score "+(ids.length-results1.length)+" low quality compounds. "+ids.length+" compounds overall.");
             //todo rather sample everything and just use results of low quality compounds? may there arise problems? in principle should not as we still sample all compounds (even 'fixed')
             C[][] candidatesNewRound = combineNewAndOldAndSetFixedProbabilities(results1, firstRoundCompoundsIdx);
             //todo this stupid thing creates a complete new graph.
@@ -136,7 +137,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
             GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, fixedIds, cClass);
             graph = submitSubJob(graphBuilder).awaitResult();
             checkForInterruption();
-            Graph.validateAndThrowError(graph, LOG());
+            Graph.validateAndThrowError(graph, LoggerFactory.getLogger(loggerKey()));
 
             gibbsParallel = new GibbsParallel<>(graph, repetitions, fixedIds);
             gibbsParallel.setIterationSteps(maxSteps, burnIn);
