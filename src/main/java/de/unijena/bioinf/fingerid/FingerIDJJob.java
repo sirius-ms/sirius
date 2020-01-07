@@ -79,7 +79,7 @@ public class FingerIDJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
     @Override
     protected List<FingerIdResult> compute() throws Exception {
-        progressInfo("Instance '"  + experiment.getName() + "': Starting CSI:FingerID Computation.");
+        logDebug("Instance '"  + experiment.getName() + "': Starting CSI:FingerID Computation.");
         if ((experiment.getPrecursorIonType().getCharge() > 0) != (predictor.predictorType.isPositive()))
             throw new IllegalArgumentException("Charges of predictor and instance are not equal");
 
@@ -103,7 +103,7 @@ public class FingerIDJJob extends BasicMasterJJob<List<FingerIdResult>> {
         //filterIdentifications list if wanted
         final FormulaResultThreshold thresholder = experiment.getAnnotationOrThrow(FormulaResultThreshold.class);
         if (thresholder.useThreshold() && idResult.size() > 0 && !isAllNaN) {
-            progressInfo("Instance '"  + experiment.getName() + "': Filter Identification Results (soft threshold) for CSI:FingerID usage");
+            logDebug("Filter Identification Results (soft threshold) for CSI:FingerID usage");
 
             // first filterIdentifications identificationResult list by top scoring formulas
             final IdentificationResult top = idResult.get(0);
@@ -114,7 +114,7 @@ public class FingerIDJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 IdentificationResult e = idResult.get(k);
                 if (Double.isNaN(e.getScore()) || e.getScore() < threshold) break;
                 if (e.getTree() == null || e.getTree().numberOfVertices() <= 1) {
-                    progressInfo("Instance '"  + experiment.getName() + "': Cannot estimate structure for " + e.getMolecularFormula() + ". Fragmentation Tree is empty.");
+                    logDebug("Cannot estimate structure for " + e.getMolecularFormula() + ". Fragmentation Tree is empty.");
                     continue;
                 }
                 filteredResults.add(e);
@@ -128,21 +128,21 @@ public class FingerIDJJob extends BasicMasterJJob<List<FingerIdResult>> {
             while (iter.hasNext()) {
                 final IdentificationResult ir = iter.next();
                 if (ir.getTree().numberOfVertices() < 3) {
-                    LoggerFactory.getLogger(FingerIDJJob.class).warn("Ignore fragmentation tree for " + ir.getMolecularFormula() + " because it contains less than 3 vertices.");
+                    logWarn("Ignore fragmentation tree for " + ir.getMolecularFormula() + " because it contains less than 3 vertices.");
                     iter.remove();
                 }
             }
         }
 
         if (filteredResults.isEmpty()) {
-            progressInfo("Instance '"  + experiment.getName() + "':No suitable fragmentation tree left.");
+            logWarn("No suitable fragmentation tree left.");
             return Collections.emptyList();
         }
 
         PossibleAdducts adducts = experiment.getPrecursorIonType().isIonizationUnknown() ? experiment.getAnnotation(PossibleAdducts.class, () -> new Ms1Preprocessor().preprocess(experiment).getAnnotation(PossibleAdducts.class).orElseGet(PossibleAdducts::new)) : new PossibleAdducts(experiment.getPrecursorIonType());
 
         // EXPAND LIST for different Adducts
-        progressInfo("Instance '"  + experiment.getName() + "': Expanding Identification Results for different Adducts.");
+        logDebug("Expanding Identification Results for different Adducts.");
         final List<IdentificationResult> ionTypes = new ArrayList<>();
         final Set<MolecularFormula> neutralFormulas = new HashSet<>();
         for (IdentificationResult ir : filteredResults)
@@ -156,7 +156,7 @@ public class FingerIDJJob extends BasicMasterJJob<List<FingerIdResult>> {
                             if (newIr.getTree().numberOfVertices() >= 3 && neutralFormulas.add(newIr.getMolecularFormula()))
                                 ionTypes.add(newIr);
                         } catch (IllegalArgumentException e) {
-                            LoggerFactory.getLogger(FingerIDJJob.class).error("Error with instance " + getExperiment().getName() + " and formula " + ir.getMolecularFormula() + " and ion type " + ionType);
+                            logError("Error with instance " + getExperiment().getName() + " and formula " + ir.getMolecularFormula() + " and ion type " + ionType);
                             throw e;
                         }
                     }
@@ -178,7 +178,7 @@ public class FingerIDJJob extends BasicMasterJJob<List<FingerIdResult>> {
         final SearchStructureByFormula fingerBlastSearchEngine = predictor.database.getSearchEngine(searchDB.value);
         final long dbFlag = searchDB.getDBFlag();
 
-        progressInfo("Instance '"  + experiment.getName() + "': Preparing CSI:FingerID search jobs.");
+        logDebug("Preparing CSI:FingerID search jobs.");
         ////////////////////////////////////////
         //submit jobs for prediction and blast
         ///////////////////////////////////////
@@ -218,7 +218,7 @@ public class FingerIDJJob extends BasicMasterJJob<List<FingerIdResult>> {
             }
         }
 
-        progressInfo("Instance '" + experiment.getName() + "': Searching with CSI:FingerID");
+        logDebug("Searching with CSI:FingerID");
         /////////////////////////////////////////////////
         //collect results and annotate to fingerid Result
         /////////////////////////////////////////////////
@@ -239,8 +239,13 @@ public class FingerIDJJob extends BasicMasterJJob<List<FingerIdResult>> {
             }
         }
 
-        progressInfo("Instance '" + experiment.getName() + "': CSI:FingerID Search DONE!");
+        logDebug("CSI:FingerID Search DONE!");
         //in linked maps values() collection is not a set -> so we have to make that distinct
         return annotationJJobs.values().stream().distinct().collect(Collectors.toList());
+    }
+
+    @Override
+    public String identifier() {
+        return super.identifier() + " | Instance: " + experiment.toString() + "@" + experiment.getIonMass() + "m/z";
     }
 }
