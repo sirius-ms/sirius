@@ -200,7 +200,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
 
             updateProgress(0, maxSteps+burnIn, i+1);
 //            if((i % step == 0 && i>0) || i == (burnIn+maxSteps-1)) {
-//                LOG().info("step "+((double)(((i+1)*100/(maxSteps+burnIn))))+"%");
+//                logInfo("step "+((double)(((i+1)*100/(maxSteps+burnIn))))+"%");
 //
 //            }
         }
