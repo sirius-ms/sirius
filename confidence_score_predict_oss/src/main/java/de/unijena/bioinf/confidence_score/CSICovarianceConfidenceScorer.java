@@ -167,7 +167,6 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         final double[][] featureMatrix = new double[1][feature.length];
         featureMatrix[0] = feature;
         SVMUtils.standardize_features(featureMatrix, svm.scales);
-        SVMUtils.normalize_features(featureMatrix, svm.scales);
         return new SVMPredict().predict_confidence(featureMatrix, svm)[0];
     }
 
