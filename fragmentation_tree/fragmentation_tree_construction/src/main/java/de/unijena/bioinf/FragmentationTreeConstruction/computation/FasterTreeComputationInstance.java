@@ -122,8 +122,6 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
     @Override
     protected FinalResult compute() throws Exception {
-        final long t = System.nanoTime();
-//        System.out.println(new Date() + "\t-> I am Sirius, computing trees for Experiment " + pinput.getExperimentInformation().getName());
         configureProgress(0, 2, 1);
         score();
         startTime = System.currentTimeMillis();
@@ -136,11 +134,18 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         // as long as we do not find good quality results
         final boolean useHeuristic = pinput.getParentPeak().getMass() > 300;
         final ExactResult[] results = estimateTreeSizeAndRecalibration(decompositions, useHeuristic);
+
+        if (results.length > 0) {
+            final UnconsideredCandidatesUpperBound it = new UnconsideredCandidatesUpperBound(
+                    pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size() - results.length,
+                    results[results.length - 1].score);
+            for (ExactResult result : results) result.tree.setAnnotation(UnconsideredCandidatesUpperBound.class, it);
+        }
+
         //we do not resolve here anymore -> because we need unresolved trees to expand adducts for fingerid
         final List<FTree> trees = Arrays.stream(results).map(r -> fixIonization(r.tree)).collect(Collectors.toList());
-        final long t2 = System.nanoTime();
-        final int timeInSeconds = (int)Math.round((t2-t)*1e-9);
-//        System.out.println(new Date() + "\t-> I am Sirius, finished with computing trees for Experiment " + pinput.getExperimentInformation().getName() +" which took " + (timeInSeconds) + " seconds.");
+
+
         return new FinalResult(trees);
     }
 
@@ -291,38 +296,33 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     }
 
     private List<ExactResult> extractExactResults(List<ExactResult> results, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
+        final List<ExactResult> returnList;
         if (numberOfResultsToKeepPerIonization<=0 || results.size()<=numberOfResultsToKeep){
-            return results.subList(0, Math.min(results.size(), numberOfResultsToKeep));
+            returnList = results.subList(0, Math.min(results.size(), numberOfResultsToKeep));
         } else {
             Map<Ionization, List<ExactResult>> ionToResults = new HashMap<>();
-            int i = 0;
             for (ExactResult result : results) {
                 final Ionization ion = result.decomposition.getIon();
                 List<ExactResult> ionResults = ionToResults.get(ion);
-                if (ionResults==null){
+                if (ionResults == null) {
                     ionResults = new ArrayList<>();
                     ionResults.add(result);
                     ionToResults.put(ion, ionResults);
-                } else if (ionResults.size()<numberOfResultsToKeepPerIonization){
+                } else if (ionResults.size() < numberOfResultsToKeepPerIonization) {
                     ionResults.add(result);
                 }
-                ++i;
             }
             Set<ExactResult> exractedResults = new HashSet<>();
             exractedResults.addAll(results.subList(0, numberOfResultsToKeep));
             for (List<ExactResult> ionResults : ionToResults.values()) {
                 exractedResults.addAll(ionResults);
             }
-            List<ExactResult> list = new ArrayList<>();
-            list.addAll(exractedResults);
-            Collections.sort(list, Collections.reverseOrder());
-            if (!list.isEmpty()) {
-                final UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = new UnconsideredCandidatesUpperBound(pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size(), list.get(list.size()-1).score);
-                list.forEach(t->t.tree.setAnnotation(UnconsideredCandidatesUpperBound.class, unconsideredCandidatesUpperBound));
-            }
 
-            return list;
+            returnList = new ArrayList<>(exractedResults);
+            returnList.sort(Collections.reverseOrder());
         }
+
+        return returnList;
     }
 
     @NotNull
