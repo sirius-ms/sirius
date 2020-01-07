@@ -25,13 +25,21 @@ public class CdkFingerprintVersion extends FingerprintVersion {
     private final MolecularProperty[] properties;
     private final USED_FINGERPRINTS[] usedFingerprints;
 
+    public USED_FINGERPRINTS[] getUsedFingerprints() {
+        return usedFingerprints;
+    }
+
+    protected CdkFingerprintVersion() {
+        this(new USED_FINGERPRINTS[0]);
+    }
+
     public CdkFingerprintVersion(USED_FINGERPRINTS... fingerprints) {
         final ArrayList<MolecularProperty> properties = new ArrayList<>();
         long fastCompareFlag = 0L;
         Arrays.sort(fingerprints);
         for (USED_FINGERPRINTS uf : fingerprints) {
             properties.addAll(Arrays.asList(getDefaultPropertiesFor(uf)));
-            fastCompareFlag |= (1L<<uf.defaultPosition);
+            fastCompareFlag |= (1L << uf.defaultPosition);
         }
         this.fastCompareFlag = fastCompareFlag;
         this.usedFingerprints = fingerprints;

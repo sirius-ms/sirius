@@ -15,6 +15,10 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
 
     }
 
+    public static ProbabilityFingerprint fromProbabilityArrayBinary(FingerprintVersion fingerprintVersion, byte[] binary){
+        return new ProbabilityFingerprint(fingerprintVersion, convertToDoubles(binary));
+    }
+
     @Override
     public Fingerprint asDeterministic() {
         final boolean[] fp = new boolean[fingerprint.length];

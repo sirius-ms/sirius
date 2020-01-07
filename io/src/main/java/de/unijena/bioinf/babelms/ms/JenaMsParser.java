@@ -70,22 +70,27 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
     }
 
     public Ms2Experiment parse(BufferedReader reader, URL source, ParameterConfig config) throws IOException {
+
         ParserInstance p = null;
-        try {
-            if (reader == lastReader) {
-                p = new ParserInstance(source, reader, config);
-                p.newCompound(lastCompundName);
-                return p.parse();
-            } else {
-                p = new ParserInstance(source, reader, config);
-                return p.parse();
-            }
-        } finally {
-            if (p != null) {
-                if (p.compoundName != null) {
-                    lastReader = reader;
+        while (true) {
+            try {
+                if (reader == lastReader) {
+                    p = new ParserInstance(source, reader, config);
+                    p.newCompound(lastCompundName);
+                    return p.parse();
+                } else {
+                    p = new ParserInstance(source, reader, config);
+                    return p.parse();
                 }
-                lastCompundName = p.compoundName;
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).warn("Error when parsing Compound '" + p.compoundName + "'. Skipping this entry!");
+            } finally {
+                if (p != null) {
+                    if (p.compoundName != null) {
+                        lastReader = reader;
+                    }
+                    lastCompundName = p.compoundName;
+                }
             }
         }
     }
@@ -198,9 +203,20 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                             }
                         }
                     }
-                } catch (RuntimeException e) {
-                    e.printStackTrace();
-                    error(e.toString());
+                } catch (IOException | RuntimeException e) {
+//                   go to next compound
+                    line = reader.readLine();
+                    while (line != null && !line.startsWith(">compound")) {
+                        try {
+                            line = reader.readLine();
+                        } catch (IOException ex) {
+                            LoggerFactory.getLogger(getClass()).warn("Error when cleaning up after Exception", ex);
+                        }
+                    }
+
+                    if (e instanceof RuntimeException)
+                        error(e.toString());
+                    else throw e;
                 }
             }
             flushCompound();
@@ -490,22 +506,33 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             }
         }
 
-        //todo ms1 annotations lost through copy cascade
         private void newSpectrum() {
             //always parse empty MS1/MS2. else this might create issues with MS1/MS2 mapping
+            final AnnotatedSpectrum<Peak> spec;
             if (spectrumType == SPECTRUM_TYPE.MS1) {
-                ms1spectra.add(new SimpleSpectrum(currentSpectrum));
+                spec = new SimpleSpectrum(currentSpectrum);
+                ms1spectra.add((SimpleSpectrum) spec);
             } else if (spectrumType == SPECTRUM_TYPE.MS2) {
-                ms2spectra.add(new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2));
+                spec = new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2);
+                ms2spectra.add((MutableMs2Spectrum) spec);
             } else if (currentSpectrum.size() > 0) {
                 if (spectrumType == SPECTRUM_TYPE.MERGED_MS1) {
                     mergedMs1 = new SimpleSpectrum(currentSpectrum);
+                    spec = mergedMs1;
                 } else {
                     warn("Unknown spectrum type. Description must contain one of the following keywords '>[ms1|mergedms1|ms2|collision|energy]'. " +
                             "Spectrum will be processed as MS2 spectrum.");
-                    ms2spectra.add(new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2));
+                    spec = new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2);
+                    ms2spectra.add((MutableMs2Spectrum) spec);
                 }
             } else return;
+
+            //transfer spectra to copied version of spectrum
+            currentSpectrum.getAnnotation(AdditionalFields.class).ifPresent(
+                    fields -> spec.setAnnotation(AdditionalFields.class, fields)
+            );
+
+            //creat new spectrum
             spectrumType = SPECTRUM_TYPE.UNKNOWN;
             this.tic = 0;
             this.currentEnergy = null;
@@ -528,40 +555,6 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private void parseIonizations(String ions) throws IOException {
             if (ions.contains(",")) {
                 changeConfig("AdductSettings.enforced",ions);
-                /*String[] arr = ions.split(",");
-                PrecursorIonType[] ionTypes = new PrecursorIonType[arr.length];
-                double[] probabilities = new double[arr.length];
-                for (int i = 0; i < arr.length; i++) {
-                    String s = arr[i];
-                    final Matcher m = ION_WITH_OR_WIHOUT_PROB_PATTERN.matcher(s);
-                    if (m.find()) {
-                        final PrecursorIonType ion = PeriodicTable.getInstance().ionByName(m.group(1).trim());
-                        if (ion == null) {
-                            warn("Unknown ionization in: '" + s + "'");
-                            return;
-                        }
-                        if (!ion.hasNeitherAdductNorInsource()) {
-                            warn("Currently only simple ionization (e.g. [M+Na]+) without additional modifications or insource fragments are supported.");
-                        }
-                        ionTypes[i] = ion;
-                        if (m.group(3) != null && m.group(3).length() > 0) {
-                            probabilities[i] = Double.parseDouble(m.group(3));
-                        } else probabilities[i] = 1d;
-                    } else {
-                        warn("Cannot parse ionizations: '" + ions + "'");
-                        return;
-                    }
-                }
-                final Set<PrecursorIonType> ionTypeSet = new HashSet<>();
-                for (int i = 0; i < ionTypes.length; i++) {
-                    PrecursorIonType ionType = ionTypes[i];
-                    ionTypeSet.add(ionType);
-                    if (probabilities[i]>1) {
-                        warn("Probabilities for ion types are currently not supported");
-                    }
-                }
-                final AdductSettings s = this.experiment.getAnnotationOrDefault(AdductSettings.class);
-                annotations.put(AdductSettings.class, s.withEnforced(ionTypeSet));*/
             } else {
                 final PrecursorIonType ion = PeriodicTable.getInstance().ionByNameOrNull(ions.trim());
                 if (ion == null) {
@@ -571,27 +564,5 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 this.ionization = ion;
             }
         }
-
-
-        /*private void postprocess() {
-            setMassDeviations();
-        }*/
-
-        /*private void setMassDeviations() {
-            if (ppmMax == 0 && ppmMaxMs2 == 0 && noiseMs2 == 0) return;
-            if (ppmMaxMs2 == 0) ppmMaxMs2 = ppmMax;
-            if (ppmMax != 0) {
-                annotations.put(MS1MassDeviation.class, PropertyManager.DEFAULTS.createInstanceWithDefaults(MS1MassDeviation.class).withAllowedMassDeviation(new Deviation(ppmMax)));
-            }
-
-            if (ppmMaxMs2 != 0) {
-                annotations.put(MS2MassDeviation.class, PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).withAllowedMassDeviation(new Deviation(ppmMaxMs2)));
-            }
-
-            if (noiseMs2 != 0) {
-                annotations.put(MedianNoiseIntensity.class, new MedianNoiseIntensity(noiseMs2));
-            }
-        }*/
-
     }
 }

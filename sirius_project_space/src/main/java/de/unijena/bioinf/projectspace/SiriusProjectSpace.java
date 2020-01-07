@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -87,10 +86,10 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     protected synchronized void open() throws IOException {
         ids.clear();
-        int maxIndex = 0;
-        for (Path dir : Files.list(root).collect(Collectors.toList())) {
+        int maxIndex = -1;
+        for (Path dir : Files.list(root).filter(Files::isDirectory).collect(Collectors.toList())) {
             final Path expInfo = dir.resolve(SiriusLocations.COMPOUND_INFO);
-            if (Files.isDirectory(dir) && Files.exists(expInfo)) {
+            if (Files.exists(expInfo)) {
                 final Map<String, String> keyValues = FileUtils.readKeyValues(expInfo);
                 final int index = Integer.parseInt(keyValues.getOrDefault("index", "0"));
                 final String name = keyValues.getOrDefault("name", "");
@@ -118,7 +117,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             }
         }
 
-        this.compoundCounter.set(maxIndex);
+        this.compoundCounter.set(maxIndex + 1);
         fireProjectSpaceChange(ProjectSpaceEvent.OPENED);
     }
 
@@ -265,17 +264,17 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             res.add(getFormulaResult(fid, comps.toArray(Class[]::new)));
 
         return res.stream().map(fr -> {
-            try {
-                T fs = fr.getAnnotationOrThrow(FormulaScoring.class).getAnnotationOrThrow(score);
+//            try {
+            T fs = fr.getAnnotation(FormulaScoring.class).map(sc -> sc.getAnnotationOr(score, FormulaScore::NA)).orElse(FormulaScore.NA(score));
                 return new SScored<>(fr, fs);
-            } catch (Exception e) {
-                LoggerFactory.getLogger(getClass()).warn("Could not load Scores of '" + fr.getId() + "' from Project Space! Score might be NaN");
+            /*} catch (Exception e) {
+                LoggerFactory.getLogger(getClass()).warn("Could not load Scores of '" + fr.getId() + "' from Project Space! Score might be NaN", e); //todo remove stack trace
                 try {
-                    return new SScored<>(fr, score.getConstructor(double.class).newInstance(Double.NaN));
+                    return new SScored<>(fr, score.getConstructor(double.class).newInstance(Double.NEGATIVE_INFINITY));
                 } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
                     throw new RuntimeException("Error when Instantiating Score class: " + score.getName(), e);
                 }
-            }
+            }*/
         }).sorted(Collections.reverseOrder()).collect(Collectors.toList());
     }
 

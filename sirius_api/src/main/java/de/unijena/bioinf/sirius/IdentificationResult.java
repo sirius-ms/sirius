@@ -25,11 +25,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 
 //this is basically just a scored tree
-//todo if the rank is used pretty offen, we can add it again
 public final class IdentificationResult<S extends FormulaScore> extends SScored<FTree, S> implements Cloneable {
-
-//    protected FTree tree;
-//    protected int rank = -1;
 
     public static <S extends FormulaScore> IdentificationResult<S> withPrecursorIonType(IdentificationResult<S> ir, PrecursorIonType ionType) {
 
@@ -54,14 +50,6 @@ public final class IdentificationResult<S extends FormulaScore> extends SScored<
     public PrecursorIonType getPrecursorIonType() {
         return getResolvedTree().getAnnotationOrThrow(PrecursorIonType.class);
     }
-
-    /*public int getRank() {
-        return rank;
-    }*/
-
-    /*public double getScore() {
-        return FTreeMetricsHelper.getSiriusScore(tree);
-    }*/
 
     public FTree getTree() {
         return getCandidate();
@@ -98,21 +86,9 @@ public final class IdentificationResult<S extends FormulaScore> extends SScored<
         return true;
     }
 
-    /*private void copyAnnotations(FTree tree, FTree beautifulTree) {
-        //todo do this for all annotations?
-        UnconsideredCandidatesUpperBound upperBound = tree.getAnnotationOrNull(UnconsideredCandidatesUpperBound.class);
-        if (upperBound == null) return;
-        //TODO always update as beautified trees are computed each separately!?
-//        if (beautifulTree.getAnnotationOrNull(UnconsideredCandidatesUpperBound.class)==null){
-        beautifulTree.clearAnnotation(UnconsideredCandidatesUpperBound.class);
-        beautifulTree.setAnnotation(UnconsideredCandidatesUpperBound.class, upperBound);
-//        }
-    }*/
-
     public IdentificationResult<S> clone() {
         return new IdentificationResult<>(new FTree(getTree()), getScoreObject());
     }
-
 
     public String toString() {
         return getMolecularFormula() + " with score " + getScore();
@@ -121,12 +97,4 @@ public final class IdentificationResult<S extends FormulaScore> extends SScored<
     public FTreeMetricsHelper newMetricsHelper() {
         return new FTreeMetricsHelper(getTree());
     }
-
-    /*@Override
-    public int compareTo(IdentificationResult o) {
-//        if (rank == o.rank)
-            return Double.compare(o.getScore(), getScore());
-
-//        else return Integer.compare(rank, o.rank);
-    }*/
 }

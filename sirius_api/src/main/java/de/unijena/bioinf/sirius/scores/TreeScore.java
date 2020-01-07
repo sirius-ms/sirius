@@ -12,4 +12,9 @@ public final class TreeScore extends FormulaScore {
     public ScoreType getScoreType() {
         return ScoreType.Logarithmic;
     }
+
+    @Override
+    public String name() {
+        return "Tree_Score";
+    }
 }
