@@ -138,7 +138,7 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
 
         long start = System.currentTimeMillis();
         combineResults();
-        LOG().debug("combined all results in: "+(System.currentTimeMillis()-start)+" ms");
+        logDebug("combined all results in: "+(System.currentTimeMillis()-start)+" ms");
 
         return createCompoundResults();
 
@@ -179,7 +179,7 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
         ++currentProgress;
 //        updateProgress(0, maxProgress, currentProgress, progressEvent.getMessage());
         if(currentProgress % step == 0) {
-            LOG().info((100*(currentProgress)/maxProgress)+"%");
+            logInfo((100*(currentProgress)/maxProgress)+"%");
         }
     }
 }
