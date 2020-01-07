@@ -25,13 +25,11 @@ import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.quality_assessment.TreeQualityEvaluator;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -97,10 +95,10 @@ public class ZodiacSubToolJob extends DataSetJob {
             List<LibraryHit> anchors = null;
             if (cliOptions.libraryHitsFile!=null) {
                 //todo implement option to set all anchors as good quality compounds
-                LOG().info("use library hits as anchors.");
+                logInfo("use library hits as anchors.");
                 ZodiacLibraryScoring zodiacLibraryScoring = settings.getAnnotationOrThrow(ZodiacLibraryScoring.class);
 
-                anchors = parseAnchors(input.keySet().stream().collect(Collectors.toList()));
+                anchors = parseAnchors(new ArrayList<>(input.keySet()));
 
                 Reaction[] reactions = ZodiacUtils.parseReactions(1);
                 Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
@@ -188,7 +186,7 @@ public class ZodiacSubToolJob extends DataSetJob {
                 if (cliOptions.summaryFile != null)
                     ZodiacUtils.writeResultSummary(scoreResults, clusterResults.getResults(), cliOptions.summaryFile);
             } catch (Exception e) {
-                LOG().error("Error when writing Deprecated ZodiacSummary", e);
+                logError("Error when writing Deprecated ZodiacSummary", e);
             }
         }
     }
@@ -197,9 +195,9 @@ public class ZodiacSubToolJob extends DataSetJob {
         List<LibraryHit> anchors;
         Path libraryHitsFile = (cliOptions.libraryHitsFile == null ? null : cliOptions.libraryHitsFile);
         try {
-            anchors = (libraryHitsFile == null) ? null : ZodiacUtils.parseLibraryHits(libraryHitsFile, ms2Experiments, LOG()); //GNPS and in-house format
+            anchors = (libraryHitsFile == null) ? null : ZodiacUtils.parseLibraryHits(libraryHitsFile, ms2Experiments, LoggerFactory.getLogger(loggerKey())); //GNPS and in-house format
         } catch (IOException e) {
-            LOG().error("Cannot load library hits from file.", e);
+            logError("Cannot load library hits from file.", e);
             return null;
         }
         return anchors;

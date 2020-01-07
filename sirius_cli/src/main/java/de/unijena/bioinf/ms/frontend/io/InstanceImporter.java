@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class InstanceImporter {
@@ -174,6 +175,7 @@ public class InstanceImporter {
     public static class InputExpanderJJob extends BasicJJob<InputFiles> {
 
         private final List<Path> input;
+        private final AtomicInteger progress = new AtomicInteger(0);
 
         public InputExpanderJJob(List<Path> input) {
             super(JobType.TINY_BACKGROUND);
@@ -184,12 +186,17 @@ public class InstanceImporter {
         @Override
         protected InputFiles compute() throws Exception {
             final InputFiles expandedFiles = new InputFiles();
-            return expandInput(input, expandedFiles);
+            if (input != null && !input.isEmpty()) {
+                updateProgress(0, input.size(), 0, "Expanding Input Files: '" + input.stream().map(Path::toString).collect(Collectors.joining(",")) + "'...");
+                expandInput(input, expandedFiles);
+                updateProgress(0, input.size(), input.size(), "...Input Files successfully expanded!");
+            }
+            return expandedFiles;
         }
 
-        private InputFiles expandInput(@NotNull final List<Path> files, @NotNull final InputFiles inputFiles) {
+        private void expandInput(@NotNull final List<Path> files, @NotNull final InputFiles inputFiles) {
             int p = 0;
-            updateProgress(0, files.size(), p, "Expanding Input Files...");
+//            updateProgress(0, files.size(), p, "Expanding Input Files...");
             for (Path g : files) {
                 if (!Files.exists(g)) {
                     LOG.warn("Path \"" + g.toString() + "\" does not exist and will be skipped");
@@ -227,10 +234,7 @@ public class InstanceImporter {
                 }
                 updateProgress(0, files.size(), ++p);
             }
-
-            updateProgress(0, files.size(), files.size(), "...Input Files expanded!");
-
-            return inputFiles;
+//            return inputFiles;
         }
     }
 

@@ -35,7 +35,7 @@ public abstract class InstanceJob extends BasicDependentJJob<Instance> implement
     protected Instance compute() throws Exception {
         checkInput();
         computeAndAnnotateResult(input);
-        updateProgress(0,100, 99, identifier() + " | DONE!");
+        updateProgress(0,100, 99, "DONE!");
 
         return input;
     }
@@ -51,7 +51,7 @@ public abstract class InstanceJob extends BasicDependentJJob<Instance> implement
 
     @Override
     public String identifier() {
-        return super.identifier() + " | Instance: '" + input.toString() + "'";
+        return super.identifier() + " | Instance: " + input.toString();
     }
 
     protected void checkInput() {

@@ -79,7 +79,7 @@ public class SiriusSubToolJob extends InstanceJob {
             System.out.println(out);*/
 
         } else {
-            LOG().info("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
+            logInfo("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
 //            System.out.println("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
         }
     }

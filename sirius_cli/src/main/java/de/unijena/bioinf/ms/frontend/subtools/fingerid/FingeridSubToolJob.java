@@ -33,13 +33,13 @@ public class FingeridSubToolJob extends InstanceJob {
                 inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, FingerblastResult.class);
 
         if (formulaResults == null || formulaResults.isEmpty()) {
-            LOG().info("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are not trees computed.");
+            logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are not trees computed.");
             return;
         }
 
         if (!isRecompute(inst) && formulaResults.stream().findFirst().map(SScored::getCandidate)
                 .map(c -> c.hasAnnotation(FingerprintResult.class) && c.hasAnnotation(FingerblastResult.class)).orElse(true)) {
-            LOG().info("Skipping CSI:FingerID for Instance \"" + inst.getExperiment().getName() + "\" because results already exist or result list is empty.");
+            logInfo("Skipping CSI:FingerID for Instance \"" + inst.getExperiment().getName() + "\" because results already exist or result list is empty.");
             return;
         }
 
