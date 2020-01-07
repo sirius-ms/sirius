@@ -43,7 +43,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
     public GraphBuilder(String[] ids, Scored<C>[][] possibleFormulas,  EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, Class<C> cClass) {
         super(JobType.CPU);
-        LOG().debug("initialize graph builder");
+        logDebug("initialize graph builder");
         this.graph = Graph.getGraph(ids, possibleFormulas);
         this.edgeScorers = edgeScorers;
         this.edgeFilter = edgeFilter;
@@ -167,7 +167,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
         //now using workers to compute edges, for the reason that not so many subjobs have to be created.
         //But does not seem to improve performance compared to previous version.
-        LOG().debug("computing edges");
+        logDebug("computing edges");
         long start = System.currentTimeMillis();
 
         List<Integer> allIndices = new ArrayList<>(size);
@@ -182,12 +182,12 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
             jobs.add(job);
             submitSubJob(job);
         }
-        LOG().info("running "+jobs.size()+" workers to compute edges");
+        logInfo("running "+jobs.size()+" workers to compute edges");
 
         for (BasicJJob job : jobs) {
             job.awaitResult();
         }
-        LOG().info("finished computing edges after "+(System.currentTimeMillis()-start));
+        logInfo("finished computing edges after "+(System.currentTimeMillis()-start));
 
     }
 
@@ -198,7 +198,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
         HighQualityRandom random = new HighQualityRandom();
 
         if (GibbsMFCorrectionNetwork.DEBUG){
-            LOG().info("setting connections in: "+(System.currentTimeMillis()-time)+" ms");
+            logInfo("setting connections in: "+(System.currentTimeMillis()-time)+" ms");
             TDoubleArrayList someScores = new TDoubleArrayList();
 
             for(int i = 0; i < 1000; ++i) {
@@ -227,7 +227,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
             sum += connection.length;
         }
 
-        LOG().info("Number of connections " + sum / 2);
+        logInfo("Number of connections " + sum / 2);
 
         if (GibbsMFCorrectionNetwork.DEBUG) {
             final TDoubleArrayList samples = new TDoubleArrayList();
@@ -266,7 +266,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
         if (progressEvent.getNewValue()!=100) return;
         ++numberOfFinishedComputations;
         if(numberOfFinishedComputations % step == 0 || numberOfFinishedComputations==size) {
-            LOG().info(Math.round(100*(numberOfFinishedComputations)/size)+"%");
+            logInfo(Math.round(100*(numberOfFinishedComputations)/size)+"%");
         }
     }
 
