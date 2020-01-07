@@ -40,7 +40,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
 
     protected void checkInput() {
         if (unfilteredSearchList == null)
-            throw new IllegalArgumentException("No Input Data found. " + LOG().getName());
+            throw new IllegalArgumentException("No Input Data found.");
     }
 
     @Override

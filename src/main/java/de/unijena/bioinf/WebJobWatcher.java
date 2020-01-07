@@ -50,97 +50,102 @@ final class WebJobWatcher {
 
         @Override
         protected Boolean compute() throws Exception {
-            long waitTime = INIT_WAIT_TIME;
-            while (true) {
-                checkForInterruption();
+            try {
+                long waitTime = INIT_WAIT_TIME;
+                while (true) {
+                    checkForInterruption();
 
-                synchronized (waitingJobs) {
-                    if (waitingJobs.isEmpty())
-                        waitingJobs.wait();
-                }
+                    synchronized (waitingJobs) {
+                        if (waitingJobs.isEmpty())
+                            waitingJobs.wait();
+                    }
 
-                final Set<JobId> orphanJobs = new HashSet<>(waitingJobs.keySet());
-                EnumMap<JobTable, List<JobUpdate<?>>> updates = NetUtils.tryAndWait(
-                        () -> api.updateJobStates(waitingJobs.keySet().stream().map(id -> id.jobTable).collect(Collectors.toSet())),
-                        this::checkForInterruption
-                );
-                List<JobUpdate<?>> toRemove = null;
+                    final Set<JobId> orphanJobs = new HashSet<>(waitingJobs.keySet());
+                    EnumMap<JobTable, List<JobUpdate<?>>> updates = NetUtils.tryAndWait(
+                            () -> api.updateJobStates(waitingJobs.keySet().stream().map(id -> id.jobTable).collect(Collectors.toSet())),
+                            this::checkForInterruption
+                    );
+                    List<JobUpdate<?>> toRemove = null;
 
 
-                if (updates != null && !updates.isEmpty()) {
-                    //update, find orphans and notify finished jobs
-                    toRemove = updates.values().stream().flatMap(Collection::stream).filter(up -> {
-                        try {
-                            checkForInterruption();
+                    if (updates != null && !updates.isEmpty()) {
+                        //update, find orphans and notify finished jobs
+                        toRemove = updates.values().stream().flatMap(Collection::stream).filter(up -> {
+                            try {
+                                checkForInterruption();
 
-                            final WebJJob<?, ?, ?> job;
-                            orphanJobs.remove(up.getGlobalId());
-                            job = waitingJobs.get(up.getGlobalId());
+                                final WebJJob<?, ?, ?> job;
+                                orphanJobs.remove(up.getGlobalId());
+                                job = waitingJobs.get(up.getGlobalId());
 
-                            if (job == null) {
-                                LOG().warn("Job \"" + up.getGlobalId().toString() + "\" was found on the server but is unknown locally. Trying to match it again later!");
+                                if (job == null) {
+                                    logWarn("Job \"" + up.getGlobalId().toString() + "\" was found on the server but is unknown locally. Trying to match it again later!");
+                                    return false;
+                                }
+
+                                return job.update(up).isFinished();
+                            } catch (Exception e) {
+                                logWarn("Could not update Job", e);
                                 return false;
                             }
+                        }).collect(Collectors.toList());
 
-                            return job.update(up).isFinished();
-                        } catch (Exception e) {
-                            LOG().warn("Could not update Job", e);
-                            return false;
+                        checkForInterruption();
+
+                        // crash and notify orphan jobs
+                        orphanJobs.stream().map(waitingJobs::get).forEach(j -> {
+                            if (!j.isFinished()) {
+                                j.crash(new Exception("Job not found on Server. It might have been deleted due to an Error."));
+                            } else
+                                logWarn("Already finished job is missing on Server. This indicates some Synchronization problem");
+                        });
+
+                        checkForInterruption();
+
+                        orphanJobs.addAll(toRemove.stream().map(JobUpdate::getGlobalId).collect(Collectors.toSet()));
+
+                        checkForInterruption();
+
+                        if (!orphanJobs.isEmpty()) {
+                            orphanJobs.forEach(waitingJobs::remove);
+                            // not it sync because it may take some time and is not needed since jobwatcher is single threaded
+                            NetUtils.tryAndWait(() -> api.deleteJobs(orphanJobs), this::checkForInterruption);
                         }
-                    }).collect(Collectors.toList());
-
-                    checkForInterruption();
-
-                    // crash and notify orphan jobs
-                    orphanJobs.stream().map(waitingJobs::get).forEach(j -> {
-                        if (!j.isFinished()) {
-                            j.crash(new Exception("Job not found on Server. It might have been deleted due to an Error."));
-                        } else
-                            LOG().warn("Already finished job is missing on Server. This indicates some Synchronization problem");
-                    });
-
-                    checkForInterruption();
-
-                    orphanJobs.addAll(toRemove.stream().map(JobUpdate::getGlobalId).collect(Collectors.toSet()));
-
-                    checkForInterruption();
-
-                    if (!orphanJobs.isEmpty()) {
-                        orphanJobs.forEach(waitingJobs::remove);
-                        // not it sync because it may take some time and is not needed since jobwatcher is single threaded
-                        NetUtils.tryAndWait(() -> api.deleteJobs(orphanJobs), this::checkForInterruption);
+                    } else {
+                        logWarn("Cannot fetch jobUpdates from CSI:FingerID Server. Trying again in " + waitTime + "ms.");
                     }
-                } else {
-                    LOG().warn("Cannot fetch jobUpdates from CSI:FingerID Server. Trying again in " + waitTime + "ms.");
-                }
 
-                checkForInterruption();
-                // if nothing was finished increase waiting time
-                // else set back to normal for fast reaction times
-                if (toRemove == null || toRemove.isEmpty()) {
-                    waitTime = (long) Math.min(waitTime * NetUtils.WAIT_TIME_MULTIPLIER, 30000);
-                    LOG().info("No CSI:FingerID prediction jobs finished. Try again in " + waitTime / 1000d + "s");
-                } else {
-                    waitTime = INIT_WAIT_TIME;
-                }
+                    checkForInterruption();
+                    // if nothing was finished increase waiting time
+                    // else set back to normal for fast reaction times
+                    if (toRemove == null || toRemove.isEmpty()) {
+                        waitTime = (long) Math.min(waitTime * NetUtils.WAIT_TIME_MULTIPLIER, 30000);
+                        logInfo("No CSI:FingerID prediction jobs finished. Try again in " + waitTime / 1000d + "s");
+                    } else {
+                        waitTime = INIT_WAIT_TIME;
+                    }
 
-                NetUtils.sleep(this::checkForInterruption, waitTime);
+                    NetUtils.sleep(this::checkForInterruption, waitTime);
+                }
+            } catch (Throwable e) {
+                throw e;
             }
+
         }
 
         @Override
         protected synchronized void cleanup() {
             super.cleanup();
 
-            LOG().info("Canceling WebWaiterJobs...");
+            logInfo("Canceling WebWaiterJobs");
             synchronized (waitingJobs) {
                 try {
                     waitingJobs.values().forEach(WaiterJJob::cancel); //this jobs are not submitted to the job manager and need no be canceled manually
-                    LOG().info("Try to delete leftover jobs on web server...");
+                    logInfo("Try to delete leftover jobs on web server...");
                     NetUtils.tryAndWait(() -> api.deleteJobs(waitingJobs.keySet()), () -> {}, 4000);
-                    LOG().info("...Job deletion Done!");
+                    logInfo("Job deletion Done!");
                 } catch (InterruptedException | TimeoutException e) {
-                    LOG().warn("Failed to delete remote jobs from server!", e);
+                    logWarn("Failed to delete remote jobs from server!", e);
                 } finally {
                     waitingJobs.clear();
                 }
