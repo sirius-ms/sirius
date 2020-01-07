@@ -204,7 +204,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
                     checkTimeout();
                 }
             }
-            Collections.sort(results, Collections.reverseOrder());
+            results.sort(Collections.reverseOrder());
             final int treeSizeCheck = Math.min(results.size(), MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY);
             if (tss == null || checkForTreeQuality(results.subList(0, treeSizeCheck))) {
                 break;
@@ -235,7 +235,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             submitSubJob(recalibrationJob);
             recalibrationJobs.add(recalibrationJob);
         }
-        final ExactResult[] exact = extractExactResults(recalibrationJobs.stream().map(this::takeResultAndCheckTime).sorted(Collections.reverseOrder()).collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization).toArray(new ExactResult[0]);
+        final ExactResult[] exact = extractExactResults(recalibrationJobs.stream().map(this::takeResultAndCheckTime).sorted(Collections.reverseOrder()).collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization).toArray(ExactResult[]::new);
         final double[] originalScores = new double[exact.length];
         for (int k=0; k < exact.length; ++k) originalScores[k] = exact[k].score;
         final ExactJob[] beautify = new ExactJob[exact.length];
