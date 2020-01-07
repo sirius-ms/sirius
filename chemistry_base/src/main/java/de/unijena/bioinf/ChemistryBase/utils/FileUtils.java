@@ -6,6 +6,7 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -13,6 +14,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.zip.*;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -561,23 +563,31 @@ public class FileUtils {
         }
     }
 
-    /**
-     * read the first nlines lines from file. Keep buffersize low.
-     * If less than nlines lines exist in file, fill them with empty strings
-     */
-    public static String[] head(File file, int nlines) throws IOException {
-        String[] lines = new String[nlines];
-        int k=0;
-        try (final BufferedReader br = new BufferedReader(new FileReader(file),40*nlines)) {
-            while (k < nlines) {
-                String l = lines[k++] = br.readLine();
-                if (l==null) {
-                    Arrays.fill(lines,k,lines.length,"");
-                    return lines;
-                }
-            }
+    public static void writeIntVector(Writer writer, int[] vector) throws IOException {
+        for (int value : vector) {
+            writer.write(String.valueOf(value));
+            writer.write('\n');
         }
-        return lines;
+    }
+
+    public static void writeKeyValues(Writer stream, Map<?, ?> map) throws IOException {
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            stream.write(String.valueOf(entry.getKey()));
+            stream.write('\t');
+            stream.write(String.valueOf(entry.getValue()));
+            stream.write('\n');
+        }
+    }
+
+    public static void writeTable(Writer w, @Nullable String[] header, Iterable<String[]> rows) throws IOException {
+        if (header != null) {
+            w.write(String.join("\t", header));
+            w.write(System.lineSeparator());
+        }
+        for (String[] row : rows) {
+            w.write(String.join("\t", row));
+            w.write(System.lineSeparator());
+        }
     }
 
     public static Map<String, String> readKeyValues(Path path) throws IOException {
@@ -602,12 +612,35 @@ public class FileUtils {
         return keyValues;
     }
 
-    public static void writeIntVector(Writer writer, int[] vector) throws IOException {
-        for (int value : vector) {
-            writer.write(String.valueOf(value));
-            writer.write('\n');
+    public static void readTable(BufferedReader br, boolean skipHeader, Consumer<String[]> f) throws IOException {
+        String line;
+        if (skipHeader)
+            br.readLine();
+        while ((line=br.readLine())!=null) {
+            f.accept(line.split("\t",-1));
         }
     }
+
+    /**
+     * read the first nlines lines from file. Keep buffersize low.
+     * If less than nlines lines exist in file, fill them with empty strings
+     */
+    public static String[] head(File file, int nlines) throws IOException {
+        String[] lines = new String[nlines];
+        int k=0;
+        try (final BufferedReader br = new BufferedReader(new FileReader(file),40*nlines)) {
+            while (k < nlines) {
+                String l = lines[k++] = br.readLine();
+                if (l==null) {
+                    Arrays.fill(lines,k,lines.length,"");
+                    return lines;
+                }
+            }
+        }
+        return lines;
+    }
+
+
 
     public static Path newTempFile(@NotNull String directory, @NotNull String prefix, @NotNull String suffix) {
         return Paths.get(directory, MessageFormat.format("{0}{1}{2}", prefix, UUID.randomUUID(), suffix));
@@ -616,5 +649,7 @@ public class FileUtils {
     public static Path newTempFile(@NotNull String prefix, @NotNull String suffix) {
         return newTempFile(System.getProperty("java.io.tmpdir"), prefix, suffix);
     }
+
+
 
 }

@@ -1,5 +1,7 @@
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedOutputStream;
@@ -20,40 +22,28 @@ public class FileBasedProjectSpaceWriter extends FileBasedProjectSpaceIO impleme
     @Override
     public void textFile(String relativePath, IOFunctions.IOConsumer<BufferedWriter> func) throws IOException {
         try (final BufferedWriter stream = Files.newBufferedWriter(resolveAndMkFilePath(relativePath))) {
-            func.consume(stream);
+            func.accept(stream);
         }
     }
 
     @Override
     public void binaryFile(String relativePath, IOFunctions.IOConsumer<BufferedOutputStream> func) throws IOException {
         try (final BufferedOutputStream stream = new BufferedOutputStream(Files.newOutputStream(resolveAndMkFilePath(relativePath)))) {
-            func.consume(stream);
+            func.accept(stream);
         }
     }
 
     @Override
     public void keyValues(String relativePath, Map<?, ?> map) throws IOException {
         try (final BufferedWriter stream = Files.newBufferedWriter(resolveAndMkFilePath(relativePath))) {
-            for (Map.Entry<?,?> entry : map.entrySet()) {
-                stream.write(String.valueOf(entry.getKey()));
-                stream.write('\t');
-                stream.write(String.valueOf(entry.getValue()));
-                stream.write('\n');
-            }
+            FileUtils.writeKeyValues(stream, map);
         }
     }
 
     @Override
     public void table(String relativePath, @Nullable  String[] header, Iterable<String[]> rows) throws IOException {
         try (final BufferedWriter bw = Files.newBufferedWriter(resolveAndMkFilePath(relativePath))) {
-            if (header!=null) {
-                bw.write(String.join("\t", header));
-                bw.newLine();
-            }
-            for (String[] row : rows) {
-                bw.write(String.join("\t", row));
-                bw.newLine();
-            }
+            FileUtils.writeTable(bw, header, rows);
         }
     }
 

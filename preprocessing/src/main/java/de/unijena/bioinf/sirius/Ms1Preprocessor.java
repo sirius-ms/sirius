@@ -107,7 +107,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         }
         final int charge = pinput.getExperimentInformation().getPrecursorIonType().getCharge();
 
-        final AdductSettings settings = pinput.getAnnotationOrThrow(AdductSettings.class);
+        final AdductSettings settings = pinput.getAnnotationOrDefault(AdductSettings.class);
         final PossibleAdducts ionModes = ionModeDetection.detect(pinput, settings.getDetectable(charge));
 
         final HashSet<PrecursorIonType> set = new HashSet<>(settings.getEnforced(charge));

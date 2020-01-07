@@ -1,6 +1,7 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -40,12 +41,7 @@ public class FileBasedProjectSpaceReader extends FileBasedProjectSpaceIO impleme
     @Override
     public void table(String relativePath, boolean skipHeader, Consumer<String[]> f) throws IOException {
         try (final BufferedReader br = Files.newBufferedReader(asPath(relativePath))) {
-            String line;
-            if (skipHeader)
-                line = br.readLine();
-            while ((line=br.readLine())!=null) {
-                f.accept(line.split("\t",-1));
-            }
+            FileUtils.readTable(br, skipHeader, f);
         }
     }
 
