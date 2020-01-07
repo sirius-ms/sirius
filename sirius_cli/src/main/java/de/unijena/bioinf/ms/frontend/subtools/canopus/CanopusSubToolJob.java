@@ -33,7 +33,7 @@ public class CanopusSubToolJob extends InstanceJob {
 
         // check if we need to skip
         if (!isRecompute(inst) && input.stream().anyMatch((it -> it.getCandidate().hasAnnotation(CanopusResult.class)))) {
-            LOG().info("Skipping Canopus for Instance \"" + inst.getExperiment().getName() + "\" because results already exist.");
+            logInfo("Skipping Canopus for Instance \"" + inst.getExperiment().getName() + "\" because results already exist.");
             return;
         }
 

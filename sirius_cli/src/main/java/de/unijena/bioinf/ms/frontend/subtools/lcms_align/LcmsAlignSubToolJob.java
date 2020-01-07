@@ -71,7 +71,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
         Cluster alignment = i.alignAndGapFilling();
         i.detectAdductsWithGibbsSampling(alignment).writeToFile(i, File.createTempFile("network", ".js"));
         final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(alignment);
-        LOG().info("Gapfilling Done.");
+        logInfo("Gapfilling Done.");
 
         int totalFeatures=0, goodFeatures=0;
         //save to project space
@@ -96,7 +96,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
 
             space.newCompoundWithUniqueId(experiment);
         }
-        LOG().info("LCMS-Align done. " + goodFeatures + " of " + totalFeatures +  " are in qood quality.");
+        logInfo("LCMS-Align done. " + goodFeatures + " of " + totalFeatures +  " are in qood quality.");
         return space;
     }
 }
