@@ -238,7 +238,7 @@ public class ZodiacUtils {
 
             UnconsideredCandidatesUpperBound unconsideredCandidatesUpperBound = candidates.get(0).getAnnotationOrNull(UnconsideredCandidatesUpperBound.class);
 
-            if (unconsideredCandidatesUpperBound ==null){
+            if (unconsideredCandidatesUpperBound == null){
                 ++missingCounter;
                 continue;
             }
@@ -260,7 +260,6 @@ public class ZodiacUtils {
                 if (candidates.get(0).hasLibraryHit()) dummyCandidate.setLibraryHit(candidates.get(0).getLibraryHit());
                 candidates.add(dummyCandidate);
             }
-
         }
 
         if (missingCounter>0){

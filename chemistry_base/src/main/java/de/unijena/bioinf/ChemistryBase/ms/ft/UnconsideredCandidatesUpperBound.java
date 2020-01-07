@@ -8,6 +8,7 @@ import java.util.Objects;
  * Annotation to save the number of molecular formula candidates which are not further considered.
  * E.g. all which are not in the Top100.
  */
+//todo this should be a Experiment Annotation!
 public final class UnconsideredCandidatesUpperBound implements TreeAnnotation {
     private final int numberOfUnconsideredCandidates;
     private final double lowestConsideredCandidateScore;
