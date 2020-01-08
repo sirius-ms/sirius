@@ -39,6 +39,7 @@ public class SiriusCLIApplication {
                 if (SiriusCLIApplication.RUN != null)
                     SiriusCLIApplication.RUN.cancel();
                 additionalActions.run();
+                ApplicationCore.WEB_API.shutdownJobWatcher();
                 JobManager.shutDownNowAllInstances();
                 ApplicationCore.DEFAULT_LOGGER.info("Try to delete leftover jobs on web server...");
                 ApplicationCore.WEB_API.deleteClientAndJobs();
