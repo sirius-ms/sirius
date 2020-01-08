@@ -31,7 +31,6 @@ import java.util.Map;
 
 public class ChemDBClient extends AbstractClient {
     public static final int MAX_NUM_OF_INCHIS = 1000;
-    private static final Logger LOG = LoggerFactory.getLogger(ChemDBClient.class);
 
     private CdkFingerprintVersion fpVersion = null;
     private final boolean cacheFpVersion;
