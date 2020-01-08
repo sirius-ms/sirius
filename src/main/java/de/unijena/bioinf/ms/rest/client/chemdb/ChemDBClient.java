@@ -110,7 +110,7 @@ public class ChemDBClient extends AbstractClient {
     public List<FingerprintCandidate> postCompounds(@NotNull List<String> inChIs, @NotNull CdkFingerprintVersion fpVersion, CloseableHttpClient client) throws IOException {
         return execute(client,
                 () -> {
-                    final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/api/compounds").build());
+                    final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/compounds").build());
                     post.setEntity(new StringEntity(String.join(",", inChIs), StandardCharsets.UTF_8));
                     return post;
                 },
