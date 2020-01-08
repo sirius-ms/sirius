@@ -11,7 +11,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 final class WebJobWatcher {
@@ -20,6 +22,7 @@ final class WebJobWatcher {
     private final Map<JobId, WebJJob<?, ?, ?>> waitingJobs = new ConcurrentHashMap<>();
     private final WebAPI api;
     private WebJobWatcherJJob job = null;
+    private final AtomicBoolean isShutDown = new AtomicBoolean(false);
 
     //this is for efficient job update even with a large number of jobs on large multi core machines
     public WebJobWatcher(WebAPI api) {
@@ -37,7 +40,27 @@ final class WebJobWatcher {
         return jobToWatch;
     }
 
+    public void shutdown() {
+        isShutDown.set(true);
+        if (job != null)
+            job.cancel();
+    }
+
+    public boolean awaitShutdown() {
+        shutdown();
+        if (job == null)
+            return false;
+
+        try {
+            return job.awaitResult();
+        } catch (ExecutionException e) {
+            return false;
+        }
+    }
+
     private synchronized void checkWatcherJob() {
+        if (isShutDown.get())
+            throw new IllegalStateException("Watcher is already shut Down! Pls create a new Instance!");
         if (job == null || job.isFinished())
             job = SiriusJobs.getGlobalJobManager().submitJob(new WebJobWatcherJJob());
     }
@@ -127,23 +150,25 @@ final class WebJobWatcher {
 
                     NetUtils.sleep(this::checkForInterruption, waitTime);
                 }
-            } catch (Throwable e) {
+            } catch (InterruptedException e) {
+                if (isShutDown.get())
+                    return true;
                 throw e;
             }
-
         }
 
         @Override
         protected synchronized void cleanup() {
             super.cleanup();
 
-            logInfo("Canceling WebWaiterJobs");
+            logDebug("Canceling WebWaiterJobs");
             synchronized (waitingJobs) {
                 try {
                     waitingJobs.values().forEach(WaiterJJob::cancel); //this jobs are not submitted to the job manager and need no be canceled manually
-                    logInfo("Try to delete leftover jobs on web server...");
-                    NetUtils.tryAndWait(() -> api.deleteJobs(waitingJobs.keySet()), () -> {}, 4000);
-                    logInfo("Job deletion Done!");
+                    logDebug("Try to delete leftover jobs on web server...");
+                    NetUtils.tryAndWait(() -> api.deleteJobs(waitingJobs.keySet()), () -> {
+                    }, 4000);
+                    logDebug("Job deletion Done!");
                 } catch (InterruptedException | TimeoutException e) {
                     logWarn("Failed to delete remote jobs from server!", e);
                 } finally {

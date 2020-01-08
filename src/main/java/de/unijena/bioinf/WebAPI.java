@@ -105,6 +105,10 @@ public final class WebAPI {
         this(URI.create(FingerIDProperties.fingeridWebHost()));
     }
 
+    public void shutdownJobWatcher() {
+        jobWatcher.shutdown();
+    }
+
     //region ServerInfo
 
     //6 csi web api for this version is not reachable because it is outdated
