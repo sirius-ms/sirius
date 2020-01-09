@@ -166,22 +166,6 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
     @Option(names = "--disable-fast-mode", hidden = true)
     public boolean disableFastMode;
 
-
-    // region Options: SINGLE_COMPOUND_MODE
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //todo hidden?
-    @Option(names = {"-1", "--ms1"}, description = "MS1 spectrum file name", order = 110)
-    public List<File> ms1;
-
-    @Option(names = {"-2", "--ms2"}, description = "MS2 spectra file names", order = 120)
-    public List<File> ms2;
-
-    @Option(names = {"-z", "--parentmass", "precursor", "mz"}, description = "the mass of the parent ion", order = 130)
-    public Double parentMz;
-    //endregion
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
     @Override
     public InstanceJob.Factory<SiriusSubToolJob> call() throws Exception {
         return () -> new SiriusSubToolJob(this);

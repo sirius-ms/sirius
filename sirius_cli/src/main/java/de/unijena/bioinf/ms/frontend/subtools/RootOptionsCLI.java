@@ -144,6 +144,19 @@ public class RootOptionsCLI<M extends ProjectSpaceManager> implements RootOption
 
     @Option(names = {"--ignore-formula"}, description = "ignore given molecular formula if present in .ms or .mgf input files.")
     private boolean ignoreFormula = false;
+
+    // region Options: SINGLE_COMPOUND_MODE
+    @Option(names = {"-1", "--ms1"}, description = "MS1 spectrum file name", order = 110)
+    public List<File> ms1;
+
+    @Option(names = {"-2", "--ms2"}, description = "MS2 spectra file names", order = 120)
+    public List<File> ms2;
+
+    @Option(names = {"-z", "--parentmass", "precursor", "mz"}, description = "the mass of the parent ion", order = 130)
+    public Double parentMz;
+    //endregion
+
+
     //endregion
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
