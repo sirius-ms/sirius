@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class Graph<C extends Candidate<?>> {
     protected final TIntIntHashMap[] indexMap;
@@ -234,12 +235,12 @@ public class Graph<C extends Candidate<?>> {
         return new GraphValidationMessage("", false, false);
     }
 
-    public static void validateAndThrowError(Graph graph, Logger logger) {
+    public static void validateAndThrowError(Graph graph, Consumer<String> logWarning) {
         GraphValidationMessage validationMessage = graph.validate();
         if (validationMessage.isError()) {
             throw new RuntimeException(validationMessage.getMessage());
         } else if (validationMessage.isWarning()) {
-            logger.warn(validationMessage.getMessage());
+            logWarning.accept(validationMessage.getMessage());
         }
     }
 
