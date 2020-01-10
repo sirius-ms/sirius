@@ -102,7 +102,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
         checkForInterruption();
         init();
         logInfo("Running ZODIAC with "+firstRoundIds.length+" of "+ids.length+" compounds.");
-        Graph.validateAndThrowError(graph, LoggerFactory.getLogger(loggerKey()));
+        Graph.validateAndThrowError(graph, this::logWarn);
         gibbsParallel = new GibbsParallel<>(graph, repetitions);
         gibbsParallel.setIterationSteps(maxSteps, burnIn);
         long start = System.currentTimeMillis();
@@ -137,7 +137,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
             GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, fixedIds, cClass);
             graph = submitSubJob(graphBuilder).awaitResult();
             checkForInterruption();
-            Graph.validateAndThrowError(graph, LoggerFactory.getLogger(loggerKey()));
+            Graph.validateAndThrowError(graph, this::logWarn);
 
             gibbsParallel = new GibbsParallel<>(graph, repetitions, fixedIds);
             gibbsParallel.setIterationSteps(maxSteps, burnIn);
