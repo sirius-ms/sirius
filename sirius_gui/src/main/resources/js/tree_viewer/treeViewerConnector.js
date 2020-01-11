@@ -15,5 +15,8 @@ function formulaIsSubset(f1, f2){
 }
 
 function getCommonLosses(){
-    return connector.getCommonLosses();
+    if (typeof variable !== 'undefined')
+        return connector.getCommonLosses();
+    else
+        return [];
 }

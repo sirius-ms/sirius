@@ -5,7 +5,7 @@ var data, data_json, root,
     popup_annot_fields = ['massDeviationPpm', 'score'],
     color_variant = "rel_int", color_scheme = "blues",
     show_edge_labels = true, show_node_labels = true,
-    centered_node_labels = false, edit_mode=true, show_color_bar = true,
+    centered_node_labels = true, edit_mode=true, show_color_bar = true,
     edge_label_boxes = false, edge_labels_angled = true, loss_colors = true,
     deviation_colors = true;
 // constants that will probably not be configurable
@@ -20,9 +20,8 @@ var nodeToMove = null, unambig_mode = 'none',
 var brushTransition = d3.transition().duration(500),
     zeroTransition = d3.transition().duration(0);
 var colorGen, loss_colors_dict, losses;
-// DEBUG
-var console_p = d3.select('body').append('p'),
-    move_log = [];
+// use innerWidth/Height (for renderers other than WebView)
+var window_use_inner = false;
 // theming
 var styles = {'elegant': {'node-rect': {'stroke' : 'transparent'},
                           'node-rect-hovered': {'stroke': 'black',
@@ -374,8 +373,6 @@ function colorLossByElements(loss){
 function* nextLossColor(scheme=interpolateHslHue){
     var t = 0;
     var commonLosses_len = getCommonLosses().length;
-    console.log(commonLosses_len);
-    console.log(t);
     while (t < commonLosses_len)
         yield scheme(t++/commonLosses_len);
     yield "black";
@@ -695,7 +692,6 @@ function moveNode(source, target, mode){
     default:
         return;
     }
-    move_log.push(source, target, mode);
     moveModes = {};
 }
 
@@ -1290,7 +1286,7 @@ var tree, node_map;
 
 // layout
 // Parameters
-var boxheight = 60;             // adapts to content, TODO: change default value
+var boxheight = 60;             // adapts to content
 var boxwidth = 100;
 var margin_left = 0;
 var margin_top = boxheight + 3;
@@ -1298,8 +1294,10 @@ var lineheight = 13;
 var width, height;
 
 function calcLayout() {
-    width = window.outerWidth - boxwidth/2;
-    height = window.outerHeight - boxheight / 2;
+    var window_width = window_use_inner?window.innerWidth:window.outerWidth;
+    var window_height = window_use_inner?window.innerHeight:window.outerHeight;
+    width = window_width - boxwidth / 2;
+    height = window_height - boxheight / 2;
     margin_left = 0;
     margin_top = boxheight + 3;
 }
