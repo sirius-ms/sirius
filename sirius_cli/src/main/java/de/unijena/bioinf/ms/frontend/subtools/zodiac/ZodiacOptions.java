@@ -73,16 +73,19 @@ public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiacSubToolJ
     ///////////////////////////
     //edge filter parameters//
     /////////////////////////
+    //
     @Option(names = "--thresholdFilter", description = " Defines the proportion of edges of the complete network which will be ignored.")
     public void setThresholdFilter(String value) throws Exception {
         defaultConfigOptions.changeOption("ZodiacEdgeFilterThresholds.thresholdFilter", value);
     }
 
+    //0d fuer filtering on the fly
     @Option(names = "--minLocalCandidates", description = "Minimum number of candidates per compound which are forced to have at least [minLocalConnections] connections to other compounds.", hidden = true)
     public void setMinLocalCandidates(String value) throws Exception {
         defaultConfigOptions.changeOption("ZodiacEdgeFilterThresholds.minLocalCandidates", value);
     }
 
+    //0d fuer filtering on the fly
     @Option(names = "--minLocalConnections", description = "Minimum number of connections per candidate which are forced for at least [minLocalCandidates] candidates to other compounds.", hidden = true)
     public void setMinLocalConnections(String value) throws Exception {
         defaultConfigOptions.changeOption("ZodiacEdgeFilterThresholds.minLocalConnections", value);

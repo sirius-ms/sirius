@@ -35,7 +35,7 @@ ext {
     cdk_version = "2.1.1"
 
     jewelcli_version = '0.8.9'
-    picocli_version = '3.9.5'
+    picocli_version = '4.1.4'//'3.9.5'
 
     //locations of runtime libraries
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'

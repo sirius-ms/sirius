@@ -2,9 +2,8 @@ package de.unijena.bioinf.ms.middleware;
 
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceFactory;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManagerFactory;
-import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
+import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
 import de.unijena.bioinf.ms.frontend.workfow.MiddlewareWorkflowBuilder;
@@ -17,7 +16,7 @@ import java.io.IOException;
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner {
 
 
-    protected static RootOptionsCLI rootOptions;
+    protected static CLIRootOptions rootOptions;
     protected final SiriusContext context;
 
     public SiriusMiddlewareApplication(SiriusContext context) {
@@ -31,7 +30,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
             });
 
             final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-            rootOptions = new RootOptionsCLI(configOptionLoader, new ProjectSpaceManagerFactory.Default());
+            rootOptions = new CLIRootOptions(configOptionLoader, new ProjectSpaceManagerFactory.Default());
             run(args, () -> new MiddlewareWorkflowBuilder<>(rootOptions, configOptionLoader));
         } catch (IOException e) {
             e.printStackTrace();

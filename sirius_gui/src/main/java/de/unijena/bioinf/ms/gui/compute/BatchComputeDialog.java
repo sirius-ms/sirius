@@ -22,7 +22,6 @@ import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
@@ -32,8 +31,7 @@ import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.io.projectspace.GPSMFactory;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceFactory;
-import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
+import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
@@ -317,7 +315,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
                 try {
                     final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                    WorkflowBuilder<RootOptionsCLI> wfBuilder = new WorkflowBuilder<>(new RootOptionsCLI(configOptionLoader, new GPSMFactory()), configOptionLoader);
+                    WorkflowBuilder<CLIRootOptions> wfBuilder = new WorkflowBuilder<>(new CLIRootOptions(configOptionLoader, new GPSMFactory()), configOptionLoader);
                     Run computation = new Run(wfBuilder);
 
                     // create computation parameters

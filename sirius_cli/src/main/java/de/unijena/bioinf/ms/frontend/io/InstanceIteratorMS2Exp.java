@@ -9,10 +9,10 @@ import java.util.Iterator;
 class InstanceIteratorMS2Exp implements Iterator<Instance> {
 
     private final ProjectSpaceManager spaceManager;
-    private final MS2ExpInputIterator MS2ExpInputIterator;
+    private final Iterator<Ms2Experiment> MS2ExpInputIterator;
 
 
-    public InstanceIteratorMS2Exp(MS2ExpInputIterator MS2ExpInputIterator, ProjectSpaceManager spaceManager) {
+    public InstanceIteratorMS2Exp(Iterator<Ms2Experiment> MS2ExpInputIterator, ProjectSpaceManager spaceManager) {
         this.MS2ExpInputIterator = MS2ExpInputIterator;
         this.spaceManager = spaceManager;
     }

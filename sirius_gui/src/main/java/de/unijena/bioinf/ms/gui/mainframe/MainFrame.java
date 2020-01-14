@@ -4,10 +4,10 @@ import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.io.InputFiles;
 import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
@@ -230,13 +230,13 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
     private void importDragAndDropFiles(List<File> rawFiles) {
-        final InputFiles input = ps.importOneExperimentPerLocation(rawFiles); //import all batch mode importable file types (e.g. .sirius, project-dir, .ms, .mgf, .mzml, .mzxml)
+        final InputFilesOptions input = ps.importOneExperimentPerLocation(rawFiles); //import all batch mode importable file types (e.g. .sirius, project-dir, .ms, .mgf, .mzml, .mzxml)
 
         // check if unknown files contain csv files with spectra
         final CSVFormatReader csvChecker = new CSVFormatReader();
-        List<File> csvFiles = input.unknownFiles.stream().map(Path::toFile)
+        List<File> csvFiles = input.msInput != null ? input.msInput.unknownFiles.stream().map(Path::toFile)
                 .filter(f -> csvChecker.isCompatible(f) || f.getName().toLowerCase().endsWith(".txt"))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()) : Collections.emptyList();
 
         if (!csvFiles.isEmpty())
             openImporterWindow(csvFiles, Collections.emptyList(), Collections.emptyList());

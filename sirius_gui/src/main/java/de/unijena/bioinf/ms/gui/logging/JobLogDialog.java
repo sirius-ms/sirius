@@ -30,7 +30,7 @@ public class JobLogDialog extends JDialog {
     private JPanel createOnDemandLoggingPanel() {
         JTextArea area = new JTextArea();
         onDemandHandler = new TextAreaHandler(new TextAreaOutputStream(area), Level.INFO);
-        Logger logger = LogManager.getLogManager().getLogger(jobContainer.getSourceJob().LOG().getName());
+        Logger logger = LogManager.getLogManager().getLogger(jobContainer.getSourceJob().loggerKey());
         logger.addHandler(onDemandHandler);
 
         return new LoggingPanel(area);
@@ -40,7 +40,7 @@ public class JobLogDialog extends JDialog {
     public void dispose() {
         super.dispose();
         if (onDemandHandler != null) {
-            Logger logger = LogManager.getLogManager().getLogger(jobContainer.getSourceJob().LOG().getName());
+            Logger logger = LogManager.getLogManager().getLogger(jobContainer.getSourceJob().loggerKey());
             if (logger != null)
                 logger.removeHandler(onDemandHandler);
         }

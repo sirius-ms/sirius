@@ -3,8 +3,8 @@ package de.unijena.bioinf.ms.frontend.io.projectspace;
 import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.frontend.io.InputFiles;
 import de.unijena.bioinf.ms.frontend.io.InstanceImporter;
+import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
@@ -145,14 +145,16 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
         return inst;
     }
 
-    public InputFiles importOneExperimentPerLocation(@NotNull final List<File> rawFiles) {
-        final InputFiles inputFiles = Jobs.runInBackgroundAndLoad(MF, "Analyzing Files...", false, InstanceImporter.makeExpandFilesJJob(rawFiles)).getResult();
-        importOneExperimentPerLocation(inputFiles);
-        return inputFiles;
+    public InputFilesOptions importOneExperimentPerLocation(@NotNull final List<File> rawFiles) {
+        final InputFilesOptions.MsInput inputFiles = Jobs.runInBackgroundAndLoad(MF, "Analyzing Files...", false, InstanceImporter.makeExpandFilesJJob(rawFiles)).getResult();
+        final InputFilesOptions inputF = new InputFilesOptions();
+        inputF.msInput = inputFiles;
+        importOneExperimentPerLocation(inputF);
+        return inputF;
     }
 
-    public void importOneExperimentPerLocation(@NotNull final InputFiles input) {
-        InstanceImporter importer = new InstanceImporter(this, Double.MAX_VALUE, false);
+    public void importOneExperimentPerLocation(@NotNull final InputFilesOptions input) {
+        InstanceImporter importer = new InstanceImporter(this, Double.MAX_VALUE);
         Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...", true, importer.makeImportJJob(input));
     }
 

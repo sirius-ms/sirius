@@ -19,7 +19,7 @@ import java.util.Iterator;
  * File based input Iterator that allows to iterate over the {@see de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment}s parsed from
  * multiple files (also different types) that are supported by the {@see de.unijena.bioinf.babelms.MsExperimentParser}.
  */
-public class MS2ExpInputIterator implements Iterator<Ms2Experiment> {
+public class MS2ExpInputIterator implements InstIterProvider {
     private static final Logger LOG = LoggerFactory.getLogger(MS2ExpInputIterator.class);
     private final ArrayDeque<Ms2Experiment> instances = new ArrayDeque<>();
     private final Iterator<Path> fileIter;
@@ -88,14 +88,5 @@ public class MS2ExpInputIterator implements Iterator<Ms2Experiment> {
                 }
             }
         }
-    }
-
-    @Override
-    public void remove() {
-        throw new UnsupportedOperationException();
-    }
-
-    public InstanceIteratorMS2Exp asInstanceIterator(ProjectSpaceManager projectSpace) {
-        return new InstanceIteratorMS2Exp(this, projectSpace);
     }
 }
