@@ -1,7 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ms.frontend.io.InputFiles;
 import de.unijena.bioinf.ms.frontend.io.InstanceImporter;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
@@ -18,12 +17,10 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
-import java.util.List;
 
 /**
  * This is for not algorithm related parameters.
@@ -35,15 +32,15 @@ import java.util.List;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "sirius", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
-public class RootOptionsCLI<M extends ProjectSpaceManager> implements RootOptions {
-    public static final Logger LOG = LoggerFactory.getLogger(RootOptionsCLI.class);
+public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOptions {
+    public static final Logger LOG = LoggerFactory.getLogger(CLIRootOptions.class);
 
     public enum InputType {PROJECT, SIRIUS}
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
     protected final ProjectSpaceManagerFactory<M> spaceManagerFactory;
 
-    public RootOptionsCLI(@NotNull DefaultParameterConfigLoader defaultConfigOptions, @NotNull ProjectSpaceManagerFactory<M> spaceManagerFactory) {
+    public CLIRootOptions(@NotNull DefaultParameterConfigLoader defaultConfigOptions, @NotNull ProjectSpaceManagerFactory<M> spaceManagerFactory) {
         this.defaultConfigOptions = defaultConfigOptions;
         this.spaceManagerFactory = spaceManagerFactory;
     }
@@ -51,26 +48,12 @@ public class RootOptionsCLI<M extends ProjectSpaceManager> implements RootOption
 
     // region Options: Quality
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //todo think how to implement this into the cli???
-    // I think a subtool that can be called multiple times could be cool???
     @Option(names = "--noise", description = "Median intensity of noise peaks", order = 10, hidden = true)
     public Double medianNoise;
 
     @Option(names = {"--assess-data-quality"}, description = "produce stats on quality of spectra and estimate isolation window. Needs to read all data at once.", order = 20, hidden = true)
     public boolean assessDataQuality;
     //endregion
-
-    // region Options: Basic
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    @Option(names = "-q", description = "suppress shell output", order = 30)
-    public boolean quiet;
-
-    /*@Option(names = "--cite", description = "show citations", order = 40,)
-    public boolean cite;*/
-
-    //endregion
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
     // region Options: Technical
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -79,13 +62,9 @@ public class RootOptionsCLI<M extends ProjectSpaceManager> implements RootOption
         PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(numOfCores));
     }
 
-
-//    @Option(names = "--max-compound-buffer", description = "Maxmimal number of compounds that will be buffered in Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. For Infinite buffer size set it to 0. Default: 2 * --initial_intance_buffer", order = 60, hidden = true)
     @Option(names = "--max-compound-buffer", description = "Deprecated: This Option is deprecated and has no effect anymore.", order = 60, hidden = true)
     private Integer maxInstanceBuffer;
 
-
-    //    @Option(names = "--initial-compound-buffer", description = "Number of compounds that will be loaded initially into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores", order = 60)
     @Option(names = {"--compound-buffer", "--initial-compound-buffer"}, description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores. Note that for DATASET_TOOLS the compound buffer may have no effect because this tools may need all compounds in memory for computation.", order = 60)
     public void setInitialInstanceBuffer(Integer initialInstanceBuffer) {
         if (initialInstanceBuffer == null)
@@ -99,12 +78,11 @@ public class RootOptionsCLI<M extends ProjectSpaceManager> implements RootOption
 
     // region Options: INPUT/OUTPUT
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius", order = 70)
+    @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius", order = 70, hidden = true)
     public Files workspace; //todo change in application core
 
-    @Option(names = "--maxmz", description = "Just consider compounds with a precursor mz lower or equal this maximum mz. All other compounds in the input file are ignored.", order = 100)
-    public Double maxMz = Double.POSITIVE_INFINITY;
-
+    @Option(names = {"--output", "--project-space", "-o", "-p"}, description = "Specify project-space to read from and also write to if nothing else is specified. For compression use the File ending .zip or .sirius", order = 70)
+    private Path projectSpaceLocation;
 
     @Option(names = "--naming-convention", description = "Specify a format for compounds' output directories. Default %%index_%%filename_%%compoundname", order = 90)
     public void setProjectSpaceFilenameFormatter(String projectSpaceFilenameFormatter) throws ParseException {
@@ -122,40 +100,17 @@ public class RootOptionsCLI<M extends ProjectSpaceManager> implements RootOption
         }
     }
 
+    @Option(names = "--maxmz", description = "Just consider compounds with a precursor mz lower or equal this maximum mz. All other compounds in the input file are ignored.", defaultValue = "Infinity", order = 100)
+    public double maxMz;
 
-    @Option(names = {"--output", "--project-space", "-o", "-p"}, description = "Specify project-space to read from and also write to if nothing else is specified. For compression use the File ending .zip or .sirius", order = 70)
-    private Path projectSpaceLocation;
 
-
-    @Option(names = {"--input", "-i"}, description = "Input for the analysis. Ths can be either preprocessed mass spectra in .ms or .mgf file format, " +
-            "LC/MS runs in .mzML/.mzXml format or already existing SIRIUS project-space(s) (uncompressed/compressed).", order = 80)
-    // we differentiate between contiunuing a project-space and starting from mzml or  already processed ms/mgf file.
-    // If multiple files match the priobtrrity is project-space,  ms/mgf,  mzml
-    public void setInputFiles(List<File> files) {
-        this.inputFiles = InstanceImporter.expandInputFromFile(files);
-    }
-
-    private InputFiles inputFiles = null;
+    @CommandLine.ArgGroup(exclusive = false, /*heading = "Specify INPUTS:",*//* multiplicity = "1",*/order = 110)
+    private InputFilesOptions inputFiles;
 
     @Override
-    public InputFiles getInput() {
+    public InputFilesOptions getInput() {
         return inputFiles;
     }
-
-    @Option(names = {"--ignore-formula"}, description = "ignore given molecular formula if present in .ms or .mgf input files.")
-    private boolean ignoreFormula = false;
-
-    // region Options: SINGLE_COMPOUND_MODE
-    @Option(names = {"-1", "--ms1"}, description = "MS1 spectrum file name", order = 110)
-    public List<File> ms1;
-
-    @Option(names = {"-2", "--ms2"}, description = "MS2 spectra file names", order = 120)
-    public List<File> ms2;
-
-    @Option(names = {"-z", "--parentmass", "precursor", "mz"}, description = "the mass of the parent ion", order = 130)
-    public Double parentMz;
-    //endregion
-
 
     //endregion
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -173,13 +128,13 @@ public class RootOptionsCLI<M extends ProjectSpaceManager> implements RootOption
 
 
     @Override
-    public PreprocessingJob makePreprocessingJob(InputFiles input, ProjectSpaceManager space) {
+    public PreprocessingJob makePreprocessingJob(InputFilesOptions input, ProjectSpaceManager space) {
         return new PreprocessingJob(input, space) {
             @Override
             protected Iterable<Instance> compute() throws Exception {
                 if (space != null) {
                     if (inputFiles != null)
-                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, maxMz, ignoreFormula).makeImportJJob(inputFiles)).awaitResult();
+                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, maxMz).makeImportJJob(inputFiles)).awaitResult();
                     if (space.size() < 1)
                         LOG.info("No Input has been imported to Project-Space. Starting application without input data.");
                     return space;
@@ -193,8 +148,8 @@ public class RootOptionsCLI<M extends ProjectSpaceManager> implements RootOption
     protected void configureProjectSpace() {
         try {
             if (projectSpaceLocation == null) {
-                if (inputFiles != null && inputFiles.projects.size() == 1) {
-                    projectSpaceLocation = (inputFiles.projects.get(0));
+                if (inputFiles != null && inputFiles.msInput.projects.size() == 1) {
+                    projectSpaceLocation = (inputFiles.msInput.projects.get(0));
                     LOG.info("No output location given. Writing output to input location: " + projectSpaceLocation.toString());
                 } else {
                     projectSpaceLocation = ProjectSpaceIO.createTmpProjectSpaceLocation();

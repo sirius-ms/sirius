@@ -7,6 +7,7 @@ import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
@@ -22,42 +23,28 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class InstanceImporter {
     protected static final Logger LOG = LoggerFactory.getLogger(InstanceImporter.class);
     private final ProjectSpaceManager importTarget;
+    private final double maxMz;
 
-    private double maxMzToImport = Double.MAX_VALUE;
-    private boolean ignoreFormulaInMs = false;
-
-
-    public InstanceImporter(ProjectSpaceManager importTarget, double maxMzToImport, boolean ignoreFormula) {
+    public InstanceImporter(ProjectSpaceManager importTarget, double maxMzToImport/*, boolean ignoreFormula*/) {
         this.importTarget = importTarget;
-        this.maxMzToImport = maxMzToImport;
-        this.ignoreFormulaInMs = ignoreFormula;
+        this.maxMz = maxMzToImport;
     }
 
-    public ImportInstancesJJob makeImportFromFilesJJob(@NotNull final List<File> files) {
-        return makeImportJJob(expandInputFromFile(files));
-    }
-
-    public ImportInstancesJJob makeImportFromPathsJJob(@NotNull final List<Path> files) {
-        return makeImportJJob(expandInput(files));
-    }
-
-
-    public ImportInstancesJJob makeImportJJob(@NotNull InputFiles files) {
+    public ImportInstancesJJob makeImportJJob(@NotNull InputFilesOptions files) {
         return new ImportInstancesJJob(files);
     }
 
     public class ImportInstancesJJob extends BasicJJob<Boolean> {
-        private InputFiles inputFiles;
+        private InputFilesOptions inputFiles;
         private int max, current;
 
 
-        public ImportInstancesJJob(InputFiles inputFiles) {
+        public ImportInstancesJJob(InputFilesOptions inputFiles) {
             super(JobType.TINY_BACKGROUND);
             this.inputFiles = inputFiles;
         }
@@ -72,19 +59,35 @@ public class InstanceImporter {
         }
 
 
-        public void importMultipleSources(@Nullable final InputFiles input) {
+        public void importMultipleSources(@Nullable final InputFilesOptions input) {
             if (input == null)
                 return;
-            importMsParserInput(input.msParserfiles);
-            importProjectsInput(input.projects);
+            if (input.msInput != null) {
+                importMsParserInput(input.msInput.msParserfiles);
+                importProjectsInput(input.msInput.projects);
+            }
+            importCSVInput(input.csvInputs);
         }
 
+        private void importCSVInput(List<InputFilesOptions.CsvInput> csvInputs) {
+            if (csvInputs == null || csvInputs.isEmpty())
+                return;
+            final InstanceIteratorMS2Exp it = new CsvMS2ExpIterator(csvInputs, maxMz).asInstanceIterator(importTarget);
+
+            long count = 0;
+            while (it.hasNext()) {
+                it.next();
+                if (count++ > csvInputs.size())
+                    max++;
+                updateProgress(0, max, ++current);
+            }
+        }
 
         public void importMsParserInput(@Nullable List<Path> files) {
             if (files == null || files.isEmpty())
                 return;
 
-            final InstanceIteratorMS2Exp it = new MS2ExpInputIterator(files, maxMzToImport, ignoreFormulaInMs).asInstanceIterator(importTarget);
+            final InstanceIteratorMS2Exp it = new MS2ExpInputIterator(files, maxMz, inputFiles.msInput.ignoreFormula).asInstanceIterator(importTarget);
 
             long count = 0;
             while (it.hasNext()) {
@@ -123,7 +126,7 @@ public class InstanceImporter {
         }
 
         public void importProject(SiriusProjectSpace inputSpace) throws IOException {
-            Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator((cid) -> cid.getIonMass().orElse(0d) <= maxMzToImport);
+            Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator((cid) -> cid.getIonMass().orElse(0d) <= maxMz);
             while (psIter.hasNext()) {
                 final CompoundContainerId sourceId = psIter.next();
                 if (importTarget.compoundFilter.test(sourceId)) {
@@ -156,36 +159,49 @@ public class InstanceImporter {
 
 
     //expanding input files
-    public static InputFiles expandInputFromFile(@NotNull final List<File> files) {
-        return SiriusJobs.getGlobalJobManager().submitJob(makeExpandFilesJJob(files)).takeResult();
+    public static InputFilesOptions.MsInput expandInputFromFile(@NotNull final List<File> files) {
+        return expandInputFromFile(files, new InputFilesOptions.MsInput());
     }
 
-    public static InputFiles expandInput(@NotNull final List<Path> files) {
-        return SiriusJobs.getGlobalJobManager().submitJob(makeExpandPathsJJob(files)).takeResult();
+    public static InputFilesOptions.MsInput expandInputFromFile(@NotNull final List<File> files, @NotNull final InputFilesOptions.MsInput expandTo) {
+        return SiriusJobs.getGlobalJobManager().submitJob(makeExpandFilesJJob(files, expandTo)).takeResult();
+    }
+
+    public static InputFilesOptions.MsInput expandInput(@NotNull final List<Path> files) {
+        return expandInput(files, new InputFilesOptions.MsInput());
+    }
+
+    public static InputFilesOptions.MsInput expandInput(@NotNull final List<Path> files, @NotNull final InputFilesOptions.MsInput expandTo) {
+        return SiriusJobs.getGlobalJobManager().submitJob(makeExpandPathsJJob(files, expandTo)).takeResult();
     }
 
     public static InputExpanderJJob makeExpandFilesJJob(@NotNull final List<File> files) {
-        return makeExpandPathsJJob(files.stream().map(File::toPath).collect(Collectors.toList()));
+        return makeExpandFilesJJob(files, new InputFilesOptions.MsInput());
+    }
+    public static InputExpanderJJob makeExpandFilesJJob(@NotNull final List<File> files, @NotNull final InputFilesOptions.MsInput expandTo) {
+        return makeExpandPathsJJob(files.stream().map(File::toPath).collect(Collectors.toList()), expandTo);
     }
 
-    public static InputExpanderJJob makeExpandPathsJJob(@NotNull final List<Path> files) {
-        return new InputExpanderJJob(files);
+    public static InputExpanderJJob makeExpandPathsJJob(@NotNull final List<Path> files, @NotNull final InputFilesOptions.MsInput expandTo) {
+        return new InputExpanderJJob(files, expandTo);
     }
 
-    public static class InputExpanderJJob extends BasicJJob<InputFiles> {
+    public static class InputExpanderJJob extends BasicJJob<InputFilesOptions.MsInput> {
 
         private final List<Path> input;
-        private final AtomicInteger progress = new AtomicInteger(0);
+        //        private final AtomicInteger progress = new AtomicInteger(0);
+        private final InputFilesOptions.MsInput expandedFiles;
 
-        public InputExpanderJJob(List<Path> input) {
+        public InputExpanderJJob(List<Path> input, InputFilesOptions.MsInput expandTo) {
             super(JobType.TINY_BACKGROUND);
             this.input = input;
+            this.expandedFiles = expandTo;
         }
 
 
         @Override
-        protected InputFiles compute() throws Exception {
-            final InputFiles expandedFiles = new InputFiles();
+        protected InputFilesOptions.MsInput compute() throws Exception {
+//            final  = new InputFiles();
             if (input != null && !input.isEmpty()) {
                 updateProgress(0, input.size(), 0, "Expanding Input Files: '" + input.stream().map(Path::toString).collect(Collectors.joining(",")) + "'...");
                 expandInput(input, expandedFiles);
@@ -194,7 +210,7 @@ public class InstanceImporter {
             return expandedFiles;
         }
 
-        private void expandInput(@NotNull final List<Path> files, @NotNull final InputFiles inputFiles) {
+        private void expandInput(@NotNull final List<Path> files, @NotNull final InputFilesOptions.MsInput inputFiles) {
             int p = 0;
 //            updateProgress(0, files.size(), p, "Expanding Input Files...");
             for (Path g : files) {

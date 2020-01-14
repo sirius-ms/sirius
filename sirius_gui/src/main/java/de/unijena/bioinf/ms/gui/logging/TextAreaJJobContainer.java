@@ -47,7 +47,7 @@ public class TextAreaJJobContainer<R> extends SwingJJobContainer<R> {
     }
 
     public void registerJobLog(JJob job) {
-        Logger logger = Logger.getLogger(job.LOG().getName());
+        Logger logger = Logger.getLogger(job.loggerKey());
         logger.addHandler(textAreaLogHandler);
     }
 }

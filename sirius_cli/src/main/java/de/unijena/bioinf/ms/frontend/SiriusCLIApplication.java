@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.frontend;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManagerFactory;
-import de.unijena.bioinf.ms.frontend.subtools.RootOptionsCLI;
+import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.utils.ProxyManager;
@@ -23,7 +23,7 @@ public class SiriusCLIApplication {
             });
             run(args, () -> {
                 final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                return new WorkflowBuilder<>(new RootOptionsCLI(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader);
+                return new WorkflowBuilder<>(new CLIRootOptions(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader);
             });
         } finally {
             System.exit(0);
