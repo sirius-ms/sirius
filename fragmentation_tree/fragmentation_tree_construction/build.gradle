@@ -1,0 +1,3 @@
+dependencies{
+    compile(group: 'de.unijena.bioinf', name: 'coin-or-illp-api', version: '1.0-SNAPSHOT')
+}
