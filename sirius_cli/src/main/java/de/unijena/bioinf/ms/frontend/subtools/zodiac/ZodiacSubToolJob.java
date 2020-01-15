@@ -119,9 +119,8 @@ public class ZodiacSubToolJob extends DataSetJob {
                 edgeFilter = new EdgeThresholdMinConnectionsFilter(edgeFilterThresholds.thresholdFilter, numberOfCandidates, numberOfConnections);
             } else if (edgeFilterThresholds.thresholdFilter > 0.0D) {
                 edgeFilter = new EdgeThresholdFilter(edgeFilterThresholds.thresholdFilter); //this one does not create the whole network
-            } else if (edgeFilterThresholds.minLocalCandidates > 0.0D) {
-                edgeFilter = new LocalEdgeFilter(edgeFilterThresholds.minLocalCandidates);
             }
+
             if (edgeFilter == null) {
                 edgeFilter = new EdgeThresholdFilter(0);
             }

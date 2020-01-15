@@ -52,7 +52,7 @@ public class CsvMS2ExpIterator implements InstIterProvider {
         try {
             if (!hasNext())
                 return null;
-            return parer.parseSpectra(next.ms1, next.ms2, next.parentMz, next.adduct);
+            return parer.parseSpectra(next.ms1, next.ms2, next.parentMz, next.ionType, next.formula);
         } finally {
             next = null;
         }
