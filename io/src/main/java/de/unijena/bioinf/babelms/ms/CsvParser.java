@@ -18,6 +18,7 @@
 package de.unijena.bioinf.babelms.ms;
 
 import com.google.common.collect.Iterators;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
@@ -25,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.SpectralParser;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -75,10 +77,11 @@ public class CsvParser extends SpectralParser {
         return spectra;
     }
 
-    public Ms2Experiment parseSpectra(List<File> ms1, List<File> ms2, double precursorMass, PrecursorIonType ionType) {
+    public Ms2Experiment parseSpectra(List<File> ms1, List<File> ms2, double precursorMass, @Nullable PrecursorIonType ionType, @Nullable MolecularFormula formula) {
         MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.setIonMass(precursorMass);
         exp.setPrecursorIonType(ionType);
+        exp.setMolecularFormula(formula);
         exp.setMs1Spectra(
                 parseSpectra(ms1).stream().map(SimpleSpectrum::new)
                         .collect(Collectors.toList()));
@@ -88,8 +91,8 @@ public class CsvParser extends SpectralParser {
         return exp;
     }
 
-    public static Ms2Experiment parse(List<File> ms1, List<File> ms2, double precursorMass, PrecursorIonType ionType) {
-        return new CsvParser().parseSpectra(ms1, ms2, precursorMass, ionType);
+    public static Ms2Experiment parse(List<File> ms1, List<File> ms2, double precursorMass, @Nullable PrecursorIonType ionType, @Nullable MolecularFormula formula) {
+        return new CsvParser().parseSpectra(ms1, ms2, precursorMass, ionType, formula);
     }
 
 
