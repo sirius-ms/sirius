@@ -1076,7 +1076,7 @@ public class UtilsCLI {
     private final static String SEP = "\t";
     private void writeHits(Path output, List<SpectralLibraryHitWithExperiment> libraryHits) throws IOException {
         BufferedWriter writer = Files.newBufferedWriter(output);
-        String header = Arrays.stream(new String[]{"compoundName", "compoundMz", "compoundAdduct", "libraryName", "libraryMz", "libraryAdduct", "libraryFormula", "cosine", "sharedPeaks", "molecularFormula", "libraryInChI", "librarySMILES", "formulaDiffToLibrary", "libURL"}).collect(Collectors.joining(SEP));
+        String header = Arrays.stream(new String[]{"compoundName", "compoundFile","compoundMz", "compoundAdduct", "libraryName", "libraryMz", "libraryAdduct", "libraryFormula", "cosine", "sharedPeaks", "molecularFormula", "libraryInChI", "librarySMILES", "formulaDiffToLibrary", "libURL"}).collect(Collectors.joining(SEP));
         writer.write(header);
         int idx = 0;
         for (SpectralLibraryHitWithExperiment libraryHit : libraryHits) {
@@ -1084,6 +1084,8 @@ public class UtilsCLI {
             SpectralLibraryHit hit = libraryHit.libraryHit;
             StringJoiner joiner = new StringJoiner(SEP);
             joiner.add(experiment.getName());
+            URL compoundSource  = experiment.getSource();
+            joiner.add(compoundSource==null?"":compoundSource.toString());
             joiner.add(Double.toString(experiment.getIonMass()));
             joiner.add(experiment.getPrecursorIonType().toString());
             if (hit.getLibraryHit().getName()!=null){
