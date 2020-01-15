@@ -106,7 +106,7 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
         defaultConfigOptions.changeOption("FormulaSearchDB", name);
     }
 
-    @Option(names = {"-f", "--formula", "--formulas"}, description = "Specify the neutral molecular formula of the measured compound to compute its tree or a list of candidate formulas the method should discriminate. Omit this option if you want to consider all possible molecular formulas")
+    @Option(names = {"-f", "--formulas"}, description = "Specify a list of candidate formulas the method should use. Omit this option if you want to consider all possible molecular formulas")
     public void setFormulaWhiteList(List<String> formulaWhiteList) throws Exception {
         formulaWhiteSet = Whiteset.of(formulaWhiteList);
     }

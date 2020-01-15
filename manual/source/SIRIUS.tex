@@ -1031,7 +1031,8 @@ training data!
 
 
 \chapter{Quick start!}
-\section{Graphical User Interface} \todo{Update needed!}
+\section{Graphical User Interface} 
+\todo{Update needed!}
 \subsection{Working in single mode}
 \label{gui:working-in-single-mode}
 
@@ -1221,8 +1222,7 @@ The demo data contain a clean MS spectrum (e.g. there is only one isotope patter
 
 
 \chapter{Input, Output and Formats}
-With SIRIUS 4.4.0 we finalized and released the SIRIUS project-space, the file based persistence layer and output format of SIRIUS. Since then CLI and GUI share the same input and output formats. 
-
+With SIRIUS 4.4.0 we finalized and released the SIRIUS project-space, the file based persistence layer and output format of SIRIUS.
 Both, CLI and GUI store the computed results as SIRIUS project-space (see the Figure below) which in turn can also be an input for the GUI or the CLI. 
 This allows the user to review results in the GUI that have been computed with an automated workflow using the CLI. 
 
@@ -1478,7 +1478,7 @@ Whenever SIRIUS requires the chemical alphabet, you have to provide which elemen
 
 \chapter{Graphical User Interface}
 \label{gui::doc}\label{gui:user-interface}
-
+\todo{update needed}
 \begin{center}
   \includegraphics[width=0.8\textwidth]{{gui}.png}
 \end{center}
@@ -1843,7 +1843,7 @@ sirius --help
 You can always use the \code{--help} option to get a documentation about the available commands and options.
 
 Since version 4.4.0 the SIRIUS commandline program is designed as a toolbox that 
-provides different tools (subcommands) for metabolite identification. This tools can be concatenated to \emph{toolchains} to compute multiple analysis steps at once. we distinguish subcommands of the following categories:
+provides different tools (subcommands) for metabolite identification. This tools can be concatenated to \emph{toolchains} to compute multiple analysis steps at once. We distinguish subcommands of the following categories:
 
 \begin{itemize}
 	\item \textbf{CONFIGURATION: }
@@ -1858,44 +1858,34 @@ provides different tools (subcommands) for metabolite identification. This tools
 	Tools that analyze all compounds (instances) of the dataset simultaneously and can be concatenated with other tools.
 \end{itemize}
 
-Each subtool can also be called with the \code{--help} option to get a documentation about the available options and commands that can follow up in a toolchain. For the \code{formula} tool the command would be: 
+Each subtool can also be called with the \code{--help} option to get a documentation about the available options and possible follow up commands in a toolchain. For the \code{formula} tool the command would be: 
 
 \begin{Verbatim}[commandchars=\\\{\}]
 sirius formula --help
 \end{Verbatim}
- %Assuming you want to analyze the example data given in the CASMI \footnote{\sphinxAtStartFootnote%
-%\url{http://casmi-contest.org/2014/example/MSpos\_Challenge0.txt}
-%} contest, you would execute the following on the commandline:
-%\begin{quote}
-%sirius -1 MSpos\_Challenge0.txt -2 MSMSpos\_Challenge0.txt
-%\end{quote}
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 
 
 \section{Identifying Molecular Formulas}
 \label{commandline:identifying-molecular-formulas}
-One main purpose of SIRIUS is identifying the molecular formula of the measured ion. For this task SIRIUS provides the \code{formula} tool. The most basic way to use the \code{formula} tool is in \emph{single compound mode}:
+One main purpose of SIRIUS is identifying the molecular formula of a measured ion. For this task SIRIUS provides the \code{formula} tool. The most basic way to use the \code{formula} tool with the generic text/CSV input:
 
 \begin{Verbatim}[commandchars=\\\{\}]
-sirius [OPTIONS] -z <PARENTMASS> -1 <MS FILE> -2 <MS/MS FILE> formula [OPTIONS] -i <IONIZATION> 
+sirius [OPTIONS]  -1 <MS FILE> -2 <MS/MS FILE> -z <PARENTMASS> --adduct <adduct> formula  
 \end{Verbatim}
 
-Where \gui{MS FILE} and \gui{MS/MS FILE} are either CSV or MGF files. If MGF files are used, you might omit the \code{-z} option. If you omit the \code{-i} option, {[}M+H{]}+ is used as default. It is also possible to give a list of MS/MS files if you have several measurements of the same compound with different collision energies. SIRIUS will merge these MS/MS spectra into one spectrum. 
+Where \gui{MS FILE} and \gui{MS/MS FILE} are either CSV or MGF files. If MGF files are used, you might omit the \code{-z} option. If you omit the \code{--adduct} option, {[}M+?{]}+ is used as default. It is also possible to give a list of MS/MS files if you have several measurements of the same compound with different collision energies. SIRIUS will merge these MS/MS spectra into one spectrum. 
 
-The more common and \textbf{recommended} way is using input files in \code{.ms} or \code{.mgf} format (with MSLEVEL and PEPMASS meta information) and not the -1 and -2 flag. For example:
+The more common and \textbf{recommended} way is using input files in \code{.ms} or \code{.mgf} format (with MSLEVEL and PEPMASS meta information). Such files contain all spectra for a compound together with their meta data. They can also contain multiple compounds per file. Further SIRIUS is able to crawl an input directory for supported files:
 
 \begin{Verbatim}[commandchars=\\\{\}]
-sirius [OPTIONS] formula [OPTIONS] demo-data/ms
+sirius [OPTIONS] --input demo-data/ms formula [OPTIONS] 
 \end{Verbatim}
 
 SIRIUS will pick the meta information (parentmass, ionization etc.) from the \code{.ms} files in the given directory. This allows SIRIUS to run in batch mode (analyzing multiple compounds without starting a new jvm process every time).
 
 Besides the raw results like the fragmentation trees in \code{.json} format, SIRIUS will output a  \code{formula\_candidates.csv} containing the  
-\gui{rank},	\gui{molecularFormula},	\gui{adduct}, \gui{precursorFormula},	\gui{rankingScore},	\gui{TreeIsotope\_Score},	\gui{Tree\_Score},	\gui{Isotope\_Score},	\gui{explainedPeaks},	\gui{explainedIntensity}.
+\gui{rank},	\gui{molecularFormula},	\gui{adduct}, \gui{precursorFormula},	\gui{rankingScore},	\gui{TreeIsotope\_Score},	\gui{Tree\_Score},	\gui{Isotope\_Score},	\gui{explainedPeaks},	\gui{explainedIntensity} on compound level and a summary containing the top hits for all compounds on project level.
 
 The \gui{TreeIsotope\_Score} is the sum of the \gui{Tree\_Score} and the \gui{Isotope\_Score}. The \code{formula} tool uses the \gui{TreeIsotope\_Score} for ranking. If the \gui{Isotope\_Score} is negative, it is set to zero. If at least one \gui{Isotope\_Score} is greater than 10, the isotope pattern is considered to have \emph{good quality} and only the candidates with best isotope pattern scores are selected for further fragmentation pattern analysis.
 
@@ -1911,22 +1901,40 @@ specified, the parent mass can be omitted. However, you still have to specify
 the ionization (except for default value \code{{[}M+H{]}+}):
 
 \begin{Verbatim}[commandchars=\\\{\}]
-sirius formula -f C20H19NO5 -2 demo-data/txt/chelidonine/\_msms1.txt demo-data/txt/chelidonine\_msms2.txt
+sirius -f C20H19NO5 -2 demo-data/txt/chelidonine/\_msms1.txt demo-data/txt/chelidonine\_msms2.txt formula 
 \end{Verbatim}
 
 \subsection*{Analysis Profiles}
-If you want to analyze spectra measured with Orbitrap or FT-ICR, you should specify the appropriate analysis profile. A profile is a set of configuration options and scoring functions SIRIUS will use for its analysis. For example, the Orbitrap and FT-ICR profiles having tighter constraints for the allowed mass deviation but do not rely so much on the intensity of isotope peaks. You can set the profile with the \code{-p \textless{}name\textgreater{}} option. By default, qtof is used as profile.
+If you want to analyze spectra measured with Orbitrap or FT-ICR, you should specify the appropriate analysis profile. A profile is a set of configuration options and scoring functions SIRIUS will use for its analysis. For example, the \code{orbitrap} and \code{FT-ICR} profiles having tighter constraints for the allowed mass deviation but do not rely so much on the intensity of isotope peaks. You can set the profile with the \code{-p \textless{}name\textgreater{}} option. By default, \code{qtof} is used.
 
 
-See the following examples for running SIRIUS commandline tool:
+See the following examples for running the \code{formula} tool of SIRIUS commandline tool:
 
 \begin{Verbatim}[commandchars=\\\{\}]
-sirius formula -p orbitrap -z 239.0315 -i [M+Na]+ -1 bergapten\PYGZus{}ms.csv -2 bergapten\PYGZus{}msms1.csv bergapten\PYGZus{}msms2.csv
-sirius formula -p fticr -z 215.0350 -i [M-H]- -e CHNOPSCl[2] -c 10 -1 unknown\PYGZus{}ms1.csv -2 unknown\PYGZus{}ms2.csv
-sirius formula -f C6H12O6 C5H6N7O C7H16OS2 -i [M+H]+ -1 ms.csv -2 msms.csv
+sirius --adduct [M+Na]+ -z 239.0315 -1 bergapten\_ms.csv -2 bergapten\_msms1.csv bergapten\_msms2.csv formula -p orbitrap 
+sirius --adduct [M-H]- -z 215.0350 -1 unknown\_ms1.csv -2 unknown\_ms2.csv formula -p fticr -e CHNOPSCl[2] -c 10 
+sirius --adduct [M+H]+ -1 ms.csv -2 msms.csv formula -f C6H12O6 C5H6N7O C7H16OS2 
+sirius --adduct [M+H]+ -1 ms.csv -2 msms.csv -f C6H12O6 formula
+sirius --adduct [M+H]+ -1 c1_ms.csv -2 c1_msms.csv -f C6H12O6 --adduct [M+?]+ -1 c2_ms.csv -2 c2_msms.csv -f C5H6N7O formula
 \end{Verbatim}
 
 \section{ZODIAC: Improve Molecular Formula Identifications}
+If your input data is derived from an biological sample or any other set of derivates, similarities between different compounds can be leveraged to improve molecular formula annotation of the individual compounds. 
+ZODIAC takes advantage of the fact that an organism produces related metabolites that are derived from multiple, but limited, biosynthetic pathways.
+The \code{zodiac} tool builds upon the \code{formula} tool and uses, say, its top 50 molecular formula annotations as candidates for one compound. 
+ZODIAC then reranks molecular formula candidates using Bayesian statistics.
+
+The \code{zodiac} tool can be executed after the \code{formula} tool without the need of many parameters:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+sirius  -i <input> -o <output>  formula -c 50  zodiac
+\end{Verbatim}
+
+Zodiac will run on all compounds that have formula candidates computed and re-ranks these formula candidates by the \gui{Zodiac\_Score} (\code{formula\_candidates.csv}).
+
+However the Network ZODIAC creates may consume a huge amount of system memory but many of the edges in the network does not contribute much information.
+Zero weight edges are automatically ignored. Which amount of low weight edges should be ignored by the \code{--edge-threshold} parameter. The default value is 0.95. However Zodiac ensures that at least one candidate per compound is connected to a minimum number of other compounds. This number can be specified by the \code{--threshold} parameter. To ensure this threshold the full graph need to be connected. To filter on the fly do somethin else \todo{FINISH THIS}
+
 
 \section{Passatutto: Decoy spectral libraries}
 

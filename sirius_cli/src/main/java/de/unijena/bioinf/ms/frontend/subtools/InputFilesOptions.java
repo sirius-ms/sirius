@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.io.InstanceImporter;
 import org.jetbrains.annotations.Nullable;
@@ -75,11 +76,18 @@ public class InputFilesOptions {
         @CommandLine.Option(names = {"-z", "--parentmass", "--precursor", "--mz"}, description = "the mass of the parent ion for specified ms2 spectra", required = true)
         public Double parentMz;
 
-        @CommandLine.Option(names = {"--adduct"}, description = "Specify the adduct for the corresponding Compound", defaultValue = "[M+?]+")
-        protected void setAdduct(String adduct) {
-            this.adduct = PrecursorIonType.fromString(adduct);
+        @CommandLine.Option(names = {"--ionization", "--adduct"}, description = "Specify the adduct for the corresponding Compound", defaultValue = "[M+?]+", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+        protected void setIonType(String ionType) {
+            this.ionType = PrecursorIonType.fromString(ionType);
         }
 
-        public PrecursorIonType adduct;
+        public PrecursorIonType ionType;
+
+        @CommandLine.Option(names = {"-f", "--formula"}, description = "Specify the neutralized formula of this compound. This will be used for tree computation and no mass decomposition will be performed.", defaultValue = "NULL")
+        public void setFormula(String formula) {
+            this.formula = MolecularFormula.parseOrThrow(formula);
+        }
+
+        public MolecularFormula formula;
     }
 }
