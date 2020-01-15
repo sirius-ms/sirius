@@ -1031,7 +1031,7 @@ training data!
 
 
 \chapter{Quick start!}
-\section{Graphical User Interface}
+\section{Graphical User Interface} \todo{Update needed!}
 \subsection{Working in single mode}
 \label{gui:working-in-single-mode}
 
@@ -1155,10 +1155,10 @@ compound because they have the same parent mass. To analyze this compound,
 run:
 %
 \begin{Verbatim}[commandchars=\\\{\}]
-sirius --input demo-data/mgf/laudanosine.mgf --output /path/laudanosine-out  formula -p orbitrap 
+sirius --input demo-data/mgf/laudanosine.mgf --output <outputdir>  formula -p orbitrap 
 \end{Verbatim}
 
-The \code{formula\_candidates.csv} should look like this is:
+The \code{formula\_candidates.csv} in \code{<outputdir>/0\_laudanosine\_FEATURE1} should look like this is:
 %
 
 \begin{Verbatim}[commandchars=\\\{\}]
@@ -1186,22 +1186,22 @@ usually be over 80 \% or even 90 \%. If this value is very low you either
 have strange high intensive noise in your spectrum, or the allowed mass
 deviation might be too low to explain all the peaks.
 
-If you want to look at the fragmentation trees you can open the output \code{/path/laudanosine-out} in the GUI and use
-the included tree viewer (see, \ref{gui:tree-view}). Note that the viewer can also export the tree as vector graphics \code{(svg, pdf)}   
+If you want to look at the fragmentation trees you can open the output \code{<outputdir>} in the GUI and use
+the included tree viewer (see, \ref{gui:tree-view}). Note that the viewer can also export the tree as vector graphics \code{(svg, pdf)}.   
 
 The directory \code{ms} contains two examples of the \code{.ms} format. Each file contains a single compound measured with an Orbitrap instrument. To analyze this compound run:
 
 \begin{Verbatim}[commandchars=\\\{\}]
-sirius -o outputdir -i demo-data/ms/Bicuculline.ms formula -p orbitrap
+sirius -o <outputdir> -i demo-data/ms/Bicuculline.ms formula -p orbitrap
 \end{Verbatim}
 
 As the ms file already contains the correct molecular formula, SIRIUS will
 directly compute the fragmentation tree without decomposing the mass (like when specifying exactly one molecular formula via \code{-f} option).
 
-If you want to enforce a molecular formula analysis and ranking (although the correct molecular formula is given within the file) you can specify the number of candidates with the \code{-c} option or use \code{--ignore-formula} option to ignore molecular the formula in the file: 
+If you want to enforce a molecular formula analysis and ranking (although the correct molecular formula is given within the file)  use \code{--ignore-formula} option to ignore molecular the formula in the file. The number of formula candidates can be specified via the \code{-c} option: 
 
 \begin{Verbatim}[commandchars=\\\{\}]
-sirius -o outputdir -i demo-data/ms/Bicuculline.ms formula -p orbitrap -c 5
+sirius -o <outputdir> -i demo-data/ms/Bicuculline.ms --ignore-formula formula -p orbitrap -c 5
 \end{Verbatim}
 
 SIRIUS will now ignore the correct molecular formula in the file and output the 5 best candidates.

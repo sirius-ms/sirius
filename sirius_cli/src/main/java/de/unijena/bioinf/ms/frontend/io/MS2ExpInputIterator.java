@@ -31,15 +31,11 @@ public class MS2ExpInputIterator implements InstIterProvider {
     Path currentFile;
     Iterator<Ms2Experiment> currentExperimentIterator;
 
-    public MS2ExpInputIterator(Collection<Path> input, double maxMz) {
-        this(input, maxMz, false);
-    }
-
     public MS2ExpInputIterator(Collection<Path> input, double maxMz, boolean ignoreFormula) {
-        fileIter = input.iterator();
+        this.fileIter = input.iterator();
         this.maxMz = maxMz;
-        currentExperimentIterator = fetchNext();
         this.ignoreFormula = ignoreFormula;
+        currentExperimentIterator = fetchNext();
     }
 
 
