@@ -37,12 +37,12 @@ LibLinearImpl imp;
 
 
 
-    public TrainedSVM trainLinearSVMWithCV(double[][] featureMatrix,double[] labels, String[] IDs, double[][] synth_features, double[] synth_labels)throws IOException{
+    public TrainedSVM trainLinearSVMWithCV(double[][] featureMatrix,double[] labels, String[] IDs, double[][] synth_features, double[] synth_labels,String[] feature_names,String dist,String fe)throws IOException{
 
         FileWriter write_features= new FileWriter("/vol/clusterdata/fingerid_martin/exp2_nfp/features.csv");
 
 
-        int folds = 5;
+        int folds = 10;
 
         this.featureMatrix=featureMatrix;
         this.labels=labels;
@@ -54,9 +54,7 @@ LibLinearImpl imp;
         System.out.println("starting standard");
 
         utils.standardize_features(featureMatrix,scales);
-        for(int i=0;i<featureMatrix.length;i++){
-            System.out.print("stand: "+Arrays.toString(featureMatrix[i]));
-        }
+
        // utils.updateForNormalization(scales,featureMatrix);
       //  utils.normalize_features(featureMatrix,scales);
         //System.out.println("Normalizing");
@@ -72,7 +70,7 @@ LibLinearImpl imp;
         List<Integer> range = IntStream.rangeClosed(0, featureMatrix.length-1)
                 .boxed().collect(Collectors.toList());
 
-        Collections.shuffle(range);
+       // Collections.shuffle(range);
 
 
         int start_index=0;
@@ -85,8 +83,9 @@ LibLinearImpl imp;
 
       for(int i=0;i<folds;i++){
 
-          System.out.println("in fold "+i);
           end_index=start_index+range.size()/folds;
+          System.out.println("in fold "+i+" - start: "+start_index+" - end: "+end_index);
+
 
           ArrayList<double[]> featuresTempTest = new ArrayList<>();
 
@@ -123,6 +122,7 @@ LibLinearImpl imp;
               System.out.println(Arrays.toString(synth_features[u]));
               featuresTempTrain.add(synth_features[u].clone());
               labelsTempTrain.add(synth_labels[u]);
+              ids_Train.add("synth");
           }
 
           double[][] featuresFinalTest = new double[featuresTempTest.size()][featureMatrix[0].length];
@@ -147,27 +147,18 @@ LibLinearImpl imp;
 
 
           }
-
-          for(int a=0;a<featuresFinalTest.length;a++){
-              write_features.write(labelsFinalTrain[a]+" ");
-              for(int b=0;b<featuresFinalTest[a].length;b++) {
-                  if (!(b+1==featuresFinalTest[a].length))
-                  write_features.write(featuresFinalTest[a][b]+" ");
-                  else{
-                  write_features.write(featuresFinalTest[a][b]+" ");
-                  }
-              }
-              write_features.write("\n");
-
+          String[] id_train_final = new String[ids_Train.size()];
+          for (int z=0;z<ids_Train.size();z++){
+              id_train_final[z]=ids_Train.get(z);
           }
-          write_features.write("\n");
+
 
 
           System.out.println("train size: "+featuresFinalTrain.length);
 
-          TrainedSVM svm =  trainLinearSVM(featuresFinalTrain,labelsFinalTrain,featuresFinalTest,labelsFinalTest,null,scales,String.valueOf(i));
+          TrainedSVM svm =  trainLinearSVM(featuresFinalTrain,labelsFinalTrain,featuresFinalTest,labelsFinalTest,feature_names,scales,String.valueOf(i),id_train_final);
 
-          writeFold(ids_Test,svm,String.valueOf(i));
+          writeFold(ids_Test,svm,String.valueOf(i),dist,fe);
 
           for(int h=0;h<svm.weights.length;h++){
               System.out.print(svm.weights[h]+" , ");
@@ -191,14 +182,6 @@ LibLinearImpl imp;
 
 
           double[] scores = predict.predict_confidence(featuresFinalTest,svm);
-
-
-
-          ArrayList<Double> testscorearray = new ArrayList<>();
-
-          for(int n=0;n<scores.length;n++){
-              testscorearray.add(scores[n]+10000);
-          }
 
           PvalueScoreUtils utils2 =  new PvalueScoreUtils();
 
@@ -261,7 +244,7 @@ LibLinearImpl imp;
 
     }
 
-    public TrainedSVM trainLinearSVM(double[][] trainfeatureMatrix, double[] labels, double[][] testFeatureMatrix, double[] testLabels,String[] feature_names,SVMScales scales, String id){
+    public TrainedSVM trainLinearSVM(double[][] trainfeatureMatrix, double[] labels, double[][] testFeatureMatrix, double[] testLabels,String[] feature_names,SVMScales scales, String id,String[] ids_train){
 
         imp = new LibLinearImpl();
         SVMUtils utils = new SVMUtils();
@@ -315,7 +298,7 @@ LibLinearImpl imp;
 
         System.out.println("before gridsearch");
 
-        double[] c_values = new double[]{0.0001,0.001,0.01,0.1,1,10,100,1000};
+        double[] c_values = new double[]{10,100,1000};
         double[] epsilon_values=  new double[]{0.000001,0.00001,0.0001,0.001,0.01,0.1,1};
 
         double best_TPR=-1;
@@ -357,11 +340,35 @@ LibLinearImpl imp;
                 //TODO: testing
                 double[] probAB = new double[2];
 
-                trainSigmoid(trainfeatureMatrix, labels, trained, probAB);
-                System.out.println("trained sigmoid");
 
-                trained.probAB=null;
-                System.out.println("Platt scaling is off!");
+                //remove all synth features for sigmoid training
+                int counter=0;
+                for (int t=0;t<ids_train.length;t++){
+                    if (!ids_train[t].equals("synth")){
+                        counter++;
+                    }
+                }
+
+
+                double[][] reduced_f_matrix = new double[counter][trainfeatureMatrix[0].length];
+                double[] reduced_labels = new double[counter];
+
+                for (int q=0;q<trainfeatureMatrix.length;q++){
+                    if (!ids_train[q].equals("synth")){
+                        reduced_f_matrix[q]=trainfeatureMatrix[q];
+                        reduced_labels[q]=labels[q];
+                    }
+                }
+                System.out.println("reduced: "+reduced_f_matrix.length+" - orig: "+trainfeatureMatrix);
+
+                //end
+
+
+                trainSigmoid(reduced_f_matrix, reduced_labels, trained, probAB,false);
+                System.out.println("trained sigmoid"+" - "+probAB[0]+" - "+probAB[1]);
+
+                //trained.probAB=null;
+                //System.out.println("Platt scaling is off!");
 
 
 
@@ -562,7 +569,7 @@ LibLinearImpl imp;
 
             double[] probAB = new double[2];
 
-            trainSigmoid(featureMatrix,labels,trained,probAB);
+            trainSigmoid(featureMatrix,labels,trained,probAB,false);
 
 
 
@@ -591,7 +598,7 @@ LibLinearImpl imp;
     }
 
 
-    public void trainSigmoid(double[][] featureMatrix, double[] labels,TrainedSVM svm ,double[] probAB){
+    public void trainSigmoid(double[][] featureMatrix, double[] labels,TrainedSVM svm ,double[] probAB, Boolean cut){
 
         HashMap<double[], Double> feature_to_label = new HashMap<>();
 
@@ -610,7 +617,10 @@ LibLinearImpl imp;
         }
         SVMPredict pred = new SVMPredict();
 
-        //SVM.sigmoid_train(cutFeatures.length,pred.predict_confidence(cutFeatures,svm),cutlabel,probAB);
+
+        if (cut==true)
+        SVM.sigmoid_train(cutFeatures.length,pred.predict_confidence(cutFeatures,svm),cutlabel,probAB);
+        if (cut==false)
         SVM.sigmoid_train(featureMatrix.length,pred.predict_confidence(featureMatrix,svm),labels,probAB);
 
 
@@ -620,17 +630,17 @@ LibLinearImpl imp;
 
     }
 
-    public void writeFold(ArrayList<String> ids_test, TrainedSVM svm, String foldID){
+    public void writeFold(ArrayList<String> ids_test, TrainedSVM svm, String foldID,String dist,String fe){
         try {
             System.out.println("writing fold"+foldID);
-            File folder = new File("/vol/clusterdata/fingerid_martin/fingerid_confidence_120/cv_folds/fold"+foldID+"/");
-            BufferedWriter write_folds = new BufferedWriter(new FileWriter(new File(folder+"testids"+foldID)));
+            File folder = new File("/vol/clusterdata/fingerid_martin/fingerid_confidence_120/cv_folds/fold"+foldID);
+            BufferedWriter write_folds = new BufferedWriter(new FileWriter(new File(folder+"/testids_"+dist+"_"+fe+"_"+foldID)));
 
             for(int i=0;i<ids_test.size();i++){
                 write_folds.write(ids_test.get(i)+"\n");
             }
             write_folds.close();
-            svm.exportAsJSON(new File(folder+"svm"+foldID));
+            svm.exportAsJSON(new File(folder+"/svm_"+dist+"_"+fe+"_"+foldID));
 
 
 
