@@ -27,7 +27,7 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
 
 
     // info
-    @Option(names = {"--info", "--webservice-info"}, description = "information about connection of CSI:FingerID Webservice")
+    @Option(names = {"--info", "--webservice-info"}, description = "Information about connection of CSI:FingerID Webservice")
     public boolean fingeridInfo;
 
     @Option(names = {"--database", "-d", "--db ", "--fingerid-db", "--fingerid_db", "--fingeriddb"}, description = "search structure in given database. By default the same database for molecular formula search is also used for structure search. If no database is used for molecular formula search, PubChem is used for structure search.")/*Accepts also a filepath to a valid database directory.*/

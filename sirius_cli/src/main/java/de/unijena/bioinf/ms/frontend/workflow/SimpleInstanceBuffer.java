@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class SimpleInstanceBuffer implements InstanceBuffer {
     private final Iterator<? extends Instance> instances;
-    private final List<InstanceJob.Factory> tasks;
+    private final List<InstanceJob.Factory<?>> tasks;
     private final DataSetJob dependJob;
 
     private final Set<InstanceJobCollectorJob> runningInstances = new LinkedHashSet<>();
@@ -30,7 +30,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
     private final int bufferSize;
     private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
-    public SimpleInstanceBuffer(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory> tasks, @Nullable DataSetJob dependJob) {
+    public SimpleInstanceBuffer(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob dependJob) {
         this.bufferSize = bufferSize < 1 ? Integer.MAX_VALUE : bufferSize;
         this.instances = instances;
         this.tasks = tasks;
@@ -56,7 +56,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
                 final InstanceJobCollectorJob collector = new InstanceJobCollectorJob(instance);
 
                 JJob<Instance> jobToWaitOn = (DymmyExpResultJob) () -> instance;
-                for (InstanceJob.Factory task : tasks) {
+                for (InstanceJob.Factory<?> task : tasks) {
                     jobToWaitOn = task.createToolJob(jobToWaitOn);
                     collector.addRequiredJob(jobToWaitOn);
                     SiriusJobs.getGlobalJobManager().submitJob(jobToWaitOn);
@@ -145,7 +145,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
 
         @Override
         public void handleFinishedRequiredJob(JJob required) {
-
+//            System.out.println(required.identifier() +" - " + required.getState().name());
         }
     }
 }

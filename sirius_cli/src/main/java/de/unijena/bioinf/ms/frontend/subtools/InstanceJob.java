@@ -44,14 +44,16 @@ public abstract class InstanceJob extends BasicDependentJJob<Instance> implement
     protected void cleanup() {
         super.cleanup();
         final Class<? extends DataAnnotation>[] ca = compoundComponentsToClear();
-        if (ca != null && ca.length > 0) input.clearCompoundCache(ca);
-        final Class<? extends DataAnnotation>[] ra = formulaResultComponentsToClear();
-        if (ra != null && ra.length > 0) input.clearFormulaResultsCache(ra);
+        if (input != null) {
+            if (ca != null && ca.length > 0) input.clearCompoundCache(ca);
+            final Class<? extends DataAnnotation>[] ra = formulaResultComponentsToClear();
+            if (ra != null && ra.length > 0) input.clearFormulaResultsCache(ra);
+        }
     }
 
     @Override
     public String identifier() {
-        return super.identifier() + " | Instance: " + input.toString();
+        return super.identifier() + " | Instance: " + (input != null ? input.toString() : "NULL");
     }
 
     protected void checkInput() {
