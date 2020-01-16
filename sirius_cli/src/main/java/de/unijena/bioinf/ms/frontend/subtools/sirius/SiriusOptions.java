@@ -22,6 +22,7 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -136,21 +137,30 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
     }
 
 
-    // some hidden parameters
-    @Option(names = "--disable-element-detection", hidden = true)
-    public void disableElementDetection(boolean disable) throws Exception {
-        if (disable)
-            defaultConfigOptions.changeOption("FormulaSettings.detectable", " , ");
+    @CommandLine.ArgGroup(exclusive = true)
+    private void setElementDetection(ElementDetection ed){
+        ed.defaultConfigOptions = defaultConfigOptions;
     }
 
-    @Option(names = "--enable-silicon-detection", hidden = true) //todo schliesst sich aus mit disable-element-detection
-    public void enableSiliconDetection(boolean enable) throws Exception {
-        if (enable) {
-            String value = defaultConfigOptions.config.getConfigValue("FormulaSettings.detectable");
-            if (value.isEmpty())
-                defaultConfigOptions.changeOption("FormulaSettings.detectable", "Si");
-            else if (!value.contains("Si"))
-                defaultConfigOptions.changeOption("FormulaSettings.detectable", value + ",Si");
+    private static class ElementDetection {
+        private DefaultParameterConfigLoader defaultConfigOptions;
+
+        // some hidden parameters
+        @Option(names = "--disable-element-detection", hidden = true)
+        public void disableElementDetection(boolean disable) throws Exception {
+            if (disable)
+                defaultConfigOptions.changeOption("FormulaSettings.detectable", " , ");
+        }
+
+        @Option(names = "--enable-silicon-detection", hidden = true)
+        public void enableSiliconDetection(boolean enable) throws Exception {
+            if (enable) {
+                String value = defaultConfigOptions.config.getConfigValue("FormulaSettings.detectable");
+                if (value.isEmpty())
+                    defaultConfigOptions.changeOption("FormulaSettings.detectable", "Si");
+                else if (!value.contains("Si"))
+                    defaultConfigOptions.changeOption("FormulaSettings.detectable", value + ",Si");
+            }
         }
     }
 

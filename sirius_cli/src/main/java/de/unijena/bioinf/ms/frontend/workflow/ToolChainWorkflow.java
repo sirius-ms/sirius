@@ -59,7 +59,7 @@ public class ToolChainWorkflow implements Workflow {
             // prepare input
             Iterable<? extends Instance> iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
             // build toolchain
-            final List<InstanceJob.Factory> instanceJobChain = new ArrayList<>(toolchain.size());
+            final List<InstanceJob.Factory<?>> instanceJobChain = new ArrayList<>(toolchain.size());
             //job factory for job that add config annotations to an instance
             instanceJobChain.add(() -> new AddConfigsJob(parameters));
             // get buffer size
@@ -69,9 +69,9 @@ public class ToolChainWorkflow implements Workflow {
             for (Object o : toolchain) {
                 checkForCancellation();
                 if (o instanceof InstanceJob.Factory) {
-                    instanceJobChain.add((InstanceJob.Factory) o);
+                    instanceJobChain.add((InstanceJob.Factory<?>) o);
                 } else if (o instanceof DataSetJob.Factory) {
-                    final DataSetJob dataSetJob = ((DataSetJob.Factory) o).makeJob();
+                    final DataSetJob dataSetJob = ((DataSetJob.Factory<?>) o).makeJob();
                     submitter = new SimpleInstanceBuffer(bufferSize, iteratorSource.iterator(), instanceJobChain, dataSetJob);
                     submitter.start();
                     iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(dataSetJob).awaitResult();
