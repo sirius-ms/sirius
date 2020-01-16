@@ -8,7 +8,7 @@ import picocli.CommandLine;
 
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "passatutto", aliases = {"P"}, description = "<COMPOUND_TOOL> Compute a decoy database based on the input spectra. If no molecular formula is provided in the input, the top scoring computed formula is used.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "passatutto", aliases = {"P"}, description = "<COMPOUND_TOOL> Compute a decoy spectra based on the fragmentation trees of the given input spectra. If no molecular formula is provided in the input, the top scoring computed formula is used.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
 public class PassatuttoOptions implements Callable<InstanceJob.Factory<PassatuttoSubToolJob>> {
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;

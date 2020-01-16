@@ -243,6 +243,7 @@ Please cite all papers that you feel relevant for your work.  Please do not
 cite this manual or the SIRIUS or CSI:FingerID website, but rather our
 scientific papers.
 
+\subsection*{SIRIUS~4}
 \begin{itemize}
 	\item Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker.
 	\textbf{SIRIUS 4: a rapid tool for turning tandem mass spectra into metabolite structure information.}
@@ -1847,7 +1848,7 @@ provides different tools (subcommands) for metabolite identification. This tools
 
 \begin{itemize}
 	\item \textbf{CONFIGURATION: }
-	The config tool can be executed before every Toolchain or standalone tool to set all configurations available in SIRIUS from the command line.
+	The config tool can be executed before every toolchain or standalone tool to set all configurations available in SIRIUS from the command line.
 	\item \textbf{STANDALONE: }
 	Tools that run Standalone and cannot be concatenated with other subtools. These are usually tools for configuration purposes.
 	\item \textbf{PREPROCESSING: }
@@ -1943,28 +1944,43 @@ sirius  -i <input> -o <output>  formula -c 50  zodiac --minLocalConnections 0 --
 \end{Verbatim}
 
 
-\section{Passatutto: Decoy spectral libraries}
-
 \section{CSI:FingerID: Identifying Molecular Structures}
 \label{commandline:identifying-molecular-structures}
 
 With the \code{structure} tool you can search for molecular structures with
-CSI:FingerID. To run CSI:FingerID you need to execute the \code{formula} tool first. You also might want to run the \code{zodiac} for improved formula ranking if your data comes from the same sample type. 
+CSI:FingerID. To run CSI:FingerID you need to execute the \code{formula} tool first. You might also want to run the \code{zodiac} for improved formula ranking if your data is derived from an biological sample or any other set of derivates. 
 
 With \code{--database} you can specify the database SIRIUS should search in. Available are \code{pubchem} and \code{bio}. 
 %You can also specify certain databases
 %like \emph{code} and \emph{code}; however, we strongly recommended to instead
 %filter the output list afterwards.
 
-SIRIUS will generate a \code{structure\_candidates.csv} for each compound containing a ordered candidate list of structures with the CSI:FingerID score. Furthermore, a \code{compound\_identification.csv} file is generated containing the top candidates from all compounds ordered by their confidence.
+The \code{structure} tool will generate a \code{structure\_candidates.csv} for each compound containing a ordered candidate list of structures with the CSI:FingerID score. Furthermore, a \code{compound\_identification.csv} file is generated containing the top candidates from all compounds ordered by their confidence.
 
 \begin{Verbatim}[commandchars=\\\{\}]
-sirius  formula -c 10  structure --database=pubchem demo-data/ms/Bicuculline.ms
+sirius  -i demo-data/ms/Bicuculline.ms -o <output>formula -c 10  structure --database pubchem 
 \end{Verbatim}
 
+When running \code{structure} together with \code{zodiac} the command could look like this:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+sirius  -i <input> -o <output> formula -c 50 zodiac structure --database bio 
+\end{Verbatim}
 
 \section{Canopus: Predicting Compound Classes without Identification}
-\todo{Coming soon... Describe the CANOPUS Tool!}
+The \code{canopus} tool allows you the predict compound classes from the probabilistic molecular fingerprint predicted by CSI:FingerID. So \code{cannopus} can even provide compound class information for unidentified compound with no hit in a structure database: 
+\begin{Verbatim}[commandchars=\\\{\}]
+sirius  -i <input> -o <output> formula -c 10  structure --database pubchem canopus
+\end{Verbatim}
+
+\section{Passatutto: Decoy Spectra from Fragmentation Trees}
+The \code{passattuto} tool allows you to compute high quality decoy spectra from fragmentation trees provided by the \code{formula} tool. Assume your are using a spectral library as input you can easily create a decoy database based on this spectra:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+sirius  -i <spectral-lib> -o <output> formula passatutto 
+\end{Verbatim}
+
+If no molecular formulas are annotated to the input spectra the best scoring candidate will be used for decoy computation instead.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  CHAPTER  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
