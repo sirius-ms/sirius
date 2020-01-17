@@ -1,13 +1,13 @@
 // tree config variables, will be overwritten by treeViewerSettings.js
+// when used in SIRIUS, values set here will have no effect
 var data, data_json, root,
     annot_fields = ['mz', 'massDeviationMz', 'relativeIntensity'],
     popup_annot_fields = ['massDeviationPpm', 'score'],
     color_variant = "rel_int", color_scheme = "blues",
     show_edge_labels = true, show_node_labels = true,
-    centered_node_labels = true,
-    show_color_bar = true,
-    edge_label_boxes = false, edge_labels_angled = true,
-    loss_colors = true, deviation_colors = true;
+    centered_node_labels = true, edit_mode=true, show_color_bar = true,
+    edge_label_boxes = false, edge_labels_angled = true, loss_colors = true,
+    deviation_colors = true;
 // constants that will probably not be configurable
 var SNAP_THR = 0;
 // statistics for color coding
@@ -20,9 +20,8 @@ var nodeToMove = null, unambig_mode = 'none',
 var brushTransition = d3.transition().duration(500),
     zeroTransition = d3.transition().duration(0);
 var colorGen, loss_colors_dict, losses;
-// DEBUG
-var console_p = d3.select('body').append('p'),
-    move_log = [];
+// use innerWidth/Height (for renderers other than WebView)
+var window_use_inner = false;
 // theming
 var styles = {'elegant': {'node-rect': {'stroke' : 'transparent'},
                           'node-rect-hovered': {'stroke': 'black',
@@ -54,7 +53,7 @@ function loadJSONTree(jsonTree){
     data = JSON.parse(jsonTree);
     // NOTE: RESET VARIABLES HERE
     moveModes = {};
-    colorGen = nextSchemeColor();
+    colorGen = nextLossColor();
     loss_colors_dict = {};
     losses = [];
     if (d3.select(nodeToMove).size() == 0)
@@ -171,6 +170,8 @@ function handleMouseMove(){
 
 // activate node move/swap-mode, visualize moving possibilities
 function handleClick(){
+    if (!edit_mode)
+        return;
 
     function clickedOnCollapse(){
         if (typeof(collapse_button) == 'undefined')
@@ -369,19 +370,23 @@ function colorLossByElements(loss){
     return color;
 }
 
-function* nextSchemeColor(scheme=interpolateHslHue){
+function* nextLossColor(scheme=interpolateHslHue){
     var t = 0;
-    var size = losses.length;
-    while (t <= size)
-        yield scheme(t++/size);
+    var commonLosses_len = getCommonLosses().length;
+    while (t < commonLosses_len)
+        yield scheme(t++/commonLosses_len);
+    yield "black";
 }
 
 function colorLossSequentially(loss){
-    if (loss_colors_dict.hasOwnProperty(loss))
-        return loss_colors_dict[loss];
-    var color = colorGen.next().value;
-    loss_colors_dict[loss] = color;
-    return color;
+    if (!loss_colors_dict.hasOwnProperty("commonLosses_initialized")){
+        for (var loss of getCommonLosses())
+            loss_colors_dict[loss] = colorGen.next().value;
+        loss_colors_dict["commonLosses_initialized"] = true;
+    }
+    if (!loss_colors_dict.hasOwnProperty(loss))
+        loss_colors_dict[loss] = colorGen.next().value;
+    return loss_colors_dict[loss];
 }
 
 function colorLossDet(loss){
@@ -405,9 +410,30 @@ function interpolateHslHue(value, s=1, l=0.35){
 
 // Tries to position link text (edge labels) optimally as to not overlap with
 // the links themselves
-function link_text_x(sx, tx) {
+function linkTextX(sx, tx) {
     // TODO: can be improved
     return (sx + tx) / 2 + ((sx > tx) ? -1 : 1) * 3;
+}
+
+// returns the x (dx) value of annotation text.
+// Attempts to center the text to the decimal separator
+function getAnnotX(d){
+    var base_dx = this.parentNode.parentNode.__data__.x +
+        (centered_node_labels?0: (-(boxwidth / 2) + 5));
+    var orig_content = this.textContent;
+    // works with both '.' and ',' as decimal separator
+    var decimal = orig_content.match(/[\.,]/);
+    if (decimal == null)
+        return base_dx;
+    var dec_sep = decimal[0];
+    if (orig_content.indexOf('.'))
+        this.textContent = this.textContent.split(dec_sep)[0] + dec_sep;
+    var max_offset = boxwidth/4; // somewhat arbitrary
+    var offset = max_offset - d3.select(this).node().getBBox().width;
+    if (offset < 0)
+        console.log('WARNING: decimals could not be perfectly aligned');
+    this.textContent = orig_content;
+    return base_dx + Math.max(offset, 0);
 }
 
 function linkAngle(x1, x2, y1, y2){
@@ -666,7 +692,6 @@ function moveNode(source, target, mode){
     default:
         return;
     }
-    move_log.push(source, target, mode);
     moveModes = {};
 }
 
@@ -1125,10 +1150,7 @@ function drawNodeAnnots() {
             return this.parentNode.parentNode.__data__.y
                 - boxheight + (2 + i) * lineheight + 5;
         })
-        .attr('dx', function(d) {
-            return this.parentNode.parentNode.__data__.x + (centered_node_labels?0:
-                (-(boxwidth / 2) + 5));
-        })
+        .attr('dx', getAnnotX)
         .attr('text-anchor', centered_node_labels?'middle':'start')
         .style('fill', (deviation_colors?
                         (function (d) {return getAnnotColor(
@@ -1201,7 +1223,7 @@ function drawLinks(root) {
             if (edge_label_boxes)
                 return (d.source.x+d.target.x)/2;
             else
-                return link_text_x(d.source.x,
+                return linkTextX(d.source.x,
                                    d.target.x);
         })
         .attr('dy', function(d) {
@@ -1219,7 +1241,7 @@ function drawLinks(root) {
             if (edge_labels_angled)
                 return 'rotate(' + linkAngle(d.source.x, d.target.x, d.source.y,
                                              d.target.y - boxheight) + ',' +
-                link_text_x(d.source.x, d.target.x) + ',' +
+                linkTextX(d.source.x, d.target.x) + ',' +
                 (d.source.y + (d.target.y - boxheight)) / 2 + ')';
             else
                 return null;
@@ -1264,7 +1286,7 @@ var tree, node_map;
 
 // layout
 // Parameters
-var boxheight = 60;             // adapts to content, TODO: change default value
+var boxheight = 60;             // adapts to content
 var boxwidth = 100;
 var margin_left = 0;
 var margin_top = boxheight + 3;
@@ -1272,8 +1294,10 @@ var lineheight = 13;
 var width, height;
 
 function calcLayout() {
-    width = window.outerWidth - boxwidth/2;
-    height = window.outerHeight - boxheight / 2;
+    var window_width = window_use_inner?window.innerWidth:window.outerWidth;
+    var window_height = window_use_inner?window.innerHeight:window.outerHeight;
+    width = window_width - boxwidth / 2;
+    height = window_height - boxheight / 2;
     margin_left = 0;
     margin_top = boxheight + 3;
 }

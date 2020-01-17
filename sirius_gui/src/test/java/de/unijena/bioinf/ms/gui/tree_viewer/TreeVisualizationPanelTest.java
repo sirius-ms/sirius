@@ -8,26 +8,24 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 
 
 public class TreeVisualizationPanelTest{
     public static void main(String[] args) throws InterruptedException {
         JFrame frame = new JFrame("TreeViewer Test");
         WebViewTreeViewer browser = new WebViewTreeViewer();
-
         browser.addJS("d3.min.js");
         browser.addJS("d3-colorbar.js");
         browser.addJS("tree_viewer/treeViewer.js");
-        browser.addJS("tree_viewer/treeViewerSettings.js");
-//        browser.addJS("tree_viewer/treeViewerConnector.js");
-
-
-//        browser.addJS("d3.min.js");
-//        browser.addJS("d3-colorbar.js");
-//        browser.addJS("treeViewer.js");
-//        browser.addJS("treeViewerSettings.js");
-        frame.add(browser);
-        browser.load();
+        // browser.addJS("tree_viewer/treeViewerSettings.js");
+        browser.addJS("tree_viewer/treeViewerConnector.js");
+        frame.add((JFXPanel) browser);
+        HashMap<String, Object> bridges = new HashMap<String, Object>() {{
+                put("config", new TreeConfig());
+                put("connector", new TreeViewerConnector());
+            }};
+        browser.load(bridges);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setSize(1200, 1400);

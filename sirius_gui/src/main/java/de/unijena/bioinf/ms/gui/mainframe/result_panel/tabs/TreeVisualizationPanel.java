@@ -67,9 +67,9 @@ public class TreeVisualizationPanel extends JPanel
         this.setLayout(new BorderLayout());
 
         localConfig = new TreeConfig();
-        localConfig.setFromString("presets", PropertyManager
-                .getProperty(
-                        "de.unijena.bioinf.tree_viewer.presets"));
+        localConfig.setFromString(
+            "presets", PropertyManager.getProperty(
+                PropertyManager.PROPERTY_BASE + ".tree_viewer.presets"));
 
         ////////////////
         //// Toolbar ///
@@ -79,8 +79,9 @@ public class TreeVisualizationPanel extends JPanel
         toolBar.setFloatable(false);
         presetBox = new JComboBox<>((String[]) localConfig.get("presets"));
         presetBox.addActionListener(this);
-        presetBox.setSelectedItem(PropertyManager.getProperty(
-                "de.unijena.bioinf.tree_viewer.preset"));
+        presetBox.setSelectedItem(
+            PropertyManager.getProperty(PropertyManager.PROPERTY_BASE
+                                        + ".tree_viewer.preset"));
         JLabel presetLabel = new JLabel("Preset");
         presetLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
         toolBar.add(presetLabel);
@@ -180,15 +181,17 @@ public class TreeVisualizationPanel extends JPanel
     }
 
     public void applyPreset(String preset) {
-        String propertyPrefix;
         if (localConfig == null)
             localConfig = new TreeConfig();
-        propertyPrefix = "de.unijena.bioinf.tree_viewer."
-                + preset.toString() + ".";
+        String propertyPrefix = PropertyManager.PROPERTY_BASE + ".tree_viewer.";
+        String presetPropertyPrefix = propertyPrefix + preset.toString() + ".";
 
         for (String setting : TreeConfig.SETTINGS)
-            localConfig.setFromString(setting, PropertyManager
-                    .getProperty(propertyPrefix + setting));
+            localConfig.setFromString(
+                setting, PropertyManager.getProperty(
+                    // preferably use preset value
+                    presetPropertyPrefix + setting,
+                    propertyPrefix + setting, null));
 
         updateConfig();
         if (settings != null)
