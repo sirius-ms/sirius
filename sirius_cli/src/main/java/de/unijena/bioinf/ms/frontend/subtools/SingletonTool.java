@@ -6,5 +6,5 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 
 public interface SingletonTool<W extends Workflow> {
 
-    W makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config);
+    W makeSingletonWorkflow(PreprocessingJob<?> preproJob, ParameterConfig config);
 }

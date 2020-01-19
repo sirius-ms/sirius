@@ -22,21 +22,19 @@ import java.awt.event.WindowEvent;
 import java.io.IOException;
 
 @CommandLine.Command(name = "gui", aliases = {"GUI"}, description = "Starts the graphical user interface of SIRIUS", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-public class GuiAppOptions implements SingletonTool {
+public class GuiAppOptions implements SingletonTool<GuiAppOptions.Flow> {
     @Override
-    public Workflow makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
-        return new Flow(preproJob, projectSpace, config);
+    public Flow makeSingletonWorkflow(PreprocessingJob<?> preproJob, ParameterConfig config) {
+        return new Flow((PreprocessingJob<ProjectSpaceManager>) preproJob, config);
     }
 
-    class Flow implements ServiceWorkflow {
-        private final PreprocessingJob preproJob;
+    public class Flow implements ServiceWorkflow {
+        private final PreprocessingJob<ProjectSpaceManager> preproJob;
         private final ParameterConfig config;
-        private final ProjectSpaceManager projectSpace;
 
 
-        public Flow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
+        private Flow(PreprocessingJob<ProjectSpaceManager> preproJob, ParameterConfig config) {
             this.preproJob = preproJob;
-            this.projectSpace = projectSpace;
             this.config = config;
         }
 
@@ -45,7 +43,7 @@ public class GuiAppOptions implements SingletonTool {
 //todo minor: cancellation handling
 
             // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
-            SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
+            final ProjectSpaceManager projectSpace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
 
 
             // NOTE: we do not want to run ConfigJob here because we want to set

@@ -17,7 +17,6 @@ import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.align.Cluster;
 import de.unijena.bioinf.model.lcms.ConsensusFeature;
 import de.unijena.bioinf.model.lcms.LCMSRun;
-import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -28,21 +27,27 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class LcmsAlignSubToolJob extends PreprocessingJob {
+public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
+    protected final List<Path> input;
+    protected final ProjectSpaceManager space;
 
-    public LcmsAlignSubToolJob(@Nullable InputFilesOptions input, @Nullable ProjectSpaceManager space) {
-        super(input, space);
+    public LcmsAlignSubToolJob(@Nullable List<Path> inputFiles, @Nullable ProjectSpaceManager space) {
+        super();
+        this.input = inputFiles;
+        this.space = space;
+
     }
 
     @Override
     protected ProjectSpaceManager compute() throws Exception {
-        final ArrayList<BasicJJob> jobs = new ArrayList<>();
+        final ArrayList<BasicJJob<?>> jobs = new ArrayList<>();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         i.setDetectableIonTypes(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
-        for (Path f : input.msInput.msParserfiles.stream().sorted().collect(Collectors.toList())) {
+        for (Path f : input.stream().sorted().collect(Collectors.toList())) {
             jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<>() {
                 @Override
                 protected Object compute() {
@@ -63,8 +68,8 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
                 }
             }));
         }
-        MultipleSources sourcelocation = MultipleSources.leastCommonAncestor(input.getAllFilesArray());
-        for (BasicJJob j : jobs) j.takeResult();
+        MultipleSources sourcelocation = MultipleSources.leastCommonAncestor(input.stream().map(Path::toFile).toArray(File[]::new));
+        for (BasicJJob<?> j : jobs) j.takeResult();
         i.getMs2Storage().backOnDisc();
         i.getMs2Storage().dropBuffer();
         Cluster alignment = i.alignAndGapFilling();
@@ -72,7 +77,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob {
         final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(alignment);
         logInfo("Gapfilling Done.");
 
-        int totalFeatures=0, goodFeatures=0;
+        int totalFeatures = 0, goodFeatures = 0;
         //save to project space
         for (ConsensusFeature feature : consensusFeatures) {
             final Ms2Experiment experiment = feature.toMs2Experiment();

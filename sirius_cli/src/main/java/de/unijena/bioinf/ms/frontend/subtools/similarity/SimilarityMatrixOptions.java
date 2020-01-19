@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.similarity;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
@@ -8,6 +9,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.util.concurrent.ExecutionException;
 
 @CommandLine.Command(name = "similarity", aliases = {}, description = "<STANDALONE> Computes the similarity between all compounds in the dataset and outputs a matrix of similarities.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
 public class SimilarityMatrixOptions implements SingletonTool<SimilarityMatrixWorkflow> {
@@ -31,7 +33,7 @@ public class SimilarityMatrixOptions implements SingletonTool<SimilarityMatrixWo
     public boolean numpy;
 
     @Override
-    public SimilarityMatrixWorkflow makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
-        return new SimilarityMatrixWorkflow(projectSpace,this, config);
+    public SimilarityMatrixWorkflow makeSingletonWorkflow(PreprocessingJob<?> preproJob, ParameterConfig config) {
+            return new SimilarityMatrixWorkflow((PreprocessingJob<ProjectSpaceManager>) preproJob,this, config);
     }
 }

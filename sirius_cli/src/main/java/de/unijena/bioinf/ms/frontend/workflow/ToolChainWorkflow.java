@@ -22,19 +22,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ToolChainWorkflow implements Workflow {
     protected final static Logger LOG = LoggerFactory.getLogger(ToolChainWorkflow.class);
     protected final ParameterConfig parameters;
-    private final PreprocessingJob preprocessingJob;
+    private final PreprocessingJob<?> preprocessingJob;
 
     protected List<Object> toolchain;
 
     private final AtomicBoolean canceled = new AtomicBoolean(false);
     private InstanceBuffer submitter = null;
-    private final ProjectSpaceManager project;
 
-    public ToolChainWorkflow(@NotNull ProjectSpaceManager projectSpace, @NotNull PreprocessingJob preprocessingJob, @NotNull ParameterConfig parameters, @NotNull List<Object> toolchain) {
+    public ToolChainWorkflow(@NotNull PreprocessingJob<?> preprocessingJob, @NotNull ParameterConfig parameters, @NotNull List<Object> toolchain) {
         this.preprocessingJob = preprocessingJob;
         this.parameters = parameters;
         this.toolchain = toolchain;
-        this.project = projectSpace;
     }
 
     @Override
@@ -56,8 +54,11 @@ public class ToolChainWorkflow implements Workflow {
         try {
             checkForCancellation();
 
+            //todo the tool chain should not know anythin about the project space. that should be outside this class.
+            //todo maybe closing the space should be a "postprocess" job??
+            final ProjectSpaceManager project = (ProjectSpaceManager) SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
             // prepare input
-            Iterable<? extends Instance> iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
+            Iterable<? extends Instance> iteratorSource = project;
             // build toolchain
             final List<InstanceJob.Factory<?>> instanceJobChain = new ArrayList<>(toolchain.size());
             //job factory for job that add config annotations to an instance
@@ -89,7 +90,6 @@ public class ToolChainWorkflow implements Workflow {
             if (!instanceJobChain.isEmpty()) {
                 submitter = new SimpleInstanceBuffer(bufferSize, iteratorSource.iterator(), instanceJobChain, null);
                 submitter.start();
-                iteratorSource = project;
             }
             LOG.info("Workflow has been finished! Writing Project-Space summaries...");
 
@@ -101,7 +101,6 @@ public class ToolChainWorkflow implements Workflow {
                 //use all experiments in workspace to create summaries
                 LOG.info("Writing summary files...");
                 project.updateSummaries(ProjectSpaceManager.defaultSummarizer());
-
 
                 LOG.info("Project-Space successfully written!");
             } catch (IOException e) {

@@ -976,7 +976,7 @@ database''.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Confidence of molecular structure search}
+\section{COSMIC - COnfidence for Small Molecule IdentifiCations}
 \todo{Coming soon... Describe the new confidence Score!}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1285,6 +1285,7 @@ See also the GNPS \footnote{\sphinxAtStartFootnote%
 } database for other examples of MGF files.
 
 \paragraph{SIRIUS MS-Format}
+\todo{ms file needs update}
 A disadvantage of these data formats is that they do not contain all information necessary for SIRIUS to perform the computation. Missing meta information have to be provided via the commandline. Therefore, SIRIUS supports also an own file format very similar to the MGF format above. The file ending of this format is \code{.ms}. Each file contains one measured compound (but arbitrary many spectra). Each line may contain a peak (given as m/z and intensity separated by a whitespace), meta information (starting with the \textbf{\textgreater{}} symbol followed by the information type, a whitespace and the value) or comments (starting with the \textbf{\#} symbol). The following fields are recognized by SIRIUS:
 \begin{itemize}
 	\item {} 
@@ -1340,6 +1341,7 @@ An example for a .ms file:
 \end{Verbatim}
 
 \subsection{LCMS-Runs}
+SIRIUS can import full LCMS-Runs via the preprocessing   
 
 \section{Output}
 \subsection{SIRIUS project-space}\label{gui:workspace}

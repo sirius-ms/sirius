@@ -14,7 +14,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "Starts SIRIUS as a background (REST) service that can be requested via a REST-API", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-public class MiddlewareAppOptions implements SingletonTool {
+public class MiddlewareAppOptions implements SingletonTool<MiddlewareAppOptions.Flow> {
 
     @CommandLine.Option(names = {"--port", "-p"}, description = "Specify the port on which the SIRIUS REST Service should run (Default: 8080).", defaultValue = "8080")
     private void setPort(int port) {
@@ -31,29 +31,33 @@ public class MiddlewareAppOptions implements SingletonTool {
     }
 
     @Override
-    public Workflow makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
-        return new Flow(preproJob, projectSpace, config);
+    public Flow makeSingletonWorkflow(PreprocessingJob<?> preproJob, ParameterConfig config) {
+        return new Flow((PreprocessingJob<ProjectSpaceManager>) preproJob, config);
     }
 
 
-    private class Flow implements ServiceWorkflow {
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
 
-        private final PreprocessingJob preproJob;
+    public class Flow implements ServiceWorkflow {
+
+        private final PreprocessingJob<ProjectSpaceManager> preproJob;
         private final ParameterConfig config;
-        private final ProjectSpaceManager projecSapce;
         private ConfigurableApplicationContext appContext = null;
 
 
-        public Flow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
+        private Flow(PreprocessingJob<ProjectSpaceManager> preproJob, ParameterConfig config) {
             this.preproJob = preproJob;
-            this.projecSapce = projectSpace;
             this.config = config;
         }
 
         @Override
         public void run() {
             System.out.println(System.getProperty("management.endpoints.web.exposure.include"));
-            SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
+            //todo needed
+            final ProjectSpaceManager projectSapace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
             SpringApplication app = new SpringApplication(SiriusMiddlewareApplication.class);
             appContext = app.run();
         }
