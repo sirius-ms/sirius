@@ -23,6 +23,7 @@ import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -48,16 +49,19 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 public class SimilarityMatrixWorkflow implements Workflow {
 
     protected final SimilarityMatrixOptions options;
-    protected final ProjectSpaceManager ps;
+    protected ProjectSpaceManager ps;
     protected final ParameterConfig config;
 
-    public SimilarityMatrixWorkflow(ProjectSpaceManager ps, SimilarityMatrixOptions options, ParameterConfig config) {
-        this.ps = ps;
+    protected final PreprocessingJob<ProjectSpaceManager> ppj;
+
+    public SimilarityMatrixWorkflow(PreprocessingJob<ProjectSpaceManager> ppj, SimilarityMatrixOptions options, ParameterConfig config) {
+        this.ppj = ppj;
         this.options = options;
         this.config = config;
     }
@@ -65,15 +69,21 @@ public class SimilarityMatrixWorkflow implements Workflow {
     @Override
     public void run() {
         final ArrayList<Instance> xs = new ArrayList<>();
-        ps.forEach(xs::add);
-        if (options.useCosine)
-            cosine(xs);
-        if (options.useAlignment)
-            align(xs);
-        if (options.useFtblast!=null)
-            ftblast(xs);
-        if (options.useTanimoto)
-            tanimoto(xs);
+
+        try {
+            ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
+            ps.forEach(xs::add);
+            if (options.useCosine)
+                cosine(xs);
+            if (options.useAlignment)
+                align(xs);
+            if (options.useFtblast!=null)
+                ftblast(xs);
+            if (options.useTanimoto)
+                tanimoto(xs);
+        } catch (ExecutionException e) {
+            LoggerFactory.getLogger(this.getClass()).error("Error when parsing project space");
+        }
     }
 
     private void tanimoto(List<Instance> xs) {

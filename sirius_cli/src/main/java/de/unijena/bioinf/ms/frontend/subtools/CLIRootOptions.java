@@ -32,10 +32,8 @@ import java.text.ParseException;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "sirius", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
-public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOptions {
+public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOptions<PreprocessingJob<ProjectSpaceManager>> {
     public static final Logger LOG = LoggerFactory.getLogger(CLIRootOptions.class);
-
-    public enum InputType {PROJECT, SIRIUS}
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
     protected final ProjectSpaceManagerFactory<M> spaceManagerFactory;
@@ -62,9 +60,6 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
         PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(numOfCores));
     }
 
-    @Option(names = "--max-compound-buffer", description = "Deprecated: This Option is deprecated and has no effect anymore.", order = 60, hidden = true)
-    private Integer maxInstanceBuffer;
-
     @Option(names = {"--compound-buffer", "--initial-compound-buffer"}, description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores. Note that for DATASET_TOOLS the compound buffer may have no effect because this tools may need all compounds in memory for computation.", order = 60)
     public void setInitialInstanceBuffer(Integer initialInstanceBuffer) {
         if (initialInstanceBuffer == null)
@@ -81,8 +76,13 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
     @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius", order = 70, hidden = true)
     public Files workspace; //todo change in application core
 
-    @Option(names = {"--output", "--project-space", "-o", "-p"}, description = "Specify project-space to read from and also write to if nothing else is specified. For compression use the File ending .zip or .sirius", order = 70)
-    private Path projectSpaceLocation;
+    @Option(names = {"--output", "-o"}, description = "Specify output location. Usually the project-space to write to and if no [--input] is specified also two read from. For compression use the File ending .zip or .sirius. This is also the output parameter for STANDALONE tools that do not write to a project-space.", order = 70)
+    private Path outputLocation;
+
+    @Override
+    public Path getOutputLocation() {
+        return outputLocation;
+    }
 
     @Option(names = "--naming-convention", description = "Specify a format for compounds' output directories. Default %%index_%%filename_%%compoundname", order = 90)
     public void setProjectSpaceFilenameFormatter(String projectSpaceFilenameFormatter) throws ParseException {
@@ -126,42 +126,23 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
         return projectSpaceToWriteOn;
     }
 
-
-    @Override
-    public PreprocessingJob makePreprocessingJob(InputFilesOptions input, ProjectSpaceManager space) {
-        return new PreprocessingJob(input, space) {
-            @Override
-            protected Iterable<Instance> compute() throws Exception {
-                if (space != null) {
-                    if (inputFiles != null)
-                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, maxMz).makeImportJJob(inputFiles)).awaitResult();
-                    if (space.size() < 1)
-                        LOG.info("No Input has been imported to Project-Space. Starting application without input data.");
-                    return space;
-                }
-                throw new CommandLine.PicocliException("No Project-Space for writing output!");
-            }
-        };
-    }
-
-
     protected void configureProjectSpace() {
         try {
-            if (projectSpaceLocation == null) {
+            if (outputLocation == null) {
                 if (inputFiles != null && inputFiles.msInput.projects.size() == 1) {
-                    projectSpaceLocation = (inputFiles.msInput.projects.get(0));
-                    LOG.info("No output location given. Writing output to input location: " + projectSpaceLocation.toString());
+                    outputLocation = (inputFiles.msInput.projects.get(0));
+                    LOG.info("No output location given. Writing output to input location: " + outputLocation.toString());
                 } else {
-                    projectSpaceLocation = ProjectSpaceIO.createTmpProjectSpaceLocation();
-                    LOG.warn("No unique output location found. Writing output to Temporary folder: " + projectSpaceLocation.toString());
+                    outputLocation = ProjectSpaceIO.createTmpProjectSpaceLocation();
+                    LOG.warn("No unique output location found. Writing output to Temporary folder: " + outputLocation.toString());
                 }
             }
 
             final SiriusProjectSpace psTmp;
-            if (Files.notExists(projectSpaceLocation)) {
-                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(projectSpaceLocation);
-            }else {
-                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(projectSpaceLocation);
+            if (Files.notExists(outputLocation)) {
+                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(outputLocation);
+            } else {
+                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(outputLocation);
             }
 
             //check for formatter
@@ -187,5 +168,24 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
         } catch (IOException e) {
             throw new CommandLine.PicocliException("Could not initialize workspace!", e);
         }
+    }
+
+    @Override
+    public PreprocessingJob<ProjectSpaceManager> makePreprocessingJob() {
+        return new PreprocessingJob<ProjectSpaceManager>() {
+            @Override
+            protected ProjectSpaceManager compute() throws Exception {
+                M space = getProjectSpace();
+                InputFilesOptions input = getInput();
+                if (space != null) {
+                    if (input != null)
+                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, maxMz).makeImportJJob(input)).awaitResult();
+                    if (space.size() < 1)
+                        logInfo("No Input has been imported to Project-Space. Starting application without input data.");
+                    return space;
+                }
+                throw new CommandLine.PicocliException("No Project-Space for writing output!");
+            }
+        };
     }
 }

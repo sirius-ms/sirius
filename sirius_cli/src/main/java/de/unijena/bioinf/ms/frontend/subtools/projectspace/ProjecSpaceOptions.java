@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.frontend.subtools.projectspace;
 
-import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
@@ -11,7 +10,7 @@ import picocli.CommandLine;
 public class ProjecSpaceOptions implements SingletonTool<ProjectSpaceWorkflow> {
 
     @Override
-    public ProjectSpaceWorkflow makeSingletonWorkflow(PreprocessingJob preproJob, ProjectSpaceManager projectSpace, ParameterConfig config) {
+    public ProjectSpaceWorkflow makeSingletonWorkflow(PreprocessingJob<?> preproJob,  ParameterConfig config) {
         return null;
     }
 }

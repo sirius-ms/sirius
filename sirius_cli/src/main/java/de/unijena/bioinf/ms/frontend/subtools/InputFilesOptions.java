@@ -48,13 +48,13 @@ public class InputFilesOptions {
             this.unknownFiles = unknownFiles;
         }
 
-        @CommandLine.Option(names = {"--input", "-i"}, description = "Specify multi compound Input formats. Ths can be either preprocessed mass spectra in .ms or .mgf file format, " +
-                "LC/MS runs in .mzML/.mzXml format or already existing SIRIUS project-space(s) (uncompressed/compressed).", required = true, split = ",", order = 121)
-        protected void setInputPath(List<File> files) {
+        @CommandLine.Option(names = {"--input", "-i"}, description = "Specify input data. This can be multi compound Input formats: Preprocessed mass spectra in .ms or .mgf file format, " +
+                "LC/MS runs in .mzML/.mzXml format or already existing SIRIUS project-space(s) (uncompressed/compressed) but also any other of STANDALONE tools.", required = true, split = ",", order = 121)
+        protected void setInputPath(List<Path> files) {
             msParserfiles.clear();
             projects.clear();
             unknownFiles.clear();
-            InstanceImporter.expandInputFromFile(files, this);
+            InstanceImporter.expandInput(files, this);
         }
 
         @CommandLine.Option(names = {"--ignore-formula"}, description = "ignore given molecular formula if present in .ms or .mgf input files.", defaultValue = "false", order = 122)

@@ -1,10 +1,7 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import com.google.common.collect.Streams;
-import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
-import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
-import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
-import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
+import de.unijena.bioinf.ms.frontend.subtools.*;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
@@ -142,7 +139,7 @@ public class WorkflowBuilder<R extends RootOptions> {
 
 
             //get project space from root cli
-            PreprocessingJob preproJob = rootOptions.makePreprocessingJob(rootOptions.getInput(), rootOptions.getProjectSpace());
+            PreprocessingJob<?> preproJob = rootOptions.makePreprocessingJob();
 
             List<Object> toolchain = new ArrayList<>();
             // look for an alternative input in the first subtool that is not the CONFIG subtool.
@@ -151,9 +148,9 @@ public class WorkflowBuilder<R extends RootOptions> {
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof DefaultParameterConfigLoader.ConfigOptions)
                     parseResult = parseResult.subcommand();
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof SingletonTool)
-                    return ((SingletonTool) parseResult.commandSpec().commandLine().getCommand()).makeSingletonWorkflow(preproJob, rootOptions.getProjectSpace(), configOptionLoader.config);
+                    return ((SingletonTool<?>) parseResult.commandSpec().commandLine().getCommand()).makeSingletonWorkflow(preproJob, configOptionLoader.config);
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof PreprocessingTool)
-                    preproJob = ((PreprocessingTool) parseResult.commandSpec().commandLine().getCommand()).makePreprocessingJob(rootOptions.getInput(), rootOptions.getProjectSpace());
+                    preproJob = ((PreprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand()).makePreprocessingJob(rootOptions.getInput(), rootOptions.getProjectSpace());
                 else
                     execute(parseResult.commandSpec().commandLine(), toolchain);
             } else {
@@ -165,9 +162,7 @@ public class WorkflowBuilder<R extends RootOptions> {
                 execute(parseResult.commandSpec().commandLine(), toolchain);
             }
 
-            final ToolChainWorkflow wf = new ToolChainWorkflow(rootOptions.getProjectSpace(), preproJob, configOptionLoader.config, toolchain);
-//            wf.setInstanceBuffer(rootOptions.getInitialInstanceBuffer(), rootOptions.getMaxInstanceBuffer());
-
+            final ToolChainWorkflow wf = new ToolChainWorkflow(preproJob, configOptionLoader.config, toolchain);
             return returnResultOrExit(wf);
         }
 
