@@ -49,7 +49,7 @@ public class InputFilesOptions {
         }
 
         @CommandLine.Option(names = {"--input", "-i"}, description = "Specify input data. This can be multi compound Input formats: Preprocessed mass spectra in .ms or .mgf file format, " +
-                "LC/MS runs in .mzML/.mzXml format or already existing SIRIUS project-space(s) (uncompressed/compressed) but also any other of STANDALONE tools.", required = true, split = ",", order = 121)
+                "LC/MS runs in .mzML/.mzXml format or already existing SIRIUS project-spaces (uncompressed/compressed) but also any other file type e.g. to provide input for STANDALONE tools.", required = true, split = ",", order = 121)
         protected void setInputPath(List<Path> files) {
             msParserfiles.clear();
             projects.clear();

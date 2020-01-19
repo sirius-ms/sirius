@@ -2,7 +2,6 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.frontend.io.InstanceImporter;
-import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -76,13 +75,8 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
     @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius", order = 70, hidden = true)
     public Files workspace; //todo change in application core
 
-    @Option(names = {"--output", "-o"}, description = "Specify output location. Usually the project-space to write to and if no [--input] is specified also two read from. For compression use the File ending .zip or .sirius. This is also the output parameter for STANDALONE tools that do not write to a project-space.", order = 70)
-    private Path outputLocation;
-
-    @Override
-    public Path getOutputLocation() {
-        return outputLocation;
-    }
+    @Option(names = {"--output", "-o"}, description = "Specify output project-space to write to. If no [--input] is specified it is also used as input to read from. For compression use the File ending .zip or .sirius.", order = 70)
+    private Path outputProjectLocation;
 
     @Option(names = "--naming-convention", description = "Specify a format for compounds' output directories. Default %%index_%%filename_%%compoundname", order = 90)
     public void setProjectSpaceFilenameFormatter(String projectSpaceFilenameFormatter) throws ParseException {
@@ -117,32 +111,31 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
 
 
     private M projectSpaceToWriteOn = null;
-
     @Override
     public M getProjectSpace() {
         if (projectSpaceToWriteOn == null)
-            configureProjectSpace();
+            projectSpaceToWriteOn = configureProjectSpace();
 
         return projectSpaceToWriteOn;
     }
 
-    protected void configureProjectSpace() {
+    protected M configureProjectSpace() {
         try {
-            if (outputLocation == null) {
+            if (outputProjectLocation == null) {
                 if (inputFiles != null && inputFiles.msInput.projects.size() == 1) {
-                    outputLocation = (inputFiles.msInput.projects.get(0));
-                    LOG.info("No output location given. Writing output to input location: " + outputLocation.toString());
+                    outputProjectLocation = (inputFiles.msInput.projects.get(0));
+                    LOG.info("No output location given. Writing output to input location: " + outputProjectLocation.toString());
                 } else {
-                    outputLocation = ProjectSpaceIO.createTmpProjectSpaceLocation();
-                    LOG.warn("No unique output location found. Writing output to Temporary folder: " + outputLocation.toString());
+                    outputProjectLocation = ProjectSpaceIO.createTmpProjectSpaceLocation();
+                    LOG.warn("No unique output location found. Writing output to Temporary folder: " + outputProjectLocation.toString());
                 }
             }
 
             final SiriusProjectSpace psTmp;
-            if (Files.notExists(outputLocation)) {
-                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(outputLocation);
+            if (Files.notExists(outputProjectLocation)) {
+                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(outputProjectLocation);
             } else {
-                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(outputLocation);
+                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(outputProjectLocation);
             }
 
             //check for formatter
@@ -157,7 +150,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                 psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(projectSpaceFilenameFormatter));
             }
 
-            projectSpaceToWriteOn = spaceManagerFactory.create(psTmp, projectSpaceFilenameFormatter, id -> {
+            return spaceManagerFactory.create(psTmp, projectSpaceFilenameFormatter, id -> {
                 if (id.getIonMass().orElse(Double.NaN) <= maxMz)
                     return true;
                 else {
@@ -171,7 +164,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
     }
 
     @Override
-    public PreprocessingJob<ProjectSpaceManager> makePreprocessingJob() {
+    public PreprocessingJob<ProjectSpaceManager> makeDefaultPreprocessingJob() {
         return new PreprocessingJob<ProjectSpaceManager>() {
             @Override
             protected ProjectSpaceManager compute() throws Exception {

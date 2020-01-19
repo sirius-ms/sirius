@@ -52,11 +52,12 @@ public class WorkflowBuilder<R extends RootOptions> {
     //global configs (subtool)
     DefaultParameterConfigLoader configOptionLoader;
 
-    //singelton tools
-    public final CustomDBOptions customDBOptions = new CustomDBOptions();
+    //standalone tools
+    public final CustomDBOptions customDBOptions;
+    public final ProjecSpaceOptions projectSpaceOptions; // this is also singleton
+    public final SimilarityMatrixOptions similarityMatrixOptions;
 
-    //external preprocessing
-    public final ProjecSpaceOptions projectSpaceOptions = new ProjecSpaceOptions(); // this is also singleton
+    //preprocessing, project-space providing tool, preprojectspace tool
     public final LcmsAlignOptions lcmsAlignOptions = new LcmsAlignOptions();
 
     //toolchain subtools
@@ -66,7 +67,6 @@ public class WorkflowBuilder<R extends RootOptions> {
     public final CanopusOptions canopusOptions;
     public final PassatuttoOptions passatuttoOptions;
 
-    public final SimilarityMatrixOptions similarityMatrixOptions;
 
 
     public WorkflowBuilder(@NotNull R rootOptions) throws IOException {
@@ -84,6 +84,8 @@ public class WorkflowBuilder<R extends RootOptions> {
         canopusOptions = new CanopusOptions(configOptionLoader);
         passatuttoOptions = new PassatuttoOptions(configOptionLoader);
 
+        customDBOptions =  new CustomDBOptions();
+        projectSpaceOptions = new ProjecSpaceOptions();
         similarityMatrixOptions = new SimilarityMatrixOptions();
     }
 
@@ -139,7 +141,7 @@ public class WorkflowBuilder<R extends RootOptions> {
 
 
             //get project space from root cli
-            PreprocessingJob<?> preproJob = rootOptions.makePreprocessingJob();
+            PreprocessingJob<?> preproJob = null;
 
             List<Object> toolchain = new ArrayList<>();
             // look for an alternative input in the first subtool that is not the CONFIG subtool.
@@ -147,10 +149,10 @@ public class WorkflowBuilder<R extends RootOptions> {
                 parseResult = parseResult.subcommand();
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof DefaultParameterConfigLoader.ConfigOptions)
                     parseResult = parseResult.subcommand();
-                if (parseResult.commandSpec().commandLine().getCommand() instanceof SingletonTool)
-                    return ((SingletonTool<?>) parseResult.commandSpec().commandLine().getCommand()).makeSingletonWorkflow(preproJob, configOptionLoader.config);
+                if (parseResult.commandSpec().commandLine().getCommand() instanceof StandaloneTool)
+                    return ((StandaloneTool<?>) parseResult.commandSpec().commandLine().getCommand()).makeWorkflow(rootOptions, configOptionLoader.config);
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof PreprocessingTool)
-                    preproJob = ((PreprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand()).makePreprocessingJob(rootOptions.getInput(), rootOptions.getProjectSpace());
+                    preproJob = ((PreprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand()).makePreprocessingJob(rootOptions, configOptionLoader.config);
                 else
                     execute(parseResult.commandSpec().commandLine(), toolchain);
             } else {
@@ -161,6 +163,9 @@ public class WorkflowBuilder<R extends RootOptions> {
                 parseResult = parseResult.subcommand();
                 execute(parseResult.commandSpec().commandLine(), toolchain);
             }
+
+            if (preproJob == null)
+                preproJob = rootOptions.makeDefaultPreprocessingJob();
 
             final ToolChainWorkflow wf = new ToolChainWorkflow(preproJob, configOptionLoader.config, toolchain);
             return returnResultOrExit(wf);

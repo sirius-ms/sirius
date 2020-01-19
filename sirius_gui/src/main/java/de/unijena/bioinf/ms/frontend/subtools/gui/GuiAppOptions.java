@@ -8,9 +8,8 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
-import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
+import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
-import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -22,7 +21,7 @@ import java.awt.event.WindowEvent;
 import java.io.IOException;
 
 @CommandLine.Command(name = "gui", aliases = {"GUI"}, description = "Starts the graphical user interface of SIRIUS", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-public class GuiAppOptions implements SingletonTool<GuiAppOptions.Flow> {
+public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
     @Override
     public Flow makeSingletonWorkflow(PreprocessingJob<?> preproJob, ParameterConfig config) {
         return new Flow((PreprocessingJob<ProjectSpaceManager>) preproJob, config);

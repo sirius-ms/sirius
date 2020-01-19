@@ -4,7 +4,6 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 
 public class ProjectSpaceWorkflow implements Workflow {
 
-
     @Override
     public void run() {
         //todo fill me
