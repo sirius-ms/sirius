@@ -4,9 +4,8 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
-import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
+import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
-import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import org.springframework.boot.SpringApplication;
@@ -14,7 +13,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "Starts SIRIUS as a background (REST) service that can be requested via a REST-API", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-public class MiddlewareAppOptions implements SingletonTool<MiddlewareAppOptions.Flow> {
+public class MiddlewareAppOptions implements StandaloneTool<MiddlewareAppOptions.Flow> {
 
     @CommandLine.Option(names = {"--port", "-p"}, description = "Specify the port on which the SIRIUS REST Service should run (Default: 8080).", defaultValue = "8080")
     private void setPort(int port) {

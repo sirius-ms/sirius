@@ -1,18 +1,17 @@
 package de.unijena.bioinf.ms.frontend.subtools.similarity;
 
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
-import de.unijena.bioinf.ms.frontend.subtools.SingletonTool;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import picocli.CommandLine;
 
 import java.io.File;
-import java.util.concurrent.ExecutionException;
 
-@CommandLine.Command(name = "similarity", aliases = {}, description = "<STANDALONE> Computes the similarity between all compounds in the dataset and outputs a matrix of similarities.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true)
-public class SimilarityMatrixOptions implements SingletonTool<SimilarityMatrixWorkflow> {
+@CommandLine.Command(name = "similarity", aliases = {}, description = "<STANDALONE> Computes the similarity between all compounds in the dataset and outputs a matrix of similarities.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
+public class SimilarityMatrixOptions implements StandaloneTool<SimilarityMatrixWorkflow> {
 
     @CommandLine.Option(names = "--ftalign", description = "compute fragmentation tree alignments between all compounds in the dataset")
     protected boolean useAlignment;
@@ -32,8 +31,9 @@ public class SimilarityMatrixOptions implements SingletonTool<SimilarityMatrixWo
     @CommandLine.Option(names = {"--numpy", "--matrix"}, description = "Write as tab separated file with a comment line containing the row/col names (numpy compatible). Otherwise, write as tab separated file with row and column names")
     public boolean numpy;
 
+
     @Override
-    public SimilarityMatrixWorkflow makeSingletonWorkflow(PreprocessingJob<?> preproJob, ParameterConfig config) {
-            return new SimilarityMatrixWorkflow((PreprocessingJob<ProjectSpaceManager>) preproJob,this, config);
+    public SimilarityMatrixWorkflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+        return new SimilarityMatrixWorkflow((PreprocessingJob<ProjectSpaceManager>) rootOptions.makeDefaultPreprocessingJob(), this, config);
     }
 }

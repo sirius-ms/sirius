@@ -18,7 +18,9 @@ import de.unijena.bioinf.lcms.align.Cluster;
 import de.unijena.bioinf.model.lcms.ConsensusFeature;
 import de.unijena.bioinf.model.lcms.LCMSRun;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.Nullable;
@@ -32,22 +34,22 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
-    protected final List<Path> input;
-    protected final ProjectSpaceManager space;
+    protected final RootOptions<?> rootCLI;
 
-    public LcmsAlignSubToolJob(@Nullable List<Path> inputFiles, @Nullable ProjectSpaceManager space) {
+    public LcmsAlignSubToolJob(RootOptions<?> rootCLI) {
         super();
-        this.input = inputFiles;
-        this.space = space;
-
+        this.rootCLI = rootCLI;
     }
 
     @Override
     protected ProjectSpaceManager compute() throws Exception {
+        final InputFilesOptions input = rootCLI.getInput();
+        final ProjectSpaceManager space = rootCLI.getProjectSpace();
+
         final ArrayList<BasicJJob<?>> jobs = new ArrayList<>();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         i.setDetectableIonTypes(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
-        for (Path f : input.stream().sorted().collect(Collectors.toList())) {
+        for (Path f : input.msInput.msParserfiles.stream().sorted().collect(Collectors.toList())) {
             jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<>() {
                 @Override
                 protected Object compute() {
@@ -68,7 +70,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
                 }
             }));
         }
-        MultipleSources sourcelocation = MultipleSources.leastCommonAncestor(input.stream().map(Path::toFile).toArray(File[]::new));
+        MultipleSources sourcelocation = MultipleSources.leastCommonAncestor(input.getAllFilesStream().map(Path::toFile).toArray(File[]::new));
         for (BasicJJob<?> j : jobs) j.takeResult();
         i.getMs2Storage().backOnDisc();
         i.getMs2Storage().dropBuffer();
