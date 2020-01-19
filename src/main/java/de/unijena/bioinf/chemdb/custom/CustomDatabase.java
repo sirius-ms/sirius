@@ -229,8 +229,6 @@ public class CustomDatabase implements SearchableDatabase {
 
     public void buildDatabase(List<File> files, CustomDatabaseImporter.Listener listener, @NotNull WebAPI api) throws IOException, CDKException {
         final CustomDatabaseImporter importer = getImporter(api);
-        final HashMap<String, Comp> dict = new HashMap<>(100);
-        final InChIGeneratorFactory icf = InChIGeneratorFactory.getInstance();
         importer.init();
         importer.addListener(listener);
         for (File f : files) {

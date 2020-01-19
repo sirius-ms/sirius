@@ -38,6 +38,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 public class CustomDatabaseImporter {
@@ -261,47 +262,49 @@ public class CustomDatabaseImporter {
 
     private void flushMoleculeBuffer() throws IOException {
         // start downloading
-        final HashMap<String, CustomDatabase.Comp> dict = new HashMap<>(moleculeBuffer.size());
-        try {
-            final InChIGeneratorFactory icf = InChIGeneratorFactory.getInstance();
-            for (IAtomContainer c : moleculeBuffer) {
-                final String key;
+        if (moleculeBuffer.size() > 0) {
+            final HashMap<String, CustomDatabase.Comp> dict = new HashMap<>(moleculeBuffer.size());
+            try {
+                final InChIGeneratorFactory icf = InChIGeneratorFactory.getInstance();
+                for (IAtomContainer c : moleculeBuffer) {
+                    final String key;
+                    try {
+                        key = icf.getInChIGenerator(c).getInchiKey().substring(0, 14);
+                        CustomDatabase.Comp comp = new CustomDatabase.Comp(key);
+                        comp.molecule = c;
+                        dict.put(key, comp);
+                    } catch (CDKException | IllegalArgumentException e) {
+                        CustomDatabase.logger.error(e.getMessage(), e);
+                    }
+                }
+            } catch (CDKException | IllegalArgumentException e) {
+                CustomDatabase.logger.error(e.getMessage(), e);
+            }
+            moleculeBuffer.clear();
+            CustomDatabase.logger.info("Try downloading compounds");
+            try {
+                try (final RESTDatabase db = api.getRESTDb(BioFilter.ALL, new File("."))) {
+                    try {
+                        for (FingerprintCandidate fc : db.lookupManyFingerprintsByInchis(dict.keySet())) {
+                            CustomDatabase.logger.info(fc.getInchiKey2D() + " downloaded");
+                            dict.get(fc.getInchiKey2D()).candidate = fc;
+                        }
+                    } catch (ChemicalDatabaseException e) {
+                        CustomDatabase.logger.error(e.getMessage(), e);
+                    }
+                }
+            } catch (Exception e) {
+                CustomDatabase.logger.error(e.getMessage(), e);
+            }
+            for (CustomDatabase.Comp c : dict.values()) {
                 try {
-                    key = icf.getInChIGenerator(c).getInchiKey().substring(0, 14);
-                    CustomDatabase.Comp comp = new CustomDatabase.Comp(key);
-                    comp.molecule = c;
-                    dict.put(key, comp);
+                    addToBuffer(computeCompound(c.molecule, c.candidate));
                 } catch (CDKException | IllegalArgumentException e) {
                     CustomDatabase.logger.error(e.getMessage(), e);
                 }
             }
-        } catch (CDKException | IllegalArgumentException e) {
-            CustomDatabase.logger.error(e.getMessage(), e);
+            for (Listener l : listeners) l.newMoleculeBufferSize(0);
         }
-        moleculeBuffer.clear();
-        CustomDatabase.logger.info("Try downloading compounds");
-        try {
-            try (final RESTDatabase db = api.getRESTDb(BioFilter.ALL, new File("."))) {
-                try {
-                    for (FingerprintCandidate fc : db.lookupManyFingerprintsByInchis(dict.keySet())) {
-                        CustomDatabase.logger.info(fc.getInchiKey2D() + " downloaded");
-                        dict.get(fc.getInchiKey2D()).candidate = fc;
-                    }
-                } catch (ChemicalDatabaseException e) {
-                    CustomDatabase.logger.error(e.getMessage(), e);
-                }
-            }
-        } catch (Exception e) {
-            CustomDatabase.logger.error(e.getMessage(), e);
-        }
-        for (CustomDatabase.Comp c : dict.values()) {
-            try {
-                addToBuffer(computeCompound(c.molecule, c.candidate));
-            } catch (CDKException | IllegalArgumentException e) {
-                CustomDatabase.logger.error(e.getMessage(), e);
-            }
-        }
-        for (Listener l : listeners) l.newMoleculeBufferSize(0);
     }
 
     private void addToBuffer(FingerprintCandidate fingerprintCandidate) throws IOException {
@@ -482,15 +485,15 @@ public class CustomDatabaseImporter {
         }
     }*/
 
-    public static void importDatabase(String dbPath, List<String> files, WebAPI api) {
+    public static void importDatabaseFromStrings(String dbPath, List<String> files, WebAPI api) {
+        importDatabase(dbPath,files.stream().map(File::new).collect(Collectors.toList()),api);
+    }
+    public static void importDatabase(String dbPath, List<File> files, WebAPI api) {
         try {
             final CustomDatabase db = CustomDatabase.createNewDatabase(new File(dbPath).getName(), new File(dbPath), api.getCDKChemDBFingerprintVersion());
-            final List<File> inchiorsmiles = new ArrayList<>();
-            for (String f : files) inchiorsmiles.add(new File(f));
-
-            db.buildDatabase(inchiorsmiles, inchi -> System.out.println(inchi.in2D + " imported"), api);
+            db.buildDatabase(files, inchi -> System.out.println(inchi.in2D + " imported"), api);
         } catch (IOException | CDKException e) {
-            e.printStackTrace();
+           LoggerFactory.getLogger(CustomDatabaseImporter.class).error("Error during database import!", e);
         }
         System.out.println("\n\nDatabase imported. Use --fingerid_db=\"" + dbPath + "\" to search in this database");
     }
