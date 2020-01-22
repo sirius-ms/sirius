@@ -29,6 +29,9 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     @Option(names = "--output", description = "Alternative output directory for the custom db with the given [--name].")
     public Path outputDir = null;
 
+    @Option(names = {"--buffer-size", "--buffer"}, description = "Maximum number of downloaded/computed compounds to keep in memory before writing them to disk", defaultValue = "1000", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+    public int writeBuffer;
+
     @Override
     public Workflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
         return () -> {
@@ -43,7 +46,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 Files.createDirectories(loc);
                 CustomDatabaseImporter.importDatabase(loc.resolve(dbName).toFile(),
                         input.msInput.unknownFiles.stream().map(Path::toFile).collect(Collectors.toList()),
-                        ApplicationCore.WEB_API);
+                        ApplicationCore.WEB_API, writeBuffer);
                 LoggerFactory.getLogger(CustomDatabaseImporter.class).info("Database imported. Use 'structure --db=\"" + loc.toString() + "\"' to search in this database.");
             } catch (IOException e) {
                 LoggerFactory.getLogger(CustomDatabaseImporter.class).error("error when storing custom db");
