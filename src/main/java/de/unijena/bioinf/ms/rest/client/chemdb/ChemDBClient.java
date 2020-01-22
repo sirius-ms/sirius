@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.rest.client.chemdb;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -16,6 +17,7 @@ import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +112,7 @@ public class ChemDBClient extends AbstractClient {
         return execute(client,
                 () -> {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/compounds").build());
-                    post.setEntity(new StringEntity(String.join(",", inChIs), StandardCharsets.UTF_8));
+                    post.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(inChIs), ContentType.APPLICATION_JSON));
                     return post;
                 },
                 br -> {
