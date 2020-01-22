@@ -180,8 +180,8 @@ public class CustomDatabase implements SearchableDatabase {
         }
     }
 
-    public CustomDatabaseImporter getImporter(@NotNull final WebAPI api) {
-        return new CustomDatabaseImporter(this, version, api);
+    public CustomDatabaseImporter getImporter(@NotNull final WebAPI api, int bufferSize) {
+        return new CustomDatabaseImporter(this, version, api, bufferSize);
     }
 
     protected File settingsFile() {
@@ -234,8 +234,8 @@ public class CustomDatabase implements SearchableDatabase {
         return megabytes;
     }
 
-    public void buildDatabase(List<File> files, CustomDatabaseImporter.Listener listener, @NotNull WebAPI api) throws IOException, CDKException {
-        final CustomDatabaseImporter importer = getImporter(api);
+    public void buildDatabase(List<File> files, CustomDatabaseImporter.Listener listener, @NotNull WebAPI api, int bufferSize) throws IOException, CDKException {
+        final CustomDatabaseImporter importer = getImporter(api, bufferSize);
         importer.init();
         importer.addListener(listener);
         for (File f : files) {

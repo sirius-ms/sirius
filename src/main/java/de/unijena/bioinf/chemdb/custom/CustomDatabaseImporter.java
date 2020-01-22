@@ -40,7 +40,6 @@ import javax.json.JsonReader;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
@@ -57,9 +56,12 @@ public class CustomDatabaseImporter {
 
     // fingerprint buffer
     private final List<FingerprintCandidate> buffer;
+    private final int bufferSize;
+
 
     // molecule buffer
-    private List<IAtomContainer> moleculeBuffer;
+    private final List<IAtomContainer> moleculeBuffer;
+    private static final int molBufferSize = 1000;
 
     final protected ConcurrentLinkedQueue<FingerprintCalculator> freeFingerprinter = new ConcurrentLinkedQueue<>();
     protected InChIGeneratorFactory inChIGeneratorFactory;
@@ -68,13 +70,14 @@ public class CustomDatabaseImporter {
     protected CdkFingerprintVersion fingerprintVersion;
     protected final WebAPI api;
 
-    protected CustomDatabaseImporter(CustomDatabase database, CdkFingerprintVersion version, WebAPI api) {
+    protected CustomDatabaseImporter(CustomDatabase database, CdkFingerprintVersion version, WebAPI api, int bufferSize) {
         this.api = api;
         this.database = database;
-        fingerprintVersion = version;
-        this.buffer = new ArrayList<>();
-        this.moleculeBuffer = new ArrayList<>();
-        currentPath = database.path;
+        this.fingerprintVersion = version;
+        this.bufferSize = bufferSize;
+        this.buffer = new ArrayList<>((int) (this.bufferSize * 1.25));
+        this.moleculeBuffer = new ArrayList<>((int) (molBufferSize * 1.25));
+        this.currentPath = database.path;
         if (currentPath == null) throw new NullPointerException();
         try {
             inChIGeneratorFactory = InChIGeneratorFactory.getInstance();
@@ -251,7 +254,7 @@ public class CustomDatabaseImporter {
         synchronized (moleculeBuffer) {
             moleculeBuffer.add(mol);
             for (Listener l : listeners) l.newMoleculeBufferSize(moleculeBuffer.size());
-            if (moleculeBuffer.size() > 1000) {
+            if (moleculeBuffer.size() > molBufferSize) {
                 flushMoleculeBuffer();
             }
         }
@@ -343,7 +346,7 @@ public class CustomDatabaseImporter {
                 l.newFingerprintBufferSize(buffer.size());
                 l.newInChI(fingerprintCandidate.getInchi());
             }
-            if (buffer.size() > 500)
+            if (buffer.size() > bufferSize)
                 flushBuffer();
         }
     }
@@ -544,19 +547,21 @@ public class CustomDatabaseImporter {
         }
     }*/
 
-    public static void importDatabaseFromStrings(String dbPath, List<String> files, WebAPI api) {
-        importDatabase(dbPath,files.stream().map(File::new).collect(Collectors.toList()),api);
+    public static void importDatabaseFromStrings(String dbPath, List<String> files, WebAPI api, int bufferSize) {
+        importDatabase(dbPath, files.stream().map(File::new).collect(Collectors.toList()), api, bufferSize);
     }
-    public static void importDatabase(String dbPath, List<File> files, WebAPI api) {
-        importDatabase(new File(dbPath),files,api);
+
+    public static void importDatabase(String dbPath, List<File> files, WebAPI api, int bufferSize) {
+        importDatabase(new File(dbPath), files, api, bufferSize);
     }
-    public static void importDatabase(File dbPath, List<File> files, WebAPI api) {
+
+    public static void importDatabase(File dbPath, List<File> files, WebAPI api, int bufferSize) {
         final Logger log = LoggerFactory.getLogger(CustomDatabaseImporter.class);
         try {
             final CustomDatabase db = CustomDatabase.createNewDatabase(dbPath.getName(), dbPath, api.getCDKChemDBFingerprintVersion());
-            db.buildDatabase(files, inchi -> log.debug(inchi.in2D + " imported"), api);
+            db.buildDatabase(files, inchi -> log.debug(inchi.in2D + " imported"), api, bufferSize);
         } catch (IOException | CDKException e) {
-           LoggerFactory.getLogger(CustomDatabaseImporter.class).error("Error during database import!", e);
+            LoggerFactory.getLogger(CustomDatabaseImporter.class).error("Error during database import!", e);
         }
     }
 
