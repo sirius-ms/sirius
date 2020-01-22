@@ -26,23 +26,27 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     @Option(names = "--name", description = "Name of the custom database to be added to the default or specified workspace (--workspace).", required = true)
     public String dbName;
 
+    @Option(names = "--output", description = "Alternative output directory for the custom db with the given [--name].")
+    public Path outputDir = null;
+
     @Override
     public Workflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
         return () -> {
+
             final InputFilesOptions input = rootOptions.getInput();
             if (dbName == null || dbName.isEmpty() || input == null || input.msInput == null || input.msInput.unknownFiles.isEmpty()) {
-                LoggerFactory.getLogger(CustomDBOptions.class).warn("No input data given. Do nothing");
+                LoggerFactory.getLogger(CustomDatabaseImporter.class).error("No input data given. Do nothing");
                 return;
             }
             try {
-                Path loc = SearchableDatabases.getCustomDatabaseDirectory().toPath();
+                Path loc = outputDir != null ? outputDir : SearchableDatabases.getCustomDatabaseDirectory().toPath();
                 Files.createDirectories(loc);
-                CustomDatabaseImporter.importDatabase(loc.resolve(dbName).toString(),
+                CustomDatabaseImporter.importDatabase(loc.resolve(dbName).toFile(),
                         input.msInput.unknownFiles.stream().map(Path::toFile).collect(Collectors.toList()),
                         ApplicationCore.WEB_API);
+                LoggerFactory.getLogger(CustomDatabaseImporter.class).info("Database imported. Use 'structure --db=\"" + loc.toString() + "\"' to search in this database.");
             } catch (IOException e) {
-                LoggerFactory.getLogger(CustomDBOptions.class).warn("error when storing custom db");
-
+                LoggerFactory.getLogger(CustomDatabaseImporter.class).error("error when storing custom db");
             }
         };
     }
