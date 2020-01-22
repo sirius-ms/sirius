@@ -1,12 +1,14 @@
 package de.unijena.bioinf.chemdb.annotations;
 
 import de.unijena.bioinf.chemdb.DatasourceService;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public abstract class SearchableDBAnnotation implements Ms2ExperimentAnnotation {
     public final static String NO_DB = "none";
@@ -58,6 +60,9 @@ public abstract class SearchableDBAnnotation implements Ms2ExperimentAnnotation 
     }
 
     public static SearchableDatabase makeDB(@NotNull String name) {
+        Path dbDir = Path.of(name);
+        if (Files.isDirectory(dbDir))
+            return SearchableDatabases.getDatabaseByPath(dbDir);
         return SearchableDatabases.getDatabaseByName(name);
     }
 }

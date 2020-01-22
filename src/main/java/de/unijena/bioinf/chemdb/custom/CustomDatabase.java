@@ -1,15 +1,14 @@
 package de.unijena.bioinf.chemdb.custom;
 
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.WebAPI;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
-import de.unijena.bioinf.WebAPI;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class CustomDatabase implements SearchableDatabase {
@@ -57,6 +55,7 @@ public class CustomDatabase implements SearchableDatabase {
         return db;
     }
 
+    @NotNull
     public static List<CustomDatabase> loadCustomDatabases(boolean up2date) {
         final List<CustomDatabase> databases = new ArrayList<>();
         final File custom = SearchableDatabases.getCustomDatabaseDirectory();
@@ -64,19 +63,27 @@ public class CustomDatabase implements SearchableDatabase {
             return databases;
         }
         for (File subDir : custom.listFiles()) {
-            if (subDir.isDirectory()) {
-                final CustomDatabase db = new CustomDatabase(subDir.getName(), subDir);
-                try {
-                    db.readSettings();
-                    if (!up2date || !db.needsUpgrade())
-                        databases.add(db);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    logger.error(e.getMessage(), e);
-                }
+            try {
+                final CustomDatabase db = loadCustomDatabaseFromLocation(subDir, up2date);
+                databases.add(db);
+            } catch (IOException e) {
+                e.printStackTrace();
+                logger.error(e.getMessage(), e);
             }
         }
         return databases;
+    }
+
+    @NotNull
+    public static CustomDatabase loadCustomDatabaseFromLocation(File dbDir, boolean up2date) throws IOException {
+        if (dbDir.isDirectory()) {
+            final CustomDatabase db = new CustomDatabase(dbDir.getName(), dbDir);
+            db.readSettings();
+            if (!up2date || !db.needsUpgrade())
+                return db;
+            throw new OutdatedDBExeption("DB '" + db.name + "' is outdated (DB-Version: " + db.databaseVersion + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
+        }
+        throw new IOException("Illegal DB location. DB location needs to be a directory.");
     }
 
     public CustomDatabase(String name, File path) {

@@ -1,11 +1,13 @@
 package de.unijena.bioinf.chemdb;
 
-import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.WebAPI;
+import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,15 @@ public class SearchableDatabases {
     public static File getCustomDatabaseDirectory() {
         return CachedRESTDB.getCustomDatabaseDirectory(getDatabaseDirectory());
     }
+
+    public static SearchableDatabase getDatabaseByPath(@NotNull Path dbDir) {
+        try {
+            return CustomDatabase.loadCustomDatabaseFromLocation(dbDir.toFile(), true);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not load DB from path: " + dbDir.toString(), e);
+        }
+    }
+
 
     @NotNull
     public static SearchableDatabase getDatabaseByName(@NotNull String name) {
@@ -77,5 +88,6 @@ public class SearchableDatabases {
     public static SearchableDatabase getBioDb() {
         return getDatabaseByName(DataSource.BIO.realName);
     }
+
 
 }
