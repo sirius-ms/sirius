@@ -1,7 +1,10 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import com.google.common.collect.Streams;
-import de.unijena.bioinf.ms.frontend.subtools.*;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
@@ -90,7 +93,7 @@ public class WorkflowBuilder<R extends RootOptions> {
     }
 
     public void initRootSpec() {
-
+        System.setProperty("picocli.color.commands", "bold,blue");
         if (rootSpec != null)
             throw new  IllegalStateException("Root spec already initialized");
 

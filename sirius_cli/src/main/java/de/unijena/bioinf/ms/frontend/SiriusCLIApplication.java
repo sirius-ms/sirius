@@ -23,7 +23,7 @@ public class SiriusCLIApplication {
             });
             run(args, () -> {
                 final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                return new WorkflowBuilder<>(new CLIRootOptions(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader);
+                return new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader);
             });
         } finally {
             System.exit(0);

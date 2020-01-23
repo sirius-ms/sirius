@@ -95,7 +95,7 @@ public class Instance {
     }
 
     public synchronized Optional<FormulaResult> loadTopFormulaResult(Class<? extends DataAnnotation>... components) {
-        List<? extends SScored<FormulaResult, ? extends FormulaScore>> sScoreds = loadFormulaResults();
+        List<? extends SScored<FormulaResult, ? extends FormulaScore>> sScoreds = loadFormulaResults(components);
         if (sScoreds.isEmpty()) return Optional.empty();
         else {
             FormulaResult candidate = sScoreds.get(0).getCandidate();

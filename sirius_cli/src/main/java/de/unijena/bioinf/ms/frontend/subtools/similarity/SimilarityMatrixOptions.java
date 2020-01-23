@@ -25,7 +25,7 @@ public class SimilarityMatrixOptions implements StandaloneTool<SimilarityMatrixW
     @CommandLine.Option(names = "--cosine", description = "compute spectral cosine similarity between all compounds in the dataset")
     protected boolean useCosine;
 
-    @CommandLine.Option(names = {"--directory", "-d"}, description = "where to store the matrices", defaultValue = ".")
+    @CommandLine.Option(names = {"--directory", "-d"}, description = "Directory to store the matrices", defaultValue = ".")
     protected File outputDirectory;
 
     @CommandLine.Option(names = {"--numpy", "--matrix"}, description = "Write as tab separated file with a comment line containing the row/col names (numpy compatible). Otherwise, write as tab separated file with row and column names")

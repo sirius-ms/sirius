@@ -20,16 +20,16 @@ import java.util.stream.Collectors;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "<STANDALONE> Generate a custom compound database. Import compounds from files containing SMARTS or InChi and generate a database from..", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "<STANDALONE> Generate a custom searchable structure database. Import multiple files with compounds as SMILES or InChi into this DB.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class CustomDBOptions implements StandaloneTool<Workflow> {
 
-    @Option(names = "--name", description = "Name of the custom database to be added to the default or specified workspace (--workspace).", required = true)
+    @Option(names = "--name", description = "Name of the custom database that will be stored at the default ('$USER_HOME/.sirius') or the specified sirius workspace (--workspace).", required = true)
     public String dbName;
 
-    @Option(names = "--output", description = "Alternative output directory for the custom db with the given [--name].")
+    @Option(names = "--output", description = "Alternative output directory of the custom database. The db will be a sub directory with the given name (--name).")
     public Path outputDir = null;
 
-    @Option(names = {"--buffer-size", "--buffer"}, description = "Maximum number of downloaded/computed compounds to keep in memory before writing them to disk", defaultValue = "1000", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+    @Option(names = {"--buffer-size", "--buffer"}, description = "Maximum number of downloaded/computed compounds to keep in memory before writing them to disk (into the db directory).", defaultValue = "1000", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
     public int writeBuffer;
 
     @Override

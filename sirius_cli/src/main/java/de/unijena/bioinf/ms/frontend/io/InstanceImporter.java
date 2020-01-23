@@ -112,7 +112,7 @@ public class InstanceImporter {
         }
 
         public void importProject(@NotNull Path file) throws IOException {
-            if (file.equals(importTarget.projectSpace().getLocation())) {
+            if (file.toAbsolutePath().equals(importTarget.projectSpace().getLocation().toAbsolutePath())) {
                 LOG.warn("target location '" + importTarget.projectSpace().getLocation() + "' was also part of the INPUT and will be ignored!");
                 return;
             }
