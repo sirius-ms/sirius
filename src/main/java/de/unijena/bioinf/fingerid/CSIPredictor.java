@@ -108,7 +108,7 @@ public class CSIPredictor extends AbstractStructurePredictor {
         return new Fingerblast(fingerblastScoring, searchEngine);
     }
 
-    public FingerIDJJob makeFingerIDJJob(@Nullable Ms2Experiment experiment, @Nullable List<IdentificationResult> formulaIDResults) {
+    public FingerIDJJob makeFingerIDJJob(@Nullable Ms2Experiment experiment, @Nullable List<IdentificationResult<?>> formulaIDResults) {
         return new FingerIDJJob(this, experiment, formulaIDResults);
     }
 
