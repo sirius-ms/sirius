@@ -16,10 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class StructureSummaryWriter implements Summarizer {
     private List<SScored<String, ? extends FormulaScore>> topHits = new ArrayList<>();
@@ -45,10 +42,11 @@ public class StructureSummaryWriter implements Summarizer {
                     fileWriter.write("rank\t");
                     fileWriter.write(StructureCSVExporter.HEADER);
                     fileWriter.write("\n");
+                    final List<SScored<String, ConfidenceScore>> topHits = new ArrayList<>();
 
-                    for (SScored<FormulaResult, ? extends FormulaScore> results : formulaResults) {
-                        if (results.getCandidate().hasAnnotation(FingerblastResult.class)) {
-                            final List<Scored<CompoundCandidate>> frs = results.getCandidate().getAnnotationOrThrow(FingerblastResult.class).getResults();
+                    for (SScored<FormulaResult, ? extends FormulaScore> result : formulaResults) {
+                        if (result.getCandidate().hasAnnotation(FingerblastResult.class)) {
+                            final List<Scored<CompoundCandidate>> frs = result.getCandidate().getAnnotationOrThrow(FingerblastResult.class).getResults();
 
                             //create buffer
                             final StringWriter w = new StringWriter(128);
@@ -67,12 +65,16 @@ public class StructureSummaryWriter implements Summarizer {
 
 
                             // collect data for project wide summary
-                            final ConfidenceScore confidence = results.getCandidate().getAnnotation(FormulaScoring.class).
+                            final ConfidenceScore confidence = result.getCandidate().getAnnotation(FormulaScoring.class).
                                     map(s -> s.getAnnotationOr(ConfidenceScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(ConfidenceScore.class));
 
                             if (lines.length >= 1)
                                 topHits.add(new SScored<>(confidence + "\t" + lines[0] + "\t" + exp.getId().getDirectoryName() + "\n", confidence));
                         }
+                    }
+                    if (!topHits.isEmpty()){
+                        topHits.sort(Comparator.reverseOrder());
+                        this.topHits.add(topHits.get(0));
                     }
                 });
                 return true;
