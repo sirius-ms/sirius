@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class ZodiacSubToolJob extends DataSetJob {
@@ -43,16 +42,16 @@ public class ZodiacSubToolJob extends DataSetJob {
     }
 
     @Override
-    protected void computeAndAnnotateResult(final @NotNull List<Instance> instances) throws Exception {
+    protected void computeAndAnnotateResult(@NotNull List<Instance> instances) throws Exception {
         final Map<Ms2Experiment, List<FormulaResult>> input = instances.stream().distinct().collect(Collectors.toMap(
                 Instance::getExperiment,
                 in -> in.loadFormulaResults(SiriusScore.class, FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList())
         ));
 
-        for (Instance instance : instances) {
-            //remove instances from input which don't have a single FTree
-            if (input.get(instance.getExperiment()).size()==0) input.remove(instance.getExperiment());
-        }
+        //remove instances from input which don't have a single FTree
+        instances = instances.stream().filter(i -> !input.get(i.getExperiment()).isEmpty()).collect(Collectors.toList());
+        input.keySet().retainAll(instances.stream().map(Instance::getExperiment).collect(Collectors.toList()));
+
 
         if (instances.stream().anyMatch(it -> isRecompute(it) || (input.containsKey(it.getExperiment()) && !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class)))) {
 //            System.out.println("I am ZODIAC and run " + instances.size() + " instances: ");

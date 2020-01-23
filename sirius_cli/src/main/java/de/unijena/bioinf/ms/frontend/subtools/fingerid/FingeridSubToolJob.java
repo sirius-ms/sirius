@@ -54,10 +54,9 @@ public class FingeridSubToolJob extends InstanceJob {
         EnumSet<PredictorType> predictors = type.toPredictors(inst.getExperiment().getPrecursorIonType().getCharge());
         final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor) ApplicationCore.WEB_API.getStructurePredictor(predictors.iterator().next()), this::checkForInterruption);
 
-        final FingerIDJJob job = csi.makeFingerIDJJob(inst.getExperiment(),
+        final FingerIDJJob<?> job = csi.makeFingerIDJJob(inst.getExperiment(),
                 formulaResults.stream().map(res -> new IdentificationResult<>(res.getCandidate().getAnnotationOrThrow(FTree.class), res.getScoreObject()))
                         .collect(Collectors.toList()));
-
 
         // do computation and await results
         List<FingerIdResult> result = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
@@ -70,9 +69,17 @@ public class FingeridSubToolJob extends InstanceJob {
 
 
         // add new id results to projectspace and mal.
-        for (IdentificationResult idr : job.getAddedIdentificationResults())
-            inst.newFormulaResultWithUniqueId(idr.getTree())
-                    .ifPresent(fr -> formulaResultsMap.put(fr.getAnnotationOrThrow(FTree.class), fr));
+        Map<? extends IdentificationResult<?>, ? extends IdentificationResult<?>> addedResults = job.getAddedIdentificationResults();
+
+        addedResults.forEach((k, v) ->
+                inst.newFormulaResultWithUniqueId(k.getTree())
+                        .ifPresent(fr -> {
+                            fr.getAnnotationOrThrow(FormulaScoring.class).setAnnotationsFrom(
+                                    formulaResultsMap.get(v.getTree()).getAnnotationOrThrow(FormulaScoring.class));
+                            inst.updateFormulaResult(fr, FormulaScoring.class);
+
+                            formulaResultsMap.put(fr.getAnnotationOrThrow(FTree.class), fr);
+                        }));
 
 
         assert formulaResultsMap.size() >= result.size();

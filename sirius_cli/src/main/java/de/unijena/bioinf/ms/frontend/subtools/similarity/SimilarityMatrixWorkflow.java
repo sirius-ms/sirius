@@ -44,6 +44,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -68,16 +69,18 @@ public class SimilarityMatrixWorkflow implements Workflow {
 
     @Override
     public void run() {
-        final ArrayList<Instance> xs = new ArrayList<>();
+        List<Instance> xs = new ArrayList<>();
 
         try {
             ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
             ps.forEach(xs::add);
             if (options.useCosine)
                 cosine(xs);
+            //filter all instances without a single fragTree
+            xs = xs.stream().filter(i -> !i.loadCompoundContainer().getResults().isEmpty()).collect(Collectors.toList());
             if (options.useAlignment)
                 align(xs);
-            if (options.useFtblast!=null)
+            if (options.useFtblast != null)
                 ftblast(xs);
             if (options.useTanimoto)
                 tanimoto(xs);
@@ -90,7 +93,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
         final JobManager J = SiriusJobs.getGlobalJobManager();
 
         final Instance[] ys = xs.stream().filter(x->x.loadTopFormulaResult(FingerprintResult.class).filter(y->y.getAnnotation(FingerprintResult.class).isPresent()).isPresent()).toArray(Instance[]::new);
-        final ProbabilityFingerprint[] fps = Arrays.stream(ys).map(f->f.loadTopFormulaResult().get().getAnnotation(FingerprintResult.class).get().fingerprint).toArray(ProbabilityFingerprint[]::new);
+        final ProbabilityFingerprint[] fps = Arrays.stream(ys).map(f->f.loadTopFormulaResult(FingerprintResult.class).orElseThrow().getAnnotationOrThrow(FingerprintResult.class).fingerprint).toArray(ProbabilityFingerprint[]::new);
         final double[][] M = new double[ys.length][ys.length];
 
         J.submitJob(MatrixUtils.parallelizeSymmetricMatrixComputation(M, (i,j)-> Tanimoto.fastTanimoto(fps[i],fps[j]))).takeResult();
@@ -100,35 +103,39 @@ public class SimilarityMatrixWorkflow implements Workflow {
 
     private void writeMatrix(String name, double[][] M, String[] header) {
         final File file = new File(options.outputDirectory, name + (options.numpy ? ".txt" : ".tsv"));
-        try (BufferedWriter bw = FileUtils.getWriter(file)) {
-            if (options.numpy) {
-                bw.write('#');
-                bw.write(header[0]);
-                for (int i=1; i < header.length; ++i) {
-                    bw.write("\t");
-                    bw.write(header[i]);
-                }
-                bw.newLine();
-                FileUtils.writeDoubleMatrix(bw, M);
-            } else {
-                bw.write("FeatureName");
-                for (String h : header) {
-                    bw.write('\t');
-                    bw.write(h);
-                }
-                bw.newLine();
-                for (int i=0; i < M.length; ++i) {
-                    bw.write(header[i]);
-                    for (int j=0; j < M.length; ++j) {
-                        bw.write('\t');
-                        bw.write(String.valueOf(M[i][j]));
+
+        try {
+            Files.createDirectories(options.outputDirectory.toPath());
+            try (BufferedWriter bw = FileUtils.getWriter(file)) {
+                if (options.numpy) {
+                    bw.write('#');
+                    bw.write(header[0]);
+                    for (int i = 1; i < header.length; ++i) {
+                        bw.write("\t");
+                        bw.write(header[i]);
                     }
                     bw.newLine();
+                    FileUtils.writeDoubleMatrix(bw, M);
+                } else {
+                    bw.write("FeatureName");
+                    for (String h : header) {
+                        bw.write('\t');
+                        bw.write(h);
+                    }
+                    bw.newLine();
+                    for (int i = 0; i < M.length; ++i) {
+                        bw.write(header[i]);
+                        for (int j = 0; j < M.length; ++j) {
+                            bw.write('\t');
+                            bw.write(String.valueOf(M[i][j]));
+                        }
+                        bw.newLine();
+                    }
                 }
             }
         } catch (IOException e) {
-            LoggerFactory.getLogger(SimilarityMatrixWorkflow.class).error(file.getAbsolutePath() + " cannot be written due to: " + e.getMessage(),e);
-            System.err.println("Cannot write file '"+file+"' due to IO error: " + e.getMessage());
+            LoggerFactory.getLogger(SimilarityMatrixWorkflow.class).error(file.getAbsolutePath() + " cannot be written due to: " + e.getMessage(), e);
+            System.err.println("Cannot write file '" + file + "' due to IO error: " + e.getMessage());
         }
     }
 
