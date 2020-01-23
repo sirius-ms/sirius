@@ -41,7 +41,7 @@ public class StructureSummaryWriter implements Summarizer {
                 writer.textFile(SummaryLocations.STRUCTURE_SUMMARY, fileWriter -> {
                     fileWriter.write("rank\t");
                     fileWriter.write(StructureCSVExporter.HEADER);
-                    fileWriter.write("\n");
+
                     final List<SScored<String, ConfidenceScore>> topHits = new ArrayList<>();
 
                     for (SScored<FormulaResult, ? extends FormulaScore> result : formulaResults) {
@@ -55,21 +55,27 @@ public class StructureSummaryWriter implements Summarizer {
                             }
                             final String[] lines = w.toString().split("\n");
 
-                            // write summary file
-                            for (int i = 0; i < lines.length; i++) {
-                                fileWriter.write(String.valueOf(i + 1));
-                                fileWriter.write("\t");
-                                fileWriter.write(lines[i]);
+                            if (lines.length > 0) {
                                 fileWriter.write("\n");
+                                // write summary file
+                                for (int i = 0; i < lines.length; i++) {
+                                    if (!lines[i].isEmpty()) {
+                                        fileWriter.write(String.valueOf(i + 1));
+                                        fileWriter.write("\t");
+                                        fileWriter.write(lines[i]);
+                                        if (i < lines.length - 1)
+                                            fileWriter.write("\n");
+                                    }
+                                }
+
+
+                                // collect data for project wide summary
+                                final ConfidenceScore confidence = result.getCandidate().getAnnotation(FormulaScoring.class).
+                                        map(s -> s.getAnnotationOr(ConfidenceScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(ConfidenceScore.class));
+
+                                if (!lines[0].isEmpty())
+                                    topHits.add(new SScored<>(confidence + "\t" + lines[0] + "\t" + exp.getId().getDirectoryName() + "\n", confidence));
                             }
-
-
-                            // collect data for project wide summary
-                            final ConfidenceScore confidence = result.getCandidate().getAnnotation(FormulaScoring.class).
-                                    map(s -> s.getAnnotationOr(ConfidenceScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(ConfidenceScore.class));
-
-                            if (lines.length >= 1)
-                                topHits.add(new SScored<>(confidence + "\t" + lines[0] + "\t" + exp.getId().getDirectoryName() + "\n", confidence));
                         }
                     }
                     if (!topHits.isEmpty()){
