@@ -66,6 +66,7 @@ public class ChemDBClient extends AbstractClient {
                         .setParameter("ppm", String.valueOf(deviation.getPpm()))
                         .setParameter("ion", ionType.toString())
                         .setParameter("db", bioFilter.name())
+                        .setParameter("charge", Integer.toString(ionType.getCharge()))
                         .build()),
                 br -> {
                     final ArrayList<FormulaCandidate> candidates = new ArrayList<>();
