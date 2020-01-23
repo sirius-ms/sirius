@@ -30,9 +30,10 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
         final Pattern dblinkPat = Pattern.compile("^.+?: \\(.+\\)$");
         final ArrayList<Scored<CompoundCandidate>> results = new ArrayList<>();
         reader.table(FINGERBLAST.relFilePath(id), true, (row) -> {
+            if (row.length == 0) return;
             final double score = Double.parseDouble(row[4]);
             final InChI inchi = new InChI(row[0], row[1]);
-            final int rank = Integer.parseInt(row[3]);
+//            final int rank = Integer.parseInt(row[3]);
             final String name = row[5], smiles = row[6];
             final double xlogp = row[7].isBlank() ? Double.NaN : Double.parseDouble(row[7]);
 //            final PubmedLinks pubmedLinks = PubmedLinks.fromString(row[8]); //todo @kai read or not read links?
