@@ -1341,7 +1341,8 @@ An example for a .ms file:
 \end{Verbatim}
 
 \subsection{LCMS-Runs}
-SIRIUS can import full LCMS-Runs via the preprocessing   
+SIRIUS can import full LCMS-Runs in (mzML/mzXML) format via the prepossessing tool \code{lcms-align}.
+\todo{todo: describe lcms-align}
 
 \section{Output}
 \subsection{SIRIUS project-space}\label{gui:workspace}
@@ -1925,7 +1926,7 @@ sirius --adduct [M+H]+ -1 c1_ms.csv -2 c1_msms.csv -f C6H12O6 --adduct [M+?]+ -1
 If your input data is derived from an biological sample or any other set of derivates, similarities between different compounds can be leveraged to improve molecular formula annotation of the individual compounds. 
 ZODIAC takes advantage of the fact that an organism produces related metabolites that are derived from multiple, but limited, biosynthetic pathways.
 The \code{zodiac} tool builds upon the \code{formula} tool and uses, say, its top 50 molecular formula annotations as candidates for one compound. 
-ZODIAC then reranks molecular formula candidates using Bayesian statistics.
+ZODIAC then re-ranks molecular formula candidates using Bayesian statistics.
 
 The \code{zodiac} tool can be executed after the \code{formula} tool without the need of many parameters:
 
@@ -1969,13 +1970,13 @@ When running \code{structure} together with \code{zodiac} the command could look
 sirius  -i <input> -o <output> formula -c 50 zodiac structure --database bio 
 \end{Verbatim}
 
-\section{Canopus: Predicting Compound Classes without Identification}
+\section{CANOPUS: Predicting Compound Classes without Identification}
 The \code{canopus} tool allows you the predict compound classes from the probabilistic molecular fingerprint predicted by CSI:FingerID. So \code{cannopus} can even provide compound class information for unidentified compound with no hit in a structure database: 
 \begin{Verbatim}[commandchars=\\\{\}]
 sirius  -i <input> -o <output> formula -c 10  structure --database pubchem canopus
 \end{Verbatim}
 
-\section{Passatutto: Decoy Spectra from Fragmentation Trees}
+\section{PASSATUTTO: Decoy Spectra from Fragmentation Trees}
 The \code{passattuto} tool allows you to compute high quality decoy spectra from fragmentation trees provided by the \code{formula} tool. Assume your are using a spectral library as input you can easily create a decoy database based on this spectra:
 
 \begin{Verbatim}[commandchars=\\\{\}]
@@ -1983,6 +1984,12 @@ sirius  -i <spectral-lib> -o <output> formula passatutto
 \end{Verbatim}
 
 If no molecular formulas are annotated to the input spectra the best scoring candidate will be used for decoy computation instead.
+
+\section{LCMS-align: Feature detection and feature alignment}
+The \code{lcms-align} tool allows you to import mzML/mzXML files into SIRIUS. It performs feature detection and feature alignment based on the MS/MS spectra and creates a SIRIUS project-space which is then used to execute followup analysis steps:
+\begin{Verbatim}[commandchars=\\\{\}]
+sirius  -i <mzml(s)> -o <output> lcms-run formula 
+\end{Verbatim}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  CHAPTER  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
