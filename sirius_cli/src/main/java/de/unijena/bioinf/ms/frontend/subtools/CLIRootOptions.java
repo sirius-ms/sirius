@@ -49,7 +49,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
         PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(numOfCores));
     }
 
-    @Option(names = {"--compound-buffer", "--initial-compound-buffer"}, description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores. Note that for DATASET_TOOLS the compound buffer may have no effect because this tools may need all compounds in memory for computation.", order = 20)
+    @Option(names = {"--compound-buffer", "--initial-compound-buffer"}, description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
     public void setInitialInstanceBuffer(Integer initialInstanceBuffer) {
         if (initialInstanceBuffer == null)
             initialInstanceBuffer = SiriusJobs.getGlobalJobManager().getCPUThreads();
@@ -60,7 +60,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
     @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius", order = 30, hidden = true)
     public Files workspace; //todo change in application core
 
-    @Option(names = "--recompute", description = "Recompute ALL results of ALL SubTools that are already present. By defaults already present results of an instance will be preserved and the instance will be skipped for the corresponding Task/Tool", order = 100, defaultValue = "FALSE")
+    @Option(names = "--recompute", description = "Recompute results of ALL tools where results are already present. Per default already present results will be preserved and the instance will be skipped for the corresponding Task/Tool", order = 100, defaultValue = "FALSE")
     public void setRecompute(boolean recompute) throws Exception {
         try {
             defaultConfigOptions.changeOption("RecomputeResults", String.valueOf((recompute)));
@@ -69,7 +69,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
         }
     }
 
-    @Option(names = "--maxmz", description = "Just consider compounds with a precursor mz lower or equal this maximum mz. All other compounds in the input file are ignored.", defaultValue = "Infinity", order = 110)
+    @Option(names = "--maxmz", description = "Only considers compounds with a precursor m/z lower or equal [--maxmz]. All other compounds in the input will be skipped.", defaultValue = "Infinity", order = 110)
     public double maxMz;
 
     //endregion
@@ -83,10 +83,10 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
     private ProjectSpaceOptions psOpts = new ProjectSpaceOptions();
 
     private static class ProjectSpaceOptions {
-        @Option(names = {"--output", "--project", "-o"}, description = "Specify output project-space to write to. If no [--input] is specified it is also used as input to read from. For compression use the File ending .zip or .sirius.", order = 210)
+        @Option(names = {"--output", "--project", "-o"}, description = "Specify the project-space to write into. If no [--input] is specified it is also used as input. For compression use the File ending .zip or .sirius.", order = 210)
         private Path outputProjectLocation;
 
-        @Option(names = "--naming-convention", description = "Specify a format for compounds' output directories. Default %%index_%%filename_%%compoundname", order = 220)
+        @Option(names = "--naming-convention", description = "Specify a naming scheme for the  compound directories ins the project-space. Default %%index_%%filename_%%compoundname", order = 220)
         private void setProjectSpaceFilenameFormatter(String projectSpaceFilenameFormatter) throws ParseException {
             this.projectSpaceFilenameFormatter = new StandardMSFilenameFormatter(projectSpaceFilenameFormatter);
         }
