@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
@@ -29,10 +30,13 @@ public class MiddlewareAppOptions implements StandaloneTool<MiddlewareAppOptions
 
     }
 
+
     @Override
-    public Flow makeSingletonWorkflow(PreprocessingJob<?> preproJob, ParameterConfig config) {
-        return new Flow((PreprocessingJob<ProjectSpaceManager>) preproJob, config);
+    public Flow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+        return new Flow((RootOptions<PreprocessingJob<ProjectSpaceManager>>) rootOptions, config);
+
     }
+
 
 
     @Override
@@ -47,15 +51,15 @@ public class MiddlewareAppOptions implements StandaloneTool<MiddlewareAppOptions
         private ConfigurableApplicationContext appContext = null;
 
 
-        private Flow(PreprocessingJob<ProjectSpaceManager> preproJob, ParameterConfig config) {
-            this.preproJob = preproJob;
+        private Flow(RootOptions<PreprocessingJob<ProjectSpaceManager>> opts, ParameterConfig config) {
+            this.preproJob = opts.makeDefaultPreprocessingJob();
             this.config = config;
         }
 
         @Override
         public void run() {
             System.out.println(System.getProperty("management.endpoints.web.exposure.include"));
-            //todo needed
+            //do the project importing from the commandline
             final ProjectSpaceManager projectSapace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
             SpringApplication app = new SpringApplication(SiriusMiddlewareApplication.class);
             appContext = app.run();
