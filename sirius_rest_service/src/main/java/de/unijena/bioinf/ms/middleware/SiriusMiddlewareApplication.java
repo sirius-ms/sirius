@@ -7,6 +7,7 @@ import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
 import de.unijena.bioinf.ms.frontend.workfow.MiddlewareWorkflowBuilder;
+import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -44,6 +45,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
 
     @Override
     public void run(String... args) throws Exception {
-        context.addProjectSpace(rootOptions.getProjectSpace().projectSpace().getRootPath().getFileName().toString(), rootOptions.getProjectSpace().projectSpace());
+        final SiriusProjectSpace ps = rootOptions.getProjectSpace().projectSpace();
+        context.addProjectSpace(ps.getLocation().getFileName().toString(), ps);
     }
 }
