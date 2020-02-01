@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.rest.client.fingerid;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
@@ -22,6 +23,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.jetbrains.annotations.NotNull;
@@ -117,13 +119,12 @@ public class FingerIdClient extends AbstractClient {
                         writer.writeTree(sw, input.ftree);
                         jsonTree = sw.toString();
                     }
+                    Map<String,String> values =  new HashMap<>();
+                    values.put("ms",stringMs);
+                    values.put("ft",jsonTree);
+                    values.put("predictors", PredictorType.getBitsAsString(input.predictors));
+                    post.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(values)));
 
-                    final NameValuePair ms = new BasicNameValuePair("ms", stringMs);
-                    final NameValuePair tree = new BasicNameValuePair("ft", jsonTree);
-                    final NameValuePair predictor = new BasicNameValuePair("predictors", PredictorType.getBitsAsString(input.predictors));
-
-                    final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(ms, tree, predictor));
-                    post.setEntity(params);
                     return post;
                 }, new TypeReference<>() {
                 }
