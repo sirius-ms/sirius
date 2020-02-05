@@ -25,7 +25,7 @@ import java.util.HashSet;
  * Created by kaidu on 11.08.14.
  */
 public class CommonLossScoring extends StandardScoring {
-    private final static String[] LOSSES = new String[]{
+    public final static String[] LOSSES = new String[]{
             "H2O", "C2H2", "HO3P", "CH3", "H3O4P", "C2H4", "H3N", "CHN", "CS", "C2H6",
             "HS", "H2S", "CO", "CH3N", "C2H2O", "C4H4", "C3H2O", "C4H6", "CH4", "C3H4O",
             "OS", "O2S", "HF", "CH2S", "CH2", "C3H6", "C2H2S", "C2H7N", "C5H10", "CH2O2",

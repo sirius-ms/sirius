@@ -40,11 +40,12 @@ public class CPLEXSolver extends AbstractSolver {
     protected IloIntVar[] variables;
     protected IloLPMatrix constraints;
 
-    public final static IlpFactory<CPLEXSolver> Factory = new IlpFactory<CPLEXSolver>() {
+    public final static IlpFactory<CPLEXSolver> Factory = new IlpFactory<>() {
         @Override
         public CPLEXSolver create(ProcessedInput input, FGraph graph, TreeBuilder.FluentInterface options) {
-            return new CPLEXSolver(graph,input,options);
+            return new CPLEXSolver(graph, input, options);
         }
+
         @Override
         public boolean isThreadSafe() {
             return true;
