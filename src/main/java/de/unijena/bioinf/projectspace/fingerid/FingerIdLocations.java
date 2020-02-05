@@ -10,6 +10,7 @@ public interface FingerIdLocations {
 
     Location
             FINGERBLAST = new Location("fingerid/", "csv", FormulaResultId::fileName),
+            FINGERBLAST_FPs = new Location("fingerid/", "fps", FormulaResultId::fileName),
             FINGERPRINTS = new Location("fingerprints/", "fpt", FormulaResultId::fileName),
             CANOPUS = new Location("canopus/", "fpt", FormulaResultId::fileName);
 
