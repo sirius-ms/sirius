@@ -6,7 +6,6 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
-import de.unijena.bioinf.ms.frontend.io.projectspace.ComputingStatus;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
@@ -67,7 +66,7 @@ public class CandidateList extends ActionList<FingerprintCandidateBean, Set<Form
 
         List<FingerprintCandidateBean> emChache = new ArrayList<>();
         for (FormulaResultBean e : formulasToShow) {
-            if (e != null && e.getFingerIdComputeState().equals(ComputingStatus.COMPUTED)) {
+            if (e != null) {
                 final FormulaResult res = e.getResult(FingerprintResult.class, FingerblastResult.class);
                 res.getAnnotation(FingerblastResult.class).ifPresent(fbr -> {
                     data.add(e);

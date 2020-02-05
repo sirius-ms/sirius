@@ -12,7 +12,7 @@ import picocli.CommandLine;
 import java.util.List;
 
 @CommandLine.Command(name = "gui-background-computation", aliases = {"gbc"}, defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, sortOptions = false)
-public class GuiComputeRoot implements RootOptions {
+public class GuiComputeRoot implements RootOptions<PreprocessingJob<List<InstanceBean>>> {
 
     protected final GuiProjectSpaceManager guiProjectSpace;
     protected final List<InstanceBean> instances;
@@ -39,12 +39,14 @@ public class GuiComputeRoot implements RootOptions {
      * here we provide an iterator about the Instances we want to compute with this configured workflow
      * */
     @Override
-    public PreprocessingJob makePreprocessingJob(InputFilesOptions input, ProjectSpaceManager space) {
-        return new PreprocessingJob() {
+    public PreprocessingJob<List<InstanceBean>> makeDefaultPreprocessingJob() {
+        return new PreprocessingJob<>() {
             @Override
-            protected Iterable<InstanceBean> compute() throws Exception {
+            protected List<InstanceBean> compute() throws Exception {
                 return instances;
             }
         };
     }
+
+
 }

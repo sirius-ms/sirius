@@ -11,6 +11,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
@@ -119,7 +120,7 @@ public class CompoundController extends BaseApiController {
                             cSum.setStructureResultSummary(sSum);
 
                             if (!fbres.getResults().isEmpty()) {
-                                final Scored<CompoundCandidate> can = fbres.getResults().get(0);
+                                final Scored<FingerprintCandidate> can = fbres.getResults().get(0);
 
                                 // scores
                                 sSum.setCsiScore(can.getScore());

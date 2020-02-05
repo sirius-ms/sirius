@@ -31,8 +31,6 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
     protected static final Logger LOG = LoggerFactory.getLogger(GuiProjectSpaceManager.class);
     public final BasicEventList<InstanceBean> COMPOUNT_LIST;
 
-//    private ContainerListener.Defined addListener, deleteListener;
-
     public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space) {
         this(space, new BasicEventList<>());
     }
@@ -48,55 +46,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
             COMPOUNT_LIST.clear();
             forEach(ins -> COMPOUNT_LIST.add((InstanceBean) ins));
         });
-
-
     }
-
-//    private ProjectSpaceManager projectSpace;
-
-//    public ProjectSpaceManager getProjectSpace() {
-//        return projectSpace;
-//    }
-
-    /*public GuiProjectSpace(@NotNull ProjectSpaceManager projectSpaceManager) {
-        changeProjectSpace(projectSpaceManager);
-    }*/
-
-
-
-/*
-    private void clearListener(@Nullable ContainerListener.Defined listener) {
-        if (listener != null)
-            listener.unregister();
-    }*/
-
-
-    /*public synchronized void changeProjectSpace(ProjectSpaceManager projectSpaceManager) {
-        // clean old if available
-        inEDTAndWait(COMPOUNT_LIST::clear);
-        *//*clearListener(addListener);
-        clearListener(deleteListener);
-
-        // add new project & listeners
-        projectSpace = projectSpaceManager;
-
-        //todo why are imported compounds do not contain results
-
-        // listen to add events
-        addListener = projectSpace.projectSpace().defineCompoundListener().onCreate().thenDo((event) -> {
-            inEDTAndWait(() -> COMPOUNT_LIST.add((InstanceBean) projectSpace.newInstanceFromCompound(event.getAffectedID(), Ms2Experiment.class)));
-        }).register();
-
-        // listen to delete events
-        deleteListener = projectSpace.projectSpace().defineCompoundListener().onDelete().thenDo((event) -> {
-            inEDTAndWait(() -> COMPOUNT_LIST.removeIf(inst -> event.getAffectedID().equals(inst.getID())));
-        }).register();
-
-        // add already existing compounds to reactive list
-        inEDTAndWait(() -> projectSpace.forEach(intBean -> COMPOUNT_LIST.add((InstanceBean) intBean)));*//*
-
-
-    }*/
 
     public void deleteCompounds(@Nullable final List<InstanceBean> insts) {
         if (insts == null || insts.isEmpty())
@@ -122,21 +72,9 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
 
     }
 
-    /*public void deleteCompound(@NotNull final CompoundContainerId id) {
-        try {
-            projectSpace().deleteCompound(id);
-
-        } catch (IOException e) {
-            LOG.error("Could not delete Compound: " + id, e);
-        }
-    }*/
-
     public synchronized void deleteAll() {
         deleteCompounds(COMPOUNT_LIST);
     }
-
-//    public enum ImportMode {REPLACE, MERGE}
-
 
     @Override
     public @NotNull Instance newCompoundWithUniqueId(Ms2Experiment inputExperiment) {

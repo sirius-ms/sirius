@@ -7,9 +7,11 @@ import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.*;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URI;
 import java.util.List;
 
 /**
@@ -23,7 +25,6 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
     public CandidateListTableView(final CandidateList list) {
         super(list);
 
-
         final CandidateTableFormat tf = new CandidateTableFormat(source.scoreStats);
         this.table = new ActionTable<>(filteredSource, sortedSource, tf);
 
@@ -33,7 +34,7 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
 
         table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer(tf.highlightColumnIndex(), source.scoreStats, false, false, null));
         table.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
-        LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer, PubmedLinks::getPubmedLink);
+        LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer, (LinkedSiriusTableCellRenderer.LinkCreator<PubmedLinks>) s -> s == null ? null : s.getPubmedLink());
         linkRenderer.registerToTable(table, 7);
         this.add(
                 new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
@@ -51,6 +52,7 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
 
     @Override
     public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
+        System.out.println("CandidateListTableView Changed!");
         //not used
     }
 }

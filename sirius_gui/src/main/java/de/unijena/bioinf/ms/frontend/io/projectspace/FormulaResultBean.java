@@ -37,13 +37,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
     private int rank;
 
-
     private ContainerListener.Defined scoreListener, fingerBlastListener, fingerprintListener, canopusListener;
-
-    // computing state
-    private volatile ComputingStatus fingerIdComputeState = ComputingStatus.UNCOMPUTED;
-    private volatile ComputingStatus canopusComputeState = ComputingStatus.UNCOMPUTED;
-
 
     protected FormulaResultBean(int rank) {
         this.rank = rank;
@@ -191,15 +185,5 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     @Override
     public int compareTo(FormulaResultBean o) {
         return Integer.compare(getRank(), o.getRank());
-    }
-
-    public ComputingStatus getFingerIdComputeState() {
-        return fingerIdComputeState;
-    }
-
-    public synchronized void setFingerIdComputeState(final ComputingStatus fingerIdComputeState) {
-        final ComputingStatus old = this.fingerIdComputeState;
-        this.fingerIdComputeState = fingerIdComputeState;
-        pcs.firePropertyChange("finger_compute_state", old, this.fingerIdComputeState);
     }
 }

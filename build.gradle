@@ -32,6 +32,7 @@ ext {
     json_impl_version = "1.0.4" //todo move to gson
 
     glpk_lib_version = '4.60'
+    clp_lib_version = '1.17.5'
     cdk_version = "2.1.1"
 
     jewelcli_version = '0.8.9'
@@ -163,6 +164,29 @@ task downloadGLPK(type: Copy) {
         }
     }
 }
+
+task downloadCLP(type: Copy) {
+    def url = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/clp/clp-${project.clp_lib_version}.zip")
+    project.ext.set("clpPath", getBuildDir().toPath().resolve('tmp/clp/').toFile())
+
+    Path dir = project.clpPath.toPath().getParent()
+    if (!dir.resolve('clp').toFile().exists()) {
+        copy {
+            println(dir.toString())
+            dir.resolve('clp').toFile().deleteDir()
+            Files.createDirectories(dir)
+
+            def zipFile = Paths.get('clp.zip')
+            def file = dir.resolve(zipFile).newOutputStream()
+            file << url.openStream()
+            file.close()
+
+            from zipTree(dir.resolve(zipFile).toFile())
+            into dir.toFile()
+        }
+    }
+}
+
 
 /*################### Building the Documentation ################### */
 

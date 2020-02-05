@@ -34,7 +34,7 @@ public class CancelComputeAction extends AbstractAction {
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
                 if (!selection.isSelectionEmpty()) {
                     for (InstanceBean ec : selection.getSelected()) {
-                        if (ec != null && (ec.isComputing() || ec.isQueued())) { //todo minor but: isQueued is somehow not detected -> maybe not property change fired?
+                        if (ec != null && ec.isComputing()) {
                             setEnabled(true);
                             return;
                         }

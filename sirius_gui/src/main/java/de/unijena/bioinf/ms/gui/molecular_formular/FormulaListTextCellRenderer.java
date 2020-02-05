@@ -131,11 +131,6 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         g2.drawString("Score:", 10, 35);
         g2.setFont(valueFont);
         g2.drawString(String.format("%.2f", (Math.exp(sre.getScoreValue(SiriusScore.class)) / stats.getExpScoreSum() * 100d)) + "%", 15 + scoreLength, 35);
-//
-        if (sre != null && sre.getFingerIdComputeState() != null) {
-            g.setFont(statusFont);
-            GuiUtils.drawListStatusElement(sre.getFingerIdComputeState(), g2, this);
-        }
     }
 
     private static class DummySiriusResult extends FormulaResultBean {

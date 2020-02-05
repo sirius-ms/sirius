@@ -27,7 +27,7 @@ public class LinkedSiriusTableCellRenderer extends MouseAdapter implements Table
 
 
     public <T> LinkedSiriusTableCellRenderer(DefaultTableCellRenderer sourceRenderer, LinkCreator<T> linker) {
-        this(sourceRenderer, linker, s -> s);
+        this(sourceRenderer, linker, s -> s != null ? s.toString():"N/A");
     }
 
     public <T, O> LinkedSiriusTableCellRenderer(DefaultTableCellRenderer sourceRenderer, LinkCreator<T> linker, LinkTextCreator<T, O> texter) {

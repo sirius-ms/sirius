@@ -60,6 +60,7 @@ distributions {
                         include('libglpk.so.40')
                         include('libglpk_java.so')
                     }
+                    from("${project.clpPath}/l${ar}/")
                 }
 
                 into('bin') {
@@ -81,6 +82,7 @@ distributions {
         })
         distribute.dependsOn "${n}DistZip"
         getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+        getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'
         getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
     }
 
@@ -97,6 +99,7 @@ distributions {
                     }
                 }
                 from { "${project.glpkPath}/w${ar}/" }
+                from("${project.clpPath}/w${ar}/")
                 from("${project.distPath}") {
                     exclude('sirius-gui')
                 }
@@ -114,6 +117,7 @@ distributions {
         })
         distribute.dependsOn "${n}DistZip"
         getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+        getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'
         getTasks().findByPath("${n}DistZip").dependsOn 'createAllExecutables'
         getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
     }
@@ -128,6 +132,7 @@ distributions {
                     exclude libExclude
                 }
                 from("${project.glpkPath}/osx/")
+                from("${project.clpPath}/osx/")
                 exclude('*.zip')
             }
 
@@ -150,6 +155,7 @@ distributions {
     })
     distribute.dependsOn "${n}DistZip"
     getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+    getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'
     getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
 
     project.getTasksByName("distTar", false).each { it.setEnabled(false) }

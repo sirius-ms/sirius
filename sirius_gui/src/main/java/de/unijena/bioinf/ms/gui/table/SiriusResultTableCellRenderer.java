@@ -1,11 +1,5 @@
 package de.unijena.bioinf.ms.gui.table;
-
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 26.01.17.
- */
-
+import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import org.jdesktop.beans.AbstractBean;
 
@@ -18,7 +12,7 @@ import java.text.NumberFormat;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SiriusResultTableCellRenderer<E extends AbstractBean, F extends SiriusTableFormat<E>> extends DefaultTableCellRenderer {
+public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
     //    public final static NumberFormat NF = new DecimalFormat("#0.00");
     protected NumberFormat nf = new DecimalFormat("#0.00");
 

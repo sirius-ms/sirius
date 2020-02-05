@@ -76,7 +76,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
 
     public CandidateListDetailView(CandidateList sourceList) {
         super(sourceList);
-        candidateList = new CandidateInnerList(new DefaultEventListModel<FingerprintCandidateBean>(filteredSource));
+        candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource));
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
         candidateList.setCellRenderer(new CandidateCellRenderer(sourceList.scoreStats, this));

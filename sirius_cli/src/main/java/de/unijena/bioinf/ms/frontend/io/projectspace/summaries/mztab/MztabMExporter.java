@@ -18,6 +18,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
@@ -102,7 +103,7 @@ public class MztabMExporter implements Summarizer {
             final FormulaScoring bestHitScores = bestHitSource.getAnnotationOrThrow(FormulaScoring.class);
 
             // check if fingerid results are available
-            Scored<CompoundCandidate> bestHit = null;
+            Scored<FingerprintCandidate> bestHit = null;
             int bestHitSourceRank = 1;
             if (bestHitScores.hasAnnotation(TopFingerblastScore.class)) {
                 bestHitSource = results.stream()
@@ -222,7 +223,7 @@ public class MztabMExporter implements Summarizer {
         return smeItem;
     }
 
-    private SmallMoleculeEvidence buildFingerIDSMEItem(@NotNull final Ms2Experiment er, @NotNull final FormulaResult bestHitSource, @NotNull final Scored<CompoundCandidate> bestHit, @NotNull final SmallMoleculeFeature smfItem) {
+    private SmallMoleculeEvidence buildFingerIDSMEItem(@NotNull final Ms2Experiment er, @NotNull final FormulaResult bestHitSource, @NotNull final Scored<? extends CompoundCandidate> bestHit, @NotNull final SmallMoleculeFeature smfItem) {
         SmallMoleculeEvidence smeItem = buildSiriusSMEItem(er, bestHitSource, smfItem);
         smeItem.setIdentificationMethod(SiriusMZTabParameter.SOFTWARE_FINGER_ID);
         smeItem.setRank(1); //todo make exported result user definable in gui
@@ -294,7 +295,7 @@ public class MztabMExporter implements Summarizer {
         mztab.getMetadata().setMzTabID(ID); //todo add workspace file parameterName here
     }
 
-    private SmallMoleculeSummary buildSMLItem(@NotNull Ms2Experiment er, @NotNull FormulaResult bestHitSource, @Nullable Scored<CompoundCandidate> bestHit) {
+    private SmallMoleculeSummary buildSMLItem(@NotNull Ms2Experiment er, @NotNull FormulaResult bestHitSource, @Nullable Scored<? extends CompoundCandidate> bestHit) {
         final SmallMoleculeSummary smlItem = new SmallMoleculeSummary();
         smlItem.setSmlId(++smlID);
         smlItem.adductIons(Collections.singletonList(bestHitSource.getId().getIonType().toString()));

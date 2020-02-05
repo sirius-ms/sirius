@@ -15,12 +15,16 @@ import java.io.IOException;
 
 public class SiriusCLIApplication {
     protected static Run RUN = null;
-
+    private static long t1;
 
     public static void main(String[] args) {
+        System.out.println("==> START MAIN");
+        t1 = System.currentTimeMillis();
         try {
             configureShutDownHook(() -> {
             });
+            measureTime("Start Run method");
+
             run(args, () -> {
                 final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
                 return new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader);
@@ -28,6 +32,12 @@ public class SiriusCLIApplication {
         } finally {
             System.exit(0);
         }
+    }
+
+    public static void measureTime(String message){
+        long t2 = System.currentTimeMillis();
+        System.out.println("==> " + message + " - " + (t2 - t1) / 1000d);
+        t1 = t2;
     }
 
     public static void configureShutDownHook(@NotNull final Runnable additionalActions) {
@@ -57,9 +67,16 @@ public class SiriusCLIApplication {
         try {
             if (RUN != null)
                 throw new IllegalStateException("Aplication can only run Once!");
+            measureTime("init Run");
             RUN = new Run(supplier.make());
-            if (RUN.parseArgs(args))
+            measureTime("Start Parse args");
+            boolean b = RUN.parseArgs(args);
+            measureTime("Parse args Done!");
+            if (b){
+                measureTime("Compute");
                 RUN.compute();
+                measureTime("Compute DONE!");
+            }
         } catch (Throwable e) {
             LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unexpected Error!", e);
         }

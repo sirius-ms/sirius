@@ -80,6 +80,7 @@ distributions {
                         include('libglpk.so.40')
                         include('libglpk_java.so')
                     }
+                    from("${project.clpPath}/l${ar}/")
                     exclude('*.zip')
                 }
 
@@ -95,7 +96,9 @@ distributions {
                 }
 
                 into("Windows/${ar}bit/Sirius") {
-                    from { "${project.glpkPath}/w${ar}/" }
+                    from("${project.glpkPath}/w${ar}/")
+                    from("${project.clpPath}/w${ar}/")
+
                     from("${project.distPath}") {
                         include('COPYING.txt')
                     }
@@ -108,6 +111,7 @@ distributions {
             }
             into('MacOS/64bit/Sirius/lib') {
                 from("${project.glpkPath}/osx/")
+                from("${project.clpPath}/osx/")
                 exclude('*.zip')
             }
 
@@ -126,6 +130,7 @@ distributions {
 //    distribute.dependsOn 'downloadOpenmsScript'
     distribute.dependsOn "${n}DistZip"
     getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+    getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'
     getTasks().findByPath("${n}DistZip").dependsOn 'createAllExecutables'
     getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
 

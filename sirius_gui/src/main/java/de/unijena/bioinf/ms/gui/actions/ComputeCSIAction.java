@@ -33,7 +33,7 @@ public class ComputeCSIAction extends AbstractAction {
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
                 if (MF.isFingerid()) {
                     for (InstanceBean container : event.getSourceList()) {
-                        if (container.isComputed()) {
+                        if (container.getResults().size() > 0) {
                             setEnabled(true);
                             return;
                         }
@@ -83,7 +83,7 @@ public class ComputeCSIAction extends AbstractAction {
         if (MF.isFingerid() && MF.getCompounds().size() > 0) {
             if (network) {
                 for (InstanceBean container : MF.getCompounds()) {
-                    if (container.isComputed())
+                    if (container.getResults().size() > 0)
                         return true;
                     setEnabled(true);
                     break;
