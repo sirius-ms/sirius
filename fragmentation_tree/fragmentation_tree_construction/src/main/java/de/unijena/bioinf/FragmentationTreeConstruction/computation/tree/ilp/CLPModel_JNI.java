@@ -1,11 +1,5 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Stack;
-
 public class CLPModel_JNI {
 
     public static interface ObjectiveSense {
@@ -22,7 +16,12 @@ public class CLPModel_JNI {
     }
 
     static {
-        System.loadLibrary("CLPModelWrapper_JNI");
+        try {
+            System.loadLibrary("CLPModelWrapper_JNI");
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     // needed, because JNI libraries are loaded as static, multiple
