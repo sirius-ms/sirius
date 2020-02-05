@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.fp;
 
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TShortArrayList;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -56,6 +57,15 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
         return convertToBinary(toProbabilityArray());
     }
 
+    public static byte[] convertToBinary(short[] data) {
+        final ByteBuffer buffer = ByteBuffer.allocate(data.length * 2);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        for (short val : data)
+            buffer.putShort(val);
+        buffer.rewind();
+        return buffer.array();
+    }
+
     public static byte[] convertToBinary(double[] data) {
         final ByteBuffer buffer = ByteBuffer.allocate(data.length * 8);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -71,6 +81,16 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
         buf.order(ByteOrder.LITTLE_ENDIAN);
         while (buf.position() < buf.limit()) {
             data.add(buf.getDouble());
+        }
+        return data.toArray();
+    }
+
+    public static short[] convertToShorts(byte[] bytes) {
+        final TShortArrayList data = new TShortArrayList(2000);
+        final ByteBuffer buf = ByteBuffer.wrap(bytes);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        while (buf.position() < buf.limit()) {
+            data.add(buf.getShort());
         }
         return data.toArray();
     }

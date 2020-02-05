@@ -55,7 +55,7 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
     }
 
     public FormulaConstraints(String string) {
-        if (string.indexOf(',')>0) string = string.replace(",","");
+        string = string.replace(",","");
         final PeriodicTable PT = PeriodicTable.getInstance();
         final Pattern pattern = PT.getPattern();
         final Matcher matcher = pattern.matcher(string);
@@ -510,19 +510,14 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
                 }
             }
         }
-        return buf.toString();
+        final String s = buf.toString();
+        return s.isEmpty() ? "," : s;
     }
 
     public FormulaConstraints intersection(FormulaConstraints formulaConstraints) {
         final List<Element> elements = new ArrayList<>(this.chemicalAlphabet.getElements());
-        final Iterator<Element> eli = elements.iterator();
-        while (eli.hasNext()) {
-            final Element e = eli.next();
-            if (!formulaConstraints.hasElement(e)) {
-                eli.remove();
-            }
-        }
-        final ChemicalAlphabet alphabet = new ChemicalAlphabet(elements.toArray(new Element[elements.size()]));
+        elements.removeIf(e -> !formulaConstraints.hasElement(e));
+        final ChemicalAlphabet alphabet = new ChemicalAlphabet(elements.toArray(Element[]::new));
         final FormulaConstraints intersection = new FormulaConstraints(alphabet);
         final HashMap<Class<? extends FormulaFilter>, FormulaFilter> ifils = new HashMap<>();
         for (FormulaFilter f : this.filters)

@@ -109,6 +109,8 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Ms2Exp
 
     @Override
     public String toString() {
+        if (value.isEmpty())
+            return ",";
         return value.toString();
     }
 

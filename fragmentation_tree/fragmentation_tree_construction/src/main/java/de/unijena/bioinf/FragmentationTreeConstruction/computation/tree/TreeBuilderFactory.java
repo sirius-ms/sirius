@@ -125,7 +125,7 @@ public final class TreeBuilderFactory {
 
 
     public TreeBuilder getTreeBuilder(DefaultBuilder builder) {
-        IlpFactory factory = null;
+        IlpFactory<?> factory = null;
         switch (builder) {
             case GUROBI:
                 factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GrbSolver"); //we have to use classloader, to prevent class not found exception. because it could be possible that gurobi.jar doe not exist -> runtime dependency
@@ -145,9 +145,8 @@ public final class TreeBuilderFactory {
         }
         if (factory == null) {
             return null;
-        } else {
-            return new AbstractTreeBuilder(factory);
         }
+        return new AbstractTreeBuilder<>(factory);
     }
 
     public TreeBuilder getTreeBuilder() {
