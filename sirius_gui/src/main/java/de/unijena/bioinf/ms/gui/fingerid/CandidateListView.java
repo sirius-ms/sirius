@@ -46,8 +46,8 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
  */
 public class CandidateListView extends ActionListDetailView<FingerprintCandidateBean, Set<FormulaResultBean>, CandidateList> {
 
-    private FilterRangeSlider logPSlider;
-    private FilterRangeSlider tanimotoSlider;
+    private FilterRangeSlider<CandidateList,FingerprintCandidateBean, Set<FormulaResultBean>> logPSlider;
+    private FilterRangeSlider<CandidateList,FingerprintCandidateBean, Set<FormulaResultBean>> tanimotoSlider;
     private DBFilterPanel dbFilterPanel;
 
     public CandidateListView(CandidateList source) {
@@ -99,13 +99,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
 
 
         final JButton exportToCSV = Buttons.getExportButton24("export candidate list");
-        exportToCSV.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                doExport();
-            } //todo export action
-        });
-
+        exportToCSV.addActionListener(e -> doExport());
         tb.add(exportToCSV);
 
         return tb;
@@ -160,10 +154,10 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
     @Override
     protected EventList<MatcherEditor<FingerprintCandidateBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
-                new CandidateStringMatcherEditor(searchField.textField),
-                new MinMaxMatcherEditor<>(logPSlider, (Filterator<Double, FingerprintCandidateBean>) (baseList, element) -> baseList.add(element.getXLogP())),
-                new MinMaxMatcherEditor<>(tanimotoSlider, (Filterator<Double, FingerprintCandidateBean>) (baseList, element) -> baseList.add(element.getTanimotoScore())),
-                new DatabaseFilterMatcherEditor(dbFilterPanel)
+//                new CandidateStringMatcherEditor(searchField.textField),
+//                new MinMaxMatcherEditor<>(logPSlider, (baseList, element) -> baseList.add(element.getXLogP())),
+//                new MinMaxMatcherEditor<>(tanimotoSlider, (baseList, element) -> baseList.add(element.getTanimotoScore())),
+//                new DatabaseFilterMatcherEditor(dbFilterPanel)
         );
     }
 }

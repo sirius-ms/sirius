@@ -637,7 +637,7 @@ public class DatabaseDialog extends JDialog {
                 CdkFingerprintVersion version = ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion();
 
                 database = CustomDatabase.createNewDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name), version);
-                importer = database.getImporter(ApplicationCore.WEB_API);
+                importer = database.getImporter(ApplicationCore.WEB_API, 1000);
                 importer.init();
                 importer.addListener(this);
                 collector = new Collector(importer);

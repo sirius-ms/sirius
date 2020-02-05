@@ -42,23 +42,23 @@ public class StructureCSVExporter {
         exportFingerIdResults(writer, formulaResult.getAnnotationOrThrow(FingerblastResult.class).getResults());
     }
 
-    public void exportFingerIdResults(Writer writer, List<Scored<CompoundCandidate>> candidates) throws IOException {
+    public void exportFingerIdResults(Writer writer, List<? extends Scored<? extends CompoundCandidate>> candidates) throws IOException {
         exportFingerIdResults(writer, candidates, true);
     }
 
-    public void exportFingerIdResults(Writer writer, List<Scored<CompoundCandidate>> candidates, boolean writeHeader) throws IOException {
+    public void exportFingerIdResults(Writer writer, List<? extends Scored<? extends CompoundCandidate>> candidates, boolean writeHeader) throws IOException {
         if (writeHeader){
             writer.write(HEADER);
             writer.write("\n");
         }
 
         int rank = 0;
-        for (Scored<CompoundCandidate> r : candidates) {
+        for (Scored<? extends CompoundCandidate> r : candidates) {
             exportFingerIdResult(writer, r, false, ++rank);
         }
     }
 
-    public void exportFingerIdResult(Writer writer, Scored<CompoundCandidate> r, boolean writeHeader, @Nullable Integer rank) throws IOException {
+    public void exportFingerIdResult(Writer writer, Scored<? extends CompoundCandidate> r, boolean writeHeader, @Nullable Integer rank) throws IOException {
         final Multimap<String, String> dbMap = r.getCandidate().getLinkedDatabases();
 
 

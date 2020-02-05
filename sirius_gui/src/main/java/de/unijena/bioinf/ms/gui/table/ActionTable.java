@@ -22,7 +22,7 @@ import javax.swing.*;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class ActionTable<T extends SiriusPCS> extends JTable {
-    public final TableComparatorChooser comparatorChooser;
+    public final TableComparatorChooser<T> comparatorChooser;
 
 
     public ActionTable(SortedList<T> sorted, TableFormat<T> format, EventList<MatcherEditor<T>> matcher) {
@@ -34,7 +34,7 @@ public class ActionTable<T extends SiriusPCS> extends JTable {
     }
 
     public ActionTable(FilterList<T> filtered, SortedList<T> sorted, TableFormat<T> format) {
-        setModel(new DefaultEventTableModel(filtered, format));
+        setModel(new DefaultEventTableModel<>(filtered, format));
         comparatorChooser = TableComparatorChooser.install(this, sorted, AbstractTableComparatorChooser.SINGLE_COLUMN);
     }
 

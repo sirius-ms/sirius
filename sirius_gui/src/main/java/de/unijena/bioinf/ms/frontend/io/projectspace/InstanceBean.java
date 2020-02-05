@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -30,6 +31,7 @@ import java.util.stream.IntStream;
  */
 public class InstanceBean extends Instance implements SiriusPCS {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
+    public final AtomicBoolean computeLock = new AtomicBoolean(false);
 
     @Override
     public HiddenChangeSupport pcs() {
@@ -39,7 +41,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
     //Project-space listener
     private ContainerListener.Defined msExperimentListener, createListener, deleteListener;
 
-    private volatile ComputingStatus fingerIdComputeState = ComputingStatus.UNCOMPUTED;
+//    private volatile ComputingStatus fingerIdComputeState = ComputingStatus.UNCOMPUTED;
 
 
     //todo best hit property change is needed.
@@ -103,28 +105,8 @@ public class InstanceBean extends Instance implements SiriusPCS {
     }
 
     // Computing State
-    public ComputingStatus getSiriusComputeState() {
-        return compoundCache.getAnnotation(ComputingStatus.class).orElse(ComputingStatus.UNCOMPUTED);
-    }
-
-    public boolean isComputed() {
-        return getSiriusComputeState() == ComputingStatus.COMPUTED;
-    }
-
     public boolean isComputing() {
-        return getSiriusComputeState() == ComputingStatus.COMPUTING;
-    }
-
-    public boolean isUncomputed() {
-        return getSiriusComputeState() == ComputingStatus.UNCOMPUTED;
-    }
-
-    public boolean isFailed() {
-        return getSiriusComputeState() == ComputingStatus.FAILED;
-    }
-
-    public boolean isQueued() {
-        return getSiriusComputeState() == ComputingStatus.QUEUED;
+        return computeLock.get();
     }
 
     private MutableMs2Experiment getMutableExperiment() {

@@ -43,11 +43,12 @@ public class GuiUtils {
 
     }
 
-    public static void drawListStatusElement(ComputingStatus state, Graphics2D g2, Component c) {
+    public static void drawListStatusElement(boolean isComputing, Graphics2D g2, Component c) {
         final Color prevCol = g2.getColor();
-        String icon = "";
+        String icon = isComputing ? "\u2699" :"";
 
-        switch (state) {
+
+        /*switch (state) {
             case COMPUTING:
                 icon = "\u2699";
                 break;
@@ -64,7 +65,7 @@ public class GuiUtils {
                 break;
             default:
                 icon = "";
-        }
+        }*/
 
         int offset = g2.getFontMetrics().stringWidth(icon);
         g2.drawString(icon, c.getWidth() - offset - 10, c.getHeight() - 8);

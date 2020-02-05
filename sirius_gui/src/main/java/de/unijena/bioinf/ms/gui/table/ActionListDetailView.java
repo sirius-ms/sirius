@@ -1,9 +1,4 @@
 package de.unijena.bioinf.ms.gui.table;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 31.01.17.
- */
 
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.FilterList;
@@ -34,7 +29,7 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
         searchField = new SearchTextField();
         this.toolBar = getToolBar();
         filteredSource = configureFiltering(source.elementList);
-        filteredSelectionModel = new DefaultEventSelectionModel<E>(filteredSource);
+        filteredSelectionModel = new DefaultEventSelectionModel<>(filteredSource);
         if (singleSelection)
             filteredSelectionModel.setSelectionMode(DefaultEventSelectionModel.SINGLE_SELECTION);
         add(getNorth(), BorderLayout.NORTH);
@@ -54,10 +49,9 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
     }
 
     protected FilterList<E> configureFiltering(EventList<E> source) {
-        FilterList<E> fl = new FilterList<E>(source,
+        return new FilterList<>(source,
                 new CompositeMatcherEditor<>(getSearchFieldMatchers())
         );
-        return fl;
     }
 
     protected JPanel getNorth() {

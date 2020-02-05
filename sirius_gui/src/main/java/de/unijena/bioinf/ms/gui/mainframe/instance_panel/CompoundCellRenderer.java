@@ -154,7 +154,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 
 
 		g2.setFont(statusFont);
-		GuiUtils.drawListStatusElement(ec.getSiriusComputeState(),g2,this);
+		GuiUtils.drawListStatusElement(ec.isComputing(),g2,this);
 	}
 
 }

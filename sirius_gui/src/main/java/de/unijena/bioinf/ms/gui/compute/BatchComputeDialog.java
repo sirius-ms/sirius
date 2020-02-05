@@ -30,6 +30,7 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.io.projectspace.GPSMFactory;
+import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -298,7 +299,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder);
 
 
-        Jobs.runInBackgroundAndLoad(owner, "Submitting Identification Jobs", new TinyBackgroundJJob() {
+        Jobs.runInBackgroundAndLoad(owner, "Submitting Identification Jobs", new TinyBackgroundJJob<>() {
             @Override
             protected Object compute() throws InterruptedException {
                 //entspricht setup() Methode
@@ -315,7 +316,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
                 try {
                     final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                    WorkflowBuilder<CLIRootOptions> wfBuilder = new WorkflowBuilder<>(new CLIRootOptions(configOptionLoader, new GPSMFactory()), configOptionLoader);
+                    WorkflowBuilder<CLIRootOptions<GuiProjectSpaceManager>> wfBuilder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new GPSMFactory()), configOptionLoader);
                     Run computation = new Run(wfBuilder);
 
                     // create computation parameters
@@ -326,7 +327,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     configs.add("--AlgorithmProfile=" + instrument.profile);
                     configs.add("--MS2MassDeviation.allowedMassDeviation=" + ppm + "ppm");
 
-                    configs.add("--FormulaSearchDB=" + searchableDatabase.name());
+                    configs.add("--FormulaSearchDB=" + (searchableDatabase != null ? searchableDatabase.name() : "none"));
                     configs.add("--StructureSearchDB=" + csiOptions.dbSelectionOptions.getDb().name());
 
 
@@ -334,13 +335,14 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     if (searchProfilePanel.restrictToOrganics())
                         c = constraints.intersection(new FormulaConstraints("C,H,N,O,P,S,B,Br,Cl,F,I"));
                     configs.add("--FormulaSettings.fallback=" + c.toString());
-                    configs.add("--FormulaSettings.detectable=" + elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(",")));
+
+                    configs.add("--FormulaSettings.detectable=" + (elementsToAutoDetect.isEmpty() ? "," :
+                            elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(","))));
 
                     configs.add("--AdductSettings.enforced=" + csiOptions.getPossibleAdducts().toString());
 
                     configs.add("--NumberOfCandidates=" + candidates);
 //                            configs.add("--NumberOfCandidatesPerIon=" + candidatesPerIon);
-
 //                            configs.add("--NumberOfStructureCandidates=" + structureCandidates);
 
                     configs.add("--RecomputeResults=" + recompute.isSelected());
@@ -348,16 +350,15 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
                     configs.add("sirius");
 
-//                            if (zodiac)
-//                                configs.add("zodiac");
+//                    if (zodiac)
+//                        configs.add("zodiac");
+
 
                     if (csiOptions.isCSISelected())
                         configs.add("fingerid");
 
-//                            if (zodiac)
-//                            configs.add("canopus");
-
-
+//                    if (canopus)
+//                        configs.add("canopus");
                     computation.parseArgs(configs.toArray(String[]::new));
                     Jobs.runInBackground(computation::compute);//todo make som nice head job that does some organizing stuff
                 } catch (IOException e) {

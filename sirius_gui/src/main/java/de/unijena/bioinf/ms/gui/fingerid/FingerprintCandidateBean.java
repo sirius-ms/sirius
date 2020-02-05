@@ -29,6 +29,7 @@ import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.custom.CustomDataSourceService;
 import de.unijena.bioinf.fingerid.CSIPredictor;
+import de.unijena.bioinf.fingerid.Fingerprinter;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -105,16 +106,16 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     protected ReentrantLock compoundLock = new ReentrantLock();
 
 
-    public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<CompoundCandidate> scoredCandidate, PrecursorIonType adduct) {
-        this(rank, fp, (FingerprintCandidate) scoredCandidate.getCandidate(), scoredCandidate.getScore(), adduct);
+    public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<FingerprintCandidate> scoredCandidate, PrecursorIonType adduct) {
+        this(rank, fp, scoredCandidate.getCandidate(), scoredCandidate.getScore(), adduct);
     }
 
     private FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, FingerprintCandidate candidate, double candidateScore, PrecursorIonType adduct) {
         this.rank = rank;
         this.fp = fp;
-        this.candidate = candidate;
         this.score = candidateScore;
-        this.tanimoto = fp != null ? Tanimoto.probabilisticTanimoto(this.fp, candidate.getFingerprint()).expectationValue() : Double.NaN;
+        this.candidate = candidate;
+        this.tanimoto = this.fp != null && candidate.getFingerprint() != null ? Tanimoto.probabilisticTanimoto(this.fp, candidate.getFingerprint()).expectationValue() : Double.NaN;
         this.molecularFormulaString = candidate.getInchi().extractFormulaOrThrow().toString();
         this.adduct = adduct;
         this.relevantFps = null;

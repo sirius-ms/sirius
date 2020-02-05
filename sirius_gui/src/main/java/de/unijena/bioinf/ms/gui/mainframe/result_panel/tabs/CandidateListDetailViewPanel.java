@@ -87,20 +87,16 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
         if (resultElement == null)
             layout.show(this, "null");
         else {
-            switch (resultElement.getFingerIdComputeState()) {
-                case COMPUTING:
-                    layout.show(this, "loader");
-                    break;
-                case COMPUTED:
-                    if (list.getSource().getElementList().isEmpty()) {
-                        layout.show(this, "empty");
-                    } else {
-                        layout.show(this, "list");
-                    }
-                    break;
-                default:
-                    layout.show(this, "computeButton");//todo other types
-                    break;
+            if (ec.isComputing()) {
+                layout.show(this, "loader");
+            }else if (resultElement.getFingerblastResult().isPresent()){
+                if (list.getSource().getElementList().isEmpty()) {
+                    layout.show(this, "empty");
+                } else {
+                    layout.show(this, "list");
+                }
+            }else {
+                layout.show(this, "computeButton");
             }
         }
 

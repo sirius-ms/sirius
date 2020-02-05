@@ -42,14 +42,25 @@ public abstract class ApplicationCore {
     public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
     public static final WebAPI WEB_API;
 
+
+    private static long t1;
+    public static void measureTime(String message){
+        long t2 = System.currentTimeMillis();
+        System.out.println("===> " + message + " - " + (t2 - t1) / 1000d);
+        t1 = t2;
+    }
+
     //creating
     static {
+        t1 = System.currentTimeMillis();
+        measureTime("Start AppCore");
         try {
             System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
 
             final String version = PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
 
             //#################### start init workspace ################################
+            measureTime("Start init Workspace");
             final String home = System.getProperty("user.home");
             final String defaultFolderName = PropertyManager.getProperty("de.unijena.bioinf.sirius.ws.default.name", null, ".sirius");
             final Path DEFAULT_WORKSPACE = Paths.get(home).resolve(defaultFolderName);
@@ -115,6 +126,7 @@ public abstract class ApplicationCore {
                     e1.printStackTrace();
                 }
             }
+            measureTime("DONE init Workspace, START init logging");
 
             //#################### end init workspace ################################
 
@@ -159,6 +171,7 @@ public abstract class ApplicationCore {
                     //this is just to skip the error report logger if it is no available (e.g. CLI)
                 }
 
+                measureTime("DONE init logging, START init Configs");
 
                 try {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -227,43 +240,27 @@ public abstract class ApplicationCore {
             DEFAULT_LOGGER.info(TreeBuilderFactory.ILP_VERSIONS_STRING);
             DEFAULT_LOGGER.info("Treebuilder priorities are: " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()));
 
+            measureTime("DONE init Configs, start Hardware Check");
+
 
             HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
             int cores = hardware.getProcessor().getPhysicalProcessorCount();
             PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(cores));
             PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(hardware.getProcessor().getLogicalProcessorCount()));
             DEFAULT_LOGGER.info("CPU check done. " + PropertyManager.getNumberOfCores() + " cores that handle " + PropertyManager.getNumberOfThreads() + " threads were found.");
+            measureTime("DONE  Hardware Check, START init bug reporting");
+
 
             //bug reporting
             ErrorReporter.INIT_PROPS(PropertyManager.asProperties());
             DEFAULT_LOGGER.info("Bug reporter initialized.");
 
+            measureTime("DONE init bug reporting, START init WebAPI");
+
             WEB_API = new WebAPI();
             DEFAULT_LOGGER.info("Web API initialized.");
+            measureTime("DONE init  init WebAPI");
 
-
-            /*Canopus c = null;
-            try {
-                InputStream s = ApplicationCore.class.getResourceAsStream("/canopus.data");
-                if (s == null)
-                    throw new IOException("canopus file not in jar");
-                c = Canopus.load(s);
-            } catch (IOException e) {
-                DEFAULT_LOGGER.warn("NO Canopus data available in JAR file! Try '" + WORKSPACE.toString() + "'.");
-                try {
-                    Path cfile = WORKSPACE.resolve("canopus.data");
-                    if (Files.isRegularFile(cfile)) {
-                        DEFAULT_LOGGER.info("Loading Canopus from local file...");
-                        c = Canopus.loadFromFile(cfile.toFile());
-                    } else {
-                        DEFAULT_LOGGER.warn("NO Canopus data available!");
-                    }
-                } catch (IOException e2) {
-                    DEFAULT_LOGGER.error("Error when reading canopus file! from '" + WORKSPACE.toString() + "'.", e);
-                }
-            } finally {
-                CANOPUS = c;
-            }*/
         } catch (Throwable e) {
             System.err.println("Application Core STATIC Block Error!");
             e.printStackTrace(System.err);

@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -46,11 +47,11 @@ public class StructureSummaryWriter implements Summarizer {
 
                     for (SScored<FormulaResult, ? extends FormulaScore> result : formulaResults) {
                         if (result.getCandidate().hasAnnotation(FingerblastResult.class)) {
-                            final List<Scored<CompoundCandidate>> frs = result.getCandidate().getAnnotationOrThrow(FingerblastResult.class).getResults();
+                            final List<Scored<FingerprintCandidate>> frs = result.getCandidate().getAnnotationOrThrow(FingerblastResult.class).getResults();
 
                             //create buffer
                             final StringWriter w = new StringWriter(128);
-                            for (Scored<CompoundCandidate> res : frs) {
+                            for (Scored<FingerprintCandidate> res : frs) {
                                 new StructureCSVExporter().exportFingerIdResult(w, res, false, null);
                             }
                             final String[] lines = w.toString().split("\n");

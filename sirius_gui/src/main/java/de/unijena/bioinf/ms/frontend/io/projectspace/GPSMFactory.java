@@ -13,7 +13,7 @@ import java.util.function.Predicate;
 public class GPSMFactory implements ProjectSpaceManagerFactory<GuiProjectSpaceManager> {
 
     @Override
-    public GuiProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory ignored, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
+    public GuiProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> ignored, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
         return create(space, new BasicEventList<>(),formatter,compoundFilter) ;
     }
 

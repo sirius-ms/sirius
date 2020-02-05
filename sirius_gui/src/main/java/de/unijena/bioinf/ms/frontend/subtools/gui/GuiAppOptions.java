@@ -8,6 +8,7 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -22,9 +23,11 @@ import java.io.IOException;
 
 @CommandLine.Command(name = "gui", aliases = {"GUI"}, description = "Starts the graphical user interface of SIRIUS", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
+
     @Override
-    public Flow makeSingletonWorkflow(PreprocessingJob<?> preproJob, ParameterConfig config) {
-        return new Flow((PreprocessingJob<ProjectSpaceManager>) preproJob, config);
+    public Flow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+        return new Flow(rootOptions, config);
+
     }
 
     public class Flow implements ServiceWorkflow {
@@ -32,8 +35,8 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
         private final ParameterConfig config;
 
 
-        private Flow(PreprocessingJob<ProjectSpaceManager> preproJob, ParameterConfig config) {
-            this.preproJob = preproJob;
+        private Flow(RootOptions<?> rootOptions, ParameterConfig config) {
+            this.preproJob = (PreprocessingJob<ProjectSpaceManager>) rootOptions.makeDefaultPreprocessingJob();
             this.config = config;
         }
 

@@ -8,6 +8,7 @@ import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
+import de.unijena.bioinf.ms.frontend.subtools.decomp.DecompOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
@@ -41,7 +42,7 @@ import java.util.concurrent.Callable;
  * We just have to define its parameters in h
  */
 
-public class WorkflowBuilder<R extends RootOptions> {
+public class WorkflowBuilder<R extends RootOptions<?>> {
 
     //root
     private CommandLine.Model.CommandSpec rootSpec;
@@ -59,6 +60,7 @@ public class WorkflowBuilder<R extends RootOptions> {
     public final CustomDBOptions customDBOptions;
     public final ProjecSpaceOptions projectSpaceOptions; // this is also singleton
     public final SimilarityMatrixOptions similarityMatrixOptions;
+    public final DecompOptions decompOptions;
 
     //preprocessing, project-space providing tool, preprojectspace tool
     public final LcmsAlignOptions lcmsAlignOptions = new LcmsAlignOptions();
@@ -90,6 +92,7 @@ public class WorkflowBuilder<R extends RootOptions> {
         customDBOptions =  new CustomDBOptions();
         projectSpaceOptions = new ProjecSpaceOptions();
         similarityMatrixOptions = new SimilarityMatrixOptions();
+        decompOptions =  new DecompOptions();
     }
 
     public void initRootSpec() {
@@ -107,12 +110,12 @@ public class WorkflowBuilder<R extends RootOptions> {
         CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), customDBOptions, lcmsAlignSpec, siriusSpec, zodiacSpec, passatuttoSpec, fingeridSpec, canopusOptions);
         rootSpec = forAnnotatedObjectWithSubCommands(
                 this.rootOptions,
-                Streams.concat(Arrays.stream(singletonTools()), Arrays.stream(new Object[]{configSpec, lcmsAlignSpec, siriusSpec, zodiacSpec, passatuttoSpec, fingeridSpec, canopusOptions})).toArray()
+                Streams.concat(Arrays.stream(standaloneTools()), Arrays.stream(new Object[]{configSpec, lcmsAlignSpec, siriusSpec, zodiacSpec, passatuttoSpec, fingeridSpec, canopusOptions})).toArray()
         );
     }
 
-    protected Object[] singletonTools() {
-        return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions};
+    protected Object[] standaloneTools() {
+        return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions};
     }
 
     protected CommandLine.Model.CommandSpec forAnnotatedObjectWithSubCommands(Object parent, Object... subsToolInExecutionOrder) {

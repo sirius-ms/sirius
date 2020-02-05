@@ -19,12 +19,12 @@ public interface ProjectSpaceManagerFactory<M extends ProjectSpaceManager> {
         return create(space, new InstanceFactory.Default(), formatter, compoundFilter);
     }
 
-    M create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter);
+    M create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter);
 
 
     final class Default implements ProjectSpaceManagerFactory<ProjectSpaceManager> {
         @Override
-        public ProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
+        public ProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
             return new ProjectSpaceManager(space, factory, formatter, compoundFilter);
         }
     }

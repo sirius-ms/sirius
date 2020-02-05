@@ -128,7 +128,7 @@ public class ZodiacSubToolJob extends DataSetJob {
             ScoreProbabilityDistribution probabilityDistribution = new LogNormalDistribution(estimateByMedian);
 
             CommonFragmentAndLossScorer c = new CommonFragmentAndLossScorerNoiseIntensityWeighted();
-            ScoreProbabilityDistributionEstimator scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator(c, probabilityDistribution, edgeFilterThresholds.thresholdFilter);
+            ScoreProbabilityDistributionEstimator<FragmentsCandidate> scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator<>(c, probabilityDistribution, edgeFilterThresholds.thresholdFilter);
 
 
             Zodiac zodiac = new Zodiac(ms2ExperimentToTreeCandidates,
@@ -191,7 +191,7 @@ public class ZodiacSubToolJob extends DataSetJob {
 
     private List<LibraryHit> parseAnchors(List<Ms2Experiment> ms2Experiments){
         List<LibraryHit> anchors;
-        Path libraryHitsFile = (cliOptions.libraryHitsFile == null ? null : cliOptions.libraryHitsFile);
+        Path libraryHitsFile = cliOptions.libraryHitsFile;
         try {
             anchors = (libraryHitsFile == null) ? null : ZodiacUtils.parseLibraryHits(libraryHitsFile, ms2Experiments, LoggerFactory.getLogger(loggerKey())); //GNPS and in-house format
         } catch (IOException e) {
