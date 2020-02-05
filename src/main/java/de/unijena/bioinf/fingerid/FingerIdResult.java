@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
@@ -32,7 +33,7 @@ public class FingerIdResult implements Annotated<ResultAnnotation> {
         return getAnnotation(FingerprintResult.class).map(r -> r.fingerprint).orElse(null);
     }
 
-    public List<Scored<CompoundCandidate>> getCandidates() {
-        return getAnnotation(FingerblastResult.class).map(r -> r.getResults()).orElse(null);
+    public List<Scored<FingerprintCandidate>> getCandidates() {
+        return getAnnotation(FingerblastResult.class).map(FingerblastResult::getResults).orElse(null);
     }
 }

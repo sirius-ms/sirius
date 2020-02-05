@@ -24,7 +24,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
     private final TrainingStructuresSet trainingStructuresSet;
 
     private List<FingerprintCandidate> unfilteredSearchList = null;
-    private List<Scored<CompoundCandidate>> unfilteredScored = null;
+    private List<Scored<FingerprintCandidate>> unfilteredScored = null;
 
     public FingerblastJJob(FingerblastScoringMethod scoring, long dbSearchFlag, TrainingStructuresSet trainingStructuresSet) {
         this(scoring, dbSearchFlag, null, null, null, trainingStructuresSet);
@@ -56,10 +56,10 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
 
 
     private void computeUnfiltered() throws Exception{
-        unfilteredScored = Fingerblast.score(scoring, unfilteredSearchList, fp).stream().map(fpc -> new Scored<CompoundCandidate>(fpc.getCandidate(), fpc.getScore())).collect(Collectors.toList());
+        unfilteredScored = Fingerblast.score(scoring, unfilteredSearchList, fp).stream().map(fpc -> new Scored<>(fpc.getCandidate(), fpc.getScore())).collect(Collectors.toList());
     }
 
-    public List<Scored<CompoundCandidate>> getUnfilteredList() {
+    public List<Scored<FingerprintCandidate>> getUnfilteredList() {
         return unfilteredScored;
     }
 
@@ -70,11 +70,11 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
         List<JJob<List<Scored<FingerprintCandidate>>>> jobs = Fingerblast.makeScoringJobs(scoring, unfilteredSearchList, fp);
         jobs.forEach(this::submitSubJob);
 
-        unfilteredScored = jobs.stream().flatMap(r -> r.takeResult().stream()).sorted(Comparator.reverseOrder()).map(fpc -> new Scored<CompoundCandidate>(fpc.getCandidate(), fpc.getScore())).collect(Collectors.toList());
+        unfilteredScored = jobs.stream().flatMap(r -> r.takeResult().stream()).sorted(Comparator.reverseOrder()).map(fpc -> new Scored<>(fpc.getCandidate(), fpc.getScore())).collect(Collectors.toList());
 
         unfilteredScored.forEach(sc -> postprocessCandidate(sc.getCandidate()));
 
-        final List<Scored<CompoundCandidate>> cds;
+        final List<Scored<FingerprintCandidate>> cds;
         if (dbSearchFlag == 0) {
             cds = unfilteredScored;
         } else {
