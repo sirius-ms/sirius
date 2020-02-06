@@ -91,7 +91,14 @@ public class DecompWorkflow implements Workflow {
             }
         }
 
+        final boolean printErrors = options.massErrors;
         try (Writer ow = options.out != null ? Files.newBufferedWriter(options.out) : new OutputStreamWriter(System.out)) {
+            //write header
+            ow.write("m/z\tdecompositions");
+            if (printErrors)
+                ow.write("\tabsMassDev\trelMassDev");
+            ow.write(System.lineSeparator());
+
             for (double mz : masses) {
                 final double mass;
                 final String ion = options.ionization;
@@ -118,7 +125,7 @@ public class DecompWorkflow implements Workflow {
                 }
                 formulas.sort(Comparator.comparingDouble(o -> Math.abs(o.getMass() - mass)));
 
-                final boolean printErrors = options.massErrors;
+
                 final DecimalFormat formater = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
                 formater.applyPattern("#.####");
                 ow.write(formater.format(mass));
