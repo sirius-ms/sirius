@@ -16,7 +16,7 @@ import java.io.IOException;
 public class SiriusCLIApplication {
     protected static Run RUN = null;
 
-    private static final boolean TIME = true;
+    private static final boolean TIME = false;
     private static long t1;
 
     public static void main(String[] args) {
