@@ -15,11 +15,13 @@ import java.io.IOException;
 
 public class SiriusCLIApplication {
     protected static Run RUN = null;
+
+    private static final boolean TIME = true;
     private static long t1;
 
     public static void main(String[] args) {
-        System.out.println("==> START MAIN");
-        t1 = System.currentTimeMillis();
+        if (TIME)
+            t1 = System.currentTimeMillis();
         try {
             configureShutDownHook(() -> {
             });
@@ -35,9 +37,11 @@ public class SiriusCLIApplication {
     }
 
     public static void measureTime(String message){
-        long t2 = System.currentTimeMillis();
-        System.out.println("==> " + message + " - " + (t2 - t1) / 1000d);
-        t1 = t2;
+        if (TIME) {
+            long t2 = System.currentTimeMillis();
+            System.err.println("==> " + message + " - " + (t2 - t1) / 1000d);
+            t1 = t2;
+        }
     }
 
     public static void configureShutDownHook(@NotNull final Runnable additionalActions) {

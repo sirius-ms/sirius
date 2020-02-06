@@ -3,7 +3,6 @@ package de.unijena.bioinf.ms.frontend.core;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.WebAPI;
-import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;
@@ -42,17 +41,20 @@ public abstract class ApplicationCore {
     public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
     public static final WebAPI WEB_API;
 
-
+    private static final boolean TIME = true;
     private static long t1;
-    public static void measureTime(String message){
-        long t2 = System.currentTimeMillis();
-        System.out.println("===> " + message + " - " + (t2 - t1) / 1000d);
-        t1 = t2;
+    public static void measureTime(String message) {
+        if (TIME) {
+            long t2 = System.currentTimeMillis();
+            System.err.println("===> " + message + " - " + (t2 - t1) / 1000d);
+            t1 = t2;
+        }
     }
 
     //creating
     static {
-        t1 = System.currentTimeMillis();
+        if (TIME)
+            t1 = System.currentTimeMillis();
         measureTime("Start AppCore");
         try {
             System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
