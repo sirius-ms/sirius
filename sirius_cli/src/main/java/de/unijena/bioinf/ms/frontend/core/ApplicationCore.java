@@ -41,7 +41,7 @@ public abstract class ApplicationCore {
     public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
     public static final WebAPI WEB_API;
 
-    private static final boolean TIME = true;
+    private static final boolean TIME = false;
     private static long t1;
     public static void measureTime(String message) {
         if (TIME) {
