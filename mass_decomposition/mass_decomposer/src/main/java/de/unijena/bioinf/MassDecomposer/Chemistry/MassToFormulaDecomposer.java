@@ -43,6 +43,10 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
         this.alphabet = alphabet;
     }
 
+    public int[] getOrderedCharacterIds() {
+        return orderedCharacterIds;
+    }
+
     public Iterator<MolecularFormula> formulaIterator(double mass, Deviation deviation, final FormulaConstraints constraints) {
         final Map<Element, Interval> boundaries = getBoundaries(constraints);
         final DecompIterator<Element> decompIterator = decomposeIterator(mass, deviation, boundaries);
