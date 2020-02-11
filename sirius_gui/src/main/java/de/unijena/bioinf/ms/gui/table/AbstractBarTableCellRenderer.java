@@ -51,8 +51,8 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
     }
 
     //override this method if you have to modify the value of the cell for view
-    protected double getValue(Object value) {
-        return ((Double) value).floatValue();
+    protected Double getValue(Object value) {
+        return value == null ? Double.NaN : (Double) value;
     }
 
     protected double getPercentage(JTable table, double value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -65,14 +65,17 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
         double max = getMax(table, isSelected, hasFocus, row, column);
         double min = getMin(table, isSelected, hasFocus, row, column);
 
-        final double current = getValue(value);
-        percentageValue = getPercentage(table, current, isSelected, hasFocus, row, column);
+        final Double current = getValue(value);
 
+        percentageValue = getPercentage(table, current, isSelected, hasFocus, row, column);
         this.max = nf.format(max);
         toFill = (float) normalize(min, max, current);
         selected = isSelected;
         thresh = (float) Math.max(0f, normalize(min, max, getThresh(table, isSelected, hasFocus, row, column)));
-        return super.getTableCellRendererComponent(table, current, isSelected, hasFocus, row, column);
+
+        return super.getTableCellRendererComponent(table, value != null ? current : "\u2699", isSelected, hasFocus, row, column);
+
+
     }
 
     private double normalize(double min, double max, double value) {

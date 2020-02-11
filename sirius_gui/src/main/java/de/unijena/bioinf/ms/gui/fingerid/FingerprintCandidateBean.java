@@ -23,15 +23,16 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeLayer;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.custom.CustomDataSourceService;
 import de.unijena.bioinf.fingerid.CSIPredictor;
-import de.unijena.bioinf.fingerid.Fingerprinter;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import net.sf.jniinchi.INCHI_RET;
@@ -86,8 +87,8 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     protected final ProbabilityFingerprint fp;
     protected final FingerprintCandidate candidate;
     protected final double score;
-    protected final double tanimoto;
     protected final int rank;
+
 
     //view
     protected final String molecularFormulaString;
@@ -115,13 +116,29 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         this.fp = fp;
         this.score = candidateScore;
         this.candidate = candidate;
-        this.tanimoto = this.fp != null && candidate.getFingerprint() != null ? Tanimoto.probabilisticTanimoto(this.fp, candidate.getFingerprint()).expectationValue() : Double.NaN;
+        if (candidate.getTanimoto() == null) {
+            if (this.fp != null && candidate.getFingerprint() != null) {
+                candidate.setTanimoto(null);
+                BasicJJob<Double> j = new BasicJJob<>() {
+                    @Override
+                    protected Double compute() {
+                        double t = Tanimoto.probabilisticTanimoto(fp, candidate.getFingerprint()).expectationValue();
+                        setTanimoto(t);
+                        return t;
+                    }
+                };
+                j.setPriority(JJob.JobPriority.NOW);
+                SiriusJobs.getGlobalJobManager().submitJob(j);
+            } else {
+                candidate.setTanimoto(Double.NaN);
+            }
+        }
         this.molecularFormulaString = candidate.getInchi().extractFormulaOrThrow().toString();
         this.adduct = adduct;
         this.relevantFps = null;
 
 
-        if (this.candidate == null || this.candidate.getLinkedDatabases().isEmpty()) {
+        if (this.candidate.getLinkedDatabases().isEmpty()) {
             this.labels = new DatabaseLabel[0];
         } else {
             List<DatabaseLabel> labels = new ArrayList<>();
@@ -151,9 +168,14 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
     }
 
+    public void setTanimoto(Double tanimoto) {
+        Double old = candidate.getTanimoto();
+        candidate.setTanimoto(tanimoto);
+        pcs.firePropertyChange("fpc.tanimoto", old, candidate.getTanimoto());
+    }
 
-    public double getTanimotoScore() {
-        return tanimoto;
+    public Double getTanimotoScore() {
+        return candidate.getTanimoto();
     }
 
     public double getScore() {
@@ -415,7 +437,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
 
 
         @Override
-        public double getTanimotoScore() {
+        public Double getTanimotoScore() {
             return 0d;
         }
 

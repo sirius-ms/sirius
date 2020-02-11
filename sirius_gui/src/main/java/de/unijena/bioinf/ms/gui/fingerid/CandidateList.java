@@ -78,7 +78,8 @@ public class CandidateList extends ActionList<FingerprintCandidateBean, Set<Form
                         emChache.add(c);
                         scoreStats.addValue(c.getScore());
                         logPStats.addValue(c.getXlogp());
-                        tanimotoStats.addValue(c.getTanimotoScore());
+                        Double tm = c.getTanimotoScore();
+                        tanimotoStats.addValue(tm == null ? Double.NaN : tm);
                     }
                 });
 
