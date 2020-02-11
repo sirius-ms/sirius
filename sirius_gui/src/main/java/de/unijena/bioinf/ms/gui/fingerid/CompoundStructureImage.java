@@ -100,7 +100,8 @@ class CompoundStructureImage extends JPanel {
         }
 //
 
-        final String tanimotoText = String.format(Locale.US, "%.2f", molecule.getTanimotoScore() * 100d) + "%";
+        //todo change to gif
+        final String tanimotoText = molecule.getTanimotoScore() == null  ? "loading..." : String.format(Locale.US, "%.2f", molecule.getTanimotoScore() * 100d) + "%";
         double tw = gg.getFontMetrics(matchFont).getStringBounds(tanimotoText, gg).getWidth();
 
         gg.setFont(matchFont);

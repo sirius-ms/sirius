@@ -12,9 +12,14 @@ import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.dialogs.NewsDialog;
+import de.unijena.bioinf.ms.gui.dialogs.UpdateDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.awt.event.WindowAdapter;
@@ -88,9 +93,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
 
             ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
 
-            System.out.println("DEBUG and reimplement Connection Check");
-            //todo reenable
-            /*Jobs.runInBackround(() -> {
+            Jobs.runInBackground(() -> {
                 ConnectionMonitor.ConnetionCheck cc = MainFrame.CONNECTION_MONITOR.checkConnection();
                 if (cc.isConnected()) {
                     @Nullable VersionsInfo versionsNumber = ApplicationCore.WEB_API.getVersionInfo();
@@ -107,7 +110,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         }
                     }
                 }
-            });*/
+            });
         }
     }
 }

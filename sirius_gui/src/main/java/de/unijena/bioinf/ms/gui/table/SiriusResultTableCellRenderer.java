@@ -33,10 +33,6 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
             this.nf = lableFormat;
     }
 
-    /*public SiriusResultTableCellRenderer(ListStats stats) {
-        this(-1,stats);
-    }*/
-
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
