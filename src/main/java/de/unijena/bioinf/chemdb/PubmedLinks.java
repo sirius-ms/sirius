@@ -1,6 +1,5 @@
 package de.unijena.bioinf.chemdb;
 
-import gnu.trove.impl.hash.TIntHash;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -91,10 +90,17 @@ public class PubmedLinks implements Comparable<PubmedLinks>, Iterable<Integer> {
         return Arrays.stream(this.ids).mapToObj(String::valueOf).collect(Collectors.joining(","));
     }
 
-    public static PubmedLinks fromString(String idList) {
+    public static @NotNull PubmedLinks fromString(String idList) {
         final TIntHashSet ids = new TIntHashSet();
-        for (String num : idList.split(",")) {
-            ids.add(Integer.parseInt(num));
+
+        if (idList != null && !idList.isEmpty()) {
+            for (String num : idList.split(",")) {
+                try {
+                    ids.add(Integer.parseInt(num));
+                } catch (NumberFormatException e) {
+                    LoggerFactory.getLogger(PubmedLinks.class).warn("Could not parse Pubmed ID '" + num + "'. Skipping this entry!", e);
+                }
+            }
         }
         return new PubmedLinks(ids);
     }
