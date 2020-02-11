@@ -116,7 +116,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         this.fp = fp;
         this.score = candidateScore;
         this.candidate = candidate;
-        if (candidate.getTanimoto() == null) {
+        if (candidate.getTanimoto() == null || candidate.getTanimoto().isNaN()) {
             if (this.fp != null && candidate.getFingerprint() != null) {
                 candidate.setTanimoto(null);
                 BasicJJob<Double> j = new BasicJJob<>() {

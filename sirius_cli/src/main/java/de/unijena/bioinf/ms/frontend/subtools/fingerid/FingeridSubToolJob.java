@@ -2,6 +2,8 @@ package de.unijena.bioinf.ms.frontend.subtools.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.fingerid.*;
@@ -9,6 +11,8 @@ import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
@@ -20,6 +24,7 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +48,6 @@ public class FingeridSubToolJob extends InstanceJob {
             return;
         }
 
-//        System.out.println("I am FingerID on Experiment " + inst.getID());
         invalidateResults(inst);
 
         PredictorTypeAnnotation type = inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class);
@@ -84,8 +88,25 @@ public class FingeridSubToolJob extends InstanceJob {
 
         assert formulaResultsMap.size() >= result.size();
 
-        for (FingerIdResult structRes : result) {
+        List<BasicJJob<Double>> tanimotoJobs = new ArrayList<>();
+        result.stream().filter(it -> it.hasAnnotation(FingerprintResult.class) && it.hasAnnotation(FingerblastResult.class)).forEach(it -> {
+            final ProbabilityFingerprint fp = it.getPredictedFingerprint();
+            it.getCandidates().stream().map(SScored::getCandidate).forEach(candidate ->
+                    tanimotoJobs.add(new BasicJJob<>() {
+                        @Override
+                        protected Double compute() {
+                            double t = Tanimoto.probabilisticTanimoto(fp, candidate.getFingerprint()).expectationValue();
+                            candidate.setTanimoto(t);
+                            return t;
+                        }
+                    })
+            );
+        });
 
+        SiriusJobs.getGlobalJobManager().submitJobsInBatches(tanimotoJobs).forEach(JJob::getResult);
+
+
+        for (FingerIdResult structRes : result) {
             final FormulaResult formRes = formulaResultsMap.get(structRes.sourceTree);
             // annotate results
 
