@@ -17,6 +17,7 @@ import de.unijena.bioinf.projectspace.ProjectReader;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import gnu.trove.list.array.TShortArrayList;
+import org.slf4j.LoggerFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -39,13 +40,12 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
         if (!reader.exists(FINGERBLAST.relFilePath(id)))
             return null;
 
-        final Pattern dblinkPat = Pattern.compile("^.+?: \\(.+\\)$");
+        final Pattern dblinkPat = Pattern.compile("^.+?:\\(.+\\)$");
         final ArrayList<Scored<FingerprintCandidate>> results = new ArrayList<>();
         reader.table(FINGERBLAST.relFilePath(id), true, (row) -> {
             if (row.length == 0) return;
             final double score = Double.parseDouble(row[4]);
             final InChI inchi = new InChI(row[0], row[1]);
-//            final int rank = Integer.parseInt(row[3]);
             final String name = row[5], smiles = row[6];
             final double xlogp = row[7].isBlank() ? Double.NaN : Double.parseDouble(row[7]);
 
@@ -62,14 +62,17 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
                 Matcher matcher = dblinkPat.matcher(db);
                 db = db.trim();
                 if (matcher.matches()) {
-                    final String dbName = matcher.group(1).trim();
-                    for (String dbId : matcher.group(2).split(",")) {
+                    String[] split = matcher.group().split(":");
+
+                    final String dbName = split[0].trim();
+                    final String ids = split[1].trim();
+                    for (String dbId : ids.substring(1, ids.length() - 1).split(","))
                         links.add(new DBLink(dbName, dbId.trim()));
-                    }
+
+                    bitset |= DatasourceService.getDBFlagFromName(db);
                 } else {
-                    links.add(new DBLink(db, null));
+                    LoggerFactory.getLogger(getClass()).warn("Could not match DB link '" + db + "' Skipping this entry!");
                 }
-                bitset |= DatasourceService.getDBFlagFromName(db);
             }
             candidate.setLinks(links.toArray(DBLink[]::new));
             candidate.setBitset(bitset);
