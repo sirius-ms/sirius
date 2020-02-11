@@ -42,32 +42,33 @@ public class InfoClient extends AbstractClient {
         super(serverUrl);
     }
 
-    //todo check if the version suff
     @Nullable
     public VersionsInfo getVersionInfo(final CloseableHttpClient client) {
         VersionsInfo v = null;
         try {
             v = execute(client,
                     () -> {
-                        HttpGet get = new HttpGet(buildVersionLessWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
+                        HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
                         get.setConfig(RequestConfig.custom().setConnectTimeout(8000).setSocketTimeout(8000).build());
                         return get;
                     },
                     this::parseVersionInfo
             );
+
         } catch (IOException e) {
-            LOG.warn("Could not reach fingerid root url for version verification. Try to reach version specific url. Cause: " + e.getMessage());
+            LOG.warn("Could not reach fingerid version specific URL for version verification. Try to reach root url. Cause:" + e.getMessage());
+
             try {
                 v = execute(client,
                         () -> {
-                            HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
+                            HttpGet get = new HttpGet(buildVersionLessWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
                             get.setConfig(RequestConfig.custom().setConnectTimeout(8000).setSocketTimeout(8000).build());
                             return get;
                         },
                         this::parseVersionInfo
                 );
             } catch (IOException ex) {
-                LOG.warn("Could not reach fingerid verssion specific URL for version verification. Cause:" + e.getMessage());
+                LOG.warn("Could not reach fingerid root url for version verification.  Cause: " + e.getMessage());
             }
         }
 
