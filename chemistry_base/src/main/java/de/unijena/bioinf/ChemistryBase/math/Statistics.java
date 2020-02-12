@@ -17,6 +17,8 @@
  */
 package de.unijena.bioinf.ChemistryBase.math;
 
+import gnu.trove.list.array.TDoubleArrayList;
+
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
@@ -38,6 +40,27 @@ public class Statistics {
         }
         mean /= sz;
         return mean;
+    }
+
+    public static double median(double[] xs) {
+        xs = xs.clone();
+        Arrays.sort(xs);
+        if (xs.length%2==0) {
+            double a = xs[xs.length/2], b = xs[xs.length/2 + 1];
+            return (a+b)/2d;
+        } else {
+            return xs[xs.length/2];
+        }
+    }
+    public static double median(TDoubleArrayList ys) {
+        double[] xs = ys.toArray();
+        Arrays.sort(xs);
+        if (xs.length%2==0) {
+            double a = xs[xs.length/2], b = xs[xs.length/2 + 1];
+            return (a+b)/2d;
+        } else {
+            return xs[xs.length/2];
+        }
     }
 
     /**
