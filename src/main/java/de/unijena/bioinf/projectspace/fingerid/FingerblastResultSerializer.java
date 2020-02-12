@@ -69,7 +69,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
                     for (String dbId : ids.substring(1, ids.length() - 1).split(","))
                         links.add(new DBLink(dbName, dbId.trim()));
 
-                    bitset |= DatasourceService.getDBFlagFromName(db);
+                    bitset |= DatasourceService.getDBFlagFromName(dbName);
                 } else {
                     LoggerFactory.getLogger(getClass()).warn("Could not match DB link '" + db + "' Skipping this entry!");
                 }
