@@ -276,7 +276,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
                 candidate.setName(set.getString(3));
                 candidate.setSmiles(set.getString(4));
                 candidate.setBitset(set.getLong(5));
-                candidate.setXlogp(set.getDouble(6));
+                candidate.setXlogp(set.getObject(6) != null ? set.getDouble(6): Double.NaN);
                 candidates.add(candidate);
             }
         }
