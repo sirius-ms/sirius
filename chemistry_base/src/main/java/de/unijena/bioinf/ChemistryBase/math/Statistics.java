@@ -46,7 +46,7 @@ public class Statistics {
         xs = xs.clone();
         Arrays.sort(xs);
         if (xs.length%2==0) {
-            double a = xs[xs.length/2], b = xs[xs.length/2 + 1];
+            double a = xs[xs.length/2 - 1], b = xs[xs.length/2];
             return (a+b)/2d;
         } else {
             return xs[xs.length/2];
@@ -56,7 +56,7 @@ public class Statistics {
         double[] xs = ys.toArray();
         Arrays.sort(xs);
         if (xs.length%2==0) {
-            double a = xs[xs.length/2], b = xs[xs.length/2 + 1];
+            double a = xs[xs.length/2 - 1], b = xs[xs.length/2 + 1];
             return (a+b)/2d;
         } else {
             return xs[xs.length/2];
