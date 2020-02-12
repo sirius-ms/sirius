@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.frontend.io.projectspace;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
@@ -182,8 +183,11 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return getMetrics().map(FTreeMetricsHelper::getNumberOfExplainablePeaks).map(Integer::doubleValue).orElse(Double.NaN);
     }
 
+    public double getMedianRelMassDev() {
+        return getMetrics().map(FTreeMetricsHelper::getMedianMassDeviation).map(Deviation::getPpm).orElse(Double.NaN);
+    }
     public double getMedianAbsMassDev() {
-        return getMetrics().map(FTreeMetricsHelper::getMedianMassDeviation).orElse(Double.NaN);
+        return getMetrics().map(FTreeMetricsHelper::getMedianMassDeviation).map(Deviation::getAbsolute).orElse(Double.NaN);
     }
 
     @Override
