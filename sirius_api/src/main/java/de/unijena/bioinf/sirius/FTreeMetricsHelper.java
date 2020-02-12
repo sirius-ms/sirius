@@ -130,7 +130,7 @@ public class FTreeMetricsHelper {
     public static int getNumberOfExplainablePeaks(@NotNull FTree tree) {
         final int numberOfExplainedPeaks = getNumOfExplainedPeaks(tree);
         if (numberOfExplainedPeaks==0) return 0;
-        return (int)Math.round(getNumOfExplainedPeaks(tree) / getExplainedPeaksRatio(tree));
+        return (int)Math.ceil(getNumOfExplainedPeaks(tree) / getExplainedPeaksRatio(tree));
     }
 
     /**
