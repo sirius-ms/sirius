@@ -1,7 +1,6 @@
 package de.unijena.bioinf.ms.gui.table;
-import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import org.jdesktop.beans.AbstractBean;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
