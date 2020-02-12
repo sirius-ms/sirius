@@ -25,12 +25,13 @@ public class Scan {
     private final double TIC;
     private final int numberOfPeaks;
     private final double collisionEnergy;
+    private final boolean centroided;
 
-    public Scan(int index, Polarity polarity, long retentionTime, double collisionEnergy, int numberOfPeaks, double TIC) {
-        this(index,polarity,retentionTime,collisionEnergy,numberOfPeaks,TIC,null);
+    public Scan(int index, Polarity polarity, long retentionTime, double collisionEnergy, int numberOfPeaks, double TIC, boolean centroided) {
+        this(index,polarity,retentionTime,collisionEnergy,numberOfPeaks,TIC,centroided,null);
     }
 
-    public Scan(int index, Polarity polarity, long retentionTime, double collisionEnergy, int numberOfPeaks, double TIC, Precursor precursor) {
+    public Scan(int index, Polarity polarity, long retentionTime, double collisionEnergy, int numberOfPeaks, double TIC, boolean centroided, Precursor precursor) {
         this.index = index;
         this.retentionTime = retentionTime;
         this.collisionEnergy=collisionEnergy;
@@ -38,6 +39,15 @@ public class Scan {
         this.polarity = polarity;
         this.TIC = TIC;
         this.numberOfPeaks = numberOfPeaks;
+        this.centroided = centroided;
+    }
+
+    public boolean isCentroided() {
+        return centroided;
+    }
+
+    public boolean isProfiled() {
+        return !centroided;
     }
 
     public int getNumberOfPeaks() {

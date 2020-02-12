@@ -22,6 +22,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Locale;
 
@@ -76,12 +77,36 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
         addKeyListener(this);
         setPreferredSize(new Dimension(1300,868));
         pack();
+
+        {
+            for (int k=0; k < 4; ++k) {
+                System.out.println("Isotope peak # " + k);
+                final ArrayList<CorrelationGroup> groups = new ArrayList<>();
+                for (FragmentedIon ion : sample.ions) {
+                    var xs = ion.getIsotopes();
+                    if (xs.size()>k) {
+                        groups.add(xs.get(k));
+                    }
+                }
+                if (groups.size()<=5)
+                    break;
+                // cosine
+                groups.sort((u,v)->Double.compare(u.getCosine(),v.getCosine()));
+                System.out.printf("Median cosine = %f\n", groups.get(groups.size()/2).getCosine() );
+                System.out.printf("15%% quantile = %f\n", groups.get((int)(groups.size()*0.15)).getCosine() );
+                // correlation
+                groups.sort((u,v)->Double.compare(u.getCorrelation(),v.getCorrelation()));
+                System.out.printf("Median cosine = %f\n", groups.get(groups.size()/2).getCorrelation() );
+                System.out.printf("15%% quantile = %f\n", groups.get((int)(groups.size()*0.15)).getCorrelation() );
+            }
+        }
+
         setVisible(true);
     }
 
     public static void main(String[] args) {
 
-        final File mzxmlFile = new File("/home/kaidu/data/raw/diatom/Pn_chubby14_100ml.mzXML");
+        final File mzxmlFile = new File("/home/kaidu/data/raw/Stachybotrys/OE_myzel_04517_konz_2.mzXML");
         InMemoryStorage storage= new InMemoryStorage();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         try {
@@ -345,7 +370,7 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
                 if (c.correlation.getAnnotation()!=null) {
                     int yyy = (int) Math.round(p.getIntensityAt(rightSegment.getApexIndex()) / deltaInt) - 16;
                     int xxx = (int) Math.round((p.getRetentionTimeAt(rightSegment.getApexIndex()) - start) / deltaRT);
-                    g.drawString(String.format(Locale.US, "%s %d %%, %.3f",c.correlation.getAnnotation() , (int)Math.round(100*c.correlation.getCorrelation()), c.correlation.getKullbackLeibler()), xxx, 700 - yyy);
+                    g.drawString(String.format(Locale.US, "%s %d %%, %d %%",c.correlation.getAnnotation() , (int)Math.round(100*c.correlation.getCorrelation()), (int)Math.round(100*c.correlation.getCosine())), xxx, 700 - yyy);
                 }
             }
 
