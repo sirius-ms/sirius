@@ -54,10 +54,10 @@ public class NoiseStatistics {
             noiseLevels.add(avgNoise/len);
         }
     }
-
+    // TODO: for MS/MS use decomposer
     private float calculateNoiseLevel(SimpleSpectrum spectrum) {
         final double[] array = Spectrums.copyIntensities(spectrum);
-        if (array.length>=20) {
+        if (array.length>=60) {
             int k = (int)Math.floor(array.length*percentile);
             return (float)Quickselect.quickselectInplace(array,0,array.length, k);
         } else {

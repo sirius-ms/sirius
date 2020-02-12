@@ -28,7 +28,8 @@ public class CorrelatedPeakDetector {
             Range.closed(4.9937908 - MZ_ISO_ERRT, 5.01572941 + MZ_ISO_ERRT)
     };
 
-    protected final static double COSINE_THRESHOLD = 0.96d,
+    protected final static double ISOTOPE_COSINE_THRESHOLD=0.97,
+                                    COSINE_THRESHOLD = 0.98d,
                                   STRICT_COSINE_THRESHOLD = 0.99;
 
     protected Set<PrecursorIonType> detectableIonTypes;
@@ -333,7 +334,7 @@ public class CorrelatedPeakDetector {
             for (int i=a; i < spectrum.size(); ++i) {
                 if (spectrum.getMzAt(i) > maxMz)
                     break;
-                sample.builder.detectExact(scan, spectrum.getMzAt(i)).map(x->correlate(peak, segment, x)).filter(x->x.map(CorrelationGroup::getCosine).orElse(0d) >= COSINE_THRESHOLD).map(Optional::get).ifPresent(isoPeaks::add);
+                sample.builder.detectExact(scan, spectrum.getMzAt(i)).map(x->correlate(peak, segment, x)).filter(x->x.map(CorrelationGroup::getCosine).orElse(0d) >= ISOTOPE_COSINE_THRESHOLD).map(Optional::get).ifPresent(isoPeaks::add);
             }
             if (isoPeaks.size() <= nsize) {
                 break forEachIsotopePeak;

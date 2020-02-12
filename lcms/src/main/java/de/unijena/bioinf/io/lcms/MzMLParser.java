@@ -69,6 +69,7 @@ public class MzMLParser implements LCMSParser {
                 final Spectrum spectrum = um.getSpectrumById(sid);
                 Polarity polarity = Polarity.UNKNOWN;
                 int msLevel = 1;
+                boolean centroided=true;
                 for (CVParam cvParam : spectrum.getCvParam()) {
                     switch (cvParam.getAccession()) {
                         case "MS:1000129":
@@ -79,6 +80,12 @@ public class MzMLParser implements LCMSParser {
                             break;
                         case "MS:1000511":
                             msLevel = Integer.parseInt(cvParam.getValue());
+                            break;
+                        case "MS:1000127":
+                            centroided = true;
+                            break;
+                        case "MS:1000128":
+                            centroided = false;
                             break;
                     }
                 }
@@ -134,6 +141,7 @@ public class MzMLParser implements LCMSParser {
                         collisionEnergy, //collision energy
                         spec.size(),
                         Spectrums.calculateTIC(spec),
+                        centroided,
                         makePrecursor(precursor, idToIndex)
                 );
 
