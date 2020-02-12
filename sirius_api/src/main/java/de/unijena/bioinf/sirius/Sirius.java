@@ -42,7 +42,6 @@ import de.unijena.bioinf.sirius.plugins.*;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.treemotifs.model.TreeMotifPlugin;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -649,7 +648,7 @@ public class Sirius {
             if (!ionType.isIonizationUnknown()) {
                 logDebug("Compound has set a fixed Adduct: " + ionType.toString() + ". Transforming trees to Adduct if necessary.");
                 irs = irs.stream()
-                        .filter(idr -> idr.getMolecularFormula().isSubtractable(ionType.getInSourceFragmentation()))
+                        .filter(idr -> idr.getMolecularFormula().isSubtractable(ionType.getAdduct()))
                         .map(idr -> IdentificationResult.withPrecursorIonType(idr, ionType))
                         .collect(Collectors.toList());
             }
