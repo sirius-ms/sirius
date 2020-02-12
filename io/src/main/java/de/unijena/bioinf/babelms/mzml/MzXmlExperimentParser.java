@@ -15,7 +15,14 @@ public class MzXmlExperimentParser extends AbstractMzParser {
 
     @Override
     protected boolean setNewSource(BufferedReader sourceReader, URL sourceURL) {
-        if (!currentSource.equals(sourceReader)) {
+        if (currentSource == null) {
+            if (sourceReader == null) {
+                return false;
+            } else {
+                currentSource = sourceReader;
+                return true;
+            }
+        } else if (!currentSource.equals(sourceReader)) {
             currentSource = sourceReader;
             return true;
         }

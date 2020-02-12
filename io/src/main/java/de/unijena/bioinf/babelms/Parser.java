@@ -36,7 +36,7 @@ public interface Parser<T> {
      * @param reader input stream
      * @param <S> data type that is parsed from the input stream
      * @return data element from the input stream
-     * @throws IOException
+     * @throws IOException if an IO error happens
      */
     <S extends T> S parse(BufferedReader reader, URL source) throws IOException;
 
