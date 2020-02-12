@@ -25,7 +25,7 @@ public class FormulaListCompactView extends ActionListView<FormulaList> {
 
         final JList<FormulaResultBean> resultListView;
         resultListView = new JList<>(new DefaultEventListModel<>(source.getElementList()));
-        resultListView.setCellRenderer(new FormulaListTextCellRenderer(source.scoreStats));
+        resultListView.setCellRenderer(new FormulaListTextCellRenderer(source.siriusScoreStats));
         resultListView.setSelectionModel(source.getResultListSelectionModel());
         resultListView.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         resultListView.setVisibleRowCount(1);

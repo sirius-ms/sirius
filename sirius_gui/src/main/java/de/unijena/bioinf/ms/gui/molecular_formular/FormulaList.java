@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.gui.molecular_formular;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
@@ -19,7 +20,8 @@ import java.util.List;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
-    public final FormulaScoreListStats scoreStats = new FormulaScoreListStats();
+    public final FormulaScoreListStats zodiacScoreStats = new FormulaScoreListStats();
+    public final FormulaScoreListStats siriusScoreStats = new FormulaScoreListStats();
     public final DoubleListStats isotopeScoreStats = new DoubleListStats();
     public final DoubleListStats treeScoreStats = new DoubleListStats();
     public final DoubleListStats explainedPeaks = new DoubleListStats();
@@ -70,7 +72,8 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         } else {
             selectionModel.clearSelection();
             elementList.clear();
-            scoreStats.update(new double[0]);
+            zodiacScoreStats.update(new double[0]);
+            siriusScoreStats.update(new double[0]);
             isotopeScoreStats.update(new double[0]);
             treeScoreStats.update(new double[0]);
         }
@@ -90,19 +93,21 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     private void intiResultList() {
         List<FormulaResultBean> r = data.getResults();
         if (r != null && !r.isEmpty()) {
-            double[] scores = new double[r.size()];
+            double[] zscores = new double[r.size()];
+            double[] sscores = new double[r.size()];
             double[] iScores = new double[r.size()];
             double[] tScores = new double[r.size()];
             int i = 0;
             for (FormulaResultBean element : r) {
-                //todo add zodiac score
                 elementList.add(element);
-                scores[i] = element.getScoreValue(SiriusScore.class);
+                zscores[i] = element.getScoreValue(ZodiacScore.class);
+                sscores[i] = element.getScoreValue(SiriusScore.class);
                 iScores[i] = element.getScoreValue(IsotopeScore.class);
                 tScores[i++] = element.getScoreValue(TreeScore.class);
             }
 
-            this.scoreStats.update(scores);
+            this.zodiacScoreStats.update(zscores);
+            this.siriusScoreStats.update(sscores);
             this.isotopeScoreStats.update(iScores);
             this.treeScoreStats.update(tScores);
 
