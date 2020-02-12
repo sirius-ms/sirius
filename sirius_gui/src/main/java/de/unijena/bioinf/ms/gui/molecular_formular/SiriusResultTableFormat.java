@@ -87,19 +87,11 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             case 6:
                 return result.getScoreValue(TreeScore.class);
             case 7:
-                final double expPeaks = result.getNumOfExplainedPeaks();
-                if (Double.isNaN(expPeaks))
-                    return "Value not found";
-                else
-                    return expPeaks;
+                return result.getNumOfExplainedPeaks();
             case 8:
-                final double intensity = result.getExplainedIntensityRatio();
-                if (Double.isNaN(intensity))
-                    return "Value not found";
-                else
-                    return intensity;
+                return result.getExplainedIntensityRatio();
             case 9:
-                return "NOT Implemented";
+                return result.getMedianAbsMassDev();
             case 10:
                 return isBest(result);
             default:
