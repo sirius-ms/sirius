@@ -43,17 +43,14 @@ public class Statistics {
     }
 
     public static double median(double[] xs) {
-        xs = xs.clone();
-        Arrays.sort(xs);
-        if (xs.length%2==0) {
-            double a = xs[xs.length/2 - 1], b = xs[xs.length/2];
-            return (a+b)/2d;
-        } else {
-            return xs[xs.length/2];
-        }
+        return medianInPlace(xs.clone());
     }
+
     public static double median(TDoubleArrayList ys) {
-        double[] xs = ys.toArray();
+        return medianInPlace(ys.toArray());
+    }
+
+    private static double medianInPlace(final double[] xs) {
         Arrays.sort(xs);
         if (xs.length%2==0) {
             double a = xs[xs.length/2 - 1], b = xs[xs.length/2];
@@ -62,6 +59,8 @@ public class Statistics {
             return xs[xs.length/2];
         }
     }
+
+
 
     /**
      * Computes pearson correlation coefficient between xs and ys
