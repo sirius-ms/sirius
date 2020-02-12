@@ -74,7 +74,7 @@ public class MassDecomposerTest {
     }
 
     @Test
-    public void decomposerTest(){
+    public void decomposerTest() {
         String[] result1 = new String[]{  //mass: 279.43, default value (ppm 20 relative error, absolute mass error in Dalton 0.001, --nofilter, -e CHNOPS, precision 1e-5
                 "H180N7",
                 "CH186O5",
@@ -411,7 +411,7 @@ public class MassDecomposerTest {
 
         assertTrue("result1[] and formulas-List differ in length", result1.length == formulas.size());
         for (MolecularFormula formula : formulas) {
-            assertTrue(formula+" was not found", searchedFormula1.contains(formula));
+            assertTrue(formula + " was not found", searchedFormula1.contains(formula));
         }
 
 
@@ -427,7 +427,7 @@ public class MassDecomposerTest {
         boundary.put(table.getByName("Cl"), new Interval(0, Integer.MAX_VALUE));
         boundary.put(table.getByName("Br"), new Interval(0, Integer.MAX_VALUE));
 
-        alphabet = new ChemicalAlphabet(tableSelection, table.getAllByName("C", "H","N","O","P","S","Fe","Cl", "Br"));
+        alphabet = new ChemicalAlphabet(tableSelection, table.getAllByName("C", "H", "N", "O", "P", "S", "Fe", "Cl", "Br"));
         decomposer = new MassDecomposer<Element>(new ChemicalAlphabetWrapper(alphabet));
 
         mass = 222.22;
@@ -446,10 +446,8 @@ public class MassDecomposerTest {
 
         assertEquals("result3[] and formulas-List differ in length", result3.length, formulas.size());
         for (MolecularFormula formula : formulas) {
-            assertTrue(formula+" was not found", searchedFormula3.contains(formula));
+            assertTrue(formula + " was not found", searchedFormula3.contains(formula));
         }
-
-
 
 
         //test MassDecomposerFast
@@ -476,8 +474,28 @@ public class MassDecomposerTest {
 
         assertTrue("result1[] and formulas-List differ in length", result1.length == formulas.size());
         for (MolecularFormula formula : formulas) {
-            assertTrue(formula+" was not found", searchedFormula1.contains(formula));
+            assertTrue(formula + " was not found", searchedFormula1.contains(formula));
         }
+
+        // test iterator
+        {
+            DecompIterator<Element> elementDecompIterator = decomposerFast.decomposeIterator(mass, dev, boundary);
+            final HashSet<MolecularFormula> tosearchin = new HashSet<>(searchedFormula1);
+            while (elementDecompIterator.next())
+                assertTrue(tosearchin.remove(alphabet.decompositionToFormula(elementDecompIterator.getCurrentCompomere())));
+            assertTrue(tosearchin.isEmpty());
+        }
+
+        // test mf iterator
+        {
+            MassToFormulaDecomposer mf = new MassToFormulaDecomposer(alphabet);
+            Iterator<MolecularFormula> molecularFormulaIterator = mf.formulaIterator(222.1, dev, new FormulaConstraints("CHNOPS"));
+            final HashSet<MolecularFormula> tosearchin = new HashSet<>(mf.decomposeToFormulas(222.1, dev, new FormulaConstraints("CHNOPS")));
+            while (molecularFormulaIterator.hasNext())
+                assertTrue(tosearchin.remove(molecularFormulaIterator.next()));
+            assertTrue(tosearchin.isEmpty());
+        }
+
 
         //with more Elements
         boundary = new HashMap<Element, Interval>();
@@ -507,7 +525,6 @@ public class MassDecomposerTest {
         }
 
     }
-
 
     @Test
     public void singleElementTest(){
