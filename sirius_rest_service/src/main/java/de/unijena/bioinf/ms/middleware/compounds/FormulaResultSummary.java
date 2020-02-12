@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ms.middleware.compounds;
 
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+
 public class FormulaResultSummary {
 
     protected Double siriusScore;
@@ -14,7 +16,7 @@ public class FormulaResultSummary {
     protected Integer numOfexplainablePeaks;
 
     protected Double totalExplainedIntensity;
-    protected Double medianMassDeviation;
+    protected Deviation medianMassDeviation;
 
     public Double getSiriusScore() {
         return siriusScore;
@@ -88,11 +90,11 @@ public class FormulaResultSummary {
         this.totalExplainedIntensity = totalExplainedIntensity;
     }
 
-    public Double getMedianMassDeviation() {
+    public Deviation getMedianMassDeviation() {
         return medianMassDeviation;
     }
 
-    public void setMedianMassDeviation(Double medianMassDeviation) {
+    public void setMedianMassDeviation(Deviation medianMassDeviation) {
         this.medianMassDeviation = medianMassDeviation;
     }
 }
