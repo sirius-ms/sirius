@@ -91,13 +91,17 @@ public class FTreeMetricsHelper {
         TDoubleArrayList ppms = new TDoubleArrayList(), mzs = new TDoubleArrayList();
         for (Fragment f : tree) {
             AnnotatedPeak p = annoPeakAnno.get(f);
-            if (p!=null && p.isMeasured()) {
+            if (p != null && p.isMeasured()) {
                 final Deviation dev = p.getMassError();
                 ppms.add(dev.getPpm());
                 mzs.add(dev.getAbsolute());
             }
         }
-        return new Deviation(Statistics.median(ppms), Statistics.median(mzs));
+
+        return new Deviation(
+                ppms.isEmpty() ? Double.NaN : Statistics.median(ppms),
+                mzs.isEmpty() ? Double.NaN : Statistics.median(mzs)
+        );
 
     }
 
