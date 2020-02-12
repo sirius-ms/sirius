@@ -10,6 +10,7 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.io.LoadController;
 import de.unijena.bioinf.ms.gui.io.spectrum.csv.CSVFormatReader;
@@ -31,12 +32,12 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class MainFrame extends JFrame implements DropTargetListener {
+
     public static final MainFrame MF = new MainFrame();
 
     // Project Space
@@ -219,12 +220,22 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     }
 
+    public static final String DONT_ASK_OPEN_KEY = "de.unijena.bioinf.sirius.dragdrop.open.dontAskAgain";
+
     @Override
     public void drop(DropTargetDropEvent dtde) {
-        final List<File> newFiles = DragAndDrop.getFileListFromDrop(dtde);
+        final List<File> newFiles = resolveFileList(DragAndDrop.getFileListFromDrop(dtde));
+        boolean openNewProject = false;
 
         if (newFiles.size() > 0) {
-            importDragAndDropFiles(resolveFileList(newFiles));
+            if (newFiles.size() == 1 && (ProjectSpaceIO.isExistingProjectspaceDirectory(newFiles.get(0).toPath()) || ProjectSpaceIO.isZipProjectSpace(newFiles.get(0).toPath())))
+                openNewProject = new QuestionDialog(MF, "<html><body>Do you want to open the dropped Project instead of importing it? <br> The currently opened project will be closed!</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
+
+            if (openNewProject)
+                MF.openNewProjectSpace(newFiles.get(0).toPath());
+            else
+                importDragAndDropFiles(newFiles);
+
         }
     }
 
@@ -248,22 +259,19 @@ public class MainFrame extends JFrame implements DropTargetListener {
         lc.showDialog();
     }
 
-    public static File[] resolveFileList(File[] files) {
-        List<File> l = resolveFileList(Arrays.asList(files));
-        return l.toArray(new File[l.size()]);
-    }
-
     public static List<File> resolveFileList(List<File> files) {
         final ArrayList<File> filelist = new ArrayList<>();
-        for (File f : files) {
-            if (f.isDirectory() && !ProjectSpaceIO.isExistingProjectspaceDirectory(f.toPath())) {
-                final File[] fl = f.listFiles();
-                if (fl != null) {
-                    for (File g : fl)
-                        if (!g.isDirectory()) filelist.add(g);
+        if (files != null) {
+            for (File f : files) {
+                if (f.isDirectory() && !ProjectSpaceIO.isExistingProjectspaceDirectory(f.toPath())) {
+                    final File[] fl = f.listFiles();
+                    if (fl != null) {
+                        for (File g : fl)
+                            if (!g.isDirectory()) filelist.add(g);
+                    }
+                } else {
+                    filelist.add(f);
                 }
-            } else {
-                filelist.add(f);
             }
         }
         return filelist;
