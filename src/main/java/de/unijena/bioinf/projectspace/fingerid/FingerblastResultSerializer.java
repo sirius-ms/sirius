@@ -76,7 +76,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
             }
             candidate.setLinks(links.toArray(DBLink[]::new));
             candidate.setBitset(bitset);
-            if (row[10] != null && !row[10].isEmpty() && !row[10].equals("N/A")) {
+            if (row.length > 10 && row[10] != null && !row[10].isEmpty() && !row[10].equals("N/A")) {
                 candidate.setTanimoto(Double.valueOf(row[10]));
             } else
                 candidate.setTanimoto(null);
