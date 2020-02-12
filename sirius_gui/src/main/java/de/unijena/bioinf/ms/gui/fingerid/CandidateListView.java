@@ -154,10 +154,10 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
     @Override
     protected EventList<MatcherEditor<FingerprintCandidateBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
-//                new CandidateStringMatcherEditor(searchField.textField),
-//                new MinMaxMatcherEditor<>(logPSlider, (baseList, element) -> baseList.add(element.getXLogP())),
-//                new MinMaxMatcherEditor<>(tanimotoSlider, (baseList, element) -> baseList.add(element.getTanimotoScore())),
-//                new DatabaseFilterMatcherEditor(dbFilterPanel)
+                new CandidateStringMatcherEditor(searchField.textField),
+                new MinMaxMatcherEditor<>(logPSlider, (baseList, element) -> baseList.add(element.getXLogP())),
+                new MinMaxMatcherEditor<>(tanimotoSlider, (baseList, element) -> baseList.add(element.getTanimotoScore())),
+                new DatabaseFilterMatcherEditor(dbFilterPanel)
         );
     }
 }

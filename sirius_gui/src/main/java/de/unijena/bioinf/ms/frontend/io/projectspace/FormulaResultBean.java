@@ -182,8 +182,14 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return getMetrics().map(FTreeMetricsHelper::getNumberOfExplainablePeaks).map(Integer::doubleValue).orElse(Double.NaN);
     }
 
+    public double getMedianAbsMassDev() {
+        return getMetrics().map(FTreeMetricsHelper::getMedianMassDeviation).orElse(Double.NaN);
+    }
+
     @Override
     public int compareTo(FormulaResultBean o) {
         return Integer.compare(getRank(), o.getRank());
     }
+
+
 }
