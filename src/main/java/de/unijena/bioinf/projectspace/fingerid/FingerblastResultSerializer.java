@@ -47,7 +47,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
             final double score = Double.parseDouble(row[4]);
             final InChI inchi = new InChI(row[0], row[1]);
             final String name = row[5], smiles = row[6];
-            final double xlogp = row[7].isBlank() ? Double.NaN : Double.parseDouble(row[7]);
+            final double xlogp = (row[7] != null && !row[7].isBlank() && !row[7].equals("N/A")) ? Double.parseDouble(row[7]) : Double.NaN;
 
             final FingerprintCandidate candidate = new FingerprintCandidate(inchi, null);
             candidate.setName(name);
@@ -76,7 +76,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
             }
             candidate.setLinks(links.toArray(DBLink[]::new));
             candidate.setBitset(bitset);
-            if (row.length > 10 && row[10] != null && !row[10].isEmpty() && !row[10].equals("N/A")) {
+            if (row.length > 10 && row[10] != null && !row[10].isBlank() && !row[10].equals("N/A")) {
                 candidate.setTanimoto(Double.valueOf(row[10]));
             } else
                 candidate.setTanimoto(null);
@@ -127,7 +127,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
             row[4] = String.valueOf(hit.getScore());
             row[5] = c.getName();
             row[6] = c.getSmiles();
-            row[7] = Double.isNaN(c.getXlogp()) ? "" : String.valueOf(c.getXlogp());
+            row[7] = Double.isNaN(c.getXlogp()) ? "N/A" : String.valueOf(c.getXlogp());
             row[8] = c.getPubmedIDs() != null ? c.getPubmedIDs().toString() : "";
             row[9] = c.getLinkedDatabases().asMap().entrySet().stream().map((k) -> k.getValue().isEmpty() ? k.getKey() : k.getKey() + ":(" + String.join(", ", k.getValue()) + ")").collect(Collectors.joining("; "));
             row[10] = c.getTanimoto() == null ? "N/A" : String.valueOf(c.getTanimoto());
