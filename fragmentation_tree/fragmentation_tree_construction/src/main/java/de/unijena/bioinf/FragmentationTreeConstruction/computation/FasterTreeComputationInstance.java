@@ -221,6 +221,10 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             inc -= TREE_SIZE_INCREASE;
             treeSize -= TREE_SIZE_INCREASE;
         }
+
+        final int numberOfResultsToKeep = Math.min(results.size(), this.numberOfResultsToKeep);
+        final int numberOfResultsToKeepPerIonization = Math.min(this.numberOfResultsToKeepPerIonization, results.size());
+
         final List<ExactResult> topResults = extractExactResults(results, numberOfResultsToKeep+10, numberOfResultsToKeepPerIonization+5);
         configureProgress(100, topResults.size());
         if (pinput.getAnnotationOrDefault(ForbidRecalibration.class).isForbidden()) {
