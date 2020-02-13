@@ -2,15 +2,18 @@ package de.unijena.bioinf.ms.frontend.io;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.FilenameFormatter;
+import de.unijena.bioinf.projectspace.ProjectSpaceIO;
+import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -20,7 +23,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -126,6 +128,17 @@ public class InstanceImporter {
         }
 
         public void importProject(SiriusProjectSpace inputSpace) throws IOException {
+            Files.list(inputSpace.getRootPath()).filter(Files::isRegularFile).filter(p -> !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME))
+                    .forEach(s -> {
+                        final Path t = importTarget.projectSpace().getRootPath().resolve(s.getFileName());
+                        try {
+                            if (Files.notExists(t))
+                                Files.copy(s, t);
+                        } catch (IOException e) {
+                            LOG.error("Could not Copy `" + s.toString() + "` to new location `" + t.toString() + "` Project might be corrupted!", e);
+                        }
+                    });
+
             Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator((cid) -> cid.getIonMass().orElse(0d) <= maxMz);
             while (psIter.hasNext()) {
                 final CompoundContainerId sourceId = psIter.next();
@@ -137,21 +150,18 @@ public class InstanceImporter {
                     inst.getID().setAllNonFinal(sourceId);
                     inst.updateCompoundID();
 
-                    // add compund annotations
-                    final CompoundContainer targetConf = inst.loadCompoundContainer();
-                    targetConf.addAnnotationsFrom(sourceComp);
-
-                    // create Results if available and add them to compoundContainer
-                    for (FormulaResultId sourceRid : sourceComp.getResults().values()) {
-                        final FormulaResult sourceRes = inputSpace.getFormulaResult(sourceRid, importTarget.projectSpace().getRegisteredFormulaResultComponents());
-                        inst.newFormulaResultWithUniqueId(sourceRes.getAnnotationOrThrow(FTree.class)).
-                                ifPresent(tres -> {
-                                    tres.setAnnotationsFrom(sourceRes);
-                                    inst.updateFormulaResult(tres, tres.annotations().getKeysArray());
-                                });
-                    }
-
-                    inst.updateCompound(targetConf, Arrays.stream(targetConf.annotations().getKeysArray()).filter((it) -> !Ms2Experiment.class.equals(it)).toArray(Class[]::new));
+                    Files.list(inputSpace.getRootPath().resolve(sourceId.getDirectoryName()))
+                            .filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO) && !p.getFileName().toString().equals(SiriusLocations.MS2_EXPERIMENT))
+                            .forEach(s -> {
+                                final Path t = importTarget.projectSpace().getRootPath().resolve(inst.getID().getDirectoryName()).resolve(s.getFileName());
+                                try {
+                                    Files.createDirectories(t);
+                                    FileUtils.copyFolder(s, t);
+                                    inst.reloadCompoundCache(Ms2Experiment.class);
+                                } catch (IOException e) {
+                                    LOG.error("Could not Copy instance `" + inst.getID().getDirectoryName() + "` to new location `" + t.toString() + "` Results might be missing!", e);
+                                }
+                            });
                 }
             }
         }
