@@ -37,7 +37,30 @@ public class InChI implements Ms2ExperimentAnnotation {
         for (b=a; b < in2D.length(); ++b) {
             if (in2D.charAt(b)=='/') break;
         }
-        return MolecularFormula.parse(in2D.substring(a, b));
+
+        MolecularFormula formula =  MolecularFormula.parse(in2D.substring(a, b));
+        int q = getQCharge();
+        if (q==0) return formula;
+        else if (q<0){
+            return formula.add(MolecularFormula.parse(String.valueOf(Math.abs(q)+"H")));
+        } else {
+            return formula.subtract(MolecularFormula.parse(String.valueOf(q+"H")));
+        }
+    }
+
+    private static final Pattern Q_LAYER = Pattern.compile("\\/(q([^\\/]*))");
+    /**
+     * if structure is disconnected return charge of first connected component
+     * @return
+     */
+    private int getQCharge() {
+        Matcher matcher = Q_LAYER.matcher(in2D);
+        if (matcher.find()){
+            String charge = matcher.group(2).split(";")[0];
+            if (charge.length()==0) return 0;
+            return Integer.parseInt(charge);
+        }
+        return 0;
     }
 
     public String key2D() {
