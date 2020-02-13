@@ -34,7 +34,9 @@ import java.util.zip.GZIPOutputStream;
 
 public class FingerprintCandidate extends CompoundCandidate {
 
-    protected final Fingerprint fingerprint;
+    protected Fingerprint fingerprint;
+    // the estimated tanimoto to the predicted fingerprint
+    protected Double tanimoto = null;
 
     public static FingerprintCandidate fromJSON(FingerprintVersion version, JsonObject o) {
         final JsonArray ary = o.getJsonArray("fingerprint");
@@ -136,5 +138,15 @@ public class FingerprintCandidate extends CompoundCandidate {
         return fingerprint;
     }
 
+    public Double getTanimoto() {
+        return tanimoto;
+    }
 
+    public void setTanimoto(Double tanimoto) {
+        this.tanimoto = tanimoto;
+    }
+
+    public void setFingerprint(Fingerprint fp) {
+        this.fingerprint = fp;
+    }
 }

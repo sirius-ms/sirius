@@ -19,6 +19,9 @@ import gnu.trove.set.hash.TIntHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
@@ -266,7 +269,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         final boolean enforceBio = bioFilter == BioFilter.ONLY_BIO;
         final PreparedStatement statement;
         if (enforceBio) {
-            final long bioflag = DataSource.BIOFLAG();
+            final long bioflag = DataSource.BIO.flag;
             statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM " + STRUCTURES_TABLE + " WHERE formula = ? AND (flags & " + bioflag + " ) != 0");
         } else {
             statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM " + STRUCTURES_TABLE + " WHERE formula = ?");
@@ -279,7 +282,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
                 candidate.setName(set.getString(3));
                 candidate.setSmiles(set.getString(4));
                 candidate.setBitset(set.getLong(5));
-                candidate.setXlogp(set.getDouble(6));
+                candidate.setXlogp(set.getObject(6) != null ? set.getDouble(6): Double.NaN);
                 candidates.add(candidate);
             }
         }
@@ -346,6 +349,29 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
             throw new ChemicalDatabaseException(e);
         }
     }
+    public int lookupAllWithFlag(long flag) throws ChemicalDatabaseException {
+        int counter=0;
+        final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
+        try (final PooledConnection<Connection> c = connection.orderConnection()) {
+            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT s.inchi_key_1, s.inchi, s.name, s.smiles, s.flags, s.xlogp, f.fingerprint FROM "+STRUCTURES_TABLE+" as s, "+FINGERPRINT_TABLE+" as f WHERE f.fp_id = "+FINGERPRINT_ID+" AND s.flags&"+flag+"!=0")) {
+
+                   // statement.setString(1, String.valueOf(flag));
+                    try (final ResultSet set = statement.executeQuery()) {
+                        if (set.next()) {
+                           counter++;
+                           System.out.println(counter);
+                        }
+                    }
+
+            }
+            return counter;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return counter;
+        } catch (IOException | SQLException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
 
     @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
@@ -405,6 +431,31 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         return lookupFingerprintsByInchis(inchi_keys);
     }
+
+    public void createDatabaseDump(long flag, File file){
+        try {
+            BufferedWriter write = new BufferedWriter(new FileWriter(file));
+            try (final PooledConnection<Connection> c = connection.orderConnection()) {
+                try (final PreparedStatement statement = c.connection.prepareStatement("SELECT s.flags, s.smiles FROM " + STRUCTURES_TABLE + " as s WHERE s.flags & "+flag+"!=0")) {
+                    try (final ResultSet set = statement.executeQuery()) {
+                        while (set.next()) {
+                            write.write(set.getString(2)+"\t"+set.getString(1)+"\n");
+                            System.out.println(set.getString(2)+"\t"+set.getString(1)+"\n");
+
+                        }
+                        write.close();
+                    }
+
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
 
     @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
@@ -536,7 +587,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         connection.close();
     }
 
-    protected static class SqlConnector implements ConnectionPool.Connection<Connection> {
+    protected static class SqlConnector implements ConnectionPool.Connector<Connection> {
         static {
             //it seems that tomcat need that to ensure that the driver is loaded before usage
             try {
@@ -587,6 +638,16 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
                 connection.close();
             } catch (SQLException e) {
                 throw new IOException(e);
+            }
+        }
+
+        @Override
+        public boolean isValid(Connection connection) {
+            try {
+                return connection.isValid(10);
+            } catch (SQLException e) {
+                LoggerFactory.getLogger(getClass()).warn("Error during ChemDB connection validation? Returning inValid state.", e);
+                return false;
             }
         }
     }

@@ -77,8 +77,7 @@ public class CompoundCandidate {
         this.smiles = o.getString("smiles", null);
         this.pLayer = o.getInt("pLayer", 0);
         this.qLayer = o.getInt("qLayer", 0);
-        JsonValue xlgp = o.getJsonNumber("xlogp");
-        this.xlogp = (xlgp == null || xlgp.equals(JsonValue.NULL)) ? Double.NaN : ((JsonNumber) xlgp).doubleValue();
+        this.xlogp = !o.containsKey("xlogp") || o.isNull("xlogp") || o.getJsonNumber("xlogp").equals(JsonNumber.NULL) ? Double.NaN : o.getJsonNumber("xlogp").doubleValue();
         final JsonObject map = o.getJsonObject("links");
         if (map != null) {
             final ArrayList<DBLink> links = new ArrayList<>();
