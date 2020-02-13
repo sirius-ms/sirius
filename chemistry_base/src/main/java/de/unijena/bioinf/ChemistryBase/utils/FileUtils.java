@@ -15,6 +15,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.zip.*;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -83,14 +84,18 @@ public class FileUtils {
      * @throws IOException if I/O Error occurs
      */
     public static void copyFolder(Path src, Path dest) throws IOException {
+        copyFolder(src, dest, p -> true);
+    }
+
+    public static void copyFolder(Path src, Path dest, Predicate<Path> filter) throws IOException {
         if (Files.notExists(dest))
             throw new IllegalArgumentException("Root destination dir/file must exist!");
 
-        Files.walk(src).forEach(source -> {
+        Files.walk(src).filter(filter).forEach(source -> {
             String relative = src.relativize(source).toString();
             final Path target = dest.resolve(relative);
             if (!target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
-                copy(source, target);;
+                copy(source, target);
         });
     }
 
