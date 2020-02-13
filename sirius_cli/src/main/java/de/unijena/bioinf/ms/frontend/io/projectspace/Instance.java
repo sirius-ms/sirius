@@ -12,6 +12,7 @@ import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 
 public class Instance {
     protected final ProjectSpaceManager spaceManager;
-    protected final CompoundContainer compoundCache;
+    private CompoundContainer compoundCache;
 
     protected Map<FormulaResultId, FormulaResult> formulaResultCache = new HashMap<>();
 
@@ -84,6 +85,15 @@ public class Instance {
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public synchronized void reloadCompoundCache (Class<? extends DataAnnotation>... components) {
+        try {
+            compoundCache = projectSpace().getCompound(getID(), components);
+        } catch (IOException e) {
+            LoggerFactory.getLogger(Instance.class).error("Could not create read Input Experiment from Project Space.");
+            throw new RuntimeException("Could not create read Input Experiment from Project Space.", e);
         }
     }
 
