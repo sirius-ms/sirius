@@ -41,6 +41,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
         return COL_COUNT;
     }
 
+    @Override
     public String getColumnName(int column) {
         switch (column) {
             case 0:
@@ -62,7 +63,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             case 8:
                 return "Total Explained Intensity";
             case 9:
-                return "Median Absolute Mass Deviation in ppm";
+                return "Median Mass Deviation in ppm";
             case 10:
                 return "Best";
             default:
@@ -70,6 +71,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
         }
     }
 
+    @Override
     public Object getColumnValue(FormulaResultBean result, int column) {
         switch (column) {
             case 0:
@@ -91,7 +93,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             case 8:
                 return result.getExplainedIntensityRatio();
             case 9:
-                return result.getMedianAbsMassDev();
+                return result.getMedianMassDevPPM();
             case 10:
                 return isBest(result);
             default:

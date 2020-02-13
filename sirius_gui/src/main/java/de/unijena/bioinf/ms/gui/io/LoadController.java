@@ -3,11 +3,10 @@ package de.unijena.bioinf.ms.gui.io;
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ms.gui.io.spectrum.csv.CSVToSpectrumConverter;
-import de.unijena.bioinf.ms.gui.io.filefilter.MsDataFormatsFilter;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
@@ -16,11 +15,14 @@ import de.unijena.bioinf.ms.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.BatchImportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.FileImportDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.io.filefilter.MsDataFormatsFilter;
 import de.unijena.bioinf.ms.gui.io.spectrum.SpectrumContainer;
+import de.unijena.bioinf.ms.gui.io.spectrum.csv.CSVFormatReader;
+import de.unijena.bioinf.ms.gui.io.spectrum.csv.CSVToSpectrumConverter;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.gui.io.spectrum.csv.CSVFormatReader;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import javax.swing.*;
@@ -281,25 +283,37 @@ public class LoadController implements LoadDialogListener {
                     expToModify.getMs2Spectra().add((MutableMs2Spectrum) spectrum);
                 }
             }
+            //make changes persistent
+            if (instance == null) {
+                expToModify.setPrecursorIonType(loadDialog.getIonization());
+                expToModify.setIonMass(loadDialog.getParentMass());
 
-            expToModify.setPrecursorIonType(loadDialog.getIonization());
-            expToModify.setIonMass(loadDialog.getParentMass());
-            expToModify.setName(loadDialog.getExperimentName());
+                expToModify.setName(loadDialog.getExperimentName());
 
-            if (loadDialog.editPanel.validateFormula()) {
-                expToModify.setMolecularFormula(loadDialog.editPanel.getMolecularFormula());
+                if (loadDialog.editPanel.validateFormula()) {
+                    expToModify.setMolecularFormula(loadDialog.editPanel.getMolecularFormula());
+                }
+
+                Jobs.runInBackgroundAndLoad(owner, () -> MainFrame.MF.ps().newCompoundWithUniqueId(expToModify));
+            } else {
+                Jobs.runInBackgroundAndLoad(owner, () -> completeExisting(instance, loadDialog.editPanel));
             }
         }
+    }
 
-        if (expToModify.getMs1Spectra().isEmpty() && expToModify.getMs2Spectra().isEmpty())
-            return;
-
-        //make changes persistent
-        if (instance == null) {
-            Jobs.runInBackgroundAndLoad(owner, () -> MainFrame.MF.ps().newCompoundWithUniqueId(expToModify));
-        } else {
-            Jobs.runInBackgroundAndLoad(owner, instance::updateExperiment);
+    public static void completeExisting(InstanceBean instance, ExperimentEditPanel editPanel) {
+        final InstanceBean.Setter expSetter = instance.set();
+        if (editPanel.validateFormula()) {
+            final MolecularFormula nuFormula = editPanel.getMolecularFormula();
+            expSetter.setMolecularFormula(nuFormula);
         }
+
+        final double ionMass = editPanel.getSelectedIonMass();
+        if (ionMass > 0)
+            expSetter.setIonMass(ionMass);
+        expSetter.setIonization(editPanel.getSelectedIonization());
+        expSetter.setName(editPanel.getExperiementName());
+        expSetter.apply(); //applies changes to experiment an writes it to projectspace
     }
 
     @Override

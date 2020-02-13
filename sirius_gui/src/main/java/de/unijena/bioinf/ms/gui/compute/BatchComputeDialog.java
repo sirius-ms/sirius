@@ -20,7 +20,6 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
@@ -38,6 +37,7 @@ import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.*;
+import de.unijena.bioinf.ms.gui.io.LoadController;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;
@@ -238,20 +238,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     }
 
     private void saveEdits(InstanceBean ec) {
-        Jobs.runInBackgroundAndLoad(this, "Saving changes...", () -> {
-            final InstanceBean.Setter expSetter = ec.set();
-            if (editPanel.validateFormula()) {
-                final MolecularFormula nuFormula = editPanel.getMolecularFormula();
-                expSetter.setMolecularFormula(nuFormula);
-            }
-
-            final double ionMass = editPanel.getSelectedIonMass();
-            if (ionMass > 0)
-                expSetter.setIonMass(ionMass);
-            expSetter.setIonization(editPanel.getSelectedIonization());
-            expSetter.setName(editPanel.getExperiementName());
-            expSetter.apply(); //applies changes to experiment an writes it to projectspace
-        });
+        Jobs.runInBackgroundAndLoad(this, "Saving changes...", () ->
+                LoadController.completeExisting(ec, editPanel));
     }
 
     private void startComputing() {

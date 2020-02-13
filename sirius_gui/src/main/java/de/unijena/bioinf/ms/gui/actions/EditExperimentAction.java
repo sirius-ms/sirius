@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.io.LoadController;
@@ -44,9 +45,5 @@ public class EditExperimentAction extends AbstractAction {
         String guiname = ec.getGUIName();
         LoadController lc = new LoadController(MF, ec);
         lc.showDialog();
-        System.out.println("writing without diff. do we need a diff here");
-        Jobs.runInBackgroundAndLoad(MF, () -> {
-
-        });
     }
 }

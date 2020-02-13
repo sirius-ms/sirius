@@ -9,7 +9,7 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 
 import javax.swing.*;
 
-//todo property change support so that other vie can listen to changes input data before applying them
+//todo property change support so that other views can listen to changes input data before applying them
 public class ExperimentEditPanel extends JPanel {
     public final PrecursorSelector precursorSelection;
     public final PrecursorIonTypeSelector ionizationCB;
