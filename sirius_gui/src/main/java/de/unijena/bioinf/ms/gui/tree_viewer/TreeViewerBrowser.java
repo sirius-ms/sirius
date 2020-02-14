@@ -11,6 +11,7 @@ public interface TreeViewerBrowser  {
     void load();
     void load(Map<String, Object> bridges);
     void loadTree(String jsonTree);
+    void clear();
     Object executeJS(String js_code);
     Object getJSObject(String name);
     Object[] getJSArray(String name);
