@@ -47,10 +47,21 @@ Array.prototype.contains = function(obj) {
     return false;
 };
 
+// returns JSON object of the input string if valid
+function validateInput(input_string){
+    // input has to be a valid JSON object
+    tree = JSON.parse(input_string);
+    // tree has to have "fragments" and "losses" members
+    if (!(tree.hasOwnProperty('fragments')
+          && tree.hasOwnProperty('losses')
+          && tree.fragments.hasOwnProperty('length')
+          && tree.fragments.length > 0))
+        throw 'tree has an invalid format';
+    return tree;
+}
+
 // main entry function, to be called from sirius
-function loadJSONTree(jsonTree){
-    data_json = jsonTree;
-    data = JSON.parse(jsonTree);
+function loadJSONTree(data_json){
     // NOTE: RESET VARIABLES HERE
     moveModes = {};
     colorGen = nextLossColor();
@@ -60,8 +71,22 @@ function loadJSONTree(jsonTree){
         // this prevents being stuck in move-mode when loading another
         // tree while in move-mode
         nodeToMove = null;
+    // input
+    try {
+        data = validateInput(data_json);
+    } catch (e) {
+        // remove previously drawn SVG elements
+        clearSVG();
+        console.error('could not load tree: ' + e);
+        return;
+    }
     apply(data);
     scaleToFit();
+}
+
+// remove all drawn SVG objects
+function clearSVG(){
+    d3.selectAll('.node, .link, .brush').remove();
 }
 
 // when width/height of the page has changed, and/or node/link
@@ -250,7 +275,8 @@ function changeCursor(new_cursor){
 // generate and draw Tree for /new/ data
 function apply(data) {
     applyWindowSize();
-    d3.selectAll('.node, .link, .brush').remove();
+    // reset, remove SVG objects
+    clearSVG();
     currentZoom = d3.zoomIdentity;
     brush_g = svg.append('g')   // all events are hooked to this DOM
         .attr('class', 'brush')
@@ -264,6 +290,7 @@ function apply(data) {
         .on('mousemove', handleMouseMove);
         // .on('mousedown dragstart touchstart', stopTransition);
     tree_scale = 1;             // will be reset for new data
+    // attempt to draw given tree
     generateTree(data);
     root = calcTreeLayout();
     drawTree();

@@ -151,6 +151,10 @@ public class TreeVisualizationPanel extends JPanel
     public void showTree(@NotNull FTree tree) {
         this.ftree = tree;
         String jsonTree = new FTJsonWriter().treeToJsonString(tree);
+        if (jsonTree.isEmpty()){
+            clearPanel();
+            return;
+        }
         browser.loadTree(jsonTree);
         for (Component comp : toolBar.getComponents())
             comp.setEnabled(true);
@@ -166,6 +170,12 @@ public class TreeVisualizationPanel extends JPanel
 
     }
 
+    public void clearPanel(){
+        browser.clear();
+        for (Component comp : toolBar.getComponents())
+            comp.setEnabled(false);
+    }
+
     @Override
     public void resultsChanged(InstanceBean experiment,
                                FormulaResultBean sre,
@@ -174,9 +184,7 @@ public class TreeVisualizationPanel extends JPanel
         if (sre != null && sre.getFragTree().isPresent())
             showTree(sre.getFragTree().get());
         else {
-            browser.loadTree(null);
-            for (Component comp : toolBar.getComponents())
-                comp.setEnabled(false);
+            clearPanel();
         }
     }
 
