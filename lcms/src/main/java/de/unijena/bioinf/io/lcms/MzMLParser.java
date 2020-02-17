@@ -167,11 +167,15 @@ public class MzMLParser implements LCMSParser {
             return null;
 
         IsolationWindow w = new IsolationWindow(0, Double.NaN);
+        double target_mz = Double.NaN;
         if (precursor.getIsolationWindow() != null) {
             double lower = 0;
             double higher = 0;
             for (CVParam cvParam : precursor.getIsolationWindow().getCvParam()) {
                 switch (cvParam.getAccession()) {
+                    case "MS:1000827": // isolation window target m/z
+                        target_mz = (Double.parseDouble(cvParam.getValue()));
+                        break;
                     case "MS:1000828":
                         lower = (Double.parseDouble(cvParam.getValue()));
                         break;
@@ -185,13 +189,13 @@ public class MzMLParser implements LCMSParser {
 
 
         double intensity = Double.NaN;
-        double mz = Double.NaN;
+        double selectedIon_mz = Double.NaN;
         int chargeState = 0;
         if (precursor.getSelectedIonList() != null && precursor.getSelectedIonList().getCount() > 0) {
             for (CVParam cvParam : precursor.getSelectedIonList().getSelectedIon().get(0).getCvParam()) {
                 switch (cvParam.getAccession()) {
-                    case "MS:1000744": // m/z
-                        mz = (Double.parseDouble(cvParam.getValue()));
+                    case "MS:1000744": // selected ion m/z
+                        selectedIon_mz = (Double.parseDouble(cvParam.getValue()));
                         break;
                     case "MS:1000042": // intensity
                         intensity = (Double.parseDouble(cvParam.getValue()));
@@ -202,6 +206,9 @@ public class MzMLParser implements LCMSParser {
                 }
             }
         }
+        //use isolation target m/z if available
+        //(it happens that the instrument targets the +2 isotope peak but the selected ion m/z is the monoisotopic m/z)
+        double mz = !Double.isNaN(target_mz) ? target_mz : selectedIon_mz;
 
         return new de.unijena.bioinf.model.lcms.Precursor(
                 idToIndex.getOrDefault(precursor.getSpectrumRef(), -1),
