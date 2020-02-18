@@ -5,17 +5,16 @@ import com.google.common.collect.Multimap;
 import com.google.gson.stream.JsonWriter;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.fp.BooleanFingerprint;
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.WebAPI;
 import de.unijena.bioinf.chemdb.*;
-import de.unijena.bioinf.fingerid.Fingerprinter;
+import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -38,8 +37,6 @@ import javax.json.JsonArray;
 import javax.json.JsonException;
 import javax.json.JsonReader;
 import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
@@ -47,9 +44,6 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 public class CustomDatabaseImporter {
-    private String[] commonNameProps = new String[]{};//notnull;
-    private String[] dbIDProps = new String[]{};//notnull;
-
     final CustomDatabase database;
     File currentPath;
     List<Listener> listeners = new ArrayList<>();
@@ -60,7 +54,7 @@ public class CustomDatabaseImporter {
 
 
     // molecule buffer
-    private final List<IAtomContainer> moleculeBuffer;
+    private final List<CustomDatabase.Molecule> moleculeBuffer;
     private static final int molBufferSize = 1000;
 
     final protected ConcurrentLinkedQueue<FingerprintCalculator> freeFingerprinter = new ConcurrentLinkedQueue<>();
@@ -87,14 +81,6 @@ public class CustomDatabaseImporter {
         } catch (CDKException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public void setCommonNameProps(String[] commonNameProps) {
-        this.commonNameProps = commonNameProps;
-    }
-
-    public void setDbIDProps(String[] dbIDProps) {
-        this.dbIDProps = dbIDProps;
     }
 
     public void addListener(Listener listener) {
@@ -141,35 +127,26 @@ public class CustomDatabaseImporter {
         }
     }
 
-    public void importFromString(String str) throws IOException {
-        importFromString(str, null);
+    public void importFromString(String str) throws IOException, CDKException {
+        importFromString(str, null, null);
     }
 
-    public void importFromString(String str, String id) throws IOException {
+    public void importFromString(String str, String id, String name) throws IOException, CDKException {
+        final CustomDatabase.Molecule molecule;
         if (str.startsWith("InChI")) {
-            // try InChI parser
-            try {
-                final IAtomContainer molecule = inChIGeneratorFactory.getInChIToStructure(str, SilentChemObjectBuilder.getInstance()).getAtomContainer();
-                if (id != null) molecule.setID(id);
-                addMolecule(molecule);
-            } catch (CDKException e) {
-                throw new IOException(e);
-            }
+            molecule = new CustomDatabase.Molecule(inChIGeneratorFactory.getInChIToStructure(str, SilentChemObjectBuilder.getInstance()).getAtomContainer());
         } else {
-            // try SMILES parser
-            try {
-                final IAtomContainer molecule = smilesParser.parseSmiles(str);
-                if (id != null) molecule.setID(id);
-                addMolecule(molecule);
-            } catch (CDKException e) {
-                throw new IOException(e);
-            }
+            molecule = new CustomDatabase.Molecule(smilesParser.parseSmiles(str));
+            molecule.smiles = new Smiles(str);
         }
+        if (id != null) molecule.container.setID(id);
+        if (name != null) molecule.container.setTitle(name);
+        addMolecule(molecule);
     }
 
     public void importFrom(File file) throws IOException {
         ReaderFactory factory = new ReaderFactory();
-        ISimpleChemObjectReader reader = null;
+        ISimpleChemObjectReader reader;
         try (InputStream stream = new FileInputStream(file)) {
             reader = factory.createReader(stream);
         }
@@ -182,7 +159,7 @@ public class CustomDatabaseImporter {
                     for (IChemSequence s : chemFile.chemSequences()) {
                         for (IChemModel m : s.chemModels()) {
                             for (IAtomContainer c : m.getMoleculeSet().atomContainers()) {
-                                addMolecule(c);
+                                addMolecule(new CustomDatabase.Molecule(c));
                             }
                         }
                     }
@@ -192,65 +169,27 @@ public class CustomDatabaseImporter {
             }
         } else {
             // checkConnectionToUrl for SMILES and InChI formats
-            final BufferedReader br = new BufferedReader(new FileReader(file));
-            String line = br.readLine();
-            br.close();
-            final List<IAtomContainer> mols = new ArrayList<>();
-            if (line == null) {
-                throw new IOException("Unknown file format: " + file.getName());
-            } else if (line.contains("InChI")) {
-                for (String aline : Files.readAllLines(file.toPath(), Charset.forName("UTF-8"))) {
-                    aline = aline.trim();
-                    if (aline.isEmpty()) continue;
-                    String id = null;
-                    final int index = aline.indexOf('\t');
-                    if (index >= 0) {
-                        String[] parts = aline.split("\t");
-                        aline = parts[0];
-                        id = parts[1];
-                    }
+            try (final BufferedReader br = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String[] parts = line.split("\t");
+                    final String structure = parts[0].trim();
+
+                    final String id = parts.length > 1 ? parts[1] : null;
+                    final String name = parts.length > 2 ? parts[2] : null;
+
                     try {
-                        final IAtomContainer mol = (inChIGeneratorFactory.getInChIToStructure(aline, SilentChemObjectBuilder.getInstance()).getAtomContainer());
-                        if (id != null) mol.setID(id);
-                        addMolecule(mol);
+                        importFromString(structure, id, name);
                     } catch (CDKException e) {
                         CustomDatabase.logger.error(e.getMessage(), e);
                     }
-
-
-                }
-            } else {
-                try {
-                    smilesParser.parseSmiles(line);
-                    for (String aline : Files.readAllLines(file.toPath(), Charset.forName("UTF-8"))) {
-                        aline = aline.trim();
-                        if (aline.isEmpty()) continue;
-                        String id = null;
-                        final int index = aline.indexOf('\t');
-                        if (index >= 0) {
-                            String[] parts = aline.split("\t");
-                            aline = parts[0];
-                            id = parts[1];
-                        }
-                        try {
-                            final IAtomContainer mol = smilesParser.parseSmiles(aline);
-                            if (id != null) mol.setID(id);
-                            addMolecule(mol);
-                        } catch (CDKException e) {
-                            CustomDatabase.logger.error(e.getMessage(), e);
-                        }
-                    }
-                } catch (InvalidSmilesException e) {
-                    throw new IOException("Unknown file format: " + file.getName());
                 }
             }
         }
     }
 
 
-
-
-    protected void addMolecule(IAtomContainer mol) throws IOException {
+    protected void addMolecule(CustomDatabase.Molecule mol) throws IOException {
         synchronized (moleculeBuffer) {
             moleculeBuffer.add(mol);
             for (Listener l : listeners) l.newMoleculeBufferSize(moleculeBuffer.size());
@@ -266,10 +205,10 @@ public class CustomDatabaseImporter {
             final HashMap<String, CustomDatabase.Comp> dict = new HashMap<>(moleculeBuffer.size());
             try {
                 final InChIGeneratorFactory icf = InChIGeneratorFactory.getInstance();
-                for (IAtomContainer c : moleculeBuffer) {
+                for (CustomDatabase.Molecule c : moleculeBuffer) {
                     final String key;
                     try {
-                        key = icf.getInChIGenerator(c).getInchiKey().substring(0, 14);
+                        key = icf.getInChIGenerator(c.container).getInchiKey().substring(0, 14);
                         CustomDatabase.Comp comp = new CustomDatabase.Comp(key);
                         comp.molecule = c;
                         dict.put(key, comp);
@@ -321,13 +260,6 @@ public class CustomDatabaseImporter {
                     CustomDatabase.logger.error(e.getMessage(), e);
                 }
             });
-            /*for (CustomDatabase.Comp c : dict.values()) {
-                try {
-                    addToBuffer(computeCompound(c.molecule, c.candidate));
-                } catch (CDKException | IllegalArgumentException e) {
-                    CustomDatabase.logger.error(e.getMessage(), e);
-                }
-            }*/
             for (Listener l : listeners) l.newMoleculeBufferSize(0);
         }
     }
@@ -354,35 +286,20 @@ public class CustomDatabaseImporter {
 
     private class FingerprintCalculator {
         private final String dbname;
-        private final CdkFingerprintVersion version;
-        private final Fingerprinter fingerprinter;
-//        private final InChIGeneratorFactory inChIGeneratorFactory;
-//        private final SmilesGenerator smilesGen;
+        private final FixedFingerprinter fingerprinter;
 
-        public FingerprintCalculator(String dbname, CdkFingerprintVersion version/*,InChIGeneratorFactory inChIGeneratorFactory,SmilesGenerator smilesGen*/) throws CDKException {
+        public FingerprintCalculator(String dbname, CdkFingerprintVersion version) {
             this.dbname = dbname;
-            this.version = version;
-//            this.inChIGeneratorFactory = inChIGeneratorFactory;
-//            this.smilesGen = smilesGen;
-            this.fingerprinter = Fingerprinter.getFor(version);
-
+            this.fingerprinter = new FixedFingerprinter(version);
         }
 
-        private String getFirstMatchingProperty(final IAtomContainer c, final String[] propertyKeys) {
-            for (String commonNameProp : propertyKeys) {
-                String propValue = (String) c.getProperties().get(commonNameProp);
-                if (propValue != null) {
-                    return propValue;
-                }
-            }
-            return null;
-        }
+        protected FingerprintCandidate computeCompound(CustomDatabase.Molecule molecule, FingerprintCandidate fc) throws CDKException, IOException {
 
-        protected FingerprintCandidate computeCompound(IAtomContainer molecule, FingerprintCandidate fc) throws CDKException, IOException {
-            final String commonName = getFirstMatchingProperty(molecule, commonNameProps);
-            final String id = getFirstMatchingProperty(molecule, dbIDProps);
+            if (fc == null) return computeCompound(molecule);
 
-            if (fc == null) return computeCompound(molecule, id, commonName);
+            final String commonName = molecule.container.getTitle();
+            final String id = molecule.container.getID();
+
 
 //        CustomDatabase.logger.info("download fingerprint " + fc.getInchiKey2D());
             if (fc.getLinks() == null) fc.setLinks(new DBLink[0]);
@@ -404,29 +321,29 @@ public class CustomDatabaseImporter {
                 fc.setLinks(ls);
             }
             fc.setBitset(fc.getBitset() | CustomDataSourceService.getSourceFromName(dbname).flag());
-
-        /*synchronized (buffer) {
-            buffer.add(fc);
-            if (buffer.size() > 10000)
-                flushBuffer();
-        }*/
             return fc;
         }
 
-        protected FingerprintCandidate computeCompound(IAtomContainer molecule, final String id, final String commonName) throws CDKException, IllegalArgumentException, IOException {
-            InChIGenerator gen = inChIGeneratorFactory.getInChIGenerator(molecule);
+        protected FingerprintCandidate computeCompound(CustomDatabase.Molecule molecule) throws CDKException, IllegalArgumentException, IOException {
+            InChIGenerator gen = inChIGeneratorFactory.getInChIGenerator(molecule.container);
             final InChI inchi = new InChI(gen.getInchiKey(), gen.getInchi());
-            molecule = inChIGeneratorFactory.getInChIToStructure(inchi.in2D, SilentChemObjectBuilder.getInstance()).getAtomContainer();
-            final boolean[] fps = fingerprinter.fingerprintsToBooleans(fingerprinter.computeFingerprints(molecule));
-            CustomDatabase.logger.info("compute fingerprint " + inchi.key2D());
-            final Fingerprint fp = new BooleanFingerprint(version, fps).asArray();
-            final String smiles = smilesGen.create(molecule);
+            molecule.container = inChIGeneratorFactory.getInChIToStructure(inchi.in2D, SilentChemObjectBuilder.getInstance()).getAtomContainer();
 
-            final FingerprintCandidate fc = new FingerprintCandidate(inchi, fp);
-            fc.setSmiles(smiles);
+            if (molecule.smiles == null) {
+                LoggerFactory.getLogger(getClass()).warn("Computing fingerprint from non smiles input. NO standardization has happened!");
+                molecule.smiles = new Smiles(smilesGen.create(molecule.container));
+            }
+            final ArrayFingerprint fps = fingerprinter.computeFingerprintFromSMILES(molecule.smiles.smiles);
 
-            if (commonName != null)
-                fc.setName(commonName);
+            CustomDatabase.logger.info("Compute fingerprint for " + inchi.key2D());
+
+            final FingerprintCandidate fc = new FingerprintCandidate(inchi, fps);
+            fc.setSmiles(molecule.smiles.smiles);
+
+            if (molecule.container.getTitle() != null)
+                fc.setName(molecule.container.getTitle());
+
+            final String id = molecule.container.getID();
             if (id != null) {
                 fc.setLinks(new DBLink[]{new DBLink(dbname, id)});
                 if (fc.getName() == null || fc.getName().isEmpty())
@@ -436,37 +353,13 @@ public class CustomDatabaseImporter {
             }
             fc.setBitset(CustomDataSourceService.getSourceFromName(dbname).flag());
 
-            // COMPUTE CHARGE STATE
-            if (inchi.in3D.contains("/p+")) {
-                fc.setpLayer(CompoundCandidateChargeState.POSITIVE_CHARGE.getValue());
-            } else if (inchi.in3D.contains("/p-")) {
-                fc.setpLayer(CompoundCandidateChargeState.NEGATIVE_CHARGE.getValue());
-            } else {
-                fc.setpLayer(CompoundCandidateChargeState.NEUTRAL_CHARGE.getValue());
-            }
-            if (inchi.in3D.contains("/q+")) {
-                fc.setqLayer(CompoundCandidateChargeState.POSITIVE_CHARGE.getValue());
-            }
-            if (inchi.in3D.contains("/q-")) {
-                fc.setqLayer(CompoundCandidateChargeState.NEGATIVE_CHARGE.getValue());
-            } else {
-                fc.setqLayer(CompoundCandidateChargeState.NEUTRAL_CHARGE.getValue());
-            }
-
             {
                 // compute XLOGP
                 final XLogPDescriptor descriptor = new XLogPDescriptor();
-                AtomContainerManipulator.convertImplicitToExplicitHydrogens(molecule);
+                AtomContainerManipulator.convertImplicitToExplicitHydrogens(molecule.container);
                 descriptor.setParameters(new Object[]{true, true});
-                fc.setXlogp(((DoubleResult) descriptor.calculate(molecule).getValue()).doubleValue());
+                fc.setXlogp(((DoubleResult) descriptor.calculate(molecule.container).getValue()).doubleValue());
             }
-
-
-        /*synchronized (buffer) {
-            buffer.add(fc);
-            if (buffer.size() > 10000)
-                flushBuffer();
-        }*/
             return fc;
         }
 
@@ -535,17 +428,6 @@ public class CustomDatabaseImporter {
             }
         }
     }
-
-    /*public void deleteDatabase() {
-        synchronized (database) {
-            if (currentPath.exists()) {
-                for (File f : currentPath.listFiles()) {
-                    f.delete();
-                }
-                currentPath.delete();
-            }
-        }
-    }*/
 
     public static void importDatabaseFromStrings(String dbPath, List<String> files, WebAPI api, int bufferSize) {
         importDatabase(dbPath, files.stream().map(File::new).collect(Collectors.toList()), api, bufferSize);

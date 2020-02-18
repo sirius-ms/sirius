@@ -1,5 +1,7 @@
 package de.unijena.bioinf.chemdb.custom;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.WebAPI;
 import de.unijena.bioinf.chemdb.DataSource;
@@ -8,6 +10,7 @@ import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import org.jetbrains.annotations.NotNull;
+import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.slf4j.Logger;
@@ -244,9 +247,23 @@ public class CustomDatabase implements SearchableDatabase {
         importer.flushBuffer();
     }
 
+    static class Molecule {
+        Smiles smiles = null;
+        @NotNull IAtomContainer container;
+
+        Molecule(Smiles smiles, @NotNull AtomContainer container) {
+            this.smiles = smiles;
+            this.container = container;
+        }
+
+        Molecule(@NotNull IAtomContainer container) {
+            this.container = container;
+        }
+    }
+
     static class Comp {
         String inchikey;
-        IAtomContainer molecule;
+        Molecule molecule;
         FingerprintCandidate candidate;
 
         Comp(String inchikey) {
