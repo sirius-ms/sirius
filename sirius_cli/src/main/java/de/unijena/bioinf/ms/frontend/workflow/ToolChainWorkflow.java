@@ -5,17 +5,20 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
+import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -23,16 +26,18 @@ public class ToolChainWorkflow implements Workflow {
     protected final static Logger LOG = LoggerFactory.getLogger(ToolChainWorkflow.class);
     protected final ParameterConfig parameters;
     private final PreprocessingJob<?> preprocessingJob;
+    private final PostprocessingJob<?> postprocessingJob;
 
     protected List<Object> toolchain;
 
     private final AtomicBoolean canceled = new AtomicBoolean(false);
     private InstanceBuffer submitter = null;
 
-    public ToolChainWorkflow(@NotNull PreprocessingJob<?> preprocessingJob, @NotNull ParameterConfig parameters, @NotNull List<Object> toolchain) {
+    public ToolChainWorkflow(@NotNull PreprocessingJob<?> preprocessingJob, @Nullable PostprocessingJob<?> postprocessingJob, @NotNull ParameterConfig parameters, @NotNull List<Object> toolchain) {
         this.preprocessingJob = preprocessingJob;
         this.parameters = parameters;
         this.toolchain = toolchain;
+        this.postprocessingJob = postprocessingJob;
     }
 
     @Override
@@ -56,9 +61,9 @@ public class ToolChainWorkflow implements Workflow {
 
             //todo the tool chain should not know anythin about the project space. that should be outside this class.
             //todo maybe closing the space should be a "postprocess" job??
-            final ProjectSpaceManager project = (ProjectSpaceManager) SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
+//            final ProjectSpaceManager project = (ProjectSpaceManager) ;
             // prepare input
-            Iterable<? extends Instance> iteratorSource = project;
+            Iterable<? extends Instance> iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
             // build toolchain
             final List<InstanceJob.Factory<?>> instanceJobChain = new ArrayList<>(toolchain.size());
             //job factory for job that add config annotations to an instance
@@ -91,29 +96,18 @@ public class ToolChainWorkflow implements Workflow {
                 submitter = new SimpleInstanceBuffer(bufferSize, iteratorSource.iterator(), instanceJobChain, null);
                 submitter.start();
             }
-            LOG.info("Workflow has been finished! Writing Project-Space summaries...");
+            LOG.info("Workflow has been finished!");
 
             checkForCancellation();
-            try {
-                //remove recompute annotation since it should be cli only option
-//                System.out.println("Summaries are currently disabled!");
-//                iteratorSource.forEach(it -> it.getExperiment().setAnnotation(RecomputeResults.class,null)); //todo fix needed
-                //use all experiments in workspace to create summaries
-                LOG.info("Writing summary files...");
-                project.updateSummaries(ProjectSpaceManager.defaultSummarizer());
-
-                LOG.info("Project-Space successfully written!");
-            } catch (IOException e) {
-                LOG.error("Error when summarizing project. Project summaries may be incomplete!", e);
-            } finally {
-                project.close();
+            if (postprocessingJob != null){
+                LOG.info("Executing Postprocessing...");
+                SiriusJobs.getGlobalJobManager().submitJob(postprocessingJob).awaitResult();
             }
+
         } catch (ExecutionException e) {
             LOG.error("Error When Executing ToolChain", e);
         } catch (InterruptedException e) {
             LOG.info("Workflow successfully canceled!", e);
-        } catch (IOException e) {
-            LOG.info("Error when closing project", e);
         }
     }
 }

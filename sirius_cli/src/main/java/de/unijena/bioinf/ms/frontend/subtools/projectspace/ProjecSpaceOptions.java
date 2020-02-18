@@ -8,7 +8,7 @@ import picocli.CommandLine;
 public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> {
 
     @Override
-    public ProjectSpaceWorkflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+    public ProjectSpaceWorkflow makeWorkflow(RootOptions<?,?> rootOptions, ParameterConfig config) {
         return new ProjectSpaceWorkflow();
     }
 }

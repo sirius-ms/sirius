@@ -1,10 +1,7 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import com.google.common.collect.Streams;
-import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
-import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
-import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
-import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
+import de.unijena.bioinf.ms.frontend.subtools.*;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
@@ -42,7 +39,7 @@ import java.util.concurrent.Callable;
  * We just have to define its parameters in h
  */
 
-public class WorkflowBuilder<R extends RootOptions<?>> {
+public class WorkflowBuilder<R extends RootOptions<?, ?>> {
 
     //root
     private CommandLine.Model.CommandSpec rootSpec;
@@ -146,7 +143,7 @@ public class WorkflowBuilder<R extends RootOptions<?>> {
                 throw new CommandLine.ExecutionException(parseResult.commandSpec().commandLine(), "Illegal root CLI found!");
 
 
-            //get project space from root cli
+            // init special preprocessing and config jobs
             PreprocessingJob<?> preproJob = null;
 
             List<Object> toolchain = new ArrayList<>();
@@ -165,15 +162,25 @@ public class WorkflowBuilder<R extends RootOptions<?>> {
                 return () -> LoggerFactory.getLogger(getClass()).warn("No execution steps have been Specified!");
             }
 
+            // handle toolchain and posprocessing jobs
+            PostprocessingJob<?> postproJob = null;
+
             while (parseResult.hasSubcommand()) {
                 parseResult = parseResult.subcommand();
-                execute(parseResult.commandSpec().commandLine(), toolchain);
+                if (parseResult.commandSpec().commandLine() instanceof PostprocessingTool) {
+                    postproJob = ((PostprocessingTool<?>) parseResult.commandSpec().commandLine()).makePostprocessingJob(rootOptions, configOptionLoader.config);
+                    break;
+                } else {
+                    execute(parseResult.commandSpec().commandLine(), toolchain);
+                }
             }
 
             if (preproJob == null)
                 preproJob = rootOptions.makeDefaultPreprocessingJob();
+            if (postproJob == null)
+                postproJob = rootOptions.makeDefaultPostprocessingJob();
 
-            final ToolChainWorkflow wf = new ToolChainWorkflow(preproJob, configOptionLoader.config, toolchain);
+            final ToolChainWorkflow wf = new ToolChainWorkflow(preproJob, postproJob, configOptionLoader.config, toolchain);
             return returnResultOrExit(wf);
         }
 

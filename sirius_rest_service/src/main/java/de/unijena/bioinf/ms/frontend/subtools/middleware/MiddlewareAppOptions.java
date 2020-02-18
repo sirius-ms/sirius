@@ -32,8 +32,8 @@ public class MiddlewareAppOptions implements StandaloneTool<MiddlewareAppOptions
 
 
     @Override
-    public Flow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
-        return new Flow((RootOptions<PreprocessingJob<ProjectSpaceManager>>) rootOptions, config);
+    public Flow makeWorkflow(RootOptions<?,?> rootOptions, ParameterConfig config) {
+        return new Flow((RootOptions<PreprocessingJob<ProjectSpaceManager>,?>) rootOptions, config);
 
     }
 
@@ -51,7 +51,7 @@ public class MiddlewareAppOptions implements StandaloneTool<MiddlewareAppOptions
         private ConfigurableApplicationContext appContext = null;
 
 
-        private Flow(RootOptions<PreprocessingJob<ProjectSpaceManager>> opts, ParameterConfig config) {
+        private Flow(RootOptions<PreprocessingJob<ProjectSpaceManager>,?> opts, ParameterConfig config) {
             this.preproJob = opts.makeDefaultPreprocessingJob();
             this.config = config;
         }
