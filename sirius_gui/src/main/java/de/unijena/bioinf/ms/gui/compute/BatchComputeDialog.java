@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.gui.GuiComputeRoot;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -290,27 +291,17 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         Jobs.runInBackgroundAndLoad(owner, "Submitting Identification Jobs", new TinyBackgroundJJob<>() {
             @Override
             protected Object compute() throws InterruptedException {
-                //entspricht setup() Methode
-                final Iterator<InstanceBean> compounds = compoundsToProcess.iterator();
-//                final int max = compoundsToProcess.size();
-//                int progress = 0;
-
-//                while (compounds.hasNext()) {
-//                    final InstanceBean ec = compounds.next();
-//                    checkForInterruption();
-//                    if (ec.isUncomputed() || ec.getResults().isEmpty()) {
                 updateProgress(0, 1, 0, "Configuring Computation...");
                         checkForInterruption();
 
                 try {
                     final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                    WorkflowBuilder<CLIRootOptions<GuiProjectSpaceManager>> wfBuilder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new GPSMFactory()), configOptionLoader);
+                    WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(),compoundsToProcess), configOptionLoader);
                     Run computation = new Run(wfBuilder);
 
                     // create computation parameters
                     List<String> configs = new ArrayList<>();
                     configs.add("config");
-//                    List<String> tools = new ArrayList<>();
 
                     configs.add("--AlgorithmProfile=" + instrument.profile);
                     configs.add("--MS2MassDeviation.allowedMassDeviation=" + ppm + "ppm");

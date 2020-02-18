@@ -30,7 +30,7 @@ import java.io.IOException;
 public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
 
     @Override
-    public Flow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+    public Flow makeWorkflow(RootOptions<?,?> rootOptions, ParameterConfig config) {
         return new Flow(rootOptions, config);
 
     }
@@ -40,7 +40,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
         private final ParameterConfig config;
 
 
-        private Flow(RootOptions<?> rootOptions, ParameterConfig config) {
+        private Flow(RootOptions<?,?> rootOptions, ParameterConfig config) {
             this.preproJob = (PreprocessingJob<ProjectSpaceManager>) rootOptions.makeDefaultPreprocessingJob();
             this.config = config;
         }

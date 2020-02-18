@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class MiddlewareWorkflowBuilder<R extends RootOptions<PreprocessingJob<? extends ProjectSpaceManager>>> extends WorkflowBuilder<R> {
+public class MiddlewareWorkflowBuilder<R extends RootOptions<PreprocessingJob<? extends ProjectSpaceManager>,?>> extends WorkflowBuilder<R> {
     public MiddlewareWorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader) throws IOException {
         super(rootOptions, configOptionLoader);
     }

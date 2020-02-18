@@ -31,7 +31,7 @@ import java.text.ParseException;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "sirius", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
-public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOptions<PreprocessingJob<ProjectSpaceManager>> {
+public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOptions<PreprocessingJob<ProjectSpaceManager>, PostprocessingJob<Boolean>> {
     public static final Logger LOG = LoggerFactory.getLogger(CLIRootOptions.class);
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
@@ -82,13 +82,18 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
     @CommandLine.ArgGroup(exclusive = false, heading = "@|bold Specify OUTPUT Project-Space: %n|@", order = 200)
     private ProjectSpaceOptions psOpts = new ProjectSpaceOptions();
 
-    private static class ProjectSpaceOptions {
+    private class ProjectSpaceOptions {
         @Option(names = {"--output", "--project", "-o"}, description = "Specify the project-space to write into. If no [--input] is specified it is also used as input. For compression use the File ending .zip or .sirius.", order = 210)
         private Path outputProjectLocation;
 
         @Option(names = "--naming-convention", description = "Specify a naming scheme for the  compound directories ins the project-space. Default %%index_%%filename_%%compoundname", order = 220)
         private void setProjectSpaceFilenameFormatter(String projectSpaceFilenameFormatter) throws ParseException {
             this.projectSpaceFilenameFormatter = new StandardMSFilenameFormatter(projectSpaceFilenameFormatter);
+        }
+
+        @Option(names = "--no-summaries", description = "Do not write summary files to the project-space", order = 230)
+        private void setNoSummaries(boolean noSummaries) throws Exception {
+            defaultConfigOptions.changeOption("WriteSummaries", String.valueOf((!noSummaries)));
         }
 
         private FilenameFormatter projectSpaceFilenameFormatter = null;
@@ -169,6 +174,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
     //endregion
 
 
+    @NotNull
     @Override
     public PreprocessingJob<ProjectSpaceManager> makeDefaultPreprocessingJob() {
         return new PreprocessingJob<ProjectSpaceManager>() {
@@ -184,6 +190,33 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                     return space;
                 }
                 throw new CommandLine.PicocliException("No Project-Space for writing output!");
+            }
+        };
+    }
+
+    @NotNull
+    @Override
+    public PostprocessingJob<Boolean> makeDefaultPostprocessingJob() {
+        return new PostprocessingJob<>() {
+            @Override
+            protected Boolean compute() throws Exception {
+                M project = getProjectSpace();
+                try {
+                    //remove recompute annotation since it should be cli only option
+//                iteratorSource.forEach(it -> it.getExperiment().setAnnotation(RecomputeResults.class,null)); //todo fix needed?
+                    //use all experiments in workspace to create summaries
+                    if (Boolean.parseBoolean(defaultConfigOptions.config.getConfigValue("WriteSummaries"))) {
+                        LOG.info("Writing summary files...");
+                        project.updateSummaries(ProjectSpaceManager.defaultSummarizer());
+                        LOG.info("Project-Space summaries successfully written!");
+                    }
+                    return true;
+                } catch (IOException e) {
+                    LOG.error("Error when summarizing project. Project summaries may be incomplete!", e);
+                    return false;
+                } finally {
+                    project.close();
+                }
             }
         };
     }

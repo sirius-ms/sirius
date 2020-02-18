@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class GuiWorkflowBuilder<R extends RootOptions<PreprocessingJob<? extends ProjectSpaceManager>>> extends MiddlewareWorkflowBuilder<R> {
+public class GuiWorkflowBuilder<R extends RootOptions<PreprocessingJob<? extends ProjectSpaceManager>,?>> extends MiddlewareWorkflowBuilder<R> {
 
     public GuiWorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader) throws IOException {
         super(rootOptions, configOptionLoader);
