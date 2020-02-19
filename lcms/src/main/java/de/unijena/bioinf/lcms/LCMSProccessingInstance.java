@@ -34,6 +34,7 @@ public class LCMSProccessingInstance {
     protected List<ProcessedSample> samples;
     protected MemoryFileStorage ms2Storage;
     protected AtomicInteger numberOfMs2Scans = new AtomicInteger();
+    protected volatile boolean centroided = true;
 
     protected Set<PrecursorIonType> detectableIonTypes;
 
@@ -76,7 +77,7 @@ public class LCMSProccessingInstance {
         final int id = numberOfMs2Scans.incrementAndGet();
         final SimpleSpectrum spec = merged.finishMerging();
         final SimpleSpectrum spec2 = Spectrums.extractMostIntensivePeaks(spec, 8, 100);
-        final Scan scan = new Scan(id, merged.getScans().get(0).getPolarity(),peak.getRetentionTimeAt(segment.getApexIndex()), merged.getScans().get(0).getCollisionEnergy(),spec.size(), Spectrums.calculateTIC(spec), merged.getPrecursor());
+        final Scan scan = new Scan(id, merged.getScans().get(0).getPolarity(),peak.getRetentionTimeAt(segment.getApexIndex()), merged.getScans().get(0).getCollisionEnergy(),spec.size(), Spectrums.calculateTIC(spec), true, merged.getPrecursor());
         ms2Storage.add(scan, spec);
         final FragmentedIon ion = new FragmentedIon(merged.getScans().get(0).getPolarity(), scan, new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20))).createQueryWithIntensityTransformationNoLoss(spec2, merged.getPrecursor().getMass(), true), merged.getQuality(spec), peak, segment);
         return ion;
@@ -116,9 +117,18 @@ public class LCMSProccessingInstance {
         return network;
     }
 
+    public boolean isCentroided() {
+        return centroided;
+    }
+
     public ProcessedSample addSample(LCMSRun run, SpectrumStorage storage) {
-        final NoiseStatistics noiseStatisticsMs1 = new NoiseStatistics(20, 0.85), noiseStatisticsMs2 = new NoiseStatistics(10, 0.85);
+        final NoiseStatistics noiseStatisticsMs1 = new NoiseStatistics(100, 0.1), noiseStatisticsMs2 = new NoiseStatistics(10, 0.85);
         for (Scan s : run.getScans()) {
+            if (!s.isCentroided()) {
+                this.centroided = false;
+                LoggerFactory.getLogger(LCMSProccessingInstance.class).warn("Scan " + s + " is in PROFILED mode. SIRIUS does only support centroided spectra. Ignore this scan.");
+                continue;
+            }
             if (s.isMsMs()) noiseStatisticsMs2.add(s, storage.getScan(s));
             else noiseStatisticsMs1.add(s,storage.getScan(s));
         }
@@ -131,7 +141,6 @@ public class LCMSProccessingInstance {
             this.storages.put(sample, storage);
         }
         return sample;
-
     }
 
     public Feature makeFeature(ProcessedSample sample, FragmentedIon ion, boolean gapFilled) {
@@ -322,6 +331,31 @@ public class LCMSProccessingInstance {
         return fit;
     }
 
+    /**
+     *
+     */
+    void addAllSegmentsAsPseudoIons() {
+        for (ProcessedSample sample : samples) {
+            final HashSet<ChromatographicPeak.Segment> allSegments = new HashSet<ChromatographicPeak.Segment>();
+            for (FragmentedIon ion : sample.ions) {
+                allSegments.add(ion.getSegment());
+            }
+            for (FragmentedIon ion : sample.gapFilledIons) {
+                allSegments.add(ion.getSegment());
+            }
+            for (FragmentedIon ion : sample.ions) {
+                for (ChromatographicPeak.Segment s : ion.getPeak().getSegments()) {
+                    if (!allSegments.contains(s)) {
+                        final GapFilledIon newIon = new GapFilledIon(Polarity.of(ion.getPolarity()), ion.getPeak(), s, ion);
+                        fitPeakShape(sample, newIon);
+                        sample.gapFilledIons.add(newIon);
+                        allSegments.add(s);
+                    }
+                }
+            }
+        }
+    }
+
     public void detectFeatures() {
         for (ProcessedSample sample : samples) {
             detectFeatures(sample);
@@ -343,10 +377,11 @@ public class LCMSProccessingInstance {
         final double initialError = error;
         int n=0;
         System.out.println("Start with " + numberOfUnalignedIons + " unaligned ions.");
-        System.out.println("Remove lonely features");System.out.flush();
+        System.out.println("Remove features with low MS/MS quality that do not align properly");System.out.flush();
         int deleted = manager.submitJob(new Aligner(false).prealignAndFeatureCutoff2(samples, 15*error, 1)).takeResult();
         System.out.println("Remove " + deleted + " features that do not align well. Keep " + (numberOfUnalignedIons-deleted) + " features." );
 
+        addAllSegmentsAsPseudoIons();
 
         System.out.println("Start Align #1");System.out.flush();
         BasicJJob<Cluster> clusterJob = new Aligner2(error*5).align(samples);//new Aligner().recalibrateRetentionTimes(this.samples);
@@ -367,6 +402,7 @@ public class LCMSProccessingInstance {
         error = cluster.estimateError();
         final double errorDueToRecalibration = error;
         System.out.println("Start Realign #3");System.out.flush();
+        addAllSegmentsAsPseudoIons();
         clusterJob  = new Aligner2(error).align(samples);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult().deleteRowsWithNoMsMs();
