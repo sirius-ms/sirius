@@ -1,4 +1,6 @@
 RecomputeResults=de.unijena.bioinf.ms.annotations.RecomputeResults
+WriteSummaries=de.unijena.bioinf.ms.annotations.WriteSummaries
+
 
 ZodiacEpochs=de.unijena.bioinf.GibbsSampling.properties.ZodiacEpochs
 ZodiacRunInTwoSteps=de.unijena.bioinf.GibbsSampling.properties.ZodiacRunInTwoSteps

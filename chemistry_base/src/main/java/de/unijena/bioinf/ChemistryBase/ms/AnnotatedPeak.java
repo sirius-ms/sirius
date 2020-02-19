@@ -100,6 +100,24 @@ public final class AnnotatedPeak implements TreeAnnotation  {
         this.spectrumIds = spectrumIds;
     }
 
+    /**
+     * returns the mass error of this fragment after recalibration.
+     * Returns NULL_DEVIATION if the fragment does not corresponds to any peak.
+     */
+    public Deviation getRecalibratedMassError() {
+        if (isMeasured())
+            return Deviation.fromMeasurementAndReference(recalibratedMass, ionization.addToMass(molecularFormula.getMass()));
+        else return Deviation.NULL_DEVIATION;
+    }
+    /**
+     * returns the mass error of this fragment. Returns NULL_DEVIATION if the fragment does not corresponds to any peak.
+     */
+    public Deviation getMassError() {
+        if (isMeasured())
+            return Deviation.fromMeasurementAndReference(mass, ionization.addToMass(molecularFormula.getMass()));
+        else return Deviation.NULL_DEVIATION;
+    }
+
     public int[] getSpectrumIds() {
         return spectrumIds;
     }
