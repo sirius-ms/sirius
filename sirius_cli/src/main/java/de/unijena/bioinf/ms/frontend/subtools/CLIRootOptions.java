@@ -77,23 +77,22 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
 
     // region Options: INPUT/OUTPUT
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    @Option(names = {"--no-summaries", "--noSummaries"}, description = "Do not write summary files to the project-space", order = 299)
+    private void setNoSummaries(boolean noSummaries) throws Exception {
+        defaultConfigOptions.changeOption("WriteSummaries", String.valueOf((!noSummaries)));
+    }
 
 
     @CommandLine.ArgGroup(exclusive = false, heading = "@|bold Specify OUTPUT Project-Space: %n|@", order = 200)
     private ProjectSpaceOptions psOpts = new ProjectSpaceOptions();
 
-    private class ProjectSpaceOptions {
+    private static class ProjectSpaceOptions {
         @Option(names = {"--output", "--project", "-o"}, description = "Specify the project-space to write into. If no [--input] is specified it is also used as input. For compression use the File ending .zip or .sirius.", order = 210)
         private Path outputProjectLocation;
 
         @Option(names = "--naming-convention", description = "Specify a naming scheme for the  compound directories ins the project-space. Default %%index_%%filename_%%compoundname", order = 220)
         private void setProjectSpaceFilenameFormatter(String projectSpaceFilenameFormatter) throws ParseException {
             this.projectSpaceFilenameFormatter = new StandardMSFilenameFormatter(projectSpaceFilenameFormatter);
-        }
-
-        @Option(names = "--no-summaries", description = "Do not write summary files to the project-space", order = 230)
-        private void setNoSummaries(boolean noSummaries) throws Exception {
-            defaultConfigOptions.changeOption("WriteSummaries", String.valueOf((!noSummaries)));
         }
 
         private FilenameFormatter projectSpaceFilenameFormatter = null;
