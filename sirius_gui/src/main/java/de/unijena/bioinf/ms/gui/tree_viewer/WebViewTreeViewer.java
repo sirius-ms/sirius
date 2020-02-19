@@ -70,7 +70,6 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
                                             Worker.State oldState,
                                             Worker.State newState) {
                             if (newState == Worker.State.SUCCEEDED) {
-                                System.out.println("LOADING JS script");
                                 JSObject win = (JSObject) executeJS("window");
                                 for (Map.Entry<String, Object> entry :
                                         bridges.entrySet())
@@ -84,8 +83,8 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
     }
 
     public void loadTree(@Nullable String json_tree) {
-//        todo clear tree on null or empty
-        final String jt = json_tree == null || json_tree.isEmpty() ? "{\"losses\":[], \"fragments\":[]}" : json_tree;
+        //todo clear tree on null or empty
+        final String jt = json_tree == null || json_tree.isEmpty() ? "{}" : json_tree;
         Platform.runLater(() -> {
             webView.getEngine().executeScript("loadJSONTree('" +
                     jt.replace("\n", " ")
