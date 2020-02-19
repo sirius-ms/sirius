@@ -186,6 +186,7 @@ class MzXMLSaxParser extends DefaultHandler {
         int msLevel;
         int npeaks;
         int scanNumber;
+        boolean centroided;
 
         int precursorScanNumber, charge;
         double precursorIntensity, isolationWindowWidth, precursorMz;
@@ -203,6 +204,7 @@ class MzXMLSaxParser extends DefaultHandler {
             msLevel = get(attr, "msLevel", 1, Integer::parseInt);
             npeaks = get(attr,"peaksCount",0,Integer::parseInt);
             scanNumber = get(attr, "num", -1, Integer::parseInt);
+            centroided = get(attr,"centroided", lcms.getProcessings().contains(MsDataProcessing.CENTROIDED),f->f.equals("1") ||f.equalsIgnoreCase("true"));
 
         }
 
@@ -270,7 +272,7 @@ class MzXMLSaxParser extends DefaultHandler {
                 if (msLevel>1) {
                     prec = new Precursor(precursorScanNumber,precursorMz,precursorIntensity,charge,isolationWindowWidth);
                 } else prec = null;
-                final Scan scan = new Scan(scanNumber,polarity,retentionTime,collisionEnergy,spectrum.size(), TIC, prec);
+                final Scan scan = new Scan(scanNumber,polarity,retentionTime,collisionEnergy,spectrum.size(), TIC, centroided, prec);
                 storage.add(scan, spectrum);
                 lcms.addScan(scan);
                 listen(false);

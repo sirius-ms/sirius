@@ -25,6 +25,14 @@ public abstract class Fingerprint extends AbstractFingerprint {
         return new ArrayFingerprint(version, indizes.toArray());
     }
 
+    public static ArrayFingerprint fromTabSeparatedString(FingerprintVersion version, String s) {
+        if (s.length()==0) return new ArrayFingerprint(version, new short[]{});
+        final String[] split = s.split("\t");
+        final short[] indizes = new short[split.length];
+        for (int k=0; k < split.length; ++k) indizes[k] = Short.parseShort(split[k]);
+        return new ArrayFingerprint(version,indizes);
+    }
+
 
     public static ArrayFingerprint fromOneZeroString(String fp) {
         return fromOneZeroString(CdkFingerprintVersion.getDefault(), fp);

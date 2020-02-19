@@ -1,12 +1,16 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
+import de.unijena.bioinf.ChemistryBase.math.Statistics;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.sirius.plugins.IsotopePatternInMs1Plugin;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
+import gnu.trove.list.array.TDoubleArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,10 +86,22 @@ public class FTreeMetricsHelper {
         return fragmentScoring.get(measuredIonRoot).get(Recalibrated.PENALTY_KEY);
     }
 
-    public double getMedianMassDeviation() {
-        return Double.NaN;
-//        FragmentAnnotation<Peak> peakAno = tree.getOrCreateFragmentAnnotation(Peak.class);
-//        FragmentAnnotation<AnnotatedPeak> annoPeakAnno = ft.getFragmentAnnotationOrNull(AnnotatedPeak.class);
+    public Deviation getMedianMassDeviation() {
+        FragmentAnnotation<AnnotatedPeak> annoPeakAnno = tree.getFragmentAnnotationOrNull(AnnotatedPeak.class);
+        TDoubleArrayList ppms = new TDoubleArrayList(), mzs = new TDoubleArrayList();
+        for (Fragment f : tree) {
+            AnnotatedPeak p = annoPeakAnno.get(f);
+            if (p != null && p.isMeasured()) {
+                final Deviation dev = p.getMassError();
+                ppms.add(dev.getPpm());
+                mzs.add(dev.getAbsolute());
+            }
+        }
+
+        return new Deviation(
+                ppms.isEmpty() ? Double.NaN : Statistics.median(ppms),
+                mzs.isEmpty() ? Double.NaN : Statistics.median(mzs)
+        );
 
     }
 
@@ -130,7 +146,7 @@ public class FTreeMetricsHelper {
     public static int getNumberOfExplainablePeaks(@NotNull FTree tree) {
         final int numberOfExplainedPeaks = getNumOfExplainedPeaks(tree);
         if (numberOfExplainedPeaks==0) return 0;
-        return (int)Math.round(getNumOfExplainedPeaks(tree) / getExplainedPeaksRatio(tree));
+        return (int)Math.ceil(getNumOfExplainedPeaks(tree) / getExplainedPeaksRatio(tree));
     }
 
     /**

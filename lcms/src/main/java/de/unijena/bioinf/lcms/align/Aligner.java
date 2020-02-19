@@ -227,10 +227,13 @@ public class Aligner {
             }
         }
         distances.sort();
+        if (distances.size() <= 10) {
+            // just take 10 seconds as error. Dunno anything better yet
+            return 10000;
+        }
         final double error = distances.getQuick((int)Math.floor(distances.size() * 0.15));
         if (error <= 0) {
-            System.out.println(Arrays.toString(distances.toArray()));
-            System.exit(0);
+            return 10000;
         }
         return error;
     }

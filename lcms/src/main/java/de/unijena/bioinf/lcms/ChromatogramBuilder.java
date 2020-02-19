@@ -122,6 +122,7 @@ public class ChromatogramBuilder {
         concat.trimEdges();
         // if scanPoint is removed during trimming, this is not a real chromatogram
         if (concat.getScanPointForScanId(scanPoint.getScanNumber())==null) return Optional.empty();
+
         if (cache!=null) cache.add(concat);
         return Optional.of(concat);
     }
@@ -157,7 +158,7 @@ public class ChromatogramBuilder {
             }
         } else {
             for (int i=0; i < peak.numberOfScans(); ++i) {
-                noiseLevels[i] = (float)sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(i), peak.getMzAt(i));
+                noiseLevels[i] = 2*(float)sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(i), peak.getMzAt(i));
             }
         }
 
@@ -192,24 +193,6 @@ public class ChromatogramBuilder {
             }
 
         }
-
-        if (extrema.isMinimum(0) || !extrema.valid()) {
-            System.err.println("Strange");
-        }
-
-        /*
-
-        // we expect a small number of extrema:
-        for (int k=2; k < 20; ++k) {
-            assert extrema.valid();
-            if (extrema.numberOfExtrema()>=(k-1)) {
-                if (!extrema.smooth(noiseLevels, k, k))
-                    break;
-            } else break;
-        }
-
-        // no smoothing now
-        */
 
         return extrema;
 

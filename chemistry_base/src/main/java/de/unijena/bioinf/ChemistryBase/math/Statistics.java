@@ -17,6 +17,8 @@
  */
 package de.unijena.bioinf.ChemistryBase.math;
 
+import gnu.trove.list.array.TDoubleArrayList;
+
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
@@ -39,6 +41,26 @@ public class Statistics {
         mean /= sz;
         return mean;
     }
+
+    public static double median(double[] xs) {
+        return medianInPlace(xs.clone());
+    }
+
+    public static double median(TDoubleArrayList ys) {
+        return medianInPlace(ys.toArray());
+    }
+
+    private static double medianInPlace(final double[] xs) {
+        Arrays.sort(xs);
+        if (xs.length%2==0) {
+            double a = xs[xs.length/2 - 1], b = xs[xs.length/2];
+            return (a+b)/2d;
+        } else {
+            return xs[xs.length/2];
+        }
+    }
+
+
 
     /**
      * Computes pearson correlation coefficient between xs and ys
