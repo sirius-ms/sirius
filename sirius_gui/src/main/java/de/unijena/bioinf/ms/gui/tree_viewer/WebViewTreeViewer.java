@@ -82,14 +82,17 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
         });
     }
 
-    public void loadTree(@Nullable String json_tree) {
-        //todo clear tree on null or empty
-        final String jt = json_tree == null || json_tree.isEmpty() ? "{}" : json_tree;
+    public void loadTree(String json_tree) {
         Platform.runLater(() -> {
-            webView.getEngine().executeScript("loadJSONTree('" +
-                    jt.replace("\n", " ")
-                    + "')");
-        });
+                executeJS("loadJSONTree('" + json_tree.replace("\n", " ")
+                          + "')");
+            });
+    }
+
+    public void clear(){
+        Platform.runLater(() -> {
+                executeJS("clearSVG();");
+            });
     }
 
     public Object executeJS(String js_code) {
