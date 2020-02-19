@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import javax.json.*;
 import javax.json.stream.JsonGenerator;
@@ -77,7 +78,14 @@ public class CompoundCandidate {
         this.smiles = o.getString("smiles", null);
         this.pLayer = o.getInt("pLayer", 0);
         this.qLayer = o.getInt("qLayer", 0);
-        this.xlogp = !o.containsKey("xlogp") || o.isNull("xlogp") || o.getJsonNumber("xlogp").equals(JsonNumber.NULL) ? Double.NaN : o.getJsonNumber("xlogp").doubleValue();
+        this.xlogp = Double.NaN;
+        try {//todo HACK:  sometimes this is not parsable
+            if (o.containsKey("xlogp") && !o.isNull("xlogp")) {
+                this.xlogp = o.getJsonNumber("xlogp").doubleValue();
+            }
+        } catch (Exception e) {
+            LoggerFactory.getLogger(getClass()).warn("Could not parse xlogp from String.",e);
+        }
         final JsonObject map = o.getJsonObject("links");
         if (map != null) {
             final ArrayList<DBLink> links = new ArrayList<>();
