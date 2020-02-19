@@ -530,7 +530,7 @@ public class DatabaseDialog extends JDialog {
                                         publish(status);
                                         for (int i = 0; i < inchiOrSmiles.size(); ++i) {
                                             try {
-                                                importer.importFromString(inchiOrSmiles.get(i), ids.get(i));
+                                                importer.importFromString(inchiOrSmiles.get(i), ids.get(i),null);
                                             } catch (Exception e) {
                                                 final ImportStatus sc = status.clone();
                                                 sc.current = i;
@@ -813,8 +813,9 @@ public class DatabaseDialog extends JDialog {
 
             JButton okB = new JButton("OK");
             okB.addActionListener(e -> {
-                importer.setCommonNameProps(nameField.getText().replaceAll("\\s+", "").split(","));
-                importer.setDbIDProps(idField.getText().replaceAll("\\s+", "").split(","));
+                System.out.println("Check custom db import");
+//                importer.setCommonNameProps(nameField.getText().replaceAll("\\s+", "").split(","));
+//                importer.setDbIDProps(idField.getText().replaceAll("\\s+", "").split(","));
                 setVisible(false);
                 dispose();
             });

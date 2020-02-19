@@ -36,8 +36,6 @@ var styles = {'elegant': {'node-rect': {'stroke' : 'transparent'},
                           'link-line': {'stroke-width': 1}}};
 var theme = 'elegant';
 
-var console_p = d3.select('body').append('p');
-
 // utility functions
 Array.prototype.contains = function(obj) {
     var i = this.length;
@@ -952,7 +950,6 @@ function createNode(parent, child_name, edgeData) {
 function generateTree(data) {
     node_map = {};
     tree = undefined;
-    // console_p.text(JSON.stringify(data));
     if (data.losses.length == 0) {
         // only one node in tree
         var node = {
