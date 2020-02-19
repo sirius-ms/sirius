@@ -124,24 +124,35 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
         }
 
 
-        // main peak is: take the two most intensive peaks with at least 10% intensity and select the peak that is
-        // nearest to the parent mass
-        final double threshold = maxIntensity * 0.1;
-        double closestMass = Double.POSITIVE_INFINITY;
+
         int bestIndex = -1;
-        for (int k = properParentPeak; k < lastIndex; ++k) {
-            if (massOrderedSpectrum.getIntensityAt(k) >= threshold) {
-                double mzdiff = Math.abs(massOrderedSpectrum.getMzAt(k) - parentMass);
-                if (mzdiff < closestMass) {
-                    closestMass = mzdiff;
-                    bestIndex = k;
+        {
+            // main peak is: take the two most intensive peaks with at least 10% intensity and select the peak that is
+            // nearest to the parent mass
+            final double threshold = maxIntensity * 0.1;
+            double closestMass = Double.POSITIVE_INFINITY;
+            for (int k = properParentPeak; k < lastIndex; ++k) {
+                if (massOrderedSpectrum.getIntensityAt(k) >= threshold) {
+                    double mzdiff = Math.abs(massOrderedSpectrum.getMzAt(k) - parentMass);
+                    if (mzdiff < closestMass) {
+                        closestMass = mzdiff;
+                        bestIndex = k;
+                    }
                 }
+            }
+
+            //if no best index is found due to super tiny intensities and rounding error, just take the closest
+            if (bestIndex < 0) {
+                closestMass = Double.POSITIVE_INFINITY;
+                for (int k = properParentPeak; k < lastIndex; ++k)
+                    if (Math.abs(massOrderedSpectrum.getMzAt(k) - parentMass) < closestMass)
+                        bestIndex = k;
             }
         }
 
         final ProcessedPeak parentPeak = new ProcessedPeak(massOrderedSpectrum.getPeakAt(bestIndex));
 
-        mergePeak(peakList,parentPeak,mzArray,properParentPeak,lastIndex);
+        mergePeak(peakList, parentPeak, mzArray, properParentPeak, lastIndex);
 
         return bestIndex;
     }
