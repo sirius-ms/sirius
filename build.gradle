@@ -107,7 +107,7 @@ allprojects {
             url "https://www.xypron.de/repository" //glpk repo
         }
         maven {
-            url "http://repo1.maven.org/maven2/" //glazed lists
+            url "https://repo1.maven.org/maven2/" //glazed lists
         }
 
     }
