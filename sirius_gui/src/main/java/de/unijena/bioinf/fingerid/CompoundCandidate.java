@@ -185,6 +185,7 @@ public class CompoundCandidate extends AbstractEDTBean implements Comparable<Com
             else minCount = 1;
 
             molecule.setProperty(HighlightGenerator.ID_MAP, Collections.emptyMap());
+            //todo use the new CDK 2.3 API for SMARTS search
             FasterSmartsQueryTool tool = new FasterSmartsQueryTool(smarts, DefaultChemObjectBuilder.getInstance());
             try {
                 if (tool.matches(molecule)) {
