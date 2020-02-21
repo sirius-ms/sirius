@@ -6,7 +6,6 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.isomorphism.ComponentGrouping;
 import org.openscience.cdk.isomorphism.SmartsStereoMatch;
 import org.openscience.cdk.isomorphism.Ullmann;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
@@ -24,7 +23,9 @@ import java.util.regex.Pattern;
 
 /**
  * A class that hacks into the SMART matching process and allows to map between the SMARTS string and the molecule atoms
+ * //todo this uses deprecated CKD SMARTS matching classes
  */
+@Deprecated
 public class SmartsMapper {
 
     /**
@@ -185,8 +186,9 @@ public class SmartsMapper {
 
         public List<List<Occurence>> getNonSymetricMatches(IAtomContainer atomContainer) {
             List<int[]> mappings = FluentIterable.from(Ullmann.findSubstructure(query).matchAll(atomContainer))
-                    .filter(new SmartsStereoMatch(query, atomContainer))
-                    .filter(new ComponentGrouping(query, atomContainer)).toList();
+                .filter(new SmartsStereoMatch(query, atomContainer)).toList();
+            //todo this should not be necessary anymore because it is already tested in the internal filter method
+//                    .filter(new ComponentFilter(query, atomContainer)).toList();
 
             final HashMap<List<Integer>, List<List<Occurence>>> variants = new HashMap<>();
             for (int[] map : mappings) {
@@ -217,9 +219,10 @@ public class SmartsMapper {
 
         public List<List<Occurence>> match(IAtomContainer atomContainer) {
             List<List<Occurence>> list = new ArrayList<>();
-            List<int[]> mappings = FluentIterable.from(Ullmann.findSubstructure(query).matchAll(atomContainer))
-                    .filter(new SmartsStereoMatch(query, atomContainer))
-                    .filter(new ComponentGrouping(query, atomContainer)).toList();
+            List<int[]> mappings = FluentIterable.from(Ullmann.findSubstructure(query).matchAll(atomContainer)).toList();
+            //this should not be necessary anymore because it is already tested in the internal filter method
+//                    .filter(new SmartsStereoMatch(query, atomContainer))
+//                    .filter(new ComponentFilter(query, atomContainer)).toList();
 
             for (int[] map : mappings) {
                 final List<Occurence> ocs = new ArrayList<>();
