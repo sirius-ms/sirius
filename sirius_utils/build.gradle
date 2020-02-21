@@ -20,12 +20,7 @@ repositories {
 }
 
 
-
 apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow'
-
-//sourceCompatibility = 1.8
-//targetCompatibility = 1.8
 
 mainClassName = "de.unijena.bioinf.ms.utils.UtilsCLI"
 project.ext.set("type", ['console'])
@@ -34,10 +29,39 @@ jar {
         attributes 'Main-Class': mainClassName
     }
 }
-shadowJar {
-    baseName = 'sirius-utils'
-    classifier = null
-    version = null
+
+startScripts {
+    applicationName = "sirius-utils"
+    defaultJvmOpts = ['-XX:+UseG1GC','-XX:+UseStringDeduplication']
+
+    doLast {
+        unixScript.text = unixScript.text.replace('CLASSPATH=', "CLASSPATH=${runtimeClasspath}:")
+        unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', 'DEFAULT_JVM_OPTS=""')
+    }
 }
 
+distributions {
+    linux64 {
+        contents {
+            into('lib') {
+                from("build/install/${project.name}/lib")
+                from("${project.glpkPath}/l64/")
+            }
 
+            into('bin') {
+                from("build/install/${project.name}/bin") {
+                    exclude("*.bat")
+                }
+
+            }
+        }
+
+    }
+
+    getTasksByName("linux64DistTar", false).each {it.setEnabled(false)}
+    getTasksByName("linux64DistTar", false).each { it.setEnabled(false)}
+}
+
+linux64DistZip.dependsOn 'installDist'
+linux64DistTar.dependsOn 'installDist'
+installLinux64Dist.dependsOn 'installDist'
